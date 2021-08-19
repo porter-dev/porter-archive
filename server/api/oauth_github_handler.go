@@ -320,7 +320,7 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	user, err := app.Repo.User.ReadUser(userID)
+	user, err := app.Repo.User().ReadUser(userID)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -336,7 +336,7 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		UserID: user.ID,
 	}
 
-	oauthInt, err = app.Repo.GithubAppOAuthIntegration.CreateGithubAppOAuthIntegration(oauthInt)
+	oauthInt, err = app.Repo.GithubAppOAuthIntegration().CreateGithubAppOAuthIntegration(oauthInt)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -345,7 +345,7 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 
 	user.GithubAppIntegrationID = oauthInt.ID
 
-	user, err = app.Repo.User.UpdateUser(user)
+	user, err = app.Repo.User().UpdateUser(user)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)

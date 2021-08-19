@@ -15,6 +15,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/forms"
@@ -337,10 +338,10 @@ func (app *App) HandleListUserProjects(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorRead(err, ErrUserDataRead, w)
 	}
 
-	projectsExt := make([]*models.ProjectExternal, 0)
+	projectsExt := make([]*types.Project, 0)
 
 	for _, project := range projects {
-		projectsExt = append(projectsExt, project.Externalize())
+		projectsExt = append(projectsExt, project.ToProjectType())
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -871,7 +872,7 @@ func (app *App) startEmailVerificationFlow(user *models.User) error {
 	}
 
 	// handle write to the database
-	pwReset, err = app.Repo.PWResetToken.CreatePWResetToken(pwReset)
+	pwReset, err = app.Repo.PWResetToken().CreatePWResetToken(pwReset)
 
 	if err != nil {
 		return err
@@ -882,14 +883,10 @@ func (app *App) startEmailVerificationFlow(user *models.User) error {
 		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
 	}
 
-	sgClient := email.SendgridClient{
-		APIKey:                app.ServerConf.SendgridAPIKey,
-		VerifyEmailTemplateID: app.ServerConf.SendgridVerifyEmailTemplateID,
-		SenderEmail:           app.ServerConf.SendgridSenderEmail,
-	}
-
-	return sgClient.SendEmailVerification(
-		fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
-		form.Email,
+	return app.notifier.SendEmailVerification(
+		&notifier.SendEmailVerificationOpts{
+			Email: form.Email,
+			URL:   fmt.Sprintf("%s/api/email/verify/finalize?%s", app.ServerConf.ServerURL, queryVals.Encode()),
+		},
 	)
 }

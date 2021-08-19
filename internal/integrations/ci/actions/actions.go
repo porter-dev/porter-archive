@@ -199,7 +199,7 @@ func (g *GithubActions) getClient() (*github.Client, error) {
 	if g.GithubOAuthIntegration != nil {
 
 		// get the oauth integration
-		oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GithubOAuthIntegration.OAuthIntegrationID)
+		oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.GithubOAuthIntegration.OAuthIntegrationID)
 
 		if err != nil {
 			return nil, err

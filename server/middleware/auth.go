@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 
@@ -26,7 +27,7 @@ type Auth struct {
 	store         sessions.Store
 	cookieName    string
 	tokenConf     *token.TokenGeneratorConf
-	repo          *repository.Repository
+	repo          repository.Repository
 	GithubAppConf *oauth2.Config
 }
 
@@ -35,7 +36,7 @@ func NewAuth(
 	store sessions.Store,
 	cookieName string,
 	tokenConf *token.TokenGeneratorConf,
-	repo *repository.Repository,
+	repo repository.Repository,
 	GithubAppConf *oauth2.Config,
 ) *Auth {
 	return &Auth{store, cookieName, tokenConf, repo, GithubAppConf}
@@ -224,7 +225,7 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 		}
 
 		// read the user and make sure the email is verified
-		user, err := auth.repo.User.ReadUser(userID)
+		user, err := auth.repo.User().ReadUser(userID)
 
 		if err != nil || !user.EmailVerified {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -243,12 +244,12 @@ func (auth *Auth) DoesUserHaveProjectAccess(
 		for _, role := range proj.Roles {
 			if role.UserID == userID {
 				if accessType == AdminAccess {
-					if role.Kind == models.RoleAdmin {
+					if role.Kind == types.RoleAdmin {
 						next.ServeHTTP(w, r)
 						return
 					}
 				} else if accessType == WriteAccess {
-					if role.Kind == models.RoleAdmin || role.Kind == models.RoleDeveloper {
+					if role.Kind == types.RoleAdmin || role.Kind == types.RoleDeveloper {
 						next.ServeHTTP(w, r)
 						return
 					}
@@ -459,14 +460,14 @@ func (auth *Auth) DoesUserHaveGitInstallationAccess(
 			}
 		}
 
-		user, err := auth.repo.User.ReadUser(userID)
+		user, err := auth.repo.User().ReadUser(userID)
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 
-		oauthInt, err := auth.repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
+		oauthInt, err := auth.repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -475,7 +476,7 @@ func (auth *Auth) DoesUserHaveGitInstallationAccess(
 
 		_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
 			auth.GithubAppConf,
-			oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, *auth.repo))
+			oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, auth.repo))
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -521,7 +522,7 @@ func (auth *Auth) DoesUserHaveGitInstallationAccess(
 			}
 		}
 
-		installations, err := auth.repo.GithubAppInstallation.ReadGithubAppInstallationByAccountIDs(accountIDs)
+		installations, err := auth.repo.GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIDs)
 
 		for _, installation := range installations {
 			if uint64(installation.InstallationID) == grID {

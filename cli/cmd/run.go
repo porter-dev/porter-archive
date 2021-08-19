@@ -339,19 +339,19 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 
 	// ugly way to catch no TTY errors, such as when running command "echo \"hello\""
 	if err != nil {
-		color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
+		color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:")
 
 		var writtenBytes int64
 
 		writtenBytes, err = pipePodLogsToStdout(config, namespace, podName, container, false)
 
 		if verbose || writtenBytes == 0 {
-			color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+			color.New(color.FgYellow).Println("Could not get logs. Pod events:")
 
 			err = pipeEventsToStdout(config, namespace, podName, container, false)
 		}
 	} else if verbose {
-		color.New(color.FgYellow).Println("Pod events:\n")
+		color.New(color.FgYellow).Println("Pod events:")
 
 		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
@@ -425,7 +425,7 @@ func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
 	)
 
 	if err != nil {
-		color.New(color.FgRed).Println("Could not delete ephemeral pod: %s", err.Error())
+		color.New(color.FgRed).Printf("Could not delete ephemeral pod: %s\n", err.Error())
 		return err
 	}
 

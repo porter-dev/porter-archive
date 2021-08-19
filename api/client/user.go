@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -185,7 +186,7 @@ func (c *Client) GetUser(ctx context.Context, userID uint) (*GetUserResponse, er
 }
 
 // ListUserProjectsResponse is the list of projects returned
-type ListUserProjectsResponse []*models.ProjectExternal
+type ListUserProjectsResponse []*types.Project
 
 // ListUserProjects returns a list of projects associated with a user
 func (c *Client) ListUserProjects(ctx context.Context, userID uint) (ListUserProjectsResponse, error) {

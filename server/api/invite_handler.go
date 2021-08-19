@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -103,7 +104,7 @@ func (app *App) HandleUpdateInviteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invite, err := app.Repo.Invite.ReadInvite(uint(id))
+	invite, err := app.Repo.Invite().ReadInvite(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -120,7 +121,7 @@ func (app *App) HandleUpdateInviteRole(w http.ResponseWriter, r *http.Request) {
 
 	invite.Kind = form.Kind
 
-	invite, err = app.Repo.Invite.UpdateInvite(invite)
+	invite, err = app.Repo.Invite().UpdateInvite(invite)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -206,10 +207,12 @@ func (app *App) HandleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new Role with the user as the admin
-	_, err = app.Repo.Project.CreateProjectRole(projModel, &models.Role{
-		UserID:    userID,
-		ProjectID: uint(projID),
-		Kind:      kind,
+	_, err = app.Repo.Project().CreateProjectRole(projModel, &models.Role{
+		Role: types.Role{
+			UserID:    userID,
+			ProjectID: uint(projID),
+			Kind:      types.RoleKind(kind),
+		},
 	})
 
 	if err != nil {

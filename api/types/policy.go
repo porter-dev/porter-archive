@@ -51,26 +51,6 @@ var ScopeHeirarchy = ScopeTree{
 
 type Policy []*PolicyDocument
 
-type APIVerb string
-
-const (
-	APIVerbGet    APIVerb = "get"
-	APIVerbCreate APIVerb = "create"
-	APIVerbList   APIVerb = "list"
-	APIVerbUpdate APIVerb = "update"
-	APIVerbDelete APIVerb = "delete"
-)
-
-type APIVerbGroup []APIVerb
-
-func ReadVerbGroup() APIVerbGroup {
-	return []APIVerb{APIVerbGet, APIVerbList}
-}
-
-func ReadWriteVerbGroup() APIVerbGroup {
-	return []APIVerb{APIVerbGet, APIVerbList, APIVerbCreate, APIVerbUpdate, APIVerbDelete}
-}
-
 var AdminPolicy = []*PolicyDocument{
 	{
 		Scope: ProjectScope,

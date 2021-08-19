@@ -246,7 +246,7 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.Repo.Cluster,
+		app.Repo.Cluster(),
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -265,7 +265,7 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+	registries, err := app.Repo.Registry().ListRegistriesByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -278,7 +278,7 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 		Namespace:  form.ReleaseForm.Form.Namespace,
 		Values:     form.ChartTemplateForm.FormValues,
 		Cluster:    form.ReleaseForm.Cluster,
-		Repo:       *app.Repo,
+		Repo:       app.Repo,
 		Registries: registries,
 	}
 
@@ -390,7 +390,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					GithubInstallationID:   gitAction.GithubInstallationID,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],
-					Repo:                   *app.Repo,
+					Repo:                   app.Repo,
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,

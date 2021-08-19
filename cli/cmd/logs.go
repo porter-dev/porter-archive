@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )

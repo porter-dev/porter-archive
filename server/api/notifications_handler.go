@@ -2,12 +2,13 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/internal/models"
-	"gorm.io/gorm"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type HandleUpdateNotificationConfigForm struct {
@@ -31,7 +32,7 @@ func (app *App) HandleUpdateNotificationConfig(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	release, err := app.Repo.Release.ReadRelease(form.ClusterID, name, form.Namespace)
+	release, err := app.Repo.Release().ReadRelease(form.ClusterID, name, form.Namespace)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -53,7 +54,7 @@ func (app *App) HandleUpdateNotificationConfig(w http.ResponseWriter, r *http.Re
 	}
 
 	if release.NotificationConfig == 0 {
-		newConfig, err = app.Repo.NotificationConfig.CreateNotificationConfig(newConfig)
+		newConfig, err = app.Repo.NotificationConfig().CreateNotificationConfig(newConfig)
 
 		if err != nil {
 			app.handleErrorInternal(err, w)
@@ -62,11 +63,11 @@ func (app *App) HandleUpdateNotificationConfig(w http.ResponseWriter, r *http.Re
 
 		release.NotificationConfig = newConfig.ID
 
-		release, err = app.Repo.Release.UpdateRelease(release)
+		release, err = app.Repo.Release().UpdateRelease(release)
 
 	} else {
 		newConfig.ID = release.NotificationConfig
-		newConfig, err = app.Repo.NotificationConfig.UpdateNotificationConfig(newConfig)
+		newConfig, err = app.Repo.NotificationConfig().UpdateNotificationConfig(newConfig)
 	}
 
 	if err != nil {
@@ -100,7 +101,7 @@ func (app *App) HandleGetNotificationConfig(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
+	release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, namespace)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -122,7 +123,7 @@ func (app *App) HandleGetNotificationConfig(w http.ResponseWriter, r *http.Reque
 	}
 
 	if release.NotificationConfig != 0 {
-		notifConfig, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+		notifConfig, err := app.Repo.NotificationConfig().ReadNotificationConfig(release.NotificationConfig)
 
 		if err != nil {
 			app.handleErrorInternal(err, w)

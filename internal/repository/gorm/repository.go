@@ -5,28 +5,31 @@ import (
 	"gorm.io/gorm"
 )
 
-<<<<<<< HEAD
 type GormRepository struct {
-	user             repository.UserRepository
-	session          repository.SessionRepository
-	project          repository.ProjectRepository
-	cluster          repository.ClusterRepository
-	helmRepo         repository.HelmRepoRepository
-	registry         repository.RegistryRepository
-	gitRepo          repository.GitRepoRepository
-	gitActionConfig  repository.GitActionConfigRepository
-	invite           repository.InviteRepository
-	release          repository.ReleaseRepository
-	authCode         repository.AuthCodeRepository
-	dnsRecord        repository.DNSRecordRepository
-	pwResetToken     repository.PWResetTokenRepository
-	infra            repository.InfraRepository
-	kubeIntegration  repository.KubeIntegrationRepository
-	basicIntegration repository.BasicIntegrationRepository
-	oidcIntegration  repository.OIDCIntegrationRepository
-	oauthIntegration repository.OAuthIntegrationRepository
-	gcpIntegration   repository.GCPIntegrationRepository
-	awsIntegration   repository.AWSIntegrationRepository
+	user                      repository.UserRepository
+	session                   repository.SessionRepository
+	project                   repository.ProjectRepository
+	cluster                   repository.ClusterRepository
+	helmRepo                  repository.HelmRepoRepository
+	registry                  repository.RegistryRepository
+	gitRepo                   repository.GitRepoRepository
+	gitActionConfig           repository.GitActionConfigRepository
+	invite                    repository.InviteRepository
+	release                   repository.ReleaseRepository
+	authCode                  repository.AuthCodeRepository
+	dnsRecord                 repository.DNSRecordRepository
+	pwResetToken              repository.PWResetTokenRepository
+	infra                     repository.InfraRepository
+	kubeIntegration           repository.KubeIntegrationRepository
+	basicIntegration          repository.BasicIntegrationRepository
+	oidcIntegration           repository.OIDCIntegrationRepository
+	oauthIntegration          repository.OAuthIntegrationRepository
+	gcpIntegration            repository.GCPIntegrationRepository
+	awsIntegration            repository.AWSIntegrationRepository
+	githubAppInstallation     repository.GithubAppInstallationRepository
+	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
+	slackIntegration          repository.SlackIntegrationRepository
+	notificationConfig        repository.NotificationConfigRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -109,59 +112,49 @@ func (t *GormRepository) AWSIntegration() repository.AWSIntegrationRepository {
 	return t.awsIntegration
 }
 
+func (t *GormRepository) GithubAppInstallation() repository.GithubAppInstallationRepository {
+	return t.githubAppInstallation
+}
+
+func (t *GormRepository) GithubAppOAuthIntegration() repository.GithubAppOAuthIntegrationRepository {
+	return t.githubAppOAuthIntegration
+}
+
+func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepository {
+	return t.slackIntegration
+}
+
+func (t *GormRepository) NotificationConfig() repository.NotificationConfigRepository {
+	return t.notificationConfig
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
 	return &GormRepository{
-		user:             NewUserRepository(db),
-		session:          NewSessionRepository(db),
-		project:          NewProjectRepository(db),
-		cluster:          NewClusterRepository(db, key),
-		helmRepo:         NewHelmRepoRepository(db, key),
-		registry:         NewRegistryRepository(db, key),
-		gitRepo:          NewGitRepoRepository(db, key),
-		gitActionConfig:  NewGitActionConfigRepository(db),
-		invite:           NewInviteRepository(db),
-		release:          NewReleaseRepository(db),
-		authCode:         NewAuthCodeRepository(db),
-		dnsRecord:        NewDNSRecordRepository(db),
-		pwResetToken:     NewPWResetTokenRepository(db),
-		infra:            NewInfraRepository(db, key),
-		kubeIntegration:  NewKubeIntegrationRepository(db, key),
-		basicIntegration: NewBasicIntegrationRepository(db, key),
-		oidcIntegration:  NewOIDCIntegrationRepository(db, key),
-		oauthIntegration: NewOAuthIntegrationRepository(db, key),
-		gcpIntegration:   NewGCPIntegrationRepository(db, key),
-		awsIntegration:   NewAWSIntegrationRepository(db, key),
-=======
-// NewRepository returns a Repository which uses
-// gorm.DB for querying the database
-func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
-	return &repository.Repository{
-		User:                      NewUserRepository(db),
-		Session:                   NewSessionRepository(db),
-		Project:                   NewProjectRepository(db),
-		Release:                   NewReleaseRepository(db),
-		GitRepo:                   NewGitRepoRepository(db, key),
-		Cluster:                   NewClusterRepository(db, key),
-		HelmRepo:                  NewHelmRepoRepository(db, key),
-		Registry:                  NewRegistryRepository(db, key),
-		Infra:                     NewInfraRepository(db, key),
-		GitActionConfig:           NewGitActionConfigRepository(db),
-		Invite:                    NewInviteRepository(db),
-		AuthCode:                  NewAuthCodeRepository(db),
-		DNSRecord:                 NewDNSRecordRepository(db),
-		PWResetToken:              NewPWResetTokenRepository(db),
-		KubeIntegration:           NewKubeIntegrationRepository(db, key),
-		BasicIntegration:          NewBasicIntegrationRepository(db, key),
-		OIDCIntegration:           NewOIDCIntegrationRepository(db, key),
-		OAuthIntegration:          NewOAuthIntegrationRepository(db, key),
-		GCPIntegration:            NewGCPIntegrationRepository(db, key),
-		AWSIntegration:            NewAWSIntegrationRepository(db, key),
-		GithubAppInstallation:     NewGithubAppInstallationRepository(db),
-		GithubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
-		SlackIntegration:          NewSlackIntegrationRepository(db, key),
-		NotificationConfig:        NewNotificationConfigRepository(db),
->>>>>>> master
+		user:                      NewUserRepository(db),
+		session:                   NewSessionRepository(db),
+		project:                   NewProjectRepository(db),
+		cluster:                   NewClusterRepository(db, key),
+		helmRepo:                  NewHelmRepoRepository(db, key),
+		registry:                  NewRegistryRepository(db, key),
+		gitRepo:                   NewGitRepoRepository(db, key),
+		gitActionConfig:           NewGitActionConfigRepository(db),
+		invite:                    NewInviteRepository(db),
+		release:                   NewReleaseRepository(db),
+		authCode:                  NewAuthCodeRepository(db),
+		dnsRecord:                 NewDNSRecordRepository(db),
+		pwResetToken:              NewPWResetTokenRepository(db),
+		infra:                     NewInfraRepository(db, key),
+		kubeIntegration:           NewKubeIntegrationRepository(db, key),
+		basicIntegration:          NewBasicIntegrationRepository(db, key),
+		oidcIntegration:           NewOIDCIntegrationRepository(db, key),
+		oauthIntegration:          NewOAuthIntegrationRepository(db, key),
+		gcpIntegration:            NewGCPIntegrationRepository(db, key),
+		awsIntegration:            NewAWSIntegrationRepository(db, key),
+		githubAppInstallation:     NewGithubAppInstallationRepository(db),
+		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
+		slackIntegration:          NewSlackIntegrationRepository(db, key),
+		notificationConfig:        NewNotificationConfigRepository(db),
 	}
 }

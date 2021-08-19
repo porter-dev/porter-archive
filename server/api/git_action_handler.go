@@ -155,27 +155,7 @@ func (app *App) createGitActionFromForm(
 		}
 	}
 
-<<<<<<< HEAD
-	// convert the form to a git action config
-	gitAction, err := form.ToGitActionConfig()
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return nil
-	}
-
-	// read the git repo
-	gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
-
-	if err != nil {
-		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
-		return nil
-	}
-
-	repoSplit := strings.Split(gitAction.GitRepo, "/")
-=======
 	repoSplit := strings.Split(form.GitRepo, "/")
->>>>>>> master
 
 	if len(repoSplit) != 2 {
 		app.handleErrorFormDecoding(fmt.Errorf("invalid formatting of repo name"), ErrProjectDecode, w)
@@ -216,26 +196,6 @@ func (app *App) createGitActionFromForm(
 
 	// create the commit in the git repo
 	gaRunner := &actions.GithubActions{
-<<<<<<< HEAD
-		ServerURL:      app.ServerConf.ServerURL,
-		GitIntegration: gr,
-		GitRepoName:    repoSplit[1],
-		GitRepoOwner:   repoSplit[0],
-		Repo:           app.Repo,
-		GithubConf:     app.GithubProjectConf,
-		WebhookToken:   release.WebhookToken,
-		ProjectID:      uint(projID),
-		ReleaseName:    name,
-		GitBranch:      gitAction.GitBranch,
-		DockerFilePath: gitAction.DockerfilePath,
-		FolderPath:     gitAction.FolderPath,
-		ImageRepoURL:   gitAction.ImageRepoURI,
-		PorterToken:    encoded,
-		BuildEnv:       form.BuildEnv,
-	}
-
-	_, err = gaRunner.Setup()
-=======
 		ServerURL:              app.ServerConf.ServerURL,
 		GithubOAuthIntegration: nil,
 		GithubAppID:            app.GithubAppConf.AppID,
@@ -243,7 +203,7 @@ func (app *App) createGitActionFromForm(
 		GithubInstallationID:   form.GitRepoID,
 		GitRepoName:            repoSplit[1],
 		GitRepoOwner:           repoSplit[0],
-		Repo:                   *app.Repo,
+		Repo:                   app.Repo,
 		GithubConf:             app.GithubProjectConf,
 		ProjectID:              uint(projID),
 		ClusterID:              uint(clusterID),
@@ -259,7 +219,6 @@ func (app *App) createGitActionFromForm(
 	}
 
 	workflowYAML, err = gaRunner.Setup()
->>>>>>> master
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -291,11 +250,7 @@ func (app *App) createGitActionFromForm(
 	// update the release in the db with the image repo uri
 	form.Release.ImageRepoURI = gitAction.ImageRepoURI
 
-<<<<<<< HEAD
-	_, err = app.Repo.Release().UpdateRelease(release)
-=======
-	_, err = app.Repo.Release.UpdateRelease(form.Release)
->>>>>>> master
+	_, err = app.Repo.Release().UpdateRelease(form.Release)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)

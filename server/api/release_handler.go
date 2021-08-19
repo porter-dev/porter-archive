@@ -662,7 +662,7 @@ func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
 
 	// validate the form
@@ -830,7 +830,7 @@ func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request)
 
 	form.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.Repo.Cluster,
+		app.Repo.Cluster(),
 	)
 
 	agent, err := app.getAgentFromReleaseForm(
@@ -882,7 +882,7 @@ func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request)
 		ImageRepoURI: repoStr,
 	}
 
-	release, err = app.Repo.Release.CreateRelease(release)
+	release, err = app.Repo.Release().CreateRelease(release)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -1020,15 +1020,15 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	rel, upgradeErr := agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
-	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+	slackInts, _ := app.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(uint(projID))
 
 	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
-	release, _ := app.Repo.Release.ReadRelease(uint(clusterID), name, form.Namespace)
+	release, _ := app.Repo.Release().ReadRelease(uint(clusterID), name, form.Namespace)
 
 	var notifConf *models.NotificationConfigExternal
 	notifConf = nil
 	if release != nil && release.NotificationConfig != 0 {
-		conf, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+		conf, err := app.Repo.NotificationConfig().ReadNotificationConfig(release.NotificationConfig)
 
 		if err != nil {
 			app.handleErrorInternal(err, w)
@@ -1133,7 +1133,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],
-					Repo:                   *app.Repo,
+					Repo:                   app.Repo,
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
@@ -1263,12 +1263,12 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		Values:     rel.Config,
 	}
 
-	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+	slackInts, _ := app.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
 
 	var notifConf *models.NotificationConfigExternal
 	notifConf = nil
 	if release != nil && release.NotificationConfig != 0 {
-		conf, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+		conf, err := app.Repo.NotificationConfig().ReadNotificationConfig(release.NotificationConfig)
 
 		if err != nil {
 			app.handleErrorInternal(err, w)
@@ -1341,7 +1341,7 @@ func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Requ
 
 	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
 		vals,
-		app.Repo.Cluster,
+		app.Repo.Cluster(),
 	)
 
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
@@ -1349,7 +1349,7 @@ func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	releases, err := app.Repo.Release.ListReleasesByImageRepoURI(form.Cluster.ID, form.ImageRepoURI)
+	releases, err := app.Repo.Release().ListReleasesByImageRepoURI(form.Cluster.ID, form.ImageRepoURI)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -1371,7 +1371,7 @@ func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+	registries, err := app.Repo.Registry().ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -1408,7 +1408,7 @@ func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Requ
 				conf := &helm.UpgradeReleaseConfig{
 					Name:       releases[index].Name,
 					Cluster:    form.ReleaseForm.Cluster,
-					Repo:       *app.Repo,
+					Repo:       app.Repo,
 					Registries: registries,
 					Values:     rel.Config,
 				}
@@ -1571,7 +1571,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
 					GitRepoName:            repoSplit[1],
 					GitRepoOwner:           repoSplit[0],
-					Repo:                   *app.Repo,
+					Repo:                   app.Repo,
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,

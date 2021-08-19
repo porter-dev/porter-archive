@@ -24,6 +24,7 @@ func TestCreateGitActionConfig(t *testing.T) {
 		GitRepo:              "porter-dev/porter",
 		ImageRepoURI:         "gcr.io/project-123456/nginx",
 		GithubInstallationID: 1,
+		Version:              "v0.0.1",
 	}
 
 	expGA := *ga

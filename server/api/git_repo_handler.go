@@ -71,7 +71,7 @@ func (app *App) HandleListProjectGitRepos(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	installationData, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountIDs(accountIds)
+	installationData, err := app.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountIDs(accountIds)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)

@@ -19,6 +19,21 @@ chmod +x ./porter
 sudo mv ./porter /usr/local/bin/porter
 ```
 
+To download a specific version of the CLI:
+
+```sh
+{
+# NOTE: replace this line with the version
+version=v0.6.1
+name=porter-$version.zip
+curl -L https://github.com/porter-dev/porter/releases/download/${version}/porter_${version}_Darwin_x86_64.zip --output $name
+unzip -a $name
+rm $name
+chmod +x ./porter
+sudo mv ./porter /usr/local/bin/porter
+}
+```
+
 ## Linux
 
 Run the following command to grab the latest binary:
@@ -38,6 +53,22 @@ Then move the file into your bin:
 ```sh
 chmod +x ./porter
 sudo mv ./porter /usr/local/bin/porter
+```
+
+
+To download a specific version of the CLI:
+
+```sh
+{
+# NOTE: replace this line with the version
+version=v0.6.1
+name=porter-$version.zip
+curl -L https://github.com/porter-dev/porter/releases/download/${version}/porter_${version}_Linux_x86_64.zip --output $name
+unzip -a $name
+rm $name
+chmod +x ./porter
+sudo mv ./porter /usr/local/bin/porter
+}
 ```
 
 ## Windows

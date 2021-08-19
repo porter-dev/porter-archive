@@ -1,51 +1,52 @@
-import React, { Component } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ChartType, StorageType, ClusterType } from "shared/types";
+import { ChartType, ClusterType, StorageType } from "shared/types";
 import { PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
 import Loading from "components/Loading";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 
-type PropsType = {
+type Props = {
   currentCluster: ClusterType;
   namespace: string;
+  // TODO Convert to enum
   sortType: string;
-  setCurrentChart: (c: ChartType) => void;
   currentView: PorterUrl;
 };
 
-type StateType = {
-  charts: ChartType[];
-  chartLookupTable: Record<string, string>;
-  controllers: Record<string, Record<string, any>>;
-  loading: boolean;
-  error: boolean;
-  websockets: Record<string, any>;
-};
+const ChartList: React.FunctionComponent<Props> = ({
+  namespace,
+  sortType,
+  currentView,
+}) => {
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeWebsocket,
+    closeAllWebsockets,
+  } = useWebsockets();
+  const [charts, setCharts] = useState<ChartType[]>([]);
+  const [controllers, setControllers] = useState<
+    Record<string, Record<string, any>>
+  >({});
+  const [releases, setReleases] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
-export default class ChartList extends Component<PropsType, StateType> {
-  state = {
-    charts: [] as ChartType[],
-    chartLookupTable: {} as Record<string, string>,
-    controllers: {} as Record<string, Record<string, any>>,
-    loading: false,
-    error: false,
-    websockets: {} as Record<string, any>,
-  };
+  const context = useContext(Context);
 
-  // TODO: promisify
-  updateCharts = (callback: Function) => {
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-    this.setState({ loading: true });
-
-    api
-      .getCharts(
+  const updateCharts = async () => {
+    try {
+      const { currentCluster, currentProject } = context;
+      setIsLoading(true);
+      const res = await api.getCharts(
         "<token>",
         {
-          namespace: this.props.namespace,
+          namespace: namespace,
           cluster_id: currentCluster.id,
           storage: StorageType.Secret,
           limit: 50,
@@ -63,200 +64,162 @@ export default class ChartList extends Component<PropsType, StateType> {
           ],
         },
         { id: currentProject.id }
-      )
-      .then((res) => {
-        let charts = res.data || [];
+      );
+      const charts = res.data || [];
 
-        // filter charts based on the current view
-        let { currentView } = this.props;
-
-        charts = charts.filter((chart: ChartType) => {
-          return (
-            (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-            ((currentView == "applications" ||
-              currentView == "cluster-dashboard") &&
-              chart.chart.metadata.name != "job")
-          );
-        });
-
-        if (this.props.sortType == "Newest") {
-          charts.sort((a: any, b: any) =>
-            Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-              ? -1
-              : 1
-          );
-        } else if (this.props.sortType == "Oldest") {
-          charts.sort((a: any, b: any) =>
-            Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-              ? 1
-              : -1
-          );
-        } else if (this.props.sortType == "Alphabetical") {
-          charts.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-        }
-        this.setState({ charts }, () => {
-          this.setState({ loading: false, error: false });
-        });
-        callback(charts);
-      })
-      .catch((err) => {
-        console.log(err);
-        setCurrentError(JSON.stringify(err));
-        this.setState({ loading: false, error: true });
+      // filter charts based on the current view
+      const filteredCharts = charts.filter((chart: ChartType) => {
+        return (
+          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+          ((currentView == "applications" ||
+            currentView == "cluster-dashboard") &&
+            chart.chart.metadata.name != "job")
+        );
       });
-  };
 
-  setupWebsocket = (kind: string) => {
-    let { currentCluster, currentProject } = this.context;
-    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+      let sortedCharts = filteredCharts;
 
-    let ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`
-    );
-    ws.onopen = () => {
-      console.log("connected to websocket");
-    };
-
-    ws.onmessage = (evt: MessageEvent) => {
-      let event = JSON.parse(evt.data);
-      let object = event.Object;
-      object.metadata.kind = event.Kind;
-      let chartKey = this.state.chartLookupTable[object.metadata.uid];
-
-      // ignore if updated object does not belong to any chart in the list.
-      if (!chartKey) {
-        return;
+      if (sortType == "Newest") {
+        sortedCharts.sort((a: any, b: any) =>
+          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+            ? -1
+            : 1
+        );
+      } else if (sortType == "Oldest") {
+        sortedCharts.sort((a: any, b: any) =>
+          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+            ? 1
+            : -1
+        );
+      } else if (sortType == "Alphabetical") {
+        sortedCharts.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
       }
 
-      let chartControllers = this.state.controllers[chartKey];
-      chartControllers[object.metadata.uid] = object;
-
-      this.setState({
-        controllers: {
-          ...this.state.controllers,
-          [chartKey]: chartControllers,
-        },
-      });
-    };
-
-    ws.onclose = () => {
-      console.log("closing websocket");
-    };
-
-    ws.onerror = (err: ErrorEvent) => {
-      console.log(err);
-      ws.close();
-    };
-
-    return ws;
+      setIsError(false);
+      return sortedCharts;
+    } catch (error) {
+      console.log(error);
+      context.setCurrentError(JSON.stringify(error));
+      setIsError(true);
+    }
   };
 
-  setControllerWebsockets = (controllers: any[]) => {
-    let websockets = controllers.map((kind: string) => {
-      return this.setupWebsocket(kind);
+  const setupHelmReleasesWebsocket = () => {
+    const apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log("connected to chart live updates websocket");
+      },
+      onmessage: (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data);
+        const object = event.Object;
+        setReleases((oldReleases) => {
+          const currentRelease = oldReleases[object?.name];
+          const currentReleaseVersion = Number(currentRelease?.version);
+          const newReleaseVersion = Number(object?.version);
+          if (currentReleaseVersion > newReleaseVersion) {
+            return {
+              ...oldReleases,
+            };
+          }
+
+          return {
+            ...oldReleases,
+            [object.name]: object,
+          };
+        });
+      },
+
+      onclose: () => {
+        console.log("closing chart live updates websocket");
+      },
+
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket("helm_releases");
+      },
+    };
+
+    newWebsocket("helm_releases", apiPath, wsConfig);
+    openWebsocket("helm_releases");
+  };
+
+  const setupWebsocket = (kind: string) => {
+    let { currentCluster, currentProject } = context;
+    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log("connected to websocket");
+      },
+      onmessage: (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data);
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
+
+        setControllers((oldControllers) => ({
+          ...oldControllers,
+          [object.metadata.uid]: object,
+        }));
+      },
+      onclose: () => {
+        console.log("closing websocket");
+      },
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(kind);
+      },
+    };
+
+    newWebsocket(kind, apiPath, wsConfig);
+
+    openWebsocket(kind);
+  };
+
+  const setControllerWebsockets = (controllers: any[]) => {
+    controllers.map((kind: string) => {
+      return setupWebsocket(kind);
     });
-    this.setState({ websockets });
   };
 
-  getControllers = (charts: any[]) => {
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-
-    charts.forEach(async (chart: any) => {
-      // don't retrieve controllers for chart that failed to even deploy.
-      if (chart.info.status == "failed") return;
-
-      await new Promise((next: (res?: any) => void) => {
-        api
-          .getChartControllers(
-            "<token>",
-            {
-              namespace: chart.namespace,
-              cluster_id: currentCluster.id,
-              storage: StorageType.Secret,
-            },
-            {
-              id: currentProject.id,
-              name: chart.name,
-              revision: chart.version,
-            }
-          )
-          .then((res) => {
-            // transform controller array into hash table for easy lookup during updates.
-            let chartControllers = {} as Record<string, Record<string, any>>;
-            res.data.forEach((c: any) => {
-              c.metadata.kind = c.kind;
-              chartControllers[c.metadata.uid] = c;
-            });
-
-            res.data.forEach(async (c: any) => {
-              await new Promise((nextController: (res?: any) => void) => {
-                this.setState(
-                  {
-                    chartLookupTable: {
-                      ...this.state.chartLookupTable,
-                      [c.metadata.uid]: `${chart.namespace}-${chart.name}`,
-                    },
-                    controllers: {
-                      ...this.state.controllers,
-                      [`${chart.namespace}-${chart.name}`]: chartControllers,
-                    },
-                  },
-                  () => {
-                    nextController();
-                  }
-                );
-              });
-            });
-            next();
-          })
-          .catch((err) => {
-            setCurrentError(JSON.stringify(err));
-            return;
-          });
-      });
-    });
-  };
-
-  componentDidMount() {
-    this.updateCharts(this.getControllers);
-    this.setControllerWebsockets([
+  // Setup basic websockets on start
+  useEffect(() => {
+    setControllerWebsockets([
       "deployment",
       "statefulset",
       "daemonset",
       "replicaset",
     ]);
-  }
+    setupHelmReleasesWebsocket();
 
-  componentWillUnmount() {
-    if (this.state.websockets) {
-      this.state.websockets.forEach((ws: WebSocket) => {
-        ws.close();
+    return () => {
+      closeAllWebsockets();
+    };
+  }, []);
+
+  useEffect(() => {
+    let isSubscribed = true;
+
+    if (namespace || namespace === "") {
+      updateCharts().then((charts) => {
+        if (isSubscribed) {
+          setCharts(charts);
+          setIsLoading(false);
+        }
       });
     }
-  }
+    return () => (isSubscribed = false);
+  }, [namespace, currentView]);
 
-  componentDidUpdate(prevProps: PropsType) {
-    // Ret2: Prevents reload when opening ClusterConfigModal
-    if (
-      prevProps.currentCluster !== this.props.currentCluster ||
-      prevProps.namespace !== this.props.namespace ||
-      prevProps.sortType !== this.props.sortType ||
-      prevProps.currentView !== this.props.currentView
-    ) {
-      this.updateCharts(this.getControllers);
-    }
-  }
-
-  renderChartList = () => {
-    let { loading, error, charts } = this.state;
-
-    if (loading) {
+  const renderChartList = () => {
+    if (isLoading || (!namespace && namespace !== "")) {
       return (
         <LoadingWrapper>
           <Loading />
         </LoadingWrapper>
       );
-    } else if (error) {
+    } else if (isError) {
       return (
         <Placeholder>
           <i className="material-icons">error</i> Error connecting to cluster.
@@ -266,33 +229,29 @@ export default class ChartList extends Component<PropsType, StateType> {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No
-          {this.props.currentView === "jobs" ? ` jobs` : ` charts`} found in
-          this namespace.
+          {currentView === "jobs" ? ` jobs` : ` charts`} found in this
+          namespace.
         </Placeholder>
       );
     }
 
-    return this.state.charts.map((chart: ChartType, i: number) => {
+    return charts.map((chart: ChartType, i: number) => {
       return (
         <Chart
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
-          setCurrentChart={this.props.setCurrentChart}
-          controllers={
-            this.state.controllers[`${chart.namespace}-${chart.name}`] ||
-            ({} as Record<string, any>)
-          }
+          controllers={controllers || {}}
+          isJob={currentView === "jobs"}
+          release={releases[chart.name] || {}}
         />
       );
     });
   };
 
-  render() {
-    return <StyledChartList>{this.renderChartList()}</StyledChartList>;
-  }
-}
+  return <StyledChartList>{renderChartList()}</StyledChartList>;
+};
 
-ChartList.contextType = Context;
+export default ChartList;
 
 const Placeholder = styled.div`
   width: 100%;
@@ -302,7 +261,7 @@ const Placeholder = styled.div`
   color: #ffffff44;
   background: #26282f;
   border-radius: 5px;
-  height: 320px;
+  height: 370px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,5 +279,5 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 85px;
+  padding-bottom: 105px;
 `;

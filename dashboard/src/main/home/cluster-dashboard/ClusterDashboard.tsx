@@ -2,26 +2,31 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
+import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
-import { PorterUrl } from "shared/routing";
+import { getQueryParam, PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
 
+import DashboardHeader from "./DashboardHeader";
 import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 import NamespaceSelector from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
-import ExpandedChart from "./expanded-chart/ExpandedChart";
-import ExpandedJobChart from "./expanded-chart/ExpandedJobChart";
+import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
+import DashboardRoutes from "./dashboard/Routes";
+import GuardedRoute from "shared/auth/RouteGuard";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = RouteComponentProps & {
-  currentCluster: ClusterType;
-  setSidebar: (x: boolean) => void;
-  currentView: PorterUrl;
-};
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    currentCluster: ClusterType;
+    setSidebar: (x: boolean) => void;
+    currentView: PorterUrl;
+  };
 
 type StateType = {
   namespace: string;
@@ -30,9 +35,10 @@ type StateType = {
   isMetricsInstalled: boolean;
 };
 
+// TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
 class ClusterDashboard extends Component<PropsType, StateType> {
   state = {
-    namespace: "default",
+    namespace: null as string,
     sortType: localStorage.getItem("SortType")
       ? localStorage.getItem("SortType")
       : "Newest",
@@ -41,14 +47,21 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    let { currentCluster, currentProject } = this.context;
+    let params = this.props.match.params as any;
+    let pathClusterName = params.cluster;
+    // Don't add cluster as query param if present in path
+    if (!pathClusterName) {
+      pushQueryParams(this.props, { cluster: currentCluster.name });
+    }
     api
       .getPrometheusIsInstalled(
         "<token>",
         {
-          cluster_id: this.context.currentCluster.id,
+          cluster_id: currentCluster.id,
         },
         {
-          id: this.context.currentProject.id,
+          id: currentProject.id,
         }
       )
       .then((res) => {
@@ -62,31 +75,38 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
-      this.setState({
-        namespace: "default",
-        sortType: localStorage.getItem("SortType")
-          ? localStorage.getItem("SortType")
-          : "Newest",
-        currentChart: null,
-      });
+      this.setState(
+        {
+          namespace: "default",
+          sortType: localStorage.getItem("SortType")
+            ? localStorage.getItem("SortType")
+            : "Newest",
+          currentChart: null,
+        },
+        () => pushQueryParams(this.props, { namespace: "default" })
+      );
     }
 
     if (prevProps.currentView !== this.props.currentView) {
-      this.setState({
-        namespace: "default",
-        sortType: "Newest",
-        currentChart: null,
-      });
+      let params = this.props.match.params as any;
+      let currentNamespace = params.namespace;
+      if (!currentNamespace) {
+        currentNamespace = getQueryParam(this.props, "namespace");
+      }
+      this.setState(
+        {
+          sortType: "Newest",
+          currentChart: null,
+          namespace: currentNamespace || "default",
+        },
+        () =>
+          pushQueryParams(this.props, {
+            namespace:
+              this.state.namespace === null ? "default" : this.state.namespace,
+          })
+      );
     }
   }
-
-  renderDashboardIcon = () => {
-    if (this.props.currentView === "jobs") {
-      return <Img src={monojob} />;
-    } else {
-      return <Img src={monoweb} />;
-    }
-  };
 
   getDescription = (currentView: string): string => {
     if (currentView === "jobs") {
@@ -97,20 +117,37 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   };
 
   renderBody = () => {
-    let { currentCluster, setSidebar, currentView } = this.props;
+    let { currentCluster, currentView } = this.props;
+    const isAuthorizedToAdd = this.props.isAuthorized(
+      "namespace",
+      [],
+      ["get", "create"]
+    );
     return (
       <>
-        <ControlRow>
-          <Button onClick={() => this.props.history.push("launch")}>
-            <i className="material-icons">add</i> Launch Template
-          </Button>
+        <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
+          {isAuthorizedToAdd && (
+            <Button
+              onClick={() =>
+                pushFiltered(this.props, "/launch", ["project_id"])
+              }
+            >
+              <i className="material-icons">add</i> Launch Template
+            </Button>
+          )}
           <SortFilterWrapper>
             <SortSelector
               setSortType={(sortType) => this.setState({ sortType })}
               sortType={this.state.sortType}
             />
             <NamespaceSelector
-              setNamespace={(namespace) => this.setState({ namespace })}
+              setNamespace={(namespace) =>
+                this.setState({ namespace }, () => {
+                  pushQueryParams(this.props, {
+                    namespace: this.state.namespace || "ALL",
+                  });
+                })
+              }
               namespace={this.state.namespace}
             />
           </SortFilterWrapper>
@@ -121,9 +158,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           currentCluster={currentCluster}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
-          setCurrentChart={(x: ChartType | null) =>
-            this.setState({ currentChart: x })
-          }
         />
       </>
     );
@@ -131,66 +165,81 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let { currentCluster, setSidebar, currentView } = this.props;
-    if (this.state.currentChart && currentView === "jobs") {
-      return (
-        <ExpandedJobChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          setSidebar={setSidebar}
-        />
-      );
-    } else if (this.state.currentChart) {
-      return (
-        <ExpandedChart
-          namespace={this.state.namespace}
-          currentCluster={this.props.currentCluster}
-          currentChart={this.state.currentChart}
-          closeChart={() => this.setState({ currentChart: null })}
-          isMetricsInstalled={this.state.isMetricsInstalled}
-          setSidebar={setSidebar}
-        />
-      );
-    } else if (currentView === "env-groups") {
+    if (currentView === "env-groups") {
       return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
     }
 
     return (
-      <div>
-        <TitleSection>
-          {this.renderDashboardIcon()}
-          <Title>{currentView}</Title>
-        </TitleSection>
-
-        <InfoSection>
-          <TopRow>
-            <InfoLabel>
-              <i className="material-icons">info</i> Info
-            </InfoLabel>
-          </TopRow>
-          <Description>{this.getDescription(currentView)}</Description>
-        </InfoSection>
-
-        <LineBreak />
-
+      <>
+        <DashboardHeader
+          image={currentView === "jobs" ? monojob : monoweb}
+          title={currentView}
+          description={this.getDescription(currentView)}
+        />
         {this.renderBody()}
-      </div>
+      </>
     );
   };
 
   render() {
-    return <div>{this.renderContents()}</div>;
+    let { setSidebar } = this.props;
+    return (
+      <Switch>
+        <Route path="/:baseRoute/:clusterName+/:namespace/:chartName">
+          <ExpandedChartWrapper
+            setSidebar={setSidebar}
+            isMetricsInstalled={this.state.isMetricsInstalled}
+          />
+        </Route>
+        <GuardedRoute
+          path={"/jobs"}
+          scope="job"
+          resource=""
+          verb={["get", "list"]}
+        >
+          {this.renderContents()}
+        </GuardedRoute>
+        <GuardedRoute
+          path={"/applications"}
+          scope="application"
+          resource=""
+          verb={["get", "list"]}
+        >
+          {this.renderContents()}
+        </GuardedRoute>
+        <GuardedRoute
+          path={"/env-groups"}
+          scope="env_group"
+          resource=""
+          verb={["get", "list"]}
+        >
+          {this.renderContents()}
+        </GuardedRoute>
+        <Route path={["/cluster-dashboard"]}>
+          <DashboardRoutes />
+        </Route>
+      </Switch>
+    );
   }
 }
 
 ClusterDashboard.contextType = Context;
 
-export default withRouter(ClusterDashboard);
+export default withRouter(withAuth(ClusterDashboard));
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+`;
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: ${(props: { hasMultipleChilds: boolean }) => {
+    if (props.hasMultipleChilds) {
+      return "space-between";
+    }
+    return "flex-end";
+  }};
   align-items: center;
   margin-bottom: 35px;
   padding-left: 0px;
@@ -332,41 +381,6 @@ const DashboardIcon = styled.div`
 
 const Img = styled.img`
   width: 30px;
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 18px;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-transform: capitalize;
-`;
-
-const TitleSection = styled.div`
-  height: 80px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding-left: 0px;
-
-  > i {
-    margin-left: 10px;
-    cursor: pointer;
-    font-size 18px;
-    color: #858FAAaa;
-    padding: 5px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
-    margin-bottom: -3px;
-  }
 `;
 
 const SortFilterWrapper = styled.div`

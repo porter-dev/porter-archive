@@ -8,6 +8,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
+
 	"golang.org/x/oauth2"
 )
 
@@ -16,6 +17,15 @@ type Config struct {
 	ClientSecret string
 	Scopes       []string
 	BaseURL      string
+}
+
+// GithubAppConf is standard oauth2 config but it need to keeps track of the app name and webhook secret
+type GithubAppConf struct {
+	AppName       string
+	WebhookSecret string
+	SecretPath    string
+	AppID         int64
+	oauth2.Config
 }
 
 func NewGithubClient(cfg *Config) *oauth2.Config {
@@ -28,6 +38,25 @@ func NewGithubClient(cfg *Config) *oauth2.Config {
 		},
 		RedirectURL: cfg.BaseURL + "/api/oauth/github/callback",
 		Scopes:      cfg.Scopes,
+	}
+}
+
+func NewGithubAppClient(cfg *Config, name string, secret string, secretPath string, appID int64) *GithubAppConf {
+	return &GithubAppConf{
+		AppName:       name,
+		WebhookSecret: secret,
+		SecretPath:    secretPath,
+		AppID:         appID,
+		Config: oauth2.Config{
+			ClientID:     cfg.ClientID,
+			ClientSecret: cfg.ClientSecret,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://github.com/login/oauth/authorize",
+				TokenURL: "https://github.com/login/oauth/access_token",
+			},
+			RedirectURL: cfg.BaseURL + "/api/oauth/github-app/callback",
+			Scopes:      cfg.Scopes,
+		},
 	}
 }
 
@@ -57,6 +86,19 @@ func NewGoogleClient(cfg *Config) *oauth2.Config {
 	}
 }
 
+func NewSlackClient(cfg *Config) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://slack.com/oauth/v2/authorize",
+			TokenURL: "https://slack.com/api/oauth.v2.access",
+		},
+		RedirectURL: cfg.BaseURL + "/api/oauth/slack/callback",
+		Scopes:      cfg.Scopes,
+	}
+}
+
 func CreateRandomState() string {
 	b := make([]byte, 16)
 	rand.Read(b)
@@ -66,17 +108,50 @@ func CreateRandomState() string {
 	return state
 }
 
+// MakeUpdateOAuthIntegrationTokenFunction creates a function to be passed to GetAccessToken that updates the OauthIntegration
+// if it needs to be updated
+func MakeUpdateOAuthIntegrationTokenFunction(
+	o *integrations.OAuthIntegration,
+	repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+		o.AccessToken = accessToken
+		o.RefreshToken = refreshToken
+		o.Expiry = expiry
+
+		_, err := repo.OAuthIntegration.UpdateOAuthIntegration(o)
+
+		return err
+	}
+}
+
+// MakeUpdateGithubAppOauthIntegrationFunction creates a function to be passed to GetAccessToken that updates the GithubAppOauthIntegration
+// if it needs to be updated
+func MakeUpdateGithubAppOauthIntegrationFunction(
+	o *integrations.GithubAppOAuthIntegration,
+	repo repository.Repository) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+		o.AccessToken = accessToken
+		o.RefreshToken = refreshToken
+		o.Expiry = expiry
+
+		_, err := repo.GithubAppOAuthIntegration.UpdateGithubAppOauthIntegration(o)
+
+		return err
+	}
+}
+
 // GetAccessToken retrieves an access token for a given client. It updates the
 // access token in the DB if necessary
 func GetAccessToken(
-	o *integrations.OAuthIntegration,
+	prevToken integrations.SharedOAuthModel,
 	conf *oauth2.Config,
-	repo repository.Repository,
+	updateToken func(accessToken []byte, refreshToken []byte, expiry time.Time) error,
 ) (string, *time.Time, error) {
 	tokSource := conf.TokenSource(context.TODO(), &oauth2.Token{
-		AccessToken:  string(o.AccessToken),
-		RefreshToken: string(o.RefreshToken),
+		AccessToken:  string(prevToken.AccessToken),
+		RefreshToken: string(prevToken.RefreshToken),
 		TokenType:    "Bearer",
+		Expiry:       prevToken.Expiry,
 	})
 
 	token, err := tokSource.Token()
@@ -85,11 +160,8 @@ func GetAccessToken(
 		return "", nil, err
 	}
 
-	if token.AccessToken != string(o.AccessToken) {
-		o.AccessToken = []byte(token.AccessToken)
-		o.RefreshToken = []byte(token.RefreshToken)
-
-		o, err = repo.OAuthIntegration().UpdateOAuthIntegration(o)
+	if token.AccessToken != string(prevToken.AccessToken) {
+		err := updateToken([]byte(token.AccessToken), []byte(token.RefreshToken), token.Expiry)
 
 		if err != nil {
 			return "", nil, err

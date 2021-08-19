@@ -203,12 +203,14 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 	}
 
 	oauth := &ints.OAuthIntegration{
-		Client:       ints.OAuthGithub,
-		ProjectID:    tester.initProjects[0].ID,
-		UserID:       tester.initUsers[0].ID,
-		ClientID:     []byte("exampleclientid"),
-		AccessToken:  []byte("idtoken"),
-		RefreshToken: []byte("refreshtoken"),
+		SharedOAuthModel: ints.SharedOAuthModel{
+			ClientID:     []byte("exampleclientid"),
+			AccessToken:  []byte("idtoken"),
+			RefreshToken: []byte("refreshtoken"),
+		},
+		Client:    ints.OAuthGithub,
+		ProjectID: tester.initProjects[0].ID,
+		UserID:    tester.initUsers[0].ID,
 	}
 
 	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)

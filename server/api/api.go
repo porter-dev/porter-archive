@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-playground/locales/en"
@@ -10,7 +11,7 @@ import (
 	vr "github.com/go-playground/validator/v10"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
-	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
@@ -18,14 +19,15 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/helm"
+	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/test"
 	"github.com/porter-dev/porter/internal/validator"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 	"helm.sh/helm/v3/pkg/storage"
 
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/config"
 )
 
@@ -69,7 +71,8 @@ type App struct {
 	TestAgents *TestAgents
 
 	// An in-cluster agent if service is running in cluster
-	InClusterAgent *kubernetes.Agent
+	ProvisionerAgent *kubernetes.Agent
+	IngressAgent     *kubernetes.Agent
 
 	// redis client for redis connection
 	RedisConf *config.RedisConf
@@ -80,28 +83,35 @@ type App struct {
 	// config for capabilities
 	Capabilities *AppCapabilities
 
+	// ChartLookupURLs contains an in-memory store of Porter chart names matched with
+	// a repo URL, so that finding a chart does not involve multiple lookups to our
+	// chart repo's index.yaml file
+	ChartLookupURLs map[string]string
+
 	// oauth-specific clients
 	GithubUserConf    *oauth2.Config
 	GithubProjectConf *oauth2.Config
+	GithubAppConf     *oauth.GithubAppConf
 	DOConf            *oauth2.Config
 	GoogleUserConf    *oauth2.Config
+	SlackConf         *oauth2.Config
 
-	db            *gorm.DB
-	validator     *vr.Validate
-	translator    *ut.Translator
-	tokenConf     *token.TokenGeneratorConf
-	segmentClient *segment.Client
-	notifier      notifier.UserNotifier
+	db              *gorm.DB
+	validator       *vr.Validate
+	translator      *ut.Translator
+	tokenConf       *token.TokenGeneratorConf
+	analyticsClient analytics.AnalyticsSegmentClient
 }
 
 type AppCapabilities struct {
-	Provisioning bool `json:"provisioner"`
-	Github       bool `json:"github"`
-	BasicLogin   bool `json:"basic_login"`
-	GithubLogin  bool `json:"github_login"`
-	GoogleLogin  bool `json:"google_login"`
-	Email        bool `json:"email"`
-	Analytics    bool `json:"analytics"`
+	Provisioning       bool `json:"provisioner"`
+	Github             bool `json:"github"`
+	BasicLogin         bool `json:"basic_login"`
+	GithubLogin        bool `json:"github_login"`
+	GoogleLogin        bool `json:"google_login"`
+	SlackNotifications bool `json:"slack_notifs"`
+	Email              bool `json:"email"`
+	Analytics          bool `json:"analytics"`
 }
 
 // New returns a new App instance
@@ -143,21 +153,11 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	app.Store = store
-
-	// if application is running in-cluster, set provisioning capabilities
-	if kubernetes.IsInCluster() {
-		app.Capabilities.Provisioning = true
-
-		agent, err := kubernetes.GetAgentInClusterConfig()
-
-		if err != nil {
-			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
-		}
-
-		app.InClusterAgent = agent
-	}
-
 	sc := conf.ServerConf
+
+	// get the InClusterAgent from either a file-based kubeconfig or the in-cluster agent
+	app.assignProvisionerAgent(&sc)
+	app.assignIngressAgent(&sc)
 
 	// if server config contains OAuth client info, create clients
 	if sc.GithubClientID != "" && sc.GithubClientSecret != "" {
@@ -180,6 +180,22 @@ func New(conf *AppConfig) (*App, error) {
 		app.Capabilities.GithubLogin = sc.GithubLoginEnabled
 	}
 
+	if sc.GithubAppClientID != "" &&
+		sc.GithubAppClientSecret != "" &&
+		sc.GithubAppName != "" &&
+		sc.GithubAppWebhookSecret != "" &&
+		sc.GithubAppSecretPath != "" &&
+		sc.GithubAppID != "" {
+		if AppID, err := strconv.ParseInt(sc.GithubAppID, 10, 64); err == nil {
+			app.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
+				ClientID:     sc.GithubAppClientID,
+				ClientSecret: sc.GithubAppClientSecret,
+				Scopes:       []string{"read:user"},
+				BaseURL:      sc.ServerURL,
+			}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, AppID)
+		}
+	}
+
 	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {
 		app.Capabilities.GoogleLogin = true
 
@@ -190,6 +206,20 @@ func New(conf *AppConfig) (*App, error) {
 				"openid",
 				"profile",
 				"email",
+			},
+			BaseURL: sc.ServerURL,
+		})
+	}
+
+	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
+		app.Capabilities.SlackNotifications = true
+
+		app.SlackConf = oauth.NewSlackClient(&oauth.Config{
+			ClientID:     sc.SlackClientID,
+			ClientSecret: sc.SlackClientSecret,
+			Scopes: []string{
+				"incoming-webhook",
+				"team:read",
 			},
 			BaseURL: sc.ServerURL,
 		})
@@ -226,12 +256,68 @@ func New(conf *AppConfig) (*App, error) {
 		TokenSecret: conf.ServerConf.TokenGeneratorSecret,
 	}
 
-	if sc := conf.ServerConf; sc.SegmentClientKey != "" {
-		client := segment.New(sc.SegmentClientKey)
-		app.segmentClient = &client
-	}
+	newSegmentClient := analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, app.Logger)
+	app.analyticsClient = newSegmentClient
+
+	app.updateChartRepoURLs()
 
 	return app, nil
+}
+
+func (app *App) assignProvisionerAgent(sc *config.ServerConf) error {
+	if sc.ProvisionerCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
+		app.Capabilities.Provisioning = true
+
+		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
+
+		if err != nil {
+			return fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		app.ProvisionerAgent = agent
+
+		return nil
+	} else if sc.ProvisionerCluster == "kubeconfig" {
+		return fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+	}
+
+	app.Capabilities.Provisioning = true
+
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		return fmt.Errorf("could not get in-cluster agent: %v", err)
+	}
+
+	app.ProvisionerAgent = agent
+
+	return nil
+}
+
+func (app *App) assignIngressAgent(sc *config.ServerConf) error {
+	if sc.IngressCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
+		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
+
+		if err != nil {
+			return fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		app.IngressAgent = agent
+
+		return nil
+	} else if sc.IngressCluster == "kubeconfig" {
+		return fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+	}
+
+	agent, err := kubernetes.GetAgentInClusterConfig()
+
+	if err != nil {
+		return fmt.Errorf("could not get in-cluster agent: %v", err)
+	}
+
+	app.IngressAgent = agent
+
+	return nil
 }
 
 func (app *App) getTokenFromRequest(r *http.Request) *token.Token {
@@ -245,7 +331,32 @@ func (app *App) getTokenFromRequest(r *http.Request) *token.Token {
 
 	reqToken = strings.TrimSpace(splitToken[1])
 
-	tok, _ := token.GetTokenFromEncoded(reqToken, app.tokenConf)
+	tok, err := token.GetTokenFromEncoded(reqToken, app.tokenConf)
+
+	if err != nil {
+		return nil
+	}
 
 	return tok
+}
+
+func (app *App) updateChartRepoURLs() {
+	newCharts := make(map[string]string)
+
+	for _, chartRepo := range []string{
+		app.ServerConf.DefaultApplicationHelmRepoURL,
+		app.ServerConf.DefaultAddonHelmRepoURL,
+	} {
+		indexFile, err := loader.LoadRepoIndexPublic(chartRepo)
+
+		if err != nil {
+			continue
+		}
+
+		for chartName, _ := range indexFile.Entries {
+			newCharts[chartName] = chartRepo
+		}
+	}
+
+	app.ChartLookupURLs = newCharts
 }

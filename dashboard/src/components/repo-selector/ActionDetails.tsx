@@ -1,4 +1,3 @@
-import ImageSelector from "components/image-selector/ImageSelector";
 import React, { Component } from "react";
 import styled from "styled-components";
 
@@ -7,8 +6,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
-import InputRow from "../values-form/InputRow";
-import InfoTooltip from "components/InfoTooltip";
+import InputRow from "../form-components/InputRow";
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -144,16 +142,6 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           />
         )}
         {this.renderRegistrySection()}
-        <SubtitleAlt>
-          <Bold>Note:</Bold> To auto-deploy each time you push changes, Porter
-          will write Github Secrets and a GitHub Actions file to your repo.
-          <Highlight
-            href="https://docs.getporter.dev/docs/auto-deploy-requirements#cicd-with-github-actions"
-            target="_blank"
-          >
-            Learn more
-          </Highlight>
-        </SubtitleAlt>
         <Br />
 
         <Flex>

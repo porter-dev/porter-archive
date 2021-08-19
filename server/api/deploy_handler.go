@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
@@ -43,6 +45,13 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 
 	// if a repo_url is passed as query param, it will be populated
 	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
@@ -125,7 +134,13 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create release with webhook token in db
-	repository := rel.Config["image"].(map[string]interface{})["repository"]
+	image, ok := rel.Config["image"].(map[string]interface{})
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field image in config"), w)
+		return
+	}
+
+	repository := image["repository"]
 	repoStr, ok := repository.(string)
 
 	if !ok {
@@ -154,13 +169,17 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	// if github action config is linked, call the github action config handler
 	if form.GithubActionConfig != nil {
 		gaForm := &forms.CreateGitAction{
-			ReleaseID:      release.ID,
+			Release: release,
+
 			GitRepo:        form.GithubActionConfig.GitRepo,
+			GitBranch:      form.GithubActionConfig.GitBranch,
 			ImageRepoURI:   form.GithubActionConfig.ImageRepoURI,
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,
-			BuildEnv:       form.GithubActionConfig.BuildEnv,
 			RegistryID:     form.GithubActionConfig.RegistryID,
+
+			ShouldGenerateOnly:   false,
+			ShouldCreateWorkflow: form.GithubActionConfig.ShouldCreateWorkflow,
 		}
 
 		// validate the form
@@ -169,7 +188,109 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, release, name, gaForm, w, r)
+		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, gaForm, w, r)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleDeployAddon triggers a addon deployment from a template
+func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	name := chi.URLParam(r, "name")
+	version := chi.URLParam(r, "version")
+
+	// if version passed as latest, pass empty string to loader to get latest
+	if version == "latest" {
+		version = ""
+	}
+
+	getChartForm := &forms.ChartForm{
+		Name:    name,
+		Version: version,
+		RepoURL: app.ServerConf.DefaultApplicationHelmRepoURL,
+	}
+
+	// if a repo_url is passed as query param, it will be populated
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	getChartForm.PopulateRepoURLFromQueryParams(vals)
+
+	chart, err := loader.LoadChartPublic(getChartForm.RepoURL, getChartForm.Name, getChartForm.Version)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	form := &forms.InstallChartTemplateForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+		ChartTemplateForm: &forms.ChartTemplateForm{},
+	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.Repo.Cluster,
+	)
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form.ReleaseForm,
+	)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	conf := &helm.InstallChartConfig{
+		Chart:      chart,
+		Name:       form.ChartTemplateForm.Name,
+		Namespace:  form.ReleaseForm.Form.Namespace,
+		Values:     form.ChartTemplateForm.FormValues,
+		Cluster:    form.ReleaseForm.Cluster,
+		Repo:       *app.Repo,
+		Registries: registries,
+	}
+
+	_, err = agent.InstallChart(conf, app.DOConf)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseDeploy,
+			Errors: []string{"error installing a new chart: " + err.Error()},
+		}, w)
+
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -245,10 +366,11 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					if err != gorm.ErrRecordNotFound {
+						app.handleErrorInternal(err, w)
+						return
+					}
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
@@ -261,20 +383,23 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 				}
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:              app.ServerConf.ServerURL,
+					GithubOAuthIntegration: gr,
+					GithubAppID:            app.GithubAppConf.AppID,
+					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
+					GithubInstallationID:   gitAction.GithubInstallationID,
+					GitRepoName:            repoSplit[1],
+					GitRepoOwner:           repoSplit[0],
+					Repo:                   *app.Repo,
+					GithubConf:             app.GithubProjectConf,
+					ProjectID:              uint(projID),
+					ReleaseName:            name,
+					GitBranch:              gitAction.GitBranch,
+					DockerFilePath:         gitAction.DockerfilePath,
+					FolderPath:             gitAction.FolderPath,
+					ImageRepoURL:           gitAction.ImageRepoURI,
+					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
 				}
 
 				err = gaRunner.Cleanup()

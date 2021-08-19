@@ -26,7 +26,10 @@ type PolicyDocument struct {
 type ScopeTree map[PermissionScope]ScopeTree
 
 /* ScopeHeirarchy describes the scope tree:
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 			Project
 		   /	   \
 		Cluster   Settings
@@ -47,3 +50,56 @@ var ScopeHeirarchy = ScopeTree{
 }
 
 type Policy []*PolicyDocument
+
+type APIVerb string
+
+const (
+	APIVerbGet    APIVerb = "get"
+	APIVerbCreate APIVerb = "create"
+	APIVerbList   APIVerb = "list"
+	APIVerbUpdate APIVerb = "update"
+	APIVerbDelete APIVerb = "delete"
+)
+
+type APIVerbGroup []APIVerb
+
+func ReadVerbGroup() APIVerbGroup {
+	return []APIVerb{APIVerbGet, APIVerbList}
+}
+
+func ReadWriteVerbGroup() APIVerbGroup {
+	return []APIVerb{APIVerbGet, APIVerbList, APIVerbCreate, APIVerbUpdate, APIVerbDelete}
+}
+
+var AdminPolicy = []*PolicyDocument{
+	{
+		Scope: ProjectScope,
+		Verbs: ReadWriteVerbGroup(),
+	},
+}
+
+var DeveloperPolicy = []*PolicyDocument{
+	{
+		Scope: ProjectScope,
+		Verbs: ReadWriteVerbGroup(),
+		Children: map[PermissionScope]*PolicyDocument{
+			SettingsScope: {
+				Scope: SettingsScope,
+				Verbs: ReadVerbGroup(),
+			},
+		},
+	},
+}
+
+var ViewerPolicy = []*PolicyDocument{
+	{
+		Scope: ProjectScope,
+		Verbs: ReadVerbGroup(),
+		Children: map[PermissionScope]*PolicyDocument{
+			SettingsScope: {
+				Scope: SettingsScope,
+				Verbs: []APIVerb{},
+			},
+		},
+	},
+}

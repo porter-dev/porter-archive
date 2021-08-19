@@ -4,25 +4,22 @@ import api from "shared/api";
 
 import { Context } from "shared/Context";
 
-import {
-  ActionConfigType,
-  ChoiceType,
-  ClusterType,
-  StorageType,
-} from "shared/types";
+import { ChoiceType, ClusterType } from "shared/types";
 
 import { isAlphanumeric } from "shared/common";
 
-import InputRow from "components/values-form/InputRow";
+import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
-import Helper from "components/values-form/Helper";
-import FormWrapper from "components/values-form/FormWrapper";
+import Helper from "components/form-components/Helper";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Selector from "components/Selector";
 import Loading from "components/Loading";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
-type PropsType = {
+type PropsType = WithAuthProps & {
   onSubmit: (x?: any) => void;
   hasSource: boolean;
+  sourceType: string;
   setPage: (x: string) => void;
   form: any;
   valuesToOverride: any;
@@ -44,7 +41,7 @@ type StateType = {
   namespaceOptions: { label: string; value: string }[];
 };
 
-export default class SettingsPage extends Component<PropsType, StateType> {
+class SettingsPage extends Component<PropsType, StateType> {
   state = {
     tabOptions: [] as ChoiceType[],
     currentTab: "",
@@ -101,12 +98,17 @@ export default class SettingsPage extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          let namespaceOptions = res.data.items.map(
+          const availableNamespaces = res.data.items.filter(
+            (namespace: any) => {
+              return namespace.status.phase !== "Terminating";
+            }
+          );
+          const namespaceOptions = availableNamespaces.map(
             (x: { metadata: { name: string } }) => {
               return { label: x.metadata.name, value: x.metadata.name };
             }
           );
-          if (res.data.items.length > 0) {
+          if (availableNamespaces.length > 0) {
             this.setState({ namespaceOptions });
           }
         }
@@ -132,24 +134,29 @@ export default class SettingsPage extends Component<PropsType, StateType> {
         onSubmit,
       } = this.props;
       return (
-        <>
+        <FadeWrapper>
           <Heading>Additional Settings</Heading>
           <Helper>
             Configure additional settings for this template. (Optional)
           </Helper>
-          <FormWrapper
+          <PorterFormWrapper
             formData={form}
             saveValuesStatus={saveValuesStatus}
-            valuesToOverride={valuesToOverride}
-            clearValuesToOverride={clearValuesToOverride}
-            externalValues={{
+            valuesToOverride={{
+              ...valuesToOverride,
               namespace: selectedNamespace,
               clusterId: this.context.currentCluster.id,
-              isLaunch: true,
             }}
-            onSubmit={onSubmit}
+            isLaunch={true}
+            isReadOnly={
+              !this.props.isAuthorized("namespace", "", ["get", "create"])
+            }
+            onSubmit={(val) => {
+              console.log(val);
+              onSubmit(val);
+            }}
           />
-        </>
+        </FadeWrapper>
       );
     } else {
       return (
@@ -176,18 +183,24 @@ export default class SettingsPage extends Component<PropsType, StateType> {
   };
 
   renderHeaderSection = () => {
-    let { hasSource, templateName, setTemplateName } = this.props;
+    let {
+      hasSource,
+      sourceType,
+      templateName,
+      setPage,
+      setTemplateName,
+    } = this.props;
 
     if (hasSource) {
+      const [pageKey, pageName] =
+        sourceType === "repo"
+          ? ["workflow", "GitHub Actions"]
+          : ["source", "Source Settings"];
+
       return (
-        <BackButton
-          width="155px"
-          onClick={() => {
-            this.props.setPage("source");
-          }}
-        >
+        <BackButton width="155px" onClick={() => setPage(pageKey)}>
           <i className="material-icons">first_page</i>
-          Source Settings
+          {pageName}
         </BackButton>
       );
     }
@@ -253,6 +266,13 @@ export default class SettingsPage extends Component<PropsType, StateType> {
             </NamespaceLabel>
             <Selector
               key={"namespace"}
+              refreshOptions={() => {
+                this.updateNamespaces(this.context.currentCluster.id);
+              }}
+              addButton={this.props.isAuthorized("namespace", "", [
+                "get",
+                "create",
+              ])}
               activeValue={selectedNamespace}
               setActiveValue={setSelectedNamespace}
               options={this.state.namespaceOptions}
@@ -269,6 +289,8 @@ export default class SettingsPage extends Component<PropsType, StateType> {
 }
 
 SettingsPage.contextType = Context;
+
+export default withAuth(SettingsPage);
 
 const LoadingWrapper = styled.div`
   margin-top: 80px;
@@ -339,6 +361,10 @@ const NamespaceLabel = styled.div`
 
 const Link = styled.a`
   margin-left: 5px;
+`;
+
+const FadeWrapper = styled.div`
+  animation: fadeIn 0.25s 0s;
 `;
 
 const Wrapper = styled.div`

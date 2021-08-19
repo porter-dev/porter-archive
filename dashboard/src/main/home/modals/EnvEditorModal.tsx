@@ -1,4 +1,4 @@
-import React, { Component, createRef } from "react";
+import React, { Component } from "react";
 import styled from "styled-components";
 import close from "assets/close.png";
 import AceEditor from "react-ace";
@@ -123,7 +123,7 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: "Assistant";
+  font-family: Work Sans, sans-serif;
   font-size: 18px;
   color: #ffffff;
   user-select: none;

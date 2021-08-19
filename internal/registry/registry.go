@@ -92,7 +92,9 @@ type gcrRepositoryResp struct {
 }
 
 func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, error) {
-	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+	getTokenCache := r.getTokenCacheFunc(repo)
+
+	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
 		r.GCPIntegrationID,
 	)
 
@@ -102,7 +104,7 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 
 	// get oauth2 access token
 	_, err = gcp.GetBearerToken(
-		r.getTokenCache,
+		getTokenCache,
 		r.setTokenCacheFunc(repo),
 		"https://www.googleapis.com/auth/devstorage.read_write",
 	)
@@ -112,7 +114,7 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 	}
 
 	// it's now written to the token cache, so return
-	cache, err := r.getTokenCache()
+	cache, err := getTokenCache()
 
 	if err != nil {
 		return nil, err
@@ -226,7 +228,7 @@ func (r *Registry) listDOCRRepositories(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -352,11 +354,18 @@ func (r *Registry) listPrivateRegistryRepositories(
 	return res, nil
 }
 
-func (r *Registry) getTokenCache() (tok *ints.TokenCache, err error) {
-	return &ints.TokenCache{
-		Token:  r.TokenCache.Token,
-		Expiry: r.TokenCache.Expiry,
-	}, nil
+func (r *Registry) getTokenCacheFunc(
+	repo repository.Repository,
+) ints.GetTokenCacheFunc {
+	return func() (tok *ints.TokenCache, err error) {
+		reg, err := repo.Registry.ReadRegistry(r.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &reg.TokenCache.TokenCache, nil
+	}
 }
 
 func (r *Registry) setTokenCacheFunc(
@@ -491,9 +500,27 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
+	imageDetails := describeResp.ImageDetails
+
+	nextToken := describeResp.NextToken
+
+	for nextToken != nil {
+		describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+			RepositoryName: &repoName,
+			ImageIds:       resp.ImageIds,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		nextToken = describeResp.NextToken
+		imageDetails = append(imageDetails, describeResp.ImageDetails...)
+	}
+
 	res := make([]*Image, 0)
 
-	for _, img := range describeResp.ImageDetails {
+	for _, img := range imageDetails {
 		for _, tag := range img.ImageTags {
 			res = append(res, &Image{
 				Digest:         *img.ImageDigest,
@@ -580,7 +607,7 @@ func (r *Registry) listDOCRImages(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err
@@ -679,6 +706,15 @@ type dockerHubImageResp struct {
 	Results []dockerHubImageResult `json:"results"`
 }
 
+type dockerHubLoginReq struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type dockerHubLoginResp struct {
+	Token string `json:"token"`
+}
+
 func (r *Registry) listDockerHubImages(repoName string, repo repository.Repository) ([]*Image, error) {
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
 		r.BasicIntegrationID,
@@ -690,7 +726,42 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 
 	client := &http.Client{}
 
+	// first, make a request for the access token
+
+	data, err := json.Marshal(&dockerHubLoginReq{
+		Username: string(basic.Username),
+		Password: string(basic.Password),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
 	req, err := http.NewRequest(
+		"POST",
+		"https://hub.docker.com/v2/users/login",
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tokenObj := dockerHubLoginResp{}
+
+	if err := json.NewDecoder(resp.Body).Decode(&tokenObj); err != nil {
+		return nil, fmt.Errorf("Could not decode Dockerhub token from response: %v", err)
+	}
+
+	req, err = http.NewRequest(
 		"GET",
 		fmt.Sprintf("https://hub.docker.com/v2/repositories/%s/tags", strings.Split(r.URL, "docker.io/")[1]),
 		nil,
@@ -700,9 +771,9 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 		return nil, err
 	}
 
-	req.SetBasicAuth(string(basic.Username), string(basic.Password))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenObj.Token))
 
-	resp, err := client.Do(req)
+	resp, err = client.Do(req)
 
 	if err != nil {
 		return nil, err
@@ -857,7 +928,7 @@ func (r *Registry) getDOCRDockerConfigFile(
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt, doAuth, repo)
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
 
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import close from "assets/close.png";
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
 import { RouteComponentProps, withRouter } from "react-router";
+import { pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {
   toggleDrawer: () => void;
@@ -33,8 +34,11 @@ class Drawer extends Component<PropsType, StateType> {
             key={i}
             active={cluster.name === currentCluster.name}
             onClick={() => {
-              setCurrentCluster(cluster);
-              this.props.history.push("applications");
+              setCurrentCluster(cluster, () => {
+                pushFiltered(this.props, "/cluster-dashboard", ["project_id"], {
+                  cluster: cluster.name,
+                });
+              });
             }}
           >
             <ClusterIcon>

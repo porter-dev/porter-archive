@@ -2,8 +2,8 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
-import { kindToIcon, edgeColors } from "shared/rosettaStone";
-import { NodeType, EdgeType } from "shared/types";
+import { edgeColors, kindToIcon } from "shared/rosettaStone";
+import { EdgeType, NodeType } from "shared/types";
 
 import YamlEditor from "components/YamlEditor";
 

@@ -76,11 +76,13 @@ func (app *App) HandleDOOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	projID, _ := session.Values["project_id"].(uint)
 
 	oauthInt := &integrations.OAuthIntegration{
-		Client:       integrations.OAuthDigitalOcean,
-		UserID:       userID,
-		ProjectID:    projID,
-		AccessToken:  []byte(token.AccessToken),
-		RefreshToken: []byte(token.RefreshToken),
+		SharedOAuthModel: integrations.SharedOAuthModel{
+			AccessToken:  []byte(token.AccessToken),
+			RefreshToken: []byte(token.RefreshToken),
+		},
+		Client:    integrations.OAuthDigitalOcean,
+		UserID:    userID,
+		ProjectID: projID,
 	}
 
 	// create the oauth integration first

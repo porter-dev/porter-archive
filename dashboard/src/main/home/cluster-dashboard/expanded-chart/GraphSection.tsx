@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { ResourceType, ChartType } from "shared/types";
+import { ChartType, ResourceType } from "shared/types";
 
 import GraphDisplay from "./graph/GraphDisplay";
 import Loading from "components/Loading";
@@ -48,9 +48,23 @@ GraphSection.contextType = Context;
 
 const StyledGraphSection = styled.div`
   width: 100%;
-  height: 100%;
-  background: #ffffff11;
+  min-height: 400px;
+  height: 50vh;
   font-size: 13px;
-  border-radius: 5px;
   overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #ffffff33;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;

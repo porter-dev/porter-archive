@@ -2,11 +2,15 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 )
+
+var ErrNotLoggedIn error = errors.New("You are not logged in.")
+var ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
 
 func checkLoginAndRun(args []string, runner func(user *api.AuthCheckResponse, client *api.Client, args []string) error) error {
 	client := GetAPIClient(config)
@@ -18,12 +22,12 @@ func checkLoginAndRun(args []string, runner func(user *api.AuthCheckResponse, cl
 
 		if strings.Contains(err.Error(), "403") {
 			red.Print("You are not logged in. Log in using \"porter auth login\"\n")
-			return nil
+			return ErrNotLoggedIn
 		} else if strings.Contains(err.Error(), "connection refused") {
 			red.Printf("Unable to connect to the Porter server at %s\n", config.Host)
 			red.Print("To set a different host, run \"porter config set-host [HOST]\"\n")
 			red.Print("To start a local server, run \"porter server start\"\n")
-			return nil
+			return ErrCannotConnect
 		}
 
 		red.Printf("Error: %v\n", err.Error())

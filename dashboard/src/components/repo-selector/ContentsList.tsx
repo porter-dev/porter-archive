@@ -7,9 +7,14 @@ import close from "assets/close.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
-import { FileType, ActionConfigType } from "../../shared/types";
+import { ActionConfigType, FileType } from "../../shared/types";
 
 import Loading from "../Loading";
+
+interface AutoBuildpack {
+  name?: string;
+  valid: boolean;
+}
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -29,6 +34,7 @@ type StateType = {
   currentDir: string;
   dockerfiles: string[];
   processes: Record<string, string>;
+  autoBuildpack: AutoBuildpack;
 };
 
 export default class ContentsList extends Component<PropsType, StateType> {
@@ -39,6 +45,10 @@ export default class ContentsList extends Component<PropsType, StateType> {
     currentDir: "",
     dockerfiles: [] as string[],
     processes: null as Record<string, string>,
+    autoBuildpack: {
+      valid: false,
+      name: "",
+    },
   };
 
   componentDidMount() {
@@ -91,9 +101,43 @@ export default class ContentsList extends Component<PropsType, StateType> {
       });
 
     api
+      .detectBuildpack(
+        "<token>",
+        {
+          dir: this.state.currentDir || ".",
+        },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      )
+      .then(({ data }) => {
+        this.setState({
+          autoBuildpack: data,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        this.setState({
+          autoBuildpack: {
+            valid: false,
+          },
+        });
+      });
+
+    let ppath =
+      this.props.procfilePath ||
+      `${this.state.currentDir ? this.state.currentDir : "."}/Procfile`;
+    api
       .getProcfileContents(
         "<token>",
-        { path: "./Procfile" },
+        {
+          path: ppath,
+        },
         {
           project_id: currentProject.id,
           git_repo_id: actionConfig.git_repo_id,
@@ -197,8 +241,8 @@ export default class ContentsList extends Component<PropsType, StateType> {
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
       }
-      if (this.state.currentDir === "" && fileName == "Procfile") {
-        this.props.setProcfilePath("./Procfile");
+      if (fileName == "Procfile") {
+        this.props.setProcfilePath(`${this.state.currentDir || "."}/Procfile`);
       }
     });
     if (dockerfiles.length > 0) {
@@ -217,6 +261,22 @@ export default class ContentsList extends Component<PropsType, StateType> {
       let processes = this.state.processes
         ? Object.keys(this.state.processes)
         : [];
+      if (this.state.processes == null) {
+        return (
+          <Overlay>
+            <BgOverlay>
+              <LoadingWrapper>
+                <Loading />
+              </LoadingWrapper>
+            </BgOverlay>
+          </Overlay>
+        );
+      }
+
+      if (processes.length == 0) {
+        this.props.setProcfilePath("");
+      }
+
       return (
         <Overlay>
           <BgOverlay
@@ -250,7 +310,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
                   }}
                   isLast={processes.length - 1 === i}
                 >
-                  <Indicator selected={false}></Indicator>
+                  <Indicator selected={false} />
                   {process}
                 </Row>
               );
@@ -309,19 +369,36 @@ export default class ContentsList extends Component<PropsType, StateType> {
   render() {
     return (
       <>
-        {this.renderJumpToParent()}
-        {this.renderContentList()}
-        <FlexWrapper>
-          <UseButton onClick={this.handleContinue}>Continue</UseButton>
-          <StatusWrapper
-            href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
-            target="_blank"
-          >
-            <i className="material-icons">help_outline</i>
-            <div>Auto build requirements</div>
-          </StatusWrapper>
-        </FlexWrapper>
-        {this.renderOverlay()}
+        {this.state.autoBuildpack && this.state.autoBuildpack.valid && (
+          <Banner>
+            <i className="material-icons">info</i>{" "}
+            <p>
+              <b>{this.state.autoBuildpack.name}</b> buildpack was{" "}
+              <a
+                href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+                target="_blank"
+              >
+                detected automatically
+              </a>
+              . Alternatively, select an application folder below:
+            </p>
+          </Banner>
+        )}
+        <ExpandedWrapperAlt>
+          {this.renderJumpToParent()}
+          {this.renderContentList()}
+          <FlexWrapper>
+            <UseButton onClick={this.handleContinue}>Continue</UseButton>
+            <StatusWrapper
+              href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+              target="_blank"
+            >
+              <i className="material-icons">help_outline</i>
+              <div>Auto build requirements</div>
+            </StatusWrapper>
+          </FlexWrapper>
+          {this.renderOverlay()}
+        </ExpandedWrapperAlt>
       </>
     );
   }
@@ -546,4 +623,31 @@ const LoadingWrapper = styled.div`
   align-items: center;
   justify-content: center;
   color: #ffffff44;
+`;
+
+const ExpandedWrapper = styled.div`
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 3px;
+  border: 1px solid #ffffff44;
+  max-height: 275px;
+  overflow-y: auto;
+`;
+
+const ExpandedWrapperAlt = styled(ExpandedWrapper)``;
+
+const Banner = styled.div`
+  height: 40px;
+  width: 100%;
+  margin: 5px 0 10px;
+  font-size: 13px;
+  display: flex;
+  border-radius: 8px;
+  padding-left: 15px;
+  align-items: center;
+  background: #ffffff11;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
+  }
 `;

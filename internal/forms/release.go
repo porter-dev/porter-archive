@@ -128,5 +128,12 @@ type InstallChartTemplateForm struct {
 	*ChartTemplateForm
 
 	// optional git action config
-	GithubActionConfig *CreateGitActionOptional `json:"github_action,omitempty"`
+	GithubActionConfig *CreateGitActionOptional `json:"githubActionConfig,omitempty"`
+}
+
+// UpdateImageForm represents the accepted values for updating a Helm release's image
+type UpdateImageForm struct {
+	*ReleaseForm
+	ImageRepoURI string `json:"image_repo_uri" form:"required"`
+	Tag          string `json:"tag" form:"required"`
 }

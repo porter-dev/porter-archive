@@ -2,7 +2,6 @@ import aws from "../assets/aws.png";
 import digitalOcean from "../assets/do.png";
 import gcp from "../assets/gcp.png";
 import github from "../assets/github.png";
-import { InfraType } from "../shared/types";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -25,6 +24,11 @@ export const integrationList: any = {
       "https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png",
     label: "Git Repository",
     buttonText: "Link a Github Account",
+  },
+  slack: {
+    icon: "https://image.flaticon.com/icons/png/512/2111/2111615.png",
+    label: "Slack",
+    buttonText: "Install Application",
   },
   registry: {
     icon:

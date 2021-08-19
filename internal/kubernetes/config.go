@@ -85,7 +85,7 @@ func GetAgentInClusterConfig() (*Agent, error) {
 		return nil, err
 	}
 
-	restClientGetter := newRESTClientGetterFromInClusterConfig(conf)
+	restClientGetter := NewRESTClientGetterFromInClusterConfig(conf)
 	clientset, err := kubernetes.NewForConfig(conf)
 
 	return &Agent{restClientGetter, clientset}, nil
@@ -312,7 +312,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		}
 
 		// add this as a bearer token
-		authInfoMap[authInfoName].Token = tok
+		authInfoMap[authInfoName].Token = tok.AccessToken
 	case models.AWS:
 		awsAuth, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
 			cluster.AWSIntegrationID,
@@ -339,7 +339,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			return nil, err
 		}
 
-		tok, _, err := oauth.GetAccessToken(oauthInt, conf.DigitalOceanOAuth, conf.Repo)
+		tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, conf.DigitalOceanOAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, *conf.Repo))
 
 		if err != nil {
 			return nil, err
@@ -386,9 +386,9 @@ func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) er
 	return err
 }
 
-// newRESTClientGetterFromInClusterConfig returns a RESTClientGetter using
+// NewRESTClientGetterFromInClusterConfig returns a RESTClientGetter using
 // default values set from the *rest.Config
-func newRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions.RESTClientGetter {
+func NewRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions.RESTClientGetter {
 	cfs := genericclioptions.NewConfigFlags(false)
 
 	cfs.ClusterName = &conf.ServerName

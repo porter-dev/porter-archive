@@ -10,25 +10,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// deployCmd represents the "porter deploy" base command when called
+// updateCmd represents the "porter update" base command when called
 // without any subcommands
-var deployCmd = &cobra.Command{
-	Use:   "deploy",
-	Short: "Builds and deploys a specified application given by the --app flag.",
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Builds and updates a specified application given by the --app flag.",
 	Long: fmt.Sprintf(`
 %s 
 
-Builds and deploys a specified application given by the --app flag. For example:
+Builds and updates a specified application given by the --app flag. For example:
 
   %s
 
-If the application has a remote Git repository source configured, this command uses the latest commit 
-from the remote repo and branch to deploy an application. It will use the latest commit as the image 
-tag. 
-
-To build from a local directory, you must specify the --local flag. The path can be configured via the 
+This command will automatically build from a local path. The path can be configured via the 
 --path flag. You can also overwrite the tag using the --tag flag. For example, to build from the 
 local directory ~/path-to-dir with the tag "testing":
+
+  %s
+
+If the application has a remote Git repository source configured, you can specify that the remote
+Git repository should be used to build the new image by specifying "--source github". Porter will use 
+the latest commit from the remote repo and branch to update an application, and will use the latest 
+commit as the image tag.
+
+  %s
+
+To add new configuration or update existing configuration, you can pass a values.yaml file in via the 
+--values flag. For example;
 
   %s
 
@@ -39,27 +47,16 @@ in your remote Git repository. For example, if a Dockerfile is found at ./docker
 specify it as follows:
 
   %s
-
-If an application does not have a remote Git repository source, this command will attempt to use a 
-cloud-native buildpack builder and build from the current directory. If this is the desired behavior,
-you do not need to configure additional flags:
-
-  %s
-
-If you would like to build from a Dockerfile instead, use the flag --dockerfile and "--method docker"
-as documented above. For example:
-
-  %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app example-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app remote-git-app --local --path ~/path-to-dir --tag testing"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app remote-git-app --method docker --dockerfile ./docker/prod.Dockerfile"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app local-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy --app local-app --method docker --dockerfile ~/porter-test/prod.Dockerfile"),
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --path ~/path-to-dir --tag testing"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app remote-git-app --source github"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --values my-values.yaml"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --method docker --dockerfile ./docker/prod.Dockerfile"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deployFull)
+		err := checkLoginAndRun(args, updateFull)
 
 		if err != nil {
 			os.Exit(1)
@@ -67,7 +64,7 @@ as documented above. For example:
 	},
 }
 
-var deployGetEnvCmd = &cobra.Command{
+var updateGetEnvCmd = &cobra.Command{
 	Use:   "get-env",
 	Short: "Gets environment variables for a deployment for a specified application given by the --app flag.",
 	Long: fmt.Sprintf(`
@@ -83,12 +80,12 @@ destination path for a .env file. For example:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy get-env\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy get-env --app example-app | xargs"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy get-env --app example-app --file .env"),
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update get-env\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app | xargs"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app --file .env"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deployGetEnv)
+		err := checkLoginAndRun(args, updateGetEnv)
 
 		if err != nil {
 			os.Exit(1)
@@ -96,7 +93,7 @@ destination path for a .env file. For example:
 	},
 }
 
-var deployBuildCmd = &cobra.Command{
+var updateBuildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Builds a new version of the application specified by the --app flag.",
 	Long: fmt.Sprintf(`
@@ -125,13 +122,13 @@ for the application:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy build\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy build --app example-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy build --app example-app --method docker"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy build --app example-app --method docker --dockerfile ./prod.Dockerfile"),
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update build\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker --dockerfile ./prod.Dockerfile"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deployBuild)
+		err := checkLoginAndRun(args, updateBuild)
 
 		if err != nil {
 			os.Exit(1)
@@ -139,7 +136,7 @@ for the application:
 	},
 }
 
-var deployPushCmd = &cobra.Command{
+var updatePushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Pushes a new image for an application specified by the --app flag.",
 	Long: fmt.Sprintf(`
@@ -156,11 +153,11 @@ This command will not use your pre-saved authentication set up via "docker login
 are using an image registry that was created outside of Porter, make sure that you have 
 linked it via "porter connect".
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy push\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy push --app nginx --tag new-tag"),
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update push\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update push --app nginx --tag new-tag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deployPush)
+		err := checkLoginAndRun(args, updatePush)
 
 		if err != nil {
 			os.Exit(1)
@@ -168,28 +165,30 @@ linked it via "porter connect".
 	},
 }
 
-var deployCallWebhookCmd = &cobra.Command{
-	Use:   "call-webhook",
-	Short: "Calls the webhook for an application specified by the --app flag.",
+var updateConfigCmd = &cobra.Command{
+	Use:   "config",
+	Short: "Updates the configuration for an application specified by the --app flag.",
 	Long: fmt.Sprintf(`
 %s 
 
-Calls the webhook for an application specified by the --app flag. This webhook will 
-trigger a new deployment for the application, with the new image set. For example:
+Updates the configuration for an application specified by the --app flag, using the configuration
+given by the --values flag. This will trigger a new deployment for the application with 
+new configuration set. Note that this will merge your existing configuration with configuration
+specified in the --values file. For example:
 
   %s
 
-This command will by default call the webhook with image tag "latest," but you can 
-specify a different tag with the --tag flag:
+You can update the configuration with only a new tag with the --tag flag, which will only update
+the image that the application uses if no --values file is specified:
 
   %s
 `,
-		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter deploy call-webhook\":"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy call-webhook --app example-app"),
-		color.New(color.FgGreen, color.Bold).Sprintf("porter deploy call-webhook --app example-app --tag custom-tag"),
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update config\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --values my-values.yaml"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --tag custom-tag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, deployCallWebhook)
+		err := checkLoginAndRun(args, updateUpgrade)
 
 		if err != nil {
 			os.Exit(1)
@@ -199,47 +198,46 @@ specify a different tag with the --tag flag:
 
 var app string
 var getEnvFileDest string
-var local bool
 var localPath string
 var tag string
 var dockerfile string
 var method string
 
 func init() {
-	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(updateCmd)
 
-	deployCmd.PersistentFlags().StringVar(
+	updateCmd.PersistentFlags().StringVar(
 		&app,
 		"app",
 		"",
 		"Application in the Porter dashboard",
 	)
 
-	deployCmd.MarkPersistentFlagRequired("app")
+	updateCmd.MarkPersistentFlagRequired("app")
 
-	deployCmd.PersistentFlags().StringVar(
+	updateCmd.PersistentFlags().StringVar(
 		&namespace,
 		"namespace",
 		"default",
 		"Namespace of the application",
 	)
 
-	deployCmd.PersistentFlags().BoolVar(
-		&local,
+	updateCmd.PersistentFlags().StringVar(
+		&source,
+		"source",
 		"local",
-		false,
-		"Whether local context should be used for build",
+		"the type of source (\"local\" or \"github\")",
 	)
 
-	deployCmd.PersistentFlags().StringVarP(
+	updateCmd.PersistentFlags().StringVarP(
 		&localPath,
 		"path",
 		"p",
 		".",
-		"If local build, the path to the build directory",
+		"If local build, the path to the build directory. If remote build, the relative path from the repository root to the build directory.",
 	)
 
-	deployCmd.PersistentFlags().StringVarP(
+	updateCmd.PersistentFlags().StringVarP(
 		&tag,
 		"tag",
 		"t",
@@ -247,56 +245,64 @@ func init() {
 		"the specified tag to use, if not \"latest\"",
 	)
 
-	deployCmd.PersistentFlags().StringVar(
+	updateCmd.PersistentFlags().StringVarP(
+		&values,
+		"values",
+		"v",
+		"",
+		"Filepath to a values.yaml file",
+	)
+
+	updateCmd.PersistentFlags().StringVar(
 		&dockerfile,
 		"dockerfile",
 		"",
 		"the path to the dockerfile",
 	)
 
-	deployCmd.PersistentFlags().StringVar(
+	updateCmd.PersistentFlags().StringVar(
 		&method,
 		"method",
 		"",
 		"the build method to use (\"docker\" or \"pack\")",
 	)
 
-	deployCmd.AddCommand(deployGetEnvCmd)
+	updateCmd.AddCommand(updateGetEnvCmd)
 
-	deployGetEnvCmd.PersistentFlags().StringVar(
+	updateGetEnvCmd.PersistentFlags().StringVar(
 		&getEnvFileDest,
 		"file",
 		"",
 		"file destination for .env files",
 	)
 
-	deployCmd.AddCommand(deployBuildCmd)
-	deployCmd.AddCommand(deployPushCmd)
-	deployCmd.AddCommand(deployCallWebhookCmd)
+	updateCmd.AddCommand(updateBuildCmd)
+	updateCmd.AddCommand(updatePushCmd)
+	updateCmd.AddCommand(updateConfigCmd)
 }
 
-func deployFull(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func updateFull(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Deploying app:", app)
 
-	deployAgent, err := deployGetAgent(client)
+	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
 		return err
 	}
 
-	err = deployBuildWithAgent(deployAgent)
+	err = updateBuildWithAgent(updateAgent)
 
 	if err != nil {
 		return err
 	}
 
-	err = deployPushWithAgent(deployAgent)
+	err = updatePushWithAgent(updateAgent)
 
 	if err != nil {
 		return err
 	}
 
-	err = deployCallWebhookWithAgent(deployAgent)
+	err = updateUpgradeWithAgent(updateAgent)
 
 	if err != nil {
 		return err
@@ -305,119 +311,128 @@ func deployFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 	return nil
 }
 
-func deployGetEnv(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
-	deployAgent, err := deployGetAgent(client)
+func updateGetEnv(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
 		return err
 	}
 
-	buildEnv, err := deployAgent.GetBuildEnv()
+	buildEnv, err := updateAgent.GetBuildEnv()
 
 	if err != nil {
 		return err
 	}
 
 	// set the environment variables in the process
-	err = deployAgent.SetBuildEnv(buildEnv)
+	err = updateAgent.SetBuildEnv(buildEnv)
 
 	if err != nil {
 		return err
 	}
 
 	// write the environment variables to either a file or stdout (stdout by default)
-	return deployAgent.WriteBuildEnv(getEnvFileDest)
+	return updateAgent.WriteBuildEnv(getEnvFileDest)
 }
 
-func deployBuild(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
-	deployAgent, err := deployGetAgent(client)
+func updateBuild(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
 		return err
 	}
 
-	return deployBuildWithAgent(deployAgent)
+	return updateBuildWithAgent(updateAgent)
 }
 
-func deployPush(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
-	deployAgent, err := deployGetAgent(client)
+func updatePush(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
 		return err
 	}
 
-	return deployPushWithAgent(deployAgent)
+	return updatePushWithAgent(updateAgent)
 }
 
-func deployCallWebhook(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
-	deployAgent, err := deployGetAgent(client)
+func updateUpgrade(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
 		return err
 	}
 
-	return deployCallWebhookWithAgent(deployAgent)
+	return updateUpgradeWithAgent(updateAgent)
 }
 
 // HELPER METHODS
-func deployGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
+func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 	var buildMethod deploy.DeployBuildType
 
 	if method != "" {
 		buildMethod = deploy.DeployBuildType(method)
 	}
 
-	// initialize the deploy agent
+	// initialize the update agent
 	return deploy.NewDeployAgent(client, app, &deploy.DeployOpts{
-		ProjectID:       config.Project,
-		ClusterID:       config.Cluster,
-		Namespace:       namespace,
-		Local:           local,
-		LocalPath:       localPath,
-		LocalDockerfile: dockerfile,
-		OverrideTag:     tag,
-		Method:          buildMethod,
+		SharedOpts: &deploy.SharedOpts{
+			ProjectID:       config.Project,
+			ClusterID:       config.Cluster,
+			Namespace:       namespace,
+			LocalPath:       localPath,
+			LocalDockerfile: dockerfile,
+			OverrideTag:     tag,
+			Method:          buildMethod,
+		},
+		Local: source != "github",
 	})
 }
 
-func deployBuildWithAgent(deployAgent *deploy.DeployAgent) error {
+func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	// build the deployment
 	color.New(color.FgGreen).Println("Building docker image for", app)
 
-	buildEnv, err := deployAgent.GetBuildEnv()
+	buildEnv, err := updateAgent.GetBuildEnv()
 
 	if err != nil {
 		return err
 	}
 
 	// set the environment variables in the process
-	err = deployAgent.SetBuildEnv(buildEnv)
+	err = updateAgent.SetBuildEnv(buildEnv)
 
 	if err != nil {
 		return err
 	}
 
-	return deployAgent.Build()
+	return updateAgent.Build()
 }
 
-func deployPushWithAgent(deployAgent *deploy.DeployAgent) error {
+func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Pushing new image for", app)
 
-	return deployAgent.Push()
+	return updateAgent.Push()
 }
 
-func deployCallWebhookWithAgent(deployAgent *deploy.DeployAgent) error {
+func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Calling webhook for", app)
 
-	err := deployAgent.CallWebhook()
+	// read the values if necessary
+	valuesObj, err := readValuesFile()
 
 	if err != nil {
 		return err
 	}
 
-	color.New(color.FgGreen).Println("Successfully re-deployed", app)
+	err = updateAgent.UpdateImageAndValues(valuesObj)
+
+	if err != nil {
+		return err
+	}
+
+	color.New(color.FgGreen).Println("Successfully updated", app)
 
 	return nil
 }

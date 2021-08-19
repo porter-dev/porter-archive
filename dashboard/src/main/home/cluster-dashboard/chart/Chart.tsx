@@ -1,30 +1,48 @@
-import React, { Component } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
 
 import { ChartType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
+import { pushFiltered } from "shared/routing";
+import { useWebsockets } from "shared/hooks/useWebsockets";
+import api from "shared/api";
 
-type PropsType = {
+type Props = {
   chart: ChartType;
-  setCurrentChart: (c: ChartType) => void;
   controllers: Record<string, any>;
+  isJob: boolean;
+  release: any;
 };
 
-type StateType = {
-  expand: boolean;
-  update: any[];
+type JobStatusType = {
+  status: "succeeded" | "running" | "failed";
+  start_time: string;
 };
 
-export default class Chart extends Component<PropsType, StateType> {
-  state = {
-    expand: false,
-    update: [] as any[],
-  };
+const Chart: React.FunctionComponent<Props> = ({
+  chart,
+  controllers,
+  isJob,
+  release,
+}) => {
+  const [expand, setExpand] = useState<boolean>(false);
+  const [chartControllers, setChartControllers] = useState<any>([]);
+  const [jobStatus, setJobStatus] = useState<JobStatusType>(null);
+  const context = useContext(Context);
+  const location = useLocation();
+  const history = useHistory();
+  const match = useRouteMatch();
 
-  renderIcon = () => {
-    let { chart } = this.props;
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
 
+  const renderIcon = () => {
     if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
       return <Icon src={chart.chart.metadata.icon} />;
     } else {
@@ -32,57 +50,165 @@ export default class Chart extends Component<PropsType, StateType> {
     }
   };
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
+  const getControllerForChart = async (chart: ChartType) => {
+    try {
+      const { currentCluster, currentProject } = context;
+      const res = await api.getChartControllers(
+        "<token>",
+        {
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+          storage: StorageType.Secret,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          revision: chart.version,
+        }
+      );
+
+      const controllersUid = res.data.map((c: any) => {
+        return c.metadata.uid;
+      });
+      setChartControllers(controllersUid);
+    } catch (error) {
+      context.setCurrentError(JSON.stringify(error));
+    }
+  };
+
+  useEffect(() => {
+    getControllerForChart(chart);
+  }, [chart]);
+
+  const setupWebsocket = (kind: string) => {
+    const { currentProject, currentCluster } = context;
+
+    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onmessage(evt: MessageEvent) {
+        const event = JSON.parse(evt.data);
+        let object = event.Object;
+        object.metadata.kind = event.Kind;
+        if (event.event_type != "UPDATE") {
+          return;
+        }
+        getJobStatus();
+      },
+      onerror() {
+        closeWebsocket(kind);
+      },
+    };
+
+    newWebsocket(kind, apiEndpoint, wsConfig);
+    openWebsocket(kind);
+  };
+
+  const getJobStatus = () => {
+    let { currentCluster, currentProject, setCurrentError } = context;
+
+    api
+      .getJobStatus(
+        "<token>",
+        {
+          cluster_id: currentCluster.id,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          namespace: chart.namespace,
+        }
+      )
+      .then((res) => {
+        setJobStatus(res.data);
+      })
+      .catch((err) => setCurrentError(err));
+  };
+
+  useEffect(() => {
+    if (isJob) {
+      getJobStatus();
+      setupWebsocket("job");
+    }
+    return () => closeAllWebsockets();
+  }, [isJob]);
+
+  const readableDate = (s: string) => {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     });
     return `${time} on ${date}`;
   };
 
-  render() {
-    let { chart, setCurrentChart } = this.props;
+  const filteredControllers = useMemo(() => {
+    let tmpControllers: any = {};
+    chartControllers.forEach((uid: any) => {
+      if (!controllers[uid]) {
+        return;
+      }
+      tmpControllers[uid] = controllers[uid];
+    });
+    return tmpControllers;
+  }, [chartControllers, controllers]);
 
-    return (
-      <StyledChart
-        onMouseEnter={() => this.setState({ expand: true })}
-        onMouseLeave={() => this.setState({ expand: false })}
-        expand={this.state.expand}
-        onClick={() => setCurrentChart(chart)}
-      >
-        <Title>
-          <IconWrapper>{this.renderIcon()}</IconWrapper>
-          {chart.name}
-        </Title>
+  return (
+    <StyledChart
+      onMouseEnter={() => setExpand(true)}
+      onMouseLeave={() => setExpand(false)}
+      expand={expand}
+      onClick={() => {
+        let urlParams = new URLSearchParams(location.search);
+        let cluster = urlParams.get("cluster");
+        let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
+        pushFiltered({ location, history }, route, ["project_id"]);
+      }}
+    >
+      <Title>
+        <IconWrapper>{renderIcon()}</IconWrapper>
+        {chart.name}
+      </Title>
 
-        <BottomWrapper>
-          <InfoWrapper>
-            <StatusIndicator
-              controllers={this.props.controllers}
-              status={chart.info.status}
-              margin_left={"17px"}
-            />
-            <LastDeployed>
-              <Dot>•</Dot> Last deployed{" "}
-              {this.readableDate(chart.info.last_deployed)}
-            </LastDeployed>
-          </InfoWrapper>
+      <BottomWrapper>
+        <InfoWrapper>
+          <StatusIndicator
+            controllers={filteredControllers}
+            status={chart.info.status}
+            margin_left={"17px"}
+          />
+          <LastDeployed>
+            <Dot>•</Dot> Last deployed{" "}
+            {readableDate(
+              release?.info?.last_deployed || chart.info.last_deployed
+            )}
+          </LastDeployed>
+        </InfoWrapper>
 
-          <TagWrapper>
-            Namespace
-            <NamespaceTag>{chart.namespace}</NamespaceTag>
-          </TagWrapper>
-        </BottomWrapper>
+        <TagWrapper>
+          Namespace
+          <NamespaceTag>{chart.namespace}</NamespaceTag>
+        </TagWrapper>
+      </BottomWrapper>
 
-        <Version>v{chart.version}</Version>
-      </StyledChart>
-    );
-  }
-}
+      <TopRightContainer>
+        {isJob && jobStatus?.status && (
+          <>
+            <JobStatus status={jobStatus.status}>
+              Last run {jobStatus.status.toUpperCase()} at{" "}
+              {readableDate(jobStatus.start_time)}
+            </JobStatus>
+            <StatusDot>•</StatusDot>
+          </>
+        )}
+        <span>v{release?.version || chart.version}</span>
+      </TopRightContainer>
+    </StyledChart>
+  );
+};
 
-Chart.contextType = Context;
+export default Chart;
 
 const BottomWrapper = styled.div`
   display: flex;
@@ -92,7 +218,7 @@ const BottomWrapper = styled.div`
   margin-top: 12px;
 `;
 
-const Version = styled.div`
+const TopRightContainer = styled.div`
   position: absolute;
   top: 12px;
   right: 12px;
@@ -102,6 +228,10 @@ const Version = styled.div`
 
 const Dot = styled.div`
   margin-right: 9px;
+`;
+
+const StatusDot = styled.span`
+  margin: 0 9px;
 `;
 
 const InfoWrapper = styled.div`
@@ -201,13 +331,26 @@ const Title = styled.div`
   }
 `;
 
+const JobStatus = styled.span`
+  font-weight: bold;
+  ${(props: { status: string }) => `
+  color: ${
+    props.status === "succeeded"
+      ? "rgb(56, 168, 138)"
+      : props.status === "failed"
+      ? "rgb(204, 61, 66)"
+      : "#aaaabb"
+  }
+`}
+`;
+
 const StyledChart = styled.div`
   background: #26282f;
   cursor: pointer;
   margin-bottom: 25px;
   padding: 1px;
-  border-radius: 5px;
-  box-shadow: 0 5px 8px 0px #00000033;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px 0px #00000055;
   position: relative;
   border: 2px solid #9eb4ff00;
   width: calc(100% + 2px);
@@ -225,7 +368,7 @@ const StyledChart = styled.div`
       padding-top: 4px;
       padding-bottom: 14px;
       margin-left: 0px;
-      box-shadow: 0 5px 8px 0px #00000033;
+      box-shadow: 0 4px 15px 0px #00000055;
       padding-left: 1px;
       margin-bottom: 25px;
       margin-top: 0px;
@@ -258,7 +401,7 @@ const StyledChart = styled.div`
       padding-top: 4px;
       padding-bottom: 14px;
       margin-left: 0px;
-      box-shadow: 0 5px 8px 0px #00000033;
+      box-shadow: 0 4px 15px 0px #00000055;
       padding-left: 1px;
       margin-bottom: 25px;
       margin-top: 0px;

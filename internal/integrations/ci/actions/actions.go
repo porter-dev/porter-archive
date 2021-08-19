@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 
+	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v33/github"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/oauth2"
@@ -19,18 +22,21 @@ import (
 type GithubActions struct {
 	ServerURL string
 
-	GitIntegration *models.GitRepo
-	GitRepoName    string
-	GitRepoOwner   string
-	Repo           repository.Repository
+	GithubOAuthIntegration *models.GitRepo
+	GitRepoName            string
+	GitRepoOwner           string
+	Repo                   repository.Repository
 
-	GithubConf *oauth2.Config
+	GithubConf           *oauth2.Config // one of these will let us authenticate
+	GithubAppID          int64
+	GithubAppSecretPath  string
+	GithubInstallationID uint
 
-	WebhookToken string
-	PorterToken  string
-	BuildEnv     map[string]string
-	ProjectID    uint
-	ReleaseName  string
+	PorterToken string
+	BuildEnv    map[string]string
+	ProjectID   uint
+	ClusterID   uint
+	ReleaseName string
 
 	GitBranch      string
 	DockerFilePath string
@@ -38,13 +44,17 @@ type GithubActions struct {
 	ImageRepoURL   string
 
 	defaultBranch string
+	Version       string
+
+	ShouldGenerateOnly   bool
+	ShouldCreateWorkflow bool
 }
 
-func (g *GithubActions) Setup() (string, error) {
+func (g *GithubActions) Setup() ([]byte, error) {
 	client, err := g.getClient()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// get the repository to find the default branch
@@ -55,39 +65,32 @@ func (g *GithubActions) Setup() (string, error) {
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// create a new secret with a webhook token
-	err = g.createGithubSecret(client, g.getWebhookSecretName(), g.WebhookToken)
-
-	if err != nil {
-		return "", err
+	if !g.ShouldGenerateOnly {
+		// create porter token secret
+		if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
+			return nil, err
+		}
 	}
 
-	// create a new secret with a porter token
-	err = g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken)
+	workflowYAML, err := g.GetGithubActionYAML()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// create a new secret with the build variables
-	err = g.createEnvSecret(client)
-
-	if err != nil {
-		return "", err
+	if !g.ShouldGenerateOnly && g.ShouldCreateWorkflow {
+		_, err = g.commitGithubFile(client, g.getPorterYMLFileName(), workflowYAML)
+		if err != nil {
+			return workflowYAML, err
+		}
 	}
 
-	fileBytes, err := g.GetGithubActionYAML()
-
-	if err != nil {
-		return "", err
-	}
-
-	return g.commitGithubFile(client, g.getPorterYMLFileName(), fileBytes)
+	return workflowYAML, err
 }
 
 func (g *GithubActions) Cleanup() error {
@@ -128,10 +131,13 @@ func (g *GithubActions) Cleanup() error {
 }
 
 type GithubActionYAMLStep struct {
-	Name string `yaml:"name,omitempty"`
-	ID   string `yaml:"id,omitempty"`
-	Uses string `yaml:"uses,omitempty"`
-	Run  string `yaml:"run,omitempty"`
+	Name    string            `yaml:"name,omitempty"`
+	ID      string            `yaml:"id,omitempty"`
+	Timeout uint64            `yaml:"timeout-minutes,omitempty"`
+	Uses    string            `yaml:"uses,omitempty"`
+	Run     string            `yaml:"run,omitempty"`
+	With    map[string]string `yaml:"with,omitempty"`
+	Env     map[string]string `yaml:"env,omitempty"`
 }
 
 type GithubActionYAMLOnPushBranches struct {
@@ -158,17 +164,8 @@ type GithubActionYAML struct {
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
-		getDownloadPorterStep(),
-		getConfigurePorterStep(g.ServerURL, g.getPorterTokenSecretName()),
+		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.Version),
 	}
-
-	if g.DockerFilePath == "" {
-		gaSteps = append(gaSteps, getBuildPackPushStep(g.getBuildEnvSecretName(), g.FolderPath, g.ImageRepoURL))
-	} else {
-		gaSteps = append(gaSteps, getDockerBuildPushStep(g.getBuildEnvSecretName(), g.DockerFilePath, g.ImageRepoURL))
-	}
-
-	gaSteps = append(gaSteps, deployPorterWebhookStep(g.ServerURL, g.getWebhookSecretName()))
 
 	branch := g.GitBranch
 
@@ -176,7 +173,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 		branch = g.defaultBranch
 	}
 
-	actionYAML := &GithubActionYAML{
+	actionYAML := GithubActionYAML{
 		On: GithubActionYAMLOnPush{
 			Push: GithubActionYAMLOnPushBranches{
 				Branches: []string{
@@ -197,22 +194,45 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 }
 
 func (g *GithubActions) getClient() (*github.Client, error) {
-	// get the oauth integration
-	oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.GitIntegration.OAuthIntegrationID)
+
+	// in the case that this still uses the oauth integration
+	if g.GithubOAuthIntegration != nil {
+
+		// get the oauth integration
+		oauthInt, err := g.Repo.OAuthIntegration.ReadOAuthIntegration(g.GithubOAuthIntegration.OAuthIntegrationID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel, g.GithubConf, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, g.Repo))
+
+		if err != nil {
+			return nil, err
+		}
+
+		client := github.NewClient(g.GithubConf.Client(oauth2.NoContext, &oauth2.Token{
+			AccessToken:  string(oauthInt.AccessToken),
+			RefreshToken: string(oauthInt.RefreshToken),
+			Expiry:       oauthInt.Expiry,
+			TokenType:    "Bearer",
+		}))
+
+		return client, nil
+	}
+
+	// authenticate as github app installation
+	itr, err := ghinstallation.NewKeyFromFile(
+		http.DefaultTransport,
+		g.GithubAppID,
+		int64(g.GithubInstallationID),
+		g.GithubAppSecretPath)
 
 	if err != nil {
 		return nil, err
 	}
 
-	tok := &oauth2.Token{
-		AccessToken:  string(oauthInt.AccessToken),
-		RefreshToken: string(oauthInt.RefreshToken),
-		TokenType:    "Bearer",
-	}
-
-	client := github.NewClient(g.GithubConf.Client(oauth2.NoContext, tok))
-
-	return client, nil
+	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
 func (g *GithubActions) createGithubSecret(
@@ -352,10 +372,13 @@ func (g *GithubActions) commitGithubFile(
 		Content: contents,
 		Branch:  github.String(branch),
 		SHA:     &sha,
-		Committer: &github.CommitAuthor{
+	}
+
+	if g.GithubOAuthIntegration != nil {
+		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
-		},
+		}
 	}
 
 	resp, _, err := client.Repositories.UpdateFile(
@@ -397,10 +420,13 @@ func (g *GithubActions) deleteGithubFile(
 		Message: github.String(fmt.Sprintf("Delete %s file", filename)),
 		Branch:  github.String(g.defaultBranch),
 		SHA:     &sha,
-		Committer: &github.CommitAuthor{
+	}
+
+	if g.GithubOAuthIntegration != nil {
+		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
-		},
+		}
 	}
 
 	_, _, err := client.Repositories.DeleteFile(

@@ -7,7 +7,12 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
+	"gorm.io/gorm"
+
+	semver "github.com/Masterminds/semver/v3"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
@@ -21,9 +26,9 @@ import (
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
+	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
-	segment "gopkg.in/segmentio/analytics-go.v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -33,6 +38,10 @@ const (
 	ErrReleaseValidateFields
 	ErrReleaseReadData
 	ErrReleaseDeploy
+)
+
+var (
+	createEnvSecretConstraint, _ = semver.NewConstraint(" < 0.1.0")
 )
 
 // HandleListReleases retrieves a list of releases for a cluster
@@ -81,9 +90,8 @@ type PorterRelease struct {
 	HasMetrics      bool                            `json:"has_metrics"`
 	LatestVersion   string                          `json:"latest_version"`
 	GitActionConfig *models.GitActionConfigExternal `json:"git_action_config"`
+	ImageRepoURI    string                          `json:"image_repo_uri"`
 }
-
-var porterApplications = map[string]string{"web": "", "job": "", "worker": ""}
 
 // HandleGetRelease retrieves a single release based on a name and revision
 func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +170,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		HelmRelease:   release,
 	}
 
-	res := &PorterRelease{release, nil, false, "", nil}
+	res := &PorterRelease{release, nil, false, "", nil, ""}
 
 	for _, file := range release.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
@@ -201,13 +209,26 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 
 	// detect if Porter application chart and attempt to get the latest version
 	// from chart repo
-	if _, found := porterApplications[res.Chart.Metadata.Name]; found {
-		repoIndex, err := loader.LoadRepoIndexPublic(app.ServerConf.DefaultApplicationHelmRepoURL)
+	chartRepoURL, firstFound := app.ChartLookupURLs[res.Chart.Metadata.Name]
+
+	if !firstFound {
+		app.updateChartRepoURLs()
+
+		chartRepoURL, _ = app.ChartLookupURLs[res.Chart.Metadata.Name]
+	}
+
+	if chartRepoURL != "" {
+		repoIndex, err := loader.LoadRepoIndexPublic(chartRepoURL)
 
 		if err == nil {
 			porterChart := loader.FindPorterChartInIndexList(repoIndex, res.Chart.Metadata.Name)
+			res.LatestVersion = res.Chart.Metadata.Version
 
-			if porterChart != nil && len(porterChart.Versions) > 0 {
+			// set latest version to the greater of porterChart.Versions and res.Chart.Metadata.Version
+			porterChartVersion, porterChartErr := semver.NewVersion(porterChart.Versions[0])
+			currChartVersion, currChartErr := semver.NewVersion(res.Chart.Metadata.Version)
+
+			if currChartErr == nil && porterChartErr == nil && porterChartVersion.GreaterThan(currChartVersion) {
 				res.LatestVersion = porterChart.Versions[0]
 			}
 		}
@@ -217,6 +238,8 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 	modelRelease, err := app.Repo.Release().ReadRelease(form.Cluster.ID, release.Name, release.Namespace)
 
 	if modelRelease != nil {
+		res.ImageRepoURI = modelRelease.ImageRepoURI
+
 		gitAction := modelRelease.GitActionConfig
 
 		if gitAction.ID != 0 {
@@ -578,6 +601,130 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+type GetJobStatusResult struct {
+	Status    string       `json:"status,omitempty"`
+	StartTime *metav1.Time `json:"start_time,omitempty"`
+}
+
+// HandleGetJobStatus gets the status for a specific job
+func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	namespace := chi.URLParam(r, "namespace")
+
+	form := &forms.GetReleaseForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+				Storage:           "secret",
+				Namespace:         namespace,
+			},
+		},
+		Name:     name,
+		Revision: 0,
+	}
+
+	agent, err := app.getAgentFromQueryParams(
+		w,
+		r,
+		form.ReleaseForm,
+		form.ReleaseForm.PopulateHelmOptionsFromQueryParams,
+	)
+
+	// errors are handled in app.getAgentFromQueryParams
+	if err != nil {
+		return
+	}
+
+	release, err := agent.GetRelease(form.Name, form.Revision)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	// get the filter options
+	k8sForm := &forms.K8sForm{
+		OutOfClusterConfig: &kubernetes.OutOfClusterConfig{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	k8sForm.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	k8sForm.DefaultNamespace = form.ReleaseForm.Namespace
+
+	// validate the form
+	if err := app.validator.Struct(k8sForm); err != nil {
+		app.handleErrorFormValidation(err, ErrK8sValidate, w)
+		return
+	}
+
+	// create a new kubernetes agent
+	var k8sAgent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		k8sAgent = app.TestAgents.K8sAgent
+	} else {
+		k8sAgent, err = kubernetes.GetAgentOutOfClusterConfig(k8sForm.OutOfClusterConfig)
+	}
+
+	jobs, err := k8sAgent.ListJobsByLabel(namespace, kubernetes.Label{
+		Key: "helm.sh/chart",
+		Val: fmt.Sprintf("%s-%s", release.Chart.Name(), release.Chart.Metadata.Version),
+	}, kubernetes.Label{
+		Key: "meta.helm.sh/release-name",
+		Val: name,
+	})
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	res := &GetJobStatusResult{}
+
+	// get the most recent job
+	if len(jobs) > 0 {
+		mostRecentJob := jobs[0]
+
+		for _, job := range jobs {
+			createdAt := job.ObjectMeta.CreationTimestamp
+
+			if mostRecentJob.CreationTimestamp.Before(&createdAt) {
+				mostRecentJob = job
+			}
+		}
+
+		res.StartTime = mostRecentJob.Status.StartTime
+
+		// get the status of the most recent job
+		if mostRecentJob.Status.Succeeded >= 1 {
+			res.Status = "succeeded"
+		} else if mostRecentJob.Status.Active >= 1 {
+			res.Status = "running"
+		} else if mostRecentJob.Status.Failed >= 1 {
+			res.Status = "failed"
+		}
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		app.handleErrorFormDecoding(err, ErrK8sDecode, w)
+		return
+	}
+}
+
 // HandleListReleaseHistory retrieves a history of releases based on a release name
 func (app *App) HandleListReleaseHistory(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
@@ -635,6 +782,8 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+
+		return
 	}
 
 	release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, namespace)
@@ -644,6 +793,100 @@ func (app *App) HandleGetReleaseToken(w http.ResponseWriter, r *http.Request) {
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+
+		return
+	}
+
+	releaseExt := release.Externalize()
+
+	if err := json.NewEncoder(w).Encode(releaseExt); err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+}
+
+// HandleCreateWebhookToken creates a new webhook token for a release
+func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	// read the release from the target cluster
+	form := &forms.ReleaseForm{
+		Form: &helm.Form{
+			Repo:              app.Repo,
+			DigitalOceanOAuth: app.DOConf,
+		},
+	}
+
+	form.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.Repo.Cluster,
+	)
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form,
+	)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	rel, err := agent.GetRelease(name, 0)
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	token, err := repository.GenerateRandomBytes(16)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	// create release with webhook token in db
+	image, ok := rel.Config["image"].(map[string]interface{})
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field image in config"), w)
+		return
+	}
+
+	repository := image["repository"]
+	repoStr, ok := repository.(string)
+
+	if !ok {
+		app.handleErrorInternal(fmt.Errorf("Could not find field repository in config"), w)
+		return
+	}
+
+	release := &models.Release{
+		ClusterID:    form.Form.Cluster.ID,
+		ProjectID:    form.Form.Cluster.ProjectID,
+		Namespace:    form.Form.Namespace,
+		Name:         name,
+		WebhookToken: token,
+		ImageRepoURI: repoStr,
+	}
+
+	release, err = app.Repo.Release.CreateRelease(release)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
 	}
 
 	releaseExt := release.Externalize()
@@ -732,20 +975,22 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			app.sendExternalError(err, http.StatusNotFound, HTTPError{
 				Code:   ErrReleaseReadData,
-				Errors: []string{"release not found"},
+				Errors: []string{"chart version not found"},
 			}, w)
 
 			return
 		}
 
-		if _, found := porterApplications[release.Chart.Metadata.Name]; found {
-			chart, err := loader.LoadChartPublic(
-				app.ServerConf.DefaultApplicationHelmRepoURL,
-				release.Chart.Metadata.Name,
-				form.ChartVersion,
-			)
+		chartRepoURL, foundFirst := app.ChartLookupURLs[release.Chart.Metadata.Name]
 
-			if err != nil {
+		if !foundFirst {
+			app.updateChartRepoURLs()
+
+			var found bool
+
+			chartRepoURL, found = app.ChartLookupURLs[release.Chart.Metadata.Name]
+
+			if !found {
 				app.sendExternalError(err, http.StatusNotFound, HTTPError{
 					Code:   ErrReleaseReadData,
 					Errors: []string{"chart not found"},
@@ -753,34 +998,93 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 				return
 			}
-
-			conf.Chart = chart
 		}
+
+		chart, err := loader.LoadChartPublic(
+			chartRepoURL,
+			release.Chart.Metadata.Name,
+			form.ChartVersion,
+		)
+
+		if err != nil {
+			app.sendExternalError(err, http.StatusNotFound, HTTPError{
+				Code:   ErrReleaseReadData,
+				Errors: []string{"chart not found"},
+			}, w)
+
+			return
+		}
+
+		conf.Chart = chart
 	}
 
-	rel, err := agent.UpgradeRelease(conf, form.Values, app.DOConf)
+	rel, upgradeErr := agent.UpgradeRelease(conf, form.Values, app.DOConf)
 
-	if err != nil {
+	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+	release, _ := app.Repo.Release.ReadRelease(uint(clusterID), name, form.Namespace)
+
+	var notifConf *models.NotificationConfigExternal
+	notifConf = nil
+	if release != nil && release.NotificationConfig != 0 {
+		conf, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		notifConf = conf.Externalize()
+	}
+
+	notifier := slack.NewSlackNotifier(notifConf, slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   uint(projID),
+		ClusterID:   form.Cluster.ID,
+		ClusterName: form.Cluster.Name,
+		Name:        name,
+		Namespace:   form.Namespace,
+		URL: fmt.Sprintf(
+			"%s/applications/%s/%s/%s",
+			app.ServerConf.ServerURL,
+			url.PathEscape(form.Cluster.Name),
+			form.Namespace,
+			name,
+		) + fmt.Sprintf("?project_id=%d", uint(projID)),
+	}
+
+	if upgradeErr != nil {
+		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Info = upgradeErr.Error()
+
+		slackErr := notifier.Notify(notifyOpts)
+		fmt.Println("SLACK ERROR IS", slackErr)
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
-			Errors: []string{err.Error()},
+			Errors: []string{upgradeErr.Error()},
 		}, w)
 
 		return
 	}
 
+	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Version = rel.Version
+
+	notifier.Notify(notifyOpts)
+
 	// update the github actions env if the release exists and is built from source
 	if cName := rel.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
-		clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
-
 		if err != nil {
 			app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 				Code:   ErrReleaseReadData,
 				Errors: []string{"release not found"},
 			}, w)
-		}
 
-		release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, rel.Namespace)
+			return
+		}
 
 		if release != nil {
 			// update image repo uri if changed
@@ -812,38 +1116,48 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 				gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					if err != gorm.ErrRecordNotFound {
+						app.handleErrorInternal(err, w)
+						return
+					}
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:              app.ServerConf.ServerURL,
+					GithubOAuthIntegration: gr,
+					GithubInstallationID:   gitAction.GithubInstallationID,
+					GithubAppID:            app.GithubAppConf.AppID,
+					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
+					GitRepoName:            repoSplit[1],
+					GitRepoOwner:           repoSplit[0],
+					Repo:                   *app.Repo,
+					GithubConf:             app.GithubProjectConf,
+					ProjectID:              uint(projID),
+					ReleaseName:            name,
+					GitBranch:              gitAction.GitBranch,
+					DockerFilePath:         gitAction.DockerfilePath,
+					FolderPath:             gitAction.FolderPath,
+					ImageRepoURL:           gitAction.ImageRepoURI,
+					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
-				err = gaRunner.CreateEnvSecret()
-
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"could not update github secret"},
-					}, w)
+					app.handleErrorInternal(err, w)
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+							Code:   ErrReleaseReadData,
+							Errors: []string{"could not update github secret"},
+						}, w)
+					}
 				}
 			}
 		}
@@ -949,9 +1263,46 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		Values:     rel.Config,
 	}
 
-	_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
+	slackInts, _ := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	var notifConf *models.NotificationConfigExternal
+	notifConf = nil
+	if release != nil && release.NotificationConfig != 0 {
+		conf, err := app.Repo.NotificationConfig.ReadNotificationConfig(release.NotificationConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+		notifConf = conf.Externalize()
+	}
+
+	notifier := slack.NewSlackNotifier(notifConf, slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   uint(form.ReleaseForm.Cluster.ProjectID),
+		ClusterID:   form.Cluster.ID,
+		ClusterName: form.Cluster.Name,
+		Name:        rel.Name,
+		Namespace:   rel.Namespace,
+		URL: fmt.Sprintf(
+			"%s/applications/%s/%s/%s",
+			app.ServerConf.ServerURL,
+			url.PathEscape(form.Cluster.Name),
+			form.Namespace,
+			rel.Name,
+		) + fmt.Sprintf("?project_id=%d", uint(form.ReleaseForm.Cluster.ProjectID)),
+	}
+
+	rel, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
 
 	if err != nil {
+		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Info = err.Error()
+
+		notifier.Notify(notifyOpts)
+
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
 			Errors: []string{err.Error()},
@@ -960,15 +1311,120 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if app.segmentClient != nil {
-		client := *app.segmentClient
-		client.Enqueue(segment.Track{
-			UserId: "anonymous",
-			Event:  "Triggered Re-deploy via Webhook",
-			Properties: segment.NewProperties().
-				Set("repository", repository),
-		})
+	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Version = rel.Version
+
+	notifier.Notify(notifyOpts)
+
+	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// HandleReleaseJobUpdateImage
+func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Request) {
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
 	}
+
+	form := &forms.UpdateImageForm{
+		ReleaseForm: &forms.ReleaseForm{
+			Form: &helm.Form{
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
+			},
+		},
+	}
+
+	form.ReleaseForm.PopulateHelmOptionsFromQueryParams(
+		vals,
+		app.Repo.Cluster,
+	)
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorFormDecoding(err, ErrUserDecode, w)
+		return
+	}
+
+	releases, err := app.Repo.Release.ListReleasesByImageRepoURI(form.Cluster.ID, form.ImageRepoURI)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"releases not found with given image repo uri"},
+		}, w)
+
+		return
+	}
+
+	agent, err := app.getAgentFromReleaseForm(
+		w,
+		r,
+		form.ReleaseForm,
+	)
+
+	// errors are handled in app.getAgentFromBodyParams
+	if err != nil {
+		return
+	}
+
+	registries, err := app.Repo.Registry.ListRegistriesByProjectID(uint(form.ReleaseForm.Cluster.ProjectID))
+
+	if err != nil {
+		app.handleErrorDataRead(err, w)
+		return
+	}
+
+	// asynchronously update releases with that image repo uri
+	var wg sync.WaitGroup
+	mu := &sync.Mutex{}
+	errors := make([]string, 0)
+
+	for i := range releases {
+		index := i
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			// read release via agent
+			rel, err := agent.GetRelease(releases[index].Name, 0)
+
+			if err != nil {
+				mu.Lock()
+				errors = append(errors, err.Error())
+				mu.Unlock()
+			}
+
+			if rel.Chart.Name() == "job" {
+				image := map[string]interface{}{}
+				image["repository"] = releases[index].ImageRepoURI
+				image["tag"] = form.Tag
+				rel.Config["image"] = image
+				rel.Config["paused"] = true
+
+				conf := &helm.UpgradeReleaseConfig{
+					Name:       releases[index].Name,
+					Cluster:    form.ReleaseForm.Cluster,
+					Repo:       *app.Repo,
+					Registries: registries,
+					Values:     rel.Config,
+				}
+
+				_, err = agent.UpgradeReleaseByValues(conf, app.DOConf)
+
+				if err != nil {
+					mu.Lock()
+					errors = append(errors, err.Error())
+					mu.Unlock()
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1047,6 +1503,8 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				Code:   ErrReleaseReadData,
 				Errors: []string{"release not found"},
 			}, w)
+
+			return
 		}
 
 		release, err := app.Repo.Release().ReadRelease(uint(clusterID), name, rel.Namespace)
@@ -1089,10 +1547,11 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				gr, err := app.Repo.GitRepo().ReadGitRepo(gitAction.GitRepoID)
 
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"github repo integration not found"},
-					}, w)
+					if err != gorm.ErrRecordNotFound {
+						app.handleErrorInternal(err, w)
+						return
+					}
+					gr = nil
 				}
 
 				repoSplit := strings.Split(gitAction.GitRepo, "/")
@@ -1105,29 +1564,38 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 				}
 
 				gaRunner := &actions.GithubActions{
-					ServerURL:      app.ServerConf.ServerURL,
-					GitIntegration: gr,
-					GitRepoName:    repoSplit[1],
-					GitRepoOwner:   repoSplit[0],
-					Repo:           app.Repo,
-					GithubConf:     app.GithubProjectConf,
-					WebhookToken:   release.WebhookToken,
-					ProjectID:      uint(projID),
-					ReleaseName:    name,
-					GitBranch:      gitAction.GitBranch,
-					DockerFilePath: gitAction.DockerfilePath,
-					FolderPath:     gitAction.FolderPath,
-					ImageRepoURL:   gitAction.ImageRepoURI,
-					BuildEnv:       cEnv.Container.Env.Normal,
+					ServerURL:              app.ServerConf.ServerURL,
+					GithubOAuthIntegration: gr,
+					GithubInstallationID:   gitAction.GithubInstallationID,
+					GithubAppID:            app.GithubAppConf.AppID,
+					GithubAppSecretPath:    app.GithubAppConf.SecretPath,
+					GitRepoName:            repoSplit[1],
+					GitRepoOwner:           repoSplit[0],
+					Repo:                   *app.Repo,
+					GithubConf:             app.GithubProjectConf,
+					ProjectID:              uint(projID),
+					ReleaseName:            name,
+					GitBranch:              gitAction.GitBranch,
+					DockerFilePath:         gitAction.DockerfilePath,
+					FolderPath:             gitAction.FolderPath,
+					ImageRepoURL:           gitAction.ImageRepoURI,
+					BuildEnv:               cEnv.Container.Env.Normal,
+					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
-				err = gaRunner.CreateEnvSecret()
-
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 				if err != nil {
-					app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
-						Code:   ErrReleaseReadData,
-						Errors: []string{"could not update github secret"},
-					}, w)
+					app.handleErrorInternal(err, w)
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+							Code:   ErrReleaseReadData,
+							Errors: []string{"could not update github secret"},
+						}, w)
+					}
 				}
 			}
 		}

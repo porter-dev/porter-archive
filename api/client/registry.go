@@ -472,3 +472,42 @@ func (c *Client) ListImages(
 
 	return *bodyResp, nil
 }
+
+type CreateRepositoryRequest struct {
+	ImageRepoURI string `json:"image_repo_uri"`
+}
+
+// CreateECR creates an Elastic Container Registry integration
+func (c *Client) CreateRepository(
+	ctx context.Context,
+	projectID, regID uint,
+	createRepo *CreateRepositoryRequest,
+) error {
+	data, err := json.Marshal(createRepo)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/registries/%d/repository", c.BaseURL, projectID, regID),
+		strings.NewReader(string(data)),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(ctx)
+
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+
+		return err
+	}
+
+	return nil
+}

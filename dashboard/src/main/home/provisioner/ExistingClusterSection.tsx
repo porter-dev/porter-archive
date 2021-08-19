@@ -5,6 +5,7 @@ import api from "shared/api";
 import { ProjectType } from "shared/types";
 import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 
 import SaveButton from "components/SaveButton";
 import { RouteComponentProps, withRouter } from "react-router";
@@ -45,8 +46,11 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
             let proj = res.data.find((el: ProjectType) => {
               return el.name === projectName;
             });
-            setCurrentProject(proj);
-            this.props.history.push("dashboard?tab=overview");
+            setCurrentProject(proj, () =>
+              pushFiltered(this.props, "/dashboard", ["project_id"], {
+                tab: "overview",
+              })
+            );
           }
         }
       })
@@ -94,7 +98,7 @@ const Placeholder = styled.div`
   background: #26282f;
   margin-bottom: 27px;
   border-radius: 5px;
-  height: 170px;
+  height: 230px;
   display: flex;
   align-items: center;
   justify-content: center;

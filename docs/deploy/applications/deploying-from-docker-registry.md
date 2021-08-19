@@ -21,6 +21,6 @@ Let's get started!
 
 5. To programmatically redeploy your service (for instance, from a CI pipeline), you will need to call your service's custom webhook. You can find your webhook by expanding your deployed service and going to the **Settings** tab.
 
-![Webhook](https://files.readme.io/23e217a-Screen_Shot_2021-03-18_at_11.29.16_AM.png "Screen Shot 2021-03-18 at 11.29.16 AM.png")
+![Webhook](https://user-images.githubusercontent.com/11699655/120046959-ac25c480-c013-11eb-8b2f-e6bfd704d7fc.png "webhook in the settings tab")
 
-Make sure to replace the `YOUR_COMMIT_HASH` and `IMAGE_REPOSITORY_URL` fields in the generated webhook.
+Make sure to replace the `YOUR_COMMIT_HASH` field with the tag of your Docker image.

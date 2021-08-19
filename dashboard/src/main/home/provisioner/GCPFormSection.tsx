@@ -6,15 +6,16 @@ import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { InfraType } from "shared/types";
+import { pushFiltered } from "shared/routing";
 
-import UploadArea from "components/values-form/UploadArea";
-import SelectRow from "components/values-form/SelectRow";
-import CheckboxRow from "components/values-form/CheckboxRow";
-import InputRow from "components/values-form/InputRow";
-import Helper from "components/values-form/Helper";
-import Heading from "components/values-form/Heading";
+import UploadArea from "components/form-components/UploadArea";
+import SelectRow from "components/form-components/SelectRow";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import InputRow from "components/form-components/InputRow";
+import Helper from "components/form-components/Helper";
+import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
-import CheckboxList from "components/values-form/CheckboxList";
+import CheckboxList from "components/form-components/CheckboxList";
 import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
@@ -164,8 +165,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
 
   // Step 1: Create a project
   createProject = (callback?: any) => {
-    console.log("Creating project");
-    let { projectName, handleError } = this.props;
+    let { projectName } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 
     api
@@ -185,8 +185,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           )
           .then((res) => {
             setProjects(res.data);
-            setCurrentProject(proj);
-            callback && callback();
+            setCurrentProject(proj, () => callback && callback());
           })
           .catch(this.catchError);
       })
@@ -222,9 +221,11 @@ class GCPFormSection extends Component<PropsType, StateType> {
         },
         { project_id: currentProject.id }
       )
-      .then((res) => {
-        this.props.history.push("dashboard?tab=provisioner");
-      })
+      .then((res) =>
+        pushFiltered(this.props, "/dashboard", ["project_id"], {
+          tab: "provisioner",
+        })
+      )
       .catch(this.catchError);
   };
 
@@ -243,7 +244,6 @@ class GCPFormSection extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res?.data) {
-          console.log("gcp provisioned with response: ", res.data);
           let { id } = res.data;
 
           if (selectedInfras.length === 2) {
@@ -252,7 +252,9 @@ class GCPFormSection extends Component<PropsType, StateType> {
           } else if (selectedInfras[0].value === "gcr") {
             // Case: project exists, only provision GCR
             this.provisionGCR(id).then(() =>
-              this.props.history.push("dashboard?tab=provisioner")
+              pushFiltered(this.props, "/dashboard", ["project_id"], {
+                tab: "provisioner",
+              })
             );
           } else {
             // Case: project exists, only provision GKE
@@ -319,7 +321,6 @@ class GCPFormSection extends Component<PropsType, StateType> {
   render() {
     let { setSelectedProvisioner } = this.props;
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
-    console.log("gcpkeydata", gcpKeyData);
     return (
       <StyledGCPFormSection>
         <FormSection>

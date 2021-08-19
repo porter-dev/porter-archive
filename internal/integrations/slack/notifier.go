@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/porter-dev/porter/internal/models"
 	"net/http"
 	"strings"
 	"time"
@@ -52,11 +53,13 @@ type NotifyOpts struct {
 
 type SlackNotifier struct {
 	slackInts []*integrations.SlackIntegration
+	Config    *models.NotificationConfigExternal
 }
 
-func NewSlackNotifier(slackInts ...*integrations.SlackIntegration) Notifier {
+func NewSlackNotifier(conf *models.NotificationConfigExternal, slackInts ...*integrations.SlackIntegration) Notifier {
 	return &SlackNotifier{
 		slackInts: slackInts,
+		Config:    conf,
 	}
 }
 
@@ -75,6 +78,18 @@ type SlackText struct {
 }
 
 func (s *SlackNotifier) Notify(opts *NotifyOpts) error {
+	if s.Config != nil {
+		if !s.Config.Enabled {
+			return nil
+		}
+		if opts.Status == StatusDeployed && !s.Config.Success {
+			return nil
+		}
+		if opts.Status == StatusFailed && !s.Config.Failure {
+			return nil
+		}
+	}
+
 	blocks := []*SlackBlock{
 		getMessageBlock(opts),
 		getDividerBlock(),

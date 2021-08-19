@@ -1604,6 +1604,25 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// HandleGetReleaseSteps returns a list of all steps for a given release
+// note that steps are not guaranteed to be in any specific order, so they should be ordered if needed
+func (app *App) HandleGetReleaseSteps(w http.ResponseWriter, r *http.Request) {
+
+}
+
+type HandleUpdateReleaseStepsForm struct {
+	EventID string
+	Name    string
+	Index   int64
+	Status  models.EventStatus
+	Info    string
+}
+
+// HandleUpdateReleaseSteps adds a new step to a release
+func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // ------------------------ Release handler helper functions ------------------------ //
 
 // getAgentFromQueryParams uses the query params to populate a form, and then

@@ -32,6 +32,7 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
+import DeploymentType from "./DeploymentType";
 
 type Props = {
   namespace: string;
@@ -661,46 +662,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
-  const renderDeploymentType = () => {
-    const githubRepository = currentChart?.git_action_config?.git_repo;
-    const icon = githubRepository
-      ? integrationList.repo.icon
-      : integrationList.registry.icon;
-
-    const isWebOrWorkerDeployment = ["web", "worker"].includes(
-      currentChart?.chart?.metadata?.name
-    );
-    if (!isWebOrWorkerDeployment) {
-      return null;
-    }
-
-    const repository =
-      githubRepository ||
-      currentChart?.image_repo_uri ||
-      currentChart?.config?.image?.repository;
-
-    if (repository?.includes("hello-porter")) {
-      return null;
-    }
-
-    return (
-      <DeploymentImageContainer>
-        <DeploymentTypeIcon src={icon} />
-        <RepositoryName
-          onMouseOver={() => {
-            setShowRepoTooltip(true);
-          }}
-          onMouseOut={() => {
-            setShowRepoTooltip(false);
-          }}
-        >
-          {repository}
-        </RepositoryName>
-        {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
-      </DeploymentImageContainer>
-    );
-  };
-
   return (
     <>
       <StyledExpandedChart>
@@ -713,7 +674,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             iconWidth="33px"
           >
             {currentChart.name}
-            {renderDeploymentType()}
+            <DeploymentType currentChart={currentChart} />
             <TagWrapper>
               Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
             </TagWrapper>

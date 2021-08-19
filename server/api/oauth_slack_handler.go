@@ -129,6 +129,29 @@ func (app *App) HandleListSlackIntegrations(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// HandleSlackIntegrationExists does 200 if at least one slack integration exists and 404 otherwise
+func (app *App) HandleSlackIntegrationExists(w http.ResponseWriter, r *http.Request) {
+	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+
+	if err != nil || projID == 0 {
+		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
+		return
+	}
+
+	slackInts, err := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+
+	if err != nil {
+		app.handleErrorRead(err, ErrProjectDataRead, w)
+		return
+	}
+
+	if len(slackInts) != 0 {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
 // HandleDeleteSlackIntegration deletes a slack integration for a project by ID
 func (app *App) HandleDeleteSlackIntegration(w http.ResponseWriter, r *http.Request) {
 	// check that slack integration belongs to given project

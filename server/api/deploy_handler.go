@@ -50,6 +50,13 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
 	getChartForm.PopulateRepoURLFromQueryParams(vals)
 
 	chart, err := loader.LoadChartPublic(getChartForm.RepoURL, getChartForm.Name, getChartForm.Version)
@@ -161,13 +168,17 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	// if github action config is linked, call the github action config handler
 	if form.GithubActionConfig != nil {
 		gaForm := &forms.CreateGitAction{
-			ReleaseID:      release.ID,
+			Release: release,
+
 			GitRepo:        form.GithubActionConfig.GitRepo,
 			GitBranch:      form.GithubActionConfig.GitBranch,
 			ImageRepoURI:   form.GithubActionConfig.ImageRepoURI,
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,
 			RegistryID:     form.GithubActionConfig.RegistryID,
+
+			ShouldGenerateOnly:   false,
+			ShouldCreateWorkflow: form.GithubActionConfig.ShouldCreateWorkflow,
 		}
 
 		// validate the form
@@ -176,7 +187,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, release, form.ChartTemplateForm.Name, gaForm, w, r)
+		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, gaForm, w, r)
 	}
 
 	w.WriteHeader(http.StatusOK)

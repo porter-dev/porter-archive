@@ -1,6 +1,6 @@
 import { baseApi } from "./baseApi";
 
-import { StorageType } from "./types";
+import { FullActionConfigType, StorageType } from "./types";
 
 /**
  * Generic api call format
@@ -111,27 +111,6 @@ const createGCR = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/provision/gcr`;
-});
-
-const createGHAction = baseApi<
-  {
-    git_repo: string;
-    git_branch: string;
-    registry_id: number;
-    image_repo_uri: string;
-    dockerfile_path: string;
-    folder_path: string;
-    git_repo_id: number;
-  },
-  {
-    project_id: number;
-    CLUSTER_ID: number;
-    RELEASE_NAME: string;
-    RELEASE_NAMESPACE: string;
-  }
->("POST", (pathParams) => {
-  let { project_id, CLUSTER_ID, RELEASE_NAME, RELEASE_NAMESPACE } = pathParams;
-  return `/api/projects/${project_id}/ci/actions?cluster_id=${CLUSTER_ID}&name=${RELEASE_NAME}&namespace=${RELEASE_NAMESPACE}`;
 });
 
 const createGKE = baseApi<
@@ -267,6 +246,46 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
+const updateNotificationConfig = baseApi<
+  {
+    payload: any;
+    namespace: string;
+    cluster_id: number;
+  },
+  {
+    project_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
+const getNotificationConfig = baseApi<
+  {
+    namespace: string;
+    cluster_id: number;
+  },
+  {
+    project_id: number;
+    name: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
+const generateGHAWorkflow = baseApi<
+  FullActionConfigType,
+  {
+    cluster_id: number;
+    project_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  const { name, cluster_id, project_id } = pathParams;
+
+  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}`;
+});
+
 const deployTemplate = baseApi<
   {
     templateName: string;
@@ -275,6 +294,7 @@ const deployTemplate = baseApi<
     storage: StorageType;
     namespace: string;
     name: string;
+    githubActionConfig?: FullActionConfigType;
   },
   {
     id: number;
@@ -542,6 +562,15 @@ const getJobs = baseApi<
   return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
 });
 
+const getJobStatus = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.name}/jobs/status`;
+});
+
 const getJobPods = baseApi<
   {
     cluster_id: number;
@@ -569,7 +598,8 @@ const getMetrics = baseApi<
     shouldsum: boolean;
     pods?: string[];
     kind?: string; // the controller kind
-    name: string;
+    name?: string;
+    percentile?: number;
     namespace: string;
     startrange: number;
     endrange: number;
@@ -1064,7 +1094,6 @@ export default {
   createEmailVerification,
   createGCPIntegration,
   createGCR,
-  createGHAction,
   createGKE,
   createInvite,
   createNamespace,
@@ -1081,6 +1110,8 @@ export default {
   deleteProject,
   deleteRegistryIntegration,
   deleteSlackIntegration,
+  updateNotificationConfig,
+  getNotificationConfig,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -1101,6 +1132,7 @@ export default {
   getClusterNodes,
   getClusterNode,
   getConfigMap,
+  generateGHAWorkflow,
   getGitRepoList,
   getGitRepos,
   getImageRepos,
@@ -1109,6 +1141,7 @@ export default {
   getIngress,
   getInvites,
   getJobs,
+  getJobStatus,
   getJobPods,
   getMatchingPods,
   getMetrics,

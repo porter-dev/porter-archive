@@ -25,7 +25,8 @@ const (
 	GithubConnectionSuccess SegmentEvent = "Github Connection Success"
 
 	// launch flow
-	ApplicationLaunch            SegmentEvent = "New Application Launched"
-	ApplicationLaunchError       SegmentEvent = "Application Deployment Error"
+	ApplicationLaunchStart   SegmentEvent = "Application Launch Started"
+	ApplicationLaunchSuccess SegmentEvent = "Application Launch Success"
+
 	ApplicationDeploymentWebhook SegmentEvent = "Triggered Re-deploy via Webhook"
 )

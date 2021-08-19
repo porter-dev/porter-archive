@@ -17,7 +17,7 @@ type CreateDNSRecordRequest struct {
 // CreateDNSRecordResponse is the DNS record that was created
 type CreateDNSRecordResponse models.DNSRecordExternal
 
-// CreateGithubAction creates a Github action with basic authentication
+// CreateDNSRecord creates a Github action with basic authentication
 func (c *Client) CreateDNSRecord(
 	ctx context.Context,
 	projectID, clusterID uint,

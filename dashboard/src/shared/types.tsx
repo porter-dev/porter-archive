@@ -259,6 +259,13 @@ export interface ActionConfigType {
   git_repo_id: number;
 }
 
+export interface FullActionConfigType extends ActionConfigType {
+  dockerfile_path: string;
+  folder_path: string;
+  registry_id: number;
+  should_create_workflow: boolean;
+}
+
 export interface CapabilityType {
   github: boolean;
   provisioner: boolean;

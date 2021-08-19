@@ -147,7 +147,12 @@ func New(conf *AppConfig) (*App, error) {
 	// }
 
 	// create the session store
-	store, err := sessionstore.NewStore(app.Repo, app.ServerConf)
+	store, err := sessionstore.NewStore(
+		&sessionstore.NewStoreOpts{
+			SessionRepository: app.Repo.Session(),
+			CookieSecrets:     app.ServerConf.CookieSecrets,
+		},
+	)
 
 	if err != nil {
 		return nil, err

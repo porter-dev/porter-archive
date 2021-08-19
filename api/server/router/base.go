@@ -95,5 +95,77 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
+	// POST /api/password/reset/initiate -> user.NewUserPasswordInitiateResetHandler
+	passwordInitiateResetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/password/reset/initiate",
+			},
+		},
+	)
+
+	passwordInitiateResetHandler := user.NewUserPasswordInitiateResetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: passwordInitiateResetEndpoint,
+		Handler:  passwordInitiateResetHandler,
+		Router:   r,
+	})
+
+	// POST /api/password/reset/verify -> user.NewUserPasswordVerifyResetHandler
+	passwordVerifyResetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/password/reset/verify",
+			},
+		},
+	)
+
+	passwordVerifyResetHandler := user.NewUserPasswordVerifyResetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: passwordVerifyResetEndpoint,
+		Handler:  passwordVerifyResetHandler,
+		Router:   r,
+	})
+
+	// POST /api/password/reset/finalize -> user.NewUserPasswordFinalizeResetHandler
+	passwordFinalizeResetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/password/reset/finalize",
+			},
+		},
+	)
+
+	passwordFinalizeResetHandler := user.NewUserPasswordFinalizeResetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: passwordFinalizeResetEndpoint,
+		Handler:  passwordFinalizeResetHandler,
+		Router:   r,
+	})
+
 	return routes
 }

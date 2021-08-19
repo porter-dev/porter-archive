@@ -19,7 +19,7 @@ type AuthCheckResponse models.UserExternal
 func (c *Client) AuthCheck(ctx context.Context) (*AuthCheckResponse, error) {
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/auth/check", c.BaseURL),
+		fmt.Sprintf("%s/users/current", c.BaseURL),
 		nil,
 	)
 
@@ -154,37 +154,6 @@ func (c *Client) CreateUser(
 	return bodyResp, nil
 }
 
-// GetUserResponse is the user model response that is returned after successfully
-// getting a user
-type GetUserResponse models.UserExternal
-
-// GetUser retrieves a user given a user id
-func (c *Client) GetUser(ctx context.Context, userID uint) (*GetUserResponse, error) {
-	req, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf("%s/users/%d", c.BaseURL, userID),
-		nil,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-
-	bodyResp := &GetUserResponse{}
-
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
-		}
-
-		return nil, err
-	}
-
-	return bodyResp, nil
-}
-
 // ListUserProjectsResponse is the list of projects returned
 type ListUserProjectsResponse []*types.Project
 
@@ -192,7 +161,7 @@ type ListUserProjectsResponse []*types.Project
 func (c *Client) ListUserProjects(ctx context.Context, userID uint) (ListUserProjectsResponse, error) {
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/users/%d/projects", c.BaseURL, userID),
+		fmt.Sprintf("%s/projects", c.BaseURL),
 		nil,
 	)
 

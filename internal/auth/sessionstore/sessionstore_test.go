@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/porter-dev/porter/internal/config"
-
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/internal/repository/test"
@@ -33,9 +31,12 @@ var secret = "secret"
 func TestPGStore(t *testing.T) {
 	repo := test.NewRepository(true)
 
-	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecrets: []string{"secret"},
-	})
+	ss, err := sessionstore.NewStore(
+		&sessionstore.NewStoreOpts{
+			SessionRepository: repo.Session(),
+			CookieSecrets:     []string{"secret"},
+		},
+	)
 
 	if err != nil {
 		t.Fatal("Failed to get store", err)
@@ -133,9 +134,12 @@ func TestPGStore(t *testing.T) {
 func TestSessionOptionsAreUniquePerSession(t *testing.T) {
 	repo := test.NewRepository(true)
 
-	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecrets: []string{"secret"},
-	})
+	ss, err := sessionstore.NewStore(
+		&sessionstore.NewStoreOpts{
+			SessionRepository: repo.Session(),
+			CookieSecrets:     []string{"secret"},
+		},
+	)
 
 	if err != nil {
 		t.Fatal("Failed to get store", err)

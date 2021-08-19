@@ -17,6 +17,7 @@ import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
 import { RouteComponentProps, withRouter } from "react-router";
+import Tooltip from "@material-ui/core/Tooltip";
 
 type PropsType = RouteComponentProps & {
   setSelectedProvisioner: (x: string | null) => void;
@@ -392,8 +393,29 @@ class GCPFormSection extends Component<PropsType, StateType> {
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
-              $200/Month
+              $250/Month
             </CostHighlight>
+            <Tooltip
+              title={
+                <div
+                  style={{
+                    fontFamily: "Work Sans, sans-serif",
+                    fontSize: "12px",
+                    fontWeight: "normal",
+                    padding: "5px 6px",
+                  }}
+                >
+                  GKE cost: ~$70/month <br />
+                  Machine (x3) cost: ~$150/month <br />
+                  Networking cost: ~$30/month
+                </div>
+              }
+              placement="top"
+            >
+              <StyledInfoTooltip>
+                <i className="material-icons">help_outline</i>
+              </StyledInfoTooltip>
+            </Tooltip>
           </Helper>
           <CheckboxRow
             isRequired={true}
@@ -513,4 +535,22 @@ const CloseButtonImg = styled.img`
 
 const CostHighlight = styled.span<{ highlight: boolean }>`
   background-color: ${(props) => props.highlight && "yellow"};
+`;
+
+const StyledInfoTooltip = styled.div`
+  display: inline-block;
+  position: relative;
+  margin-right: 2px;
+  > i {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -10px;
+    font-size: 10px;
+    color: #858faaaa;
+    cursor: pointer;
+    :hover {
+      color: #aaaabb;
+    }
+  }
 `;

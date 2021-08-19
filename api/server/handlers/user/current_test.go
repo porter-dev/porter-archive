@@ -9,14 +9,14 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-func TestAuthCheckSuccessful(t *testing.T) {
+func TestGetCurrentUserSuccessful(t *testing.T) {
 	config := apitest.LoadConfig(t)
 	authUser := apitest.CreateTestUser(t, config, true)
 	req, rr := apitest.GetRequestAndRecorder(t, string(types.HTTPVerbPost), "/api/auth/check", nil)
 
 	req = apitest.WithAuthenticatedUser(t, req, authUser)
 
-	handler := user.NewAuthCheckHandler(
+	handler := user.NewUserGetCurrentHandler(
 		config,
 		shared.NewDefaultResultWriter(config),
 	)

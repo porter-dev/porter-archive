@@ -8,19 +8,19 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type AuthCheckHandler struct {
+type UserGetCurrentHandler struct {
 	config *shared.Config
 	writer shared.ResultWriter
 }
 
-func NewAuthCheckHandler(
+func NewUserGetCurrentHandler(
 	config *shared.Config,
 	writer shared.ResultWriter,
-) *AuthCheckHandler {
-	return &AuthCheckHandler{config, writer}
+) *UserGetCurrentHandler {
+	return &UserGetCurrentHandler{config, writer}
 }
 
-func (a *AuthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (a *UserGetCurrentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	a.writer.WriteResult(w, user.ToUserType())

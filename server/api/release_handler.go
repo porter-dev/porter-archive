@@ -1325,6 +1325,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 			release.ClusterID,
 			release.Name,
 			release.Namespace,
+			rel.Chart.Metadata.Name,
 		),
 	}))
 

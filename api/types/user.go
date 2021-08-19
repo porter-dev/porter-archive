@@ -21,3 +21,15 @@ type LoginUserRequest struct {
 }
 
 type LoginUserResponse User
+
+type CLILoginUserRequest struct {
+	Redirect string `schema:"redirect" form:"required"`
+}
+
+type CLILoginExchangeRequest struct {
+	AuthorizationCode string `json:"authorization_code" form:"required"`
+}
+
+type CLILoginExchangeResponse struct {
+	Token string `json:"token" form:"required"`
+}

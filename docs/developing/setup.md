@@ -22,9 +22,27 @@ DB_NAME=porter
 SQL_LITE=false
 ```
 
-Once you've done this, go to the root repository, and run `docker-compose -f docker-compose.dev.yaml up`. You should see postgres, webpack, and porter containers spin up. When the webpack and porter containers have finished compiling and have spun up successfully (this will take 5-10 minutes after the containers start), you can navigate to `localhost:8080` and you should be greeted with the "Log In" screen. Create a user by entering an email/password on the "Register" screen. 
+Once you've done this, go to the root repository, and run `docker-compose -f docker-compose.dev.yaml up`. You should see postgres, webpack, and porter containers spin up. When the webpack and porter containers have finished compiling and have spun up successfully (this will take 5-10 minutes after the containers start), you can navigate to `localhost:8080` and you should be greeted with the "Log In" screen. Create a user by entering an email/password on the "Register" screen.
 
-At this point, you can make a change to any `.go` file to trigger a backend rebuild, and any file in `/dashboard/src` to trigger a hot reload. 
+At this point, you can make a change to any `.go` file to trigger a backend rebuild, and any file in `/dashboard/src` to trigger a hot reload.
+
+## Setup without docker
+
+While docker is an awesome way of getting started as it simulates the real environment that we use on our hosted dashboard, for some people this may bee too much.
+
+In order to decrease the complexity of all the environment, you can just run the development environment locally without docker.
+
+After cloning the repo you should only execute `make start-dev` this will ask you to install the dependencies and also run the server and the frontend in a single console.
+It will also create some env files with default values that will simplify the process!
+
+### Disclaimer
+
+For the command `make start-dev` to work, you should be working under a bash environment (WSL on windows, Linux or MacOS), also you will need go, node and npm installed
+for it to work.
+
+### Disclaimer
+
+This environment is experimental, if you run into any issue don't doubt in contact us through our [discord!](https://discord.gg/GJynMR3KXK)
 
 ## Getting PostgreSQL Access
 
@@ -34,7 +52,7 @@ You can get `psql` access by running the following:
 
 This will prompt you for a password. Enter `porter`, and you should see the `psql` shell!
 
-### Setting your email to be verified 
+### Setting your email to be verified
 
 If you are getting blocked out of the dashboard because your email is not verified (fixed in `v0.6.2` of Porter, so make sure you've pulled from `master` recently), you can update your email in the database to `verified":
 
@@ -43,16 +61,18 @@ If you are getting blocked out of the dashboard because your email is not verifi
 ## Setting up Minikube
 
 These steps will help you get set up with a minikube cluster that can be used for development. Prerequisities:
+
 - `kubectl` installed locally
 - Development instance of Porter is running
 
 Following the OS-specific steps to get minikube running:
+
 - [MacOS](#macos)
 - [Linux](#linux)
 
 If you now navigate to `http://localhost:8080`, you should see the minikube cluster attached! There will be some limitations:
-- **It is not possible to expose a service that you create. Whenever you create a web service, de-select the "Expose to external traffic" option.**
 
+- **It is not possible to expose a service that you create. Whenever you create a web service, de-select the "Expose to external traffic" option.**
 
 ### MacOS
 
@@ -119,6 +139,6 @@ If using Chrome, paste the following into the Chrome address bar:
 
 > chrome://flags/#allow-insecure-localhost
 
-And then Enable the **Allow invalid certificates for resources loaded from localhost** field. 
+And then Enable the **Allow invalid certificates for resources loaded from localhost** field.
 
-Finally, run `docker-compose -f docker-compose.dev-secure.yaml up` instead of the standard docker-compose file. 
+Finally, run `docker-compose -f docker-compose.dev-secure.yaml up` instead of the standard docker-compose file.

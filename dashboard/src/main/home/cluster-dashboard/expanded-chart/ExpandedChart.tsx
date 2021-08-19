@@ -1,11 +1,22 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
-import { ChartType, ClusterType, ResourceType, StorageType } from "shared/types";
+import {
+  ChartType,
+  ClusterType,
+  ResourceType,
+  StorageType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import StatusIndicator from "components/StatusIndicator";

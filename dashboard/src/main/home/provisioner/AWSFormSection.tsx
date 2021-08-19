@@ -16,6 +16,7 @@ import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
 import { RouteComponentProps, withRouter } from "react-router";
+import Tooltip from "@material-ui/core/Tooltip";
 
 type PropsType = RouteComponentProps & {
   setSelectedProvisioner: (x: string | null) => void;
@@ -75,12 +76,12 @@ const machineTypeOptions = [
 ];
 
 const costMapping: Record<string, number> = {
-  "t2.medium": 200,
-  "t2.xlarge": 530,
-  "t2.2xlarge": 930,
-  "t3.medium": 190,
-  "t3.xlarge": 480,
-  "t3.2xlarge": 830,
+  "t2.medium": 35,
+  "t2.xlarge": 135,
+  "t2.2xlarge": 270,
+  "t3.medium": 30,
+  "t3.xlarge": 120,
+  "t3.2xlarge": 240,
 };
 
 // TODO: Consolidate across forms w/ HOC
@@ -406,8 +407,32 @@ class AWSFormSection extends Component<PropsType, StateType> {
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
-              {`\$${costMapping[this.state.awsMachineType]}/Month`}
+              {`\$${
+                70 + 3 * costMapping[this.state.awsMachineType] + 30
+              }/Month`}
             </CostHighlight>
+            <Tooltip
+              title={
+                <div
+                  style={{
+                    fontFamily: "Work Sans, sans-serif",
+                    fontSize: "12px",
+                    fontWeight: "normal",
+                    padding: "5px 6px",
+                  }}
+                >
+                  EKS cost: ~$70/month <br />
+                  Machine (x3) cost: ~$
+                  {`${3 * costMapping[this.state.awsMachineType]}`}/month <br />
+                  Networking cost: ~$30/month
+                </div>
+              }
+              placement="top"
+            >
+              <StyledInfoTooltip>
+                <i className="material-icons">help_outline</i>
+              </StyledInfoTooltip>
+            </Tooltip>
           </Helper>
           <InputRow
             type="text"
@@ -570,4 +595,22 @@ const CloseButtonImg = styled.img`
 
 const CostHighlight = styled.span<{ highlight: boolean }>`
   background-color: ${(props) => props.highlight && "yellow"};
+`;
+
+const StyledInfoTooltip = styled.div`
+  display: inline-block;
+  position: relative;
+  margin-right: 2px;
+  > i {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -10px;
+    font-size: 10px;
+    color: #858faaaa;
+    cursor: pointer;
+    :hover {
+      color: #aaaabb;
+    }
+  }
 `;

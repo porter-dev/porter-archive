@@ -14,6 +14,8 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
+import InfoTooltip from "../../../components/InfoTooltip";
+import Tooltip from "@material-ui/core/Tooltip";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -281,8 +283,29 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
-              $100/Month
+              $90/Month
             </CostHighlight>
+            <Tooltip
+              title={
+                <div
+                  style={{
+                    fontFamily: "Work Sans, sans-serif",
+                    fontSize: "12px",
+                    fontWeight: "normal",
+                    padding: "5px 6px",
+                  }}
+                >
+                  Cluster cost: ~$10/month <br />
+                  Machine (x3) cost: ~$60/month <br />
+                  Networking cost: ~$20/month
+                </div>
+              }
+              placement="top"
+            >
+              <StyledInfoTooltip>
+                <i className="material-icons">help_outline</i>
+              </StyledInfoTooltip>
+            </Tooltip>
           </Helper>
           <CheckboxRow
             isRequired={true}
@@ -398,4 +421,22 @@ const CloseButtonImg = styled.img`
 
 const CostHighlight = styled.span<{ highlight: boolean }>`
   background-color: ${(props) => props.highlight && "yellow"};
+`;
+
+const StyledInfoTooltip = styled.div`
+  display: inline-block;
+  position: relative;
+  margin-right: 2px;
+  > i {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -10px;
+    font-size: 10px;
+    color: #858faaaa;
+    cursor: pointer;
+    :hover {
+      color: #aaaabb;
+    }
+  }
 `;

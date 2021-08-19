@@ -43,6 +43,32 @@ func getUserRoutes(
 ) []*Route {
 	routes := make([]*Route, 0)
 
+	// GET /api/cli/login -> user.user.NewCLILoginHandler
+	cliLoginUserEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/cli/login",
+			},
+			Scopes:         []types.PermissionScope{types.UserScope},
+			ShouldRedirect: true,
+		},
+	)
+
+	cliLoginUserHandler := user.NewCLILoginHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: cliLoginUserEndpoint,
+		Handler:  cliLoginUserHandler,
+		Router:   r,
+	})
+
 	// POST /api/logout -> user.NewUserLogoutHandler
 	logoutUserEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -64,20 +90,20 @@ func getUserRoutes(
 		Router:   r,
 	})
 
-	// GET /api/auth/check -> user.NewAuthCheckHandler
+	// GET /api/users/current -> user.NewUserGetCurrentHandler
 	authCheckEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/auth/check",
+				RelativePath: "/users/current",
 			},
 			Scopes: []types.PermissionScope{types.UserScope},
 		},
 	)
 
-	authCheckHandler := user.NewAuthCheckHandler(
+	authCheckHandler := user.NewUserGetCurrentHandler(
 		config,
 		factory.GetResultWriter(),
 	)

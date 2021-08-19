@@ -496,6 +496,7 @@ func GetApplicationScopedTrackOpts(userID, projID, clusterID uint, name, namespa
 		ClusterScopedTrackOpts: GetClusterScopedTrackOpts(userID, projID, clusterID),
 		Name:                   name,
 		Namespace:              namespace,
+		ChartName:              chartName,
 	}
 }
 

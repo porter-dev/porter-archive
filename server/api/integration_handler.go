@@ -240,7 +240,7 @@ func (app *App) HandleOverwriteAWSIntegration(w http.ResponseWriter, r *http.Req
 	}
 
 	// read the aws integration by ID and overwrite the access id/secret
-	awsIntegration, err := app.Repo.AWSIntegration.ReadAWSIntegration(uint(awsIntegrationID))
+	awsIntegration, err := app.Repo.AWSIntegration().ReadAWSIntegration(uint(awsIntegrationID))
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -251,7 +251,7 @@ func (app *App) HandleOverwriteAWSIntegration(w http.ResponseWriter, r *http.Req
 	awsIntegration.AWSSecretAccessKey = []byte(form.AWSSecretAccessKey)
 
 	// handle write to the database
-	awsIntegration, err = app.Repo.AWSIntegration.OverwriteAWSIntegration(awsIntegration)
+	awsIntegration, err = app.Repo.AWSIntegration().OverwriteAWSIntegration(awsIntegration)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -274,12 +274,12 @@ func (app *App) HandleOverwriteAWSIntegration(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		cluster, err := app.Repo.Cluster.ReadCluster(uint(clusterID))
+		cluster, err := app.Repo.Cluster().ReadCluster(uint(clusterID))
 
 		// clear the token
 		cluster.TokenCache.Token = []byte("")
 
-		cluster, err = app.Repo.Cluster.UpdateClusterTokenCache(&cluster.TokenCache)
+		cluster, err = app.Repo.Cluster().UpdateClusterTokenCache(&cluster.TokenCache)
 
 		if err != nil {
 			app.handleErrorDataWrite(err, w)
@@ -431,11 +431,11 @@ func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
 	switch e := event.(type) {
 	case *github.InstallationEvent:
 		if *e.Action == "created" {
-			_, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountID(*e.Installation.Account.ID)
+			_, err := app.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountID(*e.Installation.Account.ID)
 
 			if err != nil && err == gorm.ErrRecordNotFound {
 				// insert account/installation pair into database
-				_, err := app.Repo.GithubAppInstallation.CreateGithubAppInstallation(&ints.GithubAppInstallation{
+				_, err := app.Repo.GithubAppInstallation().CreateGithubAppInstallation(&ints.GithubAppInstallation{
 					AccountID:      *e.Installation.Account.ID,
 					InstallationID: *e.Installation.ID,
 				})
@@ -451,7 +451,7 @@ func (app *App) HandleGithubAppEvent(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if *e.Action == "deleted" {
-			err := app.Repo.GithubAppInstallation.DeleteGithubAppInstallationByAccountID(*e.Installation.Account.ID)
+			err := app.Repo.GithubAppInstallation().DeleteGithubAppInstallationByAccountID(*e.Installation.Account.ID)
 
 			if err != nil {
 				app.handleErrorInternal(err, w)
@@ -550,7 +550,7 @@ func (app *App) HandleListGithubAppAccess(w http.ResponseWriter, r *http.Request
 	res.LoginName = *AuthUser.Login
 
 	// check if user has app installed in their account
-	Installation, err := app.Repo.GithubAppInstallation.ReadGithubAppInstallationByAccountID(*AuthUser.ID)
+	Installation, err := app.Repo.GithubAppInstallation().ReadGithubAppInstallationByAccountID(*AuthUser.ID)
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		app.handleErrorInternal(err, w)
@@ -575,13 +575,13 @@ func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Toke
 		return nil, err
 	}
 
-	user, err := app.Repo.User.ReadUser(userID)
+	user, err := app.Repo.User().ReadUser(userID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	oauthInt, err := app.Repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
+	oauthInt, err := app.Repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
 
 	if err != nil {
 		return nil, fmt.Errorf("Could not get GH app integration for user %d: %s", user.ID, err.Error())
@@ -589,11 +589,11 @@ func (app *App) getGithubAppOauthTokenFromRequest(r *http.Request) (*oauth2.Toke
 
 	_, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
 		&app.GithubAppConf.Config,
-		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, *app.Repo))
+		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, app.Repo))
 
 	if err != nil {
 		// try again, in case the token got updated
-		oauthInt2, err := app.Repo.GithubAppOAuthIntegration.ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
+		oauthInt2, err := app.Repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
 
 		if err != nil {
 			return nil, err

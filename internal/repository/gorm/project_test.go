@@ -125,18 +125,20 @@ func TestUpdateProjectRole(t *testing.T) {
 	defer cleanup(tester, t)
 
 	role := &models.Role{
-		Kind:      models.RoleViewer,
-		UserID:    tester.initUsers[0].Model.ID,
-		ProjectID: tester.initProjects[0].Model.ID,
+		Role: types.Role{
+			Kind:      types.RoleViewer,
+			UserID:    tester.initUsers[0].Model.ID,
+			ProjectID: tester.initProjects[0].Model.ID,
+		},
 	}
 
-	role, err := tester.repo.Project.UpdateProjectRole(tester.initProjects[0].Model.ID, role)
+	role, err := tester.repo.Project().UpdateProjectRole(tester.initProjects[0].Model.ID, role)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	proj, err := tester.repo.Project.ReadProject(tester.initProjects[0].Model.ID)
+	proj, err := tester.repo.Project().ReadProject(tester.initProjects[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -160,9 +162,11 @@ func TestUpdateProjectRole(t *testing.T) {
 		Name: "project-test",
 		Roles: []models.Role{
 			{
-				Kind:      models.RoleViewer,
-				UserID:    1,
-				ProjectID: 1,
+				Role: types.Role{
+					Kind:      types.RoleViewer,
+					UserID:    1,
+					ProjectID: 1,
+				},
 			},
 		},
 	}
@@ -314,14 +318,14 @@ func TestDeleteProjectRole(t *testing.T) {
 	initProjectRole(tester, t)
 	defer cleanup(tester, t)
 
-	_, err := tester.repo.Project.DeleteProjectRole(tester.initProjects[0].Model.ID, tester.initUsers[0].Model.ID)
+	_, err := tester.repo.Project().DeleteProjectRole(tester.initProjects[0].Model.ID, tester.initUsers[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	// attempt to read the project and ensure that the error is gorm.ErrRecordNotFound
-	proj, err := tester.repo.Project.ReadProject(tester.initProjects[0].Model.ID)
+	proj, err := tester.repo.Project().ReadProject(tester.initProjects[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

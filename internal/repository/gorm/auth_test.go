@@ -514,7 +514,7 @@ func TestOverwriteAWSIntegration(t *testing.T) {
 	initAWSIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	aws, err := tester.repo.AWSIntegration.ReadAWSIntegration(1)
+	aws, err := tester.repo.AWSIntegration().ReadAWSIntegration(1)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -523,13 +523,13 @@ func TestOverwriteAWSIntegration(t *testing.T) {
 	aws.AWSAccessKeyID = []byte("accesskey2")
 	aws.AWSSecretAccessKey = []byte("secret2")
 
-	aws, err = tester.repo.AWSIntegration.OverwriteAWSIntegration(aws)
+	aws, err = tester.repo.AWSIntegration().OverwriteAWSIntegration(aws)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	gotAWS, err := tester.repo.AWSIntegration.ReadAWSIntegration(1)
+	gotAWS, err := tester.repo.AWSIntegration().ReadAWSIntegration(1)
 
 	expAWS := &ints.AWSIntegration{
 		ProjectID:          tester.initProjects[0].ID,

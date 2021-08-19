@@ -68,20 +68,12 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	return project, nil
 }
 
-<<<<<<< HEAD
-// ReadProjectRole gets a role for a project specified by a user and project ID
-func (repo *ProjectRepository) ReadProjectRole(userID, projID uint) (*models.Role, error) {
-	role := &models.Role{}
-
-	if err := repo.db.Where("user_id = ? AND project_id = ?", userID, projID).First(&role).Error; err != nil {
-=======
 // ReadProject gets a projects specified by a unique id
 func (repo *ProjectRepository) ReadProjectRole(projID, userID uint) (*models.Role, error) {
 	// find the role
 	role := &models.Role{}
 
 	if err := repo.db.Where("project_id = ? AND user_id = ?", projID, userID).First(&role).Error; err != nil {
->>>>>>> master
 		return nil, err
 	}
 

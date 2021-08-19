@@ -131,42 +131,6 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 	return repo.projects[index], nil
 }
 
-// ReadProjectRole gets a role specified by a project ID and user ID
-func (repo *ProjectRepository) ReadProjectRole(projID, userID uint) (*models.Role, error) {
-	if !repo.canQuery {
-		return nil, errors.New("Cannot write database")
-	}
-
-	var foundProject *models.Project
-
-	// find all roles matching
-	for _, project := range repo.projects {
-		if project.ID == projID {
-			foundProject = project
-		}
-	}
-
-	if foundProject == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	var index int
-
-	for i, _role := range foundProject.Roles {
-		if _role.UserID == userID {
-			index = i
-		}
-	}
-
-	if index == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	res := foundProject.Roles[index]
-
-	return &res, nil
-}
-
 // ListProjectsByUserID lists projects where a user has an associated role
 func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Project, error) {
 	if !repo.canQuery || strings.Contains(repo.failingMethods, ListProjectsByUserIDMethod) {

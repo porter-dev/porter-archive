@@ -84,7 +84,7 @@ func (app *App) HandleSlackOAuthCallback(w http.ResponseWriter, r *http.Request)
 	slackInt.ProjectID = projID
 
 	// save to repository
-	slackInt, err = app.Repo.SlackIntegration.CreateSlackIntegration(slackInt)
+	slackInt, err = app.Repo.SlackIntegration().CreateSlackIntegration(slackInt)
 
 	if err != nil {
 		app.handleErrorDataWrite(err, w)
@@ -108,7 +108,7 @@ func (app *App) HandleListSlackIntegrations(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	slackInts, err := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+	slackInts, err := app.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -138,7 +138,7 @@ func (app *App) HandleSlackIntegrationExists(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	slackInts, err := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+	slackInts, err := app.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -169,7 +169,7 @@ func (app *App) HandleDeleteSlackIntegration(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	slackInts, err := app.Repo.SlackIntegration.ListSlackIntegrationsByProjectID(uint(projID))
+	slackInts, err := app.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(uint(projID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -178,7 +178,7 @@ func (app *App) HandleDeleteSlackIntegration(w http.ResponseWriter, r *http.Requ
 
 	for _, slackInt := range slackInts {
 		if slackInt.ID == uint(integrationID) {
-			err = app.Repo.SlackIntegration.DeleteSlackIntegration(slackInt.ID)
+			err = app.Repo.SlackIntegration().DeleteSlackIntegration(slackInt.ID)
 			if err != nil {
 				app.handleErrorInternal(err, w)
 				return

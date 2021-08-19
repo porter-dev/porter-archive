@@ -22,8 +22,8 @@ import (
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
+	notif "github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/repository"
-	"github.com/porter-dev/porter/internal/repository/test"
 	"github.com/porter-dev/porter/internal/validator"
 	"helm.sh/helm/v3/pkg/storage"
 
@@ -101,6 +101,7 @@ type App struct {
 	translator      *ut.Translator
 	tokenConf       *token.TokenGeneratorConf
 	analyticsClient analytics.AnalyticsSegmentClient
+	notifier        notif.UserNotifier
 }
 
 type AppCapabilities struct {
@@ -141,9 +142,9 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	// if repository not specified, default to in-memory
-	if app.Repo == nil {
-		app.Repo = test.NewRepository(true)
-	}
+	// if app.Repo == nil {
+	// 	app.Repo = test.NewRepository(true)
+	// }
 
 	// create the session store
 	store, err := sessionstore.NewStore(app.Repo, app.ServerConf)

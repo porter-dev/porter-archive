@@ -7,12 +7,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
 // GetProjectResponse is the response returned after querying for a
 // given project
-type GetProjectResponse models.ProjectExternal
+type GetProjectResponse types.Project
 
 // GetProject retrieves a project by id
 func (c *Client) GetProject(ctx context.Context, projectID uint) (*GetProjectResponse, error) {
@@ -112,7 +113,7 @@ type CreateProjectRequest struct {
 }
 
 // CreateProjectResponse is the resulting project after creation
-type CreateProjectResponse models.ProjectExternal
+type CreateProjectResponse types.Project
 
 // CreateProject creates a project with the given request options
 func (c *Client) CreateProject(
@@ -302,7 +303,7 @@ func (c *Client) DeleteProjectCluster(
 }
 
 // DeleteProjectResponse is the object returned after project deletion
-type DeleteProjectResponse models.ProjectExternal
+type DeleteProjectResponse types.Project
 
 // DeleteProject deletes a project by id
 func (c *Client) DeleteProject(ctx context.Context, projectID uint) (*DeleteProjectResponse, error) {

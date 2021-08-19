@@ -78,7 +78,7 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 
-	projExt := projModel.Externalize()
+	projExt := projModel.ToProjectType()
 
 	if err := json.NewEncoder(w).Encode(projExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -116,7 +116,7 @@ func (app *App) HandleListProjectCollaborators(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	roles, err := app.Repo.Project.ListProjectRoles(uint(id))
+	roles, err := app.Repo.Project().ListProjectRoles(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -133,7 +133,7 @@ func (app *App) HandleListProjectCollaborators(w http.ResponseWriter, r *http.Re
 		idArr = append(idArr, role.UserID)
 	}
 
-	users, err := app.Repo.User.ListUsersByIDs(idArr)
+	users, err := app.Repo.User().ListUsersByIDs(idArr)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -143,7 +143,7 @@ func (app *App) HandleListProjectCollaborators(w http.ResponseWriter, r *http.Re
 	for _, user := range users {
 		res = append(res, &Collaborator{
 			ID:        roleMap[user.ID].ID,
-			Kind:      roleMap[user.ID].Kind,
+			Kind:      string(roleMap[user.ID].Kind),
 			UserID:    roleMap[user.ID].UserID,
 			Email:     user.Email,
 			ProjectID: roleMap[user.ID].ProjectID,
@@ -175,7 +175,7 @@ func (app *App) HandleReadProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projExt := proj.Externalize()
+	projExt := proj.ToProjectType()
 
 	w.WriteHeader(http.StatusOK)
 
@@ -201,7 +201,7 @@ func (app *App) HandleReadProjectPolicy(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	role, err := app.Repo.Project.ReadProjectRole(uint(id), userID)
+	role, err := app.Repo.Project().ReadProjectRole(uint(id), userID)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -211,11 +211,11 @@ func (app *App) HandleReadProjectPolicy(w http.ResponseWriter, r *http.Request) 
 	// case on the role to get the policy document
 	var policy types.Policy
 	switch role.Kind {
-	case models.RoleAdmin:
+	case types.RoleAdmin:
 		policy = types.AdminPolicy
-	case models.RoleDeveloper:
+	case types.RoleDeveloper:
 		policy = types.DeveloperPolicy
-	case models.RoleViewer:
+	case types.RoleViewer:
 		policy = types.ViewerPolicy
 	}
 
@@ -241,7 +241,7 @@ func (app *App) HandleUpdateProjectRole(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	role, err := app.Repo.Project.ReadProjectRole(uint(id), uint(userID))
+	role, err := app.Repo.Project().ReadProjectRole(uint(id), uint(userID))
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -256,9 +256,9 @@ func (app *App) HandleUpdateProjectRole(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	role.Kind = form.Kind
+	role.Kind = types.RoleKind(form.Kind)
 
-	role, err = app.Repo.Project.UpdateProjectRole(uint(id), role)
+	role, err = app.Repo.Project().UpdateProjectRole(uint(id), role)
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -295,7 +295,7 @@ func (app *App) HandleDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projExternal := proj.Externalize()
+	projExternal := proj.ToProjectType()
 
 	w.WriteHeader(http.StatusOK)
 
@@ -322,14 +322,14 @@ func (app *App) HandleDeleteProjectRole(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	role, err := app.Repo.Project.ReadProjectRole(uint(id), uint(userID))
+	role, err := app.Repo.Project().ReadProjectRole(uint(id), uint(userID))
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
 
-	role, err = app.Repo.Project.DeleteProjectRole(uint(id), uint(userID))
+	role, err = app.Repo.Project().DeleteProjectRole(uint(id), uint(userID))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

@@ -123,7 +123,7 @@ func initMultiUser(tester *tester, t *testing.T) {
 		Password: "hello1234",
 	}
 
-	user, err := tester.repo.User.CreateUser(user)
+	user, err := tester.repo.User().CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -136,7 +136,7 @@ func initMultiUser(tester *tester, t *testing.T) {
 		Password: "hello1234",
 	}
 
-	user, err = tester.repo.User.CreateUser(user)
+	user, err = tester.repo.User().CreateUser(user)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

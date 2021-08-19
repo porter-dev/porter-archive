@@ -104,7 +104,7 @@ func (app *App) HandleCreateRepository(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// read the registry
-	reg, err := app.Repo.Registry.ReadRegistry(uint(regID))
+	reg, err := app.Repo.Registry().ReadRegistry(uint(regID))
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -118,7 +118,7 @@ func (app *App) HandleCreateRepository(w http.ResponseWriter, r *http.Request) {
 	nameSpl := strings.Split(form.ImageRepoURI, "/")
 	repoName := nameSpl[len(nameSpl)-1]
 
-	err = regAPI.CreateRepository(*app.Repo, repoName)
+	err = regAPI.CreateRepository(app.Repo, repoName)
 
 	if err != nil {
 		app.handleErrorInternal(err, w)
@@ -362,7 +362,7 @@ func (app *App) HandleGetProjectRegistryDOCRToken(w http.ResponseWriter, r *http
 				return
 			}
 
-			tok, expiry, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, app.DOConf, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, *app.Repo))
+			tok, expiry, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, app.DOConf, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, app.Repo))
 
 			if err != nil {
 				app.handleErrorDataRead(err, w)

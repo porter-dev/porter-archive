@@ -7,12 +7,15 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/internal/models"
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
-	"github.com/porter-dev/porter/internal/repository/test"
+	"github.com/porter-dev/porter/internal/repository/gorm"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
 
@@ -82,7 +85,47 @@ func newTester(canQuery bool) *tester {
 	}
 
 	logger := lr.NewConsole(appConf.Debug)
-	repo := test.NewRepository(canQuery)
+
+	db, _ := adapter.New(&config.DBConf{
+		EncryptionKey: "__random_strong_encryption_key__",
+		SQLLite:       true,
+		SQLLitePath:   "api_test.db",
+	})
+
+	db.AutoMigrate(
+		&models.Project{},
+		&models.Role{},
+		&models.User{},
+		&models.Session{},
+		&models.GitRepo{},
+		&models.Registry{},
+		&models.Release{},
+		&models.HelmRepo{},
+		&models.Cluster{},
+		&models.ClusterCandidate{},
+		&models.ClusterResolver{},
+		&models.Infra{},
+		&models.GitActionConfig{},
+		&models.Invite{},
+		&ints.KubeIntegration{},
+		&ints.BasicIntegration{},
+		&ints.OIDCIntegration{},
+		&ints.OAuthIntegration{},
+		&ints.GCPIntegration{},
+		&ints.AWSIntegration{},
+		&ints.ClusterTokenCache{},
+		&ints.RegTokenCache{},
+		&ints.HelmRepoTokenCache{},
+		&ints.GithubAppInstallation{},
+	)
+
+	var key [32]byte
+
+	for i, b := range []byte("__random_strong_encryption_key__") {
+		key[i] = b
+	}
+
+	repo := gorm.NewRepository(db, &key)
 	store, _ := sessionstore.NewStore(repo, appConf.Server)
 	k8sAgent := kubernetes.GetAgentTesting()
 

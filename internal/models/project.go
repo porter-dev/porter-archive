@@ -42,27 +42,27 @@ type Project struct {
 	GCPIntegrations   []ints.GCPIntegration   `json:"gcp_integrations"`
 }
 
-// ProjectExternal represents the Project type that is sent over REST
-type ProjectExternal struct {
-	ID       uint              `json:"id"`
-	Name     string            `json:"name"`
-	GitRepos []GitRepoExternal `json:"git_repos,omitempty"`
-}
+// // ProjectExternal represents the Project type that is sent over REST
+// type ProjectExternal struct {
+// 	ID       uint              `json:"id"`
+// 	Name     string            `json:"name"`
+// 	GitRepos []GitRepoExternal `json:"git_repos,omitempty"`
+// }
 
-// Externalize generates an external Project to be shared over REST
-func (p *Project) Externalize() *ProjectExternal {
-	roles := make([]RoleExternal, 0)
+// // Externalize generates an external Project to be shared over REST
+// func (p *Project) Externalize() *ProjectExternal {
+// 	roles := make([]RoleExternal, 0)
 
-	for _, role := range p.Roles {
-		roles = append(roles, *role.Externalize())
-	}
+// 	for _, role := range p.Roles {
+// 		roles = append(roles, *role.Externalize())
+// 	}
 
-	return &ProjectExternal{
-		ID:    p.ID,
-		Name:  p.Name,
-		Roles: roles,
-	}
-}
+// 	return &ProjectExternal{
+// 		ID:    p.ID,
+// 		Name:  p.Name,
+// 		Roles: roles,
+// 	}
+// }
 
 // ToProjectType generates an external types.Project to be shared over REST
 func (p *Project) ToProjectType() *types.Project {

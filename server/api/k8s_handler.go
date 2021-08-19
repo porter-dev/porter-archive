@@ -208,7 +208,7 @@ func (app *App) HandleListPodEvents(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -281,7 +281,7 @@ func (app *App) HandleCreateConfigMap(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -578,7 +578,7 @@ func (app *App) HandleRenameConfigMap(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -969,7 +969,7 @@ func (app *App) HandleDeleteJob(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -1126,7 +1126,7 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		},
 	}
 
-	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster)
+	form.PopulateK8sOptionsFromQueryParams(vals, app.Repo.Cluster())
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
@@ -1448,7 +1448,7 @@ func (app *App) HandleListNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cluster, err := app.Repo.Cluster.ReadCluster(uint(id))
+	cluster, err := app.Repo.Cluster().ReadCluster(uint(id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)
@@ -1490,7 +1490,7 @@ func (app *App) HandleGetNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cluster, err := app.Repo.Cluster.ReadCluster(uint(cluster_id))
+	cluster, err := app.Repo.Cluster().ReadCluster(uint(cluster_id))
 
 	if err != nil {
 		app.handleErrorRead(err, ErrProjectDataRead, w)

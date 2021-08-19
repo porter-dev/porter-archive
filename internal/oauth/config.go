@@ -118,7 +118,7 @@ func MakeUpdateOAuthIntegrationTokenFunction(
 		o.RefreshToken = refreshToken
 		o.Expiry = expiry
 
-		_, err := repo.OAuthIntegration.UpdateOAuthIntegration(o)
+		_, err := repo.OAuthIntegration().UpdateOAuthIntegration(o)
 
 		return err
 	}
@@ -134,7 +134,7 @@ func MakeUpdateGithubAppOauthIntegrationFunction(
 		o.RefreshToken = refreshToken
 		o.Expiry = expiry
 
-		_, err := repo.GithubAppOAuthIntegration.UpdateGithubAppOauthIntegration(o)
+		_, err := repo.GithubAppOAuthIntegration().UpdateGithubAppOauthIntegration(o)
 
 		return err
 	}

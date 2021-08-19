@@ -1,14 +1,14 @@
-#!make
-include ./docker/.env
-export $(shell sed 's/=.*//' ./docker/.env)
+BINDIR      := $(CURDIR)/bin
+VERSION ?= dev
 
-setup:
-	go mod download;
-	cd dashboard && npm install;
-	cd ../;
+start-dev: install setup-env-files
+	bash ./scripts/dev-environment/StartDevServer.sh
 
-run-server: 
-	air -c .air.toml
+install: 
+	bash ./scripts/dev-environment/SetupEnvironment.sh
 
-run-frontend:
-	cd ./dashboard && npm run start
+setup-env-files: 
+	bash ./scripts/dev-environment/CreateDefaultEnvFiles.sh
+
+build-cli: 
+	go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${VERSION}'" -a -tags cli -o $(BINDIR)/porter ./cli

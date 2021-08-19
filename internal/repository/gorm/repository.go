@@ -21,6 +21,7 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		GitActionConfig:           NewGitActionConfigRepository(db),
 		Invite:                    NewInviteRepository(db),
 		AuthCode:                  NewAuthCodeRepository(db),
+		Event:                     NewEventRepository(db, key),
 		DNSRecord:                 NewDNSRecordRepository(db),
 		PWResetToken:              NewPWResetTokenRepository(db),
 		KubeIntegration:           NewKubeIntegrationRepository(db, key),

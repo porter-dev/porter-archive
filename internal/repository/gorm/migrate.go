@@ -26,6 +26,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.AuthCode{},
 		&models.DNSRecord{},
 		&models.PWResetToken{},
+		&models.Event{},
 		&models.NotificationConfig{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},

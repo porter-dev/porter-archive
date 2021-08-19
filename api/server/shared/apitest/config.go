@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/envloader"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
-	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository/test"
 )
@@ -24,15 +24,26 @@ func NewTestConfigLoader(canQuery bool, failingRepoMethods ...string) shared.Con
 func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 	l := logger.New(true, os.Stdout)
 	repo := test.NewRepository(t.canQuery, t.failingRepoMethods...)
-	configFromEnv := config.FromEnv()
-	store, err := sessionstore.NewStore(repo, configFromEnv.Server)
+
+	envConf, err := envloader.FromEnv()
+
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := sessionstore.NewStore(
+		&sessionstore.NewStoreOpts{
+			SessionRepository: repo.Session(),
+			CookieSecrets:     envConf.ServerConf.CookieSecrets,
+		},
+	)
 
 	if err != nil {
 		return nil, err
 	}
 
 	tokenConf := &token.TokenGeneratorConf{
-		TokenSecret: configFromEnv.Server.TokenGeneratorSecret,
+		TokenSecret: envConf.ServerConf.TokenGeneratorSecret,
 	}
 
 	notifier := NewFakeUserNotifier()
@@ -41,7 +52,7 @@ func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 		Logger:       l,
 		Repo:         repo,
 		Store:        store,
-		ServerConf:   configFromEnv.Server,
+		ServerConf:   envConf.ServerConf,
 		TokenConf:    tokenConf,
 		UserNotifier: notifier,
 	}, nil

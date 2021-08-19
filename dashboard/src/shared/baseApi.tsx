@@ -20,15 +20,9 @@ export const baseApi = <T extends {}, S = {}>(
     // Handle request type (can refactor)
     if (requestType === "POST") {
       return axios.post(endpointString, params, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
     } else if (requestType === "PUT") {
       return axios.put(endpointString, params, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
     } else if (requestType === "DELETE") {
       return axios.delete(

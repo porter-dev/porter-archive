@@ -22,6 +22,11 @@ type LoginUserRequest struct {
 
 type LoginUserResponse User
 
+type VerifyEmailFinalizeRequest struct {
+	TokenID uint   `schema:"token_id" form:"required"`
+	Token   string `schema:"token" form:"required"`
+}
+
 type CLILoginUserRequest struct {
 	Redirect string `schema:"redirect" form:"required"`
 }
@@ -32,4 +37,20 @@ type CLILoginExchangeRequest struct {
 
 type CLILoginExchangeResponse struct {
 	Token string `json:"token" form:"required"`
+}
+
+type InitiateResetUserPasswordRequest struct {
+	Email string `json:"email" form:"required"`
+}
+
+type VerifyResetUserPasswordRequest struct {
+	Email   string `json:"email" form:"required,max=255,email"`
+	TokenID uint   `json:"token_id" form:"required"`
+	Token   string `json:"token" form:"required"`
+}
+
+type FinalizeResetUserPasswordRequest struct {
+	VerifyResetUserPasswordRequest
+
+	NewPassword string `json:"new_password" form:"required,max=255"`
 }

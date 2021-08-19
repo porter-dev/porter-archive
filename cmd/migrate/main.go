@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/porter-dev/porter/api/server/shared/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
@@ -15,12 +15,17 @@ import (
 )
 
 func main() {
+	logger := lr.NewConsole(true)
 	fmt.Println("running migrations...")
 
-	appConf := config.FromEnv()
+	envConf, err := envloader.FromEnv()
 
-	logger := lr.NewConsole(true)
-	db, err := adapter.New(&appConf.Db)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
+		return
+	}
+
+	db, err := adapter.New(envConf.DBConf)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")

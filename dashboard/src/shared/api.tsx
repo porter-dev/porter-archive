@@ -10,7 +10,7 @@ import { FullActionConfigType, StorageType } from "./types";
  * @param {(err: Object, res: Object) => void} callback - Callback function.
  */
 
-const checkAuth = baseApi("GET", "/api/auth/check");
+const checkAuth = baseApi("GET", "/api/users/current");
 
 const connectECRRegistry = baseApi<
   {
@@ -652,9 +652,7 @@ const getProjectRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
 
-const getProjects = baseApi<{}, { id: number }>("GET", (pathParams) => {
-  return `/api/users/${pathParams.id}/projects`;
-});
+const getProjects = baseApi("GET", "/api/projects");
 
 const getPrometheusIsInstalled = baseApi<
   {
@@ -763,10 +761,6 @@ const getTemplates = baseApi<
   },
   {}
 >("GET", "/api/templates");
-
-const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
-  return `/api/users/${pathParams.id}`;
-});
 
 const getCapabilities = baseApi<{}, {}>("GET", () => {
   return `/api/capabilities`;
@@ -1116,7 +1110,6 @@ export default {
   getTemplateInfo,
   getTemplateUpgradeNotes,
   getTemplates,
-  getUser,
   linkGithubProject,
   getGithubAccess,
   listConfigMaps,

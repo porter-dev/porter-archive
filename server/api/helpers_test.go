@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/config"
 	"github.com/porter-dev/porter/internal/helm"
@@ -86,7 +87,7 @@ func newTester(canQuery bool) *tester {
 
 	logger := lr.NewConsole(appConf.Debug)
 
-	db, _ := adapter.New(&config.DBConf{
+	db, _ := adapter.New(&shared.DBConf{
 		EncryptionKey: "__random_strong_encryption_key__",
 		SQLLite:       true,
 		SQLLitePath:   "api_test.db",
@@ -126,7 +127,12 @@ func newTester(canQuery bool) *tester {
 	}
 
 	repo := gorm.NewRepository(db, &key)
-	store, _ := sessionstore.NewStore(repo, appConf.Server)
+	store, _ := sessionstore.NewStore(
+		&sessionstore.NewStoreOpts{
+			SessionRepository: repo.Session(),
+			CookieSecrets:     []string{"secret"},
+		},
+	)
 	k8sAgent := kubernetes.GetAgentTesting()
 
 	app, _ := api.New(&api.AppConfig{

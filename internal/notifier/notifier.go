@@ -28,3 +28,21 @@ type UserNotifier interface {
 	SendEmailVerification(opts *SendEmailVerificationOpts) error
 	SendProjectInviteEmail(opts *SendProjectInviteEmailOpts) error
 }
+
+type EmptyUserNotifier struct{}
+
+func (e *EmptyUserNotifier) SendPasswordResetEmail(opts *SendPasswordResetEmailOpts) error {
+	return nil
+}
+
+func (e *EmptyUserNotifier) SendGithubRelinkEmail(opts *SendGithubRelinkEmailOpts) error {
+	return nil
+}
+
+func (e *EmptyUserNotifier) SendEmailVerification(opts *SendEmailVerificationOpts) error {
+	return nil
+}
+
+func (e *EmptyUserNotifier) SendProjectInviteEmail(opts *SendProjectInviteEmailOpts) error {
+	return nil
+}

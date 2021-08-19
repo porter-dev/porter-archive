@@ -562,6 +562,15 @@ const getJobs = baseApi<
   return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
 });
 
+const getJobStatus = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.name}/jobs/status`;
+});
+
 const getJobPods = baseApi<
   {
     cluster_id: number;
@@ -1132,6 +1141,7 @@ export default {
   getIngress,
   getInvites,
   getJobs,
+  getJobStatus,
   getJobPods,
   getMatchingPods,
   getMetrics,

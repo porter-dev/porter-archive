@@ -97,6 +97,7 @@ func (app *App) HandleGetNotificationConfig(w http.ResponseWriter, r *http.Reque
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+		return
 	}
 
 	release, err := app.Repo.Release.ReadRelease(uint(clusterID), name, namespace)
@@ -111,6 +112,7 @@ func (app *App) HandleGetNotificationConfig(w http.ResponseWriter, r *http.Reque
 			Code:   ErrReleaseReadData,
 			Errors: []string{"release not found"},
 		}, w)
+		return
 	}
 
 	config := &models.NotificationConfigExternal{

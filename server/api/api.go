@@ -95,11 +95,13 @@ type App struct {
 	GoogleUserConf    *oauth2.Config
 	SlackConf         *oauth2.Config
 
-	db              *gorm.DB
-	validator       *vr.Validate
-	translator      *ut.Translator
-	tokenConf       *token.TokenGeneratorConf
-	analyticsClient analytics.AnalyticsSegmentClient
+	// analytics client for reporting
+	AnalyticsClient analytics.AnalyticsSegmentClient
+
+	db         *gorm.DB
+	validator  *vr.Validate
+	translator *ut.Translator
+	tokenConf  *token.TokenGeneratorConf
 }
 
 type AppCapabilities struct {
@@ -242,7 +244,7 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	newSegmentClient := analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, app.Logger)
-	app.analyticsClient = newSegmentClient
+	app.AnalyticsClient = newSegmentClient
 
 	app.updateChartRepoURLs()
 

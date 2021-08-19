@@ -14,11 +14,14 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
+import InfoTooltip from "../../../components/InfoTooltip";
+import Tooltip from "@material-ui/core/Tooltip";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
   handleError: () => void;
   projectName: string;
+  highlightCosts?: boolean;
   infras: InfraType[];
 };
 
@@ -277,6 +280,33 @@ export default class DOFormSection extends Component<PropsType, StateType> {
             </Highlight>
             .
           </Helper>
+          <Helper>
+            Estimated Cost:{" "}
+            <CostHighlight highlight={this.props.highlightCosts}>
+              $90/Month
+            </CostHighlight>
+            <Tooltip
+              title={
+                <div
+                  style={{
+                    fontFamily: "Work Sans, sans-serif",
+                    fontSize: "12px",
+                    fontWeight: "normal",
+                    padding: "5px 6px",
+                  }}
+                >
+                  Cluster cost: ~$10/month <br />
+                  Machine (x3) cost: ~$60/month <br />
+                  Networking cost: ~$20/month
+                </div>
+              }
+              placement="top"
+            >
+              <StyledInfoTooltip>
+                <i className="material-icons">help_outline</i>
+              </StyledInfoTooltip>
+            </Tooltip>
+          </Helper>
           <CheckboxRow
             isRequired={true}
             checked={this.state.provisionConfirmed}
@@ -387,4 +417,26 @@ const GuideButton = styled.a`
 const CloseButtonImg = styled.img`
   width: 14px;
   margin: 0 auto;
+`;
+
+const CostHighlight = styled.span<{ highlight: boolean }>`
+  background-color: ${(props) => props.highlight && "yellow"};
+`;
+
+const StyledInfoTooltip = styled.div`
+  display: inline-block;
+  position: relative;
+  margin-right: 2px;
+  > i {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -10px;
+    font-size: 10px;
+    color: #858faaaa;
+    cursor: pointer;
+    :hover {
+      color: #aaaabb;
+    }
+  }
 `;

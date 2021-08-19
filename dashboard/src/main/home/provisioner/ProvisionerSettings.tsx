@@ -13,6 +13,7 @@ import SaveButton from "components/SaveButton";
 import ExistingClusterSection from "./ExistingClusterSection";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushFiltered } from "shared/routing";
+import InfoTooltip from "../../../components/InfoTooltip";
 
 type PropsType = RouteComponentProps & {
   isInNewProject?: boolean;
@@ -23,6 +24,7 @@ type PropsType = RouteComponentProps & {
 
 type StateType = {
   selectedProvider: string | null;
+  highlightCosts: boolean;
   infras: InfraType[];
 };
 
@@ -31,6 +33,7 @@ const providers = ["aws", "gcp", "do"];
 class NewProject extends Component<PropsType, StateType> {
   state = {
     selectedProvider: null as string | null,
+    highlightCosts: true,
     infras: [] as InfraType[],
   };
 
@@ -95,6 +98,7 @@ class NewProject extends Component<PropsType, StateType> {
             handleError={this.handleError}
             projectName={projectName}
             infras={infras}
+            highlightCosts={this.state.highlightCosts}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
@@ -108,6 +112,7 @@ class NewProject extends Component<PropsType, StateType> {
             handleError={this.handleError}
             projectName={projectName}
             infras={infras}
+            highlightCosts={this.state.highlightCosts}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
@@ -121,6 +126,7 @@ class NewProject extends Component<PropsType, StateType> {
             handleError={this.handleError}
             projectName={projectName}
             infras={infras}
+            highlightCosts={this.state.highlightCosts}
             setSelectedProvisioner={(x: string | null) => {
               this.setState({ selectedProvider: x });
             }}
@@ -214,11 +220,28 @@ class NewProject extends Component<PropsType, StateType> {
                 <Block
                   key={i}
                   onClick={() => {
-                    this.setState({ selectedProvider: provider });
+                    this.setState({
+                      selectedProvider: provider,
+                      highlightCosts: false,
+                    });
                   }}
                 >
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
+                  <CostSection
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      this.setState({
+                        selectedProvider: provider,
+                        highlightCosts: true,
+                      });
+                    }}
+                  >
+                    {provider == "aws" && "$205/Month"}
+                    {provider == "gcp" && "$250/Month"}
+                    {provider == "do" && "$90/Month"}
+                    <InfoTooltip text={""} />
+                  </CostSection>
                   <BlockDescription>Hosted in your own cloud.</BlockDescription>
                 </Block>
               );
@@ -334,4 +357,9 @@ const Block = styled.div<{ disabled?: boolean }>`
       opacity: 1;
     }
   }
+`;
+
+const CostSection = styled.p`
+  position: absolute;
+  left: 0;
 `;

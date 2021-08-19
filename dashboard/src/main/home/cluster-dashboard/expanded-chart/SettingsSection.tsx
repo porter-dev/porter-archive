@@ -14,12 +14,12 @@ import _ from "lodash";
 import CopyToClipboard from "components/CopyToClipboard";
 import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
+import NotificationSettingsSection from "./NotificationSettingsSection";
 
 type PropsType = {
   currentChart: ChartType;
   refreshChart: () => void;
   setShowDeleteOverlay: (x: boolean) => void;
-  showSource?: boolean;
   saveButtonText?: string | null;
 };
 
@@ -27,7 +27,6 @@ const SettingsSection: React.FC<PropsType> = ({
   currentChart,
   refreshChart,
   setShowDeleteOverlay,
-  showSource,
   saveButtonText,
 }) => {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>("");
@@ -200,21 +199,19 @@ const SettingsSection: React.FC<PropsType> = ({
 
     return (
       <>
-        {showSource && (
-          <>
-            <Heading>Source Settings</Heading>
-            <Helper>Specify an image tag to use.</Helper>
-            <ImageSelector
-              selectedTag={selectedTag}
-              selectedImageUrl={selectedImageUrl}
-              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
-              setSelectedTag={(x: string) => setSelectedTag(x)}
-              forceExpanded={true}
-              disableImageSelect={true}
-            />
-            <Br />
-          </>
-        )}
+        <>
+          <Heading>Source Settings</Heading>
+          <Helper>Specify an image tag to use.</Helper>
+          <ImageSelector
+            selectedTag={selectedTag}
+            selectedImageUrl={selectedImageUrl}
+            setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
+            setSelectedTag={(x: string) => setSelectedTag(x)}
+            forceExpanded={true}
+            disableImageSelect={true}
+          />
+          <Br />
+        </>
 
         <>
           <Heading>Redeploy Webhook</Heading>
@@ -256,8 +253,9 @@ const SettingsSection: React.FC<PropsType> = ({
   return (
     <Wrapper>
       {!loadingWebhookToken ? (
-        <StyledSettingsSection showSource={showSource}>
+        <StyledSettingsSection>
           {renderWebhookSection()}
+          <NotificationSettingsSection currentChart={currentChart} />
           <Heading>Additional Settings</Heading>
           <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
             Delete {currentChart.name}
@@ -266,7 +264,7 @@ const SettingsSection: React.FC<PropsType> = ({
       ) : (
         <Loading />
       )}
-      {!loadingWebhookToken && showSource && (
+      {!loadingWebhookToken && (
         <SaveButton
           text={saveButtonText || "Save Config"}
           status={saveValuesStatus}
@@ -370,7 +368,7 @@ const Wrapper = styled.div`
   height: 100%;
 `;
 
-const StyledSettingsSection = styled.div<{ showSource: boolean }>`
+const StyledSettingsSection = styled.div`
   width: 100%;
   background: #ffffff11;
   padding: 0 35px;
@@ -378,7 +376,7 @@ const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   position: relative;
   border-radius: 8px;
   overflow: auto;
-  height: ${(props) => (props.showSource ? "calc(100% - 55px)" : "100%")};
+  height: calc(100% - 55px);
 `;
 
 const Holder = styled.div`

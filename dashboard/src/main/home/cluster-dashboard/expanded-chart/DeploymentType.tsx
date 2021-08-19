@@ -1,8 +1,8 @@
 import React, { useState } from "react";
+import styled from "styled-components";
 
 import { integrationList } from "shared/common";
 import { ChartType } from "shared/types";
-import styled from "styled-components";
 
 type Props = {
   currentChart: ChartType;

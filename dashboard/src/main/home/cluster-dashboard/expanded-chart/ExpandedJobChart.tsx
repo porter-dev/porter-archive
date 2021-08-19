@@ -464,7 +464,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         return (
           this.props.isAuthorized("job", "", ["get", "delete"]) && (
             <SettingsSection
-              showSource={true}
               currentChart={this.state.currentChart}
               refreshChart={() => this.refreshChart(0)}
               setShowDeleteOverlay={(x: boolean) => {

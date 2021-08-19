@@ -71,5 +71,29 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
+	// POST /api/cli/login/exchange -> user.NewCLILoginExchangeHandler
+	cliLoginExchangeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/cli/login/exchange",
+			},
+		},
+	)
+
+	cliLoginExchangeHandler := user.NewCLILoginExchangeHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: cliLoginExchangeEndpoint,
+		Handler:  cliLoginExchangeHandler,
+		Router:   r,
+	})
+
 	return routes
 }

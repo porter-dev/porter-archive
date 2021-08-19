@@ -75,7 +75,7 @@ class ProvisionerLogs extends Component<PropsType, StateType> {
         case "error":
           return (
             <Message>
-              Porter encountered an error while provisioning this resource.
+              Omni encountered an error while provisioning this resource.
             </Message>
           );
         default:

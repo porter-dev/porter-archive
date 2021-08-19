@@ -194,7 +194,7 @@ class Templates extends Component<PropsType, StateType> {
             width="665px"
             height="min-content"
           >
-            Porter encountered an error. Full error log:
+            Omni encountered an error. Full error log:
             <CodeBlock>{ingressError.error}</CodeBlock>
           </Modal>
         )}

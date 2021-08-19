@@ -143,7 +143,7 @@ const RepoList: React.FC<Props> = ({
         <LoadingWrapper>
           No connected Github repos found. You can
           <A href={"/api/integrations/github-app/install"}>
-            Install Porter in more repositories
+            Install Omni in more repositories
           </A>
           .
         </LoadingWrapper>
@@ -151,7 +151,7 @@ const RepoList: React.FC<Props> = ({
         <LoadingWrapper>
           No connected Github repos found.
           <A href={"/api/integrations/github-app/oauth"}>
-            Authorize Porter to view your repositories.
+            Authorize Omni to view your repositories.
           </A>
         </LoadingWrapper>
       );

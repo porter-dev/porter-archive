@@ -15,7 +15,7 @@ const UnexpectedErrorPage: React.FC = ({ error, resetErrorBoundary }: any) => (
         </BackButton>
         <Splitter>|</Splitter>
         <Helper>
-          Sorry for the inconvinience! The Porter team has been notified
+          Sorry for the inconvinience! The Omni team has been notified
         </Helper>
       </Flex>
     </StyledPageNotFound>

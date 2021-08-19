@@ -54,8 +54,8 @@ const ClusterSettings: React.FC = () => {
   if (!context.currentCluster?.infra_id || !context.currentCluster?.service) {
     helperText = (
       <Helper>
-        Remove this cluster from Porter. Since this cluster was not provisioned
-        by Porter, deleting the cluster will only detach this cluster from your
+        Remove this cluster from Omni. Since this cluster was not provisioned
+        by Omni, deleting the cluster will only detach this cluster from your
         project. To delete the cluster itself, you must do so manually. This
         operation cannot be undone.
       </Helper>
@@ -108,7 +108,7 @@ const ClusterSettings: React.FC = () => {
         <div>
           <Heading>Credential Rotation</Heading>
           <Helper>
-            Rotate the credentials that Porter uses to connect to the cluster.
+            Rotate the credentials that Omni uses to connect to the cluster.
           </Helper>
           <Button color="#616FEEcc" onClick={() => setStartRotateCreds(true)}>
             Rotate Credentials

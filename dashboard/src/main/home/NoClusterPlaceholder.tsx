@@ -20,7 +20,7 @@ class NoClusterPlaceholder extends Component<PropsType, StateType> {
       <StyledNoClusterPlaceholder>
         <Bold>
           <i className="material-icons">tips_and_updates</i>
-          Porter - Getting Started
+          Omni - Getting Started
         </Bold>
         <br />
         <br />

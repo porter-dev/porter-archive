@@ -114,7 +114,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
     if (!currentCluster?.infra_id || !currentCluster.service) {
       return (
         <Warning highlight={true}>
-          ⚠️ Since this cluster was not provisioned by Porter, deleting the
+          ⚠️ Since this cluster was not provisioned by Omni, deleting the
           cluster will only detach this cluster from your project. To delete the
           cluster itself, you must do so manually.
         </Warning>

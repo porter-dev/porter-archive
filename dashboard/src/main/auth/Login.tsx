@@ -229,8 +229,7 @@ export default class Login extends Component<PropsType, StateType> {
             <GradientBg />
           </OverflowWrapper>
           <FormWrapper>
-            <Logo src={logo} />
-            <Prompt>Log in to Porter</Prompt>
+            <Prompt>Log in to Omni</Prompt>
             {this.renderGithubSection()}
             {this.renderGoogleSection()}
             {(this.state.hasGithub || this.state.hasGoogle) &&
@@ -246,9 +245,9 @@ export default class Login extends Component<PropsType, StateType> {
           </FormWrapper>
         </LoginPanel>
         <Footer>
-          © 2021 Porter Technologies Inc. •
+          © 2021 Onmi RPA  Inc. •
           <Link
-            href="https://docs.getporter.dev/docs/terms-of-service"
+            href="https://omnirpa.io/docs/terms-of-service"
             target="_blank"
           >
             Terms & Privacy

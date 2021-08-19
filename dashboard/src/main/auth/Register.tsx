@@ -225,7 +225,7 @@ export default class Register extends Component<PropsType, StateType> {
           </OverflowWrapper>
           <FormWrapper>
             <Logo src={logo} />
-            <Prompt>Sign up for Porter</Prompt>
+            <Prompt>Sign up for Omni</Prompt>
             {this.renderGithubSection()}
             {this.renderGoogleSection()}
             {(this.state.hasGithub || this.state.hasGoogle) &&
@@ -244,9 +244,9 @@ export default class Register extends Component<PropsType, StateType> {
           </FormWrapper>
         </LoginPanel>
         <Footer>
-          © 2021 Porter Technologies Inc. •
+          © 2021 OmniRPA Inc. •
           <Link
-            href="https://docs.getporter.dev/docs/terms-of-service"
+            href="https://omnirpa.io/docs/terms-of-service"
             target="_blank"
           >
             Terms & Privacy

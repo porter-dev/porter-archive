@@ -416,7 +416,7 @@ tabs:
     - type: heading
       label: Ingress Custom Annotations
     - type: subtitle
-      label: Assign custom annotations to Ingress. These annotations will overwrite the annotations Porter assigns by default.
+      label: Assign custom annotations to Ingress. These annotations will overwrite the annotations Omni assigns by default.
     - type: key-value-array
       variable: ingress.annotations
       settings:

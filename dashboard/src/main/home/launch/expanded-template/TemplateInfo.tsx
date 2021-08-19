@@ -112,7 +112,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
               target="_blank"
               href="https://docs.getporter.dev/docs/https-and-custom-domains"
             >
-              Porter's HTTPS setup guide
+              Omni's HTTPS setup guide
             </Link>
             &nbsp;(5 minutes).
           </Banner>

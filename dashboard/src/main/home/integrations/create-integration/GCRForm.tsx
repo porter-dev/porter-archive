@@ -79,9 +79,9 @@ export default class GCRForm extends Component<PropsType, StateType> {
     return (
       <StyledForm>
         <CredentialWrapper>
-          <Heading>Porter Settings</Heading>
+          <Heading>Omni Settings</Heading>
           <Helper>
-            Give a name to this set of registry credentials (just for Porter).
+            Give a name to this set of registry credentials (just for Omni).
           </Helper>
           <InputRow
             type="text"

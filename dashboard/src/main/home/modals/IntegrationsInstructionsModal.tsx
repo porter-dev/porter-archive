@@ -29,11 +29,11 @@ export default class ClusterInstructionsModal extends Component<
         return (
           <Placeholder>
             <Bold>Elastic Container Registry (ECR):</Bold>
-            1. Run the following command on the Porter CLI.
-            <Code>porter connect ecr</Code>
+            1. Run the following command on the Omni CLI.
+            <Code>omni connect ecr</Code>
             2. Enter the region your ECR instance belongs to. For example:
             <Code>AWS Region: us-west-2</Code>
-            3. Porter will automatically set up an IAM user in your AWS account
+            3. Omni will automatically set up an IAM user in your AWS account
             to grant ECR access. Once this is done, it will prompt you to enter
             a name for the registry. Here you may enter any name you'd like.
             <Code>Give this registry a name: my-awesome-registry</Code>

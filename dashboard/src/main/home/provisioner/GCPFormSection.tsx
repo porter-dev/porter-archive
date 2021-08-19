@@ -366,7 +366,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           <Br />
           <Heading>GCP Resources</Heading>
           <Helper>
-            Porter will provision the following GCP resources in your own cloud.
+            Omni will provision the following GCP resources in your own cloud.
           </Helper>
           <CheckboxList
             options={provisionOptions}
@@ -377,7 +377,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           />
           {this.renderClusterNameSection()}
           <Helper>
-            By default, Porter creates a cluster with three e2-medium instances
+            By default, Omni creates a cluster with three e2-medium instances
             (2vCPUs and 4GB RAM each). Google Cloud will bill you for any
             provisioned resources. Learn more about GKE pricing
             <Highlight

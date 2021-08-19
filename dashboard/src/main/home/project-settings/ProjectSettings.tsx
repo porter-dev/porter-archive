@@ -53,8 +53,8 @@ class ProjectSettings extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>Delete Project</Heading>
           <Helper>
             Permanently delete this project. This will destroy all clusters tied
-            to this project that have been provisioned by Porter. Note that this
-            will not delete the image registries provisioned by Porter. To
+            to this project that have been provisioned by Omni. Note that this
+            will not delete the image registries provisioned by Omni. To
             delete the registries, please do so manually in your cloud console.
           </Helper>
 

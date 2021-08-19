@@ -65,7 +65,7 @@ class NewProject extends Component<PropsType, StateType> {
               <Highlight
                 onClick={() => this.setState({ selectedProvider: null })}
               >
-                Provision through Porter
+                Provision through Omni
               </Highlight>
             </Helper>
           ) : (
@@ -196,7 +196,7 @@ class NewProject extends Component<PropsType, StateType> {
         </>
       );
     } else {
-      return "Need a cluster? Provision through Porter:";
+      return "Need a cluster? Provision through Omni:";
     }
   };
 

@@ -143,7 +143,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
         )}
         {this.renderRegistrySection()}
         <SubtitleAlt>
-          <Bold>Note:</Bold> To auto-deploy each time you push changes, Porter
+          <Bold>Note:</Bold> To auto-deploy each time you push changes, Omni
           will write Github Secrets and a GitHub Actions file to your repo.
           <Highlight
             href="https://docs.getporter.dev/docs/auto-deploy-requirements#cicd-with-github-actions"

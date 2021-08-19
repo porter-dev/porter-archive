@@ -254,7 +254,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           <Br />
           <Heading>DigitalOcean Resources</Heading>
           <Helper>
-            Porter will provision the following DigitalOcean resources in your
+            Omni will provision the following DigitalOcean resources in your
             own cloud.
           </Helper>
           <CheckboxList
@@ -266,7 +266,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           />
           {this.renderClusterNameSection()}
           <Helper>
-            By default, Porter creates a cluster with three Standard (2vCPUs /
+            By default, Omni creates a cluster with three Standard (2vCPUs /
             2GB RAM) droplets. DigitalOcean will bill you for any provisioned
             resources. Learn more about DOKS pricing
             <Highlight

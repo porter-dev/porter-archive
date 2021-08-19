@@ -27,7 +27,7 @@ export default class Feedback extends Component<PropsType, StateType> {
         <DropdownAlt dropdownWidth="300px" dropdownMaxHeight="200px">
           <ConfirmationMessage>
             <i className="material-icons-outlined">emoji_food_beverage</i>
-            Thanks for improving Porter.
+            Thanks for improving Omni.
           </ConfirmationMessage>
         </DropdownAlt>
       );

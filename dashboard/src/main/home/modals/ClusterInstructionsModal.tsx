@@ -28,7 +28,7 @@ export default class ClusterInstructionsModal extends Component<
       case 0:
         return (
           <Placeholder>
-            1. To install the Porter CLI, first retrieve the latest binary:
+            1. To install the Omni CLI, first retrieve the latest binary:
             <Code>
               &#123;
               <br />
@@ -51,21 +51,21 @@ export default class ClusterInstructionsModal extends Component<
             </Code>
             2. Move the file into your bin:
             <Code>
-              chmod +x ./porter
+              chmod +x ./omni
               <br />
-              sudo mv ./porter /usr/local/bin/porter
+              sudo mv ./omni /usr/local/bin/omni
             </Code>
-            3. Log in to the Porter CLI:
+            3. Log in to the Omni CLI:
             <Code>
-              porter config set-host {location.protocol + "//" + location.host}
+              omni config set-host {location.protocol + "//" + location.host}
               <br />
-              porter auth login
+              omni auth login
             </Code>
-            4. Configure the Porter CLI and link your current context:
+            4. Configure the Omni CLI and link your current context:
             <Code>
-              porter config set-project {this.context.currentProject.id}
+              omni config set-project {this.context.currentProject.id}
               <br />
-              porter connect kubeconfig
+              omni connect kubeconfig
             </Code>
           </Placeholder>
         );
@@ -75,16 +75,16 @@ export default class ClusterInstructionsModal extends Component<
             <Bold>Passing a kubeconfig explicitly</Bold>
             You can pass a path to a kubeconfig file explicitly via:
             <Code>
-              porter connect kubeconfig --kubeconfig path/to/kubeconfig
+              omni connect kubeconfig --kubeconfig path/to/kubeconfig
             </Code>
             <Bold>Passing a context list</Bold>
-            You can initialize Porter with a set of contexts by passing a
-            context list to start. The contexts that Porter will be able to
+            You can initialize Omni with a set of contexts by passing a
+            context list to start. The contexts that Omni will be able to
             access are the same as kubectl config get-contexts. For example, if
             there are two contexts named minikube and staging, you could connect
             both of them via:
             <Code>
-              porter connect kubeconfig --context minikube --context staging
+              omni connect kubeconfig --context minikube --context staging
             </Code>
           </Placeholder>
         );

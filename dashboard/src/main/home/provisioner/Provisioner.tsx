@@ -137,7 +137,7 @@ class Provisioner extends Component<PropsType, StateType> {
 
     return (
       <StyledProvisioner>
-        You have not provisioned any resources for this project through Porter.{" "}
+        You have not provisioned any resources for this project through Omni.{" "}
         <RefreshText
           onClick={() => {
             this.setState({ loading: true });

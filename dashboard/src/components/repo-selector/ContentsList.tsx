@@ -297,7 +297,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Label>
-            Porter has detected a Procfile in this folder. Which process would
+            Omni has detected a Procfile in this folder. Which process would
             you like to run?
           </Label>
           <DockerfileList>
@@ -327,7 +327,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             <CloseButtonImg src={close} />
           </CloseButton>
           <Label>
-            Porter has detected at least one Dockerfile in this folder. Would
+            Onmi has detected at least one Dockerfile in this folder. Would
             you like to use an existing Dockerfile?
           </Label>
           <DockerfileList>

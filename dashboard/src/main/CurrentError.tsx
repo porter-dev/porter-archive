@@ -52,7 +52,7 @@ export default class CurrentError extends Component<PropsType, StateType> {
       return (
         <Overlay>
           <ExpandedError>
-            Porter encountered an error. Full error log:
+            Omni encountered an error. Full error log:
             <CodeBlock>{this.props.currentError}</CodeBlock>
             <ExpandButtonAlt onClick={() => this.setState({ expanded: false })}>
               <i className="material-icons">remove</i>

@@ -83,7 +83,7 @@ const AccountSettingsModal = () => {
                   <Helper>
                     No connected repositories found.
                     <A href={"/api/integrations/github-app/install"}>
-                      Install Porter in your repositories
+                      Install Omni in your repositories
                     </A>
                   </Helper>
                 </ListWrapper>
@@ -106,7 +106,7 @@ const AccountSettingsModal = () => {
                   <br />
                   Don't see the right repos?{" "}
                   <A href={"/api/integrations/github-app/install"}>
-                    Install Porter in more repositories
+                    Install Omni in more repositories
                   </A>
                 </>
               )}
@@ -116,7 +116,7 @@ const AccountSettingsModal = () => {
               <Helper>
                 No connected repositories found.
                 <A href={"/api/integrations/github-app/oauth"}>
-                  Authorize Porter to view your repositories.
+                  Authorize Omni to view your repositories.
                 </A>
               </Helper>
             </ListWrapper>

@@ -414,7 +414,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           <Br />
           <Heading>AWS Resources</Heading>
           <Helper>
-            Porter will provision the following AWS resources in your own cloud.
+            Omni will provision the following AWS resources in your own cloud.
           </Helper>
           <CheckboxList
             options={provisionOptions}
@@ -425,7 +425,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           />
           {this.renderClusterNameSection()}
           <Helper>
-            By default, Porter creates a cluster with three t2.medium instances
+            By default, Omni creates a cluster with three t2.medium instances
             (2vCPUs and 4GB RAM each). AWS will bill you for any provisioned
             resources. Learn more about EKS pricing
             <Highlight

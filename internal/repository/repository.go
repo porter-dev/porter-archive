@@ -25,4 +25,5 @@ type Repository struct {
 	GithubAppInstallation     GithubAppInstallationRepository
 	GithubAppOAuthIntegration GithubAppOAuthIntegrationRepository
 	SlackIntegration          SlackIntegrationRepository
+	NotificationConfig        NotificationConfigRepository
 }

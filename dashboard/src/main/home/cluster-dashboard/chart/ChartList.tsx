@@ -241,6 +241,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
           controllers={controllers || {}}
+          isJob={currentView === "jobs"}
           release={releases[chart.name] || {}}
         />
       );

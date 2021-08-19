@@ -246,6 +246,33 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
+const updateNotificationConfig = baseApi<
+  {
+    payload: any;
+    namespace: string;
+    cluster_id: number;
+  },
+  {
+    project_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
+const getNotificationConfig = baseApi<
+  {
+    namespace: string;
+    cluster_id: number;
+  },
+  {
+    project_id: number;
+    name: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
 const generateGHAWorkflow = baseApi<
   FullActionConfigType,
   {
@@ -533,6 +560,15 @@ const getJobs = baseApi<
   { chart: string; namespace: string; release_name: string; id: number }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
+});
+
+const getJobStatus = baseApi<
+  {
+    cluster_id: number;
+  },
+  { name: string; namespace: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.name}/jobs/status`;
 });
 
 const getJobPods = baseApi<
@@ -1026,6 +1062,8 @@ export default {
   deleteProject,
   deleteRegistryIntegration,
   deleteSlackIntegration,
+  updateNotificationConfig,
+  getNotificationConfig,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -1055,6 +1093,7 @@ export default {
   getIngress,
   getInvites,
   getJobs,
+  getJobStatus,
   getJobPods,
   getMatchingPods,
   getMetrics,

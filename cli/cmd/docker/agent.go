@@ -200,11 +200,13 @@ func (a *Agent) PushImage(image string) error {
 		opts,
 	)
 
+	if out != nil {
+		defer out.Close()
+	}
+
 	if err != nil {
 		return err
 	}
-
-	defer out.Close()
 
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
+import _ from "lodash";
 
 import { ChartType, StorageType } from "shared/types";
 import api from "shared/api";
@@ -49,13 +50,22 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
+    let valuesString = this.state.values;
+
+    // if this is a job, set it to paused
+    if (this.props.currentChart?.chart?.metadata?.name == "job") {
+      const valuesYAML = yaml.load(this.state.values);
+      _.set(valuesYAML, "paused", true);
+      valuesString = yaml.dump(valuesYAML);
+    }
+
     api
       .upgradeChartValues(
         "<token>",
         {
           namespace: this.props.currentChart.namespace,
           storage: StorageType.Secret,
-          values: this.state.values,
+          values: valuesString,
         },
         {
           id: currentProject.id,

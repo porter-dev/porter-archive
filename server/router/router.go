@@ -394,7 +394,21 @@ func New(a *api.App) *chi.Mux {
 			// /api/projects/{project_id}/ci routes
 			r.Method(
 				"POST",
-				"/projects/{project_id}/ci/actions",
+				"/projects/{project_id}/ci/actions/generate",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGenerateGitAction, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"POST",
+				"/projects/{project_id}/ci/actions/create",
 				auth.DoesUserHaveProjectAccess(
 					auth.DoesUserHaveClusterAccess(
 						requestlog.NewHandler(a.HandleCreateGitAction, l),
@@ -881,6 +895,37 @@ func New(a *api.App) *chi.Mux {
 				"/projects/{project_id}/slack_integrations/{slack_integration_id}",
 				auth.DoesUserHaveProjectAccess(
 					requestlog.NewHandler(a.HandleDeleteSlackIntegration, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/slack_integrations/exists",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleSlackIntegrationExists, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			// /projects/{project_id}/releases/{name}/notifications routes
+			r.Method(
+				"POST",
+				"/projects/{project_id}/releases/{name}/notifications",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleUpdateNotificationConfig, l),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/releases/{name}/notifications",
+				auth.DoesUserHaveProjectAccess(
+					requestlog.NewHandler(a.HandleGetNotificationConfig, l),
 					mw.URLParam,
 					mw.WriteAccess,
 				),

@@ -250,13 +250,13 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 // CreateNamespace creates a namespace with the given name.
 func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
 	// check if namespace exists
-	checkNS, _ := a.Clientset.CoreV1().Namespaces().Get(
+	checkNS, err := a.Clientset.CoreV1().Namespaces().Get(
 		context.TODO(),
 		name,
 		metav1.GetOptions{},
 	)
 
-	if checkNS != nil {
+	if err == nil && checkNS != nil {
 		return checkNS, nil
 	}
 
@@ -274,9 +274,9 @@ func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
 }
 
 func (a *Agent) GetPorterAgent() (*appsv1.Deployment, error) {
-	return a.Clientset.AppsV1().Deployments("porter").Get(
+	return a.Clientset.AppsV1().Deployments("porter-agent-system").Get(
 		context.TODO(),
-		"porter-agent",
+		"porter-agent-controller-manager",
 		metav1.GetOptions{},
 	)
 }

@@ -22,18 +22,10 @@ export type Event = {
   timestamp: string;
 };
 
-export type EventController = { type: string; name: string };
+type EventsTabProps = {};
 
-type EventsTabProps = {
-  controllers: { type: string; name: string }[];
-};
-
-const EventsTab: React.FunctionComponent<EventsTabProps> = ({
-  controllers,
-}) => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+const EventsTab: React.FunctionComponent<EventsTabProps> = ({}) => {
+  const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [isPorterAgentInstalled, setIsPorterAgentInstalled] = useState<boolean>(
     false
@@ -46,14 +38,22 @@ const EventsTab: React.FunctionComponent<EventsTabProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<Event>();
 
   useEffect(() => {
-    setIsLoading(true);
-    checkIfPorterAgentIsInstalled(false).then(() => setIsLoading(false));
+    checkIfPorterAgentIsInstalled();
   }, [currentCluster, currentProject]);
 
-  const checkIfPorterAgentIsInstalled = async (
-    enableRetry: boolean,
-    retryCount = 0
-  ) => {
+  useEffect(() => {
+    if (!isPorterAgentInstalling) {
+      return () => {};
+    }
+    const interval = setInterval(() => {
+      checkIfPorterAgentIsInstalled();
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isPorterAgentInstalling]);
+
+  const checkIfPorterAgentIsInstalled = async () => {
+    setIsLoading(true);
     try {
       await api.getPorterAgentIsInstalled(
         "<token>",
@@ -65,17 +65,10 @@ const EventsTab: React.FunctionComponent<EventsTabProps> = ({
         }
       );
       setIsPorterAgentInstalled(true);
-      setIsPorterAgentInstalling(false);
     } catch (error) {
       setIsPorterAgentInstalled(false);
-      if (enableRetry) {
-        if (retryCount > 3) {
-          return;
-        }
-        setTimeout(() => {
-          checkIfPorterAgentIsInstalled(enableRetry, retryCount + 1);
-        }, 500);
-      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -91,9 +84,7 @@ const EventsTab: React.FunctionComponent<EventsTabProps> = ({
         }
       );
       setIsPorterAgentInstalling(true);
-      checkIfPorterAgentIsInstalled(true);
     } catch (error) {
-      setCurrentError("There was an error trying to install the porter agent");
     } finally {
       setIsLoading(false);
     }
@@ -145,10 +136,7 @@ const EventsTab: React.FunctionComponent<EventsTabProps> = ({
 
   return (
     <EventsPageWrapper>
-      <EventsList
-        controllers={controllers}
-        selectEvent={(e) => setSelectedEvent(e)}
-      />
+      <EventsList selectEvent={(e) => setSelectedEvent(e)} />
     </EventsPageWrapper>
   );
 };

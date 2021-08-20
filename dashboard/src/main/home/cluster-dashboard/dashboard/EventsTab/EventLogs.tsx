@@ -1,12 +1,14 @@
 import React, { useContext } from "react";
 import styled from "styled-components";
 import backArrow from "assets/back_arrow.png";
-import { EventContext } from "./EventsContext";
 
-type EventLogsProps = {};
+type EventLogsProps = {
+  clearSelectedEvent: () => void;
+};
 
-const EventLogs: React.FunctionComponent<EventLogsProps> = ({}) => {
-  const { clearSelectedEvent } = useContext(EventContext);
+const EventLogs: React.FunctionComponent<EventLogsProps> = ({
+  clearSelectedEvent,
+}) => {
   return (
     <>
       <ControlRow>

@@ -1045,7 +1045,7 @@ const getPorterAgentIsInstalled = baseApi<
 
 const installPorterAgent = baseApi<
   {},
-  { project_id: number, cluster_id: number }
+  { project_id: number; cluster_id: number }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/agent/deploy?cluster_id=${pathParams.cluster_id}`;
 });
@@ -1054,9 +1054,9 @@ const getEvents = baseApi<
   {
     limit: number;
     skip: number;
-    type: "pod" | "node" | "hpa";
-    owner_type: string;
-    owner_name: string;
+    type: "pod" | "node" | "hpa" | string;
+    owner_type?: string;
+    owner_name?: string;
     sort_by: "timestamp";
   },
   {

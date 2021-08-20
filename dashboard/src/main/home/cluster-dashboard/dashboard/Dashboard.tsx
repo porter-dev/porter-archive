@@ -10,7 +10,7 @@ import NodeList from "./NodeList";
 import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
-import ClusterEventsTab from "./EventsTab";
+import ClusterEventsTab from "./EventsTab/EventsTab";
 
 import Metrics from "./Metrics";
 

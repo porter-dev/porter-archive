@@ -8,6 +8,7 @@ type Option = {
 
 type DropdownProps = {
   options: Array<Option>;
+  selectedOption: Option;
   onSelect: (selectedOption: Option) => unknown;
   selectLabel?: (currentLabel: string) => void;
   selectValue?: (currentValue: any) => void;
@@ -15,15 +16,17 @@ type DropdownProps = {
 
 const Dropdown: React.FunctionComponent<DropdownProps> = ({
   options,
+  selectedOption,
   selectLabel,
   selectValue,
   onSelect,
 }) => {
   const [isDropdownExpanded, setIsDropdownExpanded] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<Option>(options[0]);
 
   const handleSelectOption = (option: Option) => {
-    setSelectedOption(option);
+    if (selectedOption.label === option.label) {
+      return;
+    }
     onSelect(option);
     typeof selectLabel === "function" && selectLabel(option.label);
     typeof selectValue === "function" && selectValue(option.value);

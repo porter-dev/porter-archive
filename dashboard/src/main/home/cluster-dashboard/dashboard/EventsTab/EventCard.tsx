@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Event } from "./EventsContext";
+import { Event } from "./EventsTab";
 
 type CardProps = {
   event: Event;

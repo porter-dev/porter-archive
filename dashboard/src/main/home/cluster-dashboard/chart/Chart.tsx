@@ -179,9 +179,24 @@ const Chart: React.FunctionComponent<Props> = ({
             margin_left={"17px"}
           />
           <LastDeployed>
-            <Dot>•</Dot> Last deployed{" "}
-            {readableDate(
-              release?.info?.last_deployed || chart.info.last_deployed
+            {isJob && jobStatus?.status ? (
+              <>
+                <Dot>•</Dot>
+                <JobStatus status={jobStatus.status}>
+                  {jobStatus.status === "running" ? "Started" : "Last run"} {jobStatus.status} at{" "}
+                  {readableDate(jobStatus.start_time)}
+                </JobStatus>
+              </>
+            ) : (
+              <>
+                <Dot>•</Dot>
+                <JobStatus>
+                  Last deployed{" "}
+                  {readableDate(
+                    release?.info?.last_deployed || chart.info.last_deployed
+                  )}
+                </JobStatus>
+              </>
             )}
           </LastDeployed>
         </InfoWrapper>
@@ -193,15 +208,6 @@ const Chart: React.FunctionComponent<Props> = ({
       </BottomWrapper>
 
       <TopRightContainer>
-        {isJob && jobStatus?.status && (
-          <>
-            <JobStatus status={jobStatus.status}>
-              Last run {jobStatus.status.toUpperCase()} at{" "}
-              {readableDate(jobStatus.start_time)}
-            </JobStatus>
-            <StatusDot>•</StatusDot>
-          </>
-        )}
         <span>v{release?.version || chart.version}</span>
       </TopRightContainer>
     </StyledChart>
@@ -331,17 +337,17 @@ const Title = styled.div`
   }
 `;
 
-const JobStatus = styled.span`
-  font-weight: bold;
-  ${(props: { status: string }) => `
+const JobStatus = styled.span<{ status?: string }>`
+  font-size: 13px;
+  font-weight: ${props => props.status && props.status !== "running" ? "500" : ""};
+  ${props => `
   color: ${
     props.status === "succeeded"
       ? "rgb(56, 168, 138)"
       : props.status === "failed"
-      ? "rgb(204, 61, 66)"
-      : "#aaaabb"
-  }
-`}
+      ? "#ff385d"
+      : "#aaaabb66"
+  }`}
 `;
 
 const StyledChart = styled.div`

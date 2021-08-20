@@ -4,11 +4,14 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 type PorterHandler interface {
 	Config() *shared.Config
+	Repo() repository.Repository
+	HandleAPIError(w http.ResponseWriter, err apierrors.RequestError)
 }
 
 type PorterHandlerWriter interface {
@@ -18,7 +21,7 @@ type PorterHandlerWriter interface {
 
 type PorterHandlerReader interface {
 	PorterHandler
-	DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{})
+	DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool
 }
 
 type PorterHandlerReadWriter interface {
@@ -26,43 +29,36 @@ type PorterHandlerReadWriter interface {
 	PorterHandlerReader
 }
 
-// default
-
-// type PorterHandler struct {
-// 	config           *shared.Config
-// 	decoderValidator shared.RequestDecoderValidator
-// 	writer           shared.ResultWriter
-// }
-
-// handler needs:
-// - interface for decodervalidator+writer
-// - shared configuration
-// - writer
-// - context set (user, project, etc)
-// - standard error
-
-// notes:
-// decode and validate should happen above the handler itself. the scopes and strongly typed
-
-// "handlers" refer to an aggregation of application-logic. they should not contain any logic
-// for:
-// - error aggregation (so they accept api error interface)
-// - analytics
-// - authentication
-// - reading in required context (part of authentication)
-
-// ProjectScopedHandler()
-// - read project model from context
-// - so "Get Project" accepts a ProjectGetter, which calls readUser() and readProject()
-
-// The errors that a handler can throw should be defined in API spec
-
-type UserGetter interface {
-	readUser() *models.User
+type DefaultPorterHandler struct {
+	config           *shared.Config
+	decoderValidator shared.RequestDecoderValidator
+	writer           shared.ResultWriter
 }
 
-type ProjectGetter interface {
-	UserGetter
+func NewDefaultPorterHandler(
+	config *shared.Config,
+	decoderValidator shared.RequestDecoderValidator,
+	writer shared.ResultWriter,
+) PorterHandlerReadWriter {
+	return &DefaultPorterHandler{config, decoderValidator, writer}
+}
 
-	readProject() *models.Project
+func (d *DefaultPorterHandler) Config() *shared.Config {
+	return d.config
+}
+
+func (d *DefaultPorterHandler) Repo() repository.Repository {
+	return d.config.Repo
+}
+
+func (d *DefaultPorterHandler) HandleAPIError(w http.ResponseWriter, err apierrors.RequestError) {
+	apierrors.HandleAPIError(w, d.Config().Logger, err)
+}
+
+func (d *DefaultPorterHandler) WriteResult(w http.ResponseWriter, v interface{}) {
+	d.writer.WriteResult(w, v)
+}
+
+func (d *DefaultPorterHandler) DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool {
+	return d.decoderValidator.DecodeAndValidate(w, r, v)
 }

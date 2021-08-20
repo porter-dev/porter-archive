@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authn"
+	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
@@ -14,9 +15,7 @@ import (
 )
 
 type UserCreateHandler struct {
-	config           *shared.Config
-	decoderValidator shared.RequestDecoderValidator
-	writer           shared.ResultWriter
+	handlers.PorterHandlerReadWriter
 }
 
 func NewUserCreateHandler(
@@ -24,13 +23,15 @@ func NewUserCreateHandler(
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *UserCreateHandler {
-	return &UserCreateHandler{config, decoderValidator, writer}
+	return &UserCreateHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+	}
 }
 
 func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateUserRequest{}
 
-	ok := u.decoderValidator.DecodeAndValidate(w, r, request)
+	ok := u.DecodeAndValidate(w, r, request)
 
 	if !ok {
 		return
@@ -42,17 +43,11 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if user exists
-	doesExist := doesUserExist(u.config.Repo, user)
+	doesExist := doesUserExist(u.Repo().User(), user)
 
 	if doesExist {
-		apierrors.HandleAPIError(
-			w,
-			u.config.Logger,
-			apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("email already taken"),
-				http.StatusBadRequest,
-			),
-		)
+		err := fmt.Errorf("email already taken")
+		u.HandleAPIError(w, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -60,31 +55,31 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
 
 	if err != nil {
-		apierrors.HandleAPIError(w, u.config.Logger, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	user.Password = string(hashedPw)
 
 	// write the user to the db
-	user, err = u.config.Repo.User().CreateUser(user)
+	user, err = u.Repo().User().CreateUser(user)
 
 	if err != nil {
-		apierrors.HandleAPIError(w, u.config.Logger, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// save the user as authenticated in the session
-	if err := authn.SaveUserAuthenticated(w, r, u.config, user); err != nil {
-		apierrors.HandleAPIError(w, u.config.Logger, apierrors.NewErrInternal(err))
+	if err := authn.SaveUserAuthenticated(w, r, u.Config(), user); err != nil {
+		u.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	u.writer.WriteResult(w, user.ToUserType())
+	u.WriteResult(w, user.ToUserType())
 }
 
-func doesUserExist(repo repository.Repository, user *models.User) bool {
-	user, err := repo.User().ReadUserByEmail(user.Email)
+func doesUserExist(userRepo repository.UserRepository, user *models.User) bool {
+	user, err := userRepo.ReadUserByEmail(user.Email)
 
 	return user != nil && err == nil
 }

@@ -14,7 +14,7 @@ func TestGetProjectSuccessful(t *testing.T) {
 	// create a test project
 	config := apitest.LoadConfig(t)
 	user := apitest.CreateTestUser(t, config, true)
-	proj, err := project.CreateProjectWithUser(config, &models.Project{
+	proj, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
 

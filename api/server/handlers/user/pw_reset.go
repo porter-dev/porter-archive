@@ -70,35 +70,9 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	// convert the form to a project model
-	expiry := time.Now().Add(30 * time.Minute)
-
-	rawToken, err := random.StringWithCharset(32, "")
+	pwReset, rawToken, err := CreatePWResetTokenForEmail(c.Repo().PWResetToken(), c.HandleAPIError, w, request)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
-		return
-	}
-
-	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
-
-	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
-		return
-	}
-
-	pwReset := &models.PWResetToken{
-		Email:   request.Email,
-		IsValid: true,
-		Expiry:  &expiry,
-		Token:   string(hashedToken),
-	}
-
-	// handle write to the database
-	pwReset, err = c.Repo().PWResetToken().CreatePWResetToken(pwReset)
-
-	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -147,13 +121,13 @@ func (c *UserPasswordVerifyResetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
-	ok, _ = VerifyPasswordResetToken(c.Repo().PWResetToken(), c.HandleAPIError, w, request)
-
-	if ok {
-		w.WriteHeader(http.StatusOK)
-	}
-
-	return
+	VerifyToken(
+		c.Repo().PWResetToken(),
+		c.HandleAPIError,
+		w,
+		&request.VerifyTokenFinalizeRequest,
+		request.Email,
+	)
 }
 
 type UserPasswordFinalizeResetHandler struct {
@@ -179,10 +153,16 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	ok, token := VerifyPasswordResetToken(c.Repo().PWResetToken(), c.HandleAPIError, w, &request.VerifyResetUserPasswordRequest)
+	token, err := VerifyToken(
+		c.Repo().PWResetToken(),
+		c.HandleAPIError,
+		w,
+		&request.VerifyTokenFinalizeRequest,
+		request.Email,
+	)
 
-	if ok {
-		w.WriteHeader(http.StatusOK)
+	if err != nil {
+		return
 	}
 
 	// check that the email exists
@@ -229,48 +209,91 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	return
 }
 
-func VerifyPasswordResetToken(
+func VerifyToken(
 	pwResetRepo repository.PWResetTokenRepository,
 	handleErr func(w http.ResponseWriter, apiErr apierrors.RequestError),
 	w http.ResponseWriter,
-	request *types.VerifyResetUserPasswordRequest,
-) (bool, *models.PWResetToken) {
+	request *types.VerifyTokenFinalizeRequest,
+	email string,
+) (*models.PWResetToken, error) {
 	token, err := pwResetRepo.ReadPWResetToken(request.TokenID)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			err = fmt.Errorf("verify/finalize password reset failed: token does not exist")
+			err = fmt.Errorf("verify token failed: token does not exist")
 			handleErr(w, apierrors.NewErrForbidden(err))
+			return nil, err
 		} else {
 			handleErr(w, apierrors.NewErrInternal(err))
 		}
 
-		return false, nil
+		return nil, err
 	}
 
 	// make sure the token is still valid and has not expired
 	if !token.IsValid || token.IsExpired() {
-		err = fmt.Errorf("verify password reset failed: expired %t, valid %t", token.IsExpired(), token.IsValid)
+		err = fmt.Errorf("verify token failed: expired %t, valid %t", token.IsExpired(), token.IsValid)
 		handleErr(w, apierrors.NewErrForbidden(err))
 
-		return false, nil
+		return nil, err
 	}
 
 	// check that the email matches
-	if token.Email != request.Email {
-		err = fmt.Errorf("verify password reset failed: token email does not match request email")
+	if token.Email != email {
+		err = fmt.Errorf("verify token failed: token email does not match request email")
 		handleErr(w, apierrors.NewErrForbidden(err))
 
-		return false, nil
+		return nil, err
 	}
 
 	// make sure the token is correct
 	if err := bcrypt.CompareHashAndPassword([]byte(token.Token), []byte(request.Token)); err != nil {
-		err = fmt.Errorf("verify password reset failed: %s", err)
+		err = fmt.Errorf("verify token failed: %s", err)
 		handleErr(w, apierrors.NewErrForbidden(err))
 
-		return false, nil
+		return nil, err
 	}
 
-	return true, token
+	return token, nil
+}
+
+func CreatePWResetTokenForEmail(
+	pwResetRepo repository.PWResetTokenRepository,
+	handleErr func(w http.ResponseWriter, apiErr apierrors.RequestError),
+	w http.ResponseWriter,
+	request *types.InitiateResetUserPasswordRequest,
+) (*models.PWResetToken, string, error) {
+	// convert the form to a project model
+	expiry := time.Now().Add(30 * time.Minute)
+
+	rawToken, err := random.StringWithCharset(32, "")
+
+	if err != nil {
+		handleErr(w, apierrors.NewErrInternal(err))
+		return nil, "", err
+	}
+
+	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
+
+	if err != nil {
+		handleErr(w, apierrors.NewErrInternal(err))
+		return nil, "", err
+	}
+
+	pwReset := &models.PWResetToken{
+		Email:   request.Email,
+		IsValid: true,
+		Expiry:  &expiry,
+		Token:   string(hashedToken),
+	}
+
+	// handle write to the database
+	pwReset, err = pwResetRepo.CreatePWResetToken(pwReset)
+
+	if err != nil {
+		handleErr(w, apierrors.NewErrInternal(err))
+		return nil, "", err
+	}
+
+	return pwReset, rawToken, nil
 }

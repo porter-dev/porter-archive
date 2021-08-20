@@ -22,6 +22,7 @@ type PorterHandlerWriter interface {
 type PorterHandlerReader interface {
 	PorterHandler
 	DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool
+	DecodeAndValidateNoWrite(r *http.Request, v interface{}) error
 }
 
 type PorterHandlerReadWriter interface {
@@ -61,4 +62,12 @@ func (d *DefaultPorterHandler) WriteResult(w http.ResponseWriter, v interface{})
 
 func (d *DefaultPorterHandler) DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool {
 	return d.decoderValidator.DecodeAndValidate(w, r, v)
+}
+
+func (d *DefaultPorterHandler) DecodeAndValidateNoWrite(r *http.Request, v interface{}) error {
+	return d.decoderValidator.DecodeAndValidateNoWrite(r, v)
+}
+
+func IgnoreAPIError(w http.ResponseWriter, err apierrors.RequestError) {
+	return
 }

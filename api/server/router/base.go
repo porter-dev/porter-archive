@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/capabilities"
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
@@ -22,6 +23,29 @@ func GetBaseRoutes(
 	children ...*Registerer,
 ) []*Route {
 	routes := make([]*Route, 0)
+
+	// GET /api/capabilities -> user.NewUserCreateHandler
+	getCapabilitiesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/capabilities",
+			},
+		},
+	)
+
+	getCapabilitiesHandler := capabilities.NewCapabilitiesGetHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getCapabilitiesEndpoint,
+		Handler:  getCapabilitiesHandler,
+		Router:   r,
+	})
 
 	// POST /api/users -> user.NewUserCreateHandler
 	createUserEndpoint := factory.NewAPIEndpoint(

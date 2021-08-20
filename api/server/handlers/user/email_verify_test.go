@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
@@ -60,7 +61,14 @@ func TestEmailVerifyFinalizeSuccessful(t *testing.T) {
 	authUser := apitest.CreateTestUser(t, config, false)
 
 	// create a token in the DB to use for testing
-	pwReset, rawToken, err := user.CreateTokenForEmail(config, authUser.Email)
+	pwReset, rawToken, err := user.CreatePWResetTokenForEmail(
+		config.Repo.PWResetToken(),
+		handlers.IgnoreAPIError,
+		nil,
+		&types.InitiateResetUserPasswordRequest{
+			Email: authUser.Email,
+		},
+	)
 
 	if err != nil {
 		t.Fatal(err)

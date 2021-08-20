@@ -15,7 +15,7 @@ func TestListProjectsSuccessful(t *testing.T) {
 	// create a test project
 	config := apitest.LoadConfig(t)
 	user := apitest.CreateTestUser(t, config, true)
-	proj1, err := project.CreateProjectWithUser(config, &models.Project{
+	proj1, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
 
@@ -23,7 +23,7 @@ func TestListProjectsSuccessful(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	proj2, err := project.CreateProjectWithUser(config, &models.Project{
+	proj2, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project-2",
 	}, user)
 

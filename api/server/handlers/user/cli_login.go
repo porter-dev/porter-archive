@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
@@ -15,9 +16,7 @@ import (
 )
 
 type CLILoginHandler struct {
-	config           *shared.Config
-	decoderValidator shared.RequestDecoderValidator
-	writer           shared.ResultWriter
+	handlers.PorterHandlerReader
 }
 
 func NewCLILoginHandler(
@@ -25,13 +24,15 @@ func NewCLILoginHandler(
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *CLILoginHandler {
-	return &CLILoginHandler{config, decoderValidator, writer}
+	return &CLILoginHandler{
+		PorterHandlerReader: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+	}
 }
 
 func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CLILoginUserRequest{}
 
-	ok := c.decoderValidator.DecodeAndValidate(w, r, request)
+	ok := c.DecodeAndValidate(w, r, request)
 
 	if !ok {
 		return
@@ -43,30 +44,16 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	jwt, err := token.GetTokenForUser(user.ID)
 
 	if err != nil {
-		apierrors.HandleAPIError(
-			w,
-			c.config.Logger,
-			apierrors.NewErrInternal(
-				fmt.Errorf("CLI token creation failed: %s", err.Error()),
-			),
-		)
-
+		err = fmt.Errorf("CLI token creation failed: %s", err.Error())
+		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	encoded, err := jwt.EncodeToken(&token.TokenGeneratorConf{
-		TokenSecret: c.config.ServerConf.TokenGeneratorSecret,
-	})
+	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
 
 	if err != nil {
-		apierrors.HandleAPIError(
-			w,
-			c.config.Logger,
-			apierrors.NewErrInternal(
-				fmt.Errorf("CLI token encoding failed: %s", err.Error()),
-			),
-		)
-
+		err = fmt.Errorf("CLI token encoding failed: %s", err.Error())
+		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -74,14 +61,8 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	code, err := repository.GenerateRandomBytes(32)
 
 	if err != nil {
-		apierrors.HandleAPIError(
-			w,
-			c.config.Logger,
-			apierrors.NewErrInternal(
-				fmt.Errorf("CLI random code generation failed: %s", err.Error()),
-			),
-		)
-
+		err = fmt.Errorf("CLI random code generation failed: %s", err.Error())
+		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -94,15 +75,10 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Expiry:            &expiry,
 	}
 
-	authCode, err = c.config.Repo.AuthCode().CreateAuthCode(authCode)
+	authCode, err = c.Repo().AuthCode().CreateAuthCode(authCode)
 
 	if err != nil {
-		apierrors.HandleAPIError(
-			w,
-			c.config.Logger,
-			apierrors.NewErrInternal(err),
-		)
-
+		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -110,9 +86,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type CLILoginExchangeHandler struct {
-	config           *shared.Config
-	decoderValidator shared.RequestDecoderValidator
-	writer           shared.ResultWriter
+	handlers.PorterHandlerReadWriter
 }
 
 func NewCLILoginExchangeHandler(
@@ -120,20 +94,22 @@ func NewCLILoginExchangeHandler(
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *CLILoginExchangeHandler {
-	return &CLILoginExchangeHandler{config, decoderValidator, writer}
+	return &CLILoginExchangeHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+	}
 }
 
 func (c *CLILoginExchangeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CLILoginExchangeRequest{}
 
-	ok := c.decoderValidator.DecodeAndValidate(w, r, request)
+	ok := c.DecodeAndValidate(w, r, request)
 
 	if !ok {
 		return
 	}
 
 	// look up the auth code and exchange it for a token
-	authCode, err := c.config.Repo.AuthCode().ReadAuthCode(request.AuthorizationCode)
+	authCode, err := c.Repo().AuthCode().ReadAuthCode(request.AuthorizationCode)
 
 	if err != nil || authCode.IsExpired() {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -144,5 +120,5 @@ func (c *CLILoginExchangeHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		Token: authCode.Token,
 	}
 
-	c.writer.WriteResult(w, res)
+	c.WriteResult(w, res)
 }

@@ -3,16 +3,16 @@ package project
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 type ProjectCreateHandler struct {
-	config           *shared.Config
-	decoderValidator shared.RequestDecoderValidator
-	writer           shared.ResultWriter
+	handlers.PorterHandlerReadWriter
 }
 
 func NewProjectCreateHandler(
@@ -20,13 +20,15 @@ func NewProjectCreateHandler(
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *ProjectCreateHandler {
-	return &ProjectCreateHandler{config, decoderValidator, writer}
+	return &ProjectCreateHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+	}
 }
 
 func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.CreateProjectRequest{}
 
-	ok := p.decoderValidator.DecodeAndValidate(w, r, request)
+	ok := p.DecodeAndValidate(w, r, request)
 
 	if !ok {
 		return
@@ -40,29 +42,29 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	var err error
-	proj, err = CreateProjectWithUser(p.config, proj, user)
+	proj, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 
 	if err != nil {
-		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+		p.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	p.writer.WriteResult(w, proj.ToProjectType())
+	p.WriteResult(w, proj.ToProjectType())
 }
 
 func CreateProjectWithUser(
-	config *shared.Config,
+	projectRepo repository.ProjectRepository,
 	proj *models.Project,
 	user *models.User,
 ) (*models.Project, error) {
-	proj, err := config.Repo.Project().CreateProject(proj)
+	proj, err := projectRepo.CreateProject(proj)
 
 	if err != nil {
 		return nil, err
 	}
 
 	// create a new Role with the user as the admin
-	_, err = config.Repo.Project().CreateProjectRole(proj, &models.Role{
+	_, err = projectRepo.CreateProjectRole(proj, &models.Role{
 		Role: types.Role{
 			UserID:    user.ID,
 			ProjectID: proj.ID,
@@ -75,7 +77,7 @@ func CreateProjectWithUser(
 	}
 
 	// read the project again to get the model with the role attached
-	proj, err = config.Repo.Project().ReadProject(proj.ID)
+	proj, err = projectRepo.ReadProject(proj.ID)
 
 	if err != nil {
 		return nil, err

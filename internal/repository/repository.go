@@ -15,6 +15,7 @@ type Repository struct {
 	Invite                    InviteRepository
 	AuthCode                  AuthCodeRepository
 	DNSRecord                 DNSRecordRepository
+	Event                     EventRepository
 	PWResetToken              PWResetTokenRepository
 	KubeIntegration           KubeIntegrationRepository
 	BasicIntegration          BasicIntegrationRepository

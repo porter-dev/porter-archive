@@ -210,7 +210,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       });
     }
     return () => (isSubscribed = false);
-  }, [namespace, currentView]);
+  }, [sortType, namespace, currentView]);
 
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {

@@ -456,7 +456,7 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	return res, nil
 }
 
-func (d *DeployAgent) StreamEvent(event *Event) error {
+func (d *DeployAgent) StreamEvent(event *Event, token string) error {
 	return nil
 }
 

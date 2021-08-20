@@ -1616,6 +1616,7 @@ type HandleUpdateReleaseStepsForm struct {
 	Index   int64
 	Status  models.EventStatus
 	Info    string
+	Token   string
 }
 
 // HandleUpdateReleaseSteps adds a new step to a release

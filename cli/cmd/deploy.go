@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -298,7 +299,7 @@ func updateFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 		return err
 	}
 
-	err = updateBuildWithAgent(updateAgent)
+	err = updateBuildWithAgent(updateAgent, client)
 
 	if err != nil {
 		return err
@@ -350,7 +351,7 @@ func updateBuild(resp *api.AuthCheckResponse, client *api.Client, args []string)
 		return err
 	}
 
-	return updateBuildWithAgent(updateAgent)
+	return updateBuildWithAgent(updateAgent, client)
 }
 
 func updatePush(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
@@ -396,9 +397,17 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 	})
 }
 
-func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
+func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) error {
 	// build the deployment
 	color.New(color.FgGreen).Println("Building docker image for", app)
+
+	// minor thought: this ends up happening four times when upgrade is ran, when it should really only happen once
+	// maybe some way to only do this once?
+	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, name, namespace)
+
+	if err != nil {
+		return err
+	}
 
 	if stream {
 		updateAgent.StreamEvent(&deploy.Event{
@@ -407,20 +416,21 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 			Index:  100,
 			Status: deploy.EventStatusInProgress,
 			Info:   "",
-		})
+		}, release.WebhookToken)
 	}
 
 	buildEnv, err := updateAgent.GetBuildEnv()
 
 	if err != nil {
 		if stream {
+			// another concern: is it safe to ignore the error here?
 			updateAgent.StreamEvent(&deploy.Event{
 				Id:     "build",
 				Name:   "Build",
 				Index:  110,
 				Status: deploy.EventStatusInProgress,
 				Info:   err.Error(),
-			})
+			}, release.WebhookToken)
 		}
 		return err
 	}
@@ -436,7 +446,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 				Index:  120,
 				Status: deploy.EventStatusInProgress,
 				Info:   err.Error(),
-			})
+			}, release.WebhookToken)
 		}
 		return err
 	}
@@ -448,7 +458,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 			Index:  130,
 			Status: deploy.EventStatusSuccess,
 			Info:   "",
-		})
+		}, release.WebhookToken)
 	}
 
 	return updateAgent.Build()

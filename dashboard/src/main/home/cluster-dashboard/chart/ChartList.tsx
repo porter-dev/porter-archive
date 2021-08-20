@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
+import _ from "lodash";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -70,7 +71,34 @@ const ChartList: React.FunctionComponent<Props> = ({
         },
         { id: currentProject.id }
       );
-      const charts = res.data || [];
+      let charts = res.data || [];
+
+      if (_.isEmpty(jobChartsLastRunStatus)) {
+        await Promise.all(
+          charts.map(async (chart: ChartType) => {
+            if (
+              !(currentView == "jobs" && chart.chart.metadata.name == "job")
+            ) {
+              return;
+            }
+            const res = await api.getJobStatus(
+              "<token>",
+              {
+                cluster_id: currentCluster.id,
+              },
+              {
+                id: currentProject.id,
+                name: chart.name,
+                namespace: chart.namespace,
+              }
+            );
+            setJobChartsLastRunStatus((x) => ({
+              ...x,
+              [`${chart.namespace}-${chart.name}`]: res.data.status,
+            }));
+          })
+        );
+      }
 
       // filter charts based on the current view
       const filteredCharts = charts

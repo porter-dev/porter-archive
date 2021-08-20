@@ -19,7 +19,7 @@ func TestProjectMiddlewareSuccessful(t *testing.T) {
 	config, handler, next := loadProjectHandlers(t)
 
 	user := apitest.CreateTestUser(t, config, true)
-	proj, err := project.CreateProjectWithUser(config, &models.Project{
+	proj, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
 
@@ -47,7 +47,7 @@ func TestProjectMiddlewareFailedRead(t *testing.T) {
 	config, _, _ := loadProjectHandlers(t)
 
 	user := apitest.CreateTestUser(t, config, true)
-	_, err := project.CreateProjectWithUser(config, &models.Project{
+	_, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
 

@@ -33,7 +33,6 @@ import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
 import DeploymentType from "./DeploymentType";
-import EventsTab from "./events/EventsTab";
 
 type Props = {
   namespace: string;
@@ -432,14 +431,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
-      case "events":
-        const parsedControllers = Object.values(controllers).map((c) => {
-          return {
-            name: c?.metadata?.name,
-            type: c?.kind,
-          };
-        });
-        return <EventsTab controllers={parsedControllers} />;
       default:
     }
   };
@@ -448,8 +439,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     // Collate non-form tabs
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
-    leftTabOptions.push({ label: "Events", value: "events" });
-
     leftTabOptions.push({ label: "Status", value: "status" });
 
     if (props.isMetricsInstalled) {

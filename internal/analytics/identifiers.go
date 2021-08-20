@@ -18,14 +18,14 @@ type segmentIdentifyNewUser struct {
 	isGithub  bool
 }
 
-// CreateSegmentIdentifyUser creates an identifier for users
-func CreateSegmentIdentifyUser(user *models.User) *segmentIdentifyNewUser {
+// Creates a segment Identifier struct for new users. As we handle registration with github, it also accepts a param
+// to check if the new user has registered with github or not.
+func CreateSegmentIdentifyNewUser(user *models.User, registeredViaGithub bool) *segmentIdentifyNewUser {
 	userId := fmt.Sprintf("%v", user.ID)
-
 	return &segmentIdentifyNewUser{
 		userId:    userId,
 		userEmail: user.Email,
-		isGithub:  user.GithubUserID != 0,
+		isGithub:  registeredViaGithub,
 	}
 }
 

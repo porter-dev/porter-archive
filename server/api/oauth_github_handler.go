@@ -131,11 +131,8 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		}
 
 		// send to segment
-		app.AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
-
-		app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-		}))
+		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, true))
+		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
 
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
@@ -354,12 +351,6 @@ func (app *App) HandleGithubAppOAuthCallback(w http.ResponseWriter, r *http.Requ
 		app.handleErrorInternal(err, w)
 		return
 	}
-
-	app.AnalyticsClient.Track(analytics.GithubConnectionSuccessTrack(
-		&analytics.GithubConnectionSuccessTrackOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-		},
-	))
 
 	if session.Values["query_params"] != "" {
 		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)

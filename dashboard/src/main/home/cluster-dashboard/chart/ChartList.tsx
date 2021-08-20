@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ChartType, ClusterType, StorageType } from "shared/types";
+import { ChartType, ClusterType, JobStatus, StorageType } from "shared/types";
 import { PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
@@ -12,6 +12,7 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type Props = {
   currentCluster: ClusterType;
+  lastRunStatus?: JobStatus | null;
   namespace: string;
   // TODO Convert to enum
   sortType: string;
@@ -19,6 +20,7 @@ type Props = {
 };
 
 const ChartList: React.FunctionComponent<Props> = ({
+  lastRunStatus,
   namespace,
   sortType,
   currentView,
@@ -30,6 +32,9 @@ const ChartList: React.FunctionComponent<Props> = ({
     closeAllWebsockets,
   } = useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
+  const [jobChartsLastRunStatus, setJobChartsLastRunStatus] = useState<
+    Record<string, JobStatus>
+  >({});
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -68,14 +73,28 @@ const ChartList: React.FunctionComponent<Props> = ({
       const charts = res.data || [];
 
       // filter charts based on the current view
-      const filteredCharts = charts.filter((chart: ChartType) => {
-        return (
-          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-          ((currentView == "applications" ||
-            currentView == "cluster-dashboard") &&
-            chart.chart.metadata.name != "job")
-        );
-      });
+      const filteredCharts = charts
+        .filter((chart: ChartType) => {
+          return (
+            (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+            ((currentView == "applications" ||
+              currentView == "cluster-dashboard") &&
+              chart.chart.metadata.name != "job")
+          );
+        })
+        .filter((chart: ChartType) => {
+          if (currentView !== "jobs") {
+            return true;
+          }
+          if (lastRunStatus === null) {
+            return true;
+          }
+          const key = `${chart.namespace}-${chart.name}`;
+          if (!(key in jobChartsLastRunStatus)) {
+            return true;
+          }
+          return jobChartsLastRunStatus[key] === lastRunStatus;
+        });
 
       let sortedCharts = filteredCharts;
 
@@ -210,7 +229,13 @@ const ChartList: React.FunctionComponent<Props> = ({
       });
     }
     return () => (isSubscribed = false);
-  }, [sortType, namespace, currentView]);
+  }, [
+    sortType,
+    lastRunStatus,
+    JSON.stringify(jobChartsLastRunStatus),
+    namespace,
+    currentView,
+  ]);
 
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {
@@ -241,6 +266,12 @@ const ChartList: React.FunctionComponent<Props> = ({
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
           controllers={controllers || {}}
+          setJobLastRunStatus={(status: JobStatus) => {
+            setJobChartsLastRunStatus((x) => ({
+              ...x,
+              [`${chart.namespace}-${chart.name}`]: status,
+            }));
+          }}
           isJob={currentView === "jobs"}
           release={releases[chart.name] || {}}
         />

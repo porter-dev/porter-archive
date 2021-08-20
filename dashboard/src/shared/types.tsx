@@ -266,6 +266,17 @@ export interface FullActionConfigType extends ActionConfigType {
   should_create_workflow: boolean;
 }
 
+export enum JobStatus {
+  Succeeded = "succeeded",
+  Running = "running",
+  Failed = "failed",
+}
+
+export type JobStatusWithTime = {
+  status: JobStatus;
+  start_time: string;
+};
+
 export interface CapabilityType {
   github: boolean;
   provisioner: boolean;

@@ -2,7 +2,12 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 
-import { ChartType, StorageType } from "shared/types";
+import {
+  ChartType,
+  JobStatus,
+  JobStatusWithTime,
+  StorageType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
@@ -13,23 +18,20 @@ type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
   isJob: boolean;
+  setJobLastRunStatus: any;
   release: any;
-};
-
-type JobStatusType = {
-  status: "succeeded" | "running" | "failed";
-  start_time: string;
 };
 
 const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
   isJob,
+  setJobLastRunStatus,
   release,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
-  const [jobStatus, setJobStatus] = useState<JobStatusType>(null);
+  const [jobStatus, setJobStatus] = useState<JobStatusWithTime>(null);
   const context = useContext(Context);
   const location = useLocation();
   const history = useHistory();
@@ -121,6 +123,7 @@ const Chart: React.FunctionComponent<Props> = ({
       )
       .then((res) => {
         setJobStatus(res.data);
+        setJobLastRunStatus(res.data.status);
       })
       .catch((err) => setCurrentError(err));
   };
@@ -195,10 +198,10 @@ const Chart: React.FunctionComponent<Props> = ({
       <TopRightContainer>
         {isJob && jobStatus?.status && (
           <>
-            <JobStatus status={jobStatus.status}>
+            <JobStatusContainer status={jobStatus.status}>
               Last run {jobStatus.status.toUpperCase()} at{" "}
               {readableDate(jobStatus.start_time)}
-            </JobStatus>
+            </JobStatusContainer>
             <StatusDot>•</StatusDot>
           </>
         )}
@@ -331,13 +334,13 @@ const Title = styled.div`
   }
 `;
 
-const JobStatus = styled.span`
+const JobStatusContainer = styled.span`
   font-weight: bold;
-  ${(props: { status: string }) => `
+  ${(props: { status: JobStatus }) => `
   color: ${
-    props.status === "succeeded"
+    props.status === JobStatus.Succeeded
       ? "rgb(56, 168, 138)"
-      : props.status === "failed"
+      : props.status === JobStatus.Failed
       ? "rgb(204, 61, 66)"
       : "#aaaabb"
   }

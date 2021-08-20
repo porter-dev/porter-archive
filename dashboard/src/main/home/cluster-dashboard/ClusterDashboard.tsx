@@ -5,8 +5,13 @@ import monoweb from "assets/monoweb.png";
 import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
-import { ChartType, ClusterType } from "shared/types";
-import { getQueryParam, PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
+import { ChartType, ClusterType, JobStatus } from "shared/types";
+import {
+  getQueryParam,
+  PorterUrl,
+  pushFiltered,
+  pushQueryParams,
+} from "shared/routing";
 
 import DashboardHeader from "./DashboardHeader";
 import ChartList from "./chart/ChartList";
@@ -20,6 +25,7 @@ import api from "shared/api";
 import DashboardRoutes from "./dashboard/Routes";
 import GuardedRoute from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import LastRunStatusSelector from "./LastRunStatusSelector";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -31,6 +37,7 @@ type PropsType = RouteComponentProps &
 type StateType = {
   namespace: string;
   sortType: string;
+  lastRunStatus: JobStatus | null;
   currentChart: ChartType | null;
   isMetricsInstalled: boolean;
 };
@@ -42,6 +49,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     sortType: localStorage.getItem("SortType")
       ? localStorage.getItem("SortType")
       : "Newest",
+    lastRunStatus: null as null,
     currentChart: null as ChartType | null,
     isMetricsInstalled: false,
   };
@@ -125,21 +133,16 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
     return (
       <>
-        <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
-          {isAuthorizedToAdd && (
-            <Button
-              onClick={() =>
-                pushFiltered(this.props, "/launch", ["project_id"])
-              }
-            >
-              <i className="material-icons">add</i> Launch Template
-            </Button>
-          )}
+        <ControlRow>
           <SortFilterWrapper>
-            <SortSelector
-              setSortType={(sortType) => this.setState({ sortType })}
-              sortType={this.state.sortType}
-            />
+            {currentView === "jobs" && (
+              <LastRunStatusSelector
+                lastRunStatus={this.state.lastRunStatus}
+                setLastRunStatus={(lastRunStatus: JobStatus) => {
+                  this.setState({ lastRunStatus });
+                }}
+              />
+            )}
             <NamespaceSelector
               setNamespace={(namespace) =>
                 this.setState({ namespace }, () => {
@@ -150,12 +153,26 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               }
               namespace={this.state.namespace}
             />
+            <SortSelector
+              setSortType={(sortType) => this.setState({ sortType })}
+              sortType={this.state.sortType}
+            />
           </SortFilterWrapper>
+          {isAuthorizedToAdd && (
+            <Button
+              onClick={() =>
+                pushFiltered(this.props, "/launch", ["project_id"])
+              }
+            >
+              <i className="material-icons">add</i> Launch Template
+            </Button>
+          )}
         </ControlRow>
 
         <ChartList
           currentView={currentView}
           currentCluster={currentCluster}
+          lastRunStatus={this.state.lastRunStatus}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
         />
@@ -234,12 +251,8 @@ const Br = styled.div`
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: ${(props: { hasMultipleChilds: boolean }) => {
-    if (props.hasMultipleChilds) {
-      return "space-between";
-    }
-    return "flex-end";
-  }};
+  flex-direction: row-reverse;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 35px;
   padding-left: 0px;
@@ -384,7 +397,9 @@ const Img = styled.img`
 `;
 
 const SortFilterWrapper = styled.div`
-  width: 468px;
   display: flex;
   justify-content: space-between;
+  > div:not(:first-child) {
+    margin-left: 30px;
+  }
 `;

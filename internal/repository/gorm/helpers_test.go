@@ -1,7 +1,6 @@
 package gorm_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -23,7 +22,6 @@ type tester struct {
 	initGRs      []*models.GitRepo
 	initRegs     []*models.Registry
 	initClusters []*models.Cluster
-	initEvents   []*models.Event
 	initHRs      []*models.HelmRepo
 	initInfras   []*models.Infra
 	initReleases []*models.Release
@@ -65,7 +63,6 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.Infra{},
 		&models.GitActionConfig{},
 		&models.Invite{},
-		&models.Event{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -497,49 +494,6 @@ func initInfra(tester *tester, t *testing.T) {
 	}
 
 	tester.initInfras = append(tester.initInfras, infra)
-}
-
-func initEvents(tester *tester, t *testing.T) {
-	t.Helper()
-
-	if len(tester.initProjects) == 0 {
-		initProject(tester, t)
-	}
-
-	expiry := time.Now().Add(24 * time.Hour)
-
-	initEvents := make([]*models.Event, 0)
-
-	// init 100 events for testing purposes
-	for i := 0; i < 100; i++ {
-		refType := "pod"
-
-		if i >= 50 {
-			refType = "node"
-		}
-
-		event := &models.Event{
-			ProjectID:    tester.initProjects[0].Model.ID,
-			ClusterID:    tester.initClusters[0].Model.ID,
-			RefType:      refType,
-			RefName:      fmt.Sprintf("%s-example-%d", refType, i),
-			RefNamespace: "default",
-			Message:      "Pod killed",
-			Reason:       "OOM: memory limit exceeded",
-			Data:         []byte("log from pod\nlog2 from pod"),
-			Expiry:       expiry,
-		}
-
-		event, err := tester.repo.Event.CreateEvent(event)
-
-		if err != nil {
-			t.Fatalf("%v\n", err)
-		}
-
-		initEvents = append(initEvents, event)
-	}
-
-	tester.initEvents = initEvents
 }
 
 func initInvite(tester *tester, t *testing.T) {

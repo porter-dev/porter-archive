@@ -54,11 +54,8 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// send to segment
-		app.AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
-
-		app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-		}))
+		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, false))
+		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
 
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 

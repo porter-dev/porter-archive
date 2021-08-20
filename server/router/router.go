@@ -420,6 +420,49 @@ func New(a *api.App) *chi.Mux {
 				),
 			)
 
+			// /api/projects/{project_id}/events routes
+			r.Method(
+				"POST",
+				"/projects/{project_id}/clusters/{cluster_id}/events",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleCreateEvent, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/clusters/{cluster_id}/events",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleListEvents, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/clusters/{cluster_id}/events/{event_id}",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetEvent, l),
+						mw.URLParam,
+						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.AdminAccess,
+				),
+			)
+
 			// /api/projects/{project_id}/invites routes
 			r.Method(
 				"POST",
@@ -1318,6 +1361,35 @@ func New(a *api.App) *chi.Mux {
 					auth.DoesUserHaveGitInstallationAccess(
 						requestlog.NewHandler(a.HandleGetRepoZIPDownloadURL, l),
 						mw.URLParam,
+					),
+					mw.URLParam,
+					mw.ReadAccess,
+				),
+			)
+
+			// api/projects/{project_id}/agent routes
+			r.Method(
+				"POST",
+				"/projects/{project_id}/agent/deploy",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDeployAgent, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
+					mw.URLParam,
+					mw.WriteAccess,
+				),
+			)
+
+			r.Method(
+				"GET",
+				"/projects/{project_id}/agent/detect",
+				auth.DoesUserHaveProjectAccess(
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleDetectPorterAgentInstalled, l),
+						mw.URLParam,
+						mw.QueryParam,
 					),
 					mw.URLParam,
 					mw.ReadAccess,

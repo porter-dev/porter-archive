@@ -58,19 +58,6 @@ func main() {
 
 	repo := gorm.NewRepository(db, &key)
 
-	a, err := api.New(&api.AppConfig{
-		Logger:     logger,
-		Repository: repo,
-		ServerConf: appConf.Server,
-		RedisConf:  &appConf.Redis,
-		CapConf:    appConf.Capabilities,
-		DBConf:     appConf.Db,
-	})
-
-	if err != nil {
-		logger.Fatal().Err(err).Msg("")
-	}
-
 	if appConf.Redis.Enabled {
 		redis, err := adapter.NewRedisClient(&appConf.Redis)
 
@@ -83,7 +70,20 @@ func main() {
 
 		errorChan := make(chan error)
 
-		go prov.GlobalStreamListener(redis, *repo, a.AnalyticsClient, errorChan)
+		go prov.GlobalStreamListener(redis, *repo, errorChan)
+	}
+
+	a, err := api.New(&api.AppConfig{
+		Logger:     logger,
+		Repository: repo,
+		ServerConf: appConf.Server,
+		RedisConf:  &appConf.Redis,
+		CapConf:    appConf.Capabilities,
+		DBConf:     appConf.Db,
+	})
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
 	}
 
 	appRouter := router.New(a)

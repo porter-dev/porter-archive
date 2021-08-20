@@ -246,19 +246,6 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
-const generateGHAWorkflow = baseApi<
-  FullActionConfigType,
-  {
-    cluster_id: number;
-    project_id: number;
-    name: string;
-  }
->("POST", (pathParams) => {
-  const { name, cluster_id, project_id } = pathParams;
-
-  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}`;
-});
-
 const updateNotificationConfig = baseApi<
   {
     payload: any;
@@ -284,6 +271,19 @@ const getNotificationConfig = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+});
+
+const generateGHAWorkflow = baseApi<
+  FullActionConfigType,
+  {
+    cluster_id: number;
+    project_id: number;
+    name: string;
+  }
+>("POST", (pathParams) => {
+  const { name, cluster_id, project_id } = pathParams;
+
+  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}`;
 });
 
 const deployTemplate = baseApi<
@@ -1034,54 +1034,6 @@ const createWebhookToken = baseApi<
     `/api/projects/${project_id}/releases/${chart_name}/webhook_token?namespace=${namespace}&cluster_id=${cluster_id}&storage=${storage}`
 );
 
-const getPorterAgentIsInstalled = baseApi<
-  {
-    cluster_id: number;
-  },
-  { project_id: number }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/agent/detect`;
-});
-
-const installPorterAgent = baseApi<
-  {},
-  { project_id: number, cluster_id: number }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/agent/deploy?cluster_id=${pathParams.cluster_id}`;
-});
-
-const getEvents = baseApi<
-  {
-    limit: number;
-    skip: number;
-    type: "pod" | "node" | "hpa";
-    owner_type: string;
-    owner_name: string;
-    sort_by: "timestamp";
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  (pathParams) =>
-    `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/events`
-);
-
-const getEventById = baseApi<
-  {},
-  {
-    project_id: number;
-    cluster_id: number;
-    event_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id, event_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/events/${event_id}`
-);
-
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1188,8 +1140,4 @@ export default {
   removeCollaborator,
   getPolicyDocument,
   createWebhookToken,
-  getPorterAgentIsInstalled,
-  installPorterAgent,
-  getEvents,
-  getEventById,
 };

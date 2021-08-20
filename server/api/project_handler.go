@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -72,10 +71,6 @@ func (app *App) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorDataWrite(err, w)
 		return
 	}
-
-	app.AnalyticsClient.Track(analytics.ProjectCreateTrack(&analytics.ProjectCreateTrackOpts{
-		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, projModel.ID),
-	}))
 
 	app.Logger.Info().Msgf("New project created: %d", projModel.ID)
 

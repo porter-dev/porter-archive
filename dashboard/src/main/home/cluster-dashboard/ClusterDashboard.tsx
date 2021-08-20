@@ -134,6 +134,15 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     return (
       <>
         <ControlRow>
+          {isAuthorizedToAdd && (
+            <Button
+              onClick={() =>
+                pushFiltered(this.props, "/launch", ["project_id"])
+              }
+            >
+              <i className="material-icons">add</i> Launch Template
+            </Button>
+          )}
           <SortFilterWrapper>
             {currentView === "jobs" && (
               <LastRunStatusSelector
@@ -158,15 +167,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               sortType={this.state.sortType}
             />
           </SortFilterWrapper>
-          {isAuthorizedToAdd && (
-            <Button
-              onClick={() =>
-                pushFiltered(this.props, "/launch", ["project_id"])
-              }
-            >
-              <i className="material-icons">add</i> Launch Template
-            </Button>
-          )}
         </ControlRow>
 
         <ChartList
@@ -251,7 +251,7 @@ const Br = styled.div`
 
 const ControlRow = styled.div`
   display: flex;
-  flex-direction: row-reverse;
+  margin-left: auto;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 35px;

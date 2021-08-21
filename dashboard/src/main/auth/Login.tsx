@@ -146,7 +146,7 @@ export default class Login extends Component<PropsType, StateType> {
   };
 
   renderGoogleSection = () => {
-    if (true || this.state.hasGoogle) {
+    if (this.state.hasGoogle) {
       return (
         <OAuthButton onClick={this.googleRedirect}>
           <IconWrapper>

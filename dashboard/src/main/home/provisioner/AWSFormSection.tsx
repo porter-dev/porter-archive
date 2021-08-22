@@ -381,8 +381,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             AWS Credentials
             <GuideButton
-              href="https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
-              target="_blank"
+              onClick={() => window.open("https://docs.getporter.dev/docs/getting-started-with-porter-on-aws")}
             >
               <i className="material-icons-outlined">help</i>
               Guide
@@ -404,6 +403,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
             setActiveValue={(x: string) => this.setState({ awsMachineType: x })}
             label="⚙️ AWS Machine Type"
           />
+          {/*
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
@@ -434,6 +434,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
               </StyledInfoTooltip>
             </Tooltip>
           </Helper>
+          */}
           <InputRow
             type="text"
             value={awsAccessId}
@@ -559,7 +560,7 @@ const CloseButton = styled.div`
   }
 `;
 
-const GuideButton = styled.a`
+const GuideButton = styled.div`
   display: flex;
   align-items: center;
   margin-left: 20px;
@@ -568,7 +569,7 @@ const GuideButton = styled.a`
   margin-bottom: -1px;
   border: 1px solid #aaaabb;
   padding: 5px 10px;
-  padding-left: 6px;
+  padding-left: 8px;
   border-radius: 5px;
   cursor: pointer;
   :hover {
@@ -584,7 +585,7 @@ const GuideButton = styled.a`
   > i {
     color: #aaaabb;
     font-size: 16px;
-    margin-right: 6px;
+    margin-right: 7px;
   }
 `;
 

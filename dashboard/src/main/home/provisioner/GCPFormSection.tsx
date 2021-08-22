@@ -332,8 +332,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             GCP Credentials
             <GuideButton
-              href="https://docs.getporter.dev/docs/getting-started-on-gcp"
-              target="_blank"
+              onClick={() => window.open("https://docs.getporter.dev/docs/getting-started-on-gcp")}
             >
               <i className="material-icons-outlined">help</i>
               Guide
@@ -390,6 +389,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
             </Highlight>
             .
           </Helper>
+          {/*
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
@@ -417,6 +417,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
               </StyledInfoTooltip>
             </Tooltip>
           </Helper>
+          */}
           <CheckboxRow
             isRequired={true}
             checked={this.state.provisionConfirmed}
@@ -499,7 +500,7 @@ const CloseButton = styled.div`
   }
 `;
 
-const GuideButton = styled.a`
+const GuideButton = styled.div`
   display: flex;
   align-items: center;
   margin-left: 20px;
@@ -508,7 +509,7 @@ const GuideButton = styled.a`
   margin-bottom: -1px;
   border: 1px solid #aaaabb;
   padding: 5px 10px;
-  padding-left: 6px;
+  padding-left: 8px;
   border-radius: 5px;
   cursor: pointer;
   :hover {
@@ -524,7 +525,7 @@ const GuideButton = styled.a`
   > i {
     color: #aaaabb;
     font-size: 16px;
-    margin-right: 6px;
+    margin-right: 7px;
   }
 `;
 

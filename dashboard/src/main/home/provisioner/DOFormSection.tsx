@@ -280,6 +280,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
             </Highlight>
             .
           </Helper>
+          {/*
           <Helper>
             Estimated Cost:{" "}
             <CostHighlight highlight={this.props.highlightCosts}>
@@ -307,6 +308,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
               </StyledInfoTooltip>
             </Tooltip>
           </Helper>
+          */}
           <CheckboxRow
             isRequired={true}
             checked={this.state.provisionConfirmed}

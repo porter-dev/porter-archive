@@ -7,8 +7,6 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"fmt"
-
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -22,6 +20,7 @@ import (
 // container pod
 func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -45,6 +44,8 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -147,6 +148,7 @@ func (app *App) HandleDestroyTestInfra(w http.ResponseWriter, r *http.Request) {
 // HandleProvisionAWSECRInfra provisions a new aws ECR instance for a project
 func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -176,6 +178,8 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -218,6 +222,14 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New aws ecr infra created: %d", infra.ID)
+
+	app.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+		&analytics.RegistryProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			RegistryType:           models.InfraECR,
+			InfraID:                infra.ID,
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -336,6 +348,8 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	infra.CreatedByUserID = userID
+
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
 
@@ -378,13 +392,12 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New aws eks infra created: %d", infra.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", infra.ProjectID),
-			ClusterName: form.EKSName,
-			ClusterType: "EKS",
-			EventType:   "provisioned",
+
+	app.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
+		&analytics.ClusterProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			ClusterType:            models.InfraEKS,
+			InfraID:                infra.ID,
 		},
 	))
 
@@ -402,7 +415,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
-	userID, err := app.getUserIDFromRequest(r)
+	// userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -469,15 +482,6 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("AWS EKS infra marked for destruction: %d", infra.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", infra.ProjectID),
-			ClusterName: form.EKSName,
-			ClusterType: "EKS",
-			EventType:   "destroyed",
-		},
-	))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -485,6 +489,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 // HandleProvisionGCPGCRInfra enables GCR for a project
 func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -514,6 +519,8 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -555,6 +562,14 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New gcp gcr infra created: %d", infra.ID)
+
+	app.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+		&analytics.RegistryProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			RegistryType:           models.InfraGCR,
+			InfraID:                infra.ID,
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -600,6 +615,8 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	infra.CreatedByUserID = userID
+
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
 
@@ -641,13 +658,12 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New gcp gke infra created: %d", infra.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", infra.ProjectID),
-			ClusterName: form.GKEName,
-			ClusterType: "GKE",
-			EventType:   "provisioned",
+
+	app.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
+		&analytics.ClusterProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			ClusterType:            models.InfraGKE,
+			InfraID:                infra.ID,
 		},
 	))
 
@@ -665,7 +681,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
-	userID, err := app.getUserIDFromRequest(r)
+	// userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -731,15 +747,6 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("GCP GKE infra marked for destruction: %d", infra.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", infra.ProjectID),
-			ClusterName: form.GKEName,
-			ClusterType: "GKE",
-			EventType:   "destroyed",
-		},
-	))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -791,6 +798,7 @@ func (app *App) HandleGetProvisioningLogs(w http.ResponseWriter, r *http.Request
 // HandleProvisionDODOCRInfra provisions a new digitalocean DOCR instance for a project
 func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -820,6 +828,8 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	infra.CreatedByUserID = userID
 
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
@@ -864,6 +874,14 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New do docr infra created: %d", infra.ID)
+
+	app.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+		&analytics.RegistryProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			RegistryType:           models.InfraDOCR,
+			InfraID:                infra.ID,
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -984,6 +1002,8 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	infra.CreatedByUserID = userID
+
 	// handle write to the database
 	infra, err = app.Repo.Infra.CreateInfra(infra)
 
@@ -1027,13 +1047,12 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New do doks infra created: %d", infra.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", infra.ProjectID),
-			ClusterName: form.DOKSName,
-			ClusterType: "DOKS",
-			EventType:   "provisioned",
+
+	app.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
+		&analytics.ClusterProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			ClusterType:            models.InfraDOKS,
+			InfraID:                infra.ID,
 		},
 	))
 
@@ -1051,7 +1070,6 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request) {
 	// get path parameters
 	infraID, err := strconv.ParseUint(chi.URLParam(r, "infra_id"), 10, 64)
-	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -1119,15 +1137,6 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.Logger.Info().Msgf("DO DOKS infra marked for destruction: %d", infra.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", infra.ProjectID),
-			ClusterName: form.DOKSName,
-			ClusterType: "DOKS",
-			EventType:   "destroyed",
-		},
-	))
 
 	w.WriteHeader(http.StatusOK)
 }

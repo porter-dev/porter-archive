@@ -16,6 +16,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
@@ -481,6 +482,14 @@ func (app *App) HandleGithubAppAuthorize(w http.ResponseWriter, r *http.Request)
 
 // HandleGithubAppOauthInit redirects the user to the Porter github app authorization page
 func (app *App) HandleGithubAppOauthInit(w http.ResponseWriter, r *http.Request) {
+	userID, _ := app.getUserIDFromRequest(r)
+
+	app.AnalyticsClient.Track(analytics.GithubConnectionStartTrack(
+		&analytics.GithubConnectionStartTrackOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(userID),
+		},
+	))
+
 	http.Redirect(w, r, app.GithubAppConf.AuthCodeURL("", oauth2.AccessTypeOffline), 302)
 }
 

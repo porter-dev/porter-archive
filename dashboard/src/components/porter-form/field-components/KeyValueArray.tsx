@@ -349,6 +349,9 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   props: KeyValueArrayField,
   state: KeyValueArrayFieldState
 ) => {
+  console.log(vars);
+  console.log(props);
+  console.log(state);
   if (!state) {
     return {
       [props.variable]: props.value ? props.value[0] : [],

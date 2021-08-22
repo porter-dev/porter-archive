@@ -4,7 +4,7 @@
 
 The [analytics package](https://github.com/porter-dev/porter/tree/master/internal/analytics) is currently dependent on Segment, so to use it you need to add your segment key via an environment variables `SEGMENT_CLIENT_KEY` in the `docker/.env` file. See [this link](https://segment.com/docs/connections/find-writekey/) for information on how to retrieve your key.
 
-This package is divided in four files:
+This package is divided in five files:
 
 - segment.go
 
@@ -45,7 +45,7 @@ type [Noun][Verb][Subverb]TrackOpts  struct {
 }
 
 // [Noun][Verb][Subverb]Track
-func ClusterConnectionSuccessTrack(opts *[Noun][Verb][Subverb]TrackOpts) segmentTrack {
+func [Noun][Verb][Subverb]Track(opts *[Noun][Verb][Subverb]TrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 
   // add additional fields to the Segment properties

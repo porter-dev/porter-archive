@@ -5,7 +5,7 @@ import {
   MetricsNetworkDataResponse,
   MetricsNGINXErrorsDataResponse,
   AvailableMetrics,
-  MetricsHpaReplicasDataResponse, 
+  MetricsHpaReplicasDataResponse,
   MetricsNGINXLatencyDataResponse,
   NormalizedMetricsData,
 } from "./types";
@@ -40,7 +40,10 @@ export class MetricNormalizer {
     if (this.kind.includes("nginx:errors")) {
       return this.parseNGINXErrorsMetrics(this.metric_results);
     }
-    if (this.kind.includes("nginx:latency") || this.kind.includes("nginx:latency-histogram")) {
+    if (
+      this.kind.includes("nginx:latency") ||
+      this.kind.includes("nginx:latency-histogram")
+    ) {
       return this.parseNGINXLatencyMetrics(this.metric_results);
     }
     if (this.kind.includes("hpa_replicas")) {

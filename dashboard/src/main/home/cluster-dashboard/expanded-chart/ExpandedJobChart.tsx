@@ -17,6 +17,7 @@ import SettingsSection from "./SettingsSection";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import ValuesYaml from "./ValuesYaml";
+import DeploymentType from "./DeploymentType";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -464,7 +465,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         return (
           this.props.isAuthorized("job", "", ["get", "delete"]) && (
             <SettingsSection
-              showSource={true}
               currentChart={this.state.currentChart}
               refreshChart={() => this.refreshChart(0)}
               setShowDeleteOverlay={(x: boolean) => {
@@ -586,6 +586,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               iconWidth="33px"
             >
               {chart.name}
+              <DeploymentType currentChart={currentChart} />
               <TagWrapper>
                 Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
               </TagWrapper>

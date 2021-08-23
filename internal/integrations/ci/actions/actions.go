@@ -164,6 +164,7 @@ type GithubActionYAML struct {
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
+		getSetTagStep(),
 		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.Version),
 	}
 

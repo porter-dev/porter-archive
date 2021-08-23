@@ -127,8 +127,7 @@ const successScreen = `
     <meta charset='UTF-8'>
     <title>Porter | Login</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Assistant:400,700|Noto+Sans:400,600,700|Work+Sans:400,500,600|Source+Sans+Pro:400,600,700|Hind+Siliguri:500|Cabin:400,600" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Work+Sans:400,500,600" rel="stylesheet">
     <link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@600&display=swap" rel="stylesheet">
     <style>

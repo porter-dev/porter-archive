@@ -8,7 +8,7 @@ import {
   ResourceListField,
   Section,
   SelectField,
-  ServiceIPListField
+  ServiceIPListField,
 } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../form-components/Heading";

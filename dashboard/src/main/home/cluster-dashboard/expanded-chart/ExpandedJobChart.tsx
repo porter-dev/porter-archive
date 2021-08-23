@@ -436,7 +436,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 <Header>
                   <Spinner src={loading} /> This job is currently being deployed
                 </Header>
-                Navigate to the "Actions" tab of your GitHub repo to view live
+                Navigate to the
+                <A
+                  href={`https://github.com/${this.props.currentChart.git_action_config.git_repo}/actions`}
+                  target={"_blank"}
+                >
+                  "Actions" tab of your GitHub repo to view live
+                </A>{" "}
                 build logs.
               </TextWrap>
             </Placeholder>
@@ -865,4 +871,11 @@ const TabButton = styled.div`
     font-size: 17px;
     margin-right: 9px;
   }
+`;
+
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
 `;

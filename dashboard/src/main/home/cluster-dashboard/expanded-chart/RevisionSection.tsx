@@ -234,7 +234,18 @@ class RevisionSection extends Component<PropsType, StateType> {
         >
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
-          <Td>{parsedImageTag || "N/A"}</Td>
+          <Td>
+            {isGithubApp ? (
+              <A
+                href={`https://github.com/${this.props.chart.git_action_config.git_repo}/commit/${imageTag}`}
+                target="_blank"
+              >
+                {parsedImageTag}
+              </A>
+            ) : (
+              parsedImageTag || "N/A"
+            )}
+          </Td>
           <Td>v{revision.chart.metadata.version}</Td>
           <Td>
             <RollbackButton
@@ -535,4 +546,11 @@ const RevisionUpdateMessage = styled.div`
     border-radius: 20px;
     transform: none;
   }
+`;
+
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
 `;

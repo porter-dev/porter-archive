@@ -210,6 +210,18 @@ const SettingsSection: React.FC<PropsType> = ({
             forceExpanded={true}
             disableImageSelect={true}
           />
+          {!loadingWebhookToken && (
+            <>
+            <Br /><Br /><Br />
+            <SaveButton
+              clearPosition={true}
+              statusPosition="right"
+              text="Save Source Settings"
+              status={saveValuesStatus}
+              onClick={handleSubmit}
+            />
+            </>
+          )}
           <Br />
         </>
 
@@ -263,14 +275,6 @@ const SettingsSection: React.FC<PropsType> = ({
         </StyledSettingsSection>
       ) : (
         <Loading />
-      )}
-      {!loadingWebhookToken && (
-        <SaveButton
-          text={saveButtonText || "Save Config"}
-          status={saveValuesStatus}
-          onClick={handleSubmit}
-          makeFlush={true}
-        />
       )}
     </Wrapper>
   );

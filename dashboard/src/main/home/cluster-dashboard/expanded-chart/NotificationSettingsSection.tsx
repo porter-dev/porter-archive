@@ -161,7 +161,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
               <br />
               <SaveButton
                 onClick={() => saveChanges()}
-                text={"Save"}
+                text="Save Notification Settings"
                 clearPosition={true}
                 statusPosition={"right"}
                 disabled={props.disabled || initLoading || saveLoading}

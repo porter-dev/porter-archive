@@ -30,10 +30,10 @@ const ChartList: React.FunctionComponent<Props> = ({
     closeAllWebsockets,
   } = useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
+  const [filteredCharts, setFilteredCharts] = useState<ChartType[]>([]);
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
-  const [releases, setReleases] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -66,37 +66,8 @@ const ChartList: React.FunctionComponent<Props> = ({
         { id: currentProject.id }
       );
       const charts = res.data || [];
-
-      // filter charts based on the current view
-      const filteredCharts = charts.filter((chart: ChartType) => {
-        return (
-          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-          ((currentView == "applications" ||
-            currentView == "cluster-dashboard") &&
-            chart.chart.metadata.name != "job")
-        );
-      });
-
-      let sortedCharts = filteredCharts;
-
-      if (sortType == "Newest") {
-        sortedCharts.sort((a: any, b: any) =>
-          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-            ? -1
-            : 1
-        );
-      } else if (sortType == "Oldest") {
-        sortedCharts.sort((a: any, b: any) =>
-          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-            ? 1
-            : -1
-        );
-      } else if (sortType == "Alphabetical") {
-        sortedCharts.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-      }
-
       setIsError(false);
-      return sortedCharts;
+      return charts;
     } catch (error) {
       console.log(error);
       context.setCurrentError(JSON.stringify(error));
@@ -113,21 +84,30 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
-        const object = event.Object;
-        setReleases((oldReleases) => {
-          const currentRelease = oldReleases[object?.name];
-          const currentReleaseVersion = Number(currentRelease?.version);
-          const newReleaseVersion = Number(object?.version);
-          if (currentReleaseVersion > newReleaseVersion) {
-            return {
-              ...oldReleases,
-            };
+        const newChart = event.Object;
+        const matches = (chart: ChartType) => chart.name === newChart.name;
+        setCharts((currentCharts) => {
+          switch (event.event_type) {
+            case "ADD":
+            // upgrades emit both ADD and UPDATE events
+            case "UPDATE":
+              let updated = false;
+              const result = currentCharts.map((chart) => {
+                if (matches(chart)) {
+                  updated = true;
+                  return newChart;
+                }
+                return chart;
+              });
+              if (!updated) {
+                result.push(newChart);
+              }
+              return result;
+            case "DELETE":
+              return currentCharts.filter((chart) => !matches(chart));
+            default:
+              return currentCharts;
           }
-
-          return {
-            ...oldReleases,
-            [object.name]: object,
-          };
         });
       },
 
@@ -212,6 +192,35 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => (isSubscribed = false);
   }, [namespace, currentView]);
 
+  useEffect(() => {
+    const result = charts.filter((chart: ChartType) => {
+      return (
+        (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+        ((currentView == "applications" ||
+          currentView == "cluster-dashboard") &&
+          chart.chart.metadata.name != "job")
+      );
+    });
+
+    if (sortType == "Newest") {
+      result.sort((a: any, b: any) =>
+        Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+          ? -1
+          : 1
+      );
+    } else if (sortType == "Oldest") {
+      result.sort((a: any, b: any) =>
+        Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+          ? 1
+          : -1
+      );
+    } else if (sortType == "Alphabetical") {
+      result.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+    }
+
+    setFilteredCharts(result);
+  }, [charts, sortType]);
+
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {
       return (
@@ -225,7 +234,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
-    } else if (charts.length === 0) {
+    } else if (filteredCharts.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No
@@ -235,14 +244,13 @@ const ChartList: React.FunctionComponent<Props> = ({
       );
     }
 
-    return charts.map((chart: ChartType, i: number) => {
+    return filteredCharts.map((chart: ChartType, i: number) => {
       return (
         <Chart
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
           controllers={controllers || {}}
           isJob={currentView === "jobs"}
-          release={releases[chart.name] || {}}
         />
       );
     });

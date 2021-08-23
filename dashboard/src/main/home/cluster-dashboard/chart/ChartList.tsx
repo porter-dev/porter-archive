@@ -193,14 +193,19 @@ const ChartList: React.FunctionComponent<Props> = ({
   }, [namespace, currentView]);
 
   useEffect(() => {
-    const result = charts.filter((chart: ChartType) => {
-      return (
-        (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-        ((currentView == "applications" ||
-          currentView == "cluster-dashboard") &&
-          chart.chart.metadata.name != "job")
-      );
-    });
+    const result = charts
+      .filter((chart: ChartType) => {
+        return (
+          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+          ((currentView == "applications" ||
+            currentView == "cluster-dashboard") &&
+            chart.chart.metadata.name != "job")
+        );
+      })
+      .filter((chart: ChartType) => {
+        // websocket emits new releases across all namespaces
+        return chart.namespace === namespace;
+      });
 
     if (sortType == "Newest") {
       result.sort((a: any, b: any) =>

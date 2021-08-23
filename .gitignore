@@ -13,6 +13,7 @@ gon*.hcl
 staging.sh
 *.crt
 *.key
+bin
 
 # Local .terraform directories
 **/.terraform/*
@@ -55,3 +56,9 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+
+# Ignore editor files
+.vscode
+
+tmp

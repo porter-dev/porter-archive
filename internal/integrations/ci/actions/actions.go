@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v33/github"
 	"github.com/porter-dev/porter/internal/models"
@@ -45,13 +46,20 @@ type GithubActions struct {
 
 	defaultBranch string
 	Version       string
+
+	ShouldGenerateOnly   bool
+	ShouldCreateWorkflow bool
 }
 
-func (g *GithubActions) Setup() (string, error) {
+var (
+	deleteWebhookAndEnvSecretsConstraint, _ = semver.NewConstraint(" < 0.1.0")
+)
+
+func (g *GithubActions) Setup() ([]byte, error) {
 	client, err := g.getClient()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// get the repository to find the default branch
@@ -62,23 +70,32 @@ func (g *GithubActions) Setup() (string, error) {
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// create porter token secret
-	if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
-		return "", err
+	if !g.ShouldGenerateOnly {
+		// create porter token secret
+		if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
+			return nil, err
+		}
 	}
 
-	fileBytes, err := g.GetGithubActionYAML()
+	workflowYAML, err := g.GetGithubActionYAML()
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return g.commitGithubFile(client, g.getPorterYMLFileName(), fileBytes)
+	if !g.ShouldGenerateOnly && g.ShouldCreateWorkflow {
+		_, err = g.commitGithubFile(client, g.getPorterYMLFileName(), workflowYAML)
+		if err != nil {
+			return workflowYAML, err
+		}
+	}
+
+	return workflowYAML, err
 }
 
 func (g *GithubActions) Cleanup() error {
@@ -101,17 +118,25 @@ func (g *GithubActions) Cleanup() error {
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// delete the webhook token secret
-	err = g.deleteGithubSecret(client, g.getWebhookSecretName())
-
+	actionVersion, err := semver.NewVersion(g.Version)
 	if err != nil {
 		return err
 	}
 
-	// delete the env secret
-	err = g.deleteGithubSecret(client, g.getBuildEnvSecretName())
+	if deleteWebhookAndEnvSecretsConstraint.Check(actionVersion) {
+		// delete the webhook token secret
+		if err := g.deleteGithubSecret(client, g.getWebhookSecretName()); err != nil {
+			return err
+		}
 
-	if err != nil {
+		// delete the env secret
+		if err := g.deleteGithubSecret(client, g.getBuildEnvSecretName()); err != nil {
+			return err
+		}
+	}
+
+	// delete the porter token secret
+	if err := g.deleteGithubSecret(client, g.getPorterTokenSecretName()); err != nil {
 		return err
 	}
 
@@ -152,6 +177,7 @@ type GithubActionYAML struct {
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
+		getSetTagStep(),
 		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.Version),
 	}
 
@@ -161,7 +187,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 		branch = g.defaultBranch
 	}
 
-	actionYAML := &GithubActionYAML{
+	actionYAML := GithubActionYAML{
 		On: GithubActionYAMLOnPush{
 			Push: GithubActionYAMLOnPushBranches{
 				Branches: []string{

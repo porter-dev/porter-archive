@@ -28,7 +28,9 @@ type PropsType = RouteComponentProps & {
   setImageTag: (x: string) => void;
 
   actionConfig: ActionConfigType;
-  setActionConfig: (x: ActionConfigType) => void;
+  setActionConfig: (
+    x: ActionConfigType | ((prevState: ActionConfigType) => ActionConfigType)
+  ) => void;
   procfileProcess: string;
   setProcfileProcess: (x: string) => void;
   branch: string;
@@ -162,7 +164,10 @@ class SourcePage extends Component<PropsType, StateType> {
           actionConfig={actionConfig}
           branch={branch}
           setActionConfig={(actionConfig: ActionConfigType) => {
-            setActionConfig(actionConfig);
+            setActionConfig((currentActionConfig: ActionConfigType) => ({
+              ...currentActionConfig,
+              ...actionConfig,
+            }));
             setImageUrl(actionConfig.image_repo_uri);
             /*
             setParentState({ actionConfig }, () =>
@@ -173,10 +178,11 @@ class SourcePage extends Component<PropsType, StateType> {
           procfileProcess={procfileProcess}
           setProcfileProcess={(procfileProcess: string) => {
             setProcfileProcess(procfileProcess);
-            setValuesToOverride({
+            setValuesToOverride((v: any) => ({
+              ...v,
               "container.command": procfileProcess || "",
               showStartCommand: !procfileProcess,
-            });
+            }));
           }}
           setBranch={setBranch}
           setDockerfilePath={setDockerfilePath}
@@ -223,6 +229,16 @@ class SourcePage extends Component<PropsType, StateType> {
     }
   };
 
+  handleContinue = () => {
+    const { sourceType, setPage } = this.props;
+
+    if (sourceType === "repo") {
+      setPage("workflow");
+    } else {
+      setPage("settings");
+    }
+  };
+
   render() {
     let { templateName, setTemplateName, setPage } = this.props;
 
@@ -266,7 +282,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <SaveButton
           text="Continue"
           disabled={!this.checkSourceSelected()}
-          onClick={() => setPage("settings")}
+          onClick={this.handleContinue}
           status={this.getButtonStatus()}
           makeFlush={true}
           helper={this.getButtonHelper()}

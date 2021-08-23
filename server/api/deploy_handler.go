@@ -3,18 +3,21 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"gopkg.in/yaml.v2"
 )
@@ -22,6 +25,8 @@ import (
 // HandleDeployTemplate triggers a chart deployment from a template
 func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
+	flowID := oauth.CreateRandomState()
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -49,6 +54,20 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
+
+	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
+
+	if err != nil {
+		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		return
+	}
+
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
+		&analytics.ApplicationLaunchStartTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), uint(clusterID)),
+			FlowID:                 flowID,
+		},
+	))
 
 	getChartForm.PopulateRepoURLFromQueryParams(vals)
 
@@ -161,13 +180,17 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	// if github action config is linked, call the github action config handler
 	if form.GithubActionConfig != nil {
 		gaForm := &forms.CreateGitAction{
-			ReleaseID:      release.ID,
+			Release: release,
+
 			GitRepo:        form.GithubActionConfig.GitRepo,
 			GitBranch:      form.GithubActionConfig.GitBranch,
 			ImageRepoURI:   form.GithubActionConfig.ImageRepoURI,
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,
 			RegistryID:     form.GithubActionConfig.RegistryID,
+
+			ShouldGenerateOnly:   false,
+			ShouldCreateWorkflow: form.GithubActionConfig.ShouldCreateWorkflow,
 		}
 
 		// validate the form
@@ -176,8 +199,22 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, release, form.ChartTemplateForm.Name, gaForm, w, r)
+		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, gaForm, w, r)
 	}
+
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
+		&analytics.ApplicationLaunchSuccessTrackOpts{
+			ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+				userID,
+				uint(projID),
+				uint(clusterID),
+				release.Name,
+				release.Namespace,
+				chart.Metadata.Name,
+			),
+			FlowID: flowID,
+		},
+	))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -185,6 +222,8 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 // HandleDeployAddon triggers a addon deployment from a template
 func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
+	flowID := oauth.CreateRandomState()
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -242,6 +281,13 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
+		&analytics.ApplicationLaunchStartTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), uint(form.ReleaseForm.Cluster.ID)),
+			FlowID:                 flowID,
+		},
+	))
+
 	agent, err := app.getAgentFromReleaseForm(
 		w,
 		r,
@@ -270,7 +316,7 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	_, err = agent.InstallChart(conf, app.DOConf)
+	rel, err := agent.InstallChart(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -280,6 +326,20 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
+		&analytics.ApplicationLaunchSuccessTrackOpts{
+			ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+				userID,
+				uint(projID),
+				uint(form.ReleaseForm.Cluster.ID),
+				rel.Name,
+				rel.Namespace,
+				chart.Metadata.Name,
+			),
+			FlowID: flowID,
+		},
+	))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -388,6 +448,7 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
 					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
 				err = gaRunner.Cleanup()

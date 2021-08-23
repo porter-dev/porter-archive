@@ -16,12 +16,14 @@ import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
 import { RouteComponentProps, withRouter } from "react-router";
+import Tooltip from "@material-ui/core/Tooltip";
 
 type PropsType = RouteComponentProps & {
   setSelectedProvisioner: (x: string | null) => void;
   handleError: () => void;
   projectName: string;
   infras: InfraType[];
+  highlightCosts?: boolean;
 };
 
 type StateType = {
@@ -72,6 +74,15 @@ const machineTypeOptions = [
   { value: "t3.xlarge", label: "t3.xlarge" },
   { value: "t3.2xlarge", label: "t3.2xlarge" },
 ];
+
+const costMapping: Record<string, number> = {
+  "t2.medium": 35,
+  "t2.xlarge": 135,
+  "t2.2xlarge": 270,
+  "t3.medium": 30,
+  "t3.xlarge": 120,
+  "t3.2xlarge": 240,
+};
 
 // TODO: Consolidate across forms w/ HOC
 class AWSFormSection extends Component<PropsType, StateType> {
@@ -370,8 +381,11 @@ class AWSFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             AWS Credentials
             <GuideButton
-              href="https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
-              target="_blank"
+              onClick={() =>
+                window.open(
+                  "https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
+                )
+              }
             >
               <i className="material-icons-outlined">help</i>
               Guide
@@ -393,6 +407,38 @@ class AWSFormSection extends Component<PropsType, StateType> {
             setActiveValue={(x: string) => this.setState({ awsMachineType: x })}
             label="⚙️ AWS Machine Type"
           />
+          {/*
+          <Helper>
+            Estimated Cost:{" "}
+            <CostHighlight highlight={this.props.highlightCosts}>
+              {`\$${
+                70 + 3 * costMapping[this.state.awsMachineType] + 30
+              }/Month`}
+            </CostHighlight>
+            <Tooltip
+              title={
+                <div
+                  style={{
+                    fontFamily: "Work Sans, sans-serif",
+                    fontSize: "12px",
+                    fontWeight: "normal",
+                    padding: "5px 6px",
+                  }}
+                >
+                  EKS cost: ~$70/month <br />
+                  Machine (x3) cost: ~$
+                  {`${3 * costMapping[this.state.awsMachineType]}`}/month <br />
+                  Networking cost: ~$30/month
+                </div>
+              }
+              placement="top"
+            >
+              <StyledInfoTooltip>
+                <i className="material-icons">help_outline</i>
+              </StyledInfoTooltip>
+            </Tooltip>
+          </Helper>
+          */}
           <InputRow
             type="text"
             value={awsAccessId}
@@ -518,7 +564,7 @@ const CloseButton = styled.div`
   }
 `;
 
-const GuideButton = styled.a`
+const GuideButton = styled.div`
   display: flex;
   align-items: center;
   margin-left: 20px;
@@ -527,7 +573,7 @@ const GuideButton = styled.a`
   margin-bottom: -1px;
   border: 1px solid #aaaabb;
   padding: 5px 10px;
-  padding-left: 6px;
+  padding-left: 8px;
   border-radius: 5px;
   cursor: pointer;
   :hover {
@@ -543,11 +589,33 @@ const GuideButton = styled.a`
   > i {
     color: #aaaabb;
     font-size: 16px;
-    margin-right: 6px;
+    margin-right: 7px;
   }
 `;
 
 const CloseButtonImg = styled.img`
   width: 14px;
   margin: 0 auto;
+`;
+
+const CostHighlight = styled.span<{ highlight: boolean }>`
+  background-color: ${(props) => props.highlight && "yellow"};
+`;
+
+const StyledInfoTooltip = styled.div`
+  display: inline-block;
+  position: relative;
+  margin-right: 2px;
+  > i {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -10px;
+    font-size: 10px;
+    color: #858faaaa;
+    cursor: pointer;
+    :hover {
+      color: #aaaabb;
+    }
+  }
 `;

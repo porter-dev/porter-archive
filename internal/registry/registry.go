@@ -92,6 +92,8 @@ type gcrRepositoryResp struct {
 }
 
 func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, error) {
+	getTokenCache := r.getTokenCacheFunc(repo)
+
 	gcp, err := repo.GCPIntegration.ReadGCPIntegration(
 		r.GCPIntegrationID,
 	)
@@ -102,7 +104,7 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 
 	// get oauth2 access token
 	_, err = gcp.GetBearerToken(
-		r.getTokenCache,
+		getTokenCache,
 		r.setTokenCacheFunc(repo),
 		"https://www.googleapis.com/auth/devstorage.read_write",
 	)
@@ -112,7 +114,7 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 	}
 
 	// it's now written to the token cache, so return
-	cache, err := r.getTokenCache()
+	cache, err := getTokenCache()
 
 	if err != nil {
 		return nil, err
@@ -352,11 +354,18 @@ func (r *Registry) listPrivateRegistryRepositories(
 	return res, nil
 }
 
-func (r *Registry) getTokenCache() (tok *ints.TokenCache, err error) {
-	return &ints.TokenCache{
-		Token:  r.TokenCache.Token,
-		Expiry: r.TokenCache.Expiry,
-	}, nil
+func (r *Registry) getTokenCacheFunc(
+	repo repository.Repository,
+) ints.GetTokenCacheFunc {
+	return func() (tok *ints.TokenCache, err error) {
+		reg, err := repo.Registry.ReadRegistry(r.ID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &reg.TokenCache.TokenCache, nil
+	}
 }
 
 func (r *Registry) setTokenCacheFunc(

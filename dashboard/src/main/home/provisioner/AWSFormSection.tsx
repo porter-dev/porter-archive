@@ -381,7 +381,11 @@ class AWSFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             AWS Credentials
             <GuideButton
-              onClick={() => window.open("https://docs.getporter.dev/docs/getting-started-with-porter-on-aws")}
+              onClick={() =>
+                window.open(
+                  "https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
+                )
+              }
             >
               <i className="material-icons-outlined">help</i>
               Guide

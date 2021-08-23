@@ -6,7 +6,12 @@ import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
-import { getQueryParam, PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
+import {
+  getQueryParam,
+  PorterUrl,
+  pushFiltered,
+  pushQueryParams,
+} from "shared/routing";
 
 import DashboardHeader from "./DashboardHeader";
 import ChartList from "./chart/ChartList";

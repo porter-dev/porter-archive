@@ -13,6 +13,14 @@ func getCheckoutCodeStep() GithubActionYAMLStep {
 	}
 }
 
+func getSetTagStep() GithubActionYAMLStep {
+	return GithubActionYAMLStep{
+		Name: "Set Github tag",
+		ID:   "vars",
+		Run:  `echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"`,
+	}
+}
+
 func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string, actionVersion string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Update Porter App",
@@ -23,6 +31,7 @@ func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, c
 			"host":    serverURL,
 			"project": fmt.Sprintf("%d", projectID),
 			"token":   fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
+			"tag":     "${{ steps.vars.outputs.sha_short }}",
 		},
 		Timeout: 20,
 	}

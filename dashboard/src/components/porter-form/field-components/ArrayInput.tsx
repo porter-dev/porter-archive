@@ -1,6 +1,10 @@
 import React from "react";
 import styled from "styled-components";
-import { ArrayInputField, ArrayInputFieldState, GetFinalVariablesFunction } from "../types";
+import {
+  ArrayInputField,
+  ArrayInputFieldState,
+  GetFinalVariablesFunction,
+} from "../types";
 import useFormField from "../hooks/useFormField";
 
 const ArrayInput: React.FC<ArrayInputField> = (props) => {

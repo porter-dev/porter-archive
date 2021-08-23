@@ -8,7 +8,7 @@ type StateType = {};
 export default class GHIcon extends Component<PropsType, StateType> {
   render() {
     return (
-      <Svg width="46px" height="46px" viewBox="0 0 46 46">
+      <Svg width="46px" height="46px" viewBox="0 0 46 46" {...this.props}>
         <title>btn_google_light_normal_ios</title>
         <desc>Created with Sketch.</desc>
         <defs>

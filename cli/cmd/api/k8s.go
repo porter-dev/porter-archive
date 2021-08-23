@@ -37,7 +37,7 @@ func (c *Client) GetK8sNamespaces(
 	req = req.WithContext(ctx)
 	bodyResp := &GetK8sNamespacesResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -77,7 +77,7 @@ func (c *Client) GetKubeconfig(
 	req = req.WithContext(ctx)
 	bodyResp := &GetKubeconfigResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -116,7 +116,7 @@ func (c *Client) GetRelease(
 	req = req.WithContext(ctx)
 	bodyResp := &GetReleaseResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -155,7 +155,7 @@ func (c *Client) GetK8sAllPods(
 	req = req.WithContext(ctx)
 	bodyResp := &GetReleaseAllPodsResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

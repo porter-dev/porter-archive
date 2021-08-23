@@ -30,7 +30,7 @@ func (c *Client) AuthCheck(ctx context.Context) (*AuthCheckResponse, error) {
 
 	bodyResp := &AuthCheckResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -72,7 +72,7 @@ func (c *Client) Login(ctx context.Context, loginRequest *LoginRequest) (*LoginR
 	req = req.WithContext(ctx)
 	bodyResp := &LoginResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, false); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, false); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -97,7 +97,7 @@ func (c *Client) Logout(ctx context.Context) error {
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -142,7 +142,7 @@ func (c *Client) CreateUser(
 	req = req.WithContext(ctx)
 	bodyResp := &CreateUserResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, false); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, false); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -173,7 +173,7 @@ func (c *Client) GetUser(ctx context.Context, userID uint) (*GetUserResponse, er
 
 	bodyResp := &GetUserResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -203,7 +203,7 @@ func (c *Client) ListUserProjects(ctx context.Context, userID uint) (ListUserPro
 
 	bodyResp := ListUserProjectsResponse{}
 
-	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -243,7 +243,7 @@ func (c *Client) DeleteUser(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

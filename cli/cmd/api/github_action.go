@@ -54,7 +54,7 @@ func (c *Client) CreateGithubAction(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

@@ -1622,17 +1622,26 @@ func (app *App) HandleGetReleaseSteps(w http.ResponseWriter, r *http.Request) {
 }
 
 type HandleUpdateReleaseStepsForm struct {
-	EventID string
-	Name    string
-	Index   int64
-	Status  models.EventStatus
-	Info    string
-	Token   string
+	Event struct {
+		ID     string             `json:"event_id" form:"required"`
+		Name   string             `json:"name" form:"required"`
+		Index  int64              `json:"index" form:"required"`
+		Status models.EventStatus `json:"status" form:"required"`
+		Info   string             `json:"info" form:"required"`
+	} `json:"event" form:"required"`
+	Token string `json:"token" form:"required"`
 }
 
 // HandleUpdateReleaseSteps adds a new step to a release
 func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request) {
+	form := &HandleUpdateReleaseStepsForm{}
 
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	fmt.Printf("%#v", form)
 }
 
 // ------------------------ Release handler helper functions ------------------------ //

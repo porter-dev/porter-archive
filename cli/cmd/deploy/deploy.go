@@ -1,11 +1,13 @@
 package deploy
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,11 +63,17 @@ const (
 
 // Event represents an event that happens during
 type Event struct {
-	Id     string // events with the same id wil be treated the same, and the highest index one is retained
-	Name   string
-	Index  int64 // priority of the event, used for sorting
-	Status EventStatus
-	Info   string // extra information (can be error or success)
+	ID     string      `json:"event_id"` // events with the same id wil be treated the same, and the highest index one is retained
+	Name   string      `json:"name"`
+	Index  int64       `json:"index"` // priority of the event, used for sorting
+	Status EventStatus `json:"status"`
+	Info   string      `json:"info"` // extra information (can be error or success)
+}
+
+// StreamEventForm is used to send event data to the api
+type StreamEventForm struct {
+	Event `json:"event"`
+	Token string `json:"token"`
 }
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
@@ -456,7 +464,38 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	return res, nil
 }
 
-func (d *DeployAgent) StreamEvent(event *Event, token string) error {
+func (d *DeployAgent) StreamEvent(event Event, token string) error {
+	form := StreamEventForm{
+		Event: event,
+		Token: token,
+	}
+
+	body := new(bytes.Buffer)
+	err := json.NewEncoder(body).Encode(form)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/releases/%s/steps", d.client.BaseURL, d.opts.ProjectID, d.release.Name),
+		body,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(context.Background())
+
+	if httpErr, err := d.client.SendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+		return err
+	}
+
 	return nil
 }
 

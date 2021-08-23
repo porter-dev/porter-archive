@@ -62,7 +62,7 @@ func NewClientWithToken(baseURL, token string) *Client {
 	return client
 }
 
-func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
+func (c *Client) SendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 

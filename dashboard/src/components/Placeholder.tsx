@@ -9,10 +9,7 @@ interface Props {
 
 const Placeholder: React.FC<Props> = ({ height, minHeight, children }) => {
   return (
-    <StyledPlaceholder 
-      height={height}
-      minHeight={minHeight}
-    >
+    <StyledPlaceholder height={height} minHeight={minHeight}>
       {children}
     </StyledPlaceholder>
   );
@@ -20,13 +17,13 @@ const Placeholder: React.FC<Props> = ({ height, minHeight, children }) => {
 
 export default Placeholder;
 
-const StyledPlaceholder = styled.div<{ 
-  height: string,
-  minHeight: string,
+const StyledPlaceholder = styled.div<{
+  height: string;
+  minHeight: string;
 }>`
   width: 100%;
-  height: ${props => props.height || "100px"};
-  minHeight: ${props => props.minHeight || ""};
+  height: ${(props) => props.height || "100px"};
+  minheight: ${(props) => props.minHeight || ""};
   display: flex;
   align-items: center;
   justify-content: center;

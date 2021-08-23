@@ -52,7 +52,7 @@ Thus, subsequent endpoint can simply call the following:
 proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 ```
 
-Note that **we assume the resource is populated** -- we do not check for this condition, since this is the function of the middleware.
+Note that **we assume the resource is populated in subsequent handlers** -- we do not check for this condition, since this is the function of the middleware.
 
 ## Migrating Existing Handlers
 

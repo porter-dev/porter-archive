@@ -168,7 +168,7 @@ func GetAccessToken(
 		AccessToken:  string(prevToken.AccessToken),
 		RefreshToken: string(prevToken.RefreshToken),
 		TokenType:    "Bearer",
-		Expiry:       prevToken.Expiry,
+		Expiry:       expiry,
 	})
 
 	token, err := tokSource.Token()

@@ -21,13 +21,13 @@ This refactor abstracts authentication and authorization logic much better than 
 ```
              User
               |
-			Project
-		   /	   \
-		Cluster   Settings
-		/
-	Namespace
+           Project
+           /      \
+        Cluster   Settings
+         /
+    Namespace
        |
-	 Release
+     Release
 ```
 
 That is, all project routes are user-scoped (require authenticated user), all cluster scopes require a project, etc.

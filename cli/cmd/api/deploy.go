@@ -36,7 +36,7 @@ func (c *Client) GetReleaseWebhook(
 	req = req.WithContext(ctx)
 	bodyResp := &GetReleaseWebhookResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -64,7 +64,7 @@ func (c *Client) DeployWithWebhook(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -109,7 +109,7 @@ func (c *Client) UpdateBatchImage(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -168,7 +168,7 @@ func (c *Client) DeployTemplate(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -212,7 +212,7 @@ func (c *Client) UpgradeRelease(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

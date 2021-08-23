@@ -25,7 +25,7 @@ func (c *Client) ListTemplates(
 
 	bodyResp := make([]*models.PorterChartList, 0)
 
-	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -54,7 +54,7 @@ func (c *Client) GetTemplate(
 
 	bodyResp := &models.PorterChartRead{}
 
-	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

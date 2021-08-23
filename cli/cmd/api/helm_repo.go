@@ -46,7 +46,7 @@ func (c *Client) CreateHelmRepo(
 	req = req.WithContext(ctx)
 	bodyResp := &CreateHelmRepoResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -78,7 +78,7 @@ func (c *Client) ListHelmRepos(
 	req = req.WithContext(ctx)
 	bodyResp := &ListHelmRepoResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -111,7 +111,7 @@ func (c *Client) ListCharts(
 	req = req.WithContext(ctx)
 	bodyResp := &ListChartsResponse{}
 
-	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

@@ -410,8 +410,8 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 	}
 
 	if stream {
-		updateAgent.StreamEvent(&deploy.Event{
-			Id:     "build",
+		updateAgent.StreamEvent(deploy.Event{
+			ID:     "build",
 			Name:   "Build",
 			Index:  100,
 			Status: deploy.EventStatusInProgress,
@@ -424,8 +424,8 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 	if err != nil {
 		if stream {
 			// another concern: is it safe to ignore the error here?
-			updateAgent.StreamEvent(&deploy.Event{
-				Id:     "build",
+			updateAgent.StreamEvent(deploy.Event{
+				ID:     "build",
 				Name:   "Build",
 				Index:  110,
 				Status: deploy.EventStatusInProgress,
@@ -440,8 +440,8 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(&deploy.Event{
-				Id:     "build",
+			updateAgent.StreamEvent(deploy.Event{
+				ID:     "build",
 				Name:   "Build",
 				Index:  120,
 				Status: deploy.EventStatusInProgress,
@@ -452,8 +452,8 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 	}
 
 	if stream {
-		updateAgent.StreamEvent(&deploy.Event{
-			Id:     "build",
+		updateAgent.StreamEvent(deploy.Event{
+			ID:     "build",
 			Name:   "Build",
 			Index:  130,
 			Status: deploy.EventStatusSuccess,

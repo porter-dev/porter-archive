@@ -263,7 +263,8 @@ const Metrics: React.FC = () => {
       <br />
       <br />
       <Placeholder height="calc(50vh - 50px)" minHeight="400px">
-        Cluster metrics unavailable. Make sure nginx-ingress and Prometheus are installed. 
+        Cluster metrics unavailable. Make sure nginx-ingress and Prometheus are
+        installed.
         <A href="/launch">Go to Launch</A>
       </Placeholder>
     </>

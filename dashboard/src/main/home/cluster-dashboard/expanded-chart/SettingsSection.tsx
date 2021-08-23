@@ -212,14 +212,16 @@ const SettingsSection: React.FC<PropsType> = ({
           />
           {!loadingWebhookToken && (
             <>
-            <Br /><Br /><Br />
-            <SaveButton
-              clearPosition={true}
-              statusPosition="right"
-              text="Save Source Settings"
-              status={saveValuesStatus}
-              onClick={handleSubmit}
-            />
+              <Br />
+              <Br />
+              <Br />
+              <SaveButton
+                clearPosition={true}
+                statusPosition="right"
+                text="Save Source Settings"
+                status={saveValuesStatus}
+                onClick={handleSubmit}
+              />
             </>
           )}
           <Br />

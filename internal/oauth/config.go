@@ -28,13 +28,24 @@ type GithubAppConf struct {
 	oauth2.Config
 }
 
+const (
+	GithubAuthURL  string = "https://github.com/login/oauth/authorize"
+	GithubTokenURL string = "https://github.com/login/oauth/access_token"
+	DOAuthURL      string = "https://cloud.digitalocean.com/v1/oauth/authorize"
+	DOTokenURL     string = "https://cloud.digitalocean.com/v1/oauth/token"
+	GoogleAuthURL  string = "https://accounts.google.com/o/oauth2/v2/auth"
+	GoogleTokenURL string = "https://oauth2.googleapis.com/token"
+	SlackAuthURL   string = "https://slack.com/oauth/v2/authorize"
+	SlackTokenURL  string = "https://slack.com/api/oauth.v2.access"
+)
+
 func NewGithubClient(cfg *Config) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://github.com/login/oauth/authorize",
-			TokenURL: "https://github.com/login/oauth/access_token",
+			AuthURL:  GithubAuthURL,
+			TokenURL: GithubTokenURL,
 		},
 		RedirectURL: cfg.BaseURL + "/api/oauth/github/callback",
 		Scopes:      cfg.Scopes,
@@ -51,8 +62,8 @@ func NewGithubAppClient(cfg *Config, name string, secret string, secretPath stri
 			ClientID:     cfg.ClientID,
 			ClientSecret: cfg.ClientSecret,
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  "https://github.com/login/oauth/authorize",
-				TokenURL: "https://github.com/login/oauth/access_token",
+				AuthURL:  GithubAuthURL,
+				TokenURL: GithubTokenURL,
 			},
 			RedirectURL: cfg.BaseURL + "/api/oauth/github-app/callback",
 			Scopes:      cfg.Scopes,
@@ -65,8 +76,8 @@ func NewDigitalOceanClient(cfg *Config) *oauth2.Config {
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://cloud.digitalocean.com/v1/oauth/authorize",
-			TokenURL: "https://cloud.digitalocean.com/v1/oauth/token",
+			AuthURL:  DOAuthURL,
+			TokenURL: DOTokenURL,
 		},
 		RedirectURL: cfg.BaseURL + "/api/oauth/digitalocean/callback",
 		Scopes:      cfg.Scopes,
@@ -78,8 +89,8 @@ func NewGoogleClient(cfg *Config) *oauth2.Config {
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://accounts.google.com/o/oauth2/v2/auth",
-			TokenURL: "https://oauth2.googleapis.com/token",
+			AuthURL:  GoogleAuthURL,
+			TokenURL: GoogleTokenURL,
 		},
 		RedirectURL: cfg.BaseURL + "/api/oauth/google/callback",
 		Scopes:      cfg.Scopes,
@@ -91,8 +102,8 @@ func NewSlackClient(cfg *Config) *oauth2.Config {
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://slack.com/oauth/v2/authorize",
-			TokenURL: "https://slack.com/api/oauth.v2.access",
+			AuthURL:  SlackAuthURL,
+			TokenURL: SlackTokenURL,
 		},
 		RedirectURL: cfg.BaseURL + "/api/oauth/slack/callback",
 		Scopes:      cfg.Scopes,
@@ -147,6 +158,12 @@ func GetAccessToken(
 	conf *oauth2.Config,
 	updateToken func(accessToken []byte, refreshToken []byte, expiry time.Time) error,
 ) (string, *time.Time, error) {
+	expiry := prevToken.Expiry
+	if conf.Endpoint.AuthURL == DOAuthURL && expiry.IsZero() {
+		// manually set the expiry so refresh token is used
+		expiry = time.Now().Add(-1 * time.Minute)
+	}
+
 	tokSource := conf.TokenSource(context.TODO(), &oauth2.Token{
 		AccessToken:  string(prevToken.AccessToken),
 		RefreshToken: string(prevToken.RefreshToken),

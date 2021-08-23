@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
@@ -104,6 +105,29 @@ func (c *Cluster) Externalize() *ClusterExternal {
 	}
 
 	return &ClusterExternal{
+		ID:               c.ID,
+		ProjectID:        c.ProjectID,
+		Name:             c.Name,
+		Server:           c.Server,
+		Service:          serv,
+		InfraID:          c.InfraID,
+		AWSIntegrationID: c.AWSIntegrationID,
+	}
+}
+
+// ToProjectType generates an external types.Project to be shared over REST
+func (c *Cluster) ToClusterType() *types.Cluster {
+	serv := types.Kube
+
+	if c.AWSIntegrationID != 0 {
+		serv = types.EKS
+	} else if c.GCPIntegrationID != 0 {
+		serv = types.GKE
+	} else if c.DOIntegrationID != 0 {
+		serv = types.DOKS
+	}
+
+	return &types.Cluster{
 		ID:               c.ID,
 		ProjectID:        c.ProjectID,
 		Name:             c.Name,

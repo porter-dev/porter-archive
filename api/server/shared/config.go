@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 )
 
 type Config struct {
@@ -33,6 +34,9 @@ type Config struct {
 	// UserNotifier is an object that notifies users of transactions (pw reset, email
 	// verification, etc)
 	UserNotifier notifier.UserNotifier
+
+	// DOConf is the configuration for a DigitalOcean OAuth client
+	DOConf *oauth2.Config
 }
 
 type ConfigLoader interface {

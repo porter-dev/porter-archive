@@ -3,26 +3,25 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
-	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewProjectScopedRegisterer(children ...*Registerer) *Registerer {
+func NewClusterScopedRegisterer(children ...*Registerer) *Registerer {
 	return &Registerer{
-		GetRoutes: GetProjectScopedRoutes,
+		GetRoutes: GetClusterScopedRoutes,
 		Children:  children,
 	}
 }
 
-func GetProjectScopedRoutes(
+func GetClusterScopedRoutes(
 	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*Registerer,
 ) []*Route {
-	routes, projPath := getProjectRoutes(r, config, basePath, factory)
+	routes, projPath := getClusterRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
 		r.Route(projPath.RelativePath, func(r chi.Router) {
@@ -37,13 +36,13 @@ func GetProjectScopedRoutes(
 	return routes
 }
 
-func getProjectRoutes(
+func getClusterRoutes(
 	r chi.Router,
 	config *shared.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*Route, *types.Path) {
-	relPath := "/projects/{project_id}"
+	relPath := "/clusters/{cluster_id}"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -52,7 +51,7 @@ func getProjectRoutes(
 
 	routes := make([]*Route, 0)
 
-	// GET /api/projects/{project_id} -> project.NewProjectGetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id} -> project.NewClusterGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -64,11 +63,12 @@ func getProjectRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.ClusterScope,
 			},
 		},
 	)
 
-	getHandler := project.NewProjectGetHandler(
+	getHandler := cluster.NewClusterGetHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -76,33 +76,6 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters -> cluster.NewClusterListHandler
-	listClusterEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbList,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-		},
-	)
-
-	listClusterHandler := cluster.NewClusterListHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &Route{
-		Endpoint: listClusterEndpoint,
-		Handler:  listClusterHandler,
 		Router:   r,
 	})
 

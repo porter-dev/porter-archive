@@ -47,8 +47,8 @@ class JobList extends Component<PropsType, StateType> {
                     onNo: () => {
                       this.setState({ deletionCandidate: null });
                       this.context.setCurrentOverlay(null);
-                    }
-                  })
+                    },
+                  });
                 }}
                 deleting={
                   this.state.deletionJob?.metadata?.name == job.metadata?.name
@@ -102,9 +102,7 @@ class JobList extends Component<PropsType, StateType> {
   };
 
   render() {
-    return (
-      <JobListWrapper>{this.renderJobList()}</JobListWrapper>
-    );
+    return <JobListWrapper>{this.renderJobList()}</JobListWrapper>;
   }
 }
 

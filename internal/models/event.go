@@ -12,8 +12,8 @@ const (
 
 type EventContainer struct {
 	gorm.Model
-
-	Steps []SubEvent
+	ReleaseID uint
+	Steps     []SubEvent
 }
 
 type SubEvent struct {

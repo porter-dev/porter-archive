@@ -1642,6 +1642,19 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 	}
 
 	fmt.Printf("%#v", form)
+
+	release, err := app.Repo.Release.ReadReleaseByWebhookToken(form.Token)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found with given webhook"},
+		}, w)
+
+		return
+	}
+
+	fmt.Printf("%#v", release.EventContainer)
 }
 
 // ------------------------ Release handler helper functions ------------------------ //

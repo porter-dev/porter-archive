@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/authz"
+	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/types"
 )
@@ -18,7 +19,8 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 
 	endpointFactory := shared.NewAPIObjectEndpointFactory(config)
 	baseRegisterer := NewBaseRegisterer()
-	projRegisterer := NewProjectScopedRegisterer()
+	clusterRegisterer := NewClusterScopedRegisterer()
+	projRegisterer := NewProjectScopedRegisterer(clusterRegisterer)
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
 	r.Route("/api", func(r chi.Router) {
@@ -76,6 +78,13 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 	// after authorization. Each subsequent http.Handler can lookup the project in context.
 	projFactory := authz.NewProjectScopedFactory(config)
 
+	// Create a new "cluster-scoped" factory which will create a new cluster-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the cluster in context.
+	clusterFactory := authz.NewClusterScopedFactory(config)
+
+	// Policy doc loader loads the policy documents for a specific project.
+	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
+
 	for _, route := range routes {
 		atomicGroup := route.Router.Group(nil)
 
@@ -89,7 +98,12 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 					atomicGroup.Use(authNFactory.NewAuthenticated)
 				}
 			case types.ProjectScope:
+				policyFactory := authz.NewPolicyMiddleware(config, *route.Endpoint.Metadata, policyDocLoader)
+
+				atomicGroup.Use(policyFactory.Middleware)
 				atomicGroup.Use(projFactory.Middleware)
+			case types.ClusterScope:
+				atomicGroup.Use(clusterFactory.Middleware)
 			}
 		}
 

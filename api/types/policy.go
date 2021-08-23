@@ -26,10 +26,6 @@ type PolicyDocument struct {
 type ScopeTree map[PermissionScope]ScopeTree
 
 /* ScopeHeirarchy describes the scope tree:
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 			Project
 		   /	   \
 		Cluster   Settings

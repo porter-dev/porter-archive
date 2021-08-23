@@ -9,7 +9,10 @@ import { Context } from "shared/Context";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import { KeyValue } from "components/form-components/KeyValueArray";
-import { EnvGroupData, formattedEnvironmentValue } from "../cluster-dashboard/env-groups/EnvGroup";
+import {
+  EnvGroupData,
+  formattedEnvironmentValue,
+} from "../cluster-dashboard/env-groups/EnvGroup";
 
 type PropsType = {
   namespace: string;

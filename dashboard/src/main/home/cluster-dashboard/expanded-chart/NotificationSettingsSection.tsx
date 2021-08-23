@@ -1,12 +1,14 @@
 import React, { useContext, useState, useEffect } from "react";
-import Heading from "../../../../components/form-components/Heading";
-import CheckboxRow from "../../../../components/form-components/CheckboxRow";
-import Helper from "../../../../components/form-components/Helper";
-import SaveButton from "../../../../components/SaveButton";
-import api from "../../../../shared/api";
-import { Context } from "../../../../shared/Context";
-import { ChartType } from "../../../../shared/types";
-import Loading from "../../../../components/Loading";
+import Heading from "components/form-components/Heading";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Helper from "components/form-components/Helper";
+import SaveButton from "components/SaveButton";
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { ChartType } from "shared/types";
+import Loading from "components/Loading";
+import Banner from "components/Banner";
+import styled from "styled-components";
 
 const NOTIF_CATEGORIES = ["success", "fail"];
 
@@ -105,62 +107,72 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
   return (
     <>
       <Heading>Notification Settings</Heading>
+      <Helper>Configure notification settings for this application.</Helper>
       {initLoading ? (
         <Loading />
       ) : !hasRelease ? (
-        <Heading>
-          This message appears when the release isn't in the database, so Porter
-          can't laod in notifications for it
-        </Heading>
+        <Banner type="error">
+          Notifications unavailable. Porter could not find this application in
+          the database.
+        </Banner>
       ) : (
         <>
-          {hasNotifications != null && !hasNotifications && (
-            <Helper>
-              This message appears when there are no notification integrations
-              for the project
-            </Helper>
-          )}
-          <CheckboxRow
-            label={"Notifications Enabled"}
-            checked={notificationsOn}
-            toggle={() => setNotificationsOn(!notificationsOn)}
-            disabled={props.disabled}
-          />
-          {notificationsOn && (
+          {hasNotifications != null && !hasNotifications ? (
+            <Banner type="warning">
+              No integration has been set up for notifications.{" "}
+              <A href="http://localhost:8080/integrations/slack">
+                Connect to Slack
+              </A>
+            </Banner>
+          ) : (
             <>
-              <Helper>Send notifications on:</Helper>
-              {Object.entries(categories).map(([k, v]: [string, boolean]) => {
-                return (
-                  <React.Fragment key={k}>
-                    <CheckboxRow
-                      label={k}
-                      checked={v}
-                      toggle={() =>
-                        setCategories((prev) => {
-                          return {
-                            ...prev,
-                            [k]: !v,
-                          };
-                        })
-                      }
-                      disabled={props.disabled}
-                    />
-                  </React.Fragment>
-                );
-              })}
+              <CheckboxRow
+                label={"Enable notifications"}
+                checked={notificationsOn}
+                toggle={() => setNotificationsOn(!notificationsOn)}
+                disabled={props.disabled}
+              />
+              {notificationsOn && (
+                <>
+                  <Helper>Send notifications on:</Helper>
+                  {Object.entries(categories).map(
+                    ([k, v]: [string, boolean]) => {
+                      return (
+                        <React.Fragment key={k}>
+                          <CheckboxRow
+                            label={`Deploy ${k}`}
+                            checked={v}
+                            toggle={() =>
+                              setCategories((prev) => {
+                                return {
+                                  ...prev,
+                                  [k]: !v,
+                                };
+                              })
+                            }
+                            disabled={props.disabled}
+                          />
+                        </React.Fragment>
+                      );
+                    }
+                  )}
+                </>
+              )}
+              <br />
+              <SaveButton
+                onClick={() => saveChanges()}
+                text={"Save"}
+                clearPosition={true}
+                statusPosition={"right"}
+                disabled={props.disabled || initLoading || saveLoading}
+                status={
+                  saveLoading ? "loading" : numSaves > 0 ? "successful" : null
+                }
+                saveText={"Saving . . ."}
+              />
+              <Br />
             </>
           )}
-          <SaveButton
-            onClick={() => saveChanges()}
-            text={"Save Changes"}
-            clearPosition={true}
-            statusPosition={"right"}
-            disabled={props.disabled || initLoading || saveLoading}
-            status={
-              saveLoading ? "loading" : numSaves > 0 ? "successful" : null
-            }
-            saveText={"Saving . . ."}
-          />
         </>
       )}
     </>
@@ -168,3 +180,14 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
 };
 
 export default NotificationSettingsSection;
+
+const A = styled.a`
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 5px;
+`;
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;

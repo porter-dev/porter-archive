@@ -183,8 +183,8 @@ const Chart: React.FunctionComponent<Props> = ({
               <>
                 <Dot>•</Dot>
                 <JobStatus status={jobStatus.status}>
-                  {jobStatus.status === "running" ? "Started" : "Last run"} {jobStatus.status} at{" "}
-                  {readableDate(jobStatus.start_time)}
+                  {jobStatus.status === "running" ? "Started" : "Last run"}{" "}
+                  {jobStatus.status} at {readableDate(jobStatus.start_time)}
                 </JobStatus>
               </>
             ) : (
@@ -339,8 +339,9 @@ const Title = styled.div`
 
 const JobStatus = styled.span<{ status?: string }>`
   font-size: 13px;
-  font-weight: ${props => props.status && props.status !== "running" ? "500" : ""};
-  ${props => `
+  font-weight: ${(props) =>
+    props.status && props.status !== "running" ? "500" : ""};
+  ${(props) => `
   color: ${
     props.status === "succeeded"
       ? "rgb(56, 168, 138)"

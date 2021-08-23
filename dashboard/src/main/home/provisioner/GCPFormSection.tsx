@@ -332,7 +332,11 @@ class GCPFormSection extends Component<PropsType, StateType> {
           <Heading isAtTop={true}>
             GCP Credentials
             <GuideButton
-              onClick={() => window.open("https://docs.getporter.dev/docs/getting-started-on-gcp")}
+              onClick={() =>
+                window.open(
+                  "https://docs.getporter.dev/docs/getting-started-on-gcp"
+                )
+              }
             >
               <i className="material-icons-outlined">help</i>
               Guide

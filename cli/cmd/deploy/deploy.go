@@ -1,13 +1,11 @@
 package deploy
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -465,38 +463,7 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 }
 
 func (d *DeployAgent) StreamEvent(event Event, token string) error {
-	form := StreamEventForm{
-		Event: event,
-		Token: token,
-	}
-
-	body := new(bytes.Buffer)
-	err := json.NewEncoder(body).Encode(form)
-
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest(
-		"POST",
-		fmt.Sprintf("%s/projects/%d/releases/%s/steps", d.client.BaseURL, d.opts.ProjectID, d.release.Name),
-		body,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	req = req.WithContext(context.Background())
-
-	if httpErr, err := d.client.SendRequest(req, nil, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
-		}
-		return err
-	}
-
-	return nil
+	return d.client.StreamEvent(event, token, d.opts.ProjectID, d.release.Name)
 }
 
 type NestedMapFieldNotFoundError struct {

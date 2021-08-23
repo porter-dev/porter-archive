@@ -1,9 +1,12 @@
 package api
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -62,7 +65,7 @@ func NewClientWithToken(baseURL, token string) *Client {
 	return client
 }
 
-func (c *Client) SendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
+func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
@@ -119,6 +122,42 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 	}
 
 	return ioutil.WriteFile(c.CookieFilePath, data, 0644)
+}
+
+// StreamEvent sends an event from deployment to the api
+func (c *Client) StreamEvent(event deploy.Event, token string, projID uint, name string) error {
+	form := deploy.StreamEventForm{
+		Event: event,
+		Token: token,
+	}
+
+	body := new(bytes.Buffer)
+	err := json.NewEncoder(body).Encode(form)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/releases/%s/steps", c.BaseURL, projID, name),
+		body,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(context.Background())
+
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+		return err
+	}
+
+	return nil
 }
 
 // retrieves single cookie from file

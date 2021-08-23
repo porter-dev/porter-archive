@@ -3,18 +3,30 @@ import styled from "styled-components";
 
 interface Props {
   height?: string;
+  minHeight?: string;
   children: React.ReactNode;
 }
 
-const Placeholder: React.FC<Props> = ({ height, children }) => {
-  return <StyledPlaceholder height={height}>{children}</StyledPlaceholder>;
+const Placeholder: React.FC<Props> = ({ height, minHeight, children }) => {
+  return (
+    <StyledPlaceholder 
+      height={height}
+      minHeight={minHeight}
+    >
+      {children}
+    </StyledPlaceholder>
+  );
 };
 
 export default Placeholder;
 
-const StyledPlaceholder = styled.div<{ height: string }>`
+const StyledPlaceholder = styled.div<{ 
+  height: string,
+  minHeight: string,
+}>`
   width: 100%;
-  height: ${(props) => props.height || "100px"};
+  height: ${props => props.height || "100px"};
+  minHeight: ${props => props.minHeight || ""};
   display: flex;
   align-items: center;
   justify-content: center;

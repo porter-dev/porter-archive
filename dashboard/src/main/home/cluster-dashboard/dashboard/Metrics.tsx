@@ -258,12 +258,13 @@ const Metrics: React.FC = () => {
     <LoadingWrapper>
       <Loading />
     </LoadingWrapper>
-  ) : !detected ? (
+  ) : !detected || true ? (
     <>
       <br />
       <br />
       <Placeholder height="calc(50vh - 50px)" minHeight="400px">
-        Cluster metrics unavailable. No ingress controller or instance of nginx-ingress was found on this cluster.
+        Cluster metrics unavailable. Make sure nginx-ingress and Prometheus are installed. 
+        <A href="/launch">Go to Launch</A>
       </Placeholder>
     </>
   ) : (
@@ -335,6 +336,10 @@ const Metrics: React.FC = () => {
 };
 
 export default Metrics;
+
+const A = styled.a`
+  margin-left: 5px;
+`;
 
 const LoadingWrapper = styled.div`
   padding: 100px 0px;

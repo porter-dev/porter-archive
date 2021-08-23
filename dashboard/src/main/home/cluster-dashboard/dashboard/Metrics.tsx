@@ -258,7 +258,7 @@ const Metrics: React.FC = () => {
     <LoadingWrapper>
       <Loading />
     </LoadingWrapper>
-  ) : !detected || true ? (
+  ) : !detected ? (
     <>
       <br />
       <br />

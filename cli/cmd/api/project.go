@@ -29,7 +29,7 @@ func (c *Client) GetProject(ctx context.Context, projectID uint) (*GetProjectRes
 	req = req.WithContext(ctx)
 	bodyResp := &GetProjectResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -63,7 +63,7 @@ func (c *Client) GetProjectCluster(
 	req = req.WithContext(ctx)
 	bodyResp := &GetProjectClusterResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -95,7 +95,7 @@ func (c *Client) ListProjectClusters(
 	req = req.WithContext(ctx)
 	bodyResp := ListProjectClustersResponse{}
 
-	if httpErr, err := c.SendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -138,7 +138,7 @@ func (c *Client) CreateProject(
 	req = req.WithContext(ctx)
 	bodyResp := &CreateProjectResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -186,7 +186,7 @@ func (c *Client) CreateProjectCandidates(
 	req = req.WithContext(ctx)
 	bodyResp := CreateProjectCandidatesResponse{}
 
-	if httpErr, err := c.SendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -219,7 +219,7 @@ func (c *Client) GetProjectCandidates(
 	req = req.WithContext(ctx)
 	bodyResp := GetProjectCandidatesResponse{}
 
-	if httpErr, err := c.SendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -261,7 +261,7 @@ func (c *Client) CreateProjectCluster(
 	req = req.WithContext(ctx)
 	bodyResp := &CreateProjectClusterResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -290,7 +290,7 @@ func (c *Client) DeleteProjectCluster(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -319,7 +319,7 @@ func (c *Client) DeleteProject(ctx context.Context, projectID uint) (*DeleteProj
 	req = req.WithContext(ctx)
 	bodyResp := &DeleteProjectResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

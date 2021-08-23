@@ -48,7 +48,7 @@ func (c *Client) CreateECR(
 	req = req.WithContext(ctx)
 	bodyResp := &CreateECRResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -95,7 +95,7 @@ func (c *Client) CreatePrivateRegistry(
 	req = req.WithContext(ctx)
 	bodyResp := &CreatePrivateRegistryResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -142,7 +142,7 @@ func (c *Client) CreateGCR(
 	req = req.WithContext(ctx)
 	bodyResp := &CreateGCRResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -189,7 +189,7 @@ func (c *Client) CreateDOCR(
 	req = req.WithContext(ctx)
 	bodyResp := &CreateDOCRResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -221,7 +221,7 @@ func (c *Client) ListRegistries(
 	req = req.WithContext(ctx)
 	bodyResp := &ListRegistryResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -250,7 +250,7 @@ func (c *Client) DeleteProjectRegistry(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -286,7 +286,7 @@ func (c *Client) GetECRAuthorizationToken(
 	bodyResp := &GetTokenResponse{}
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -326,7 +326,7 @@ func (c *Client) GetGCRAuthorizationToken(
 	bodyResp := &GetTokenResponse{}
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -355,7 +355,7 @@ func (c *Client) GetDockerhubAuthorizationToken(
 	bodyResp := &GetTokenResponse{}
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -395,7 +395,7 @@ func (c *Client) GetDOCRAuthorizationToken(
 	bodyResp := &GetTokenResponse{}
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -428,7 +428,7 @@ func (c *Client) ListRegistryRepositories(
 	req = req.WithContext(ctx)
 	bodyResp := &ListRegistryRepositoryResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -462,7 +462,7 @@ func (c *Client) ListImages(
 	req = req.WithContext(ctx)
 	bodyResp := &ListImagesResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -501,7 +501,7 @@ func (c *Client) CreateRepository(
 
 	req = req.WithContext(ctx)
 
-	if httpErr, err := c.SendRequest(req, nil, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

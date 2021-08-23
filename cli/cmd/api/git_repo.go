@@ -30,7 +30,7 @@ func (c *Client) ListGitRepos(
 	req = req.WithContext(ctx)
 	bodyResp := &ListGitRepoResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -70,7 +70,7 @@ func (c *Client) GetRepoZIPDownloadURL(
 	req = req.WithContext(ctx)
 	bodyResp := &GetRepoTarballDownloadURLResp{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}
@@ -102,7 +102,7 @@ func (c *Client) ListGithubRepos(
 	req = req.WithContext(ctx)
 	bodyResp := &ListGithubReposResponse{}
 
-	if httpErr, err := c.SendRequest(req, bodyResp, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

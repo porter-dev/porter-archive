@@ -48,7 +48,7 @@ func (c *Client) CreateDNSRecord(
 
 	res := &CreateDNSRecordResponse{}
 
-	if httpErr, err := c.SendRequest(req, res, true); httpErr != nil || err != nil {
+	if httpErr, err := c.sendRequest(req, res, true); httpErr != nil || err != nil {
 		if httpErr != nil {
 			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
 		}

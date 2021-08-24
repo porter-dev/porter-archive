@@ -239,8 +239,11 @@ class RevisionSection extends Component<PropsType, StateType> {
               "N/A"
             ) : isGithubApp && /[0-9A-Fa-f]{6}/g.test(parsedImageTag) ? (
               <A
-                href={`https://github.com/${this.props.chart.git_action_config.git_repo}/commit/${imageTag}`}
+                href={`https://github.com/${this.props.chart.git_action_config?.git_repo}/commit/${imageTag}`}
                 target="_blank"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
               >
                 {parsedImageTag}
               </A>

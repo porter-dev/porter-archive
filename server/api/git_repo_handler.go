@@ -355,7 +355,12 @@ func (app *App) HandleGetBranchContents(w http.ResponseWriter, r *http.Request) 
 
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
-	branch := chi.URLParam(r, "branch")
+	branch, err := url.QueryUnescape(chi.URLParam(r, "branch"))
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
 	repoContentOptions := github.RepositoryContentGetOptions{}
 	repoContentOptions.Ref = branch
@@ -394,7 +399,12 @@ func (app *App) HandleGetProcfileContents(w http.ResponseWriter, r *http.Request
 
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
-	branch := chi.URLParam(r, "branch")
+	branch, err := url.QueryUnescape(chi.URLParam(r, "branch"))
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 
@@ -455,7 +465,12 @@ func (app *App) HandleGetRepoZIPDownloadURL(w http.ResponseWriter, r *http.Reque
 
 	owner := chi.URLParam(r, "owner")
 	name := chi.URLParam(r, "name")
-	branch := chi.URLParam(r, "branch")
+	branch, err := url.QueryUnescape(chi.URLParam(r, "branch"))
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
 
 	branchResp, _, err := client.Repositories.GetBranch(
 		context.TODO(),

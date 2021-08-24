@@ -356,7 +356,11 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const getBranchContents = baseApi<
@@ -372,7 +376,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -388,7 +396,11 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getBranches = baseApi<

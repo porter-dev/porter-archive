@@ -163,7 +163,7 @@ This configuration only applies to `web` applications.
 ```yaml
 ingress:
   custom_domain: true
-  custom_paths:
+  hosts:
   - my-app.example.com
 ```
 

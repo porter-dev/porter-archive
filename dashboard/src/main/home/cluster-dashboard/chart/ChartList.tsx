@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -30,7 +30,6 @@ const ChartList: React.FunctionComponent<Props> = ({
     closeAllWebsockets,
   } = useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
-  const [filteredCharts, setFilteredCharts] = useState<ChartType[]>([]);
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -192,7 +191,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => (isSubscribed = false);
   }, [namespace, currentView]);
 
-  useEffect(() => {
+  const filteredCharts = useMemo(() => {
     const result = charts
       .filter((chart: ChartType) => {
         return (
@@ -223,7 +222,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       result.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
     }
 
-    setFilteredCharts(result);
+    return result;
   }, [charts, sortType]);
 
   const renderChartList = () => {

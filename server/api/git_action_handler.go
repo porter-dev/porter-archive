@@ -32,6 +32,7 @@ func (app *App) HandleGenerateGitAction(w http.ResponseWriter, r *http.Request) 
 
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 	name := vals["name"][0]
+	namespace := vals["namespace"][0]
 
 	clusterID, err := strconv.ParseUint(vals["cluster_id"][0], 10, 64)
 
@@ -53,7 +54,7 @@ func (app *App) HandleGenerateGitAction(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, workflowYAML := app.createGitActionFromForm(projID, clusterID, name, form, w, r)
+	_, workflowYAML := app.createGitActionFromForm(projID, clusterID, name, namespace, form, w, r)
 
 	w.WriteHeader(http.StatusOK)
 
@@ -106,7 +107,7 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gaExt, _ := app.createGitActionFromForm(projID, clusterID, name, form, w, r)
+	gaExt, _ := app.createGitActionFromForm(projID, clusterID, name, namespace, form, w, r)
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -119,7 +120,7 @@ func (app *App) HandleCreateGitAction(w http.ResponseWriter, r *http.Request) {
 func (app *App) createGitActionFromForm(
 	projID,
 	clusterID uint64,
-	name string,
+	name, namespace string,
 	form *forms.CreateGitAction,
 	w http.ResponseWriter,
 	r *http.Request,

@@ -12,6 +12,7 @@ import SaveButton from "../../../../components/SaveButton";
 
 type PropsType = {
   name: string;
+  namespace: string;
   fullActionConfig: FullActionConfigType;
   shouldCreateWorkflow: boolean;
   setShouldCreateWorkflow: (x: (prevState: boolean) => boolean) => void;
@@ -31,6 +32,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
     api
       .generateGHAWorkflow("<token>", props.fullActionConfig, {
         name: props.name,
+        namespace: props.namespace,
         cluster_id: currentCluster.id,
         project_id: currentProject.id,
       })

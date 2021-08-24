@@ -1,9 +1,16 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import _ from "lodash";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ChartType, ClusterType, StorageType } from "shared/types";
+import {
+  ChartType,
+  ClusterType,
+  JobStatusType,
+  JobStatusWithTimeType,
+  StorageType,
+} from "shared/types";
 import { PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
@@ -17,6 +24,10 @@ type Props = {
   sortType: string;
   currentView: PorterUrl;
 };
+
+interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
+  resource_version: number;
+}
 
 const ChartList: React.FunctionComponent<Props> = ({
   namespace,
@@ -33,10 +44,16 @@ const ChartList: React.FunctionComponent<Props> = ({
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
+  const [jobStatus, setJobStatus] = useState<
+    Record<string, JobStatusWithTimeAndVersion>
+  >({});
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
   const context = useContext(Context);
+
+  const getChartKey = (name: string, namespace: string) =>
+    `${namespace}-${name}`;
 
   const updateCharts = async () => {
     try {
@@ -85,14 +102,14 @@ const ChartList: React.FunctionComponent<Props> = ({
 
     const wsConfig = {
       onopen: () => {
-        console.log("connected to chart live updates websocket");
+        console.log(`connected to websocket: ${websocketID}`);
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
         const newChart: ChartType = event.Object;
         const isSameChart = (chart: ChartType) =>
-          chart.name === newChart.name &&
-          chart.namespace === newChart.namespace;
+          getChartKey(chart.name, chart.namespace) ===
+          getChartKey(newChart.name, newChart.namespace);
         setCharts((currentCharts) => {
           switch (event.event_type) {
             case "ADD":
@@ -116,12 +133,12 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
 
       onclose: () => {
-        console.log("closing chart live updates websocket");
+        console.log(`closing websocket: ${websocketID}`);
       },
 
       onerror: (err: ErrorEvent) => {
         console.log(err);
-        closeWebsocket("helm_releases");
+        closeWebsocket(websocketID);
       },
     };
 
@@ -135,7 +152,7 @@ const ChartList: React.FunctionComponent<Props> = ({
 
     const wsConfig = {
       onopen: () => {
-        console.log("connected to websocket");
+        console.log(`connected to websocket: ${kind}`);
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
@@ -148,7 +165,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         }));
       },
       onclose: () => {
-        console.log("closing websocket");
+        console.log(`closing websocket: ${kind}`);
       },
       onerror: (err: ErrorEvent) => {
         console.log(err);
@@ -165,6 +182,76 @@ const ChartList: React.FunctionComponent<Props> = ({
     controllers.map((kind) => setupControllerWebsocket(kind));
   };
 
+  const setupJobWebsocket = (websocketID: string) => {
+    const kind = "job";
+    let { currentCluster, currentProject } = context;
+    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log(`connected to websocket: ${websocketID}`);
+      },
+      onmessage: (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data);
+        let object = event.Object;
+
+        if (_.get(object.metadata, ["annotations", "helm.sh/hook"])) {
+          return;
+        }
+
+        setJobStatus((currentStatus) => {
+          let nextStatus: JobStatusType = null;
+          for (const status of Object.values(JobStatusType)) {
+            if (_.get(object.status, status, 0) > 0) {
+              nextStatus = status;
+              break;
+            }
+          }
+
+          const chartName =
+            object.metadata.labels["app.kubernetes.io/instance"];
+          const chartNamespace = object.metadata.namespace;
+          const key = getChartKey(chartName, chartNamespace);
+
+          const existingValue: JobStatusWithTimeAndVersion = _.get(
+            currentStatus,
+            key,
+            null
+          );
+          const newValue: JobStatusWithTimeAndVersion = {
+            status: nextStatus,
+            start_time: object.status.startTime,
+            resource_version: object.metadata.resourceVersion,
+          };
+
+          if (
+            !existingValue ||
+            newValue.resource_version > existingValue.resource_version
+          ) {
+            return {
+              ...currentStatus,
+              [key]: newValue,
+            };
+          }
+
+          return currentStatus;
+        });
+      },
+      onclose: () => {
+        console.log(`closing websocket: ${websocketID}`);
+      },
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(websocketID);
+      },
+    };
+
+    newWebsocket(websocketID, apiPath, wsConfig);
+
+    openWebsocket(websocketID);
+  };
+
+  // Setup basic websockets on start
   useEffect(() => {
     const controllers = [
       "deployment",
@@ -172,11 +259,14 @@ const ChartList: React.FunctionComponent<Props> = ({
       "daemonset",
       "replicaset",
     ];
-
     setupControllerWebsockets(controllers);
+
+    const jobWebsocketID = "job";
+    setupJobWebsocket(jobWebsocketID);
 
     return () => {
       controllers.map((controller) => closeWebsocket(controller));
+      closeWebsocket(jobWebsocketID);
     };
   }, []);
 
@@ -259,10 +349,14 @@ const ChartList: React.FunctionComponent<Props> = ({
     return filteredCharts.map((chart: ChartType, i: number) => {
       return (
         <Chart
-          key={`${chart.namespace}-${chart.name}`}
+          key={getChartKey(chart.name, chart.namespace)}
           chart={chart}
           controllers={controllers || {}}
-          isJob={currentView === "jobs"}
+          jobStatus={_.get(
+            jobStatus,
+            getChartKey(chart.name, chart.namespace),
+            null
+          )}
         />
       );
     });

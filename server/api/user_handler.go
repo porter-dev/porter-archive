@@ -58,6 +58,7 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 		app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
 			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
 		}))
 
 		app.Logger.Info().Msgf("New user created: %d", user.ID)

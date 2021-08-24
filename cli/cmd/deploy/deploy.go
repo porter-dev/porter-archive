@@ -279,6 +279,11 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
 
+	// if this is a job chart, set "paused" to false so that the job doesn't run
+	if d.release.Chart.Name() == "job" {
+		mergedValues["paused"] = true
+	}
+
 	// if the current image section is hello-porter, the image must be overriden
 	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||
 		currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter-job" {

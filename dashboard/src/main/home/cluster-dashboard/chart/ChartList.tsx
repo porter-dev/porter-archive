@@ -74,8 +74,11 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
-  const setupHelmReleasesWebsocket = () => {
-    const apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+  const setupHelmReleasesWebsocket = (namespace: string) => {
+    let apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+    if (namespace) {
+      apiPath += `&namespace=${namespace}`;
+    }
 
     const wsConfig = {
       onopen: () => {
@@ -170,12 +173,12 @@ const ChartList: React.FunctionComponent<Props> = ({
       "daemonset",
       "replicaset",
     ]);
-    setupHelmReleasesWebsocket();
+    setupHelmReleasesWebsocket(namespace);
 
     return () => {
       closeAllWebsockets();
     };
-  }, []);
+  }, [namespace]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -192,19 +195,14 @@ const ChartList: React.FunctionComponent<Props> = ({
   }, [namespace, currentView]);
 
   const filteredCharts = useMemo(() => {
-    const result = charts
-      .filter((chart: ChartType) => {
-        return (
-          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-          ((currentView == "applications" ||
-            currentView == "cluster-dashboard") &&
-            chart.chart.metadata.name != "job")
-        );
-      })
-      .filter((chart: ChartType) => {
-        // websocket emits new releases across all namespaces
-        return chart.namespace === namespace;
-      });
+    const result = charts.filter((chart: ChartType) => {
+      return (
+        (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+        ((currentView == "applications" ||
+          currentView == "cluster-dashboard") &&
+          chart.chart.metadata.name != "job")
+      );
+    });
 
     if (sortType == "Newest") {
       result.sort((a: any, b: any) =>

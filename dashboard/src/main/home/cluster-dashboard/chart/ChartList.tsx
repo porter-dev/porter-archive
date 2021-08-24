@@ -87,32 +87,25 @@ const ChartList: React.FunctionComponent<Props> = ({
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
         const newChart: ChartType = event.Object;
-        const matches = (chart: ChartType) => chart.name === newChart.name;
+        const isSameChart = (chart: ChartType) =>
+          chart.name === newChart.name &&
+          chart.namespace === newChart.namespace;
         setCharts((currentCharts) => {
           switch (event.event_type) {
             case "ADD":
-            // upgrades emit both ADD and UPDATE events
+              if (currentCharts.find(isSameChart)) {
+                return currentCharts;
+              }
+              return currentCharts.concat(newChart);
             case "UPDATE":
-              let updated = false,
-                isOld = false;
-              const result = currentCharts.map((chart) => {
-                if (matches(chart)) {
-                  // TODO: figure out why websocket returns old releases
-                  if (newChart.version < chart.version) {
-                    isOld = true;
-                  } else {
-                    updated = true;
-                    return newChart;
-                  }
+              return currentCharts.map((chart) => {
+                if (isSameChart(chart) && newChart.version >= chart.version) {
+                  return newChart;
                 }
                 return chart;
               });
-              if (!updated && !isOld) {
-                result.push(newChart);
-              }
-              return result;
             case "DELETE":
-              return currentCharts.filter((chart) => !matches(chart));
+              return currentCharts.filter((chart) => !isSameChart(chart));
             default:
               return currentCharts;
           }

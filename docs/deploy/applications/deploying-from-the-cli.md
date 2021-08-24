@@ -118,6 +118,19 @@ If you would only like to update the configuration for your application via a `v
 porter update config --app [app-name] --values [values-file]
 ```
 
+For example, to update the app `web-test`, and to programmatically set the environment variables for that application, create a file called `web-test-values.yaml` with the following structure:
+
+```yaml
+container:
+  env:
+    normal:
+      TESTING: test-from-cli
+```
+
+If I then run `porter update config --app web-test --values web-test-values.yaml`, I will now see the new values in the application:
+
+![CLI env vars](https://files.readme.io/1c30b1c-Screen_Shot_2021-08-20_at_11.51.41_AM.png "Screen Shot 2021-08-20 at 11.51.41 AM.png")
+
 # Common Configuration Options
 
 ## Container Port

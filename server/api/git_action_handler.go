@@ -209,6 +209,7 @@ func (app *App) createGitActionFromForm(
 		ProjectID:              uint(projID),
 		ClusterID:              uint(clusterID),
 		ReleaseName:            name,
+		ReleaseNamespace:       namespace,
 		GitBranch:              form.GitBranch,
 		DockerFilePath:         form.DockerfilePath,
 		FolderPath:             form.FolderPath,

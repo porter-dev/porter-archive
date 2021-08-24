@@ -18,7 +18,7 @@ export interface GenericInputField extends GenericField {
   settings?: any;
 
   // Read in value from Helm for existing revisions
-  value?: any[];
+  value?: [any]|[];
 }
 
 export interface HeadingField extends GenericField {
@@ -62,7 +62,6 @@ export interface CheckboxField extends GenericInputField {
   type: "checkbox";
   label?: string;
   settings?: {
-    default: boolean;
   };
 }
 

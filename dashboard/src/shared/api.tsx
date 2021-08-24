@@ -279,11 +279,12 @@ const generateGHAWorkflow = baseApi<
     cluster_id: number;
     project_id: number;
     name: string;
+    namespace: string;
   }
 >("POST", (pathParams) => {
-  const { name, cluster_id, project_id } = pathParams;
+  const { name, namespace, cluster_id, project_id } = pathParams;
 
-  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}`;
+  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}&namespace=${namespace}`;
 });
 
 const deployTemplate = baseApi<

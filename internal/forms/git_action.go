@@ -10,7 +10,7 @@ type CreateGitAction struct {
 	Release *models.Release
 
 	GitRepo        string `json:"git_repo" form:"required"`
-	GitBranch      string `json:"git_branch"`
+	GitBranch      string `json:"branch"`
 	ImageRepoURI   string `json:"image_repo_uri" form:"required"`
 	DockerfilePath string `json:"dockerfile_path"`
 	FolderPath     string `json:"folder_path"`

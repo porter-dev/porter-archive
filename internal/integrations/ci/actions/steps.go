@@ -21,17 +21,18 @@ func getSetTagStep() GithubActionYAMLStep {
 	}
 }
 
-func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string, actionVersion string) GithubActionYAMLStep {
+func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string, appNamespace, actionVersion string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Update Porter App",
 		Uses: fmt.Sprintf("%s@%s", updateAppActionName, actionVersion),
 		With: map[string]string{
-			"app":     appName,
-			"cluster": fmt.Sprintf("%d", clusterID),
-			"host":    serverURL,
-			"project": fmt.Sprintf("%d", projectID),
-			"token":   fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
-			"tag":     "${{ steps.vars.outputs.sha_short }}",
+			"app":       appName,
+			"cluster":   fmt.Sprintf("%d", clusterID),
+			"host":      serverURL,
+			"project":   fmt.Sprintf("%d", projectID),
+			"token":     fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
+			"tag":       "${{ steps.vars.outputs.sha_short }}",
+			"namespace": appNamespace,
 		},
 		Timeout: 20,
 	}

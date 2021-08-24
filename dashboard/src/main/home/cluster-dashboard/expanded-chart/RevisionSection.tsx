@@ -235,7 +235,9 @@ class RevisionSection extends Component<PropsType, StateType> {
           <Td>{revision.version}</Td>
           <Td>{this.readableDate(revision.info.last_deployed)}</Td>
           <Td>
-            {isGithubApp ? (
+            {!parsedImageTag ? (
+              "N/A"
+            ) : isGithubApp && /[0-9A-Fa-f]{6}/g.test(parsedImageTag) ? (
               <A
                 href={`https://github.com/${this.props.chart.git_action_config.git_repo}/commit/${imageTag}`}
                 target="_blank"
@@ -243,7 +245,7 @@ class RevisionSection extends Component<PropsType, StateType> {
                 {parsedImageTag}
               </A>
             ) : (
-              parsedImageTag || "N/A"
+              parsedImageTag
             )}
           </Td>
           <Td>v{revision.chart.metadata.version}</Td>

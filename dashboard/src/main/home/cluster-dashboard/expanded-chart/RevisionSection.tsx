@@ -237,7 +237,7 @@ class RevisionSection extends Component<PropsType, StateType> {
           <Td>
             {!imageTag ? (
               "N/A"
-            ) : isGithubApp && /[0-9A-Fa-f]+/g.test(imageTag) ? (
+            ) : isGithubApp && /^[0-9A-Fa-f]{7}$/g.test(imageTag) ? (
               <A
                 href={`https://github.com/${this.props.chart.git_action_config?.git_repo}/commit/${imageTag}`}
                 target="_blank"

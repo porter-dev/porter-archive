@@ -13,7 +13,6 @@ type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
   isJob: boolean;
-  release: any;
 };
 
 type JobStatusType = {
@@ -25,7 +24,6 @@ const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
   isJob,
-  release,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
@@ -191,10 +189,7 @@ const Chart: React.FunctionComponent<Props> = ({
               <>
                 <Dot>•</Dot>
                 <JobStatus>
-                  Last deployed{" "}
-                  {readableDate(
-                    release?.info?.last_deployed || chart.info.last_deployed
-                  )}
+                  Last deployed {readableDate(chart.info.last_deployed)}
                 </JobStatus>
               </>
             )}
@@ -208,7 +203,7 @@ const Chart: React.FunctionComponent<Props> = ({
       </BottomWrapper>
 
       <TopRightContainer>
-        <span>v{release?.version || chart.version}</span>
+        <span>v{chart.version}</span>
       </TopRightContainer>
     </StyledChart>
   );

@@ -704,7 +704,7 @@ func parseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Relea
 	return helm_object, false, nil
 }
 
-func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, selectors string) error {
+func (a *Agent) StreamHelmReleases(conn *websocket.Conn, namespace string, chartList []string, selectors string) error {
 	tweakListOptionsFunc := func(options *metav1.ListOptions) {
 		options.LabelSelector = selectors
 	}
@@ -713,6 +713,7 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 		a.Clientset,
 		0,
 		informers.WithTweakListOptions(tweakListOptionsFunc),
+		informers.WithNamespace(namespace),
 	)
 
 	informer := factory.Core().V1().Secrets().Informer()

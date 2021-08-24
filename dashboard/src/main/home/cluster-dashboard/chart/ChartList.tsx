@@ -86,22 +86,28 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
-        const newChart = event.Object;
+        const newChart: ChartType = event.Object;
         const matches = (chart: ChartType) => chart.name === newChart.name;
         setCharts((currentCharts) => {
           switch (event.event_type) {
             case "ADD":
             // upgrades emit both ADD and UPDATE events
             case "UPDATE":
-              let updated = false;
+              let updated = false,
+                isOld = false;
               const result = currentCharts.map((chart) => {
                 if (matches(chart)) {
-                  updated = true;
-                  return newChart;
+                  // TODO: figure out why websocket returns old releases
+                  if (newChart.version < chart.version) {
+                    isOld = true;
+                  } else {
+                    updated = true;
+                    return newChart;
+                  }
                 }
                 return chart;
               });
-              if (!updated) {
+              if (!updated && !isOld) {
                 result.push(newChart);
               }
               return result;

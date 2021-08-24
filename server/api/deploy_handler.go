@@ -199,7 +199,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, form.ChartTemplateForm.Namespace, gaForm, w, r)
+		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, form.ReleaseForm.Form.Namespace, gaForm, w, r)
 	}
 
 	app.AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(

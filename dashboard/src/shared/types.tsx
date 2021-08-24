@@ -297,3 +297,14 @@ export interface ContextProps {
   setCapabilities: (capabilities: CapabilityType) => void;
   clearContext: () => void;
 }
+
+export enum JobStatusType {
+  Succeeded = "succeeded",
+  Running = "active",
+  Failed = "failed",
+}
+
+export interface JobStatusWithTimeType {
+  status: JobStatusType;
+  start_time: string;
+}

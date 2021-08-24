@@ -33,11 +33,12 @@ type GithubActions struct {
 	GithubAppSecretPath  string
 	GithubInstallationID uint
 
-	PorterToken string
-	BuildEnv    map[string]string
-	ProjectID   uint
-	ClusterID   uint
-	ReleaseName string
+	PorterToken      string
+	BuildEnv         map[string]string
+	ProjectID        uint
+	ClusterID        uint
+	ReleaseName      string
+	ReleaseNamespace string
 
 	GitBranch      string
 	DockerFilePath string
@@ -178,7 +179,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getSetTagStep(),
-		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.Version),
+		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.ReleaseNamespace, g.Version),
 	}
 
 	branch := g.GitBranch

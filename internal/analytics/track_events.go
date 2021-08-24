@@ -4,8 +4,9 @@ type SegmentEvent string
 
 const (
 	// onboarding flow
-	UserCreate    SegmentEvent = "New User"
-	ProjectCreate SegmentEvent = "New Project Event"
+	UserCreate      SegmentEvent = "New User"
+	UserVerifyEmail SegmentEvent = "User Verified Email"
+	ProjectCreate   SegmentEvent = "New Project Event"
 
 	ClusterProvisioningStart   SegmentEvent = "Cluster Provisioning Started"
 	ClusterProvisioningError   SegmentEvent = "Cluster Provisioning Error"

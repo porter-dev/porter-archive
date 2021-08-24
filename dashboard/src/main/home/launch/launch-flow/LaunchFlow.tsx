@@ -329,6 +329,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       return (
         <WorkflowPage
           name={templateName}
+          namespace={"default"}
           fullActionConfig={fullActionConfig}
           shouldCreateWorkflow={shouldCreateWorkflow}
           setShouldCreateWorkflow={setShouldCreateWorkflow}

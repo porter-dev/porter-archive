@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -33,7 +33,6 @@ const ChartList: React.FunctionComponent<Props> = ({
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
-  const [releases, setReleases] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
@@ -66,37 +65,8 @@ const ChartList: React.FunctionComponent<Props> = ({
         { id: currentProject.id }
       );
       const charts = res.data || [];
-
-      // filter charts based on the current view
-      const filteredCharts = charts.filter((chart: ChartType) => {
-        return (
-          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-          ((currentView == "applications" ||
-            currentView == "cluster-dashboard") &&
-            chart.chart.metadata.name != "job")
-        );
-      });
-
-      let sortedCharts = filteredCharts;
-
-      if (sortType == "Newest") {
-        sortedCharts.sort((a: any, b: any) =>
-          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-            ? -1
-            : 1
-        );
-      } else if (sortType == "Oldest") {
-        sortedCharts.sort((a: any, b: any) =>
-          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-            ? 1
-            : -1
-        );
-      } else if (sortType == "Alphabetical") {
-        sortedCharts.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-      }
-
       setIsError(false);
-      return sortedCharts;
+      return charts;
     } catch (error) {
       console.log(error);
       context.setCurrentError(JSON.stringify(error));
@@ -104,8 +74,14 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
-  const setupHelmReleasesWebsocket = () => {
-    const apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+  const setupHelmReleasesWebsocket = (
+    websocketID: string,
+    namespace: string
+  ) => {
+    let apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+    if (namespace) {
+      apiPath += `&namespace=${namespace}`;
+    }
 
     const wsConfig = {
       onopen: () => {
@@ -113,21 +89,29 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
-        const object = event.Object;
-        setReleases((oldReleases) => {
-          const currentRelease = oldReleases[object?.name];
-          const currentReleaseVersion = Number(currentRelease?.version);
-          const newReleaseVersion = Number(object?.version);
-          if (currentReleaseVersion > newReleaseVersion) {
-            return {
-              ...oldReleases,
-            };
+        const newChart: ChartType = event.Object;
+        const isSameChart = (chart: ChartType) =>
+          chart.name === newChart.name &&
+          chart.namespace === newChart.namespace;
+        setCharts((currentCharts) => {
+          switch (event.event_type) {
+            case "ADD":
+              if (currentCharts.find(isSameChart)) {
+                return currentCharts;
+              }
+              return currentCharts.concat(newChart);
+            case "UPDATE":
+              return currentCharts.map((chart) => {
+                if (isSameChart(chart) && newChart.version >= chart.version) {
+                  return newChart;
+                }
+                return chart;
+              });
+            case "DELETE":
+              return currentCharts.filter((chart) => !isSameChart(chart));
+            default:
+              return currentCharts;
           }
-
-          return {
-            ...oldReleases,
-            [object.name]: object,
-          };
         });
       },
 
@@ -141,11 +125,11 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
     };
 
-    newWebsocket("helm_releases", apiPath, wsConfig);
-    openWebsocket("helm_releases");
+    newWebsocket(websocketID, apiPath, wsConfig);
+    openWebsocket(websocketID);
   };
 
-  const setupWebsocket = (kind: string) => {
+  const setupControllerWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
     const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
 
@@ -177,26 +161,34 @@ const ChartList: React.FunctionComponent<Props> = ({
     openWebsocket(kind);
   };
 
-  const setControllerWebsockets = (controllers: any[]) => {
-    controllers.map((kind: string) => {
-      return setupWebsocket(kind);
-    });
+  const setupControllerWebsockets = (controllers: string[]) => {
+    controllers.map((kind) => setupControllerWebsocket(kind));
   };
 
-  // Setup basic websockets on start
   useEffect(() => {
-    setControllerWebsockets([
+    const controllers = [
       "deployment",
       "statefulset",
       "daemonset",
       "replicaset",
-    ]);
-    setupHelmReleasesWebsocket();
+    ];
+
+    setupControllerWebsockets(controllers);
 
     return () => {
-      closeAllWebsockets();
+      controllers.map((controller) => closeWebsocket(controller));
     };
   }, []);
+
+  useEffect(() => {
+    const websocketID = "helm_releases";
+
+    setupHelmReleasesWebsocket(websocketID, namespace);
+
+    return () => {
+      closeWebsocket(websocketID);
+    };
+  }, [namespace]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -212,6 +204,35 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => (isSubscribed = false);
   }, [namespace, currentView]);
 
+  const filteredCharts = useMemo(() => {
+    const result = charts.filter((chart: ChartType) => {
+      return (
+        (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+        ((currentView == "applications" ||
+          currentView == "cluster-dashboard") &&
+          chart.chart.metadata.name != "job")
+      );
+    });
+
+    if (sortType == "Newest") {
+      result.sort((a: any, b: any) =>
+        Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+          ? -1
+          : 1
+      );
+    } else if (sortType == "Oldest") {
+      result.sort((a: any, b: any) =>
+        Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+          ? 1
+          : -1
+      );
+    } else if (sortType == "Alphabetical") {
+      result.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+    }
+
+    return result;
+  }, [charts, sortType]);
+
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {
       return (
@@ -225,7 +246,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
-    } else if (charts.length === 0) {
+    } else if (filteredCharts.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No
@@ -235,14 +256,13 @@ const ChartList: React.FunctionComponent<Props> = ({
       );
     }
 
-    return charts.map((chart: ChartType, i: number) => {
+    return filteredCharts.map((chart: ChartType, i: number) => {
       return (
         <Chart
           key={`${chart.namespace}-${chart.name}`}
           chart={chart}
           controllers={controllers || {}}
           isJob={currentView === "jobs"}
-          release={releases[chart.name] || {}}
         />
       );
     });

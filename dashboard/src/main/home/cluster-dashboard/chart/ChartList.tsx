@@ -74,7 +74,10 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
-  const setupHelmReleasesWebsocket = (namespace: string) => {
+  const setupHelmReleasesWebsocket = (
+    websocketID: string,
+    namespace: string
+  ) => {
     let apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
     if (namespace) {
       apiPath += `&namespace=${namespace}`;
@@ -122,11 +125,11 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
     };
 
-    newWebsocket("helm_releases", apiPath, wsConfig);
-    openWebsocket("helm_releases");
+    newWebsocket(websocketID, apiPath, wsConfig);
+    openWebsocket(websocketID);
   };
 
-  const setupWebsocket = (kind: string) => {
+  const setupControllerWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
     const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
 
@@ -158,24 +161,32 @@ const ChartList: React.FunctionComponent<Props> = ({
     openWebsocket(kind);
   };
 
-  const setControllerWebsockets = (controllers: any[]) => {
-    controllers.map((kind: string) => {
-      return setupWebsocket(kind);
-    });
+  const setupControllerWebsockets = (controllers: string[]) => {
+    controllers.map((kind) => setupControllerWebsocket(kind));
   };
 
-  // Setup basic websockets on start
   useEffect(() => {
-    setControllerWebsockets([
+    const controllers = [
       "deployment",
       "statefulset",
       "daemonset",
       "replicaset",
-    ]);
-    setupHelmReleasesWebsocket(namespace);
+    ];
+
+    setupControllerWebsockets(controllers);
 
     return () => {
-      closeAllWebsockets();
+      controllers.map((controller) => closeWebsocket(controller));
+    };
+  }, []);
+
+  useEffect(() => {
+    const websocketID = "helm_releases";
+
+    setupHelmReleasesWebsocket(websocketID, namespace);
+
+    return () => {
+      closeWebsocket(websocketID);
     };
   }, [namespace]);
 

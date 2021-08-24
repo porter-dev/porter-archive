@@ -383,9 +383,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   href={`https://github.com/${props.currentChart.git_action_config.git_repo}/actions`}
                   target={"_blank"}
                 >
-                  "Actions" tab of your GitHub repo to view live
+                  Actions tab
                 </A>{" "}
-                build logs.
+                of your GitHub repo to view live build logs.
               </TextWrap>
             </Placeholder>
           );
@@ -1046,6 +1046,5 @@ const DeploymentTypeIcon = styled(Icon)`
 const A = styled.a`
   color: #8590ff;
   text-decoration: underline;
-  margin-left: 5px;
   cursor: pointer;
 `;

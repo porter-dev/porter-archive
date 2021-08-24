@@ -135,6 +135,7 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 
 		app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
 			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
 		}))
 
 		// log the user in

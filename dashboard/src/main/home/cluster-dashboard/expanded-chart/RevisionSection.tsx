@@ -553,6 +553,5 @@ const RevisionUpdateMessage = styled.div`
 const A = styled.a`
   color: #8590ff;
   text-decoration: underline;
-  margin-left: 5px;
   cursor: pointer;
 `;

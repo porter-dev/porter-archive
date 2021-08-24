@@ -113,10 +113,11 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
     api
       .getNamespaces(
         "<token>",
+        {},
         {
+          id: currentProject.id,
           cluster_id: this.props.currentCluster.id,
-        },
-        { id: currentProject.id }
+        }
       )
       .then((res) => {
         if (res.data) {

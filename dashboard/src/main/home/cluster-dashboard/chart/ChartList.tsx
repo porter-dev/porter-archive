@@ -19,6 +19,7 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type Props = {
   currentCluster: ClusterType;
+  lastRunStatus?: JobStatusType | null;
   namespace: string;
   // TODO Convert to enum
   sortType: string;
@@ -30,6 +31,7 @@ interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
 }
 
 const ChartList: React.FunctionComponent<Props> = ({
+  lastRunStatus,
   namespace,
   sortType,
   currentView,
@@ -295,14 +297,29 @@ const ChartList: React.FunctionComponent<Props> = ({
   }, [namespace, currentView]);
 
   const filteredCharts = useMemo(() => {
-    const result = charts.filter((chart: ChartType) => {
-      return (
-        (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-        ((currentView == "applications" ||
-          currentView == "cluster-dashboard") &&
-          chart.chart.metadata.name != "job")
-      );
-    });
+    const result = charts
+      .filter((chart: ChartType) => {
+        return (
+          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+          ((currentView == "applications" ||
+            currentView == "cluster-dashboard") &&
+            chart.chart.metadata.name != "job")
+        );
+      })
+      .filter((chart: ChartType) => {
+        if (currentView !== "jobs") {
+          return true;
+        }
+        if (lastRunStatus === null) {
+          return true;
+        }
+        const status: JobStatusWithTimeAndVersion = _.get(
+          jobStatus,
+          getChartKey(chart.name, chart.namespace),
+          null
+        );
+        return !status || status.status === lastRunStatus;
+      });
 
     if (sortType == "Newest") {
       result.sort((a: any, b: any) =>
@@ -321,7 +338,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
 
     return result;
-  }, [charts, sortType]);
+  }, [charts, sortType, jobStatus, lastRunStatus]);
 
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {
@@ -340,8 +357,8 @@ const ChartList: React.FunctionComponent<Props> = ({
       return (
         <Placeholder>
           <i className="material-icons">category</i> No
-          {currentView === "jobs" ? ` jobs` : ` charts`} found in this
-          namespace.
+          {currentView === "jobs" ? ` jobs` : ` charts`} found with the given
+          filters.
         </Placeholder>
       );
     }

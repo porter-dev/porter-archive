@@ -417,7 +417,7 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 
 func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	// push the deployment
-	color.New(color.FgGreen).Println("Calling webhook for", app)
+	color.New(color.FgGreen).Println("Upgrading configuration for", app)
 
 	// read the values if necessary
 	valuesObj, err := readValuesFile()

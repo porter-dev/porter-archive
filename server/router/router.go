@@ -128,7 +128,7 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/email/verify/finalize",
 				auth.BasicAuthenticateWithRedirect(
-					requestlog.NewHandler(a.FinalizEmailVerifyUser, l),
+					requestlog.NewHandler(a.FinalizeEmailVerifyUser, l),
 				),
 			)
 

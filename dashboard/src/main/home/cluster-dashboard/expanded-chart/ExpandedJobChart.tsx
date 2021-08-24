@@ -438,12 +438,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 </Header>
                 Navigate to the
                 <A
-                  href={`https://github.com/${this.props.currentChart.git_action_config.git_repo}/actions`}
-                  target={"_blank"}
+                    href={`https://github.com/${this.props.currentChart.git_action_config.git_repo}/actions`}
+                    target={"_blank"}
                 >
-                  "Actions" tab of your GitHub repo to view live
+                  Actions tab
                 </A>{" "}
-                build logs.
+                of your GitHub repo to view live build logs.
               </TextWrap>
             </Placeholder>
           );

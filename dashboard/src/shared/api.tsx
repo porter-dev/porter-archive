@@ -611,12 +611,13 @@ const getMetrics = baseApi<
 });
 
 const getNamespaces = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/namespaces`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces`;
 });
 
 const getNGINXIngresses = baseApi<

@@ -100,7 +100,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
     return (
       <StyledNamespaceSelector>
         <Label>
-          <i className="material-icons">filter_alt</i> Filter
+          <i className="material-icons">filter_alt</i> Namespace
         </Label>
         <Selector
           activeValue={this.props.namespace}

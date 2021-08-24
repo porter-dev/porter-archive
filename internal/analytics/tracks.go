@@ -94,6 +94,24 @@ func UserCreateTrack(opts *UserCreateTrackOpts) segmentTrack {
 	)
 }
 
+// UserCreateTrackOpts are the options for creating a track when a user's email is verified
+type UserVerifyEmailTrackOpts struct {
+	*UserScopedTrackOpts
+
+	Email string
+}
+
+// UserVerifyEmailTrack returns a track for when a user's email is verified
+func UserVerifyEmailTrack(opts *UserVerifyEmailTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, UserVerifyEmail),
+	)
+}
+
 // ProjectCreateTrackOpts are the options for creating a track when a project is created
 type ProjectCreateTrackOpts struct {
 	*ProjectScopedTrackOpts

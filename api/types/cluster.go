@@ -1,5 +1,7 @@
 package types
 
+import v1 "k8s.io/api/core/v1"
+
 type Cluster struct {
 	ID uint `json:"id"`
 
@@ -40,3 +42,7 @@ const (
 	GKE  ClusterService = "gke"
 	Kube ClusterService = "kube"
 )
+
+type ClusterListNamespacesResponse struct {
+	*v1.NamespaceList
+}

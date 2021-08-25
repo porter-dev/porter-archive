@@ -60,13 +60,9 @@ func (c *Client) GetKubeconfig(
 	projectID uint,
 	clusterID uint,
 ) (*GetKubeconfigResponse, error) {
-	cl := fmt.Sprintf("%d", clusterID)
-
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/k8s/kubeconfig?"+url.Values{
-			"cluster_id": []string{cl},
-		}.Encode(), c.BaseURL, projectID),
+		fmt.Sprintf("%s/projects/%d/clusters/%d/kubeconfig", c.BaseURL, projectID, clusterID),
 		nil,
 	)
 

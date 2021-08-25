@@ -51,7 +51,7 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, request.QueryOpts)
+	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, &request.QueryOpts)
 
 	if err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))

@@ -69,7 +69,7 @@ type GetTemporaryKubeconfigResponse struct {
 type ListNGINXIngressesResponse []prometheus.SimpleIngress
 
 type GetPodMetricsRequest struct {
-	*prometheus.QueryOpts
+	prometheus.QueryOpts
 }
 
 type GetPodMetricsResponse *string

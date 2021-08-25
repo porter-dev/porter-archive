@@ -25,6 +25,7 @@ type PropsType = RouteComponentProps & {
   projectName: string;
   highlightCosts?: boolean;
   infras: InfraType[];
+  trackOnSave: () => void;
 };
 
 type StateType = {
@@ -269,6 +270,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
 
   // TODO: handle generically (with > 2 steps)
   onCreateGCP = () => {
+    this.props?.trackOnSave();
     this.setState({ buttonStatus: "loading" });
     let { projectName } = this.props;
 
@@ -320,6 +322,14 @@ class GCPFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  goToGuide = () => {
+    window?.analytics?.track("provision_go-to-guide", {
+      hosting: "gcp",
+    });
+
+    window.open("https://docs.getporter.dev/docs/getting-started-on-gcp");
+  };
+
   render() {
     let { setSelectedProvisioner } = this.props;
     let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
@@ -331,13 +341,7 @@ class GCPFormSection extends Component<PropsType, StateType> {
           </CloseButton>
           <Heading isAtTop={true}>
             GCP Credentials
-            <GuideButton
-              onClick={() =>
-                window.open(
-                  "https://docs.getporter.dev/docs/getting-started-on-gcp"
-                )
-              }
-            >
+            <GuideButton onClick={() => this.goToGuide()}>
               <i className="material-icons-outlined">help</i>
               Guide
             </GuideButton>

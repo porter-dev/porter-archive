@@ -24,6 +24,7 @@ type PropsType = RouteComponentProps & {
   projectName: string;
   infras: InfraType[];
   highlightCosts?: boolean;
+  trackOnSave: () => void;
 };
 
 type StateType = {
@@ -282,6 +283,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
 
   // TODO: handle generically (with > 2 steps)
   onCreateAWS = () => {
+    this.props?.trackOnSave();
     this.setState({ buttonStatus: "loading" });
     let { projectName } = this.props;
     let { selectedInfras } = this.state;
@@ -362,6 +364,16 @@ class AWSFormSection extends Component<PropsType, StateType> {
     }
   };
 
+  goToGuide = () => {
+    window?.analytics?.track("provision_go-to-guide", {
+      hosting: "aws",
+    });
+
+    window.open(
+      "https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
+    );
+  };
+
   render() {
     let { setSelectedProvisioner } = this.props;
     let {
@@ -380,13 +392,7 @@ class AWSFormSection extends Component<PropsType, StateType> {
           </CloseButton>
           <Heading isAtTop={true}>
             AWS Credentials
-            <GuideButton
-              onClick={() =>
-                window.open(
-                  "https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
-                )
-              }
-            >
+            <GuideButton onClick={() => this.goToGuide()}>
               <i className="material-icons-outlined">help</i>
               Guide
             </GuideButton>

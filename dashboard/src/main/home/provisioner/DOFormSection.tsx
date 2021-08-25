@@ -23,6 +23,7 @@ type PropsType = {
   projectName: string;
   highlightCosts?: boolean;
   infras: InfraType[];
+  trackOnSave: () => void;
 };
 
 type StateType = {
@@ -177,6 +178,7 @@ export default class DOFormSection extends Component<PropsType, StateType> {
 
   // TODO: handle generically (with > 2 steps)
   onCreateDO = () => {
+    this.props?.trackOnSave();
     let { projectName } = this.props;
     let { selectedInfras } = this.state;
     let { currentProject } = this.context;

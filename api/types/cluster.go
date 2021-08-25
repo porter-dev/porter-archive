@@ -1,6 +1,9 @@
 package types
 
-import v1 "k8s.io/api/core/v1"
+import (
+	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
+	v1 "k8s.io/api/core/v1"
+)
 
 type Cluster struct {
 	ID uint `json:"id"`
@@ -62,3 +65,5 @@ type DeleteNamespaceRequest struct {
 type GetTemporaryKubeconfigResponse struct {
 	Kubeconfig []byte `json:"kubeconfig"`
 }
+
+type ListNGINXIngressesResponse []prometheus.SimpleIngress

@@ -27,3 +27,21 @@ type SubEvent struct {
 	Status  EventStatus
 	Info    string
 }
+
+type SubEventExternal struct {
+	EventID string      `json:"event_id"`
+	Name    string      `json:"name"`
+	Index   int64       `json:"index"`
+	Status  EventStatus `json:"status"`
+	Info    string      `json:"info"`
+}
+
+func (event *SubEvent) Externalize() SubEventExternal {
+	return SubEventExternal{
+		EventID: event.EventID,
+		Name:    event.Name,
+		Index:   event.Index,
+		Status:  event.Status,
+		Info:    event.Info,
+	}
+}

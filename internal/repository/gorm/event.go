@@ -30,3 +30,11 @@ func (repo EventRepository) CreateSubEvent(am *models.SubEvent) (*models.SubEven
 	}
 	return am, nil
 }
+
+func (repo EventRepository) ReadEventsByContainerID(id uint) ([]*models.SubEvent, error) {
+	var events []*models.SubEvent
+	if err := repo.db.Where("container_id = ?", id).Find(&events).Error; err != nil {
+		return nil, err
+	}
+	return events, nil
+}

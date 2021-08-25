@@ -1618,7 +1618,47 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 // HandleGetReleaseSteps returns a list of all steps for a given release
 // note that steps are not guaranteed to be in any specific order, so they should be ordered if needed
 func (app *App) HandleGetReleaseSteps(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	vals, err := url.ParseQuery(r.URL.RawQuery)
 
+	if err != nil {
+		app.handleErrorInternal(err, w)
+	}
+
+	namespace := vals["namespace"][0]
+	clusterId, err := strconv.ParseUint(vals["cluster_id"][0], 0, 64)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	rel, err := app.Repo.Release.ReadRelease(uint(clusterId), name, namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	res := make([]models.SubEventExternal, 0)
+
+	if rel.EventContainer != 0 {
+		subevents, err := app.Repo.Event.ReadEventsByContainerID(rel.EventContainer)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+		}
+
+		for _, sub := range subevents {
+			res = append(res, sub.Externalize())
+		}
+	}
+
+	json.NewEncoder(w).Encode(res)
 }
 
 type HandleUpdateReleaseStepsForm struct {
@@ -1641,8 +1681,6 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	fmt.Printf("%#v", form)
-
 	release, err := app.Repo.Release.ReadReleaseByWebhookToken(form.Token)
 
 	if err != nil {
@@ -1654,11 +1692,11 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	fmt.Println(release)
+
 	if release.EventContainer == 0 {
 		// create new event container
 	}
-
-	fmt.Printf("%#v", release.EventContainer)
 }
 
 // ------------------------ Release handler helper functions ------------------------ //

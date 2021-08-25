@@ -593,7 +593,6 @@ const getMatchingPods = baseApi<
 
 const getMetrics = baseApi<
   {
-    cluster_id: number;
     metric: string;
     shouldsum: boolean;
     pods?: string[];
@@ -605,9 +604,12 @@ const getMetrics = baseApi<
     endrange: number;
     resolution: string;
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/metrics`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/metrics`;
 });
 
 const getNamespaces = baseApi<

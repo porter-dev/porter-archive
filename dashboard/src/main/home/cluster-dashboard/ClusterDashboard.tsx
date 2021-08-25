@@ -6,7 +6,12 @@ import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
 import { ChartType, ClusterType } from "shared/types";
-import { getQueryParam, PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
+import {
+  getQueryParam,
+  PorterUrl,
+  pushFiltered,
+  pushQueryParams,
+} from "shared/routing";
 
 import DashboardHeader from "./DashboardHeader";
 import ChartList from "./chart/ChartList";
@@ -57,11 +62,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     api
       .getPrometheusIsInstalled(
         "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
+        {},
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       )
       .then((res) => {

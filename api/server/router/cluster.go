@@ -192,5 +192,30 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/prometheus/detect -> cluster.NewDetectPrometheusInstalledHandler
+	detectPrometheusInstalledEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/prometheus/detect",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	detectPrometheusInstalledHandler := cluster.NewDetectPrometheusInstalledHandler(config)
+
+	routes = append(routes, &Route{
+		Endpoint: detectPrometheusInstalledEndpoint,
+		Handler:  detectPrometheusInstalledHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

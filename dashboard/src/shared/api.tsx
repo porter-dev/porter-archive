@@ -953,12 +953,14 @@ const createNamespace = baseApi<
 const deleteNamespace = baseApi<
   {
     name: string;
-    cluster_id: number;
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+  }
 >("DELETE", (pathParams) => {
-  let { id } = pathParams;
-  return `/api/projects/${id}/k8s/namespaces/delete`;
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/delete`;
 });
 
 const deleteJob = baseApi<

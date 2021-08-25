@@ -54,3 +54,7 @@ type CreateNamespaceRequest struct {
 type CreateNamespaceResponse struct {
 	*v1.Namespace
 }
+
+type DeleteNamespaceRequest struct {
+	Name string `json:"name" form:"required"`
+}

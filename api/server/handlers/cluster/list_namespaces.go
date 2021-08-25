@@ -10,22 +10,22 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type ClusterListNamespacesHandler struct {
+type ListNamespacesHandler struct {
 	handlers.PorterHandlerWriter
 	KubernetesAgentGetter
 }
 
-func NewClusterListNamespacesHandler(
+func NewListNamespacesHandler(
 	config *shared.Config,
 	writer shared.ResultWriter,
-) *ClusterListNamespacesHandler {
-	return &ClusterListNamespacesHandler{
+) *ListNamespacesHandler {
+	return &ListNamespacesHandler{
 		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
 		KubernetesAgentGetter: NewDefaultKubernetesAgentGetter(config),
 	}
 }
 
-func (c *ClusterListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(cluster)
@@ -42,7 +42,7 @@ func (c *ClusterListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	res := types.ClusterListNamespacesResponse{
+	res := types.ListNamespacesResponse{
 		NamespaceList: namespaceList,
 	}
 

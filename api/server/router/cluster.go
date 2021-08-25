@@ -96,7 +96,7 @@ func getClusterRoutes(
 		},
 	)
 
-	listNamespacesHandler := cluster.NewClusterListNamespacesHandler(
+	listNamespacesHandler := cluster.NewListNamespacesHandler(
 		config,
 		factory.GetResultWriter(),
 	)

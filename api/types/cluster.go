@@ -46,7 +46,7 @@ const (
 	Kube ClusterService = "kube"
 )
 
-type ClusterListNamespacesResponse struct {
+type ListNamespacesResponse struct {
 	*v1.NamespaceList
 }
 

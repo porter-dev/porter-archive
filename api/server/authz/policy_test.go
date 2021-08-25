@@ -71,7 +71,7 @@ func TestPolicyMiddlewareSuccessfulApplication(t *testing.T) {
 			types.ProjectScope,
 			types.ClusterScope,
 			types.NamespaceScope,
-			types.ApplicationScope,
+			types.ReleaseScope,
 		},
 	}, false, false)
 
@@ -121,7 +121,7 @@ func TestPolicyMiddlewareSuccessfulApplication(t *testing.T) {
 				Name: "default",
 			},
 		},
-		types.ApplicationScope: {
+		types.ReleaseScope: {
 			Verb: types.APIVerbCreate,
 			Resource: types.NameOrUInt{
 				Name: "app-1",

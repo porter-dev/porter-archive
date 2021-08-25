@@ -1654,6 +1654,10 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if release.EventContainer == 0 {
+		// create new event container
+	}
+
 	fmt.Printf("%#v", release.EventContainer)
 }
 

@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -29,6 +28,29 @@ type Client struct {
 type HTTPError struct {
 	Code   uint     `json:"code"`
 	Errors []string `json:"errors"`
+}
+
+type EventStatus int64
+
+const (
+	EventStatusSuccess    EventStatus = 1
+	EventStatusInProgress             = 2
+	EventStatusFailed                 = 3
+)
+
+// Event represents an event that happens during
+type Event struct {
+	ID     string      `json:"event_id"` // events with the same id wil be treated the same, and the highest index one is retained
+	Name   string      `json:"name"`
+	Index  int64       `json:"index"` // priority of the event, used for sorting
+	Status EventStatus `json:"status"`
+	Info   string      `json:"info"` // extra information (can be error or success)
+}
+
+// StreamEventForm is used to send event data to the api
+type StreamEventForm struct {
+	Event `json:"event"`
+	Token string `json:"token"`
 }
 
 // NewClient constructs a new client based on a set of options
@@ -94,6 +116,9 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 			return &errRes, nil
 		}
 
+		fmt.Println("error request")
+		fmt.Printf("%+v\n", req)
+
 		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
 	}
 
@@ -125,8 +150,8 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 }
 
 // StreamEvent sends an event from deployment to the api
-func (c *Client) StreamEvent(event deploy.Event, token string, projID uint, name string) error {
-	form := deploy.StreamEventForm{
+func (c *Client) StreamEvent(event Event, token string, projID uint, name string) error {
+	form := StreamEventForm{
 		Event: event,
 		Token: token,
 	}

@@ -253,6 +253,7 @@ func (a *Agent) getPushOptions(image string) (types.ImagePushOptions, error) {
 }
 
 func GetServerURLFromTag(image string) (string, error) {
+	image = strings.Replace(image, "index.docker.io", "docker.io", -1)
 	named, err := reference.ParseNamed(image)
 
 	if err != nil {

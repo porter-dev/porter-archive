@@ -656,12 +656,13 @@ const getProjectRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
 const getProjects = baseApi("GET", "/api/projects");
 
 const getPrometheusIsInstalled = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/prometheus/detect`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/prometheus/detect`;
 });
 
 const getRegistryIntegrations = baseApi("GET", "/api/integrations/registry");

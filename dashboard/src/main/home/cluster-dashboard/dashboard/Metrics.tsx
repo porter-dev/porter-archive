@@ -58,11 +58,10 @@ const Metrics: React.FC = () => {
       ),
       api.getPrometheusIsInstalled(
         "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
+        {},
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       ),
     ])

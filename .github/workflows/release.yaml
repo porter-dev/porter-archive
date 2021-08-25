@@ -95,7 +95,7 @@ jobs:
           zip --junk-paths ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./docker-credential-porter
       - name: Build and zip Darwin binaries
         run: |
-          docker build . --file ./build/Dockerfile.osx -t osx
+          docker build . --file ./build/Dockerfile.osx -t osx --build-arg version=${{steps.tag_name.outputs.tag}}
           docker run \
           --mount type=bind,source="$(pwd)"/release,target=/release \
           osx:latest ${{steps.tag_name.outputs.tag}}

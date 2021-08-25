@@ -379,7 +379,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   being deployed
                 </Header>
                 Navigate to the <A
-                  href={`https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`}
+                  href={props.currentChart.git_action_config && `https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`}
                   target={"_blank"}
                 >
                   Actions

@@ -8,15 +8,14 @@ import Selector from "../../Selector";
 import styled from "styled-components";
 import useFormField from "../hooks/useFormField";
 import { Context } from "../../../shared/Context";
+import { hasSetValue } from "../utils";
 
 const Select: React.FC<SelectField> = (props) => {
   const { currentCluster } = useContext(Context);
   const { variables, setVars } = useFormField<SelectFieldState>(props.id, {
     initVars: {
-      [props.variable]: props.value
+      [props.variable]: hasSetValue(props)
         ? props.value[0]
-        : props.settings.default
-        ? props.settings.default
         : props.settings.type == "provider"
         ? ({
             gke: "gcp",
@@ -72,10 +71,8 @@ export const getFinalVariablesForSelect: GetFinalVariablesFunction = (
   return vars[props.variable]
     ? {}
     : {
-        [props.variable]: props.value
+        [props.variable]: hasSetValue(props)
           ? props.value[0]
-          : props.settings.default
-          ? props.settings.default
           : props.settings.type == "provider"
           ? ({
               gke: "gcp",

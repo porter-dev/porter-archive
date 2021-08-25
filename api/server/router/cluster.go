@@ -136,5 +136,33 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/delete -> cluster.NewDeleteNamespaceHandler
+	deleteNamespaceEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/namespaces/delete",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	deleteNamespaceHandler := cluster.NewDeleteNamespaceHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteNamespaceEndpoint,
+		Handler:  deleteNamespaceHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

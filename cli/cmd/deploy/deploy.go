@@ -51,29 +51,6 @@ type DeployOpts struct {
 	Local bool
 }
 
-type EventStatus int64
-
-const (
-	EventStatusSuccess    EventStatus = 1
-	EventStatusInProgress             = 2
-	EventStatusFailed                 = 3
-)
-
-// Event represents an event that happens during
-type Event struct {
-	ID     string      `json:"event_id"` // events with the same id wil be treated the same, and the highest index one is retained
-	Name   string      `json:"name"`
-	Index  int64       `json:"index"` // priority of the event, used for sorting
-	Status EventStatus `json:"status"`
-	Info   string      `json:"info"` // extra information (can be error or success)
-}
-
-// StreamEventForm is used to send event data to the api
-type StreamEventForm struct {
-	Event `json:"event"`
-	Token string `json:"token"`
-}
-
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
 // name, and DeployOpts.
 func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
@@ -462,8 +439,9 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	return res, nil
 }
 
-func (d *DeployAgent) StreamEvent(event Event, token string) error {
-	return d.client.StreamEvent(event, token, d.opts.ProjectID, d.release.Name)
+func (d *DeployAgent) StreamEvent(event api.Event, token string) error {
+	//return d.client.StreamEvent(event, token, d.opts.ProjectID, d.release.Name)
+	return nil
 }
 
 type NestedMapFieldNotFoundError struct {

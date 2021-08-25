@@ -403,18 +403,21 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 
 	// minor thought: this ends up happening four times when upgrade is ran, when it should really only happen once
 	// maybe some way to only do this once?
-	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, name, namespace)
+	fmt.Println(app)
+	fmt.Println(namespace)
+
+	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, app, namespace)
 
 	if err != nil {
 		return err
 	}
 
 	if stream {
-		updateAgent.StreamEvent(deploy.Event{
+		updateAgent.StreamEvent(api.Event{
 			ID:     "build",
 			Name:   "Build",
 			Index:  100,
-			Status: deploy.EventStatusInProgress,
+			Status: api.EventStatusInProgress,
 			Info:   "",
 		}, release.WebhookToken)
 	}
@@ -424,11 +427,11 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 	if err != nil {
 		if stream {
 			// another concern: is it safe to ignore the error here?
-			updateAgent.StreamEvent(deploy.Event{
+			updateAgent.StreamEvent(api.Event{
 				ID:     "build",
 				Name:   "Build",
 				Index:  110,
-				Status: deploy.EventStatusInProgress,
+				Status: api.EventStatusInProgress,
 				Info:   err.Error(),
 			}, release.WebhookToken)
 		}
@@ -440,11 +443,11 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(deploy.Event{
+			updateAgent.StreamEvent(api.Event{
 				ID:     "build",
 				Name:   "Build",
 				Index:  120,
-				Status: deploy.EventStatusInProgress,
+				Status: api.EventStatusInProgress,
 				Info:   err.Error(),
 			}, release.WebhookToken)
 		}
@@ -452,11 +455,11 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 	}
 
 	if stream {
-		updateAgent.StreamEvent(deploy.Event{
+		updateAgent.StreamEvent(api.Event{
 			ID:     "build",
 			Name:   "Build",
 			Index:  130,
-			Status: deploy.EventStatusSuccess,
+			Status: api.EventStatusSuccess,
 			Info:   "",
 		}, release.WebhookToken)
 	}

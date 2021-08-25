@@ -34,7 +34,7 @@ jobs:
           cat ./dashboard/.env
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile
+          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile --build-arg version=${{steps.tag_name.outputs.tag}}
       - name: Push
         run: |
           docker push porter1/porter:${{steps.tag_name.outputs.tag}}
@@ -95,7 +95,7 @@ jobs:
           zip --junk-paths ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./docker-credential-porter
       - name: Build and zip Darwin binaries
         run: |
-          docker build . --file ./build/Dockerfile.osx -t osx --build-arg version=${{steps.tag_name.outputs.tag}}
+          docker build . --file ./build/Dockerfile.osx -t osx
           docker run \
           --mount type=bind,source="$(pwd)"/release,target=/release \
           osx:latest ${{steps.tag_name.outputs.tag}}

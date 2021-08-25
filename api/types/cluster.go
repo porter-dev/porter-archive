@@ -46,3 +46,11 @@ const (
 type ClusterListNamespacesResponse struct {
 	*v1.NamespaceList
 }
+
+type CreateNamespaceRequest struct {
+	Name string `json:"name" form:"required"`
+}
+
+type CreateNamespaceResponse struct {
+	*v1.Namespace
+}

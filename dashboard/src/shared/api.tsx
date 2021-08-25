@@ -947,7 +947,7 @@ const createNamespace = baseApi<
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/namespaces/create?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/create`;
 });
 
 const deleteNamespace = baseApi<

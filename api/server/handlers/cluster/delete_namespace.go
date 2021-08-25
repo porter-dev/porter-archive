@@ -45,4 +45,6 @@ func (c *DeleteNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }

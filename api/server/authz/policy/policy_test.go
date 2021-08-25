@@ -313,8 +313,8 @@ var testInvalidPolicyDocumentNested = []*types.PolicyDocument{
 					},
 				},
 				Children: map[types.PermissionScope]*types.PolicyDocument{
-					types.ApplicationScope: {
-						Scope: types.ApplicationScope,
+					types.ReleaseScope: {
+						Scope: types.ReleaseScope,
 						Verbs: types.ReadWriteVerbGroup(),
 						Resources: []types.NameOrUInt{
 							{

@@ -100,7 +100,7 @@ func getRequestActionForEndpoint(
 			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamClusterID))
 		case types.NamespaceScope:
 			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamNamespace))
-		case types.ApplicationScope:
+		case types.ReleaseScope:
 			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamApplication))
 		}
 

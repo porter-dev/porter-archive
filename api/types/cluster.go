@@ -58,3 +58,7 @@ type CreateNamespaceResponse struct {
 type DeleteNamespaceRequest struct {
 	Name string `json:"name" form:"required"`
 }
+
+type GetTemporaryKubeconfigResponse struct {
+	Kubeconfig []byte `json:"kubeconfig"`
+}

@@ -440,8 +440,7 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 }
 
 func (d *DeployAgent) StreamEvent(event api.Event, token string) error {
-	//return d.client.StreamEvent(event, token, d.opts.ProjectID, d.release.Name)
-	return nil
+	return d.client.StreamEvent(event, token, d.opts.ProjectID, d.opts.ClusterID, d.release.Name)
 }
 
 type NestedMapFieldNotFoundError struct {

@@ -49,8 +49,9 @@ type Event struct {
 
 // StreamEventForm is used to send event data to the api
 type StreamEventForm struct {
-	Event `json:"event"`
-	Token string `json:"token"`
+	Event     `json:"event"`
+	Token     string `json:"token"`
+	ClusterID uint   `json:"cluster_id"`
 }
 
 // NewClient constructs a new client based on a set of options
@@ -98,6 +99,8 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 		req.AddCookie(c.Cookie)
 	}
 
+	fmt.Printf("%+v\n", req.Header)
+
 	res, err := c.HTTPClient.Do(req)
 
 	if err != nil {
@@ -118,6 +121,8 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 
 		fmt.Println("error request")
 		fmt.Printf("%+v\n", req)
+		fmt.Println(errRes)
+		fmt.Println(res.StatusCode)
 
 		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
 	}
@@ -150,10 +155,11 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 }
 
 // StreamEvent sends an event from deployment to the api
-func (c *Client) StreamEvent(event Event, token string, projID uint, name string) error {
+func (c *Client) StreamEvent(event Event, token string, projID uint, clusterID uint, name string) error {
 	form := StreamEventForm{
-		Event: event,
-		Token: token,
+		Event:     event,
+		Token:     token,
+		ClusterID: clusterID,
 	}
 
 	body := new(bytes.Buffer)

@@ -237,7 +237,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       const res = await api.getMetrics(
         "<token>",
         {
-          cluster_id: currentCluster.id,
           metric: metricType,
           shouldsum: shouldsum,
           kind: selectedController?.kind,
@@ -250,6 +249,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         },
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       );
 
@@ -297,7 +297,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       const res = await api.getMetrics(
         "<token>",
         {
-          cluster_id: currentCluster.id,
           metric: selectedMetric,
           shouldsum: shouldsum,
           kind: selectedController?.kind,
@@ -310,6 +309,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         },
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       );
 

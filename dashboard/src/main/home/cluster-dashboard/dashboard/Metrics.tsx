@@ -216,7 +216,6 @@ const Metrics: React.FC = () => {
       const res = await api.getMetrics(
         "<token>",
         {
-          cluster_id: currentCluster.id,
           metric: selectedMetric,
           shouldsum: false,
           kind: "Ingress",
@@ -233,6 +232,7 @@ const Metrics: React.FC = () => {
         },
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       );
 

@@ -621,12 +621,13 @@ const getNamespaces = baseApi<
 });
 
 const getNGINXIngresses = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/prometheus/ingresses`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/prometheus/ingresses`;
 });
 
 const getOAuthIds = baseApi<

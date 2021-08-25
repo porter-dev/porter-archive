@@ -72,11 +72,10 @@ const Metrics: React.FC = () => {
         api
           .getNGINXIngresses(
             "<token>",
-            {
-              cluster_id: currentCluster.id,
-            },
+            {},
             {
               id: currentProject.id,
+              cluster_id: currentCluster.id,
             }
           )
           .then((res) => {

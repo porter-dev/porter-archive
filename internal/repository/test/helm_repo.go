@@ -39,6 +39,7 @@ func (repo *HelmRepoRepository) CreateHelmRepo(
 
 // ReadHelmRepo finds a repoistry by id
 func (repo *HelmRepoRepository) ReadHelmRepo(
+	projectID uint,
 	id uint,
 ) (*models.HelmRepo, error) {
 	if !repo.canQuery {

@@ -1,153 +1,153 @@
 | Path                     | Assigned To  | Changed schema? | CLI Updated | Frontend Updated |
 | ------------------------ | ------------ | --------------- | ----------- | ---------------- |
-| `GET /api/auth/check` | | | |
-| `GET /api/capabilities` | | | |
-| `GET /api/cli/login` | | | |
-| `GET /api/cli/login/exchange` | | | |
-| `GET /api/email/verify/finalize` | | | |
-| `POST /api/email/verify/initiate` | | | |
-| `GET /api/integrations/cluster` | | | |
-| `GET /api/integrations/github-app/access` | | | |
-| `GET /api/integrations/github-app/authorize` | | | |
-| `GET /api/integrations/github-app/install` | | | |
-| `GET /api/integrations/github-app/oauth` | | | |
-| `POST /api/integrations/github-app/webhook` | | | |
-| `GET /api/integrations/helm` | | | |
-| `GET /api/integrations/registry` | | | |
-| `GET /api/integrations/repo` | | | |
-| `GET /api/livez` | | | |
-| `POST /api/login` | | | |
-| `POST /api/logout` | | | |
-| `GET /api/oauth/digitalocean/callback` | | | |
-| `GET /api/oauth/github-app/callback` | | | |
-| `GET /api/oauth/github/callback` | | | |
-| `GET /api/oauth/google/callback` | | | |
-| `GET /api/oauth/login/github` | | | |
-| `GET /api/oauth/login/google` | | | |
-| `GET /api/oauth/projects/{project_id}/digitalocean` | | | |
-| `GET /api/oauth/projects/{project_id}/github` | | | |
-| `GET /api/oauth/projects/{project_id}/slack` | | | |
-| `GET /api/oauth/slack/callback` | | | |
-| `POST /api/password/reset/finalize` | | | |
-| `POST /api/password/reset/initiate` | | | |
-| `POST /api/password/reset/verify` | | | |
-| `POST /api/projects` | | | |
-| `GET /api/projects/{project_id}` | | | |
-| `DELETE /api/projects/{project_id}` | | | |
-| `POST /api/projects/{project_id}/ci/actions/create` | | | |
-| `POST /api/projects/{project_id}/ci/actions/generate` | | | |
-| `GET /api/projects/{project_id}/clusters` | | | |
-| `POST /api/projects/{project_id}/clusters` | | | |
-| `POST /api/projects/{project_id}/clusters/candidates` | | | |
-| `GET /api/projects/{project_id}/clusters/candidates` | | | |
-| `POST /api/projects/{project_id}/clusters/candidates/{candidate_id}/resolve` | | | |
-| `GET /api/projects/{project_id}/clusters/{cluster_id}` | | | |
-| `POST /api/projects/{project_id}/clusters/{cluster_id}` | | | |
-| `DELETE /api/projects/{project_id}/clusters/{cluster_id}` | | | |
-| `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}` | | | |
-| `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes` | | | |
-| `GET /api/projects/{project_id}/collaborators` | | | |
-| `POST /api/projects/{project_id}/delete/{name}` | | | |
-| `POST /api/projects/{project_id}/deploy/addon/{name}/{version}` | | | |
-| `POST /api/projects/{project_id}/deploy/{name}/{version}` | | | |
-| `GET /api/projects/{project_id}/gitrepos` | | | |
-| `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos` | | | |
-| `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches` | | | |
-| `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect` | | | |
-| `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents` | | | |
-| `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile` | | | |
-| `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url` | | | |
-| `POST /api/projects/{project_id}/helmrepos` | | | |
-| `GET /api/projects/{project_id}/helmrepos` | | | |
-| `GET /api/projects/{project_id}/helmrepos/{helm_id}/charts` | | | |
-| `GET /api/projects/{project_id}/infra` | | | |
-| `POST /api/projects/{project_id}/infra/{infra_id}/docr/destroy` | | | |
-| `POST /api/projects/{project_id}/infra/{infra_id}/doks/destroy` | | | |
-| `POST /api/projects/{project_id}/infra/{infra_id}/ecr/destroy` | | | |
-| `POST /api/projects/{project_id}/infra/{infra_id}/eks/destroy` | | | |
-| `POST /api/projects/{project_id}/infra/{infra_id}/gke/destroy` | | | |
-| `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy` | | | |
-| `POST /api/projects/{project_id}/integrations/aws` | | | |
-| `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite` | | | |
-| `POST /api/projects/{project_id}/integrations/basic` | | | |
-| `POST /api/projects/{project_id}/integrations/gcp` | | | |
-| `GET /api/projects/{project_id}/integrations/oauth` | | | |
-| `POST /api/projects/{project_id}/invites` | | | |
-| `GET /api/projects/{project_id}/invites` | | | |
-| `POST /api/projects/{project_id}/invites/{invite_id}` | | | |
-| `DELETE /api/projects/{project_id}/invites/{invite_id}` | | | |
-| `GET /api/projects/{project_id}/invites/{token}` | | | |
-| `GET /api/projects/{project_id}/k8s/configmap` | | | |
-| `POST /api/projects/{project_id}/k8s/configmap/create` | | | |
-| `DELETE /api/projects/{project_id}/k8s/configmap/delete` | | | |
-| `GET /api/projects/{project_id}/k8s/configmap/list` | | | |
-| `POST /api/projects/{project_id}/k8s/configmap/rename` | | | |
-| `POST /api/projects/{project_id}/k8s/configmap/update` | | | |
-| `GET /api/projects/{project_id}/k8s/helm_releases` | | | |
-| `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}` | | | |
-| `GET /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods` | | | |
-| `POST /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/stop` | | | |
-| `GET /api/projects/{project_id}/k8s/kubeconfig` | | | |
-| `GET /api/projects/{project_id}/k8s/metrics` | | | |
-| `GET /api/projects/{project_id}/k8s/namespaces` | | | |
-| `POST /api/projects/{project_id}/k8s/namespaces/create` | | | |
-| `DELETE /api/projects/{project_id}/k8s/namespaces/delete` | | | |
-| `GET /api/projects/{project_id}/k8s/pods` | | | |
-| `DELETE /api/projects/{project_id}/k8s/pods/{namespace}/{name}` | | | |
-| `GET /api/projects/{project_id}/k8s/pods/{namespace}/{name}/events/list` | | | |
-| `GET /api/projects/{project_id}/k8s/prometheus/detect` | | | |
-| `GET /api/projects/{project_id}/k8s/prometheus/ingresses` | | | |
-| `POST /api/projects/{project_id}/k8s/subdomain` | | | |
-| `GET /api/projects/{project_id}/k8s/{namespace}/ingress/{name}` | | | |
-| `GET /api/projects/{project_id}/k8s/{namespace}/pod/{name}/logs` | | | |
-| `GET /api/projects/{project_id}/k8s/{kind}/status` | | | |
-| `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status` | | | |
-| `GET /api/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs` | | | |
-| `GET /api/projects/{project_id}/policy` | | | |
-| `POST /api/projects/{project_id}/provision/docr` | | | |
-| `POST /api/projects/{project_id}/provision/doks` | | | |
-| `POST /api/projects/{project_id}/provision/ecr` | | | |
-| `POST /api/projects/{project_id}/provision/eks` | | | |
-| `POST /api/projects/{project_id}/provision/gcr` | | | |
-| `POST /api/projects/{project_id}/provision/gke` | | | |
-| `POST /api/projects/{project_id}/provision/test` | | | |
-| `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs` | | | |
-| `POST /api/projects/{project_id}/registries` | | | |
-| `GET /api/projects/{project_id}/registries` | | | |
-| `GET /api/projects/{project_id}/registries/dockerhub/token` | | | |
-| `GET /api/projects/{project_id}/registries/docr/token` | | | |
-| `GET /api/projects/{project_id}/registries/ecr/{region}/token` | | | |
-| `GET /api/projects/{project_id}/registries/gcr/token` | | | |
-| `POST /api/projects/{project_id}/registries/{registry_id}` | | | |
-| `DELETE /api/projects/{project_id}/registries/{registry_id}` | | | |
-| `GET /api/projects/{project_id}/registries/{registry_id}/repositories` | | | |
-| `GET /api/projects/{project_id}/registries/{registry_id}/repositories/*` | | | |
-| `POST /api/projects/{project_id}/registries/{registry_id}/repository` | | | |
-| `GET /api/projects/{project_id}/releases` | | | |
-| `POST /api/projects/{project_id}/releases/image/update/batch` | | | |
-| `GET /api/projects/{project_id}/releases/{name}/history` | | | |
-| `POST /api/projects/{project_id}/releases/{name}/notifications` | | | |
-| `GET /api/projects/{project_id}/releases/{name}/notifications` | | | |
-| `POST /api/projects/{project_id}/releases/{name}/rollback` | | | |
-| `POST /api/projects/{project_id}/releases/{name}/upgrade` | | | |
-| `GET /api/projects/{project_id}/releases/{name}/webhook_token` | | | |
-| `POST /api/projects/{project_id}/releases/{name}/webhook_token` | | | |
-| `GET /api/projects/{project_id}/releases/{name}/{revision}` | | | |
-| `GET /api/projects/{project_id}/releases/{name}/{revision}/components` | | | |
-| `GET /api/projects/{project_id}/releases/{name}/{revision}/controllers` | | | |
-| `GET /api/projects/{project_id}/releases/{name}/{revision}/pods/all` | | | |
-| `GET /api/projects/{project_id}/roles` | | | |
-| `DELETE /api/projects/{project_id}/roles/{user_id}` | | | |
-| `POST /api/projects/{project_id}/roles/{user_id}` | | | |
-| `GET /api/projects/{project_id}/slack_integrations` | | | |
-| `GET /api/projects/{project_id}/slack_integrations/exists` | | | |
-| `DELETE /api/projects/{project_id}/slack_integrations/{slack_integration_id}` | | | |
-| `GET /api/readyz` | | | |
-| `GET /api/templates` | | | |
-| `GET /api/templates/upgrade_notes/{name}/{version}` | | | |
-| `GET /api/templates/{name}/{version}` | | | |
-| `POST /api/users` | | | |
-| `DELETE /api/users/{user_id}` | | | |
-| `GET /api/users/{user_id}` | | | |
-| `GET /api/users/{user_id}/projects` | | | |
-| `POST /api/webhooks/deploy/{token}` | | | |
+| <li>- [ ] `GET /api/auth/check` </li> | | | |
+| <li>- [ ] `GET /api/capabilities` </li> | | | |
+| <li>- [ ] `GET /api/cli/login` </li> | | | |
+| <li>- [ ] `GET /api/cli/login/exchange` </li> | | | |
+| <li>- [ ] `GET /api/email/verify/finalize` </li> | | | |
+| <li>- [ ] `POST /api/email/verify/initiate` </li> | | | |
+| <li>- [ ] `GET /api/integrations/cluster` </li> | | | |
+| <li>- [ ] `GET /api/integrations/github-app/access` </li> | | | |
+| <li>- [ ] `GET /api/integrations/github-app/authorize` </li> | | | |
+| <li>- [ ] `GET /api/integrations/github-app/install` </li> | | | |
+| <li>- [ ] `GET /api/integrations/github-app/oauth` </li> | | | |
+| <li>- [ ] `POST /api/integrations/github-app/webhook` </li> | | | |
+| <li>- [ ] `GET /api/integrations/helm` </li> | | | |
+| <li>- [ ] `GET /api/integrations/registry` </li> | | | |
+| <li>- [ ] `GET /api/integrations/repo` </li> | | | |
+| <li>- [ ] `GET /api/livez` </li> | | | |
+| <li>- [ ] `POST /api/login` </li> | | | |
+| <li>- [ ] `POST /api/logout` </li> | | | |
+| <li>- [ ] `GET /api/oauth/digitalocean/callback` </li> | | | |
+| <li>- [ ] `GET /api/oauth/github-app/callback` </li> | | | |
+| <li>- [ ] `GET /api/oauth/github/callback` </li> | | | |
+| <li>- [ ] `GET /api/oauth/google/callback` </li> | | | |
+| <li>- [ ] `GET /api/oauth/login/github` </li> | | | |
+| <li>- [ ] `GET /api/oauth/login/google` </li> | | | |
+| <li>- [ ] `GET /api/oauth/projects/{project_id}/digitalocean` </li> | | | |
+| <li>- [ ] `GET /api/oauth/projects/{project_id}/github` </li> | | | |
+| <li>- [ ] `GET /api/oauth/projects/{project_id}/slack` </li> | | | |
+| <li>- [ ] `GET /api/oauth/slack/callback` </li> | | | |
+| <li>- [ ] `POST /api/password/reset/finalize` </li> | | | |
+| <li>- [ ] `POST /api/password/reset/initiate` </li> | | | |
+| <li>- [ ] `POST /api/password/reset/verify` </li> | | | |
+| <li>- [ ] `POST /api/projects` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/ci/actions/create` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/ci/actions/generate` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/clusters` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/clusters` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/clusters/candidates` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/clusters/candidates` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/clusters/candidates/{candidate_id}/resolve` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/clusters/{cluster_id}` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/clusters/{cluster_id}` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/clusters/{cluster_id}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/collaborators` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/delete/{name}` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/deploy/addon/{name}/{version}` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/deploy/{name}/{version}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/gitrepos` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/helmrepos` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/helmrepos` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/helmrepos/{helm_id}/charts` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/infra` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/docr/destroy` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/doks/destroy` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/ecr/destroy` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/eks/destroy` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/gke/destroy` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/integrations/aws` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/integrations/basic` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/integrations/gcp` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/integrations/oauth` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/invites` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/invites` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/invites/{invite_id}` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/invites/{invite_id}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/invites/{token}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/configmap` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/create` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/k8s/configmap/delete` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/configmap/list` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/rename` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/update` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/helm_releases` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/stop` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/kubeconfig` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/metrics` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/namespaces` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/k8s/namespaces/create` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/k8s/namespaces/delete` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/pods` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/k8s/pods/{namespace}/{name}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/pods/{namespace}/{name}/events/list` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/prometheus/detect` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/prometheus/ingresses` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/k8s/subdomain` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/ingress/{name}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/pod/{name}/logs` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/{kind}/status` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/policy` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/provision/docr` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/provision/doks` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/provision/ecr` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/provision/eks` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/provision/gcr` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/provision/gke` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/provision/test` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/registries` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/registries` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/registries/dockerhub/token` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/registries/docr/token` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/registries/ecr/{region}/token` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/registries/gcr/token` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/registries/{registry_id}` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/registries/{registry_id}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories/*` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/registries/{registry_id}/repository` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/releases/image/update/batch` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/history` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/notifications` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/notifications` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/rollback` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/upgrade` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/webhook_token` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/webhook_token` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/{revision}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/{revision}/components` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/{revision}/controllers` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/{revision}/pods/all` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/roles` </li> | | | |
+| <li>- [ ] `POST /api/projects/{project_id}/roles/{user_id}` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/roles/{user_id}` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/slack_integrations` </li> | | | |
+| <li>- [ ] `GET /api/projects/{project_id}/slack_integrations/exists` </li> | | | |
+| <li>- [ ] `DELETE /api/projects/{project_id}/slack_integrations/{slack_integration_id}` </li> | | | |
+| <li>- [ ] `GET /api/readyz` </li> | | | |
+| <li>- [ ] `GET /api/templates` </li> | | | |
+| <li>- [ ] `GET /api/templates/upgrade_notes/{name}/{version}` </li> | | | |
+| <li>- [ ] `GET /api/templates/{name}/{version}` </li> | | | |
+| <li>- [ ] `POST /api/users` </li> | | | |
+| <li>- [ ] `GET /api/users/{user_id}` </li> | | | |
+| <li>- [ ] `DELETE /api/users/{user_id}` </li> | | | |
+| <li>- [ ] `GET /api/users/{user_id}/projects` </li> | | | |
+| <li>- [ ] `POST /api/webhooks/deploy/{token}` </li> | | | |

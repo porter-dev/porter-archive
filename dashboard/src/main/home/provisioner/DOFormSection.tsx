@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import close from "assets/close.png";
@@ -14,8 +14,6 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
-import InfoTooltip from "../../../components/InfoTooltip";
-import Tooltip from "@material-ui/core/Tooltip";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -24,15 +22,6 @@ type PropsType = {
   highlightCosts?: boolean;
   infras: InfraType[];
   trackOnSave: () => void;
-};
-
-type StateType = {
-  selectedInfras: { value: string; label: string }[];
-  subscriptionTier: string;
-  doRegion: string;
-  clusterName: string;
-  clusterNameSet: boolean;
-  provisionConfirmed: boolean;
 };
 
 const provisionOptions = [
@@ -59,25 +48,35 @@ const regionOptions = [
 ];
 
 // TODO: Consolidate across forms w/ HOC
-export default class DOFormSection extends Component<PropsType, StateType> {
-  state = {
-    selectedInfras: [...provisionOptions],
-    subscriptionTier: "basic",
-    doRegion: "nyc1",
-    clusterName: "",
-    clusterNameSet: false,
-    provisionConfirmed: false,
-  };
+const DOFormSectionFC: React.FC<PropsType> = (props) => {
+  const [selectedInfras, setSelectedInfras] = useState([...provisionOptions]);
+  const [subscriptionTier, setSubscriptionTier] = useState("basic");
+  const [doRegion, setDoRegion] = useState("nyc1");
+  const [clusterName, setClusterName] = useState("");
+  const [clusterNameSet, setClusterNameSet] = useState(false);
+  const [provisionConfirmed, setProvisionConfirmed] = useState(false);
 
-  componentDidMount = () => {
-    let { infras } = this.props;
-    let { selectedInfras } = this.state;
-    this.setClusterNameIfNotSet();
+  const context = useContext(Context);
 
-    if (infras) {
+  // This is added only for tracking purposes
+  // With this prop we will track down if the user has had an intent of filling the formulary
+  const [isFormDirty, setIsFormDirty] = useState(false);
+
+  useEffect(() => {
+    if (!isFormDirty) {
+      return;
+    }
+
+    window.analytics?.track("provision_form-dirty", {
+      provider: "do",
+    });
+  }, [isFormDirty]);
+
+  useEffect(() => {
+    if (props.infras) {
       // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
-      infras.forEach((infra: InfraType, i: number) => {
+      props.infras.forEach((infra: InfraType, i: number) => {
         let { kind, status } = infra;
         if (status === "creating" || status === "created") {
           filtered = filtered.filter((item: any) => {
@@ -85,39 +84,30 @@ export default class DOFormSection extends Component<PropsType, StateType> {
           });
         }
       });
-      this.setState({ selectedInfras: filtered });
+      setSelectedInfras(filtered);
+    }
+  }, [props.infras]);
+
+  useEffect(() => {
+    setClusterNameIfNotSet();
+  }, [props.projectName]);
+
+  const setClusterNameIfNotSet = () => {
+    let projectName = props.projectName || context.currentProject?.name;
+
+    if (!clusterNameSet && !clusterName.includes(`${projectName}-cluster`)) {
+      setClusterName(
+        `${projectName}-cluster-${Math.random().toString(36).substring(2, 8)}`
+      );
     }
   };
 
-  componentDidUpdate = (prevProps: PropsType, prevState: StateType) => {
-    if (prevProps.projectName != this.props.projectName) {
-      this.setClusterNameIfNotSet();
-    }
-  };
-
-  setClusterNameIfNotSet = () => {
-    let projectName =
-      this.props.projectName || this.context.currentProject?.name;
-
-    if (
-      !this.state.clusterNameSet &&
-      !this.state.clusterName.includes(`${projectName}-cluster`)
-    ) {
-      this.setState({
-        clusterName: `${projectName}-cluster-${Math.random()
-          .toString(36)
-          .substring(2, 8)}`,
-      });
-    }
-  };
-
-  checkFormDisabled = () => {
-    if (!this.state.provisionConfirmed) {
+  const checkFormDisabled = () => {
+    if (!provisionConfirmed) {
       return true;
     }
 
-    let { selectedInfras, clusterName } = this.state;
-    let { projectName } = this.props;
+    let { projectName } = props;
     if (projectName || projectName === "") {
       return (
         !isAlphanumeric(projectName) ||
@@ -129,16 +119,16 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     }
   };
 
-  catchError = (err: any) => {
+  const catchError = (err: any) => {
     console.log(err);
-    this.props.handleError();
+    props.handleError();
     return;
   };
 
   // Step 1: Create a project
-  createProject = (callback?: any) => {
-    let { projectName } = this.props;
-    let { user, setProjects, setCurrentProject } = this.context;
+  const createProject = (callback?: any) => {
+    let { projectName } = props;
+    let { user, setProjects, setCurrentProject } = context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -157,16 +147,10 @@ export default class DOFormSection extends Component<PropsType, StateType> {
         setProjects(res_1.data);
         setCurrentProject(proj, () => callback && callback(proj.id));
       })
-      .catch(this.catchError);
+      .catch(catchError);
   };
 
-  doRedirect = (projectId: number) => {
-    let {
-      subscriptionTier,
-      doRegion,
-      selectedInfras,
-      clusterName,
-    } = this.state;
+  const doRedirect = (projectId: number) => {
     let redirectUrl = `/api/oauth/projects/${projectId}/digitalocean?project_id=${projectId}&provision=do`;
     redirectUrl += `&tier=${subscriptionTier}&region=${doRegion}&cluster_name=${clusterName}`;
     selectedInfras.forEach((option: { value: string; label: string }) => {
@@ -177,37 +161,30 @@ export default class DOFormSection extends Component<PropsType, StateType> {
   };
 
   // TODO: handle generically (with > 2 steps)
-  onCreateDO = () => {
-    this.props?.trackOnSave();
-    let { projectName } = this.props;
-    let { selectedInfras } = this.state;
-    let { currentProject } = this.context;
+  const onCreateDO = () => {
+    props?.trackOnSave();
+    let { projectName } = props;
+    let { currentProject } = context;
 
     if (!projectName) {
-      this.doRedirect(currentProject.id);
+      doRedirect(currentProject.id);
     } else {
-      this.createProject((projectId: number) => this.doRedirect(projectId));
+      createProject((projectId: number) => doRedirect(projectId));
     }
   };
 
-  getButtonStatus = () => {
-    if (this.props.projectName) {
-      if (!isAlphanumeric(this.props.projectName)) {
+  const getButtonStatus = () => {
+    if (props.projectName) {
+      if (!isAlphanumeric(props.projectName)) {
         return "Project name contains illegal characters";
       }
     }
-    if (
-      !this.state.provisionConfirmed ||
-      this.props.projectName === "" ||
-      !this.state.clusterName
-    ) {
+    if (!provisionConfirmed || props.projectName === "" || !clusterName) {
       return "Required fields missing";
     }
   };
 
-  renderClusterNameSection = () => {
-    let { selectedInfras, clusterName } = this.state;
-
+  const renderClusterNameSection = () => {
     if (
       selectedInfras.length == 2 ||
       (selectedInfras.length == 1 && selectedInfras[0].value === "doks")
@@ -216,9 +193,11 @@ export default class DOFormSection extends Component<PropsType, StateType> {
         <InputRow
           type="text"
           value={clusterName}
-          setValue={(x: string) =>
-            this.setState({ clusterName: x, clusterNameSet: true })
-          }
+          setValue={(x: string) => {
+            setClusterName(x);
+            setClusterNameSet(true);
+            setIsFormDirty(true);
+          }}
           label="Cluster Name"
           placeholder="ex: porter-cluster"
           width="100%"
@@ -228,115 +207,112 @@ export default class DOFormSection extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    let { setSelectedProvisioner } = this.props;
-    let { selectedInfras, subscriptionTier, doRegion } = this.state;
-
-    return (
-      <StyledAWSFormSection>
-        <FormSection>
-          <CloseButton onClick={() => setSelectedProvisioner(null)}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Heading isAtTop={true}>DigitalOcean Settings</Heading>
-          <SelectRow
-            options={tierOptions}
-            width="100%"
-            value={subscriptionTier}
-            setActiveValue={(x: string) =>
-              this.setState({ subscriptionTier: x })
-            }
-            label="💰 Subscription Tier"
-          />
-          <SelectRow
-            options={regionOptions}
-            width="100%"
-            dropdownMaxHeight="240px"
-            value={doRegion}
-            setActiveValue={(x: string) => this.setState({ doRegion: x })}
-            label="📍 DigitalOcean Region"
-          />
-          <Br />
-          <Heading>DigitalOcean Resources</Heading>
-          <Helper>
-            Porter will provision the following DigitalOcean resources in your
-            own cloud.
-          </Helper>
-          <CheckboxList
-            options={provisionOptions}
-            selected={selectedInfras}
-            setSelected={(x: { value: string; label: string }[]) => {
-              this.setState({ selectedInfras: x });
-            }}
-          />
-          {this.renderClusterNameSection()}
-          <Helper>
-            By default, Porter creates a cluster with three Standard (2vCPUs /
-            2GB RAM) droplets. DigitalOcean will bill you for any provisioned
-            resources. Learn more about DOKS pricing
-            <Highlight
-              href="https://www.digitalocean.com/products/kubernetes/"
-              target="_blank"
-            >
-              here
-            </Highlight>
-            .
-          </Helper>
-          {/*
-          <Helper>
-            Estimated Cost:{" "}
-            <CostHighlight highlight={this.props.highlightCosts}>
-              $90/Month
-            </CostHighlight>
-            <Tooltip
-              title={
-                <div
-                  style={{
-                    fontFamily: "Work Sans, sans-serif",
-                    fontSize: "12px",
-                    fontWeight: "normal",
-                    padding: "5px 6px",
-                  }}
-                >
-                  Cluster cost: ~$10/month <br />
-                  Machine (x3) cost: ~$60/month <br />
-                  Networking cost: ~$20/month
-                </div>
-              }
-              placement="top"
-            >
-              <StyledInfoTooltip>
-                <i className="material-icons">help_outline</i>
-              </StyledInfoTooltip>
-            </Tooltip>
-          </Helper>
-          */}
-          <CheckboxRow
-            isRequired={true}
-            checked={this.state.provisionConfirmed}
-            toggle={() =>
-              this.setState({
-                provisionConfirmed: !this.state.provisionConfirmed,
-              })
-            }
-            label="I understand and wish to proceed"
-          />
-        </FormSection>
-        {this.props.children ? this.props.children : <Padding />}
-        <SaveButton
-          text="Submit"
-          disabled={this.checkFormDisabled()}
-          onClick={this.onCreateDO}
-          makeFlush={true}
-          status={this.getButtonStatus()}
-          helper="Note: Provisioning can take up to 15 minutes"
+  return (
+    <StyledAWSFormSection>
+      <FormSection>
+        <CloseButton onClick={() => props.setSelectedProvisioner(null)}>
+          <CloseButtonImg src={close} />
+        </CloseButton>
+        <Heading isAtTop={true}>DigitalOcean Settings</Heading>
+        <SelectRow
+          options={tierOptions}
+          width="100%"
+          value={subscriptionTier}
+          setActiveValue={(x: string) => {
+            setSubscriptionTier(x);
+            setIsFormDirty(true);
+          }}
+          label="💰 Subscription Tier"
         />
-      </StyledAWSFormSection>
-    );
-  }
-}
-
-DOFormSection.contextType = Context;
+        <SelectRow
+          options={regionOptions}
+          width="100%"
+          dropdownMaxHeight="240px"
+          value={doRegion}
+          setActiveValue={(x: string) => {
+            setDoRegion(x);
+            setIsFormDirty(true);
+          }}
+          label="📍 DigitalOcean Region"
+        />
+        <Br />
+        <Heading>DigitalOcean Resources</Heading>
+        <Helper>
+          Porter will provision the following DigitalOcean resources in your own
+          cloud.
+        </Helper>
+        <CheckboxList
+          options={provisionOptions}
+          selected={selectedInfras}
+          setSelected={(x: { value: string; label: string }[]) => {
+            setSelectedInfras(x);
+            setIsFormDirty(true);
+          }}
+        />
+        {renderClusterNameSection()}
+        <Helper>
+          By default, Porter creates a cluster with three Standard (2vCPUs / 2GB
+          RAM) droplets. DigitalOcean will bill you for any provisioned
+          resources. Learn more about DOKS pricing
+          <Highlight
+            href="https://www.digitalocean.com/products/kubernetes/"
+            target="_blank"
+          >
+            here
+          </Highlight>
+          .
+        </Helper>
+        {/*
+        <Helper>
+          Estimated Cost:{" "}
+          <CostHighlight highlight={this.props.highlightCosts}>
+            $90/Month
+          </CostHighlight>
+          <Tooltip
+            title={
+              <div
+                style={{
+                  fontFamily: "Work Sans, sans-serif",
+                  fontSize: "12px",
+                  fontWeight: "normal",
+                  padding: "5px 6px",
+                }}
+              >
+                Cluster cost: ~$10/month <br />
+                Machine (x3) cost: ~$60/month <br />
+                Networking cost: ~$20/month
+              </div>
+            }
+            placement="top"
+          >
+            <StyledInfoTooltip>
+              <i className="material-icons">help_outline</i>
+            </StyledInfoTooltip>
+          </Tooltip>
+        </Helper>
+        */}
+        <CheckboxRow
+          isRequired={true}
+          checked={provisionConfirmed}
+          toggle={() => {
+            setIsFormDirty(true);
+            setProvisionConfirmed(!provisionConfirmed);
+          }}
+          label="I understand and wish to proceed"
+        />
+      </FormSection>
+      {props.children ? props.children : <Padding />}
+      <SaveButton
+        text="Submit"
+        disabled={checkFormDisabled()}
+        onClick={onCreateDO}
+        makeFlush={true}
+        status={getButtonStatus()}
+        helper="Note: Provisioning can take up to 15 minutes"
+      />
+    </StyledAWSFormSection>
+  );
+};
 
 const Highlight = styled.a`
   color: #8590ff;

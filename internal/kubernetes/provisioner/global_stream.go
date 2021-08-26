@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/porter-dev/porter/internal/repository"
+	"github.com/go-redis/redis/v8"
 
-	redis "github.com/go-redis/redis/v8"
-
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 // GlobalStreamName is the name of the Redis stream for global operations
@@ -113,7 +113,7 @@ func GlobalStreamListener(
 					continue
 				}
 
-				infra.Status = models.StatusCreated
+				infra.Status = types.StatusCreated
 
 				infra, err = repo.Infra().UpdateInfra(infra)
 
@@ -122,7 +122,7 @@ func GlobalStreamListener(
 				}
 
 				// create ECR/EKS
-				if kind == string(models.InfraECR) {
+				if kind == string(types.InfraECR) {
 					reg := &models.Registry{
 						ProjectID:        projID,
 						AWSIntegrationID: infra.AWSIntegrationID,
@@ -163,7 +163,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.InfraEKS) {
+				} else if kind == string(types.InfraEKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.AWS,
 						ProjectID:        projID,
@@ -197,7 +197,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.InfraGCR) {
+				} else if kind == string(types.InfraGCR) {
 					reg := &models.Registry{
 						ProjectID:        projID,
 						GCPIntegrationID: infra.GCPIntegrationID,
@@ -217,7 +217,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.InfraGKE) {
+				} else if kind == string(types.InfraGKE) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.GCP,
 						ProjectID:        projID,
@@ -251,7 +251,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.InfraDOCR) {
+				} else if kind == string(types.InfraDOCR) {
 					reg := &models.Registry{
 						ProjectID:       projID,
 						DOIntegrationID: infra.DOIntegrationID,
@@ -270,7 +270,7 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(models.InfraDOKS) {
+				} else if kind == string(types.InfraDOKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:   models.DO,
 						ProjectID:       projID,
@@ -312,7 +312,7 @@ func GlobalStreamListener(
 					continue
 				}
 
-				infra.Status = models.StatusError
+				infra.Status = types.StatusError
 
 				infra, err = repo.Infra().UpdateInfra(infra)
 
@@ -326,7 +326,7 @@ func GlobalStreamListener(
 					continue
 				}
 
-				infra.Status = models.StatusDestroyed
+				infra.Status = types.StatusDestroyed
 
 				infra, err = repo.Infra().UpdateInfra(infra)
 

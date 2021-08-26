@@ -37,6 +37,7 @@ const (
 	URLParamClusterID      URLParam = "cluster_id"
 	URLParamRegistryID     URLParam = "registry_id"
 	URLParamHelmRepoID     URLParam = "helm_repo_id"
+	URLParamInviteID       URLParam = "invite_id"
 	URLParamNamespace      URLParam = "namespace"
 	URLParamReleaseName    URLParam = "name"
 	URLParamReleaseVersion URLParam = "version"

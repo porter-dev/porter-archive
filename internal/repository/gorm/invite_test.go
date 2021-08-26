@@ -33,7 +33,7 @@ func TestCreateInvite(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	invite, err = tester.repo.Invite().ReadInvite(invite.Model.ID)
+	invite, err = tester.repo.Invite().ReadInvite(1, invite.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

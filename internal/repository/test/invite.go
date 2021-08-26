@@ -33,7 +33,7 @@ func (repo *InviteRepository) CreateInvite(invite *models.Invite) (*models.Invit
 }
 
 // ReadInvite gets an invite specified by a unique id
-func (repo *InviteRepository) ReadInvite(id uint) (*models.Invite, error) {
+func (repo *InviteRepository) ReadInvite(projectID, id uint) (*models.Invite, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}

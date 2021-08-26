@@ -98,6 +98,10 @@ func getRequestActionForEndpoint(
 			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamProjectID))
 		case types.ClusterScope:
 			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamClusterID))
+		case types.RegistryScope:
+			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamRegistryID))
+		case types.HelmRepoScope:
+			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamHelmRepoID))
 		case types.NamespaceScope:
 			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamNamespace))
 		case types.ReleaseScope:

@@ -32,7 +32,7 @@ func TestCreateHelmRepo(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	hr, err = tester.repo.HelmRepo().ReadHelmRepo(hr.Model.ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, hr.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -114,7 +114,7 @@ func TestUpdateHelmRepo(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initHRs[0].ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, tester.initHRs[0].ID)
 
 	// make sure data is correct
 	expHelmRepo := models.HelmRepo{
@@ -159,7 +159,7 @@ func TestUpdateHelmRepoToken(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	hr, err = tester.repo.HelmRepo().ReadHelmRepo(hr.Model.ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, hr.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -186,7 +186,7 @@ func TestUpdateHelmRepoToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
-	hr, err = tester.repo.HelmRepo().ReadHelmRepo(hr.Model.ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, hr.Model.ID)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

@@ -358,7 +358,7 @@ func (r *Registry) getTokenCacheFunc(
 	repo repository.Repository,
 ) ints.GetTokenCacheFunc {
 	return func() (tok *ints.TokenCache, err error) {
-		reg, err := repo.Registry().ReadRegistry(r.ID)
+		reg, err := repo.Registry().ReadRegistry(r.ProjectID, r.ID)
 
 		if err != nil {
 			return nil, err

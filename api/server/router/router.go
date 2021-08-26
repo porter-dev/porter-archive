@@ -84,6 +84,10 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 	// after authorization. Each subsequent http.Handler can lookup the cluster in context.
 	clusterFactory := authz.NewClusterScopedFactory(config)
 
+	// Create a new "registry-scoped" factory which will create a new registry-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the registry in context.
+	registryFactory := authz.NewRegistryScopedFactory(config)
+
 	// Create a new "release-scoped" factory which will create a new release-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the release in context.
 	releaseFactory := authz.NewReleaseScopedFactory(config)
@@ -110,6 +114,8 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 				atomicGroup.Use(projFactory.Middleware)
 			case types.ClusterScope:
 				atomicGroup.Use(clusterFactory.Middleware)
+			case types.RegistryScope:
+				atomicGroup.Use(registryFactory.Middleware)
 			case types.ReleaseScope:
 				atomicGroup.Use(releaseFactory.Middleware)
 			}

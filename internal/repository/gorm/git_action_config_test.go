@@ -49,7 +49,7 @@ func TestCreateGitActionConfig(t *testing.T) {
 	// reset fields for reflect.DeepEqual
 	ga.Model = orm.Model{}
 
-	if diff := deep.Equal(expGA, *ga); diff != nil {
+	if diff := deep.Equal(&expGA, ga); diff != nil {
 		t.Errorf("incorrect git action config")
 		t.Error(diff)
 	}
@@ -64,7 +64,7 @@ func TestCreateGitActionConfig(t *testing.T) {
 	gotReleaseGA := release.GitActionConfig
 	gotReleaseGA.Model = orm.Model{}
 
-	if diff := deep.Equal(expGA, gotReleaseGA); diff != nil {
+	if diff := deep.Equal(&expGA, gotReleaseGA); diff != nil {
 		t.Errorf("incorrect git action config")
 		t.Error(diff)
 	}

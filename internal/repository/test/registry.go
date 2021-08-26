@@ -39,17 +39,17 @@ func (repo *RegistryRepository) CreateRegistry(
 
 // ReadRegistry finds a registry by id
 func (repo *RegistryRepository) ReadRegistry(
-	id uint,
+	projectID, regID uint,
 ) (*models.Registry, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
 
-	if int(id-1) >= len(repo.registries) || repo.registries[id-1] == nil {
+	if int(regID-1) >= len(repo.registries) || repo.registries[regID-1] == nil {
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	index := int(id - 1)
+	index := int(regID - 1)
 	return repo.registries[index], nil
 }
 

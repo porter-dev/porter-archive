@@ -6,6 +6,7 @@ const (
 	UserScope      PermissionScope = "user"
 	ProjectScope   PermissionScope = "project"
 	ClusterScope   PermissionScope = "cluster"
+	RegistryScope  PermissionScope = "registry"
 	NamespaceScope PermissionScope = "namespace"
 	SettingsScope  PermissionScope = "settings"
 	ReleaseScope   PermissionScope = "release"
@@ -25,14 +26,8 @@ type PolicyDocument struct {
 
 type ScopeTree map[PermissionScope]ScopeTree
 
-/* ScopeHeirarchy describes the scope tree:
-			Project
-		   /	   \
-		Cluster   Settings
-		/
-	Namespace
-       |
-	 Release
+/* ScopeHeirarchy describes the tree of scopes, i.e. Cluster, Registry, and Settings
+are children of Project, Namespace is a child of Cluster, etc.
 */
 var ScopeHeirarchy = ScopeTree{
 	ProjectScope: {
@@ -41,6 +36,7 @@ var ScopeHeirarchy = ScopeTree{
 				ReleaseScope: {},
 			},
 		},
+		RegistryScope: {},
 		SettingsScope: {},
 	},
 }

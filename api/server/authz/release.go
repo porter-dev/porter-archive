@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
@@ -25,13 +24,13 @@ func NewReleaseScopedFactory(
 }
 
 func (p *ReleaseScopedFactory) Middleware(next http.Handler) http.Handler {
-	return &ReleaseScopedMiddleware{next, p.config, cluster.NewDefaultKubernetesAgentGetter(p.config)}
+	return &ReleaseScopedMiddleware{next, p.config, NewOutOfClusterAgentGetter(p.config)}
 }
 
 type ReleaseScopedMiddleware struct {
 	next        http.Handler
 	config      *shared.Config
-	agentGetter cluster.KubernetesAgentGetter
+	agentGetter KubernetesAgentGetter
 }
 
 func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +43,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	k8sAgent, err := p.agentGetter.GetAgent(cluster)
+	k8sAgent, err := p.agentGetter.GetAgent(r, cluster)
 
 	if err != nil {
 		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))

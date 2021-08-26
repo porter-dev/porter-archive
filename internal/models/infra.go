@@ -45,8 +45,8 @@ type Infra struct {
 	LastApplied []byte
 }
 
-// Externalize generates an external Infra to be shared over REST
-func (i *Infra) Externalize() *types.Infra {
+// ToInfraType generates an external Infra to be shared over REST
+func (i *Infra) ToInfraType() *types.Infra {
 	return &types.Infra{
 		ID:        i.ID,
 		ProjectID: i.ProjectID,

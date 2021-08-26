@@ -29,7 +29,7 @@ func (app *App) HandleListProjectInfra(w http.ResponseWriter, r *http.Request) {
 	extInfras := make([]*types.Infra, 0)
 
 	for _, infra := range infras {
-		extInfras = append(extInfras, infra.Externalize())
+		extInfras = append(extInfras, infra.ToInfraType())
 	}
 
 	w.WriteHeader(http.StatusOK)

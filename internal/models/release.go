@@ -20,7 +20,7 @@ type Release struct {
 	// but this should be used for the source of truth going forward.
 	ImageRepoURI string `json:"image_repo_uri,omitempty"`
 
-	GitActionConfig    GitActionConfig `json:"git_action_config"`
+	GitActionConfig    *GitActionConfig `json:"git_action_config"`
 	NotificationConfig uint
 }
 

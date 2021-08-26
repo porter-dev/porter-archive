@@ -20,13 +20,9 @@ func (c *Client) GetK8sNamespaces(
 	projectID uint,
 	clusterID uint,
 ) (*GetK8sNamespacesResponse, error) {
-	cl := fmt.Sprintf("%d", clusterID)
-
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/k8s/namespaces?"+url.Values{
-			"cluster_id": []string{cl},
-		}.Encode(), c.BaseURL, projectID),
+		fmt.Sprintf("%s/projects/%d/clusters/%d/namespaces", c.BaseURL, projectID, clusterID),
 		nil,
 	)
 

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
@@ -103,6 +104,18 @@ type GitActionConfigExternal struct {
 // Externalize generates an external GitActionConfig to be shared over REST
 func (r *GitActionConfig) Externalize() *GitActionConfigExternal {
 	return &GitActionConfigExternal{
+		GitRepo:        r.GitRepo,
+		GitBranch:      r.GitBranch,
+		ImageRepoURI:   r.ImageRepoURI,
+		GitRepoID:      r.GithubInstallationID,
+		DockerfilePath: r.DockerfilePath,
+		FolderPath:     r.FolderPath,
+	}
+}
+
+// ToGitActionConfigType generates an external GitActionConfig to be shared over REST
+func (r *GitActionConfig) ToGitActionConfigType() *types.GitActionConfig {
+	return &types.GitActionConfig{
 		GitRepo:        r.GitRepo,
 		GitBranch:      r.GitBranch,
 		ImageRepoURI:   r.ImageRepoURI,

@@ -8,7 +8,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/release"
 )
@@ -34,30 +33,23 @@ type ReleaseScopedMiddleware struct {
 }
 
 func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// get the project id from the URL param context
-	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
-
-	// get the name and the namespace of the application
-	namespace := reqScopes[types.NamespaceScope].Resource.Name
-	name := reqScopes[types.ReleaseScope].Resource.Name
-
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	k8sAgent, err := p.agentGetter.GetAgent(r, cluster)
+	helmAgent, err := p.agentGetter.GetHelmAgent(r, cluster)
 
 	if err != nil {
 		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
 		return
 	}
 
-	helmAgent, err := helm.GetAgentFromK8sAgent("secret", namespace, p.config.Logger, k8sAgent)
+	// get the name of the application
+	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	name := reqScopes[types.ReleaseScope].Resource.Name
 
-	if err != nil {
-		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
-		return
-	}
+	// get the version for the application
+	version, _ := GetURLParamUint(r, string(types.URLParamReleaseVersion))
 
-	release, err := helmAgent.GetRelease(name, 0)
+	release, err := helmAgent.GetRelease(name, int(version))
 
 	if err != nil {
 		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))

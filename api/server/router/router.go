@@ -21,7 +21,8 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 	baseRegisterer := NewBaseRegisterer()
 
 	releaseRegisterer := NewReleaseScopedRegisterer()
-	clusterRegisterer := NewClusterScopedRegisterer(releaseRegisterer)
+	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer)
+	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer)
 	projRegisterer := NewProjectScopedRegisterer(clusterRegisterer)
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 

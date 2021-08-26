@@ -23,6 +23,7 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 	releaseRegisterer := NewReleaseScopedRegisterer()
 	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer)
 	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer)
+	infraRegisterer := NewInfraScopedRegisterer()
 	gitInstallationRegisterer := NewGitInstallationScopedRegisterer()
 	registryRegisterer := NewRegistryScopedRegisterer()
 	helmRepoRegisterer := NewHelmRepoScopedRegisterer()
@@ -33,6 +34,7 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 		helmRepoRegisterer,
 		inviteRegisterer,
 		gitInstallationRegisterer,
+		infraRegisterer,
 	)
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
@@ -107,6 +109,14 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 	// after authorization. Each subsequent http.Handler can lookup the gitinstallation in context.
 	gitInstallationFactory := authz.NewGitInstallationScopedFactory(config)
 
+	// Create a new "invite-scoped" factory which will create a new invite-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the invite in context.
+	inviteFactory := authz.NewInviteScopedFactory(config)
+
+	// Create a new "infra-scoped" factory which will create a new infra-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the infra in context.
+	infraFactory := authz.NewInfraScopedFactory(config)
+
 	// Create a new "release-scoped" factory which will create a new release-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the release in context.
 	releaseFactory := authz.NewReleaseScopedFactory(config)
@@ -137,8 +147,12 @@ func registerRoutes(config *shared.Config, routes []*Route) {
 				atomicGroup.Use(helmRepoFactory.Middleware)
 			case types.RegistryScope:
 				atomicGroup.Use(registryFactory.Middleware)
+			case types.InviteScope:
+				atomicGroup.Use(inviteFactory.Middleware)
 			case types.GitInstallationScope:
 				atomicGroup.Use(gitInstallationFactory.Middleware)
+			case types.InfraScope:
+				atomicGroup.Use(infraFactory.Middleware)
 			case types.ReleaseScope:
 				atomicGroup.Use(releaseFactory.Middleware)
 			}

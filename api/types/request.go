@@ -38,6 +38,7 @@ const (
 	URLParamRegistryID        URLParam = "registry_id"
 	URLParamHelmRepoID        URLParam = "helm_repo_id"
 	URLParamGitInstallationID URLParam = "git_installation_id"
+	URLParamInfraID           URLParam = "infra_id"
 	URLParamInviteID          URLParam = "invite_id"
 	URLParamNamespace         URLParam = "namespace"
 	URLParamReleaseName       URLParam = "name"

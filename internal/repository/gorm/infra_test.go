@@ -31,7 +31,7 @@ func TestCreateInfra(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	infra, err = tester.repo.Infra().ReadInfra(infra.Model.ID)
+	infra, err = tester.repo.Infra().ReadInfra(tester.initProjects[0].Model.ID, infra.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

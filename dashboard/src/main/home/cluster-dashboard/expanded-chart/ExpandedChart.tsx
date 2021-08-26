@@ -33,6 +33,7 @@ import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
 import DeploymentType from "./DeploymentType";
+import DeployStatus from "./status/DeployStatus";
 
 type Props = {
   namespace: string;
@@ -367,6 +368,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Spinner src={loadingSrc} />
                 </Header>
               </TextWrap>
+              <DeployStatus chart={chart} />
             </Placeholder>
           );
         }
@@ -381,6 +383,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                 Navigate to the "Actions" tab of your GitHub repo to view live
                 build logs.
               </TextWrap>
+              <DeployStatus chart={chart} />
             </Placeholder>
           );
         } else {

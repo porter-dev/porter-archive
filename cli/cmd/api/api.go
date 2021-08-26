@@ -99,8 +99,6 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 		req.AddCookie(c.Cookie)
 	}
 
-	fmt.Printf("%+v\n", req.Header)
-
 	res, err := c.HTTPClient.Do(req)
 
 	if err != nil {
@@ -118,11 +116,6 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return &errRes, nil
 		}
-
-		fmt.Println("error request")
-		fmt.Printf("%+v\n", req)
-		fmt.Println(errRes)
-		fmt.Println(res.StatusCode)
 
 		return nil, fmt.Errorf("unknown error, status code: %d", res.StatusCode)
 	}

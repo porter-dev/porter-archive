@@ -403,8 +403,6 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 
 	// minor thought: this ends up happening four times when upgrade is ran, when it should really only happen once
 	// maybe some way to only do this once?
-	fmt.Println(app)
-	fmt.Println(namespace)
 
 	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, app, namespace)
 
@@ -431,7 +429,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 				ID:     "build",
 				Name:   "Build",
 				Index:  110,
-				Status: api.EventStatusInProgress,
+				Status: api.EventStatusFailed,
 				Info:   err.Error(),
 			}, release.WebhookToken)
 		}
@@ -447,7 +445,20 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 				ID:     "build",
 				Name:   "Build",
 				Index:  120,
-				Status: api.EventStatusInProgress,
+				Status: api.EventStatusFailed,
+				Info:   err.Error(),
+			}, release.WebhookToken)
+		}
+		return err
+	}
+
+	if err := updateAgent.Build(); err != nil {
+		if stream {
+			updateAgent.StreamEvent(api.Event{
+				ID:     "build",
+				Name:   "Build",
+				Index:  130,
+				Status: api.EventStatusFailed,
 				Info:   err.Error(),
 			}, release.WebhookToken)
 		}
@@ -458,13 +469,13 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 		updateAgent.StreamEvent(api.Event{
 			ID:     "build",
 			Name:   "Build",
-			Index:  130,
+			Index:  140,
 			Status: api.EventStatusSuccess,
 			Info:   "",
 		}, release.WebhookToken)
 	}
 
-	return updateAgent.Build()
+	return nil
 }
 
 func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {

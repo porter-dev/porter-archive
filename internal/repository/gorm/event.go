@@ -61,14 +61,11 @@ func (repo EventRepository) ReadSubEvent(id uint) (*models.SubEvent, error) {
 func (repo EventRepository) AppendEvent(container *models.EventContainer, event *models.SubEvent) error {
 	subevent := &models.SubEvent{}
 
-	fmt.Println("doing query....")
-
 	if err := repo.db.Where("event_container_id = ? AND event_id = ? AND index = ?",
 		container.ID,
 		event.EventID,
 		event.Index).First(&subevent).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			fmt.Println("need to make a new one!")
 			if err := repo.db.Create(event).Error; err != nil {
 				return err
 			}
@@ -78,10 +75,9 @@ func (repo EventRepository) AppendEvent(container *models.EventContainer, event 
 		}
 	}
 
-	fmt.Println("need to update old one")
 	subevent.Info = event.Info
 	subevent.Status = event.Status
 	subevent.Name = event.Name
 
-	return repo.db.Save(event).Error
+	return repo.db.Save(subevent).Error
 }

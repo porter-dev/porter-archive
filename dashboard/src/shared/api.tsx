@@ -593,7 +593,6 @@ const getMatchingPods = baseApi<
 
 const getMetrics = baseApi<
   {
-    cluster_id: number;
     metric: string;
     shouldsum: boolean;
     pods?: string[];
@@ -605,27 +604,32 @@ const getMetrics = baseApi<
     endrange: number;
     resolution: string;
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/metrics`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/metrics`;
 });
 
 const getNamespaces = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/namespaces`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces`;
 });
 
 const getNGINXIngresses = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/prometheus/ingresses`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/prometheus/ingresses`;
 });
 
 const getOAuthIds = baseApi<
@@ -655,12 +659,13 @@ const getProjectRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
 const getProjects = baseApi("GET", "/api/projects");
 
 const getPrometheusIsInstalled = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/prometheus/detect`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/prometheus/detect`;
 });
 
 const getRegistryIntegrations = baseApi("GET", "/api/integrations/registry");
@@ -946,18 +951,20 @@ const createNamespace = baseApi<
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/namespaces/create?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/create`;
 });
 
 const deleteNamespace = baseApi<
   {
     name: string;
-    cluster_id: number;
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+  }
 >("DELETE", (pathParams) => {
-  let { id } = pathParams;
-  return `/api/projects/${id}/k8s/namespaces/delete`;
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/delete`;
 });
 
 const deleteJob = baseApi<

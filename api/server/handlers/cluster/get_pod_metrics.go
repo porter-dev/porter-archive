@@ -1,0 +1,66 @@
+package cluster
+
+import (
+	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
+	"net/http"
+
+	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
+)
+
+type GetPodMetricsHandler struct {
+	handlers.PorterHandlerReadWriter
+	KubernetesAgentGetter
+}
+
+func NewGetPodMetricsHandler(
+	config *shared.Config,
+	decoderValidator shared.RequestDecoderValidator,
+	writer shared.ResultWriter,
+) *GetPodMetricsHandler {
+	return &GetPodMetricsHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   NewDefaultKubernetesAgentGetter(config),
+	}
+}
+
+func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.GetPodMetricsRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
+	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
+	agent, err := c.GetAgent(cluster)
+
+	if err != nil {
+		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// get prometheus service
+	promSvc, found, err := prometheus.GetPrometheusService(agent.Clientset)
+
+	if err != nil || !found {
+		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		return
+	}
+
+	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, &request.QueryOpts)
+
+	if err != nil {
+		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		return
+	}
+
+	s := string(rawQuery)
+
+	var res types.GetPodMetricsResponse = &s
+
+	c.WriteResult(w, res)
+}

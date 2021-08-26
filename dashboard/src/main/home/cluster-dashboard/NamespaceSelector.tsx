@@ -29,10 +29,11 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
     api
       .getNamespaces(
         "<token>",
+        {},
         {
+          id: currentProject.id,
           cluster_id: currentCluster.id,
-        },
-        { id: currentProject.id }
+        }
       )
       .then((res) => {
         if (this._isMounted) {

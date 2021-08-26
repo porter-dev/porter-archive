@@ -58,11 +58,10 @@ const Metrics: React.FC = () => {
       ),
       api.getPrometheusIsInstalled(
         "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
+        {},
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       ),
     ])
@@ -73,11 +72,10 @@ const Metrics: React.FC = () => {
         api
           .getNGINXIngresses(
             "<token>",
-            {
-              cluster_id: currentCluster.id,
-            },
+            {},
             {
               id: currentProject.id,
+              cluster_id: currentCluster.id,
             }
           )
           .then((res) => {
@@ -218,7 +216,6 @@ const Metrics: React.FC = () => {
       const res = await api.getMetrics(
         "<token>",
         {
-          cluster_id: currentCluster.id,
           metric: selectedMetric,
           shouldsum: false,
           kind: "Ingress",
@@ -235,6 +232,7 @@ const Metrics: React.FC = () => {
         },
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       );
 

@@ -8,42 +8,45 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-type ListNamespacesHandler struct {
+type GetTemporaryKubeconfigHandler struct {
 	handlers.PorterHandlerWriter
 	KubernetesAgentGetter
 }
 
-func NewListNamespacesHandler(
+func NewGetTemporaryKubeconfigHandler(
 	config *shared.Config,
 	writer shared.ResultWriter,
-) *ListNamespacesHandler {
-	return &ListNamespacesHandler{
+) *GetTemporaryKubeconfigHandler {
+	return &GetTemporaryKubeconfigHandler{
 		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
 		KubernetesAgentGetter: NewDefaultKubernetesAgentGetter(config),
 	}
 }
 
-func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	agent, err := c.GetAgent(cluster)
+	outOfClusterConfig := c.GetOutOfClusterConfig(cluster)
+
+	kubeconfig, err := outOfClusterConfig.CreateRawConfigFromCluster()
 
 	if err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	namespaceList, err := agent.ListNamespaces()
+	kubeconfigBytes, err := clientcmd.Write(*kubeconfig)
 
 	if err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	res := types.ListNamespacesResponse{
-		NamespaceList: namespaceList,
+	res := &types.GetTemporaryKubeconfigResponse{
+		Kubeconfig: kubeconfigBytes,
 	}
 
 	c.WriteResult(w, res)

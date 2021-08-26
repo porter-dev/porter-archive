@@ -101,7 +101,7 @@ func getRequestActionForEndpoint(
 		case types.NamespaceScope:
 			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamNamespace))
 		case types.ReleaseScope:
-			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamApplication))
+			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamReleaseName))
 		}
 
 		if reqErr != nil {

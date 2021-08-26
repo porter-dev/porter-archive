@@ -33,10 +33,11 @@ const (
 type URLParam string
 
 const (
-	URLParamProjectID   URLParam = "project_id"
-	URLParamClusterID   URLParam = "cluster_id"
-	URLParamNamespace   URLParam = "namespace"
-	URLParamApplication URLParam = "application"
+	URLParamProjectID      URLParam = "project_id"
+	URLParamClusterID      URLParam = "cluster_id"
+	URLParamNamespace      URLParam = "namespace"
+	URLParamReleaseName    URLParam = "name"
+	URLParamReleaseVersion URLParam = "version"
 )
 
 type Path struct {

@@ -41,7 +41,7 @@ func (repo *ClusterRepository) CreateClusterCandidate(
 }
 
 // ReadClusterCandidate finds a service account candidate by id
-func (repo *ClusterRepository) ReadClusterCandidate(id uint) (*models.ClusterCandidate, error) {
+func (repo *ClusterRepository) ReadClusterCandidate(projectID, id uint) (*models.ClusterCandidate, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
@@ -110,7 +110,7 @@ func (repo *ClusterRepository) CreateCluster(
 
 // ReadCluster finds a service account by id
 func (repo *ClusterRepository) ReadCluster(
-	id uint,
+	projectID, id uint,
 ) (*models.Cluster, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")

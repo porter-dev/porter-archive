@@ -61,11 +61,11 @@ func (repo *ClusterRepository) CreateClusterCandidate(
 
 // ReadClusterCandidate finds a cluster candidate by id
 func (repo *ClusterRepository) ReadClusterCandidate(
-	id uint,
+	projectID, ccID uint,
 ) (*models.ClusterCandidate, error) {
 	cc := &models.ClusterCandidate{}
 
-	if err := repo.db.Preload("Resolvers").Where("id = ?", id).First(&cc).Error; err != nil {
+	if err := repo.db.Preload("Resolvers").Where("project_id = ? AND id = ?", projectID, ccID).First(&cc).Error; err != nil {
 		return nil, err
 	}
 
@@ -165,14 +165,14 @@ func (repo *ClusterRepository) CreateCluster(
 
 // ReadCluster finds a cluster by id
 func (repo *ClusterRepository) ReadCluster(
-	id uint,
+	projectID, clusterID uint,
 ) (*models.Cluster, error) {
 	ctxDB := repo.db.WithContext(context.Background())
 
 	cluster := &models.Cluster{}
 
 	// preload Clusters association
-	if err := ctxDB.Preload("TokenCache").Where("id = ?", id).First(&cluster).Error; err != nil {
+	if err := ctxDB.Preload("TokenCache").Where("project_id = ? AND id = ?", projectID, clusterID).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 

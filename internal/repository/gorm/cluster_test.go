@@ -39,7 +39,7 @@ func TestCreateClusterCandidate(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	cc, err = tester.repo.Cluster().ReadClusterCandidate(cc.Model.ID)
+	cc, err = tester.repo.Cluster().ReadClusterCandidate(tester.initProjects[0].ID, cc.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -93,7 +93,7 @@ func TestCreateClusterCandidateWithResolvers(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	cc, err = tester.repo.Cluster().ReadClusterCandidate(cc.Model.ID)
+	cc, err = tester.repo.Cluster().ReadClusterCandidate(tester.initProjects[0].ID, cc.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -237,7 +237,7 @@ func TestCreateCluster(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	cluster, err = tester.repo.Cluster().ReadCluster(cluster.Model.ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, cluster.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -321,7 +321,7 @@ func TestUpdateCluster(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	cluster, err = tester.repo.Cluster().ReadCluster(tester.initClusters[0].ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, tester.initClusters[0].ID)
 
 	// make sure data is correct
 	expCluster := models.Cluster{
@@ -371,7 +371,7 @@ func TestUpdateClusterToken(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	cluster, err = tester.repo.Cluster().ReadCluster(cluster.Model.ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, cluster.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -399,7 +399,7 @@ func TestUpdateClusterToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
-	cluster, err = tester.repo.Cluster().ReadCluster(cluster.Model.ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, cluster.Model.ID)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -433,7 +433,7 @@ func TestDeleteCluster(t *testing.T) {
 	initCluster(tester, t)
 	defer cleanup(tester, t)
 
-	cluster, err := tester.repo.Cluster().ReadCluster(tester.initClusters[0].Model.ID)
+	cluster, err := tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, tester.initClusters[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -445,7 +445,7 @@ func TestDeleteCluster(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	_, err = tester.repo.Cluster().ReadCluster(tester.initClusters[0].Model.ID)
+	_, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, tester.initClusters[0].Model.ID)
 
 	if err != orm.ErrRecordNotFound {
 		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)

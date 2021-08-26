@@ -23,6 +23,7 @@ bin
 .terraform.lock.hcl
 
 *kubeconfig*
+!*kubeconfig*.go
 
 # .tfstate files
 *.tfstate

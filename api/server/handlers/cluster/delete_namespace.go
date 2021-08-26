@@ -10,22 +10,28 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type ListNamespacesHandler struct {
-	handlers.PorterHandlerWriter
+type DeleteNamespaceHandler struct {
+	handlers.PorterHandlerReader
 	KubernetesAgentGetter
 }
 
-func NewListNamespacesHandler(
+func NewDeleteNamespaceHandler(
 	config *shared.Config,
-	writer shared.ResultWriter,
-) *ListNamespacesHandler {
-	return &ListNamespacesHandler{
-		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
+	decoderValidator shared.RequestDecoderValidator,
+) *DeleteNamespaceHandler {
+	return &DeleteNamespaceHandler{
+		PorterHandlerReader:   handlers.NewDefaultPorterHandler(config, decoderValidator, nil),
 		KubernetesAgentGetter: NewDefaultKubernetesAgentGetter(config),
 	}
 }
 
-func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *DeleteNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.DeleteNamespaceRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(cluster)
@@ -35,16 +41,10 @@ func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	namespaceList, err := agent.ListNamespaces()
-
-	if err != nil {
+	if err := agent.DeleteNamespace(request.Name); err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	res := types.ListNamespacesResponse{
-		NamespaceList: namespaceList,
-	}
-
-	c.WriteResult(w, res)
+	w.WriteHeader(http.StatusOK)
 }

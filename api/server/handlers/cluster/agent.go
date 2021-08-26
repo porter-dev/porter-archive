@@ -7,6 +7,7 @@ import (
 )
 
 type KubernetesAgentGetter interface {
+	GetOutOfClusterConfig(cluster *models.Cluster) *kubernetes.OutOfClusterConfig
 	GetAgent(cluster *models.Cluster) (*kubernetes.Agent, error)
 }
 
@@ -18,12 +19,16 @@ func NewDefaultKubernetesAgentGetter(config *shared.Config) KubernetesAgentGette
 	return &DefaultKubernetesAgentGetter{config}
 }
 
-func (d *DefaultKubernetesAgentGetter) GetAgent(cluster *models.Cluster) (*kubernetes.Agent, error) {
-	ooc := &kubernetes.OutOfClusterConfig{
+func (d *DefaultKubernetesAgentGetter) GetOutOfClusterConfig(cluster *models.Cluster) *kubernetes.OutOfClusterConfig {
+	return &kubernetes.OutOfClusterConfig{
 		Repo:              d.config.Repo,
 		DigitalOceanOAuth: d.config.DOConf,
 		Cluster:           cluster,
 	}
+}
+
+func (d *DefaultKubernetesAgentGetter) GetAgent(cluster *models.Cluster) (*kubernetes.Agent, error) {
+	ooc := d.GetOutOfClusterConfig(cluster)
 
 	return kubernetes.GetAgentOutOfClusterConfig(ooc)
 }

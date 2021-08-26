@@ -1,9 +1,11 @@
 package cluster
 
 import (
-	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
+
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -13,7 +15,7 @@ import (
 
 type GetPodMetricsHandler struct {
 	handlers.PorterHandlerReadWriter
-	KubernetesAgentGetter
+	authz.KubernetesAgentGetter
 }
 
 func NewGetPodMetricsHandler(
@@ -23,7 +25,7 @@ func NewGetPodMetricsHandler(
 ) *GetPodMetricsHandler {
 	return &GetPodMetricsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
-		KubernetesAgentGetter:   NewDefaultKubernetesAgentGetter(config),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -36,7 +38,7 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	agent, err := c.GetAgent(cluster)
+	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))

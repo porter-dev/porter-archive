@@ -80,7 +80,7 @@ func (d *OutOfClusterAgentGetter) GetOutOfClusterConfig(cluster *models.Cluster)
 
 func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Cluster) (*kubernetes.Agent, error) {
 	// look for the agent in context
-	ctxAgentVal := r.Context().Value(types.ClusterScope)
+	ctxAgentVal := r.Context().Value(KubernetesAgentCtxKey)
 
 	if ctxAgentVal != nil {
 		if agent, ok := ctxAgentVal.(*kubernetes.Agent); ok {

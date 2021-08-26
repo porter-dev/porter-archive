@@ -3,6 +3,7 @@ package cluster
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -14,7 +15,7 @@ import (
 
 type ClusterGetHandler struct {
 	handlers.PorterHandlerWriter
-	KubernetesAgentGetter
+	authz.KubernetesAgentGetter
 }
 
 func NewClusterGetHandler(
@@ -23,7 +24,7 @@ func NewClusterGetHandler(
 ) *ClusterGetHandler {
 	return &ClusterGetHandler{
 		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
-		KubernetesAgentGetter: NewDefaultKubernetesAgentGetter(config),
+		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -34,7 +35,7 @@ func (c *ClusterGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Cluster: cluster.ToClusterType(),
 	}
 
-	agent, err := c.GetAgent(cluster)
+	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))

@@ -28,3 +28,5 @@ type DeleteProjectRequest struct {
 }
 
 type DeleteProjectResponse Project
+
+type ListProjectInfraResponse []*Infra

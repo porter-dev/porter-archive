@@ -9,13 +9,12 @@ import (
 
 	"fmt"
 
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
-	"github.com/porter-dev/porter/internal/models"
-
-	"github.com/porter-dev/porter/internal/adapter"
 )
 
 // HandleProvisionTestInfra will create a test resource by deploying a provisioner
@@ -66,7 +65,7 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 	)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
@@ -107,7 +106,7 @@ func (app *App) HandleDestroyTestInfra(w http.ResponseWriter, r *http.Request) {
 	agent, err := kubernetes.GetAgentInClusterConfig()
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
@@ -115,7 +114,7 @@ func (app *App) HandleDestroyTestInfra(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// mark infra for deletion
-	infra.Status = models.StatusDestroying
+	infra.Status = types.StatusDestroying
 	infra, err = app.Repo.Infra().UpdateInfra(infra)
 
 	if err != nil {
@@ -188,7 +187,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	awsInt, err := app.Repo.AWSIntegration().ReadAWSIntegration(infra.AWSIntegrationID)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
@@ -210,7 +209,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
@@ -253,7 +252,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -262,7 +261,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
@@ -271,7 +270,7 @@ func (app *App) HandleDestroyAWSECRInfra(w http.ResponseWriter, r *http.Request)
 
 	// launch provisioning destruction pod
 	// mark infra for deletion
-	infra.Status = models.StatusDestroying
+	infra.Status = types.StatusDestroying
 	infra, err = app.Repo.Infra().UpdateInfra(infra)
 
 	if err != nil {
@@ -347,7 +346,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	awsInt, err := app.Repo.AWSIntegration().ReadAWSIntegration(infra.AWSIntegrationID)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
@@ -370,7 +369,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
@@ -423,7 +422,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -432,7 +431,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
@@ -441,7 +440,7 @@ func (app *App) HandleDestroyAWSEKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// launch provisioning destruction pod
 	// mark infra for deletion
-	infra.Status = models.StatusDestroying
+	infra.Status = types.StatusDestroying
 	infra, err = app.Repo.Infra().UpdateInfra(infra)
 
 	if err != nil {
@@ -526,7 +525,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	gcpInt, err := app.Repo.GCPIntegration().ReadGCPIntegration(infra.GCPIntegrationID)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
@@ -547,7 +546,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
@@ -611,7 +610,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 	gcpInt, err := app.Repo.GCPIntegration().ReadGCPIntegration(infra.GCPIntegrationID)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
@@ -633,7 +632,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
@@ -686,7 +685,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -695,7 +694,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
@@ -704,7 +703,7 @@ func (app *App) HandleDestroyGCPGKEInfra(w http.ResponseWriter, r *http.Request)
 
 	// launch provisioning destruction pod
 	// mark infra for deletion
-	infra.Status = models.StatusDestroying
+	infra.Status = types.StatusDestroying
 	infra, err = app.Repo.Infra().UpdateInfra(infra)
 
 	if err != nil {
@@ -832,7 +831,7 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 	oauthInt, err := app.Repo.OAuthIntegration().ReadOAuthIntegration(infra.DOIntegrationID)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
@@ -856,7 +855,7 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
@@ -899,7 +898,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -908,7 +907,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
@@ -917,7 +916,7 @@ func (app *App) HandleDestroyDODOCRInfra(w http.ResponseWriter, r *http.Request)
 
 	// launch provisioning destruction pod
 	// mark infra for deletion
-	infra.Status = models.StatusDestroying
+	infra.Status = types.StatusDestroying
 	infra, err = app.Repo.Infra().UpdateInfra(infra)
 
 	if err != nil {
@@ -995,7 +994,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 	oauthInt, err := app.Repo.OAuthIntegration().ReadOAuthIntegration(infra.DOIntegrationID)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorDataRead(err, w)
@@ -1019,7 +1018,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 	)
 
 	if err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorInternal(err, w)
@@ -1072,7 +1071,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// decode from JSON to form value
 	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -1081,7 +1080,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// validate the form
 	if err := app.validator.Struct(form); err != nil {
-		infra.Status = models.StatusError
+		infra.Status = types.StatusError
 		infra, _ = app.Repo.Infra().UpdateInfra(infra)
 
 		app.handleErrorFormValidation(err, ErrProjectValidateFields, w)
@@ -1090,7 +1089,7 @@ func (app *App) HandleDestroyDODOKSInfra(w http.ResponseWriter, r *http.Request)
 
 	// launch provisioning destruction pod
 	// mark infra for deletion
-	infra.Status = models.StatusDestroying
+	infra.Status = types.StatusDestroying
 	infra, err = app.Repo.Infra().UpdateInfra(infra)
 
 	if err != nil {

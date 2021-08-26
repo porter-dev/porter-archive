@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -18,10 +19,10 @@ type CreateTestInfra struct {
 // ToInfra converts the form to a gorm aws infra model
 func (ce *CreateTestInfra) ToInfra() (*models.Infra, error) {
 	return &models.Infra{
-		Kind:      models.InfraTest,
+		Kind:      types.InfraTest,
 		ProjectID: ce.ProjectID,
 		Suffix:    stringWithCharset(6, randCharset),
-		Status:    models.StatusCreating,
+		Status:    types.StatusCreating,
 	}, nil
 }
 
@@ -36,10 +37,10 @@ type CreateECRInfra struct {
 // ToInfra converts the form to a gorm aws infra model
 func (ce *CreateECRInfra) ToInfra() (*models.Infra, error) {
 	return &models.Infra{
-		Kind:             models.InfraECR,
+		Kind:             types.InfraECR,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
-		Status:           models.StatusCreating,
+		Status:           types.StatusCreating,
 		AWSIntegrationID: ce.AWSIntegrationID,
 	}, nil
 }
@@ -56,10 +57,10 @@ type CreateEKSInfra struct {
 // ToInfra converts the form to a gorm aws infra model
 func (ce *CreateEKSInfra) ToInfra() (*models.Infra, error) {
 	return &models.Infra{
-		Kind:             models.InfraEKS,
+		Kind:             types.InfraEKS,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
-		Status:           models.StatusCreating,
+		Status:           types.StatusCreating,
 		AWSIntegrationID: ce.AWSIntegrationID,
 	}, nil
 }
@@ -74,10 +75,10 @@ type CreateGCRInfra struct {
 // ToInfra converts the form to a gorm aws infra model
 func (ce *CreateGCRInfra) ToInfra() (*models.Infra, error) {
 	return &models.Infra{
-		Kind:             models.InfraGCR,
+		Kind:             types.InfraGCR,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
-		Status:           models.StatusCreating,
+		Status:           types.StatusCreating,
 		GCPIntegrationID: ce.GCPIntegrationID,
 	}, nil
 }
@@ -93,10 +94,10 @@ type CreateGKEInfra struct {
 // ToInfra converts the form to a gorm aws infra model
 func (ce *CreateGKEInfra) ToInfra() (*models.Infra, error) {
 	return &models.Infra{
-		Kind:             models.InfraGKE,
+		Kind:             types.InfraGKE,
 		ProjectID:        ce.ProjectID,
 		Suffix:           stringWithCharset(6, randCharset),
-		Status:           models.StatusCreating,
+		Status:           types.StatusCreating,
 		GCPIntegrationID: ce.GCPIntegrationID,
 	}, nil
 }
@@ -113,10 +114,10 @@ type CreateDOCRInfra struct {
 // ToInfra converts the form to a gorm infra model
 func (de *CreateDOCRInfra) ToInfra() (*models.Infra, error) {
 	return &models.Infra{
-		Kind:            models.InfraDOCR,
+		Kind:            types.InfraDOCR,
 		ProjectID:       de.ProjectID,
 		Suffix:          stringWithCharset(6, randCharset),
-		Status:          models.StatusCreating,
+		Status:          types.StatusCreating,
 		DOIntegrationID: de.DOIntegrationID,
 	}, nil
 }
@@ -133,10 +134,10 @@ type CreateDOKSInfra struct {
 // ToInfra converts the form to a gorm infra model
 func (de *CreateDOKSInfra) ToInfra() (*models.Infra, error) {
 	return &models.Infra{
-		Kind:            models.InfraDOKS,
+		Kind:            types.InfraDOKS,
 		ProjectID:       de.ProjectID,
 		Suffix:          stringWithCharset(6, randCharset),
-		Status:          models.StatusCreating,
+		Status:          types.StatusCreating,
 		DOIntegrationID: de.DOIntegrationID,
 	}, nil
 }

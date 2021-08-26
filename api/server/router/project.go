@@ -79,6 +79,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/infra -> project.NewListProjectInfraHandler
+	listInfraEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/infra",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listInfraHandler := project.NewProjectListInfraHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listInfraEndpoint,
+		Handler:  listInfraHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters -> cluster.NewClusterListHandler
 	listClusterEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

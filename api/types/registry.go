@@ -1,7 +1,5 @@
 package types
 
-import "github.com/porter-dev/porter/internal/models/integrations"
-
 type Registry struct {
 	ID uint `json:"id"`
 
@@ -15,8 +13,17 @@ type Registry struct {
 	URL string `json:"url"`
 
 	// The integration service for this registry
-	Service integrations.IntegrationService `json:"service"`
+	Service RegistryService `json:"service"`
 
 	// The infra id, if registry was provisioned with Porter
 	InfraID uint `json:"infra_id"`
 }
+
+type RegistryService string
+
+const (
+	GCR       RegistryService = "gcr"
+	ECR       RegistryService = "ecr"
+	DOCR      RegistryService = "docr"
+	DockerHub RegistryService = "dockerhub"
+)

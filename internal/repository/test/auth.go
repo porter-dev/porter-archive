@@ -2,6 +2,7 @@ package test
 
 import (
 	"errors"
+
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 
@@ -451,7 +452,7 @@ func (repo *GithubAppInstallationRepository) CreateGithubAppInstallation(am *int
 	return am, nil
 }
 
-func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error) {
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(projectID, id uint) (*ints.GithubAppInstallation, error) {
 	if !repo.canQuery {
 		return nil, errors.New("cannot write database")
 	}

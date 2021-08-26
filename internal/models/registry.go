@@ -90,16 +90,16 @@ func (r *Registry) Externalize() *RegistryExternal {
 }
 
 func (r *Registry) ToRegistryType() *types.Registry {
-	var serv integrations.IntegrationService
+	var serv types.RegistryService
 
 	if r.AWSIntegrationID != 0 {
-		serv = integrations.ECR
+		serv = types.ECR
 	} else if r.GCPIntegrationID != 0 {
-		serv = integrations.GCR
+		serv = types.GCR
 	} else if r.DOIntegrationID != 0 {
-		serv = integrations.DOCR
+		serv = types.DOCR
 	} else if strings.Contains(r.URL, "index.docker.io") {
-		serv = integrations.DockerHub
+		serv = types.DockerHub
 	}
 
 	uri := r.URL

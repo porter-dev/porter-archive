@@ -8,3 +8,5 @@ type Invite struct {
 	Accepted bool   `json:"accepted"`
 	Kind     string `json:"kind"`
 }
+
+type GetInviteResponse Invite

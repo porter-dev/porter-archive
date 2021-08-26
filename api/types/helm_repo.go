@@ -1,7 +1,5 @@
 package types
 
-import "github.com/porter-dev/porter/internal/models/integrations"
-
 type HelmRepo struct {
 	ID uint `json:"id"`
 
@@ -12,7 +10,6 @@ type HelmRepo struct {
 	Name string `json:"name"`
 
 	RepoURL string `json:"repo_name"`
-
-	// The integration service for this registry
-	Service integrations.IntegrationService `json:"service"`
 }
+
+type GetHelmRepoResponse HelmRepo

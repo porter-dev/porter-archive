@@ -3,15 +3,16 @@ package types
 type PermissionScope string
 
 const (
-	UserScope      PermissionScope = "user"
-	ProjectScope   PermissionScope = "project"
-	ClusterScope   PermissionScope = "cluster"
-	RegistryScope  PermissionScope = "registry"
-	InviteScope    PermissionScope = "invite"
-	HelmRepoScope  PermissionScope = "helm_repo"
-	NamespaceScope PermissionScope = "namespace"
-	SettingsScope  PermissionScope = "settings"
-	ReleaseScope   PermissionScope = "release"
+	UserScope            PermissionScope = "user"
+	ProjectScope         PermissionScope = "project"
+	ClusterScope         PermissionScope = "cluster"
+	RegistryScope        PermissionScope = "registry"
+	InviteScope          PermissionScope = "invite"
+	HelmRepoScope        PermissionScope = "helm_repo"
+	GitInstallationScope PermissionScope = "git_installation"
+	NamespaceScope       PermissionScope = "namespace"
+	SettingsScope        PermissionScope = "settings"
+	ReleaseScope         PermissionScope = "release"
 )
 
 type NameOrUInt struct {

@@ -307,6 +307,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           type="text"
           value={clusterName}
           setValue={(x: string) => {
+            setIsFormDirty(true);
             setClusterName(x);
             setClusterNameSet(true);
           }}

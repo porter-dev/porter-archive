@@ -42,7 +42,7 @@ func getReleaseRoutes(
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*Route, *types.Path) {
-	relPath := "/releases/{namespace}/{name}/{version}"
+	relPath := "/releases/{name}/{version}"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -51,7 +51,7 @@ func getReleaseRoutes(
 
 	routes := make([]*Route, 0)
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/releases/{namespace}/{name}/{version} -> release.NewReleaseGetHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version} -> release.NewReleaseGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -64,6 +64,7 @@ func getReleaseRoutes(
 				types.UserScope,
 				types.ProjectScope,
 				types.ClusterScope,
+				types.NamespaceScope,
 				types.ReleaseScope,
 			},
 		},

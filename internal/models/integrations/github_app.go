@@ -1,6 +1,9 @@
 package integrations
 
-import "gorm.io/gorm"
+import (
+	"github.com/porter-dev/porter/api/types"
+	"gorm.io/gorm"
+)
 
 // GithubAppInstallation is an instance of the porter github app
 // we need to store account/installation id pairs in order to authenticate as the installation
@@ -26,6 +29,14 @@ type GithubAppInstallationExternal struct {
 
 func (r *GithubAppInstallation) Externalize() *GithubAppInstallationExternal {
 	return &GithubAppInstallationExternal{
+		ID:             r.ID,
+		AccountID:      r.AccountID,
+		InstallationID: r.InstallationID,
+	}
+}
+
+func (r *GithubAppInstallation) ToGitInstallationType() *types.GitInstallation {
+	return &types.GitInstallation{
 		ID:             r.ID,
 		AccountID:      r.AccountID,
 		InstallationID: r.InstallationID,

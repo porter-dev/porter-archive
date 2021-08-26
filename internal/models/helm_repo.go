@@ -72,21 +72,10 @@ func (hr *HelmRepo) Externalize() *HelmRepoExternal {
 
 // ToHelmRepoType generates an external HelmRepo to be shared over REST
 func (hr *HelmRepo) ToHelmRepoType() *types.HelmRepo {
-	var serv integrations.IntegrationService
-
-	if hr.BasicAuthIntegrationID != 0 {
-		serv = integrations.HelmRepo
-	} else if hr.AWSIntegrationID != 0 {
-		serv = integrations.S3
-	} else if hr.GCPIntegrationID != 0 {
-		serv = integrations.GCS
-	}
-
 	return &types.HelmRepo{
 		ID:        hr.ID,
 		ProjectID: hr.ProjectID,
 		Name:      hr.Name,
 		RepoURL:   hr.RepoURL,
-		Service:   serv,
 	}
 }

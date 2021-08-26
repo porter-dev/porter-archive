@@ -431,9 +431,15 @@ func (g *GithubActions) deleteGithubFile(
 		sha = *fileData.SHA
 	}
 
+	branch := g.GitBranch
+
+	if branch == "" {
+		branch = g.defaultBranch
+	}
+
 	opts := &github.RepositoryContentFileOptions{
 		Message: github.String(fmt.Sprintf("Delete %s file", filename)),
-		Branch:  github.String(g.defaultBranch),
+		Branch:  &branch,
 		SHA:     &sha,
 	}
 

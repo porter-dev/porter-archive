@@ -1696,7 +1696,46 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 
 	if release.EventContainer == 0 {
 		// create new event container
+		container, err := app.Repo.Event.CreateEventContainer(&models.EventContainer{ReleaseID: release.ID})
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
+
+		release.EventContainer = container.ID
+
+		release, err = app.Repo.Release.UpdateRelease(release)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
 	}
+
+	fmt.Println(release.EventContainer)
+
+	container, err := app.Repo.Event.ReadEventContainer(release.EventContainer)
+
+	if err != nil {
+		fmt.Println("ERRRORRRR")
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	fmt.Println(container)
+
+	if err := app.Repo.Event.AppendEvent(container, &models.SubEvent{
+		EventContainerID: container.ID,
+		EventID:          form.Event.ID,
+		Name:             form.Event.Name,
+		Index:            form.Event.Index,
+		Status:           form.Event.Status,
+		Info:             form.Event.Info,
+	}); err != nil {
+		app.handleErrorInternal(err, w)
+	}
+
 }
 
 // ------------------------ Release handler helper functions ------------------------ //

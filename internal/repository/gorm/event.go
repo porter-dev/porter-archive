@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"fmt"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -33,8 +34,54 @@ func (repo EventRepository) CreateSubEvent(am *models.SubEvent) (*models.SubEven
 
 func (repo EventRepository) ReadEventsByContainerID(id uint) ([]*models.SubEvent, error) {
 	var events []*models.SubEvent
-	if err := repo.db.Where("container_id = ?", id).Find(&events).Error; err != nil {
+	if err := repo.db.Where("event_container_id = ?", id).Find(&events).Error; err != nil {
 		return nil, err
 	}
 	return events, nil
+}
+
+func (repo EventRepository) ReadEventContainer(id uint) (*models.EventContainer, error) {
+	container := &models.EventContainer{}
+	if err := repo.db.Where("id = ?", id).First(&container).Error; err != nil {
+		return nil, err
+	}
+	return container, nil
+}
+
+func (repo EventRepository) ReadSubEvent(id uint) (*models.SubEvent, error) {
+	event := &models.SubEvent{}
+	if err := repo.db.Where("id = ?", id).First(&event).Error; err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// AppendEvent will check if subevent with same (id, index) already exists
+// if yes, overrite it, otherwise make a new subevent
+func (repo EventRepository) AppendEvent(container *models.EventContainer, event *models.SubEvent) error {
+	subevent := &models.SubEvent{}
+
+	fmt.Println("doing query....")
+
+	if err := repo.db.Where("event_container_id = ? AND event_id = ? AND index = ?",
+		container.ID,
+		event.EventID,
+		event.Index).First(&subevent).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			fmt.Println("need to make a new one!")
+			if err := repo.db.Create(event).Error; err != nil {
+				return err
+			}
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	fmt.Println("need to update old one")
+	subevent.Info = event.Info
+	subevent.Status = event.Status
+	subevent.Name = event.Name
+
+	return repo.db.Save(event).Error
 }

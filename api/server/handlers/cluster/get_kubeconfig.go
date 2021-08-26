@@ -3,6 +3,7 @@ package cluster
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -13,7 +14,7 @@ import (
 
 type GetTemporaryKubeconfigHandler struct {
 	handlers.PorterHandlerWriter
-	KubernetesAgentGetter
+	authz.KubernetesAgentGetter
 }
 
 func NewGetTemporaryKubeconfigHandler(
@@ -22,7 +23,7 @@ func NewGetTemporaryKubeconfigHandler(
 ) *GetTemporaryKubeconfigHandler {
 	return &GetTemporaryKubeconfigHandler{
 		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
-		KubernetesAgentGetter: NewDefaultKubernetesAgentGetter(config),
+		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 

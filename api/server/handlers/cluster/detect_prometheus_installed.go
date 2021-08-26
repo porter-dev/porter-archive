@@ -3,6 +3,7 @@ package cluster
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -13,7 +14,7 @@ import (
 
 type DetectPrometheusInstalledHandler struct {
 	handlers.PorterHandler
-	KubernetesAgentGetter
+	authz.KubernetesAgentGetter
 }
 
 func NewDetectPrometheusInstalledHandler(
@@ -21,14 +22,14 @@ func NewDetectPrometheusInstalledHandler(
 ) *DetectPrometheusInstalledHandler {
 	return &DetectPrometheusInstalledHandler{
 		PorterHandler:         handlers.NewDefaultPorterHandler(config, nil, nil),
-		KubernetesAgentGetter: NewDefaultKubernetesAgentGetter(config),
+		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 func (c *DetectPrometheusInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	agent, err := c.GetAgent(cluster)
+	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))

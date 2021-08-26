@@ -3,6 +3,7 @@ package cluster
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -12,7 +13,7 @@ import (
 
 type ListNamespacesHandler struct {
 	handlers.PorterHandlerWriter
-	KubernetesAgentGetter
+	authz.KubernetesAgentGetter
 }
 
 func NewListNamespacesHandler(
@@ -21,14 +22,14 @@ func NewListNamespacesHandler(
 ) *ListNamespacesHandler {
 	return &ListNamespacesHandler{
 		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
-		KubernetesAgentGetter: NewDefaultKubernetesAgentGetter(config),
+		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	agent, err := c.GetAgent(cluster)
+	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
 		c.HandleAPIError(w, apierrors.NewErrInternal(err))

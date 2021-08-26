@@ -1,7 +1,6 @@
 package gorm
 
 import (
-	"fmt"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"

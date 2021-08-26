@@ -2,7 +2,6 @@ package models
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
 type EventStatus int64
@@ -37,7 +36,7 @@ type SubEventExternal struct {
 	Index   int64       `json:"index"`
 	Status  EventStatus `json:"status"`
 	Info    string      `json:"info"`
-	Time    time.Time   `json:"time""`
+	Time    int64       `json:"time""`
 }
 
 func (event *SubEvent) Externalize() SubEventExternal {
@@ -47,6 +46,6 @@ func (event *SubEvent) Externalize() SubEventExternal {
 		Index:   event.Index,
 		Status:  event.Status,
 		Info:    event.Info,
-		Time:    event.UpdatedAt,
+		Time:    event.UpdatedAt.Unix(),
 	}
 }

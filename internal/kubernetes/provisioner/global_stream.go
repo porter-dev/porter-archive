@@ -107,7 +107,7 @@ func GlobalStreamListener(
 			kind, projID, infraID, err := models.ParseUniqueName(fmt.Sprintf("%v", msg.Values["id"]))
 
 			if fmt.Sprintf("%v", msg.Values["status"]) == "created" {
-				infra, err := repo.Infra().ReadInfra(infraID)
+				infra, err := repo.Infra().ReadInfra(projID, infraID)
 
 				if err != nil {
 					continue
@@ -306,7 +306,7 @@ func GlobalStreamListener(
 					}
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "error" {
-				infra, err := repo.Infra().ReadInfra(infraID)
+				infra, err := repo.Infra().ReadInfra(projID, infraID)
 
 				if err != nil {
 					continue
@@ -320,7 +320,7 @@ func GlobalStreamListener(
 					continue
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "destroyed" {
-				infra, err := repo.Infra().ReadInfra(infraID)
+				infra, err := repo.Infra().ReadInfra(projID, infraID)
 
 				if err != nil {
 					continue

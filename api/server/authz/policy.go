@@ -102,6 +102,10 @@ func getRequestActionForEndpoint(
 			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamRegistryID))
 		case types.HelmRepoScope:
 			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamHelmRepoID))
+		case types.GitInstallationScope:
+			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamGitInstallationID))
+		case types.InfraScope:
+			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamInfraID))
 		case types.NamespaceScope:
 			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamNamespace))
 		case types.ReleaseScope:

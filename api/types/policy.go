@@ -9,6 +9,7 @@ const (
 	RegistryScope        PermissionScope = "registry"
 	InviteScope          PermissionScope = "invite"
 	HelmRepoScope        PermissionScope = "helm_repo"
+	InfraScope           PermissionScope = "infra"
 	GitInstallationScope PermissionScope = "git_installation"
 	NamespaceScope       PermissionScope = "namespace"
 	SettingsScope        PermissionScope = "settings"
@@ -39,8 +40,11 @@ var ScopeHeirarchy = ScopeTree{
 				ReleaseScope: {},
 			},
 		},
-		RegistryScope: {},
-		SettingsScope: {},
+		RegistryScope:        {},
+		HelmRepoScope:        {},
+		GitInstallationScope: {},
+		InfraScope:           {},
+		SettingsScope:        {},
 	},
 }
 

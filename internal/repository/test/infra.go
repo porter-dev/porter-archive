@@ -10,8 +10,8 @@ import (
 
 // InfraRepository implements repository.InfraRepository
 type InfraRepository struct {
-	canQuery  bool
-	infras []*models.Infra
+	canQuery bool
+	infras   []*models.Infra
 }
 
 // NewInfraRepository will return errors if canQuery is false
@@ -38,6 +38,7 @@ func (repo *InfraRepository) CreateInfra(
 
 // ReadInfra finds a aws infra by id
 func (repo *InfraRepository) ReadInfra(
+	projectID,
 	id uint,
 ) (*models.Infra, error) {
 	if !repo.canQuery {

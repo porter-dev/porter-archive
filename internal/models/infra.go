@@ -6,32 +6,8 @@ import (
 	"strings"
 
 	"gorm.io/gorm"
-)
 
-// InfraStatus is the status that an infrastructure can take
-type InfraStatus string
-
-// The allowed statuses
-const (
-	StatusCreating   InfraStatus = "creating"
-	StatusCreated    InfraStatus = "created"
-	StatusError      InfraStatus = "error"
-	StatusDestroying InfraStatus = "destroying"
-	StatusDestroyed  InfraStatus = "destroyed"
-)
-
-// InfraKind is the kind that infra can be
-type InfraKind string
-
-// The supported infra kinds
-const (
-	InfraTest InfraKind = "test"
-	InfraECR  InfraKind = "ecr"
-	InfraEKS  InfraKind = "eks"
-	InfraGCR  InfraKind = "gcr"
-	InfraGKE  InfraKind = "gke"
-	InfraDOCR InfraKind = "docr"
-	InfraDOKS InfraKind = "doks"
+	"github.com/porter-dev/porter/api/types"
 )
 
 // Infra represents the metadata for an infrastructure type provisioned on
@@ -40,7 +16,7 @@ type Infra struct {
 	gorm.Model
 
 	// The type of infra that was provisioned
-	Kind InfraKind `json:"kind"`
+	Kind types.InfraKind `json:"kind"`
 
 	// A random 6-byte suffix to ensure workspace/stream ids are unique
 	Suffix string
@@ -49,7 +25,7 @@ type Infra struct {
 	ProjectID uint `json:"project_id"`
 
 	// Status is the status of the infra
-	Status InfraStatus `json:"status"`
+	Status types.InfraStatus `json:"status"`
 
 	// The AWS integration that was used to create the infra
 	AWSIntegrationID uint
@@ -69,23 +45,9 @@ type Infra struct {
 	LastApplied []byte
 }
 
-// InfraExternal is an external Infra to be shared over REST
-type InfraExternal struct {
-	ID uint `json:"id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-
-	// The type of infra that was provisioned
-	Kind InfraKind `json:"kind"`
-
-	// Status is the status of the infra
-	Status InfraStatus `json:"status"`
-}
-
-// Externalize generates an external Infra to be shared over REST
-func (i *Infra) Externalize() *InfraExternal {
-	return &InfraExternal{
+// ToInfraType generates an external Infra to be shared over REST
+func (i *Infra) ToInfraType() *types.Infra {
+	return &types.Infra{
 		ID:        i.ID,
 		ProjectID: i.ProjectID,
 		Kind:      i.Kind,

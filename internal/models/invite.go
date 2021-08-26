@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -34,6 +35,18 @@ type InviteExternal struct {
 // Externalize generates an external Invite to be shared over REST
 func (i *Invite) Externalize() *InviteExternal {
 	return &InviteExternal{
+		ID:       i.Model.ID,
+		Token:    i.Token,
+		Email:    i.Email,
+		Expired:  i.IsExpired(),
+		Accepted: i.IsAccepted(),
+		Kind:     i.Kind,
+	}
+}
+
+// ToInviteType generates an external Invite to be shared over REST
+func (i *Invite) ToInviteType() *types.Invite {
+	return &types.Invite{
 		ID:       i.Model.ID,
 		Token:    i.Token,
 		Email:    i.Email,

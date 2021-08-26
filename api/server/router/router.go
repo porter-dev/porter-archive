@@ -25,7 +25,13 @@ func NewAPIRouter(config *shared.Config) *chi.Mux {
 	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer)
 	registryRegisterer := NewRegistryScopedRegisterer()
 	helmRepoRegisterer := NewHelmRepoScopedRegisterer()
-	projRegisterer := NewProjectScopedRegisterer(clusterRegisterer, registryRegisterer, helmRepoRegisterer)
+	inviteRegisterer := NewInviteScopedRegisterer()
+	projRegisterer := NewProjectScopedRegisterer(
+		clusterRegisterer,
+		registryRegisterer,
+		helmRepoRegisterer,
+		inviteRegisterer,
+	)
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
 	r.Route("/api", func(r chi.Router) {

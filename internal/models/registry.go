@@ -3,6 +3,7 @@ package models
 import (
 	"strings"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
@@ -79,6 +80,36 @@ func (r *Registry) Externalize() *RegistryExternal {
 	}
 
 	return &RegistryExternal{
+		ID:        r.ID,
+		ProjectID: r.ProjectID,
+		Name:      r.Name,
+		URL:       uri,
+		Service:   serv,
+		InfraID:   r.InfraID,
+	}
+}
+
+func (r *Registry) ToRegistryType() *types.Registry {
+	var serv integrations.IntegrationService
+
+	if r.AWSIntegrationID != 0 {
+		serv = integrations.ECR
+	} else if r.GCPIntegrationID != 0 {
+		serv = integrations.GCR
+	} else if r.DOIntegrationID != 0 {
+		serv = integrations.DOCR
+	} else if strings.Contains(r.URL, "index.docker.io") {
+		serv = integrations.DockerHub
+	}
+
+	uri := r.URL
+
+	// remove the protocol
+	if splStr := strings.Split(uri, "://"); len(splStr) > 1 {
+		uri = splStr[1]
+	}
+
+	return &types.Registry{
 		ID:        r.ID,
 		ProjectID: r.ProjectID,
 		Name:      r.Name,

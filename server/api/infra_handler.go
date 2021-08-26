@@ -6,7 +6,8 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/internal/models"
+
+	"github.com/porter-dev/porter/api/types"
 )
 
 // HandleListProjectInfra returns a list of infrasa for a project
@@ -25,10 +26,10 @@ func (app *App) HandleListProjectInfra(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	extInfras := make([]*models.InfraExternal, 0)
+	extInfras := make([]*types.Infra, 0)
 
 	for _, infra := range infras {
-		extInfras = append(extInfras, infra.Externalize())
+		extInfras = append(extInfras, infra.ToInfraType())
 	}
 
 	w.WriteHeader(http.StatusOK)

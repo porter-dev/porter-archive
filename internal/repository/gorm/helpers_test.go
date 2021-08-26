@@ -485,9 +485,9 @@ func initInfra(tester *tester, t *testing.T) {
 	}
 
 	infra := &models.Infra{
-		Kind:      models.InfraECR,
+		Kind:      types.InfraECR,
 		ProjectID: tester.initProjects[0].Model.ID,
-		Status:    models.StatusCreated,
+		Status:    types.StatusCreated,
 	}
 
 	infra, err := tester.repo.Infra().CreateInfra(infra)

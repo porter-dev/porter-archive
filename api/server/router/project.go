@@ -79,6 +79,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/policy -> project.NewProjectGetPolicyHandler
+	getPolicyEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/policy",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getPolicyHandler := project.NewProjectGetPolicyHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getPolicyEndpoint,
+		Handler:  getPolicyHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/infra -> project.NewListProjectInfraHandler
 	listInfraEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

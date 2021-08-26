@@ -92,6 +92,16 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
   const history = useHistory();
 
   useEffect(() => {
+    if (!isFormDirty) {
+      return;
+    }
+
+    window.analytics?.track("provision_form-dirty", {
+      provider: "aws",
+    });
+  }, [isFormDirty]);
+
+  useEffect(() => {
     if (props.infras) {
       // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
@@ -318,6 +328,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
       "https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
     );
   };
+
   return (
     <StyledAWSFormSection>
       <FormSection>
@@ -336,7 +347,10 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           width="100%"
           value={awsRegion}
           dropdownMaxHeight="240px"
-          setActiveValue={(x: string) => setAwsRegion(x)}
+          setActiveValue={(x: string) => {
+            setIsFormDirty(true);
+            setAwsRegion(x);
+          }}
           label="📍 AWS Region"
         />
         <SelectRow
@@ -344,7 +358,10 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           width="100%"
           value={awsMachineType}
           dropdownMaxHeight="240px"
-          setActiveValue={(x: string) => setAwsMachineType(x)}
+          setActiveValue={(x: string) => {
+            setIsFormDirty(true);
+            setAwsMachineType(x);
+          }}
           label="⚙️ AWS Machine Type"
         />
         {/*
@@ -382,7 +399,10 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="text"
           value={awsAccessId}
-          setValue={(x: string) => setAwsAccessId(x)}
+          setValue={(x: string) => {
+            setIsFormDirty(true);
+            setAwsAccessId(x);
+          }}
           label="👤 AWS Access ID"
           placeholder="ex: AKIAIOSFODNN7EXAMPLE"
           width="100%"
@@ -391,7 +411,10 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="password"
           value={awsSecretKey}
-          setValue={(x: string) => setAwsSecretKey(x)}
+          setValue={(x: string) => {
+            setIsFormDirty(true);
+            setAwsSecretKey(x);
+          }}
           label="🔒 AWS Secret Key"
           placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
           width="100%"
@@ -406,6 +429,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           options={provisionOptions}
           selected={selectedInfras}
           setSelected={(x: { value: string; label: string }[]) => {
+            setIsFormDirty(true);
             setSelectedInfras(x);
           }}
         />
@@ -422,7 +446,10 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
         <CheckboxRow
           isRequired={true}
           checked={provisionConfirmed}
-          toggle={() => setProvisionConfirmed(!provisionConfirmed)}
+          toggle={() => {
+            setIsFormDirty(true);
+            setProvisionConfirmed(!provisionConfirmed);
+          }}
           label="I understand and wish to proceed"
         />
       </FormSection>

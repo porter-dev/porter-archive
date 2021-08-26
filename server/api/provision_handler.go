@@ -76,7 +76,7 @@ func (app *App) HandleProvisionTestInfra(w http.ResponseWriter, r *http.Request)
 
 	w.WriteHeader(http.StatusCreated)
 
-	infraExt := infra.Externalize()
+	infraExt := infra.ToInfraType()
 
 	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -220,7 +220,7 @@ func (app *App) HandleProvisionAWSECRInfra(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	infraExt := infra.Externalize()
+	infraExt := infra.ToInfraType()
 
 	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -389,7 +389,7 @@ func (app *App) HandleProvisionAWSEKSInfra(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	infraExt := infra.Externalize()
+	infraExt := infra.ToInfraType()
 
 	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -557,7 +557,7 @@ func (app *App) HandleProvisionGCPGCRInfra(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	infraExt := infra.Externalize()
+	infraExt := infra.ToInfraType()
 
 	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -652,7 +652,7 @@ func (app *App) HandleProvisionGCPGKEInfra(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	infraExt := infra.Externalize()
+	infraExt := infra.ToInfraType()
 
 	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -866,7 +866,7 @@ func (app *App) HandleProvisionDODOCRInfra(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	infraExt := infra.Externalize()
+	infraExt := infra.ToInfraType()
 
 	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -1038,7 +1038,7 @@ func (app *App) HandleProvisionDODOKSInfra(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	infraExt := infra.Externalize()
+	infraExt := infra.ToInfraType()
 
 	if err := json.NewEncoder(w).Encode(infraExt); err != nil {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)

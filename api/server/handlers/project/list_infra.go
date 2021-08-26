@@ -35,7 +35,7 @@ func (p *ProjectListInfraHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	infraList := make([]*types.Infra, 0)
 
 	for _, infra := range infras {
-		infraList = append(infraList, infra.Externalize())
+		infraList = append(infraList, infra.ToInfraType())
 	}
 
 	var res types.ListProjectInfraResponse = infraList

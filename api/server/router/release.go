@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -16,7 +17,7 @@ func NewReleaseScopedRegisterer(children ...*Registerer) *Registerer {
 
 func GetReleaseScopedRoutes(
 	r chi.Router,
-	config *shared.Config,
+	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*Registerer,
@@ -38,7 +39,7 @@ func GetReleaseScopedRoutes(
 
 func getReleaseRoutes(
 	r chi.Router,
-	config *shared.Config,
+	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*Route, *types.Path) {

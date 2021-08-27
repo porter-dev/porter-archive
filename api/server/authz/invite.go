@@ -6,19 +6,19 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 )
 
 type InviteScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewInviteScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *InviteScopedFactory {
 	return &InviteScopedFactory{config}
 }
@@ -29,7 +29,7 @@ func (p *InviteScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type InviteScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (p *InviteScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,11 +44,11 @@ func (p *InviteScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
 				fmt.Errorf("invite with id %d not found in project %d", inviteID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		}
 
 		return

@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -21,9 +22,9 @@ type APIObjectEndpointFactory struct {
 	ResultWriter     ResultWriter
 }
 
-func NewAPIObjectEndpointFactory(config *Config) APIEndpointFactory {
-	decoderValidator := NewDefaultRequestDecoderValidator(config)
-	resultWriter := NewDefaultResultWriter(config)
+func NewAPIObjectEndpointFactory(conf *config.Config) APIEndpointFactory {
+	decoderValidator := NewDefaultRequestDecoderValidator(conf)
+	resultWriter := NewDefaultResultWriter(conf)
 
 	return &APIObjectEndpointFactory{
 		DecoderValidator: decoderValidator,

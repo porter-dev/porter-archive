@@ -5,18 +5,18 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
 type ProjectScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewProjectScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *ProjectScopedFactory {
 	return &ProjectScopedFactory{config}
 }
@@ -27,7 +27,7 @@ func (p *ProjectScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type ProjectScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +39,7 @@ func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	project, err := p.config.Repo.Project().ReadProject(projID)
 
 	if err != nil {
-		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		return
 	}
 

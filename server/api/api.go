@@ -28,7 +28,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 
 	"github.com/porter-dev/porter/internal/analytics"
-	"github.com/porter-dev/porter/internal/config"
 )
 
 // TestAgents are the k8s agents used for testing

@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -16,7 +17,7 @@ type ProjectCreateHandler struct {
 }
 
 func NewProjectCreateHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *ProjectCreateHandler {
@@ -45,11 +46,11 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	proj, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 
 	if err != nil {
-		p.HandleAPIError(w, apierrors.NewErrInternal(err))
+		p.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	p.WriteResult(w, proj.ToProjectType())
+	p.WriteResult(r.Context(), w, proj.ToProjectType())
 }
 
 func CreateProjectWithUser(

@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
@@ -15,11 +15,11 @@ import (
 )
 
 type GitInstallationScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewGitInstallationScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *GitInstallationScopedFactory {
 	return &GitInstallationScopedFactory{config}
 }
@@ -30,7 +30,7 @@ func (p *GitInstallationScopedFactory) Middleware(next http.Handler) http.Handle
 
 type GitInstallationScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -45,11 +45,11 @@ func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *ht
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
 				fmt.Errorf("github app installation with id %d not found in project %d", gitInstallationID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		}
 
 		return

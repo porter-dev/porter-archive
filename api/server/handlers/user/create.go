@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -19,7 +20,7 @@ type UserCreateHandler struct {
 }
 
 func NewUserCreateHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *UserCreateHandler {
@@ -47,7 +48,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if doesExist {
 		err := fmt.Errorf("email already taken")
-		u.HandleAPIError(w, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -55,7 +56,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
 
 	if err != nil {
-		u.HandleAPIError(w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -65,17 +66,17 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err = u.Repo().User().CreateUser(user)
 
 	if err != nil {
-		u.HandleAPIError(w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// save the user as authenticated in the session
 	if err := authn.SaveUserAuthenticated(w, r, u.Config(), user); err != nil {
-		u.HandleAPIError(w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	u.WriteResult(w, user.ToUserType())
+	u.WriteResult(r.Context(), w, user.ToUserType())
 }
 
 func doesUserExist(userRepo repository.UserRepository, user *models.User) bool {

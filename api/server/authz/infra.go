@@ -6,19 +6,19 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 )
 
 type InfraScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewInfraScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *InfraScopedFactory {
 	return &InfraScopedFactory{config}
 }
@@ -29,7 +29,7 @@ func (p *InfraScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type InfraScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,11 +44,11 @@ func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
 				fmt.Errorf("infra with id %d not found in project %d", infraID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		}
 
 		return

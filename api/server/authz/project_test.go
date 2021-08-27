@@ -7,8 +7,8 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository/test"
@@ -76,7 +76,7 @@ func TestProjectMiddlewareFailedRead(t *testing.T) {
 func loadProjectHandlers(
 	t *testing.T,
 	failingRepoMethods ...string,
-) (*shared.Config, http.Handler, *testProjectHandler) {
+) (*config.Config, http.Handler, *testProjectHandler) {
 	config := apitest.LoadConfig(t, failingRepoMethods...)
 	mwFactory := authz.NewProjectScopedFactory(config)
 

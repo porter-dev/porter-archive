@@ -6,20 +6,20 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
 type PolicyMiddleware struct {
-	config       *shared.Config
+	config       *config.Config
 	endpointMeta types.APIRequestMetadata
 	loader       policy.PolicyDocumentLoader
 }
 
 func NewPolicyMiddleware(
-	config *shared.Config,
+	config *config.Config,
 	endpointMeta types.APIRequestMetadata,
 	loader policy.PolicyDocumentLoader,
 ) *PolicyMiddleware {
@@ -32,7 +32,7 @@ func (p *PolicyMiddleware) Middleware(next http.Handler) http.Handler {
 
 type PolicyHandler struct {
 	next         http.Handler
-	config       *shared.Config
+	config       *config.Config
 	endpointMeta types.APIRequestMetadata
 	loader       policy.PolicyDocumentLoader
 }
@@ -42,7 +42,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqScopes, reqErr := getRequestActionForEndpoint(r, h.endpointMeta)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(w, h.config.Logger, reqErr)
+		apierrors.HandleAPIError(r.Context(), h.config, w, reqErr)
 		return
 	}
 
@@ -53,7 +53,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	policyDocs, reqErr := h.loader.LoadPolicyDocuments(user.ID, projID)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(w, h.config.Logger, reqErr)
+		apierrors.HandleAPIError(r.Context(), h.config, w, reqErr)
 		return
 	}
 
@@ -62,8 +62,9 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !hasAccess {
 		apierrors.HandleAPIError(
+			r.Context(),
+			h.config,
 			w,
-			h.config.Logger,
 			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action for user %d in project %d", user.ID, projID)),
 		)
 

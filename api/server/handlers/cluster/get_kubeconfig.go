@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/client-go/tools/clientcmd"
@@ -18,7 +19,7 @@ type GetTemporaryKubeconfigHandler struct {
 }
 
 func NewGetTemporaryKubeconfigHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *GetTemporaryKubeconfigHandler {
 	return &GetTemporaryKubeconfigHandler{
@@ -35,14 +36,14 @@ func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http
 	kubeconfig, err := outOfClusterConfig.CreateRawConfigFromCluster()
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	kubeconfigBytes, err := clientcmd.Write(*kubeconfig)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -50,5 +51,5 @@ func (c *GetTemporaryKubeconfigHandler) ServeHTTP(w http.ResponseWriter, r *http
 		Kubeconfig: kubeconfigBytes,
 	}
 
-	c.WriteResult(w, res)
+	c.WriteResult(r.Context(), w, res)
 }

@@ -6,19 +6,19 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 )
 
 type RegistryScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewRegistryScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *RegistryScopedFactory {
 	return &RegistryScopedFactory{config}
 }
@@ -29,7 +29,7 @@ func (p *RegistryScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type RegistryScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (p *RegistryScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,11 +44,11 @@ func (p *RegistryScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
 				fmt.Errorf("registry with id %d not found in project %d", registryID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		}
 
 		return

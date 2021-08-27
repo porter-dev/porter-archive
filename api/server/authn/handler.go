@@ -7,21 +7,21 @@ import (
 	"strings"
 
 	"github.com/gorilla/sessions"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
 )
 
 // AuthNFactory generates a middleware handler `AuthN`
 type AuthNFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 // NewAuthNFactory returns an `AuthNFactory` that uses the passed-in server
 // config
 func NewAuthNFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *AuthNFactory {
 	return &AuthNFactory{config}
 }
@@ -42,7 +42,7 @@ func (f *AuthNFactory) NewAuthenticatedWithRedirect(next http.Handler) http.Hand
 // AuthN implements the authentication middleware
 type AuthN struct {
 	next     http.Handler
-	config   *shared.Config
+	config   *config.Config
 	redirect bool
 }
 
@@ -153,7 +153,7 @@ func (authn *AuthN) nextWithUserID(w http.ResponseWriter, r *http.Request, userI
 func (authn *AuthN) sendForbiddenError(err error, w http.ResponseWriter) {
 	reqErr := apierrors.NewErrForbidden(err)
 
-	apierrors.HandleAPIError(w, authn.config.Logger, reqErr)
+	apierrors.HandleAPIError(context.Background(), authn.config, w, reqErr)
 }
 
 var errInvalidToken = fmt.Errorf("authorization header exists, but token is not valid")

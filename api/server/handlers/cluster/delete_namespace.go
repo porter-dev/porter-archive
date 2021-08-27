@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -17,7 +18,7 @@ type DeleteNamespaceHandler struct {
 }
 
 func NewDeleteNamespaceHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 ) *DeleteNamespaceHandler {
 	return &DeleteNamespaceHandler{
@@ -38,12 +39,12 @@ func (c *DeleteNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	if err := agent.DeleteNamespace(request.Name); err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 

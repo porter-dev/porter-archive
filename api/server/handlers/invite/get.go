@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -16,7 +17,7 @@ type InviteGetHandler struct {
 }
 
 func NewInviteGetHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *InviteGetHandler {
 	return &InviteGetHandler{
@@ -28,5 +29,5 @@ func NewInviteGetHandler(
 func (c *InviteGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	invite, _ := r.Context().Value(types.InviteScope).(*models.Invite)
 
-	c.WriteResult(w, invite.ToInviteType())
+	c.WriteResult(r.Context(), w, invite.ToInviteType())
 }

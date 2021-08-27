@@ -5,19 +5,19 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/release"
 )
 
 type ReleaseScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewReleaseScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *ReleaseScopedFactory {
 	return &ReleaseScopedFactory{config}
 }
@@ -28,7 +28,7 @@ func (p *ReleaseScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type ReleaseScopedMiddleware struct {
 	next        http.Handler
-	config      *shared.Config
+	config      *config.Config
 	agentGetter KubernetesAgentGetter
 }
 
@@ -38,7 +38,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	helmAgent, err := p.agentGetter.GetHelmAgent(r, cluster)
 
 	if err != nil {
-		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -52,7 +52,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	release, err := helmAgent.GetRelease(name, int(version))
 
 	if err != nil {
-		apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		return
 	}
 

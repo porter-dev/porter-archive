@@ -7,6 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
@@ -17,8 +18,6 @@ import (
 
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
-
-	"github.com/porter-dev/porter/internal/config"
 )
 
 // InfraOption is a type of infrastructure that can be provisioned

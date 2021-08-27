@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -15,7 +16,7 @@ type ProjectListInfraHandler struct {
 }
 
 func NewProjectListInfraHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *ProjectListInfraHandler {
 	return &ProjectListInfraHandler{
@@ -29,7 +30,7 @@ func (p *ProjectListInfraHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	infras, err := p.Repo().Infra().ListInfrasByProjectID(proj.ID)
 
 	if err != nil {
-		p.HandleAPIError(w, apierrors.NewErrInternal(err))
+		p.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 	}
 
 	infraList := make([]*types.Infra, 0)
@@ -40,5 +41,5 @@ func (p *ProjectListInfraHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	var res types.ListProjectInfraResponse = infraList
 
-	p.WriteResult(w, res)
+	p.WriteResult(r.Context(), w, res)
 }

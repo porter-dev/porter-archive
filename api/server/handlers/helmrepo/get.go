@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -16,7 +17,7 @@ type HelmRepoGetHandler struct {
 }
 
 func NewHelmRepoGetHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *HelmRepoGetHandler {
 	return &HelmRepoGetHandler{
@@ -28,5 +29,5 @@ func NewHelmRepoGetHandler(
 func (c *HelmRepoGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	helmRepo, _ := r.Context().Value(types.HelmRepoScope).(*models.HelmRepo)
 
-	c.WriteResult(w, helmRepo.ToHelmRepoType())
+	c.WriteResult(r.Context(), w, helmRepo.ToHelmRepoType())
 }

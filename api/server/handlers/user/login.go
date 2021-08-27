@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -19,7 +20,7 @@ type UserLoginHandler struct {
 }
 
 func NewUserLoginHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *UserLoginHandler {
@@ -43,25 +44,25 @@ func (u *UserLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// case on user not existing, send forbidden error if not exist
 	if err != nil {
 		if targetErr := gorm.ErrRecordNotFound; errors.Is(err, targetErr) {
-			u.HandleAPIError(w, apierrors.NewErrForbidden(err))
+			u.HandleAPIError(r.Context(), w, apierrors.NewErrForbidden(err))
 			return
 		} else {
-			u.HandleAPIError(w, apierrors.NewErrInternal(err))
+			u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 			return
 		}
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(request.Password)); err != nil {
 		reqErr := apierrors.NewErrPassThroughToClient(fmt.Errorf("incorrect password"), http.StatusUnauthorized)
-		u.HandleAPIError(w, reqErr)
+		u.HandleAPIError(r.Context(), w, reqErr)
 		return
 	}
 
 	// save the user as authenticated in the session
 	if err := authn.SaveUserAuthenticated(w, r, u.Config(), storedUser); err != nil {
-		u.HandleAPIError(w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	u.WriteResult(w, storedUser.ToUserType())
+	u.WriteResult(r.Context(), w, storedUser.ToUserType())
 }

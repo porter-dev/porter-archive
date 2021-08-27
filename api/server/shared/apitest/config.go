@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/envloader"
+	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/logger"
@@ -17,15 +17,15 @@ type TestConfigLoader struct {
 	failingRepoMethods []string
 }
 
-func NewTestConfigLoader(canQuery bool, failingRepoMethods ...string) shared.ConfigLoader {
+func NewTestConfigLoader(canQuery bool, failingRepoMethods ...string) config.ConfigLoader {
 	return &TestConfigLoader{canQuery, failingRepoMethods}
 }
 
-func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
+func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 	l := logger.New(true, os.Stdout)
 	repo := test.NewRepository(t.canQuery, t.failingRepoMethods...)
 
-	envConf, err := envloader.FromEnv()
+	envConf, err := loader.FromEnv()
 
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 
 	notifier := NewFakeUserNotifier()
 
-	return &shared.Config{
+	return &config.Config{
 		Logger:       l,
 		Repo:         repo,
 		Store:        store,
@@ -58,7 +58,7 @@ func (t *TestConfigLoader) LoadConfig() (*shared.Config, error) {
 	}, nil
 }
 
-func LoadConfig(t *testing.T, failingRepoMethods ...string) *shared.Config {
+func LoadConfig(t *testing.T, failingRepoMethods ...string) *config.Config {
 	configLoader := NewTestConfigLoader(true, failingRepoMethods...)
 
 	config, err := configLoader.LoadConfig()

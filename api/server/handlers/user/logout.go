@@ -5,8 +5,8 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
 type UserLogoutHandler struct {
@@ -14,7 +14,7 @@ type UserLogoutHandler struct {
 }
 
 func NewUserLogoutHandler(
-	config *shared.Config,
+	config *config.Config,
 ) *UserLogoutHandler {
 	return &UserLogoutHandler{
 		PorterHandler: handlers.NewDefaultPorterHandler(config, nil, nil),
@@ -23,7 +23,7 @@ func NewUserLogoutHandler(
 
 func (u *UserLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := authn.SaveUserUnauthenticated(w, r, u.Config()); err != nil {
-		u.HandleAPIError(w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 	}
 
 	return

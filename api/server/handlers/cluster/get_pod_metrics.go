@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -19,7 +20,7 @@ type GetPodMetricsHandler struct {
 }
 
 func NewGetPodMetricsHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *GetPodMetricsHandler {
@@ -41,7 +42,7 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -49,14 +50,14 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	promSvc, found, err := prometheus.GetPrometheusService(agent.Clientset)
 
 	if err != nil || !found {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, &request.QueryOpts)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -64,5 +65,5 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	var res types.GetPodMetricsResponse = &s
 
-	c.WriteResult(w, res)
+	c.WriteResult(r.Context(), w, res)
 }

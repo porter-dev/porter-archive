@@ -9,9 +9,9 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/stretchr/testify/assert"
@@ -238,7 +238,7 @@ func loadHandlers(
 	endpointMeta types.APIRequestMetadata,
 	shouldLoaderFail bool,
 	shouldLoaderLoadViewer bool,
-) (*shared.Config, http.Handler, *testHandler) {
+) (*config.Config, http.Handler, *testHandler) {
 	config := apitest.LoadConfig(t)
 	var loader policy.PolicyDocumentLoader = policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
 

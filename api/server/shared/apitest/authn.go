@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
@@ -16,7 +16,7 @@ import (
 // AuthenticateUserWithCookie uses the session store to create a cookie for a user
 func AuthenticateUserWithCookie(
 	t *testing.T,
-	config *shared.Config,
+	config *config.Config,
 	user *models.User,
 	badUserIDType bool,
 ) *http.Cookie {
@@ -58,7 +58,7 @@ func AuthenticateUserWithCookie(
 }
 
 // AuthenticateUserWithToken uses the JWT token generator to create a token for a user
-func AuthenticateUserWithToken(t *testing.T, config *shared.Config, userID uint) string {
+func AuthenticateUserWithToken(t *testing.T, config *config.Config, userID uint) string {
 	issToken, err := token.GetTokenForUser(userID)
 
 	if err != nil {

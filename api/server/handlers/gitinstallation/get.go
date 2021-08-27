@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
@@ -16,7 +17,7 @@ type GitInstallationGetHandler struct {
 }
 
 func NewGitInstallationGetHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *GitInstallationGetHandler {
 	return &GitInstallationGetHandler{
@@ -28,5 +29,5 @@ func NewGitInstallationGetHandler(
 func (c *GitInstallationGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
 
-	c.WriteResult(w, ga.ToGitInstallationType())
+	c.WriteResult(r.Context(), w, ga.ToGitInstallationType())
 }

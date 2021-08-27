@@ -73,7 +73,7 @@ type [Resource][Verb]Handler struct {
 }
 
 func New[Resource][Verb]Handler(
-	config *shared.Config,
+	config *config.Config,
     // TODO: additional arguments
 ) *[Resource][Verb]Handler {
 	return &[Resource][Verb]Handler{
@@ -93,7 +93,7 @@ func (c *[Resource][Verb]Handler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 - Use helper methods attached to the `handlers.PorterHandler` interface, which implements the following:
 
 ```go
-Config() *shared.Config
+Config() *config.Config
 Repo() repository.Repository
 HandleAPIError(w http.ResponseWriter, err apierrors.RequestError)
 ```

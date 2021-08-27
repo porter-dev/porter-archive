@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/porter-dev/porter/api/server/router"
-	"github.com/porter-dev/porter/api/server/shared/configloader"
+	"github.com/porter-dev/porter/api/server/shared/config/loader"
 )
 
 // Version will be linked by an ldflag during build
@@ -25,7 +25,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	cl := configloader.NewEnvLoader()
+	cl := loader.NewEnvLoader()
 
 	config, err := cl.LoadConfig()
 

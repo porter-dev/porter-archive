@@ -23,6 +23,12 @@ export default class NewProject extends Component<PropsType, StateType> {
     selectedProvider: null as string | null,
   };
 
+  componentDidMount() {
+    window.analytics.track("provision_new-project", {
+      userId: this.context.user?.id,
+    });
+  }
+
   render() {
     let { capabilities } = this.context;
     let { projectName } = this.state;

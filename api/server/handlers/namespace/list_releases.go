@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -17,7 +18,7 @@ type ListReleasesHandler struct {
 }
 
 func NewListReleasesHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *ListReleasesHandler {
@@ -40,18 +41,18 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	helmAgent, err := c.GetHelmAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	releases, err := helmAgent.ListReleases(namespace, request.ReleaseListFilter)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	var res types.ListReleasesResponse = releases
 
-	c.WriteResult(w, res)
+	c.WriteResult(r.Context(), w, res)
 }

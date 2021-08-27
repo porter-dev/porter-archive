@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
 
 type NamespaceScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewNamespaceScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *NamespaceScopedFactory {
 	return &NamespaceScopedFactory{config}
 }
@@ -25,7 +25,7 @@ func (p *NamespaceScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type NamespaceScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (n *NamespaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {

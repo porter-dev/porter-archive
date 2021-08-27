@@ -52,6 +52,8 @@ type StreamEventForm struct {
 	Event     `json:"event"`
 	Token     string `json:"token"`
 	ClusterID uint   `json:"cluster_id"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 // NewClient constructs a new client based on a set of options
@@ -148,11 +150,12 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 }
 
 // StreamEvent sends an event from deployment to the api
-func (c *Client) StreamEvent(event Event, token string, projID uint, clusterID uint, name string) error {
+func (c *Client) StreamEvent(event Event, projID uint, clusterID uint, name string, namespace string) error {
 	form := StreamEventForm{
 		Event:     event,
-		Token:     token,
 		ClusterID: clusterID,
+		Name:      name,
+		Namespace: namespace,
 	}
 
 	body := new(bytes.Buffer)

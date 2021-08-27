@@ -1669,9 +1669,9 @@ type HandleUpdateReleaseStepsForm struct {
 		Status models.EventStatus `json:"status" form:"required"`
 		Info   string             `json:"info" form:"required"`
 	} `json:"event" form:"required"`
-	ClusterID uint   `json:"cluster_id" form:"required"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	ClusterID uint   `json:"cluster_id"`
 }
 
 // HandleUpdateReleaseSteps adds a new step to a release

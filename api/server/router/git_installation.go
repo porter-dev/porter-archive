@@ -51,7 +51,7 @@ func getGitInstallationRoutes(
 
 	routes := make([]*Route, 0)
 
-	// GET /api/projects/{project_id}/gitrepos/{git_installation_id} -> registry.NewGitInstallationGetHandler
+	// GET /api/projects/{project_id}/gitrepos/{git_installation_id} -> gitinstallation.NewGitInstallationGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

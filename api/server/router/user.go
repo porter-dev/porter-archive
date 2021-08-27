@@ -187,7 +187,7 @@ func getUserRoutes(
 		Router:   r,
 	})
 
-	// GET /email/verify/initiate -> user.VerifyEmailInitiateHandler
+	// POST /email/verify/initiate -> user.VerifyEmailInitiateHandler
 	emailVerifyInitiateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,

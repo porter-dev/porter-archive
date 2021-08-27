@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -351,7 +350,7 @@ func updateBuild(resp *api.AuthCheckResponse, client *api.Client, args []string)
 		return err
 	}
 
-	return updateBuildWithAgent(updateAgent, client)
+	return updateBuildWithAgent(updateAgent)
 }
 
 func updatePush(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
@@ -361,7 +360,7 @@ func updatePush(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 		return err
 	}
 
-	return updatePushWithAgent(updateAgent, client)
+	return updatePushWithAgent(updateAgent)
 }
 
 func updateUpgrade(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
@@ -371,7 +370,7 @@ func updateUpgrade(resp *api.AuthCheckResponse, client *api.Client, args []strin
 		return err
 	}
 
-	return updateUpgradeWithAgent(updateAgent, client)
+	return updateUpgradeWithAgent(updateAgent)
 }
 
 // HELPER METHODS
@@ -397,18 +396,9 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 	})
 }
 
-func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) error {
+func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	// build the deployment
 	color.New(color.FgGreen).Println("Building docker image for", app)
-
-	// minor thought: this ends up happening four times when upgrade is ran, when it should really only happen once
-	// maybe some way to only do this once?
-
-	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, app, namespace)
-
-	if err != nil {
-		return err
-	}
 
 	if stream {
 		updateAgent.StreamEvent(api.Event{
@@ -417,7 +407,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 			Index:  100,
 			Status: api.EventStatusInProgress,
 			Info:   "",
-		}, release.WebhookToken)
+		})
 	}
 
 	buildEnv, err := updateAgent.GetBuildEnv()
@@ -431,7 +421,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 				Index:  110,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
-			}, release.WebhookToken)
+			})
 		}
 		return err
 	}
@@ -447,7 +437,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 				Index:  120,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
-			}, release.WebhookToken)
+			})
 		}
 		return err
 	}
@@ -460,7 +450,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 				Index:  130,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
-			}, release.WebhookToken)
+			})
 		}
 		return err
 	}
@@ -472,21 +462,15 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 			Index:  140,
 			Status: api.EventStatusSuccess,
 			Info:   "",
-		}, release.WebhookToken)
+		})
 	}
 
 	return nil
 }
 
-func updatePushWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) error {
+func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Pushing new image for", app)
-
-	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, app, namespace)
-
-	if err != nil {
-		return err
-	}
 
 	if stream {
 		updateAgent.StreamEvent(api.Event{
@@ -495,7 +479,7 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) er
 			Index:  200,
 			Status: api.EventStatusInProgress,
 			Info:   "",
-		}, release.WebhookToken)
+		})
 	}
 
 	if err := updateAgent.Push(); err != nil {
@@ -506,7 +490,7 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) er
 				Index:  210,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
-			}, release.WebhookToken)
+			})
 		}
 		return err
 	}
@@ -518,21 +502,15 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) er
 			Index:  220,
 			Status: api.EventStatusSuccess,
 			Info:   "",
-		}, release.WebhookToken)
+		})
 	}
 
 	return nil
 }
 
-func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) error {
+func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Calling webhook for", app)
-
-	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, app, namespace)
-
-	if err != nil {
-		return err
-	}
 
 	if stream {
 		updateAgent.StreamEvent(api.Event{
@@ -541,7 +519,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent, client *api.Client)
 			Index:  200,
 			Status: api.EventStatusInProgress,
 			Info:   "",
-		}, release.WebhookToken)
+		})
 	}
 
 	// read the values if necessary
@@ -555,7 +533,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent, client *api.Client)
 				Index:  210,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
-			}, release.WebhookToken)
+			})
 		}
 		return err
 	}
@@ -570,7 +548,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent, client *api.Client)
 				Index:  220,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
-			}, release.WebhookToken)
+			})
 		}
 		return err
 	}
@@ -582,7 +560,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent, client *api.Client)
 			Index:  230,
 			Status: api.EventStatusSuccess,
 			Info:   err.Error(),
-		}, release.WebhookToken)
+		})
 	}
 
 	color.New(color.FgGreen).Println("Successfully updated", app)

@@ -516,7 +516,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 		updateAgent.StreamEvent(api.Event{
 			ID:     "upgrade",
 			Name:   "Upgrade",
-			Index:  200,
+			Index:  300,
 			Status: api.EventStatusInProgress,
 			Info:   "",
 		})
@@ -530,7 +530,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			updateAgent.StreamEvent(api.Event{
 				ID:     "upgrade",
 				Name:   "Upgrade",
-				Index:  210,
+				Index:  310,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
 			})
@@ -545,7 +545,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			updateAgent.StreamEvent(api.Event{
 				ID:     "upgrade",
 				Name:   "Upgrade",
-				Index:  220,
+				Index:  320,
 				Status: api.EventStatusFailed,
 				Info:   err.Error(),
 			})
@@ -557,7 +557,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 		updateAgent.StreamEvent(api.Event{
 			ID:     "upgrade",
 			Name:   "Upgrade",
-			Index:  230,
+			Index:  330,
 			Status: api.EventStatusSuccess,
 			Info:   err.Error(),
 		})

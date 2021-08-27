@@ -1720,8 +1720,6 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	fmt.Println(container)
-
 	if err := app.Repo.Event.AppendEvent(container, &models.SubEvent{
 		EventContainerID: container.ID,
 		EventID:          form.Event.ID,

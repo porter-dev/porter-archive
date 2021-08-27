@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -50,7 +49,7 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 		w.WriteHeader(http.StatusOK)
 		return
 	} else if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -64,7 +63,7 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 		)
 
 		if err != nil {
-			c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 
@@ -73,10 +72,10 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	pwReset, rawToken, err := CreatePWResetTokenForEmail(
-		r.Context(),
 		c.Repo().PWResetToken(),
 		c.HandleAPIError,
 		w,
+		r,
 		request,
 	)
 
@@ -98,7 +97,7 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -130,10 +129,10 @@ func (c *UserPasswordVerifyResetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	VerifyToken(
-		r.Context(),
 		c.Repo().PWResetToken(),
 		c.HandleAPIError,
 		w,
+		r,
 		&request.VerifyTokenFinalizeRequest,
 		request.Email,
 	)
@@ -163,10 +162,10 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	token, err := VerifyToken(
-		r.Context(),
 		c.Repo().PWResetToken(),
 		c.HandleAPIError,
 		w,
+		r,
 		&request.VerifyTokenFinalizeRequest,
 		request.Email,
 	)
@@ -181,9 +180,9 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			err = fmt.Errorf("finalize password reset failed: email does not exist")
-			c.HandleAPIError(r.Context(), w, apierrors.NewErrForbidden(err))
+			c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		} else {
-			c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		}
 
 		return
@@ -192,7 +191,7 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	hashedPW, err := bcrypt.GenerateFromPassword([]byte(request.NewPassword), 8)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -201,7 +200,7 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	user, err = c.Repo().User().UpdateUser(user)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -211,7 +210,7 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 	_, err = c.Repo().PWResetToken().UpdatePWResetToken(token)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -220,10 +219,10 @@ func (c *UserPasswordFinalizeResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 }
 
 func VerifyToken(
-	ctx context.Context,
 	pwResetRepo repository.PWResetTokenRepository,
-	handleErr func(ctx context.Context, w http.ResponseWriter, apiErr apierrors.RequestError),
+	handleErr func(w http.ResponseWriter, r *http.Request, err apierrors.RequestError),
 	w http.ResponseWriter,
+	r *http.Request,
 	request *types.VerifyTokenFinalizeRequest,
 	email string,
 ) (*models.PWResetToken, error) {
@@ -232,10 +231,10 @@ func VerifyToken(
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			err = fmt.Errorf("verify token failed: token does not exist")
-			handleErr(ctx, w, apierrors.NewErrForbidden(err))
+			handleErr(w, r, apierrors.NewErrForbidden(err))
 			return nil, err
 		} else {
-			handleErr(ctx, w, apierrors.NewErrInternal(err))
+			handleErr(w, r, apierrors.NewErrInternal(err))
 		}
 
 		return nil, err
@@ -244,7 +243,7 @@ func VerifyToken(
 	// make sure the token is still valid and has not expired
 	if !token.IsValid || token.IsExpired() {
 		err = fmt.Errorf("verify token failed: expired %t, valid %t", token.IsExpired(), token.IsValid)
-		handleErr(ctx, w, apierrors.NewErrForbidden(err))
+		handleErr(w, r, apierrors.NewErrForbidden(err))
 
 		return nil, err
 	}
@@ -252,7 +251,7 @@ func VerifyToken(
 	// check that the email matches
 	if token.Email != email {
 		err = fmt.Errorf("verify token failed: token email does not match request email")
-		handleErr(ctx, w, apierrors.NewErrForbidden(err))
+		handleErr(w, r, apierrors.NewErrForbidden(err))
 
 		return nil, err
 	}
@@ -260,7 +259,7 @@ func VerifyToken(
 	// make sure the token is correct
 	if err := bcrypt.CompareHashAndPassword([]byte(token.Token), []byte(request.Token)); err != nil {
 		err = fmt.Errorf("verify token failed: %s", err)
-		handleErr(ctx, w, apierrors.NewErrForbidden(err))
+		handleErr(w, r, apierrors.NewErrForbidden(err))
 
 		return nil, err
 	}
@@ -269,10 +268,10 @@ func VerifyToken(
 }
 
 func CreatePWResetTokenForEmail(
-	ctx context.Context,
 	pwResetRepo repository.PWResetTokenRepository,
-	handleErr func(ctx context.Context, w http.ResponseWriter, apiErr apierrors.RequestError),
+	handleErr func(w http.ResponseWriter, r *http.Request, err apierrors.RequestError),
 	w http.ResponseWriter,
+	r *http.Request,
 	request *types.InitiateResetUserPasswordRequest,
 ) (*models.PWResetToken, string, error) {
 	// convert the form to a project model
@@ -281,14 +280,14 @@ func CreatePWResetTokenForEmail(
 	rawToken, err := random.StringWithCharset(32, "")
 
 	if err != nil {
-		handleErr(ctx, w, apierrors.NewErrInternal(err))
+		handleErr(w, r, apierrors.NewErrInternal(err))
 		return nil, "", err
 	}
 
 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
 
 	if err != nil {
-		handleErr(ctx, w, apierrors.NewErrInternal(err))
+		handleErr(w, r, apierrors.NewErrInternal(err))
 		return nil, "", err
 	}
 
@@ -303,7 +302,7 @@ func CreatePWResetTokenForEmail(
 	pwReset, err = pwResetRepo.CreatePWResetToken(pwReset)
 
 	if err != nil {
-		handleErr(ctx, w, apierrors.NewErrInternal(err))
+		handleErr(w, r, apierrors.NewErrInternal(err))
 		return nil, "", err
 	}
 

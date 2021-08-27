@@ -32,7 +32,7 @@ func (p *ClusterListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	clusters, err := p.Repo().Cluster().ListClustersByProjectID(proj.ID)
 
 	if err != nil {
-		p.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -42,5 +42,5 @@ func (p *ClusterListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res[i] = cluster.ToClusterType()
 	}
 
-	p.WriteResult(r.Context(), w, res)
+	p.WriteResult(w, r, res)
 }

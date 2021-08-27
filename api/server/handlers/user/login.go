@@ -44,25 +44,25 @@ func (u *UserLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// case on user not existing, send forbidden error if not exist
 	if err != nil {
 		if targetErr := gorm.ErrRecordNotFound; errors.Is(err, targetErr) {
-			u.HandleAPIError(r.Context(), w, apierrors.NewErrForbidden(err))
+			u.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 			return
 		} else {
-			u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+			u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(storedUser.Password), []byte(request.Password)); err != nil {
 		reqErr := apierrors.NewErrPassThroughToClient(fmt.Errorf("incorrect password"), http.StatusUnauthorized)
-		u.HandleAPIError(r.Context(), w, reqErr)
+		u.HandleAPIError(w, r, reqErr)
 		return
 	}
 
 	// save the user as authenticated in the session
 	if err := authn.SaveUserAuthenticated(w, r, u.Config(), storedUser); err != nil {
-		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	u.WriteResult(r.Context(), w, storedUser.ToUserType())
+	u.WriteResult(w, r, storedUser.ToUserType())
 }

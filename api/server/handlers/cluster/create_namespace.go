@@ -40,14 +40,14 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	namespace, err := agent.CreateNamespace(request.Name)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -55,5 +55,5 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Namespace: namespace,
 	}
 
-	c.WriteResult(r.Context(), w, res)
+	c.WriteResult(w, r, res)
 }

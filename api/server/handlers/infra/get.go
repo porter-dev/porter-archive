@@ -29,5 +29,5 @@ func NewInfraGetHandler(
 func (c *InfraGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
-	c.WriteResult(r.Context(), w, infra.ToInfraType())
+	c.WriteResult(w, r, infra.ToInfraType())
 }

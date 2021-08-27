@@ -29,5 +29,5 @@ func NewInviteGetHandler(
 func (c *InviteGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	invite, _ := r.Context().Value(types.InviteScope).(*models.Invite)
 
-	c.WriteResult(r.Context(), w, invite.ToInviteType())
+	c.WriteResult(w, r, invite.ToInviteType())
 }

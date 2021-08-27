@@ -31,15 +31,15 @@ func (u *UserDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err := u.Repo().User().DeleteUser(user)
 
 	if err != nil {
-		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// set the user as unauthenticated in the session
 	if err := authn.SaveUserUnauthenticated(w, r, u.Config()); err != nil {
-		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	u.WriteResult(r.Context(), w, user.ToUserType())
+	u.WriteResult(w, r, user.ToUserType())
 }

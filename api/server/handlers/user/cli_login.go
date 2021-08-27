@@ -46,7 +46,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		err = fmt.Errorf("CLI token creation failed: %s", err.Error())
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -54,7 +54,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		err = fmt.Errorf("CLI token encoding failed: %s", err.Error())
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -63,7 +63,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		err = fmt.Errorf("CLI random code generation failed: %s", err.Error())
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -79,7 +79,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authCode, err = c.Repo().AuthCode().CreateAuthCode(authCode)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -121,5 +121,5 @@ func (c *CLILoginExchangeHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		Token: authCode.Token,
 	}
 
-	c.WriteResult(r.Context(), w, res)
+	c.WriteResult(w, r, res)
 }

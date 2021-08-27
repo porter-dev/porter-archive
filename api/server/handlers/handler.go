@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared"
@@ -13,7 +12,7 @@ import (
 type PorterHandler interface {
 	Config() *config.Config
 	Repo() repository.Repository
-	HandleAPIError(ctx context.Context, w http.ResponseWriter, err apierrors.RequestError)
+	HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
 }
 
 type PorterHandlerWriter interface {
@@ -53,12 +52,12 @@ func (d *DefaultPorterHandler) Repo() repository.Repository {
 	return d.config.Repo
 }
 
-func (d *DefaultPorterHandler) HandleAPIError(ctx context.Context, w http.ResponseWriter, err apierrors.RequestError) {
-	apierrors.HandleAPIError(ctx, d.Config(), w, err)
+func (d *DefaultPorterHandler) HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError) {
+	apierrors.HandleAPIError(d.Config(), w, r, err)
 }
 
-func (d *DefaultPorterHandler) WriteResult(ctx context.Context, w http.ResponseWriter, v interface{}) {
-	d.writer.WriteResult(ctx, w, v)
+func (d *DefaultPorterHandler) WriteResult(w http.ResponseWriter, r *http.Request, v interface{}) {
+	d.writer.WriteResult(w, r, v)
 }
 
 func (d *DefaultPorterHandler) DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool {
@@ -69,6 +68,6 @@ func (d *DefaultPorterHandler) DecodeAndValidateNoWrite(r *http.Request, v inter
 	return d.decoderValidator.DecodeAndValidateNoWrite(r, v)
 }
 
-func IgnoreAPIError(ctx context.Context, w http.ResponseWriter, err apierrors.RequestError) {
+func IgnoreAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError) {
 	return
 }

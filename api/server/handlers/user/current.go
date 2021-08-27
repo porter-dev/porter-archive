@@ -26,5 +26,5 @@ func NewUserGetCurrentHandler(
 func (a *UserGetCurrentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
-	a.WriteResult(r.Context(), w, user.ToUserType())
+	a.WriteResult(w, r, user.ToUserType())
 }

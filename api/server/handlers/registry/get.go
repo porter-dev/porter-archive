@@ -29,5 +29,5 @@ func NewRegistryGetHandler(
 func (c *RegistryGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	registry, _ := r.Context().Value(types.RegistryScope).(*models.Registry)
 
-	c.WriteResult(r.Context(), w, registry.ToRegistryType())
+	c.WriteResult(w, r, registry.ToRegistryType())
 }

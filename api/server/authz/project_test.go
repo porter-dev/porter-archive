@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/authz"
-	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -29,7 +28,7 @@ func TestProjectMiddlewareSuccessful(t *testing.T) {
 
 	req, rr := apitest.GetRequestAndRecorder(t, string(types.HTTPVerbPost), "/api/projects/1", nil)
 	req = apitest.WithAuthenticatedUser(t, req, user)
-	req = apitest.WithRequestScopes(t, req, map[types.PermissionScope]*policy.RequestAction{
+	req = apitest.WithRequestScopes(t, req, map[types.PermissionScope]*types.RequestAction{
 		types.ProjectScope: {
 			Verb: types.APIVerbCreate,
 			Resource: types.NameOrUInt{
@@ -59,7 +58,7 @@ func TestProjectMiddlewareFailedRead(t *testing.T) {
 
 	req, rr := apitest.GetRequestAndRecorder(t, string(types.HTTPVerbPost), "/api/projects/1", nil)
 	req = apitest.WithAuthenticatedUser(t, req, user)
-	req = apitest.WithRequestScopes(t, req, map[types.PermissionScope]*policy.RequestAction{
+	req = apitest.WithRequestScopes(t, req, map[types.PermissionScope]*types.RequestAction{
 		types.ProjectScope: {
 			Verb: types.APIVerbCreate,
 			Resource: types.NameOrUInt{

@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
@@ -10,7 +9,7 @@ import (
 )
 
 type ResultWriter interface {
-	WriteResult(ctx context.Context, w http.ResponseWriter, v interface{})
+	WriteResult(w http.ResponseWriter, r *http.Request, v interface{})
 }
 
 // default generalizes response codes for common operations
@@ -23,10 +22,10 @@ func NewDefaultResultWriter(conf *config.Config) ResultWriter {
 	return &DefaultResultWriter{conf}
 }
 
-func (j *DefaultResultWriter) WriteResult(ctx context.Context, w http.ResponseWriter, v interface{}) {
+func (j *DefaultResultWriter) WriteResult(w http.ResponseWriter, r *http.Request, v interface{}) {
 	err := json.NewEncoder(w).Encode(v)
 
 	if err != nil {
-		apierrors.HandleAPIError(ctx, j.config, w, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(j.config, w, r, apierrors.NewErrInternal(err))
 	}
 }

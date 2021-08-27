@@ -34,18 +34,18 @@ func (c *ListNGINXIngressesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	ingresses, err := prometheus.GetIngressesWithNGINXAnnotation(agent.Clientset)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	var res types.ListNGINXIngressesResponse = ingresses
 
-	c.WriteResult(r.Context(), w, res)
+	c.WriteResult(w, r, res)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
@@ -30,7 +29,7 @@ type NamespaceScopedMiddleware struct {
 
 func (n *NamespaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// get the namespace from the URL param context
-	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 
 	namespace := reqScopes[types.NamespaceScope].Resource.Name
 

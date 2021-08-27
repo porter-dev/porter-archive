@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -44,17 +43,17 @@ func (p *ClusterScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	// get the cluster id from the URL param context
-	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	clusterID := reqScopes[types.ClusterScope].Resource.UInt
 	cluster, err := p.config.Repo.Cluster().ReadCluster(proj.ID, clusterID)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(
 				fmt.Errorf("cluster with id %d not found in project %d", clusterID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
 		}
 
 		return
@@ -136,7 +135,7 @@ func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.
 	}
 
 	// look for namespace in context, otherwise go with default
-	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	namespace := "default"
 
 	if nsPolicy, ok := reqScopes[types.NamespaceScope]; ok && nsPolicy.Resource.Name != "" {

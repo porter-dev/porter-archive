@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -32,14 +31,14 @@ type ProjectScopedMiddleware struct {
 
 func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// get the project id from the URL param context
-	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 
 	projID := reqScopes[types.ProjectScope].Resource.UInt
 
 	project, err := p.config.Repo.Project().ReadProject(projID)
 
 	if err != nil {
-		apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
 		return
 	}
 

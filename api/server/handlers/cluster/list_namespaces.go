@@ -33,14 +33,14 @@ func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	namespaceList, err := agent.ListNamespaces()
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -48,5 +48,5 @@ func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		NamespaceList: namespaceList,
 	}
 
-	c.WriteResult(r.Context(), w, res)
+	c.WriteResult(w, r, res)
 }

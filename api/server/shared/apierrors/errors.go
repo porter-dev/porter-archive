@@ -7,6 +7,8 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/rs/zerolog"
 )
 
 type RequestError interface {
@@ -91,23 +93,27 @@ func (e *ErrPassThroughToClient) GetStatusCode() int {
 }
 
 func HandleAPIError(
-	ctx context.Context,
 	config *config.Config,
 	w http.ResponseWriter,
+	r *http.Request,
 	err RequestError,
 ) {
 	// if the status code is internal server error, use alerter
 	if err.GetStatusCode() == http.StatusInternalServerError && config.Alerter != nil {
-		config.Alerter.SendAlert(ctx, err)
+		config.Alerter.SendAlert(r.Context(), err)
 	}
 
 	extErrorStr := err.ExternalError()
 
 	// log the internal error
-	config.Logger.Warn().
+	event := config.Logger.Warn().
 		Str("internal_error", err.InternalError()).
-		Str("external_error", extErrorStr).
-		Msg("")
+		Str("external_error", extErrorStr)
+
+	addLoggingScopes(r.Context(), event)
+	addLoggingRequestMeta(r, event)
+
+	event.Msg("")
 
 	// send the external error
 	resp := &types.ExternalError{
@@ -120,10 +126,43 @@ func HandleAPIError(
 	writerErr := json.NewEncoder(w).Encode(resp)
 
 	if writerErr != nil {
-		config.Logger.Error().
-			Err(writerErr).
-			Msg("")
+		event := config.Logger.Error().
+			Err(writerErr)
+
+		addLoggingScopes(r.Context(), event)
+		addLoggingRequestMeta(r, event)
+
+		event.Msg("")
 	}
 
 	return
+}
+
+func addLoggingScopes(ctx context.Context, event *zerolog.Event) {
+	// case on the context values that exist, add them to event
+	if userVal := ctx.Value(types.UserScope); userVal != nil {
+		if userModel, ok := userVal.(*models.User); ok {
+			event.Uint("user_id", userModel.ID)
+		}
+	}
+
+	// if this is a project-scoped route, add various scopes
+	if reqScopesVal := ctx.Value(types.RequestScopeCtxKey); reqScopesVal != nil {
+		if reqScopes, ok := reqScopesVal.(map[types.PermissionScope]*types.RequestAction); ok {
+			for key, scope := range reqScopes {
+				if scope.Resource.Name != "" {
+					event.Str(string(key), scope.Resource.Name)
+				}
+
+				if scope.Resource.UInt != 0 {
+					event.Uint(string(key), scope.Resource.UInt)
+				}
+			}
+		}
+	}
+}
+
+func addLoggingRequestMeta(r *http.Request, event *zerolog.Event) {
+	event.Str("method", r.Method)
+	event.Str("url", r.URL.String())
 }

@@ -53,7 +53,7 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	dynClient, err := c.GetDynamicClient(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}
 
 	parserDef := &parser.ClientConfigDefault{
@@ -70,5 +70,5 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res.Form = form
 	}
 
-	c.WriteResult(r.Context(), w, res)
+	c.WriteResult(w, r, res)
 }

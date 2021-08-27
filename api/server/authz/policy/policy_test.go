@@ -11,7 +11,7 @@ import (
 type testHasScopeAccess struct {
 	description string
 	policy      []*types.PolicyDocument
-	reqScopes   map[types.PermissionScope]*policy.RequestAction
+	reqScopes   map[types.PermissionScope]*types.RequestAction
 	expRes      bool
 }
 
@@ -19,7 +19,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "admin access to project",
 		policy:      policy.AdminPolicy,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ProjectScope: {
 				Verb: types.APIVerbGet,
 				Resource: types.NameOrUInt{
@@ -32,7 +32,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "viewer access cannot perform write operation",
 		policy:      policy.ViewerPolicy,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ClusterScope: {
 				Verb: types.APIVerbCreate,
 				Resource: types.NameOrUInt{
@@ -45,7 +45,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "developer access cannot write settings",
 		policy:      policy.DeveloperPolicy,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.SettingsScope: {
 				Verb: types.APIVerbUpdate,
 				Resource: types.NameOrUInt{
@@ -58,7 +58,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "custom policy for cluster 1 can write cluster 1",
 		policy:      testPolicySpecificClusters,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ClusterScope: {
 				Verb: types.APIVerbUpdate,
 				Resource: types.NameOrUInt{
@@ -71,7 +71,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "custom policy for cluster 1 cannot write cluster 2",
 		policy:      testPolicySpecificClusters,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ClusterScope: {
 				Verb: types.APIVerbUpdate,
 				Resource: types.NameOrUInt{
@@ -84,7 +84,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "cannot access wrong namespace + cluster combination",
 		policy:      testPolicyNamespaceSpecific,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ClusterScope: {
 				Verb: types.APIVerbGet,
 				Resource: types.NameOrUInt{
@@ -103,7 +103,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "can access set namespace + cluster combination",
 		policy:      testPolicyNamespaceSpecific,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ClusterScope: {
 				Verb: types.APIVerbGet,
 				Resource: types.NameOrUInt{
@@ -122,7 +122,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "cannot write the set namespace + cluster combination",
 		policy:      testPolicyNamespaceSpecific,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ClusterScope: {
 				Verb: types.APIVerbGet,
 				Resource: types.NameOrUInt{
@@ -141,7 +141,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "test invalid policy document",
 		policy:      testInvalidPolicyDocument,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ProjectScope: {
 				Verb: types.APIVerbGet,
 				Resource: types.NameOrUInt{
@@ -154,7 +154,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "test invalid policy document nested",
 		policy:      testInvalidPolicyDocumentNested,
-		reqScopes: map[types.PermissionScope]*policy.RequestAction{
+		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ProjectScope: {
 				Verb: types.APIVerbGet,
 				Resource: types.NameOrUInt{
@@ -183,7 +183,7 @@ func BenchmarkSimpleHasScopeAccess(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		res := policy.HasScopeAccess(
 			testPolicySpecificClusters,
-			map[types.PermissionScope]*policy.RequestAction{
+			map[types.PermissionScope]*types.RequestAction{
 				types.ClusterScope: {
 					Verb: types.APIVerbCreate,
 					Resource: types.NameOrUInt{

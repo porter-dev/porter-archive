@@ -47,7 +47,7 @@ func TestPolicyMiddlewareSuccessfulProjectCluster(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	assertNextHandlerCalled(t, next, rr, map[types.PermissionScope]*policy.RequestAction{
+	assertNextHandlerCalled(t, next, rr, map[types.PermissionScope]*types.RequestAction{
 		types.ProjectScope: {
 			Verb: types.APIVerbCreate,
 			Resource: types.NameOrUInt{
@@ -102,7 +102,7 @@ func TestPolicyMiddlewareSuccessfulApplication(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	assertNextHandlerCalled(t, next, rr, map[types.PermissionScope]*policy.RequestAction{
+	assertNextHandlerCalled(t, next, rr, map[types.PermissionScope]*types.RequestAction{
 		types.ProjectScope: {
 			Verb: types.APIVerbCreate,
 			Resource: types.NameOrUInt{
@@ -272,20 +272,20 @@ func (f *viewerDocLoader) LoadPolicyDocuments(userID, projectID uint) ([]*types.
 
 type testHandler struct {
 	WasCalled bool
-	ReqScopes map[types.PermissionScope]*policy.RequestAction
+	ReqScopes map[types.PermissionScope]*types.RequestAction
 }
 
 func (t *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.WasCalled = true
 
-	t.ReqScopes, _ = r.Context().Value(authz.RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	t.ReqScopes, _ = r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 }
 
 func assertNextHandlerCalled(
 	t *testing.T,
 	next *testHandler,
 	rr *httptest.ResponseRecorder,
-	expScopes map[types.PermissionScope]*policy.RequestAction,
+	expScopes map[types.PermissionScope]*types.RequestAction,
 ) {
 	// make sure the handler was called with the expected user, and resulted in 200 OK
 	assert := assert.New(t)

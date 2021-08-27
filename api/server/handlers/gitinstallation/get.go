@@ -29,5 +29,5 @@ func NewGitInstallationGetHandler(
 func (c *GitInstallationGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
 
-	c.WriteResult(r.Context(), w, ga.ToGitInstallationType())
+	c.WriteResult(w, r, ga.ToGitInstallationType())
 }

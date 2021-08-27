@@ -29,5 +29,5 @@ func NewHelmRepoGetHandler(
 func (c *HelmRepoGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	helmRepo, _ := r.Context().Value(types.HelmRepoScope).(*models.HelmRepo)
 
-	c.WriteResult(r.Context(), w, helmRepo.ToHelmRepoType())
+	c.WriteResult(w, r, helmRepo.ToHelmRepoType())
 }

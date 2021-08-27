@@ -1,7 +1,6 @@
 package user_test
 
 import (
-	"context"
 	"fmt"
 	"net/url"
 	"testing"
@@ -63,9 +62,9 @@ func TestEmailVerifyFinalizeSuccessful(t *testing.T) {
 
 	// create a token in the DB to use for testing
 	pwReset, rawToken, err := user.CreatePWResetTokenForEmail(
-		context.Background(),
 		config.Repo.PWResetToken(),
 		handlers.IgnoreAPIError,
+		nil,
 		nil,
 		&types.InitiateResetUserPasswordRequest{
 			Email: authUser.Email,

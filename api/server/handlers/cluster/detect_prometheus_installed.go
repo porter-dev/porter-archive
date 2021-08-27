@@ -32,12 +32,12 @@ func (c *DetectPrometheusInstalledHandler) ServeHTTP(w http.ResponseWriter, r *h
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	if _, found, err := prometheus.GetPrometheusService(agent.Clientset); err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	} else if !found {
 		http.NotFound(w, r)

@@ -26,5 +26,5 @@ func NewProjectGetHandler(
 func (p *ProjectGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	p.WriteResult(r.Context(), w, proj.ToProjectType())
+	p.WriteResult(w, r, proj.ToProjectType())
 }

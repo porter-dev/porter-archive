@@ -48,7 +48,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if doesExist {
 		err := fmt.Errorf("email already taken")
-		u.HandleAPIError(r.Context(), w, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -56,7 +56,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
 
 	if err != nil {
-		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -66,17 +66,17 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err = u.Repo().User().CreateUser(user)
 
 	if err != nil {
-		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// save the user as authenticated in the session
 	if err := authn.SaveUserAuthenticated(w, r, u.Config(), user); err != nil {
-		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	u.WriteResult(r.Context(), w, user.ToUserType())
+	u.WriteResult(w, r, user.ToUserType())
 }
 
 func doesUserExist(userRepo repository.UserRepository, user *models.User) bool {

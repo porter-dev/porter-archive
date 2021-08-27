@@ -57,3 +57,10 @@ type APIRequestMetadata struct {
 	Scopes         []PermissionScope
 	ShouldRedirect bool
 }
+
+const RequestScopeCtxKey = "requestscopes"
+
+type RequestAction struct {
+	Verb     APIVerb
+	Resource NameOrUInt
+}

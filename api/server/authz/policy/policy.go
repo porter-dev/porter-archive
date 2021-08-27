@@ -4,16 +4,11 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-type RequestAction struct {
-	Verb     types.APIVerb
-	Resource types.NameOrUInt
-}
-
 // HasScopeAccess checks that a user can perform an action (`verb`) against a specific
 // resource (`resource+scope`) according to a `policy`.
 func HasScopeAccess(
 	policy []*types.PolicyDocument,
-	reqScopes map[types.PermissionScope]*RequestAction,
+	reqScopes map[types.PermissionScope]*types.RequestAction,
 ) bool {
 	// iterate through policy documents until a match is found
 	for _, policyDoc := range policy {
@@ -94,7 +89,7 @@ func populateAndVerifyPolicyDocument(
 	tree types.ScopeTree,
 	currScope types.PermissionScope,
 	parentVerbs []types.APIVerb,
-	reqScopes map[types.PermissionScope]*RequestAction,
+	reqScopes map[types.PermissionScope]*types.RequestAction,
 	currMatchDocs map[types.PermissionScope]*types.PolicyDocument,
 ) (ok bool, matchDocs map[types.PermissionScope]*types.PolicyDocument) {
 	if currMatchDocs == nil {

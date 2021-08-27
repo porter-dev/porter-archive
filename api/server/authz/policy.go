@@ -42,7 +42,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqScopes, reqErr := getRequestActionForEndpoint(r, h.endpointMeta)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(r.Context(), h.config, w, reqErr)
+		apierrors.HandleAPIError(h.config, w, r, reqErr)
 		return
 	}
 
@@ -53,7 +53,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	policyDocs, reqErr := h.loader.LoadPolicyDocuments(user.ID, projID)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(r.Context(), h.config, w, reqErr)
+		apierrors.HandleAPIError(h.config, w, r, reqErr)
 		return
 	}
 
@@ -62,9 +62,9 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !hasAccess {
 		apierrors.HandleAPIError(
-			r.Context(),
 			h.config,
 			w,
+			r,
 			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action for user %d in project %d", user.ID, projID)),
 		)
 
@@ -77,17 +77,15 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.next.ServeHTTP(w, r)
 }
 
-const RequestScopeCtxKey = "requestscopes"
-
-func NewRequestScopeCtx(ctx context.Context, reqScopes map[types.PermissionScope]*policy.RequestAction) context.Context {
-	return context.WithValue(ctx, RequestScopeCtxKey, reqScopes)
+func NewRequestScopeCtx(ctx context.Context, reqScopes map[types.PermissionScope]*types.RequestAction) context.Context {
+	return context.WithValue(ctx, types.RequestScopeCtxKey, reqScopes)
 }
 
 func getRequestActionForEndpoint(
 	r *http.Request,
 	endpointMeta types.APIRequestMetadata,
-) (res map[types.PermissionScope]*policy.RequestAction, reqErr apierrors.RequestError) {
-	res = make(map[types.PermissionScope]*policy.RequestAction)
+) (res map[types.PermissionScope]*types.RequestAction, reqErr apierrors.RequestError) {
+	res = make(map[types.PermissionScope]*types.RequestAction)
 
 	// iterate through scopes, attach policies as needed
 	for _, scope := range endpointMeta.Scopes {
@@ -117,7 +115,7 @@ func getRequestActionForEndpoint(
 			return nil, reqErr
 		}
 
-		res[scope] = &policy.RequestAction{
+		res[scope] = &types.RequestAction{
 			Verb:     endpointMeta.Verb,
 			Resource: resource,
 		}

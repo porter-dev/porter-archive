@@ -38,13 +38,13 @@ func (j *DefaultRequestDecoderValidator) DecodeAndValidate(
 
 	// decode the request parameters (body and query)
 	if requestErr = j.decoder.Decode(v, r); requestErr != nil {
-		apierrors.HandleAPIError(r.Context(), j.config, w, requestErr)
+		apierrors.HandleAPIError(j.config, w, r, requestErr)
 		return false
 	}
 
 	// validate the request object
 	if requestErr = j.validator.Validate(v); requestErr != nil {
-		apierrors.HandleAPIError(r.Context(), j.config, w, requestErr)
+		apierrors.HandleAPIError(j.config, w, r, requestErr)
 		return false
 	}
 

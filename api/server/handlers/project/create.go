@@ -46,11 +46,11 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	proj, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 
 	if err != nil {
-		p.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	p.WriteResult(r.Context(), w, proj.ToProjectType())
+	p.WriteResult(w, r, proj.ToProjectType())
 }
 
 func CreateProjectWithUser(

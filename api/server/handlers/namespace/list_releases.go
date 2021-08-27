@@ -41,18 +41,18 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	helmAgent, err := c.GetHelmAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	releases, err := helmAgent.ListReleases(namespace, request.ReleaseListFilter)
 
 	if err != nil {
-		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	var res types.ListReleasesResponse = releases
 
-	c.WriteResult(r.Context(), w, res)
+	c.WriteResult(w, r, res)
 }

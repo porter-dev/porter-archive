@@ -59,7 +59,7 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// if the error is not an invalid auth error, the token was invalid, and we throw error
 	// forbidden. If the error was an invalid auth error, we look for a cookie.
 	if err != nil && err != errInvalidAuthHeader {
-		authn.sendForbiddenError(err, w)
+		authn.sendForbiddenError(err, w, r)
 		return
 	} else if err == nil && tok != nil {
 		authn.nextWithToken(w, r, tok)
@@ -76,7 +76,7 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// forbidden error regardless
 		session.Save(r, w)
 
-		authn.sendForbiddenError(err, w)
+		authn.sendForbiddenError(err, w, r)
 		return
 	}
 
@@ -114,7 +114,7 @@ func (authn *AuthN) handleForbiddenForSession(
 
 		http.Redirect(w, r, "/dashboard", 302)
 	} else {
-		authn.sendForbiddenError(err, w)
+		authn.sendForbiddenError(err, w, r)
 	}
 
 	return
@@ -136,7 +136,7 @@ func (authn *AuthN) nextWithUserID(w http.ResponseWriter, r *http.Request, userI
 	user, err := authn.config.Repo.User().ReadUser(userID)
 
 	if err != nil {
-		authn.sendForbiddenError(fmt.Errorf("user with id %d not found in database", userID), w)
+		authn.sendForbiddenError(fmt.Errorf("user with id %d not found in database", userID), w, r)
 		return
 	}
 
@@ -150,10 +150,10 @@ func (authn *AuthN) nextWithUserID(w http.ResponseWriter, r *http.Request, userI
 
 // sendForbiddenError sends a 403 Forbidden error to the end user while logging a
 // specific error
-func (authn *AuthN) sendForbiddenError(err error, w http.ResponseWriter) {
+func (authn *AuthN) sendForbiddenError(err error, w http.ResponseWriter, r *http.Request) {
 	reqErr := apierrors.NewErrForbidden(err)
 
-	apierrors.HandleAPIError(context.Background(), authn.config, w, reqErr)
+	apierrors.HandleAPIError(authn.config, w, r, reqErr)
 }
 
 var errInvalidToken = fmt.Errorf("authorization header exists, but token is not valid")

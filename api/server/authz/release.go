@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -38,12 +37,12 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	helmAgent, err := p.agentGetter.GetHelmAgent(r, cluster)
 
 	if err != nil {
-		apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// get the name of the application
-	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	name := reqScopes[types.ReleaseScope].Resource.Name
 
 	// get the version for the application
@@ -52,7 +51,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	release, err := helmAgent.GetRelease(name, int(version))
 
 	if err != nil {
-		apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
 		return
 	}
 

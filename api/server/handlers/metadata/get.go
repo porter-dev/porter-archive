@@ -22,5 +22,5 @@ func NewMetadataGetHandler(
 }
 
 func (v *MetadataGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	v.WriteResult(r.Context(), w, v.Config().Metadata)
+	v.WriteResult(w, r, v.Config().Metadata)
 }

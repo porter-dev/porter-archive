@@ -30,10 +30,10 @@ func (v *VerifyEmailInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	pwReset, rawToken, err := CreatePWResetTokenForEmail(
-		r.Context(),
 		v.Repo().PWResetToken(),
 		v.HandleAPIError,
 		w,
+		r,
 		&types.InitiateResetUserPasswordRequest{
 			Email: user.Email,
 		},
@@ -56,7 +56,7 @@ func (v *VerifyEmailInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	)
 
 	if err != nil {
-		v.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		v.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 }
@@ -85,10 +85,10 @@ func (v *VerifyEmailFinalizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	token, err := VerifyToken(
-		r.Context(),
 		v.Repo().PWResetToken(),
 		handlers.IgnoreAPIError,
 		w,
+		r,
 		&request.VerifyTokenFinalizeRequest,
 		user.Email,
 	)

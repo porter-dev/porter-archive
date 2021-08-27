@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -37,18 +36,18 @@ func (p *HelmRepoScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	// get the registry id from the URL param context
-	reqScopes, _ := r.Context().Value(RequestScopeCtxKey).(map[types.PermissionScope]*policy.RequestAction)
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	helmRepoID := reqScopes[types.HelmRepoScope].Resource.UInt
 
 	helmRepo, err := p.config.Repo.HelmRepo().ReadHelmRepo(proj.ID, helmRepoID)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(
 				fmt.Errorf("helm repo with id %d not found in project %d", helmRepoID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
 		}
 
 		return

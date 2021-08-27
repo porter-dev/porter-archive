@@ -35,10 +35,10 @@ func (p *ProjectGetPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	policyDocs, err := policyDocLoader.LoadPolicyDocuments(user.ID, proj.ID)
 
 	if err != nil {
-		p.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}
 
 	var res types.GetProjectPolicyResponse = policyDocs
 
-	p.WriteResult(r.Context(), w, res)
+	p.WriteResult(w, r, res)
 }

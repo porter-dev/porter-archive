@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
@@ -20,7 +21,7 @@ type CLILoginHandler struct {
 }
 
 func NewCLILoginHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *CLILoginHandler {
@@ -45,7 +46,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		err = fmt.Errorf("CLI token creation failed: %s", err.Error())
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -53,7 +54,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		err = fmt.Errorf("CLI token encoding failed: %s", err.Error())
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -62,7 +63,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		err = fmt.Errorf("CLI random code generation failed: %s", err.Error())
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -78,7 +79,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authCode, err = c.Repo().AuthCode().CreateAuthCode(authCode)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -90,7 +91,7 @@ type CLILoginExchangeHandler struct {
 }
 
 func NewCLILoginExchangeHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *CLILoginExchangeHandler {
@@ -120,5 +121,5 @@ func (c *CLILoginExchangeHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		Token: authCode.Token,
 	}
 
-	c.WriteResult(w, res)
+	c.WriteResult(r.Context(), w, res)
 }

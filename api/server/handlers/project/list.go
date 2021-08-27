@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -15,7 +16,7 @@ type ProjectListHandler struct {
 }
 
 func NewProjectListHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *ProjectListHandler {
 	return &ProjectListHandler{
@@ -31,7 +32,7 @@ func (p *ProjectListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	projects, err := p.Config().Repo.Project().ListProjectsByUserID(user.ID)
 
 	if err != nil {
-		p.HandleAPIError(w, apierrors.NewErrInternal(err))
+		p.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -41,5 +42,5 @@ func (p *ProjectListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res[i] = proj.ToProjectType()
 	}
 
-	p.WriteResult(w, res)
+	p.WriteResult(r.Context(), w, res)
 }

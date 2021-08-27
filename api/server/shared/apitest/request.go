@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
 func GetRequestAndRecorder(t *testing.T, method, route string, requestObj interface{}) (*http.Request, *httptest.ResponseRecorder) {
@@ -56,7 +57,7 @@ func WithURLParams(t *testing.T, req *http.Request, params map[string]string) *h
 }
 
 type failingDecoderValidator struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func (f *failingDecoderValidator) DecodeAndValidate(
@@ -64,7 +65,7 @@ func (f *failingDecoderValidator) DecodeAndValidate(
 	r *http.Request,
 	v interface{},
 ) (ok bool) {
-	apierrors.HandleAPIError(w, f.config.Logger, apierrors.NewErrInternal(fmt.Errorf("fake error")))
+	apierrors.HandleAPIError(r.Context(), f.config, w, apierrors.NewErrInternal(fmt.Errorf("fake error")))
 	return false
 }
 
@@ -75,6 +76,6 @@ func (f *failingDecoderValidator) DecodeAndValidateNoWrite(
 	return fmt.Errorf("fake error")
 }
 
-func NewFailingDecoderValidator(config *shared.Config) shared.RequestDecoderValidator {
+func NewFailingDecoderValidator(config *config.Config) shared.RequestDecoderValidator {
 	return &failingDecoderValidator{config}
 }

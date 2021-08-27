@@ -5,6 +5,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -17,7 +18,7 @@ func NewUserScopedRegisterer(children ...*Registerer) *Registerer {
 
 func GetUserScopedRoutes(
 	r chi.Router,
-	config *shared.Config,
+	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*Registerer,
@@ -37,7 +38,7 @@ func GetUserScopedRoutes(
 
 func getUserRoutes(
 	r chi.Router,
-	config *shared.Config,
+	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) []*Route {

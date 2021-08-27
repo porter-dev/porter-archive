@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -18,7 +19,7 @@ type VerifyEmailInitiateHandler struct {
 }
 
 func NewVerifyEmailInitiateHandler(
-	config *shared.Config,
+	config *config.Config,
 ) *VerifyEmailInitiateHandler {
 	return &VerifyEmailInitiateHandler{
 		PorterHandler: handlers.NewDefaultPorterHandler(config, nil, nil),
@@ -28,9 +29,15 @@ func NewVerifyEmailInitiateHandler(
 func (v *VerifyEmailInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
-	pwReset, rawToken, err := CreatePWResetTokenForEmail(v.Repo().PWResetToken(), v.HandleAPIError, w, &types.InitiateResetUserPasswordRequest{
-		Email: user.Email,
-	})
+	pwReset, rawToken, err := CreatePWResetTokenForEmail(
+		r.Context(),
+		v.Repo().PWResetToken(),
+		v.HandleAPIError,
+		w,
+		&types.InitiateResetUserPasswordRequest{
+			Email: user.Email,
+		},
+	)
 
 	if err != nil {
 		return
@@ -49,7 +56,7 @@ func (v *VerifyEmailInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	)
 
 	if err != nil {
-		v.HandleAPIError(w, apierrors.NewErrInternal(err))
+		v.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 }
@@ -59,7 +66,7 @@ type VerifyEmailFinalizeHandler struct {
 }
 
 func NewVerifyEmailFinalizeHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 ) *VerifyEmailFinalizeHandler {
 	return &VerifyEmailFinalizeHandler{
@@ -78,6 +85,7 @@ func (v *VerifyEmailFinalizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	token, err := VerifyToken(
+		r.Context(),
 		v.Repo().PWResetToken(),
 		handlers.IgnoreAPIError,
 		w,

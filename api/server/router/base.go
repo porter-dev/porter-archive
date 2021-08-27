@@ -2,9 +2,10 @@ package router
 
 import (
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/handlers/capabilities"
+	"github.com/porter-dev/porter/api/server/handlers/metadata"
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -17,7 +18,7 @@ func NewBaseRegisterer(children ...*Registerer) *Registerer {
 
 func GetBaseRoutes(
 	r chi.Router,
-	config *shared.Config,
+	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*Registerer,
@@ -25,25 +26,25 @@ func GetBaseRoutes(
 	routes := make([]*Route, 0)
 
 	// GET /api/capabilities -> user.NewUserCreateHandler
-	getCapabilitiesEndpoint := factory.NewAPIEndpoint(
+	getMetadataEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/capabilities",
+				RelativePath: "/metadata",
 			},
 		},
 	)
 
-	getCapabilitiesHandler := capabilities.NewCapabilitiesGetHandler(
+	getMetadataHandler := metadata.NewMetadataGetHandler(
 		config,
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
-		Endpoint: getCapabilitiesEndpoint,
-		Handler:  getCapabilitiesHandler,
+		Endpoint: getMetadataEndpoint,
+		Handler:  getMetadataHandler,
 		Router:   r,
 	})
 

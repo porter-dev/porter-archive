@@ -1,11 +1,12 @@
 package apierrors
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/logger"
 )
 
 type RequestError interface {
@@ -90,14 +91,20 @@ func (e *ErrPassThroughToClient) GetStatusCode() int {
 }
 
 func HandleAPIError(
+	ctx context.Context,
+	config *config.Config,
 	w http.ResponseWriter,
-	logger *logger.Logger,
 	err RequestError,
 ) {
+	// if the status code is internal server error, use alerter
+	if err.GetStatusCode() == http.StatusInternalServerError && config.Alerter != nil {
+		config.Alerter.SendAlert(ctx, err)
+	}
+
 	extErrorStr := err.ExternalError()
 
 	// log the internal error
-	logger.Warn().
+	config.Logger.Warn().
 		Str("internal_error", err.InternalError()).
 		Str("external_error", extErrorStr).
 		Msg("")
@@ -113,7 +120,7 @@ func HandleAPIError(
 	writerErr := json.NewEncoder(w).Encode(resp)
 
 	if writerErr != nil {
-		logger.Error().
+		config.Logger.Error().
 			Err(writerErr).
 			Msg("")
 	}

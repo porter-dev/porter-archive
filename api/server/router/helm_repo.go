@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/helmrepo"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -16,7 +17,7 @@ func NewHelmRepoScopedRegisterer(children ...*Registerer) *Registerer {
 
 func GetHelmRepoScopedRoutes(
 	r chi.Router,
-	config *shared.Config,
+	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*Registerer,
@@ -38,7 +39,7 @@ func GetHelmRepoScopedRoutes(
 
 func getHelmRepoRoutes(
 	r chi.Router,
-	config *shared.Config,
+	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*Route, *types.Path) {

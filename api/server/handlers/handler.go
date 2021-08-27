@@ -1,28 +1,29 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/repository"
 )
 
 type PorterHandler interface {
-	Config() *shared.Config
+	Config() *config.Config
 	Repo() repository.Repository
-	HandleAPIError(w http.ResponseWriter, err apierrors.RequestError)
+	HandleAPIError(ctx context.Context, w http.ResponseWriter, err apierrors.RequestError)
 }
 
 type PorterHandlerWriter interface {
 	PorterHandler
-	WriteResult(w http.ResponseWriter, v interface{})
+	shared.ResultWriter
 }
 
 type PorterHandlerReader interface {
 	PorterHandler
-	DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool
-	DecodeAndValidateNoWrite(r *http.Request, v interface{}) error
+	shared.RequestDecoderValidator
 }
 
 type PorterHandlerReadWriter interface {
@@ -31,20 +32,20 @@ type PorterHandlerReadWriter interface {
 }
 
 type DefaultPorterHandler struct {
-	config           *shared.Config
+	config           *config.Config
 	decoderValidator shared.RequestDecoderValidator
 	writer           shared.ResultWriter
 }
 
 func NewDefaultPorterHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) PorterHandlerReadWriter {
 	return &DefaultPorterHandler{config, decoderValidator, writer}
 }
 
-func (d *DefaultPorterHandler) Config() *shared.Config {
+func (d *DefaultPorterHandler) Config() *config.Config {
 	return d.config
 }
 
@@ -52,12 +53,12 @@ func (d *DefaultPorterHandler) Repo() repository.Repository {
 	return d.config.Repo
 }
 
-func (d *DefaultPorterHandler) HandleAPIError(w http.ResponseWriter, err apierrors.RequestError) {
-	apierrors.HandleAPIError(w, d.Config().Logger, err)
+func (d *DefaultPorterHandler) HandleAPIError(ctx context.Context, w http.ResponseWriter, err apierrors.RequestError) {
+	apierrors.HandleAPIError(ctx, d.Config(), w, err)
 }
 
-func (d *DefaultPorterHandler) WriteResult(w http.ResponseWriter, v interface{}) {
-	d.writer.WriteResult(w, v)
+func (d *DefaultPorterHandler) WriteResult(ctx context.Context, w http.ResponseWriter, v interface{}) {
+	d.writer.WriteResult(ctx, w, v)
 }
 
 func (d *DefaultPorterHandler) DecodeAndValidate(w http.ResponseWriter, r *http.Request, v interface{}) bool {
@@ -68,6 +69,6 @@ func (d *DefaultPorterHandler) DecodeAndValidateNoWrite(r *http.Request, v inter
 	return d.decoderValidator.DecodeAndValidateNoWrite(r, v)
 }
 
-func IgnoreAPIError(w http.ResponseWriter, err apierrors.RequestError) {
+func IgnoreAPIError(ctx context.Context, w http.ResponseWriter, err apierrors.RequestError) {
 	return
 }

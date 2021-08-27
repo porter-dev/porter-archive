@@ -19,6 +19,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.6.3
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.9.0
+	github.com/getsentry/sentry-go v0.11.0
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0

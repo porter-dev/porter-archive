@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	redis "github.com/go-redis/redis/v8"
-	"github.com/porter-dev/porter/internal/config"
+	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
 // NewRedisClient returns a new redis client instance

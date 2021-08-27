@@ -8,10 +8,11 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewAPIRouter(config *shared.Config) *chi.Mux {
+func NewAPIRouter(config *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
 	// set the content type for all API endpoints
@@ -75,7 +76,7 @@ type Route struct {
 type Registerer struct {
 	GetRoutes func(
 		r chi.Router,
-		config *shared.Config,
+		config *config.Config,
 		basePath *types.Path,
 		factory shared.APIEndpointFactory,
 		children ...*Registerer,
@@ -84,7 +85,7 @@ type Registerer struct {
 	Children []*Registerer
 }
 
-func registerRoutes(config *shared.Config, routes []*Route) {
+func registerRoutes(config *config.Config, routes []*Route) {
 	// Create a new "user-scoped" factory which will create a new user-scoped request
 	// after authentication. Each subsequent http.Handler can lookup the user in context.
 	authNFactory := authn.NewAuthNFactory(config)

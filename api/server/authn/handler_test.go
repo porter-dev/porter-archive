@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/authn"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/stretchr/testify/assert"
@@ -211,7 +211,7 @@ func (t *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	t.User = user
 }
 
-func loadHandlers(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
+func loadHandlers(t *testing.T) (*config.Config, http.Handler, *testHandler) {
 	config := apitest.LoadConfig(t)
 
 	factory := authn.NewAuthNFactory(config)
@@ -222,7 +222,7 @@ func loadHandlers(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
 	return config, handler, next
 }
 
-func loadHandlersWithRedirect(t *testing.T) (*shared.Config, http.Handler, *testHandler) {
+func loadHandlersWithRedirect(t *testing.T) (*config.Config, http.Handler, *testHandler) {
 	config := apitest.LoadConfig(t)
 
 	factory := authn.NewAuthNFactory(config)

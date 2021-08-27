@@ -5,8 +5,8 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
@@ -18,7 +18,7 @@ type DetectPrometheusInstalledHandler struct {
 }
 
 func NewDetectPrometheusInstalledHandler(
-	config *shared.Config,
+	config *config.Config,
 ) *DetectPrometheusInstalledHandler {
 	return &DetectPrometheusInstalledHandler{
 		PorterHandler:         handlers.NewDefaultPorterHandler(config, nil, nil),
@@ -32,12 +32,12 @@ func (c *DetectPrometheusInstalledHandler) ServeHTTP(w http.ResponseWriter, r *h
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	if _, found, err := prometheus.GetPrometheusService(agent.Clientset); err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	} else if !found {
 		http.NotFound(w, r)

@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -17,7 +18,7 @@ type ListNamespacesHandler struct {
 }
 
 func NewListNamespacesHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *ListNamespacesHandler {
 	return &ListNamespacesHandler{
@@ -32,14 +33,14 @@ func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	namespaceList, err := agent.ListNamespaces()
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -47,5 +48,5 @@ func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		NamespaceList: namespaceList,
 	}
 
-	c.WriteResult(w, res)
+	c.WriteResult(r.Context(), w, res)
 }

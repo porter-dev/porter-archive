@@ -6,19 +6,19 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 )
 
 type HelmRepoScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewHelmRepoScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *HelmRepoScopedFactory {
 	return &HelmRepoScopedFactory{config}
 }
@@ -29,7 +29,7 @@ func (p *HelmRepoScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type HelmRepoScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (p *HelmRepoScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,11 +44,11 @@ func (p *HelmRepoScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
 				fmt.Errorf("helm repo with id %d not found in project %d", helmRepoID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		}
 
 		return

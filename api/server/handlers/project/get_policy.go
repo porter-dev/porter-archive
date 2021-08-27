@@ -1,9 +1,11 @@
 package project
 
 import (
+	"net/http"
+
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"net/http"
+	"github.com/porter-dev/porter/api/server/shared/config"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -16,7 +18,7 @@ type ProjectGetPolicyHandler struct {
 }
 
 func NewProjectGetPolicyHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *ProjectGetPolicyHandler {
 	return &ProjectGetPolicyHandler{
@@ -33,10 +35,10 @@ func (p *ProjectGetPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	policyDocs, err := policyDocLoader.LoadPolicyDocuments(user.ID, proj.ID)
 
 	if err != nil {
-		p.HandleAPIError(w, apierrors.NewErrInternal(err))
+		p.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 	}
 
 	var res types.GetProjectPolicyResponse = policyDocs
 
-	p.WriteResult(w, res)
+	p.WriteResult(r.Context(), w, res)
 }

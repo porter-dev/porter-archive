@@ -3,14 +3,14 @@ package authn
 import (
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/models"
 )
 
 func SaveUserAuthenticated(
 	w http.ResponseWriter,
 	r *http.Request,
-	config *shared.Config,
+	config *config.Config,
 	user *models.User,
 ) error {
 	session, err := config.Store.Get(r, config.ServerConf.CookieName)
@@ -36,7 +36,7 @@ func SaveUserAuthenticated(
 func SaveUserUnauthenticated(
 	w http.ResponseWriter,
 	r *http.Request,
-	config *shared.Config,
+	config *config.Config,
 ) error {
 	session, err := config.Store.Get(r, config.ServerConf.CookieName)
 

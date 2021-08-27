@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
@@ -46,8 +47,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/remotecommand"
-
-	"github.com/porter-dev/porter/internal/config"
 
 	rspb "helm.sh/helm/v3/pkg/release"
 )

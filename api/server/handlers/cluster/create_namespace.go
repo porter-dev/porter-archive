@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -17,7 +18,7 @@ type CreateNamespaceHandler struct {
 }
 
 func NewCreateNamespaceHandler(
-	config *shared.Config,
+	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *CreateNamespaceHandler {
@@ -39,14 +40,14 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	agent, err := c.GetAgent(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	namespace, err := agent.CreateNamespace(request.Name)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -54,5 +55,5 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Namespace: namespace,
 	}
 
-	c.WriteResult(w, res)
+	c.WriteResult(r.Context(), w, res)
 }

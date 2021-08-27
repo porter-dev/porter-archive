@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -21,11 +21,11 @@ const KubernetesDynamicClientCtxKey string = "k8s-dyn-client"
 const HelmAgentCtxKey string = "helm-agent"
 
 type ClusterScopedFactory struct {
-	config *shared.Config
+	config *config.Config
 }
 
 func NewClusterScopedFactory(
-	config *shared.Config,
+	config *config.Config,
 ) *ClusterScopedFactory {
 	return &ClusterScopedFactory{config}
 }
@@ -36,7 +36,7 @@ func (p *ClusterScopedFactory) Middleware(next http.Handler) http.Handler {
 
 type ClusterScopedMiddleware struct {
 	next   http.Handler
-	config *shared.Config
+	config *config.Config
 }
 
 func (p *ClusterScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -50,11 +50,11 @@ func (p *ClusterScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrForbidden(
 				fmt.Errorf("cluster with id %d not found in project %d", clusterID, proj.ID),
 			))
 		} else {
-			apierrors.HandleAPIError(w, p.config.Logger, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(r.Context(), p.config, w, apierrors.NewErrInternal(err))
 		}
 
 		return
@@ -77,10 +77,10 @@ type KubernetesAgentGetter interface {
 }
 
 type OutOfClusterAgentGetter struct {
-	config *shared.Config
+	config *config.Config
 }
 
-func NewOutOfClusterAgentGetter(config *shared.Config) KubernetesAgentGetter {
+func NewOutOfClusterAgentGetter(config *config.Config) KubernetesAgentGetter {
 	return &OutOfClusterAgentGetter{config}
 }
 

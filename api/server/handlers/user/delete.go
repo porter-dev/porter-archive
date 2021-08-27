@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -16,7 +17,7 @@ type UserDeleteHandler struct {
 }
 
 func NewUserDeleteHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *UserDeleteHandler {
 	return &UserDeleteHandler{
@@ -30,15 +31,15 @@ func (u *UserDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err := u.Repo().User().DeleteUser(user)
 
 	if err != nil {
-		u.HandleAPIError(w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// set the user as unauthenticated in the session
 	if err := authn.SaveUserUnauthenticated(w, r, u.Config()); err != nil {
-		u.HandleAPIError(w, apierrors.NewErrInternal(err))
+		u.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 		return
 	}
 
-	u.WriteResult(w, user.ToUserType())
+	u.WriteResult(r.Context(), w, user.ToUserType())
 }

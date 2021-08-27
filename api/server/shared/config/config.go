@@ -1,24 +1,57 @@
 package config
 
 import (
-	"log"
 	"time"
 
-	"github.com/joeshaw/envdecode"
+	"github.com/gorilla/sessions"
+	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
+	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 )
 
-// Conf is the configuration for the Go server
-type Conf struct {
-	Debug        bool `env:"DEBUG,default=false"`
-	Server       ServerConf
-	Db           DBConf
-	K8s          K8sConf
-	Redis        RedisConf
-	Capabilities CapConf
+type Config struct {
+	// Logger for logging
+	Logger *logger.Logger
+
+	// Repo implements a query repository
+	Repo repository.Repository
+
+	// Metadata is a description object for the server metadata, used
+	// to determine which endpoints to register
+	Metadata *Metadata
+
+	// Alerter sends messages to alert aggregators (like Sentry) if the
+	// error is fatal
+	Alerter alerter.Alerter
+
+	// Store implements a session store for session-based cookies
+	Store sessions.Store
+
+	// ServerConf is the set of configuration variables for the Porter server
+	ServerConf *ServerConf
+
+	// TokenConf contains the config for generating and validating JWT tokens
+	TokenConf *token.TokenGeneratorConf
+
+	// UserNotifier is an object that notifies users of transactions (pw reset, email
+	// verification, etc)
+	UserNotifier notifier.UserNotifier
+
+	// DOConf is the configuration for a DigitalOcean OAuth client
+	DOConf *oauth2.Config
+}
+
+type ConfigLoader interface {
+	LoadConfig() (*Config, error)
 }
 
 // ServerConf is the server configuration
 type ServerConf struct {
+	Debug bool `env:"DEBUG,default=false"`
+
 	ServerURL            string        `env:"SERVER_URL,default=http://localhost:8080"`
 	Port                 int           `env:"SERVER_PORT,default=8080"`
 	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
@@ -68,6 +101,8 @@ type ServerConf struct {
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
 	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
 
+	SentryDSN string `env:"SENTRY_DSN"`
+
 	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
 	IngressCluster     string `env:"INGRESS_CLUSTER"`
 	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
@@ -90,28 +125,14 @@ type DBConf struct {
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
 }
 
-// K8sConf is the global configuration for the k8s agents
-type K8sConf struct {
-	IsTesting bool `env:"K8S_IS_TESTING,default=false"`
-}
+// RedisConf is the redis config required for the provisioner container
+type RedisConf struct {
+	// if redis should be used
+	Enabled bool `env:"REDIS_ENABLED,default=true"`
 
-type CapConf struct {
-	Provisioner bool `env:"PROVISIONER_ENABLED,default=true"`
-	Github      bool `env:"GITHUB_ENABLED,default=true"`
-	Google      bool
-}
-
-// FromEnv generates a configuration from environment variables
-func FromEnv() *Conf {
-	var c Conf
-
-	if err := envdecode.StrictDecode(&c); err != nil {
-		log.Fatalf("Failed to decode server conf: %s", err)
-	}
-
-	if c.Server.GoogleClientID != "" && c.Server.GoogleClientSecret != "" {
-		c.Capabilities.Google = true
-	}
-
-	return &c
+	Host     string `env:"REDIS_HOST,default=redis"`
+	Port     string `env:"REDIS_PORT,default=6379"`
+	Username string `env:"REDIS_USER"`
+	Password string `env:"REDIS_PASS"`
+	DB       int    `env:"REDIS_DB,default=0"`
 }

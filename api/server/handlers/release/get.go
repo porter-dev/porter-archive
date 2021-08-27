@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
@@ -19,7 +20,7 @@ type ReleaseGetHandler struct {
 }
 
 func NewReleaseGetHandler(
-	config *shared.Config,
+	config *config.Config,
 	writer shared.ResultWriter,
 ) *ReleaseGetHandler {
 	return &ReleaseGetHandler{
@@ -52,7 +53,7 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	dynClient, err := c.GetDynamicClient(r, cluster)
 
 	if err != nil {
-		c.HandleAPIError(w, apierrors.NewErrInternal(err))
+		c.HandleAPIError(r.Context(), w, apierrors.NewErrInternal(err))
 	}
 
 	parserDef := &parser.ClientConfigDefault{
@@ -69,5 +70,5 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res.Form = form
 	}
 
-	c.WriteResult(w, res)
+	c.WriteResult(r.Context(), w, res)
 }

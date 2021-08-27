@@ -1,6 +1,6 @@
-package shared
+package config
 
-type Capabilities struct {
+type Metadata struct {
 	Provisioning       bool `json:"provisioner"`
 	Github             bool `json:"github"`
 	BasicLogin         bool `json:"basic_login"`
@@ -11,8 +11,8 @@ type Capabilities struct {
 	Analytics          bool `json:"analytics"`
 }
 
-func CapabilitiesFromConf(sc *ServerConf) *Capabilities {
-	return &Capabilities{
+func MetadataFromConf(sc *ServerConf) *Metadata {
+	return &Metadata{
 		// TODO: case provisioning on env variables
 		Provisioning:       false,
 		Github:             hasGithubAppVars(sc),

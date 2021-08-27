@@ -98,6 +98,10 @@ func registerRoutes(config *config.Config, routes []*Route) {
 	// after authorization. Each subsequent http.Handler can lookup the cluster in context.
 	clusterFactory := authz.NewClusterScopedFactory(config)
 
+	// Create a new "namespace-scoped" factory which will create a new namespace-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the namespace in context.
+	namespaceFactory := authz.NewNamespaceScopedFactory(config)
+
 	// Create a new "helmrepo-scoped" factory which will create a new helmrepo-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the helm repo in context.
 	helmRepoFactory := authz.NewHelmRepoScopedFactory(config)
@@ -144,6 +148,8 @@ func registerRoutes(config *config.Config, routes []*Route) {
 				atomicGroup.Use(projFactory.Middleware)
 			case types.ClusterScope:
 				atomicGroup.Use(clusterFactory.Middleware)
+			case types.NamespaceScope:
+				atomicGroup.Use(namespaceFactory.Middleware)
 			case types.HelmRepoScope:
 				atomicGroup.Use(helmRepoFactory.Middleware)
 			case types.RegistryScope:

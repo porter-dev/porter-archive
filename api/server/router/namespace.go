@@ -2,6 +2,8 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+
+	"github.com/porter-dev/porter/api/server/handlers/namespace"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -50,6 +52,36 @@ func getNamespaceRoutes(
 	}
 
 	routes := make([]*Route, 0)
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases -> namespace.NewListReleasesHandler
+	getEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/releases",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	getHandler := namespace.NewListReleasesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getEndpoint,
+		Handler:  getHandler,
+		Router:   r,
+	})
 
 	return routes, newPath
 }

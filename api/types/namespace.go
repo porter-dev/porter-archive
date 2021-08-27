@@ -1,12 +1,13 @@
-package helm
+package types
 
 import (
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/release"
 )
 
-// ListFilter is a struct that represents the various filter options used for
+// ReleaseListFilter is a struct that represents the various filter options used for
 // retrieving the releases
-type ListFilter struct {
+type ReleaseListFilter struct {
 	Namespace    string   `json:"namespace"`
 	Limit        int      `json:"limit"`
 	Skip         int      `json:"skip"`
@@ -21,7 +22,7 @@ type ListFilter struct {
 //
 // It returns an action.ListStates to be used in an action.List as filters for
 // releases in a certain state.
-func (h *ListFilter) listStatesFromNames() action.ListStates {
+func (h *ReleaseListFilter) listStatesFromNames() action.ListStates {
 	var res action.ListStates = 0
 
 	for _, name := range h.StatusFilter {
@@ -31,8 +32,8 @@ func (h *ListFilter) listStatesFromNames() action.ListStates {
 	return res
 }
 
-// apply sets the ListFilter options for an action.List
-func (h *ListFilter) apply(list *action.List) {
+// Apply sets the ReleaseListFilter options for an action.List
+func (h *ReleaseListFilter) Apply(list *action.List) {
 	if h.Namespace == "" {
 		list.AllNamespaces = true
 	}
@@ -46,3 +47,9 @@ func (h *ListFilter) apply(list *action.List) {
 		list.ByDate = true
 	}
 }
+
+type ListReleasesRequest struct {
+	*ReleaseListFilter
+}
+
+type ListReleasesResponse []*release.Release

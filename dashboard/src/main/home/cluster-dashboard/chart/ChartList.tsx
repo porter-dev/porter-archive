@@ -46,9 +46,6 @@ const ChartList: React.FunctionComponent<Props> = ({
       const res = await api.getCharts(
         "<token>",
         {
-          namespace: namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
           limit: 50,
           skip: 0,
           byDate: false,
@@ -63,7 +60,11 @@ const ChartList: React.FunctionComponent<Props> = ({
             "failed",
           ],
         },
-        { id: currentProject.id }
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: namespace,
+        }
       );
       const charts = res.data || [];
 

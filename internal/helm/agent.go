@@ -4,14 +4,16 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/helm/pkg/chartutil"
+
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 // Agent is a Helm agent for performing helm operations
@@ -23,11 +25,11 @@ type Agent struct {
 // ListReleases lists releases based on a ListFilter
 func (a *Agent) ListReleases(
 	namespace string,
-	filter *ListFilter,
+	filter *types.ReleaseListFilter,
 ) ([]*release.Release, error) {
 	cmd := action.NewList(a.ActionConfig)
 
-	filter.apply(cmd)
+	filter.Apply(cmd)
 
 	return cmd.Run()
 }

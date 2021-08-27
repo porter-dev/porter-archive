@@ -861,9 +861,9 @@ const Placeholder = styled.div`
   font-size: 13px;
   color: #ffffff44;
   width: 100%;
-  display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: scroll;
 `;
 
 const Spinner = styled.img`

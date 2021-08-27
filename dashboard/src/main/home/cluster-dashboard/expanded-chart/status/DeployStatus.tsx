@@ -22,41 +22,48 @@ interface Props {
 
 const DeployStatus: React.FC<Props> = (props) => {
   const [shouldRequest, setShouldRequest] = useState(true);
-  const [eventData, setEventData] = useState([]);
+  const [eventData, setEventData] = useState<Event[][]>([]); // most recent event is first
   const { currentCluster, currentProject } = useContext(Context);
 
-  // sort by index, ensure sequence is monotonically increasing by time, collapse by id
+  // sort by time, ensure sequences are monotonically increasing by time, collapse by id
   const filterData = (data: Event[]) => {
-    data = data.sort((a, b) => a.index - b.index);
+    data = data.sort((a, b) => a.time - b.time);
 
-    let pref = 1;
-    while (pref < data.length) {
-      if (data[pref].time < data[pref - 1].time) {
-        break;
+    if (data.length == 0) return;
+
+    let seq: Event[][] = [];
+    let cur: Event[] = [data[0]];
+
+    for (let i = 1; i < data.length; ++i) {
+      if (data[i].index < data[i - 1].index) {
+        seq.push(cur);
+        cur = [];
       }
-      pref += 1;
+      cur.push(data[i]);
     }
-    if (data.length == 0) pref = 0;
+    if (cur) seq.push(cur);
 
-    data = data.slice(0, pref);
+    let ret: Event[][] = [];
+    seq.forEach((j) => {
+      j.push({
+        event_id: "",
+        index: 0,
+        info: "",
+        name: "",
+        status: 0,
+        time: 0,
+      });
 
-    data.push({
-      event_id: "",
-      index: 0,
-      info: "",
-      name: "",
-      status: 0,
-      time: 0,
+      let fin: Event[] = [];
+      for (let i = 0; i < j.length - 1; ++i) {
+        if (j[i].event_id != j[i + 1].event_id) {
+          fin.push(j[i]);
+        }
+      }
+      ret.push(fin);
     });
 
-    const fin: Event[] = [];
-    for (let i = 0; i < data.length - 1; ++i) {
-      if (data[i].event_id != data[i + 1].event_id) {
-        fin.push(data[i]);
-      }
-    }
-
-    setEventData(fin);
+    setEventData(ret.reverse());
   };
 
   useEffect(() => {
@@ -105,18 +112,22 @@ const DeployStatus: React.FC<Props> = (props) => {
   };
 
   return eventData.length ? (
-    <table>
-      <thead>
-        <td>Name</td>
-        <td>Time</td>
-        <td>Status</td>
-      </thead>
-      <tbody>
-        {eventData.map((ev) => (
-          <React.Fragment key={ev.index}>{renderEvent(ev)}</React.Fragment>
-        ))}
-      </tbody>
-    </table>
+    <React.Fragment>
+      {eventData.map((group, j) => (
+        <table key={j}>
+          <thead>
+            <td>Name</td>
+            <td>Time</td>
+            <td>Status</td>
+          </thead>
+          <tbody>
+            {group.map((ev) => (
+              <React.Fragment key={ev.index}>{renderEvent(ev)}</React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      ))}
+    </React.Fragment>
   ) : (
     <React.Fragment />
   );

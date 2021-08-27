@@ -417,17 +417,18 @@ const getChart = baseApi<
 
 const getCharts = baseApi<
   {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
     limit: number;
     skip: number;
     byDate: boolean;
     statusFilter: string[];
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/releases`;
 });
 
 const getChartComponents = baseApi<

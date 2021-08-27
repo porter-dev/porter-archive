@@ -1669,7 +1669,9 @@ type HandleUpdateReleaseStepsForm struct {
 		Status models.EventStatus `json:"status" form:"required"`
 		Info   string             `json:"info" form:"required"`
 	} `json:"event" form:"required"`
-	Token string `json:"token" form:"required"`
+	ClusterID uint   `json:"cluster_id" form:"required"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 // HandleUpdateReleaseSteps adds a new step to a release
@@ -1681,30 +1683,28 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	release, err := app.Repo.Release.ReadReleaseByWebhookToken(form.Token)
+	rel, err := app.Repo.Release.ReadRelease(form.ClusterID, form.Name, form.Namespace)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseReadData,
-			Errors: []string{"release not found with given webhook"},
+			Errors: []string{"Release not found"},
 		}, w)
 
 		return
 	}
 
-	fmt.Println(release)
-
-	if release.EventContainer == 0 {
+	if rel.EventContainer == 0 {
 		// create new event container
-		container, err := app.Repo.Event.CreateEventContainer(&models.EventContainer{ReleaseID: release.ID})
+		container, err := app.Repo.Event.CreateEventContainer(&models.EventContainer{ReleaseID: rel.ID})
 		if err != nil {
 			app.handleErrorDataWrite(err, w)
 			return
 		}
 
-		release.EventContainer = container.ID
+		rel.EventContainer = container.ID
 
-		release, err = app.Repo.Release.UpdateRelease(release)
+		rel, err = app.Repo.Release.UpdateRelease(rel)
 
 		if err != nil {
 			app.handleErrorInternal(err, w)
@@ -1713,12 +1713,9 @@ func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request)
 
 	}
 
-	fmt.Println(release.EventContainer)
-
-	container, err := app.Repo.Event.ReadEventContainer(release.EventContainer)
+	container, err := app.Repo.Event.ReadEventContainer(rel.EventContainer)
 
 	if err != nil {
-		fmt.Println("ERRRORRRR")
 		app.handleErrorInternal(err, w)
 		return
 	}

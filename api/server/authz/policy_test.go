@@ -92,10 +92,10 @@ func TestPolicyMiddlewareSuccessfulApplication(t *testing.T) {
 	)
 
 	req = apitest.WithURLParams(t, req, map[string]string{
-		"project_id":  "1",
-		"cluster_id":  "1",
-		"namespace":   "default",
-		"application": "app-1",
+		"project_id": "1",
+		"cluster_id": "1",
+		"namespace":  "default",
+		"name":       "app-1",
 	})
 
 	req = apitest.WithAuthenticatedUser(t, req, user)

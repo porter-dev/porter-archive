@@ -58,25 +58,6 @@ func (repo EventRepository) ReadSubEvent(id uint) (*models.SubEvent, error) {
 // AppendEvent will check if subevent with same (id, index) already exists
 // if yes, overrite it, otherwise make a new subevent
 func (repo EventRepository) AppendEvent(container *models.EventContainer, event *models.SubEvent) error {
-	subevent := &models.SubEvent{}
-
-	if err := repo.db.Where("event_container_id = ? AND event_id = ? AND index = ?",
-		container.ID,
-		event.EventID,
-		event.Index).First(&subevent).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			if err := repo.db.Create(event).Error; err != nil {
-				return err
-			}
-			return nil
-		} else {
-			return err
-		}
-	}
-
-	subevent.Info = event.Info
-	subevent.Status = event.Status
-	subevent.Name = event.Name
-
-	return repo.db.Save(subevent).Error
+	event.EventContainerID = container.ID
+	return repo.db.Create(event).Error
 }

@@ -305,13 +305,13 @@ func updateFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 		return err
 	}
 
-	err = updatePushWithAgent(updateAgent)
+	err = updatePushWithAgent(updateAgent, client)
 
 	if err != nil {
 		return err
 	}
 
-	err = updateUpgradeWithAgent(updateAgent)
+	err = updateUpgradeWithAgent(updateAgent, client)
 
 	if err != nil {
 		return err
@@ -361,7 +361,7 @@ func updatePush(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 		return err
 	}
 
-	return updatePushWithAgent(updateAgent)
+	return updatePushWithAgent(updateAgent, client)
 }
 
 func updateUpgrade(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
@@ -371,7 +371,7 @@ func updateUpgrade(resp *api.AuthCheckResponse, client *api.Client, args []strin
 		return err
 	}
 
-	return updateUpgradeWithAgent(updateAgent)
+	return updateUpgradeWithAgent(updateAgent, client)
 }
 
 // HELPER METHODS
@@ -478,28 +478,111 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) e
 	return nil
 }
 
-func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
+func updatePushWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Pushing new image for", app)
 
-	return updateAgent.Push()
+	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, app, namespace)
+
+	if err != nil {
+		return err
+	}
+
+	if stream {
+		updateAgent.StreamEvent(api.Event{
+			ID:     "push",
+			Name:   "Push",
+			Index:  200,
+			Status: api.EventStatusInProgress,
+			Info:   "",
+		}, release.WebhookToken)
+	}
+
+	if err := updateAgent.Push(); err != nil {
+		if stream {
+			updateAgent.StreamEvent(api.Event{
+				ID:     "push",
+				Name:   "Push",
+				Index:  210,
+				Status: api.EventStatusFailed,
+				Info:   err.Error(),
+			}, release.WebhookToken)
+		}
+		return err
+	}
+
+	if stream {
+		updateAgent.StreamEvent(api.Event{
+			ID:     "push",
+			Name:   "Push",
+			Index:  220,
+			Status: api.EventStatusSuccess,
+			Info:   "",
+		}, release.WebhookToken)
+	}
+
+	return nil
 }
 
-func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
+func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent, client *api.Client) error {
 	// push the deployment
 	color.New(color.FgGreen).Println("Calling webhook for", app)
+
+	release, err := client.GetReleaseWebhook(context.Background(), config.Project, config.Cluster, app, namespace)
+
+	if err != nil {
+		return err
+	}
+
+	if stream {
+		updateAgent.StreamEvent(api.Event{
+			ID:     "upgrade",
+			Name:   "Upgrade",
+			Index:  200,
+			Status: api.EventStatusInProgress,
+			Info:   "",
+		}, release.WebhookToken)
+	}
 
 	// read the values if necessary
 	valuesObj, err := readValuesFile()
 
 	if err != nil {
+		if stream {
+			updateAgent.StreamEvent(api.Event{
+				ID:     "upgrade",
+				Name:   "Upgrade",
+				Index:  210,
+				Status: api.EventStatusFailed,
+				Info:   err.Error(),
+			}, release.WebhookToken)
+		}
 		return err
 	}
 
 	err = updateAgent.UpdateImageAndValues(valuesObj)
 
 	if err != nil {
+		if stream {
+			updateAgent.StreamEvent(api.Event{
+				ID:     "upgrade",
+				Name:   "Upgrade",
+				Index:  220,
+				Status: api.EventStatusFailed,
+				Info:   err.Error(),
+			}, release.WebhookToken)
+		}
 		return err
+	}
+
+	if stream {
+		updateAgent.StreamEvent(api.Event{
+			ID:     "upgrade",
+			Name:   "Upgrade",
+			Index:  230,
+			Status: api.EventStatusSuccess,
+			Info:   err.Error(),
+		}, release.WebhookToken)
 	}
 
 	color.New(color.FgGreen).Println("Successfully updated", app)

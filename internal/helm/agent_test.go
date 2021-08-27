@@ -5,6 +5,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/storage/driver"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/logger"
 
@@ -102,7 +103,7 @@ func compareReleaseToStubs(t *testing.T, releases []*release.Release, stubs []re
 type listReleaseTest struct {
 	name      string
 	namespace string
-	filter    *helm.ListFilter
+	filter    *types.ReleaseListFilter
 	releases  []releaseStub
 	expRes    []releaseStub
 }
@@ -111,7 +112,7 @@ var listReleaseTests = []listReleaseTest{
 	{
 		name:      "simple test across namespaces, should sort by name",
 		namespace: "",
-		filter: &helm.ListFilter{
+		filter: &types.ReleaseListFilter{
 			Namespace:    "",
 			Limit:        20,
 			Skip:         0,
@@ -132,7 +133,7 @@ var listReleaseTests = []listReleaseTest{
 	{
 		name:      "simple test only default namespace",
 		namespace: "default",
-		filter: &helm.ListFilter{
+		filter: &types.ReleaseListFilter{
 			Namespace:    "",
 			Limit:        20,
 			Skip:         0,
@@ -152,7 +153,7 @@ var listReleaseTests = []listReleaseTest{
 	{
 		name:      "simple test limit",
 		namespace: "",
-		filter: &helm.ListFilter{
+		filter: &types.ReleaseListFilter{
 			Namespace:    "",
 			Limit:        2,
 			Skip:         0,

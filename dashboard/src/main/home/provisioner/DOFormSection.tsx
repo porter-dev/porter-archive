@@ -314,6 +314,8 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   );
 };
 
+export default DOFormSectionFC;
+
 const Highlight = styled.a`
   color: #8590ff;
   cursor: pointer;

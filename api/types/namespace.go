@@ -32,7 +32,7 @@ func (h *ReleaseListFilter) listStatesFromNames() action.ListStates {
 	return res
 }
 
-// apply sets the ReleaseListFilter options for an action.List
+// Apply sets the ReleaseListFilter options for an action.List
 func (h *ReleaseListFilter) Apply(list *action.List) {
 	if h.Namespace == "" {
 		list.AllNamespaces = true

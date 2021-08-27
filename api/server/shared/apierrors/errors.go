@@ -98,11 +98,6 @@ func HandleAPIError(
 	r *http.Request,
 	err RequestError,
 ) {
-	// if the status code is internal server error, use alerter
-	if err.GetStatusCode() == http.StatusInternalServerError && config.Alerter != nil {
-		config.Alerter.SendAlert(r.Context(), err)
-	}
-
 	extErrorStr := err.ExternalError()
 
 	// log the internal error
@@ -110,10 +105,18 @@ func HandleAPIError(
 		Str("internal_error", err.InternalError()).
 		Str("external_error", extErrorStr)
 
-	addLoggingScopes(r.Context(), event)
+	data := addLoggingScopes(r.Context(), event)
 	addLoggingRequestMeta(r, event)
 
-	event.Msg("")
+	event.Send()
+
+	// if the status code is internal server error, use alerter
+	if err.GetStatusCode() == http.StatusInternalServerError && config.Alerter != nil {
+		data["method"] = r.Method
+		data["url"] = r.URL.String()
+
+		config.Alerter.SendAlert(r.Context(), err, data)
+	}
 
 	// send the external error
 	resp := &types.ExternalError{
@@ -132,17 +135,20 @@ func HandleAPIError(
 		addLoggingScopes(r.Context(), event)
 		addLoggingRequestMeta(r, event)
 
-		event.Msg("")
+		event.Send()
 	}
 
 	return
 }
 
-func addLoggingScopes(ctx context.Context, event *zerolog.Event) {
+func addLoggingScopes(ctx context.Context, event *zerolog.Event) map[string]interface{} {
+	res := make(map[string]interface{})
+
 	// case on the context values that exist, add them to event
 	if userVal := ctx.Value(types.UserScope); userVal != nil {
 		if userModel, ok := userVal.(*models.User); ok {
 			event.Uint("user_id", userModel.ID)
+			res["user_id"] = userModel.ID
 		}
 	}
 
@@ -152,14 +158,18 @@ func addLoggingScopes(ctx context.Context, event *zerolog.Event) {
 			for key, scope := range reqScopes {
 				if scope.Resource.Name != "" {
 					event.Str(string(key), scope.Resource.Name)
+					res[string(key)] = scope.Resource.Name
 				}
 
 				if scope.Resource.UInt != 0 {
 					event.Uint(string(key), scope.Resource.UInt)
+					res[string(key)] = scope.Resource.UInt
 				}
 			}
 		}
 	}
+
+	return res
 }
 
 func addLoggingRequestMeta(r *http.Request, event *zerolog.Event) {

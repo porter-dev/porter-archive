@@ -44,7 +44,7 @@ const ProvisionerSettings: React.FC<Props> = ({
 
   const handleSelectProvider = (newSelectedProvider: string) => {
     if (!isInNewProject) {
-      setSelectedProvider(selectedProvider);
+      setSelectedProvider(newSelectedProvider);
       return;
     }
     if (newSelectedProvider === selectedProvider) {

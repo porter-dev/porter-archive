@@ -431,6 +431,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           selected={selectedInfras}
           setSelected={(x: { value: string; label: string }[]) => {
             setIsFormDirty(true);
+            console.log(x);
             setSelectedInfras(x);
           }}
         />

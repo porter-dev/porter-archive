@@ -53,8 +53,38 @@ func getNamespaceRoutes(
 
 	routes := make([]*Route, 0)
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap -> namespace.NewGetConfigMapHandler
+	getConfigMapEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/configmap",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	getConfigMapHandler := namespace.NewGetConfigMapHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getConfigMapEndpoint,
+		Handler:  getConfigMapHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases -> namespace.NewListReleasesHandler
-	getEndpoint := factory.NewAPIEndpoint(
+	listReleasesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
@@ -71,15 +101,15 @@ func getNamespaceRoutes(
 		},
 	)
 
-	getHandler := namespace.NewListReleasesHandler(
+	listReleasesHandler := namespace.NewListReleasesHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
-		Endpoint: getEndpoint,
-		Handler:  getHandler,
+		Endpoint: listReleasesEndpoint,
+		Handler:  listReleasesHandler,
 		Router:   r,
 	})
 

@@ -3,6 +3,7 @@ package types
 import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
+	v1 "k8s.io/api/core/v1"
 )
 
 // ReleaseListFilter is a struct that represents the various filter options used for
@@ -53,3 +54,11 @@ type ListReleasesRequest struct {
 }
 
 type ListReleasesResponse []*release.Release
+
+type GetConfigMapRequest struct {
+	Name string `schema:"name,required"`
+}
+
+type GetConfigMapResponse struct {
+	*v1.ConfigMap
+}

@@ -84,6 +84,16 @@ type CreateConfigMapResponse struct {
 	*v1.ConfigMap
 }
 
+type UpdateConfigMapRequest struct {
+	Name            string            `json:"name,required"`
+	Variables       map[string]string `json:"variables,required"`
+	SecretVariables map[string]string `json:"secret_variables,required"`
+}
+
+type UpdateConfigMapResponse struct {
+	*v1.ConfigMap
+}
+
 type RenameConfigMapRequest struct {
 	Name    string `json:"name,required"`
 	NewName string `json:"new_name,required"`

@@ -202,13 +202,13 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
         "<token>",
         {
           name,
-          namespace,
           variables: apiEnvVariables,
           secret_variables: secretEnvVariables,
         },
         {
           id: this.context.currentProject.id,
           cluster_id: this.props.currentCluster.id,
+          namespace,
         }
       )
       .then((res) => {

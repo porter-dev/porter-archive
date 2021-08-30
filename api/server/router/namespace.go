@@ -112,7 +112,7 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/create -> namespace.NewGetConfigMapHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/create -> namespace.NewCreateConfigMapHandler
 	createConfigMapEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -139,6 +139,36 @@ func getNamespaceRoutes(
 	routes = append(routes, &Route{
 		Endpoint: createConfigMapEndpoint,
 		Handler:  createConfigMapHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/update -> namespace.NewUpdateConfigMapHandler
+	updateConfigMapEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/configmap/update",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	updateConfigMapHandler := namespace.NewUpdateConfigMapHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateConfigMapEndpoint,
+		Handler:  updateConfigMapHandler,
 		Router:   r,
 	})
 

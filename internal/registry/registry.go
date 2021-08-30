@@ -57,6 +57,30 @@ type Image struct {
 	PushedAt *time.Time `json:"pushed_at"`
 }
 
+func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, awsIntID uint) (string, error) {
+	awsInt, err := awsIntRepo.ReadAWSIntegration(awsIntID)
+
+	if err != nil {
+		return "", err
+	}
+
+	sess, err := awsInt.GetSession()
+
+	if err != nil {
+		return "", err
+	}
+
+	ecrSvc := ecr.New(sess)
+
+	output, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+
+	if err != nil {
+		return "", err
+	}
+
+	return *output.AuthorizationData[0].ProxyEndpoint, nil
+}
+
 // ListRepositories lists the repositories for a registry
 func (r *Registry) ListRepositories(
 	repo repository.Repository,

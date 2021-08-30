@@ -112,8 +112,8 @@
 | <li>- [ ] `POST /api/projects/{project_id}/provision/gke`                                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/test`                                                                  |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs`                                                 |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/registries`                                                                      |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/registries`                                                                       |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/registries`                                                                      | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/registries`                                                                       | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/dockerhub/token`                                                       |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/docr/token`                                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/ecr/{region}/token`                                                    |             |                 |             |                  |
@@ -122,7 +122,7 @@
 | <li>- [ ] `POST /api/projects/{project_id}/registries/{registry_id}`                                                        |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories`                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories/*`                                          |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/registries/{registry_id}/repository`                                             |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}/repository`                                             | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/releases`                                                                         | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/image/update/batch`                                                     |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/history`                                                          |             |                 |             |                  |

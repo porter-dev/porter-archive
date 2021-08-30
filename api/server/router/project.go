@@ -5,6 +5,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/project"
+	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -186,6 +187,61 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listGitReposEndpoint,
 		Handler:  listGitReposHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/registries -> registry.NewRegistryListHandler
+	listRegistriesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/registries",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listRegistriesHandler := registry.NewRegistryListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listRegistriesEndpoint,
+		Handler:  listRegistriesHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/registries -> registry.NewRegistryCreateHandler
+	createRegistryEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/registries",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createRegistryHandler := registry.NewRegistryCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createRegistryEndpoint,
+		Handler:  createRegistryHandler,
 		Router:   r,
 	})
 

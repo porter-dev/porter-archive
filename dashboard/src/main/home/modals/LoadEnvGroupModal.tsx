@@ -9,7 +9,10 @@ import { Context } from "shared/Context";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import { KeyValue } from "components/form-components/KeyValueArray";
-import { EnvGroupData, formattedEnvironmentValue } from "../cluster-dashboard/env-groups/EnvGroup";
+import {
+  EnvGroupData,
+  formattedEnvironmentValue,
+} from "../cluster-dashboard/env-groups/EnvGroup";
 
 type PropsType = {
   namespace: string;
@@ -45,12 +48,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     api
       .listConfigMaps(
         "<token>",
-        {
-          namespace: this.props.namespace,
-          cluster_id: this.props.clusterId || this.context.currentCluster.id,
-        },
+        {},
         {
           id: this.context.currentProject.id,
+          namespace: this.props.namespace,
+          cluster_id: this.props.clusterId || this.context.currentCluster.id,
         }
       )
       .then((res) => {

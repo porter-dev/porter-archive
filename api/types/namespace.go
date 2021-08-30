@@ -62,3 +62,7 @@ type GetConfigMapRequest struct {
 type GetConfigMapResponse struct {
 	*v1.ConfigMap
 }
+
+type ListConfigMapsResponse struct {
+	*v1.ConfigMapList
+}

@@ -876,13 +876,14 @@ const upgradeChartValues = baseApi<
 });
 
 const listConfigMaps = baseApi<
+  {},
   {
+    id: number;
     namespace: string;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/configmap/list`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/list`;
 });
 
 const getConfigMap = baseApi<

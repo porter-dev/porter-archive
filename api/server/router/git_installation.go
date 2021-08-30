@@ -220,5 +220,42 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile ->
+	// gitinstallation.NewGithubGetProcfileHandler
+	getProcfileEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/repos/{%s}/{%s}/{%s}/{%s}/procfile",
+					relPath,
+					types.URLParamGitKind,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	getProcfileHandler := gitinstallation.NewGithubGetProcfileHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getProcfileEndpoint,
+		Handler:  getProcfileHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -54,3 +54,9 @@ type GithubDirectoryItem struct {
 }
 
 type GetContentsResponse []GithubDirectoryItem
+
+type GetProcfileRequest struct {
+	Path string `schema:"path" form:"required"`
+}
+
+type GetProcfileResponse map[string]string

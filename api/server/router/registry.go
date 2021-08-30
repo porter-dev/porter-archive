@@ -80,5 +80,34 @@ func getRegistryRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/registries/{registry_id}/repository -> registry.NewRegistryCreateRepositoryHandler
+	createRepositoryEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/repository",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.RegistryScope,
+			},
+		},
+	)
+
+	createRepositoryHandler := registry.NewRegistryCreateRepositoryHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createRepositoryEndpoint,
+		Handler:  createRepositoryHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

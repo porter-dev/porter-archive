@@ -3,7 +3,6 @@ package infra
 import (
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -13,7 +12,6 @@ import (
 
 type InfraGetHandler struct {
 	handlers.PorterHandlerWriter
-	authz.KubernetesAgentGetter
 }
 
 func NewInfraGetHandler(
@@ -21,8 +19,7 @@ func NewInfraGetHandler(
 	writer shared.ResultWriter,
 ) *InfraGetHandler {
 	return &InfraGetHandler{
-		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
-		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
+		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 

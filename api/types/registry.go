@@ -27,3 +27,18 @@ const (
 	DOCR      RegistryService = "docr"
 	DockerHub RegistryService = "dockerhub"
 )
+
+type RegistryListResponse []Registry
+
+type CreateRegistryRequest struct {
+	URL                string `json:"url"`
+	Name               string `json:"name" form:"required"`
+	GCPIntegrationID   uint   `json:"gcp_integration_id"`
+	AWSIntegrationID   uint   `json:"aws_integration_id"`
+	DOIntegrationID    uint   `json:"do_integration_id"`
+	BasicIntegrationID uint   `json:"basic_integration_id"`
+}
+
+type CreateRegistryRepositoryRequest struct {
+	ImageRepoURI string `json:"image_repo_uri" form:"required"`
+}

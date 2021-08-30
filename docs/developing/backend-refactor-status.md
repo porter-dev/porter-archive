@@ -54,7 +54,7 @@
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos`                                                 | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches`                  | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect` | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents`         |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents`         | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile`         |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url`      |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/helmrepos`                                                                        |             |                 |             |                  |

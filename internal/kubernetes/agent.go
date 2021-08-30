@@ -111,7 +111,7 @@ type mergeConfigMapData struct {
 }
 
 // UpdateConfigMap updates the configmap given its name and namespace
-func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) error {
+func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
 	cmData := make(map[string]*string)
 
 	for key, val := range configMap {
@@ -130,18 +130,16 @@ func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[str
 	patchBytes, err := json.Marshal(mergeCM)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = a.Clientset.CoreV1().ConfigMaps(namespace).Patch(
+	return a.Clientset.CoreV1().ConfigMaps(namespace).Patch(
 		context.Background(),
 		name,
 		types.MergePatchType,
 		patchBytes,
 		metav1.PatchOptions{},
 	)
-
-	return err
 }
 
 type mergeLinkedSecretData struct {

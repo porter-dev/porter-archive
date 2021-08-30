@@ -69,18 +69,7 @@ func (c *CreateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 }
 
 func createConfigMap(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.ConfigMap, error) {
-	secretData := make(map[string][]byte)
-
-	for key, rawValue := range input.SecretVariables {
-		// encodedValue := base64.StdEncoding.EncodeToString([]byte(rawValue))
-
-		// if err != nil {
-		// 	app.handleErrorInternal(err, w)
-		// 	return
-		// }
-
-		secretData[key] = []byte(rawValue)
-	}
+	secretData := encodeSecrets(input.SecretVariables)
 
 	// create secret first
 	if _, err := agent.CreateLinkedSecret(input.Name, input.Namespace, input.Name, secretData); err != nil {
@@ -93,4 +82,21 @@ func createConfigMap(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.C
 	}
 
 	return agent.CreateConfigMap(input.Name, input.Namespace, input.Variables)
+}
+
+func encodeSecrets(data map[string]string) map[string][]byte {
+	res := make(map[string][]byte)
+
+	for key, rawValue := range data {
+		// encodedValue := base64.StdEncoding.EncodeToString([]byte(rawValue))
+
+		// if err != nil {
+		// 	app.handleErrorInternal(err, w)
+		// 	return
+		// }
+
+		res[key] = []byte(rawValue)
+	}
+
+	return res
 }

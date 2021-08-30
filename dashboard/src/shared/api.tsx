@@ -902,14 +902,16 @@ const getConfigMap = baseApi<
 const createConfigMap = baseApi<
   {
     name: string;
-    namespace: string;
     variables: Record<string, string>;
     secret_variables?: Record<string, string>;
   },
-  { id: number; cluster_id: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
 >("POST", (pathParams) => {
-  let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/configmap/create?cluster_id=${cluster_id}`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/create`;
 });
 
 const updateConfigMap = baseApi<

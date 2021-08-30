@@ -66,3 +66,13 @@ type GetConfigMapResponse struct {
 type ListConfigMapsResponse struct {
 	*v1.ConfigMapList
 }
+
+type CreateConfigMapRequest struct {
+	Name            string            `json:"name,required"`
+	Variables       map[string]string `json:"variables,required"`
+	SecretVariables map[string]string `json:"secret_variables,required"`
+}
+
+type CreateConfigMapResponse struct {
+	*v1.ConfigMap
+}

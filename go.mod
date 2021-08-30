@@ -5,7 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.65.0
 	github.com/AlecAivazis/survey/v2 v2.2.9
-	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/aws/aws-sdk-go v1.35.4
 	github.com/bradleyfalzon/ghinstallation v1.1.1
@@ -37,7 +37,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/itchyny/gojq v0.12.1
-	github.com/jinzhu/gorm v1.9.16
+	github.com/jinzhu/gorm v1.9.16 // indirect
 	github.com/joeshaw/envdecode v0.0.0-20200121155833-099f1fc765bd
 	github.com/josharian/impl v1.1.0 // indirect
 	github.com/kris-nova/logger v0.0.0-20181127235838-fd0d87064b06

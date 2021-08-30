@@ -120,7 +120,7 @@
 | <li>- [ ] `GET /api/projects/{project_id}/registries/gcr/token`                                                             |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/registries/{registry_id}`                                                      |             |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}`                                                        | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories`                                            |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/registries/{registry_id}/repositories`                                            | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories/*`                                          |             |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}/repository`                                             | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/releases`                                                                         | AS          | yes             |             | yes              |

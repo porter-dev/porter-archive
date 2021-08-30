@@ -31,11 +31,26 @@ const (
 
 type ListRepoBranchesResponse []string
 
-type GetBuildpackRequest struct {
+type GithubDirectoryRequest struct {
 	Dir string `schema:"dir" form:"required"`
+}
+
+type GetBuildpackRequest struct {
+	GithubDirectoryRequest
 }
 
 type GetBuildpackResponse struct {
 	Valid bool   `json:"valid"`
 	Name  string `json:"name"`
 }
+
+type GetContentsRequest struct {
+	GithubDirectoryRequest
+}
+
+type GithubDirectoryItem struct {
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+type GetContentsResponse []GithubDirectoryItem

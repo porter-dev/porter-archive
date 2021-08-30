@@ -183,5 +183,42 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	//   GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents ->
+	// gitinstallation.NewGithubGetContentsHandler
+	getContentsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/repos/{%s}/{%s}/{%s}/{%s}/contents",
+					relPath,
+					types.URLParamGitKind,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	getContentsHandler := gitinstallation.NewGithubGetContentsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getContentsEndpoint,
+		Handler:  getContentsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -1,23 +1,5 @@
 package models
 
-import "helm.sh/helm/v3/pkg/chart"
-
-// PorterChartList is how a chart gets displayed when listed
-type PorterChartList struct {
-	Name        string   `json:"name"`
-	Versions    []string `json:"versions"`
-	Description string   `json:"description"`
-	Icon        string   `json:"icon"`
-}
-
-// PorterChartRead is a chart with detailed information and a form for reading
-type PorterChartRead struct {
-	Markdown string                 `json:"markdown"`
-	Metadata *chart.Metadata        `json:"metadata"`
-	Values   map[string]interface{} `json:"values"`
-	Form     *FormYAML              `json:"form"`
-}
-
 // FormContext is the target context
 type FormContext struct {
 	Type   string            `yaml:"type" json:"type"`

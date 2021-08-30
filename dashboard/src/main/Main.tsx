@@ -56,7 +56,7 @@ export default class Main extends Component<PropsType, StateType> {
       .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
 
     api
-      .getCapabilities("", {}, {})
+      .getMetadata("", {}, {})
       .then((res) => {
         this.setState({ local: !res.data?.provisioner });
       })

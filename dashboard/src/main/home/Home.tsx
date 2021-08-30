@@ -111,9 +111,9 @@ class Home extends Component<PropsType, StateType> {
       });
   };
 
-  getCapabilities = () => {
+  getMetadata = () => {
     api
-      .getCapabilities("<token>", {}, {})
+      .getMetadata("<token>", {}, {})
       .then((res) => {
         this.context.setCapabilities(res.data);
       })
@@ -286,7 +286,7 @@ class Home extends Component<PropsType, StateType> {
     this.setState({ ghRedirect: urlParams.get("gh_oauth") !== null });
     urlParams.delete("gh_oauth");
     this.getProjects(defaultProjectId);
-    this.getCapabilities();
+    this.getMetadata();
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
@@ -302,7 +302,7 @@ class Home extends Component<PropsType, StateType> {
         this.checkDO();
       } else {
         this.initializeView();
-        this.getCapabilities();
+        this.getMetadata();
       }
     }
   }

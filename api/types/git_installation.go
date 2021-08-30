@@ -21,3 +21,11 @@ type Repo struct {
 }
 
 type ListReposResponse []Repo
+
+const (
+	URLParamGitKind      URLParam = "kind"
+	URLParamGitRepoOwner URLParam = "owner"
+	URLParamGitRepoName  URLParam = "name"
+)
+
+type ListRepoBranchesResponse []string

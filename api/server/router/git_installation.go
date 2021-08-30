@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -106,6 +108,41 @@ func getGitInstallationRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listReposEndpoint,
 		Handler:  listReposHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches ->
+	// gitinstallation.GithubListBranchesHandler
+	listBranchesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/repos/%s/%s/%s/branches",
+					relPath,
+					types.URLParamGitKind,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	listBranchesHandler := gitinstallation.NewGithubListBranchesHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listBranchesEndpoint,
+		Handler:  listBranchesHandler,
 		Router:   r,
 	})
 

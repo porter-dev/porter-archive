@@ -1,4 +1,4 @@
-package authz_test
+package requestutils_test
 
 import (
 	"context"
@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +59,7 @@ func TestGetURLUintParamsErrors(t *testing.T) {
 		// set the context for testing
 		r = apitest.WithURLParams(t, r, test.routeParams)
 
-		_, err := authz.GetURLParamUint(r, test.paramReq)
+		_, err := requestutils.GetURLParamUint(r, types.URLParam(test.paramReq))
 
 		if err == nil {
 			t.Fatalf("[ %s ] did not return an error when error was expected", test.description)
@@ -89,7 +90,7 @@ func TestGetURLParamString(t *testing.T) {
 
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
-	res, err := authz.GetURLParamString(r, "name")
+	res, err := requestutils.GetURLParamString(r, "name")
 
 	if err != nil {
 		t.Fatalf("[ GetURLParamString ] returneed an error when no error was expected, %v", err.Error())
@@ -111,7 +112,7 @@ func TestGetURLParamUint(t *testing.T) {
 
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
-	res, err := authz.GetURLParamUint(r, "name")
+	res, err := requestutils.GetURLParamUint(r, "name")
 
 	if err != nil {
 		t.Fatalf("[ GetURLParamUint ] returneed an error when no error was expected, %v", err.Error())

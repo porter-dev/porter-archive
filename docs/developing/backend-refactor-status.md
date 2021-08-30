@@ -79,9 +79,9 @@
 | <li>- [ ] `GET /api/projects/{project_id}/invites/{token}`                                                                  |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/configmap`                                                                    | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/create`                                                            | AS          | yes             |             | yes              |
-| <li>- [ ] `DELETE /api/projects/{project_id}/k8s/configmap/delete`                                                          |             |                 |             |                  |
+| <li>- [x] `DELETE /api/projects/{project_id}/k8s/configmap/delete`                                                          | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/configmap/list`                                                               | AS          | yes             |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/rename`                                                            |             |                 |             |                  |
+| <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/rename`                                                            | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/update`                                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/helm_releases`                                                                |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}`                                                   |             |                 |             |                  |

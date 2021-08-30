@@ -140,7 +140,10 @@ export default class JobResource extends Component<PropsType, StateType> {
     let envObject = {} as any;
     envArray &&
       envArray.forEach((env: any, i: number) => {
-        envObject[env.name] = env.value;
+        const secretName = _.get(env, "valueFrom.secretKeyRef.name");
+        envObject[env.name] = secretName
+          ? `PORTERSECRET_${secretName}`
+          : env.value;
       });
 
     // Handle no config to show

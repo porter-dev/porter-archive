@@ -316,9 +316,9 @@ const ChartList: React.FunctionComponent<Props> = ({
         const status: JobStatusWithTimeAndVersion = _.get(
           jobStatus,
           getChartKey(chart.name, chart.namespace),
-          null
+          { status: null } as any
         );
-        return !status || status.status === lastRunStatus;
+        return status.status === lastRunStatus;
       });
 
     if (sortType == "Newest") {

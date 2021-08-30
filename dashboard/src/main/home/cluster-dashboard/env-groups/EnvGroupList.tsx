@@ -38,12 +38,11 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
     api
       .listConfigMaps(
         "<token>",
-        {
-          namespace: this.props.namespace,
-          cluster_id: this.props.currentCluster.id,
-        },
+        {},
         {
           id: this.context.currentProject.id,
+          namespace: this.props.namespace,
+          cluster_id: this.props.currentCluster.id,
         }
       )
       .then((res) => {

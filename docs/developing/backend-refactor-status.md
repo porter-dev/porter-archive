@@ -80,7 +80,7 @@
 | <li>- [x] `GET /api/projects/{project_id}/k8s/configmap`                                                                    |             | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/create`                                                            |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/k8s/configmap/delete`                                                          |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/configmap/list`                                                               |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/configmap/list`                                                               |             | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/rename`                                                            |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/update`                                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/helm_releases`                                                                |             |                 |             |                  |

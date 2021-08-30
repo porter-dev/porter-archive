@@ -2,7 +2,6 @@ package gitinstallation
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/google/go-github/github"
@@ -93,5 +92,5 @@ func (c *GitRepoListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		installationIds = append(installationIds, v.InstallationID)
 	}
 
-	json.NewEncoder(w).Encode(installationIds)
+	c.WriteResult(w, r, installationIds)
 }

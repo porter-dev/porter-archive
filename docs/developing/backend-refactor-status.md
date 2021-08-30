@@ -51,7 +51,7 @@
 | <li>- [ ] `POST /api/projects/{project_id}/deploy/addon/{name}/{version}`                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/deploy/{name}/{version}`                                                         |             |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos`                                                                         | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos`                                                 |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos`                                                 | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches`                  |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect` |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents`         |             |                 |             |                  |

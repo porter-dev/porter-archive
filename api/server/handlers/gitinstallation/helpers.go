@@ -3,9 +3,12 @@ package gitinstallation
 import (
 	"net/http"
 
+	"github.com/bradleyfalzon/ghinstallation"
+	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/oauth"
 	"golang.org/x/oauth2"
 )
@@ -46,4 +49,24 @@ func GetGithubAppOauthTokenFromRequest(config *config.Config, r *http.Request) (
 		Expiry:       oauthInt.Expiry,
 		TokenType:    "Bearer",
 	}, nil
+}
+
+// GetGithubAppClientFromRequest gets the github app installation id from the request and authenticates
+// using it and a private key file
+func GetGithubAppClientFromRequest(config *config.Config, r *http.Request) (*github.Client, error) {
+	// get installation id from context
+	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
+
+	itr, err := ghinstallation.NewKeyFromFile(
+		http.DefaultTransport,
+		config.GithubAppConf.AppID,
+		int64(ga.ID),
+		config.GithubAppConf.SecretPath,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return github.NewClient(&http.Client{Transport: itr}), nil
 }

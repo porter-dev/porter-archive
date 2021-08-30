@@ -119,7 +119,7 @@
 | <li>- [ ] `GET /api/projects/{project_id}/registries/ecr/{region}/token`                                                    |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/gcr/token`                                                             |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/registries/{registry_id}`                                                      |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/registries/{registry_id}`                                                        |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}`                                                        | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories`                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories/*`                                          |             |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}/repository`                                             | AB          |                 |             |                  |

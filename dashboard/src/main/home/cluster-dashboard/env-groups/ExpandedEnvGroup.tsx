@@ -123,12 +123,12 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
         "<token>",
         {
           name,
-          namespace,
           new_name: newName,
         },
         {
           id: this.context.currentProject.id,
           cluster_id: this.props.currentCluster.id,
+          namespace,
         }
       )
       .then((res) => {
@@ -348,10 +348,12 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
         "<token>",
         {
           name,
-          namespace,
-          cluster_id: this.props.currentCluster.id,
         },
-        { id: this.context.currentProject.id }
+        {
+          id: this.context.currentProject.id,
+          cluster_id: this.props.currentCluster.id,
+          namespace,
+        }
       )
       .then((res) => {
         this.props.closeExpanded();

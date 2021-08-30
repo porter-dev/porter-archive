@@ -67,6 +67,13 @@ type ListConfigMapsResponse struct {
 	*v1.ConfigMapList
 }
 
+type ConfigMapInput struct {
+	Name            string
+	Namespace       string
+	Variables       map[string]string
+	SecretVariables map[string]string
+}
+
 type CreateConfigMapRequest struct {
 	Name            string            `json:"name,required"`
 	Variables       map[string]string `json:"variables,required"`
@@ -75,4 +82,17 @@ type CreateConfigMapRequest struct {
 
 type CreateConfigMapResponse struct {
 	*v1.ConfigMap
+}
+
+type RenameConfigMapRequest struct {
+	Name    string `json:"name,required"`
+	NewName string `json:"new_name,required"`
+}
+
+type RenameConfigMapResponse struct {
+	*v1.ConfigMap
+}
+
+type DeleteConfigMapRequest struct {
+	Name string `schema:"name,required"`
 }

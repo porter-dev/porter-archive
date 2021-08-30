@@ -142,6 +142,65 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/rename -> namespace.NewRenameConfigMapHandler
+	renameConfigMapEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/configmap/rename",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	renameConfigMapHandler := namespace.NewRenameConfigMapHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: renameConfigMapEndpoint,
+		Handler:  renameConfigMapHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/delete -> namespace.NewDeleteConfigMapHandler
+	deleteConfigMapEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/configmap/delete",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	deleteConfigMapHandler := namespace.NewDeleteConfigMapHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteConfigMapEndpoint,
+		Handler:  deleteConfigMapHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases -> namespace.NewListReleasesHandler
 	listReleasesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

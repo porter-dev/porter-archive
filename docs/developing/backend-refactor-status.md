@@ -143,9 +143,9 @@
 | <li>- [ ] `GET /api/projects/{project_id}/slack_integrations/exists`                                                        |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/slack_integrations/{slack_integration_id}`                                     |             |                 |             |                  |
 | <li>- [ ] `GET /api/readyz`                                                                                                 |             |                 |             |                  |
-| <li>- [ ] `GET /api/templates`                                                                                              |             |                 |             |                  |
+| <li>- [X] `GET /api/templates`                                                                                              | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/templates/upgrade_notes/{name}/{version}`                                                               |             |                 |             |                  |
-| <li>- [ ] `GET /api/templates/{name}/{version}`                                                                             |             |                 |             |                  |
+| <li>- [X] `GET /api/templates/{name}/{version}`                                                                             | AB          |                 |             |                  |
 | <li>- [x] `POST /api/users`                                                                                                 | AB          | yes             |             | yes              |
 | <li>- [x] `GET /api/users/{user_id}`                                                                                        | AB          | yes             |             | yes              |
 | <li>- [x] `DELETE /api/users/{user_id}`                                                                                     | AB          | yes             |             |                  |

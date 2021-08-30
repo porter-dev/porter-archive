@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -109,6 +111,34 @@ func getRegistryRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryDeleteHandler
+	deleteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.RegistryScope,
+			},
+		},
+	)
+
+	deleteHandler := registry.NewRegistryDeleteHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteEndpoint,
+		Handler:  deleteHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/registries/{registry_id}/repositories -> registry.NewRegistryListRepositoriesHandler
 	listRepositoriesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -134,6 +164,38 @@ func getRegistryRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listRepositoriesEndpoint,
 		Handler:  listRepositoriesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/registries/{registry_id}/repositories/* -> registry.NewRegistryListImagesHandler
+	listImagesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/repositories/%s",
+					relPath,
+					types.URLParamWildcard,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.RegistryScope,
+			},
+		},
+	)
+
+	listImagesHandler := registry.NewRegistryListImagesHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listImagesEndpoint,
+		Handler:  listImagesHandler,
 		Router:   r,
 	})
 

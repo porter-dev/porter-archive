@@ -39,6 +39,7 @@ type TestAgents struct {
 
 // AppConfig is the configuration required for creating a new App
 type AppConfig struct {
+	Version    string
 	DB         *gorm.DB
 	Logger     *lr.Logger
 	Repository *repository.Repository
@@ -105,14 +106,15 @@ type App struct {
 }
 
 type AppCapabilities struct {
-	Provisioning       bool `json:"provisioner"`
-	Github             bool `json:"github"`
-	BasicLogin         bool `json:"basic_login"`
-	GithubLogin        bool `json:"github_login"`
-	GoogleLogin        bool `json:"google_login"`
-	SlackNotifications bool `json:"slack_notifs"`
-	Email              bool `json:"email"`
-	Analytics          bool `json:"analytics"`
+	Version            string `json:"version"`
+	Provisioning       bool   `json:"provisioner"`
+	Github             bool   `json:"github"`
+	BasicLogin         bool   `json:"basic_login"`
+	GithubLogin        bool   `json:"github_login"`
+	GoogleLogin        bool   `json:"google_login"`
+	SlackNotifications bool   `json:"slack_notifs"`
+	Email              bool   `json:"email"`
+	Analytics          bool   `json:"analytics"`
 }
 
 // New returns a new App instance
@@ -129,16 +131,18 @@ func New(conf *AppConfig) (*App, error) {
 	}
 
 	app := &App{
-		Logger:       conf.Logger,
-		Repo:         conf.Repository,
-		ServerConf:   conf.ServerConf,
-		RedisConf:    conf.RedisConf,
-		DBConf:       conf.DBConf,
-		TestAgents:   conf.TestAgents,
-		Capabilities: &AppCapabilities{},
-		db:           conf.DB,
-		validator:    validator,
-		translator:   &translator,
+		Logger:     conf.Logger,
+		Repo:       conf.Repository,
+		ServerConf: conf.ServerConf,
+		RedisConf:  conf.RedisConf,
+		DBConf:     conf.DBConf,
+		TestAgents: conf.TestAgents,
+		Capabilities: &AppCapabilities{
+			Version: conf.Version,
+		},
+		db:         conf.DB,
+		validator:  validator,
+		translator: &translator,
 	}
 
 	// if repository not specified, default to in-memory

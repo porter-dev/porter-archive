@@ -10,12 +10,12 @@ type PropsType = {
 
 const CheckboxList = ({ label, options, selected, setSelected }: PropsType) => {
   let onSelectOption = (option: { value: string; label: string }) => {
-    if (!selected.includes(option)) {
-      selected.push(option);
-      setSelected(selected);
+    const tmp = [...selected];
+    if (!tmp.includes(option)) {
+      setSelected([...tmp, option]);
     } else {
-      selected.splice(selected.indexOf(option), 1);
-      setSelected(selected);
+      tmp.splice(tmp.indexOf(option), 1);
+      setSelected(tmp);
     }
   };
 

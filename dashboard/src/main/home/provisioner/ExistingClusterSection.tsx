@@ -12,6 +12,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
   projectName: string;
+  trackOnSave: () => void;
 };
 
 type StateType = {
@@ -24,6 +25,7 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
   };
 
   onCreateProject = () => {
+    this.props?.trackOnSave();
     let { projectName } = this.props;
     let { user, setProjects, setCurrentProject } = this.context;
 

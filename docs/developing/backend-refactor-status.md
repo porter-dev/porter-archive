@@ -82,7 +82,7 @@
 | <li>- [x] `DELETE /api/projects/{project_id}/k8s/configmap/delete`                                                          | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/configmap/list`                                                               | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/rename`                                                            | AS          | yes             |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/update`                                                            |             |                 |             |                  |
+| <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/update`                                                            | AS          | yes             |             | yes              |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/helm_releases`                                                                |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}`                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods`                                                 |             |                 |             |                  |
@@ -103,7 +103,7 @@
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{kind}/status`                                                                |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status`                                               |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs`                                      |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/policy`                                                                           |             |                 |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/policy`                                                                           | AS          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/docr`                                                                  |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/doks`                                                                  |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/ecr`                                                                   |             |                 |             |                  |
@@ -146,8 +146,8 @@
 | <li>- [ ] `GET /api/templates`                                                                                              |             |                 |             |                  |
 | <li>- [ ] `GET /api/templates/upgrade_notes/{name}/{version}`                                                               |             |                 |             |                  |
 | <li>- [ ] `GET /api/templates/{name}/{version}`                                                                             |             |                 |             |                  |
-| <li>- [x] `POST /api/users`                                                                                                 |             |                 |             | yes              |
-| <li>- [x] `GET /api/users/{user_id}`                                                                                        |             | yes             |             | yes              |
-| <li>- [x] `DELETE /api/users/{user_id}`                                                                                     |             | yes             |             |                  |
-| <li>- [x] `GET /api/users/{user_id}/projects`                                                                               |             | yes             |             | yes              |
+| <li>- [x] `POST /api/users`                                                                                                 | AB          | yes             |             | yes              |
+| <li>- [x] `GET /api/users/{user_id}`                                                                                        | AB          | yes             |             | yes              |
+| <li>- [x] `DELETE /api/users/{user_id}`                                                                                     | AB          | yes             |             |                  |
+| <li>- [x] `GET /api/users/{user_id}/projects`                                                                               | AB          | yes             |             | yes              |
 | <li>- [ ] `POST /api/webhooks/deploy/{token}`                                                                               |             |                 |             |                  |

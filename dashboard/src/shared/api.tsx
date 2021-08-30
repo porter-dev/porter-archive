@@ -930,24 +930,28 @@ const updateConfigMap = baseApi<
 const renameConfigMap = baseApi<
   {
     name: string;
-    namespace: string;
     new_name: string;
   },
-  { id: number; cluster_id: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
 >("POST", (pathParams) => {
-  let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/configmap/rename?cluster_id=${cluster_id}`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/rename`;
 });
 
 const deleteConfigMap = baseApi<
   {
     name: string;
+  },
+  {
+    id: number;
     namespace: string;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("DELETE", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/configmap/delete`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/delete`;
 });
 
 const createNamespace = baseApi<

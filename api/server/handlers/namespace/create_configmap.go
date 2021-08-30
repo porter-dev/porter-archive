@@ -49,7 +49,12 @@ func (c *CreateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	configMap, err := createConfigMap(agent, namespace, request)
+	configMap, err := createConfigMap(agent, types.ConfigMapInput{
+		Name:            request.Name,
+		Namespace:       namespace,
+		Variables:       request.Variables,
+		SecretVariables: request.SecretVariables,
+	})
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -63,10 +68,10 @@ func (c *CreateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	c.WriteResult(w, r, res)
 }
 
-func createConfigMap(agent *kubernetes.Agent, namespace string, request *types.CreateConfigMapRequest) (*v1.ConfigMap, error) {
+func createConfigMap(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.ConfigMap, error) {
 	secretData := make(map[string][]byte)
 
-	for key, rawValue := range request.SecretVariables {
+	for key, rawValue := range input.SecretVariables {
 		// encodedValue := base64.StdEncoding.EncodeToString([]byte(rawValue))
 
 		// if err != nil {
@@ -78,14 +83,14 @@ func createConfigMap(agent *kubernetes.Agent, namespace string, request *types.C
 	}
 
 	// create secret first
-	if _, err := agent.CreateLinkedSecret(request.Name, namespace, request.Name, secretData); err != nil {
+	if _, err := agent.CreateLinkedSecret(input.Name, input.Namespace, input.Name, secretData); err != nil {
 		return nil, err
 	}
 
 	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
-	for key := range request.SecretVariables {
-		request.Variables[key] = fmt.Sprintf("PORTERSECRET_%s", request.Name)
+	for key := range input.SecretVariables {
+		input.Variables[key] = fmt.Sprintf("PORTERSECRET_%s", input.Name)
 	}
 
-	return agent.CreateConfigMap(request.Name, namespace, request.Variables)
+	return agent.CreateConfigMap(input.Name, input.Namespace, input.Variables)
 }

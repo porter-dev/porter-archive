@@ -60,3 +60,8 @@ type GetProcfileRequest struct {
 }
 
 type GetProcfileResponse map[string]string
+
+type GetTarballURLResponse struct {
+	URLString       string `json:"url"`
+	LatestCommitSHA string `json:"latest_commit_sha"`
+}

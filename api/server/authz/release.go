@@ -6,6 +6,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/release"
@@ -46,7 +47,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	name := reqScopes[types.ReleaseScope].Resource.Name
 
 	// get the version for the application
-	version, _ := GetURLParamUint(r, string(types.URLParamReleaseVersion))
+	version, _ := requestutils.GetURLParamUint(r, types.URLParamReleaseVersion)
 
 	release, err := helmAgent.GetRelease(name, int(version))
 

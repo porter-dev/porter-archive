@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -94,21 +95,21 @@ func getRequestActionForEndpoint(
 
 		switch scope {
 		case types.ProjectScope:
-			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamProjectID))
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamProjectID)
 		case types.ClusterScope:
-			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamClusterID))
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamClusterID)
 		case types.RegistryScope:
-			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamRegistryID))
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamRegistryID)
 		case types.HelmRepoScope:
-			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamHelmRepoID))
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamHelmRepoID)
 		case types.GitInstallationScope:
-			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamGitInstallationID))
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamGitInstallationID)
 		case types.InfraScope:
-			resource.UInt, reqErr = GetURLParamUint(r, string(types.URLParamInfraID))
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamInfraID)
 		case types.NamespaceScope:
-			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamNamespace))
+			resource.Name, reqErr = requestutils.GetURLParamString(r, types.URLParamNamespace)
 		case types.ReleaseScope:
-			resource.Name, reqErr = GetURLParamString(r, string(types.URLParamReleaseName))
+			resource.Name, reqErr = requestutils.GetURLParamString(r, types.URLParamReleaseName)
 		}
 
 		if reqErr != nil {

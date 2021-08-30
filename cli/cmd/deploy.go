@@ -298,19 +298,19 @@ func updateFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 		return err
 	}
 
-	err = updateBuildWithAgent(updateAgent, client)
+	err = updateBuildWithAgent(updateAgent)
 
 	if err != nil {
 		return err
 	}
 
-	err = updatePushWithAgent(updateAgent, client)
+	err = updatePushWithAgent(updateAgent)
 
 	if err != nil {
 		return err
 	}
 
-	err = updateUpgradeWithAgent(updateAgent, client)
+	err = updateUpgradeWithAgent(updateAgent)
 
 	if err != nil {
 		return err

@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -158,6 +159,33 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listClusterEndpoint,
 		Handler:  listClusterHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/gitrepos -> gitinstallation.NewGitRepoListHandler
+	listGitReposEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitrepos",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitReposHandler := gitinstallation.NewGitRepoListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitReposEndpoint,
+		Handler:  listGitReposHandler,
 		Router:   r,
 	})
 

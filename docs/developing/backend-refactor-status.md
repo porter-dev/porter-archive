@@ -1,5 +1,5 @@
-| Path                                                                                                                    | Assigned To | Changed schema? | CLI Updated | Frontend Updated |
-|-------------------------------------------------------------------------------------------------------------------------|-------------|-----------------|-------------|------------------|
+| Path                                                                                                                        | Assigned To | Changed schema? | CLI Updated | Frontend Updated |
+| --------------------------------------------------------------------------------------------------------------------------- | ----------- | --------------- | ----------- | ---------------- |
 | <li>- [x] `GET /api/auth/check`                                                                                             |             | yes             |             | yes              |
 | <li>- [x] `GET /api/capabilities`                                                                                           |             |                 |             | yes              |
 | <li>- [x] `GET /api/cli/login`                                                                                              |             |                 | yes         |                  |
@@ -50,7 +50,7 @@
 | <li>- [ ] `POST /api/projects/{project_id}/delete/{name}`                                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/deploy/addon/{name}/{version}`                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/deploy/{name}/{version}`                                                         |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/gitrepos`                                                                         |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/gitrepos`                                                                         | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos`                                                 |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches`                  |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect` |             |                 |             |                  |

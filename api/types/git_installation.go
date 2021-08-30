@@ -13,3 +13,11 @@ type GitInstallation struct {
 type GetGitInstallationResponse GitInstallation
 
 type ListGitInstallationIDsResponse []int64
+
+// Repo represents a GitHub or Gitab repository
+type Repo struct {
+	FullName string
+	Kind     string
+}
+
+type ListReposResponse []Repo

@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
 )
@@ -42,6 +43,12 @@ type Config struct {
 
 	// DOConf is the configuration for a DigitalOcean OAuth client
 	DOConf *oauth2.Config
+
+	// GithubConf is the configuration for a Github OAuth client
+	GithubConf *oauth2.Config
+
+	// GithubAppConf is the configuration for a Github App OAuth client
+	GithubAppConf *oauth.GithubAppConf
 }
 
 type ConfigLoader interface {

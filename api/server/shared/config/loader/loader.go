@@ -1,6 +1,8 @@
 package loader
 
 import (
+	"strconv"
+
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/adapter"
@@ -8,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	lr "github.com/porter-dev/porter/internal/logger"
@@ -19,14 +22,21 @@ func NewEnvLoader() config.ConfigLoader {
 	return &EnvConfigLoader{}
 }
 
-func (e *EnvConfigLoader) LoadConfig() (*config.Config, error) {
+func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	envConf, err := FromEnv()
 
 	if err != nil {
 		return nil, err
 	}
 
-	metadata := config.MetadataFromConf(envConf.ServerConf)
+	sc := envConf.ServerConf
+
+	res = &config.Config{
+		Logger:     lr.NewConsole(sc.Debug),
+		ServerConf: sc,
+	}
+
+	res.Metadata = config.MetadataFromConf(envConf.ServerConf)
 
 	db, err := adapter.New(envConf.DBConf)
 
@@ -46,12 +56,12 @@ func (e *EnvConfigLoader) LoadConfig() (*config.Config, error) {
 		key[i] = b
 	}
 
-	repo := gorm.NewRepository(db, &key)
+	res.Repo = gorm.NewRepository(db, &key)
 
 	// create the session store
-	store, err := sessionstore.NewStore(
+	res.Store, err = sessionstore.NewStore(
 		&sessionstore.NewStoreOpts{
-			SessionRepository: repo.Session(),
+			SessionRepository: res.Repo.Session(),
 			CookieSecrets:     envConf.ServerConf.CookieSecrets,
 		},
 	)
@@ -60,14 +70,14 @@ func (e *EnvConfigLoader) LoadConfig() (*config.Config, error) {
 		return nil, err
 	}
 
-	tokenConf := &token.TokenGeneratorConf{
+	res.TokenConf = &token.TokenGeneratorConf{
 		TokenSecret: envConf.ServerConf.TokenGeneratorSecret,
 	}
 
-	var notif notifier.UserNotifier = &notifier.EmptyUserNotifier{}
+	res.UserNotifier = &notifier.EmptyUserNotifier{}
 
-	if metadata.Email {
-		notif = sendgrid.NewUserNotifier(&sendgrid.Client{
+	if res.Metadata.Email {
+		res.UserNotifier = sendgrid.NewUserNotifier(&sendgrid.Client{
 			APIKey:                  envConf.ServerConf.SendgridAPIKey,
 			PWResetTemplateID:       envConf.ServerConf.SendgridPWResetTemplateID,
 			PWGHTemplateID:          envConf.ServerConf.SendgridPWGHTemplateID,
@@ -77,20 +87,45 @@ func (e *EnvConfigLoader) LoadConfig() (*config.Config, error) {
 		})
 	}
 
-	var errAlerter alerter.Alerter = alerter.NoOpAlerter{}
+	res.Alerter = alerter.NoOpAlerter{}
 
 	if envConf.ServerConf.SentryDSN != "" {
-		errAlerter, err = alerter.NewSentryAlerter(envConf.ServerConf.SentryDSN)
+		res.Alerter, err = alerter.NewSentryAlerter(envConf.ServerConf.SentryDSN)
 	}
 
-	return &config.Config{
-		Alerter:      errAlerter,
-		Logger:       lr.NewConsole(envConf.ServerConf.Debug),
-		Repo:         repo,
-		Metadata:     metadata,
-		Store:        store,
-		ServerConf:   envConf.ServerConf,
-		TokenConf:    tokenConf,
-		UserNotifier: notif,
-	}, nil
+	if sc.DOClientID != "" && sc.DOClientSecret != "" {
+		res.DOConf = oauth.NewDigitalOceanClient(&oauth.Config{
+			ClientID:     sc.DOClientID,
+			ClientSecret: sc.DOClientSecret,
+			Scopes:       []string{"read", "write"},
+			BaseURL:      sc.ServerURL,
+		})
+	}
+
+	if sc.GithubClientID != "" && sc.GithubClientSecret != "" {
+		res.GithubConf = oauth.NewGithubClient(&oauth.Config{
+			ClientID:     sc.GithubClientID,
+			ClientSecret: sc.GithubClientSecret,
+			Scopes:       []string{"read:user", "user:email"},
+			BaseURL:      sc.ServerURL,
+		})
+	}
+
+	if sc.GithubAppClientID != "" &&
+		sc.GithubAppClientSecret != "" &&
+		sc.GithubAppName != "" &&
+		sc.GithubAppWebhookSecret != "" &&
+		sc.GithubAppSecretPath != "" &&
+		sc.GithubAppID != "" {
+		if AppID, err := strconv.ParseInt(sc.GithubAppID, 10, 64); err == nil {
+			res.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
+				ClientID:     sc.GithubAppClientID,
+				ClientSecret: sc.GithubAppClientSecret,
+				Scopes:       []string{"read:user"},
+				BaseURL:      sc.ServerURL,
+			}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, AppID)
+		}
+	}
+
+	return res, nil
 }

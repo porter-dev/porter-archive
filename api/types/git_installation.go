@@ -11,3 +11,5 @@ type GitInstallation struct {
 }
 
 type GetGitInstallationResponse GitInstallation
+
+type ListGitInstallationIDsResponse []int64

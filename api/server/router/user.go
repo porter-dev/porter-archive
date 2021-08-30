@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/project"
+	"github.com/porter-dev/porter/api/server/handlers/template"
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -228,6 +229,31 @@ func getUserRoutes(
 	routes = append(routes, &Route{
 		Endpoint: emailVerifyFinalizeEndpoint,
 		Handler:  emailVerifyFinalizeHandler,
+		Router:   r,
+	})
+
+	// GET /api/templates -> template.NewTemplateListHandler
+	listTemplatesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/templates",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	listTemplatesRequest := template.NewTemplateListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listTemplatesEndpoint,
+		Handler:  listTemplatesRequest,
 		Router:   r,
 	})
 

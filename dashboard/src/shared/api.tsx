@@ -758,7 +758,7 @@ const getTemplateUpgradeNotes = baseApi<
   },
   { name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/templates/upgrade_notes/${pathParams.name}/${pathParams.version}`;
+  return `/api/templates/${pathParams.name}/${pathParams.version}/upgrade_notes`;
 });
 
 const getTemplates = baseApi<

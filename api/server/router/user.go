@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/template"
@@ -263,8 +265,12 @@ func getUserRoutes(
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: "/templates/{name}/{version}",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"/templates/{%s}/{%s}",
+					types.URLParamTemplateName,
+					types.URLParamTemplateVersion,
+				),
 			},
 			Scopes: []types.PermissionScope{types.UserScope},
 		},
@@ -279,6 +285,35 @@ func getUserRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getTemplateEndpoint,
 		Handler:  getTemplateRequest,
+		Router:   r,
+	})
+
+	// GET /api/templates/{name}/{version}/upgrade_notes -> template.NewTemplateGetUpgradeNotesHandler
+	getTemplateUpgradeNotesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"/templates/{%s}/{%s}/upgrade_notes",
+					types.URLParamTemplateName,
+					types.URLParamTemplateVersion,
+				),
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	getTemplateUpgradeNotesRequest := template.NewTemplateGetUpgradeNotesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getTemplateUpgradeNotesEndpoint,
+		Handler:  getTemplateUpgradeNotesRequest,
 		Router:   r,
 	})
 

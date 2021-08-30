@@ -1,6 +1,14 @@
 package types
 
-import "helm.sh/helm/v3/pkg/chart"
+import (
+	"github.com/porter-dev/porter/internal/helm/upgrade"
+	"helm.sh/helm/v3/pkg/chart"
+)
+
+const (
+	URLParamTemplateName    URLParam = "name"
+	URLParamTemplateVersion URLParam = "version"
+)
 
 type TemplateGetBaseRequest struct {
 	RepoURL string `schema:"repo_url"`
@@ -31,3 +39,10 @@ type GetTemplateResponse struct {
 	Values   map[string]interface{} `json:"values"`
 	Form     *FormYAML              `json:"form"`
 }
+
+type GetTemplateUpgradeNotesRequest struct {
+	TemplateGetBaseRequest
+	PrevVersion string `schema:"prev_version"`
+}
+
+type GetTemplateUpgradeNotesResponse upgrade.UpgradeFile

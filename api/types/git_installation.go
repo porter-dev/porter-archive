@@ -26,6 +26,16 @@ const (
 	URLParamGitKind      URLParam = "kind"
 	URLParamGitRepoOwner URLParam = "owner"
 	URLParamGitRepoName  URLParam = "name"
+	URLParamGitBranch    URLParam = "branch"
 )
 
 type ListRepoBranchesResponse []string
+
+type GetBuildpackRequest struct {
+	Dir string `schema:"dir" form:"required"`
+}
+
+type GetBuildpackResponse struct {
+	Valid bool   `json:"valid"`
+	Name  string `json:"name"`
+}

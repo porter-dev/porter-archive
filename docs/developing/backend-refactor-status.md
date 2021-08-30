@@ -60,7 +60,7 @@
 | <li>- [ ] `GET /api/projects/{project_id}/helmrepos`                                                                        |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/helmrepos`                                                                       |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/helmrepos/{helm_id}/charts`                                                       |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/infra`                                                                            |             |                 |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/infra`                                                                            | AS          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/docr/destroy`                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/doks/destroy`                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/ecr/destroy`                                                    |             |                 |             |                  |
@@ -77,26 +77,26 @@
 | <li>- [ ] `POST /api/projects/{project_id}/invites/{invite_id}`                                                             |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/invites/{invite_id}`                                                           |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/invites/{token}`                                                                  |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/k8s/configmap`                                                                    |             | yes             |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/create`                                                            |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/configmap`                                                                    | AS          | yes             |             | yes              |
+| <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/create`                                                            | AS          | yes             |             | yes              |
 | <li>- [ ] `DELETE /api/projects/{project_id}/k8s/configmap/delete`                                                          |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/k8s/configmap/list`                                                               |             | yes             |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/configmap/list`                                                               | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/rename`                                                            |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/configmap/update`                                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/helm_releases`                                                                |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}`                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods`                                                 |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/stop`                                                |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/k8s/kubeconfig`                                                                   |             | yes             | yes         |                  |
-| <li>- [x] `GET /api/projects/{project_id}/k8s/metrics`                                                                      |             | yes             |             | yes              |
-| <li>- [x] `GET /api/projects/{project_id}/k8s/namespaces`                                                                   |             | yes             |             | yes              |
-| <li>- [x] `POST /api/projects/{project_id}/k8s/namespaces/create`                                                           |             | yes             |             | yes              |
-| <li>- [x] `DELETE /api/projects/{project_id}/k8s/namespaces/delete`                                                         |             | yes             |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/kubeconfig`                                                                   | AS          | yes             | yes         |                  |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/metrics`                                                                      | AS          | yes             |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/namespaces`                                                                   | AS          | yes             |             | yes              |
+| <li>- [x] `POST /api/projects/{project_id}/k8s/namespaces/create`                                                           | AS          | yes             |             | yes              |
+| <li>- [x] `DELETE /api/projects/{project_id}/k8s/namespaces/delete`                                                         | AS          | yes             |             | yes              |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/pods`                                                                         |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/k8s/pods/{namespace}/{name}`                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/pods/{namespace}/{name}/events/list`                                          |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/detect`                                                            |             | yes             |             | yes              |
-| <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/ingresses`                                                         |             | yes             |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/detect`                                                            | AS          | yes             |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/ingresses`                                                         | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/subdomain`                                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/ingress/{name}`                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/pod/{name}/logs`                                                  |             |                 |             |                  |
@@ -123,7 +123,7 @@
 | <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories`                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/registries/{registry_id}/repositories/*`                                          |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/registries/{registry_id}/repository`                                             |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/releases`                                                                         |             | yes             |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/releases`                                                                         | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/image/update/batch`                                                     |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/history`                                                          |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/notifications`                                                   |             |                 |             |                  |

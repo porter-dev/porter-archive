@@ -53,6 +53,35 @@ func getNamespaceRoutes(
 
 	routes := make([]*Route, 0)
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/list -> namespace.NewListConfigMapsHandler
+	listConfigMapsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/configmap/list",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	listConfigMapsHandler := namespace.NewListConfigMapsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listConfigMapsEndpoint,
+		Handler:  listConfigMapsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap -> namespace.NewGetConfigMapHandler
 	getConfigMapEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -83,14 +112,14 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/list -> namespace.NewListConfigMapsHandler
-	listConfigMapsEndpoint := factory.NewAPIEndpoint(
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/create -> namespace.NewGetConfigMapHandler
+	createConfigMapEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/configmap/list",
+				RelativePath: relPath + "/configmap/create",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -101,14 +130,15 @@ func getNamespaceRoutes(
 		},
 	)
 
-	listConfigMapsHandler := namespace.NewListConfigMapsHandler(
+	createConfigMapHandler := namespace.NewCreateConfigMapHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
-		Endpoint: listConfigMapsEndpoint,
-		Handler:  listConfigMapsHandler,
+		Endpoint: createConfigMapEndpoint,
+		Handler:  createConfigMapHandler,
 		Router:   r,
 	})
 

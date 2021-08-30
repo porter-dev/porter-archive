@@ -768,8 +768,8 @@ const getTemplates = baseApi<
   {}
 >("GET", "/api/templates");
 
-const getCapabilities = baseApi<{}, {}>("GET", () => {
-  return `/api/capabilities`;
+const getMetadata = baseApi<{}, {}>("GET", () => {
+  return `/api/metadata`;
 });
 
 const linkGithubProject = baseApi<
@@ -1087,7 +1087,7 @@ export default {
   detectBuildpack,
   getBranchContents,
   getBranches,
-  getCapabilities,
+  getMetadata,
   getChart,
   getCharts,
   getChartComponents,

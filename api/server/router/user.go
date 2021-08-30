@@ -257,5 +257,30 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// GET /api/templates/{name}/{version} -> template.NewTemplateGetHandler
+	getTemplateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/templates/{name}/{version}",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	getTemplateRequest := template.NewTemplateGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getTemplateEndpoint,
+		Handler:  getTemplateRequest,
+		Router:   r,
+	})
+
 	return routes
 }

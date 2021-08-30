@@ -44,7 +44,7 @@ export default class Register extends Component<PropsType, StateType> {
 
     // get capabilities to case on github
     api
-      .getCapabilities("", {}, {})
+      .getMetadata("", {}, {})
       .then((res) => {
         this.setState({
           hasGithub: res.data?.github_login,

@@ -42,3 +42,9 @@ type CreateRegistryRequest struct {
 type CreateRegistryRepositoryRequest struct {
 	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 }
+
+// UpdateRegistryRequest represents the accepted values for updating a
+// registry (only name for now)
+type UpdateRegistryRequest struct {
+	Name string `json:"name" form:"required"`
+}

@@ -120,7 +120,7 @@ func getGitInstallationRoutes(
 			Path: &types.Path{
 				Parent: basePath,
 				RelativePath: fmt.Sprintf(
-					"%s/repos/%s/%s/%s/branches",
+					"%s/repos/{%s}/{%s}/{%s}/branches",
 					relPath,
 					types.URLParamGitKind,
 					types.URLParamGitRepoOwner,
@@ -143,6 +143,43 @@ func getGitInstallationRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listBranchesEndpoint,
 		Handler:  listBranchesHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/buildpack/detect ->
+	// gitinstallation.NewGithubGetBuildpackHandler
+	getBuildpackEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/repos/{%s}/{%s}/{%s}/{%s}/buildpack/detect",
+					relPath,
+					types.URLParamGitKind,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	getBuildpackHandler := gitinstallation.NewGithubGetBuildpackHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getBuildpackEndpoint,
+		Handler:  getBuildpackHandler,
 		Router:   r,
 	})
 

@@ -5,7 +5,9 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/github"
+	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
@@ -69,4 +71,23 @@ func GetGithubAppClientFromRequest(config *config.Config, r *http.Request) (*git
 	}
 
 	return github.NewClient(&http.Client{Transport: itr}), nil
+}
+
+// GetOwnerAndNameParams gets the owner and name ref for the Github repo
+func GetOwnerAndNameParams(c handlers.PorterHandler, w http.ResponseWriter, r *http.Request) (string, string, bool) {
+	owner, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoOwner)
+
+	if reqErr != nil {
+		c.HandleAPIError(w, r, reqErr)
+		return "", "", false
+	}
+
+	name, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoName)
+
+	if reqErr != nil {
+		c.HandleAPIError(w, r, reqErr)
+		return "", "", false
+	}
+
+	return owner, name, true
 }

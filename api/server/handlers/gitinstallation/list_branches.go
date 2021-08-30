@@ -11,7 +11,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -30,15 +29,9 @@ func NewGithubListBranchesHandler(
 }
 
 func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	owner, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoOwner)
+	owner, name, ok := GetOwnerAndNameParams(c, w, r)
 
-	if reqErr != nil {
-		return
-	}
-
-	name, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoName)
-
-	if reqErr != nil {
+	if !ok {
 		return
 	}
 

@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/shared"
+
+	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/config"
+	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	lr "github.com/porter-dev/porter/internal/logger"
@@ -19,8 +21,6 @@ import (
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	"github.com/porter-dev/porter/server/api"
 	"github.com/porter-dev/porter/server/router"
-
-	"github.com/porter-dev/porter/internal/auth/sessionstore"
 )
 
 type tester struct {
@@ -64,9 +64,9 @@ func (t *tester) createUserSession(email string, pw string) {
 }
 
 func newTester(canQuery bool) *tester {
-	appConf := config.Conf{
-		Debug: true,
-		Server: config.ServerConf{
+	appConf := loader.EnvConf{
+		ServerConf: &config.ServerConf{
+			Debug:                true,
 			Port:                 8080,
 			CookieName:           "porter",
 			CookieSecrets:        []string{"secret"},
@@ -78,16 +78,12 @@ func newTester(canQuery bool) *tester {
 			BasicLoginEnabled:    true,
 		},
 		// unimportant here
-		Db: config.DBConf{},
-		// set the helm config to testing
-		K8s: config.K8sConf{
-			IsTesting: true,
-		},
+		DBConf: &config.DBConf{},
 	}
 
-	logger := lr.NewConsole(appConf.Debug)
+	logger := lr.NewConsole(appConf.ServerConf.Debug)
 
-	db, _ := adapter.New(&shared.DBConf{
+	db, _ := adapter.New(&config.DBConf{
 		EncryptionKey: "__random_strong_encryption_key__",
 		SQLLite:       true,
 		SQLLitePath:   "api_test.db",
@@ -138,7 +134,7 @@ func newTester(canQuery bool) *tester {
 	app, _ := api.New(&api.AppConfig{
 		Logger:     logger,
 		Repository: repo,
-		ServerConf: appConf.Server,
+		ServerConf: appConf.ServerConf,
 		TestAgents: &api.TestAgents{
 			HelmAgent:             helm.GetAgentTesting(&helm.Form{}, nil, logger, k8sAgent),
 			HelmTestStorageDriver: helm.StorageMap["memory"](nil, nil, ""),

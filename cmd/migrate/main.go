@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/porter-dev/porter/api/server/shared/envloader"
+	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
@@ -18,7 +18,7 @@ func main() {
 	logger := lr.NewConsole(true)
 	fmt.Println("running migrations...")
 
-	envConf, err := envloader.FromEnv()
+	envConf, err := loader.FromEnv()
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")

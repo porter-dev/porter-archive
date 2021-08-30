@@ -888,12 +888,14 @@ const listConfigMaps = baseApi<
 const getConfigMap = baseApi<
   {
     name: string;
+  },
+  {
+    id: number;
     namespace: string;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/configmap`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap`;
 });
 
 const createConfigMap = baseApi<

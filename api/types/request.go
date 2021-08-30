@@ -43,6 +43,7 @@ const (
 	URLParamNamespace         URLParam = "namespace"
 	URLParamReleaseName       URLParam = "name"
 	URLParamReleaseVersion    URLParam = "version"
+	URLParamWildcard          URLParam = "*"
 )
 
 type Path struct {

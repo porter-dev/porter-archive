@@ -382,20 +382,19 @@ class Home extends Component<PropsType, StateType> {
         />
       );
     } else {
-      
       return (
         <>
           <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
             <Icon src={discordLogo} />
             Join Our Discord
           </DiscordButton>
-          {
-            this.context?.capabilities?.version === "dev" &&
-            this.state.showWelcomeForm && 
+          {this.context?.capabilities?.version === "dev" &&
+            this.state.showWelcomeForm &&
             localStorage.getItem("welcomed") != "true" && (
-              <WelcomeForm closeForm={() => this.setState({ showWelcomeForm: false })} />
-            )
-          }
+              <WelcomeForm
+                closeForm={() => this.setState({ showWelcomeForm: false })}
+              />
+            )}
         </>
       );
     }

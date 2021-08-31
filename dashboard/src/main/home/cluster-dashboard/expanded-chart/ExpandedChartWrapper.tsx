@@ -38,11 +38,8 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
         .getRevisions(
           "<token>",
           {
-            namespace: namespace,
-            cluster_id: currentCluster.id,
-            storage: StorageType.Secret,
           },
-          { id: currentProject.id, name: chartName }
+          { id: currentProject.id, namespace: namespace, cluster_id: currentCluster.id ,name: chartName }
         )
         .then((res) => {
           res.data.sort((a: ChartType, b: ChartType) => {
@@ -53,13 +50,12 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
             .getChart(
               "<token>",
               {
-                namespace: namespace,
-                cluster_id: currentCluster.id,
-                storage: StorageType.Secret,
               },
               {
                 name: chartName,
                 revision: maxVersion,
+                namespace: namespace,
+                cluster_id: currentCluster.id,
                 id: currentProject.id,
               }
             )

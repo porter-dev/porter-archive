@@ -388,13 +388,16 @@ class Home extends Component<PropsType, StateType> {
             <Icon src={discordLogo} />
             Join Our Discord
           </DiscordButton>
-          {this.context?.capabilities?.version === "production" &&
+          {
+            (this.context?.capabilities?.version === "production" ||
+            this.context?.capabilities?.version === "staging") &&
             this.state.showWelcomeForm &&
             localStorage.getItem("welcomed") != "true" && (
               <WelcomeForm
                 closeForm={() => this.setState({ showWelcomeForm: false })}
               />
-            )}
+            )
+          }
         </>
       );
     }

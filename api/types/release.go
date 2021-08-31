@@ -4,7 +4,7 @@ import "helm.sh/helm/v3/pkg/release"
 
 // Release is a helm release with a form attached
 type Release struct {
-	HelmRelease *release.Release `json:"helm_release"`
+	*release.Release
 
 	ID              uint             `json:"id"`
 	WebhookToken    string           `json:"webhook_token"`

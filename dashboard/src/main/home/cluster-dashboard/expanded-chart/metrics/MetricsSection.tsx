@@ -137,13 +137,12 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       .getChartControllers(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
         },
         {
           id: currentProject.id,
           name: currentChart.name,
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
           revision: currentChart.version,
         }
       )

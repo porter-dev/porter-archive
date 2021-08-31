@@ -445,7 +445,7 @@ const getChartControllers = baseApi<
 { id: number; cluster_id: number; namespace: string; name: string; revision: number }
 >("GET", (pathParams) => {
   let { id, cluster_id, namespace, name, revision } = pathParams
-  
+
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/controllers`
 });
 
@@ -729,13 +729,14 @@ const getSlackIntegrations = baseApi<{}, { id: number }>(
 
 const getRevisions = baseApi<
   {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
   },
-  { id: number; name: string }
+  { id: number; cluster_id: number; namespace: string; name: string }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
+  console.log("PATH PARAMS", pathParams)
+  
+  let { id, cluster_id, namespace, name } = pathParams
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/history`
 });
 
 const getTemplateInfo = baseApi<

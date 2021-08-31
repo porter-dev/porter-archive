@@ -71,13 +71,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .getChart(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
         },
         {
           name: chart.name,
           revision: revision,
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
           id: currentProject.id,
         }
       )

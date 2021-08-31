@@ -331,56 +331,104 @@ func (a *Agent) GetIngress(namespace string, name string) (*v1beta1.Ingress, err
 
 // GetDeployment gets the deployment given the name and namespace
 func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
-	return a.Clientset.AppsV1().Deployments(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().Deployments(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetStatefulSet gets the statefulset given the name and namespace
 func (a *Agent) GetStatefulSet(c grapher.Object) (*appsv1.StatefulSet, error) {
-	return a.Clientset.AppsV1().StatefulSets(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().StatefulSets(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetReplicaSet gets the replicaset given the name and namespace
 func (a *Agent) GetReplicaSet(c grapher.Object) (*appsv1.ReplicaSet, error) {
-	return a.Clientset.AppsV1().ReplicaSets(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().ReplicaSets(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetDaemonSet gets the daemonset by name and namespace
 func (a *Agent) GetDaemonSet(c grapher.Object) (*appsv1.DaemonSet, error) {
-	return a.Clientset.AppsV1().DaemonSets(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().DaemonSets(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetJob gets the job by name and namespace
 func (a *Agent) GetJob(c grapher.Object) (*batchv1.Job, error) {
-	return a.Clientset.BatchV1().Jobs(c.Namespace).Get(
+	res, err := a.Clientset.BatchV1().Jobs(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetCronJob gets the CronJob by name and namespace
 func (a *Agent) GetCronJob(c grapher.Object) (*batchv1beta1.CronJob, error) {
-	return a.Clientset.BatchV1beta1().CronJobs(c.Namespace).Get(
+	res, err := a.Clientset.BatchV1beta1().CronJobs(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetPodsByLabel retrieves pods with matching labels

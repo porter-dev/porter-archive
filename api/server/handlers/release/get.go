@@ -33,7 +33,7 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
 	res := &types.Release{
-		HelmRelease: helmRelease,
+		Release: helmRelease,
 	}
 
 	// look up the release in the database; if not found, do not populate Porter fields

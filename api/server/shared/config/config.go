@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
+	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/logger"
@@ -49,6 +50,9 @@ type Config struct {
 
 	// GithubAppConf is the configuration for a Github App OAuth client
 	GithubAppConf *oauth.GithubAppConf
+
+	// WSUpgrader upgrades HTTP connections to websocket connections
+	WSUpgrader *websocket.Upgrader
 }
 
 type ConfigLoader interface {

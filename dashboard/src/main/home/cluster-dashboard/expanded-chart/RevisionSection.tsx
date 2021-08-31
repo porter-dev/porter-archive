@@ -78,7 +78,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
 
-    const apiPath = `/api/projects/${currentProject.id}/k8s/helm_releases?cluster_id=${currentCluster.id}&charts=${chart.name}`;
+    const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/helm_release?charts=${chart.name}`;
     const protocol = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${protocol}://${window.location.host}`;
 

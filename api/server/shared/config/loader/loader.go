@@ -1,8 +1,10 @@
 package loader
 
 import (
+	"net/http"
 	"strconv"
 
+	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/adapter"
@@ -125,6 +127,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 				BaseURL:      sc.ServerURL,
 			}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, AppID)
 		}
+	}
+
+	res.WSUpgrader = &websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			return origin == sc.ServerURL
+		},
 	}
 
 	return res, nil

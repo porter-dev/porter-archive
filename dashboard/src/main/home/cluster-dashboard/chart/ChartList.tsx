@@ -106,7 +106,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   };
 
   const setupHelmReleasesWebsocket = () => {
-    const apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+    const apiPath = `/api/projects/${context.currentProject.id}/clusters/${context.currentCluster.id}/helm_release`;
 
     const wsConfig = {
       onopen: () => {
@@ -148,7 +148,7 @@ const ChartList: React.FunctionComponent<Props> = ({
 
   const setupWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
-    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
       onopen: () => {

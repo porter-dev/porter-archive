@@ -33,7 +33,7 @@ export default class UpgradeChartModal extends Component<PropsType, StateType> {
       .toLowerCase()
       .trim();
 
-    if (chartName == "web" || chartName == "worker") {
+    if (chartName == "web" || chartName == "worker" || chartName === "job") {
       repoURL = process.env.APPLICATION_CHART_REPO_URL;
     }
 

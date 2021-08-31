@@ -114,10 +114,10 @@
 | <li>- [ ] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs`                                                 |             |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries`                                                                      | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries`                                                                       | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/registries/dockerhub/token`                                                       |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/registries/docr/token`                                                            |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/registries/ecr/{region}/token`                                                    |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/registries/gcr/token`                                                             |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/registries/dockerhub/token`                                                       | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/registries/docr/token`                                                            | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/registries/ecr/{region}/token`                                                    | AB          | yes             |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/registries/gcr/token`                                                             |             |                 |             |                  |
 | <li>- [X] `DELETE /api/projects/{project_id}/registries/{registry_id}`                                                      | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}`                                                        | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries/{registry_id}/repositories`                                            | AB          |                 |             |                  |

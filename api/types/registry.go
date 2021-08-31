@@ -1,5 +1,11 @@
 package types
 
+import "time"
+
+const (
+	URLParamRegion URLParam = "region"
+)
+
 type Registry struct {
 	ID uint `json:"id"`
 
@@ -47,4 +53,21 @@ type CreateRegistryRepositoryRequest struct {
 // registry (only name for now)
 type UpdateRegistryRequest struct {
 	Name string `json:"name" form:"required"`
+}
+
+type GetRegistryTokenResponse struct {
+	Token     string     `json:"token"`
+	ExpiresAt *time.Time `json:"expires_at"`
+}
+
+type GetRegistryGCRTokenRequest struct {
+	ServerURL string `schema:"server_url"`
+}
+
+type GetRegistryECRTokenRequest struct {
+	Region string `schema:"region"`
+}
+
+type GetRegistryDOCRTokenRequest struct {
+	ServerURL string `schema:"server_url"`
 }

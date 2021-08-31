@@ -82,5 +82,35 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/controllers -> release.NewGetControllersHandler
+	getControllersEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/controllers",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	getControllersHandler := release.NewGetControllersHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getControllersEndpoint,
+		Handler:  getControllersHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

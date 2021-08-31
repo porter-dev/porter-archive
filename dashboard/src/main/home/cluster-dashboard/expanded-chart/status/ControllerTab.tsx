@@ -293,7 +293,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   };
 
   const setupWebsocket = (kind: string, controllerUid: string) => {
-    let apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
     if (kind == "pod" && currentSelectors) {
       apiEndpoint += `&selectors=${currentSelectors[0]}`;
     }

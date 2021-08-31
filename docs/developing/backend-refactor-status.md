@@ -83,7 +83,7 @@
 | <li>- [x] `GET /api/projects/{project_id}/k8s/configmap/list`                                                               | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/rename`                                                            | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/update`                                                            | AS          | yes             |             | yes              |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/helm_releases`                                                                |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/helm_releases`                                                                | AB          | yes             |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}`                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods`                                                 |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/stop`                                                |             |                 |             |                  |
@@ -100,7 +100,7 @@
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/subdomain`                                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/ingress/{name}`                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/pod/{name}/logs`                                                  |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/{kind}/status`                                                                |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/{kind}/status`                                                                | AB          | yes             |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status`                                               |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs`                                      |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/policy`                                                                           | AS          |                 |             | yes              |

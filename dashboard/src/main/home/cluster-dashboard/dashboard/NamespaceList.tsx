@@ -35,7 +35,7 @@ const useWebsocket = (
   useEffect(() => {
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     wsRef.current = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/namespace/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespace/status`
     );
 
     wsRef.current.onopen = () => {

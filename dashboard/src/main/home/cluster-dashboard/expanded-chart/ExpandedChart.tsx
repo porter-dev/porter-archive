@@ -167,7 +167,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const setupWebsocket = (kind: string) => {
-    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    const apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
       onmessage(evt: MessageEvent) {

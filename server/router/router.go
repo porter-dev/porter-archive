@@ -1697,6 +1697,13 @@ func New(a *api.App) *chi.Mux {
 				http.HandlerFunc(a.HandleGetCapabilities),
 			)
 
+			// welcome form
+			r.Method(
+				"GET",
+				"/welcome",
+				http.HandlerFunc(a.HandleWelcome),
+			)
+
 			// /api/projects/{project_id}/deploy routes
 			r.Method(
 				"POST",

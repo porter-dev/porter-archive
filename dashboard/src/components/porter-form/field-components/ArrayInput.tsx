@@ -67,12 +67,19 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
                 onChange={(e: any) => {
                   e.persist();
                   setVars((prev) => {
-                    return {
-                      [props.variable]: prev[props.variable]?.map(
+                    const val = prev[props.variable]?.map(
                         (t: string, j: number) => {
                           return i == j ? e.target.value : t;
                         }
-                      ),
+                      );
+                    setValidation((prev) => {
+                      return {
+                        ...prev,
+                        validated: validateArray(val)
+                      }
+                    })
+                    return {
+                      [props.variable]: val
                     };
                   });
                 }}
@@ -88,7 +95,7 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
 
   return (
     <StyledInputArray>
-      <Label>{props.label}</Label>
+      <Label>{props.label}{props.required && <Required>{" *"}</Required>}</Label>
       {variables[props.variable] === 0 ? (
         <></>
       ) : (
@@ -199,4 +206,8 @@ const Label = styled.div`
 const StyledInputArray = styled.div`
   margin-bottom: 15px;
   margin-top: 22px;
+`;
+
+const Required = styled.span`
+  color: #fc4976;
 `;

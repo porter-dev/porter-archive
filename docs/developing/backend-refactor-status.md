@@ -133,7 +133,7 @@
 | <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/webhook_token`                                                    |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/webhook_token`                                                   |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/releases/{name}/{revision}`                                                       |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/{revision}/components`                                            |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/components`                                            | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/controllers`                                           | AB          | yes             |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/{revision}/pods/all`                                              |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/roles`                                                                            |             |                 |             |                  |

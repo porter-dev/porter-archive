@@ -112,6 +112,36 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/components -> release.NewGetComponentsHandler
+	getComponentsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/components",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	getComponentsHandler := release.NewGetComponentsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getComponentsEndpoint,
+		Handler:  getComponentsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/history -> release.NewGetHistoryHandler
 	getHistoryEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

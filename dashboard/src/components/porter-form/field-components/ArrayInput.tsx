@@ -9,21 +9,19 @@ import useFormField from "../hooks/useFormField";
 import { hasSetValue } from "../utils";
 
 const validateArray = (arr: any[]) => {
-  return arr.some(x => x)
-}
+  return arr.some((x) => x);
+};
 
 const ArrayInput: React.FC<ArrayInputField> = (props) => {
-  const { state, variables, setVars, setValidation } = useFormField<ArrayInputFieldState>(
-    props.id,
-    {
+  const { state, variables, setVars, setValidation } =
+    useFormField<ArrayInputFieldState>(props.id, {
       initVars: {
         [props.variable]: hasSetValue(props) ? props.value[0] : [],
       },
       initValidation: {
-        validated: validateArray(hasSetValue(props) ? props.value[0] : [])
-      }
-    }
-  );
+        validated: validateArray(hasSetValue(props) ? props.value[0] : []),
+      },
+    });
 
   if (state == undefined) return <></>;
 
@@ -34,16 +32,16 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
           onClick={() => {
             setVars((prev) => {
               const val = prev[props.variable]
-                  .slice(0, i)
-                  .concat(prev[props.variable].slice(i + 1));
+                .slice(0, i)
+                .concat(prev[props.variable].slice(i + 1));
               setValidation((prev) => {
                 return {
                   ...prev,
-                  validated: validateArray(val)
-                }
-              })
+                  validated: validateArray(val),
+                };
+              });
               return {
-                [props.variable]: val
+                [props.variable]: val,
               };
             });
           }}
@@ -68,18 +66,18 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
                   e.persist();
                   setVars((prev) => {
                     const val = prev[props.variable]?.map(
-                        (t: string, j: number) => {
-                          return i == j ? e.target.value : t;
-                        }
-                      );
+                      (t: string, j: number) => {
+                        return i == j ? e.target.value : t;
+                      }
+                    );
                     setValidation((prev) => {
                       return {
                         ...prev,
-                        validated: validateArray(val)
-                      }
-                    })
+                        validated: validateArray(val),
+                      };
+                    });
                     return {
-                      [props.variable]: val
+                      [props.variable]: val,
                     };
                   });
                 }}
@@ -95,7 +93,10 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
 
   return (
     <StyledInputArray>
-      <Label>{props.label}{props.required && <Required>{" *"}</Required>}</Label>
+      <Label>
+        {props.label}
+        {props.required && <Required>{" *"}</Required>}
+      </Label>
       {variables[props.variable] === 0 ? (
         <></>
       ) : (

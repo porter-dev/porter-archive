@@ -275,7 +275,7 @@ func (c *Client) GetECRAuthorizationToken(
 ) (*GetTokenResponse, error) {
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/registries/ecr/%s/token", c.BaseURL, projectID, region),
+		fmt.Sprintf("%s/projects/%d/registries/ecr/token?region=%s", c.BaseURL, projectID, region),
 		nil,
 	)
 
@@ -315,8 +315,8 @@ func (c *Client) GetGCRAuthorizationToken(
 
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/registries/gcr/token", c.BaseURL, projectID),
-		strings.NewReader(string(data)),
+		fmt.Sprintf("%s/projects/%d/registries/gcr/token?server_url=%s", c.BaseURL, projectID, gcrRequest.ServerURL),
+		nil,
 	)
 
 	if err != nil {
@@ -384,8 +384,8 @@ func (c *Client) GetDOCRAuthorizationToken(
 
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/registries/docr/token", c.BaseURL, projectID),
-		strings.NewReader(string(data)),
+		fmt.Sprintf("%s/projects/%d/registries/docr/token?server_url=%s", c.BaseURL, projectID, docrRequest.ServerURL),
+		nil,
 	)
 
 	if err != nil {

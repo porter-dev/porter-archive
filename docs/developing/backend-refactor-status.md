@@ -125,7 +125,7 @@
 | <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}/repository`                                             | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/releases`                                                                         | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/image/update/batch`                                                     |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/history`                                                          |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/releases/{name}/history`                                                          | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/notifications`                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/notifications`                                                    |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/rollback`                                                        |             |                 |             |                  |

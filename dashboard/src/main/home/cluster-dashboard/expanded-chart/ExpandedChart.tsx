@@ -203,13 +203,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
       const res = await api.getChartComponents(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
         },
         {
           id: currentProject.id,
           name: currentChart.name,
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
           revision: currentChart.version,
         }
       );

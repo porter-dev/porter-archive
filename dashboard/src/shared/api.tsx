@@ -431,13 +431,12 @@ const getCharts = baseApi<
 
 const getChartComponents = baseApi<
   {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
   },
-  { id: number; name: string; revision: number }
+  { id: number; cluster_id: number; namespace: string; name: string; revision: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
+  let { id, cluster_id, namespace, name, revision } = pathParams
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/components`
 });
 
 const getChartControllers = baseApi<
@@ -733,7 +732,7 @@ const getRevisions = baseApi<
   { id: number; cluster_id: number; namespace: string; name: string }
 >("GET", (pathParams) => {
   console.log("PATH PARAMS", pathParams)
-  
+
   let { id, cluster_id, namespace, name } = pathParams
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/history`

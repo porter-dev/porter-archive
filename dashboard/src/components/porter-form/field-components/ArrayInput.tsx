@@ -8,13 +8,20 @@ import {
 import useFormField from "../hooks/useFormField";
 import { hasSetValue } from "../utils";
 
+const validateArray = (arr: any[]) => {
+  return arr.some(x => x)
+}
+
 const ArrayInput: React.FC<ArrayInputField> = (props) => {
-  const { state, variables, setVars } = useFormField<ArrayInputFieldState>(
+  const { state, variables, setVars, setValidation } = useFormField<ArrayInputFieldState>(
     props.id,
     {
       initVars: {
         [props.variable]: hasSetValue(props) ? props.value[0] : [],
       },
+      initValidation: {
+        validated: validateArray(hasSetValue(props) ? props.value[0] : [])
+      }
     }
   );
 
@@ -26,10 +33,17 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
         <DeleteButton
           onClick={() => {
             setVars((prev) => {
-              return {
-                [props.variable]: prev[props.variable]
+              const val = prev[props.variable]
                   .slice(0, i)
-                  .concat(prev[props.variable].slice(i + 1)),
+                  .concat(prev[props.variable].slice(i + 1));
+              setValidation((prev) => {
+                return {
+                  ...prev,
+                  validated: validateArray(val)
+                }
+              })
+              return {
+                [props.variable]: val
               };
             });
           }}

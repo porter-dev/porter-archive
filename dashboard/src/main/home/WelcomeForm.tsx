@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import { CSSTransition } from "react-transition-group";
-import axios from "axios";
+import api from "shared/api";
 
 import { Context } from "shared/Context";
 
@@ -21,22 +21,22 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
   const [company, setCompany] = useState("");
 
   const submitForm = () => {
-    axios
-      .get(process.env.WELCOME_FORM_WEBHOOK, {
-        params: {
+    api
+      .getWelcome(
+        "<token>",
+        {
           email: context.user && context.user.email,
           isCompany,
           company,
           role,
         },
-      })
-      .then((res) => {
+        {}
+      )
+      .then(() => {
         localStorage.setItem("welcomed", "true");
         setActive(false);
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch((err) => console.log(err));
   };
 
   const renderContents = () => {

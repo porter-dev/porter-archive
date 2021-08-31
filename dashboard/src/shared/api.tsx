@@ -785,6 +785,15 @@ const getCapabilities = baseApi<{}, {}>("GET", () => {
   return `/api/capabilities`;
 });
 
+const getWelcome = baseApi<{
+  email: string,
+  isCompany: boolean,
+  company: string,
+  role: string
+}, {}>("GET", () => {
+  return `/api/welcome`;
+});
+
 const linkGithubProject = baseApi<
   {},
   {
@@ -1087,6 +1096,7 @@ export default {
   getBranchContents,
   getBranches,
   getCapabilities,
+  getWelcome,
   getChart,
   getCharts,
   getChartComponents,

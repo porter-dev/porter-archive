@@ -378,8 +378,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Spinner src={loadingSrc} /> This application is currently
                   being deployed
                 </Header>
-                Navigate to the <A
-                  href={props.currentChart.git_action_config && `https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`}
+                Navigate to the{" "}
+                <A
+                  href={
+                    props.currentChart.git_action_config &&
+                    `https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`
+                  }
                   target={"_blank"}
                 >
                   Actions

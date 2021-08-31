@@ -99,13 +99,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setIsLoadingChartData(true);
     const res = await api.getChart(
       "<token>",
-      {
-        namespace: chart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-      },
+      {},
       {
         name: chart.name,
+        namespace: chart.namespace,
+        cluster_id: currentCluster.id,
         revision: chart.version,
         id: currentProject.id,
       }
@@ -136,15 +134,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
     try {
       const { data: chartControllers } = await api.getChartControllers(
         "<token>",
+        {},
         {
+          name: chart.name,
           namespace: chart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          id: currentProject.id,
-          name: chart.name,
           revision: chart.version,
+          id: currentProject.id,
         }
       );
 

@@ -405,14 +405,12 @@ const getBranches = baseApi<
 });
 
 const getChart = baseApi<
-  {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
-  },
-  { id: number; name: string; revision: number }
+  {},
+  { id: number; cluster_id: number; namespace: string; name: string; revision: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}`;
+  let { id, cluster_id, namespace, name, revision } = pathParams
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}`
 });
 
 const getCharts = baseApi<
@@ -443,14 +441,12 @@ const getChartComponents = baseApi<
 });
 
 const getChartControllers = baseApi<
-  {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
-  },
-  { id: number; name: string; revision: number }
+{},
+{ id: number; cluster_id: number; namespace: string; name: string; revision: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
+  let { id, cluster_id, namespace, name, revision } = pathParams
+  
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/controllers`
 });
 
 const getClusterIntegrations = baseApi("GET", "/api/integrations/cluster");

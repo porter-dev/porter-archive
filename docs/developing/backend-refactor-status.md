@@ -1,11 +1,11 @@
 | Path                                                                                                                        | Assigned To | Changed schema? | CLI Updated | Frontend Updated |
 | --------------------------------------------------------------------------------------------------------------------------- | ----------- | --------------- | ----------- | ---------------- |
-| <li>- [x] `GET /api/auth/check`                                                                                             |             | yes             |             | yes              |
-| <li>- [x] `GET /api/capabilities`                                                                                           |             |                 |             | yes              |
-| <li>- [x] `GET /api/cli/login`                                                                                              |             |                 | yes         |                  |
-| <li>- [x] `GET /api/cli/login/exchange`                                                                                     |             |                 | yes         |                  |
-| <li>- [x] `GET /api/email/verify/finalize`                                                                                  |             |                 |             |                  |
-| <li>- [x] `POST /api/email/verify/initiate`                                                                                 |             |                 |             | yes              |
+| <li>- [x] `GET /api/auth/check`                                                                                             | AB          | yes             |             | yes              |
+| <li>- [x] `GET /api/capabilities`                                                                                           | AB          |                 |             | yes              |
+| <li>- [x] `GET /api/cli/login`                                                                                              | AB          |                 | yes         |                  |
+| <li>- [x] `GET /api/cli/login/exchange`                                                                                     | AB          |                 | yes         |                  |
+| <li>- [x] `GET /api/email/verify/finalize`                                                                                  | AB          |                 |             |                  |
+| <li>- [x] `POST /api/email/verify/initiate`                                                                                 | AB          |                 |             | yes              |
 | <li>- [ ] `GET /api/integrations/cluster`                                                                                   |             |                 |             |                  |
 | <li>- [ ] `GET /api/integrations/github-app/access`                                                                         |             |                 |             |                  |
 | <li>- [ ] `GET /api/integrations/github-app/authorize`                                                                      |             |                 |             |                  |
@@ -16,8 +16,8 @@
 | <li>- [ ] `GET /api/integrations/registry`                                                                                  |             |                 |             |                  |
 | <li>- [ ] `GET /api/integrations/repo`                                                                                      |             |                 |             |                  |
 | <li>- [ ] `GET /api/livez`                                                                                                  |             |                 |             |                  |
-| <li>- [x] `POST /api/login`                                                                                                 |             |                 |             | yes              |
-| <li>- [x] `POST /api/logout`                                                                                                |             |                 |             | yes              |
+| <li>- [x] `POST /api/login`                                                                                                 | AB          |                 |             | yes              |
+| <li>- [x] `POST /api/logout`                                                                                                | AB          |                 |             | yes              |
 | <li>- [ ] `GET /api/oauth/digitalocean/callback`                                                                            |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/github-app/callback`                                                                              |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/github/callback`                                                                                  |             |                 |             |                  |
@@ -28,20 +28,20 @@
 | <li>- [ ] `GET /api/oauth/projects/{project_id}/github`                                                                     |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/projects/{project_id}/slack`                                                                      |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/slack/callback`                                                                                   |             |                 |             |                  |
-| <li>- [x] `POST /api/password/reset/finalize`                                                                               |             |                 |             | yes              |
-| <li>- [x] `POST /api/password/reset/initiate`                                                                               |             |                 |             | yes              |
-| <li>- [x] `POST /api/password/reset/verify`                                                                                 |             |                 |             | yes              |
-| <li>- [x] `POST /api/projects`                                                                                              |             |                 |             | yes              |
+| <li>- [x] `POST /api/password/reset/finalize`                                                                               | AB          |                 |             | yes              |
+| <li>- [x] `POST /api/password/reset/initiate`                                                                               | AB          |                 |             | yes              |
+| <li>- [x] `POST /api/password/reset/verify`                                                                                 | AB          |                 |             | yes              |
+| <li>- [x] `POST /api/projects`                                                                                              | AB          |                 |             | yes              |
 | <li>- [ ] `DELETE /api/projects/{project_id}`                                                                               |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}`                                                                                  |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}`                                                                                  | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/ci/actions/create`                                                               |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/ci/actions/generate`                                                             |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/clusters`                                                                         |             |                 |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/clusters`                                                                         | AB          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/clusters`                                                                        |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/clusters/candidates`                                                             |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/clusters/candidates`                                                              |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/clusters/candidates/{candidate_id}/resolve`                                      |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/clusters/{cluster_id}`                                                            |             |                 |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/clusters/{cluster_id}`                                                            | AB          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/clusters/{cluster_id}`                                                           |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/clusters/{cluster_id}`                                                         |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}`                                           |             |                 |             |                  |
@@ -117,7 +117,7 @@
 | <li>- [X] `GET /api/projects/{project_id}/registries/dockerhub/token`                                                       | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries/docr/token`                                                            | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries/ecr/{region}/token`                                                    | AB          | yes             |             |                  |
-| <li>- [X] `GET /api/projects/{project_id}/registries/gcr/token`                                                             |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/registries/gcr/token`                                                             | AB          |                 |             |                  |
 | <li>- [X] `DELETE /api/projects/{project_id}/registries/{registry_id}`                                                      | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries/{registry_id}`                                                        | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries/{registry_id}/repositories`                                            | AB          |                 |             |                  |

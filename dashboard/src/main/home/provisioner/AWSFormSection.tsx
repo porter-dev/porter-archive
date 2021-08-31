@@ -267,9 +267,9 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
       .filter(filterNonAWSInfras)
       .map((infra) => {
         if (infra.value === "ecr") {
-          return provisionECR(awsIntegrationId);
+          return provisionECR(awsIntegrationId?.id);
         }
-        return provisionEKS(awsIntegrationId);
+        return provisionEKS(awsIntegrationId?.id);
       });
     // Wait for all promises to be completed (could be just one)
     await Promise.all(infraCreationRequests);

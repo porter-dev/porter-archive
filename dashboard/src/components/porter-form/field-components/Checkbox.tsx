@@ -26,7 +26,7 @@ const Checkbox: React.FC<Props> = ({
       validated: !required,
     },
     initVars: {
-      [variable]: value ? value[0] : !!settings?.default,
+      [variable]: value ? value[0] : false,
     },
   });
 
@@ -75,6 +75,6 @@ export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
   }
 
   return {
-    [props.variable]: props.value ? props.value[0] : !!props.settings?.default,
+    [props.variable]: props.value ? props.value[0] : false,
   };
 };

@@ -6,13 +6,14 @@ import {
   GetFinalVariablesFunction,
 } from "../types";
 import useFormField from "../hooks/useFormField";
+import { hasSetValue } from "../utils";
 
 const ArrayInput: React.FC<ArrayInputField> = (props) => {
   const { state, variables, setVars } = useFormField<ArrayInputFieldState>(
     props.id,
     {
       initVars: {
-        [props.variable]: props.value && props.value[0] ? props.value[0] : [],
+        [props.variable]: hasSetValue(props) ? props.value[0] : [],
       },
     }
   );
@@ -100,10 +101,10 @@ export const getFinalVariablesForArrayInput: GetFinalVariablesFunction = (
   vars,
   props: ArrayInputField
 ) => {
-  return vars[props.variable]
+  return vars[props.variable] != undefined && vars[props.variable] != null
     ? {}
     : {
-        [props.variable]: props.value ? props.value[0] : [],
+        [props.variable]: hasSetValue(props) ? props.value[0] : [],
       };
 };
 

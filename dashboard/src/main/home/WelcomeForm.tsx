@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import styled from "styled-components";
-import { CSSTransition } from 'react-transition-group';
+import { CSSTransition } from "react-transition-group";
 import axios from "axios";
 
 import { Context } from "shared/Context";
@@ -11,7 +11,6 @@ type Props = {
 
 type StateType = {
   active: boolean;
-
 };
 
 const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
@@ -23,17 +22,14 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
 
   const submitForm = () => {
     axios
-      .get(
-        process.env.WELCOME_FORM_WEBHOOK,
-        {
-          params: {
+      .get(process.env.WELCOME_FORM_WEBHOOK, {
+        params: {
           email: context.user && context.user.email,
           isCompany,
           company,
           role,
-          }
-        }
-      )
+        },
+      })
       .then((res) => {
         localStorage.setItem("welcomed", "true");
         setActive(false);
@@ -41,7 +37,7 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
       .catch((err) => {
         console.log(err);
       });
-  }
+  };
 
   const renderContents = () => {
     if (isCompany) {
@@ -49,44 +45,57 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
         <FadeWrapper>
           <Title>Welcome to Porter</Title>
           <Subtitle>Just two things before getting started.</Subtitle>
-          <SubtitleAlt><Num>1</Num> What is your company name? *</SubtitleAlt>
-          <Input 
+          <SubtitleAlt>
+            <Num>1</Num> What is your company name? *
+          </SubtitleAlt>
+          <Input
             placeholder="ex: Acme"
             value={company}
             onChange={(e: any) => setCompany(e.target.value)}
           />
-          <SubtitleAlt><Num>2</Num> What is your role? *</SubtitleAlt>
-          <RadioButton 
+          <SubtitleAlt>
+            <Num>2</Num> What is your role? *
+          </SubtitleAlt>
+          <RadioButton
             onClick={() => setRole("founder")}
             selected={role === "founder"}
           >
-            <i className="material-icons-round">{role === "founder" ? "check_box" : "check_box_outline_blank"}</i> Founder
+            <i className="material-icons-round">
+              {role === "founder" ? "check_box" : "check_box_outline_blank"}
+            </i>{" "}
+            Founder
           </RadioButton>
-          <RadioButton 
+          <RadioButton
             onClick={() => setRole("developer")}
             selected={role === "developer"}
           >
-            <i className="material-icons-round">{role === "developer" ? "check_box" : "check_box_outline_blank"}</i> Developer
+            <i className="material-icons-round">
+              {role === "developer" ? "check_box" : "check_box_outline_blank"}
+            </i>{" "}
+            Developer
           </RadioButton>
-          <RadioButton 
+          <RadioButton
             onClick={() => setRole("devops")}
             selected={role === "devops"}
           >
-            <i className="material-icons-round">{role === "devops" ? "check_box" : "check_box_outline_blank"}</i> DevOps
+            <i className="material-icons-round">
+              {role === "devops" ? "check_box" : "check_box_outline_blank"}
+            </i>{" "}
+            DevOps
           </RadioButton>
 
-          <Submit 
-            isDisabled={!company || role === "unspecified"} 
+          <Submit
+            isDisabled={!company || role === "unspecified"}
             onClick={() => company && role !== "unspecified" && submitForm()}
           >
             <i className="material-icons-round">check</i> Done
           </Submit>
         </FadeWrapper>
-      )
+      );
     }
     return (
       <>
-        <Title>Welcome to Porter</Title>  
+        <Title>Welcome to Porter</Title>
         <Subtitle delay="0.7s">I am interested in using Porter as:</Subtitle>
         <Option onClick={() => setIsCompany(true)}>
           <i className="material-icons-round">people</i> A Company
@@ -96,12 +105,12 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
         </Option>
       </>
     );
-  }
+  };
 
   return (
     <CSSTransition
       in={active}
-      timeout={500} 
+      timeout={500}
       classNames="alert"
       unmountOnExit
       onEnter={() => setActive(true)}
@@ -116,7 +125,7 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
       </StyledWelcomeForm>
     </CSSTransition>
   );
-}
+};
 
 export default WelcomeForm;
 
@@ -190,11 +199,11 @@ const Submit = styled(Option)<{ isDisabled: boolean }>`
   animation: fadeIn 0.7s 0.5s;
   animation-fill-mode: forwards;
   margin-top: 35px;
-  cursor: ${props => props.isDisabled ? "not-allowed" : "pointer"};
-  background: ${props => props.isDisabled ? "#aaaabb" : "#616FEEcc"};
+  cursor: ${(props) => (props.isDisabled ? "not-allowed" : "pointer")};
+  background: ${(props) => (props.isDisabled ? "#aaaabb" : "#616FEEcc")};
   :hover {
-    filter: ${props => props.isDisabled ? "" : "brightness(130%)"};
-    background: ${props => props.isDisabled ? "#aaaabb" : "#616FEEcc"};
+    filter: ${(props) => (props.isDisabled ? "" : "brightness(130%)")};
+    background: ${(props) => (props.isDisabled ? "#aaaabb" : "#616FEEcc")};
   }
 
   > i {
@@ -204,12 +213,12 @@ const Submit = styled(Option)<{ isDisabled: boolean }>`
 
 const RadioButton = styled(Option)<{ selected: boolean }>`
   opacity: 0;
-  background: ${props => props.selected ? "#ffffff44" : "#ffffff22"};
+  background: ${(props) => (props.selected ? "#ffffff44" : "#ffffff22")};
   animation: fadeIn 0.5s 0.2s;
   animation-fill-mode: forwards;
 
   > div {
-    background: ${props => props.selected ? "#ffffff44" : ""}
+    background: ${(props) => (props.selected ? "#ffffff44" : "")};
   }
 `;
 
@@ -238,7 +247,7 @@ const Subtitle = styled.div<{ delay?: string }>`
   color: #aaaabb;
 
   opacity: 0;
-  animation: fadeIn 0.5s ${props => props.delay || "0.2s"};
+  animation: fadeIn 0.5s ${(props) => props.delay || "0.2s"};
   animation-fill-mode: forwards;
 `;
 

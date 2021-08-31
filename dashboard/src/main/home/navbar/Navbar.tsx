@@ -55,7 +55,6 @@ class Navbar extends Component<PropsType, StateType> {
   };
 
   renderFeedbackButton = () => {
-    console.log("hi", this.context?.capabilities)
     if (this.context?.capabilities?.provisioner) {
       return <Feedback currentView={this.props.currentView} />;
     }

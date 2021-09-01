@@ -915,7 +915,11 @@ func New(a *api.App) *chi.Mux {
 				"POST",
 				"/projects/{project_id}/releases/{name}/notifications",
 				auth.DoesUserHaveProjectAccess(
-					requestlog.NewHandler(a.HandleUpdateNotificationConfig, l),
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleUpdateNotificationConfig, l),
+						mw.URLParam,
+						mw.BodyParam,
+					),
 					mw.URLParam,
 					mw.WriteAccess,
 				),
@@ -925,7 +929,11 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/projects/{project_id}/releases/{name}/notifications",
 				auth.DoesUserHaveProjectAccess(
-					requestlog.NewHandler(a.HandleGetNotificationConfig, l),
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetNotificationConfig, l),
+						mw.URLParam,
+						mw.BodyParam,
+					),
 					mw.URLParam,
 					mw.WriteAccess,
 				),

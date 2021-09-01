@@ -5,6 +5,7 @@ import loadingSrc from "assets/loading.gif";
 import { Context } from "shared/Context";
 import { ChartType } from "../../../../../shared/types";
 import api from "../../../../../shared/api";
+import EventCard from "./EventCard";
 
 export type Event = {
   event_id: string;
@@ -124,7 +125,13 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
     );
   }
 
-  return <h1>Events Tab is ready to display events!</h1>;
+  return (
+    <EventsGrid>
+      {eventData.map((dat) => {
+        return <EventCard event={dat[dat.length - 1]} selectEvent={() => {}} />;
+      })}
+    </EventsGrid>
+  );
 
   // if (selectedEvent) {
   //   return <EventLogs clearSelectedEvent={() => setSelectedEvent(undefined)} />;
@@ -214,4 +221,10 @@ const Spinner = styled.img`
   height: 15px;
   margin-right: 12px;
   margin-bottom: -2px;
+`;
+
+const EventsGrid = styled.div`
+  display: grid;
+  grid-row-gap: 15px;
+  grid-template-columns: 1;
 `;

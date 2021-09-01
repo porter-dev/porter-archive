@@ -393,9 +393,15 @@ class Home extends Component<PropsType, StateType> {
             this.context?.capabilities?.version === "staging") &&
             this.state.showWelcomeForm &&
             localStorage.getItem("welcomed") != "true" && (
-              <WelcomeForm
-                closeForm={() => this.setState({ showWelcomeForm: false })}
-              />
+              <>
+                <WelcomeForm
+                  closeForm={() => this.setState({ showWelcomeForm: false })}
+                />
+                <Navbar
+                  logOut={this.props.logOut}
+                  currentView={this.props.currentRoute} // For form feedback
+                />
+              </>
             )
           }
         </>
@@ -671,7 +677,7 @@ const StyledHome = styled.div`
 
 const DiscordButton = styled.a`
   position: absolute;
-  z-index: 100;
+  z-index: 1;
   text-decoration: none;
   bottom: 17px;
   display: flex;

@@ -44,3 +44,7 @@ type CreateReleaseRequest struct {
 type CreateAddonRequest struct {
 	*CreateReleaseBaseRequest
 }
+
+type RollbackReleaseRequest struct {
+	Revision int `json:"revision" form:"required"`
+}

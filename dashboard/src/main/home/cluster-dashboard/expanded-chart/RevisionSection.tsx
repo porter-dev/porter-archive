@@ -165,13 +165,12 @@ class RevisionSection extends Component<PropsType, StateType> {
       .rollbackChart(
         "<token>",
         {
-          namespace: this.props.chart.namespace,
-          storage: StorageType.Secret,
           revision: revisionNumber,
         },
         {
           id: currentProject.id,
           name: this.props.chart.name,
+          namespace: this.props.chart.namespace,
           cluster_id: currentCluster.id,
         }
       )

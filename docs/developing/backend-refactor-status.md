@@ -48,8 +48,8 @@
 | <li>- [ ] `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes`                                                      |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/collaborators`                                                                    |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/delete/{name}`                                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/deploy/addon/{name}/{version}`                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/deploy/{name}/{version}`                                                         |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/deploy/addon/{name}/{version}`                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/deploy/{name}/{version}`                                                         | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos`                                                                         | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos`                                                 | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/branches`                  | AB          |                 |             |                  |

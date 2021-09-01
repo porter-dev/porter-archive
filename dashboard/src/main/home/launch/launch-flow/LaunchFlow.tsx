@@ -100,17 +100,15 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       .deployAddon(
         "<token>",
         {
-          templateName: props.currentTemplate.name,
-          storage: StorageType.Secret,
-          formValues: values,
-          namespace: selectedNamespace,
-          name: templateName,
+          template_name: props.currentTemplate.name,
+          template_version: props.currentTemplate?.currentVersion || "latest",
+          values: values,
+          name: props.currentTemplate.name.toLowerCase().trim(),
         },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
-          name: props.currentTemplate.name.toLowerCase().trim(),
-          version: props.currentTemplate?.currentVersion || "latest",
+          namespace: selectedNamespace,
           repo_url: process.env.ADDON_CHART_REPO_URL,
         }
       )
@@ -249,19 +247,17 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       .deployTemplate(
         "<token>",
         {
-          templateName: props.currentTemplate.name,
-          imageURL: url,
-          storage: StorageType.Secret,
-          formValues: values,
-          namespace: selectedNamespace,
+          image_url: url,
+          values: values,
+          template_name: props.currentTemplate.name.toLowerCase().trim(),
+          template_version: props.currentTemplate?.currentVersion || "latest",
           name: templateName,
-          githubActionConfig,
+          github_action_config: githubActionConfig,
         },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
-          name: props.currentTemplate.name.toLowerCase().trim(),
-          version: props.currentTemplate?.currentVersion || "latest",
+          namespace: selectedNamespace,
           repo_url: process.env.APPLICATION_CHART_REPO_URL,
         }
       )

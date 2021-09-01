@@ -381,10 +381,10 @@ func getReleaseRoutes(
 	})
 
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/rollback ->
-	// release.NewCreateAddonHandler
+	// release.NewRollbackReleaseHandler
 	rollbackEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
+			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
@@ -409,6 +409,38 @@ func getReleaseRoutes(
 	routes = append(routes, &Route{
 		Endpoint: rollbackEndpoint,
 		Handler:  rollbackHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/upgrade ->
+	// release.NewUpgradeReleaseHandler
+	upgradeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/upgrade",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	upgradeHandler := release.NewUpgradeReleaseHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: upgradeEndpoint,
+		Handler:  upgradeHandler,
 		Router:   r,
 	})
 

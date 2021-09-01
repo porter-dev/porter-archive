@@ -250,12 +250,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
       await api.upgradeChartValues(
         "<token>",
         {
-          namespace: currentChart.namespace,
           storage: StorageType.Secret,
           values: valuesYaml,
         },
         {
           id: currentProject.id,
+          namespace: currentChart.namespace,
           name: currentChart.name,
           cluster_id: currentCluster.id,
         }
@@ -304,13 +304,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
         await api.upgradeChartValues(
           "<token>",
           {
-            namespace: currentChart.namespace,
-            storage: StorageType.Secret,
             values: valuesYaml,
             version: version,
           },
           {
             id: currentProject.id,
+            namespace: currentChart.namespace,
             name: currentChart.name,
             cluster_id: currentCluster.id,
           }

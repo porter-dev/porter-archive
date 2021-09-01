@@ -48,3 +48,8 @@ type CreateAddonRequest struct {
 type RollbackReleaseRequest struct {
 	Revision int `json:"revision" form:"required"`
 }
+
+type UpgradeReleaseRequest struct {
+	Values       string `json:"values" form:"required"`
+	ChartVersion string `json:"version"`
+}

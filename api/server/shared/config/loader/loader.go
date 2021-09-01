@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -137,6 +138,8 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			return origin == sc.ServerURL
 		},
 	}
+
+	res.URLCache = urlcache.Init(sc.DefaultApplicationHelmRepoURL, sc.DefaultAddonHelmRepoURL)
 
 	return res, nil
 }

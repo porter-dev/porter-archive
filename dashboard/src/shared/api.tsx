@@ -851,19 +851,18 @@ const updateUser = baseApi<
 
 const upgradeChartValues = baseApi<
   {
-    namespace: string;
-    storage: StorageType;
     values: string;
     version?: string;
   },
   {
     id: number;
     name: string;
+    namespace: string;
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
 });
 
 const listConfigMaps = baseApi<

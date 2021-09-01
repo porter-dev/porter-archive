@@ -344,13 +344,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .upgradeChartValues(
         "<token>",
         {
-          namespace: this.state.currentChart.namespace,
           storage: StorageType.Secret,
           values: conf,
         },
         {
           id: currentProject.id,
           name: this.state.currentChart.name,
+          namespace: this.state.currentChart.namespace,
           cluster_id: currentCluster.id,
         }
       )

@@ -118,13 +118,12 @@ const SettingsSection: React.FC<PropsType> = ({
       await api.upgradeChartValues(
         "<token>",
         {
-          namespace: currentChart?.namespace,
-          storage: StorageType.Secret,
           values: conf,
         },
         {
           id: currentProject.id,
           name: currentChart?.name,
+          namespace: currentChart?.namespace,
           cluster_id: currentCluster.id,
         }
       );

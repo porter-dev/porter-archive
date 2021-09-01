@@ -63,14 +63,13 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
       .upgradeChartValues(
         "<token>",
         {
-          namespace: this.props.currentChart.namespace,
-          storage: StorageType.Secret,
           values: valuesString,
         },
         {
           id: currentProject.id,
           name: this.props.currentChart.name,
           cluster_id: currentCluster.id,
+          namespace: this.props.currentChart.namespace,
         }
       )
       .then((res) => {

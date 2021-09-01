@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -53,6 +54,9 @@ type Config struct {
 
 	// WSUpgrader upgrades HTTP connections to websocket connections
 	WSUpgrader *websocket.Upgrader
+
+	// URLCache contains a cache of chart names to chart repos
+	URLCache *urlcache.ChartURLCache
 }
 
 type ConfigLoader interface {

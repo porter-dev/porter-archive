@@ -60,9 +60,9 @@ export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
 ) => {
   // Read from revision values if unrendered (and therefore not in form state)
   if (vars[props.variable] === null || vars[props.variable] === undefined) {
-    if (props.value[0] === false) {
+    if (props.value && props.value[0] === false) {
       return { [props.variable]: false };
-    } else if (props.value[0] === true) {
+    } else if (props.value && props.value[0] === true) {
       return { [props.variable]: true };
     }
   }

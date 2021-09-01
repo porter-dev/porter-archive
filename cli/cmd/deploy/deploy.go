@@ -3,7 +3,6 @@ package deploy
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -328,10 +327,8 @@ func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) 
 	envConfig, err := getNestedMap(config, "container", "env", "normal")
 
 	// if the field is not found, set envConfig to an empty map; this release has no env set
-	if e := (&NestedMapFieldNotFoundError{}); errors.As(err, &e) {
+	if err != nil {
 		envConfig = make(map[string]interface{})
-	} else if err != nil {
-		return nil, fmt.Errorf("could not get environment variables from release: %s", err.Error())
 	}
 
 	mapEnvConfig := make(map[string]string)

@@ -55,7 +55,6 @@ class Navbar extends Component<PropsType, StateType> {
   };
 
   renderFeedbackButton = () => {
-    console.log("hi", this.context?.capabilities)
     if (this.context?.capabilities?.provisioner) {
       return <Feedback currentView={this.props.currentView} />;
     }
@@ -242,6 +241,7 @@ const StyledNavbar = styled.div`
   align-items: center;
   padding-right: 5px;
   justify-content: flex-end;
+  z-index: 1;
 `;
 
 const NavButton = styled.a`

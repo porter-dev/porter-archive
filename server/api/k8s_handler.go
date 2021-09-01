@@ -35,7 +35,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

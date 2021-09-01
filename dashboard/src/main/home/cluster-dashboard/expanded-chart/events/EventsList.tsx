@@ -9,6 +9,8 @@ import { Context } from "shared/Context";
 
 import loadingSrc from "assets/loading.gif";
 
+import mockData from "./MockData";
+
 type EventController = { type: string; name: string };
 
 const removeDuplicatedEvents = (events: Event[]) => {
@@ -120,7 +122,7 @@ const EventsList: React.FC<Props> = ({ selectEvent, controllers = [] }) => {
   }, [controllers, currentController, currentResourceType, currentLimit]);
 
   const handleSelectEvent = (id: number) => {
-    const event = eventList.find((e) => e.id === id);
+    const event = mockData.find((e) => e.id === id);
     selectEvent(event);
   };
 
@@ -165,7 +167,7 @@ const EventsList: React.FC<Props> = ({ selectEvent, controllers = [] }) => {
           </div>
         </Placeholder>
       )}
-      {!isLoading && !eventList.length && (
+      {false && !isLoading && !eventList.length && (
         <Placeholder>
           <div>
             <Header>No events to show :(</Header>
@@ -175,7 +177,7 @@ const EventsList: React.FC<Props> = ({ selectEvent, controllers = [] }) => {
         </Placeholder>
       )}
       <EventsGrid>
-        {eventList.map((event) => {
+        {mockData.map((event) => {
           return (
             <EventCard
               key={event.id}

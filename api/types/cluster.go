@@ -73,3 +73,8 @@ type GetPodMetricsRequest struct {
 }
 
 type GetPodMetricsResponse *string
+
+type GetPodsRequest struct {
+	Namespace string   `schema:"namespace"`
+	Selectors []string `schema:"selectors"`
+}

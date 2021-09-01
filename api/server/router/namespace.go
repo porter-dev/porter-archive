@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
@@ -258,6 +260,40 @@ func getNamespaceRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listReleasesEndpoint,
 		Handler:  listReleasesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/pod/{name}/logs -> namespace.NewStreamPodLogsHandler
+	streamPodLogsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/pod/{%s}/logs",
+					relPath,
+					types.URLParamPodName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	streamPodLogsHandler := namespace.NewStreamPodLogsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: streamPodLogsEndpoint,
+		Handler:  streamPodLogsHandler,
 		Router:   r,
 	})
 

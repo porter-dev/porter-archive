@@ -195,12 +195,12 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       .getMatchingPods(
         "<token>",
         {
-          cluster_id: currentCluster.id,
           namespace: selectedController?.metadata?.namespace,
           selectors,
         },
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       )
       .then((res) => {

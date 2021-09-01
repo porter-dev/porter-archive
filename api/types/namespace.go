@@ -6,6 +6,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const (
+	URLParamPodName URLParam = "name"
+)
+
 // ReleaseListFilter is a struct that represents the various filter options used for
 // retrieving the releases
 type ReleaseListFilter struct {

@@ -99,8 +99,9 @@ export default class Logs extends Component<PropsType, StateType> {
     let { selectedPod } = this.props;
     if (!selectedPod?.metadata?.name) return;
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+
     this.ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?cluster_id=${currentCluster.id}&service_account_id=${currentCluster.service_account_id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs`
     );
 
     this.ws.onopen = () => {};

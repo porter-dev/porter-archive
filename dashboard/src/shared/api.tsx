@@ -578,13 +578,12 @@ const getJobPods = baseApi<
 
 const getMatchingPods = baseApi<
   {
-    cluster_id: number;
     namespace: string;
     selectors: string[];
   },
-  { id: number }
+  { id: number, cluster_id: number; }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/pods`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/pods`;
 });
 
 const getMetrics = baseApi<
@@ -731,8 +730,6 @@ const getRevisions = baseApi<
   },
   { id: number; cluster_id: number; namespace: string; name: string }
 >("GET", (pathParams) => {
-  console.log("PATH PARAMS", pathParams)
-
   let { id, cluster_id, namespace, name } = pathParams
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/history`

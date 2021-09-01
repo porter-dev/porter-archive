@@ -249,28 +249,32 @@ const deleteSlackIntegration = baseApi<
 const updateNotificationConfig = baseApi<
   {
     payload: any;
-    namespace: string;
-    cluster_id: number;
   },
   {
     project_id: number;
+    cluster_id: number;
+    namespace: string;
     name: string;
   }
 >("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+  let { project_id, cluster_id, namespace, name } = pathParams
+
+  return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
 
 const getNotificationConfig = baseApi<
   {
-    namespace: string;
-    cluster_id: number;
   },
   {
     project_id: number;
+    cluster_id: number;
+    namespace: string;
     name: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+  let { project_id, cluster_id, namespace, name } = pathParams
+
+  return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
 
 const generateGHAWorkflow = baseApi<

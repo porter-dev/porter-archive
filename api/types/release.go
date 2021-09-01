@@ -13,3 +13,11 @@ type Release struct {
 }
 
 type GetReleaseResponse Release
+
+type UpdateNotificationConfigRequest struct {
+	Payload struct {
+		Enabled bool `json:"enabled"`
+		Success bool `json:"success"`
+		Failure bool `json:"failure"`
+	} `json:"payload"`
+}

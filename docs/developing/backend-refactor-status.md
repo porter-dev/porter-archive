@@ -126,8 +126,8 @@
 | <li>- [x] `GET /api/projects/{project_id}/releases`                                                                         | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/image/update/batch`                                                     |             |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/history`                                                          | AB          |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/notifications`                                                   |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/notifications`                                                    |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/releases/{name}/notifications`                                                   | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/releases/{name}/notifications`                                                    | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/rollback`                                                        |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/upgrade`                                                         |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/webhook_token`                                                    |             |                 |             |                  |

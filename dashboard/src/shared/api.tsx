@@ -671,13 +671,12 @@ const getRegistryIntegrations = baseApi("GET", "/api/integrations/registry");
 
 const getReleaseToken = baseApi<
   {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
   },
-  { name: string; id: number }
+  { name: string; id: number, namespace: string; cluster_id: number; }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
+  let { id, cluster_id, namespace, name } = pathParams
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/webhook`;
 });
 
 const destroyEKS = baseApi<
@@ -1037,12 +1036,11 @@ const createWebhookToken = baseApi<
     chart_name: string;
     namespace: string;
     cluster_id: number;
-    storage: StorageType;
   }
 >(
   "POST",
-  ({ project_id, chart_name, namespace, cluster_id, storage }) =>
-    `/api/projects/${project_id}/releases/${chart_name}/webhook_token?namespace=${namespace}&cluster_id=${cluster_id}&storage=${storage}`
+  ({ project_id, chart_name, namespace, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${chart_name}/webhook`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)

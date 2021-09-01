@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
+	"gorm.io/gorm"
 	"helm.sh/helm/v3/pkg/release"
 )
 
@@ -41,12 +42,17 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 
 	if err == nil {
+		res.PorterRelease = release.ToReleaseType()
+
 		res.ID = release.ID
 		res.WebhookToken = release.WebhookToken
 
 		if release.GitActionConfig != nil {
 			res.GitActionConfig = release.GitActionConfig.ToGitActionConfigType()
 		}
+	} else if err != gorm.ErrRecordNotFound {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	// look for the form using the dynamic client
@@ -54,6 +60,7 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	parserDef := &parser.ClientConfigDefault{

@@ -8,6 +8,8 @@ import {
 import useFormField from "../hooks/useFormField";
 import { hasSetValue } from "../utils";
 
+// this is used to set validation for the below form component in case
+// input validation needs to get more complicated in the future
 const validateArray = (arr: any[]) => {
   return arr.some((x) => x);
 };

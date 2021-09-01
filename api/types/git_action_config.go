@@ -15,8 +15,20 @@ type GitActionConfig struct {
 	GitRepoID uint `json:"git_repo_id"`
 
 	// The path to the dockerfile in the git repo
-	DockerfilePath string `json:"dockerfile_path" form:"required"`
+	DockerfilePath string `json:"dockerfile_path"`
 
 	// The build context
 	FolderPath string `json:"folder_path"`
+}
+
+type CreateGitActionConfigRequest struct {
+	GitRepo        string `json:"git_repo" form:"required"`
+	GitBranch      string `json:"git_branch"`
+	ImageRepoURI   string `json:"image_repo_uri" form:"required"`
+	DockerfilePath string `json:"dockerfile_path"`
+	FolderPath     string `json:"folder_path"`
+	GitRepoID      uint   `json:"git_repo_id" form:"required"`
+	RegistryID     uint   `json:"registry_id"`
+
+	ShouldCreateWorkflow bool `json:"should_create_workflow"`
 }

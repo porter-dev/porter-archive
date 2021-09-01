@@ -292,49 +292,45 @@ const generateGHAWorkflow = baseApi<
 
 const deployTemplate = baseApi<
   {
-    templateName: string;
-    imageURL?: string;
-    formValues?: any;
-    storage: StorageType;
-    namespace: string;
+    template_name: string;
+    template_version: string;
+    image_url?: string;
+    values?: any;
     name: string;
-    githubActionConfig?: FullActionConfigType;
+    github_action_config?: FullActionConfigType;
   },
   {
     id: number;
     cluster_id: number;
-    name: string;
-    version: string;
+    namespace: string;
     repo_url?: string;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, name, version, repo_url } = pathParams;
+  let { cluster_id, id, namespace, repo_url } = pathParams;
 
   if (repo_url) {
-    return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
+    return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases?repo_url=${repo_url}`;
   }
-  return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases`;
 });
 
 const deployAddon = baseApi<
   {
-    templateName: string;
-    formValues?: any;
-    storage: StorageType;
-    namespace: string;
+    template_name: string;
+    template_version: string;
+    values?: any;
     name: string;
   },
   {
     id: number;
     cluster_id: number;
-    name: string;
-    version: string;
+    namespace: string;
     repo_url?: string;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, name, version, repo_url } = pathParams;
+  let { cluster_id, id, namespace, repo_url } = pathParams;
 
-  return `/api/projects/${id}/deploy/addon/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/addons?repo_url=${repo_url}`;
 });
 
 const destroyCluster = baseApi<

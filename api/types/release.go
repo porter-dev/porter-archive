@@ -25,3 +25,22 @@ type UpdateNotificationConfigRequest struct {
 		Failure bool `json:"failure"`
 	} `json:"payload"`
 }
+
+type CreateReleaseBaseRequest struct {
+	RepoURL         string                 `schema:"repo_url"`
+	TemplateName    string                 `json:"template_name" form:"required"`
+	TemplateVersion string                 `json:"template_version" form:"required"`
+	Values          map[string]interface{} `json:"values"`
+	Name            string                 `json:"name" form:"required"`
+}
+
+type CreateReleaseRequest struct {
+	*CreateReleaseBaseRequest
+
+	ImageURL           string                        `json:"image_url" form:"required"`
+	GithubActionConfig *CreateGitActionConfigRequest `json:"github_action_config,omitempty"`
+}
+
+type CreateAddonRequest struct {
+	*CreateReleaseBaseRequest
+}

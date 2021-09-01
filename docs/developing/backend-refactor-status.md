@@ -128,7 +128,7 @@
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/history`                                                          | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/releases/{name}/notifications`                                                   | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/notifications`                                                    | AB          |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/rollback`                                                        |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/releases/{name}/rollback`                                                        | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/upgrade`                                                         |             |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/webhook_token`                                                    | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/releases/{name}/webhook_token`                                                   | AB          |                 |             |                  |

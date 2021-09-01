@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/release"
 )
 
@@ -262,4 +263,63 @@ func createGitAction(
 	}
 
 	return ga.ToGitActionConfigType(), workflowYAML, nil
+}
+
+type containerEnvConfig struct {
+	Container struct {
+		Env struct {
+			Normal map[string]string `yaml:"normal"`
+		} `yaml:"env"`
+	} `yaml:"container"`
+}
+
+func updateGitActionEnvSecret(
+	config *config.Config,
+	userID, projectID, clusterID uint,
+	ga *models.GitActionConfig,
+	name, namespace string,
+	release *models.Release,
+	helmRelease *release.Release,
+) error {
+	cEnv := &containerEnvConfig{}
+	rawValues, err := yaml.Marshal(helmRelease.Config)
+
+	if err != nil {
+		return err
+	}
+
+	err = yaml.Unmarshal(rawValues, cEnv)
+
+	if err != nil {
+		return err
+	}
+
+	repoSplit := strings.Split(ga.GitRepo, "/")
+
+	if len(repoSplit) != 2 {
+		return fmt.Errorf("invalid formatting of repo name")
+	}
+
+	// create the commit in the git repo
+	gaRunner := &actions.GithubActions{
+		ServerURL:              config.ServerConf.ServerURL,
+		GithubOAuthIntegration: nil,
+		BuildEnv:               cEnv.Container.Env.Normal,
+		GithubAppID:            config.GithubAppConf.AppID,
+		GithubAppSecretPath:    config.GithubAppConf.SecretPath,
+		GithubInstallationID:   ga.GitRepoID,
+		GitRepoName:            repoSplit[1],
+		GitRepoOwner:           repoSplit[0],
+		Repo:                   config.Repo,
+		ProjectID:              projectID,
+		ClusterID:              clusterID,
+		ReleaseName:            name,
+		GitBranch:              ga.GitBranch,
+		DockerFilePath:         ga.DockerfilePath,
+		FolderPath:             ga.FolderPath,
+		ImageRepoURL:           ga.ImageRepoURI,
+		Version:                "v0.1.0",
+	}
+
+	return gaRunner.CreateEnvSecret()
 }

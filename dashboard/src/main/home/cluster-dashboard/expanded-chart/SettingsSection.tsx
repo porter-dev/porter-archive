@@ -67,11 +67,13 @@ const SettingsSection: React.FC<PropsType> = ({
       .getReleaseToken(
         "<token>",
         {
+        },
+        { 
+          id: currentProject.id, 
+          name: currentChart?.name,
           namespace: currentChart?.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        { id: currentProject.id, name: currentChart?.name }
+        }
       )
       .then((res) => {
         if (!isSubscribed) {
@@ -155,7 +157,6 @@ const SettingsSection: React.FC<PropsType> = ({
           chart_name,
           namespace,
           cluster_id,
-          storage: StorageType.Secret,
         }
       );
       setCreateWebhookButtonStatus("successful");

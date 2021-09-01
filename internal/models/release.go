@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -39,4 +40,17 @@ func (r *Release) Externalize() *ReleaseExternal {
 		WebhookToken:    r.WebhookToken,
 		GitActionConfig: r.GitActionConfig.Externalize(),
 	}
+}
+
+func (r *Release) ToReleaseType() *types.PorterRelease {
+	res := &types.PorterRelease{
+		ID:           r.ID,
+		WebhookToken: r.WebhookToken,
+	}
+
+	if r.GitActionConfig != nil {
+		res.GitActionConfig = r.GitActionConfig.ToGitActionConfigType()
+	}
+
+	return res
 }

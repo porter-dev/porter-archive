@@ -1,7 +1,9 @@
 package release
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -10,8 +12,11 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm/grapher"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/release"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type GetControllersHandler struct {
@@ -47,20 +52,7 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// get current status of each controller
 	for _, controller := range controllers {
 		controller.Namespace = helmRelease.Namespace
-		var rc interface{}
-
-		switch controller.Kind {
-		case "Deployment":
-			rc, err = agent.GetDeployment(controller)
-		case "StatefulSet":
-			rc, err = agent.GetStatefulSet(controller)
-		case "DaemonSet":
-			rc, err = agent.GetDaemonSet(controller)
-		case "ReplicaSet":
-			rc, err = agent.GetReplicaSet(controller)
-		case "CronJob":
-			rc, err = agent.GetCronJob(controller)
-		}
+		rc, _, err := getController(controller, agent)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -71,4 +63,51 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	c.WriteResult(w, r, retrievedControllers)
+}
+
+func getController(controller grapher.Object, agent *kubernetes.Agent) (rc interface{}, selector *metav1.LabelSelector, err error) {
+	switch strings.ToLower(controller.Kind) {
+	case "deployment":
+		obj, err := agent.GetDeployment(controller)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return obj, obj.Spec.Selector, nil
+	case "statefulset":
+		obj, err := agent.GetStatefulSet(controller)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return obj, obj.Spec.Selector, nil
+	case "daemonset":
+		obj, err := agent.GetDaemonSet(controller)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return obj, obj.Spec.Selector, nil
+	case "replicaset":
+		obj, err := agent.GetReplicaSet(controller)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return obj, obj.Spec.Selector, nil
+	case "cronjob":
+		obj, err := agent.GetCronJob(controller)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return obj, obj.Spec.JobTemplate.Spec.Selector, nil
+	}
+
+	return nil, nil, fmt.Errorf("not a valid controller")
 }

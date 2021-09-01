@@ -172,5 +172,35 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/pods/all -> release.NewGetAllPodsHandler
+	getAllPodsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/pods/all",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	getAllPodsHandler := release.NewGetAllPodsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getAllPodsEndpoint,
+		Handler:  getAllPodsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -128,15 +128,9 @@ func (c *Client) GetK8sAllPods(
 	projectID, clusterID uint,
 	namespace, name string,
 ) (GetReleaseAllPodsResponse, error) {
-	cl := fmt.Sprintf("%d", clusterID)
-
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/projects/%d/releases/%s/0/pods/all?"+url.Values{
-			"cluster_id": []string{cl},
-			"namespace":  []string{namespace},
-			"storage":    []string{"secret"},
-		}.Encode(), c.BaseURL, projectID, name),
+		fmt.Sprintf("%s/projects/%d/clusters/%d/namespaces/%s/releases/%s/0/pods/all", c.BaseURL, projectID, clusterID, namespace, name),
 		nil,
 	)
 

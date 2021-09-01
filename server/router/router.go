@@ -932,7 +932,7 @@ func New(a *api.App) *chi.Mux {
 					auth.DoesUserHaveClusterAccess(
 						requestlog.NewHandler(a.HandleGetNotificationConfig, l),
 						mw.URLParam,
-						mw.URLParam,
+						mw.QueryParam,
 					),
 					mw.URLParam,
 					mw.WriteAccess,

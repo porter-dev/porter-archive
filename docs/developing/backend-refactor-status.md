@@ -130,8 +130,8 @@
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/notifications`                                                    | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/rollback`                                                        |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/upgrade`                                                         |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/webhook_token`                                                    |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/webhook_token`                                                   |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/releases/{name}/webhook_token`                                                    | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/releases/{name}/webhook_token`                                                   | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/releases/{name}/{revision}`                                                       | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/components`                                            | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/controllers`                                           | AB          | yes             |             |                  |

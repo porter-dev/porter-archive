@@ -53,3 +53,8 @@ type UpgradeReleaseRequest struct {
 	Values       string `json:"values" form:"required"`
 	ChartVersion string `json:"version"`
 }
+
+type UpdateImageBatchRequest struct {
+	ImageRepoURI string `json:"image_repo_uri" form:"required"`
+	Tag          string `json:"tag" form:"required"`
+}

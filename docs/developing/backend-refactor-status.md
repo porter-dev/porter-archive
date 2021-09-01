@@ -132,10 +132,10 @@
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/upgrade`                                                         |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/webhook_token`                                                    |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/releases/{name}/webhook_token`                                                   |             |                 |             |                  |
-| <li>- [x] `GET /api/projects/{project_id}/releases/{name}/{revision}`                                                       |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/releases/{name}/{revision}`                                                       | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/components`                                            | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/controllers`                                           | AB          | yes             |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/releases/{name}/{revision}/pods/all`                                              |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/pods/all`                                              | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/roles`                                                                            |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/roles/{user_id}`                                                                 |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/roles/{user_id}`                                                               |             |                 |             |                  |

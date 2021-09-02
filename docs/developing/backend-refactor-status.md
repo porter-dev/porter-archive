@@ -84,9 +84,9 @@
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/rename`                                                            | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/update`                                                            | AS          | yes             |             | yes              |
 | <li>- [X] `GET /api/projects/{project_id}/k8s/helm_releases`                                                                | AB          | yes             |             |                  |
-| <li>- [ ] `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}`                                                   |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods`                                                 |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/stop`                                                |             |                 |             |                  |
+| <li>- [X] `DELETE /api/projects/{project_id}/k8s/jobs/{namespace}/{name}`                                                   | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/pods`                                                 | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/k8s/jobs/{namespace}/{name}/stop`                                                | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/kubeconfig`                                                                   | AS          | yes             | yes         |                  |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/metrics`                                                                      | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/namespaces`                                                                   | AS          | yes             |             | yes              |

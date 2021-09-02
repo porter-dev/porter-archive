@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 
+	"github.com/porter-dev/porter/api/server/handlers/jobs"
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -294,6 +295,103 @@ func getNamespaceRoutes(
 	routes = append(routes, &Route{
 		Endpoint: streamPodLogsEndpoint,
 		Handler:  streamPodLogsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/jobs/{name}/pods -> jobs.NewGetPodsHandler
+	getJobPodsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/jobs/{%s}/pods",
+					relPath,
+					types.URLParamJobName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	getJobPodsHandler := jobs.NewGetPodsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getJobPodsEndpoint,
+		Handler:  getJobPodsHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/jobs/{name} -> jobs.NewDeleteHandler
+	deleteJobEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/jobs/{%s}",
+					relPath,
+					types.URLParamJobName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	deleteJobHandler := jobs.NewDeleteHandler(
+		config,
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteJobEndpoint,
+		Handler:  deleteJobHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/jobs/{name}/stop -> jobs.NewStopHandler
+	stopJobEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/jobs/{%s}/stop",
+					relPath,
+					types.URLParamJobName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	stopJobHandler := jobs.NewStopHandler(
+		config,
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: stopJobEndpoint,
+		Handler:  stopJobHandler,
 		Router:   r,
 	})
 

@@ -571,11 +571,11 @@ const getJobStatus = baseApi<
 
 const getJobPods = baseApi<
   {
-    cluster_id: number;
   },
-  { name: string; namespace: string; id: number }
+  { name: string; namespace: string; id: number; cluster_id: number; }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/jobs/${pathParams.namespace}/${pathParams.name}/pods`;
+  let { id, name, cluster_id, namespace } = pathParams
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
 
 const getMatchingPods = baseApi<
@@ -973,11 +973,12 @@ const deleteNamespace = baseApi<
 });
 
 const deleteJob = baseApi<
-  { cluster_id: number },
-  { name: string; namespace: string; id: number }
+{
+},
+{ name: string; namespace: string; id: number; cluster_id: number; }
 >("DELETE", (pathParams) => {
-  let { id, name, namespace } = pathParams;
-  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}`;
+  let { id, name, cluster_id, namespace } = pathParams
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}`;
 });
 
 const stopJob = baseApi<
@@ -985,7 +986,7 @@ const stopJob = baseApi<
   { name: string; namespace: string; id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, name, namespace, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}/stop?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/stop`
 });
 
 const getAvailableRoles = baseApi<{}, { project_id: number }>(

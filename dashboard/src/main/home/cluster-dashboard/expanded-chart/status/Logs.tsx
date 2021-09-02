@@ -159,11 +159,11 @@ export default class Logs extends Component<PropsType, StateType> {
       .getPodEvents(
         "<token>",
         {
-          cluster_id: this.context.currentCluster.id,
         },
         {
           name: selectedPod?.metadata?.name,
           namespace: selectedPod?.metadata?.namespace,
+          cluster_id: this.context.currentCluster.id,
           id: this.context.currentProject.id,
         }
       )

@@ -1,6 +1,9 @@
 package types
 
-import "helm.sh/helm/v3/pkg/release"
+import (
+	"helm.sh/helm/v3/pkg/release"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // Release is a helm release with a form attached
 type Release struct {
@@ -57,4 +60,9 @@ type UpgradeReleaseRequest struct {
 type UpdateImageBatchRequest struct {
 	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 	Tag          string `json:"tag" form:"required"`
+}
+
+type GetJobsStatusResponse struct {
+	Status    string       `json:"status,omitempty"`
+	StartTime *metav1.Time `json:"start_time,omitempty"`
 }

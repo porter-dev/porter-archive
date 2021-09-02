@@ -214,11 +214,12 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
             .createSubdomain(
               "<token>",
               {
-                release_name: templateName,
               },
               {
                 id: currentProject.id,
                 cluster_id: currentCluster.id,
+                release_name: templateName,
+                namespace: selectedNamespace,
               }
             )
             .then((res) => {

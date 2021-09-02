@@ -297,7 +297,7 @@ func getReleaseRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/releases/{name}/webhook",
+				RelativePath: relPath + "/webhook",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -534,6 +534,35 @@ func getReleaseRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getJobsStatusEndpoint,
 		Handler:  getJobsStatusHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/subdomain -> release.NewCreateSubdomainHandler
+	createSubdomainEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/releases/{name}/subdomain",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	createSubdomainHandler := release.NewCreateSubdomainHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createSubdomainEndpoint,
+		Handler:  createSubdomainHandler,
 		Router:   r,
 	})
 

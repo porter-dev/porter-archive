@@ -55,11 +55,11 @@ func (repo *KubeIntegrationRepository) CreateKubeIntegration(
 
 // ReadKubeIntegration finds a kube auth mechanism by id
 func (repo *KubeIntegrationRepository) ReadKubeIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.KubeIntegration, error) {
 	ki := &ints.KubeIntegration{}
 
-	if err := repo.db.Where("id = ?", id).First(&ki).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&ki).Error; err != nil {
 		return nil, err
 	}
 
@@ -275,11 +275,11 @@ func (repo *BasicIntegrationRepository) CreateBasicIntegration(
 
 // ReadBasicIntegration finds a basic auth mechanism by id
 func (repo *BasicIntegrationRepository) ReadBasicIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.BasicIntegration, error) {
 	basic := &ints.BasicIntegration{}
 
-	if err := repo.db.Where("id = ?", id).First(&basic).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&basic).Error; err != nil {
 		return nil, err
 	}
 
@@ -415,11 +415,11 @@ func (repo *OIDCIntegrationRepository) CreateOIDCIntegration(
 
 // ReadOIDCIntegration finds a oidc auth mechanism by id
 func (repo *OIDCIntegrationRepository) ReadOIDCIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.OIDCIntegration, error) {
 	oidc := &ints.OIDCIntegration{}
 
-	if err := repo.db.Where("id = ?", id).First(&oidc).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&oidc).Error; err != nil {
 		return nil, err
 	}
 
@@ -635,11 +635,11 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 
 // ReadOAuthIntegration finds a oauth auth mechanism by id
 func (repo *OAuthIntegrationRepository) ReadOAuthIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.OAuthIntegration, error) {
 	oauth := &ints.OAuthIntegration{}
 
-	if err := repo.db.Where("id = ?", id).First(&oauth).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&oauth).Error; err != nil {
 		return nil, err
 	}
 
@@ -818,11 +818,11 @@ func (repo *GCPIntegrationRepository) CreateGCPIntegration(
 
 // ReadGCPIntegration finds a gcp auth mechanism by id
 func (repo *GCPIntegrationRepository) ReadGCPIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.GCPIntegration, error) {
 	gcp := &ints.GCPIntegration{}
 
-	if err := repo.db.Where("id = ?", id).First(&gcp).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&gcp).Error; err != nil {
 		return nil, err
 	}
 
@@ -955,11 +955,11 @@ func (repo *AWSIntegrationRepository) OverwriteAWSIntegration(
 
 // ReadAWSIntegration finds a aws auth mechanism by id
 func (repo *AWSIntegrationRepository) ReadAWSIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.AWSIntegration, error) {
 	aws := &ints.AWSIntegration{}
 
-	if err := repo.db.Where("id = ?", id).First(&aws).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&aws).Error; err != nil {
 		return nil, err
 	}
 

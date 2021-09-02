@@ -53,7 +53,7 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	for _, reg := range regs {
 		if reg.AWSIntegrationID != 0 {
-			awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(reg.AWSIntegrationID)
+			awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(reg.ProjectID, reg.AWSIntegrationID)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -187,7 +187,7 @@ func (c *RegistryGetDOCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	for _, reg := range regs {
 		if reg.DOIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
-			oauthInt, err := c.Repo().OAuthIntegration().ReadOAuthIntegration(reg.DOIntegrationID)
+			oauthInt, err := c.Repo().OAuthIntegration().ReadOAuthIntegration(reg.ProjectID, reg.DOIntegrationID)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -249,7 +249,7 @@ func (c *RegistryGetDockerhubTokenHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	for _, reg := range regs {
 		if reg.BasicIntegrationID != 0 && strings.Contains(reg.URL, "index.docker.io") {
-			basic, err := c.Repo().BasicIntegration().ReadBasicIntegration(reg.BasicIntegrationID)
+			basic, err := c.Repo().BasicIntegration().ReadBasicIntegration(reg.ProjectID, reg.BasicIntegrationID)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

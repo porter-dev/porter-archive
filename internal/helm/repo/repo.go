@@ -40,6 +40,7 @@ func (hr *HelmRepo) listChartsBasic(
 ) (types.ListTemplatesResponse, error) {
 	// get the basic auth integration
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		hr.ProjectID,
 		hr.BasicAuthIntegrationID,
 	)
 
@@ -67,6 +68,7 @@ func (hr *HelmRepo) getChartBasic(
 ) (*chart.Chart, error) {
 	// get the basic auth integration
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		hr.ProjectID,
 		hr.BasicAuthIntegrationID,
 	)
 

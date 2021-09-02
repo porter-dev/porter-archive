@@ -49,7 +49,7 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	if regModel.URL == "" && regModel.AWSIntegrationID != 0 {
-		url, err := registry.GetECRRegistryURL(p.Repo().AWSIntegration(), regModel.AWSIntegrationID)
+		url, err := registry.GetECRRegistryURL(p.Repo().AWSIntegration(), regModel.ProjectID, regModel.AWSIntegrationID)
 
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

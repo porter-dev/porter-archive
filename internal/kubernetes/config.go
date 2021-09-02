@@ -181,6 +181,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster() (clientcmd.ClientCo
 
 	if conf.Cluster.AuthMechanism == models.Local {
 		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
+			conf.Cluster.ProjectID,
 			conf.Cluster.KubeIntegrationID,
 		)
 
@@ -242,6 +243,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 	switch cluster.AuthMechanism {
 	case models.X509:
 		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
+			cluster.ProjectID,
 			cluster.KubeIntegrationID,
 		)
 
@@ -253,6 +255,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].ClientKeyData = kubeAuth.ClientKeyData
 	case models.Basic:
 		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
+			cluster.ProjectID,
 			cluster.KubeIntegrationID,
 		)
 
@@ -264,6 +267,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].Password = string(kubeAuth.Password)
 	case models.Bearer:
 		kubeAuth, err := conf.Repo.KubeIntegration().ReadKubeIntegration(
+			cluster.ProjectID,
 			cluster.KubeIntegrationID,
 		)
 
@@ -274,6 +278,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].Token = string(kubeAuth.Token)
 	case models.OIDC:
 		oidcAuth, err := conf.Repo.OIDCIntegration().ReadOIDCIntegration(
+			cluster.ProjectID,
 			cluster.OIDCIntegrationID,
 		)
 
@@ -294,6 +299,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		}
 	case models.GCP:
 		gcpAuth, err := conf.Repo.GCPIntegration().ReadGCPIntegration(
+			cluster.ProjectID,
 			cluster.GCPIntegrationID,
 		)
 
@@ -315,6 +321,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].Token = tok.AccessToken
 	case models.AWS:
 		awsAuth, err := conf.Repo.AWSIntegration().ReadAWSIntegration(
+			cluster.ProjectID,
 			cluster.AWSIntegrationID,
 		)
 
@@ -332,6 +339,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 		authInfoMap[authInfoName].Token = tok
 	case models.DO:
 		oauthInt, err := conf.Repo.OAuthIntegration().ReadOAuthIntegration(
+			cluster.ProjectID,
 			cluster.DOIntegrationID,
 		)
 

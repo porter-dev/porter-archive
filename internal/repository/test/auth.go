@@ -39,7 +39,7 @@ func (repo *KubeIntegrationRepository) CreateKubeIntegration(
 
 // ReadKubeIntegration finds a kube auth mechanism by id
 func (repo *KubeIntegrationRepository) ReadKubeIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.KubeIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
@@ -103,7 +103,7 @@ func (repo *BasicIntegrationRepository) CreateBasicIntegration(
 
 // ReadBasicIntegration finds a basic auth mechanism by id
 func (repo *BasicIntegrationRepository) ReadBasicIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.BasicIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
@@ -167,7 +167,7 @@ func (repo *OIDCIntegrationRepository) CreateOIDCIntegration(
 
 // ReadOIDCIntegration finds a oidc auth mechanism by id
 func (repo *OIDCIntegrationRepository) ReadOIDCIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.OIDCIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
@@ -231,7 +231,7 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 
 // ReadOAuthIntegration finds a o auth mechanism by id
 func (repo *OAuthIntegrationRepository) ReadOAuthIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.OAuthIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
@@ -330,7 +330,7 @@ func (repo *AWSIntegrationRepository) OverwriteAWSIntegration(
 
 // ReadAWSIntegration finds a aws auth mechanism by id
 func (repo *AWSIntegrationRepository) ReadAWSIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.AWSIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
@@ -394,7 +394,7 @@ func (repo *GCPIntegrationRepository) CreateGCPIntegration(
 
 // ReadGCPIntegration finds a gcp auth mechanism by id
 func (repo *GCPIntegrationRepository) ReadGCPIntegration(
-	id uint,
+	projectID, id uint,
 ) (*ints.GCPIntegration, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")

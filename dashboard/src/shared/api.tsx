@@ -279,11 +279,12 @@ const generateGHAWorkflow = baseApi<
     cluster_id: number;
     project_id: number;
     name: string;
+    namespace: string;
   }
 >("POST", (pathParams) => {
-  const { name, cluster_id, project_id } = pathParams;
+  const { name, namespace, cluster_id, project_id } = pathParams;
 
-  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}`;
+  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}&namespace=${namespace}`;
 });
 
 const deployTemplate = baseApi<
@@ -356,7 +357,11 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const getBranchContents = baseApi<
@@ -372,7 +377,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -388,7 +397,11 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getBranches = baseApi<
@@ -782,6 +795,15 @@ const getCapabilities = baseApi<{}, {}>("GET", () => {
   return `/api/capabilities`;
 });
 
+const getWelcome = baseApi<{
+  email: string,
+  isCompany: boolean,
+  company: string,
+  role: string
+}, {}>("GET", () => {
+  return `/api/welcome`;
+});
+
 const linkGithubProject = baseApi<
   {},
   {
@@ -1084,6 +1106,7 @@ export default {
   getBranchContents,
   getBranches,
   getCapabilities,
+  getWelcome,
   getChart,
   getCharts,
   getChartComponents,

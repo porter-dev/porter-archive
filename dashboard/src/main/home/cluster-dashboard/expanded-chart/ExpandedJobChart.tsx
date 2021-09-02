@@ -18,6 +18,8 @@ import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import ValuesYaml from "./ValuesYaml";
 import DeploymentType from "./DeploymentType";
+import Modal from "main/home/modals/Modal";
+import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -42,6 +44,7 @@ type StateType = {
   saveValuesStatus: string | null;
   formData: any;
   devOpsMode: boolean;
+  upgradeVersion: string;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -59,6 +62,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     deleting: false,
     saveValuesStatus: null as string | null,
     formData: {} as any,
+    upgradeVersion: "",
     devOpsMode: localStorage.getItem("devOpsMode") === "true",
   };
 
@@ -436,8 +440,14 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 <Header>
                   <Spinner src={loading} /> This job is currently being deployed
                 </Header>
-                Navigate to the "Actions" tab of your GitHub repo to view live
-                build logs.
+                Navigate to the
+                <A
+                  href={`https://github.com/${this.props.currentChart?.git_action_config?.git_repo}/actions`}
+                  target={"_blank"}
+                >
+                  Actions tab
+                </A>{" "}
+                of your GitHub repo to view live build logs.
               </TextWrap>
             </Placeholder>
           );
@@ -569,13 +579,91 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
+  handleUpgradeVersion = async (version: string, cb: () => void) => {
+    // convert current values to yaml
+    let values = this.state.currentChart.config;
+
+    let valuesYaml = yaml.dump({
+      ...(this.state.currentChart.config as Object),
+      ...values,
+    });
+
+    _.set(values, "paused", true);
+
+    const { currentChart } = this.state;
+    this.setState({ saveValuesStatus: "loading" });
+    this.getChartData(currentChart, currentChart.version);
+
+    try {
+      await api.upgradeChartValues(
+        "<token>",
+        {
+          namespace: currentChart.namespace,
+          storage: StorageType.Secret,
+          values: valuesYaml,
+          version: version,
+        },
+        {
+          id: this.context.currentProject.id,
+          name: currentChart.name,
+          cluster_id: this.context.currentCluster.id,
+        }
+      );
+      this.setState({ saveValuesStatus: "successful" });
+
+      window.analytics.track("Chart Upgraded", {
+        chart: currentChart.name,
+        values: valuesYaml,
+      });
+
+      cb && cb();
+    } catch (err) {
+      let parsedErr =
+        err?.response?.data?.errors && err.response.data.errors[0];
+
+      if (parsedErr) {
+        err = parsedErr;
+      }
+      this.setState({ saveValuesStatus: err });
+      this.context.setCurrentError(parsedErr);
+
+      window.analytics.track("Failed to Upgrade Chart", {
+        chart: currentChart.name,
+        values: valuesYaml,
+        error: err,
+      });
+    }
+  };
+
   render() {
     let { closeChart } = this.props;
     let { currentChart } = this.state;
     let chart = currentChart;
-
+    const displayUpdateButton =
+      chart.latest_version &&
+      chart.latest_version !== chart.chart.metadata.version;
     return (
       <>
+        {this.state.upgradeVersion && (
+          <Modal
+            onRequestClose={() => this.setState({ upgradeVersion: "" })}
+            width="500px"
+            height="450px"
+          >
+            <UpgradeChartModal
+              currentChart={chart}
+              closeModal={() => {
+                this.setState({ upgradeVersion: "" });
+              }}
+              onSubmit={() => {
+                this.handleUpgradeVersion(this.state.upgradeVersion, () => {
+                  this.setState({ loading: false });
+                });
+                this.setState({ upgradeVersion: "", loading: true });
+              }}
+            />
+          </Modal>
+        )}
         <StyledExpandedChart>
           <HeaderWrapper>
             <BackButton onClick={closeChart}>
@@ -599,6 +687,19 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 {" " + this.readableDate(chart.info.last_deployed)}
               </LastDeployed>
             </InfoWrapper>
+            {displayUpdateButton && (
+              <RevisionUpdateMessage
+                onClick={(e) => {
+                  e.stopPropagation();
+                  this.setState({
+                    upgradeVersion: currentChart.latest_version,
+                  });
+                }}
+              >
+                <i className="material-icons">notification_important</i>
+                Template Update Available
+              </RevisionUpdateMessage>
+            )}
           </HeaderWrapper>
 
           {this.state.deleting ? (
@@ -659,6 +760,31 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 ExpandedJobChart.contextType = Context;
 
 export default withAuth(ExpandedJobChart);
+
+const RevisionUpdateMessage = styled.button`
+  background: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: none;
+  margin-bottom: 14px;
+
+  :hover {
+    border: 1px solid white;
+    padding: 3px 9px;
+    cursor: pointer;
+  }
+
+  > i {
+    margin-right: 6px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    transform: none;
+  }
+`;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
@@ -865,4 +991,11 @@ const TabButton = styled.div`
     font-size: 17px;
     margin-right: 9px;
   }
+`;
+
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  margin-left: 5px;
+  cursor: pointer;
 `;

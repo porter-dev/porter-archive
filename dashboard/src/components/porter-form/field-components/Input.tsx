@@ -6,6 +6,7 @@ import {
   InputField,
   StringInputFieldState,
 } from "../types";
+import { hasSetValue } from "../utils";
 
 const clipOffUnit = (unit: string, x: string) => {
   if (typeof x === "string" && unit) {
@@ -16,17 +17,19 @@ const clipOffUnit = (unit: string, x: string) => {
   return x;
 };
 
-const Input: React.FC<InputField> = ({
-  id,
-  variable,
-  label,
-  required,
-  placeholder,
-  info,
-  settings,
-  isReadOnly,
-  value,
-}) => {
+const Input: React.FC<InputField> = (props) => {
+  const {
+    id,
+    variable,
+    label,
+    required,
+    placeholder,
+    info,
+    settings,
+    isReadOnly,
+    value,
+  } = props;
+
   const {
     state,
     variables,
@@ -34,14 +37,12 @@ const Input: React.FC<InputField> = ({
     setValidation,
   } = useFormField<StringInputFieldState>(id, {
     initValidation: {
-      validated: value
-        ? value[0] !== undefined && value[0] !== "" && value[0] != null
-        : settings?.default != undefined,
+      validated: hasSetValue(props),
     },
     initVars: {
-      [variable]: value
+      [variable]: hasSetValue(props)
         ? clipOffUnit(settings?.unit, value[0])
-        : settings?.default,
+        : undefined,
     },
   });
 
@@ -93,10 +94,12 @@ export const getFinalVariablesForStringInput: GetFinalVariablesFunction = (
   props: InputField
 ) => {
   const val =
-    vars[props.variable] ||
-    (props.value
+    vars[props.variable] != undefined && vars[props.variable] != null
+      ? vars[props.variable]
+      : hasSetValue(props)
       ? clipOffUnit(props.settings?.unit, props.value[0])
-      : props.settings?.default);
+      : undefined;
+
   return {
     [props.variable]:
       props.settings?.unit && !props.settings.omitUnitFromValue

@@ -2,45 +2,34 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 
-import { ChartType, StorageType } from "shared/types";
+import {
+  ChartType,
+  JobStatusType,
+  JobStatusWithTimeType,
+  StorageType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
-import { useWebsockets } from "shared/hooks/useWebsockets";
 import api from "shared/api";
 
 type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
-  isJob: boolean;
-  release: any;
-};
-
-type JobStatusType = {
-  status: "succeeded" | "running" | "failed";
-  start_time: string;
+  jobStatus: JobStatusWithTimeType;
 };
 
 const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
-  isJob,
-  release,
+  jobStatus,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
-  const [jobStatus, setJobStatus] = useState<JobStatusType>(null);
   const context = useContext(Context);
   const location = useLocation();
   const history = useHistory();
   const match = useRouteMatch();
-
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
 
   const renderIcon = () => {
     if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
@@ -79,59 +68,6 @@ const Chart: React.FunctionComponent<Props> = ({
   useEffect(() => {
     getControllerForChart(chart);
   }, [chart]);
-
-  const setupWebsocket = (kind: string) => {
-    const { currentProject, currentCluster } = context;
-
-    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
-
-    const wsConfig = {
-      onmessage(evt: MessageEvent) {
-        const event = JSON.parse(evt.data);
-        let object = event.Object;
-        object.metadata.kind = event.Kind;
-        if (event.event_type != "UPDATE") {
-          return;
-        }
-        getJobStatus();
-      },
-      onerror() {
-        closeWebsocket(kind);
-      },
-    };
-
-    newWebsocket(kind, apiEndpoint, wsConfig);
-    openWebsocket(kind);
-  };
-
-  const getJobStatus = () => {
-    let { currentCluster, currentProject, setCurrentError } = context;
-
-    api
-      .getJobStatus(
-        "<token>",
-        {
-          cluster_id: currentCluster.id,
-        },
-        {
-          id: currentProject.id,
-          name: chart.name,
-          namespace: chart.namespace,
-        }
-      )
-      .then((res) => {
-        setJobStatus(res.data);
-      })
-      .catch((err) => setCurrentError(err));
-  };
-
-  useEffect(() => {
-    if (isJob) {
-      getJobStatus();
-      setupWebsocket("job");
-    }
-    return () => closeAllWebsockets();
-  }, [isJob]);
 
   const readableDate = (s: string) => {
     const ts = new Date(s);
@@ -179,22 +115,21 @@ const Chart: React.FunctionComponent<Props> = ({
             margin_left={"17px"}
           />
           <LastDeployed>
-            {isJob && jobStatus?.status ? (
+            {jobStatus?.status ? (
               <>
                 <Dot>•</Dot>
                 <JobStatus status={jobStatus.status}>
-                  {jobStatus.status === "running" ? "Started" : "Last run"} {jobStatus.status} at{" "}
-                  {readableDate(jobStatus.start_time)}
+                  {jobStatus.status === JobStatusType.Running
+                    ? "Started running"
+                    : `Last run ${jobStatus.status}`}{" "}
+                  at {readableDate(jobStatus.start_time)}
                 </JobStatus>
               </>
             ) : (
               <>
                 <Dot>•</Dot>
                 <JobStatus>
-                  Last deployed{" "}
-                  {readableDate(
-                    release?.info?.last_deployed || chart.info.last_deployed
-                  )}
+                  Last deployed {readableDate(chart.info.last_deployed)}
                 </JobStatus>
               </>
             )}
@@ -208,7 +143,7 @@ const Chart: React.FunctionComponent<Props> = ({
       </BottomWrapper>
 
       <TopRightContainer>
-        <span>v{release?.version || chart.version}</span>
+        <span>v{chart.version}</span>
       </TopRightContainer>
     </StyledChart>
   );
@@ -337,14 +272,15 @@ const Title = styled.div`
   }
 `;
 
-const JobStatus = styled.span<{ status?: string }>`
+const JobStatus = styled.span<{ status?: JobStatusType }>`
   font-size: 13px;
-  font-weight: ${props => props.status && props.status !== "running" ? "500" : ""};
-  ${props => `
+  font-weight: ${(props) =>
+    props.status && props.status !== JobStatusType.Running ? "500" : ""};
+  ${(props) => `
   color: ${
-    props.status === "succeeded"
+    props.status === JobStatusType.Succeeded
       ? "rgb(56, 168, 138)"
-      : props.status === "failed"
+      : props.status === JobStatusType.Failed
       ? "#ff385d"
       : "#aaaabb66"
   }`}

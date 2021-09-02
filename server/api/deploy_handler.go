@@ -199,7 +199,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, gaForm, w, r)
+		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, form.ReleaseForm.Form.Namespace, gaForm, w, r)
 	}
 
 	app.AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
@@ -442,12 +442,14 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
+					ReleaseNamespace:       release.Namespace,
 					GitBranch:              gitAction.GitBranch,
 					DockerFilePath:         gitAction.DockerfilePath,
 					FolderPath:             gitAction.FolderPath,
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
 					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
 				err = gaRunner.Cleanup()

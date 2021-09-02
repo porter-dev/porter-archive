@@ -121,7 +121,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -281,7 +281,7 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -338,7 +338,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -478,7 +478,7 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -636,7 +636,7 @@ func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -844,7 +844,7 @@ func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	rel, err := agent.GetRelease(name, 0)
+	rel, err := agent.GetRelease(name, 0, false)
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -970,7 +970,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	// if the chart version is set, load a chart from the repo
 	if form.ChartVersion != "" {
-		release, err := agent.GetRelease(form.Name, 0)
+		release, err := agent.GetRelease(form.Name, 0, false)
 
 		if err != nil {
 			app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -1136,6 +1136,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
+					ReleaseNamespace:       release.Namespace,
 					GitBranch:              gitAction.GitBranch,
 					DockerFilePath:         gitAction.DockerfilePath,
 					FolderPath:             gitAction.FolderPath,
@@ -1219,7 +1220,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	rel, err := agent.GetRelease(form.Name, 0)
+	rel, err := agent.GetRelease(form.Name, 0, false)
 
 	// repository is set to current repository by default
 	commit := vals["commit"][0]
@@ -1401,7 +1402,7 @@ func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Requ
 		go func() {
 			defer wg.Done()
 			// read release via agent
-			rel, err := agent.GetRelease(releases[index].Name, 0)
+			rel, err := agent.GetRelease(releases[index].Name, 0, false)
 
 			if err != nil {
 				mu.Lock()
@@ -1494,7 +1495,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the full release data for GHA updating
-	rel, err := agent.GetRelease(form.Name, form.Revision)
+	rel, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -1586,6 +1587,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
+					ReleaseNamespace:       release.Namespace,
 					GitBranch:              gitAction.GitBranch,
 					DockerFilePath:         gitAction.DockerfilePath,
 					FolderPath:             gitAction.FolderPath,

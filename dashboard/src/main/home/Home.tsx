@@ -12,6 +12,7 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import ClusterDashboard from "./cluster-dashboard/ClusterDashboard";
 import Dashboard from "./dashboard/Dashboard";
+import WelcomeForm from "./WelcomeForm";
 import Integrations from "./integrations/Integrations";
 import Templates from "./launch/Launch";
 import ClusterInstructionsModal from "./modals/ClusterInstructionsModal";
@@ -65,6 +66,7 @@ type StateType = {
 
   // Track last project id for refreshing clusters on project change
   prevProjectId: number | null;
+  showWelcomeForm: boolean;
 };
 
 // TODO: Handle cluster connected but with some failed infras (no successful set)
@@ -78,6 +80,7 @@ class Home extends Component<PropsType, StateType> {
     sidebarReady: false,
     handleDO: false,
     ghRedirect: false,
+    showWelcomeForm: true,
   };
 
   // TODO: Refactor and prevent flash + multiple reload
@@ -385,6 +388,22 @@ class Home extends Component<PropsType, StateType> {
             <Icon src={discordLogo} />
             Join Our Discord
           </DiscordButton>
+          {
+            (this.context?.capabilities?.version === "production" ||
+            this.context?.capabilities?.version === "staging") &&
+            this.state.showWelcomeForm &&
+            localStorage.getItem("welcomed") != "true" && (
+              <>
+                <WelcomeForm
+                  closeForm={() => this.setState({ showWelcomeForm: false })}
+                />
+                <Navbar
+                  logOut={this.props.logOut}
+                  currentView={this.props.currentRoute} // For form feedback
+                />
+              </>
+            )
+          }
         </>
       );
     }
@@ -658,7 +677,7 @@ const StyledHome = styled.div`
 
 const DiscordButton = styled.a`
   position: absolute;
-  z-index: 100;
+  z-index: 1;
   text-decoration: none;
   bottom: 17px;
   display: flex;

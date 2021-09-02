@@ -374,8 +374,17 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Spinner src={loadingSrc} /> This application is currently
                   being deployed
                 </Header>
-                Navigate to the "Actions" tab of your GitHub repo to view live
-                build logs.
+                Navigate to the{" "}
+                <A
+                  href={
+                    props.currentChart.git_action_config &&
+                    `https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`
+                  }
+                  target={"_blank"}
+                >
+                  Actions
+                </A>{" "}
+                tab of your GitHub repo to view live build logs.
               </TextWrap>
               <DeployStatus chart={chart} />
             </Placeholder>
@@ -1033,4 +1042,10 @@ const DeploymentImageContainer = styled.div`
 const DeploymentTypeIcon = styled(Icon)`
   width: 20px;
   margin-right: 10px;
+`;
+
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  cursor: pointer;
 `;

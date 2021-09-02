@@ -59,6 +59,7 @@ func main() {
 	repo := gorm.NewRepository(db, &key)
 
 	a, err := api.New(&api.AppConfig{
+		Version:    Version,
 		Logger:     logger,
 		Repository: repo,
 		ServerConf: appConf.Server,

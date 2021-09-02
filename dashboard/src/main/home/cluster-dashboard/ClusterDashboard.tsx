@@ -5,7 +5,7 @@ import monoweb from "assets/monoweb.png";
 import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
-import { ChartType, ClusterType } from "shared/types";
+import { ChartType, ClusterType, JobStatusType } from "shared/types";
 import {
   getQueryParam,
   PorterUrl,
@@ -25,6 +25,7 @@ import api from "shared/api";
 import DashboardRoutes from "./dashboard/Routes";
 import GuardedRoute from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import LastRunStatusSelector from "./LastRunStatusSelector";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -36,6 +37,7 @@ type PropsType = RouteComponentProps &
 type StateType = {
   namespace: string;
   sortType: string;
+  lastRunStatus: JobStatusType | null;
   currentChart: ChartType | null;
   isMetricsInstalled: boolean;
 };
@@ -47,6 +49,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     sortType: localStorage.getItem("SortType")
       ? localStorage.getItem("SortType")
       : "Newest",
+    lastRunStatus: null as null,
     currentChart: null as ChartType | null,
     isMetricsInstalled: false,
   };
@@ -130,7 +133,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
     return (
       <>
-        <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
+        <ControlRow>
           {isAuthorizedToAdd && (
             <Button
               onClick={() =>
@@ -141,10 +144,14 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             </Button>
           )}
           <SortFilterWrapper>
-            <SortSelector
-              setSortType={(sortType) => this.setState({ sortType })}
-              sortType={this.state.sortType}
-            />
+            {currentView === "jobs" && (
+              <LastRunStatusSelector
+                lastRunStatus={this.state.lastRunStatus}
+                setLastRunStatus={(lastRunStatus: JobStatusType) => {
+                  this.setState({ lastRunStatus });
+                }}
+              />
+            )}
             <NamespaceSelector
               setNamespace={(namespace) =>
                 this.setState({ namespace }, () => {
@@ -155,12 +162,17 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               }
               namespace={this.state.namespace}
             />
+            <SortSelector
+              setSortType={(sortType) => this.setState({ sortType })}
+              sortType={this.state.sortType}
+            />
           </SortFilterWrapper>
         </ControlRow>
 
         <ChartList
           currentView={currentView}
           currentCluster={currentCluster}
+          lastRunStatus={this.state.lastRunStatus}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
         />
@@ -239,12 +251,8 @@ const Br = styled.div`
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: ${(props: { hasMultipleChilds: boolean }) => {
-    if (props.hasMultipleChilds) {
-      return "space-between";
-    }
-    return "flex-end";
-  }};
+  margin-left: auto;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 35px;
   padding-left: 0px;
@@ -389,7 +397,9 @@ const Img = styled.img`
 `;
 
 const SortFilterWrapper = styled.div`
-  width: 468px;
   display: flex;
   justify-content: space-between;
+  > div:not(:first-child) {
+    margin-left: 30px;
+  }
 `;

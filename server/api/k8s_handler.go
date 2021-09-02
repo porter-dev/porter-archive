@@ -35,7 +35,7 @@ func (app *App) HandleListNamespaces(w http.ResponseWriter, r *http.Request) {
 	vals, err := url.ParseQuery(r.URL.RawQuery)
 
 	if err != nil {
-		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -1228,7 +1228,12 @@ func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request)
 		chartList = vals["charts"]
 	}
 
-	err = agent.StreamHelmReleases(conn, chartList, selectors)
+	namespace := v1.NamespaceAll
+	if vals["namespace"] != nil {
+		namespace = vals["namespace"][0]
+	}
+
+	err = agent.StreamHelmReleases(conn, namespace, chartList, selectors)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)

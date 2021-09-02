@@ -6,16 +6,24 @@ import {
   GetFinalVariablesFunction,
 } from "../types";
 import useFormField from "../hooks/useFormField";
+import { hasSetValue } from "../utils";
+
+// this is used to set validation for the below form component in case
+// input validation needs to get more complicated in the future
+const validateArray = (arr: any[]) => {
+  return arr.some((x) => x);
+};
 
 const ArrayInput: React.FC<ArrayInputField> = (props) => {
-  const { state, variables, setVars } = useFormField<ArrayInputFieldState>(
-    props.id,
-    {
+  const { state, variables, setVars, setValidation } =
+    useFormField<ArrayInputFieldState>(props.id, {
       initVars: {
-        [props.variable]: props.value && props.value[0] ? props.value[0] : [],
+        [props.variable]: hasSetValue(props) ? props.value[0] : [],
       },
-    }
-  );
+      initValidation: {
+        validated: validateArray(hasSetValue(props) ? props.value[0] : []),
+      },
+    });
 
   if (state == undefined) return <></>;
 
@@ -25,10 +33,17 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
         <DeleteButton
           onClick={() => {
             setVars((prev) => {
+              const val = prev[props.variable]
+                .slice(0, i)
+                .concat(prev[props.variable].slice(i + 1));
+              setValidation((prev) => {
+                return {
+                  ...prev,
+                  validated: validateArray(val),
+                };
+              });
               return {
-                [props.variable]: prev[props.variable]
-                  .slice(0, i)
-                  .concat(prev[props.variable].slice(i + 1)),
+                [props.variable]: val,
               };
             });
           }}
@@ -52,12 +67,19 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
                 onChange={(e: any) => {
                   e.persist();
                   setVars((prev) => {
+                    const val = prev[props.variable]?.map(
+                      (t: string, j: number) => {
+                        return i == j ? e.target.value : t;
+                      }
+                    );
+                    setValidation((prev) => {
+                      return {
+                        ...prev,
+                        validated: validateArray(val),
+                      };
+                    });
                     return {
-                      [props.variable]: prev[props.variable]?.map(
-                        (t: string, j: number) => {
-                          return i == j ? e.target.value : t;
-                        }
-                      ),
+                      [props.variable]: val,
                     };
                   });
                 }}
@@ -73,7 +95,10 @@ const ArrayInput: React.FC<ArrayInputField> = (props) => {
 
   return (
     <StyledInputArray>
-      <Label>{props.label}</Label>
+      <Label>
+        {props.label}
+        {props.required && <Required>{" *"}</Required>}
+      </Label>
       {variables[props.variable] === 0 ? (
         <></>
       ) : (
@@ -100,10 +125,10 @@ export const getFinalVariablesForArrayInput: GetFinalVariablesFunction = (
   vars,
   props: ArrayInputField
 ) => {
-  return vars[props.variable]
+  return vars[props.variable] != undefined && vars[props.variable] != null
     ? {}
     : {
-        [props.variable]: props.value ? props.value[0] : [],
+        [props.variable]: hasSetValue(props) ? props.value[0] : [],
       };
 };
 
@@ -184,4 +209,8 @@ const Label = styled.div`
 const StyledInputArray = styled.div`
   margin-bottom: 15px;
   margin-top: 22px;
+`;
+
+const Required = styled.span`
+  color: #fc4976;
 `;

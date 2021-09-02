@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/v33/github"
 	"github.com/porter-dev/porter/internal/models"
@@ -32,11 +33,12 @@ type GithubActions struct {
 	GithubAppSecretPath  string
 	GithubInstallationID uint
 
-	PorterToken string
-	BuildEnv    map[string]string
-	ProjectID   uint
-	ClusterID   uint
-	ReleaseName string
+	PorterToken      string
+	BuildEnv         map[string]string
+	ProjectID        uint
+	ClusterID        uint
+	ReleaseName      string
+	ReleaseNamespace string
 
 	GitBranch      string
 	DockerFilePath string
@@ -49,6 +51,10 @@ type GithubActions struct {
 	ShouldGenerateOnly   bool
 	ShouldCreateWorkflow bool
 }
+
+var (
+	deleteWebhookAndEnvSecretsConstraint, _ = semver.NewConstraint(" < 0.1.0")
+)
 
 func (g *GithubActions) Setup() ([]byte, error) {
 	client, err := g.getClient()
@@ -113,18 +119,21 @@ func (g *GithubActions) Cleanup() error {
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	// delete the webhook token secret
-	err = g.deleteGithubSecret(client, g.getWebhookSecretName())
-
+	actionVersion, err := semver.NewVersion(g.Version)
 	if err != nil {
 		return err
 	}
 
-	// delete the env secret
-	err = g.deleteGithubSecret(client, g.getBuildEnvSecretName())
+	if deleteWebhookAndEnvSecretsConstraint.Check(actionVersion) {
+		// delete the webhook token secret
+		if err := g.deleteGithubSecret(client, g.getWebhookSecretName()); err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
+		// delete the env secret
+		if err := g.deleteGithubSecret(client, g.getBuildEnvSecretName()); err != nil {
+			return err
+		}
 	}
 
 	return g.deleteGithubFile(client, g.getPorterYMLFileName())
@@ -164,7 +173,8 @@ type GithubActionYAML struct {
 func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
-		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.Version),
+		getSetTagStep(),
+		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.ReleaseNamespace, g.Version),
 	}
 
 	branch := g.GitBranch
@@ -400,25 +410,31 @@ func (g *GithubActions) deleteGithubFile(
 	client *github.Client,
 	filename string,
 ) error {
-	filepath := ".github/workflows/" + filename
-	sha := ""
+	branch := g.GitBranch
+	if branch == "" {
+		branch = g.defaultBranch
+	}
 
+	filepath := ".github/workflows/" + filename
 	// get contents of a file if it exists
 	fileData, _, _, _ := client.Repositories.GetContents(
 		context.TODO(),
 		g.GitRepoOwner,
 		g.GitRepoName,
 		filepath,
-		&github.RepositoryContentGetOptions{},
+		&github.RepositoryContentGetOptions{
+			Ref: branch,
+		},
 	)
 
+	sha := ""
 	if fileData != nil {
 		sha = *fileData.SHA
 	}
 
 	opts := &github.RepositoryContentFileOptions{
 		Message: github.String(fmt.Sprintf("Delete %s file", filename)),
-		Branch:  github.String(g.defaultBranch),
+		Branch:  &branch,
 		SHA:     &sha,
 	}
 

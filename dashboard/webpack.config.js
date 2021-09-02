@@ -78,7 +78,6 @@ module.exports = () => {
       publicPath: "/",
     },
     devServer: {
-      port: env["PORT"],
       historyApiFallback: true,
       disableHostCheck: true,
       host: "0.0.0.0",
@@ -134,9 +133,7 @@ module.exports = () => {
   if (env.ENABLE_ANALYZER) {
     config.plugins.push(new BundleAnalyzerPlugin());
   }
-  console.log(env);
   if (env.ENABLE_PROXY) {
-    console.log("WORKED!");
     if (!env.API_SERVER) {
       throw new Error(
         "API_SERVER is not present on .env! Please setup the api server url if you want the proxy to work! API_SERVER example: http://localhost:8080"

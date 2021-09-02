@@ -79,15 +79,36 @@ func (p segmentProperties) addAdditionalProperties(props map[string]interface{})
 // UserCreateTrackOpts are the options for creating a track when a user is created
 type UserCreateTrackOpts struct {
 	*UserScopedTrackOpts
+
+	Email string
 }
 
 // UserCreateTrack returns a track for when a user is created
 func UserCreateTrack(opts *UserCreateTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
 
 	return getSegmentUserTrack(
 		opts.UserScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, UserCreate),
+	)
+}
+
+// UserCreateTrackOpts are the options for creating a track when a user's email is verified
+type UserVerifyEmailTrackOpts struct {
+	*UserScopedTrackOpts
+
+	Email string
+}
+
+// UserVerifyEmailTrack returns a track for when a user's email is verified
+func UserVerifyEmailTrack(opts *UserVerifyEmailTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+
+	return getSegmentUserTrack(
+		opts.UserScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, UserVerifyEmail),
 	)
 }
 

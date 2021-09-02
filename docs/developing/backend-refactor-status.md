@@ -42,10 +42,10 @@
 | <li>- [X] `GET /api/projects/{project_id}/clusters/candidates`                                                              | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/clusters/candidates/{candidate_id}/resolve`                                      | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/clusters/{cluster_id}`                                                            | AB          |                 |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/clusters/{cluster_id}`                                                           |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/clusters/{cluster_id}`                                                           | AB          |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/clusters/{cluster_id}`                                                         |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}`                                           |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes`                                                      |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}`                                           | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes`                                                      | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/collaborators`                                                                    |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/delete/{name}`                                                                   |             |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/deploy/addon/{name}/{version}`                                                   | AB          |                 |             |                  |

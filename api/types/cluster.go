@@ -7,6 +7,7 @@ import (
 
 const (
 	URLParamCandidateID URLParam = "candidate_id"
+	URLParamNodeName    URLParam = "node_name"
 )
 
 type Cluster struct {
@@ -235,4 +236,8 @@ type CreateClusterCandidateRequest struct {
 	// "local": if so, the auth mechanism uses local plugins/mechanisms purely from the
 	// kubeconfig.
 	IsLocal bool `json:"is_local"`
+}
+
+type UpdateClusterRequest struct {
+	Name string `json:"name" form:"required"`
 }

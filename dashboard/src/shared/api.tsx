@@ -485,7 +485,7 @@ const getClusterNode = baseApi<
 >(
   "GET",
   (pathParams) =>
-    `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/node/${pathParams.nodeName}`
+    `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/nodes/${pathParams.nodeName}`
 );
 
 const getGitRepoList = baseApi<

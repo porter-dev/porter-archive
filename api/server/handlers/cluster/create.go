@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/resolver"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
@@ -112,4 +113,45 @@ func getClusterModelFromManualRequest(
 		AWSIntegrationID:         request.AWSIntegrationID,
 		CertificateAuthorityData: cert,
 	}, nil
+}
+
+func createClusterFromCandidate(
+	repo repository.Repository,
+	project *models.Project,
+	user *models.User,
+	candidate *models.ClusterCandidate,
+) (*models.Cluster, *models.ClusterCandidate, error) {
+	// we query the repo again to get the decrypted version of the cluster candidate
+	cc, err := repo.Cluster().ReadClusterCandidate(project.ID, candidate.ID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cResolver := &resolver.CandidateResolver{
+		Resolver:           &types.ClusterResolverAll{},
+		ClusterCandidateID: cc.ID,
+		ProjectID:          project.ID,
+		UserID:             user.ID,
+	}
+
+	err = cResolver.ResolveIntegration(repo)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cluster, err := cResolver.ResolveCluster(repo)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cc, err = repo.Cluster().UpdateClusterCandidateCreatedClusterID(cc.ID, cluster.ID)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cluster, cc, nil
 }

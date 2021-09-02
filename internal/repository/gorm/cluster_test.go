@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	orm "gorm.io/gorm"
@@ -74,7 +75,7 @@ func TestCreateClusterCandidateWithResolvers(t *testing.T) {
 		CreatedClusterID: 0,
 		Resolvers: []models.ClusterResolver{
 			{
-				Name:     models.ClusterLocalhost,
+				Name:     types.ClusterLocalhost,
 				Resolved: false,
 			},
 		},

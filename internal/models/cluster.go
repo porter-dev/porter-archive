@@ -69,52 +69,6 @@ type Cluster struct {
 	CertificateAuthorityData []byte `json:"certificate-authority-data,omitempty"`
 }
 
-// ClusterExternal is an external Cluster to be shared over REST
-type ClusterExternal struct {
-	ID uint `json:"id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-
-	// Name of the cluster
-	Name string `json:"name"`
-
-	// Server endpoint for the cluster
-	Server string `json:"server"`
-
-	// The integration service for this cluster
-	Service integrations.IntegrationService `json:"service"`
-
-	// The infra id, if cluster was provisioned with Porter
-	InfraID uint `json:"infra_id"`
-
-	// (optional) The aws integration id, if available
-	AWSIntegrationID uint `json:"aws_integration_id"`
-}
-
-// Externalize generates an external Cluster to be shared over REST
-func (c *Cluster) Externalize() *ClusterExternal {
-	serv := integrations.Kube
-
-	if c.AWSIntegrationID != 0 {
-		serv = integrations.EKS
-	} else if c.GCPIntegrationID != 0 {
-		serv = integrations.GKE
-	} else if c.DOIntegrationID != 0 {
-		serv = integrations.DOKS
-	}
-
-	return &ClusterExternal{
-		ID:               c.ID,
-		ProjectID:        c.ProjectID,
-		Name:             c.Name,
-		Server:           c.Server,
-		Service:          serv,
-		InfraID:          c.InfraID,
-		AWSIntegrationID: c.AWSIntegrationID,
-	}
-}
-
 // ToProjectType generates an external types.Project to be shared over REST
 func (c *Cluster) ToClusterType() *types.Cluster {
 	serv := types.Kube
@@ -135,25 +89,6 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 		Service:          serv,
 		InfraID:          c.InfraID,
 		AWSIntegrationID: c.AWSIntegrationID,
-	}
-}
-
-type ClusterDetailedExternal struct {
-	// Simple cluster external data
-	ClusterExternal
-
-	// The NGINX Ingress IP to access the cluster
-	IngressIP string `json:"ingress_ip"`
-
-	// Error displayed in case couldn't get the IP
-	IngressError error `json:"ingress_error"`
-}
-
-func (c *Cluster) DetailedExternalize() *ClusterDetailedExternal {
-	clusterExt := c.Externalize()
-
-	return &ClusterDetailedExternal{
-		ClusterExternal: *clusterExt,
 	}
 }
 
@@ -197,44 +132,14 @@ type ClusterCandidate struct {
 	Kubeconfig []byte `json:"kubeconfig"`
 }
 
-// ClusterCandidateExternal represents the ClusterCandidate to be sent over REST
-type ClusterCandidateExternal struct {
-	ID uint `json:"id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-
-	// CreatedClusterID is the ID of the cluster that's eventually
-	// created
-	CreatedClusterID uint `json:"created_cluster_id"`
-
-	// Name of the cluster
-	Name string `json:"name"`
-
-	// Server endpoint for the cluster
-	Server string `json:"server"`
-
-	// Name of the context that this was created from, if it exists
-	ContextName string `json:"context_name"`
-
-	// Resolvers are the list of resolvers: once all resolvers are "resolved," the
-	// cluster will be created
-	Resolvers []ClusterResolverExternal `json:"resolvers"`
-
-	// The best-guess for the AWSClusterID, which is required by aws auth mechanisms
-	// See https://github.com/kubernetes-sigs/aws-iam-authenticator#what-is-a-cluster-id
-	AWSClusterIDGuess string `json:"aws_cluster_id_guess"`
-}
-
-// Externalize generates an external ClusterCandidateExternal to be shared over REST
-func (cc *ClusterCandidate) Externalize() *ClusterCandidateExternal {
-	resolvers := make([]ClusterResolverExternal, 0)
+func (cc *ClusterCandidate) ToClusterCandidateType() *types.ClusterCandidate {
+	resolvers := make([]types.ClusterResolver, 0)
 
 	for _, resolver := range cc.Resolvers {
-		resolvers = append(resolvers, *resolver.Externalize())
+		resolvers = append(resolvers, *resolver.ToClusterResolverType())
 	}
 
-	return &ClusterCandidateExternal{
+	return &types.ClusterCandidate{
 		ID:                cc.ID,
 		ProjectID:         cc.ProjectID,
 		CreatedClusterID:  cc.CreatedClusterID,
@@ -246,84 +151,6 @@ func (cc *ClusterCandidate) Externalize() *ClusterCandidateExternal {
 	}
 }
 
-// ClusterResolverName is the name for a cluster resolve
-type ClusterResolverName string
-
-// Options for the cluster resolver names
-const (
-	ClusterCAData    ClusterResolverName = "upload-cluster-ca-data"
-	ClusterLocalhost                     = "rewrite-cluster-localhost"
-	ClientCertData                       = "upload-client-cert-data"
-	ClientKeyData                        = "upload-client-key-data"
-	OIDCIssuerData                       = "upload-oidc-idp-issuer-ca-data"
-	TokenData                            = "upload-token-data"
-	GCPKeyData                           = "upload-gcp-key-data"
-	AWSData                              = "upload-aws-data"
-)
-
-// ClusterResolverInfo contains the information for actions to be
-// performed in order to initialize a cluster
-type ClusterResolverInfo struct {
-	// Docs is a link to documentation that helps resolve this manually
-	Docs string `json:"docs"`
-
-	// a comma-separated list of required fields to send in an action request
-	Fields string `json:"fields"`
-}
-
-// ClusterResolverInfos is a map of the information for actions to be
-// performed in order to initialize a cluster
-var ClusterResolverInfos = map[ClusterResolverName]ClusterResolverInfo{
-	ClusterCAData: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "cluster_ca_data",
-	},
-	ClusterLocalhost: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "cluster_hostname",
-	},
-	ClientCertData: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "client_cert_data",
-	},
-	ClientKeyData: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "client_key_data",
-	},
-	OIDCIssuerData: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "oidc_idp_issuer_ca_data",
-	},
-	TokenData: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "token_data",
-	},
-	GCPKeyData: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "gcp_key_data",
-	},
-	AWSData: {
-		Docs:   "https://github.com/porter-dev/porter",
-		Fields: "aws_access_key_id,aws_secret_access_key,aws_cluster_id",
-	},
-}
-
-// ClusterResolverAll is a helper type that contains the fields for
-// all possible resolvers, so that raw bytes can be unmarshaled in a single
-// read
-type ClusterResolverAll struct {
-	ClusterCAData      string `json:"cluster_ca_data,omitempty"`
-	ClusterHostname    string `json:"cluster_hostname,omitempty"`
-	ClientCertData     string `json:"client_cert_data,omitempty"`
-	ClientKeyData      string `json:"client_key_data,omitempty"`
-	OIDCIssuerCAData   string `json:"oidc_idp_issuer_ca_data,omitempty"`
-	TokenData          string `json:"token_data,omitempty"`
-	GCPKeyData         string `json:"gcp_key_data,omitempty"`
-	AWSAccessKeyID     string `json:"aws_access_key_id"`
-	AWSSecretAccessKey string `json:"aws_secret_access_key"`
-	AWSClusterID       string `json:"aws_cluster_id"`
-}
-
 // ClusterResolver is an action that must be resolved to set up
 // a Cluster
 type ClusterResolver struct {
@@ -333,7 +160,7 @@ type ClusterResolver struct {
 	ClusterCandidateID uint `json:"cluster_candidate_id"`
 
 	// One of the ClusterResolverNames
-	Name ClusterResolverName `json:"name"`
+	Name types.ClusterResolverName `json:"name"`
 
 	// Resolved is true if this has been resolved, false otherwise
 	Resolved bool `json:"resolved"`
@@ -343,43 +170,14 @@ type ClusterResolver struct {
 	Data []byte `json:"data,omitempty"`
 }
 
-// ClusterResolverData is a map of key names to fields, which gets marshaled from
-// the raw JSON bytes stored in the ClusterResolver
-type ClusterResolverData map[string]string
+func (cr *ClusterResolver) ToClusterResolverType() *types.ClusterResolver {
+	info := types.ClusterResolverInfos[cr.Name]
 
-// ClusterResolverExternal is an external ClusterResolver to be shared over REST
-type ClusterResolverExternal struct {
-	ID uint `json:"id"`
-
-	// The ClusterCandidate that this is resolving
-	ClusterCandidateID uint `json:"cluster_candidate_id"`
-
-	// One of the ClusterResolverNames
-	Name ClusterResolverName `json:"name"`
-
-	// Resolved is true if this has been resolved, false otherwise
-	Resolved bool `json:"resolved"`
-
-	// Docs is a link to documentation that helps resolve this manually
-	Docs string `json:"docs"`
-
-	// Fields is a list of fields that must be sent with the resolving request
-	Fields string `json:"fields"`
-
-	// Data is additional data for resolving the action, for example a file name,
-	// context name, etc
-	Data ClusterResolverData `json:"data,omitempty"`
-}
-
-// Externalize generates an external ClusterResolver to be shared over REST
-func (cr *ClusterResolver) Externalize() *ClusterResolverExternal {
-	info := ClusterResolverInfos[cr.Name]
-
-	data := make(ClusterResolverData)
+	data := make(types.ClusterResolverData)
 
 	json.Unmarshal(cr.Data, &data)
 
-	return &ClusterResolverExternal{
+	return &types.ClusterResolver{
 		ID:                 cr.ID,
 		ClusterCandidateID: cr.ClusterCandidateID,
 		Name:               cr.Name,

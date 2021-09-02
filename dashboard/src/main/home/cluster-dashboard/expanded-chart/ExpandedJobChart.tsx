@@ -154,7 +154,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/job/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/job/status`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -344,7 +344,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .upgradeChartValues(
         "<token>",
         {
-          storage: StorageType.Secret,
           values: conf,
         },
         {
@@ -387,11 +386,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .getJobs(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
           id: currentProject.id,
-          chart: `${chart.chart.metadata.name}-${chart.chart.metadata.version}`,
+          cluster_id: currentCluster.id,
           namespace: chart.namespace,
           release_name: chart.name,
         }

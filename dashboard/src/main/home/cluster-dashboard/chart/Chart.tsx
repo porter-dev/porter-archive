@@ -109,11 +109,11 @@ const Chart: React.FunctionComponent<Props> = ({
       .getJobStatus(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
           id: currentProject.id,
-          name: chart.name,
+          release_name: chart.name,
+          cluster_id: currentCluster.id,
           namespace: chart.namespace,
         }
       )

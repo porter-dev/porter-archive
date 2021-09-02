@@ -551,20 +551,22 @@ const getInvites = baseApi<{}, { id: number }>("GET", (pathParams) => {
 
 const getJobs = baseApi<
   {
-    cluster_id: number;
   },
-  { chart: string; namespace: string; release_name: string; id: number }
+  { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
+  let { id, release_name, cluster_id, namespace } = pathParams
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs`;
 });
 
 const getJobStatus = baseApi<
   {
-    cluster_id: number;
   },
-  { name: string; namespace: string; id: number }
+  { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.name}/jobs/status`;
+  let { id, release_name, cluster_id, namespace } = pathParams
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs/status`;
 });
 
 const getJobPods = baseApi<

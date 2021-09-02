@@ -5,6 +5,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const (
+	URLParamCandidateID URLParam = "candidate_id"
+)
+
 type Cluster struct {
 	ID uint `json:"id"`
 

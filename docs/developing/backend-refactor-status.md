@@ -39,7 +39,7 @@
 | <li>- [x] `GET /api/projects/{project_id}/clusters`                                                                         | AB          |                 |             | yes              |
 | <li>- [X] `POST /api/projects/{project_id}/clusters`                                                                        | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/clusters/candidates`                                                             | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/clusters/candidates`                                                              |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/clusters/candidates`                                                              | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/clusters/candidates/{candidate_id}/resolve`                                      |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/clusters/{cluster_id}`                                                            | AB          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/clusters/{cluster_id}`                                                           |             |                 |             |                  |

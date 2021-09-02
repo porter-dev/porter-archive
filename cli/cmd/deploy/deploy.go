@@ -397,6 +397,12 @@ func (d *DeployAgent) pullCurrentReleaseImage() error {
 		return fmt.Errorf("could not cast image.tag field to string")
 	}
 
+	// if image repo is a hello-porter image, skip
+	if d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+		d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+		return nil
+	}
+
 	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
 	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))

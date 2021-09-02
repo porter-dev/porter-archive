@@ -95,11 +95,7 @@ func (c *Client) UpdateBatchImage(
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/projects/%d/releases/image/update/batch?"+url.Values{
-			"cluster_id": []string{fmt.Sprintf("%d", clusterID)},
-			"namespace":  []string{namespace},
-			"storage":    []string{"secret"},
-		}.Encode(), c.BaseURL, projID),
+		fmt.Sprintf("%s/projects/%d/clusters/%d/namespaces/%s/releases/image/batch", c.BaseURL, projID, clusterID, namespace),
 		strings.NewReader(string(data)),
 	)
 

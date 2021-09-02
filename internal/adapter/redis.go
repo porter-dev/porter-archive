@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	redis "github.com/go-redis/redis/v8"
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 )
 
 // NewRedisClient returns a new redis client instance
-func NewRedisClient(conf *config.RedisConf) (*redis.Client, error) {
+func NewRedisClient(conf *env.RedisConf) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", conf.Host, conf.Port),
 		Username: conf.Username,

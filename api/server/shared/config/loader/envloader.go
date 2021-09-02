@@ -4,19 +4,19 @@ import (
 	"fmt"
 
 	"github.com/joeshaw/envdecode"
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 )
 
 type EnvDecoderConf struct {
-	ServerConf config.ServerConf
-	RedisConf  config.RedisConf
-	DBConf     config.DBConf
+	ServerConf env.ServerConf
+	RedisConf  env.RedisConf
+	DBConf     env.DBConf
 }
 
 type EnvConf struct {
-	ServerConf *config.ServerConf
-	RedisConf  *config.RedisConf
-	DBConf     *config.DBConf
+	ServerConf *env.ServerConf
+	RedisConf  *env.RedisConf
+	DBConf     *env.DBConf
 }
 
 // FromEnv generates a configuration from environment variables

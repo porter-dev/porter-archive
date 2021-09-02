@@ -1,5 +1,7 @@
 package config
 
+import "github.com/porter-dev/porter/api/server/shared/config/env"
+
 type Metadata struct {
 	Provisioning       bool `json:"provisioner"`
 	Github             bool `json:"github"`
@@ -11,7 +13,7 @@ type Metadata struct {
 	Analytics          bool `json:"analytics"`
 }
 
-func MetadataFromConf(sc *ServerConf) *Metadata {
+func MetadataFromConf(sc *env.ServerConf) *Metadata {
 	return &Metadata{
 		// TODO: case provisioning on env variables
 		Provisioning:       false,
@@ -25,7 +27,7 @@ func MetadataFromConf(sc *ServerConf) *Metadata {
 	}
 }
 
-func hasGithubAppVars(sc *ServerConf) bool {
+func hasGithubAppVars(sc *env.ServerConf) bool {
 	return sc.GithubAppClientID != "" &&
 		sc.GithubAppClientSecret != "" &&
 		sc.GithubAppName != "" &&

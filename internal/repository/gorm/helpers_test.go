@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/models"
@@ -39,7 +39,7 @@ type tester struct {
 func setupTestEnv(tester *tester, t *testing.T) {
 	t.Helper()
 
-	db, err := adapter.New(&config.DBConf{
+	db, err := adapter.New(&env.DBConf{
 		EncryptionKey: "__random_strong_encryption_key__",
 		SQLLite:       true,
 		SQLLitePath:   tester.dbFileName,

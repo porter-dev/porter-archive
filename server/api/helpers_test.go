@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
@@ -65,7 +65,7 @@ func (t *tester) createUserSession(email string, pw string) {
 
 func newTester(canQuery bool) *tester {
 	appConf := loader.EnvConf{
-		ServerConf: &config.ServerConf{
+		ServerConf: &env.ServerConf{
 			Debug:                true,
 			Port:                 8080,
 			CookieName:           "porter",
@@ -78,12 +78,12 @@ func newTester(canQuery bool) *tester {
 			BasicLoginEnabled:    true,
 		},
 		// unimportant here
-		DBConf: &config.DBConf{},
+		DBConf: &env.DBConf{},
 	}
 
 	logger := lr.NewConsole(appConf.ServerConf.Debug)
 
-	db, _ := adapter.New(&config.DBConf{
+	db, _ := adapter.New(&env.DBConf{
 		EncryptionKey: "__random_strong_encryption_key__",
 		SQLLite:       true,
 		SQLLitePath:   "api_test.db",

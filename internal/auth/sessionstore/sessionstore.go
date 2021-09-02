@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 
@@ -137,7 +137,7 @@ func NewStore(opts *NewStoreOpts) (*PGStore, error) {
 }
 
 // NewFilesystemStore takes session key pairs to create a session-store in the local fs without using a db.
-func NewFilesystemStore(conf config.ServerConf) *sessions.FilesystemStore {
+func NewFilesystemStore(conf env.ServerConf) *sessions.FilesystemStore {
 	keyPairs := [][]byte{}
 
 	for _, key := range conf.CookieSecrets {

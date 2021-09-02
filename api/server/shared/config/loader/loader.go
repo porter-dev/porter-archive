@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
@@ -163,7 +164,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	return res, nil
 }
 
-func getProvisionerAgent(sc *config.ServerConf) (*kubernetes.Agent, error) {
+func getProvisionerAgent(sc *env.ServerConf) (*kubernetes.Agent, error) {
 	if sc.ProvisionerCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
 		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
 
@@ -181,7 +182,7 @@ func getProvisionerAgent(sc *config.ServerConf) (*kubernetes.Agent, error) {
 	return agent, nil
 }
 
-func getIngressAgent(sc *config.ServerConf) (*kubernetes.Agent, error) {
+func getIngressAgent(sc *env.ServerConf) (*kubernetes.Agent, error) {
 	if sc.IngressCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
 		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
 

@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 // New returns a new gorm database instance
-func New(conf *config.DBConf) (*gorm.DB, error) {
+func New(conf *env.DBConf) (*gorm.DB, error) {
 	if conf.SQLLite {
 		// we add DisableForeignKeyConstraintWhenMigrating since our sqlite does
 		// not support foreign key constraints

@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
@@ -885,8 +885,8 @@ func (a *Agent) ProvisionECR(
 	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
+	pgConf *env.DBConf,
+	redisConf *env.RedisConf,
 	provImageTag string,
 	provImagePullSecret string,
 ) (*batchv1.Job, error) {
@@ -922,8 +922,8 @@ func (a *Agent) ProvisionEKS(
 	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
+	pgConf *env.DBConf,
+	redisConf *env.RedisConf,
 	provImageTag string,
 	provImagePullSecret string,
 ) (*batchv1.Job, error) {
@@ -959,8 +959,8 @@ func (a *Agent) ProvisionGCR(
 	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
+	pgConf *env.DBConf,
+	redisConf *env.RedisConf,
 	provImageTag string,
 	provImagePullSecret string,
 ) (*batchv1.Job, error) {
@@ -993,8 +993,8 @@ func (a *Agent) ProvisionGKE(
 	repo repository.Repository,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
+	pgConf *env.DBConf,
+	redisConf *env.RedisConf,
 	provImageTag string,
 	provImagePullSecret string,
 ) (*batchv1.Job, error) {
@@ -1031,8 +1031,8 @@ func (a *Agent) ProvisionDOCR(
 	docrName, docrSubscriptionTier string,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
+	pgConf *env.DBConf,
+	redisConf *env.RedisConf,
 	provImageTag string,
 	provImagePullSecret string,
 ) (*batchv1.Job, error) {
@@ -1083,8 +1083,8 @@ func (a *Agent) ProvisionDOKS(
 	doRegion, doksClusterName string,
 	infra *models.Infra,
 	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
+	pgConf *env.DBConf,
+	redisConf *env.RedisConf,
 	provImageTag string,
 	provImagePullSecret string,
 ) (*batchv1.Job, error) {
@@ -1132,8 +1132,8 @@ func (a *Agent) ProvisionTest(
 	infra *models.Infra,
 	repo repository.Repository,
 	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
+	pgConf *env.DBConf,
+	redisConf *env.RedisConf,
 	provImageTag string,
 	provImagePullSecret string,
 ) (*batchv1.Job, error) {

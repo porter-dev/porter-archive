@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	vr "github.com/go-playground/validator/v10"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
@@ -42,9 +43,9 @@ type AppConfig struct {
 	DB         *gorm.DB
 	Logger     *lr.Logger
 	Repository repository.Repository
-	ServerConf config.ServerConf
-	RedisConf  *config.RedisConf
-	DBConf     config.DBConf
+	ServerConf env.ServerConf
+	RedisConf  *env.RedisConf
+	DBConf     env.DBConf
 	CapConf    config.CapConf
 
 	// TestAgents if API is in testing mode
@@ -55,7 +56,7 @@ type AppConfig struct {
 // and a logger instance
 type App struct {
 	// Server configuration
-	ServerConf config.ServerConf
+	ServerConf env.ServerConf
 
 	// Logger for logging
 	Logger *lr.Logger
@@ -74,10 +75,10 @@ type App struct {
 	IngressAgent     *kubernetes.Agent
 
 	// redis client for redis connection
-	RedisConf *config.RedisConf
+	RedisConf *env.RedisConf
 
 	// config for db
-	DBConf config.DBConf
+	DBConf env.DBConf
 
 	// config for capabilities
 	Capabilities *AppCapabilities
@@ -269,7 +270,7 @@ func New(conf *AppConfig) (*App, error) {
 	return app, nil
 }
 
-func (app *App) assignProvisionerAgent(sc *config.ServerConf) error {
+func (app *App) assignProvisionerAgent(sc *env.ServerConf) error {
 	if sc.ProvisionerCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
 		app.Capabilities.Provisioning = true
 
@@ -299,7 +300,7 @@ func (app *App) assignProvisionerAgent(sc *config.ServerConf) error {
 	return nil
 }
 
-func (app *App) assignIngressAgent(sc *config.ServerConf) error {
+func (app *App) assignIngressAgent(sc *env.ServerConf) error {
 	if sc.IngressCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
 		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
 

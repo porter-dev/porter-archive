@@ -395,5 +395,70 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/pods/{name} -> namespace.NewDeletePodHandler
+	deletePodEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/pods/{%s}",
+					relPath,
+					types.URLParamPodName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	deletePodHandler := namespace.NewDeletePodHandler(
+		config,
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deletePodEndpoint,
+		Handler:  deletePodHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/pods/{name}/events -> namespace.NewGetPodEventsHandler
+	getPodEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/pods/{%s}/events",
+					relPath,
+					types.URLParamPodName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	getPodEventsHandler := namespace.NewGetPodEventsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getPodEventsEndpoint,
+		Handler:  getPodEventsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

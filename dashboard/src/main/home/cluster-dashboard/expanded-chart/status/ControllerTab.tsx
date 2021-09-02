@@ -231,9 +231,9 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       .deletePod(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
+          cluster_id: currentCluster.id,
           name: pod.metadata?.name,
           namespace: pod.metadata?.namespace,
           id: currentProject.id,

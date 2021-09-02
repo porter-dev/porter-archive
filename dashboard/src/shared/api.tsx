@@ -206,20 +206,20 @@ const deleteInvite = baseApi<{}, { id: number; invId: number }>(
 
 const deletePod = baseApi<
   {
-    cluster_id: number;
   },
-  { name: string; namespace: string; id: number }
+  { name: string; namespace: string; id: number; cluster_id: number; }
 >("DELETE", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}`;
+  let { id, name, cluster_id, namespace } = pathParams
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}`;
 });
 
 const getPodEvents = baseApi<
   {
-    cluster_id: number;
   },
-  { name: string; namespace: string; id: number }
+  { name: string; namespace: string; id: number; cluster_id: number; }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}/events/list`;
+  let { id, name, cluster_id, namespace } = pathParams
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}/events`;
 });
 
 const deleteProject = baseApi<{}, { id: number }>("DELETE", (pathParams) => {

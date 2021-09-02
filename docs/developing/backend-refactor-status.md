@@ -92,9 +92,9 @@
 | <li>- [x] `GET /api/projects/{project_id}/k8s/namespaces`                                                                   | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/namespaces/create`                                                           | AS          | yes             |             | yes              |
 | <li>- [x] `DELETE /api/projects/{project_id}/k8s/namespaces/delete`                                                         | AS          | yes             |             | yes              |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/pods`                                                                         |             |                 |             |                  |
-| <li>- [ ] `DELETE /api/projects/{project_id}/k8s/pods/{namespace}/{name}`                                                   |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/pods/{namespace}/{name}/events/list`                                          |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/pods`                                                                         | AB          | !removed        |             |                  |
+| <li>- [X] `DELETE /api/projects/{project_id}/k8s/pods/{namespace}/{name}`                                                   | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/pods/{namespace}/{name}/events/list`                                          | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/detect`                                                            | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/ingresses`                                                         | AS          | yes             |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/k8s/subdomain`                                                                   |             |                 |             |                  |

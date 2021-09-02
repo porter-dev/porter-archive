@@ -101,8 +101,8 @@
 | <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/ingress/{name}`                                                   |             |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/pod/{name}/logs`                                                  | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/k8s/{kind}/status`                                                                | AB          | yes             |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status`                                               |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs`                                      |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status`                                               | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs`                                      | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/policy`                                                                           | AS          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/docr`                                                                  |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/doks`                                                                  |             |                 |             |                  |

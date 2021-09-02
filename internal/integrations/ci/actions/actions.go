@@ -136,11 +136,6 @@ func (g *GithubActions) Cleanup() error {
 		}
 	}
 
-	// delete the porter token secret
-	if err := g.deleteGithubSecret(client, g.getPorterTokenSecretName()); err != nil {
-		return err
-	}
-
 	return g.deleteGithubFile(client, g.getPorterYMLFileName())
 }
 

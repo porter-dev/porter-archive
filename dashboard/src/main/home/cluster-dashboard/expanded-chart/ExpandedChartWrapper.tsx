@@ -5,7 +5,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import { ChartType, StorageType } from "shared/types";
 import api from "shared/api";
-import { pushFiltered } from "shared/routing";
+import { getQueryParam, pushFiltered } from "shared/routing";
 import ExpandedJobChart from "./ExpandedJobChart";
 import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";
@@ -34,42 +34,24 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { currentProject, currentCluster } = this.context;
     if (currentProject && currentCluster) {
       // TODO: add query for retrieving max revision #
+      const lastCheckedRevision = getQueryParam(this.props, "chart_revision");
+
       api
-        .getRevisions(
+        .getChart(
           "<token>",
           {
             namespace: namespace,
             cluster_id: currentCluster.id,
             storage: StorageType.Secret,
           },
-          { id: currentProject.id, name: chartName }
+          {
+            name: chartName,
+            revision: Number(lastCheckedRevision),
+            id: currentProject.id,
+          }
         )
         .then((res) => {
-          res.data.sort((a: ChartType, b: ChartType) => {
-            return -(a.version - b.version);
-          });
-          let maxVersion = res.data[0].version;
-          api
-            .getChart(
-              "<token>",
-              {
-                namespace: namespace,
-                cluster_id: currentCluster.id,
-                storage: StorageType.Secret,
-              },
-              {
-                name: chartName,
-                revision: maxVersion,
-                id: currentProject.id,
-              }
-            )
-            .then((res) => {
-              this.setState({ currentChart: res.data, loading: false });
-            })
-            .catch((err) => {
-              console.log("err", err.response.data);
-              this.setState({ loading: false });
-            });
+          this.setState({ currentChart: res.data, loading: false });
         })
         .catch((err) => {
           console.log("err", err.response.data);

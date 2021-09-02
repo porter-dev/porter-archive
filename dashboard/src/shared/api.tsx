@@ -836,11 +836,10 @@ const uninstallTemplate = baseApi<
     name: string;
     cluster_id: number;
     namespace: string;
-    storage: StorageType;
   }
->("POST", (pathParams) => {
-  let { id, name, cluster_id, storage, namespace } = pathParams;
-  return `/api/projects/${id}/delete/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
+>("DELETE", (pathParams) => {
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0`;
 });
 
 const updateUser = baseApi<

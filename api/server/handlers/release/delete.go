@@ -1,7 +1,6 @@
 package release
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -14,23 +13,23 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 )
 
-type RollbackReleaseHandler struct {
+type DeleteReleaseHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewRollbackReleaseHandler(
+func NewDeleteReleaseHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *RollbackReleaseHandler {
-	return &RollbackReleaseHandler{
+) *DeleteReleaseHandler {
+	return &DeleteReleaseHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
@@ -42,35 +41,18 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	request := &types.RollbackReleaseRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
-
-	err = helmAgent.RollbackRelease(helmRelease.Name, request.Revision)
+	_, err = helmAgent.UninstallChart(helmRelease.Name)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error rolling back release: %s", err.Error()),
-			http.StatusBadRequest,
-		))
-
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	rel, releaseErr := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 
 	// update the github actions env if the release exists and is built from source
 	if cName := helmRelease.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
-		rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
-
-		if err == nil && rel != nil {
-			err = updateReleaseRepo(c.Config(), rel, helmRelease)
-
-			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
-
+		if releaseErr == nil && rel != nil {
 			gitAction := rel.GitActionConfig
 
 			if gitAction != nil && gitAction.ID != 0 {
@@ -91,7 +73,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					return
 				}
 
-				err = gaRunner.CreateEnvSecret()
+				err = gaRunner.Cleanup()
 
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -100,24 +82,4 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			}
 		}
 	}
-}
-
-func updateReleaseRepo(config *config.Config, release *models.Release, helmRelease *release.Release) error {
-	repository := helmRelease.Config["image"].(map[string]interface{})["repository"]
-	repoStr, ok := repository.(string)
-
-	if !ok {
-		return fmt.Errorf("Could not find field repository in config")
-	}
-
-	if repoStr != release.ImageRepoURI {
-		release.ImageRepoURI = repoStr
-		_, err := config.Repo.Release().UpdateRelease(release)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

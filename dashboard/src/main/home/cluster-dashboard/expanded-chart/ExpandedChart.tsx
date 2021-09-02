@@ -572,7 +572,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
         {},
         {
           namespace: currentChart.namespace,
-          storage: StorageType.Secret,
           name: currentChart.name,
           id: currentProject.id,
           cluster_id: currentCluster.id,

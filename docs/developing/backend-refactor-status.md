@@ -150,4 +150,4 @@
 | <li>- [x] `GET /api/users/{user_id}`                                                                                        | AB          | yes             |             | yes              |
 | <li>- [x] `DELETE /api/users/{user_id}`                                                                                     | AB          | yes             |             |                  |
 | <li>- [x] `GET /api/users/{user_id}/projects`                                                                               | AB          | yes             |             | yes              |
-| <li>- [ ] `POST /api/webhooks/deploy/{token}`                                                                               |             |                 |             |                  |
+| <li>- [X] `POST /api/webhooks/deploy/{token}`                                                                               | AB          |                 |             |                  |

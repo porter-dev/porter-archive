@@ -554,7 +554,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         {},
         {
           namespace: currentChart.namespace,
-          storage: StorageType.Secret,
           name: currentChart.name,
           id: currentProject.id,
           cluster_id: currentCluster.id,

@@ -174,7 +174,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			gitAction := rel.GitActionConfig
 
 			if gitAction != nil && gitAction.ID != 0 {
-				err = updateGitActionEnvSecret(
+				gaRunner, err := getGARunner(
 					c.Config(),
 					user.ID,
 					cluster.ProjectID,
@@ -185,6 +185,13 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 					rel,
 					helmRelease,
 				)
+
+				if err != nil {
+					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					return
+				}
+
+				err = gaRunner.CreateEnvSecret()
 
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

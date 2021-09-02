@@ -273,35 +273,35 @@ type containerEnvConfig struct {
 	} `yaml:"container"`
 }
 
-func updateGitActionEnvSecret(
+func getGARunner(
 	config *config.Config,
 	userID, projectID, clusterID uint,
 	ga *models.GitActionConfig,
 	name, namespace string,
 	release *models.Release,
 	helmRelease *release.Release,
-) error {
+) (*actions.GithubActions, error) {
 	cEnv := &containerEnvConfig{}
 	rawValues, err := yaml.Marshal(helmRelease.Config)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = yaml.Unmarshal(rawValues, cEnv)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	repoSplit := strings.Split(ga.GitRepo, "/")
 
 	if len(repoSplit) != 2 {
-		return fmt.Errorf("invalid formatting of repo name")
+		return nil, fmt.Errorf("invalid formatting of repo name")
 	}
 
 	// create the commit in the git repo
-	gaRunner := &actions.GithubActions{
+	return &actions.GithubActions{
 		ServerURL:              config.ServerConf.ServerURL,
 		GithubOAuthIntegration: nil,
 		BuildEnv:               cEnv.Container.Env.Normal,
@@ -319,7 +319,5 @@ func updateGitActionEnvSecret(
 		FolderPath:             ga.FolderPath,
 		ImageRepoURL:           ga.ImageRepoURI,
 		Version:                "v0.1.0",
-	}
-
-	return gaRunner.CreateEnvSecret()
+	}, nil
 }

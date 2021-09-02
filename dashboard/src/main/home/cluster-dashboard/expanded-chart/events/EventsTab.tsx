@@ -6,6 +6,7 @@ import { Context } from "shared/Context";
 import { ChartType } from "../../../../../shared/types";
 import api from "../../../../../shared/api";
 import EventCard from "./EventCard";
+import EventDetail from "./EventDetail";
 
 export type Event = {
   event_id: string;
@@ -14,6 +15,12 @@ export type Event = {
   name: string;
   status: number;
   time: number;
+};
+
+export type EventContainer = {
+  events: Event[];
+  name: string;
+  started_at: number;
 };
 
 type Props = {
@@ -26,7 +33,8 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [shouldRequest, setShouldRequest] = useState(true);
-  const [eventData, setEventData] = useState<Event[][]>([]); // most recent event is first
+  const [eventData, setEventData] = useState<EventContainer[]>([]); // most recent event is last
+  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
 
   // sort by time, ensure sequences are monotonically increasing by time, collapse by id
   const filterData = (data: Event[]) => {
@@ -46,7 +54,7 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
     }
     if (cur) seq.push(cur);
 
-    let ret: Event[][] = [];
+    let ret: EventContainer[] = [];
     seq.forEach((j) => {
       j.push({
         event_id: "",
@@ -57,16 +65,20 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
         time: 0,
       });
 
-      let fin: Event[] = [];
+      let fin: EventContainer = {
+        events: [],
+        name: "Deployment",
+        started_at: j[0].time,
+      };
       for (let i = 0; i < j.length - 1; ++i) {
         if (j[i].event_id != j[i + 1].event_id) {
-          fin.push(j[i]);
+          fin.events.push(j[i]);
         }
       }
       ret.push(fin);
     });
 
-    setEventData(ret.reverse());
+    setEventData(ret);
   };
 
   useEffect(() => {
@@ -125,23 +137,39 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
     );
   }
 
+  if (selectedEvent != null) {
+    return (
+      <EventDetail
+        container={eventData[selectedEvent]}
+        resetSelection={() => {
+          setSelectedEvent(null);
+          return null;
+        }}
+      />
+    );
+  }
+
   return (
     <EventsGrid>
-      {eventData.map((dat) => {
-        return <EventCard event={dat[dat.length - 1]} selectEvent={() => {}} />;
-      })}
+      {eventData
+        .slice(0)
+        .reverse()
+        .map((dat, i) => {
+          console.log(dat.started_at);
+          return (
+            <React.Fragment key={dat.started_at}>
+              <EventCard
+                event={dat.events[dat.events.length - 1]}
+                selectEvent={() => {
+                  setSelectedEvent(eventData.length - i - 1);
+                }}
+                overrideName={"Deployment"}
+              />
+            </React.Fragment>
+          );
+        })}
     </EventsGrid>
   );
-
-  // if (selectedEvent) {
-  //   return <EventLogs clearSelectedEvent={() => setSelectedEvent(undefined)} />;
-  // }
-  //
-  // return (
-  //   <EventsPageWrapper>
-  //     <EventsList selectEvent={(e) => setSelectedEvent(e)} />
-  //   </EventsPageWrapper>
-  // );
 };
 
 export default EventsTab;

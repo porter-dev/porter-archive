@@ -5,9 +5,11 @@ import Loading from "../../../../../components/Loading";
 
 type CardProps = {
   event: Event;
-  selectEvent: (id: number) => void;
+  selectEvent?: () => void;
+  overrideName?: string;
 };
-const getReadableDate = (s: number) => {
+
+export const getReadableDate = (s: number) => {
   let ts = new Date(s * 1000);
   let date = ts.toLocaleDateString();
   let time = ts.toLocaleTimeString([], {
@@ -21,12 +23,11 @@ const getReadableDate = (s: number) => {
 const EventCard: React.FunctionComponent<CardProps> = ({
   event,
   selectEvent,
+  overrideName,
 }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-
   return (
     <StyledCard>
-      <ContentContainer>
+      <ContentContainer onClick={() => selectEvent && selectEvent()}>
         {event.status == 1 && (
           <Icon status={"normal"} className="material-icons-outlined">
             check
@@ -43,7 +44,7 @@ const EventCard: React.FunctionComponent<CardProps> = ({
           </Icon>
         )}
         <EventInformation>
-          <EventName>Deployment</EventName>
+          <EventName>{overrideName ? overrideName : event.name}</EventName>
           <EventReason>
             {event.status == 2 && (
               <Helper>Step {event.name} In Progress</Helper>

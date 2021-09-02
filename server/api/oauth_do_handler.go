@@ -79,6 +79,7 @@ func (app *App) HandleDOOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		SharedOAuthModel: integrations.SharedOAuthModel{
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
+			Expiry:       token.Expiry,
 		},
 		Client:    integrations.OAuthDigitalOcean,
 		UserID:    userID,

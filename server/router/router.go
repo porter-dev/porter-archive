@@ -128,7 +128,7 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/email/verify/finalize",
 				auth.BasicAuthenticateWithRedirect(
-					requestlog.NewHandler(a.FinalizEmailVerifyUser, l),
+					requestlog.NewHandler(a.FinalizeEmailVerifyUser, l),
 				),
 			)
 
@@ -915,7 +915,11 @@ func New(a *api.App) *chi.Mux {
 				"POST",
 				"/projects/{project_id}/releases/{name}/notifications",
 				auth.DoesUserHaveProjectAccess(
-					requestlog.NewHandler(a.HandleUpdateNotificationConfig, l),
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleUpdateNotificationConfig, l),
+						mw.URLParam,
+						mw.BodyParam,
+					),
 					mw.URLParam,
 					mw.WriteAccess,
 				),
@@ -925,7 +929,11 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/projects/{project_id}/releases/{name}/notifications",
 				auth.DoesUserHaveProjectAccess(
-					requestlog.NewHandler(a.HandleGetNotificationConfig, l),
+					auth.DoesUserHaveClusterAccess(
+						requestlog.NewHandler(a.HandleGetNotificationConfig, l),
+						mw.URLParam,
+						mw.QueryParam,
+					),
 					mw.URLParam,
 					mw.WriteAccess,
 				),
@@ -1723,6 +1731,13 @@ func New(a *api.App) *chi.Mux {
 				"GET",
 				"/capabilities",
 				http.HandlerFunc(a.HandleGetCapabilities),
+			)
+
+			// welcome form
+			r.Method(
+				"GET",
+				"/welcome",
+				http.HandlerFunc(a.HandleWelcome),
 			)
 
 			// /api/projects/{project_id}/deploy routes

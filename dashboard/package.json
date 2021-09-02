@@ -38,6 +38,7 @@
     "react-modal": "^3.11.2",
     "react-router-dom": "^5.2.0",
     "react-table": "^7.7.0",
+    "react-transition-group": "^4.4.2",
     "regenerator-runtime": "^0.13.9",
     "semver": "^7.3.5",
     "styled-components": "^5.2.0"
@@ -68,7 +69,7 @@
     "@types/node": "^12.12.62",
     "@types/qs": "^6.9.5",
     "@types/random-words": "^1.1.0",
-    "@types/react": "^16.9.49",
+    "@types/react": "^16.14.14",
     "@types/react-dom": "^16.9.8",
     "@types/react-modal": "^3.10.6",
     "@types/react-router": "^5.1.8",

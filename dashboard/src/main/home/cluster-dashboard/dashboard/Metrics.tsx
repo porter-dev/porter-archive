@@ -1,11 +1,11 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Context } from "../../../../shared/Context";
-import api from "../../../../shared/api";
+import { Context } from "shared/Context";
+import api from "shared/api";
 import styled from "styled-components";
-import Loading from "../../../../components/Loading";
-import settings from "../../../../assets/settings.svg";
-import TabSelector from "../../../../components/TabSelector";
-import CheckboxRow from "../../../../components/form-components/CheckboxRow";
+import Loading from "components/Loading";
+import settings from "assets/settings.svg";
+import TabSelector from "components/TabSelector";
+import Placeholder from "components/Placeholder";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import AreaChart from "../expanded-chart/metrics/AreaChart";
 import {
@@ -259,10 +259,15 @@ const Metrics: React.FC = () => {
       <Loading />
     </LoadingWrapper>
   ) : !detected ? (
-    <p>
-      This message displays when either there's no ingress controller or nginx
-      is not installed
-    </p>
+    <>
+      <br />
+      <br />
+      <Placeholder height="calc(50vh - 50px)" minHeight="400px">
+        Cluster metrics unavailable. Make sure nginx-ingress and Prometheus are
+        installed.
+        <A href="/launch">Go to Launch</A>
+      </Placeholder>
+    </>
   ) : (
     <StyledMetricsSection>
       <Header>
@@ -333,8 +338,13 @@ const Metrics: React.FC = () => {
 
 export default Metrics;
 
+const A = styled.a`
+  margin-left: 5px;
+`;
+
 const LoadingWrapper = styled.div`
-  padding: 30px 0px;
+  padding: 100px 0px;
+  width: 100%;
   display: flex;
   align-items: center;
   font-size: 13px;
@@ -518,7 +528,7 @@ const StyledMetricsSection = styled.div`
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
-  margin-top: 20px;
+  margin-top: 34px;
   @keyframes floatIn {
     from {
       opacity: 0;
@@ -533,6 +543,9 @@ const StyledMetricsSection = styled.div`
 
 const Header = styled.div`
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   color: #aaaabb;
   font-size: 16px;
   margin-bottom: 15px;

@@ -133,10 +133,6 @@ func (app *App) HandleGithubOAuthCallback(w http.ResponseWriter, r *http.Request
 		// send to segment
 		app.AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
 
-		app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
-			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-		}))
-
 		// log the user in
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 
@@ -234,6 +230,11 @@ func (app *App) upsertUserFromToken(tok *oauth2.Token) (*models.User, error) {
 			if err != nil {
 				return nil, err
 			}
+
+			app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+				UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+				Email:               user.Email,
+			}))
 
 			if !verified {
 				// non-fatal email verification flow

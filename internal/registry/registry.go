@@ -57,8 +57,8 @@ type Image struct {
 	PushedAt *time.Time `json:"pushed_at"`
 }
 
-func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, awsIntID uint) (string, error) {
-	awsInt, err := awsIntRepo.ReadAWSIntegration(awsIntID)
+func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, projectID, awsIntID uint) (string, error) {
+	awsInt, err := awsIntRepo.ReadAWSIntegration(projectID, awsIntID)
 
 	if err != nil {
 		return "", err
@@ -119,6 +119,7 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 	getTokenCache := r.getTokenCacheFunc(repo)
 
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
 		r.GCPIntegrationID,
 	)
 
@@ -151,6 +152,7 @@ func (r *Registry) listGCRRepositories(
 	repo repository.Repository,
 ) ([]*Repository, error) {
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
 		r.GCPIntegrationID,
 	)
 
@@ -206,6 +208,7 @@ func (r *Registry) listGCRRepositories(
 
 func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repository, error) {
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
+		r.ProjectID,
 		r.AWSIntegrationID,
 	)
 
@@ -245,6 +248,7 @@ func (r *Registry) listDOCRRepositories(
 	doAuth *oauth2.Config,
 ) ([]*Repository, error) {
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
+		r.ProjectID,
 		r.DOIntegrationID,
 	)
 
@@ -303,6 +307,7 @@ func (r *Registry) listPrivateRegistryRepositories(
 	}
 
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		r.ProjectID,
 		r.BasicIntegrationID,
 	)
 
@@ -430,6 +435,7 @@ func (r *Registry) createECRRepository(
 	name string,
 ) error {
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
+		r.ProjectID,
 		r.AWSIntegrationID,
 	)
 
@@ -492,6 +498,7 @@ func (r *Registry) ListImages(
 
 func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([]*Image, error) {
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
+		r.ProjectID,
 		r.AWSIntegrationID,
 	)
 
@@ -564,6 +571,7 @@ type gcrImageResp struct {
 
 func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([]*Image, error) {
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
 		r.GCPIntegrationID,
 	)
 
@@ -624,6 +632,7 @@ func (r *Registry) listDOCRImages(
 	doAuth *oauth2.Config,
 ) ([]*Image, error) {
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
+		r.ProjectID,
 		r.DOIntegrationID,
 	)
 
@@ -672,6 +681,7 @@ func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Re
 	}
 
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		r.ProjectID,
 		r.BasicIntegrationID,
 	)
 
@@ -741,6 +751,7 @@ type dockerHubLoginResp struct {
 
 func (r *Registry) listDockerHubImages(repoName string, repo repository.Repository) ([]*Image, error) {
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		r.ProjectID,
 		r.BasicIntegrationID,
 	)
 
@@ -858,6 +869,7 @@ func (r *Registry) getECRDockerConfigFile(
 	repo repository.Repository,
 ) (*configfile.ConfigFile, error) {
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
+		r.ProjectID,
 		r.AWSIntegrationID,
 	)
 
@@ -914,6 +926,7 @@ func (r *Registry) getGCRDockerConfigFile(
 	repo repository.Repository,
 ) (*configfile.ConfigFile, error) {
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
 		r.GCPIntegrationID,
 	)
 
@@ -945,6 +958,7 @@ func (r *Registry) getDOCRDockerConfigFile(
 	doAuth *oauth2.Config,
 ) (*configfile.ConfigFile, error) {
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
+		r.ProjectID,
 		r.DOIntegrationID,
 	)
 
@@ -981,6 +995,7 @@ func (r *Registry) getPrivateRegistryDockerConfigFile(
 	repo repository.Repository,
 ) (*configfile.ConfigFile, error) {
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		r.ProjectID,
 		r.BasicIntegrationID,
 	)
 

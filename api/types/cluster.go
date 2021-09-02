@@ -78,3 +78,14 @@ type GetPodsRequest struct {
 	Namespace string   `schema:"namespace"`
 	Selectors []string `schema:"selectors"`
 }
+
+type CreateClusterManualRequest struct {
+	Name      string `json:"name" form:"required"`
+	ProjectID uint   `json:"project_id" form:"required"`
+	Server    string `json:"server" form:"required"`
+
+	GCPIntegrationID uint `json:"gcp_integration_id"`
+	AWSIntegrationID uint `json:"aws_integration_id"`
+
+	CertificateAuthorityData string `json:"certificate_authority_data,omitempty"`
+}

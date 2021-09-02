@@ -1038,6 +1038,7 @@ func (a *Agent) ProvisionDOCR(
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
+		projectID,
 		infra.DOIntegrationID,
 	)
 
@@ -1090,6 +1091,7 @@ func (a *Agent) ProvisionDOKS(
 ) (*batchv1.Job, error) {
 	// get the token
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
+		projectID,
 		infra.DOIntegrationID,
 	)
 

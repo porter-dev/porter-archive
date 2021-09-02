@@ -33,7 +33,7 @@ func TestCreateKubeIntegration(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	ki, err = tester.repo.KubeIntegration().ReadKubeIntegration(ki.Model.ID)
+	ki, err = tester.repo.KubeIntegration().ReadKubeIntegration(tester.initProjects[0].ID, ki.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -119,7 +119,7 @@ func TestCreateBasicIntegration(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	basic, err = tester.repo.BasicIntegration().ReadBasicIntegration(basic.Model.ID)
+	basic, err = tester.repo.BasicIntegration().ReadBasicIntegration(tester.initProjects[0].ID, basic.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -209,7 +209,7 @@ func TestCreateOIDCIntegration(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	oidc, err = tester.repo.OIDCIntegration().ReadOIDCIntegration(oidc.Model.ID)
+	oidc, err = tester.repo.OIDCIntegration().ReadOIDCIntegration(tester.initProjects[0].ID, oidc.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -303,7 +303,7 @@ func TestCreateOAuthIntegration(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	oauth, err = tester.repo.OAuthIntegration().ReadOAuthIntegration(oauth.Model.ID)
+	oauth, err = tester.repo.OAuthIntegration().ReadOAuthIntegration(tester.initProjects[0].ID, oauth.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -394,7 +394,7 @@ func TestCreateGCPIntegration(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	gcp, err = tester.repo.GCPIntegration().ReadGCPIntegration(gcp.Model.ID)
+	gcp, err = tester.repo.GCPIntegration().ReadGCPIntegration(tester.initProjects[0].ID, gcp.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -483,7 +483,7 @@ func TestCreateAWSIntegration(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	aws, err = tester.repo.AWSIntegration().ReadAWSIntegration(aws.Model.ID)
+	aws, err = tester.repo.AWSIntegration().ReadAWSIntegration(tester.initProjects[0].ID, aws.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -514,7 +514,7 @@ func TestOverwriteAWSIntegration(t *testing.T) {
 	initAWSIntegration(tester, t)
 	defer cleanup(tester, t)
 
-	aws, err := tester.repo.AWSIntegration().ReadAWSIntegration(1)
+	aws, err := tester.repo.AWSIntegration().ReadAWSIntegration(tester.initProjects[0].ID, 1)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -529,7 +529,7 @@ func TestOverwriteAWSIntegration(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	gotAWS, err := tester.repo.AWSIntegration().ReadAWSIntegration(1)
+	gotAWS, err := tester.repo.AWSIntegration().ReadAWSIntegration(tester.initProjects[0].ID, 1)
 
 	expAWS := &ints.AWSIntegration{
 		ProjectID:          tester.initProjects[0].ID,

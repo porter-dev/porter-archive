@@ -54,6 +54,34 @@ func getClusterRoutes(
 
 	routes := make([]*Route, 0)
 
+	// POST /api/projects/{project_id}/clusters -> project.NewCreateClusterManualHandler
+	createEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/clusters",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createHandler := cluster.NewCreateClusterManualHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createEndpoint,
+		Handler:  createHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id} -> project.NewClusterGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

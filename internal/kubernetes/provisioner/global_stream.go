@@ -136,7 +136,7 @@ func GlobalStreamListener(
 						json.Unmarshal([]byte(dataString), reg)
 					}
 
-					awsInt, err := repo.AWSIntegration().ReadAWSIntegration(reg.AWSIntegrationID)
+					awsInt, err := repo.AWSIntegration().ReadAWSIntegration(reg.ProjectID, reg.AWSIntegrationID)
 
 					if err != nil {
 						continue

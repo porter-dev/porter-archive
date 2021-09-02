@@ -216,7 +216,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/cronjob/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/cronjob/status`
     );
     ws.onopen = () => {
       console.log("connected to websocket");

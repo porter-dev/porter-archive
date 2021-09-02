@@ -66,11 +66,11 @@ class JobList extends Component<PropsType, StateType> {
       .deleteJob(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
           id: currentProject.id,
           name: job.metadata?.name,
+          cluster_id: currentCluster.id,
           namespace: job.metadata?.namespace,
         }
       )

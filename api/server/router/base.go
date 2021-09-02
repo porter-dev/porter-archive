@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/metadata"
+	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -189,6 +190,31 @@ func GetBaseRoutes(
 	routes = append(routes, &Route{
 		Endpoint: passwordFinalizeResetEndpoint,
 		Handler:  passwordFinalizeResetHandler,
+		Router:   r,
+	})
+
+	// POST /api/webhooks/deploy/{token} -> release.NewWebhookHandler
+	webhookEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/webhooks/deploy/{token}",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	webhookHandler := release.NewWebhookHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: webhookEndpoint,
+		Handler:  webhookHandler,
 		Router:   r,
 	})
 

@@ -66,3 +66,9 @@ type GetJobsStatusResponse struct {
 	Status    string       `json:"status,omitempty"`
 	StartTime *metav1.Time `json:"start_time,omitempty"`
 }
+
+const URLParamToken URLParam = "token"
+
+type WebhookRequest struct {
+	Commit string `schema:"commit"`
+}

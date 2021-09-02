@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,13 +72,23 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	}
 
 	releases, err := agent.ListReleases(form.Namespace, form.ListFilter)
+	var releaseList []*release.Release
+	// Clean up unused properties, these values are unnecesary to display the frontend rn
+	for _, r := range releases {
+		r.Chart.Files = []*chart.File{}
+		r.Chart.Templates = []*chart.File{}
+		r.Manifest = ""
+		r.Chart.Values = nil
+		r.Info.Notes = ""
+		releaseList = append(releaseList, r)
+	}
 
 	if err != nil {
 		app.handleErrorRead(err, ErrReleaseReadData, w)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(releases); err != nil {
+	if err := json.NewEncoder(w).Encode(releaseList); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}

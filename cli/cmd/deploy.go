@@ -559,7 +559,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			Name:   "Upgrade",
 			Index:  330,
 			Status: api.EventStatusSuccess,
-			Info:   err.Error(),
+			Info:   "",
 		})
 	}
 

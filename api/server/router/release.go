@@ -444,5 +444,36 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/image/batch ->
+	// release.NewUpdateImageBatchHandler
+	updateImageBatchEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/releases/image/batch",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	updateImageBatchHandler := release.NewUpgradeReleaseHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateImageBatchEndpoint,
+		Handler:  updateImageBatchHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

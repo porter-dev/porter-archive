@@ -877,30 +877,34 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, chartList []string, sel
 	}
 }
 
+type SharedProvisionOpts struct {
+	ProjectID           uint
+	Repo                repository.Repository
+	Infra               *models.Infra
+	Operation           provisioner.ProvisionerOperation
+	PGConf              *env.DBConf
+	RedisConf           *env.RedisConf
+	ProvImageTag        string
+	ProvImagePullSecret string
+}
+
 // ProvisionECR spawns a new provisioning pod that creates an ECR instance
 func (a *Agent) ProvisionECR(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *env.DBConf,
-	redisConf *env.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.ECR,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -911,33 +915,26 @@ func (a *Agent) ProvisionECR(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionEKS spawns a new provisioning pod that creates an EKS instance
 func (a *Agent) ProvisionEKS(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	awsConf *integrations.AWSIntegration,
 	eksName, machineType string,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *env.DBConf,
-	redisConf *env.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.EKS,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -949,32 +946,25 @@ func (a *Agent) ProvisionEKS(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionGCR spawns a new provisioning pod that creates a GCR instance
 func (a *Agent) ProvisionGCR(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	gcpConf *integrations.GCPIntegration,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *env.DBConf,
-	redisConf *env.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.GCR,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,
@@ -982,33 +972,26 @@ func (a *Agent) ProvisionGCR(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionGKE spawns a new provisioning pod that creates a GKE instance
 func (a *Agent) ProvisionGKE(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	gcpConf *integrations.GCPIntegration,
 	gkeName string,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *env.DBConf,
-	redisConf *env.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.GKE,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,
@@ -1019,50 +1002,43 @@ func (a *Agent) ProvisionGKE(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionDOCR spawns a new provisioning pod that creates a DOCR instance
 func (a *Agent) ProvisionDOCR(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	doConf *integrations.OAuthIntegration,
 	doAuth *oauth2.Config,
-	repo repository.Repository,
 	docrName, docrSubscriptionTier string,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *env.DBConf,
-	redisConf *env.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
-	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
-		projectID,
-		infra.DOIntegrationID,
+	oauthInt, err := opts.Repo.OAuthIntegration().ReadOAuthIntegration(
+		opts.ProjectID,
+		opts.Infra.DOIntegrationID,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, opts.Repo))
 
 	if err != nil {
 		return nil, err
 	}
 
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.DOCR,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -1072,50 +1048,43 @@ func (a *Agent) ProvisionDOCR(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionDOKS spawns a new provisioning pod that creates a DOKS instance
 func (a *Agent) ProvisionDOKS(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	doConf *integrations.OAuthIntegration,
 	doAuth *oauth2.Config,
-	repo repository.Repository,
 	doRegion, doksClusterName string,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *env.DBConf,
-	redisConf *env.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
-	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
-		projectID,
-		infra.DOIntegrationID,
+	oauthInt, err := opts.Repo.OAuthIntegration().ReadOAuthIntegration(
+		opts.ProjectID,
+		opts.Infra.DOIntegrationID,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, opts.Repo))
 
 	if err != nil {
 		return nil, err
 	}
 
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.DOKS,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		LastApplied:         infra.LastApplied,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		LastApplied:         opts.Infra.LastApplied,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -1125,34 +1094,27 @@ func (a *Agent) ProvisionDOKS(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionTest spawns a new provisioning pod that tests provisioning
 func (a *Agent) ProvisionTest(
-	projectID uint,
-	infra *models.Infra,
-	repo repository.Repository,
-	operation provisioner.ProvisionerOperation,
-	pgConf *env.DBConf,
-	redisConf *env.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
+	opts *SharedProvisionOpts,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Operation:           operation,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
+		Operation:           opts.Operation,
 		Kind:                provisioner.Test,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 func (a *Agent) provision(

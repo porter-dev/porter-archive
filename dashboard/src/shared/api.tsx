@@ -175,16 +175,17 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
 
 const createSubdomain = baseApi<
   {
-    release_name: string;
   },
   {
     id: number;
+    release_name: string;
+    namespace: string;
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id } = pathParams;
+  let { cluster_id, id, namespace, release_name } = pathParams;
 
-  return `/api/projects/${id}/k8s/subdomain?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/subdomain`;
 });
 
 const deleteCluster = baseApi<
@@ -538,11 +539,12 @@ const getInfra = baseApi<
 
 const getIngress = baseApi<
   {
-    cluster_id: number;
   },
-  { name: string; namespace: string; id: number }
+  { namespace: string; cluster_id: number; name: string; id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
+  let { id, name, cluster_id, namespace } = pathParams
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/ingresses/${name}`;
 });
 
 const getInvites = baseApi<{}, { id: number }>("GET", (pathParams) => {
@@ -1037,7 +1039,7 @@ const createWebhookToken = baseApi<
 >(
   "POST",
   ({ project_id, chart_name, namespace, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${chart_name}/webhook`
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${chart_name}/0/webhook`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)

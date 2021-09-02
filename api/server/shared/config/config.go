@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -57,6 +58,14 @@ type Config struct {
 
 	// URLCache contains a cache of chart names to chart repos
 	URLCache *urlcache.ChartURLCache
+
+	// ProvisionerAgent is the kubernetes client responsible for creating new provisioner
+	// jobs
+	ProvisionerAgent *kubernetes.Agent
+
+	// IngressAgent is the kubernetes client responsible for creating new ingress
+	// resources
+	IngressAgent *kubernetes.Agent
 }
 
 type ConfigLoader interface {

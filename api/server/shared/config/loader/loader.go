@@ -1,6 +1,7 @@
 package loader
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -141,5 +144,57 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	res.URLCache = urlcache.Init(sc.DefaultApplicationHelmRepoURL, sc.DefaultAddonHelmRepoURL)
 
+	provAgent, err := getProvisionerAgent(sc)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.ProvisionerAgent = provAgent
+
+	ingressAgent, err := getIngressAgent(sc)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.IngressAgent = ingressAgent
+
 	return res, nil
+}
+
+func getProvisionerAgent(sc *config.ServerConf) (*kubernetes.Agent, error) {
+	if sc.ProvisionerCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
+		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		return agent, nil
+	} else if sc.ProvisionerCluster == "kubeconfig" {
+		return nil, fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+	}
+
+	agent, _ := kubernetes.GetAgentInClusterConfig()
+
+	return agent, nil
+}
+
+func getIngressAgent(sc *config.ServerConf) (*kubernetes.Agent, error) {
+	if sc.IngressCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
+		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		return agent, nil
+	} else if sc.ProvisionerCluster == "kubeconfig" {
+		return nil, fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+	}
+
+	agent, _ := kubernetes.GetAgentInClusterConfig()
+
+	return agent, nil
 }

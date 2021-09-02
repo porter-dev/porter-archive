@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	URLParamPodName URLParam = "name"
+	URLParamPodName     URLParam = "name"
+	URLParamIngressName URLParam = "name"
 )
 
 // ReleaseListFilter is a struct that represents the various filter options used for

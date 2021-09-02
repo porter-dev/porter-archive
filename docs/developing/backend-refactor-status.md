@@ -97,8 +97,8 @@
 | <li>- [X] `GET /api/projects/{project_id}/k8s/pods/{namespace}/{name}/events/list`                                          | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/detect`                                                            | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/prometheus/ingresses`                                                         | AS          | yes             |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/k8s/subdomain`                                                                   |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/k8s/{namespace}/ingress/{name}`                                                   |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/k8s/subdomain`                                                                   | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/ingress/{name}`                                                   | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/pod/{name}/logs`                                                  | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/k8s/{kind}/status`                                                                | AB          | yes             |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status`                                               | AB          |                 |             |                  |

@@ -250,7 +250,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
       await api.upgradeChartValues(
         "<token>",
         {
-          storage: StorageType.Secret,
           values: valuesYaml,
         },
         {
@@ -627,11 +626,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
       .getIngress(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
           id: currentProject.id,
           name: ingressName,
+          cluster_id: currentCluster.id,
           namespace: `${currentChart.namespace}`,
         }
       )

@@ -1,6 +1,10 @@
 package integrations
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+
+	"github.com/porter-dev/porter/api/types"
+)
 
 // SlackIntegration is a webhook notifier to a specific channel in a Slack workspace.
 type SlackIntegration struct {
@@ -8,7 +12,7 @@ type SlackIntegration struct {
 	SharedOAuthModel
 
 	// The name of the auth mechanism
-	Client OAuthIntegrationClient `json:"client"`
+	Client types.OAuthIntegrationClient `json:"client"`
 
 	// The id of the user that linked this auth mechanism
 	UserID uint `json:"user_id"`

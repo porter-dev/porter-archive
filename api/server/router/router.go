@@ -29,6 +29,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	registryRegisterer := NewRegistryScopedRegisterer()
 	helmRepoRegisterer := NewHelmRepoScopedRegisterer()
 	inviteRegisterer := NewInviteScopedRegisterer()
+	projectIntegrationRegisterer := NewProjectIntegrationScopedRegisterer()
 	projRegisterer := NewProjectScopedRegisterer(
 		clusterRegisterer,
 		registryRegisterer,
@@ -36,6 +37,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		inviteRegisterer,
 		gitInstallationRegisterer,
 		infraRegisterer,
+		projectIntegrationRegisterer,
 	)
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 

@@ -795,12 +795,15 @@ const getCapabilities = baseApi<{}, {}>("GET", () => {
   return `/api/capabilities`;
 });
 
-const getWelcome = baseApi<{
-  email: string,
-  isCompany: boolean,
-  company: string,
-  role: string
-}, {}>("GET", () => {
+const getWelcome = baseApi<
+  {
+    email: string;
+    isCompany: boolean;
+    company: string;
+    role: string;
+  },
+  {}
+>("GET", () => {
   return `/api/welcome`;
 });
 

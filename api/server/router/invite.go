@@ -52,7 +52,7 @@ func getInviteRoutes(
 
 	routes := make([]*Route, 0)
 
-	// GET /api/projects/{project_id}/invites/{invite_id} -> registry.NewInviteGetHandler
+	// GET /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

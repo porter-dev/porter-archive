@@ -108,5 +108,34 @@ func getInfraRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/infras/{infra_id} -> infra.NewInfraDeleteHandler
+	deleteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	deleteHandler := infra.NewInfraDeleteHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteEndpoint,
+		Handler:  deleteHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -61,12 +61,12 @@
 | <li>- [ ] `POST /api/projects/{project_id}/helmrepos`                                                                       |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/helmrepos/{helm_id}/charts`                                                       |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/infra`                                                                            | AS          |                 |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/docr/destroy`                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/doks/destroy`                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/ecr/destroy`                                                    |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/eks/destroy`                                                    |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/gke/destroy`                                                    |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy`                                                   |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/docr/destroy`                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/doks/destroy`                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/ecr/destroy`                                                    | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/eks/destroy`                                                    | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/gke/destroy`                                                    | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy`                                                   | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/aws`                                                                |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite`                                 |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/basic`                                                              |             |                 |             |                  |

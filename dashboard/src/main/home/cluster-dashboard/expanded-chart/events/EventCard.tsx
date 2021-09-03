@@ -26,46 +26,35 @@ const EventCard: React.FunctionComponent<CardProps> = ({
   overrideName,
 }) => {
   return (
-    <StyledCard>
-      <ContentContainer onClick={() => selectEvent && selectEvent()}>
-        {event.status == 1 && (
-          <Icon status={"normal"} className="material-icons-outlined">
-            check
-          </Icon>
-        )}
-        {event.status == 2 && (
-          <Icon status={"critical"} className="material-icons-outlined">
-            autorenew
-          </Icon>
-        )}
-        {event.status == 3 && (
-          <Icon status={"critical"} className="material-icons-outlined">
-            error
-          </Icon>
-        )}
-        <EventInformation>
-          <EventName>{overrideName ? overrideName : event.name}</EventName>
-          <EventReason>
-            {event.status == 2 && (
-              <Helper>Step {event.name} In Progress</Helper>
-            )}
-            {event.status == 1 && <Helper>Step {event.name} Successful</Helper>}
-            {event.status == 3 && (
-              <Helper>
-                Step {event.name} failed: {event.info}
-              </Helper>
-            )}
-          </EventReason>
-        </EventInformation>
-      </ContentContainer>
-      <ActionContainer hasOneChild>
+    <StyledCard onClick={() => selectEvent && selectEvent()}>
+      {event.status == 1 && (
+        <Icon status="normal" className="material-icons-outlined">
+          check
+        </Icon>
+      )}
+      {event.status == 2 && (
+        <Icon className="material-icons-outlined">
+          autorenew
+        </Icon>
+      )}
+      {event.status == 3 && (
+        <Icon status="critical" className="material-icons-outlined">
+          error
+        </Icon>
+      )}
+       
+      <InfoWrapper>
+        <EventName>
+          {overrideName ? overrideName : event.name}
+          {event.status == 1 && " successful"}
+          {event.status == 2 && " in progress"}
+          {event.status == 3 && ` failed: ${event.info}`}
+        </EventName>
         <TimestampContainer>
-          <TimestampIcon className="material-icons-outlined">
-            access_time
-          </TimestampIcon>
-          <span>{getReadableDate(event.time)}</span>
+          <i className="material-icons-outlined">access_time</i>
+          {getReadableDate(event.time)}
         </TimestampContainer>
-      </ActionContainer>
+      </InfoWrapper>
     </StyledCard>
   );
 };
@@ -73,136 +62,60 @@ const EventCard: React.FunctionComponent<CardProps> = ({
 export default EventCard;
 
 const StyledCard = styled.div`
-  background: #26282f;
-  min-height: 100px;
-  width: 100%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border: 1px solid #26282f;
-  box-shadow: 0 4px 15px 0px #00000055;
-  border-radius: 8px;
-  padding: 14px;
-  animation: fadeIn 0.5s;
-  @keyframes fadeIn {
+  border: 1px solid #ffffff44;
+  background: #ffffff08;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  padding-left: 20px;
+  overflow: hidden;
+  height: 80px;
+  cursor: pointer;
+
+  :hover {
+    background: #ffffff11;
+    border: 1px solid #ffffff66;
+  }
+`;
+
+const Icon = styled.span<{ status?: "critical" | "normal" }>`
+  font-size: 22px;
+  margin-right: 18px;
+  color: ${({ status }) => status ? (status === "critical" ? "#cc3d42" : "#38a88a" ) : "#efefef"};
+  animation: ${({ status }) => !status && "rotating 3s linear infinite"};
+  @keyframes rotating {
     from {
-      opacity: 0;
+      transform: rotate(0deg);
     }
     to {
-      opacity: 1;
+      transform: rotate(360deg);
     }
   }
 `;
 
-const ContentContainer = styled.div`
-  display: flex;
-  height: 100%;
-  width: 100%;
-  align-items: center;
-`;
-
-const Icon = styled.span`
-  font-size: 35px;
-  margin-right: 14px;
-  color: ${({ status }: { status: "critical" | "normal" }) =>
-    status === "critical" ? "red" : "green"};
-`;
-
-const EventInformation = styled.div`
+const InfoWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  height: 100%;
 `;
 
 const EventName = styled.div`
-  font-size: 14px;
+  font-size: 13px;
   font-family: "Work Sans", sans-serif;
   font-weight: 500;
   color: #ffffff;
 `;
 
-const Helper = styled.span`
-  font-size: 14px;
-  text-transform: capitalize;
-  color: #ffffff44;
-  margin-right: 5px;
-`;
-
-const EventReason = styled.div`
-  font-size: 18px;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  margin-top: 8px;
-`;
-
-const ActionContainer = styled.div`
-  width: max-content;
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  height: 100%;
-  flex-direction: column;
-  justify-content: ${(props: { hasOneChild: boolean }) => {
-    return props.hasOneChild ? "flex-end" : "space-between";
-  }};
-`;
-
-const HistoryButton = styled.button`
-  position: relative;
-  border: none;
-  background: none;
-  color: white;
-  padding: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  color: #ffffff44;
-  :hover {
-    background: #32343a;
-    cursor: pointer;
-  }
-`;
-
-const Tooltip = styled.div`
-  position: absolute;
-  left: 0px;
-  word-wrap: break-word;
-  top: 38px;
-  min-height: 18px;
-  padding: 5px 7px;
-  background: #272731;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1;
-  color: white;
-  text-transform: none;
-  font-size: 12px;
-  font-family: "Work Sans", sans-serif;
-  outline: 1px solid #ffffff55;
-  opacity: 0;
-  animation: faded-in 0.2s 0.15s;
-  animation-fill-mode: forwards;
-  @keyframes faded-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
 const TimestampContainer = styled.div`
   display: flex;
-  white-space: nowrap;
   align-items: center;
-  justify-self: flex-end;
-`;
+  color: #ffffff55;
+  font-size: 13px;
+  margin-top: 8px;
 
-const TimestampIcon = styled.span`
-  margin-right: 5px;
+  > i {
+    margin-right: 5px;
+    font-size: 18px;
+    margin-left: -1px;
+  }
 `;

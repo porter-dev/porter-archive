@@ -68,3 +68,14 @@ type CreateAWSRequest struct {
 type CreateAWSResponse struct {
 	*AWSIntegration
 }
+
+type OverwriteAWSRequest struct {
+	AWSIntegrationID   uint   `json:"aws_integration_id,required"`
+	AWSAccessKeyID     string `json:"aws_access_key_id,required"`
+	AWSSecretAccessKey string `json:"aws_secret_access_key,required"`
+	ClusterID          uint   `json:"cluster_id"`
+}
+
+type OverwriteAWSResponse struct {
+	*AWSIntegration
+}

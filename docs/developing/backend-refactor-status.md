@@ -67,8 +67,8 @@
 | <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/eks/destroy`                                                    |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/gke/destroy`                                                    |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy`                                                   |             |                 |             |                  |
-| <li>- [x] `POST /api/projects/{project_id}/integrations/aws`                                                                | AS          |                 | yes         |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite`                                 |             |                 |             |                  |
+| <li>- [x] `POST /api/projects/{project_id}/integrations/aws`                                                                | AS          |                 | yes         | yes              |
+| <li>- [x] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite`                                 | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/basic`                                                              | AS          |                 | yes         |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/gcp`                                                                |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/integrations/oauth`                                                               | AS          |                 | yes         | yes              |

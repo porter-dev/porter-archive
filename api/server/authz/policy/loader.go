@@ -26,7 +26,7 @@ func (b *BasicPolicyDocumentLoader) LoadPolicyDocuments(
 	userID, projectID uint,
 ) ([]*types.PolicyDocument, apierrors.RequestError) {
 	// read role and case on role "kind"
-	role, err := b.projRepo.ReadProjectRole(userID, projectID)
+	role, err := b.projRepo.ReadProjectRole(projectID, userID)
 
 	if err != nil && err == gorm.ErrRecordNotFound {
 		return nil, apierrors.NewErrForbidden(

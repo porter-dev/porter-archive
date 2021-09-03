@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
+	"github.com/porter-dev/porter/api/server/handlers/invite"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/provision"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
@@ -188,6 +189,116 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listGitReposEndpoint,
 		Handler:  listGitReposHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/collaborators -> project.NewCollaboratorsListHandler
+	listCollaboratorsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/collaborators",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listCollaboratorsHandler := project.NewCollaboratorsListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listCollaboratorsEndpoint,
+		Handler:  listCollaboratorsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/roles -> project.NewRolesListHandler
+	listRolesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/roles",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listRolesHandler := project.NewRolesListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listRolesEndpoint,
+		Handler:  listRolesHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/roles -> project.NewRoleUpdateHandler
+	updateRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/roles",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	updateRoleHandler := project.NewRoleUpdateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateRoleEndpoint,
+		Handler:  updateRoleHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/roles -> project.NewRoleDeleteHandler
+	deleteRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/roles",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteRoleHandler := project.NewRoleDeleteHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteRoleEndpoint,
+		Handler:  deleteRoleHandler,
 		Router:   r,
 	})
 
@@ -411,6 +522,85 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: provisionEKSEndpoint,
 		Handler:  provisionEKSHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/invites -> invite.NewInvitesListHandler
+	listInvitesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/invites",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listInvitesHandler := invite.NewInvitesListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listInvitesEndpoint,
+		Handler:  listInvitesHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/invites -> invite.NewInviteCreateHandler
+	createInviteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/invites",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createInviteHandler := invite.NewInviteCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createInviteEndpoint,
+		Handler:  createInviteHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/invites/accept -> invite.NewInviteAcceptHandler
+	acceptInviteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/invites/accept",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	acceptInviteHandler := invite.NewInviteAcceptHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: acceptInviteEndpoint,
+		Handler:  acceptInviteHandler,
 		Router:   r,
 	})
 

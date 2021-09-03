@@ -23,7 +23,7 @@ func NewInviteScopedFactory(
 }
 
 func (p *InviteScopedFactory) Middleware(next http.Handler) http.Handler {
-	return &RegistryScopedMiddleware{next, p.config}
+	return &InviteScopedMiddleware{next, p.config}
 }
 
 type InviteScopedMiddleware struct {
@@ -35,7 +35,7 @@ func (p *InviteScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	// read the project to check scopes
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	// get the registry id from the URL param context
+	// get the invite id from the URL param context
 	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	inviteID := reqScopes[types.InviteScope].Resource.UInt
 

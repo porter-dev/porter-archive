@@ -109,7 +109,7 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 			deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
 		}
 
-		if deployAgent.opts.LocalDockerfile == "" {
+		if deployAgent.dockerfilePath == "" && deployAgent.opts.LocalDockerfile == "" {
 			deployAgent.dockerfilePath = "./Dockerfile"
 		}
 	}

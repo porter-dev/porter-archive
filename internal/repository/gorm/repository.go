@@ -33,5 +33,6 @@ func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
 		GithubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		SlackIntegration:          NewSlackIntegrationRepository(db, key),
 		NotificationConfig:        NewNotificationConfigRepository(db),
+		Event:                     NewEventRepository(db),
 	}
 }

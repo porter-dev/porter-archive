@@ -28,11 +28,14 @@ import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
+import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
 import DeploymentType from "./DeploymentType";
+import DeployStatus from "./status/DeployStatus";
+import EventsTab from "./events/EventsTab";
 
 type Props = {
   namespace: string;
@@ -67,9 +70,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
   const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
-  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
-    false
-  );
+  const [forceRefreshRevisions, setForceRefreshRevisions] =
+    useState<boolean>(false);
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -81,19 +83,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError, setCurrentOverlay } =
+    useContext(Context);
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -358,15 +352,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
+      case "events":
+        return <EventsTab currentChart={chart} />;
       case "status":
         if (isLoadingChartData) {
           return (
             <Placeholder>
-              <TextWrap>
-                <Header>
-                  <Spinner src={loadingSrc} />
-                </Header>
-              </TextWrap>
+              <Loading />
+              <DeployStatus chart={chart} />
             </Placeholder>
           );
         }
@@ -390,6 +383,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                 </A>{" "}
                 tab of your GitHub repo to view live build logs.
               </TextWrap>
+              <DeployStatus chart={chart} />
             </Placeholder>
           );
         } else {
@@ -449,6 +443,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
     leftTabOptions.push({ label: "Status", value: "status" });
+    leftTabOptions.push({ label: "Events", value: "events" });
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });
@@ -630,7 +625,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     localStorage.setItem("devOpsMode", devOpsMode.toString());
   }, [devOpsMode, currentChart?.form, isPreview]);
 
-  useEffect(() => {
+  useEffect((): any => {
     let isSubscribed = true;
 
     const ingressComponent = components?.find((c) => c.Kind === "Ingress");
@@ -812,6 +807,14 @@ const Tooltip = styled.div`
 
 const TextWrap = styled.div``;
 
+const LoadingWrapper = styled.div`
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const LineBreak = styled.div`
   width: calc(100% - 0px);
   height: 2px;
@@ -867,9 +870,9 @@ const Placeholder = styled.div`
   font-size: 13px;
   color: #ffffff44;
   width: 100%;
-  display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: scroll;
 `;
 
 const Spinner = styled.img`

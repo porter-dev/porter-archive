@@ -36,6 +36,12 @@ type Config struct {
 	// ServerConf is the set of configuration variables for the Porter server
 	ServerConf *env.ServerConf
 
+	// DBConf is the set of configuration variables for the DB
+	DBConf *env.DBConf
+
+	// RedisConf is the set of configuration variables for the redis instance
+	RedisConf *env.RedisConf
+
 	// TokenConf contains the config for generating and validating JWT tokens
 	TokenConf *token.TokenGeneratorConf
 

@@ -358,7 +358,8 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,

@@ -1016,12 +1016,12 @@ const getCollaborators = baseApi<{}, { project_id: number }>(
 );
 
 const updateCollaborator = baseApi<
-  { kind: string },
-  { project_id: number; user_id: number }
->(
-  "POST",
-  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
-);
+  {
+    kind: string;
+    user_id: number;
+  },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/roles`);
 
 const removeCollaborator = baseApi<{}, { project_id: number; user_id: number }>(
   "DELETE",

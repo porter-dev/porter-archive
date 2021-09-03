@@ -111,7 +111,7 @@
 | <li>- [X] `POST /api/projects/{project_id}/provision/gcr`                                                                   | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/provision/gke`                                                                   | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/provision/test`                                                                  | N/A         |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs`                                                 |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs`                                                 | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries`                                                                      | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries`                                                                       | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries/dockerhub/token`                                                       | AB          |                 |             |                  |

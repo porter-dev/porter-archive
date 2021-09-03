@@ -80,5 +80,60 @@ func getInviteRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteUpdateRoleHandler
+	updateRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InviteScope,
+			},
+		},
+	)
+
+	updateRoleHandler := invite.NewInviteUpdateRoleHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateRoleEndpoint,
+		Handler:  updateRoleHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteGetHandler
+	deleteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InviteScope,
+			},
+		},
+	)
+
+	deleteHandler := invite.NewInviteDeleteHandler(
+		config,
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteEndpoint,
+		Handler:  deleteHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

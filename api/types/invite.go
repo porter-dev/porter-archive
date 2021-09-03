@@ -10,3 +10,18 @@ type Invite struct {
 }
 
 type GetInviteResponse Invite
+
+type CreateInviteRequest struct {
+	Email string `json:"email,required"`
+	Kind  string `json:"kind,required"`
+}
+
+type CreateInviteResponse struct {
+	*Invite
+}
+
+type ListInvitesResponse []*Invite
+
+type UpdateInviteRoleRequest struct {
+	Kind string `json:"kind,required"`
+}

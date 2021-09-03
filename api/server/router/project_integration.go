@@ -163,5 +163,33 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/integrations/gcp -> project_integrations.NewCreateGCPHandler
+	createGCPEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gcp",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createGCPHandler := project_integration.NewCreateGCPHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createGCPEndpoint,
+		Handler:  createGCPHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

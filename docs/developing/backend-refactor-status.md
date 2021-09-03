@@ -70,7 +70,7 @@
 | <li>- [x] `POST /api/projects/{project_id}/integrations/aws`                                                                | AS          |                 | yes         | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite`                                 | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/basic`                                                              | AS          |                 | yes         |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/integrations/gcp`                                                                |             |                 |             |                  |
+| <li>- [x] `POST /api/projects/{project_id}/integrations/gcp`                                                                | AS          |                 | yes         | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/integrations/oauth`                                                               | AS          |                 | yes         | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/invites`                                                                          | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/invites`                                                                         | AS          |                 |             | yes              |

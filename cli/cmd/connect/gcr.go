@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 )
 
@@ -41,7 +43,7 @@ Key file location: `))
 		integration, err := client.CreateGCPIntegration(
 			context.Background(),
 			projectID,
-			&api.CreateGCPIntegrationRequest{
+			&types.CreateGCPRequest{
 				GCPKeyData: string(bytes),
 			},
 		)

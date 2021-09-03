@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/porter-dev/porter/api/types"
-	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 // CreateAWSIntegration creates an AWS integration with the given request options
@@ -47,21 +46,12 @@ func (c *Client) CreateAWSIntegration(
 	return bodyResp, nil
 }
 
-// CreateGCPIntegrationRequest represents the accepted fields for creating
-// a gcp integration
-type CreateGCPIntegrationRequest struct {
-	GCPKeyData string `json:"gcp_key_data"`
-}
-
-// CreateGCPIntegrationResponse is the resulting integration after creation
-type CreateGCPIntegrationResponse ints.GCPIntegrationExternal
-
 // CreateGCPIntegration creates a GCP integration with the given request options
 func (c *Client) CreateGCPIntegration(
 	ctx context.Context,
 	projectID uint,
-	createGCP *CreateGCPIntegrationRequest,
-) (*CreateGCPIntegrationResponse, error) {
+	createGCP *types.CreateGCPRequest,
+) (*types.CreateGCPResponse, error) {
 	data, err := json.Marshal(createGCP)
 
 	if err != nil {
@@ -79,7 +69,7 @@ func (c *Client) CreateGCPIntegration(
 	}
 
 	req = req.WithContext(ctx)
-	bodyResp := &CreateGCPIntegrationResponse{}
+	bodyResp := &types.CreateGCPResponse{}
 
 	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {

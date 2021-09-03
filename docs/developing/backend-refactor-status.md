@@ -106,8 +106,8 @@
 | <li>- [x] `GET /api/projects/{project_id}/policy`                                                                           | AS          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/docr`                                                                  |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/doks`                                                                  |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/provision/ecr`                                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/provision/eks`                                                                   |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/provision/ecr`                                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/provision/eks`                                                                   | AB          |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/gcr`                                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/gke`                                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/provision/test`                                                                  |             |                 |             |                  |

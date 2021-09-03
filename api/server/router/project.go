@@ -5,6 +5,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/project"
+	"github.com/porter-dev/porter/api/server/handlers/provision"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -354,6 +355,62 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getDockerhubTokenEndpoint,
 		Handler:  getDockerhubTokenHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/provision/ecr -> provision.NewProvisionECRHandler
+	provisionECREndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/provision/ecr",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	provisionECRHandler := provision.NewProvisionECRHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: provisionECREndpoint,
+		Handler:  provisionECRHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/provision/eks -> provision.NewProvisionEKSHandler
+	provisionEKSEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/provision/eks",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	provisionEKSHandler := provision.NewProvisionEKSHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: provisionEKSEndpoint,
+		Handler:  provisionEKSHandler,
 		Router:   r,
 	})
 

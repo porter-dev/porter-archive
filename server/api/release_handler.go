@@ -1628,6 +1628,124 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// HandleGetReleaseSteps returns a list of all steps for a given release
+// note that steps are not guaranteed to be in any specific order, so they should be ordered if needed
+func (app *App) HandleGetReleaseSteps(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+	}
+
+	namespace := vals["namespace"][0]
+	clusterId, err := strconv.ParseUint(vals["cluster_id"][0], 0, 64)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	rel, err := app.Repo.Release.ReadRelease(uint(clusterId), name, namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	res := make([]models.SubEventExternal, 0)
+
+	if rel.EventContainer != 0 {
+		subevents, err := app.Repo.Event.ReadEventsByContainerID(rel.EventContainer)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+		}
+
+		for _, sub := range subevents {
+			res = append(res, sub.Externalize())
+		}
+	}
+
+	json.NewEncoder(w).Encode(res)
+}
+
+type HandleUpdateReleaseStepsForm struct {
+	Event struct {
+		ID     string             `json:"event_id" form:"required"`
+		Name   string             `json:"name" form:"required"`
+		Index  int64              `json:"index" form:"required"`
+		Status models.EventStatus `json:"status" form:"required"`
+		Info   string             `json:"info" form:"required"`
+	} `json:"event" form:"required"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	ClusterID uint   `json:"cluster_id"`
+}
+
+// HandleUpdateReleaseSteps adds a new step to a release
+func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request) {
+	form := &HandleUpdateReleaseStepsForm{}
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	rel, err := app.Repo.Release.ReadRelease(form.ClusterID, form.Name, form.Namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"Release not found"},
+		}, w)
+
+		return
+	}
+
+	if rel.EventContainer == 0 {
+		// create new event container
+		container, err := app.Repo.Event.CreateEventContainer(&models.EventContainer{ReleaseID: rel.ID})
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
+
+		rel.EventContainer = container.ID
+
+		rel, err = app.Repo.Release.UpdateRelease(rel)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+	}
+
+	container, err := app.Repo.Event.ReadEventContainer(rel.EventContainer)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := app.Repo.Event.AppendEvent(container, &models.SubEvent{
+		EventContainerID: container.ID,
+		EventID:          form.Event.ID,
+		Name:             form.Event.Name,
+		Index:            form.Event.Index,
+		Status:           form.Event.Status,
+		Info:             form.Event.Info,
+	}); err != nil {
+		app.handleErrorInternal(err, w)
+	}
+
+}
+
 // ------------------------ Release handler helper functions ------------------------ //
 
 // getAgentFromQueryParams uses the query params to populate a form, and then

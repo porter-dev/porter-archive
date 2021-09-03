@@ -145,22 +145,22 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
   return (
     <EventsGrid>
       {eventData
-      .slice(0)
-      .reverse()
-      .map((dat, i) => {
-        console.log(dat.started_at);
-        return (
-          <React.Fragment key={dat.started_at}>
-            <EventCard
-              event={dat.events[dat.events.length - 1]}
-              selectEvent={() => {
-                setSelectedEvent(eventData.length - i - 1);
-              }}
-              overrideName={"Deployment"}
-            />
-          </React.Fragment>
-        );
-      })}
+        .slice(0)
+        .reverse()
+        .map((dat, i) => {
+          console.log(dat.started_at);
+          return (
+            <React.Fragment key={dat.started_at}>
+              <EventCard
+                event={dat.events[dat.events.length - 1]}
+                selectEvent={() => {
+                  setSelectedEvent(eventData.length - i - 1);
+                }}
+                overrideName={"Deployment"}
+              />
+            </React.Fragment>
+          );
+        })}
     </EventsGrid>
   );
 };

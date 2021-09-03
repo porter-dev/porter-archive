@@ -70,8 +70,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
   const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
-  const [forceRefreshRevisions, setForceRefreshRevisions] =
-    useState<boolean>(false);
+  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
+    false
+  );
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -83,11 +84,19 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
 
-  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
-    useWebsockets();
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
 
-  const { currentCluster, currentProject, setCurrentError, setCurrentOverlay } =
-    useContext(Context);
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    setCurrentOverlay,
+  } = useContext(Context);
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -383,7 +392,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
                 </A>{" "}
                 tab of your GitHub repo to view live build logs.
               </TextWrap>
-              <DeployStatus chart={chart} />
             </Placeholder>
           );
         } else {
@@ -863,16 +871,19 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  min-height: 400px;
-  height: 50vh;
-  padding: 30px;
-  padding-bottom: 90px;
-  font-size: 13px;
-  color: #ffffff44;
   width: 100%;
+  min-height: 300px;
+  height: 40vh;
+  display: flex;
   align-items: center;
   justify-content: center;
-  overflow-y: scroll;
+  color: #ffffff44;
+  font-size: 14px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+  }
 `;
 
 const Spinner = styled.img`

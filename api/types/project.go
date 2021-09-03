@@ -46,10 +46,18 @@ type Collaborator struct {
 type ListCollaboratorsResponse []*Collaborator
 
 type UpdateRoleRequest struct {
-	UserID uint   `json:"user_id"`
-	Kind   string `json:"kind"`
+	UserID uint   `json:"user_id,required"`
+	Kind   string `json:"kind,required"`
 }
 
 type UpdateRoleResponse struct {
+	*Role
+}
+
+type DeleteRoleRequest struct {
+	UserID uint `schema:"user_id,required"`
+}
+
+type DeleteRoleResponse struct {
 	*Role
 }

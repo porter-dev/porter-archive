@@ -138,7 +138,7 @@
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/pods/all`                                              | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/roles`                                                                            | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/roles/{user_id}`                                                                 | AS          | yes             |             | yes              |
-| <li>- [ ] `DELETE /api/projects/{project_id}/roles/{user_id}`                                                               |             |                 |             |                  |
+| <li>- [x] `DELETE /api/projects/{project_id}/roles/{user_id}`                                                               |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/slack_integrations`                                                               |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/slack_integrations/exists`                                                        |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/slack_integrations/{slack_integration_id}`                                     |             |                 |             |                  |

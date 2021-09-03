@@ -174,8 +174,7 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
 });
 
 const createSubdomain = baseApi<
-  {
-  },
+  {},
   {
     id: number;
     release_name: string;
@@ -206,20 +205,18 @@ const deleteInvite = baseApi<{}, { id: number; invId: number }>(
 );
 
 const deletePod = baseApi<
-  {
-  },
-  { name: string; namespace: string; id: number; cluster_id: number; }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("DELETE", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams
+  let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}`;
 });
 
 const getPodEvents = baseApi<
-  {
-  },
-  { name: string; namespace: string; id: number; cluster_id: number; }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("GET", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams
+  let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}/events`;
 });
 
@@ -258,14 +255,13 @@ const updateNotificationConfig = baseApi<
     name: string;
   }
 >("POST", (pathParams) => {
-  let { project_id, cluster_id, namespace, name } = pathParams
+  let { project_id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
 
 const getNotificationConfig = baseApi<
-  {
-  },
+  {},
   {
     project_id: number;
     cluster_id: number;
@@ -273,7 +269,7 @@ const getNotificationConfig = baseApi<
     name: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, namespace, name } = pathParams
+  let { project_id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
@@ -407,11 +403,17 @@ const getBranches = baseApi<
 
 const getChart = baseApi<
   {},
-  { id: number; cluster_id: number; namespace: string; name: string; revision: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+    name: string;
+    revision: number;
+  }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name, revision } = pathParams
+  let { id, cluster_id, namespace, name, revision } = pathParams;
 
-  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}`
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}`;
 });
 
 const getCharts = baseApi<
@@ -431,22 +433,33 @@ const getCharts = baseApi<
 });
 
 const getChartComponents = baseApi<
+  {},
   {
-  },
-  { id: number; cluster_id: number; namespace: string; name: string; revision: number }
+    id: number;
+    cluster_id: number;
+    namespace: string;
+    name: string;
+    revision: number;
+  }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name, revision } = pathParams
+  let { id, cluster_id, namespace, name, revision } = pathParams;
 
-  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/components`
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/components`;
 });
 
 const getChartControllers = baseApi<
-{},
-{ id: number; cluster_id: number; namespace: string; name: string; revision: number }
+  {},
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+    name: string;
+    revision: number;
+  }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name, revision } = pathParams
+  let { id, cluster_id, namespace, name, revision } = pathParams;
 
-  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/controllers`
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/controllers`;
 });
 
 const getClusterIntegrations = baseApi("GET", "/api/integrations/cluster");
@@ -538,11 +551,10 @@ const getInfra = baseApi<
 });
 
 const getIngress = baseApi<
-  {
-  },
+  {},
   { namespace: string; cluster_id: number; name: string; id: number }
 >("GET", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams
+  let { id, name, cluster_id, namespace } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/ingresses/${name}`;
 });
@@ -552,31 +564,28 @@ const getInvites = baseApi<{}, { id: number }>("GET", (pathParams) => {
 });
 
 const getJobs = baseApi<
-  {
-  },
+  {},
   { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  let { id, release_name, cluster_id, namespace } = pathParams
+  let { id, release_name, cluster_id, namespace } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs`;
 });
 
 const getJobStatus = baseApi<
-  {
-  },
+  {},
   { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  let { id, release_name, cluster_id, namespace } = pathParams
+  let { id, release_name, cluster_id, namespace } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs/status`;
 });
 
 const getJobPods = baseApi<
-  {
-  },
-  { name: string; namespace: string; id: number; cluster_id: number; }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("GET", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams
+  let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
 
@@ -585,7 +594,7 @@ const getMatchingPods = baseApi<
     namespace: string;
     selectors: string[];
   },
-  { id: number, cluster_id: number; }
+  { id: number; cluster_id: number }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/pods`;
 });
@@ -670,11 +679,10 @@ const getPrometheusIsInstalled = baseApi<
 const getRegistryIntegrations = baseApi("GET", "/api/integrations/registry");
 
 const getReleaseToken = baseApi<
-  {
-  },
-  { name: string; id: number, namespace: string; cluster_id: number; }
+  {},
+  { name: string; id: number; namespace: string; cluster_id: number }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name } = pathParams
+  let { id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/webhook`;
 });
@@ -729,13 +737,12 @@ const getSlackIntegrations = baseApi<{}, { id: number }>(
 );
 
 const getRevisions = baseApi<
-  {
-  },
+  {},
   { id: number; cluster_id: number; namespace: string; name: string }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name } = pathParams
+  let { id, cluster_id, namespace, name } = pathParams;
 
-  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/history`
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/history`;
 });
 
 const getTemplateInfo = baseApi<
@@ -974,11 +981,10 @@ const deleteNamespace = baseApi<
 });
 
 const deleteJob = baseApi<
-{
-},
-{ name: string; namespace: string; id: number; cluster_id: number; }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("DELETE", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams
+  let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}`;
 });
 
@@ -987,7 +993,7 @@ const stopJob = baseApi<
   { name: string; namespace: string; id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, name, namespace, cluster_id } = pathParams;
-  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/stop`
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/stop`;
 });
 
 const getAvailableRoles = baseApi<{}, { project_id: number }>(

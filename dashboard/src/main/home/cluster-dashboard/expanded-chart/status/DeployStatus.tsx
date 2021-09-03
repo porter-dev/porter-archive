@@ -5,7 +5,7 @@ import { ChartType } from "../../../../../shared/types";
 import { filter } from "d3-array";
 import { render } from "react-dom";
 
-const REFRESH_TIME = 15000; // SHOULD BE MADE HIGHER!
+const REFRESH_TIME = 1000; // SHOULD BE MADE HIGHER!
 
 interface Event {
   event_id: string;

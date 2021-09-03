@@ -3,6 +3,7 @@ package connect
 import (
 	"context"
 	"fmt"
+	"github.com/porter-dev/porter/api/types"
 	"strings"
 	"time"
 
@@ -60,7 +61,7 @@ Would you like to proceed? %s `,
 		integration, err := client.CreateAWSIntegration(
 			context.Background(),
 			projectID,
-			&api.CreateAWSIntegrationRequest{
+			&types.CreateAWSRequest{
 				AWSAccessKeyID:     creds.AWSAccessKeyID,
 				AWSSecretAccessKey: creds.AWSSecretAccessKey,
 				AWSRegion:          region,
@@ -107,7 +108,7 @@ func ecrManual(
 	integration, err := client.CreateAWSIntegration(
 		context.Background(),
 		projectID,
-		&api.CreateAWSIntegrationRequest{
+		&types.CreateAWSRequest{
 			AWSAccessKeyID:     accessKeyID,
 			AWSSecretAccessKey: secretKey,
 			AWSRegion:          region,

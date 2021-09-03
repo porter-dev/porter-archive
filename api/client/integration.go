@@ -11,23 +11,12 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
-// CreateAWSIntegrationRequest represents the accepted fields for creating
-// an aws integration
-type CreateAWSIntegrationRequest struct {
-	AWSRegion          string `json:"aws_region"`
-	AWSAccessKeyID     string `json:"aws_access_key_id"`
-	AWSSecretAccessKey string `json:"aws_secret_access_key"`
-}
-
-// CreateAWSIntegrationResponse is the resulting integration after creation
-type CreateAWSIntegrationResponse ints.AWSIntegrationExternal
-
 // CreateAWSIntegration creates an AWS integration with the given request options
 func (c *Client) CreateAWSIntegration(
 	ctx context.Context,
 	projectID uint,
-	createAWS *CreateAWSIntegrationRequest,
-) (*CreateAWSIntegrationResponse, error) {
+	createAWS *types.CreateAWSRequest,
+) (*types.CreateAWSResponse, error) {
 	data, err := json.Marshal(createAWS)
 
 	if err != nil {
@@ -45,7 +34,7 @@ func (c *Client) CreateAWSIntegration(
 	}
 
 	req = req.WithContext(ctx)
-	bodyResp := &CreateAWSIntegrationResponse{}
+	bodyResp := &types.CreateAWSResponse{}
 
 	if httpErr, err := c.sendRequest(req, bodyResp, true); httpErr != nil || err != nil {
 		if httpErr != nil {

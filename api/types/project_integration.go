@@ -44,3 +44,27 @@ type CreateBasicRequest struct {
 type CreateBasicResponse struct {
 	*BasicIntegration
 }
+
+type AWSIntegration struct {
+	ID uint `json:"id"`
+
+	// The id of the user that linked this auth mechanism
+	UserID uint `json:"user_id"`
+
+	// The project that this integration belongs to
+	ProjectID uint `json:"project_id"`
+
+	// The AWS arn this is integration is linked to
+	AWSArn string `json:"aws_arn"`
+}
+
+type CreateAWSRequest struct {
+	AWSRegion          string `json:"aws_region"`
+	AWSClusterID       string `json:"aws_cluster_id"`
+	AWSAccessKeyID     string `json:"aws_access_key_id"`
+	AWSSecretAccessKey string `json:"aws_secret_access_key"`
+}
+
+type CreateAWSResponse struct {
+	*AWSIntegration
+}

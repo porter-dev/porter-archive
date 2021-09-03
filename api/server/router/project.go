@@ -467,5 +467,29 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/invites/accept -> invite.NewInviteAcceptHandler
+	acceptInviteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/invites/accept",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	acceptInviteHandler := invite.NewInviteAcceptHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: acceptInviteEndpoint,
+		Handler:  acceptInviteHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

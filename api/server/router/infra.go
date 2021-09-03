@@ -80,5 +80,33 @@ func getInfraRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/infras/{infra_id}/logs -> infra.NewInfraStreamLogsHandler
+	streamLogsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/logs",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	streamLogsHandler := infra.NewInfraGetHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: streamLogsEndpoint,
+		Handler:  streamLogsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

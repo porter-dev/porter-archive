@@ -245,7 +245,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/roles -> project.NewProjectUpdateRoleHandler
+	// POST /api/projects/{project_id}/roles -> project.NewProjectUpdateRoleHandler
 	updateRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -270,6 +270,34 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: updateRoleEndpoint,
 		Handler:  updateRoleHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/roles -> project.NewProjectDeleteRoleHandler
+	deleteRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/roles",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteRoleHandler := project.NewProjectDeleteRoleHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteRoleEndpoint,
+		Handler:  deleteRoleHandler,
 		Router:   r,
 	})
 

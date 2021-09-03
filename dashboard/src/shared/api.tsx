@@ -1023,9 +1023,9 @@ const updateCollaborator = baseApi<
   { project_id: number }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/roles`);
 
-const removeCollaborator = baseApi<{}, { project_id: number; user_id: number }>(
+const removeCollaborator = baseApi<{ user_id: number }, { project_id: number }>(
   "DELETE",
-  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
+  ({ project_id }) => `/api/projects/${project_id}/roles`
 );
 
 const getPolicyDocument = baseApi<{}, { project_id: number }>(

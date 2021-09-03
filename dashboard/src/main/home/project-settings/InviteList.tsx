@@ -182,8 +182,8 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     try {
       api.removeCollaborator(
         "<token>",
-        {},
-        { project_id: currentProject.id, user_id }
+        { user_id },
+        { project_id: currentProject.id }
       );
       getData();
     } catch (error) {

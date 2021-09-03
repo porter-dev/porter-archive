@@ -9,20 +9,20 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-type ProjectListRolesHandler struct {
+type RolesListHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewProjectListRolesHandler(
+func NewRolesListHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *ProjectListRolesHandler {
-	return &ProjectListRolesHandler{
+) *RolesListHandler {
+	return &RolesListHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (p *ProjectListRolesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *RolesListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var res types.ListProjectRolesResponse = []types.RoleKind{types.RoleAdmin, types.RoleDeveloper, types.RoleViewer}
 
 	p.WriteResult(w, r, res)

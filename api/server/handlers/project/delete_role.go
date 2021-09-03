@@ -11,21 +11,21 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type ProjectDeleteRoleHandler struct {
+type RoleDeleteHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewProjectDeleteRoleHandler(
+func NewRoleDeleteHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ProjectDeleteRoleHandler {
-	return &ProjectDeleteRoleHandler{
+) *RoleDeleteHandler {
+	return &RoleDeleteHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *ProjectDeleteRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *RoleDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.DeleteRoleRequest{}

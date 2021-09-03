@@ -15,21 +15,21 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 )
 
-type CreateInviteHandler struct {
+type InviteCreateHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewCreateInviteHandler(
+func NewInviteCreateHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreateInviteHandler {
-	return &CreateInviteHandler{
+) *InviteCreateHandler {
+	return &InviteCreateHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *CreateInviteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 

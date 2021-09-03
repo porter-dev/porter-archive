@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/models"
@@ -43,7 +43,7 @@ type tester struct {
 func setupTestEnv(tester *tester, t *testing.T) {
 	t.Helper()
 
-	db, err := adapter.New(&shared.DBConf{
+	db, err := adapter.New(&env.DBConf{
 		EncryptionKey: "__random_strong_encryption_key__",
 		SQLLite:       true,
 		SQLLitePath:   tester.dbFileName,
@@ -261,7 +261,7 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 			AccessToken:  []byte("idtoken"),
 			RefreshToken: []byte("refreshtoken"),
 		},
-		Client:    ints.OAuthGithub,
+		Client:    types.OAuthGithub,
 		ProjectID: tester.initProjects[0].ID,
 		UserID:    tester.initUsers[0].ID,
 	}

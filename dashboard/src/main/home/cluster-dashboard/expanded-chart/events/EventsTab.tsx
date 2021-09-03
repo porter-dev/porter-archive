@@ -28,7 +28,7 @@ type Props = {
   currentChart: ChartType;
 };
 
-const REFRESH_TIME = 15000; // SHOULD BE MADE HIGHER!
+const REFRESH_TIME = 15000;
 
 const EventsTab: React.FunctionComponent<Props> = (props) => {
   const { currentCluster, currentProject } = useContext(Context);

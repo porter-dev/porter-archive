@@ -28,6 +28,7 @@ import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
+import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
@@ -357,11 +358,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         if (isLoadingChartData) {
           return (
             <Placeholder>
-              <TextWrap>
-                <Header>
-                  <Spinner src={loadingSrc} />
-                </Header>
-              </TextWrap>
+              <Loading />
               <DeployStatus chart={chart} />
             </Placeholder>
           );
@@ -628,7 +625,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     localStorage.setItem("devOpsMode", devOpsMode.toString());
   }, [devOpsMode, currentChart?.form, isPreview]);
 
-  useEffect(() => {
+  useEffect((): any => {
     let isSubscribed = true;
 
     const ingressComponent = components?.find((c) => c.Kind === "Ingress");
@@ -809,6 +806,14 @@ const Tooltip = styled.div`
 `;
 
 const TextWrap = styled.div``;
+
+const LoadingWrapper = styled.div`
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);

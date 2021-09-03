@@ -15,15 +15,19 @@ const validateArray = (arr: any[]) => {
 };
 
 const ArrayInput: React.FC<ArrayInputField> = (props) => {
-  const { state, variables, setVars, setValidation } =
-    useFormField<ArrayInputFieldState>(props.id, {
-      initVars: {
-        [props.variable]: hasSetValue(props) ? props.value[0] : [],
-      },
-      initValidation: {
-        validated: validateArray(hasSetValue(props) ? props.value[0] : []),
-      },
-    });
+  const {
+    state,
+    variables,
+    setVars,
+    setValidation,
+  } = useFormField<ArrayInputFieldState>(props.id, {
+    initVars: {
+      [props.variable]: hasSetValue(props) ? props.value[0] : [],
+    },
+    initValidation: {
+      validated: validateArray(hasSetValue(props) ? props.value[0] : []),
+    },
+  });
 
   if (state == undefined) return <></>;
 

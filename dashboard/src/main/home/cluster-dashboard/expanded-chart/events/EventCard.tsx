@@ -33,16 +33,14 @@ const EventCard: React.FunctionComponent<CardProps> = ({
         </Icon>
       )}
       {event.status == 2 && (
-        <Icon className="material-icons-outlined">
-          autorenew
-        </Icon>
+        <Icon className="material-icons-outlined">autorenew</Icon>
       )}
       {event.status == 3 && (
         <Icon status="critical" className="material-icons-outlined">
           error
         </Icon>
       )}
-       
+
       <InfoWrapper>
         <EventName>
           {overrideName ? overrideName : event.name}
@@ -82,7 +80,8 @@ const StyledCard = styled.div`
 const Icon = styled.span<{ status?: "critical" | "normal" }>`
   font-size: 22px;
   margin-right: 18px;
-  color: ${({ status }) => status ? (status === "critical" ? "#cc3d42" : "#38a88a" ) : "#efefef"};
+  color: ${({ status }) =>
+    status ? (status === "critical" ? "#cc3d42" : "#38a88a") : "#efefef"};
   animation: ${({ status }) => !status && "rotating 3s linear infinite"};
   @keyframes rotating {
     from {

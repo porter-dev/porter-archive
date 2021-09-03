@@ -61,17 +61,17 @@
 | <li>- [ ] `POST /api/projects/{project_id}/helmrepos`                                                                       |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/helmrepos/{helm_id}/charts`                                                       |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/infra`                                                                            | AS          |                 |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/docr/destroy`                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/doks/destroy`                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/ecr/destroy`                                                    |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/eks/destroy`                                                    |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/gke/destroy`                                                    |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy`                                                   |             |                 |             |                  |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/aws`                                                                | AS          |                 | yes         | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite`                                 | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/basic`                                                              | AS          |                 | yes         |                  |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/gcp`                                                                | AS          |                 | yes         | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/integrations/oauth`                                                               | AS          |                 | yes         | yes              |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/docr/destroy`                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/doks/destroy`                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/ecr/destroy`                                                    | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/eks/destroy`                                                    | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/gke/destroy`                                                    | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy`                                                   | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/invites`                                                                          | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/invites`                                                                         | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/invites/{invite_id}`                                                             | AS          |                 |             | yes              |
@@ -111,7 +111,7 @@
 | <li>- [X] `POST /api/projects/{project_id}/provision/gcr`                                                                   | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/provision/gke`                                                                   | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/provision/test`                                                                  | N/A         |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs`                                                 |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs`                                                 | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries`                                                                      | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries`                                                                       | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries/dockerhub/token`                                                       | AB          |                 |             |                  |

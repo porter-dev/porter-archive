@@ -59,48 +59,16 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         }
 
         // Handle destroying infra we've provisioned
-        switch (currentCluster.service) {
-          case "eks":
-            api
-              .destroyEKS(
-                "<token>",
-                { eks_name: currentCluster.name },
+        api.destroyInfra(
+          "<token>",
+                { name: currentCluster.name },
                 {
                   project_id: currentProject.id,
                   infra_id: currentCluster.infra_id,
                 }
-              )
-              .then(() => console.log("destroyed provisioned infra."))
-              .catch(this.catchErr);
-            break;
-          case "gke":
-            api
-              .destroyGKE(
-                "<token>",
-                { gke_name: currentCluster.name },
-                {
-                  project_id: currentProject.id,
-                  infra_id: currentCluster.infra_id,
-                }
-              )
-              .then(() => console.log("destroyed provisioned infra."))
-              .catch(this.catchErr);
-            break;
-
-          case "doks":
-            api
-              .destroyDOKS(
-                "<token>",
-                { doks_name: currentCluster.name },
-                {
-                  project_id: currentProject.id,
-                  infra_id: currentCluster.infra_id,
-                }
-              )
-              .then(() => console.log("destroyed provisioned infra."))
-              .catch(this.catchErr);
-            break;
-        }
+        ).then(() =>
+          console.log("destroyed provisioned infra:", currentCluster.infra_id)
+        ).catch(console.log);
 
         this.props.setRefreshClusters(true);
         this.setState({ status: "successful", showDeleteOverlay: false });

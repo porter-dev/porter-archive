@@ -79,3 +79,29 @@ type OverwriteAWSRequest struct {
 type OverwriteAWSResponse struct {
 	*AWSIntegration
 }
+
+type GCPIntegration struct {
+	ID uint `json:"id"`
+
+	// The id of the user that linked this auth mechanism
+	UserID uint `json:"user_id"`
+
+	// The project that this integration belongs to
+	ProjectID uint `json:"project_id"`
+
+	// The GCP project id where the service account for this auth mechanism persists
+	GCPProjectID string `json:"gcp-project-id"`
+
+	// The GCP user email that linked this service account
+	GCPUserEmail string `json:"gcp-user-email"`
+}
+
+type CreateGCPRequest struct {
+	GCPKeyData   string `json:"gcp_key_data" form:"required"`
+	GCPProjectID string `json:"gcp_project_id"`
+	GCPRegion    string `json:"gcp_region"`
+}
+
+type CreateGCPResponse struct {
+	*GCPIntegration
+}

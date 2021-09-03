@@ -11,20 +11,20 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type ProjectListCollaboratorsHandler struct {
+type CollaboratorsListHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewProjectListCollaboratorsHandler(
+func NewCollaboratorsListHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *ProjectListCollaboratorsHandler {
-	return &ProjectListCollaboratorsHandler{
+) *CollaboratorsListHandler {
+	return &CollaboratorsListHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (p *ProjectListCollaboratorsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *CollaboratorsListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	roles, err := p.Repo().Project().ListProjectRoles(proj.ID)

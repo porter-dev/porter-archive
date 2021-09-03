@@ -11,21 +11,21 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type ProjectUpdateRoleHandler struct {
+type RoleUpdateHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewProjectUpdateRoleHandler(
+func NewRoleUpdateHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ProjectUpdateRoleHandler {
-	return &ProjectUpdateRoleHandler{
+) *RoleUpdateHandler {
+	return &RoleUpdateHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *ProjectUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *RoleUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.UpdateRoleRequest{}

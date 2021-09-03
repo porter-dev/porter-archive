@@ -191,7 +191,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/collaborators -> project.NewProjectListCollaboratorsHandler
+	// GET /api/projects/{project_id}/collaborators -> project.NewCollaboratorsListHandler
 	listCollaboratorsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -207,7 +207,7 @@ func getProjectRoutes(
 		},
 	)
 
-	listCollaboratorsHandler := project.NewProjectListCollaboratorsHandler(
+	listCollaboratorsHandler := project.NewCollaboratorsListHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -218,7 +218,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/roles -> project.NewProjectListRolesHandler
+	// GET /api/projects/{project_id}/roles -> project.NewRolesListHandler
 	listRolesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -234,7 +234,7 @@ func getProjectRoutes(
 		},
 	)
 
-	listRolesHandler := project.NewProjectListRolesHandler(
+	listRolesHandler := project.NewRolesListHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -245,7 +245,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/roles -> project.NewProjectUpdateRoleHandler
+	// POST /api/projects/{project_id}/roles -> project.NewRoleUpdateHandler
 	updateRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -261,7 +261,7 @@ func getProjectRoutes(
 		},
 	)
 
-	updateRoleHandler := project.NewProjectUpdateRoleHandler(
+	updateRoleHandler := project.NewRoleUpdateHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -273,7 +273,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/roles -> project.NewProjectDeleteRoleHandler
+	// DELETE /api/projects/{project_id}/roles -> project.NewRoleDeleteHandler
 	deleteRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
@@ -289,7 +289,7 @@ func getProjectRoutes(
 		},
 	)
 
-	deleteRoleHandler := project.NewProjectDeleteRoleHandler(
+	deleteRoleHandler := project.NewRoleDeleteHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -468,7 +468,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/invites -> invite.NewCreateInviteHandler
+	// GET /api/projects/{project_id}/invites -> invite.NewInvitesListHandler
 	listInvitesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -484,7 +484,7 @@ func getProjectRoutes(
 		},
 	)
 
-	listInvitesHandler := invite.NewListInvitesHandler(
+	listInvitesHandler := invite.NewInvitesListHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -495,7 +495,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/invites -> invite.NewCreateInviteHandler
+	// POST /api/projects/{project_id}/invites -> invite.NewInviteCreateHandler
 	createInviteEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -511,7 +511,7 @@ func getProjectRoutes(
 		},
 	)
 
-	createInviteHandler := invite.NewCreateInviteHandler(
+	createInviteHandler := invite.NewInviteCreateHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

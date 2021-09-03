@@ -34,7 +34,6 @@ import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
 import DeploymentType from "./DeploymentType";
-import DeployStatus from "./status/DeployStatus";
 import EventsTab from "./events/EventsTab";
 
 type Props = {
@@ -70,9 +69,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
   const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
-  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
-    false
-  );
+  const [forceRefreshRevisions, setForceRefreshRevisions] =
+    useState<boolean>(false);
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -84,19 +82,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError, setCurrentOverlay } =
+    useContext(Context);
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -368,7 +358,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           return (
             <Placeholder>
               <Loading />
-              <DeployStatus chart={chart} />
             </Placeholder>
           );
         }

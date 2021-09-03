@@ -32,3 +32,15 @@ type DeleteProjectResponse Project
 type ListProjectInfraResponse []*Infra
 
 type GetProjectPolicyResponse []*PolicyDocument
+
+type ListProjectRolesResponse []string
+
+type Collaborator struct {
+	ID        uint   `json:"id"`
+	Kind      string `json:"kind"`
+	UserID    uint   `json:"user_id"`
+	Email     string `json:"email"`
+	ProjectID uint   `json:"project_id"`
+}
+
+type ListCollaboratorsResponse []*Collaborator

@@ -330,18 +330,6 @@ const deployAddon = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/addons?repo_url=${repo_url}`;
 });
 
-const destroyCluster = baseApi<
-  {
-    eks_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
-});
-
 const detectBuildpack = baseApi<
   {},
   {
@@ -687,40 +675,16 @@ const getReleaseToken = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/webhook`;
 });
 
-const destroyEKS = baseApi<
-  {
-    eks_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
-});
-
-const destroyGKE = baseApi<
-  {
-    gke_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/gke/destroy`;
-});
-
-const destroyDOKS = baseApi<
-  {
-    doks_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/doks/destroy`;
+const destroyInfra = baseApi<
+{
+  name: string;
+},
+{
+  project_id: number;
+  infra_id: number;
+}
+>("DELETE", (pathParams) => {
+return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}`;
 });
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
@@ -1080,9 +1044,7 @@ export default {
   createSubdomain,
   deployTemplate,
   deployAddon,
-  destroyEKS,
-  destroyGKE,
-  destroyDOKS,
+  destroyInfra,
   detectBuildpack,
   getBranchContents,
   getBranches,

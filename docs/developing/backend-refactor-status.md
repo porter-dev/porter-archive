@@ -104,13 +104,13 @@
 | <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/{name}/jobs/status`                                               | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/k8s/{namespace}/{chart}/{release_name}/jobs`                                      | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/policy`                                                                           | AS          |                 |             | yes              |
-| <li>- [ ] `POST /api/projects/{project_id}/provision/docr`                                                                  |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/provision/doks`                                                                  |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/provision/docr`                                                                  | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/provision/doks`                                                                  | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/provision/ecr`                                                                   | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/provision/eks`                                                                   | AB          |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/provision/gcr`                                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/provision/gke`                                                                   |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/provision/test`                                                                  |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/provision/gcr`                                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/provision/gke`                                                                   | AB          |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/provision/test`                                                                  | N/A         |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/provision/{kind}/{infra_id}/logs`                                                 |             |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/registries`                                                                      | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/registries`                                                                       | AB          |                 |             |                  |

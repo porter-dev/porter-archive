@@ -525,6 +525,118 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	//  POST /api/projects/{project_id}/provision/docr -> provision.NewProvisionDOCRHandler
+	provisionDOCREndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/provision/docr",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	provisionDOCRHandler := provision.NewProvisionDOCRHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: provisionDOCREndpoint,
+		Handler:  provisionDOCRHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/provision/doks -> provision.NewProvisionDOKSHandler
+	provisionDOKSEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/provision/doks",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	provisionDOKSHandler := provision.NewProvisionDOCRHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: provisionDOKSEndpoint,
+		Handler:  provisionDOKSHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/provision/gcr -> provision.NewProvisionGCRHandler
+	provisionGCREndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/provision/gcr",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	provisionGCRHandler := provision.NewProvisionGCRHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: provisionGCREndpoint,
+		Handler:  provisionGCRHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/provision/gke -> provision.NewProvisionGKEHandler
+	provisionGKEEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/provision/gke",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	provisionGKEHandler := provision.NewProvisionGKEHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: provisionGKEEndpoint,
+		Handler:  provisionGKEHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/invites -> invite.NewInvitesListHandler
 	listInvitesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

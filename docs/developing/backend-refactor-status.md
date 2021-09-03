@@ -46,7 +46,7 @@
 | <li>- [ ] `DELETE /api/projects/{project_id}/clusters/{cluster_id}`                                                         |             |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}`                                           | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes`                                                      | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/collaborators`                                                                    |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/collaborators`                                                                    | AS          |                 |             | yes              |
 | <li>- [X] `POST /api/projects/{project_id}/delete/{name}`                                                                   | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/deploy/addon/{name}/{version}`                                                   | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/deploy/{name}/{version}`                                                         | AB          |                 |             |                  |
@@ -69,9 +69,9 @@
 | <li>- [ ] `POST /api/projects/{project_id}/infra/{infra_id}/test/destroy`                                                   |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/aws`                                                                |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite`                                 |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/integrations/basic`                                                              |             |                 |             |                  |
+| <li>- [x] `POST /api/projects/{project_id}/integrations/basic`                                                              | AS          |                 | yes         |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/gcp`                                                                |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/integrations/oauth`                                                               |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/integrations/oauth`                                                               | AS          |                 | yes         | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/invites`                                                                          | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/invites`                                                                         | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/invites/{invite_id}`                                                             | AS          |                 |             | yes              |

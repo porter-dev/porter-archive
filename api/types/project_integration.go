@@ -25,3 +25,22 @@ type OAuthIntegration struct {
 }
 
 type ListOAuthResponse []*OAuthIntegration
+
+type BasicIntegration struct {
+	ID uint `json:"id"`
+
+	// The id of the user that linked this auth mechanism
+	UserID uint `json:"user_id"`
+
+	// The project that this integration belongs to
+	ProjectID uint `json:"project_id"`
+}
+
+type CreateBasicRequest struct {
+	Username string `json:"username,required"`
+	Password string `json:"password,required"`
+}
+
+type CreateBasicResponse struct {
+	*BasicIntegration
+}

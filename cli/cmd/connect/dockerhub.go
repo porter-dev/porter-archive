@@ -3,6 +3,7 @@ package connect
 import (
 	"context"
 	"fmt"
+	"github.com/porter-dev/porter/api/types"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
@@ -44,7 +45,7 @@ Token:`)
 	integration, err := client.CreateBasicAuthIntegration(
 		context.Background(),
 		projectID,
-		&api.CreateBasicAuthIntegrationRequest{
+		&types.CreateBasicRequest{
 			Username: username,
 			Password: password,
 		},

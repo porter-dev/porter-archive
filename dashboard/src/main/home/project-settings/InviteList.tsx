@@ -209,7 +209,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         Header: "Role",
         accessor: "kind",
         Cell: ({ row }) => {
-          return <Role>{row.values.kind || "Admin"}</Role>;
+          return <Role>{row.values.kind || "Developer"}</Role>;
         },
       },
       {
@@ -310,7 +310,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     const buildInviteLink = (token: string) => `
       ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${
       currentProject.id
-    }/invites/${token}
+    }/invites/accept?token=${token}
     `;
 
     const mappedInviteList = inviteList.map(

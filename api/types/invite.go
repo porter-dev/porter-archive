@@ -25,3 +25,7 @@ type ListInvitesResponse []*Invite
 type UpdateInviteRoleRequest struct {
 	Kind string `json:"kind,required"`
 }
+
+type AcceptInviteRequest struct {
+	Token string `schema:"token,required"`
+}

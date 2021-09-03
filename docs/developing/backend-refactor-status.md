@@ -72,11 +72,11 @@
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/basic`                                                              |             |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/integrations/gcp`                                                                |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/integrations/oauth`                                                               |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/invites`                                                                          |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/invites`                                                                         |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/invites/{invite_id}`                                                             |             |                 |             |                  |
-| <li>- [ ] `DELETE /api/projects/{project_id}/invites/{invite_id}`                                                           |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/invites/{token}`                                                                  |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/invites`                                                                          | AS          |                 |             | yes              |
+| <li>- [x] `POST /api/projects/{project_id}/invites`                                                                         | AS          |                 |             | yes              |
+| <li>- [x] `POST /api/projects/{project_id}/invites/{invite_id}`                                                             | AS          |                 |             | yes              |
+| <li>- [x] `DELETE /api/projects/{project_id}/invites/{invite_id}`                                                           | AS          |                 |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/invites/{token}`                                                                  | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/configmap`                                                                    | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/create`                                                            | AS          | yes             |             | yes              |
 | <li>- [x] `DELETE /api/projects/{project_id}/k8s/configmap/delete`                                                          | AS          | yes             |             | yes              |
@@ -136,7 +136,7 @@
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/components`                                            | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/controllers`                                           | AB          | yes             |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/releases/{name}/{revision}/pods/all`                                              | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/roles`                                                                            |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/roles`                                                                            | AS          |                 |             | yes              |
 | <li>- [ ] `POST /api/projects/{project_id}/roles/{user_id}`                                                                 |             |                 |             |                  |
 | <li>- [ ] `DELETE /api/projects/{project_id}/roles/{user_id}`                                                               |             |                 |             |                  |
 | <li>- [ ] `GET /api/projects/{project_id}/slack_integrations`                                                               |             |                 |             |                  |

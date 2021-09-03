@@ -7,7 +7,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/models"
 )
 
 type ProjectListRolesHandler struct {
@@ -24,7 +23,7 @@ func NewProjectListRolesHandler(
 }
 
 func (p *ProjectListRolesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var res types.ListProjectRolesResponse = []string{models.RoleAdmin, models.RoleDeveloper, models.RoleViewer}
+	var res types.ListProjectRolesResponse = []types.RoleKind{types.RoleAdmin, types.RoleDeveloper, types.RoleViewer}
 
 	p.WriteResult(w, r, res)
 }

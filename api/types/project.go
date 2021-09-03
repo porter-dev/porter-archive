@@ -33,7 +33,7 @@ type ListProjectInfraResponse []*Infra
 
 type GetProjectPolicyResponse []*PolicyDocument
 
-type ListProjectRolesResponse []string
+type ListProjectRolesResponse []RoleKind
 
 type Collaborator struct {
 	ID        uint   `json:"id"`
@@ -44,3 +44,12 @@ type Collaborator struct {
 }
 
 type ListCollaboratorsResponse []*Collaborator
+
+type UpdateRoleRequest struct {
+	UserID uint   `json:"user_id"`
+	Kind   string `json:"kind"`
+}
+
+type UpdateRoleResponse struct {
+	*Role
+}

@@ -245,6 +245,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/roles -> project.NewProjectUpdateRoleHandler
+	updateRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/roles",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	updateRoleHandler := project.NewProjectUpdateRoleHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateRoleEndpoint,
+		Handler:  updateRoleHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/registries -> registry.NewRegistryListHandler
 	listRegistriesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

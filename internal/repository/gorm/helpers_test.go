@@ -281,7 +281,7 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 			AccessToken:  []byte("idtoken"),
 			RefreshToken: []byte("refreshtoken"),
 		},
-		Client:    ints.OAuthGithub,
+		Client:    types.OAuthGithub,
 		ProjectID: tester.initProjects[0].ID,
 		UserID:    tester.initUsers[0].ID,
 	}

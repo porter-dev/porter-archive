@@ -7,9 +7,8 @@ import (
 	"time"
 
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
-
-	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 // DOCR creates a DOCR integration
@@ -30,11 +29,11 @@ func DOCR(
 	}
 
 	linkedDO := false
-	var doAuth ints.OAuthIntegrationExternal
+	var doAuth *types.OAuthIntegration
 
 	// iterate through oauth integrations to find do
 	for _, oauthInt := range oauthInts {
-		if oauthInt.Client == ints.OAuthDigitalOcean {
+		if oauthInt.Client == types.OAuthDigitalOcean {
 			linkedDO = true
 			doAuth = oauthInt
 			break
@@ -77,8 +76,8 @@ Registry URL: `))
 	return reg.ID, nil
 }
 
-func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (ints.OAuthIntegrationExternal, error) {
-	var doAuth ints.OAuthIntegrationExternal
+func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (*types.OAuthIntegration, error) {
+	var doAuth *types.OAuthIntegration
 
 	oauthURL := fmt.Sprintf("%s/oauth/projects/%d/digitalocean", client.BaseURL, projectID)
 
@@ -96,7 +95,7 @@ func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (ints.OAuthInt
 
 		// iterate through oauth integrations to find do
 		for _, oauthInt := range oauthInts {
-			if oauthInt.Client == ints.OAuthDigitalOcean {
+			if oauthInt.Client == types.OAuthDigitalOcean {
 				linkedDO = true
 				doAuth = oauthInt
 				break

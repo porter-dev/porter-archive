@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/api/types"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	orm "gorm.io/gorm"
 )
@@ -290,7 +291,7 @@ func TestCreateOAuthIntegration(t *testing.T) {
 			AccessToken:  []byte("idtoken"),
 			RefreshToken: []byte("refreshtoken"),
 		},
-		Client:    ints.OAuthGithub,
+		Client:    types.OAuthGithub,
 		ProjectID: tester.initProjects[0].ID,
 		UserID:    tester.initUsers[0].ID,
 	}
@@ -352,7 +353,7 @@ func TestListOAuthIntegrationsByProjectID(t *testing.T) {
 			AccessToken:  []byte("idtoken"),
 			RefreshToken: []byte("refreshtoken"),
 		},
-		Client:    ints.OAuthGithub,
+		Client:    types.OAuthGithub,
 		ProjectID: tester.initProjects[0].ID,
 		UserID:    tester.initUsers[0].ID,
 	}

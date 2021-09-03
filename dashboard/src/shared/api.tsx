@@ -47,16 +47,16 @@ const createAWSIntegration = baseApi<
 
 const overwriteAWSIntegration = baseApi<
   {
+    aws_integration_id: number;
     aws_access_key_id: string;
     aws_secret_access_key: string;
+    cluster_id: number;
   },
   {
-    projectID: number;
-    awsIntegrationID: number;
-    cluster_id: number;
+    project_id: number;
   }
 >("POST", (pathParams) => {
-  return `/api/projects/${pathParams.projectID}/integrations/aws/${pathParams.awsIntegrationID}/overwrite?cluster_id=${pathParams.cluster_id}`;
+  return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
 const createDOCR = baseApi<

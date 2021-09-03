@@ -135,5 +135,33 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/integrations/aws/overwrite -> project_integrations.NewOverwriteAWSHandler
+	overwriteAWSEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/aws/overwrite",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	overwriteAWSHandler := project_integration.NewOverwriteAWSHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: overwriteAWSEndpoint,
+		Handler:  overwriteAWSHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

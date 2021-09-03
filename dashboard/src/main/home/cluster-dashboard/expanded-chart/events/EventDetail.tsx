@@ -13,25 +13,25 @@ const EventDetail: React.FC<Props> = (props) => {
   return (
     <>
       <Flex>
-      <TitleSection handleNavBack={props.resetSelection}>
-        {props.container.name}
-      </TitleSection>
-      <P>
-        <i className="material-icons-outlined">access_time</i>
-        {getReadableDate(props.container.started_at)}
-      </P>
+        <TitleSection handleNavBack={props.resetSelection}>
+          {props.container.name}
+        </TitleSection>
+        <P>
+          <i className="material-icons-outlined">access_time</i>
+          {getReadableDate(props.container.started_at)}
+        </P>
       </Flex>
       <EventsGrid>
         {props.container.events
-        .slice(0)
-        .reverse()
-        .map((event) => {
-          return (
-            <React.Fragment key={event.index}>
-              <EventCard event={event} />
-            </React.Fragment>
-          );
-        })}
+          .slice(0)
+          .reverse()
+          .map((event) => {
+            return (
+              <React.Fragment key={event.index}>
+                <EventCard event={event} />
+              </React.Fragment>
+            );
+          })}
       </EventsGrid>
     </>
   );

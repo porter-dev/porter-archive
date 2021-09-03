@@ -79,7 +79,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/integrations/basic -> project_integrations.NewCreateBasic
+	// POST /api/projects/{project_id}/integrations/basic -> project_integrations.NewCreateBasicHandler
 	createBasicEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -104,6 +104,34 @@ func getProjectIntegrationRoutes(
 	routes = append(routes, &Route{
 		Endpoint: createBasicEndpoint,
 		Handler:  createBasicHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/integrations/aws -> project_integrations.NewCreateAWSHandler
+	createAWSEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/aws",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createAWSHandler := project_integration.NewCreateAWSHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createAWSEndpoint,
+		Handler:  createAWSHandler,
 		Router:   r,
 	})
 

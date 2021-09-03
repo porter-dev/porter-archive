@@ -3,8 +3,9 @@ package models
 import (
 	"time"
 
-	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
+
+	"github.com/porter-dev/porter/api/types"
 )
 
 // Invite type that extends gorm.Model

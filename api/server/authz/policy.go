@@ -110,6 +110,8 @@ func getRequestActionForEndpoint(
 			resource.Name, reqErr = requestutils.GetURLParamString(r, types.URLParamNamespace)
 		case types.ReleaseScope:
 			resource.Name, reqErr = requestutils.GetURLParamString(r, types.URLParamReleaseName)
+		case types.InviteScope:
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamInviteID)
 		}
 
 		if reqErr != nil {

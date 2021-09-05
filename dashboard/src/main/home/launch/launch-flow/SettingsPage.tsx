@@ -10,6 +10,7 @@ import { isAlphanumeric } from "shared/common";
 
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
+import WorkflowPage from "./WorkflowPage";
 import Helper from "components/form-components/Helper";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Selector from "components/Selector";
@@ -30,6 +31,10 @@ type PropsType = WithAuthProps & {
   selectedNamespace: string;
   setSelectedNamespace: (x: string) => void;
   saveValuesStatus: string;
+
+  setShouldCreateWorkflow: any;
+  shouldCreateWorkflow: boolean;
+  fullActionConfig: any;
 };
 
 type StateType = {
@@ -281,6 +286,16 @@ class SettingsPage extends Component<PropsType, StateType> {
               closeOverlay={true}
             />
           </ClusterSection>
+
+          <WorkflowPage
+            setPage={this.props.setPage}
+            setShouldCreateWorkflow={this.props.setShouldCreateWorkflow}
+            shouldCreateWorkflow={this.props.shouldCreateWorkflow}
+            fullActionConfig={this.props.fullActionConfig}
+            name={this.props.templateName}
+            namespace="default"
+          />
+
           {this.renderSettingsRegion()}
         </StyledSettingsPage>
       </PaddingWrapper>

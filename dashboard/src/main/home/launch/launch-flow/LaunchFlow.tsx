@@ -68,17 +68,17 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   };
 
   const getFullActionConfig = (): FullActionConfigType => {
-    let imageRepoUri = `${selectedRegistry.url}/${templateName}-${selectedNamespace}`;
+    let imageRepoUri = `${selectedRegistry?.url}/${templateName}-${selectedNamespace}`;
 
     // DockerHub registry integration is per repo
-    if (selectedRegistry.service === "dockerhub") {
-      imageRepoUri = selectedRegistry.url;
+    if (selectedRegistry?.service === "dockerhub") {
+      imageRepoUri = selectedRegistry?.url;
     }
 
     return {
       git_repo: actionConfig.git_repo,
       branch: branch,
-      registry_id: selectedRegistry.id,
+      registry_id: selectedRegistry?.id,
       dockerfile_path: dockerfilePath,
       folder_path: folderPath,
       image_repo_uri: imageRepoUri,
@@ -324,21 +324,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     setRandomNameIfEmpty();
 
-    if (currentPage === "workflow" && currentTab === "porter") {
-      const fullActionConfig = getFullActionConfig();
-      return (
-        <WorkflowPage
-          name={templateName}
-          namespace={"default"}
-          fullActionConfig={fullActionConfig}
-          shouldCreateWorkflow={shouldCreateWorkflow}
-          setShouldCreateWorkflow={setShouldCreateWorkflow}
-          setPage={setCurrentPage}
-        />
-      );
-    }
-
     // Display main (non-source) settings page
+    const fullActionConfig = getFullActionConfig();
     return (
       <SettingsPage
         onSubmit={currentTab === "porter" ? handleSubmit : handleSubmitAddon}
@@ -353,6 +340,10 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         form={form}
         valuesToOverride={valuesToOverride}
         clearValuesToOverride={() => setValuesToOverride(null)}
+
+        fullActionConfig={fullActionConfig}
+        shouldCreateWorkflow={shouldCreateWorkflow}
+        setShouldCreateWorkflow={setShouldCreateWorkflow}
       />
     );
   };

@@ -20,14 +20,17 @@ import ValuesYaml from "./ValuesYaml";
 import DeploymentType from "./DeploymentType";
 import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
+import { pushFiltered } from "../../../../shared/routing";
+import { RouteComponentProps, withRouter } from "react-router";
 
-type PropsType = WithAuthProps & {
-  namespace: string;
-  currentChart: ChartType;
-  currentCluster: ClusterType;
-  closeChart: () => void;
-  setSidebar: (x: boolean) => void;
-};
+type PropsType = WithAuthProps &
+  RouteComponentProps & {
+    namespace: string;
+    currentChart: ChartType;
+    currentCluster: ClusterType;
+    closeChart: () => void;
+    setSidebar: (x: boolean) => void;
+  };
 
 type StateType = {
   currentChart: ChartType;
@@ -105,6 +108,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             },
             () => {
               this.updateTabs();
+              this.updateURL();
             }
           );
         } else {
@@ -116,11 +120,24 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             },
             () => {
               this.updateTabs();
+              this.updateURL();
             }
           );
         }
       })
       .catch(console.log);
+  };
+
+  updateURL = () => {
+    // updates the url to use the correct revision to ensure refreshes work correctly
+    pushFiltered(
+      { location: this.props.location, history: this.props.history },
+      this.props.match.url,
+      ["project_id"],
+      {
+        chart_revision: this.state.currentChart.version,
+      }
+    );
   };
 
   refreshChart = (revision: number) =>
@@ -759,7 +776,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
 ExpandedJobChart.contextType = Context;
 
-export default withAuth(ExpandedJobChart);
+export default withRouter(withAuth(ExpandedJobChart));
 
 const RevisionUpdateMessage = styled.button`
   background: none;

@@ -133,6 +133,12 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 		deployAgent.imageRepo = release.GitActionConfig.ImageRepoURI
 	}
 
+	if deployAgent.opts.Method == DeployBuildTypeDocker {
+		if deployAgent.opts.LocalPath == "" {
+			deployAgent.opts.LocalPath = filepath.Dir(deployAgent.dockerfilePath)
+		}
+	}
+
 	deployAgent.tag = opts.OverrideTag
 
 	return deployAgent, nil

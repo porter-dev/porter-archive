@@ -462,7 +462,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
-      let liveTabs = ["status", "settings", "deploy", "metrics"];
+      let liveTabs = ["status", "events", "settings", "deploy", "metrics"];
       rightTabOptions = rightTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );

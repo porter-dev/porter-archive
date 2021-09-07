@@ -93,7 +93,7 @@ func init() {
 		"path",
 		"p",
 		"",
-		"if local build, the path to the build directory",
+		"if local build, the path to the build directory (default: Dockerfile directory)",
 	)
 
 	createCmd.PersistentFlags().StringVar(

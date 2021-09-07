@@ -235,7 +235,7 @@ func init() {
 		"path",
 		"p",
 		"",
-		"If local build, the path to the build directory. If remote build, the relative path from the repository root to the build directory.",
+		"If local build, the path to the build directory. If remote build, the relative path from the repository root to the build directory. (default: Dockerfile directory)",
 	)
 
 	updateCmd.PersistentFlags().StringVarP(

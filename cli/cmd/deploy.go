@@ -234,7 +234,7 @@ func init() {
 		&localPath,
 		"path",
 		"p",
-		".",
+		"",
 		"If local build, the path to the build directory. If remote build, the relative path from the repository root to the build directory.",
 	)
 

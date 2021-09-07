@@ -109,7 +109,7 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 			deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
 		}
 
-		if deployAgent.opts.LocalDockerfile == "" {
+		if deployAgent.dockerfilePath == "" && deployAgent.opts.LocalDockerfile == "" {
 			deployAgent.dockerfilePath = "./Dockerfile"
 		}
 	}
@@ -397,6 +397,12 @@ func (d *DeployAgent) pullCurrentReleaseImage() error {
 		return fmt.Errorf("could not cast image.tag field to string")
 	}
 
+	// if image repo is a hello-porter image, skip
+	if d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+		d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+		return nil
+	}
+
 	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
 	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
@@ -439,6 +445,10 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	}
 
 	return res, nil
+}
+
+func (d *DeployAgent) StreamEvent(event api.Event) error {
+	return d.client.StreamEvent(event, d.opts.ProjectID, d.opts.ClusterID, d.release.Name, d.release.Namespace)
 }
 
 type NestedMapFieldNotFoundError struct {

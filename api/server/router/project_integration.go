@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/go-chi/chi"
-	project_integration "github.com/porter-dev/porter/api/server/handlers/project_integrations"
+	project_integration "github.com/porter-dev/porter/api/server/handlers/project_integration"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -52,7 +52,7 @@ func getProjectIntegrationRoutes(
 
 	routes := make([]*Route, 0)
 
-	// GET /api/projects/{project_id}/integrations/oauth -> project_integrations.NewListOAuth
+	// GET /api/projects/{project_id}/integrations/oauth -> project_integration.NewListOAuthHandler
 	listOAuthEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -79,7 +79,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/integrations/basic -> project_integrations.NewCreateBasicHandler
+	// POST /api/projects/{project_id}/integrations/basic -> project_integration.NewCreateBasicHandler
 	createBasicEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -107,7 +107,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/integrations/aws -> project_integrations.NewCreateAWSHandler
+	// POST /api/projects/{project_id}/integrations/aws -> project_integration.NewCreateAWSHandler
 	createAWSEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -135,7 +135,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/integrations/aws/overwrite -> project_integrations.NewOverwriteAWSHandler
+	// POST /api/projects/{project_id}/integrations/aws/overwrite -> project_integration.NewOverwriteAWSHandler
 	overwriteAWSEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -163,7 +163,7 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/integrations/gcp -> project_integrations.NewCreateGCPHandler
+	// POST /api/projects/{project_id}/integrations/gcp -> project_integration.NewCreateGCPHandler
 	createGCPEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,

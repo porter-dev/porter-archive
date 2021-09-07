@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"github.com/porter-dev/porter/api/server/handlers/jobs"
+	"github.com/porter-dev/porter/api/server/handlers/job"
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -320,7 +320,7 @@ func getNamespaceRoutes(
 		},
 	)
 
-	getJobPodsHandler := jobs.NewGetPodsHandler(
+	getJobPodsHandler := job.NewGetPodsHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -353,7 +353,7 @@ func getNamespaceRoutes(
 		},
 	)
 
-	deleteJobHandler := jobs.NewDeleteHandler(
+	deleteJobHandler := job.NewDeleteHandler(
 		config,
 	)
 
@@ -385,7 +385,7 @@ func getNamespaceRoutes(
 		},
 	)
 
-	stopJobHandler := jobs.NewStopHandler(
+	stopJobHandler := job.NewStopHandler(
 		config,
 	)
 

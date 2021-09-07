@@ -80,6 +80,85 @@ func getInviteRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/invites -> invite.NewInvitesListHandler
+	listEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/invites",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listHandler := invite.NewInvitesListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listEndpoint,
+		Handler:  listHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/invites -> invite.NewInviteCreateHandler
+	createEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/invites",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createHandler := invite.NewInviteCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createEndpoint,
+		Handler:  createHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/invites/accept -> invite.NewInviteAcceptHandler
+	acceptEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/invites/accept",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	acceptHandler := invite.NewInviteAcceptHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: acceptEndpoint,
+		Handler:  acceptHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteUpdateRoleHandler
 	updateRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

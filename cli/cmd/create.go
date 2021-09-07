@@ -227,10 +227,6 @@ func handleSubdomainCreate(subdomain string, err error) error {
 }
 
 func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
-	if localPath == "" {
-		localPath = filepath.Dir(dockerfile)
-	}
-
 	fullPath, err := filepath.Abs(localPath)
 
 	if err != nil {

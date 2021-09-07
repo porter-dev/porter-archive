@@ -691,6 +691,16 @@ const getReleaseToken = baseApi<
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
 });
 
+const getReleaseSteps = baseApi<
+  {
+    namespace: string;
+    cluster_id: number;
+  },
+  { name: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/steps`;
+});
+
 const destroyEKS = baseApi<
   {
     eks_name: string;
@@ -785,12 +795,15 @@ const getCapabilities = baseApi<{}, {}>("GET", () => {
   return `/api/capabilities`;
 });
 
-const getWelcome = baseApi<{
-  email: string,
-  isCompany: boolean,
-  company: string,
-  role: string
-}, {}>("GET", () => {
+const getWelcome = baseApi<
+  {
+    email: string;
+    isCompany: boolean;
+    company: string;
+    role: string;
+  },
+  {}
+>("GET", () => {
   return `/api/welcome`;
 });
 
@@ -1132,6 +1145,7 @@ export default {
   getPrometheusIsInstalled,
   getRegistryIntegrations,
   getReleaseToken,
+  getReleaseSteps,
   getRepoIntegrations,
   getSlackIntegrations,
   getRepos,

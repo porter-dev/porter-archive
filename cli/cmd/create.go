@@ -92,7 +92,7 @@ func init() {
 		&localPath,
 		"path",
 		"p",
-		".",
+		"",
 		"if local build, the path to the build directory",
 	)
 
@@ -164,6 +164,10 @@ func createFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", args[0], name)
 
+	if localPath == "" {
+		localPath = filepath.Dir(dockerfile)
+	}
+
 	fullPath, err := filepath.Abs(localPath)
 
 	if err != nil {
@@ -223,6 +227,10 @@ func handleSubdomainCreate(subdomain string, err error) error {
 }
 
 func createFromGithub(createAgent *deploy.CreateAgent, overrideValues map[string]interface{}) error {
+	if localPath == "" {
+		localPath = filepath.Dir(dockerfile)
+	}
+
 	fullPath, err := filepath.Abs(localPath)
 
 	if err != nil {

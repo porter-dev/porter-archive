@@ -1,4 +1,4 @@
-package project
+package infra
 
 import (
 	"net/http"
@@ -11,20 +11,20 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type ProjectListInfraHandler struct {
+type InfraListHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewProjectListInfraHandler(
+func NewInfraListHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *ProjectListInfraHandler {
-	return &ProjectListInfraHandler{
+) *InfraListHandler {
+	return &InfraListHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (p *ProjectListInfraHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *InfraListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	infras, err := p.Repo().Infra().ListInfrasByProjectID(proj.ID)

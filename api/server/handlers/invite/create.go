@@ -60,7 +60,7 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if err := c.Config().UserNotifier.SendProjectInviteEmail(
 		&notifier.SendProjectInviteEmailOpts{
 			InviteeEmail:      request.Email,
-			URL:               fmt.Sprintf("%s/api/projects/%d/invites/accept?token=%s", c.Config().ServerConf.ServerURL, project.ID, invite.Token),
+			URL:               fmt.Sprintf("%s/api/projects/%d/invites/%s", c.Config().ServerConf.ServerURL, project.ID, invite.Token),
 			Project:           project.Name,
 			ProjectOwnerEmail: user.Email,
 		},

@@ -310,7 +310,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     const buildInviteLink = (token: string) => `
       ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${
       currentProject.id
-    }/invites/accept?token=${token}
+    }/invites/${token}
     `;
 
     const mappedInviteList = inviteList.map(

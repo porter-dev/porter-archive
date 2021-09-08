@@ -9,32 +9,27 @@ import (
 	"github.com/go-chi/chi"
 
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
 type InviteAcceptHandler struct {
-	handlers.PorterHandlerReader
+	handlers.PorterHandler
 }
 
 func NewInviteAcceptHandler(
 	config *config.Config,
-	decoderValidator shared.RequestDecoderValidator,
 ) *InviteAcceptHandler {
 	return &InviteAcceptHandler{
-		PorterHandlerReader: handlers.NewDefaultPorterHandler(config, decoderValidator, nil),
+		PorterHandler: handlers.NewDefaultPorterHandler(config, nil, nil),
 	}
 }
 
 func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.AcceptInviteRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
+	token, _ := requestutils.GetURLParamString(r, types.URLParamInviteToken)
 
 	session, err := c.Config().Store.Get(r, c.Config().ServerConf.CookieName)
 
@@ -58,7 +53,7 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	invite, err := c.Repo().Invite().ReadInviteByToken(request.Token)
+	invite, err := c.Repo().Invite().ReadInviteByToken(token)
 
 	if err != nil || invite.ProjectID != uint(projectID) {
 		vals := url.Values{}

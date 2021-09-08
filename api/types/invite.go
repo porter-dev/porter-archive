@@ -1,5 +1,9 @@
 package types
 
+const (
+	URLParamInviteToken = "token"
+)
+
 type Invite struct {
 	ID       uint   `json:"id"`
 	Token    string `json:"token"`
@@ -24,8 +28,4 @@ type ListInvitesResponse []*Invite
 
 type UpdateInviteRoleRequest struct {
 	Kind string `json:"kind,required"`
-}
-
-type AcceptInviteRequest struct {
-	Token string `schema:"token,required"`
 }

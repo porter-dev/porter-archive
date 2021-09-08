@@ -136,6 +136,18 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		}
 	}
 
+	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
+		res.SlackConf = oauth.NewSlackClient(&oauth.Config{
+			ClientID:     sc.SlackClientID,
+			ClientSecret: sc.SlackClientSecret,
+			Scopes: []string{
+				"incoming-webhook",
+				"team:read",
+			},
+			BaseURL: sc.ServerURL,
+		})
+	}
+
 	res.WSUpgrader = &websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,

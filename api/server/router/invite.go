@@ -52,34 +52,6 @@ func getInviteRoutes(
 
 	routes := make([]*Route, 0)
 
-	// GET /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteGetHandler
-	getEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath,
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.InviteScope,
-			},
-		},
-	)
-
-	getHandler := invite.NewInviteGetHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &Route{
-		Endpoint: getEndpoint,
-		Handler:  getHandler,
-		Router:   r,
-	})
-
 	// GET /api/projects/{project_id}/invites -> invite.NewInvitesListHandler
 	listEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -135,23 +107,20 @@ func getInviteRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/invites/accept -> invite.NewInviteAcceptHandler
+	// GET /api/projects/{project_id}/invites/{token} -> invite.NewInviteAcceptHandler
 	acceptEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/invites/accept",
+				RelativePath: "/invites/{token}",
 			},
 			Scopes: []types.PermissionScope{},
 		},
 	)
 
-	acceptHandler := invite.NewInviteAcceptHandler(
-		config,
-		factory.GetDecoderValidator(),
-	)
+	acceptHandler := invite.NewInviteAcceptHandler(config)
 
 	routes = append(routes, &Route{
 		Endpoint: acceptEndpoint,

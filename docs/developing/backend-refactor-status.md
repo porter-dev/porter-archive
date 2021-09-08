@@ -76,7 +76,7 @@
 | <li>- [x] `POST /api/projects/{project_id}/invites`                                                                         | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/invites/{invite_id}`                                                             | AS          |                 |             | yes              |
 | <li>- [x] `DELETE /api/projects/{project_id}/invites/{invite_id}`                                                           | AS          |                 |             | yes              |
-| <li>- [x] `GET /api/projects/{project_id}/invites/{token}`                                                                  | AS          | yes             |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/invites/{token}`                                                                  | AS          |                 |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/k8s/configmap`                                                                    | AS          | yes             |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/k8s/configmap/create`                                                            | AS          | yes             |             | yes              |
 | <li>- [x] `DELETE /api/projects/{project_id}/k8s/configmap/delete`                                                          | AS          | yes             |             | yes              |

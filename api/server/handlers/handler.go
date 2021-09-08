@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
 
@@ -13,6 +16,7 @@ type PorterHandler interface {
 	Config() *config.Config
 	Repo() repository.Repository
 	HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
+	PopulateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error
 }
 
 type PorterHandlerWriter interface {
@@ -70,4 +74,32 @@ func (d *DefaultPorterHandler) DecodeAndValidateNoWrite(r *http.Request, v inter
 
 func IgnoreAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError) {
 	return
+}
+
+func (d *DefaultPorterHandler) PopulateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error {
+	session, err := d.Config().Store.Get(r, d.Config().ServerConf.CookieName)
+
+	if err != nil {
+		return err
+	}
+
+	// need state parameter to validate when redirected
+	session.Values["state"] = state
+	session.Values["query_params"] = r.URL.RawQuery
+
+	if isProject {
+		project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
+		if project == nil {
+			return fmt.Errorf("could not read project")
+		}
+
+		session.Values["project_id"] = project.ID
+	}
+
+	if err := session.Save(r, w); err != nil {
+		return err
+	}
+
+	return nil
 }

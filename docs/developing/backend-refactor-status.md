@@ -26,8 +26,8 @@
 | <li>- [ ] `GET /api/oauth/login/google`                                                                                     |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/projects/{project_id}/digitalocean`                                                               |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/projects/{project_id}/github`                                                                     |             |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/projects/{project_id}/slack`                                                                      |             |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/slack/callback`                                                                                   |             |                 |             |                  |
+| <li>- [x] `GET /api/oauth/projects/{project_id}/slack`                                                                      | AS          | yes             |             | yes              |
+| <li>- [x] `GET /api/oauth/slack/callback`                                                                                   | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/password/reset/finalize`                                                                               | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/password/reset/initiate`                                                                               | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/password/reset/verify`                                                                                 | AB          |                 |             | yes              |
@@ -139,9 +139,9 @@
 | <li>- [x] `GET /api/projects/{project_id}/roles`                                                                            | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/roles/{user_id}`                                                                 | AS          | yes             |             | yes              |
 | <li>- [x] `DELETE /api/projects/{project_id}/roles/{user_id}`                                                               | AS          | yes             |             | yes              |
-| <li>- [ ] `GET /api/projects/{project_id}/slack_integrations`                                                               |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/slack_integrations/exists`                                                        |             |                 |             |                  |
-| <li>- [ ] `DELETE /api/projects/{project_id}/slack_integrations/{slack_integration_id}`                                     |             |                 |             |                  |
+| <li>- [x] `GET /api/projects/{project_id}/slack_integrations`                                                               | AS          |                 |             | yes              |
+| <li>- [x] `GET /api/projects/{project_id}/slack_integrations/exists`                                                        | AS          |                 |             | yes              |
+| <li>- [x] `DELETE /api/projects/{project_id}/slack_integrations/{slack_integration_id}`                                     | AS          |                 |             | yes              |
 | <li>- [ ] `GET /api/readyz`                                                                                                 |             |                 |             |                  |
 | <li>- [X] `GET /api/templates`                                                                                              | AB          |                 |             |                  |
 | <li>- [X] `GET /api/templates/upgrade_notes/{name}/{version}`                                                               | AB          | yes             |             |                  |

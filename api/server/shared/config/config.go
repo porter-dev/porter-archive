@@ -58,6 +58,9 @@ type Config struct {
 	// GithubAppConf is the configuration for a Github App OAuth client
 	GithubAppConf *oauth.GithubAppConf
 
+	// SlackConf is the configuration for a Slack OAuth client
+	SlackConf *oauth2.Config
+
 	// WSUpgrader upgrades HTTP connections to websocket connections
 	WSUpgrader *websocket.Upgrader
 

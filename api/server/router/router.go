@@ -19,7 +19,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	r.Use(ContentTypeJSON)
 
 	endpointFactory := shared.NewAPIObjectEndpointFactory(config)
+
 	baseRegisterer := NewBaseRegisterer()
+	oauthCallbackRegisterer := NewOAuthCallbackRegisterer()
 
 	releaseRegisterer := NewReleaseScopedRegisterer()
 	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer)
@@ -30,6 +32,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	helmRepoRegisterer := NewHelmRepoScopedRegisterer()
 	inviteRegisterer := NewInviteScopedRegisterer()
 	projectIntegrationRegisterer := NewProjectIntegrationScopedRegisterer()
+	projectOAuthRegisterer := NewProjectOAuthScopedRegisterer()
+	slackIntegrationRegisterer := NewSlackIntegrationScopedRegisterer()
 	projRegisterer := NewProjectScopedRegisterer(
 		clusterRegisterer,
 		registryRegisterer,
@@ -38,11 +42,22 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		gitInstallationRegisterer,
 		infraRegisterer,
 		projectIntegrationRegisterer,
+		projectOAuthRegisterer,
+		slackIntegrationRegisterer,
 	)
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
 	r.Route("/api", func(r chi.Router) {
 		baseRoutes := baseRegisterer.GetRoutes(
+			r,
+			config,
+			&types.Path{
+				RelativePath: "",
+			},
+			endpointFactory,
+		)
+
+		oauthCallbackRoutes := oauthCallbackRegisterer.GetRoutes(
 			r,
 			config,
 			&types.Path{
@@ -61,9 +76,18 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 			userRegisterer.Children...,
 		)
 
-		routes := append(baseRoutes, userRoutes...)
+		routes := [][]*Route{
+			baseRoutes,
+			userRoutes,
+			oauthCallbackRoutes,
+		}
 
-		registerRoutes(config, routes)
+		var allRoutes []*Route
+		for _, r := range routes {
+			allRoutes = append(allRoutes, r...)
+		}
+
+		registerRoutes(config, allRoutes)
 	})
 
 	return r

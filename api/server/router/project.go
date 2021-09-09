@@ -83,6 +83,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id} -> project.NewProjectDeleteHandler
+	deleteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteHandler := project.NewProjectDeleteHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteEndpoint,
+		Handler:  deleteHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/policy -> project.NewProjectGetPolicyHandler
 	getPolicyEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

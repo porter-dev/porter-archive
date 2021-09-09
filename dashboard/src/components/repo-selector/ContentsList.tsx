@@ -19,6 +19,8 @@ interface AutoBuildpack {
 type PropsType = {
   actionConfig: ActionConfigType | null;
   branch: string;
+  dockerfilePath?: string;
+  folderPath: string;
   procfilePath?: string;
   setActionConfig: (x: ActionConfigType) => void;
   setProcfileProcess?: (x: string) => void;
@@ -35,6 +37,7 @@ type StateType = {
   dockerfiles: string[];
   processes: Record<string, string>;
   autoBuildpack: AutoBuildpack;
+  showingBuildContextPrompt: boolean;
 };
 
 export default class ContentsList extends Component<PropsType, StateType> {
@@ -49,6 +52,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
       valid: false,
       name: "",
     },
+    showingBuildContextPrompt: true,
   };
 
   componentDidMount() {
@@ -184,7 +188,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         );
       }
 
-      if (fileName.includes("Dockerfile")) {
+      if (fileName.includes("Dockerfile") && !this.props.dockerfilePath) {
         return (
           <FileItem
             key={i}
@@ -228,12 +232,20 @@ export default class ContentsList extends Component<PropsType, StateType> {
     return (
       <FileItem lastItem={false}>
         <img src={info} />
-        Select Application Folder
+        Select{" "}
+        {this.props.dockerfilePath
+          ? "Docker Build Context"
+          : "Application Folder"}
       </FileItem>
     );
   };
 
   handleContinue = () => {
+    if (this.props.dockerfilePath) {
+      this.props.setFolderPath(this.state.currentDir || "./");
+      return;
+    }
+
     let dockerfiles = [] as string[];
     this.state.contents.forEach((item: FileType, i: number) => {
       let splits = item.Path.split("/");
@@ -319,7 +331,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         </Overlay>
       );
     }
-    if (this.state.dockerfiles.length > 0) {
+    if (this.state.dockerfiles.length > 0 && !this.props.dockerfilePath) {
       return (
         <Overlay>
           <BgOverlay onClick={() => this.setState({ dockerfiles: [] })} />
@@ -361,6 +373,45 @@ export default class ContentsList extends Component<PropsType, StateType> {
           >
             No, I don't want to use a Dockerfile
           </ConfirmButton>
+        </Overlay>
+      );
+    }
+    if (
+      this.props.dockerfilePath &&
+      !this.props.folderPath &&
+      this.state.showingBuildContextPrompt
+    ) {
+      return (
+        <Overlay>
+          <BgOverlay onClick={() => this.props.setDockerfilePath("")} />
+          <CloseButton
+            onClick={() =>
+              this.props.setFolderPath(this.state.currentDir || "./")
+            }
+          >
+            <CloseButtonImg src={close} />
+          </CloseButton>
+          <Label>
+            Would you like to set the Docker build context to a different
+            directory?
+          </Label>
+          <MultiSelectRow>
+            <ConfirmButton
+              onClick={() => {
+                this.setState({ showingBuildContextPrompt: false });
+                this.setSubdirectory("");
+              }}
+            >
+              Yes
+            </ConfirmButton>
+            <ConfirmButton
+              onClick={() =>
+                this.props.setFolderPath(this.state.currentDir || "./")
+              }
+            >
+              No
+            </ConfirmButton>
+          </MultiSelectRow>
         </Overlay>
       );
     }
@@ -477,10 +528,16 @@ const Indicator = styled.div<{ selected: boolean }>`
 `;
 
 const Label = styled.div`
-  max-width: 420px;
+  max-width: 500px;
   line-height: 1.5em;
   text-align: center;
   font-size: 14px;
+`;
+
+const MultiSelectRow = styled.div`
+  display: flex;
+  min-width: 150px;
+  justify-content: space-between;
 `;
 
 const DockerfileList = styled.div`

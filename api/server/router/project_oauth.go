@@ -81,5 +81,33 @@ func getProjectOAuthRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/oauth/digitalocean -> project_integration.NewProjectOAuthDOHandler
+	doEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/digitalocean",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	doHandler := project_oauth.NewProjectOAuthDOHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: doEndpoint,
+		Handler:  doHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

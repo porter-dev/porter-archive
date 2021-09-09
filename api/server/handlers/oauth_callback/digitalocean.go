@@ -1,7 +1,6 @@
 package oauth_callback
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -9,24 +8,26 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/internal/integrations/slack"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models/integrations"
+	"golang.org/x/oauth2"
 )
 
-type OAuthCallbackSlackHandler struct {
+type OAuthCallbackDOHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewOAuthCallbackSlackHandler(
+func NewOAuthCallbackDOHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *OAuthCallbackSlackHandler {
-	return &OAuthCallbackSlackHandler{
+) *OAuthCallbackDOHandler {
+	return &OAuthCallbackDOHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *OAuthCallbackSlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *OAuthCallbackDOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := p.Config().Store.Get(r, p.Config().ServerConf.CookieName)
 
 	if err != nil {
@@ -44,27 +45,35 @@ func (p *OAuthCallbackSlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	token, err := p.Config().SlackConf.Exchange(context.TODO(), r.URL.Query().Get("code"))
+	token, err := p.Config().DOConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
 	}
 
-	slackInt, err := slack.TokenToSlackIntegration(token)
-
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	if !token.Valid() {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("invalid token")))
 		return
 	}
 
 	userID, _ := session.Values["user_id"].(uint)
 	projID, _ := session.Values["project_id"].(uint)
 
-	slackInt.UserID = userID
-	slackInt.ProjectID = projID
+	oauthInt := &integrations.OAuthIntegration{
+		SharedOAuthModel: integrations.SharedOAuthModel{
+			AccessToken:  []byte(token.AccessToken),
+			RefreshToken: []byte(token.RefreshToken),
+		},
+		Client:    types.OAuthDigitalOcean,
+		UserID:    userID,
+		ProjectID: projID,
+	}
 
-	if _, err = p.Repo().SlackIntegration().CreateSlackIntegration(slackInt); err != nil {
+	// create the oauth integration first
+	oauthInt, err = p.Repo().OAuthIntegration().CreateOAuthIntegration(oauthInt)
+
+	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

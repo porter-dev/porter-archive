@@ -50,5 +50,29 @@ func GetOAuthCallbackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/oauth/digitalocean/callback -> oauth_callback.NewOAuthCallbackDOHandler
+	doEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/digitalocean/callback",
+			},
+		},
+	)
+
+	doHandler := oauth_callback.NewOAuthCallbackDOHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: doEndpoint,
+		Handler:  doHandler,
+		Router:   r,
+	})
+
 	return routes
 }

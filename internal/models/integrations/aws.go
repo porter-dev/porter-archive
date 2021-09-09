@@ -56,20 +56,6 @@ func (a *AWSIntegration) ToAWSIntegrationType() *types.AWSIntegration {
 	}
 }
 
-// ToProjectIntegration converts an aws integration to a project integration
-func (a *AWSIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            a.ID,
-		ProjectID:     a.ProjectID,
-		AuthMechanism: "aws",
-		Category:      category,
-		Service:       service,
-	}
-}
-
 // GetSession retrieves an AWS session to use based on the access key and secret
 // access key
 func (a *AWSIntegration) GetSession() (*session.Session, error) {

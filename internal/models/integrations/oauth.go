@@ -1,9 +1,10 @@
 package integrations
 
 import (
+	"time"
+
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
-	"time"
 )
 
 // SharedOAuthModel stores general fields needed for OAuth Integration
@@ -59,19 +60,5 @@ func (o *OAuthIntegration) ToOAuthIntegrationType() *types.OAuthIntegration {
 		Client:    o.Client,
 		UserID:    o.UserID,
 		ProjectID: o.ProjectID,
-	}
-}
-
-// ToProjectIntegration converts an oauth integration to a project integration
-func (o *OAuthIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            o.ID,
-		ProjectID:     o.ProjectID,
-		AuthMechanism: "oauth",
-		Category:      category,
-		Service:       service,
 	}
 }

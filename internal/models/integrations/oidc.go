@@ -74,17 +74,3 @@ func (o *OIDCIntegration) Externalize() *OIDCIntegrationExternal {
 		ProjectID: o.ProjectID,
 	}
 }
-
-// ToProjectIntegration converts a gcp integration to a project integration
-func (o *OIDCIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            o.ID,
-		ProjectID:     o.ProjectID,
-		AuthMechanism: "oidc",
-		Category:      category,
-		Service:       service,
-	}
-}

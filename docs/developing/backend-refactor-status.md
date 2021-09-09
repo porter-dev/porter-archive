@@ -6,15 +6,15 @@
 | <li>- [x] `GET /api/cli/login/exchange`                                                                                     | AB          |                 | yes         |                  |
 | <li>- [x] `GET /api/email/verify/finalize`                                                                                  | AB          |                 |             |                  |
 | <li>- [x] `POST /api/email/verify/initiate`                                                                                 | AB          |                 |             | yes              |
-| <li>- [ ] `GET /api/integrations/cluster`                                                                                   |             |                 |             |                  |
+| <li>- [X] `GET /api/integrations/cluster`                                                                                   | AB          |                 |             |                  |
 | <li>- [X] `GET /api/integrations/github-app/access`                                                                         | AB          |                 |             |                  |
 | <li>- [X] `GET /api/integrations/github-app/authorize`                                                                      | AB          |                 |             |                  |
 | <li>- [X] `GET /api/integrations/github-app/install`                                                                        | AB          |                 |             |                  |
 | <li>- [X] `GET /api/integrations/github-app/oauth`                                                                          | AB          |                 |             |                  |
 | <li>- [X] `POST /api/integrations/github-app/webhook`                                                                       | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/integrations/helm`                                                                                      |             |                 |             |                  |
-| <li>- [ ] `GET /api/integrations/registry`                                                                                  |             |                 |             |                  |
-| <li>- [ ] `GET /api/integrations/repo`                                                                                      |             |                 |             |                  |
+| <li>- [X] `GET /api/integrations/helm`                                                                                      | AB          |                 |             |                  |
+| <li>- [X] `GET /api/integrations/registry`                                                                                  | AB          |                 |             |                  |
+| <li>- [X] `GET /api/integrations/repo`                                                                                      | N/A         |                 |             |                  |
 | <li>- [ ] `GET /api/livez`                                                                                                  |             |                 |             |                  |
 | <li>- [x] `POST /api/login`                                                                                                 | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/logout`                                                                                                | AB          |                 |             | yes              |

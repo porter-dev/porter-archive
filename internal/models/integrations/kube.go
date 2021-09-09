@@ -69,17 +69,3 @@ func (k *KubeIntegration) Externalize() *KubeIntegrationExternal {
 		ProjectID: k.ProjectID,
 	}
 }
-
-// ToProjectIntegration converts a gcp integration to a project integration
-func (k *KubeIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            k.ID,
-		ProjectID:     k.ProjectID,
-		AuthMechanism: "kube",
-		Category:      category,
-		Service:       service,
-	}
-}

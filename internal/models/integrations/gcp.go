@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/porter-dev/porter/api/types"
 
 	"golang.org/x/oauth2"
@@ -45,20 +46,6 @@ func (g *GCPIntegration) ToGCPIntegrationType() *types.GCPIntegration {
 		ProjectID:    g.ProjectID,
 		GCPProjectID: g.GCPProjectID,
 		GCPUserEmail: g.GCPUserEmail,
-	}
-}
-
-// ToProjectIntegration converts a gcp integration to a project integration
-func (g *GCPIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            g.ID,
-		ProjectID:     g.ProjectID,
-		AuthMechanism: "gcp",
-		Category:      category,
-		Service:       service,
 	}
 }
 

@@ -32,17 +32,3 @@ func (b *BasicIntegration) ToBasicIntegrationType() *types.BasicIntegration {
 		ProjectID: b.ProjectID,
 	}
 }
-
-// ToProjectIntegration converts an oauth integration to a project integration
-func (b *BasicIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            b.ID,
-		ProjectID:     b.ProjectID,
-		AuthMechanism: "basic",
-		Category:      category,
-		Service:       service,
-	}
-}

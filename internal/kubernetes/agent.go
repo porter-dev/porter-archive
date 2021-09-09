@@ -1169,7 +1169,7 @@ func (a *Agent) CreateImagePullSecrets(
 			return nil, err
 		}
 
-		secretName := fmt.Sprintf("porter-%s-%d", val.Externalize().Service, val.ID)
+		secretName := fmt.Sprintf("porter-%s-%d", val.ToRegistryType().Service, val.ID)
 
 		secret, err := a.Clientset.CoreV1().Secrets(namespace).Get(
 			context.TODO(),

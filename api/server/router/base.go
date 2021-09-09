@@ -50,6 +50,75 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
+	// GET /api/integrations/cluster -> metadata.NewListClusterIntegrationsHandler
+	listClusterIntsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/cluster",
+			},
+		},
+	)
+
+	listClusterIntsHandler := metadata.NewListClusterIntegrationsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listClusterIntsEndpoint,
+		Handler:  listClusterIntsHandler,
+		Router:   r,
+	})
+
+	// GET /api/integrations/registry -> metadata.NewListRegistryIntegrationsHandler
+	listRegistryIntsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/registry",
+			},
+		},
+	)
+
+	listRegistryIntsHandler := metadata.NewListRegistryIntegrationsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listRegistryIntsEndpoint,
+		Handler:  listRegistryIntsHandler,
+		Router:   r,
+	})
+
+	// GET /api/integrations/helm -> metadata.NewListHelmRepoIntegrationsHandler
+	listHelmRepoIntsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/helm",
+			},
+		},
+	)
+
+	listHelmRepoIntsHandler := metadata.NewListHelmRepoIntegrationsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listHelmRepoIntsEndpoint,
+		Handler:  listHelmRepoIntsHandler,
+		Router:   r,
+	})
+
 	// POST /api/users -> user.NewUserCreateHandler
 	createUserEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

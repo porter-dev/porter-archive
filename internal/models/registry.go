@@ -51,42 +51,8 @@ type RegistryExternal struct {
 	// URL of the registry
 	URL string `json:"url"`
 
-	// The integration service for this registry
-	Service integrations.IntegrationService `json:"service"`
-
 	// The infra id, if registry was provisioned with Porter
 	InfraID uint `json:"infra_id"`
-}
-
-// Externalize generates an external Registry to be shared over REST
-func (r *Registry) Externalize() *RegistryExternal {
-	var serv integrations.IntegrationService
-
-	if r.AWSIntegrationID != 0 {
-		serv = integrations.ECR
-	} else if r.GCPIntegrationID != 0 {
-		serv = integrations.GCR
-	} else if r.DOIntegrationID != 0 {
-		serv = integrations.DOCR
-	} else if strings.Contains(r.URL, "index.docker.io") {
-		serv = integrations.DockerHub
-	}
-
-	uri := r.URL
-
-	// remove the protocol
-	if splStr := strings.Split(uri, "://"); len(splStr) > 1 {
-		uri = splStr[1]
-	}
-
-	return &RegistryExternal{
-		ID:        r.ID,
-		ProjectID: r.ProjectID,
-		Name:      r.Name,
-		URL:       uri,
-		Service:   serv,
-		InfraID:   r.InfraID,
-	}
 }
 
 func (r *Registry) ToRegistryType() *types.Registry {

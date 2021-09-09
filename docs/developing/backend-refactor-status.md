@@ -7,11 +7,11 @@
 | <li>- [x] `GET /api/email/verify/finalize`                                                                                  | AB          |                 |             |                  |
 | <li>- [x] `POST /api/email/verify/initiate`                                                                                 | AB          |                 |             | yes              |
 | <li>- [ ] `GET /api/integrations/cluster`                                                                                   |             |                 |             |                  |
-| <li>- [ ] `GET /api/integrations/github-app/access`                                                                         |             |                 |             |                  |
-| <li>- [ ] `GET /api/integrations/github-app/authorize`                                                                      |             |                 |             |                  |
-| <li>- [ ] `GET /api/integrations/github-app/install`                                                                        |             |                 |             |                  |
-| <li>- [ ] `GET /api/integrations/github-app/oauth`                                                                          |             |                 |             |                  |
-| <li>- [ ] `POST /api/integrations/github-app/webhook`                                                                       |             |                 |             |                  |
+| <li>- [X] `GET /api/integrations/github-app/access`                                                                         | AB          |                 |             |                  |
+| <li>- [X] `GET /api/integrations/github-app/authorize`                                                                      | AB          |                 |             |                  |
+| <li>- [X] `GET /api/integrations/github-app/install`                                                                        | AB          |                 |             |                  |
+| <li>- [X] `GET /api/integrations/github-app/oauth`                                                                          | AB          |                 |             |                  |
+| <li>- [X] `POST /api/integrations/github-app/webhook`                                                                       | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/integrations/helm`                                                                                      |             |                 |             |                  |
 | <li>- [ ] `GET /api/integrations/registry`                                                                                  |             |                 |             |                  |
 | <li>- [ ] `GET /api/integrations/repo`                                                                                      |             |                 |             |                  |
@@ -19,7 +19,7 @@
 | <li>- [x] `POST /api/login`                                                                                                 | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/logout`                                                                                                | AB          |                 |             | yes              |
 | <li>- [ ] `GET /api/oauth/digitalocean/callback`                                                                            |             |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/github-app/callback`                                                                              |             |                 |             |                  |
+| <li>- [ ] `GET /api/oauth/github-app/callback`                                                                              | AB          |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/github/callback`                                                                                  |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/google/callback`                                                                                  |             |                 |             |                  |
 | <li>- [ ] `GET /api/oauth/login/github`                                                                                     |             |                 |             |                  |

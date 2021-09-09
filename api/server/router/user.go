@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/template"
 	"github.com/porter-dev/porter/api/server/handlers/user"
@@ -314,6 +315,56 @@ func getUserRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getTemplateUpgradeNotesEndpoint,
 		Handler:  getTemplateUpgradeNotesRequest,
+		Router:   r,
+	})
+
+	//  GET /api/oauth/github-app/callback -> gitinstallation.GithubAppOAuthCallbackHandler
+	githubAppOAuthCallbackEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/oauth/github-app/callback",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	githubAppOAuthCallbackHandler := gitinstallation.NewGithubAppOAuthCallbackHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubAppOAuthCallbackEndpoint,
+		Handler:  githubAppOAuthCallbackHandler,
+		Router:   r,
+	})
+
+	//  GET /api/integrations/github-app/accounts -> gitinstallation.NewGetGithubAppAccountsHandler
+	githubAppAccountsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/github-app/callback",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	githubAppAccountsHandler := gitinstallation.NewGetGithubAppAccountsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubAppAccountsEndpoint,
+		Handler:  githubAppAccountsHandler,
 		Router:   r,
 	})
 

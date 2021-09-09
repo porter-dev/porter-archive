@@ -131,6 +131,7 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 		deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
 	} else {
 		deployAgent.imageRepo = release.GitActionConfig.ImageRepoURI
+		deployAgent.opts.LocalPath = release.GitActionConfig.FolderPath
 	}
 
 	deployAgent.tag = opts.OverrideTag

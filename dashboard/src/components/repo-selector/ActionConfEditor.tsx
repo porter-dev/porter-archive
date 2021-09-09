@@ -67,36 +67,12 @@ const ActionConfEditor: React.FC<Props> = (props) => {
         </BackButton>
       </>
     );
-  } else if (!props.dockerfilePath && !props.folderPath) {
-    return (
-      <>
-        <ContentsList
-          actionConfig={actionConfig}
-          branch={branch}
-          setActionConfig={setActionConfig}
-          setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
-          setProcfilePath={(x: string) => props.setProcfilePath(x)}
-          setFolderPath={(x: string) => props.setFolderPath(x)}
-        />
-        <Br />
-        <BackButton
-          width="145px"
-          onClick={() => {
-            setBranch("");
-          }}
-        >
-          <i className="material-icons">keyboard_backspace</i>
-          Select Branch
-        </BackButton>
-      </>
-    );
-  }
-
-  if (
-    props.procfilePath &&
-    props.folderPath &&
-    !props.dockerfilePath &&
-    !props.procfileProcess
+  } else if (
+    (!props.dockerfilePath && !props.folderPath) ||
+    (props.procfilePath &&
+      props.folderPath &&
+      !props.dockerfilePath &&
+      !props.procfileProcess)
   ) {
     return (
       <>

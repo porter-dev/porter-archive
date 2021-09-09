@@ -68,19 +68,25 @@ const ActionConfEditor: React.FC<Props> = (props) => {
       </>
     );
   } else if (
+    // select dockerfile or buildpack build context
     (!props.dockerfilePath && !props.folderPath) ||
+    // select procfile process
     (props.procfilePath &&
       props.folderPath &&
       !props.dockerfilePath &&
-      !props.procfileProcess)
+      !props.procfileProcess) ||
+    // select docker build context
+    (props.dockerfilePath && !props.folderPath)
   ) {
     return (
       <>
         <ContentsList
           actionConfig={actionConfig}
           branch={branch}
-          setActionConfig={setActionConfig}
+          dockerfilePath={props.dockerfilePath}
           procfilePath={props.procfilePath}
+          folderPath={props.folderPath}
+          setActionConfig={setActionConfig}
           setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
           setProcfilePath={(x: string) => props.setProcfilePath(x)}
           setProcfileProcess={(x: string) => props.setProcfileProcess(x)}
@@ -91,6 +97,7 @@ const ActionConfEditor: React.FC<Props> = (props) => {
           width="145px"
           onClick={() => {
             setBranch("");
+            props.setDockerfilePath("");
           }}
         >
           <i className="material-icons">keyboard_backspace</i>

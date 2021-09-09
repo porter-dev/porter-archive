@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
+	"github.com/porter-dev/porter/api/server/handlers/healthcheck"
 	"github.com/porter-dev/porter/api/server/handlers/metadata"
 	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/handlers/user"
@@ -26,6 +27,52 @@ func GetBaseRoutes(
 	children ...*Registerer,
 ) []*Route {
 	routes := make([]*Route, 0)
+
+	// GET /api/readyz -> healthcheck.NewReadyzHandler
+	getReadyzEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/readyz",
+			},
+		},
+	)
+
+	getReadyzHandler := healthcheck.NewReadyzHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getReadyzEndpoint,
+		Handler:  getReadyzHandler,
+		Router:   r,
+	})
+
+	// GET /api/livez -> healthcheck.NewLivezHandler
+	getLivezEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/livez",
+			},
+		},
+	)
+
+	getLivezHandler := healthcheck.NewLivezHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getLivezEndpoint,
+		Handler:  getLivezHandler,
+		Router:   r,
+	})
 
 	// GET /api/capabilities -> user.NewUserCreateHandler
 	getMetadataEndpoint := factory.NewAPIEndpoint(

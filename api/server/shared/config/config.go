@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 )
 
 type Config struct {
@@ -77,6 +78,9 @@ type Config struct {
 	// IngressAgent is the kubernetes client responsible for creating new ingress
 	// resources
 	IngressAgent *kubernetes.Agent
+
+	// DB is the gorm DB instance
+	DB *gorm.DB
 }
 
 type ConfigLoader interface {

@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -143,13 +144,19 @@ func (repo *ClusterRepository) CreateCluster(
 	}
 
 	// create a token cache by default
-	assoc = ctxDB.Model(cluster).Association("TokenCache")
-
-	if assoc.Error != nil {
-		return nil, assoc.Error
+	if cluster.TokenCache == nil {
+		cluster.TokenCache = &ints.ClusterTokenCache{}
 	}
 
-	if err := assoc.Append(&cluster.TokenCache); err != nil {
+	cluster.TokenCache.ClusterID = cluster.ID
+
+	if err := ctxDB.Save(cluster.TokenCache).Error; err != nil {
+		return nil, err
+	}
+
+	cluster.TokenCacheID = cluster.TokenCache.ID
+
+	if err := ctxDB.Save(cluster).Error; err != nil {
 		return nil, err
 	}
 
@@ -171,11 +178,13 @@ func (repo *ClusterRepository) ReadCluster(
 	cluster := &models.Cluster{}
 
 	// preload Clusters association
-	if err := ctxDB.Debug().Preload("TokenCache", func(db *gorm.DB) *gorm.DB {
-		return db.Limit(100).Order("cluster_token_caches.updated_at DESC")
-	}).Where("id = ?", id).First(&cluster).Error; err != nil {
+	if err := ctxDB.Debug().Where("id = ?", id).First(&cluster).Error; err != nil {
 		return nil, err
 	}
+
+	fmt.Println("AaaaAAJASJKSAJKJKSJKSAJKAJK")
+	fmt.Println(cluster.TokenCacheID)
+	fmt.Println(cluster.TokenCacheID)
 
 	err := repo.DecryptClusterData(cluster, repo.key)
 
@@ -236,6 +245,8 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 	tokenCache *ints.ClusterTokenCache,
 ) (*models.Cluster, error) {
 	ctxDB := repo.db.WithContext(context.Background())
+
+	fmt.Println("UPDATE CACHE UPDATE CACHE UPDATE CACHE")
 
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := repository.Encrypt(tok, repo.key)

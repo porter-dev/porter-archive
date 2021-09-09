@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"context"
-
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -172,7 +171,9 @@ func (repo *ClusterRepository) ReadCluster(
 	cluster := &models.Cluster{}
 
 	// preload Clusters association
-	if err := ctxDB.Preload("TokenCache").Where("id = ?", id).First(&cluster).Error; err != nil {
+	if err := ctxDB.Debug().Preload("TokenCache", func(db *gorm.DB) *gorm.DB {
+		return db.Limit(100).Order("cluster_token_caches.updated_at DESC")
+	}).Where("id = ?", id).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 
@@ -261,7 +262,7 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 	cluster.TokenCache.Token = tokenCache.Token
 	cluster.TokenCache.Expiry = tokenCache.Expiry
 
-	if err := ctxDB.Save(cluster).Error; err != nil {
+	if err := ctxDB.Debug().Save(cluster).Error; err != nil {
 		return nil, err
 	}
 

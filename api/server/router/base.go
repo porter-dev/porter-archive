@@ -359,5 +359,105 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
+	// GET /api/oauth/login/github
+	githubLoginStartEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/oauth/login/github",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	githubLoginStartHandler := user.NewUserOAuthGithubHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubLoginStartEndpoint,
+		Handler:  githubLoginStartHandler,
+		Router:   r,
+	})
+
+	// GET /api/oauth/github/callback
+	githubLoginCallbackEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/oauth/github/callback",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	githubLoginCallbackHandler := user.NewUserOAuthGithubCallbackHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubLoginCallbackEndpoint,
+		Handler:  githubLoginCallbackHandler,
+		Router:   r,
+	})
+
+	// GET /api/oauth/login/google
+	googleLoginStartEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/oauth/login/google",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	googleLoginStartHandler := user.NewUserOAuthGoogleHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: googleLoginStartEndpoint,
+		Handler:  googleLoginStartHandler,
+		Router:   r,
+	})
+
+	// GET /api/oauth/google/callback
+	googleLoginCallbackEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/oauth/google/callback",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	googleLoginCallbackHandler := user.NewUserOAuthGoogleCallbackHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: googleLoginCallbackEndpoint,
+		Handler:  googleLoginCallbackHandler,
+		Router:   r,
+	})
+
 	return routes
 }

@@ -111,6 +111,19 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		})
 	}
 
+	if sc.GoogleClientID != "" && sc.GoogleClientSecret != "" {
+		res.GoogleConf = oauth.NewGoogleClient(&oauth.Config{
+			ClientID:     sc.GoogleClientID,
+			ClientSecret: sc.GoogleClientSecret,
+			Scopes: []string{
+				"openid",
+				"profile",
+				"email",
+			},
+			BaseURL: sc.ServerURL,
+		})
+	}
+
 	if sc.GithubClientID != "" && sc.GithubClientSecret != "" {
 		res.GithubConf = oauth.NewGithubClient(&oauth.Config{
 			ClientID:     sc.GithubClientID,

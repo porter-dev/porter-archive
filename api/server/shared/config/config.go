@@ -58,6 +58,9 @@ type Config struct {
 	// GithubAppConf is the configuration for a Github App OAuth client
 	GithubAppConf *oauth.GithubAppConf
 
+	// GoogleConf is the configuration for a Google OAuth client
+	GoogleConf *oauth2.Config
+
 	// SlackConf is the configuration for a Slack OAuth client
 	SlackConf *oauth2.Config
 

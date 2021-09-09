@@ -19,13 +19,13 @@
 | <li>- [x] `POST /api/login`                                                                                                 | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/logout`                                                                                                | AB          |                 |             | yes              |
 | <li>- [X] `GET /api/oauth/digitalocean/callback`                                                                            | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/github-app/callback`                                                                              | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/github/callback`                                                                                  |             |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/google/callback`                                                                                  |             |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/login/github`                                                                                     |             |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/login/google`                                                                                     |             |                 |             |                  |
+| <li>- [X] `GET /api/oauth/github-app/callback`                                                                              | AB          |                 |             |                  |
+| <li>- [X] `GET /api/oauth/github/callback`                                                                                  | AB          |                 |             |                  |
+| <li>- [X] `GET /api/oauth/google/callback`                                                                                  | AB          |                 |             |                  |
+| <li>- [X] `GET /api/oauth/login/github`                                                                                     | AB          |                 |             |                  |
+| <li>- [X] `GET /api/oauth/login/google`                                                                                     | AB          |                 |             |                  |
 | <li>- [X] `GET /api/oauth/projects/{project_id}/digitalocean`                                                               | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/oauth/projects/{project_id}/github`                                                                     |             |                 |             |                  |
+| <li>- [X] `GET /api/oauth/projects/{project_id}/github`                                                                     | N/A         |                 |             |                  |
 | <li>- [x] `GET /api/oauth/projects/{project_id}/slack`                                                                      | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/oauth/slack/callback`                                                                                   | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/password/reset/finalize`                                                                               | AB          |                 |             | yes              |

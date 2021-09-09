@@ -53,6 +53,8 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		return nil, err
 	}
 
+	res.DB = db
+
 	err = gorm.AutoMigrate(db)
 
 	if err != nil {

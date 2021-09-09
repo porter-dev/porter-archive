@@ -15,7 +15,7 @@
 | <li>- [X] `GET /api/integrations/helm`                                                                                      | AB          |                 |             |                  |
 | <li>- [X] `GET /api/integrations/registry`                                                                                  | AB          |                 |             |                  |
 | <li>- [X] `GET /api/integrations/repo`                                                                                      | N/A         |                 |             |                  |
-| <li>- [ ] `GET /api/livez`                                                                                                  |             |                 |             |                  |
+| <li>- [X] `GET /api/livez`                                                                                                  | AB          |                 |             |                  |
 | <li>- [x] `POST /api/login`                                                                                                 | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/logout`                                                                                                | AB          |                 |             | yes              |
 | <li>- [X] `GET /api/oauth/digitalocean/callback`                                                                            | AB          |                 |             |                  |
@@ -57,9 +57,9 @@
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/contents`         | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/procfile`         | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/gitrepos/{installation_id}/repos/{kind}/{owner}/{name}/{branch}/tarball_url`      | AB          |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/helmrepos`                                                                        |             |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/helmrepos`                                                                       |             |                 |             |                  |
-| <li>- [ ] `GET /api/projects/{project_id}/helmrepos/{helm_id}/charts`                                                       |             |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/helmrepos`                                                                        | N/A         |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/helmrepos`                                                                       | N/A         |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/helmrepos/{helm_id}/charts`                                                       | N/A         |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/infra`                                                                            | AS          |                 |             | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/aws`                                                                | AS          |                 | yes         | yes              |
 | <li>- [x] `POST /api/projects/{project_id}/integrations/aws/{aws_integration_id}/overwrite`                                 | AS          | yes             |             | yes              |
@@ -142,7 +142,7 @@
 | <li>- [x] `GET /api/projects/{project_id}/slack_integrations`                                                               | AS          |                 |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/slack_integrations/exists`                                                        | AS          |                 |             | yes              |
 | <li>- [x] `DELETE /api/projects/{project_id}/slack_integrations/{slack_integration_id}`                                     | AS          |                 |             | yes              |
-| <li>- [ ] `GET /api/readyz`                                                                                                 |             |                 |             |                  |
+| <li>- [X] `GET /api/readyz`                                                                                                 | AB          |                 |             |                  |
 | <li>- [X] `GET /api/templates`                                                                                              | AB          |                 |             |                  |
 | <li>- [X] `GET /api/templates/upgrade_notes/{name}/{version}`                                                               | AB          | yes             |             |                  |
 | <li>- [X] `GET /api/templates/{name}/{version}`                                                                             | AB          |                 |             |                  |

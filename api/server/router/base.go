@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/metadata"
 	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/handlers/user"
@@ -215,6 +216,77 @@ func GetBaseRoutes(
 	routes = append(routes, &Route{
 		Endpoint: webhookEndpoint,
 		Handler:  webhookHandler,
+		Router:   r,
+	})
+
+	//  GET /api/integrations/github-app/oauth -> gitinstallation.NewGithubAppOAuthStartHandler
+	githubAppOAuthStartEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/github-app/oauth",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	githubAppOAuthStartHandler := gitinstallation.NewGithubAppOAuthStartHandler(
+		config,
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubAppOAuthStartEndpoint,
+		Handler:  githubAppOAuthStartHandler,
+		Router:   r,
+	})
+
+	//  GET /api/integrations/github-app/install
+	githubAppInstallEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/github-app/install",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	githubAppInstallHandler := gitinstallation.NewGithubAppInstallHandler(
+		config,
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubAppInstallEndpoint,
+		Handler:  githubAppInstallHandler,
+		Router:   r,
+	})
+
+	//  POST /api/integrations/github-app/webhook
+	githubAppWebhookEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/github-app/webhook",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	githubAppWebhookHandler := gitinstallation.NewGithubAppWebhookHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubAppWebhookEndpoint,
+		Handler:  githubAppWebhookHandler,
 		Router:   r,
 	})
 

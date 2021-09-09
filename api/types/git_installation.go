@@ -65,3 +65,8 @@ type GetTarballURLResponse struct {
 	URLString       string `json:"url"`
 	LatestCommitSHA string `json:"latest_commit_sha"`
 }
+
+type GetGithubAppAccountsResponse struct {
+	Username string   `json:"username,omitempty"`
+	Accounts []string `json:"accounts,omitempty"`
+}

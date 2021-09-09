@@ -186,6 +186,7 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			GitBranch:      form.GithubActionConfig.GitBranch,
 			ImageRepoURI:   form.GithubActionConfig.ImageRepoURI,
 			DockerfilePath: form.GithubActionConfig.DockerfilePath,
+			FolderPath:     form.GithubActionConfig.FolderPath,
 			GitRepoID:      form.GithubActionConfig.GitRepoID,
 			RegistryID:     form.GithubActionConfig.RegistryID,
 

@@ -32,9 +32,9 @@
 | <li>- [x] `POST /api/password/reset/initiate`                                                                               | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/password/reset/verify`                                                                                 | AB          |                 |             | yes              |
 | <li>- [x] `POST /api/projects`                                                                                              | AB          |                 |             | yes              |
-| <li>- [ ] `DELETE /api/projects/{project_id}`                                                                               |             |                 |             |                  |
+| <li>- [X] `DELETE /api/projects/{project_id}`                                                                               | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}`                                                                                  | AB          |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/ci/actions/create`                                                               |             |                 |             |                  |
+| <li>- [X] `POST /api/projects/{project_id}/ci/actions/create`                                                               | N/A         |                 |             |                  |
 | <li>- [ ] `POST /api/projects/{project_id}/ci/actions/generate`                                                             |             |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/clusters`                                                                         | AB          |                 |             | yes              |
 | <li>- [X] `POST /api/projects/{project_id}/clusters`                                                                        | AB          |                 |             |                  |
@@ -43,7 +43,7 @@
 | <li>- [X] `POST /api/projects/{project_id}/clusters/candidates/{candidate_id}/resolve`                                      | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/clusters/{cluster_id}`                                                            | AB          |                 |             | yes              |
 | <li>- [X] `POST /api/projects/{project_id}/clusters/{cluster_id}`                                                           | AB          |                 |             |                  |
-| <li>- [ ] `DELETE /api/projects/{project_id}/clusters/{cluster_id}`                                                         |             |                 |             |                  |
+| <li>- [X] `DELETE /api/projects/{project_id}/clusters/{cluster_id}`                                                         | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}`                                           | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes`                                                      | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/collaborators`                                                                    | AS          |                 |             | yes              |

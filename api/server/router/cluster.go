@@ -197,6 +197,34 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id} -> project.NewClusterDeleteHandler
+	deleteClusterEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	deleteClusterHandler := cluster.NewClusterDeleteHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteClusterEndpoint,
+		Handler:  deleteClusterHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id} -> project.NewClusterGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

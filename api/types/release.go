@@ -72,3 +72,10 @@ const URLParamToken URLParam = "token"
 type WebhookRequest struct {
 	Commit string `schema:"commit"`
 }
+
+type GetGHATemplateRequest struct {
+	ReleaseName        string                        `json:"release_name"`
+	GithubActionConfig *CreateGitActionConfigRequest `json:"github_action_config" form:"required"`
+}
+
+type GetGHATemplateResponse string

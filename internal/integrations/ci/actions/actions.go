@@ -46,7 +46,7 @@ type GithubActions struct {
 	defaultBranch string
 	Version       string
 
-	ShouldGenerateOnly   bool
+	DryRun               bool
 	ShouldCreateWorkflow bool
 }
 
@@ -70,7 +70,7 @@ func (g *GithubActions) Setup() ([]byte, error) {
 
 	g.defaultBranch = repo.GetDefaultBranch()
 
-	if !g.ShouldGenerateOnly {
+	if !g.DryRun {
 		// create porter token secret
 		if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
 			return nil, err
@@ -83,7 +83,7 @@ func (g *GithubActions) Setup() ([]byte, error) {
 		return nil, err
 	}
 
-	if !g.ShouldGenerateOnly && g.ShouldCreateWorkflow {
+	if !g.DryRun && g.ShouldCreateWorkflow {
 		_, err = g.commitGithubFile(client, g.getPorterYMLFileName(), workflowYAML)
 		if err != nil {
 			return workflowYAML, err

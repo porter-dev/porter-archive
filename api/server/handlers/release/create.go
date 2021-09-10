@@ -223,6 +223,7 @@ func createGitAction(
 		PorterToken:            encoded,
 		Version:                "v0.1.0",
 		ShouldCreateWorkflow:   request.ShouldCreateWorkflow,
+		DryRun:                 release == nil,
 	}
 
 	workflowYAML, err := gaRunner.Setup()
@@ -231,7 +232,7 @@ func createGitAction(
 		return nil, nil, err
 	}
 
-	if !request.ShouldCreateWorkflow {
+	if gaRunner.DryRun {
 		return nil, workflowYAML, nil
 	}
 

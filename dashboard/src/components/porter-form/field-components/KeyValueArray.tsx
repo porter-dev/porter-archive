@@ -1,5 +1,9 @@
 import React from "react";
-import { GetFinalVariablesFunction, KeyValueArrayField, KeyValueArrayFieldState } from "../types";
+import {
+  GetFinalVariablesFunction,
+  KeyValueArrayField,
+  KeyValueArrayFieldState,
+} from "../types";
 import sliders from "../../../assets/sliders.svg";
 import upload from "../../../assets/upload.svg";
 import styled from "styled-components";
@@ -7,6 +11,7 @@ import useFormField from "../hooks/useFormField";
 import Modal from "../../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
+import { hasSetValue } from "../utils";
 
 interface Props extends KeyValueArrayField {
   id: string;
@@ -17,12 +22,11 @@ const KeyValueArray: React.FC<Props> = (props) => {
     props.id,
     {
       initState: {
-        values:
-          props.value && props.value[0]
-            ? (Object.entries(props.value[0])?.map(([k, v]) => {
-                return { key: k, value: v };
-              }) as any[])
-            : [],
+        values: hasSetValue(props)
+          ? (Object.entries(props.value[0])?.map(([k, v]) => {
+              return { key: k, value: v };
+            }) as any[])
+          : [],
         showEnvModal: false,
         showEditorModal: false,
       },
@@ -347,7 +351,7 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
 ) => {
   if (!state) {
     return {
-      [props.variable]: props.value ? props.value[0] : [],
+      [props.variable]: hasSetValue(props) ? props.value[0] : [],
     };
   }
 

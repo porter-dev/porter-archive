@@ -58,4 +58,8 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+
+# Ignore editor files
+.vscode
+
 tmp

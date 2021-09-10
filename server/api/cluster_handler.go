@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -17,7 +16,7 @@ import (
 // HandleCreateProjectCluster creates a new cluster
 func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
-	userID, err := app.getUserIDFromRequest(r)
+	// userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -57,15 +56,6 @@ func (app *App) HandleCreateProjectCluster(w http.ResponseWriter, r *http.Reques
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", projID),
-			ClusterName: cluster.Name,
-			ClusterType: "EKS",
-			EventType:   "connected",
-		},
-	))
 
 	w.WriteHeader(http.StatusCreated)
 
@@ -279,14 +269,7 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 
 	extClusters := make([]*models.ClusterCandidateExternal, 0)
 
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	userID, _ := session.Values["user_id"].(uint)
+	userID, _ := app.getUserIDFromRequest(r)
 
 	for _, cc := range ccs {
 		// handle write to the database
@@ -296,6 +279,13 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 			app.handleErrorDataWrite(err, w)
 			return
 		}
+
+		app.AnalyticsClient.Track(analytics.ClusterConnectionStartTrack(
+			&analytics.ClusterConnectionStartTrackOpts{
+				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+				ClusterCandidateID:     cc.ID,
+			},
+		))
 
 		app.Logger.Info().Msgf("New cluster candidate created: %d", cc.ID)
 
@@ -339,6 +329,13 @@ func (app *App) HandleCreateProjectClusterCandidates(w http.ResponseWriter, r *h
 			}
 
 			app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
+
+			app.AnalyticsClient.Track(analytics.ClusterConnectionSuccessTrack(
+				&analytics.ClusterConnectionSuccessTrackOpts{
+					ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), cluster.ID),
+					ClusterCandidateID:     cc.ID,
+				},
+			))
 		}
 
 		extClusters = append(extClusters, cc.Externalize())
@@ -401,14 +398,7 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	session, err := app.Store.Get(r, app.ServerConf.CookieName)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	userID, _ := session.Values["user_id"].(uint)
+	userID, _ := app.getUserIDFromRequest(r)
 
 	// decode actions from request
 	resolver := &models.ClusterResolverAll{}
@@ -447,13 +437,11 @@ func (app *App) HandleResolveClusterCandidate(w http.ResponseWriter, r *http.Req
 	}
 
 	app.Logger.Info().Msgf("New cluster created: %d", cluster.ID)
-	app.analyticsClient.Track(analytics.CreateSegmentNewClusterEvent(
-		&analytics.NewClusterEventOpts{
-			UserId:      fmt.Sprintf("%d", userID),
-			ProjId:      fmt.Sprintf("%d", projID),
-			ClusterName: cluster.Name,
-			ClusterType: "",
-			EventType:   "connected",
+
+	app.AnalyticsClient.Track(analytics.ClusterConnectionSuccessTrack(
+		&analytics.ClusterConnectionSuccessTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), cluster.ID),
+			ClusterCandidateID:     uint(candID),
 		},
 	))
 

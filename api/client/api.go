@@ -1,6 +1,8 @@
 package client
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -26,6 +28,32 @@ type Client struct {
 type HTTPError struct {
 	Code   uint     `json:"code"`
 	Errors []string `json:"errors"`
+}
+
+type EventStatus int64
+
+const (
+	EventStatusSuccess    EventStatus = 1
+	EventStatusInProgress             = 2
+	EventStatusFailed                 = 3
+)
+
+// Event represents an event that happens during
+type Event struct {
+	ID     string      `json:"event_id"` // events with the same id wil be treated the same, and the highest index one is retained
+	Name   string      `json:"name"`
+	Index  int64       `json:"index"` // priority of the event, used for sorting
+	Status EventStatus `json:"status"`
+	Info   string      `json:"info"` // extra information (can be error or success)
+}
+
+// StreamEventForm is used to send event data to the api
+type StreamEventForm struct {
+	Event     `json:"event"`
+	Token     string `json:"token"`
+	ClusterID uint   `json:"cluster_id"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 // NewClient constructs a new client based on a set of options
@@ -119,6 +147,44 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 	}
 
 	return ioutil.WriteFile(c.CookieFilePath, data, 0644)
+}
+
+// StreamEvent sends an event from deployment to the api
+func (c *Client) StreamEvent(event Event, projID uint, clusterID uint, name string, namespace string) error {
+	form := StreamEventForm{
+		Event:     event,
+		ClusterID: clusterID,
+		Name:      name,
+		Namespace: namespace,
+	}
+
+	body := new(bytes.Buffer)
+	err := json.NewEncoder(body).Encode(form)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/projects/%d/releases/%s/steps", c.BaseURL, projID, name),
+		body,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req = req.WithContext(context.Background())
+
+	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
+		}
+		return err
+	}
+
+	return nil
 }
 
 // retrieves single cookie from file

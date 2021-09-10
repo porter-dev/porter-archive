@@ -9,7 +9,10 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/go-redis/redis/v8"
+	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/repository"
+
+	redis "github.com/go-redis/redis/v8"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -83,6 +86,7 @@ type ResourceCRUDHandler interface {
 func GlobalStreamListener(
 	client *redis.Client,
 	repo repository.Repository,
+	analyticsClient analytics.AnalyticsSegmentClient,
 	errorChan chan error,
 ) {
 	for {
@@ -163,7 +167,15 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(types.InfraEKS) {
+
+					analyticsClient.Track(analytics.RegistryProvisioningSuccessTrack(
+						&analytics.RegistryProvisioningSuccessTrackOpts{
+							RegistryScopedTrackOpts: analytics.GetRegistryScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, reg.ID),
+							RegistryType:            infra.Kind,
+							InfraID:                 infra.ID,
+						},
+					))
+				} else if kind == string(models.InfraEKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.AWS,
 						ProjectID:        projID,
@@ -197,7 +209,15 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(types.InfraGCR) {
+
+					analyticsClient.Track(analytics.ClusterProvisioningSuccessTrack(
+						&analytics.ClusterProvisioningSuccessTrackOpts{
+							ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, cluster.ID),
+							ClusterType:            infra.Kind,
+							InfraID:                infra.ID,
+						},
+					))
+				} else if kind == string(models.InfraGCR) {
 					reg := &models.Registry{
 						ProjectID:        projID,
 						GCPIntegrationID: infra.GCPIntegrationID,
@@ -217,7 +237,15 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(types.InfraGKE) {
+
+					analyticsClient.Track(analytics.RegistryProvisioningSuccessTrack(
+						&analytics.RegistryProvisioningSuccessTrackOpts{
+							RegistryScopedTrackOpts: analytics.GetRegistryScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, reg.ID),
+							RegistryType:            infra.Kind,
+							InfraID:                 infra.ID,
+						},
+					))
+				} else if kind == string(models.InfraGKE) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.GCP,
 						ProjectID:        projID,
@@ -251,7 +279,15 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(types.InfraDOCR) {
+
+					analyticsClient.Track(analytics.ClusterProvisioningSuccessTrack(
+						&analytics.ClusterProvisioningSuccessTrackOpts{
+							ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, cluster.ID),
+							ClusterType:            infra.Kind,
+							InfraID:                infra.ID,
+						},
+					))
+				} else if kind == string(models.InfraDOCR) {
 					reg := &models.Registry{
 						ProjectID:       projID,
 						DOIntegrationID: infra.DOIntegrationID,
@@ -270,7 +306,15 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
-				} else if kind == string(types.InfraDOKS) {
+
+					analyticsClient.Track(analytics.RegistryProvisioningSuccessTrack(
+						&analytics.RegistryProvisioningSuccessTrackOpts{
+							RegistryScopedTrackOpts: analytics.GetRegistryScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, reg.ID),
+							RegistryType:            infra.Kind,
+							InfraID:                 infra.ID,
+						},
+					))
+				} else if kind == string(models.InfraDOKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:   models.DO,
 						ProjectID:       projID,
@@ -304,6 +348,14 @@ func GlobalStreamListener(
 					if err != nil {
 						continue
 					}
+
+					analyticsClient.Track(analytics.ClusterProvisioningSuccessTrack(
+						&analytics.ClusterProvisioningSuccessTrackOpts{
+							ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, cluster.ID),
+							ClusterType:            infra.Kind,
+							InfraID:                infra.ID,
+						},
+					))
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "error" {
 				infra, err := repo.Infra().ReadInfra(projID, infraID)
@@ -318,6 +370,24 @@ func GlobalStreamListener(
 
 				if err != nil {
 					continue
+				}
+
+				if infra.Kind == models.InfraDOKS || infra.Kind == models.InfraGKE || infra.Kind == models.InfraEKS {
+					analyticsClient.Track(analytics.ClusterProvisioningErrorTrack(
+						&analytics.ClusterProvisioningErrorTrackOpts{
+							ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID),
+							ClusterType:            infra.Kind,
+							InfraID:                infra.ID,
+						},
+					))
+				} else if infra.Kind == models.InfraDOCR || infra.Kind == models.InfraGCR || infra.Kind == models.InfraECR {
+					analyticsClient.Track(analytics.RegistryProvisioningErrorTrack(
+						&analytics.RegistryProvisioningErrorTrackOpts{
+							ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID),
+							RegistryType:           infra.Kind,
+							InfraID:                infra.ID,
+						},
+					))
 				}
 			} else if fmt.Sprintf("%v", msg.Values["status"]) == "destroyed" {
 				infra, err := repo.Infra().ReadInfra(projID, infraID)

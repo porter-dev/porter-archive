@@ -60,6 +60,8 @@ type ServerConf struct {
 	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
 	IngressCluster     string `env:"INGRESS_CLUSTER"`
 	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
+
+	WelcomeFormWebhook string `env:"WELCOME_FORM_WEBHOOK"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

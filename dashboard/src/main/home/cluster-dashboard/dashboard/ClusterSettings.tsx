@@ -120,7 +120,7 @@ const ClusterSettings: React.FC = () => {
 
   return (
     <div>
-      <StyledSettingsSection showSource={false}>
+      <StyledSettingsSection>
         {keyRotationSection}
         <DarkMatter />
         <Heading>Delete Cluster</Heading>
@@ -143,7 +143,7 @@ const DarkMatter = styled.div`
   margin-top: -15px;
 `;
 
-const StyledSettingsSection = styled.div<{ showSource: boolean }>`
+const StyledSettingsSection = styled.div`
   margin-top: 35px;
   width: 100%;
   background: #ffffff11;
@@ -152,7 +152,7 @@ const StyledSettingsSection = styled.div<{ showSource: boolean }>`
   position: relative;
   border-radius: 8px;
   overflow: auto;
-  height: ${(props) => (props.showSource ? "calc(100% - 55px)" : "100%")};
+  height: 100%;
 `;
 
 const Button = styled.button`

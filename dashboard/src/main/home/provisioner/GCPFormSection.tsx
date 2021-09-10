@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import close from "assets/close.png";
@@ -16,24 +16,15 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
-import { RouteComponentProps, withRouter } from "react-router";
+import { useHistory, useLocation } from "react-router";
 
-type PropsType = RouteComponentProps & {
+type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
   handleError: () => void;
   projectName: string;
+  highlightCosts?: boolean;
   infras: InfraType[];
-};
-
-type StateType = {
-  gcpRegion: string;
-  gcpProjectId: string;
-  gcpKeyData: any;
-  clusterName: string;
-  clusterNameSet: boolean;
-  selectedInfras: { value: string; label: string }[];
-  buttonStatus: string;
-  provisionConfirmed: boolean;
+  trackOnSave: () => void;
 };
 
 const provisionOptions = [
@@ -68,27 +59,38 @@ const regionOptions = [
   { value: "us-west4", label: "us-west4" },
 ];
 
-class GCPFormSection extends Component<PropsType, StateType> {
-  state = {
-    gcpRegion: "us-east1",
-    gcpProjectId: "",
-    gcpKeyData: "",
-    clusterName: "",
-    clusterNameSet: false,
-    selectedInfras: [...provisionOptions],
-    buttonStatus: "",
-    provisionConfirmed: false,
-  };
+const GCPFormSectionFC: React.FC<PropsType> = (props) => {
+  const [gcpRegion, setGcpRegion] = useState("us-east1");
+  const [gcpProjectId, setGcpProjectId] = useState("");
+  const [gcpKeyData, setGcpKeyData] = useState("");
+  const [clusterName, setClusterName] = useState("");
+  const [clusterNameSet, setClusterNameSet] = useState(false);
+  const [selectedInfras, setSelectedInfras] = useState([...provisionOptions]);
+  const [buttonStatus, setButtonStatus] = useState("");
+  const [provisionConfirmed, setProvisionConfirmed] = useState(false);
+  // This is added only for tracking purposes
+  // With this prop we will track down if the user has had an intent of filling the formulary
+  const [isFormDirty, setIsFormDirty] = useState(false);
 
-  componentDidMount = () => {
-    let { infras } = this.props;
-    let { selectedInfras } = this.state;
-    this.setClusterNameIfNotSet();
+  const context = useContext(Context);
+  const location = useLocation();
+  const history = useHistory();
 
-    if (infras) {
+  useEffect(() => {
+    if (!isFormDirty) {
+      return;
+    }
+
+    window.analytics?.track("provision_form-dirty", {
+      provider: "gcp",
+    });
+  }, [isFormDirty]);
+
+  useEffect(() => {
+    if (props.infras) {
       // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
-      infras.forEach((infra: InfraType, i: number) => {
+      props.infras.forEach((infra: InfraType, i: number) => {
         let { kind, status } = infra;
         if (status === "creating" || status === "created") {
           filtered = filtered.filter((item: any) => {
@@ -96,45 +98,30 @@ class GCPFormSection extends Component<PropsType, StateType> {
           });
         }
       });
-      this.setState({ selectedInfras: filtered });
+      setSelectedInfras(filtered);
+    }
+  }, [props.infras]);
+
+  useEffect(() => {
+    setClusterNameIfNotSet();
+  }, [props.projectName]);
+
+  const setClusterNameIfNotSet = () => {
+    let projectName = props.projectName || context.currentProject?.name;
+
+    if (!clusterNameSet && !clusterName.includes(`${projectName}-cluster`)) {
+      setClusterName(
+        `${projectName}-cluster-${Math.random().toString(36).substring(2, 8)}`
+      );
     }
   };
 
-  componentDidUpdate = (prevProps: PropsType, prevState: StateType) => {
-    if (prevProps.projectName != this.props.projectName) {
-      this.setClusterNameIfNotSet();
-    }
-  };
-
-  setClusterNameIfNotSet = () => {
-    let projectName =
-      this.props.projectName || this.context.currentProject?.name;
-
-    if (
-      !this.state.clusterNameSet &&
-      !this.state.clusterName.includes(`${projectName}-cluster`)
-    ) {
-      this.setState({
-        clusterName: `${projectName}-cluster-${Math.random()
-          .toString(36)
-          .substring(2, 8)}`,
-      });
-    }
-  };
-
-  checkFormDisabled = () => {
-    if (!this.state.provisionConfirmed) {
+  const checkFormDisabled = () => {
+    if (!provisionConfirmed) {
       return true;
     }
 
-    let {
-      gcpRegion,
-      gcpProjectId,
-      gcpKeyData,
-      selectedInfras,
-      clusterName,
-    } = this.state;
-    let { projectName } = this.props;
+    let { projectName } = props;
     if (projectName || projectName === "") {
       return (
         !isAlphanumeric(projectName) ||
@@ -158,15 +145,15 @@ class GCPFormSection extends Component<PropsType, StateType> {
     }
   };
 
-  catchError = (err: any) => {
+  const catchError = (err: any) => {
     console.log(err);
-    this.props.handleError();
+    props.handleError();
   };
 
   // Step 1: Create a project
-  createProject = (callback?: any) => {
-    let { projectName } = this.props;
-    let { user, setProjects, setCurrentProject } = this.context;
+  const createProject = (callback?: any) => {
+    let { projectName } = props;
+    let { user, setProjects, setCurrentProject } = context;
 
     api
       .createProject("<token>", { name: projectName }, {})
@@ -187,14 +174,14 @@ class GCPFormSection extends Component<PropsType, StateType> {
             setProjects(res.data);
             setCurrentProject(proj, () => callback && callback());
           })
-          .catch(this.catchError);
+          .catch(catchError);
       })
-      .catch(this.catchError);
+      .catch(catchError);
   };
 
-  provisionGCR = (id: number, callback?: any) => {
+  const provisionGCR = (id: number, callback?: any) => {
     console.log("Provisioning GCR");
-    let { currentProject } = this.context;
+    let { currentProject } = context;
 
     return api
       .createGCR(
@@ -204,34 +191,32 @@ class GCPFormSection extends Component<PropsType, StateType> {
         },
         { project_id: currentProject.id }
       )
-      .catch(this.catchError);
+      .catch(catchError);
   };
 
-  provisionGKE = (id: number) => {
+  const provisionGKE = (id: number) => {
     console.log("Provisioning GKE");
-    let { handleError } = this.props;
-    let { currentProject } = this.context;
+    let { currentProject } = context;
 
     api
       .createGKE(
         "<token>",
         {
-          gke_name: this.state.clusterName,
+          gke_name: clusterName,
           gcp_integration_id: id,
         },
         { project_id: currentProject.id }
       )
       .then((res) =>
-        pushFiltered(this.props, "/dashboard", ["project_id"], {
+        pushFiltered({ history, location }, "/dashboard", ["project_id"], {
           tab: "provisioner",
         })
       )
-      .catch(this.catchError);
+      .catch(catchError);
   };
 
-  handleCreateFlow = () => {
-    let { selectedInfras, gcpKeyData, gcpProjectId, gcpRegion } = this.state;
-    let { currentProject } = this.context;
+  const handleCreateFlow = () => {
+    let { currentProject } = context;
     api
       .createGCPIntegration(
         "<token>",
@@ -248,56 +233,59 @@ class GCPFormSection extends Component<PropsType, StateType> {
 
           if (selectedInfras.length === 2) {
             // Case: project exists, provision GCR + GKE
-            this.provisionGCR(id).then(() => this.provisionGKE(id));
+            provisionGCR(id).then(() => provisionGKE(id));
           } else if (selectedInfras[0].value === "gcr") {
             // Case: project exists, only provision GCR
-            this.provisionGCR(id).then(() =>
-              pushFiltered(this.props, "/dashboard", ["project_id"], {
-                tab: "provisioner",
-              })
+            provisionGCR(id).then(() =>
+              pushFiltered(
+                { location, history },
+                "/dashboard",
+                ["project_id"],
+                {
+                  tab: "provisioner",
+                }
+              )
             );
           } else {
             // Case: project exists, only provision GKE
-            this.provisionGKE(id);
+            provisionGKE(id);
           }
         }
       })
       .catch(console.log);
   };
 
-  // TODO: handle generically (with > 2 steps)
-  onCreateGCP = () => {
-    this.setState({ buttonStatus: "loading" });
-    let { projectName } = this.props;
+  const onCreateGCP = () => {
+    props?.trackOnSave();
+    setButtonStatus("loading");
+    let { projectName } = props;
 
     if (!projectName) {
-      this.handleCreateFlow();
+      handleCreateFlow();
     } else {
-      this.createProject(this.handleCreateFlow);
+      createProject(handleCreateFlow);
     }
   };
 
-  getButtonStatus = () => {
-    if (this.props.projectName) {
-      if (!isAlphanumeric(this.props.projectName)) {
+  const getButtonStatus = () => {
+    if (props.projectName) {
+      if (!isAlphanumeric(props.projectName)) {
         return "Project name contains illegal characters";
       }
     }
     if (
-      !this.state.gcpProjectId ||
-      !this.state.gcpKeyData ||
-      !this.state.provisionConfirmed ||
-      !this.state.clusterName ||
-      this.props.projectName === ""
+      !gcpProjectId ||
+      !gcpKeyData ||
+      !provisionConfirmed ||
+      !clusterName ||
+      props.projectName === ""
     ) {
       return "Required fields missing";
     }
-    return this.state.buttonStatus;
+    return buttonStatus;
   };
 
-  renderClusterNameSection = () => {
-    let { selectedInfras, clusterName } = this.state;
-
+  const renderClusterNameSection = () => {
     if (
       selectedInfras.length == 2 ||
       (selectedInfras.length == 1 && selectedInfras[0].value === "gke")
@@ -306,9 +294,11 @@ class GCPFormSection extends Component<PropsType, StateType> {
         <InputRow
           type="text"
           value={clusterName}
-          setValue={(x: string) =>
-            this.setState({ clusterName: x, clusterNameSet: true })
-          }
+          setValue={(x: string) => {
+            setIsFormDirty(true);
+            setClusterName(x);
+            setClusterNameSet(true);
+          }}
           label="Cluster Name"
           placeholder="ex: porter-cluster"
           width="100%"
@@ -318,106 +308,141 @@ class GCPFormSection extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    let { setSelectedProvisioner } = this.props;
-    let { gcpRegion, gcpProjectId, gcpKeyData, selectedInfras } = this.state;
-    return (
-      <StyledGCPFormSection>
-        <FormSection>
-          <CloseButton onClick={() => setSelectedProvisioner(null)}>
-            <CloseButtonImg src={close} />
-          </CloseButton>
-          <Heading isAtTop={true}>
-            GCP Credentials
-            <GuideButton
-              href="https://docs.getporter.dev/docs/getting-started-on-gcp"
-              target="_blank"
-            >
-              <i className="material-icons-outlined">help</i>
-              Guide
-            </GuideButton>
-          </Heading>
-          <SelectRow
-            options={regionOptions}
-            width="100%"
-            value={gcpRegion}
-            dropdownMaxHeight="240px"
-            setActiveValue={(x: string) => this.setState({ gcpRegion: x })}
-            label="📍 GCP Region"
-          />
-          <InputRow
-            type="text"
-            value={gcpProjectId}
-            setValue={(x: string) => this.setState({ gcpProjectId: x })}
-            label="🏷️ GCP Project ID"
-            placeholder="ex: blindfold-ceiling-24601"
-            width="100%"
-            isRequired={true}
-          />
-          <UploadArea
-            setValue={(x: any) => this.setState({ gcpKeyData: x })}
-            label="🔒 GCP Key Data (JSON)"
-            placeholder="Choose a file or drag it here."
-            width="100%"
-            height="100%"
-            isRequired={true}
-          />
+  const goToGuide = () => {
+    window?.analytics?.track("provision_go-to-guide", {
+      hosting: "gcp",
+    });
 
-          <Br />
-          <Heading>GCP Resources</Heading>
-          <Helper>
-            Porter will provision the following GCP resources in your own cloud.
-          </Helper>
-          <CheckboxList
-            options={provisionOptions}
-            selected={selectedInfras}
-            setSelected={(x: { value: string; label: string }[]) => {
-              this.setState({ selectedInfras: x });
-            }}
-          />
-          {this.renderClusterNameSection()}
-          <Helper>
-            By default, Porter creates a cluster with three e2-medium instances
-            (2vCPUs and 4GB RAM each). Google Cloud will bill you for any
-            provisioned resources. Learn more about GKE pricing
-            <Highlight
-              href="https://cloud.google.com/kubernetes-engine/pricing"
-              target="_blank"
-            >
-              here
-            </Highlight>
-            .
-          </Helper>
-          <CheckboxRow
-            isRequired={true}
-            checked={this.state.provisionConfirmed}
-            toggle={() =>
-              this.setState({
-                provisionConfirmed: !this.state.provisionConfirmed,
-              })
-            }
-            label="I understand and wish to proceed"
-          />
-        </FormSection>
-        {this.props.children ? this.props.children : <Padding />}
-        <SaveButton
-          text="Submit"
-          disabled={
-            this.checkFormDisabled() || this.state.buttonStatus === "loading"
-          }
-          onClick={this.onCreateGCP}
-          makeFlush={true}
-          status={this.getButtonStatus()}
-          helper="Note: Provisioning can take up to 15 minutes"
+    window.open("https://docs.getporter.dev/docs/getting-started-on-gcp");
+  };
+
+  return (
+    <StyledGCPFormSection>
+      <FormSection>
+        <CloseButton onClick={() => props.setSelectedProvisioner(null)}>
+          <CloseButtonImg src={close} />
+        </CloseButton>
+        <Heading isAtTop={true}>
+          GCP Credentials
+          <GuideButton onClick={() => goToGuide()}>
+            <i className="material-icons-outlined">help</i>
+            Guide
+          </GuideButton>
+        </Heading>
+        <SelectRow
+          options={regionOptions}
+          width="100%"
+          value={gcpRegion}
+          dropdownMaxHeight="240px"
+          setActiveValue={(x: string) => {
+            setIsFormDirty(true);
+            setGcpRegion(x);
+          }}
+          label="📍 GCP Region"
         />
-      </StyledGCPFormSection>
-    );
-  }
-}
+        <InputRow
+          type="text"
+          value={gcpProjectId}
+          setValue={(x: string) => {
+            setIsFormDirty(true);
+            setGcpProjectId(x);
+          }}
+          label="🏷️ GCP Project ID"
+          placeholder="ex: blindfold-ceiling-24601"
+          width="100%"
+          isRequired={true}
+        />
+        <UploadArea
+          setValue={(x: any) => {
+            setIsFormDirty(true);
+            setGcpKeyData(x);
+          }}
+          label="🔒 GCP Key Data (JSON)"
+          placeholder="Choose a file or drag it here."
+          width="100%"
+          height="100%"
+          isRequired={true}
+        />
 
-GCPFormSection.contextType = Context;
+        <Br />
+        <Heading>GCP Resources</Heading>
+        <Helper>
+          Porter will provision the following GCP resources in your own cloud.
+        </Helper>
+        <CheckboxList
+          options={provisionOptions}
+          selected={selectedInfras}
+          setSelected={(x: { value: string; label: string }[]) => {
+            setIsFormDirty(true);
+            setSelectedInfras(x);
+          }}
+        />
+        {renderClusterNameSection()}
+        <Helper>
+          By default, Porter creates a cluster with three custom-2-4096
+          instances (2 CPU, 4 GB RAM each). Google Cloud will bill you for any
+          provisioned resources. Learn more about GKE pricing
+          <Highlight
+            href="https://cloud.google.com/kubernetes-engine/pricing"
+            target="_blank"
+          >
+            here
+          </Highlight>
+          .
+        </Helper>
+        {/*
+        <Helper>
+          Estimated Cost:{" "}
+          <CostHighlight highlight={this.props.highlightCosts}>
+            $250/Month
+          </CostHighlight>
+          <Tooltip
+            title={
+              <div
+                style={{
+                  fontFamily: "Work Sans, sans-serif",
+                  fontSize: "12px",
+                  fontWeight: "normal",
+                  padding: "5px 6px",
+                }}
+              >
+                GKE cost: ~$70/month <br />
+                Machine (x3) cost: ~$150/month <br />
+                Networking cost: ~$30/month
+              </div>
+            }
+            placement="top"
+          >
+            <StyledInfoTooltip>
+              <i className="material-icons">help_outline</i>
+            </StyledInfoTooltip>
+          </Tooltip>
+        </Helper>
+        */}
+        <CheckboxRow
+          isRequired={true}
+          checked={provisionConfirmed}
+          toggle={() => {
+            setIsFormDirty(true);
+            setProvisionConfirmed(!provisionConfirmed);
+          }}
+          label="I understand and wish to proceed"
+        />
+      </FormSection>
+      {props.children ? props.children : <Padding />}
+      <SaveButton
+        text="Submit"
+        disabled={checkFormDisabled() || buttonStatus === "loading"}
+        onClick={onCreateGCP}
+        makeFlush={true}
+        status={getButtonStatus()}
+        helper="Note: Provisioning can take up to 15 minutes"
+      />
+    </StyledGCPFormSection>
+  );
+};
 
-export default withRouter(GCPFormSection);
+export default GCPFormSectionFC;
 
 const Highlight = styled.a`
   color: #8590ff;
@@ -470,7 +495,7 @@ const CloseButton = styled.div`
   }
 `;
 
-const GuideButton = styled.a`
+const GuideButton = styled.div`
   display: flex;
   align-items: center;
   margin-left: 20px;
@@ -479,7 +504,7 @@ const GuideButton = styled.a`
   margin-bottom: -1px;
   border: 1px solid #aaaabb;
   padding: 5px 10px;
-  padding-left: 6px;
+  padding-left: 8px;
   border-radius: 5px;
   cursor: pointer;
   :hover {
@@ -495,11 +520,33 @@ const GuideButton = styled.a`
   > i {
     color: #aaaabb;
     font-size: 16px;
-    margin-right: 6px;
+    margin-right: 7px;
   }
 `;
 
 const CloseButtonImg = styled.img`
   width: 14px;
   margin: 0 auto;
+`;
+
+const CostHighlight = styled.span<{ highlight: boolean }>`
+  background-color: ${(props) => props.highlight && "yellow"};
+`;
+
+const StyledInfoTooltip = styled.div`
+  display: inline-block;
+  position: relative;
+  margin-right: 2px;
+  > i {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -10px;
+    font-size: 10px;
+    color: #858faaaa;
+    cursor: pointer;
+    :hover {
+      color: #aaaabb;
+    }
+  }
 `;

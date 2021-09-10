@@ -5,7 +5,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import { ChartType, StorageType } from "shared/types";
 import api from "shared/api";
-import { pushFiltered } from "shared/routing";
+import { getQueryParam, pushFiltered } from "shared/routing";
 import ExpandedJobChart from "./ExpandedJobChart";
 import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";
@@ -34,11 +34,14 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { currentProject, currentCluster } = this.context;
     if (currentProject && currentCluster) {
       // TODO: add query for retrieving max revision #
+      const lastCheckedRevision = getQueryParam(this.props, "chart_revision");
+
       api
-        .getRevisions(
+        .getChart(
           "<token>",
           {
           },
+<<<<<<< HEAD
           { id: currentProject.id, namespace: namespace, cluster_id: currentCluster.id ,name: chartName }
         )
         .then((res) => {
@@ -66,6 +69,16 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
               console.log("err", err.response.data);
               this.setState({ loading: false });
             });
+=======
+          {
+            name: chartName,
+            revision: Number(lastCheckedRevision),
+            id: currentProject.id,
+          }
+        )
+        .then((res) => {
+          this.setState({ currentChart: res.data, loading: false });
+>>>>>>> master
         })
         .catch((err) => {
           console.log("err", err.response.data);

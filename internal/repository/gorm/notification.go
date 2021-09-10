@@ -23,7 +23,7 @@ func (repo NotificationConfigRepository) CreateNotificationConfig(am *models.Not
 	return am, nil
 }
 
-// ReadNotificationConfig reads a NotificationConfig by Id
+// ReadNotificationConfig reads a NotificationConfig by ID
 func (repo NotificationConfigRepository) ReadNotificationConfig(id uint) (*models.NotificationConfig, error) {
 	ret := &models.NotificationConfig{}
 

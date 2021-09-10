@@ -11,11 +11,13 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/forms"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"gopkg.in/yaml.v2"
 )
@@ -23,6 +25,8 @@ import (
 // HandleDeployTemplate triggers a chart deployment from a template
 func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
+	flowID := oauth.CreateRandomState()
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -57,6 +61,13 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
+
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
+		&analytics.ApplicationLaunchStartTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), uint(clusterID)),
+			FlowID:                 flowID,
+		},
+	))
 
 	getChartForm.PopulateRepoURLFromQueryParams(vals)
 
@@ -188,8 +199,22 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, gaForm, w, r)
+		app.createGitActionFromForm(projID, clusterID, form.ChartTemplateForm.Name, form.ReleaseForm.Form.Namespace, gaForm, w, r)
 	}
+
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
+		&analytics.ApplicationLaunchSuccessTrackOpts{
+			ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+				userID,
+				uint(projID),
+				uint(clusterID),
+				release.Name,
+				release.Namespace,
+				chart.Metadata.Name,
+			),
+			FlowID: flowID,
+		},
+	))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -197,6 +222,8 @@ func (app *App) HandleDeployTemplate(w http.ResponseWriter, r *http.Request) {
 // HandleDeployAddon triggers a addon deployment from a template
 func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
+	flowID := oauth.CreateRandomState()
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
@@ -254,6 +281,13 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
+		&analytics.ApplicationLaunchStartTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(userID, uint(projID), uint(form.ReleaseForm.Cluster.ID)),
+			FlowID:                 flowID,
+		},
+	))
+
 	agent, err := app.getAgentFromReleaseForm(
 		w,
 		r,
@@ -282,7 +316,7 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 		Registries: registries,
 	}
 
-	_, err = agent.InstallChart(conf, app.DOConf)
+	rel, err := agent.InstallChart(conf, app.DOConf)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
@@ -292,6 +326,20 @@ func (app *App) HandleDeployAddon(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	app.AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
+		&analytics.ApplicationLaunchSuccessTrackOpts{
+			ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+				userID,
+				uint(projID),
+				uint(form.ReleaseForm.Cluster.ID),
+				rel.Name,
+				rel.Namespace,
+				chart.Metadata.Name,
+			),
+			FlowID: flowID,
+		},
+	))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -310,7 +358,8 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 	form := &forms.GetReleaseForm{
 		ReleaseForm: &forms.ReleaseForm{
 			Form: &helm.Form{
-				Repo: app.Repo,
+				Repo:              app.Repo,
+				DigitalOceanOAuth: app.DOConf,
 			},
 		},
 		Name: name,
@@ -394,12 +443,14 @@ func (app *App) HandleUninstallTemplate(w http.ResponseWriter, r *http.Request) 
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
+					ReleaseNamespace:       release.Namespace,
 					GitBranch:              gitAction.GitBranch,
 					DockerFilePath:         gitAction.DockerfilePath,
 					FolderPath:             gitAction.FolderPath,
 					ImageRepoURL:           gitAction.ImageRepoURI,
 					BuildEnv:               cEnv.Container.Env.Normal,
 					ClusterID:              release.ClusterID,
+					Version:                gitAction.Version,
 				}
 
 				err = gaRunner.Cleanup()

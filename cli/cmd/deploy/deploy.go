@@ -3,7 +3,6 @@ package deploy
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -110,7 +109,7 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 			deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
 		}
 
-		if deployAgent.opts.LocalDockerfile == "" {
+		if deployAgent.dockerfilePath == "" && deployAgent.opts.LocalDockerfile == "" {
 			deployAgent.dockerfilePath = "./Dockerfile"
 		}
 	}
@@ -279,6 +278,11 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
 
+	// if this is a job chart, set "paused" to false so that the job doesn't run
+	if d.release.Chart.Name() == "job" {
+		mergedValues["paused"] = true
+	}
+
 	// if the current image section is hello-porter, the image must be overriden
 	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||
 		currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
@@ -323,10 +327,8 @@ func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) 
 	envConfig, err := getNestedMap(config, "container", "env", "normal")
 
 	// if the field is not found, set envConfig to an empty map; this release has no env set
-	if e := (&NestedMapFieldNotFoundError{}); errors.As(err, &e) {
+	if err != nil {
 		envConfig = make(map[string]interface{})
-	} else if err != nil {
-		return nil, fmt.Errorf("could not get environment variables from release: %s", err.Error())
 	}
 
 	mapEnvConfig := make(map[string]string)
@@ -395,6 +397,12 @@ func (d *DeployAgent) pullCurrentReleaseImage() error {
 		return fmt.Errorf("could not cast image.tag field to string")
 	}
 
+	// if image repo is a hello-porter image, skip
+	if d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+		d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+		return nil
+	}
+
 	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
 	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
@@ -437,6 +445,10 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	}
 
 	return res, nil
+}
+
+func (d *DeployAgent) StreamEvent(event api.Event) error {
+	return d.client.StreamEvent(event, d.opts.ProjectID, d.opts.ClusterID, d.release.Name, d.release.Namespace)
 }
 
 type NestedMapFieldNotFoundError struct {

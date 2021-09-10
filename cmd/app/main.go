@@ -33,6 +33,21 @@ func main() {
 		log.Fatal("Config loading failed: ", err)
 	}
 
+	if config.RedisConf.Enabled {
+		redis, err := adapter.NewRedisClient(&appConf.Redis)
+
+		if err != nil {
+			logger.Fatal().Err(err).Msg("")
+			return
+		}
+
+		prov.InitGlobalStream(redis)
+
+		errorChan := make(chan error)
+
+		go prov.GlobalStreamListener(redis, *repo, a.AnalyticsClient, errorChan)
+	}
+
 	appRouter := router.NewAPIRouter(config)
 
 	address := fmt.Sprintf(":%d", config.ServerConf.Port)

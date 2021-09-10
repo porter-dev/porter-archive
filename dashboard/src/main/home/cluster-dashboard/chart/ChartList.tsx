@@ -94,19 +94,15 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
-<<<<<<< HEAD
-  const setupHelmReleasesWebsocket = () => {
-    const apiPath = `/api/projects/${context.currentProject.id}/clusters/${context.currentCluster.id}/helm_release`;
-=======
   const setupHelmReleasesWebsocket = (
     websocketID: string,
     namespace: string
   ) => {
-    let apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+    let apiPath = `/api/projects/${context.currentProject.id}/clusters/${context.currentCluster.id}/helm_release`;
+
     if (namespace) {
-      apiPath += `&namespace=${namespace}`;
+      apiPath += `?namespace=${namespace}`;
     }
->>>>>>> master
 
     const wsConfig = {
       onopen: () => {
@@ -193,7 +189,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   const setupJobWebsocket = (websocketID: string) => {
     const kind = "job";
     let { currentCluster, currentProject } = context;
-    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
       onopen: () => {

@@ -41,44 +41,10 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           "<token>",
           {
           },
-<<<<<<< HEAD
-          { id: currentProject.id, namespace: namespace, cluster_id: currentCluster.id ,name: chartName }
-        )
-        .then((res) => {
-          res.data.sort((a: ChartType, b: ChartType) => {
-            return -(a.version - b.version);
-          });
-          let maxVersion = res.data[0].version;
-          api
-            .getChart(
-              "<token>",
-              {
-              },
-              {
-                name: chartName,
-                revision: maxVersion,
-                namespace: namespace,
-                cluster_id: currentCluster.id,
-                id: currentProject.id,
-              }
-            )
-            .then((res) => {
-              this.setState({ currentChart: res.data, loading: false });
-            })
-            .catch((err) => {
-              console.log("err", err.response.data);
-              this.setState({ loading: false });
-            });
-=======
-          {
-            name: chartName,
-            revision: Number(lastCheckedRevision),
-            id: currentProject.id,
-          }
+          { id: currentProject.id, namespace: namespace, cluster_id: currentCluster.id ,name: chartName, revision: Number(lastCheckedRevision), }
         )
         .then((res) => {
           this.setState({ currentChart: res.data, loading: false });
->>>>>>> master
         })
         .catch((err) => {
           console.log("err", err.response.data);

@@ -685,9 +685,9 @@ const getReleaseToken = baseApi<
 >("GET", (pathParams) => {
   let { id, cluster_id, namespace, name } = pathParams;
 
-<<<<<<< HEAD
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/webhook`;
-=======
+});
+
 const getReleaseSteps = baseApi<
   {
     namespace: string;
@@ -696,19 +696,6 @@ const getReleaseSteps = baseApi<
   { name: string; id: number }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/releases/${pathParams.name}/steps`;
-});
-
-const destroyEKS = baseApi<
-  {
-    eks_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
->>>>>>> master
 });
 
 const destroyInfra = baseApi<
@@ -1096,12 +1083,8 @@ export default {
   detectBuildpack,
   getBranchContents,
   getBranches,
-<<<<<<< HEAD
   getMetadata,
-=======
-  getCapabilities,
   getWelcome,
->>>>>>> master
   getChart,
   getCharts,
   getChartComponents,

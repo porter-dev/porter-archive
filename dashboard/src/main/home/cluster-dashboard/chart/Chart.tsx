@@ -67,62 +67,6 @@ const Chart: React.FunctionComponent<Props> = ({
     getControllerForChart(chart);
   }, [chart]);
 
-<<<<<<< HEAD
-  const setupWebsocket = (kind: string) => {
-    const { currentProject, currentCluster } = context;
-
-    const apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
-
-    const wsConfig = {
-      onmessage(evt: MessageEvent) {
-        const event = JSON.parse(evt.data);
-        let object = event.Object;
-        object.metadata.kind = event.Kind;
-        if (event.event_type != "UPDATE") {
-          return;
-        }
-        getJobStatus();
-      },
-      onerror() {
-        closeWebsocket(kind);
-      },
-    };
-
-    newWebsocket(kind, apiEndpoint, wsConfig);
-    openWebsocket(kind);
-  };
-
-  const getJobStatus = () => {
-    let { currentCluster, currentProject, setCurrentError } = context;
-
-    api
-      .getJobStatus(
-        "<token>",
-        {
-        },
-        {
-          id: currentProject.id,
-          release_name: chart.name,
-          cluster_id: currentCluster.id,
-          namespace: chart.namespace,
-        }
-      )
-      .then((res) => {
-        setJobStatus(res.data);
-      })
-      .catch((err) => setCurrentError(err));
-  };
-
-  useEffect(() => {
-    if (isJob) {
-      getJobStatus();
-      setupWebsocket("job");
-    }
-    return () => closeAllWebsockets();
-  }, [isJob]);
-
-=======
->>>>>>> master
   const readableDate = (s: string) => {
     const ts = new Date(s);
     const date = ts.toLocaleDateString();

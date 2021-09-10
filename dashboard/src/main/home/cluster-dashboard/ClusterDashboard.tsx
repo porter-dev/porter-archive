@@ -5,11 +5,7 @@ import monoweb from "assets/monoweb.png";
 import { Route, Switch } from "react-router-dom";
 
 import { Context } from "shared/Context";
-<<<<<<< HEAD
-import { ChartType, ClusterType } from "shared/types";
-=======
 import { ChartType, ClusterType, JobStatusType } from "shared/types";
->>>>>>> master
 import {
   getQueryParam,
   PorterUrl,

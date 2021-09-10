@@ -9,6 +9,8 @@ import (
 
 	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
+	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 )
 
 // Version will be linked by an ldflag during build
@@ -34,18 +36,18 @@ func main() {
 	}
 
 	if config.RedisConf.Enabled {
-		redis, err := adapter.NewRedisClient(&appConf.Redis)
+		redis, err := adapter.NewRedisClient(config.RedisConf)
 
 		if err != nil {
-			logger.Fatal().Err(err).Msg("")
+			log.Fatal("Redis connection failed: ", err)
 			return
 		}
 
-		prov.InitGlobalStream(redis)
+		provisioner.InitGlobalStream(redis)
 
 		errorChan := make(chan error)
 
-		go prov.GlobalStreamListener(redis, *repo, a.AnalyticsClient, errorChan)
+		go provisioner.GlobalStreamListener(redis, config.Repo, config.AnalyticsClient, errorChan)
 	}
 
 	appRouter := router.NewAPIRouter(config)

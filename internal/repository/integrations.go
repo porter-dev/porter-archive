@@ -72,7 +72,7 @@ type GCPIntegrationRepository interface {
 // GithubAppInstallationRepository represents the set of queries for github app installations
 type GithubAppInstallationRepository interface {
 	CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error)
-	ReadGithubAppInstallation(projectID, gaID uint) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallationByInstallationID(gaID uint) (*ints.GithubAppInstallation, error)
 	ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error)
 	ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error)
 	DeleteGithubAppInstallationByAccountID(accountID int64) error

@@ -210,8 +210,8 @@ export interface RepoType {
 }
 
 export interface FileType {
-  Path: string;
-  Type: string;
+  path: string;
+  type: string;
 }
 
 export interface ProjectType {

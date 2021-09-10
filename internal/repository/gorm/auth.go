@@ -1106,11 +1106,11 @@ func (repo *GithubAppInstallationRepository) CreateGithubAppInstallation(am *int
 	return am, nil
 }
 
-// ReadGithubAppInstallation finds a GithubAppInstallation by id
-func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(projectID, gaID uint) (*ints.GithubAppInstallation, error) {
+// ReadGithubAppInstallationByInstallationID finds a GithubAppInstallation by id
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByInstallationID(gaID uint) (*ints.GithubAppInstallation, error) {
 	ret := &ints.GithubAppInstallation{}
 
-	if err := repo.db.Where("project_id = ? AND id = ?", projectID, gaID).First(&ret).Error; err != nil {
+	if err := repo.db.Where("installation_id = ?", gaID).First(&ret).Error; err != nil {
 		return nil, err
 	}
 

@@ -274,18 +274,20 @@ const getNotificationConfig = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
 
-const generateGHAWorkflow = baseApi<
-  FullActionConfigType,
+const getGHAWorkflowTemplate = baseApi<
+  {
+    name: string;
+    github_action_config: FullActionConfigType;
+  },
   {
     cluster_id: number;
     project_id: number;
-    name: string;
     namespace: string;
   }
 >("POST", (pathParams) => {
-  const { name, namespace, cluster_id, project_id } = pathParams;
+  const { cluster_id, project_id, namespace } = pathParams;
 
-  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}&namespace=${namespace}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/gha_template`;
 });
 
 const deployTemplate = baseApi<
@@ -699,15 +701,15 @@ const getReleaseSteps = baseApi<
 });
 
 const destroyInfra = baseApi<
-{
-  name: string;
-},
-{
-  project_id: number;
-  infra_id: number;
-}
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
 >("DELETE", (pathParams) => {
-return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}`;
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}`;
 });
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
@@ -783,8 +785,8 @@ const linkGithubProject = baseApi<
   return `/api/oauth/projects/${pathParams.project_id}/github`;
 });
 
-const getGithubAccess = baseApi<{}, {}>("GET", () => {
-  return `/api/integrations/github-app/access`;
+const getGithubAccounts = baseApi<{}, {}>("GET", () => {
+  return `/api/integrations/github-app/accounts`;
 });
 
 const logInUser = baseApi<{
@@ -1095,7 +1097,7 @@ export default {
   getClusterNodes,
   getClusterNode,
   getConfigMap,
-  generateGHAWorkflow,
+  getGHAWorkflowTemplate,
   getGitRepoList,
   getGitRepos,
   getImageRepos,
@@ -1129,7 +1131,7 @@ export default {
   getTemplateUpgradeNotes,
   getTemplates,
   linkGithubProject,
-  getGithubAccess,
+  getGithubAccounts,
   listConfigMaps,
   logInUser,
   logOutUser,

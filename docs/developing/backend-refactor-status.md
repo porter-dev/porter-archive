@@ -35,7 +35,7 @@
 | <li>- [X] `DELETE /api/projects/{project_id}`                                                                               | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}`                                                                                  | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/ci/actions/create`                                                               | N/A         |                 |             |                  |
-| <li>- [ ] `POST /api/projects/{project_id}/ci/actions/generate`                                                             |             |                 |             |                  |
+| <li>- [x] `POST /api/projects/{project_id}/ci/actions/generate`                                                             | AS          | yes             |             | yes              |
 | <li>- [x] `GET /api/projects/{project_id}/clusters`                                                                         | AB          |                 |             | yes              |
 | <li>- [X] `POST /api/projects/{project_id}/clusters`                                                                        | AB          |                 |             |                  |
 | <li>- [X] `POST /api/projects/{project_id}/clusters/candidates`                                                             | AB          |                 |             |                  |

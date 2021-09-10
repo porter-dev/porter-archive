@@ -67,7 +67,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     api
       .getBranchContents(
         "<token>",
-        { dir: this.state.currentDir },
+        { dir: this.state.currentDir || "./" },
         {
           project_id: currentProject.id,
           git_repo_id: actionConfig.git_repo_id,
@@ -81,14 +81,14 @@ export default class ContentsList extends Component<PropsType, StateType> {
         let files = [] as FileType[];
         let folders = [] as FileType[];
         res.data.map((x: FileType, i: number) => {
-          x.Type === "dir" ? folders.push(x) : files.push(x);
+          x.type === "dir" ? folders.push(x) : files.push(x);
         });
 
         folders.sort((a: FileType, b: FileType) => {
-          return a.Path < b.Path ? 1 : 0;
+          return a.path < b.path ? 1 : 0;
         });
         files.sort((a: FileType, b: FileType) => {
-          return a.Path < b.Path ? 1 : 0;
+          return a.path < b.path ? 1 : 0;
         });
         let contents = folders.concat(files);
 
@@ -166,17 +166,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
     } else if (error || !contents) {
       return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
     }
-
     return contents.map((item: FileType, i: number) => {
-      let splits = item.Path.split("/");
+      let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
-      if (item.Type === "dir") {
+      if (item.type === "dir") {
         return (
           <Item
             key={i}
-            isSelected={item.Path === this.state.currentDir}
+            isSelected={item.path === this.state.currentDir}
             lastItem={i === contents.length - 1}
-            onClick={() => this.setSubdirectory(item.Path)}
+            onClick={() => this.setSubdirectory(item.path)}
           >
             <img src={folder} />
             {fileName}
@@ -190,7 +189,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             key={i}
             lastItem={i === contents.length - 1}
             isADocker
-            onClick={() => this.props.setDockerfilePath(item.Path)}
+            onClick={() => this.props.setDockerfilePath(item.path)}
           >
             <img src={file} />
             {fileName}
@@ -236,7 +235,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
   handleContinue = () => {
     let dockerfiles = [] as string[];
     this.state.contents.forEach((item: FileType, i: number) => {
-      let splits = item.Path.split("/");
+      let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);

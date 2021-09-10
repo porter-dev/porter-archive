@@ -213,8 +213,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           api
             .createSubdomain(
               "<token>",
-              {
-              },
+              {},
               {
                 id: currentProject.id,
                 cluster_id: currentCluster.id,
@@ -326,7 +325,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       return (
         <WorkflowPage
           name={templateName}
-          namespace={"default"}
+          namespace={selectedNamespace}
           fullActionConfig={fullActionConfig}
           shouldCreateWorkflow={shouldCreateWorkflow}
           setShouldCreateWorkflow={setShouldCreateWorkflow}

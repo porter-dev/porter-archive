@@ -62,7 +62,7 @@ func GetGithubAppClientFromRequest(config *config.Config, r *http.Request) (*git
 	itr, err := ghinstallation.NewKeyFromFile(
 		http.DefaultTransport,
 		config.GithubAppConf.AppID,
-		int64(ga.ID),
+		ga.InstallationID,
 		config.GithubAppConf.SecretPath,
 	)
 

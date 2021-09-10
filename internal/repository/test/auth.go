@@ -464,6 +464,10 @@ func (repo *GithubAppInstallationRepository) ReadGithubAppInstallation(projectID
 	return repo.githubAppInstallations[int(id-1)], nil
 }
 
+func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByInstallationID(gaID uint) (*ints.GithubAppInstallation, error) {
+	panic("unimplemented")
+}
+
 func (repo *GithubAppInstallationRepository) ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error) {
 
 	if !repo.canQuery {

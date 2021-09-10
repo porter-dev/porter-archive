@@ -280,7 +280,7 @@ func (app *App) HandleOverwriteAWSIntegration(w http.ResponseWriter, r *http.Req
 		// clear the token
 		cluster.TokenCache.Token = []byte("")
 
-		cluster, err = app.Repo.Cluster.UpdateClusterTokenCache(cluster.TokenCache)
+		cluster, err = app.Repo.Cluster.UpdateClusterTokenCache(&cluster.TokenCache)
 
 		if err != nil {
 			app.handleErrorDataWrite(err, w)

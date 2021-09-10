@@ -43,10 +43,12 @@ func (c *GetNotificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	config := &models.NotificationConfigExternal{
-		Enabled: true,
-		Success: true,
-		Failure: true,
+	res := &types.GetNotificationConfigResponse{
+		NotificationConfig: &types.NotificationConfig{
+			Enabled: true,
+			Success: true,
+			Failure: true,
+		},
 	}
 
 	if release.NotificationConfig != 0 {
@@ -57,8 +59,8 @@ func (c *GetNotificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		config = notifConfig.Externalize()
+		res.NotificationConfig = notifConfig.ToNotificationConfigType()
 	}
 
-	c.WriteResult(w, r, config)
+	c.WriteResult(w, r, res)
 }

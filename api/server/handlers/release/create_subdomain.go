@@ -74,5 +74,5 @@ func (c *CreateSubdomainHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	c.WriteResult(w, r, record.Externalize())
+	c.WriteResult(w, r, record.ToDNSRecordType())
 }

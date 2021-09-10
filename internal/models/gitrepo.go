@@ -20,26 +20,6 @@ type GitRepo struct {
 	OAuthIntegrationID uint
 }
 
-// // GitRepoExternal is a repository to be shared over REST
-// type GitRepoExternal struct {
-// 	ID uint `json:"id"`
-
-// 	// The project that this integration belongs to
-// 	ProjectID uint `json:"project_id"`
-
-// 	// The username/organization that this repo integration is linked to
-// 	RepoEntity string `json:"repo_entity"`
-// }
-
-// // Externalize generates an external Repo to be shared over REST
-// func (r *GitRepo) Externalize() *GitRepoExternal {
-// 	return &GitRepoExternal{
-// 		ID:         r.Model.ID,
-// 		ProjectID:  r.ProjectID,
-// 		RepoEntity: r.RepoEntity,
-// 	}
-// }
-
 // GitActionConfig is a configuration for release's CI integration via
 // Github Actions
 type GitActionConfig struct {
@@ -73,39 +53,6 @@ type GitActionConfig struct {
 	IsInstallation bool `json:"is_installation"`
 
 	Version string `json:"version" gorm:"default:v0.0.1"`
-}
-
-// GitActionConfigExternal is an external GitActionConfig to be shared over REST
-type GitActionConfigExternal struct {
-	// The git repo in ${owner}/${repo} form
-	GitRepo string `json:"git_repo"`
-
-	// The git branch to use
-	GitBranch string `json:"git_branch"`
-
-	// The complete image repository uri to pull from
-	ImageRepoURI string `json:"image_repo_uri"`
-
-	// The git integration id
-	GitRepoID uint `json:"git_repo_id"`
-
-	// The path to the dockerfile in the git repo
-	DockerfilePath string `json:"dockerfile_path" form:"required"`
-
-	// The build context
-	FolderPath string `json:"folder_path"`
-}
-
-// Externalize generates an external GitActionConfig to be shared over REST
-func (r *GitActionConfig) Externalize() *GitActionConfigExternal {
-	return &GitActionConfigExternal{
-		GitRepo:        r.GitRepo,
-		GitBranch:      r.GitBranch,
-		ImageRepoURI:   r.ImageRepoURI,
-		GitRepoID:      r.GithubInstallationID,
-		DockerfilePath: r.DockerfilePath,
-		FolderPath:     r.FolderPath,
-	}
 }
 
 // ToGitActionConfigType generates an external GitActionConfig to be shared over REST

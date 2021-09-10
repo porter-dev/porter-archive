@@ -112,7 +112,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	rel, releaseErr := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 
-	var notifConf *models.NotificationConfigExternal
+	var notifConf *types.NotificationConfig
 	notifConf = nil
 	if rel != nil && rel.NotificationConfig != 0 {
 		conf, err := c.Repo().NotificationConfig().ReadNotificationConfig(rel.NotificationConfig)
@@ -122,7 +122,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		notifConf = conf.Externalize()
+		notifConf = conf.ToNotificationConfigType()
 	}
 
 	notifier := slack.NewSlackNotifier(notifConf, slackInts...)

@@ -14,7 +14,6 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/integrations/slack"
-	"github.com/porter-dev/porter/internal/models"
 )
 
 type WebhookHandler struct {
@@ -112,7 +111,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	slackInts, _ := c.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(release.ProjectID)
 
-	var notifConf *models.NotificationConfigExternal
+	var notifConf *types.NotificationConfig
 	notifConf = nil
 	if release != nil && release.NotificationConfig != 0 {
 		conf, err := c.Repo().NotificationConfig().ReadNotificationConfig(release.NotificationConfig)
@@ -122,7 +121,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		notifConf = conf.Externalize()
+		notifConf = conf.ToNotificationConfigType()
 	}
 
 	notifier := slack.NewSlackNotifier(notifConf, slackInts...)

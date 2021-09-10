@@ -44,7 +44,7 @@
 | <li>- [x] `GET /api/projects/{project_id}/clusters/{cluster_id}`                                                            | AB          |                 |             | yes              |
 | <li>- [X] `POST /api/projects/{project_id}/clusters/{cluster_id}`                                                           | AB          |                 |             |                  |
 | <li>- [X] `DELETE /api/projects/{project_id}/clusters/{cluster_id}`                                                         | AB          |                 |             |                  |
-| <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}`                                           | AB          |                 |             |                  |
+| <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/node/{node_name}` t                                         | AB          |                 |             |                  |
 | <li>- [X] `GET /api/projects/{project_id}/clusters/{cluster_id}/nodes`                                                      | AB          |                 |             |                  |
 | <li>- [x] `GET /api/projects/{project_id}/collaborators`                                                                    | AS          |                 |             | yes              |
 | <li>- [X] `POST /api/projects/{project_id}/delete/{name}`                                                                   | AB          |                 |             |                  |

@@ -79,3 +79,32 @@ type GetGHATemplateRequest struct {
 }
 
 type GetGHATemplateResponse string
+
+type GetReleaseStepsResponse []SubEvent
+
+type SubEvent struct {
+	EventID string      `json:"event_id"`
+	Name    string      `json:"name"`
+	Index   int64       `json:"index"`
+	Status  EventStatus `json:"status"`
+	Info    string      `json:"info"`
+	Time    int64       `json:"time"`
+}
+
+type EventStatus int64
+
+const (
+	EventStatusSuccess    EventStatus = 1
+	EventStatusInProgress             = 2
+	EventStatusFailed                 = 3
+)
+
+type UpdateReleaseStepsRequest struct {
+	Event struct {
+		ID     string      `json:"event_id" form:"required"`
+		Name   string      `json:"name" form:"required"`
+		Index  int64       `json:"index" form:"required"`
+		Status EventStatus `json:"status" form:"required"`
+		Info   string      `json:"info" form:"required"`
+	} `json:"event" form:"required"`
+}

@@ -320,6 +320,66 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/steps -> release.NewGetReleaseStepsHandler
+	getStepsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/releases/{name}/steps",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	getStepsHandler := release.NewGetReleaseStepsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getStepsEndpoint,
+		Handler:  getStepsHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/steps -> release.NewUpdateReleaseStepsHandler
+	updateStepsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/releases/{name}/steps",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	updateStepsHandler := release.NewUpdateReleaseStepsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateStepsEndpoint,
+		Handler:  updateStepsHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases -> release.NewCreateReleaseHandler
 	createReleaseEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

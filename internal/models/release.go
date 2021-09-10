@@ -26,23 +26,6 @@ type Release struct {
 	NotificationConfig uint
 }
 
-// ReleaseExternal represents the Release type that is sent over REST
-type ReleaseExternal struct {
-	ID uint `json:"id"`
-
-	WebhookToken    string                   `json:"webhook_token"`
-	GitActionConfig *GitActionConfigExternal `json:"git_action_config,omitempty"`
-}
-
-// Externalize generates an external User to be shared over REST
-func (r *Release) Externalize() *ReleaseExternal {
-	return &ReleaseExternal{
-		ID:              r.ID,
-		WebhookToken:    r.WebhookToken,
-		GitActionConfig: r.GitActionConfig.Externalize(),
-	}
-}
-
 func (r *Release) ToReleaseType() *types.PorterRelease {
 	res := &types.PorterRelease{
 		ID:           r.ID,

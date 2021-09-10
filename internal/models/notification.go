@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/porter-dev/porter/api/types"
+	"gorm.io/gorm"
+)
 
 type NotificationConfig struct {
 	gorm.Model
@@ -11,14 +14,8 @@ type NotificationConfig struct {
 	Failure bool
 }
 
-type NotificationConfigExternal struct {
-	Enabled bool `json:"enabled"`
-	Success bool `json:"success"`
-	Failure bool `json:"failure"`
-}
-
-func (conf *NotificationConfig) Externalize() *NotificationConfigExternal {
-	return &NotificationConfigExternal{
+func (conf *NotificationConfig) ToNotificationConfigType() *types.NotificationConfig {
+	return &types.NotificationConfig{
 		Enabled: conf.Enabled,
 		Success: conf.Success,
 		Failure: conf.Failure,

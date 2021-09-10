@@ -45,27 +45,3 @@ type KubeIntegration struct {
 	// The raw kubeconfig, used by local auth mechanisms
 	Kubeconfig []byte `json:"kubeconfig"`
 }
-
-// KubeIntegrationExternal is a KubeIntegration to be shared over REST
-type KubeIntegrationExternal struct {
-	ID uint `json:"id"`
-
-	// The name of the auth mechanism
-	Mechanism KubeIntegrationName `json:"mechanism"`
-
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-}
-
-// Externalize generates an external KubeIntegration to be shared over REST
-func (k *KubeIntegration) Externalize() *KubeIntegrationExternal {
-	return &KubeIntegrationExternal{
-		ID:        k.ID,
-		Mechanism: k.Mechanism,
-		UserID:    k.UserID,
-		ProjectID: k.ProjectID,
-	}
-}

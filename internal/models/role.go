@@ -18,24 +18,6 @@ type Role struct {
 	types.Role
 }
 
-// RoleExternal represents the Role type that is sent over REST
-type RoleExternal struct {
-	types.Role
-	ID uint `json:"id"`
-}
-
-// Externalize generates an external Role to be shared over REST
-func (r *Role) Externalize() *RoleExternal {
-	return &RoleExternal{
-		ID: r.ID,
-		Role: types.Role{
-			Kind:      r.Kind,
-			UserID:    r.UserID,
-			ProjectID: r.ProjectID,
-		},
-	}
-}
-
 func (r *Role) ToRoleType() *types.Role {
 	return &types.Role{
 		Kind:      r.Kind,

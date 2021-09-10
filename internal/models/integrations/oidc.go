@@ -50,27 +50,3 @@ type OIDCIntegration struct {
 	// The user's refresh token
 	RefreshToken []byte `json:"refresh-token"`
 }
-
-// OIDCIntegrationExternal is a OIDCIntegration to be shared over REST
-type OIDCIntegrationExternal struct {
-	ID uint `json:"id"`
-
-	// The name of the auth mechanism
-	Client OIDCIntegrationClient `json:"client"`
-
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-}
-
-// Externalize generates an external KubeIntegration to be shared over REST
-func (o *OIDCIntegration) Externalize() *OIDCIntegrationExternal {
-	return &OIDCIntegrationExternal{
-		ID:        o.ID,
-		Client:    o.Client,
-		UserID:    o.UserID,
-		ProjectID: o.ProjectID,
-	}
-}

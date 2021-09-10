@@ -23,28 +23,6 @@ type Invite struct {
 	UserID    uint
 }
 
-// InviteExternal represents the Invite type that is sent over REST
-type InviteExternal struct {
-	ID       uint   `json:"id"`
-	Token    string `json:"token"`
-	Expired  bool   `json:"expired"`
-	Email    string `json:"email"`
-	Accepted bool   `json:"accepted"`
-	Kind     string `json:"kind"`
-}
-
-// Externalize generates an external Invite to be shared over REST
-func (i *Invite) Externalize() *InviteExternal {
-	return &InviteExternal{
-		ID:       i.Model.ID,
-		Token:    i.Token,
-		Email:    i.Email,
-		Expired:  i.IsExpired(),
-		Accepted: i.IsAccepted(),
-		Kind:     i.Kind,
-	}
-}
-
 // ToInviteType generates an external Invite to be shared over REST
 func (i *Invite) ToInviteType() *types.Invite {
 	return &types.Invite{

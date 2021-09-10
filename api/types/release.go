@@ -108,3 +108,22 @@ type UpdateReleaseStepsRequest struct {
 		Info   string      `json:"info" form:"required"`
 	} `json:"event" form:"required"`
 }
+
+type NotificationConfig struct {
+	Enabled bool `json:"enabled"`
+	Success bool `json:"success"`
+	Failure bool `json:"failure"`
+}
+
+type GetNotificationConfigResponse struct {
+	*NotificationConfig
+}
+
+type DNSRecord struct {
+	ExternalURL string `json:"external_url"`
+
+	Endpoint string `json:"endpoint"`
+	Hostname string `json:"hostname"`
+
+	ClusterID uint `json:"cluster_id"`
+}

@@ -38,7 +38,7 @@ func main() {
 		logger.Fatal().Err(err).Msg("")
 		return
 	}
-	if err := db.Raw("LTER TABLE cluster_token_caches DROP CONSTRAINT IF EXISTS fk_clusters_token_cache").Error; err != nil {
+	if err := db.Raw("ALTER TABLE cluster_token_caches DROP CONSTRAINT IF EXISTS fk_clusters_token_cache").Error; err != nil {
 		logger.Fatal().Err(err).Msg("")
 		return
 	}

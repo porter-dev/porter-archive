@@ -78,7 +78,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		go func() {
 			defer wg.Done()
 			// read release via agent
-			rel, err := helmAgent.GetRelease(releases[index].Name, 0)
+			rel, err := helmAgent.GetRelease(releases[index].Name, 0, false)
 
 			if err != nil {
 				mu.Lock()

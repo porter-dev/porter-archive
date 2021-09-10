@@ -51,7 +51,7 @@ func (c *StreamHelmReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = agent.StreamHelmReleases(conn, request.Charts, request.Selectors)
+	err = agent.StreamHelmReleases(conn, request.Namespace, request.Charts, request.Selectors)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

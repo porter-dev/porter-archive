@@ -39,7 +39,17 @@ class JobList extends Component<PropsType, StateType> {
               <JobResource
                 key={job?.metadata?.name}
                 job={job}
-                handleDelete={() => this.setState({ deletionCandidate: job })}
+                handleDelete={() => {
+                  this.setState({ deletionCandidate: job });
+                  this.context.setCurrentOverlay({
+                    message: `Are you sure you want to delete this job run?`,
+                    onYes: this.deleteJob,
+                    onNo: () => {
+                      this.setState({ deletionCandidate: null });
+                      this.context.setCurrentOverlay(null);
+                    },
+                  });
+                }}
                 deleting={
                   this.state.deletionJob?.metadata?.name == job.metadata?.name
                 }
@@ -61,6 +71,7 @@ class JobList extends Component<PropsType, StateType> {
   deleteJob = () => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
     let job = this.state.deletionCandidate;
+    this.context.setCurrentOverlay(null);
 
     api
       .deleteJob(
@@ -91,17 +102,7 @@ class JobList extends Component<PropsType, StateType> {
   };
 
   render() {
-    return (
-      <>
-        <ConfirmOverlay
-          show={this.state.deletionCandidate}
-          message={`Are you sure you want to delete this job run?`}
-          onYes={this.deleteJob}
-          onNo={() => this.setState({ deletionCandidate: null })}
-        />
-        <JobListWrapper>{this.renderJobList()}</JobListWrapper>
-      </>
-    );
+    return <JobListWrapper>{this.renderJobList()}</JobListWrapper>;
   }
 }
 

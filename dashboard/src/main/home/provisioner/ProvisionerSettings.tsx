@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -11,134 +11,171 @@ import GCPFormSection from "./GCPFormSection";
 import DOFormSection from "./DOFormSection";
 import SaveButton from "components/SaveButton";
 import ExistingClusterSection from "./ExistingClusterSection";
-import { RouteComponentProps, withRouter } from "react-router";
+import { useHistory, useLocation } from "react-router";
 import { pushFiltered } from "shared/routing";
 
-type PropsType = RouteComponentProps & {
+type Props = {
   isInNewProject?: boolean;
   projectName?: string;
   infras?: InfraType[];
   provisioner?: boolean;
 };
 
-type StateType = {
-  selectedProvider: string | null;
-  infras: InfraType[];
-};
-
 const providers = ["aws", "gcp", "do"];
 
-class NewProject extends Component<PropsType, StateType> {
-  state = {
-    selectedProvider: null as string | null,
-    infras: [] as InfraType[],
+const ProvisionerSettings: React.FC<Props> = ({
+  provisioner,
+  projectName,
+  infras,
+  isInNewProject,
+}) => {
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [highlightCosts, setHighlightCosts] = useState(true);
+
+  const { setCurrentError } = useContext(Context);
+  const location = useLocation();
+  const history = useHistory();
+
+  useEffect(() => {
+    if (!provisioner) {
+      handleSelectProvider("skipped");
+    }
+  }, [provisioner]);
+
+  const handleSelectProvider = (newSelectedProvider: string) => {
+    if (!isInNewProject) {
+      setSelectedProvider(newSelectedProvider);
+      return;
+    }
+    if (newSelectedProvider === selectedProvider) {
+      return;
+    }
+
+    if (selectedProvider && !newSelectedProvider) {
+      window?.analytics?.track("provision_unselect-provider", {
+        unselectedProvider: selectedProvider,
+      });
+      setSelectedProvider(newSelectedProvider);
+      return;
+    }
+
+    window?.analytics?.track("provision_select-provider", {
+      selectedProvider: newSelectedProvider,
+    });
+    setSelectedProvider(newSelectedProvider);
   };
 
-  // Handle any submission (pre-status) error
-  handleError = () => {
-    let { setCurrentError } = this.context;
-    this.setState({ selectedProvider: null });
+  const handleError = () => {
+    handleSelectProvider(null);
+
     setCurrentError(
       "Provisioning failed. Check your credentials and try again."
     );
-    pushFiltered(this.props, "/dashboard", ["project_id"], { tab: "overview" });
+    pushFiltered({ location, history }, "/dashboard", ["project_id"], {
+      tab: "overview",
+    });
   };
 
-  renderSelectedProvider = (override?: string) => {
-    let { selectedProvider } = this.state;
-    let { projectName, infras } = this.props;
+  const trackOnSave = (provider: string) => {
+    window?.analytics?.track("provision_created-project", {
+      choosenProvider: provider,
+    });
+  };
 
-    if (override) {
-      selectedProvider = override;
+  const renderSkipHelper = () => {
+    if (!provisioner) {
+      return;
     }
 
-    let renderSkipHelper = () => {
-      if (!this.props.provisioner) {
-        return;
-      }
-
-      return (
-        <>
-          {selectedProvider === "skipped" ? (
+    return (
+      <>
+        {selectedProvider === "skipped" ? (
+          <Helper>
+            Don't have a Kubernetes cluster?
+            <Highlight onClick={() => handleSelectProvider(null)}>
+              Provision through Porter
+            </Highlight>
+          </Helper>
+        ) : (
+          <PositionWrapper selectedProvider={selectedProvider}>
             <Helper>
-              Don't have a Kubernetes cluster?
-              <Highlight
-                onClick={() => this.setState({ selectedProvider: null })}
-              >
-                Provision through Porter
+              Already have a Kubernetes cluster?
+              <Highlight onClick={() => handleSelectProvider("skipped")}>
+                Skip
               </Highlight>
             </Helper>
-          ) : (
-            <PositionWrapper selectedProvider={selectedProvider}>
-              <Helper>
-                Already have a Kubernetes cluster?
-                <Highlight
-                  onClick={() =>
-                    this.setState({
-                      selectedProvider: "skipped",
-                    })
-                  }
-                >
-                  Skip
-                </Highlight>
-              </Helper>
-            </PositionWrapper>
-          )}
-        </>
-      );
-    };
-
-    switch (selectedProvider) {
-      case "aws":
-        return (
-          <AWSFormSection
-            handleError={this.handleError}
-            projectName={projectName}
-            infras={infras}
-            setSelectedProvisioner={(x: string | null) => {
-              this.setState({ selectedProvider: x });
-            }}
-          >
-            {renderSkipHelper()}
-          </AWSFormSection>
-        );
-      case "gcp":
-        return (
-          <GCPFormSection
-            handleError={this.handleError}
-            projectName={projectName}
-            infras={infras}
-            setSelectedProvisioner={(x: string | null) => {
-              this.setState({ selectedProvider: x });
-            }}
-          >
-            {renderSkipHelper()}
-          </GCPFormSection>
-        );
-      case "do":
-        return (
-          <DOFormSection
-            handleError={this.handleError}
-            projectName={projectName}
-            infras={infras}
-            setSelectedProvisioner={(x: string | null) => {
-              this.setState({ selectedProvider: x });
-            }}
-          />
-        );
-      default:
-        return (
-          <ExistingClusterSection projectName={projectName}>
-            {renderSkipHelper()}
-          </ExistingClusterSection>
-        );
-    }
+          </PositionWrapper>
+        )}
+      </>
+    );
   };
 
-  renderFooter = () => {
-    let { selectedProvider } = this.state;
-    let { isInNewProject } = this.props;
-    let { provisioner } = this.props;
+  const renderSelectedProvider = (override?: string) => {
+    let currentSelectedProvider = selectedProvider;
+    if (override) {
+      currentSelectedProvider = override;
+    }
+
+    if (selectedProvider === "aws") {
+      return (
+        <AWSFormSection
+          handleError={handleError}
+          projectName={projectName}
+          infras={infras}
+          highlightCosts={highlightCosts}
+          setSelectedProvisioner={(x: string | null) => {
+            handleSelectProvider(x);
+          }}
+          trackOnSave={() => trackOnSave(selectedProvider)}
+        >
+          {renderSkipHelper()}
+        </AWSFormSection>
+      );
+    }
+
+    if (selectedProvider === "gcp") {
+      return (
+        <GCPFormSection
+          handleError={handleError}
+          projectName={projectName}
+          infras={infras}
+          highlightCosts={highlightCosts}
+          setSelectedProvisioner={(x: string | null) => {
+            handleSelectProvider(x);
+          }}
+          trackOnSave={() => trackOnSave(selectedProvider)}
+        >
+          {renderSkipHelper()}
+        </GCPFormSection>
+      );
+    }
+
+    if (selectedProvider === "do") {
+      return (
+        <DOFormSection
+          handleError={handleError}
+          projectName={projectName}
+          infras={infras}
+          highlightCosts={highlightCosts}
+          setSelectedProvisioner={(x: string | null) => {
+            handleSelectProvider(x);
+          }}
+          trackOnSave={() => trackOnSave(selectedProvider)}
+        />
+      );
+    }
+
+    return (
+      <ExistingClusterSection
+        projectName={projectName}
+        trackOnSave={() => trackOnSave(selectedProvider)}
+      >
+        {renderSkipHelper()}
+      </ExistingClusterSection>
+    );
+  };
+
+  const renderFooter = () => {
     let helper = provisioner
       ? "Note: Provisioning can take up to 15 minutes"
       : "";
@@ -148,9 +185,7 @@ class NewProject extends Component<PropsType, StateType> {
         <>
           <Helper>
             Already have a Kubernetes cluster?
-            <Highlight
-              onClick={() => this.setState({ selectedProvider: "skipped" })}
-            >
+            <Highlight onClick={() => handleSelectProvider("skipped")}>
               Skip
             </Highlight>
           </Helper>
@@ -167,24 +202,7 @@ class NewProject extends Component<PropsType, StateType> {
     }
   };
 
-  componentDidMount() {
-    let { provisioner } = this.props;
-
-    if (!provisioner) {
-      this.setState({ selectedProvider: "skipped" });
-    }
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (prevProps.provisioner !== this.props.provisioner) {
-      if (!this.props.provisioner) {
-        this.setState({ selectedProvider: "skipped" });
-      }
-    }
-  }
-
-  renderHelperText = () => {
-    let { isInNewProject, provisioner } = this.props;
+  const renderHelperText = () => {
     if (!provisioner) {
       return;
     }
@@ -200,42 +218,51 @@ class NewProject extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    let { selectedProvider } = this.state;
-
-    return (
-      <StyledProvisionerSettings>
-        <Helper>{this.renderHelperText()}</Helper>
-        {!selectedProvider ? (
-          <BlockList>
-            {providers.map((provider: string, i: number) => {
-              let providerInfo = integrationList[provider];
-              return (
-                <Block
-                  key={i}
-                  onClick={() => {
-                    this.setState({ selectedProvider: provider });
+  return (
+    <StyledProvisionerSettings>
+      <Helper>{renderHelperText()}</Helper>
+      {!selectedProvider ? (
+        <BlockList>
+          {providers.map((provider: string, i: number) => {
+            let providerInfo = integrationList[provider];
+            return (
+              <Block
+                key={i}
+                onClick={() => {
+                  handleSelectProvider(provider);
+                  setHighlightCosts(false);
+                }}
+              >
+                <Icon src={providerInfo.icon} />
+                <BlockTitle>{providerInfo.label}</BlockTitle>
+                <CostSection
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectProvider(provider);
+                    setHighlightCosts(true);
                   }}
                 >
-                  <Icon src={providerInfo.icon} />
-                  <BlockTitle>{providerInfo.label}</BlockTitle>
-                  <BlockDescription>Hosted in your own cloud.</BlockDescription>
-                </Block>
-              );
-            })}
-          </BlockList>
-        ) : (
-          <>{this.renderSelectedProvider()}</>
-        )}
-        {this.renderFooter()}
-      </StyledProvisionerSettings>
-    );
-  }
-}
+                  {/*
+                  {provider == "aws" && "$205/Month"}
+                  {provider == "gcp" && "$250/Month"}
+                  {provider == "do" && "$90/Month"}
+                  <InfoTooltip text={""} />
+                  */}
+                </CostSection>
+                <BlockDescription>Hosted in your own cloud.</BlockDescription>
+              </Block>
+            );
+          })}
+        </BlockList>
+      ) : (
+        <>{renderSelectedProvider()}</>
+      )}
+      {renderFooter()}
+    </StyledProvisionerSettings>
+  );
+};
 
-NewProject.contextType = Context;
-
-export default withRouter(NewProject);
+export default ProvisionerSettings;
 
 const Br = styled.div`
   width: 100%;
@@ -334,4 +361,9 @@ const Block = styled.div<{ disabled?: boolean }>`
       opacity: 1;
     }
   }
+`;
+
+const CostSection = styled.p`
+  position: absolute;
+  left: 0;
 `;

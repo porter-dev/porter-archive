@@ -306,7 +306,7 @@ const IconWrapper = styled.div`
 
 const Icon = styled.img`
   height: 18px;
-  margin: 14px;
+  margin: 0 10px;
 `;
 
 const StyledGoogleIcon = styled(GoogleIcon)`
@@ -314,9 +314,10 @@ const StyledGoogleIcon = styled(GoogleIcon)`
   height: 38px;
 `;
 
-const OAuthButton = styled.div`
+const OAuthButton = styled.button`
   width: 200px;
   height: 30px;
+  border: 0;
   display: flex;
   background: #ffffff;
   align-items: center;

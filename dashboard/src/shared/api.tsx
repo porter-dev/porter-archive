@@ -280,11 +280,12 @@ const generateGHAWorkflow = baseApi<
     cluster_id: number;
     project_id: number;
     name: string;
+    namespace: string;
   }
 >("POST", (pathParams) => {
-  const { name, cluster_id, project_id } = pathParams;
+  const { name, namespace, cluster_id, project_id } = pathParams;
 
-  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}`;
+  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}&namespace=${namespace}`;
 });
 
 const deployTemplate = baseApi<
@@ -341,7 +342,11 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const getBranchContents = baseApi<
@@ -357,7 +362,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -373,7 +382,11 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name}/${pathParams.branch}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getBranches = baseApi<
@@ -672,7 +685,30 @@ const getReleaseToken = baseApi<
 >("GET", (pathParams) => {
   let { id, cluster_id, namespace, name } = pathParams;
 
+<<<<<<< HEAD
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/webhook`;
+=======
+const getReleaseSteps = baseApi<
+  {
+    namespace: string;
+    cluster_id: number;
+  },
+  { name: string; id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/steps`;
+});
+
+const destroyEKS = baseApi<
+  {
+    eks_name: string;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
+>>>>>>> master
 });
 
 const destroyInfra = baseApi<
@@ -737,6 +773,18 @@ const getTemplates = baseApi<
 
 const getMetadata = baseApi<{}, {}>("GET", () => {
   return `/api/metadata`;
+});
+
+const getWelcome = baseApi<
+  {
+    email: string;
+    isCompany: boolean;
+    company: string;
+    role: string;
+  },
+  {}
+>("GET", () => {
+  return `/api/welcome`;
 });
 
 const linkGithubProject = baseApi<
@@ -1048,7 +1096,12 @@ export default {
   detectBuildpack,
   getBranchContents,
   getBranches,
+<<<<<<< HEAD
   getMetadata,
+=======
+  getCapabilities,
+  getWelcome,
+>>>>>>> master
   getChart,
   getCharts,
   getChartComponents,
@@ -1084,6 +1137,7 @@ export default {
   getPrometheusIsInstalled,
   getRegistryIntegrations,
   getReleaseToken,
+  getReleaseSteps,
   getRepoIntegrations,
   getSlackIntegrations,
   getRepos,

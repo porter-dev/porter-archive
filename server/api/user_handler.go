@@ -55,8 +55,12 @@ func (app *App) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		// send to segment
-		app.analyticsClient.Identify(analytics.CreateSegmentIdentifyNewUser(user, false))
-		app.analyticsClient.Track(analytics.CreateSegmentNewUserTrack(user))
+		app.AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+
+		app.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
+		}))
 
 		app.Logger.Info().Msgf("New user created: %d", user.ID)
 
@@ -400,8 +404,8 @@ func (app *App) InitiateEmailVerifyUser(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-// FinalizEmailVerifyUser completes the email verification flow for a user.
-func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
+// FinalizeEmailVerifyUser completes the email verification flow for a user.
+func (app *App) FinalizeEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := app.getUserIDFromRequest(r)
 
 	if err != nil {
@@ -485,6 +489,11 @@ func (app *App) FinalizEmailVerifyUser(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)
 		return
 	}
+
+	app.AnalyticsClient.Track(analytics.UserVerifyEmailTrack(&analytics.UserVerifyEmailTrackOpts{
+		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+		Email:               user.Email,
+	}))
 
 	http.Redirect(w, r, "/dashboard", 302)
 	return

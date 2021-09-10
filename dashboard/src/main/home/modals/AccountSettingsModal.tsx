@@ -140,7 +140,7 @@ const User = styled.div`
 
 const ListWrapper = styled.div`
   width: 100%;
-  height: 200px;
+  height: 250px;
   background: #ffffff11;
   display: flex;
   align-items: center;

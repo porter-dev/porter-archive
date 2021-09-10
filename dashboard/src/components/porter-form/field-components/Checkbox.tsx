@@ -1,5 +1,9 @@
 import React from "react";
-import { CheckboxField, CheckboxFieldState, GetFinalVariablesFunction } from "../types";
+import {
+  CheckboxField,
+  CheckboxFieldState,
+  GetFinalVariablesFunction,
+} from "../types";
 import CheckboxRow from "../../form-components/CheckboxRow";
 import useFormField from "../hooks/useFormField";
 
@@ -22,7 +26,7 @@ const Checkbox: React.FC<Props> = ({
       validated: !required,
     },
     initVars: {
-      [variable]: value ? value[0] : !!settings?.default,
+      [variable]: value ? value[0] : false,
     },
   });
 
@@ -56,9 +60,9 @@ export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
 ) => {
   // Read from revision values if unrendered (and therefore not in form state)
   if (vars[props.variable] === null || vars[props.variable] === undefined) {
-    if (props.value[0] === false) {
+    if (props.value && props.value[0] === false) {
       return { [props.variable]: false };
-    } else if (props.value[0] === true) {
+    } else if (props.value && props.value[0] === true) {
       return { [props.variable]: true };
     }
   }
@@ -71,6 +75,6 @@ export const getFinalVariablesForCheckbox: GetFinalVariablesFunction = (
   }
 
   return {
-    [props.variable]: props.value ? props.value[0] : !!props.settings?.default,
+    [props.variable]: props.value ? props.value[0] : false,
   };
 };

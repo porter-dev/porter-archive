@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/oauth"
-
 	"github.com/porter-dev/porter/internal/registry"
 
 	"github.com/go-chi/chi"
@@ -22,11 +22,20 @@ import (
 // HandleCreateRegistry creates a new registry
 func (app *App) HandleCreateRegistry(w http.ResponseWriter, r *http.Request) {
 	projID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
+	userID, err := app.getUserIDFromRequest(r)
+	flowID := oauth.CreateRandomState()
 
 	if err != nil || projID == 0 {
 		app.handleErrorFormDecoding(err, ErrProjectDecode, w)
 		return
 	}
+
+	app.AnalyticsClient.Track(analytics.RegistryConnectionStartTrack(
+		&analytics.RegistryConnectionStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(userID, uint(projID)),
+			FlowID:                 flowID,
+		},
+	))
 
 	form := &forms.CreateRegistry{
 		ProjectID: uint(projID),
@@ -61,6 +70,13 @@ func (app *App) HandleCreateRegistry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.Logger.Info().Msgf("New registry created: %d", registry.ID)
+
+	app.AnalyticsClient.Track(analytics.RegistryConnectionSuccessTrack(
+		&analytics.RegistryConnectionSuccessTrackOpts{
+			RegistryScopedTrackOpts: analytics.GetRegistryScopedTrackOpts(userID, uint(projID), registry.ID),
+			FlowID:                  flowID,
+		},
+	))
 
 	w.WriteHeader(http.StatusCreated)
 

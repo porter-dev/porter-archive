@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,13 +72,23 @@ func (app *App) HandleListReleases(w http.ResponseWriter, r *http.Request) {
 	}
 
 	releases, err := agent.ListReleases(form.Namespace, form.ListFilter)
+	var releaseList []*release.Release
+	// Clean up unused properties, these values are unnecesary to display the frontend rn
+	for _, r := range releases {
+		r.Chart.Files = []*chart.File{}
+		r.Chart.Templates = []*chart.File{}
+		r.Manifest = ""
+		r.Chart.Values = nil
+		r.Info.Notes = ""
+		releaseList = append(releaseList, r)
+	}
 
 	if err != nil {
 		app.handleErrorRead(err, ErrReleaseReadData, w)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(releases); err != nil {
+	if err := json.NewEncoder(w).Encode(releaseList); err != nil {
 		app.handleErrorFormDecoding(err, ErrReleaseDecode, w)
 		return
 	}
@@ -121,7 +132,7 @@ func (app *App) HandleGetRelease(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -281,7 +292,7 @@ func (app *App) HandleGetReleaseComponents(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -338,7 +349,7 @@ func (app *App) HandleGetReleaseControllers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -478,7 +489,7 @@ func (app *App) HandleGetReleaseAllPods(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -636,7 +647,7 @@ func (app *App) HandleGetJobStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	release, err := agent.GetRelease(form.Name, form.Revision)
+	release, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -844,7 +855,7 @@ func (app *App) HandleCreateWebhookToken(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	rel, err := agent.GetRelease(name, 0)
+	rel, err := agent.GetRelease(name, 0, false)
 
 	if err != nil {
 		app.handleErrorDataRead(err, w)
@@ -970,7 +981,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 
 	// if the chart version is set, load a chart from the repo
 	if form.ChartVersion != "" {
-		release, err := agent.GetRelease(form.Name, 0)
+		release, err := agent.GetRelease(form.Name, 0, false)
 
 		if err != nil {
 			app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -1059,8 +1070,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 		notifyOpts.Status = slack.StatusFailed
 		notifyOpts.Info = upgradeErr.Error()
 
-		slackErr := notifier.Notify(notifyOpts)
-		fmt.Println("SLACK ERROR IS", slackErr)
+		notifier.Notify(notifyOpts)
 
 		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
 			Code:   ErrReleaseDeploy,
@@ -1137,6 +1147,7 @@ func (app *App) HandleUpgradeRelease(w http.ResponseWriter, r *http.Request) {
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
+					ReleaseNamespace:       release.Namespace,
 					GitBranch:              gitAction.GitBranch,
 					DockerFilePath:         gitAction.DockerfilePath,
 					FolderPath:             gitAction.FolderPath,
@@ -1220,7 +1231,7 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	rel, err := agent.GetRelease(form.Name, 0)
+	rel, err := agent.GetRelease(form.Name, 0, false)
 
 	// repository is set to current repository by default
 	commit := vals["commit"][0]
@@ -1316,7 +1327,19 @@ func (app *App) HandleReleaseDeployWebhook(w http.ResponseWriter, r *http.Reques
 
 	notifier.Notify(notifyOpts)
 
-	app.analyticsClient.Track(analytics.CreateSegmentRedeployViaWebhookTrack("anonymous", repository.(string)))
+	userID, _ := app.getUserIDFromRequest(r)
+
+	app.AnalyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
+		ImageURI: fmt.Sprintf("%v", repository),
+		ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+			userID,
+			release.ProjectID,
+			release.ClusterID,
+			release.Name,
+			release.Namespace,
+			rel.Chart.Metadata.Name,
+		),
+	}))
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1390,7 +1413,7 @@ func (app *App) HandleReleaseUpdateJobImages(w http.ResponseWriter, r *http.Requ
 		go func() {
 			defer wg.Done()
 			// read release via agent
-			rel, err := agent.GetRelease(releases[index].Name, 0)
+			rel, err := agent.GetRelease(releases[index].Name, 0, false)
 
 			if err != nil {
 				mu.Lock()
@@ -1483,7 +1506,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the full release data for GHA updating
-	rel, err := agent.GetRelease(form.Name, form.Revision)
+	rel, err := agent.GetRelease(form.Name, form.Revision, false)
 
 	if err != nil {
 		app.sendExternalError(err, http.StatusNotFound, HTTPError{
@@ -1575,6 +1598,7 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 					GithubConf:             app.GithubProjectConf,
 					ProjectID:              uint(projID),
 					ReleaseName:            name,
+					ReleaseNamespace:       release.Namespace,
 					GitBranch:              gitAction.GitBranch,
 					DockerFilePath:         gitAction.DockerfilePath,
 					FolderPath:             gitAction.FolderPath,
@@ -1602,6 +1626,124 @@ func (app *App) HandleRollbackRelease(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// HandleGetReleaseSteps returns a list of all steps for a given release
+// note that steps are not guaranteed to be in any specific order, so they should be ordered if needed
+func (app *App) HandleGetReleaseSteps(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	vals, err := url.ParseQuery(r.URL.RawQuery)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+	}
+
+	namespace := vals["namespace"][0]
+	clusterId, err := strconv.ParseUint(vals["cluster_id"][0], 0, 64)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	rel, err := app.Repo.Release.ReadRelease(uint(clusterId), name, namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusNotFound, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"release not found"},
+		}, w)
+
+		return
+	}
+
+	res := make([]models.SubEventExternal, 0)
+
+	if rel.EventContainer != 0 {
+		subevents, err := app.Repo.Event.ReadEventsByContainerID(rel.EventContainer)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+		}
+
+		for _, sub := range subevents {
+			res = append(res, sub.Externalize())
+		}
+	}
+
+	json.NewEncoder(w).Encode(res)
+}
+
+type HandleUpdateReleaseStepsForm struct {
+	Event struct {
+		ID     string             `json:"event_id" form:"required"`
+		Name   string             `json:"name" form:"required"`
+		Index  int64              `json:"index" form:"required"`
+		Status models.EventStatus `json:"status" form:"required"`
+		Info   string             `json:"info" form:"required"`
+	} `json:"event" form:"required"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	ClusterID uint   `json:"cluster_id"`
+}
+
+// HandleUpdateReleaseSteps adds a new step to a release
+func (app *App) HandleUpdateReleaseSteps(w http.ResponseWriter, r *http.Request) {
+	form := &HandleUpdateReleaseStepsForm{}
+
+	if err := json.NewDecoder(r.Body).Decode(form); err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	rel, err := app.Repo.Release.ReadRelease(form.ClusterID, form.Name, form.Namespace)
+
+	if err != nil {
+		app.sendExternalError(err, http.StatusInternalServerError, HTTPError{
+			Code:   ErrReleaseReadData,
+			Errors: []string{"Release not found"},
+		}, w)
+
+		return
+	}
+
+	if rel.EventContainer == 0 {
+		// create new event container
+		container, err := app.Repo.Event.CreateEventContainer(&models.EventContainer{ReleaseID: rel.ID})
+		if err != nil {
+			app.handleErrorDataWrite(err, w)
+			return
+		}
+
+		rel.EventContainer = container.ID
+
+		rel, err = app.Repo.Release.UpdateRelease(rel)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
+
+	}
+
+	container, err := app.Repo.Event.ReadEventContainer(rel.EventContainer)
+
+	if err != nil {
+		app.handleErrorInternal(err, w)
+		return
+	}
+
+	if err := app.Repo.Event.AppendEvent(container, &models.SubEvent{
+		EventContainerID: container.ID,
+		EventID:          form.Event.ID,
+		Name:             form.Event.Name,
+		Index:            form.Event.Index,
+		Status:           form.Event.Status,
+		Info:             form.Event.Info,
+	}); err != nil {
+		app.handleErrorInternal(err, w)
+	}
+
 }
 
 // ------------------------ Release handler helper functions ------------------------ //

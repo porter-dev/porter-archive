@@ -4,6 +4,13 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+<<<<<<< HEAD
+=======
+	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
+>>>>>>> master
 	"golang.org/x/oauth2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -38,13 +45,39 @@ func (a *Agent) ListReleases(
 func (a *Agent) GetRelease(
 	name string,
 	version int,
+	getDeps bool,
 ) (*release.Release, error) {
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewGet(a.ActionConfig)
 
 	cmd.Version = version
 
-	return cmd.Run(name)
+	release, err := cmd.Run(name)
+
+	if getDeps {
+		for _, dep := range release.Chart.Metadata.Dependencies {
+			depExists := false
+
+			for _, currDep := range release.Chart.Dependencies() {
+				// we just case on name for now -- there might be edge cases we're missing
+				// but this will cover 99% of cases
+				if dep.Name == currDep.Name() {
+					depExists = true
+					break
+				}
+			}
+
+			if !depExists {
+				depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
+
+				if err == nil {
+					release.Chart.AddDependency(depChart)
+				}
+			}
+		}
+	}
+
+	return release, err
 }
 
 // GetReleaseHistory returns a list of charts for a specific release
@@ -90,7 +123,7 @@ func (a *Agent) UpgradeReleaseByValues(
 	doAuth *oauth2.Config,
 ) (*release.Release, error) {
 	// grab the latest release
-	rel, err := a.GetRelease(conf.Name, 0)
+	rel, err := a.GetRelease(conf.Name, 0, true)
 
 	if err != nil {
 		return nil, fmt.Errorf("Could not get release to be upgraded: %v", err)

@@ -20,9 +20,11 @@ RUN --mount=type=cache,target=$GOPATH/pkg/mod \
 # --------------------
 FROM base AS build-go
 
+ARG version=production
+
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=$GOPATH/pkg/mod \
-    go build -ldflags '-w -s' -a -o ./bin/app ./cmd/app && \
+    go build -ldflags="-w -s -X 'main.Version=${version}'" -a -o ./bin/app ./cmd/app && \
     go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate && \
     go build -ldflags '-w -s' -a -o ./bin/ready ./cmd/ready
 

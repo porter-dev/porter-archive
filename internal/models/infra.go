@@ -24,6 +24,9 @@ type Infra struct {
 	// The project that this infra belongs to
 	ProjectID uint `json:"project_id"`
 
+	// The ID of the user that created this infra
+	CreatedByUserID uint
+
 	// Status is the status of the infra
 	Status types.InfraStatus `json:"status"`
 

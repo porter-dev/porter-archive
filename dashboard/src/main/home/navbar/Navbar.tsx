@@ -24,6 +24,7 @@ class Navbar extends Component<PropsType, StateType> {
 
   renderSettingsDropdown = () => {
     if (this.state.showDropdown) {
+      let version = this.context?.capabilities?.version;
       return (
         <>
           <CloseOverlay
@@ -45,6 +46,7 @@ class Navbar extends Component<PropsType, StateType> {
             </UserDropdownButton>
             <UserDropdownButton onClick={this.props.logOut}>
               <i className="material-icons">keyboard_return</i> Log Out
+              {version !== "production" && <VersionTag>{version}</VersionTag>}
             </UserDropdownButton>
           </Dropdown>
         </>
@@ -79,6 +81,14 @@ class Navbar extends Component<PropsType, StateType> {
 Navbar.contextType = Context;
 
 export default withAuth(Navbar);
+
+const VersionTag = styled.div`
+  position: absolute;
+  right: 10px;
+  top: 15px;
+  color: #ffffff22;
+  font-weight: 400;
+`;
 
 const SettingsIcon = styled.div`
   > i {
@@ -119,6 +129,7 @@ const CloseOverlay = styled.div`
 
 const UserDropdownButton = styled.button`
   padding: 13px;
+  position: relative;
   height: 40px;
   font-size: 13px;
   font-weight: 500;
@@ -230,6 +241,7 @@ const StyledNavbar = styled.div`
   align-items: center;
   padding-right: 5px;
   justify-content: flex-end;
+  z-index: 1;
 `;
 
 const NavButton = styled.a`

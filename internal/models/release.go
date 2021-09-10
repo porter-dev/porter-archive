@@ -22,6 +22,7 @@ type Release struct {
 	ImageRepoURI string `json:"image_repo_uri,omitempty"`
 
 	GitActionConfig    *GitActionConfig `json:"git_action_config"`
+	EventContainer     uint
 	NotificationConfig uint
 }
 

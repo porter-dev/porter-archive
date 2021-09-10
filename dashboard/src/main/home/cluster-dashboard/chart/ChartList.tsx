@@ -1,9 +1,16 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import _ from "lodash";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ChartType, ClusterType, StorageType } from "shared/types";
+import {
+  ChartType,
+  ClusterType,
+  JobStatusType,
+  JobStatusWithTimeType,
+  StorageType,
+} from "shared/types";
 import { PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
@@ -12,13 +19,19 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type Props = {
   currentCluster: ClusterType;
+  lastRunStatus?: JobStatusType | null;
   namespace: string;
   // TODO Convert to enum
   sortType: string;
   currentView: PorterUrl;
 };
 
+interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
+  resource_version: number;
+}
+
 const ChartList: React.FunctionComponent<Props> = ({
+  lastRunStatus,
   namespace,
   sortType,
   currentView,
@@ -33,11 +46,16 @@ const ChartList: React.FunctionComponent<Props> = ({
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
-  const [releases, setReleases] = useState<Record<string, any>>({});
+  const [jobStatus, setJobStatus] = useState<
+    Record<string, JobStatusWithTimeAndVersion>
+  >({});
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
   const context = useContext(Context);
+
+  const getChartKey = (name: string, namespace: string) =>
+    `${namespace}-${name}`;
 
   const updateCharts = async () => {
     try {
@@ -67,37 +85,8 @@ const ChartList: React.FunctionComponent<Props> = ({
         }
       );
       const charts = res.data || [];
-
-      // filter charts based on the current view
-      const filteredCharts = charts.filter((chart: ChartType) => {
-        return (
-          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-          ((currentView == "applications" ||
-            currentView == "cluster-dashboard") &&
-            chart.chart.metadata.name != "job")
-        );
-      });
-
-      let sortedCharts = filteredCharts;
-
-      if (sortType == "Newest") {
-        sortedCharts.sort((a: any, b: any) =>
-          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-            ? -1
-            : 1
-        );
-      } else if (sortType == "Oldest") {
-        sortedCharts.sort((a: any, b: any) =>
-          Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
-            ? 1
-            : -1
-        );
-      } else if (sortType == "Alphabetical") {
-        sortedCharts.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-      }
-
       setIsError(false);
-      return sortedCharts;
+      return charts;
     } catch (error) {
       console.log(error);
       context.setCurrentError(JSON.stringify(error));
@@ -105,54 +94,73 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
   };
 
+<<<<<<< HEAD
   const setupHelmReleasesWebsocket = () => {
     const apiPath = `/api/projects/${context.currentProject.id}/clusters/${context.currentCluster.id}/helm_release`;
+=======
+  const setupHelmReleasesWebsocket = (
+    websocketID: string,
+    namespace: string
+  ) => {
+    let apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+    if (namespace) {
+      apiPath += `&namespace=${namespace}`;
+    }
+>>>>>>> master
 
     const wsConfig = {
       onopen: () => {
-        console.log("connected to chart live updates websocket");
+        console.log(`connected to websocket: ${websocketID}`);
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
-        const object = event.Object;
-        setReleases((oldReleases) => {
-          const currentRelease = oldReleases[object?.name];
-          const currentReleaseVersion = Number(currentRelease?.version);
-          const newReleaseVersion = Number(object?.version);
-          if (currentReleaseVersion > newReleaseVersion) {
-            return {
-              ...oldReleases,
-            };
+        const newChart: ChartType = event.Object;
+        const isSameChart = (chart: ChartType) =>
+          getChartKey(chart.name, chart.namespace) ===
+          getChartKey(newChart.name, newChart.namespace);
+        setCharts((currentCharts) => {
+          switch (event.event_type) {
+            case "ADD":
+              if (currentCharts.find(isSameChart)) {
+                return currentCharts;
+              }
+              return currentCharts.concat(newChart);
+            case "UPDATE":
+              return currentCharts.map((chart) => {
+                if (isSameChart(chart) && newChart.version >= chart.version) {
+                  return newChart;
+                }
+                return chart;
+              });
+            case "DELETE":
+              return currentCharts.filter((chart) => !isSameChart(chart));
+            default:
+              return currentCharts;
           }
-
-          return {
-            ...oldReleases,
-            [object.name]: object,
-          };
         });
       },
 
       onclose: () => {
-        console.log("closing chart live updates websocket");
+        console.log(`closing websocket: ${websocketID}`);
       },
 
       onerror: (err: ErrorEvent) => {
         console.log(err);
-        closeWebsocket("helm_releases");
+        closeWebsocket(websocketID);
       },
     };
 
-    newWebsocket("helm_releases", apiPath, wsConfig);
-    openWebsocket("helm_releases");
+    newWebsocket(websocketID, apiPath, wsConfig);
+    openWebsocket(websocketID);
   };
 
-  const setupWebsocket = (kind: string) => {
+  const setupControllerWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
     const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
       onopen: () => {
-        console.log("connected to websocket");
+        console.log(`connected to websocket: ${kind}`);
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
@@ -165,7 +173,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         }));
       },
       onclose: () => {
-        console.log("closing websocket");
+        console.log(`closing websocket: ${kind}`);
       },
       onerror: (err: ErrorEvent) => {
         console.log(err);
@@ -178,26 +186,107 @@ const ChartList: React.FunctionComponent<Props> = ({
     openWebsocket(kind);
   };
 
-  const setControllerWebsockets = (controllers: any[]) => {
-    controllers.map((kind: string) => {
-      return setupWebsocket(kind);
-    });
+  const setupControllerWebsockets = (controllers: string[]) => {
+    controllers.map((kind) => setupControllerWebsocket(kind));
+  };
+
+  const setupJobWebsocket = (websocketID: string) => {
+    const kind = "job";
+    let { currentCluster, currentProject } = context;
+    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log(`connected to websocket: ${websocketID}`);
+      },
+      onmessage: (evt: MessageEvent) => {
+        let event = JSON.parse(evt.data);
+        let object = event.Object;
+
+        if (_.get(object.metadata, ["annotations", "helm.sh/hook"])) {
+          return;
+        }
+
+        setJobStatus((currentStatus) => {
+          let nextStatus: JobStatusType = null;
+          for (const status of Object.values(JobStatusType)) {
+            if (_.get(object.status, status, 0) > 0) {
+              nextStatus = status;
+              break;
+            }
+          }
+
+          const chartName =
+            object.metadata.labels["app.kubernetes.io/instance"];
+          const chartNamespace = object.metadata.namespace;
+          const key = getChartKey(chartName, chartNamespace);
+
+          const existingValue: JobStatusWithTimeAndVersion = _.get(
+            currentStatus,
+            key,
+            null
+          );
+          const newValue: JobStatusWithTimeAndVersion = {
+            status: nextStatus,
+            start_time: object.status.startTime,
+            resource_version: object.metadata.resourceVersion,
+          };
+
+          if (
+            !existingValue ||
+            newValue.resource_version > existingValue.resource_version
+          ) {
+            return {
+              ...currentStatus,
+              [key]: newValue,
+            };
+          }
+
+          return currentStatus;
+        });
+      },
+      onclose: () => {
+        console.log(`closing websocket: ${websocketID}`);
+      },
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(websocketID);
+      },
+    };
+
+    newWebsocket(websocketID, apiPath, wsConfig);
+
+    openWebsocket(websocketID);
   };
 
   // Setup basic websockets on start
   useEffect(() => {
-    setControllerWebsockets([
+    const controllers = [
       "deployment",
       "statefulset",
       "daemonset",
       "replicaset",
-    ]);
-    setupHelmReleasesWebsocket();
+    ];
+    setupControllerWebsockets(controllers);
+
+    const jobWebsocketID = "job";
+    setupJobWebsocket(jobWebsocketID);
 
     return () => {
-      closeAllWebsockets();
+      controllers.map((controller) => closeWebsocket(controller));
+      closeWebsocket(jobWebsocketID);
     };
   }, []);
+
+  useEffect(() => {
+    const websocketID = "helm_releases";
+
+    setupHelmReleasesWebsocket(websocketID, namespace);
+
+    return () => {
+      closeWebsocket(websocketID);
+    };
+  }, [namespace]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -213,6 +302,50 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => (isSubscribed = false);
   }, [namespace, currentView]);
 
+  const filteredCharts = useMemo(() => {
+    const result = charts
+      .filter((chart: ChartType) => {
+        return (
+          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
+          ((currentView == "applications" ||
+            currentView == "cluster-dashboard") &&
+            chart.chart.metadata.name != "job")
+        );
+      })
+      .filter((chart: ChartType) => {
+        if (currentView !== "jobs") {
+          return true;
+        }
+        if (lastRunStatus === null) {
+          return true;
+        }
+        const status: JobStatusWithTimeAndVersion = _.get(
+          jobStatus,
+          getChartKey(chart.name, chart.namespace),
+          { status: null } as any
+        );
+        return status.status === lastRunStatus;
+      });
+
+    if (sortType == "Newest") {
+      result.sort((a: any, b: any) =>
+        Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+          ? -1
+          : 1
+      );
+    } else if (sortType == "Oldest") {
+      result.sort((a: any, b: any) =>
+        Date.parse(a.info.last_deployed) > Date.parse(b.info.last_deployed)
+          ? 1
+          : -1
+      );
+    } else if (sortType == "Alphabetical") {
+      result.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+    }
+
+    return result;
+  }, [charts, sortType, jobStatus, lastRunStatus]);
+
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {
       return (
@@ -226,24 +359,27 @@ const ChartList: React.FunctionComponent<Props> = ({
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
-    } else if (charts.length === 0) {
+    } else if (filteredCharts.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No
-          {currentView === "jobs" ? ` jobs` : ` charts`} found in this
-          namespace.
+          {currentView === "jobs" ? ` jobs` : ` charts`} found with the given
+          filters.
         </Placeholder>
       );
     }
 
-    return charts.map((chart: ChartType, i: number) => {
+    return filteredCharts.map((chart: ChartType, i: number) => {
       return (
         <Chart
-          key={`${chart.namespace}-${chart.name}`}
+          key={getChartKey(chart.name, chart.namespace)}
           chart={chart}
           controllers={controllers || {}}
-          isJob={currentView === "jobs"}
-          release={releases[chart.name] || {}}
+          jobStatus={_.get(
+            jobStatus,
+            getChartKey(chart.name, chart.namespace),
+            null
+          )}
         />
       );
     });

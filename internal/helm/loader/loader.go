@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"k8s.io/helm/pkg/repo"
@@ -140,7 +141,11 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 	}
 
 	trimmedRepoURL := strings.TrimSuffix(strings.TrimSpace(repoURL), "/")
-	chartURL := trimmedRepoURL + "/" + strings.TrimPrefix(cv.URLs[0], "/")
+	chartURL := cv.URLs[0]
+
+	if !isValidURL(chartURL) {
+		chartURL = trimmedRepoURL + "/" + strings.TrimPrefix(cv.URLs[0], "/")
+	}
 
 	// download tgz
 	req, err := http.NewRequest("GET", chartURL, nil)
@@ -177,4 +182,22 @@ func LoadChart(client *BasicAuthClient, repoURL, chartName, chartVersion string)
 // repo index, this should check the digest in the cache
 func LoadChartPublic(repoURL, chartName, chartVersion string) (*chart.Chart, error) {
 	return LoadChart(&BasicAuthClient{}, repoURL, chartName, chartVersion)
+}
+
+// Helper method to test if chart repo URL is valid, or is a path. Chartmuseum saves URLs
+// as paths, other Helm repositories do not.
+func isValidURL(testURI string) bool {
+	_, err := url.ParseRequestURI(testURI)
+
+	if err != nil {
+		return false
+	}
+
+	u, err := url.Parse(testURI)
+
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return false
+	}
+
+	return true
 }

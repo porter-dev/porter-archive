@@ -2,45 +2,34 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 
-import { ChartType, StorageType } from "shared/types";
+import {
+  ChartType,
+  JobStatusType,
+  JobStatusWithTimeType,
+  StorageType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
-import { useWebsockets } from "shared/hooks/useWebsockets";
 import api from "shared/api";
 
 type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
-  isJob: boolean;
-  release: any;
-};
-
-type JobStatusType = {
-  status: "succeeded" | "running" | "failed";
-  start_time: string;
+  jobStatus: JobStatusWithTimeType;
 };
 
 const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
-  isJob,
-  release,
+  jobStatus,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
-  const [jobStatus, setJobStatus] = useState<JobStatusType>(null);
   const context = useContext(Context);
   const location = useLocation();
   const history = useHistory();
   const match = useRouteMatch();
-
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
 
   const renderIcon = () => {
     if (chart.chart.metadata.icon && chart.chart.metadata.icon !== "") {
@@ -78,6 +67,7 @@ const Chart: React.FunctionComponent<Props> = ({
     getControllerForChart(chart);
   }, [chart]);
 
+<<<<<<< HEAD
   const setupWebsocket = (kind: string) => {
     const { currentProject, currentCluster } = context;
 
@@ -131,6 +121,8 @@ const Chart: React.FunctionComponent<Props> = ({
     return () => closeAllWebsockets();
   }, [isJob]);
 
+=======
+>>>>>>> master
   const readableDate = (s: string) => {
     const ts = new Date(s);
     const date = ts.toLocaleDateString();
@@ -161,7 +153,9 @@ const Chart: React.FunctionComponent<Props> = ({
         let urlParams = new URLSearchParams(location.search);
         let cluster = urlParams.get("cluster");
         let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
-        pushFiltered({ location, history }, route, ["project_id"]);
+        pushFiltered({ location, history }, route, ["project_id"], {
+          chart_revision: chart.version,
+        });
       }}
     >
       <Title>
@@ -177,9 +171,23 @@ const Chart: React.FunctionComponent<Props> = ({
             margin_left={"17px"}
           />
           <LastDeployed>
-            <Dot>•</Dot> Last deployed{" "}
-            {readableDate(
-              release?.info?.last_deployed || chart.info.last_deployed
+            {jobStatus?.status ? (
+              <>
+                <Dot>•</Dot>
+                <JobStatus status={jobStatus.status}>
+                  {jobStatus.status === JobStatusType.Running
+                    ? "Started running"
+                    : `Last run ${jobStatus.status}`}{" "}
+                  at {readableDate(jobStatus.start_time)}
+                </JobStatus>
+              </>
+            ) : (
+              <>
+                <Dot>•</Dot>
+                <JobStatus>
+                  Last deployed {readableDate(chart.info.last_deployed)}
+                </JobStatus>
+              </>
             )}
           </LastDeployed>
         </InfoWrapper>
@@ -191,16 +199,7 @@ const Chart: React.FunctionComponent<Props> = ({
       </BottomWrapper>
 
       <TopRightContainer>
-        {isJob && jobStatus?.status && (
-          <>
-            <JobStatus status={jobStatus.status}>
-              Last run {jobStatus.status.toUpperCase()} at{" "}
-              {readableDate(jobStatus.start_time)}
-            </JobStatus>
-            <StatusDot>•</StatusDot>
-          </>
-        )}
-        <span>v{release?.version || chart.version}</span>
+        <span>v{chart.version}</span>
       </TopRightContainer>
     </StyledChart>
   );
@@ -329,17 +328,18 @@ const Title = styled.div`
   }
 `;
 
-const JobStatus = styled.span`
-  font-weight: bold;
-  ${(props: { status: string }) => `
+const JobStatus = styled.span<{ status?: JobStatusType }>`
+  font-size: 13px;
+  font-weight: ${(props) =>
+    props.status && props.status !== JobStatusType.Running ? "500" : ""};
+  ${(props) => `
   color: ${
-    props.status === "succeeded"
+    props.status === JobStatusType.Succeeded
       ? "rgb(56, 168, 138)"
-      : props.status === "failed"
-      ? "rgb(204, 61, 66)"
-      : "#aaaabb"
-  }
-`}
+      : props.status === JobStatusType.Failed
+      ? "#ff385d"
+      : "#aaaabb66"
+  }`}
 `;
 
 const StyledChart = styled.div`

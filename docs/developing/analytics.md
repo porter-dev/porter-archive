@@ -1,10 +1,10 @@
-# How the analytics package works
+# Adding Analytics
 
-The analytics package is entirely dependant over segment, to use it you should add
-a config key SEGMENT_CLIENT_KEY on `docker/.env` file.
-To find the segment client key check [this link](https://segment.com/docs/connections/find-writekey/).
+## Package Overview
 
-This package is divided in four files:
+The [analytics package](https://github.com/porter-dev/porter/tree/master/internal/analytics) is currently dependent on Segment, so to use it you need to add your segment key via an environment variables `SEGMENT_CLIENT_KEY` in the `docker/.env` file. See [this link](https://segment.com/docs/connections/find-writekey/) for information on how to retrieve your key.
+
+This package is divided in five files:
 
 - segment.go
 
@@ -14,6 +14,10 @@ This package is divided in four files:
 
   _tracks.go_ will export an interface `SegmentTrack` that all the tracks should follow, this helps when trying to standardize the analytics package. The idea behind this is to always use a constructor for the track that we're trying to use instead of having different implementations all over the app.
 
+- track_scopes.go
+
+  _track_scopes.go_ contains a set of "scopes" that a certain `SegmentTrack` will use. API operations can be user-scoped, project-scoped, cluster-scoped, etc. These scopes will populate certain fields in the track, like `project_id` and `cluster_id`. Most tracks will be project- or cluster-scoped, so when adding a new track, you can likely use an existing scope. If adding a scope is required, it should be straightforward to use the existing structure contained in this file.
+
 - track_events.go
 
   Enum of events that can be used on tracks, those will be implemented on the tracks.go so they shouldn't appear in any other part of the application.
@@ -22,9 +26,69 @@ This package is divided in four files:
 
   Similar as the tracks.go, although this is more specialized as it should only be used on user register/login/update parts of the application.
 
-## How to add new analytics to the app
+## Adding New Analytics
 
-### Adding new segment spec objects
+### Adding New Events to Track
+
+To add a new event to track, you should follow two steps (see example below):
+
+1. Add the event in `track_events.go`, in the form `[Noun][Verb][Subverb]` (for example, `ClusterProvisioningSuccess`).
+
+2. You should then add the track in `tracks.go` by adding the following methods:
+
+```go
+// [Noun][Verb][Subverb]TrackOpts
+type [Noun][Verb][Subverb]TrackOpts  struct {
+	// *Optional Scope
+
+  // Additional fields
+}
+
+// [Noun][Verb][Subverb]Track
+func [Noun][Verb][Subverb]Track(opts *[Noun][Verb][Subverb]TrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+  // add additional fields to the Segment properties
+
+  // return an object which implements segmentTrack -- you can most likely use a scope helper here
+}
+```
+
+So for example, to implement the track `ClusterProvisioningSuccess`, the following gets written:
+
+1. In `track_events.go`:
+
+```go
+  ClusterProvisioningSuccess SegmentEvent = "Cluster Provisioning Success"
+```
+
+2. In `tracks.go`:
+
+```go
+// ClusterProvisioningSuccessTrackOpts are the options for creating a track when a cluster
+// has successfully provisioned
+type ClusterProvisioningSuccessTrackOpts struct {
+	*ClusterScopedTrackOpts
+
+	ClusterType models.InfraKind
+	InfraID     uint
+}
+
+// ClusterProvisioningSuccessTrack returns a new track for when a cluster
+// has successfully provisioned
+func ClusterProvisioningSuccessTrack(opts *ClusterProvisioningSuccessTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["cluster_type"] = opts.ClusterType
+	additionalProps["infra_id"] = opts.InfraID
+
+	return getSegmentClusterTrack(
+		opts.ClusterScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterProvisioningSuccess),
+	)
+}
+```
+
+### Adding New Segment [Specs](https://segment.com/docs/connections/spec/)
 
 The current implementation only uses [Tracks](https://segment.com/docs/connections/spec/track/) and [Identifiers](https://segment.com/docs/connections/spec/identify/) specs from the segment package, in order to add a new spec you should follow this steps:
 
@@ -32,14 +96,3 @@ The current implementation only uses [Tracks](https://segment.com/docs/connectio
 - Create a new file on the same `internal/analytics` folder with the name on plural of the spec you want to add.
 - In this spec file, you should declare the interface that the analyticsClient spec function will receive, and after that the correspondant structs that will refer to the different metrics you want to add. For more examples on how to implement this you can use as reference the `internal/analytics/tracks.go` file.
 - Update this file with the correspondant documentation about the implementation
-
-### Adding new objects to current implemented specs
-
-In order to add new metrics to the current implementation the process should be simple:
-
-- Look for the segment spec file in `internal/analytics` folder that you want to use
-- Add a new struct that accomplish the interface defined at the start of the file with the data that you need for that metric
-- Write a constructor for the struct.
-- You're done to use!
-
-For any doubts about this document or how to improve the analytics you can reach us on discord!

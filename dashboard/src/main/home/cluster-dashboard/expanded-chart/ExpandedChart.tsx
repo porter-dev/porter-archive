@@ -28,10 +28,13 @@ import MetricsSection from "./metrics/MetricsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
+import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
+import DeploymentType from "./DeploymentType";
+import EventsTab from "./events/EventsTab";
 
 type Props = {
   namespace: string;
@@ -66,9 +69,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
   const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
-  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
-    false
-  );
+  const [forceRefreshRevisions, setForceRefreshRevisions] =
+    useState<boolean>(false);
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -80,19 +82,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError, setCurrentOverlay } =
+    useContext(Context);
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -350,15 +344,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
+      case "events":
+        return <EventsTab currentChart={chart} />;
       case "status":
         if (isLoadingChartData) {
           return (
             <Placeholder>
-              <TextWrap>
-                <Header>
-                  <Spinner src={loadingSrc} />
-                </Header>
-              </TextWrap>
+              <Loading />
             </Placeholder>
           );
         }
@@ -370,8 +362,17 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Spinner src={loadingSrc} /> This application is currently
                   being deployed
                 </Header>
-                Navigate to the "Actions" tab of your GitHub repo to view live
-                build logs.
+                Navigate to the{" "}
+                <A
+                  href={
+                    props.currentChart.git_action_config &&
+                    `https://github.com/${props.currentChart.git_action_config?.git_repo}/actions`
+                  }
+                  target={"_blank"}
+                >
+                  Actions
+                </A>{" "}
+                tab of your GitHub repo to view live build logs.
               </TextWrap>
             </Placeholder>
           );
@@ -432,6 +433,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
     leftTabOptions.push({ label: "Status", value: "status" });
+    leftTabOptions.push({ label: "Events", value: "events" });
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });
@@ -453,7 +455,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
-      let liveTabs = ["status", "settings", "deploy", "metrics"];
+      let liveTabs = ["status", "events", "settings", "deploy", "metrics"];
       rightTabOptions = rightTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
@@ -612,7 +614,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     localStorage.setItem("devOpsMode", devOpsMode.toString());
   }, [devOpsMode, currentChart?.form, isPreview]);
 
-  useEffect(() => {
+  useEffect((): any => {
     let isSubscribed = true;
 
     const ingressComponent = components?.find((c) => c.Kind === "Ingress");
@@ -653,46 +655,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
-  const renderDeploymentType = () => {
-    const githubRepository = currentChart?.git_action_config?.git_repo;
-    const icon = githubRepository
-      ? integrationList.repo.icon
-      : integrationList.registry.icon;
-
-    const isWebOrWorkerDeployment = ["web", "worker"].includes(
-      currentChart?.chart?.metadata?.name
-    );
-    if (!isWebOrWorkerDeployment) {
-      return null;
-    }
-
-    const repository =
-      githubRepository ||
-      currentChart?.image_repo_uri ||
-      currentChart?.config?.image?.repository;
-
-    if (repository?.includes("hello-porter")) {
-      return null;
-    }
-
-    return (
-      <DeploymentImageContainer>
-        <DeploymentTypeIcon src={icon} />
-        <RepositoryName
-          onMouseOver={() => {
-            setShowRepoTooltip(true);
-          }}
-          onMouseOut={() => {
-            setShowRepoTooltip(false);
-          }}
-        >
-          {repository}
-        </RepositoryName>
-        {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
-      </DeploymentImageContainer>
-    );
-  };
-
   return (
     <>
       <StyledExpandedChart>
@@ -705,7 +667,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             iconWidth="33px"
           >
             {currentChart.name}
-            {renderDeploymentType()}
+            <DeploymentType currentChart={currentChart} />
             <TagWrapper>
               Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
             </TagWrapper>
@@ -834,6 +796,14 @@ const Tooltip = styled.div`
 
 const TextWrap = styled.div``;
 
+const LoadingWrapper = styled.div`
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const LineBreak = styled.div`
   width: calc(100% - 0px);
   height: 2px;
@@ -882,16 +852,19 @@ const Header = styled.div`
 `;
 
 const Placeholder = styled.div`
-  min-height: 400px;
-  height: 50vh;
-  padding: 30px;
-  padding-bottom: 90px;
-  font-size: 13px;
-  color: #ffffff44;
   width: 100%;
+  min-height: 300px;
+  height: 40vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #ffffff44;
+  font-size: 14px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+  }
 `;
 
 const Spinner = styled.img`
@@ -1066,4 +1039,10 @@ const DeploymentImageContainer = styled.div`
 const DeploymentTypeIcon = styled(Icon)`
   width: 20px;
   margin-right: 10px;
+`;
+
+const A = styled.a`
+  color: #8590ff;
+  text-decoration: underline;
+  cursor: pointer;
 `;

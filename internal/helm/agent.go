@@ -4,13 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-<<<<<<< HEAD
-=======
 	"github.com/porter-dev/porter/internal/helm/loader"
-	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
->>>>>>> master
 	"golang.org/x/oauth2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"

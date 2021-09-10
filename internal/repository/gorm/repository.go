@@ -5,7 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-<<<<<<< HEAD
 type GormRepository struct {
 	user                      repository.UserRepository
 	session                   repository.SessionRepository
@@ -31,6 +30,7 @@ type GormRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
+	event                     repository.EventRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -129,6 +129,10 @@ func (t *GormRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
+func (t *GormRepository) Event() repository.EventRepository {
+	return t.event
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
@@ -157,36 +161,6 @@ func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
-=======
-// NewRepository returns a Repository which uses
-// gorm.DB for querying the database
-func NewRepository(db *gorm.DB, key *[32]byte) *repository.Repository {
-	return &repository.Repository{
-		User:                      NewUserRepository(db),
-		Session:                   NewSessionRepository(db),
-		Project:                   NewProjectRepository(db),
-		Release:                   NewReleaseRepository(db),
-		GitRepo:                   NewGitRepoRepository(db, key),
-		Cluster:                   NewClusterRepository(db, key),
-		HelmRepo:                  NewHelmRepoRepository(db, key),
-		Registry:                  NewRegistryRepository(db, key),
-		Infra:                     NewInfraRepository(db, key),
-		GitActionConfig:           NewGitActionConfigRepository(db),
-		Invite:                    NewInviteRepository(db),
-		AuthCode:                  NewAuthCodeRepository(db),
-		DNSRecord:                 NewDNSRecordRepository(db),
-		PWResetToken:              NewPWResetTokenRepository(db),
-		KubeIntegration:           NewKubeIntegrationRepository(db, key),
-		BasicIntegration:          NewBasicIntegrationRepository(db, key),
-		OIDCIntegration:           NewOIDCIntegrationRepository(db, key),
-		OAuthIntegration:          NewOAuthIntegrationRepository(db, key),
-		GCPIntegration:            NewGCPIntegrationRepository(db, key),
-		AWSIntegration:            NewAWSIntegrationRepository(db, key),
-		GithubAppInstallation:     NewGithubAppInstallationRepository(db),
-		GithubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
-		SlackIntegration:          NewSlackIntegrationRepository(db, key),
-		NotificationConfig:        NewNotificationConfigRepository(db),
-		Event:                     NewEventRepository(db),
->>>>>>> master
+		event:                     NewEventRepository(db),
 	}
 }

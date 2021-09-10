@@ -224,7 +224,7 @@ func TestGetReleases(t *testing.T) {
 		// namespace, so we have to reset the namespace of the storage driver
 		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-		rel, err := agent.GetRelease(tc.getName, tc.getVersion)
+		rel, err := agent.GetRelease(tc.getName, tc.getVersion, false)
 
 		if err != nil {
 			t.Errorf("%v", err)
@@ -334,7 +334,7 @@ func TestRollbackRelease(t *testing.T) {
 			t.Errorf("%v", err)
 		}
 
-		rel, err := agent.GetRelease(tc.getName, tc.getVersion)
+		rel, err := agent.GetRelease(tc.getName, tc.getVersion, false)
 
 		if err != nil {
 			t.Errorf("%v", err)

@@ -68,7 +68,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rel, err := helmAgent.GetRelease(release.Name, 0)
+	rel, err := helmAgent.GetRelease(release.Name, 0, true)
 
 	// repository is set to current repository by default
 	repository := rel.Config["image"].(map[string]interface{})["repository"]

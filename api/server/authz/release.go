@@ -49,7 +49,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// get the version for the application
 	version, _ := requestutils.GetURLParamUint(r, types.URLParamReleaseVersion)
 
-	release, err := helmAgent.GetRelease(name, int(version))
+	release, err := helmAgent.GetRelease(name, int(version), false)
 
 	if err != nil {
 		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))

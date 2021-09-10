@@ -127,7 +127,7 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		clusters := []*models.Cluster{}
 
-		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Preload("TokenCache").Find(&clusters).Error; err != nil {
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&clusters).Error; err != nil {
 			return err
 		}
 
@@ -143,8 +143,10 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 
 				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
 				// recover it
-				cluster.CertificateAuthorityData = []byte{}
-				cluster.TokenCache.Token = []byte{}
+				if err := db.Unscoped().Where("id = ?", cluster.TokenCacheID).Delete().Error; err != nil {
+					return err
+				}
+				cluster.TokenCacheID = 0
 			}
 		}
 

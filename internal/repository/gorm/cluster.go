@@ -144,13 +144,9 @@ func (repo *ClusterRepository) CreateCluster(
 	}
 
 	// create a token cache by default
-	if cluster.TokenCache == nil {
-		cluster.TokenCache = &ints.ClusterTokenCache{}
-	}
-
 	cluster.TokenCache.ClusterID = cluster.ID
 
-	if err := ctxDB.Save(cluster.TokenCache).Error; err != nil {
+	if err := ctxDB.Create(&cluster.TokenCache).Error; err != nil {
 		return nil, err
 	}
 
@@ -182,9 +178,16 @@ func (repo *ClusterRepository) ReadCluster(
 		return nil, err
 	}
 
-	fmt.Println("AaaaAAJASJKSAJKJKSJKSAJKAJK")
+	fmt.Println(cluster.TokenCache)
 	fmt.Println(cluster.TokenCacheID)
-	fmt.Println(cluster.TokenCacheID)
+
+	cache := &ints.ClusterTokenCache{}
+
+	if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
+		return nil, err
+	}
+
+	cluster.TokenCache = *cache
 
 	err := repo.DecryptClusterData(cluster, repo.key)
 

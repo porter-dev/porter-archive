@@ -34,6 +34,11 @@ func main() {
 		return
 	}
 
+	if err := db.Raw("ALTER TABLE clusters DROP CONSTRAINT IF EXISTS fk_cluster_token_caches").Error; err != nil {
+		logger.Fatal().Err(err).Msg("")
+		return
+	}
+
 	if shouldRotate, oldKeyStr, newKeyStr := shouldKeyRotate(); shouldRotate {
 		oldKey := [32]byte{}
 		newKey := [32]byte{}

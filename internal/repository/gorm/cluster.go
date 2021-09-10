@@ -2,7 +2,6 @@ package gorm
 
 import (
 	"context"
-	"fmt"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -178,16 +177,15 @@ func (repo *ClusterRepository) ReadCluster(
 		return nil, err
 	}
 
-	fmt.Println(cluster.TokenCache)
-	fmt.Println(cluster.TokenCacheID)
+	cache := ints.ClusterTokenCache{}
 
-	cache := &ints.ClusterTokenCache{}
-
-	if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
-		return nil, err
+	if cluster.TokenCacheID != 0 {
+		if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
+			return nil, err
+		}
 	}
 
-	cluster.TokenCache = *cache
+	cluster.TokenCache = cache
 
 	err := repo.DecryptClusterData(cluster, repo.key)
 
@@ -249,8 +247,6 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 ) (*models.Cluster, error) {
 	ctxDB := repo.db.WithContext(context.Background())
 
-	fmt.Println("UPDATE CACHE UPDATE CACHE UPDATE CACHE")
-
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := repository.Encrypt(tok, repo.key)
 
@@ -267,17 +263,21 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 		return nil, err
 	}
 
-	// delete the existing token cache first
-	if err := ctxDB.Where("id = ?", tokenCache.ID).Unscoped().Delete(&cluster.TokenCache).Error; err != nil {
-		return nil, err
-	}
-
-	// set the new token cache
-	cluster.TokenCache.Token = tokenCache.Token
-	cluster.TokenCache.Expiry = tokenCache.Expiry
-
-	if err := ctxDB.Debug().Save(cluster).Error; err != nil {
-		return nil, err
+	if cluster.TokenCacheID == 0 {
+		tokenCache.ClusterID = cluster.ID
+		if err := ctxDB.Create(tokenCache).Error; err != nil {
+			return nil, err
+		}
+		cluster.TokenCacheID = tokenCache.ID
+		if err := ctxDB.Save(cluster).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		tokenCache.ClusterID = cluster.ID
+		tokenCache.ID = cluster.TokenCacheID
+		if err := ctxDB.Save(tokenCache).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	return cluster, nil
@@ -288,16 +288,9 @@ func (repo *ClusterRepository) DeleteCluster(
 	cluster *models.Cluster,
 ) error {
 	// clear TokenCache association
-	assoc := repo.db.Model(cluster).Association("TokenCache")
-
-	if assoc.Error != nil {
-		return assoc.Error
-	}
-
-	if err := assoc.Clear(); err != nil {
+	if err := repo.db.Where("id = ?", cluster.TokenCacheID).Delete(&ints.TokenCache{}).Error; err != nil {
 		return err
 	}
-
 	if err := repo.db.Where("id = ?", cluster.ID).Delete(&models.Cluster{}).Error; err != nil {
 		return err
 	}

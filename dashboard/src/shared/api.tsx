@@ -691,13 +691,12 @@ const getReleaseToken = baseApi<
 });
 
 const getReleaseSteps = baseApi<
-  {
-    namespace: string;
-    cluster_id: number;
-  },
-  { name: string; id: number }
+  {},
+  { name: string; id: number; namespace: string; cluster_id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/steps`;
+  let { id, cluster_id, namespace, name } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/steps`;
 });
 
 const destroyInfra = baseApi<

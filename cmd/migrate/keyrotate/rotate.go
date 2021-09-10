@@ -143,7 +143,7 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 
 				// in these cases we'll wipe the data -- if it can't be decrypted, we can't
 				// recover it
-				if err := db.Unscoped().Where("id = ?", cluster.TokenCacheID).Delete().Error; err != nil {
+				if err := db.Unscoped().Where("id = ?", cluster.TokenCacheID).Delete(&ints.ClusterTokenCache{}).Error; err != nil {
 					return err
 				}
 				cluster.TokenCacheID = 0

@@ -350,7 +350,7 @@ func getUserRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/integrations/github-app/callback",
+				RelativePath: "/integrations/github-app/accounts",
 			},
 			Scopes: []types.PermissionScope{types.UserScope},
 		},

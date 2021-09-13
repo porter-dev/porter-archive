@@ -576,6 +576,11 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 	errorchan := make(chan error)
 	defer close(stopper)
 
+	informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+		fmt.Println("ERROR ERROR ERROR")
+		fmt.Println(err)
+	})
+
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			msg := Message{

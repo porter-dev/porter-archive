@@ -3,7 +3,7 @@
 create-backend-env-file() {
   FILE=./docker/.env
 cat > $FILE <<- EOM
-SERVER_URL=http://localhost:8080
+SERVER_URL=http://localhost:8081
 SERVER_PORT=8080 # Be sure that doesn't colision with the frontend port
 SQL_LITE=true
 SQL_LITE_PATH=./porter.db

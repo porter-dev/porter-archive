@@ -61,9 +61,5 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	s := string(rawQuery)
-
-	var res types.GetPodMetricsResponse = &s
-
-	c.WriteResult(w, r, res)
+	c.WriteResult(w, r, rawQuery)
 }

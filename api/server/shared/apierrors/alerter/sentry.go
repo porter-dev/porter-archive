@@ -2,7 +2,6 @@ package alerter
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -32,15 +31,15 @@ func NewSentryAlerter(sentryDSN string) (*SentryAlerter, error) {
 }
 
 func (s *SentryAlerter) SendAlert(ctx context.Context, err error, data map[string]interface{}) {
-	s.client.CaptureEvent(&sentry.Event{
-		Message: err.Error(),
-		Extra:   data,
-		Exception: []sentry.Exception{
-			{
-				Value:      err.Error(),
-				Type:       reflect.TypeOf(err).String(),
-				Stacktrace: sentry.ExtractStacktrace(err),
-			},
+	scope := sentry.NewScope()
+
+	scope.SetExtras(data)
+
+	s.client.CaptureException(
+		err,
+		&sentry.EventHint{
+			Data: data,
 		},
-	}, nil, nil)
+		scope,
+	)
 }

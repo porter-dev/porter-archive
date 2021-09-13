@@ -39,13 +39,20 @@ func (c *Client) Login(ctx context.Context, req *types.LoginUserRequest) (*types
 
 // Logout logs the user out and deauthorizes the cookie-based session
 func (c *Client) Logout(ctx context.Context) error {
-	return c.postRequest(
+	err := c.postRequest(
 		fmt.Sprintf(
 			"/logout",
 		),
 		nil,
 		nil,
 	)
+
+	if err != nil {
+		return err
+	}
+
+	// remove the cookie, if it exists
+	return c.deleteCookie()
 }
 
 // CreateUser will create the user, authorize the user and grant them a cookie-based session

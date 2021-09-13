@@ -81,7 +81,7 @@ Registry URL: `))
 func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (*types.OAuthIntegration, error) {
 	var doAuth *types.OAuthIntegration
 
-	oauthURL := fmt.Sprintf("%s/oauth/projects/%d/digitalocean", client.BaseURL, projectID)
+	oauthURL := fmt.Sprintf("%s/projects/%d/oauth/digitalocean", client.BaseURL, projectID)
 
 	fmt.Printf("Please visit %s in your browser to connect to Digital Ocean (it should open automatically).", oauthURL)
 	utils.OpenBrowser(oauthURL)

@@ -70,7 +70,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
         integrationList[registry.service] &&
         integrationList[registry.service].icon;
       if (!icon) {
-        icon = integrationList["docker"].icon;
+        icon = integrationList["dockerhub"].icon;
       }
       return (
         <RegistryItem

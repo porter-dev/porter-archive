@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -92,6 +93,8 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 	if err != nil {
 		return nil
 	}
+
+	fmt.Println(string(strData))
 
 	req, err := http.NewRequest(
 		"POST",
@@ -224,6 +227,16 @@ func (c *Client) getCookie() (*http.Cookie, error) {
 	}
 
 	return cookie.Cookie, nil
+}
+
+// retrieves single cookie from file
+func (c *Client) deleteCookie() error {
+	// if file does not exist, return no error
+	if _, err := os.Stat(c.CookieFilePath); os.IsNotExist(err) {
+		return nil
+	}
+
+	return os.Remove(c.CookieFilePath)
 }
 
 type TokenProjectID struct {

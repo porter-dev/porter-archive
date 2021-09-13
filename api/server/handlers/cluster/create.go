@@ -120,6 +120,7 @@ func createClusterFromCandidate(
 	project *models.Project,
 	user *models.User,
 	candidate *models.ClusterCandidate,
+	clResolver *types.ClusterResolverAll,
 ) (*models.Cluster, *models.ClusterCandidate, error) {
 	// we query the repo again to get the decrypted version of the cluster candidate
 	cc, err := repo.Cluster().ReadClusterCandidate(project.ID, candidate.ID)
@@ -129,7 +130,7 @@ func createClusterFromCandidate(
 	}
 
 	cResolver := &resolver.CandidateResolver{
-		Resolver:           &types.ClusterResolverAll{},
+		Resolver:           clResolver,
 		ClusterCandidateID: cc.ID,
 		ProjectID:          project.ID,
 		UserID:             user.ID,

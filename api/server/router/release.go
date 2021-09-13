@@ -585,7 +585,7 @@ func getReleaseRoutes(
 		},
 	)
 
-	updateImageBatchHandler := release.NewUpgradeReleaseHandler(
+	updateImageBatchHandler := release.NewUpdateImageBatchHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

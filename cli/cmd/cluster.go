@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -75,12 +76,14 @@ func init() {
 	clusterNamespaceCmd.AddCommand(clusterNamespaceListCmd)
 }
 
-func listClusters(user *api.AuthCheckResponse, client *api.Client, args []string) error {
-	clusters, err := client.ListProjectClusters(context.Background(), config.Project)
+func listClusters(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	resp, err := client.ListProjectClusters(context.Background(), config.Project)
 
 	if err != nil {
 		return err
 	}
+
+	clusters := *resp
 
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
@@ -102,7 +105,7 @@ func listClusters(user *api.AuthCheckResponse, client *api.Client, args []string
 	return nil
 }
 
-func deleteCluster(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func deleteCluster(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the cluster with id %s? %s `,
@@ -134,7 +137,7 @@ func deleteCluster(user *api.AuthCheckResponse, client *api.Client, args []strin
 	return nil
 }
 
-func listNamespaces(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func listNamespaces(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	pID := config.Project
 
 	// get the service account based on the cluster id

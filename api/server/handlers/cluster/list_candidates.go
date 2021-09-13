@@ -34,7 +34,7 @@ func (c *ListClusterCandidatesHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	res := make([]*types.ClusterCandidate, 0)
+	res := make(types.ListClusterCandidateResponse, 0)
 
 	for _, cc := range ccs {
 		res = append(res, cc.ToClusterCandidateType())

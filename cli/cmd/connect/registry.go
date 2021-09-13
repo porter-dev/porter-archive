@@ -3,6 +3,7 @@ package connect
 import (
 	"context"
 	"fmt"
+
 	"github.com/porter-dev/porter/api/types"
 
 	"github.com/fatih/color"
@@ -57,10 +58,10 @@ Username: `))
 
 	color.New(color.FgGreen).Printf("created basic auth integration with id %d\n", integration.ID)
 
-	reg, err := client.CreatePrivateRegistry(
+	reg, err := client.CreateRegistry(
 		context.Background(),
 		projectID,
-		&api.CreatePrivateRegistryRequest{
+		&types.CreateRegistryRequest{
 			URL:                repoURL,
 			Name:               repoURL,
 			BasicIntegrationID: integration.ID,

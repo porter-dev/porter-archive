@@ -7,6 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/spf13/cobra"
 )
 
@@ -73,7 +74,7 @@ func init() {
 	batchImageUpdateCmd.MarkPersistentFlagRequired("tag")
 }
 
-func batchImageUpdate(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Updating all jobs which use the image:", imageRepoURI)
 
 	return client.UpdateBatchImage(
@@ -81,7 +82,7 @@ func batchImageUpdate(resp *api.AuthCheckResponse, client *api.Client, args []st
 		config.Project,
 		config.Cluster,
 		namespace,
-		&api.UpdateBatchImageRequest{
+		&types.UpdateImageBatchRequest{
 			ImageRepoURI: imageRepoURI,
 			Tag:          tag,
 		},

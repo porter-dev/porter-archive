@@ -1,17 +1,18 @@
 package client
 
 import (
-	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/gorilla/schema"
+	"github.com/porter-dev/porter/api/types"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -22,38 +23,6 @@ type Client struct {
 	Cookie         *http.Cookie
 	CookieFilePath string
 	Token          string
-}
-
-// HTTPError is the Porter error response returned if a request fails
-type HTTPError struct {
-	Code   uint     `json:"code"`
-	Errors []string `json:"errors"`
-}
-
-type EventStatus int64
-
-const (
-	EventStatusSuccess    EventStatus = 1
-	EventStatusInProgress             = 2
-	EventStatusFailed                 = 3
-)
-
-// Event represents an event that happens during
-type Event struct {
-	ID     string      `json:"event_id"` // events with the same id wil be treated the same, and the highest index one is retained
-	Name   string      `json:"name"`
-	Index  int64       `json:"index"` // priority of the event, used for sorting
-	Status EventStatus `json:"status"`
-	Info   string      `json:"info"` // extra information (can be error or success)
-}
-
-// StreamEventForm is used to send event data to the api
-type StreamEventForm struct {
-	Event     `json:"event"`
-	Token     string `json:"token"`
-	ClusterID uint   `json:"cluster_id"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
 }
 
 // NewClient constructs a new client based on a set of options
@@ -90,7 +59,90 @@ func NewClientWithToken(baseURL, token string) *Client {
 	return client
 }
 
-func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (*HTTPError, error) {
+func (c *Client) getRequest(relPath string, data interface{}, response interface{}) error {
+	vals := make(map[string][]string)
+	err := schema.NewEncoder().Encode(data, vals)
+
+	urlVals := url.Values(vals)
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/%s?%s", c.BaseURL, relPath, urlVals.Encode()),
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("%v", httpErr.Error)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) postRequest(relPath string, data interface{}, response interface{}) error {
+	strData, err := json.Marshal(data)
+
+	if err != nil {
+		return nil
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/%s", c.BaseURL, relPath),
+		strings.NewReader(string(strData)),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("%v", httpErr.Error)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) deleteRequest(relPath string, data interface{}, response interface{}) error {
+	strData, err := json.Marshal(data)
+
+	if err != nil {
+		return nil
+	}
+
+	req, err := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("%s/%s", c.BaseURL, relPath),
+		strings.NewReader(string(strData)),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
+		if httpErr != nil {
+			return fmt.Errorf("%v", httpErr.Error)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (*types.ExternalError, error) {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
@@ -114,7 +166,7 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 	}
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		var errRes HTTPError
+		var errRes types.ExternalError
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return &errRes, nil
 		}
@@ -123,7 +175,13 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 	}
 
 	if v != nil {
-		if err = json.NewDecoder(res.Body).Decode(v); err != nil {
+		debugBytes, _ := ioutil.ReadAll(res.Body)
+
+		fmt.Println(string(debugBytes))
+
+		copyBody := strings.NewReader(string(debugBytes))
+
+		if err = json.NewDecoder(copyBody).Decode(v); err != nil {
 			return nil, err
 		}
 	}
@@ -147,44 +205,6 @@ func (c *Client) saveCookie(cookie *http.Cookie) error {
 	}
 
 	return ioutil.WriteFile(c.CookieFilePath, data, 0644)
-}
-
-// StreamEvent sends an event from deployment to the api
-func (c *Client) StreamEvent(event Event, projID uint, clusterID uint, name string, namespace string) error {
-	form := StreamEventForm{
-		Event:     event,
-		ClusterID: clusterID,
-		Name:      name,
-		Namespace: namespace,
-	}
-
-	body := new(bytes.Buffer)
-	err := json.NewEncoder(body).Encode(form)
-
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest(
-		"POST",
-		fmt.Sprintf("%s/projects/%d/releases/%s/steps", c.BaseURL, projID, name),
-		body,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	req = req.WithContext(context.Background())
-
-	if httpErr, err := c.sendRequest(req, nil, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
-		}
-		return err
-	}
-
-	return nil
 }
 
 // retrieves single cookie from file

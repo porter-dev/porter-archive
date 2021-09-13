@@ -241,3 +241,9 @@ type CreateClusterCandidateRequest struct {
 type UpdateClusterRequest struct {
 	Name string `json:"name" form:"required"`
 }
+
+type ListClusterResponse []*Cluster
+
+type CreateClusterCandidateResponse []*ClusterCandidate
+
+type ListClusterCandidateResponse []*ClusterCandidate

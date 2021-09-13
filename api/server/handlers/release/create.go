@@ -56,6 +56,14 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if request.RepoURL == "" {
+		request.RepoURL = c.Config().ServerConf.DefaultApplicationHelmRepoURL
+	}
+
+	if request.TemplateVersion == "latest" {
+		request.TemplateVersion = ""
+	}
+
 	chart, err := loader.LoadChartPublic(request.RepoURL, request.TemplateName, request.TemplateVersion)
 
 	if err != nil {

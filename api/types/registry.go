@@ -25,6 +25,36 @@ type Registry struct {
 	InfraID uint `json:"infra_id"`
 }
 
+// Repository is a collection of images
+type RegistryRepository struct {
+	// Name of the repository
+	Name string `json:"name"`
+
+	// When the repository was created
+	CreatedAt time.Time `json:"created_at,omitempty"`
+
+	// The URI of the repository
+	URI string `json:"uri"`
+}
+
+// Image is a Docker image type
+type Image struct {
+	// The sha256 digest of the image manifest.
+	Digest string `json:"digest"`
+
+	// The tag used for the image.
+	Tag string `json:"tag"`
+
+	// The image manifest associated with the image.
+	Manifest string `json:"manifest"`
+
+	// The name of the repository associated with the image.
+	RepositoryName string `json:"repository_name"`
+
+	// When the image was pushed
+	PushedAt *time.Time `json:"pushed_at"`
+}
+
 type RegistryService string
 
 const (
@@ -71,3 +101,7 @@ type GetRegistryECRTokenRequest struct {
 type GetRegistryDOCRTokenRequest struct {
 	ServerURL string `schema:"server_url"`
 }
+
+type ListRegistryRepositoryResponse []*RegistryRepository
+
+type ListImageResponse []*Image

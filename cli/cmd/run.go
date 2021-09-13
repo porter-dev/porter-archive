@@ -11,6 +11,7 @@ import (
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -74,7 +75,7 @@ func init() {
 	)
 }
 
-func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
+func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
 
 	podsSimple, err := getPods(client, namespace, args[0])
@@ -219,9 +220,11 @@ func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, er
 		return nil, err
 	}
 
+	pods := *resp
+
 	res := make([]podSimple, 0)
 
-	for _, pod := range resp {
+	for _, pod := range pods {
 		containerNames := make([]string, 0)
 
 		for _, container := range pod.Spec.Containers {

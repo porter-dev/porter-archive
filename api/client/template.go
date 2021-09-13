@@ -3,64 +3,42 @@ package client
 import (
 	"context"
 	"fmt"
-	"net/http"
 
-	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/api/types"
 )
 
 func (c *Client) ListTemplates(
 	ctx context.Context,
-) ([]*models.PorterChartList, error) {
-	req, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf("%s/templates", c.BaseURL),
-		nil,
+	req *types.ListTemplatesRequest,
+) (*types.ListTemplatesResponse, error) {
+	resp := &types.ListTemplatesResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/templates",
+		),
+		req,
+		resp,
 	)
 
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-
-	bodyResp := make([]*models.PorterChartList, 0)
-
-	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
-		}
-
-		return nil, err
-	}
-
-	return bodyResp, nil
+	return resp, err
 }
 
 func (c *Client) GetTemplate(
 	ctx context.Context,
 	name, version string,
-) (*models.PorterChartRead, error) {
-	req, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf("%s/templates/%s/%s", c.BaseURL, name, version),
-		nil,
+	req *types.GetTemplateRequest,
+) (*types.GetTemplateResponse, error) {
+	resp := &types.GetTemplateResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/templates/%s/%s",
+			name, version,
+		),
+		req,
+		resp,
 	)
 
-	if err != nil {
-		return nil, err
-	}
-
-	req = req.WithContext(ctx)
-
-	bodyResp := &models.PorterChartRead{}
-
-	if httpErr, err := c.sendRequest(req, &bodyResp, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return nil, fmt.Errorf("code %d, errors %v", httpErr.Code, httpErr.Errors)
-		}
-
-		return nil, err
-	}
-
-	return bodyResp, nil
+	return resp, err
 }

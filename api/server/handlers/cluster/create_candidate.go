@@ -45,7 +45,7 @@ func (c *CreateClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	res := make([]*types.ClusterCandidate, 0)
+	res := make(types.CreateClusterCandidateResponse, 0)
 
 	for _, cc := range ccs {
 		// handle write to the database

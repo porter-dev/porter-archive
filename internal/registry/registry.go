@@ -19,6 +19,8 @@ import (
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 
+	ptypes "github.com/porter-dev/porter/api/types"
+
 	"github.com/digitalocean/godo"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
@@ -26,36 +28,6 @@ import (
 
 // Registry wraps the gorm Registry model
 type Registry models.Registry
-
-// Repository is a collection of images
-type Repository struct {
-	// Name of the repository
-	Name string `json:"name"`
-
-	// When the repository was created
-	CreatedAt time.Time `json:"created_at,omitempty"`
-
-	// The URI of the repository
-	URI string `json:"uri"`
-}
-
-// Image is a Docker image type
-type Image struct {
-	// The sha256 digest of the image manifest.
-	Digest string `json:"digest"`
-
-	// The tag used for the image.
-	Tag string `json:"tag"`
-
-	// The image manifest associated with the image.
-	Manifest string `json:"manifest"`
-
-	// The name of the repository associated with the image.
-	RepositoryName string `json:"repository_name"`
-
-	// When the image was pushed
-	PushedAt *time.Time `json:"pushed_at"`
-}
 
 func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, projectID, awsIntID uint) (string, error) {
 	awsInt, err := awsIntRepo.ReadAWSIntegration(projectID, awsIntID)
@@ -85,7 +57,7 @@ func GetECRRegistryURL(awsIntRepo repository.AWSIntegrationRepository, projectID
 func (r *Registry) ListRepositories(
 	repo repository.Repository,
 	doAuth *oauth2.Config, // only required if using DOCR
-) ([]*Repository, error) {
+) ([]*ptypes.RegistryRepository, error) {
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
 		return r.listECRRepositories(repo)
@@ -150,7 +122,7 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 
 func (r *Registry) listGCRRepositories(
 	repo repository.Repository,
-) ([]*Repository, error) {
+) ([]*ptypes.RegistryRepository, error) {
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
 		r.ProjectID,
 		r.GCPIntegrationID,
@@ -188,7 +160,7 @@ func (r *Registry) listGCRRepositories(
 		return nil, fmt.Errorf("Could not read GCR repositories: %v", err)
 	}
 
-	res := make([]*Repository, 0)
+	res := make([]*ptypes.RegistryRepository, 0)
 
 	parsedURL, err := url.Parse("https://" + r.URL)
 
@@ -197,7 +169,7 @@ func (r *Registry) listGCRRepositories(
 	}
 
 	for _, repo := range gcrResp.Repositories {
-		res = append(res, &Repository{
+		res = append(res, &ptypes.RegistryRepository{
 			Name: repo,
 			URI:  parsedURL.Host + "/" + repo,
 		})
@@ -206,7 +178,7 @@ func (r *Registry) listGCRRepositories(
 	return res, nil
 }
 
-func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repository, error) {
+func (r *Registry) listECRRepositories(repo repository.Repository) ([]*ptypes.RegistryRepository, error) {
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
 		r.AWSIntegrationID,
@@ -230,10 +202,10 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repositor
 		return nil, err
 	}
 
-	res := make([]*Repository, 0)
+	res := make([]*ptypes.RegistryRepository, 0)
 
 	for _, repo := range resp.Repositories {
-		res = append(res, &Repository{
+		res = append(res, &ptypes.RegistryRepository{
 			Name:      *repo.RepositoryName,
 			CreatedAt: *repo.CreatedAt,
 			URI:       *repo.RepositoryUri,
@@ -246,7 +218,7 @@ func (r *Registry) listECRRepositories(repo repository.Repository) ([]*Repositor
 func (r *Registry) listDOCRRepositories(
 	repo repository.Repository,
 	doAuth *oauth2.Config,
-) ([]*Repository, error) {
+) ([]*ptypes.RegistryRepository, error) {
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
 		r.ProjectID,
 		r.DOIntegrationID,
@@ -278,10 +250,10 @@ func (r *Registry) listDOCRRepositories(
 		return nil, err
 	}
 
-	res := make([]*Repository, 0)
+	res := make([]*ptypes.RegistryRepository, 0)
 
 	for _, repo := range repos {
-		res = append(res, &Repository{
+		res = append(res, &ptypes.RegistryRepository{
 			Name: repo.Name,
 			URI:  r.URL + "/" + repo.Name,
 		})
@@ -292,13 +264,13 @@ func (r *Registry) listDOCRRepositories(
 
 func (r *Registry) listPrivateRegistryRepositories(
 	repo repository.Repository,
-) ([]*Repository, error) {
+) ([]*ptypes.RegistryRepository, error) {
 	// handle dockerhub different, as it doesn't implement the docker registry http api
 	if strings.Contains(r.URL, "docker.io") {
 		// in this case, we just return the single dockerhub repository that's linked
-		res := make([]*Repository, 0)
+		res := make([]*ptypes.RegistryRepository, 0)
 
-		res = append(res, &Repository{
+		res = append(res, &ptypes.RegistryRepository{
 			Name: strings.Split(r.URL, "docker.io/")[1],
 			URI:  r.URL,
 		})
@@ -367,14 +339,14 @@ func (r *Registry) listPrivateRegistryRepositories(
 		return nil, fmt.Errorf("Could not read private registry repositories: %v", err)
 	}
 
-	res := make([]*Repository, 0)
+	res := make([]*ptypes.RegistryRepository, 0)
 
 	if err != nil {
 		return nil, err
 	}
 
 	for _, repo := range gcrResp.Repositories {
-		res = append(res, &Repository{
+		res = append(res, &ptypes.RegistryRepository{
 			Name: repo,
 			URI:  parsedURL.Host + "/" + repo,
 		})
@@ -475,7 +447,7 @@ func (r *Registry) ListImages(
 	repoName string,
 	repo repository.Repository,
 	doAuth *oauth2.Config, // only required if using DOCR
-) ([]*Image, error) {
+) ([]*ptypes.Image, error) {
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
 		return r.listECRImages(repoName, repo)
@@ -496,7 +468,7 @@ func (r *Registry) ListImages(
 	return nil, fmt.Errorf("error listing images")
 }
 
-func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([]*Image, error) {
+func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
 		r.AWSIntegrationID,
@@ -549,11 +521,11 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		imageDetails = append(imageDetails, describeResp.ImageDetails...)
 	}
 
-	res := make([]*Image, 0)
+	res := make([]*ptypes.Image, 0)
 
 	for _, img := range imageDetails {
 		for _, tag := range img.ImageTags {
-			res = append(res, &Image{
+			res = append(res, &ptypes.Image{
 				Digest:         *img.ImageDigest,
 				Tag:            *tag,
 				RepositoryName: repoName,
@@ -569,7 +541,7 @@ type gcrImageResp struct {
 	Tags []string `json:"tags"`
 }
 
-func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([]*Image, error) {
+func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
 		r.ProjectID,
 		r.GCPIntegrationID,
@@ -614,10 +586,10 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 		return nil, fmt.Errorf("Could not read GCR repositories: %v", err)
 	}
 
-	res := make([]*Image, 0)
+	res := make([]*ptypes.Image, 0)
 
 	for _, tag := range gcrResp.Tags {
-		res = append(res, &Image{
+		res = append(res, &ptypes.Image{
 			RepositoryName: repoName,
 			Tag:            tag,
 		})
@@ -630,7 +602,7 @@ func (r *Registry) listDOCRImages(
 	repoName string,
 	repo repository.Repository,
 	doAuth *oauth2.Config,
-) ([]*Image, error) {
+) ([]*ptypes.Image, error) {
 	oauthInt, err := repo.OAuthIntegration().ReadOAuthIntegration(
 		r.ProjectID,
 		r.DOIntegrationID,
@@ -662,10 +634,10 @@ func (r *Registry) listDOCRImages(
 		return nil, err
 	}
 
-	res := make([]*Image, 0)
+	res := make([]*ptypes.Image, 0)
 
 	for _, tag := range tags {
-		res = append(res, &Image{
+		res = append(res, &ptypes.Image{
 			RepositoryName: repoName,
 			Tag:            tag.Tag,
 		})
@@ -674,7 +646,7 @@ func (r *Registry) listDOCRImages(
 	return res, nil
 }
 
-func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Repository) ([]*Image, error) {
+func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
 	// handle dockerhub different, as it doesn't implement the docker registry http api
 	if strings.Contains(r.URL, "docker.io") {
 		return r.listDockerHubImages(repoName, repo)
@@ -720,10 +692,10 @@ func (r *Registry) listPrivateRegistryImages(repoName string, repo repository.Re
 		return nil, fmt.Errorf("Could not read private registry repositories: %v", err)
 	}
 
-	res := make([]*Image, 0)
+	res := make([]*ptypes.Image, 0)
 
 	for _, tag := range gcrResp.Tags {
-		res = append(res, &Image{
+		res = append(res, &ptypes.Image{
 			RepositoryName: repoName,
 			Tag:            tag,
 		})
@@ -749,7 +721,7 @@ type dockerHubLoginResp struct {
 	Token string `json:"token"`
 }
 
-func (r *Registry) listDockerHubImages(repoName string, repo repository.Repository) ([]*Image, error) {
+func (r *Registry) listDockerHubImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
 	basic, err := repo.BasicIntegration().ReadBasicIntegration(
 		r.ProjectID,
 		r.BasicIntegrationID,
@@ -820,10 +792,10 @@ func (r *Registry) listDockerHubImages(repoName string, repo repository.Reposito
 		return nil, fmt.Errorf("Could not read private registry repositories: %v", err)
 	}
 
-	res := make([]*Image, 0)
+	res := make([]*ptypes.Image, 0)
 
 	for _, result := range imageResp.Results {
-		res = append(res, &Image{
+		res = append(res, &ptypes.Image{
 			RepositoryName: repoName,
 			Tag:            result.Name,
 		})

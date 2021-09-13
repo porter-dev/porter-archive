@@ -6,6 +6,7 @@ import (
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/spf13/cobra"
 )
@@ -289,7 +290,7 @@ func init() {
 	updateCmd.AddCommand(updateConfigCmd)
 }
 
-func updateFull(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Deploying app:", app)
 
 	updateAgent, err := updateGetAgent(client)
@@ -319,7 +320,7 @@ func updateFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 	return nil
 }
 
-func updateGetEnv(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
@@ -343,7 +344,7 @@ func updateGetEnv(resp *api.AuthCheckResponse, client *api.Client, args []string
 	return updateAgent.WriteBuildEnv(getEnvFileDest)
 }
 
-func updateBuild(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func updateBuild(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
@@ -353,7 +354,7 @@ func updateBuild(resp *api.AuthCheckResponse, client *api.Client, args []string)
 	return updateBuildWithAgent(updateAgent)
 }
 
-func updatePush(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
@@ -363,7 +364,7 @@ func updatePush(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 	return updatePushWithAgent(updateAgent)
 }
 
-func updateUpgrade(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {
@@ -401,12 +402,12 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	color.New(color.FgGreen).Println("Building docker image for", app)
 
 	if stream {
-		updateAgent.StreamEvent(api.Event{
-			ID:     "build",
-			Name:   "Build",
-			Index:  100,
-			Status: api.EventStatusInProgress,
-			Info:   "",
+		updateAgent.StreamEvent(types.SubEvent{
+			EventID: "build",
+			Name:    "Build",
+			Index:   100,
+			Status:  types.EventStatusInProgress,
+			Info:    "",
 		})
 	}
 
@@ -415,12 +416,12 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	if err != nil {
 		if stream {
 			// another concern: is it safe to ignore the error here?
-			updateAgent.StreamEvent(api.Event{
-				ID:     "build",
-				Name:   "Build",
-				Index:  110,
-				Status: api.EventStatusFailed,
-				Info:   err.Error(),
+			updateAgent.StreamEvent(types.SubEvent{
+				EventID: "build",
+				Name:    "Build",
+				Index:   110,
+				Status:  types.EventStatusFailed,
+				Info:    err.Error(),
 			})
 		}
 		return err
@@ -431,12 +432,12 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(api.Event{
-				ID:     "build",
-				Name:   "Build",
-				Index:  120,
-				Status: api.EventStatusFailed,
-				Info:   err.Error(),
+			updateAgent.StreamEvent(types.SubEvent{
+				EventID: "build",
+				Name:    "Build",
+				Index:   120,
+				Status:  types.EventStatusFailed,
+				Info:    err.Error(),
 			})
 		}
 		return err
@@ -444,24 +445,24 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if err := updateAgent.Build(); err != nil {
 		if stream {
-			updateAgent.StreamEvent(api.Event{
-				ID:     "build",
-				Name:   "Build",
-				Index:  130,
-				Status: api.EventStatusFailed,
-				Info:   err.Error(),
+			updateAgent.StreamEvent(types.SubEvent{
+				EventID: "build",
+				Name:    "Build",
+				Index:   130,
+				Status:  types.EventStatusFailed,
+				Info:    err.Error(),
 			})
 		}
 		return err
 	}
 
 	if stream {
-		updateAgent.StreamEvent(api.Event{
-			ID:     "build",
-			Name:   "Build",
-			Index:  140,
-			Status: api.EventStatusSuccess,
-			Info:   "",
+		updateAgent.StreamEvent(types.SubEvent{
+			EventID: "build",
+			Name:    "Build",
+			Index:   140,
+			Status:  types.EventStatusSuccess,
+			Info:    "",
 		})
 	}
 
@@ -473,35 +474,35 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 	color.New(color.FgGreen).Println("Pushing new image for", app)
 
 	if stream {
-		updateAgent.StreamEvent(api.Event{
-			ID:     "push",
-			Name:   "Push",
-			Index:  200,
-			Status: api.EventStatusInProgress,
-			Info:   "",
+		updateAgent.StreamEvent(types.SubEvent{
+			EventID: "push",
+			Name:    "Push",
+			Index:   200,
+			Status:  types.EventStatusInProgress,
+			Info:    "",
 		})
 	}
 
 	if err := updateAgent.Push(); err != nil {
 		if stream {
-			updateAgent.StreamEvent(api.Event{
-				ID:     "push",
-				Name:   "Push",
-				Index:  210,
-				Status: api.EventStatusFailed,
-				Info:   err.Error(),
+			updateAgent.StreamEvent(types.SubEvent{
+				EventID: "push",
+				Name:    "Push",
+				Index:   210,
+				Status:  types.EventStatusFailed,
+				Info:    err.Error(),
 			})
 		}
 		return err
 	}
 
 	if stream {
-		updateAgent.StreamEvent(api.Event{
-			ID:     "push",
-			Name:   "Push",
-			Index:  220,
-			Status: api.EventStatusSuccess,
-			Info:   "",
+		updateAgent.StreamEvent(types.SubEvent{
+			EventID: "push",
+			Name:    "Push",
+			Index:   220,
+			Status:  types.EventStatusSuccess,
+			Info:    "",
 		})
 	}
 
@@ -513,12 +514,12 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	color.New(color.FgGreen).Println("Upgrading configuration for", app)
 
 	if stream {
-		updateAgent.StreamEvent(api.Event{
-			ID:     "upgrade",
-			Name:   "Upgrade",
-			Index:  300,
-			Status: api.EventStatusInProgress,
-			Info:   "",
+		updateAgent.StreamEvent(types.SubEvent{
+			EventID: "upgrade",
+			Name:    "Upgrade",
+			Index:   300,
+			Status:  types.EventStatusInProgress,
+			Info:    "",
 		})
 	}
 
@@ -527,12 +528,12 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(api.Event{
-				ID:     "upgrade",
-				Name:   "Upgrade",
-				Index:  310,
-				Status: api.EventStatusFailed,
-				Info:   err.Error(),
+			updateAgent.StreamEvent(types.SubEvent{
+				EventID: "upgrade",
+				Name:    "Upgrade",
+				Index:   310,
+				Status:  types.EventStatusFailed,
+				Info:    err.Error(),
 			})
 		}
 		return err
@@ -542,24 +543,24 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 
 	if err != nil {
 		if stream {
-			updateAgent.StreamEvent(api.Event{
-				ID:     "upgrade",
-				Name:   "Upgrade",
-				Index:  320,
-				Status: api.EventStatusFailed,
-				Info:   err.Error(),
+			updateAgent.StreamEvent(types.SubEvent{
+				EventID: "upgrade",
+				Name:    "Upgrade",
+				Index:   320,
+				Status:  types.EventStatusFailed,
+				Info:    err.Error(),
 			})
 		}
 		return err
 	}
 
 	if stream {
-		updateAgent.StreamEvent(api.Event{
-			ID:     "upgrade",
-			Name:   "Upgrade",
-			Index:  330,
-			Status: api.EventStatusSuccess,
-			Info:   "",
+		updateAgent.StreamEvent(types.SubEvent{
+			EventID: "upgrade",
+			Name:    "Upgrade",
+			Index:   330,
+			Status:  types.EventStatusSuccess,
+			Info:    "",
 		})
 	}
 

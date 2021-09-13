@@ -69,10 +69,10 @@ Registry URL: `))
 			return 0, err
 		}
 
-		reg, err := client.CreateGCR(
+		reg, err := client.CreateRegistry(
 			context.Background(),
 			projectID,
-			&api.CreateGCRRequest{
+			&types.CreateRegistryRequest{
 				Name:             regName,
 				GCPIntegrationID: integration.ID,
 				URL:              regURL,

@@ -2,6 +2,7 @@ package types
 
 import (
 	"helm.sh/helm/v3/pkg/release"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,6 +18,7 @@ type PorterRelease struct {
 	ID              uint             `json:"id"`
 	WebhookToken    string           `json:"webhook_token"`
 	GitActionConfig *GitActionConfig `json:"git_action_config,omitempty"`
+	ImageRepoURI    string           `json:"image_repo_uri"`
 }
 
 type GetReleaseResponse Release
@@ -100,13 +102,7 @@ const (
 )
 
 type UpdateReleaseStepsRequest struct {
-	Event struct {
-		ID     string      `json:"event_id" form:"required"`
-		Name   string      `json:"name" form:"required"`
-		Index  int64       `json:"index" form:"required"`
-		Status EventStatus `json:"status" form:"required"`
-		Info   string      `json:"info" form:"required"`
-	} `json:"event" form:"required"`
+	Event SubEvent `json:"event" form:"required"`
 }
 
 type NotificationConfig struct {
@@ -127,3 +123,5 @@ type DNSRecord struct {
 
 	ClusterID uint `json:"cluster_id"`
 }
+
+type GetReleaseAllPodsResponse []v1.Pod

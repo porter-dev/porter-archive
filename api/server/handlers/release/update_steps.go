@@ -81,7 +81,7 @@ func (c *UpdateReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	if err := c.Repo().Event().AppendEvent(container, &models.SubEvent{
 		EventContainerID: container.ID,
-		EventID:          request.Event.ID,
+		EventID:          request.Event.EventID,
 		Name:             request.Event.Name,
 		Index:            request.Event.Index,
 		Status:           request.Event.Status,

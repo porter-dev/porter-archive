@@ -36,7 +36,7 @@ func (p *ClusterListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := make([]*types.Cluster, len(clusters))
+	res := make(types.ListClusterResponse, len(clusters))
 
 	for i, cluster := range clusters {
 		res[i] = cluster.ToClusterType()

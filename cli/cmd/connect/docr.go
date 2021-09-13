@@ -22,11 +22,13 @@ func DOCR(
 	}
 
 	// list oauth integrations and make sure DO exists
-	oauthInts, err := client.ListOAuthIntegrations(context.TODO(), projectID)
+	resp, err := client.ListOAuthIntegrations(context.TODO(), projectID)
 
 	if err != nil {
 		return 0, err
 	}
+
+	oauthInts := *resp
 
 	linkedDO := false
 	var doAuth *types.OAuthIntegration
@@ -63,10 +65,10 @@ Registry URL: `))
 		return 0, err
 	}
 
-	reg, err := client.CreateDOCR(
+	reg, err := client.CreateRegistry(
 		context.Background(),
 		projectID,
-		&api.CreateDOCRRequest{
+		&types.CreateRegistryRequest{
 			Name:            regName,
 			DOIntegrationID: doAuth.ID,
 			URL:             regURL,
@@ -85,13 +87,15 @@ func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (*types.OAuthI
 	utils.OpenBrowser(oauthURL)
 
 	for {
-		oauthInts, err := client.ListOAuthIntegrations(context.TODO(), projectID)
+		resp, err := client.ListOAuthIntegrations(context.TODO(), projectID)
 
 		if err != nil {
 			return doAuth, err
 		}
 
 		linkedDO := false
+
+		oauthInts := *resp
 
 		// iterate through oauth integrations to find do
 		for _, oauthInt := range oauthInts {

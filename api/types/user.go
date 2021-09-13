@@ -58,3 +58,5 @@ type FinalizeResetUserPasswordRequest struct {
 
 	NewPassword string `json:"new_password" form:"required,max=255"`
 }
+
+type ListUserProjectsResponse []*Project

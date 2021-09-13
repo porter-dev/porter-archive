@@ -3,9 +3,10 @@ package connect
 import (
 	"context"
 	"fmt"
-	"github.com/porter-dev/porter/api/types"
 	"strings"
 	"time"
+
+	"github.com/porter-dev/porter/api/types"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/fatih/color"
@@ -133,10 +134,10 @@ func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) 
 		return 0, err
 	}
 
-	reg, err := client.CreateECR(
+	reg, err := client.CreateRegistry(
 		context.Background(),
 		projectID,
-		&api.CreateECRRequest{
+		&types.CreateRegistryRequest{
 			Name:             regName,
 			AWSIntegrationID: intID,
 		},

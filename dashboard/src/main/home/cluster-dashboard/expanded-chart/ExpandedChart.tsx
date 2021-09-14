@@ -263,7 +263,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       });
     } catch (err) {
       const parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -318,7 +318,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         cb && cb();
       } catch (err) {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;

@@ -60,7 +60,7 @@ export default class JobResource extends Component<PropsType, StateType> {
       .then((res) => {})
       .catch((err) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
         if (parsedErr) {
           err = parsedErr;
         }

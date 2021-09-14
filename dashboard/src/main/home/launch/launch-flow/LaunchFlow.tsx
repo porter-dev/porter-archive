@@ -131,7 +131,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       })
       .catch((err) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
 
         err = parsedErr || err.message || JSON.stringify(err);
 
@@ -226,7 +226,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
             })
             .catch((err) => {
               let parsedErr =
-                err?.response?.data?.errors && err.response.data.errors[0];
+                err?.response?.data?.error;
               err = parsedErr || err.message || JSON.stringify(err);
               setSaveValuesStatus(`Could not create subdomain: ${err}`);
 
@@ -275,7 +275,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       })
       .catch((err: any) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
         err = parsedErr || err.message || JSON.stringify(err);
         setSaveValuesStatus(`Could not deploy template: ${err}`);
         setCurrentError(err);

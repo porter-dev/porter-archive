@@ -102,7 +102,7 @@ export default class Register extends Component<PropsType, StateType> {
             authenticate();
           }
         })
-        .catch((err) => setCurrentError(err.response.data.errors[0]));
+        .catch((err) => setCurrentError(err.response.data.error));
     }
   };
 

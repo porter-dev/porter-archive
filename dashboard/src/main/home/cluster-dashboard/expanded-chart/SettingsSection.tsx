@@ -129,7 +129,7 @@ const SettingsSection: React.FC<PropsType> = ({
       refreshChart();
     } catch (err) {
       let parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -163,7 +163,7 @@ const SettingsSection: React.FC<PropsType> = ({
       }, 500);
     } catch (err) {
       let parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;

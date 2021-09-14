@@ -381,7 +381,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
@@ -632,7 +632,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       cb && cb();
     } catch (err) {
       let parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;

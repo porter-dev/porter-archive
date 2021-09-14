@@ -69,6 +69,12 @@ type ListOptions struct {
 	FieldSelector string
 }
 
+type AuthError struct{}
+
+func (e *AuthError) Error() string {
+	return "Unauthorized error"
+}
+
 // CreateConfigMap creates the configmap given the key-value pairs and namespace
 func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).Create(
@@ -577,8 +583,9 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 	defer close(stopper)
 
 	informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-		fmt.Println("ERROR ERROR ERROR")
-		fmt.Println(err)
+		if strings.HasSuffix(err.Error(), ": Unauthorized") {
+			errorchan <- &AuthError{}
+		}
 	})
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{

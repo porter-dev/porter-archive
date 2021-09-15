@@ -3,7 +3,11 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { PorterTemplate } from "shared/types";
+import {
+  ChartTypeWithExtendedConfig,
+  PorterTemplate,
+  StorageType,
+} from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
@@ -14,13 +18,15 @@ import TitleSection from "components/TitleSection";
 
 import { hardcodedNames } from "shared/hardcodedNameDict";
 import semver from "semver";
+import { RouteComponentProps, withRouter } from "react-router";
+import { getQueryParam, getQueryParams } from "shared/routing";
 
 const tabOptions = [
   { label: "New Application", value: "porter" },
   { label: "Community Add-ons", value: "community" },
 ];
 
-type PropsType = {};
+type PropsType = RouteComponentProps & {};
 
 type StateType = {
   currentTemplate: PorterTemplate | null;
@@ -31,9 +37,10 @@ type StateType = {
   loading: boolean;
   error: boolean;
   isOnLaunchFlow: boolean;
+  clonedChart: ChartTypeWithExtendedConfig;
 };
 
-export default class Templates extends Component<PropsType, StateType> {
+class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
     form: null as any,
@@ -43,83 +50,156 @@ export default class Templates extends Component<PropsType, StateType> {
     loading: true,
     error: false,
     isOnLaunchFlow: false,
+    clonedChart: null as ChartTypeWithExtendedConfig,
   };
 
-  componentDidMount() {
-    api
-      .getTemplates(
+  async componentDidMount() {
+    try {
+      const res = await api.getTemplates(
         "<token>",
         {
           repo_url: process.env.ADDON_CHART_REPO_URL,
         },
         {}
-      )
-      .then((res) => {
-        let sortedVersionData = res.data.map((template: any) => {
-          let versions = template.versions.reverse();
+      );
+      let sortedVersionData = res.data.map((template: any) => {
+        let versions = template.versions.reverse();
 
-          versions = template.versions.sort(semver.rcompare);
+        versions = template.versions.sort(semver.rcompare);
 
-          return {
-            ...template,
-            versions,
-            currentVersion: versions[0],
-          };
-        });
+        return {
+          ...template,
+          versions,
+          currentVersion: versions[0],
+        };
+      });
+      sortedVersionData.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
 
-        this.setState(
-          { addonTemplates: sortedVersionData, error: false },
-          () => {
-            this.state.addonTemplates.sort((a, b) =>
-              a.name > b.name ? 1 : -1
-            );
-
-            this.setState({
-              loading: false,
-            });
-          }
-        );
-      })
-      .catch(() => this.setState({ loading: false, error: true }));
-
-    api
-      .getTemplates(
+      this.setState({ addonTemplates: sortedVersionData, error: false });
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+    }
+    try {
+      const res = await api.getTemplates(
         "<token>",
         {
           repo_url: process.env.APPLICATION_CHART_REPO_URL,
         },
         {}
-      )
-      .then((res) => {
-        let sortedVersionData = res.data.map((template: any) => {
-          let versions = template.versions.reverse();
+      );
+      let sortedVersionData = res.data.map((template: any) => {
+        let versions = template.versions.reverse();
 
-          versions = template.versions.sort(semver.rcompare);
+        versions = template.versions.sort(semver.rcompare);
 
-          return {
-            ...template,
-            versions,
-            currentVersion: versions[0],
-          };
-        });
+        return {
+          ...template,
+          versions,
+          currentVersion: versions[0],
+        };
+      });
 
-        this.setState(
-          { applicationTemplates: sortedVersionData, error: false },
-          () => {
-            let preferredOrder = ["web", "worker", "job"];
-            this.state.applicationTemplates.sort((a, b) => {
-              return (
-                preferredOrder.indexOf(a.name) - preferredOrder.indexOf(b.name)
-              );
-            });
-            this.setState({
-              loading: false,
-            });
-          }
+      let currentTemplate = null;
+      let isOnLaunchFlow = false;
+      let form = null;
+      let clonedChart = null;
+      if (this.isTryingToClone() && this.areCloneQueryParamsValid()) {
+        isOnLaunchFlow = true;
+        const template_name = getQueryParam(this.props, "release_type");
+        const version = getQueryParam(this.props, "release_template_version");
+        currentTemplate = sortedVersionData.find(
+          (v: any) => v.name === template_name
         );
-      })
-      .catch(() => this.setState({ loading: false, error: true }));
+
+        console.log(currentTemplate);
+        if (currentTemplate.versions.find((v: any) => v === version)) {
+          currentTemplate.currentVersion = version;
+        }
+        const release = await this.getClonedRelease().then((res) => res.data);
+        form = release.form;
+        clonedChart = release;
+        if (release.git_action_config || release.image_repo_uri) {
+          this.context.setCurrentError(
+            "Application/Jobs deployed with GitHub are not supported for cloning yet!"
+          );
+          this.props.history.push("/dashboard");
+          return;
+        }
+      }
+
+      this.setState(
+        {
+          applicationTemplates: sortedVersionData,
+          error: false,
+          currentTemplate,
+          isOnLaunchFlow,
+          form,
+          clonedChart,
+        },
+        () => {
+          let preferredOrder = ["web", "worker", "job"];
+          this.state.applicationTemplates.sort((a, b) => {
+            return (
+              preferredOrder.indexOf(a.name) - preferredOrder.indexOf(b.name)
+            );
+          });
+          this.setState({
+            loading: false,
+          });
+        }
+      );
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+    }
   }
+
+  isTryingToClone = () => {
+    const queryParams = getQueryParams({ location });
+    return queryParams.has("shouldClone");
+  };
+
+  areCloneQueryParamsValid = () => {
+    const qp = getQueryParams(this.props);
+
+    const requiredParams = [
+      "release_namespace",
+      "release_template_version",
+      "release_name",
+      "release_version",
+      "release_type",
+    ];
+    // Check if we have all the params we need to make the request for the cloned app
+    // If the any param is missing then the some function will return true, so the validation
+    // went wrong.
+    return !requiredParams.some((rp) => !qp.has(rp));
+  };
+
+  getClonedRelease = () => {
+    const queryParams = getQueryParams(this.props);
+
+    if (!this.areCloneQueryParamsValid()) {
+      this.context.setCurrentError(
+        "Url has missing params to clone the app. Please try again."
+      );
+      this.props.history.push("/dashboard");
+      return;
+    }
+
+    return api.getChart<ChartTypeWithExtendedConfig>(
+      "<token>",
+      {
+        namespace: queryParams.get("release_namespace"),
+        cluster_id: this.context?.currentCluster?.id,
+        storage: StorageType.Secret,
+      },
+      {
+        id: this.context.currentProject.id,
+        name: queryParams.get("release_name"),
+        // This will get by default the last available version
+        revision: Number(queryParams.get("release_version")),
+      }
+    );
+  };
 
   renderIcon = (icon: string) => {
     if (icon) {
@@ -232,6 +312,9 @@ export default class Templates extends Component<PropsType, StateType> {
   };
 
   render() {
+    if (this.isTryingToClone() && this.state.loading) {
+      return <Loading />;
+    }
     if (!this.state.isOnLaunchFlow || !this.state.currentTemplate) {
       return (
         <TemplatesWrapper>
@@ -247,6 +330,8 @@ export default class Templates extends Component<PropsType, StateType> {
     } else {
       return (
         <LaunchFlow
+          isCloning={this.isTryingToClone()}
+          clonedChart={this.state.clonedChart}
           form={this.state.form}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
@@ -258,6 +343,8 @@ export default class Templates extends Component<PropsType, StateType> {
 }
 
 Templates.contextType = Context;
+
+export default withRouter(Templates);
 
 const Placeholder = styled.div`
   padding-top: 200px;

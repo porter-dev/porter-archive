@@ -15,6 +15,7 @@ import CopyToClipboard from "components/CopyToClipboard";
 import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
 import NotificationSettingsSection from "./NotificationSettingsSection";
+import { Link } from "react-router-dom";
 
 type PropsType = {
   currentChart: ChartType;
@@ -174,6 +175,21 @@ const SettingsSection: React.FC<PropsType> = ({
     }
   };
 
+  const getCloneUrl = () => {
+    const params = new URLSearchParams();
+    params.append("project_id", currentProject.id.toString());
+    params.append("shouldClone", "true");
+    params.append("release_namespace", currentChart.namespace);
+    params.append(
+      "release_template_version",
+      currentChart.chart.metadata.version
+    );
+    params.append("release_type", currentChart.chart.metadata.name);
+    params.append("release_name", currentChart.name);
+    params.append("release_version", currentChart.version.toString());
+    return `/launch?${params.toString()}`;
+  };
+
   const renderWebhookSection = () => {
     if (!currentChart?.form?.hasSource) {
       return;
@@ -264,6 +280,13 @@ const SettingsSection: React.FC<PropsType> = ({
     );
   };
 
+  const chartWasDeployedWithGithub = () => {
+    if (currentChart.git_action_config || currentChart.image_repo_uri) {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <Wrapper>
       {!loadingWebhookToken ? (
@@ -271,6 +294,12 @@ const SettingsSection: React.FC<PropsType> = ({
           {renderWebhookSection()}
           <NotificationSettingsSection currentChart={currentChart} />
           <Heading>Additional Settings</Heading>
+          {/* Prevent the clone button to be rendered in github deployed charts */}
+          {!chartWasDeployedWithGithub() && (
+            <Button as={Link} to={getCloneUrl()}>
+              Clone
+            </Button>
+          )}
           <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
             Delete {currentChart.name}
           </Button>

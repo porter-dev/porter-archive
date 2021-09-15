@@ -293,13 +293,22 @@ const SettingsSection: React.FC<PropsType> = ({
         <StyledSettingsSection>
           {renderWebhookSection()}
           <NotificationSettingsSection currentChart={currentChart} />
-          <Heading>Additional Settings</Heading>
           {/* Prevent the clone button to be rendered in github deployed charts */}
           {!chartWasDeployedWithGithub() && (
-            <Button as={Link} to={getCloneUrl()}>
-              Clone
-            </Button>
+            <>
+              <Heading>Clone deployment</Heading>
+              <Helper>
+                Click the button below to be redirected to the deploy form with
+                all the data prefilled
+              </Helper>
+              <CloneButton as={Link} to={getCloneUrl()}>
+                Clone
+              </CloneButton>
+            </>
           )}
+
+          <Heading>Additional Settings</Heading>
+
           <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
             Delete {currentChart.name}
           </Button>
@@ -340,6 +349,15 @@ const Button = styled.button`
   }
   :hover {
     filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
+`;
+
+const CloneButton = styled(Button)`
+  display: block;
+
+  background-color: #ffffff11;
+  :hover {
+    background-color: #ffffff18;
   }
 `;
 

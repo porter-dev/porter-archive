@@ -35,6 +35,7 @@ type PropsType = WithAuthProps & {
   setShouldCreateWorkflow: any;
   shouldCreateWorkflow: boolean;
   fullActionConfig: any;
+  isCloning: boolean;
 };
 
 type StateType = {
@@ -187,28 +188,8 @@ class SettingsPage extends Component<PropsType, StateType> {
     }
   };
 
-  renderHeaderSection = () => {
-    let {
-      hasSource,
-      sourceType,
-      templateName,
-      setPage,
-      setTemplateName,
-    } = this.props;
-
-    if (hasSource) {
-      const [pageKey, pageName] =
-        sourceType === "repo"
-          ? ["workflow", "GitHub Actions"]
-          : ["source", "Source Settings"];
-
-      return (
-        <BackButton width="155px" onClick={() => setPage(pageKey)}>
-          <i className="material-icons">first_page</i>
-          {pageName}
-        </BackButton>
-      );
-    }
+  getNameInput = () => {
+    const { templateName, setTemplateName } = this.props;
 
     return (
       <>
@@ -234,6 +215,36 @@ class SettingsPage extends Component<PropsType, StateType> {
     );
   };
 
+  renderHeaderSection = () => {
+    let {
+      hasSource,
+      sourceType,
+      templateName,
+      setPage,
+      setTemplateName,
+    } = this.props;
+
+    if (this.props.isCloning) {
+      return null;
+    }
+
+    if (hasSource) {
+      const [pageKey, pageName] =
+        sourceType === "repo"
+          ? ["workflow", "GitHub Actions"]
+          : ["source", "Source Settings"];
+
+      return (
+        <BackButton width="155px" onClick={() => setPage(pageKey)}>
+          <i className="material-icons">first_page</i>
+          {pageName}
+        </BackButton>
+      );
+    }
+
+    return this.getNameInput();
+  };
+
   render() {
     let { selectedCluster } = this.state;
 
@@ -243,6 +254,7 @@ class SettingsPage extends Component<PropsType, StateType> {
       <PaddingWrapper>
         <StyledSettingsPage>
           {this.renderHeaderSection()}
+          {this.props.isCloning && this.getNameInput()}
           <Heading>Destination</Heading>
           <Helper>
             Specify the cluster and namespace you would like to deploy your

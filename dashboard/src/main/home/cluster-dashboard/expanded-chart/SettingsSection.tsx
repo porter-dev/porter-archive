@@ -281,7 +281,7 @@ const SettingsSection: React.FC<PropsType> = ({
   };
 
   const chartWasDeployedWithGithub = () => {
-    if (currentChart.git_action_config || currentChart.image_repo_uri) {
+    if (currentChart.git_action_config) {
       return true;
     }
     return false;
@@ -353,8 +353,10 @@ const Button = styled.button`
 `;
 
 const CloneButton = styled(Button)`
-  display: block;
-
+  display: flex;
+  width: min-content;
+  align-items: center;
+  justify-content: center;
   background-color: #ffffff11;
   :hover {
     background-color: #ffffff18;

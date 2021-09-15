@@ -118,7 +118,7 @@ class Templates extends Component<PropsType, StateType> {
         const release = await this.getClonedRelease().then((res) => res.data);
         form = release.form;
         clonedChart = release;
-        if (release.git_action_config || release.image_repo_uri) {
+        if (release.git_action_config) {
           this.context.setCurrentError(
             "Application/Jobs deployed with GitHub are not supported for cloning yet!"
           );

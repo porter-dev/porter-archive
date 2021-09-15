@@ -38,7 +38,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
       .then((res) => {
         if (this._isMounted) {
           let namespaceOptions: { label: string; value: string }[] = [
-            { label: "All", value: "" },
+            { label: "All", value: "ALL" },
           ];
 
           // Set namespace from URL if specified
@@ -46,7 +46,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           let urlParams = new URLSearchParams(queryString);
           let urlNamespace = urlParams.get("namespace");
           if (urlNamespace === "ALL") {
-            urlNamespace = "";
+            urlNamespace = "all";
           }
 
           let defaultNamespace = "default";
@@ -77,7 +77,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         if (this._isMounted) {
-          this.setState({ namespaceOptions: [{ label: "All", value: "" }] });
+          this.setState({ namespaceOptions: [{ label: "All", value: "ALL" }] });
         }
       });
   };

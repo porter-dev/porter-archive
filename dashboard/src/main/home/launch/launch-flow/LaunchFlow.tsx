@@ -65,11 +65,9 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const [selectedRegistry, setSelectedRegistry] = useState(null);
   const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
 
-  const setRandomNameIfEmpty = () => {
-    if (!templateName) {
-      const randomTemplateName = randomWords({ exactly: 3, join: "-" });
-      setTemplateName(randomTemplateName);
-    }
+  const generateRandomName = () => {
+    const randomTemplateName = randomWords({ exactly: 3, join: "-" });
+    return randomTemplateName;
   };
 
   const getFullActionConfig = (): FullActionConfigType => {
@@ -96,6 +94,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     let { currentCluster, currentProject, setCurrentError } = context;
     setSaveValuesStatus("loading");
 
+    const name = templateName || generateRandomName();
+
     let values = {};
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
@@ -109,7 +109,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           storage: StorageType.Secret,
           formValues: values,
           namespace: selectedNamespace,
-          name: templateName,
+          name,
         },
         {
           id: currentProject.id,
@@ -219,6 +219,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     }
 
     var external_domain: string;
+
+    const release_name = templateName || generateRandomName();
     // check if template is docker and create external domain if necessary
     if (props.currentTemplate.name == "web") {
       if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
@@ -227,7 +229,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
             .createSubdomain(
               "<token>",
               {
-                release_name: templateName,
+                release_name,
               },
               {
                 id: currentProject.id,
@@ -269,7 +271,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           storage: StorageType.Secret,
           formValues: values,
           namespace: selectedNamespace,
-          name: templateName,
+          name: release_name,
           githubActionConfig,
         },
         {
@@ -337,7 +339,10 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       );
     }
 
-    setRandomNameIfEmpty();
+    if (!templateName && !props.isCloning) {
+      const newTemplateName = generateRandomName();
+      setTemplateName(newTemplateName)
+    }
 
     if (currentPage === "workflow" && currentTab === "porter") {
       const fullActionConfig = getFullActionConfig();

@@ -734,6 +734,12 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, namespace string, chart
 	errorchan := make(chan error)
 	defer close(stopper)
 
+	informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+		if strings.HasSuffix(err.Error(), ": Unauthorized") {
+			errorchan <- &AuthError{}
+		}
+	})
+
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			secretObj, ok := newObj.(*v1.Secret)

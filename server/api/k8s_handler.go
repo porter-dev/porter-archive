@@ -1216,15 +1216,6 @@ func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// create a new agent
-	var agent *kubernetes.Agent
-
-	if app.ServerConf.IsTesting {
-		agent = app.TestAgents.K8sAgent
-	} else {
-		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
-	}
-
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	// upgrade to websocket.
@@ -1250,11 +1241,31 @@ func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request)
 		namespace = vals["namespace"][0]
 	}
 
-	err = agent.StreamHelmReleases(conn, namespace, chartList, selectors)
+	lastTime := int64(0)
 
-	if err != nil {
-		app.handleErrorWebsocketWrite(err, w)
-		return
+	for {
+		// create a new agent
+		var agent *kubernetes.Agent
+
+		if app.ServerConf.IsTesting {
+			agent = app.TestAgents.K8sAgent
+		} else {
+			agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+		}
+
+		err = agent.StreamHelmReleases(conn, namespace, chartList, selectors)
+
+		if !errors.Is(err, &kubernetes.AuthError{}) {
+			app.handleErrorWebsocketWrite(err, w)
+			return
+		}
+
+		if time.Now().Unix()-lastTime < 60 { // don't regenerate connection if too many unauthorized errors
+			app.handleErrorWebsocketWrite(err, w)
+			return
+		}
+
+		lastTime = time.Now().Unix()
 	}
 }
 

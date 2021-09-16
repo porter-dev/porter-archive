@@ -18,9 +18,6 @@ import (
 func NewAPIRouter(config *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
-	// set the content type for all API endpoints
-	r.Use(ContentTypeJSON)
-
 	endpointFactory := shared.NewAPIObjectEndpointFactory(config)
 
 	baseRegisterer := NewBaseRegisterer()
@@ -51,6 +48,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
 	r.Route("/api", func(r chi.Router) {
+		// set the content type for all API endpoints
+		r.Use(ContentTypeJSON)
+
 		baseRoutes := baseRegisterer.GetRoutes(
 			r,
 			config,

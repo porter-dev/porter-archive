@@ -2,7 +2,11 @@ package adapter
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"time"
+
+	"gorm.io/gorm/logger"
 
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"gorm.io/driver/postgres"
@@ -12,12 +16,22 @@ import (
 
 // New returns a new gorm database instance
 func New(conf *env.DBConf) (*gorm.DB, error) {
+	logger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold: time.Second,
+			LogLevel:      logger.Silent,
+			Colorful:      false,
+		},
+	)
+
 	if conf.SQLLite {
 		// we add DisableForeignKeyConstraintWhenMigrating since our sqlite does
 		// not support foreign key constraints
 		return gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
 			FullSaveAssociations:                     true,
+			Logger:                                   logger,
 		})
 	}
 
@@ -41,6 +55,7 @@ func New(conf *env.DBConf) (*gorm.DB, error) {
 
 	defaultDB, err := gorm.Open(postgres.Open(postgresDSN), &gorm.Config{
 		FullSaveAssociations: true,
+		Logger:               logger,
 	})
 
 	// attempt to create the database
@@ -51,6 +66,7 @@ func New(conf *env.DBConf) (*gorm.DB, error) {
 	// open the database connection
 	res, err := gorm.Open(postgres.Open(targetDSN), &gorm.Config{
 		FullSaveAssociations: true,
+		Logger:               logger,
 	})
 
 	// retry the connection 3 times
@@ -62,6 +78,7 @@ func New(conf *env.DBConf) (*gorm.DB, error) {
 			time.Sleep(timeout)
 			res, err = gorm.Open(postgres.Open(targetDSN), &gorm.Config{
 				FullSaveAssociations: true,
+				Logger:               logger,
 			})
 
 			if retryCount > 3 {

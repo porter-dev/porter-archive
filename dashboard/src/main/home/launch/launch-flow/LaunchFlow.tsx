@@ -341,7 +341,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     if (!templateName && !props.isCloning) {
       const newTemplateName = generateRandomName();
-      setTemplateName(newTemplateName)
+      setTemplateName(newTemplateName);
     }
 
     if (currentPage === "workflow" && currentTab === "porter") {
@@ -403,7 +403,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         {renderIcon()}
         {!props.isCloning
           ? `New ${currentTemplateName} ${
-              currentTab === "porter" ? null : "Instance"
+              currentTab !== "porter" ? "Instance" : ""
             }`
           : `Cloning ${currentTemplateName} deployment: ${props.clonedChart.name}`}
       </TitleSection>

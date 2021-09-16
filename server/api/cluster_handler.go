@@ -98,7 +98,12 @@ func (app *App) HandleReadProjectCluster(w http.ResponseWriter, r *http.Request)
 	if app.ServerConf.IsTesting {
 		agent = app.TestAgents.K8sAgent
 	} else {
-		agent, _ = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+
+		if err != nil {
+			app.handleErrorInternal(err, w)
+			return
+		}
 	}
 
 	endpoint, found, ingressErr := domain.GetNGINXIngressServiceIP(agent.Clientset)

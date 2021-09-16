@@ -273,9 +273,17 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 			return nil, err
 		}
 	} else {
-		tokenCache.ClusterID = cluster.ID
-		tokenCache.ID = cluster.TokenCacheID
-		if err := ctxDB.Save(tokenCache).Error; err != nil {
+		prev := &ints.ClusterTokenCache{}
+
+		if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(prev).Error; err != nil {
+			return nil, err
+		}
+
+		prev.Token = tokenCache.Token
+		prev.Expiry = tokenCache.Expiry
+		prev.ClusterID = cluster.ID
+
+		if err := ctxDB.Save(prev).Error; err != nil {
 			return nil, err
 		}
 	}

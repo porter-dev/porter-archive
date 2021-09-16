@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
@@ -403,25 +402,27 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 	isNative := false
 
 	if strings.Contains(regName, "gcr") && d.Cluster.AuthMechanism == models.GCP {
-		// get the project id of the cluster
-		gcpInt, err := d.Repo.GCPIntegration().ReadGCPIntegration(d.Cluster.ProjectID, d.Cluster.GCPIntegrationID)
+		// TODO (POR-33): fix architecture for clusters and re-add the code below
 
-		if err != nil {
-			return false
-		}
+		// // get the project id of the cluster
+		// gcpInt, err := d.Repo.GCPIntegration().ReadGCPIntegration(d.Cluster.ProjectID, d.Cluster.GCPIntegrationID)
 
-		gkeProjectID, err := integrations.GCPProjectIDFromJSON(gcpInt.GCPKeyData)
+		// if err != nil {
+		// 	return false
+		// }
 
-		if err != nil {
-			return false
-		}
+		// gkeProjectID, err := integrations.GCPProjectIDFromJSON(gcpInt.GCPKeyData)
 
-		// parse the project id of the gcr url
-		if regNameArr := strings.Split(regName, "/"); len(regNameArr) >= 2 {
-			gcrProjectID := regNameArr[1]
+		// if err != nil {
+		// 	return false
+		// }
 
-			isNative = gcrProjectID == gkeProjectID
-		}
+		// // parse the project id of the gcr url
+		// if regNameArr := strings.Split(regName, "/"); len(regNameArr) >= 2 {
+		// 	gcrProjectID := regNameArr[1]
+
+		// 	isNative = gcrProjectID == gkeProjectID
+		// }
 	} else if strings.Contains(regName, "ecr") && d.Cluster.AuthMechanism == models.AWS {
 		matches := ecrPattern.FindStringSubmatch(regName)
 

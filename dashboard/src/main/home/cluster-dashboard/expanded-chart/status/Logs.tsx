@@ -4,6 +4,8 @@ import { Context } from "shared/Context";
 import * as Anser from "anser";
 import api from "shared/api";
 
+const MAX_LOGS = 1000;
+
 type PropsType = {
   selectedPod: any;
   podError: string;
@@ -11,15 +13,19 @@ type PropsType = {
 };
 
 type StateType = {
-  logs: Anser.AnserJsonEntry[][];
+  logs: [number, Anser.AnserJsonEntry[]][];
+  numLogs: number;
   ws: any;
   scroll: boolean;
   currentTab: string;
 };
 
 export default class Logs extends Component<PropsType, StateType> {
+  private numLogs: React.RefObject<number>;
+
   state = {
-    logs: [] as Anser.AnserJsonEntry[][],
+    logs: [] as [number, Anser.AnserJsonEntry[]][],
+    numLogs: 0,
     ws: null as any,
     scroll: true,
     currentTab: "Application",
@@ -76,15 +82,16 @@ export default class Logs extends Component<PropsType, StateType> {
     }
 
     return this.state.logs.map((log, i) => {
+      const key = log[0];
       return (
-        <Log key={i}>
-          {this.state.logs[i].map((ansi, j) => {
+        <Log key={key}>
+          {this.state.logs[i][1].map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
             }
 
             return (
-              <LogSpan key={i + "." + j} ansi={ansi}>
+              <LogSpan key={key + "." + j} ansi={ansi}>
                 {ansi.content.replace(/ /g, "\u00a0")}
               </LogSpan>
             );
@@ -110,13 +117,28 @@ export default class Logs extends Component<PropsType, StateType> {
       let ansiLog = Anser.ansiToJson(evt.data);
 
       let logs = this.state.logs;
-      logs.push(ansiLog);
+      logs.push([this.state.numLogs, ansiLog]);
 
-      this.setState({ logs: logs }, () => {
-        if (this.state.scroll) {
-          this.scrollToBottom(false);
+      // this is technically not as efficient as things could be
+      // if there are performance issues, a deque can be used in place of a list
+      // for storing logs
+      if (logs.length > MAX_LOGS) {
+        logs.shift();
+      }
+
+      this.setState(
+        (prev) => {
+          return {
+            logs: prev.logs,
+            numLogs: prev.numLogs + 1,
+          };
+        },
+        () => {
+          if (this.state.scroll) {
+            this.scrollToBottom(false);
+          }
         }
-      });
+      );
     };
 
     this.ws.onerror = (err: ErrorEvent) => {};
@@ -168,7 +190,7 @@ export default class Logs extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        let logs = [] as Anser.AnserJsonEntry[][];
+        let logs = [] as [number, Anser.AnserJsonEntry[]][];
         // TODO: column view
         // logs.push(Anser.ansiToJson("\u001b[33;5;196mEvent Type\u001b[0m \t || \t \u001b[43m\u001b[34m\tReason\t\u001b[0m \t ||\tMessage"))
 
@@ -177,7 +199,7 @@ export default class Logs extends Component<PropsType, StateType> {
           let ansiLog = Anser.ansiToJson(
             `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
           );
-          logs.push(ansiLog);
+          logs.push([logs.length, ansiLog]);
         });
         this.setState({ logs: logs });
         console.log(res);

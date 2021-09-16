@@ -56,6 +56,7 @@ type ServerConf struct {
 	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
 
 	SentryDSN string `env:"SENTRY_DSN"`
+	SentryEnv string `env:"SENTRY_ENV,default=dev"`
 
 	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
 	IngressCluster     string `env:"INGRESS_CLUSTER"`

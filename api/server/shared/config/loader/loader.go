@@ -102,7 +102,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.Alerter = alerter.NoOpAlerter{}
 
 	if envConf.ServerConf.SentryDSN != "" {
-		res.Alerter, err = alerter.NewSentryAlerter(envConf.ServerConf.SentryDSN)
+		res.Alerter, err = alerter.NewSentryAlerter(envConf.ServerConf.SentryDSN, envConf.ServerConf.SentryEnv)
 	}
 
 	if sc.DOClientID != "" && sc.DOClientSecret != "" {

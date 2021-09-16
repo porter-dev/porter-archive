@@ -119,10 +119,10 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 const FadeWrapper = styled.div`
   animation: fadeIn 0.2s;
   @keyframes fadeIn {
-    from: {
+    from {
       opacity: 0;
     }
-    to: {
+    to {
       opacity: 1;
     }
   }

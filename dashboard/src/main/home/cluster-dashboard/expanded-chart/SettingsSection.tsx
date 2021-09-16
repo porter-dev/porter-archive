@@ -15,6 +15,7 @@ import CopyToClipboard from "components/CopyToClipboard";
 import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
 import NotificationSettingsSection from "./NotificationSettingsSection";
+import { Link } from "react-router-dom";
 
 type PropsType = {
   currentChart: ChartType;
@@ -174,6 +175,21 @@ const SettingsSection: React.FC<PropsType> = ({
     }
   };
 
+  const getCloneUrl = () => {
+    const params = new URLSearchParams();
+    params.append("project_id", currentProject.id.toString());
+    params.append("shouldClone", "true");
+    params.append("release_namespace", currentChart.namespace);
+    params.append(
+      "release_template_version",
+      currentChart.chart.metadata.version
+    );
+    params.append("release_type", currentChart.chart.metadata.name);
+    params.append("release_name", currentChart.name);
+    params.append("release_version", currentChart.version.toString());
+    return `/launch?${params.toString()}`;
+  };
+
   const renderWebhookSection = () => {
     if (!currentChart?.form?.hasSource) {
       return;
@@ -264,13 +280,35 @@ const SettingsSection: React.FC<PropsType> = ({
     );
   };
 
+  const chartWasDeployedWithGithub = () => {
+    if (currentChart.git_action_config) {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <Wrapper>
       {!loadingWebhookToken ? (
         <StyledSettingsSection>
           {renderWebhookSection()}
           <NotificationSettingsSection currentChart={currentChart} />
+          {/* Prevent the clone button to be rendered in github deployed charts */}
+          {!chartWasDeployedWithGithub() && (
+            <>
+              <Heading>Clone deployment</Heading>
+              <Helper>
+                Click the button below to be redirected to the deploy form with
+                all the data prefilled
+              </Helper>
+              <CloneButton as={Link} to={getCloneUrl()}>
+                Clone
+              </CloneButton>
+            </>
+          )}
+
           <Heading>Additional Settings</Heading>
+
           <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
             Delete {currentChart.name}
           </Button>
@@ -311,6 +349,17 @@ const Button = styled.button`
   }
   :hover {
     filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
+`;
+
+const CloneButton = styled(Button)`
+  display: flex;
+  width: min-content;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff11;
+  :hover {
+    background-color: #ffffff18;
   }
 `;
 

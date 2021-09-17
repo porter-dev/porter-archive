@@ -11,11 +11,13 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
 	"gopkg.in/yaml.v2"
@@ -42,6 +44,14 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
+	operationID := oauth.CreateRandomState()
+
+	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
+		&analytics.ApplicationLaunchStartTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(user.ID, cluster.ProjectID, cluster.ID),
+			FlowID:                 operationID,
+		},
+	))
 
 	helmAgent, err := c.GetHelmAgent(r, cluster)
 
@@ -123,6 +133,20 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
+
+	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
+		&analytics.ApplicationLaunchSuccessTrackOpts{
+			ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+				user.ID,
+				cluster.ProjectID,
+				cluster.ID,
+				release.Name,
+				release.Namespace,
+				chart.Metadata.Name,
+			),
+			FlowID: operationID,
+		},
+	))
 }
 
 func createReleaseFromHelmRelease(

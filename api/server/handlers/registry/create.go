@@ -8,7 +8,9 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
 )
 
@@ -27,7 +29,16 @@ func NewRegistryCreateHandler(
 }
 
 func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	operationID := oauth.CreateRandomState()
+
+	p.Config().AnalyticsClient.Track(analytics.RegistryConnectionStartTrack(
+		&analytics.RegistryConnectionStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
+			FlowID:                 operationID,
+		},
+	))
 
 	request := &types.CreateRegistryRequest{}
 
@@ -66,6 +77,13 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	p.Config().AnalyticsClient.Track(analytics.RegistryConnectionSuccessTrack(
+		&analytics.RegistryConnectionSuccessTrackOpts{
+			RegistryScopedTrackOpts: analytics.GetRegistryScopedTrackOpts(user.ID, proj.ID, regModel.ID),
+			FlowID:                  operationID,
+		},
+	))
 
 	p.WriteResult(w, r, regModel.ToRegistryType())
 }

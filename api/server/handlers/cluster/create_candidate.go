@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -56,15 +57,29 @@ func (c *CreateClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *http
 			return
 		}
 
+		c.Config().AnalyticsClient.Track(analytics.ClusterConnectionStartTrack(
+			&analytics.ClusterConnectionStartTrackOpts{
+				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
+				ClusterCandidateID:     cc.ID,
+			},
+		))
+
 		// if the ClusterCandidate does not have any actions to perform, create the Cluster
 		// automatically
 		if len(cc.Resolvers) == 0 {
-			_, cc, err = createClusterFromCandidate(c.Repo(), proj, user, cc, &types.ClusterResolverAll{})
+			cluster, cc, err := createClusterFromCandidate(c.Repo(), proj, user, cc, &types.ClusterResolverAll{})
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
+
+			c.Config().AnalyticsClient.Track(analytics.ClusterConnectionSuccessTrack(
+				&analytics.ClusterConnectionSuccessTrackOpts{
+					ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(user.ID, proj.ID, cluster.ID),
+					ClusterCandidateID:     cc.ID,
+				},
+			))
 		}
 
 		res = append(res, cc.ToClusterCandidateType())

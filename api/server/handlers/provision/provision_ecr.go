@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/models"
@@ -30,7 +31,8 @@ func NewProvisionECRHandler(
 }
 
 func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// read the project from context
+	// read the user and project from context
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.CreateECRInfraRequest{}
@@ -97,6 +99,14 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	c.Config().AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+		&analytics.RegistryProvisioningStartTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
+			RegistryType:           types.InfraECR,
+			InfraID:                infra.ID,
+		},
+	))
 
 	c.WriteResult(w, r, infra.ToInfraType())
 }

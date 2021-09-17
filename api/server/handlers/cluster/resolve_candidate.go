@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -51,6 +52,13 @@ func (c *ResolveClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	c.Config().AnalyticsClient.Track(analytics.ClusterConnectionSuccessTrack(
+		&analytics.ClusterConnectionSuccessTrackOpts{
+			ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(user.ID, proj.ID, cluster.ID),
+			ClusterCandidateID:     cc.ID,
+		},
+	))
 
 	c.WriteResult(w, r, cluster.ToClusterType())
 }

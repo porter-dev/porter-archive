@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/integrations/slack"
 )
@@ -161,4 +162,16 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	notifyOpts.Version = rel.Version
 
 	notifier.Notify(notifyOpts)
+
+	c.Config().AnalyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
+		ImageURI: fmt.Sprintf("%v", repository),
+		ApplicationScopedTrackOpts: analytics.GetApplicationScopedTrackOpts(
+			0,
+			release.ProjectID,
+			release.ClusterID,
+			release.Name,
+			release.Namespace,
+			rel.Chart.Metadata.Name,
+		),
+	}))
 }

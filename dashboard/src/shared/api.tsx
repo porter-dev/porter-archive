@@ -276,7 +276,7 @@ const getNotificationConfig = baseApi<
 
 const getGHAWorkflowTemplate = baseApi<
   {
-    name: string;
+    release_name: string;
     github_action_config: FullActionConfigType;
   },
   {

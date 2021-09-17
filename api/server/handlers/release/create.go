@@ -170,7 +170,7 @@ func createGitAction(
 	release *models.Release,
 ) (*types.GitActionConfig, []byte, error) {
 	// if the registry was provisioned through Porter, create a repository if necessary
-	if request.RegistryID != 0 {
+	if release != nil && request.RegistryID != 0 {
 		// read the registry
 		reg, err := config.Repo.Registry().ReadRegistry(projectID, request.RegistryID)
 
@@ -224,6 +224,7 @@ func createGitAction(
 		ProjectID:              projectID,
 		ClusterID:              clusterID,
 		ReleaseName:            name,
+		ReleaseNamespace:       namespace,
 		GitBranch:              request.GitBranch,
 		DockerFilePath:         request.DockerfilePath,
 		FolderPath:             request.FolderPath,

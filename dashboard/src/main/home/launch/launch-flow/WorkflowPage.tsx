@@ -33,7 +33,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
       .getGHAWorkflowTemplate(
         "<token>",
         {
-          name: props.name,
+          release_name: props.name,
           github_action_config: props.fullActionConfig,
         },
         {

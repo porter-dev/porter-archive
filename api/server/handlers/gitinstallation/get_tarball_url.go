@@ -10,7 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -36,10 +35,9 @@ func (c *GithubGetTarballURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	branch, reqErr := requestutils.GetURLParamString(r, types.URLParamGitBranch)
+	branch, ok := GetBranch(c, w, r)
 
-	if reqErr != nil {
-		c.HandleAPIError(w, r, reqErr)
+	if !ok {
 		return
 	}
 

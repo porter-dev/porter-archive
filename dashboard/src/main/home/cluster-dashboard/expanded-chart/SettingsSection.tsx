@@ -47,7 +47,7 @@ const SettingsSection: React.FC<PropsType> = ({
     git_repo: "",
     image_repo_uri: "",
     git_repo_id: 0,
-    branch: "",
+    git_branch: "",
   });
 
   const { currentCluster, currentProject, setCurrentError } = useContext(

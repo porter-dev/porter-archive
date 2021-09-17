@@ -3,10 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
-	"strconv"
-
 	"github.com/go-chi/chi"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/websocket"
@@ -16,6 +12,9 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
+	"net/http"
+	"net/url"
+	"strconv"
 )
 
 // Enumeration of k8s API error codes, represented as int64
@@ -1134,13 +1133,12 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// create a new agent
-	var agent *kubernetes.Agent
+	// get path parameters
+	kind := chi.URLParam(r, "kind")
 
-	if app.ServerConf.IsTesting {
-		agent = app.TestAgents.K8sAgent
-	} else {
-		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	selectors := ""
+	if vals["selectors"] != nil {
+		selectors = vals["selectors"][0]
 	}
 
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -1152,18 +1150,19 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		app.handleErrorUpgradeWebsocket(err, w)
 	}
 
-	// get path parameters
-	kind := chi.URLParam(r, "kind")
+	// create a new agent
+	var agent *kubernetes.Agent
 
-	selectors := ""
-	if vals["selectors"] != nil {
-		selectors = vals["selectors"][0]
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
 	}
+
 	err = agent.StreamControllerStatus(conn, kind, selectors)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)
-		return
 	}
 }
 
@@ -1199,15 +1198,6 @@ func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// create a new agent
-	var agent *kubernetes.Agent
-
-	if app.ServerConf.IsTesting {
-		agent = app.TestAgents.K8sAgent
-	} else {
-		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
-	}
-
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	// upgrade to websocket.
@@ -1233,11 +1223,19 @@ func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request)
 		namespace = vals["namespace"][0]
 	}
 
+	// create a new agent
+	var agent *kubernetes.Agent
+
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
+
 	err = agent.StreamHelmReleases(conn, namespace, chartList, selectors)
 
 	if err != nil {
 		app.handleErrorWebsocketWrite(err, w)
-		return
 	}
 }
 

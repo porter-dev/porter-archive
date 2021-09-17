@@ -29,7 +29,7 @@ type Props = {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
-  branch: "",
+  git_branch: "",
   git_repo_id: 0,
 };
 

@@ -34,7 +34,7 @@ type PropsType = RouteComponentProps & {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
-  branch: "",
+  git_branch: "",
   git_repo_id: 0,
 };
 
@@ -80,7 +80,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     return {
       git_repo: actionConfig.git_repo,
-      branch: branch,
+      git_branch: branch,
       registry_id: selectedRegistry?.id,
       dockerfile_path: dockerfilePath,
       folder_path: folderPath,

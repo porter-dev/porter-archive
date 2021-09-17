@@ -254,7 +254,7 @@ export interface InviteType {
 
 export interface ActionConfigType {
   git_repo: string;
-  branch: string;
+  git_branch: string;
   image_repo_uri: string;
   git_repo_id: number;
 }

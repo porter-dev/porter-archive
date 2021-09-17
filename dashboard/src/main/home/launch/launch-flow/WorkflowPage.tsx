@@ -9,14 +9,15 @@ import Loading from "../../../../components/Loading";
 import Helper from "../../../../components/form-components/Helper";
 import CheckboxRow from "../../../../components/form-components/CheckboxRow";
 import SaveButton from "../../../../components/SaveButton";
+import yaml from "js-yaml";
 
 type PropsType = {
   name: string;
   namespace: string;
   fullActionConfig: FullActionConfigType;
-  shouldCreateWorkflow: boolean;
-  setShouldCreateWorkflow: (x: (prevState: boolean) => boolean) => void;
-  setPage: (x: string) => void;
+  shouldCreateWorkflow?: boolean;
+  setShouldCreateWorkflow?: (x: (prevState: boolean) => boolean) => void;
+  setPage?: (x: string) => void;
 };
 
 const WorkflowPage: React.FC<PropsType> = (props) => {
@@ -25,6 +26,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [workflowYAML, setWorkflowYAML] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const { currentCluster, currentProject } = context;
@@ -61,34 +63,25 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
     return <YamlEditor value={workflowYAML} readOnly={true} />;
   };
 
-  const getButtonHelper = () => {
-    if (props.shouldCreateWorkflow) {
-      return "Both secrets and workflow will be created";
-    } else {
-      return "Only secrets will be created";
-    }
-  };
-
   return (
     <StyledWorkflowPage>
-      <BackButton width="155px" onClick={() => props.setPage("source")}>
-        <i className="material-icons">first_page</i>
-        Source Settings
-      </BackButton>
       <Heading>GitHub Actions</Heading>
       <Helper>
         To auto-deploy each time you push changes, Porter will write GitHub
         Secrets and this GitHub Actions workflow to your repository.
       </Helper>
       {renderWorkflow()}
-      <CheckboxRow
-        toggle={() => props.setShouldCreateWorkflow((x: boolean) => !x)}
-        checked={props.shouldCreateWorkflow}
-        label="Create workflow file"
-      />
       <Helper>
-        You may copy the YAML to an existing workflow and uncheck this box to
-        prevent Porter from creating a new workflow file.
+        <GitHubActionLink show={!props.shouldCreateWorkflow}>
+          If you want to create a custom workflow file for your deployments, we
+          recommend you deploy from docker instead, and checkout this guide:{" "}
+          <a
+            href="https://docs.porter.run/docs/auto-deploy-requirements#cicd-with-github-actions"
+            target="_blank"
+          >
+            CI/CD with GitHub Actions
+          </a>
+        </GitHubActionLink>
         <GitHubActionLink show={!props.shouldCreateWorkflow}>
           The GitHub Action can be found at{" "}
           <a
@@ -100,13 +93,6 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         </GitHubActionLink>
       </Helper>
       <Buffer />
-      <SaveButton
-        text="Continue"
-        makeFlush={true}
-        disabled={hasError}
-        onClick={() => props.setPage("settings")}
-        helper={getButtonHelper()}
-      />
     </StyledWorkflowPage>
   );
 };

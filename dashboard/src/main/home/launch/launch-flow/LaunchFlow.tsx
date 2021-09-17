@@ -344,20 +344,18 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       setTemplateName(newTemplateName);
     }
 
-    if (currentPage === "workflow" && currentTab === "porter") {
-      const fullActionConfig = getFullActionConfig();
-      return (
-        <WorkflowPage
-          name={templateName}
-          namespace={"default"}
-          fullActionConfig={fullActionConfig}
-          shouldCreateWorkflow={shouldCreateWorkflow}
-          setShouldCreateWorkflow={setShouldCreateWorkflow}
-          setPage={setCurrentPage}
-        />
-      );
-    }
+    // if (currentPage === "workflow" && currentTab === "porter") {
+    //   return (
+    //     <WorkflowPage
+    //       name={templateName}
+    //       namespace={"default"}
+    //       fullActionConfig={fullActionConfig}
+    //       setPage={setCurrentPage}
+    //     />
+    //   );
+    // }
 
+    const fullActionConfig = getFullActionConfig();
     // Display main (non-source) settings page
     return (
       <SettingsPage
@@ -374,6 +372,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         form={form}
         valuesToOverride={valuesToOverride}
         clearValuesToOverride={() => setValuesToOverride(null)}
+        fullActionConfig={fullActionConfig}
       />
     );
   };

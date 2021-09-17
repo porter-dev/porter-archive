@@ -230,17 +230,12 @@ class SourcePage extends Component<PropsType, StateType> {
   };
 
   handleContinue = () => {
-    const { sourceType, setPage } = this.props;
-
-    if (sourceType === "repo") {
-      setPage("workflow");
-    } else {
-      setPage("settings");
-    }
+    const { setPage } = this.props;
+    setPage("settings");
   };
 
   render() {
-    let { templateName, setTemplateName, setPage } = this.props;
+    let { templateName, setTemplateName } = this.props;
 
     return (
       <StyledSourcePage>

@@ -2,12 +2,13 @@
 
 # Base Go environment
 # -------------------
-FROM golang:1.15-alpine as base
+FROM golang:1.15 as base
 WORKDIR /porter
 
-RUN apk update && apk add --no-cache gcc musl-dev git make
+RUN apt-get update && apt-get install -y gcc musl-dev git make
 
 COPY go.mod go.sum ./
+COPY Makefile .
 COPY /cli ./cli
 COPY /internal ./internal
 COPY /api ./api
@@ -25,8 +26,8 @@ RUN make build-cli
 
 # Deployment environment
 # ----------------------
-FROM alpine
-RUN apk update
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y ca-certificates
 
 COPY --from=build-go /porter/bin/porter .
 

@@ -316,16 +316,16 @@ func getGARunner(
 	helmRelease *release.Release,
 ) (*actions.GithubActions, error) {
 	cEnv := &containerEnvConfig{}
+
 	rawValues, err := yaml.Marshal(helmRelease.Config)
 
-	if err != nil {
-		return nil, err
-	}
+	if err == nil {
+		err = yaml.Unmarshal(rawValues, cEnv)
 
-	err = yaml.Unmarshal(rawValues, cEnv)
-
-	if err != nil {
-		return nil, err
+		// if unmarshal error, just set to empty map
+		if err != nil {
+			cEnv.Container.Env.Normal = make(map[string]string)
+		}
 	}
 
 	repoSplit := strings.Split(ga.GitRepo, "/")

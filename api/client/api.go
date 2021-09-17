@@ -65,12 +65,22 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 	err := schema.NewEncoder().Encode(data, vals)
 
 	urlVals := url.Values(vals)
+	encodedURLVals := urlVals.Encode()
+	var req *http.Request
 
-	req, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf("%s/%s?%s", c.BaseURL, relPath, urlVals.Encode()),
-		nil,
-	)
+	if encodedURLVals != "" {
+		req, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("%s%s?%s", c.BaseURL, relPath, encodedURLVals),
+			nil,
+		)
+	} else {
+		req, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("%s%s", c.BaseURL, relPath),
+			nil,
+		)
+	}
 
 	if err != nil {
 		return err
@@ -98,7 +108,7 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/%s", c.BaseURL, relPath),
+		fmt.Sprintf("%s%s", c.BaseURL, relPath),
 		strings.NewReader(string(strData)),
 	)
 
@@ -126,7 +136,7 @@ func (c *Client) deleteRequest(relPath string, data interface{}, response interf
 
 	req, err := http.NewRequest(
 		"DELETE",
-		fmt.Sprintf("%s/%s", c.BaseURL, relPath),
+		fmt.Sprintf("%s%s", c.BaseURL, relPath),
 		strings.NewReader(string(strData)),
 	)
 
@@ -178,13 +188,7 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 	}
 
 	if v != nil {
-		debugBytes, _ := ioutil.ReadAll(res.Body)
-
-		fmt.Println(string(debugBytes))
-
-		copyBody := strings.NewReader(string(debugBytes))
-
-		if err = json.NewDecoder(copyBody).Decode(v); err != nil {
+		if err = json.NewDecoder(res.Body).Decode(v); err != nil {
 			return nil, err
 		}
 	}

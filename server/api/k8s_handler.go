@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/schema"
@@ -16,7 +15,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 )
 
 // Enumeration of k8s API error codes, represented as int64
@@ -1152,35 +1150,19 @@ func (app *App) HandleStreamControllerStatus(w http.ResponseWriter, r *http.Requ
 		app.handleErrorUpgradeWebsocket(err, w)
 	}
 
-	lastTime := int64(0)
+	// create a new agent
+	var agent *kubernetes.Agent
 
-	for {
-		// create a new agent
-		var agent *kubernetes.Agent
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
 
-		if app.ServerConf.IsTesting {
-			agent = app.TestAgents.K8sAgent
-		} else {
-			agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
-		}
+	err = agent.StreamControllerStatus(conn, kind, selectors)
 
-		err = agent.StreamControllerStatus(conn, kind, selectors)
-
-		if err == nil {
-			return
-		}
-
-		if !errors.Is(err, &kubernetes.AuthError{}) {
-			app.handleErrorWebsocketWrite(err, w)
-			return
-		}
-
-		if time.Now().Unix()-lastTime < 60 { // don't regenerate connection if too many unauthorized errors
-			app.handleErrorWebsocketWrite(err, w)
-			return
-		}
-
-		lastTime = time.Now().Unix()
+	if err != nil {
+		app.handleErrorWebsocketWrite(err, w)
 	}
 }
 
@@ -1241,31 +1223,19 @@ func (app *App) HandleStreamHelmReleases(w http.ResponseWriter, r *http.Request)
 		namespace = vals["namespace"][0]
 	}
 
-	lastTime := int64(0)
+	// create a new agent
+	var agent *kubernetes.Agent
 
-	for {
-		// create a new agent
-		var agent *kubernetes.Agent
+	if app.ServerConf.IsTesting {
+		agent = app.TestAgents.K8sAgent
+	} else {
+		agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
+	}
 
-		if app.ServerConf.IsTesting {
-			agent = app.TestAgents.K8sAgent
-		} else {
-			agent, err = kubernetes.GetAgentOutOfClusterConfig(form.OutOfClusterConfig)
-		}
+	err = agent.StreamHelmReleases(conn, namespace, chartList, selectors)
 
-		err = agent.StreamHelmReleases(conn, namespace, chartList, selectors)
-
-		if !errors.Is(err, &kubernetes.AuthError{}) {
-			app.handleErrorWebsocketWrite(err, w)
-			return
-		}
-
-		if time.Now().Unix()-lastTime < 60 { // don't regenerate connection if too many unauthorized errors
-			app.handleErrorWebsocketWrite(err, w)
-			return
-		}
-
-		lastTime = time.Now().Unix()
+	if err != nil {
+		app.handleErrorWebsocketWrite(err, w)
 	}
 }
 

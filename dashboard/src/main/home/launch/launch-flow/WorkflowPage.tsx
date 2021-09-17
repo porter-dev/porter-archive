@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useState } from "react";
-import { RouteComponentProps } from "react-router";
 import { FullActionConfigType } from "../../../../shared/types";
 import api from "../../../../shared/api";
 import { Context } from "../../../../shared/Context";
@@ -7,9 +6,6 @@ import styled from "styled-components";
 import YamlEditor from "../../../../components/YamlEditor";
 import Loading from "../../../../components/Loading";
 import Helper from "../../../../components/form-components/Helper";
-import CheckboxRow from "../../../../components/form-components/CheckboxRow";
-import SaveButton from "../../../../components/SaveButton";
-import yaml from "js-yaml";
 
 type PropsType = {
   name: string;
@@ -60,7 +56,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         </Placeholder>
       );
     }
-    return <YamlEditor value={workflowYAML} readOnly={true} />;
+    return <AnimatedYamlEditor value={workflowYAML} readOnly={true} />;
   };
 
   return (
@@ -70,7 +66,13 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         To auto-deploy each time you push changes, Porter will write GitHub
         Secrets and this GitHub Actions workflow to your repository.
       </Helper>
-      {renderWorkflow()}
+      <ExpandableButton onClick={() => setIsExpanded((prev) => !prev)}>
+        Show porter workflow{" "}
+        <i className="material-icons-outlined">
+          {isExpanded ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+        </i>
+      </ExpandableButton>
+      {isExpanded && renderWorkflow()}
       <Helper>
         <GitHubActionLink show={!props.shouldCreateWorkflow}>
           If you want to create a custom workflow file for your deployments, we
@@ -138,19 +140,20 @@ const Buffer = styled.div`
   height: 35px;
 `;
 
-const BackButton = styled.div`
+const ExpandableButton = styled.div`
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   font-size: 13px;
   margin-top: 25px;
-  height: 35px;
+  height: 40px;
   padding: 5px 13px;
   padding-right: 15px;
   border: 1px solid #ffffff55;
-  border-radius: 100px;
-  width: ${(props: { width: string }) => props.width};
+  border-radius: 5px;
+  width: 100%;
   color: white;
   background: #ffffff11;
 
@@ -160,11 +163,14 @@ const BackButton = styled.div`
 
   > i {
     color: white;
-    font-size: 16px;
+    font-size: 24px;
     margin-right: 6px;
     margin-left: -2px;
   }
 `;
+
+// This should carry animations for the yaml editor to be more gently introduce into the page
+const AnimatedYamlEditor = styled(YamlEditor)``;
 
 const GitHubActionLink = styled.p`
   visibility: ${(props: { show: boolean }) =>

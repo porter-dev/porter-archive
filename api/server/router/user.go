@@ -318,6 +318,31 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	//  GET /api/integrations/github-app/oauth -> gitinstallation.NewGithubAppOAuthStartHandler
+	githubAppOAuthStartEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/integrations/github-app/oauth",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+			},
+		},
+	)
+
+	githubAppOAuthStartHandler := gitinstallation.NewGithubAppOAuthStartHandler(
+		config,
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: githubAppOAuthStartEndpoint,
+		Handler:  githubAppOAuthStartHandler,
+		Router:   r,
+	})
+
 	//  GET /api/oauth/github-app/callback -> gitinstallation.GithubAppOAuthCallbackHandler
 	githubAppOAuthCallbackEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

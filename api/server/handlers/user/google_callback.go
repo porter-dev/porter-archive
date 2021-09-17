@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -77,6 +78,8 @@ func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
+	p.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+
 	// save the user as authenticated in the session
 	if err := authn.SaveUserAuthenticated(w, r, p.Config(), user); err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -123,6 +126,11 @@ func upsertGoogleUserFromToken(config *config.Config, tok *oauth2.Token) (*model
 			if err != nil {
 				return nil, err
 			}
+
+			config.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+				UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+				Email:               user.Email,
+			}))
 		} else if err == nil {
 			return nil, fmt.Errorf("email already registered")
 		} else if err != nil {

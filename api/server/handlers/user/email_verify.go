@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
 )
@@ -116,6 +117,11 @@ func (v *VerifyEmailFinalizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Could not verify email address"), 302)
 		return
 	}
+
+	v.Config().AnalyticsClient.Track(analytics.UserVerifyEmailTrack(&analytics.UserVerifyEmailTrackOpts{
+		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+		Email:               user.Email,
+	}))
 
 	http.Redirect(w, r, "/dashboard", 302)
 	return

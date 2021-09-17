@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -75,6 +76,13 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+
+	u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+		Email:               user.Email,
+	}))
 
 	u.WriteResult(w, r, user.ToUserType())
 }

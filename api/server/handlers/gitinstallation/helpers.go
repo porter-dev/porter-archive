@@ -2,10 +2,12 @@ package gitinstallation
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/bradleyfalzon/ghinstallation"
 	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
@@ -90,4 +92,23 @@ func GetOwnerAndNameParams(c handlers.PorterHandler, w http.ResponseWriter, r *h
 	}
 
 	return owner, name, true
+}
+
+// GetBranch gets the unencoded branch
+func GetBranch(c handlers.PorterHandler, w http.ResponseWriter, r *http.Request) (string, bool) {
+	branch, reqErr := requestutils.GetURLParamString(r, types.URLParamGitBranch)
+
+	if reqErr != nil {
+		c.HandleAPIError(w, r, reqErr)
+		return "", false
+	}
+
+	branch, err := url.QueryUnescape(branch)
+
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return "", false
+	}
+
+	return branch, true
 }

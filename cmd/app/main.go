@@ -39,7 +39,7 @@ func main() {
 		redis, err := adapter.NewRedisClient(config.RedisConf)
 
 		if err != nil {
-			log.Fatal("Redis connection failed: ", err)
+			config.Logger.Fatal().Err(err).Msg("redis connection failed")
 			return
 		}
 
@@ -65,6 +65,6 @@ func main() {
 	}
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal("Server startup failed", err)
+		config.Logger.Fatal().Err(err).Msg("Server startup failed")
 	}
 }

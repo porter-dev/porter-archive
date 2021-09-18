@@ -284,15 +284,16 @@ func (d *DeployAgent) Push() error {
 // reuses the configuration set for the application. If overrideValues is not nil,
 // it will merge the overriding values with the existing configuration.
 func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
+	// if this is a job chart, set "paused" to false so that the job doesn't run, unless
+	// the user has explicitly overriden the "paused" field
+	if _, exists := overrideValues["paused"]; d.release.Chart.Name() == "job" && !exists {
+		overrideValues["paused"] = true
+	}
+
 	mergedValues := utils.CoalesceValues(d.release.Config, overrideValues)
 
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
-
-	// if this is a job chart, set "paused" to false so that the job doesn't run
-	if d.release.Chart.Name() == "job" {
-		mergedValues["paused"] = true
-	}
 
 	// if the current image section is hello-porter, the image must be overriden
 	if currImageSection["repository"] == "public.ecr.aws/o1j4x7p4/hello-porter" ||

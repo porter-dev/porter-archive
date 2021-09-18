@@ -60,9 +60,7 @@ const AccountSettingsModal = () => {
       <Heading>
         <GitIcon src={github} /> Github
       </Heading>
-      {accessError ? (
-        <Placeholder>An error has occured.</Placeholder>
-      ) : accessLoading ? (
+      {accessLoading ? (
         <LoadingWrapper>
           {" "}
           <Loading />

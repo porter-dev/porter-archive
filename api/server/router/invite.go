@@ -116,7 +116,10 @@ func getInviteRoutes(
 				Parent:       basePath,
 				RelativePath: "/invites/{token}",
 			},
-			Scopes: []types.PermissionScope{},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+			},
+			ShouldRedirect: true,
 		},
 	)
 

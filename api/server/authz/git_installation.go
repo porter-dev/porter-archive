@@ -56,7 +56,7 @@ func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *ht
 	}
 
 	ctx := NewGitInstallationContext(r.Context(), gitInstallation)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
 

@@ -40,7 +40,7 @@ project, _ := p.config.Repo.Project().ReadProject(projID)
 
 // add the project to the request context
 ctx := NewProjectContext(r.Context(), project)
-r = r.WithContext(ctx)
+r = r.Clone(ctx)
 
 // call the next handler
 p.next.ServeHTTP(w, r)

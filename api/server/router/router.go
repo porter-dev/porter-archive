@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/authn"
@@ -13,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/logger"
 )
 
 func NewAPIRouter(config *config.Config) *chi.Mux {
@@ -45,10 +47,11 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		projectOAuthRegisterer,
 		slackIntegrationRegisterer,
 	)
+
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 
 	r.Route("/api", func(r chi.Router) {
-		// set the content type for all API endpoints
+		// set the content type for all API endpoints and log all request info
 		r.Use(ContentTypeJSON)
 
 		baseRoutes := baseRegisterer.GetRoutes(
@@ -177,6 +180,9 @@ func registerRoutes(config *config.Config, routes []*Route) {
 	// Policy doc loader loads the policy documents for a specific project.
 	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
 
+	// set up logging middleware to log information about the request
+	loggerMw := &RequestLoggerMiddleware{config.Logger}
+
 	for _, route := range routes {
 		atomicGroup := route.Router.Group(nil)
 
@@ -213,6 +219,8 @@ func registerRoutes(config *config.Config, routes []*Route) {
 			}
 		}
 
+		atomicGroup.Use(loggerMw.Middleware)
+
 		atomicGroup.Method(
 			string(route.Endpoint.Metadata.Method),
 			route.Endpoint.Metadata.Path.RelativePath,
@@ -226,5 +234,41 @@ func ContentTypeJSON(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json;charset=utf8")
 		next.ServeHTTP(w, r)
+	})
+}
+
+type requestLoggerResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func newRequestLoggerResponseWriter(w http.ResponseWriter) *requestLoggerResponseWriter {
+	return &requestLoggerResponseWriter{w, http.StatusOK}
+}
+
+func (rw *requestLoggerResponseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+type RequestLoggerMiddleware struct {
+	logger *logger.Logger
+}
+
+func (mw *RequestLoggerMiddleware) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		rw := newRequestLoggerResponseWriter(w)
+
+		next.ServeHTTP(rw, r)
+
+		latency := time.Since(start)
+
+		event := mw.logger.Info().Dur("latency", latency).Int("status", rw.statusCode)
+
+		logger.AddLoggingContextScopes(r.Context(), event)
+		logger.AddLoggingRequestMeta(r, event)
+
+		event.Send()
 	})
 }

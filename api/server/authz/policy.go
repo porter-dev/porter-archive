@@ -74,7 +74,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// add the set of resource ids to the request context
 	ctx := NewRequestScopeCtx(r.Context(), reqScopes)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	h.next.ServeHTTP(w, r)
 }
 

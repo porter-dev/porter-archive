@@ -39,7 +39,7 @@ func TestClusterModelRotation(t *testing.T) {
 
 	clusters := []*models.Cluster{}
 
-	if err := tester.DB.Preload("TokenCache").Find(&clusters).Error; err != nil {
+	if err := tester.DB.Find(&clusters).Error; err != nil {
 		t.Fatalf("%v\n", err)
 	}
 

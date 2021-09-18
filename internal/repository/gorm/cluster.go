@@ -297,9 +297,10 @@ func (repo *ClusterRepository) DeleteCluster(
 	cluster *models.Cluster,
 ) error {
 	// clear TokenCache association
-	if err := repo.db.Where("id = ?", cluster.TokenCacheID).Delete(&ints.TokenCache{}).Error; err != nil {
+	if err := repo.db.Where("id = ?", cluster.TokenCacheID).Delete(&ints.ClusterTokenCache{}).Error; err != nil {
 		return err
 	}
+
 	if err := repo.db.Where("id = ?", cluster.ID).Delete(&models.Cluster{}).Error; err != nil {
 		return err
 	}

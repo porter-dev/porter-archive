@@ -6,6 +6,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/logger"
@@ -49,12 +50,13 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 	notifier := NewFakeUserNotifier()
 
 	return &config.Config{
-		Logger:       l,
-		Repo:         repo,
-		Store:        store,
-		ServerConf:   envConf.ServerConf,
-		TokenConf:    tokenConf,
-		UserNotifier: notifier,
+		Logger:          l,
+		Repo:            repo,
+		Store:           store,
+		ServerConf:      envConf.ServerConf,
+		TokenConf:       tokenConf,
+		UserNotifier:    notifier,
+		AnalyticsClient: analytics.InitializeAnalyticsSegmentClient("", l),
 	}, nil
 }
 

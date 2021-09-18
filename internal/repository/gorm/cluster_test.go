@@ -250,7 +250,10 @@ func TestCreateCluster(t *testing.T) {
 	}
 
 	// reset fields for deep.Equal
+	expCluster.TokenCacheID = 1
+	expCluster.TokenCache.ClusterID = 1
 	cluster.Model = orm.Model{}
+	cluster.TokenCache.Model = orm.Model{}
 
 	if diff := deep.Equal(expCluster, *cluster); diff != nil {
 		t.Errorf("incorrect cluster")
@@ -287,12 +290,14 @@ func TestListClustersByProjectID(t *testing.T) {
 		Server:                   "https://localhost",
 		KubeIntegrationID:        tester.initKIs[0].ID,
 		CertificateAuthorityData: []byte("-----BEGIN"),
+		TokenCacheID:             1,
 	}
 
 	cluster := clusters[0]
 
 	// reset fields for reflect.DeepEqual
 	cluster.Model = orm.Model{}
+	cluster.TokenCache.Model = orm.Model{}
 
 	if diff := deep.Equal(expCluster, *cluster); diff != nil {
 		t.Errorf("incorrect cluster")
@@ -331,10 +336,15 @@ func TestUpdateCluster(t *testing.T) {
 		Server:                   "https://localhost",
 		KubeIntegrationID:        tester.initKIs[0].ID,
 		CertificateAuthorityData: []byte("-----BEGIN"),
+		TokenCacheID:             1,
+		TokenCache: ints.ClusterTokenCache{
+			ClusterID: 1,
+		},
 	}
 
 	// reset fields for reflect.DeepEqual
 	cluster.Model = orm.Model{}
+	cluster.TokenCache.Model = orm.Model{}
 
 	if diff := deep.Equal(expCluster, *cluster); diff != nil {
 		t.Errorf("incorrect cluster")

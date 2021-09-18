@@ -314,7 +314,7 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 		writtenBytes, _ = pipePodLogsToStdout(config, namespace, podName, container, false)
 
 		if verbose || writtenBytes == 0 {
-			color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+			color.New(color.FgYellow).Println("Could not get logs. Pod events:")
 			pipeEventsToStdout(config, namespace, podName, container, false)
 		}
 		return nil
@@ -360,7 +360,7 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	}
 
 	if verbose {
-		color.New(color.FgYellow).Println("Pod events:\n")
+		color.New(color.FgYellow).Println("Pod events:")
 		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
 
@@ -435,13 +435,13 @@ func handlePodAttachError(err error, config *PorterRunSharedConfig, namespace, p
 	if verbose {
 		color.New(color.FgYellow).Printf("Error: %s\n", err)
 	}
-	color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
+	color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:")
 
 	var writtenBytes int64
 	writtenBytes, _ = pipePodLogsToStdout(config, namespace, podName, container, false)
 
 	if verbose || writtenBytes == 0 {
-		color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+		color.New(color.FgYellow).Println("Could not get logs. Pod events:")
 		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
 	return err

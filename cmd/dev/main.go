@@ -1,26 +1,35 @@
-package router_test
+package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
-	"testing"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
 )
 
-func TestRouter(t *testing.T) {
+func main() {
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		route = strings.Replace(route, "/*/", "/", -1)
-		t.Errorf("%s %s %d\n", method, route, len(middlewares))
+		fmt.Printf("%s %s %d\n", method, route, len(middlewares))
 		return nil
 	}
 
-	config := apitest.LoadConfig(t)
+	configLoader := apitest.NewTestConfigLoader(true)
+
+	config, err := configLoader.LoadConfig()
+
+	if err != nil {
+		fmt.Printf("Logging err: %s\n", err.Error())
+		return
+	}
+
 	r := router.NewAPIRouter(config)
 
 	if err := chi.Walk(r, walkFunc); err != nil {
-		t.Fatalf("Logging err: %s\n", err.Error())
+		fmt.Printf("Logging err: %s\n", err.Error())
+		return
 	}
 }

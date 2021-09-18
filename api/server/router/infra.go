@@ -124,7 +124,7 @@ func getInfraRoutes(
 		},
 	)
 
-	streamLogsHandler := infra.NewInfraGetHandler(
+	streamLogsHandler := infra.NewInfraStreamLogsHandler(
 		config,
 		factory.GetResultWriter(),
 	)

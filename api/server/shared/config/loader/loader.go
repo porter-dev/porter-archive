@@ -183,6 +183,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	res.ProvisionerAgent = provAgent
 
+	if res.ProvisionerAgent != nil && res.RedisConf.Enabled {
+		res.Metadata.Provisioning = true
+	}
+
 	ingressAgent, err := getIngressAgent(sc)
 
 	if err != nil {

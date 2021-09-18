@@ -15,7 +15,7 @@ type Metadata struct {
 
 func MetadataFromConf(sc *env.ServerConf) *Metadata {
 	return &Metadata{
-		// TODO: case provisioning on env variables
+		// note: provisioning is set in the metadata after the loader is called
 		Provisioning:       false,
 		Github:             hasGithubAppVars(sc),
 		GithubLogin:        sc.GithubClientID != "" && sc.GithubClientSecret != "" && sc.GithubLoginEnabled,

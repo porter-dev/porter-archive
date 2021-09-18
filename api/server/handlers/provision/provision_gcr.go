@@ -35,7 +35,9 @@ func (c *ProvisionGCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	request := &types.CreateGCRInfraRequest{}
+	request := &types.CreateGCRInfraRequest{
+		ProjectID: proj.ID,
+	}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return

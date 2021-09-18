@@ -568,7 +568,7 @@ func getProjectRoutes(
 		},
 	)
 
-	provisionDOKSHandler := provision.NewProvisionDOCRHandler(
+	provisionDOKSHandler := provision.NewProvisionDOKSHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

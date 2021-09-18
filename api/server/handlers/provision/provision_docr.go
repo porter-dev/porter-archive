@@ -35,7 +35,9 @@ func (c *ProvisionDOCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	request := &types.CreateDOCRInfraRequest{}
+	request := &types.CreateDOCRInfraRequest{
+		ProjectID: proj.ID,
+	}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return

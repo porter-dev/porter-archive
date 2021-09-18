@@ -227,7 +227,10 @@ func getUserRoutes(
 		},
 	)
 
-	emailVerifyFinalizeHandler := user.NewVerifyEmailInitiateHandler(config)
+	emailVerifyFinalizeHandler := user.NewVerifyEmailFinalizeHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
 
 	routes = append(routes, &Route{
 		Endpoint: emailVerifyFinalizeEndpoint,

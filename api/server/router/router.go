@@ -1,6 +1,9 @@
 package router
 
 import (
+	"bufio"
+	"errors"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -249,6 +252,14 @@ func newRequestLoggerResponseWriter(w http.ResponseWriter) *requestLoggerRespons
 func (rw *requestLoggerResponseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *requestLoggerResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := rw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("ResponseWriter Interface does not support hijacking")
+	}
+	return h.Hijack()
 }
 
 type RequestLoggerMiddleware struct {

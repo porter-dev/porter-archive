@@ -54,7 +54,7 @@ func (p *HelmRepoScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	ctx := NewHelmRepoContext(r.Context(), helmRepo)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
 

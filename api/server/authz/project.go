@@ -43,7 +43,7 @@ func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx := NewProjectContext(r.Context(), project)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
 

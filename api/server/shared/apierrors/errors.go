@@ -1,14 +1,12 @@
 package apierrors
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/models"
-	"github.com/rs/zerolog"
+	"github.com/porter-dev/porter/internal/logger"
 )
 
 type RequestError interface {
@@ -105,8 +103,8 @@ func HandleAPIError(
 		Str("internal_error", err.InternalError()).
 		Str("external_error", extErrorStr)
 
-	data := addLoggingScopes(r.Context(), event)
-	addLoggingRequestMeta(r, event)
+	data := logger.AddLoggingContextScopes(r.Context(), event)
+	logger.AddLoggingRequestMeta(r, event)
 
 	event.Send()
 
@@ -132,47 +130,11 @@ func HandleAPIError(
 		event := config.Logger.Error().
 			Err(writerErr)
 
-		addLoggingScopes(r.Context(), event)
-		addLoggingRequestMeta(r, event)
+		logger.AddLoggingContextScopes(r.Context(), event)
+		logger.AddLoggingRequestMeta(r, event)
 
 		event.Send()
 	}
 
 	return
-}
-
-func addLoggingScopes(ctx context.Context, event *zerolog.Event) map[string]interface{} {
-	res := make(map[string]interface{})
-
-	// case on the context values that exist, add them to event
-	if userVal := ctx.Value(types.UserScope); userVal != nil {
-		if userModel, ok := userVal.(*models.User); ok {
-			event.Uint("user_id", userModel.ID)
-			res["user_id"] = userModel.ID
-		}
-	}
-
-	// if this is a project-scoped route, add various scopes
-	if reqScopesVal := ctx.Value(types.RequestScopeCtxKey); reqScopesVal != nil {
-		if reqScopes, ok := reqScopesVal.(map[types.PermissionScope]*types.RequestAction); ok {
-			for key, scope := range reqScopes {
-				if scope.Resource.Name != "" {
-					event.Str(string(key), scope.Resource.Name)
-					res[string(key)] = scope.Resource.Name
-				}
-
-				if scope.Resource.UInt != 0 {
-					event.Uint(string(key), scope.Resource.UInt)
-					res[string(key)] = scope.Resource.UInt
-				}
-			}
-		}
-	}
-
-	return res
-}
-
-func addLoggingRequestMeta(r *http.Request, event *zerolog.Event) {
-	event.Str("method", r.Method)
-	event.Str("url", r.URL.String())
 }

@@ -54,7 +54,7 @@ func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	ctx := NewInfraContext(r.Context(), infra)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
 

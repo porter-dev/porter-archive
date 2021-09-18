@@ -34,7 +34,7 @@ func (n *NamespaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 	namespace := reqScopes[types.NamespaceScope].Resource.Name
 
 	ctx := NewNamespaceContext(r.Context(), namespace)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	n.next.ServeHTTP(w, r)
 }
 

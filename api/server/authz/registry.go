@@ -54,7 +54,7 @@ func (p *RegistryScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	ctx := NewRegistryContext(r.Context(), registry)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
 

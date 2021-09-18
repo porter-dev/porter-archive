@@ -57,7 +57,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx := NewReleaseContext(r.Context(), release)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
 

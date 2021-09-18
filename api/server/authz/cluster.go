@@ -61,7 +61,7 @@ func (p *ClusterScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx := NewClusterContext(r.Context(), cluster)
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }
 

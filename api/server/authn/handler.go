@@ -144,7 +144,7 @@ func (authn *AuthN) nextWithUserID(w http.ResponseWriter, r *http.Request, userI
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, types.UserScope, user)
 
-	r = r.WithContext(ctx)
+	r = r.Clone(ctx)
 	authn.next.ServeHTTP(w, r)
 }
 

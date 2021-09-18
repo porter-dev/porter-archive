@@ -174,7 +174,7 @@ func (repo *ClusterRepository) ReadCluster(
 	cluster := &models.Cluster{}
 
 	// preload Clusters association
-	if err := ctxDB.Debug().Where("project_id = ? AND id = ?", projectID, clusterID).First(&cluster).Error; err != nil {
+	if err := ctxDB.Where("project_id = ? AND id = ?", projectID, clusterID).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 

@@ -133,11 +133,11 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 
 		// decrypt with the old key
 		for _, cluster := range clusters {
+			// attach the token cache, not fatal if it fails
+			db.Where("id = ?", cluster.TokenCacheID).First(&cluster.TokenCache)
+
 			err := repo.DecryptClusterData(cluster, oldKey)
 
-			if err != nil {
-				return err
-			}
 			if err != nil {
 				fmt.Printf("error decrypting cluster %d\n", cluster.ID)
 
@@ -161,6 +161,10 @@ func rotateClusterModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 			}
 
 			if err := db.Save(cluster).Error; err != nil {
+				return err
+			}
+
+			if err := db.Save(&cluster.TokenCache).Error; err != nil {
 				return err
 			}
 		}

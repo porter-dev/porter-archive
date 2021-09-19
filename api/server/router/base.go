@@ -37,6 +37,7 @@ func GetBaseRoutes(
 				Parent:       basePath,
 				RelativePath: "/readyz",
 			},
+			Quiet: true,
 		},
 	)
 
@@ -60,6 +61,7 @@ func GetBaseRoutes(
 				Parent:       basePath,
 				RelativePath: "/livez",
 			},
+			Quiet: true,
 		},
 	)
 

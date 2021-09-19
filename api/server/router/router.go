@@ -222,7 +222,9 @@ func registerRoutes(config *config.Config, routes []*Route) {
 			}
 		}
 
-		atomicGroup.Use(loggerMw.Middleware)
+		if !route.Endpoint.Metadata.Quiet {
+			atomicGroup.Use(loggerMw.Middleware)
+		}
 
 		atomicGroup.Method(
 			string(route.Endpoint.Metadata.Method),

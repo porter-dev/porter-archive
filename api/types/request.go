@@ -57,6 +57,9 @@ type APIRequestMetadata struct {
 	Path           *Path
 	Scopes         []PermissionScope
 	ShouldRedirect bool
+
+	// Whether the endpoint should log
+	Quiet bool
 }
 
 const RequestScopeCtxKey = "requestscopes"

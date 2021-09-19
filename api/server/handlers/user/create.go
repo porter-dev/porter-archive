@@ -77,6 +77,11 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// non-fatal send email verification
+	if !user.EmailVerified {
+		startEmailVerification(u.Config(), w, r, user)
+	}
+
 	u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
 
 	u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{

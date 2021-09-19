@@ -30,35 +30,10 @@ func NewVerifyEmailInitiateHandler(
 func (v *VerifyEmailInitiateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
-	pwReset, rawToken, err := CreatePWResetTokenForEmail(
-		v.Repo().PWResetToken(),
-		v.HandleAPIError,
-		w,
-		r,
-		&types.InitiateResetUserPasswordRequest{
-			Email: user.Email,
-		},
-	)
-
-	if err != nil {
-		return
-	}
-
-	queryVals := url.Values{
-		"token":    []string{rawToken},
-		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
-	}
-
-	err = v.Config().UserNotifier.SendEmailVerification(
-		&notifier.SendEmailVerificationOpts{
-			Email: user.Email,
-			URL:   fmt.Sprintf("%s/api/email/verify/finalize?%s", v.Config().ServerConf.ServerURL, queryVals.Encode()),
-		},
-	)
+	err := startEmailVerification(v.Config(), w, r, user)
 
 	if err != nil {
 		v.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
 	}
 }
 
@@ -125,4 +100,36 @@ func (v *VerifyEmailFinalizeHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	http.Redirect(w, r, "/dashboard", 302)
 	return
+}
+
+func startEmailVerification(
+	config *config.Config,
+	w http.ResponseWriter, r *http.Request,
+	user *models.User,
+) error {
+	pwReset, rawToken, err := CreatePWResetTokenForEmail(
+		config.Repo.PWResetToken(),
+		handlers.IgnoreAPIError,
+		w,
+		r,
+		&types.InitiateResetUserPasswordRequest{
+			Email: user.Email,
+		},
+	)
+
+	if err != nil {
+		return err
+	}
+
+	queryVals := url.Values{
+		"token":    []string{rawToken},
+		"token_id": []string{fmt.Sprintf("%d", pwReset.ID)},
+	}
+
+	return config.UserNotifier.SendEmailVerification(
+		&notifier.SendEmailVerificationOpts{
+			Email: user.Email,
+			URL:   fmt.Sprintf("%s/api/email/verify/finalize?%s", config.ServerConf.ServerURL, queryVals.Encode()),
+		},
+	)
 }

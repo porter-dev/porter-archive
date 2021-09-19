@@ -86,6 +86,11 @@ func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
+	// non-fatal send email verification
+	if !user.EmailVerified {
+		startEmailVerification(p.Config(), w, r, user)
+	}
+
 	if session.Values["query_params"] != "" {
 		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
 	} else {

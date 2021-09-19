@@ -287,6 +287,19 @@ const SettingsSection: React.FC<PropsType> = ({
     return false;
   };
 
+  const canBeCloned = () => {
+    if(chartWasDeployedWithGithub()) {
+      return false;
+    }
+
+    // If its not web worker or job it means is an addon, and for now it's not supported
+    if (!["web", "worker", "job"].includes(currentChart?.chart?.metadata?.name)) {
+      return false
+    }
+
+    return true
+  }
+
   return (
     <Wrapper>
       {!loadingWebhookToken ? (
@@ -294,7 +307,7 @@ const SettingsSection: React.FC<PropsType> = ({
           {renderWebhookSection()}
           <NotificationSettingsSection currentChart={currentChart} />
           {/* Prevent the clone button to be rendered in github deployed charts */}
-          {!chartWasDeployedWithGithub() && (
+          {canBeCloned() && (
             <>
               <Heading>Clone deployment</Heading>
               <Helper>

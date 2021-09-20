@@ -93,7 +93,7 @@ func init() {
 		"path",
 		"p",
 		"",
-		"if local build, the path to the build directory (default: Dockerfile directory)",
+		"if local build, the path to the build directory",
 	)
 
 	createCmd.PersistentFlags().StringVar(
@@ -163,10 +163,6 @@ func createFull(resp *api.AuthCheckResponse, client *api.Client, args []string) 
 	}
 
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", args[0], name)
-
-	if localPath == "" {
-		localPath = filepath.Dir(dockerfile)
-	}
 
 	fullPath, err := filepath.Abs(localPath)
 

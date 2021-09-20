@@ -6,7 +6,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
+import { getQueryParam, getQueryParams, pushFiltered } from "shared/routing";
 
 import { hardcodedNames } from "shared/hardcodedNameDict";
 import SourcePage from "./SourcePage";
@@ -16,6 +16,7 @@ import TitleSection from "components/TitleSection";
 
 import {
   ActionConfigType,
+  ChartTypeWithExtendedConfig,
   FullActionConfigType,
   PorterTemplate,
   StorageType,
@@ -26,6 +27,8 @@ type PropsType = RouteComponentProps & {
   currentTemplate: PorterTemplate;
   hideLaunchFlow: () => void;
   form: any;
+  isCloning: boolean;
+  clonedChart: ChartTypeWithExtendedConfig;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -38,7 +41,9 @@ const defaultActionConfig: ActionConfigType = {
 const LaunchFlow: React.FC<PropsType> = (props) => {
   const context = useContext(Context);
 
-  const [currentPage, setCurrentPage] = useState("source");
+  const [currentPage, setCurrentPage] = useState(
+    props.isCloning ? "settings" : "source"
+  );
   const [templateName, setTemplateName] = useState("");
   const [saveValuesStatus, setSaveValuesStatus] = useState("");
   const [sourceType, setSourceType] = useState("");
@@ -60,25 +65,23 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const [selectedRegistry, setSelectedRegistry] = useState(null);
   const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
 
-  const setRandomNameIfEmpty = () => {
-    if (!templateName) {
-      const randomTemplateName = randomWords({ exactly: 3, join: "-" });
-      setTemplateName(randomTemplateName);
-    }
+  const generateRandomName = () => {
+    const randomTemplateName = randomWords({ exactly: 3, join: "-" });
+    return randomTemplateName;
   };
 
   const getFullActionConfig = (): FullActionConfigType => {
-    let imageRepoUri = `${selectedRegistry.url}/${templateName}-${selectedNamespace}`;
+    let imageRepoUri = `${selectedRegistry?.url}/${templateName}-${selectedNamespace}`;
 
     // DockerHub registry integration is per repo
-    if (selectedRegistry.service === "dockerhub") {
-      imageRepoUri = selectedRegistry.url;
+    if (selectedRegistry?.service === "dockerhub") {
+      imageRepoUri = selectedRegistry?.url;
     }
 
     return {
       git_repo: actionConfig.git_repo,
       branch: branch,
-      registry_id: selectedRegistry.id,
+      registry_id: selectedRegistry?.id,
       dockerfile_path: dockerfilePath,
       folder_path: folderPath,
       image_repo_uri: imageRepoUri,
@@ -90,6 +93,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const handleSubmitAddon = (wildcard?: any) => {
     let { currentCluster, currentProject, setCurrentError } = context;
     setSaveValuesStatus("loading");
+
+    const name = templateName || generateRandomName();
 
     let values = {};
     for (let key in wildcard) {
@@ -104,7 +109,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           storage: StorageType.Secret,
           formValues: values,
           namespace: selectedNamespace,
-          name: templateName,
+          name,
         },
         {
           id: currentProject.id,
@@ -159,8 +164,14 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       _.set(values, key, rawValues[key]);
     }
 
-    let url = imageUrl,
-      tag = imageTag;
+    let url = imageUrl;
+    let tag = imageTag;
+
+    if (props.isCloning) {
+      url = props.clonedChart.config.image.repository;
+      tag = props.clonedChart.config.image.tag;
+    }
+
     if (url.includes(":")) {
       let splits = url.split(":");
       url = splits[0];
@@ -208,6 +219,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     }
 
     var external_domain: string;
+
+    const release_name = templateName || generateRandomName();
     // check if template is docker and create external domain if necessary
     if (props.currentTemplate.name == "web") {
       if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
@@ -216,7 +229,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
             .createSubdomain(
               "<token>",
               {
-                release_name: templateName,
+                release_name,
               },
               {
                 id: currentProject.id,
@@ -242,7 +255,11 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     let githubActionConfig: FullActionConfigType = null;
     if (sourceType === "repo") {
-      githubActionConfig = getFullActionConfig();
+      if (props.isCloning) {
+        githubActionConfig = props.clonedChart?.git_action_config;
+      } else {
+        githubActionConfig = getFullActionConfig();
+      }
     }
 
     api
@@ -254,7 +271,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           storage: StorageType.Secret,
           formValues: values,
           namespace: selectedNamespace,
-          name: templateName,
+          name: release_name,
           githubActionConfig,
         },
         {
@@ -322,7 +339,10 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       );
     }
 
-    setRandomNameIfEmpty();
+    if (!templateName && !props.isCloning && currentTab === "porter") {
+      const newTemplateName = generateRandomName();
+      setTemplateName(newTemplateName);
+    }
 
     if (currentPage === "workflow" && currentTab === "porter") {
       const fullActionConfig = getFullActionConfig();
@@ -341,6 +361,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     // Display main (non-source) settings page
     return (
       <SettingsPage
+        isCloning={props.isCloning}
         onSubmit={currentTab === "porter" ? handleSubmit : handleSubmitAddon}
         saveValuesStatus={saveValuesStatus}
         selectedNamespace={selectedNamespace}
@@ -377,10 +398,14 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   }
 
   return (
-    <StyledLaunchFlow>
+    <StyledLaunchFlow disableMarginTop={props.isCloning}>
       <TitleSection handleNavBack={props.hideLaunchFlow}>
         {renderIcon()}
-        New {currentTemplateName} {currentTab === "porter" ? null : "Instance"}
+        {!props.isCloning
+          ? `New ${currentTemplateName} ${
+              currentTab !== "porter" ? "Instance" : ""
+            }`
+          : `Cloning ${currentTemplateName} deployment: ${props.clonedChart.name}`}
       </TitleSection>
       {renderCurrentPage()}
       <Br />
@@ -428,5 +453,6 @@ const Polymer = styled.div`
 const StyledLaunchFlow = styled.div`
   width: calc(90% - 130px);
   min-width: 300px;
-  margin-top: calc(50vh - 380px);
+  margin-top: ${(props: { disableMarginTop: boolean }) =>
+    props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
 `;

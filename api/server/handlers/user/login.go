@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/types"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -32,9 +33,12 @@ func NewUserLoginHandler(
 func (u *UserLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	request := &types.LoginUserRequest{}
 
-	ok := u.DecodeAndValidate(w, r, request)
+	if ok := u.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
 
-	if !ok {
+	if err := checkUserRestrictions(u.Config().ServerConf, request.Email); err != nil {
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -65,4 +69,18 @@ func (u *UserLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u.WriteResult(w, r, storedUser.ToUserType())
+}
+
+// checkUserRestrictions checks login restrictions specified by environment variables on the
+// Porter instance.
+func checkUserRestrictions(
+	serverConf *env.ServerConf,
+	reqEmail string,
+) error {
+	// if the admin user env var is specified, only allow admin user email
+	if adminEmail := serverConf.AdminEmail; adminEmail != "" && adminEmail != reqEmail {
+		return fmt.Errorf("email not allowed")
+	}
+
+	return nil
 }

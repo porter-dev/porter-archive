@@ -53,6 +53,11 @@ func (c *UserPasswordInitiateResetHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
+	if err := checkUserRestrictions(c.Config().ServerConf, user.Email); err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		return
+	}
+
 	// if the user is a Github user, send them a Github email
 	if user.GithubUserID != 0 {
 		err := c.Config().UserNotifier.SendGithubRelinkEmail(

@@ -41,6 +41,11 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
+	if err := checkUserRestrictions(c.Config().ServerConf, user.Email); err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	// generate the token
 	jwt, err := token.GetTokenForUser(user.ID)
 

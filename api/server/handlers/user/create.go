@@ -53,6 +53,11 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := checkUserRestrictions(u.Config().ServerConf, request.Email); err != nil {
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	// hash the password using bcrypt
 	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
 

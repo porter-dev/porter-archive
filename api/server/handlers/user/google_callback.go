@@ -105,6 +105,10 @@ func upsertGoogleUserFromToken(config *config.Config, tok *oauth2.Token) (*model
 		return nil, err
 	}
 
+	if err := checkUserRestrictions(config.ServerConf, gInfo.Email); err != nil {
+		return nil, err
+	}
+
 	// if the app has a restricted domain, check the `hd` query param
 	if config.ServerConf.GoogleRestrictedDomain != "" {
 		if gInfo.HD != config.ServerConf.GoogleRestrictedDomain {

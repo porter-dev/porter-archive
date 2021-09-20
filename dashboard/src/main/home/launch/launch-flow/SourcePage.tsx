@@ -147,7 +147,15 @@ class SourcePage extends Component<PropsType, StateType> {
     } = this.props;
     return (
       <StyledSourceBox>
-        <CloseButton onClick={() => setSourceType("")}>
+        <CloseButton
+          onClick={() => {
+            setSourceType("");
+            setDockerfilePath("");
+            setFolderPath("");
+            setProcfilePath("");
+            setProcfileProcess("");
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Subtitle>

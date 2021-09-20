@@ -335,7 +335,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       );
     }
 
-    if (!templateName && !props.isCloning) {
+    if (!templateName && !props.isCloning && currentTab === "porter") {
       const newTemplateName = generateRandomName();
       setTemplateName(newTemplateName);
     }

@@ -55,6 +55,11 @@ type ServerConf struct {
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
 	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
 
+	// Email for an admin user. On a self-hosted instance of Porter, the
+	// admin user is the only user that can log in and register. After the admin
+	// user has logged in, registration is turned off.
+	AdminEmail string `env:"ADMIN_EMAIL"`
+
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`
 

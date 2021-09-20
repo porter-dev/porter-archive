@@ -131,6 +131,10 @@ func upsertUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User
 			return nil, fmt.Errorf("github user must have an email")
 		}
 
+		if err := checkUserRestrictions(config.ServerConf, primary); err != nil {
+			return nil, err
+		}
+
 		// check if a user with that email address already exists
 		_, err = config.Repo.User().ReadUserByEmail(primary)
 

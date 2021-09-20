@@ -124,7 +124,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           width="100%"
           value={this.props.branch}
         />
-        {this.props.dockerfilePath ? (
+        {this.props.dockerfilePath && (
           <InputRow
             disabled={true}
             label="Dockerfile Path"
@@ -132,15 +132,18 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             width="100%"
             value={this.props.dockerfilePath}
           />
-        ) : (
-          <InputRow
-            disabled={true}
-            label="Folder Path"
-            type="text"
-            width="100%"
-            value={this.props.folderPath}
-          />
         )}
+        <InputRow
+          disabled={true}
+          label={
+            this.props.dockerfilePath
+              ? "Docker Build Context"
+              : "Application Folder"
+          }
+          type="text"
+          width="100%"
+          value={this.props.folderPath}
+        />
         {this.renderRegistrySection()}
         <Br />
 

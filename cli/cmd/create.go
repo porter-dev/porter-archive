@@ -93,7 +93,7 @@ func init() {
 		&localPath,
 		"path",
 		"p",
-		".",
+		"",
 		"if local build, the path to the build directory",
 	)
 

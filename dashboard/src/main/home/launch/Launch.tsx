@@ -125,6 +125,14 @@ class Templates extends Component<PropsType, StateType> {
           this.props.history.push("/dashboard");
           return;
         }
+        // If its not web worker or job it means is an addon, and for now it's not supported
+        if (!["web", "worker", "job"].includes(release?.chart?.metadata?.name)) {
+          this.context.setCurrentError(
+            "Addons don't support cloning yet!"
+          );
+          this.props.history.push("/dashboard");
+          return;
+        }
       }
 
       this.setState(

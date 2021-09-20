@@ -3,6 +3,7 @@ package pack
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/buildpacks/pack"
 	"github.com/porter-dev/porter/cli/cmd/docker"
@@ -16,16 +17,24 @@ func (a *Agent) Build(opts *docker.BuildOpts) error {
 
 	//initialize a pack client
 	client, err := pack.NewClient()
+
 	if err != nil {
-		panic(err)
+		return err
+	}
+
+	absPath, err := filepath.Abs(opts.BuildContext)
+
+	if err != nil {
+		return err
 	}
 
 	buildOpts := pack.BuildOptions{
-		Image:        fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
-		Builder:      "heroku/buildpacks:18",
-		AppPath:      opts.BuildContext,
-		TrustBuilder: true,
-		Env:          opts.Env,
+		RelativeBaseDir: filepath.Dir(absPath),
+		Image:           fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
+		Builder:         "heroku/buildpacks:18",
+		AppPath:         opts.BuildContext,
+		TrustBuilder:    true,
+		Env:             opts.Env,
 	}
 
 	return client.Build(context, buildOpts)

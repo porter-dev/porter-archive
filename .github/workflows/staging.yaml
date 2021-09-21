@@ -30,15 +30,14 @@ jobs:
           cat >./dashboard/.env <<EOL
           NODE_ENV=production
           API_SERVER=dashboard.staging.getporter.dev
-          FULLSTORY_ORG_ID=${{secrets.FULLSTORY_ORG_ID}}
           DISCORD_KEY=${{secrets.DISCORD_KEY}}
           DISCORD_CID=${{secrets.DISCORD_CID}}
           FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
-          POSTHOG_API_KEY=${{secrets.POSTHOG_API_KEY}}
-          POSTHOG_HOST=${{secrets.POSTHOG_HOST}}
           SEGMENT_PUBLIC_KEY=${{secrets.SEGMENT_PUBLIC_KEY}}
           APPLICATION_CHART_REPO_URL=https://charts.staging.getporter.dev
           ADDON_CHART_REPO_URL=https://chart-addons.staging.getporter.dev
+          ENABLE_SENTRY=true
+          SENTRY_DSN=${{secrets.SENTRY_DSN}}
           EOL
       - name: Build
         run: |

@@ -63,14 +63,13 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
       .upgradeChartValues(
         "<token>",
         {
-          namespace: this.props.currentChart.namespace,
-          storage: StorageType.Secret,
           values: valuesString,
         },
         {
           id: currentProject.id,
           name: this.props.currentChart.name,
           cluster_id: currentCluster.id,
+          namespace: this.props.currentChart.namespace,
         }
       )
       .then((res) => {
@@ -79,7 +78,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;

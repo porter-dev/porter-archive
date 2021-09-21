@@ -8,7 +8,7 @@ import (
 // HelmRepoRepository represents the set of queries on the HelmRepo model
 type HelmRepoRepository interface {
 	CreateHelmRepo(repo *models.HelmRepo) (*models.HelmRepo, error)
-	ReadHelmRepo(id uint) (*models.HelmRepo, error)
+	ReadHelmRepo(projectID, hrID uint) (*models.HelmRepo, error)
 	ListHelmReposByProjectID(projectID uint) ([]*models.HelmRepo, error)
 	UpdateHelmRepo(repo *models.HelmRepo) (*models.HelmRepo, error)
 	UpdateHelmRepoTokenCache(tokenCache *ints.HelmRepoTokenCache) (*models.HelmRepo, error)

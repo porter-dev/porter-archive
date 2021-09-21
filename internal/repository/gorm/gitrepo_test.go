@@ -27,13 +27,13 @@ func TestCreateGitRepo(t *testing.T) {
 
 	expGR := *gr
 
-	gr, err := tester.repo.GitRepo.CreateGitRepo(gr)
+	gr, err := tester.repo.GitRepo().CreateGitRepo(gr)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	gr, err = tester.repo.GitRepo.ReadGitRepo(gr.Model.ID)
+	gr, err = tester.repo.GitRepo().ReadGitRepo(gr.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -62,7 +62,7 @@ func TestListGitReposByProjectID(t *testing.T) {
 	initGitRepo(tester, t)
 	defer cleanup(tester, t)
 
-	grs, err := tester.repo.GitRepo.ListGitReposByProjectID(
+	grs, err := tester.repo.GitRepo().ListGitReposByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -106,7 +106,7 @@ func TestUpdateGitRepo(t *testing.T) {
 
 	gr.RepoEntity = "porter-dev-new-name"
 
-	gr, err := tester.repo.GitRepo.UpdateGitRepo(
+	gr, err := tester.repo.GitRepo().UpdateGitRepo(
 		gr,
 	)
 
@@ -114,7 +114,7 @@ func TestUpdateGitRepo(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	gr, err = tester.repo.GitRepo.ReadGitRepo(tester.initGRs[0].ID)
+	gr, err = tester.repo.GitRepo().ReadGitRepo(tester.initGRs[0].ID)
 
 	// make sure data is correct
 	expGR := models.GitRepo{

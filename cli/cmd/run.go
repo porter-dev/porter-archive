@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -74,7 +75,7 @@ func init() {
 	)
 }
 
-func run(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
+func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
 
 	podsSimple, err := getPods(client, namespace, args[0])
@@ -219,9 +220,11 @@ func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, er
 		return nil, err
 	}
 
+	pods := *resp
+
 	res := make([]podSimple, 0)
 
-	for _, pod := range resp {
+	for _, pod := range pods {
 		containerNames := make([]string, 0)
 
 		for _, container := range pod.Spec.Containers {
@@ -311,7 +314,7 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 		writtenBytes, _ = pipePodLogsToStdout(config, namespace, podName, container, false)
 
 		if verbose || writtenBytes == 0 {
-			color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+			color.New(color.FgYellow).Println("Could not get logs. Pod events:")
 			pipeEventsToStdout(config, namespace, podName, container, false)
 		}
 		return nil
@@ -357,7 +360,7 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	}
 
 	if verbose {
-		color.New(color.FgYellow).Println("Pod events:\n")
+		color.New(color.FgYellow).Println("Pod events:")
 		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
 
@@ -432,13 +435,13 @@ func handlePodAttachError(err error, config *PorterRunSharedConfig, namespace, p
 	if verbose {
 		color.New(color.FgYellow).Printf("Error: %s\n", err)
 	}
-	color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:\n")
+	color.New(color.FgYellow).Println("Could not open a shell to this container. Container logs:")
 
 	var writtenBytes int64
 	writtenBytes, _ = pipePodLogsToStdout(config, namespace, podName, container, false)
 
 	if verbose || writtenBytes == 0 {
-		color.New(color.FgYellow).Println("Could not get logs. Pod events:\n")
+		color.New(color.FgYellow).Println("Could not get logs. Pod events:")
 		pipeEventsToStdout(config, namespace, podName, container, false)
 	}
 	return err
@@ -507,7 +510,7 @@ func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
 	)
 
 	if err != nil {
-		color.New(color.FgRed).Println("Could not delete ephemeral pod: %s", err.Error())
+		color.New(color.FgRed).Printf("Could not delete ephemeral pod: %s\n", err.Error())
 		return err
 	}
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/porter-dev/porter/api/types"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"gorm.io/gorm"
@@ -37,45 +39,13 @@ type GCPIntegration struct {
 	GCPKeyData []byte `json:"gcp_key_data"`
 }
 
-// GCPIntegrationExternal is a GCPIntegration to be shared over REST
-type GCPIntegrationExternal struct {
-	ID uint `json:"id"`
-
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-
-	// The GCP project id where the service account for this auth mechanism persists
-	GCPProjectID string `json:"gcp-project-id"`
-
-	// The GCP user email that linked this service account
-	GCPUserEmail string `json:"gcp-user-email"`
-}
-
-// Externalize generates an external KubeIntegration to be shared over REST
-func (g *GCPIntegration) Externalize() *GCPIntegrationExternal {
-	return &GCPIntegrationExternal{
+func (g *GCPIntegration) ToGCPIntegrationType() *types.GCPIntegration {
+	return &types.GCPIntegration{
 		ID:           g.ID,
 		UserID:       g.UserID,
 		ProjectID:    g.ProjectID,
 		GCPProjectID: g.GCPProjectID,
 		GCPUserEmail: g.GCPUserEmail,
-	}
-}
-
-// ToProjectIntegration converts a gcp integration to a project integration
-func (g *GCPIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            g.ID,
-		ProjectID:     g.ProjectID,
-		AuthMechanism: "gcp",
-		Category:      category,
-		Service:       service,
 	}
 }
 

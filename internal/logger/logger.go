@@ -3,8 +3,11 @@ package logger
 import (
 	"context"
 	"io"
+	"net/http"
 	"os"
 
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/rs/zerolog"
 )
 
@@ -136,4 +139,40 @@ func (l *Logger) Printf(format string, v ...interface{}) {
 // is associated, a disabled logger is returned.
 func (l *Logger) Ctx(ctx context.Context) *Logger {
 	return &Logger{logger: zerolog.Ctx(ctx)}
+}
+
+func AddLoggingContextScopes(ctx context.Context, event *zerolog.Event) map[string]interface{} {
+	res := make(map[string]interface{})
+
+	// case on the context values that exist, add them to event
+	if userVal := ctx.Value(types.UserScope); userVal != nil {
+		if userModel, ok := userVal.(*models.User); ok {
+			event.Uint("user_id", userModel.ID)
+			res["user_id"] = userModel.ID
+		}
+	}
+
+	// if this is a project-scoped route, add various scopes
+	if reqScopesVal := ctx.Value(types.RequestScopeCtxKey); reqScopesVal != nil {
+		if reqScopes, ok := reqScopesVal.(map[types.PermissionScope]*types.RequestAction); ok {
+			for key, scope := range reqScopes {
+				if scope.Resource.Name != "" {
+					event.Str(string(key), scope.Resource.Name)
+					res[string(key)] = scope.Resource.Name
+				}
+
+				if scope.Resource.UInt != 0 {
+					event.Uint(string(key), scope.Resource.UInt)
+					res[string(key)] = scope.Resource.UInt
+				}
+			}
+		}
+	}
+
+	return res
+}
+
+func AddLoggingRequestMeta(r *http.Request, event *zerolog.Event) {
+	event.Str("method", r.Method)
+	event.Str("url", r.URL.String())
 }

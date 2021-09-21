@@ -56,7 +56,7 @@ export default class Main extends Component<PropsType, StateType> {
       .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
 
     api
-      .getCapabilities("", {}, {})
+      .getMetadata("", {}, {})
       .then((res) => {
         this.setState({ local: !res.data?.provisioner });
       })
@@ -107,7 +107,7 @@ export default class Main extends Component<PropsType, StateType> {
       return <Loading />;
     }
 
-    // if logged in but not verified, block until email verification
+    // if logged in but not verified, block until email verification    
     if (
       !this.state.local &&
       this.state.isLoggedIn &&

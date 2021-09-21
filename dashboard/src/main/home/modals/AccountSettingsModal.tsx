@@ -13,7 +13,6 @@ import Helper from "components/form-components/Helper";
 import TabSelector from "components/TabSelector";
 
 interface GithubAppAccessData {
-  has_access: boolean;
   username?: string;
   accounts?: string[];
 }
@@ -24,14 +23,13 @@ const AccountSettingsModal = () => {
   const { setCurrentModal } = useContext(Context);
   const [accessLoading, setAccessLoading] = useState(true);
   const [accessError, setAccessError] = useState(false);
-  const [accessData, setAccessData] = useState<GithubAppAccessData>({
-    has_access: false,
-  });
+  const [accessData, setAccessData] = useState<GithubAppAccessData>({});
+
   const [currentTab, setCurrentTab] = useState("integrations");
 
   useEffect(() => {
     api
-      .getGithubAccess("<token>", {}, {})
+      .getGithubAccounts("<token>", {}, {})
       .then(({ data }) => {
         setAccessData(data);
         setAccessLoading(false);
@@ -62,9 +60,7 @@ const AccountSettingsModal = () => {
       <Heading>
         <GitIcon src={github} /> Github
       </Heading>
-      {accessError ? (
-        <Placeholder>An error has occured.</Placeholder>
-      ) : accessLoading ? (
+      {accessLoading ? (
         <LoadingWrapper>
           {" "}
           <Loading />
@@ -72,7 +68,7 @@ const AccountSettingsModal = () => {
       ) : (
         <>
           {/* Will be styled (and show what account is connected) later */}
-          {accessData.has_access ? (
+          {accessData.accounts?.length > 0 ? (
             <Placeholder>
               <User>
                 You are currently authorized as <B>{accessData.username}</B> and

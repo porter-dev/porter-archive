@@ -21,7 +21,7 @@ import (
 // creating a Helm agent
 type Form struct {
 	Cluster           *models.Cluster `form:"required"`
-	Repo              *repository.Repository
+	Repo              repository.Repository
 	DigitalOceanOAuth *oauth2.Config
 	Storage           string `json:"storage" form:"oneof=secret configmap memory" default:"secret"`
 	Namespace         string `json:"namespace"`

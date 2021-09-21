@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	orm "gorm.io/gorm"
@@ -33,13 +34,13 @@ func TestCreateClusterCandidate(t *testing.T) {
 
 	expCC := *cc
 
-	cc, err := tester.repo.Cluster.CreateClusterCandidate(cc)
+	cc, err := tester.repo.Cluster().CreateClusterCandidate(cc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	cc, err = tester.repo.Cluster.ReadClusterCandidate(cc.Model.ID)
+	cc, err = tester.repo.Cluster().ReadClusterCandidate(tester.initProjects[0].ID, cc.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -73,8 +74,8 @@ func TestCreateClusterCandidateWithResolvers(t *testing.T) {
 		ProjectID:        tester.initProjects[0].ID,
 		CreatedClusterID: 0,
 		Resolvers: []models.ClusterResolver{
-			models.ClusterResolver{
-				Name:     models.ClusterLocalhost,
+			{
+				Name:     types.ClusterLocalhost,
 				Resolved: false,
 			},
 		},
@@ -87,13 +88,13 @@ func TestCreateClusterCandidateWithResolvers(t *testing.T) {
 
 	expCC := *cc
 
-	cc, err := tester.repo.Cluster.CreateClusterCandidate(cc)
+	cc, err := tester.repo.Cluster().CreateClusterCandidate(cc)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	cc, err = tester.repo.Cluster.ReadClusterCandidate(cc.Model.ID)
+	cc, err = tester.repo.Cluster().ReadClusterCandidate(tester.initProjects[0].ID, cc.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -136,7 +137,7 @@ func TestListClusterCandidatesByProjectID(t *testing.T) {
 	initClusterCandidate(tester, t)
 	defer cleanup(tester, t)
 
-	ccs, err := tester.repo.Cluster.ListClusterCandidatesByProjectID(
+	ccs, err := tester.repo.Cluster().ListClusterCandidatesByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -182,7 +183,7 @@ func TestUpdateClusterCandidateCreatedClusterID(t *testing.T) {
 	initCluster(tester, t)
 	defer cleanup(tester, t)
 
-	cc, err := tester.repo.Cluster.UpdateClusterCandidateCreatedClusterID(
+	cc, err := tester.repo.Cluster().UpdateClusterCandidateCreatedClusterID(
 		tester.initCCs[0].ID,
 		tester.initClusters[0].ID,
 	)
@@ -231,13 +232,13 @@ func TestCreateCluster(t *testing.T) {
 
 	expCluster := *cluster
 
-	cluster, err := tester.repo.Cluster.CreateCluster(cluster)
+	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	cluster, err = tester.repo.Cluster.ReadCluster(cluster.Model.ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, cluster.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -249,7 +250,10 @@ func TestCreateCluster(t *testing.T) {
 	}
 
 	// reset fields for deep.Equal
+	expCluster.TokenCacheID = 1
+	expCluster.TokenCache.ClusterID = 1
 	cluster.Model = orm.Model{}
+	cluster.TokenCache.Model = orm.Model{}
 
 	if diff := deep.Equal(expCluster, *cluster); diff != nil {
 		t.Errorf("incorrect cluster")
@@ -267,7 +271,7 @@ func TestListClustersByProjectID(t *testing.T) {
 	initCluster(tester, t)
 	defer cleanup(tester, t)
 
-	clusters, err := tester.repo.Cluster.ListClustersByProjectID(
+	clusters, err := tester.repo.Cluster().ListClustersByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -286,12 +290,14 @@ func TestListClustersByProjectID(t *testing.T) {
 		Server:                   "https://localhost",
 		KubeIntegrationID:        tester.initKIs[0].ID,
 		CertificateAuthorityData: []byte("-----BEGIN"),
+		TokenCacheID:             1,
 	}
 
 	cluster := clusters[0]
 
 	// reset fields for reflect.DeepEqual
 	cluster.Model = orm.Model{}
+	cluster.TokenCache.Model = orm.Model{}
 
 	if diff := deep.Equal(expCluster, *cluster); diff != nil {
 		t.Errorf("incorrect cluster")
@@ -313,7 +319,7 @@ func TestUpdateCluster(t *testing.T) {
 
 	cluster.Name = "cluster-new-name"
 
-	cluster, err := tester.repo.Cluster.UpdateCluster(
+	cluster, err := tester.repo.Cluster().UpdateCluster(
 		cluster,
 	)
 
@@ -321,7 +327,7 @@ func TestUpdateCluster(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	cluster, err = tester.repo.Cluster.ReadCluster(tester.initClusters[0].ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, tester.initClusters[0].ID)
 
 	// make sure data is correct
 	expCluster := models.Cluster{
@@ -330,10 +336,15 @@ func TestUpdateCluster(t *testing.T) {
 		Server:                   "https://localhost",
 		KubeIntegrationID:        tester.initKIs[0].ID,
 		CertificateAuthorityData: []byte("-----BEGIN"),
+		TokenCacheID:             1,
+		TokenCache: ints.ClusterTokenCache{
+			ClusterID: 1,
+		},
 	}
 
 	// reset fields for reflect.DeepEqual
 	cluster.Model = orm.Model{}
+	cluster.TokenCache.Model = orm.Model{}
 
 	if diff := deep.Equal(expCluster, *cluster); diff != nil {
 		t.Errorf("incorrect cluster")
@@ -365,13 +376,13 @@ func TestUpdateClusterToken(t *testing.T) {
 		},
 	}
 
-	cluster, err := tester.repo.Cluster.CreateCluster(cluster)
+	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	cluster, err = tester.repo.Cluster.ReadCluster(cluster.Model.ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, cluster.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -395,11 +406,11 @@ func TestUpdateClusterToken(t *testing.T) {
 	cluster.TokenCache.Token = []byte("token-2")
 	cluster.TokenCache.Expiry = time.Now().Add(24 * time.Hour)
 
-	cluster, err = tester.repo.Cluster.UpdateClusterTokenCache(&cluster.TokenCache)
+	cluster, err = tester.repo.Cluster().UpdateClusterTokenCache(&cluster.TokenCache)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
-	cluster, err = tester.repo.Cluster.ReadCluster(cluster.Model.ID)
+	cluster, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, cluster.Model.ID)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -433,25 +444,25 @@ func TestDeleteCluster(t *testing.T) {
 	initCluster(tester, t)
 	defer cleanup(tester, t)
 
-	cluster, err := tester.repo.Cluster.ReadCluster(tester.initClusters[0].Model.ID)
+	cluster, err := tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, tester.initClusters[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	err = tester.repo.Cluster.DeleteCluster(cluster)
+	err = tester.repo.Cluster().DeleteCluster(cluster)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	_, err = tester.repo.Cluster.ReadCluster(tester.initClusters[0].Model.ID)
+	_, err = tester.repo.Cluster().ReadCluster(tester.initProjects[0].ID, tester.initClusters[0].Model.ID)
 
 	if err != orm.ErrRecordNotFound {
 		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)
 	}
 
-	clusters, err := tester.repo.Cluster.ListClustersByProjectID(tester.initProjects[0].Model.ID)
+	clusters, err := tester.repo.Cluster().ListClustersByProjectID(tester.initProjects[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

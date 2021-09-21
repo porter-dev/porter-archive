@@ -67,8 +67,19 @@ const AccountSettingsModal = () => {
         </LoadingWrapper>
       ) : (
         <>
+          {accessError && (
+            <ListWrapper>
+              <Helper>
+                No connected repositories found.
+                <A href={"/api/integrations/github-app/oauth"}>
+                  Authorize Porter to view your repositories.
+                </A>
+              </Helper>
+            </ListWrapper>
+          )}
+
           {/* Will be styled (and show what account is connected) later */}
-          {accessData.accounts?.length > 0 ? (
+          {!accessError && accessData.accounts?.length >= 0 && (
             <Placeholder>
               <User>
                 You are currently authorized as <B>{accessData.username}</B> and
@@ -107,15 +118,6 @@ const AccountSettingsModal = () => {
                 </>
               )}
             </Placeholder>
-          ) : (
-            <ListWrapper>
-              <Helper>
-                No connected repositories found.
-                <A href={"/api/integrations/github-app/oauth"}>
-                  Authorize Porter to view your repositories.
-                </A>
-              </Helper>
-            </ListWrapper>
           )}
         </>
       )}

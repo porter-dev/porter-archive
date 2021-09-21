@@ -168,7 +168,7 @@ class Templates extends Component<PropsType, StateType> {
 
   areCloneQueryParamsValid = () => {
     const qp = getQueryParams(this.props);
-    console.log(qp);
+    
     const requiredParams = [
       "release_namespace",
       "release_template_version",

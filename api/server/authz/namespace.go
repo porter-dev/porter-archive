@@ -3,6 +3,7 @@ package authz
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -32,6 +33,10 @@ func (n *NamespaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 
 	namespace := reqScopes[types.NamespaceScope].Resource.Name
+
+	if strings.ToLower(namespace) == "all" {
+		namespace = ""
+	}
 
 	ctx := NewNamespaceContext(r.Context(), namespace)
 	r = r.Clone(ctx)

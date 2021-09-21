@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -139,12 +138,8 @@ func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.
 	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	namespace := "default"
 
-	if nsPolicy, ok := reqScopes[types.NamespaceScope]; ok && nsPolicy.Resource.Name != "" {
+	if nsPolicy, ok := reqScopes[types.NamespaceScope]; ok {
 		namespace = nsPolicy.Resource.Name
-	}
-
-	if strings.ToLower(namespace) == "all" {
-		namespace = ""
 	}
 
 	helmAgent, err := helm.GetAgentFromK8sAgent("secret", namespace, d.config.Logger, k8sAgent)

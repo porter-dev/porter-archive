@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useState } from "react";
-import { RouteComponentProps } from "react-router";
 import { FullActionConfigType } from "../../../../shared/types";
 import api from "../../../../shared/api";
 import { Context } from "../../../../shared/Context";
@@ -7,16 +6,14 @@ import styled from "styled-components";
 import YamlEditor from "../../../../components/YamlEditor";
 import Loading from "../../../../components/Loading";
 import Helper from "../../../../components/form-components/Helper";
-import CheckboxRow from "../../../../components/form-components/CheckboxRow";
-import SaveButton from "../../../../components/SaveButton";
 
 type PropsType = {
   name: string;
   namespace: string;
   fullActionConfig: FullActionConfigType;
-  shouldCreateWorkflow: boolean;
-  setShouldCreateWorkflow: (x: (prevState: boolean) => boolean) => void;
-  setPage: (x: string) => void;
+  shouldCreateWorkflow?: boolean;
+  setShouldCreateWorkflow?: (x: (prevState: boolean) => boolean) => void;
+  setPage?: (x: string) => void;
 };
 
 const WorkflowPage: React.FC<PropsType> = (props) => {
@@ -25,10 +22,11 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [workflowYAML, setWorkflowYAML] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const { currentCluster, currentProject } = context;
-
+    let isSubscribed = true;
     api
       .getGHAWorkflowTemplate(
         "<token>",
@@ -43,12 +41,17 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         }
       )
       .then((res) => {
-        setWorkflowYAML(res.data);
-        setIsLoading(false);
+        if (isSubscribed) {
+          setWorkflowYAML(res.data);
+          setIsLoading(false);
+        }
       })
       .catch((err) => setHasError(true))
       .finally(() => setIsLoading(false));
-  }, []);
+    return () => {
+      isSubscribed = false;
+    };
+  }, [props.name, props.namespace, props.fullActionConfig]);
 
   const renderWorkflow = () => {
     if (isLoading) {
@@ -64,37 +67,35 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         </Placeholder>
       );
     }
-    return <YamlEditor value={workflowYAML} readOnly={true} />;
-  };
-
-  const getButtonHelper = () => {
-    if (props.shouldCreateWorkflow) {
-      return "Both secrets and workflow will be created";
-    } else {
-      return "Only secrets will be created";
-    }
+    return <AnimatedYamlEditor value={workflowYAML} readOnly={true} />;
   };
 
   return (
     <StyledWorkflowPage>
-      <BackButton width="155px" onClick={() => props.setPage("source")}>
-        <i className="material-icons">first_page</i>
-        Source Settings
-      </BackButton>
       <Heading>GitHub Actions</Heading>
       <Helper>
         To auto-deploy each time you push changes, Porter will write GitHub
         Secrets and this GitHub Actions workflow to your repository.
       </Helper>
-      {renderWorkflow()}
-      <CheckboxRow
-        toggle={() => props.setShouldCreateWorkflow((x: boolean) => !x)}
-        checked={props.shouldCreateWorkflow}
-        label="Create workflow file"
-      />
+      <ExpandableButton onClick={() => setIsExpanded((prev) => !prev)}>
+        Show Porter workflow{" "}
+        <i className="material-icons-outlined">
+          {isExpanded ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+        </i>
+      </ExpandableButton>
+      {isExpanded && renderWorkflow()}
       <Helper>
-        You may copy the YAML to an existing workflow and uncheck this box to
-        prevent Porter from creating a new workflow file.
+        <GitHubActionLink show={!props.shouldCreateWorkflow}>
+          If you want to create a custom workflow file for your deployments, we
+          recommend you <b>deploy from docker instead</b>, and checkout this
+          guide:{" "}
+          <a
+            href="https://docs.porter.run/docs/auto-deploy-requirements#cicd-with-github-actions"
+            target="_blank"
+          >
+            CI/CD with GitHub Actions
+          </a>
+        </GitHubActionLink>
         <GitHubActionLink show={!props.shouldCreateWorkflow}>
           The GitHub Action can be found at{" "}
           <a
@@ -106,13 +107,6 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         </GitHubActionLink>
       </Helper>
       <Buffer />
-      <SaveButton
-        text="Continue"
-        makeFlush={true}
-        disabled={hasError}
-        onClick={() => props.setPage("settings")}
-        helper={getButtonHelper()}
-      />
     </StyledWorkflowPage>
   );
 };
@@ -158,19 +152,20 @@ const Buffer = styled.div`
   height: 35px;
 `;
 
-const BackButton = styled.div`
+const ExpandableButton = styled.div`
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
   font-size: 13px;
   margin-top: 25px;
-  height: 35px;
+  height: 40px;
   padding: 5px 13px;
   padding-right: 15px;
   border: 1px solid #ffffff55;
-  border-radius: 100px;
-  width: ${(props: { width: string }) => props.width};
+  border-radius: 5px;
+  width: 100%;
   color: white;
   background: #ffffff11;
 
@@ -180,11 +175,14 @@ const BackButton = styled.div`
 
   > i {
     color: white;
-    font-size: 16px;
+    font-size: 24px;
     margin-right: 6px;
     margin-left: -2px;
   }
 `;
+
+// This should carry animations for the yaml editor to be more gently introduce into the page
+const AnimatedYamlEditor = styled(YamlEditor)``;
 
 const GitHubActionLink = styled.p`
   visibility: ${(props: { show: boolean }) =>

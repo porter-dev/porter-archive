@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/docker/docker/client"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 )
 
 const label = "CreatedByPorterCLI"

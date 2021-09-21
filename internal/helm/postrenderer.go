@@ -405,7 +405,7 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 		// TODO (POR-33): fix architecture for clusters and re-add the code below
 
 		// // get the project id of the cluster
-		// gcpInt, err := d.Repo.GCPIntegration.ReadGCPIntegration(d.Cluster.GCPIntegrationID)
+		// gcpInt, err := d.Repo.GCPIntegration().ReadGCPIntegration(d.Cluster.ProjectID, d.Cluster.GCPIntegrationID)
 
 		// if err != nil {
 		// 	return false
@@ -433,7 +433,7 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 		eksAccountID := matches[1]
 		eksRegion := matches[3]
 
-		awsInt, err := d.Repo.AWSIntegration.ReadAWSIntegration(d.Cluster.AWSIntegrationID)
+		awsInt, err := d.Repo.AWSIntegration().ReadAWSIntegration(d.Cluster.ProjectID, d.Cluster.AWSIntegrationID)
 
 		if err != nil {
 			return false

@@ -6,10 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
-
-	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
 // DOCR creates a DOCR integration
@@ -23,18 +22,20 @@ func DOCR(
 	}
 
 	// list oauth integrations and make sure DO exists
-	oauthInts, err := client.ListOAuthIntegrations(context.TODO(), projectID)
+	resp, err := client.ListOAuthIntegrations(context.TODO(), projectID)
 
 	if err != nil {
 		return 0, err
 	}
 
+	oauthInts := *resp
+
 	linkedDO := false
-	var doAuth ints.OAuthIntegrationExternal
+	var doAuth *types.OAuthIntegration
 
 	// iterate through oauth integrations to find do
 	for _, oauthInt := range oauthInts {
-		if oauthInt.Client == ints.OAuthDigitalOcean {
+		if oauthInt.Client == types.OAuthDigitalOcean {
 			linkedDO = true
 			doAuth = oauthInt
 			break
@@ -64,10 +65,10 @@ Registry URL: `))
 		return 0, err
 	}
 
-	reg, err := client.CreateDOCR(
+	reg, err := client.CreateRegistry(
 		context.Background(),
 		projectID,
-		&api.CreateDOCRRequest{
+		&types.CreateRegistryRequest{
 			Name:            regName,
 			DOIntegrationID: doAuth.ID,
 			URL:             regURL,
@@ -77,16 +78,16 @@ Registry URL: `))
 	return reg.ID, nil
 }
 
-func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (ints.OAuthIntegrationExternal, error) {
-	var doAuth ints.OAuthIntegrationExternal
+func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (*types.OAuthIntegration, error) {
+	var doAuth *types.OAuthIntegration
 
-	oauthURL := fmt.Sprintf("%s/oauth/projects/%d/digitalocean", client.BaseURL, projectID)
+	oauthURL := fmt.Sprintf("%s/projects/%d/oauth/digitalocean", client.BaseURL, projectID)
 
 	fmt.Printf("Please visit %s in your browser to connect to Digital Ocean (it should open automatically).", oauthURL)
 	utils.OpenBrowser(oauthURL)
 
 	for {
-		oauthInts, err := client.ListOAuthIntegrations(context.TODO(), projectID)
+		resp, err := client.ListOAuthIntegrations(context.TODO(), projectID)
 
 		if err != nil {
 			return doAuth, err
@@ -94,9 +95,11 @@ func triggerDigitalOceanOAuth(client *api.Client, projectID uint) (ints.OAuthInt
 
 		linkedDO := false
 
+		oauthInts := *resp
+
 		// iterate through oauth integrations to find do
 		for _, oauthInt := range oauthInts {
-			if oauthInt.Client == ints.OAuthDigitalOcean {
+			if oauthInt.Client == types.OAuthDigitalOcean {
 				linkedDO = true
 				doAuth = oauthInt
 				break

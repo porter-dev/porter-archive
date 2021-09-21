@@ -6,9 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/api/types"
+
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/models/integrations"
 
@@ -60,7 +62,7 @@ Would you like to proceed? %s `,
 		integration, err := client.CreateAWSIntegration(
 			context.Background(),
 			projectID,
-			&api.CreateAWSIntegrationRequest{
+			&types.CreateAWSRequest{
 				AWSAccessKeyID:     creds.AWSAccessKeyID,
 				AWSSecretAccessKey: creds.AWSSecretAccessKey,
 				AWSRegion:          region,
@@ -107,7 +109,7 @@ func ecrManual(
 	integration, err := client.CreateAWSIntegration(
 		context.Background(),
 		projectID,
-		&api.CreateAWSIntegrationRequest{
+		&types.CreateAWSRequest{
 			AWSAccessKeyID:     accessKeyID,
 			AWSSecretAccessKey: secretKey,
 			AWSRegion:          region,
@@ -132,10 +134,10 @@ func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) 
 		return 0, err
 	}
 
-	reg, err := client.CreateECR(
+	reg, err := client.CreateRegistry(
 		context.Background(),
 		projectID,
-		&api.CreateECRRequest{
+		&types.CreateRegistryRequest{
 			Name:             regName,
 			AWSIntegrationID: intID,
 		},

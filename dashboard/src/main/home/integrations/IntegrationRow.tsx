@@ -94,7 +94,7 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
                   {
                     git_repo: "",
                     image_repo_uri: "",
-                    branch: "",
+                    git_branch: "",
                     git_repo_id: 0,
                     dockerfile_path: "",
                   } as ActionConfigType

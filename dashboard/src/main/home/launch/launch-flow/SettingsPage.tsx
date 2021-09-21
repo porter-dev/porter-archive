@@ -300,16 +300,7 @@ class SettingsPage extends Component<PropsType, StateType> {
           {this.renderSettingsRegion()}
           {this.props.fullActionConfig?.git_repo && (
             <WorkflowPage
-              fullActionConfig={{
-                git_repo: "jnfrati/cryptoshops",
-                branch: "master",
-                registry_id: 9,
-                dockerfile_path: null,
-                folder_path: "./",
-                image_repo_uri: "index.docker.io/jnfrati/porter",
-                git_repo_id: 19210609,
-                should_create_workflow: true,
-              }}
+              fullActionConfig={this.props.fullActionConfig}
               name={this.props.templateName}
               namespace={this.props.selectedNamespace}
             />

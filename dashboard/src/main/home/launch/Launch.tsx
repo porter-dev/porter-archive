@@ -126,10 +126,10 @@ class Templates extends Component<PropsType, StateType> {
           return;
         }
         // If its not web worker or job it means is an addon, and for now it's not supported
-        if (!["web", "worker", "job"].includes(release?.chart?.metadata?.name)) {
-          this.context.setCurrentError(
-            "Addons don't support cloning yet!"
-          );
+        if (
+          !["web", "worker", "job"].includes(release?.chart?.metadata?.name)
+        ) {
+          this.context.setCurrentError("Addons don't support cloning yet!");
           this.props.history.push("/dashboard");
           return;
         }
@@ -162,13 +162,13 @@ class Templates extends Component<PropsType, StateType> {
   }
 
   isTryingToClone = () => {
-    const queryParams = getQueryParams({ location });
+    const queryParams = getQueryParams(this.props);
     return queryParams.has("shouldClone");
   };
 
   areCloneQueryParamsValid = () => {
     const qp = getQueryParams(this.props);
-
+    console.log(qp);
     const requiredParams = [
       "release_namespace",
       "release_template_version",
@@ -195,8 +195,7 @@ class Templates extends Component<PropsType, StateType> {
 
     return api.getChart<ChartTypeWithExtendedConfig>(
       "<token>",
-      {
-      },
+      {},
       {
         id: this.context.currentProject.id,
         name: queryParams.get("release_name"),

@@ -26,7 +26,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
 
   useEffect(() => {
     const { currentCluster, currentProject } = context;
-
+    let isSubscribed = true;
     api
       .generateGHAWorkflow("<token>", props.fullActionConfig, {
         name: props.name,
@@ -35,12 +35,17 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         project_id: currentProject.id,
       })
       .then((res) => {
-        setWorkflowYAML(res.data);
-        setIsLoading(false);
+        if (isSubscribed) {
+          setWorkflowYAML(res.data);
+          setIsLoading(false);
+        }
       })
       .catch((err) => setHasError(true))
       .finally(() => setIsLoading(false));
-  }, []);
+    return () => {
+      isSubscribed = false;
+    };
+  }, [props.name, props.namespace, props.fullActionConfig]);
 
   const renderWorkflow = () => {
     if (isLoading) {
@@ -67,7 +72,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         Secrets and this GitHub Actions workflow to your repository.
       </Helper>
       <ExpandableButton onClick={() => setIsExpanded((prev) => !prev)}>
-        Show porter workflow{" "}
+        Show Porter workflow{" "}
         <i className="material-icons-outlined">
           {isExpanded ? "keyboard_arrow_up" : "keyboard_arrow_down"}
         </i>
@@ -76,7 +81,8 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
       <Helper>
         <GitHubActionLink show={!props.shouldCreateWorkflow}>
           If you want to create a custom workflow file for your deployments, we
-          recommend you deploy from docker instead, and checkout this guide:{" "}
+          recommend you <b>deploy from docker instead</b>, and checkout this
+          guide:{" "}
           <a
             href="https://docs.porter.run/docs/auto-deploy-requirements#cicd-with-github-actions"
             target="_blank"

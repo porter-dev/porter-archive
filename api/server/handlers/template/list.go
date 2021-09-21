@@ -34,6 +34,12 @@ func (t *TemplateListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	repoURL := request.RepoURL
+
+	if repoURL == "" {
+		repoURL = t.Config().ServerConf.DefaultApplicationHelmRepoURL
+	}
+
 	repoIndex, err := loader.LoadRepoIndexPublic(request.RepoURL)
 
 	if err != nil {

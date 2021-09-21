@@ -16,7 +16,7 @@ const PorterErrorBoundary: React.FC<PorterErrorBoundaryProps> = ({
   children,
 }) => {
   const handleError = (error: Error, info: { componentStack: string }) => {
-    if (process.env.SENTRY_ENABLED) {
+    if (process.env.ENABLE_SENTRY) {
       Sentry.captureException(error, (scope) => {
         scope.setTags({
           error_boundary_location: errorBoundaryLocation,

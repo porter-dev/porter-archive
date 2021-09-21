@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -14,24 +15,11 @@ const (
 // Role type that extends gorm.Model
 type Role struct {
 	gorm.Model
-
-	Kind      string `json:"kind"`
-	UserID    uint   `json:"user_id"`
-	ProjectID uint   `json:"project_id"`
+	types.Role
 }
 
-// RoleExternal represents the Role type that is sent over REST
-type RoleExternal struct {
-	ID        uint   `json:"id"`
-	Kind      string `json:"kind"`
-	UserID    uint   `json:"user_id"`
-	ProjectID uint   `json:"project_id"`
-}
-
-// Externalize generates an external Role to be shared over REST
-func (r *Role) Externalize() *RoleExternal {
-	return &RoleExternal{
-		ID:        r.ID,
+func (r *Role) ToRoleType() *types.Role {
+	return &types.Role{
 		Kind:      r.Kind,
 		UserID:    r.UserID,
 		ProjectID: r.ProjectID,

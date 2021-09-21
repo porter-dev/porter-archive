@@ -8,7 +8,7 @@ import (
 // mechanism
 type KubeIntegrationRepository interface {
 	CreateKubeIntegration(am *ints.KubeIntegration) (*ints.KubeIntegration, error)
-	ReadKubeIntegration(id uint) (*ints.KubeIntegration, error)
+	ReadKubeIntegration(projectID, id uint) (*ints.KubeIntegration, error)
 	ListKubeIntegrationsByProjectID(projectID uint) ([]*ints.KubeIntegration, error)
 }
 
@@ -16,7 +16,7 @@ type KubeIntegrationRepository interface {
 // mechanism
 type BasicIntegrationRepository interface {
 	CreateBasicIntegration(am *ints.BasicIntegration) (*ints.BasicIntegration, error)
-	ReadBasicIntegration(id uint) (*ints.BasicIntegration, error)
+	ReadBasicIntegration(projectID, id uint) (*ints.BasicIntegration, error)
 	ListBasicIntegrationsByProjectID(projectID uint) ([]*ints.BasicIntegration, error)
 }
 
@@ -24,7 +24,7 @@ type BasicIntegrationRepository interface {
 // mechanism
 type OIDCIntegrationRepository interface {
 	CreateOIDCIntegration(am *ints.OIDCIntegration) (*ints.OIDCIntegration, error)
-	ReadOIDCIntegration(id uint) (*ints.OIDCIntegration, error)
+	ReadOIDCIntegration(projectID, id uint) (*ints.OIDCIntegration, error)
 	ListOIDCIntegrationsByProjectID(projectID uint) ([]*ints.OIDCIntegration, error)
 }
 
@@ -32,7 +32,7 @@ type OIDCIntegrationRepository interface {
 // mechanism
 type OAuthIntegrationRepository interface {
 	CreateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
-	ReadOAuthIntegration(id uint) (*ints.OAuthIntegration, error)
+	ReadOAuthIntegration(projectID, id uint) (*ints.OAuthIntegration, error)
 	ListOAuthIntegrationsByProjectID(projectID uint) ([]*ints.OAuthIntegration, error)
 	UpdateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
 }
@@ -57,7 +57,7 @@ type SlackIntegrationRepository interface {
 type AWSIntegrationRepository interface {
 	CreateAWSIntegration(am *ints.AWSIntegration) (*ints.AWSIntegration, error)
 	OverwriteAWSIntegration(am *ints.AWSIntegration) (*ints.AWSIntegration, error)
-	ReadAWSIntegration(id uint) (*ints.AWSIntegration, error)
+	ReadAWSIntegration(projectID, id uint) (*ints.AWSIntegration, error)
 	ListAWSIntegrationsByProjectID(projectID uint) ([]*ints.AWSIntegration, error)
 }
 
@@ -65,14 +65,14 @@ type AWSIntegrationRepository interface {
 // mechanism
 type GCPIntegrationRepository interface {
 	CreateGCPIntegration(am *ints.GCPIntegration) (*ints.GCPIntegration, error)
-	ReadGCPIntegration(id uint) (*ints.GCPIntegration, error)
+	ReadGCPIntegration(projectID, id uint) (*ints.GCPIntegration, error)
 	ListGCPIntegrationsByProjectID(projectID uint) ([]*ints.GCPIntegration, error)
 }
 
 // GithubAppInstallationRepository represents the set of queries for github app installations
 type GithubAppInstallationRepository interface {
 	CreateGithubAppInstallation(am *ints.GithubAppInstallation) (*ints.GithubAppInstallation, error)
-	ReadGithubAppInstallation(id uint) (*ints.GithubAppInstallation, error)
+	ReadGithubAppInstallationByInstallationID(gaID uint) (*ints.GithubAppInstallation, error)
 	ReadGithubAppInstallationByAccountID(accountID int64) (*ints.GithubAppInstallation, error)
 	ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error)
 	DeleteGithubAppInstallationByAccountID(accountID int64) error

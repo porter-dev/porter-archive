@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/porter-dev/porter/internal/models/integrations"
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -18,30 +18,6 @@ type GitRepo struct {
 
 	// The various auth mechanisms available to the integration
 	OAuthIntegrationID uint
-}
-
-// GitRepoExternal is a repository to be shared over REST
-type GitRepoExternal struct {
-	ID uint `json:"id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-
-	// The username/organization that this repo integration is linked to
-	RepoEntity string `json:"repo_entity"`
-
-	// The integration service for this git repo
-	Service integrations.IntegrationService `json:"service"`
-}
-
-// Externalize generates an external Repo to be shared over REST
-func (r *GitRepo) Externalize() *GitRepoExternal {
-	return &GitRepoExternal{
-		ID:         r.Model.ID,
-		ProjectID:  r.ProjectID,
-		RepoEntity: r.RepoEntity,
-		Service:    integrations.Github,
-	}
 }
 
 // GitActionConfig is a configuration for release's CI integration via
@@ -79,30 +55,9 @@ type GitActionConfig struct {
 	Version string `json:"version" gorm:"default:v0.0.1"`
 }
 
-// GitActionConfigExternal is an external GitActionConfig to be shared over REST
-type GitActionConfigExternal struct {
-	// The git repo in ${owner}/${repo} form
-	GitRepo string `json:"git_repo"`
-
-	// The git branch to use
-	GitBranch string `json:"git_branch"`
-
-	// The complete image repository uri to pull from
-	ImageRepoURI string `json:"image_repo_uri"`
-
-	// The git integration id
-	GitRepoID uint `json:"git_repo_id"`
-
-	// The path to the dockerfile in the git repo
-	DockerfilePath string `json:"dockerfile_path" form:"required"`
-
-	// The build context
-	FolderPath string `json:"folder_path"`
-}
-
-// Externalize generates an external GitActionConfig to be shared over REST
-func (r *GitActionConfig) Externalize() *GitActionConfigExternal {
-	return &GitActionConfigExternal{
+// ToGitActionConfigType generates an external GitActionConfig to be shared over REST
+func (r *GitActionConfig) ToGitActionConfigType() *types.GitActionConfig {
+	return &types.GitActionConfig{
 		GitRepo:        r.GitRepo,
 		GitBranch:      r.GitBranch,
 		ImageRepoURI:   r.ImageRepoURI,

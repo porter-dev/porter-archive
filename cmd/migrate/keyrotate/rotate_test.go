@@ -39,13 +39,13 @@ func TestClusterModelRotation(t *testing.T) {
 
 	clusters := []*models.Cluster{}
 
-	if err := tester.DB.Preload("TokenCache").Find(&clusters).Error; err != nil {
+	if err := tester.DB.Find(&clusters).Error; err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	// decrypt with the old key
 	for _, c := range clusters {
-		cluster, err := repo.ReadCluster(c.ID)
+		cluster, err := repo.ReadCluster(c.ProjectID, c.ID)
 
 		if err != nil {
 			t.Fatalf("error reading cluster: %v\n", err)
@@ -97,7 +97,7 @@ func TestClusterCandidateModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, c := range ccs {
-		cc, err := repo.ReadClusterCandidate(c.ID)
+		cc, err := repo.ReadClusterCandidate(c.ProjectID, c.ID)
 
 		if err != nil {
 			t.Fatalf("error reading cluster: %v\n", err)
@@ -149,7 +149,7 @@ func TestRegistryModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, r := range regs {
-		registry, err := repo.ReadRegistry(r.ID)
+		registry, err := repo.ReadRegistry(r.ProjectID, r.ID)
 
 		if err != nil {
 			t.Fatalf("error reading registry: %v\n", err)
@@ -197,7 +197,7 @@ func TestHelmRepoModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, h := range hrs {
-		hr, err := repo.ReadHelmRepo(h.ID)
+		hr, err := repo.ReadHelmRepo(h.ProjectID, h.ID)
 
 		if err != nil {
 			t.Fatalf("error reading helm repo: %v\n", err)
@@ -245,7 +245,7 @@ func TestInfraModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, i := range infras {
-		infra, err := repo.ReadInfra(i.ID)
+		infra, err := repo.ReadInfra(i.ProjectID, i.ID)
 
 		if err != nil {
 			t.Fatalf("error reading infra: %v\n", err)
@@ -293,7 +293,7 @@ func TestKubeIntegrationModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, k := range kis {
-		ki, err := repo.ReadKubeIntegration(k.ID)
+		ki, err := repo.ReadKubeIntegration(k.ProjectID, k.ID)
 
 		if err != nil {
 			t.Fatalf("error reading infra: %v\n", err)
@@ -361,7 +361,7 @@ func TestBasicIntegrationModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, k := range basics {
-		basic, err := repo.ReadBasicIntegration(k.ID)
+		basic, err := repo.ReadBasicIntegration(k.ProjectID, k.ID)
 
 		if err != nil {
 			t.Fatalf("error reading infra: %v\n", err)
@@ -413,7 +413,7 @@ func TestOIDCIntegrationModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, k := range oidcs {
-		oidc, err := repo.ReadOIDCIntegration(k.ID)
+		oidc, err := repo.ReadOIDCIntegration(k.ProjectID, k.ID)
 
 		if err != nil {
 			t.Fatalf("error reading infra: %v\n", err)
@@ -481,7 +481,7 @@ func TestOAuthIntegrationModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, k := range oauths {
-		oauth, err := repo.ReadOAuthIntegration(k.ID)
+		oauth, err := repo.ReadOAuthIntegration(k.ProjectID, k.ID)
 
 		if err != nil {
 			t.Fatalf("error reading infra: %v\n", err)
@@ -537,7 +537,7 @@ func TestGCPIntegrationModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, k := range gcps {
-		gcp, err := repo.ReadGCPIntegration(k.ID)
+		gcp, err := repo.ReadGCPIntegration(k.ProjectID, k.ID)
 
 		if err != nil {
 			t.Fatalf("error reading infra: %v\n", err)
@@ -585,7 +585,7 @@ func TestAWSIntegrationModelRotation(t *testing.T) {
 
 	// decrypt with the old key
 	for _, k := range awss {
-		aws, err := repo.ReadAWSIntegration(k.ID)
+		aws, err := repo.ReadAWSIntegration(k.ProjectID, k.ID)
 
 		if err != nil {
 			t.Fatalf("error reading infra: %v\n", err)

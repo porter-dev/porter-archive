@@ -28,12 +28,18 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
     const { currentCluster, currentProject } = context;
     let isSubscribed = true;
     api
-      .generateGHAWorkflow("<token>", props.fullActionConfig, {
-        name: props.name,
-        namespace: props.namespace,
-        cluster_id: currentCluster.id,
-        project_id: currentProject.id,
-      })
+      .getGHAWorkflowTemplate(
+        "<token>",
+        {
+          release_name: props.name,
+          github_action_config: props.fullActionConfig,
+        },
+        {
+          namespace: props.namespace,
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
       .then((res) => {
         if (isSubscribed) {
           setWorkflowYAML(res.data);

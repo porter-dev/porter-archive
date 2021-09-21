@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -20,24 +21,21 @@ type Release struct {
 	// but this should be used for the source of truth going forward.
 	ImageRepoURI string `json:"image_repo_uri,omitempty"`
 
-	GitActionConfig    GitActionConfig `json:"git_action_config"`
+	GitActionConfig    *GitActionConfig `json:"git_action_config"`
 	EventContainer     uint
 	NotificationConfig uint
 }
 
-// ReleaseExternal represents the Release type that is sent over REST
-type ReleaseExternal struct {
-	ID uint `json:"id"`
-
-	WebhookToken    string                   `json:"webhook_token"`
-	GitActionConfig *GitActionConfigExternal `json:"git_action_config,omitempty"`
-}
-
-// Externalize generates an external User to be shared over REST
-func (r *Release) Externalize() *ReleaseExternal {
-	return &ReleaseExternal{
-		ID:              r.ID,
-		WebhookToken:    r.WebhookToken,
-		GitActionConfig: r.GitActionConfig.Externalize(),
+func (r *Release) ToReleaseType() *types.PorterRelease {
+	res := &types.PorterRelease{
+		ID:           r.ID,
+		WebhookToken: r.WebhookToken,
+		ImageRepoURI: r.ImageRepoURI,
 	}
+
+	if r.GitActionConfig != nil {
+		res.GitActionConfig = r.GitActionConfig.ToGitActionConfigType()
+	}
+
+	return res
 }

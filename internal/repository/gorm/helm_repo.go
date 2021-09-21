@@ -64,10 +64,10 @@ func (repo *HelmRepoRepository) CreateHelmRepo(hr *models.HelmRepo) (*models.Hel
 }
 
 // ReadHelmRepo gets a helm repo specified by a unique id
-func (repo *HelmRepoRepository) ReadHelmRepo(id uint) (*models.HelmRepo, error) {
+func (repo *HelmRepoRepository) ReadHelmRepo(projectID, hrID uint) (*models.HelmRepo, error) {
 	hr := &models.HelmRepo{}
 
-	if err := repo.db.Preload("TokenCache").Where("id = ?", id).First(&hr).Error; err != nil {
+	if err := repo.db.Preload("TokenCache").Where("project_id = ? AND id = ?", projectID, hrID).First(&hr).Error; err != nil {
 		return nil, err
 	}
 

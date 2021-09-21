@@ -91,12 +91,12 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       const res = await api.getMatchingPods(
         "<token>",
         {
-          cluster_id: currentCluster.id,
           namespace: controller?.metadata?.namespace,
           selectors: currentSelectors,
         },
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       );
       const data = res?.data as any[];
@@ -231,9 +231,9 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       .deletePod(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
+          cluster_id: currentCluster.id,
           name: pod.metadata?.name,
           namespace: pod.metadata?.namespace,
           id: currentProject.id,
@@ -293,9 +293,9 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   };
 
   const setupWebsocket = (kind: string, controllerUid: string) => {
-    let apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status?`;
     if (kind == "pod" && currentSelectors) {
-      apiEndpoint += `&selectors=${currentSelectors[0]}`;
+      apiEndpoint += `selectors=${currentSelectors[0]}`;
     }
 
     const options: NewWebsocketOptions = {};

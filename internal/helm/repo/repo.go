@@ -3,6 +3,7 @@ package repo
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/chart"
@@ -14,7 +15,7 @@ import (
 type HelmRepo models.HelmRepo
 
 // ListCharts lists Porter charts for a given helm repo
-func (hr *HelmRepo) ListCharts(repo repository.Repository) ([]*models.PorterChartList, error) {
+func (hr *HelmRepo) ListCharts(repo repository.Repository) (types.ListTemplatesResponse, error) {
 	if hr.BasicAuthIntegrationID != 0 {
 		return hr.listChartsBasic(repo)
 	}
@@ -36,9 +37,10 @@ func (hr *HelmRepo) GetChart(
 
 func (hr *HelmRepo) listChartsBasic(
 	repo repository.Repository,
-) ([]*models.PorterChartList, error) {
+) (types.ListTemplatesResponse, error) {
 	// get the basic auth integration
-	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		hr.ProjectID,
 		hr.BasicAuthIntegrationID,
 	)
 
@@ -65,7 +67,8 @@ func (hr *HelmRepo) getChartBasic(
 	chartName, chartVersion string,
 ) (*chart.Chart, error) {
 	// get the basic auth integration
-	basic, err := repo.BasicIntegration.ReadBasicIntegration(
+	basic, err := repo.BasicIntegration().ReadBasicIntegration(
+		hr.ProjectID,
 		hr.BasicAuthIntegrationID,
 	)
 

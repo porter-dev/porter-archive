@@ -3,9 +3,11 @@ package gorm_test
 import (
 	"testing"
 
-	"github.com/go-test/deep"
-	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
+
+	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 func TestCreateInfra(t *testing.T) {
@@ -18,18 +20,18 @@ func TestCreateInfra(t *testing.T) {
 	defer cleanup(tester, t)
 
 	infra := &models.Infra{
-		Kind:      models.InfraECR,
+		Kind:      types.InfraECR,
 		ProjectID: tester.initProjects[0].Model.ID,
-		Status:    models.StatusCreated,
+		Status:    types.StatusCreated,
 	}
 
-	infra, err := tester.repo.Infra.CreateInfra(infra)
+	infra, err := tester.repo.Infra().CreateInfra(infra)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	infra, err = tester.repo.Infra.ReadInfra(infra.Model.ID)
+	infra, err = tester.repo.Infra().ReadInfra(tester.initProjects[0].Model.ID, infra.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -40,12 +42,12 @@ func TestCreateInfra(t *testing.T) {
 		t.Errorf("incorrect registry ID: expected %d, got %d\n", 1, infra.Model.ID)
 	}
 
-	if infra.Kind != models.InfraECR {
-		t.Errorf("incorrect aws infra kind: expected %s, got %s\n", models.InfraECR, infra.Kind)
+	if infra.Kind != types.InfraECR {
+		t.Errorf("incorrect aws infra kind: expected %s, got %s\n", types.InfraECR, infra.Kind)
 	}
 
-	if infra.Status != models.StatusCreated {
-		t.Errorf("incorrect aws infra status: expected %s, got %s\n", models.StatusCreated, infra.Status)
+	if infra.Status != types.StatusCreated {
+		t.Errorf("incorrect aws infra status: expected %s, got %s\n", types.StatusCreated, infra.Status)
 	}
 }
 
@@ -59,7 +61,7 @@ func TestListInfrasByProjectID(t *testing.T) {
 	initInfra(tester, t)
 	defer cleanup(tester, t)
 
-	infras, err := tester.repo.Infra.ListInfrasByProjectID(
+	infras, err := tester.repo.Infra().ListInfrasByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -75,7 +77,7 @@ func TestListInfrasByProjectID(t *testing.T) {
 	expInfra := models.Infra{
 		Kind:      "ecr",
 		ProjectID: tester.initProjects[0].Model.ID,
-		Status:    models.StatusCreated,
+		Status:    types.StatusCreated,
 	}
 
 	infra := infras[0]

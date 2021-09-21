@@ -121,7 +121,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
                   ),
               });
             } else {
-              window.location.href = `/api/oauth/projects/${currentProject.id}/slack`;
+              window.location.href = `/api/projects/${currentProject.id}/oauth/slack`;
             }
           }}
         >

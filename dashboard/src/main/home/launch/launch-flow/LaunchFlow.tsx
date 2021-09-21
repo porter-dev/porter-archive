@@ -34,7 +34,7 @@ type PropsType = RouteComponentProps & {
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
-  branch: "",
+  git_branch: "",
   git_repo_id: 0,
 };
 
@@ -80,7 +80,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     return {
       git_repo: actionConfig.git_repo,
-      branch: branch,
+      git_branch: branch,
       registry_id: selectedRegistry?.id,
       dockerfile_path: dockerfilePath,
       folder_path: folderPath,
@@ -105,17 +105,15 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       .deployAddon(
         "<token>",
         {
-          templateName: props.currentTemplate.name,
-          storage: StorageType.Secret,
-          formValues: values,
-          namespace: selectedNamespace,
+          template_name: props.currentTemplate.name,
+          template_version: props.currentTemplate?.currentVersion || "latest",
+          values: values,
           name,
         },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
-          name: props.currentTemplate.name.toLowerCase().trim(),
-          version: props.currentTemplate?.currentVersion || "latest",
+          namespace: selectedNamespace,
           repo_url: process.env.ADDON_CHART_REPO_URL,
         }
       )
@@ -137,8 +135,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         });
       })
       .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+        let parsedErr = err?.response?.data?.error;
 
         err = parsedErr || err.message || JSON.stringify(err);
 
@@ -228,20 +225,19 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           api
             .createSubdomain(
               "<token>",
-              {
-                release_name,
-              },
+              {},
               {
                 id: currentProject.id,
                 cluster_id: currentCluster.id,
+                release_name,
+                namespace: selectedNamespace,
               }
             )
             .then((res) => {
               resolve(res?.data?.external_url);
             })
             .catch((err) => {
-              let parsedErr =
-                err?.response?.data?.errors && err.response.data.errors[0];
+              let parsedErr = err?.response?.data?.error;
               err = parsedErr || err.message || JSON.stringify(err);
               setSaveValuesStatus(`Could not create subdomain: ${err}`);
 
@@ -266,19 +262,17 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       .deployTemplate(
         "<token>",
         {
-          templateName: props.currentTemplate.name,
-          imageURL: url,
-          storage: StorageType.Secret,
-          formValues: values,
-          namespace: selectedNamespace,
+          image_url: url,
+          values: values,
+          template_name: props.currentTemplate.name.toLowerCase().trim(),
+          template_version: props.currentTemplate?.currentVersion || "latest",
           name: release_name,
-          githubActionConfig,
+          github_action_config: githubActionConfig,
         },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
-          name: props.currentTemplate.name.toLowerCase().trim(),
-          version: props.currentTemplate?.currentVersion || "latest",
+          namespace: selectedNamespace,
           repo_url: process.env.APPLICATION_CHART_REPO_URL,
         }
       )
@@ -295,8 +289,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         }, 1000);
       })
       .catch((err: any) => {
-        let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+        let parsedErr = err?.response?.data?.error;
         err = parsedErr || err.message || JSON.stringify(err);
         setSaveValuesStatus(`Could not deploy template: ${err}`);
         setCurrentError(err);
@@ -339,25 +332,12 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       );
     }
 
-    if (!templateName && !props.isCloning) {
+    if (!templateName && !props.isCloning && currentTab === "porter") {
       const newTemplateName = generateRandomName();
       setTemplateName(newTemplateName);
     }
 
-    if (currentPage === "workflow" && currentTab === "porter") {
-      const fullActionConfig = getFullActionConfig();
-      return (
-        <WorkflowPage
-          name={templateName}
-          namespace={"default"}
-          fullActionConfig={fullActionConfig}
-          shouldCreateWorkflow={shouldCreateWorkflow}
-          setShouldCreateWorkflow={setShouldCreateWorkflow}
-          setPage={setCurrentPage}
-        />
-      );
-    }
-
+    const fullActionConfig = getFullActionConfig();
     // Display main (non-source) settings page
     return (
       <SettingsPage
@@ -374,6 +354,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         form={form}
         valuesToOverride={valuesToOverride}
         clearValuesToOverride={() => setValuesToOverride(null)}
+        fullActionConfig={fullActionConfig}
       />
     );
   };

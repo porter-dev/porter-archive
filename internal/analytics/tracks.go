@@ -1,7 +1,7 @@
 package analytics
 
 import (
-	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/api/types"
 	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 
@@ -133,7 +133,7 @@ type ClusterProvisioningStartTrackOpts struct {
 	// note that this is a project-scoped track, since the cluster has not been created yet
 	*ProjectScopedTrackOpts
 
-	ClusterType models.InfraKind
+	ClusterType types.InfraKind
 	InfraID     uint
 }
 
@@ -156,7 +156,7 @@ type ClusterProvisioningErrorTrackOpts struct {
 	// note that this is a project-scoped track, since the cluster has not been created yet
 	*ProjectScopedTrackOpts
 
-	ClusterType models.InfraKind
+	ClusterType types.InfraKind
 	InfraID     uint
 }
 
@@ -178,7 +178,7 @@ func ClusterProvisioningErrorTrack(opts *ClusterProvisioningErrorTrackOpts) segm
 type ClusterProvisioningSuccessTrackOpts struct {
 	*ClusterScopedTrackOpts
 
-	ClusterType models.InfraKind
+	ClusterType types.InfraKind
 	InfraID     uint
 }
 
@@ -381,7 +381,7 @@ type RegistryProvisioningStartTrackOpts struct {
 	// note that this is a project-scoped track, since the registry has not been created yet
 	*ProjectScopedTrackOpts
 
-	RegistryType models.InfraKind
+	RegistryType types.InfraKind
 	InfraID      uint
 }
 
@@ -404,7 +404,7 @@ type RegistryProvisioningErrorTrackOpts struct {
 	// note that this is a project-scoped track, since the registry has not been created yet
 	*ProjectScopedTrackOpts
 
-	RegistryType models.InfraKind
+	RegistryType types.InfraKind
 	InfraID      uint
 }
 
@@ -426,7 +426,7 @@ func RegistryProvisioningErrorTrack(opts *RegistryProvisioningErrorTrackOpts) se
 type RegistryProvisioningSuccessTrackOpts struct {
 	*RegistryScopedTrackOpts
 
-	RegistryType models.InfraKind
+	RegistryType types.InfraKind
 	InfraID      uint
 }
 

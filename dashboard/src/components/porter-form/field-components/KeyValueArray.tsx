@@ -12,6 +12,7 @@ import Modal from "../../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
+import _ from "lodash";
 
 interface Props extends KeyValueArrayField {
   id: string;
@@ -166,17 +167,23 @@ const KeyValueArray: React.FC<Props> = (props) => {
             }
             setValues={(values) => {
               setState((prev) => {
+                // Transform array to object similar on what we receive from setValues
+                const prevValues = prev.values.reduce((acc, currentValue) => {
+                  acc[currentValue.key] = currentValue.value;
+                  return acc;
+                }, {} as Record<string, string>)
+
+                // Deconstruct the two records/objects inside one to merge their values (this will override the old duped vars too)
+                // and convert the new object back to an array usable for the component
+                const newValues = Object.entries({...prevValues, ...values})?.map(([k, v]) => {
+                  return {
+                    key: k,
+                    value: v,
+                  };
+                });
+
                 return {
-                  // might be broken
-                  values: [
-                    ...prev.values,
-                    ...Object.entries(values)?.map(([k, v]) => {
-                      return {
-                        key: k,
-                        value: v,
-                      };
-                    }),
-                  ],
+                  values: [...newValues]
                 };
               });
             }}

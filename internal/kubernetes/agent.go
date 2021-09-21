@@ -11,7 +11,9 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"time"
 
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
@@ -27,6 +29,8 @@ import (
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
+
+	errors2 "errors"
 
 	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/helm/grapher"
@@ -47,8 +51,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/remotecommand"
 
-	"github.com/porter-dev/porter/internal/config"
-
 	rspb "helm.sh/helm/v3/pkg/release"
 )
 
@@ -67,6 +69,31 @@ type Message struct {
 
 type ListOptions struct {
 	FieldSelector string
+}
+
+type AuthError struct{}
+
+func (e *AuthError) Error() string {
+	return "Unauthorized error"
+}
+
+// UpdateClientset updates the Agent's Clientset (this refreshes auth tokens)
+func (a *Agent) UpdateClientset() error {
+	restConf, err := a.RESTClientGetter.ToRESTConfig()
+
+	if err != nil {
+		return err
+	}
+
+	clientset, err := kubernetes.NewForConfig(restConf)
+
+	if err != nil {
+		return err
+	}
+
+	a.Clientset = clientset
+
+	return nil
 }
 
 // CreateConfigMap creates the configmap given the key-value pairs and namespace
@@ -112,7 +139,7 @@ type mergeConfigMapData struct {
 }
 
 // UpdateConfigMap updates the configmap given its name and namespace
-func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) error {
+func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
 	cmData := make(map[string]*string)
 
 	for key, val := range configMap {
@@ -131,18 +158,16 @@ func (a *Agent) UpdateConfigMap(name string, namespace string, configMap map[str
 	patchBytes, err := json.Marshal(mergeCM)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = a.Clientset.CoreV1().ConfigMaps(namespace).Patch(
+	return a.Clientset.CoreV1().ConfigMaps(namespace).Patch(
 		context.Background(),
 		name,
 		types.MergePatchType,
 		patchBytes,
 		metav1.PatchOptions{},
 	)
-
-	return err
 }
 
 type mergeLinkedSecretData struct {
@@ -334,56 +359,104 @@ func (a *Agent) GetIngress(namespace string, name string) (*v1beta1.Ingress, err
 
 // GetDeployment gets the deployment given the name and namespace
 func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
-	return a.Clientset.AppsV1().Deployments(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().Deployments(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetStatefulSet gets the statefulset given the name and namespace
 func (a *Agent) GetStatefulSet(c grapher.Object) (*appsv1.StatefulSet, error) {
-	return a.Clientset.AppsV1().StatefulSets(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().StatefulSets(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetReplicaSet gets the replicaset given the name and namespace
 func (a *Agent) GetReplicaSet(c grapher.Object) (*appsv1.ReplicaSet, error) {
-	return a.Clientset.AppsV1().ReplicaSets(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().ReplicaSets(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetDaemonSet gets the daemonset by name and namespace
 func (a *Agent) GetDaemonSet(c grapher.Object) (*appsv1.DaemonSet, error) {
-	return a.Clientset.AppsV1().DaemonSets(c.Namespace).Get(
+	res, err := a.Clientset.AppsV1().DaemonSets(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetJob gets the job by name and namespace
 func (a *Agent) GetJob(c grapher.Object) (*batchv1.Job, error) {
-	return a.Clientset.BatchV1().Jobs(c.Namespace).Get(
+	res, err := a.Clientset.BatchV1().Jobs(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetCronJob gets the CronJob by name and namespace
 func (a *Agent) GetCronJob(c grapher.Object) (*batchv1beta1.CronJob, error) {
-	return a.Clientset.BatchV1beta1().CronJobs(c.Namespace).Get(
+	res, err := a.Clientset.BatchV1beta1().CronJobs(c.Namespace).Get(
 		context.TODO(),
 		c.Name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.Kind = c.Kind
+
+	return res, nil
 }
 
 // GetPodsByLabel retrieves pods with matching labels
@@ -535,104 +608,144 @@ func (a *Agent) StopJobWithJobSidecar(namespace, name string) error {
 	})
 }
 
+// RunWebsocketTask will run a websocket task. If the websocket returns an anauthorized error, it will restart
+// the task some number of times until failing
+func (a *Agent) RunWebsocketTask(task func() error) error {
+
+	lastTime := int64(0)
+
+	for {
+		if err := a.UpdateClientset(); err != nil {
+			return err
+		}
+
+		err := task()
+
+		if err == nil {
+			return nil
+		}
+
+		if !errors2.Is(err, &AuthError{}) {
+			return err
+		}
+
+		if time.Now().Unix()-lastTime < 60 { // don't regenerate connection if too many unauthorized errors
+			return err
+		}
+
+		lastTime = time.Now().Unix()
+	}
+}
+
 // StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet
 // TODO: Support Jobs
 func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, selectors string) error {
-	// selectors is an array of max length 1. StreamControllerStatus accepts calls without the selectors argument.
-	// selectors argument is a single string with comma separated key=value pairs. (e.g. "app=porter,porter=true")
-	tweakListOptionsFunc := func(options *metav1.ListOptions) {
-		options.LabelSelector = selectors
-	}
 
-	factory := informers.NewSharedInformerFactoryWithOptions(
-		a.Clientset,
-		0,
-		informers.WithTweakListOptions(tweakListOptionsFunc),
-	)
+	run := func() error {
+		// selectors is an array of max length 1. StreamControllerStatus accepts calls without the selectors argument.
+		// selectors argument is a single string with comma separated key=value pairs. (e.g. "app=porter,porter=true")
+		tweakListOptionsFunc := func(options *metav1.ListOptions) {
+			options.LabelSelector = selectors
+		}
 
-	var informer cache.SharedInformer
+		factory := informers.NewSharedInformerFactoryWithOptions(
+			a.Clientset,
+			0,
+			informers.WithTweakListOptions(tweakListOptionsFunc),
+		)
 
-	// Spins up an informer depending on kind. Convert to lowercase for robustness
-	switch strings.ToLower(kind) {
-	case "deployment":
-		informer = factory.Apps().V1().Deployments().Informer()
-	case "statefulset":
-		informer = factory.Apps().V1().StatefulSets().Informer()
-	case "replicaset":
-		informer = factory.Apps().V1().ReplicaSets().Informer()
-	case "daemonset":
-		informer = factory.Apps().V1().DaemonSets().Informer()
-	case "job":
-		informer = factory.Batch().V1().Jobs().Informer()
-	case "cronjob":
-		informer = factory.Batch().V1beta1().CronJobs().Informer()
-	case "namespace":
-		informer = factory.Core().V1().Namespaces().Informer()
-	case "pod":
-		informer = factory.Core().V1().Pods().Informer()
-	}
+		var informer cache.SharedInformer
 
-	stopper := make(chan struct{})
-	errorchan := make(chan error)
-	defer close(stopper)
+		// Spins up an informer depending on kind. Convert to lowercase for robustness
+		switch strings.ToLower(kind) {
+		case "deployment":
+			informer = factory.Apps().V1().Deployments().Informer()
+		case "statefulset":
+			informer = factory.Apps().V1().StatefulSets().Informer()
+		case "replicaset":
+			informer = factory.Apps().V1().ReplicaSets().Informer()
+		case "daemonset":
+			informer = factory.Apps().V1().DaemonSets().Informer()
+		case "job":
+			informer = factory.Batch().V1().Jobs().Informer()
+		case "cronjob":
+			informer = factory.Batch().V1beta1().CronJobs().Informer()
+		case "namespace":
+			informer = factory.Core().V1().Namespaces().Informer()
+		case "pod":
+			informer = factory.Core().V1().Pods().Informer()
+		}
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			msg := Message{
-				EventType: "UPDATE",
-				Object:    newObj,
-				Kind:      strings.ToLower(kind),
+		stopper := make(chan struct{})
+		errorchan := make(chan error)
+		defer close(stopper)
+
+		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+			if strings.HasSuffix(err.Error(), ": Unauthorized") {
+				errorchan <- &AuthError{}
 			}
-			if writeErr := conn.WriteJSON(msg); writeErr != nil {
-				errorchan <- writeErr
-				return
-			}
-		},
-		AddFunc: func(obj interface{}) {
-			msg := Message{
-				EventType: "ADD",
-				Object:    obj,
-				Kind:      strings.ToLower(kind),
-			}
+		})
 
-			if writeErr := conn.WriteJSON(msg); writeErr != nil {
-				errorchan <- writeErr
-				return
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			msg := Message{
-				EventType: "DELETE",
-				Object:    obj,
-				Kind:      strings.ToLower(kind),
-			}
+		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				msg := Message{
+					EventType: "UPDATE",
+					Object:    newObj,
+					Kind:      strings.ToLower(kind),
+				}
+				if writeErr := conn.WriteJSON(msg); writeErr != nil {
+					errorchan <- writeErr
+					return
+				}
+			},
+			AddFunc: func(obj interface{}) {
+				msg := Message{
+					EventType: "ADD",
+					Object:    obj,
+					Kind:      strings.ToLower(kind),
+				}
 
-			if writeErr := conn.WriteJSON(msg); writeErr != nil {
-				errorchan <- writeErr
-				return
-			}
-		},
-	})
+				if writeErr := conn.WriteJSON(msg); writeErr != nil {
+					errorchan <- writeErr
+					return
+				}
+			},
+			DeleteFunc: func(obj interface{}) {
+				msg := Message{
+					EventType: "DELETE",
+					Object:    obj,
+					Kind:      strings.ToLower(kind),
+				}
 
-	go func() {
-		// listens for websocket closing handshake
+				if writeErr := conn.WriteJSON(msg); writeErr != nil {
+					errorchan <- writeErr
+					return
+				}
+			},
+		})
+
+		go func() {
+			// listens for websocket closing handshake
+			for {
+				if _, _, err := conn.ReadMessage(); err != nil {
+					conn.Close()
+					errorchan <- nil
+					return
+				}
+			}
+		}()
+
+		go informer.Run(stopper)
+
 		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
-				conn.Close()
-				errorchan <- nil
-				return
+			select {
+			case err := <-errorchan:
+				return err
 			}
 		}
-	}()
-
-	go informer.Run(stopper)
-
-	for {
-		select {
-		case err := <-errorchan:
-			return err
-		}
 	}
+
+	return a.RunWebsocketTask(run)
 }
 
 var b64 = base64.StdEncoding
@@ -705,158 +818,173 @@ func parseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Relea
 }
 
 func (a *Agent) StreamHelmReleases(conn *websocket.Conn, namespace string, chartList []string, selectors string) error {
-	tweakListOptionsFunc := func(options *metav1.ListOptions) {
-		options.LabelSelector = selectors
-	}
 
-	factory := informers.NewSharedInformerFactoryWithOptions(
-		a.Clientset,
-		0,
-		informers.WithTweakListOptions(tweakListOptionsFunc),
-		informers.WithNamespace(namespace),
-	)
+	run := func() error {
+		tweakListOptionsFunc := func(options *metav1.ListOptions) {
+			options.LabelSelector = selectors
+		}
 
-	informer := factory.Core().V1().Secrets().Informer()
+		factory := informers.NewSharedInformerFactoryWithOptions(
+			a.Clientset,
+			0,
+			informers.WithTweakListOptions(tweakListOptionsFunc),
+			informers.WithNamespace(namespace),
+		)
 
-	stopper := make(chan struct{})
-	errorchan := make(chan error)
-	defer close(stopper)
+		informer := factory.Core().V1().Secrets().Informer()
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			secretObj, ok := newObj.(*v1.Secret)
+		stopper := make(chan struct{})
+		errorchan := make(chan error)
+		defer close(stopper)
 
-			if !ok {
-				errorchan <- fmt.Errorf("could not cast to secret")
-				return
+		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+			if strings.HasSuffix(err.Error(), ": Unauthorized") {
+				errorchan <- &AuthError{}
 			}
+		})
 
-			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				secretObj, ok := newObj.(*v1.Secret)
 
-			if isNotHelmRelease && err == nil {
-				return
+				if !ok {
+					errorchan <- fmt.Errorf("could not cast to secret")
+					return
+				}
+
+				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+
+				if isNotHelmRelease && err == nil {
+					return
+				}
+
+				if err != nil {
+					errorchan <- err
+					return
+				}
+
+				msg := Message{
+					EventType: "UPDATE",
+					Object:    helm_object,
+				}
+
+				if writeErr := conn.WriteJSON(msg); writeErr != nil {
+					errorchan <- writeErr
+					return
+				}
+			},
+			AddFunc: func(obj interface{}) {
+				secretObj, ok := obj.(*v1.Secret)
+
+				if !ok {
+					errorchan <- fmt.Errorf("could not cast to secret")
+					return
+				}
+
+				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+
+				if isNotHelmRelease && err == nil {
+					return
+				}
+
+				if err != nil {
+					errorchan <- err
+					return
+				}
+
+				msg := Message{
+					EventType: "ADD",
+					Object:    helm_object,
+				}
+
+				if writeErr := conn.WriteJSON(msg); writeErr != nil {
+					errorchan <- writeErr
+					return
+				}
+			},
+			DeleteFunc: func(obj interface{}) {
+				secretObj, ok := obj.(*v1.Secret)
+
+				if !ok {
+					errorchan <- fmt.Errorf("could not cast to secret")
+					return
+				}
+
+				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+
+				if isNotHelmRelease && err == nil {
+					return
+				}
+
+				if err != nil {
+					errorchan <- err
+					return
+				}
+
+				msg := Message{
+					EventType: "DELETE",
+					Object:    helm_object,
+				}
+
+				if writeErr := conn.WriteJSON(msg); writeErr != nil {
+					errorchan <- writeErr
+					return
+				}
+			},
+		})
+
+		go func() {
+			// listens for websocket closing handshake
+			for {
+				if _, _, err := conn.ReadMessage(); err != nil {
+					conn.Close()
+					errorchan <- nil
+					return
+				}
 			}
+		}()
 
-			if err != nil {
-				errorchan <- err
-				return
-			}
+		go informer.Run(stopper)
 
-			msg := Message{
-				EventType: "UPDATE",
-				Object:    helm_object,
-			}
-
-			if writeErr := conn.WriteJSON(msg); writeErr != nil {
-				errorchan <- writeErr
-				return
-			}
-		},
-		AddFunc: func(obj interface{}) {
-			secretObj, ok := obj.(*v1.Secret)
-
-			if !ok {
-				errorchan <- fmt.Errorf("could not cast to secret")
-				return
-			}
-
-			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
-
-			if isNotHelmRelease && err == nil {
-				return
-			}
-
-			if err != nil {
-				errorchan <- err
-				return
-			}
-
-			msg := Message{
-				EventType: "ADD",
-				Object:    helm_object,
-			}
-
-			if writeErr := conn.WriteJSON(msg); writeErr != nil {
-				errorchan <- writeErr
-				return
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			secretObj, ok := obj.(*v1.Secret)
-
-			if !ok {
-				errorchan <- fmt.Errorf("could not cast to secret")
-				return
-			}
-
-			helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
-
-			if isNotHelmRelease && err == nil {
-				return
-			}
-
-			if err != nil {
-				errorchan <- err
-				return
-			}
-
-			msg := Message{
-				EventType: "DELETE",
-				Object:    helm_object,
-			}
-
-			if writeErr := conn.WriteJSON(msg); writeErr != nil {
-				errorchan <- writeErr
-				return
-			}
-		},
-	})
-
-	go func() {
-		// listens for websocket closing handshake
 		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
-				conn.Close()
-				errorchan <- nil
-				return
+			select {
+			case err := <-errorchan:
+				return err
 			}
 		}
-	}()
-
-	go informer.Run(stopper)
-
-	for {
-		select {
-		case err := <-errorchan:
-			return err
-		}
 	}
+
+	return a.RunWebsocketTask(run)
+}
+
+type SharedProvisionOpts struct {
+	ProjectID           uint
+	Repo                repository.Repository
+	Infra               *models.Infra
+	Operation           provisioner.ProvisionerOperation
+	PGConf              *env.DBConf
+	RedisConf           *env.RedisConf
+	ProvImageTag        string
+	ProvImagePullSecret string
 }
 
 // ProvisionECR spawns a new provisioning pod that creates an ECR instance
 func (a *Agent) ProvisionECR(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	awsConf *integrations.AWSIntegration,
 	ecrName string,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.ECR,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -867,33 +995,26 @@ func (a *Agent) ProvisionECR(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionEKS spawns a new provisioning pod that creates an EKS instance
 func (a *Agent) ProvisionEKS(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	awsConf *integrations.AWSIntegration,
 	eksName, machineType string,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.EKS,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		AWS: &aws.Conf{
 			AWSRegion:          awsConf.AWSRegion,
 			AWSAccessKeyID:     string(awsConf.AWSAccessKeyID),
@@ -905,32 +1026,25 @@ func (a *Agent) ProvisionEKS(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionGCR spawns a new provisioning pod that creates a GCR instance
 func (a *Agent) ProvisionGCR(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	gcpConf *integrations.GCPIntegration,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.GCR,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,
@@ -938,33 +1052,26 @@ func (a *Agent) ProvisionGCR(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionGKE spawns a new provisioning pod that creates a GKE instance
 func (a *Agent) ProvisionGKE(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	gcpConf *integrations.GCPIntegration,
 	gkeName string,
-	repo repository.Repository,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.GKE,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		GCP: &gcp.Conf{
 			GCPRegion:    gcpConf.GCPRegion,
 			GCPProjectID: gcpConf.GCPProjectID,
@@ -975,49 +1082,43 @@ func (a *Agent) ProvisionGKE(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionDOCR spawns a new provisioning pod that creates a DOCR instance
 func (a *Agent) ProvisionDOCR(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	doConf *integrations.OAuthIntegration,
 	doAuth *oauth2.Config,
-	repo repository.Repository,
 	docrName, docrSubscriptionTier string,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
-	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
-		infra.DOIntegrationID,
+	oauthInt, err := opts.Repo.OAuthIntegration().ReadOAuthIntegration(
+		opts.ProjectID,
+		opts.Infra.DOIntegrationID,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, opts.Repo))
 
 	if err != nil {
 		return nil, err
 	}
 
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.DOCR,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
-		LastApplied:         infra.LastApplied,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
+		LastApplied:         opts.Infra.LastApplied,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -1027,49 +1128,43 @@ func (a *Agent) ProvisionDOCR(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionDOKS spawns a new provisioning pod that creates a DOKS instance
 func (a *Agent) ProvisionDOKS(
-	projectID uint,
+	opts *SharedProvisionOpts,
 	doConf *integrations.OAuthIntegration,
 	doAuth *oauth2.Config,
-	repo repository.Repository,
 	doRegion, doksClusterName string,
-	infra *models.Infra,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
 ) (*batchv1.Job, error) {
 	// get the token
-	oauthInt, err := repo.OAuthIntegration.ReadOAuthIntegration(
-		infra.DOIntegrationID,
+	oauthInt, err := opts.Repo.OAuthIntegration().ReadOAuthIntegration(
+		opts.ProjectID,
+		opts.Infra.DOIntegrationID,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, repo))
+	tok, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, doAuth, oauth.MakeUpdateOAuthIntegrationTokenFunction(oauthInt, opts.Repo))
 
 	if err != nil {
 		return nil, err
 	}
 
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
 		Kind:                provisioner.DOKS,
-		Operation:           operation,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		LastApplied:         infra.LastApplied,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
+		Operation:           opts.Operation,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		LastApplied:         opts.Infra.LastApplied,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
 		DO: &do.Conf{
 			DOToken: tok,
 		},
@@ -1079,34 +1174,27 @@ func (a *Agent) ProvisionDOKS(
 		},
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 // ProvisionTest spawns a new provisioning pod that tests provisioning
 func (a *Agent) ProvisionTest(
-	projectID uint,
-	infra *models.Infra,
-	repo repository.Repository,
-	operation provisioner.ProvisionerOperation,
-	pgConf *config.DBConf,
-	redisConf *config.RedisConf,
-	provImageTag string,
-	provImagePullSecret string,
+	opts *SharedProvisionOpts,
 ) (*batchv1.Job, error) {
-	id := infra.GetUniqueName()
+	id := opts.Infra.GetUniqueName()
 
 	prov := &provisioner.Conf{
 		ID:                  id,
-		Name:                fmt.Sprintf("prov-%s-%s", id, string(operation)),
-		Operation:           operation,
+		Name:                fmt.Sprintf("prov-%s-%s", id, string(opts.Operation)),
+		Operation:           opts.Operation,
 		Kind:                provisioner.Test,
-		Redis:               redisConf,
-		Postgres:            pgConf,
-		ProvisionerImageTag: provImageTag,
-		ImagePullSecret:     provImagePullSecret,
+		Redis:               opts.RedisConf,
+		Postgres:            opts.PGConf,
+		ProvisionerImageTag: opts.ProvImageTag,
+		ImagePullSecret:     opts.ProvImagePullSecret,
 	}
 
-	return a.provision(prov, infra, repo)
+	return a.provision(prov, opts.Infra, opts.Repo)
 }
 
 func (a *Agent) provision(
@@ -1133,7 +1221,7 @@ func (a *Agent) provision(
 	}
 
 	infra.LastApplied = prov.LastApplied
-	infra, err = repo.Infra.UpdateInfra(infra)
+	infra, err = repo.Infra().UpdateInfra(infra)
 
 	if err != nil {
 		return nil, err
@@ -1161,7 +1249,7 @@ func (a *Agent) CreateImagePullSecrets(
 			return nil, err
 		}
 
-		secretName := fmt.Sprintf("porter-%s-%d", val.Externalize().Service, val.ID)
+		secretName := fmt.Sprintf("porter-%s-%d", val.ToRegistryType().Service, val.ID)
 
 		secret, err := a.Clientset.CoreV1().Secrets(namespace).Get(
 			context.TODO(),

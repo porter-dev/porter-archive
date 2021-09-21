@@ -13,7 +13,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	ptypes "github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/spf13/cobra"
 
@@ -44,14 +45,14 @@ func init() {
 	dockerCmd.AddCommand(configureCmd)
 }
 
-func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	pID := config.Project
 
 	// get all registries that should be added
 	regToAdd := make([]string, 0)
 
 	// get the list of namespaces
-	registries, err := client.ListRegistries(
+	resp, err := client.ListRegistries(
 		context.Background(),
 		pID,
 	)
@@ -59,6 +60,8 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 	if err != nil {
 		return err
 	}
+
+	registries := *resp
 
 	for _, registry := range registries {
 		if registry.URL != "" {
@@ -148,7 +151,7 @@ func dockerConfig(user *api.AuthCheckResponse, client *api.Client, args []string
 		if strings.Contains(regURL, "index.docker.io") {
 			isAuthenticated := false
 
-			for key, _ := range configFile.AuthConfigs {
+			for key := range configFile.AuthConfigs {
 				if key == "https://index.docker.io/v1/" {
 					isAuthenticated = true
 				}

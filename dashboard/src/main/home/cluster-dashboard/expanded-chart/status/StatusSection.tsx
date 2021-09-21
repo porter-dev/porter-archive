@@ -33,11 +33,10 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
       .getChartControllers(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
         },
         {
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
           id: currentProject.id,
           name: currentChart.name,
           revision: currentChart.version,

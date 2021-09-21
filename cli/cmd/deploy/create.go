@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/internal/templater/utils"
 )
@@ -44,7 +45,7 @@ func (c *CreateAgent) CreateFromGithub(
 	opts := c.CreateOpts
 
 	// get all linked github repos and find matching repo
-	gitRepos, err := c.Client.ListGitRepos(
+	resp, err := c.Client.ListGitInstallationIDs(
 		context.Background(),
 		c.CreateOpts.ProjectID,
 	)
@@ -53,23 +54,27 @@ func (c *CreateAgent) CreateFromGithub(
 		return "", err
 	}
 
-	var gitRepoMatch uint
+	gitInstallations := *resp
 
-	for _, gitRepo := range gitRepos {
+	var gitRepoMatch int64
+
+	for _, gitInstallationID := range gitInstallations {
 		// for each git repo, search for a matching username/owner
-		githubRepos, err := c.Client.ListGithubRepos(
+		resp, err := c.Client.ListGitRepos(
 			context.Background(),
 			c.CreateOpts.ProjectID,
-			gitRepo,
+			gitInstallationID,
 		)
 
 		if err != nil {
 			return "", err
 		}
 
+		githubRepos := *resp
+
 		for _, githubRepo := range githubRepos {
 			if githubRepo.FullName == ghOpts.Repo {
-				gitRepoMatch = gitRepo
+				gitRepoMatch = gitInstallationID
 				break
 			}
 		}
@@ -107,12 +112,6 @@ func (c *CreateAgent) CreateFromGithub(
 		return "", err
 	}
 
-	env, err := GetEnvFromConfig(mergedValues)
-
-	if err != nil {
-		env = map[string]string{}
-	}
-
 	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
 
 	if err != nil {
@@ -123,23 +122,24 @@ func (c *CreateAgent) CreateFromGithub(
 		context.Background(),
 		opts.ProjectID,
 		opts.ClusterID,
-		opts.Kind,
-		latestVersion,
-		&api.DeployTemplateRequest{
-			TemplateName: opts.Kind,
-			ImageURL:     imageURL,
-			FormValues:   mergedValues,
-			Namespace:    opts.Namespace,
-			Name:         opts.ReleaseName,
-			GitAction: &api.DeployTemplateGitAction{
-				GitRepo:        ghOpts.Repo,
-				GitBranch:      ghOpts.Branch,
-				ImageRepoURI:   imageURL,
-				DockerfilePath: opts.LocalDockerfile,
-				FolderPath:     ".",
-				GitRepoID:      gitRepoMatch,
-				BuildEnv:       env,
-				RegistryID:     regID,
+		opts.Namespace,
+		&types.CreateReleaseRequest{
+			CreateReleaseBaseRequest: &types.CreateReleaseBaseRequest{
+				TemplateName:    opts.Kind,
+				TemplateVersion: latestVersion,
+				Values:          mergedValues,
+				Name:            opts.ReleaseName,
+			},
+			ImageURL: imageURL,
+			GithubActionConfig: &types.CreateGitActionConfigRequest{
+				GitRepo:              ghOpts.Repo,
+				GitBranch:            ghOpts.Branch,
+				ImageRepoURI:         imageURL,
+				DockerfilePath:       opts.LocalDockerfile,
+				FolderPath:           ".",
+				GitRepoID:            uint(gitRepoMatch),
+				RegistryID:           regID,
+				ShouldCreateWorkflow: true,
 			},
 		},
 	)
@@ -190,14 +190,15 @@ func (c *CreateAgent) CreateFromRegistry(
 		context.Background(),
 		opts.ProjectID,
 		opts.ClusterID,
-		opts.Kind,
-		latestVersion,
-		&api.DeployTemplateRequest{
-			TemplateName: opts.Kind,
-			ImageURL:     imageSpl[0],
-			FormValues:   mergedValues,
-			Namespace:    opts.Namespace,
-			Name:         opts.ReleaseName,
+		opts.Namespace,
+		&types.CreateReleaseRequest{
+			CreateReleaseBaseRequest: &types.CreateReleaseBaseRequest{
+				TemplateName:    opts.Kind,
+				TemplateVersion: latestVersion,
+				Values:          mergedValues,
+				Name:            opts.ReleaseName,
+			},
+			ImageURL: imageSpl[0],
 		},
 	)
 
@@ -280,7 +281,7 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	if opts.Method == DeployBuildTypeDocker {
-		err = buildAgent.BuildDocker(agent, opts.LocalPath, ".", opts.LocalDockerfile, "latest")
+		err = buildAgent.BuildDocker(agent, opts.LocalPath, opts.LocalPath, opts.LocalDockerfile, "latest")
 	} else {
 		err = buildAgent.BuildPack(agent, opts.LocalPath, "latest")
 	}
@@ -294,7 +295,7 @@ func (c *CreateAgent) CreateFromDocker(
 		context.Background(),
 		opts.ProjectID,
 		regID,
-		&api.CreateRepositoryRequest{
+		&types.CreateRegistryRepositoryRequest{
 			ImageRepoURI: imageURL,
 		},
 	)
@@ -319,14 +320,15 @@ func (c *CreateAgent) CreateFromDocker(
 		context.Background(),
 		opts.ProjectID,
 		opts.ClusterID,
-		opts.Kind,
-		latestVersion,
-		&api.DeployTemplateRequest{
-			TemplateName: opts.Kind,
-			ImageURL:     imageURL,
-			FormValues:   mergedValues,
-			Namespace:    opts.Namespace,
-			Name:         opts.ReleaseName,
+		opts.Namespace,
+		&types.CreateReleaseRequest{
+			CreateReleaseBaseRequest: &types.CreateReleaseBaseRequest{
+				TemplateName:    opts.Kind,
+				TemplateVersion: latestVersion,
+				Values:          mergedValues,
+				Name:            opts.ReleaseName,
+			},
+			ImageURL: imageURL,
 		},
 	)
 
@@ -352,10 +354,12 @@ func (c *CreateAgent) HasDefaultDockerfile(buildPath string) bool {
 func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, error) {
 	// get all image registries linked to the project
 	// get the list of namespaces
-	registries, err := c.Client.ListRegistries(
+	resp, err := c.Client.ListRegistries(
 		context.Background(),
 		c.CreateOpts.ProjectID,
 	)
+
+	registries := *resp
 
 	if err != nil {
 		return 0, "", err
@@ -387,13 +391,16 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 // GetLatestTemplateVersion retrieves the latest template version for a specific
 // Porter template from the chart repository.
 func (c *CreateAgent) GetLatestTemplateVersion(templateName string) (string, error) {
-	templates, err := c.Client.ListTemplates(
+	resp, err := c.Client.ListTemplates(
 		context.Background(),
+		&types.ListTemplatesRequest{},
 	)
 
 	if err != nil {
 		return "", err
 	}
+
+	templates := *resp
 
 	var version string
 	// find the matching template name
@@ -418,6 +425,7 @@ func (c *CreateAgent) GetLatestTemplateDefaultValues(templateName, templateVersi
 		context.Background(),
 		templateName,
 		templateVersion,
+		&types.GetTemplateRequest{},
 	)
 
 	if err != nil {
@@ -471,9 +479,8 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 						context.Background(),
 						c.CreateOpts.ProjectID,
 						c.CreateOpts.ClusterID,
-						&api.CreateDNSRecordRequest{
-							ReleaseName: c.CreateOpts.ReleaseName,
-						},
+						c.CreateOpts.Namespace,
+						c.CreateOpts.ReleaseName,
 					)
 
 					if err != nil {

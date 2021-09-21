@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+
+	"github.com/porter-dev/porter/api/types"
 )
 
 // Invite type that extends gorm.Model
@@ -21,19 +23,9 @@ type Invite struct {
 	UserID    uint
 }
 
-// InviteExternal represents the Invite type that is sent over REST
-type InviteExternal struct {
-	ID       uint   `json:"id"`
-	Token    string `json:"token"`
-	Expired  bool   `json:"expired"`
-	Email    string `json:"email"`
-	Accepted bool   `json:"accepted"`
-	Kind     string `json:"kind"`
-}
-
-// Externalize generates an external Invite to be shared over REST
-func (i *Invite) Externalize() *InviteExternal {
-	return &InviteExternal{
+// ToInviteType generates an external Invite to be shared over REST
+func (i *Invite) ToInviteType() *types.Invite {
+	return &types.Invite{
 		ID:       i.Model.ID,
 		Token:    i.Token,
 		Email:    i.Email,

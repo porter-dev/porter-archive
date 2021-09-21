@@ -86,7 +86,7 @@ type ExchangeResponse struct {
 
 func ExchangeToken(host, code string) (string, error) {
 	req, err := http.NewRequest(
-		"GET",
+		"POST",
 		fmt.Sprintf("%s/api/cli/login/exchange", host),
 		strings.NewReader(fmt.Sprintf(`{"authorization_code": "%s"}`, code)),
 	)

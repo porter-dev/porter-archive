@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/fixtures"
 	"github.com/porter-dev/porter/internal/models"
@@ -17,16 +18,16 @@ type ccsTest struct {
 }
 
 var ClusterCandidatesTests = []ccsTest{
-	ccsTest{
+	{
 		name: "test without cluster ca data",
 		raw:  []byte(fixtures.ClusterCAWithoutData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.X509,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
-						Name:     models.ClusterCAData,
+					{
+						Name:     types.ClusterCAData,
 						Resolved: false,
 						Data:     []byte(`{"filename":"/fake/path/to/ca.pem"}`),
 					},
@@ -39,16 +40,16 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "test cluster localhost",
 		raw:  []byte(fixtures.ClusterLocalhost),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.X509,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
-						Name:     models.ClusterLocalhost,
+					{
+						Name:     types.ClusterLocalhost,
 						Resolved: false,
 					},
 				},
@@ -60,11 +61,11 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "x509 test with cert and key data",
 		raw:  []byte(fixtures.X509WithData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism:     models.X509,
 				ProjectID:         1,
 				Resolvers:         []models.ClusterResolver{},
@@ -76,15 +77,15 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "x509 test without cert data",
 		raw:  []byte(fixtures.X509WithoutCertData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.X509,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-client-cert-data",
 						Resolved: false,
 						Data:     []byte(`{"filename":"/fake/path/to/cert.pem"}`),
@@ -98,15 +99,15 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "x509 test without key data",
 		raw:  []byte(fixtures.X509WithoutKeyData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.X509,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-client-key-data",
 						Resolved: false,
 						Data:     []byte(`{"filename":"/fake/path/to/key.pem"}`),
@@ -120,20 +121,20 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "x509 test without cert and key data",
 		raw:  []byte(fixtures.X509WithoutCertAndKeyData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.X509,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-client-cert-data",
 						Resolved: false,
 						Data:     []byte(`{"filename":"/fake/path/to/cert.pem"}`),
 					},
-					models.ClusterResolver{
+					{
 						Name:     "upload-client-key-data",
 						Resolved: false,
 						Data:     []byte(`{"filename":"/fake/path/to/key.pem"}`),
@@ -147,11 +148,11 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "bearer token test with data",
 		raw:  []byte(fixtures.BearerTokenWithData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism:     models.Bearer,
 				ProjectID:         1,
 				Resolvers:         []models.ClusterResolver{},
@@ -163,15 +164,15 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "bearer token test without data",
 		raw:  []byte(fixtures.BearerTokenWithoutData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.Bearer,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-token-data",
 						Resolved: false,
 						Data:     []byte(`{"filename":"/path/to/token/file.txt"}`),
@@ -185,15 +186,15 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "gcp test",
 		raw:  []byte(fixtures.GCPPlugin),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.GCP,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-gcp-key-data",
 						Resolved: false,
 					},
@@ -206,15 +207,15 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "aws iam authenticator test",
 		raw:  []byte(fixtures.AWSIamAuthenticatorExec),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.AWS,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-aws-data",
 						Resolved: false,
 					},
@@ -227,15 +228,15 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "aws eks get-token test",
 		raw:  []byte(fixtures.AWSEKSGetTokenExec),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.AWS,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-aws-data",
 						Resolved: false,
 					},
@@ -248,15 +249,15 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "oidc without ca data",
 		raw:  []byte(fixtures.OIDCAuthWithoutData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism: models.OIDC,
 				ProjectID:     1,
 				Resolvers: []models.ClusterResolver{
-					models.ClusterResolver{
+					{
 						Name:     "upload-oidc-idp-issuer-ca-data",
 						Resolved: false,
 						Data:     []byte(`{"filename":"/fake/path/to/ca.pem"}`),
@@ -270,11 +271,11 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "oidc with ca data",
 		raw:  []byte(fixtures.OIDCAuthWithData),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism:     models.OIDC,
 				ProjectID:         1,
 				Resolvers:         []models.ClusterResolver{},
@@ -286,11 +287,11 @@ var ClusterCandidatesTests = []ccsTest{
 			},
 		},
 	},
-	ccsTest{
+	{
 		name: "basic auth test",
 		raw:  []byte(fixtures.BasicAuth),
 		expected: []*models.ClusterCandidate{
-			&models.ClusterCandidate{
+			{
 				AuthMechanism:     models.Basic,
 				ProjectID:         1,
 				Resolvers:         []models.ClusterResolver{},

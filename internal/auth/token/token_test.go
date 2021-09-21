@@ -27,10 +27,9 @@ func TestGetAndEncodeTokenForUser(t *testing.T) {
 
 	// decode the token again and compare
 	expToken := &token.Token{
-		SubKind:   token.User,
-		Sub:       "1",
-		ProjectID: 1,
-		IBy:       1,
+		SubKind: token.User,
+		Sub:     "1",
+		IBy:     1,
 	}
 
 	gotToken, err := token.GetTokenFromEncoded(tokString, conf)

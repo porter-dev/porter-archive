@@ -24,17 +24,18 @@ func TestCreateGitActionConfig(t *testing.T) {
 		GitRepo:              "porter-dev/porter",
 		ImageRepoURI:         "gcr.io/project-123456/nginx",
 		GithubInstallationID: 1,
+		Version:              "v0.0.1",
 	}
 
 	expGA := *ga
 
-	ga, err := tester.repo.GitActionConfig.CreateGitActionConfig(ga)
+	ga, err := tester.repo.GitActionConfig().CreateGitActionConfig(ga)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	ga, err = tester.repo.GitActionConfig.ReadGitActionConfig(ga.Model.ID)
+	ga, err = tester.repo.GitActionConfig().ReadGitActionConfig(ga.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -48,13 +49,13 @@ func TestCreateGitActionConfig(t *testing.T) {
 	// reset fields for reflect.DeepEqual
 	ga.Model = orm.Model{}
 
-	if diff := deep.Equal(expGA, *ga); diff != nil {
+	if diff := deep.Equal(&expGA, ga); diff != nil {
 		t.Errorf("incorrect git action config")
 		t.Error(diff)
 	}
 
 	// read the release and make sure GitActionConfig is expected
-	release, err := tester.repo.Release.ReadRelease(1, "denver-meister-dakota", "default")
+	release, err := tester.repo.Release().ReadRelease(1, "denver-meister-dakota", "default")
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -63,7 +64,7 @@ func TestCreateGitActionConfig(t *testing.T) {
 	gotReleaseGA := release.GitActionConfig
 	gotReleaseGA.Model = orm.Model{}
 
-	if diff := deep.Equal(expGA, gotReleaseGA); diff != nil {
+	if diff := deep.Equal(&expGA, gotReleaseGA); diff != nil {
 		t.Errorf("incorrect git action config")
 		t.Error(diff)
 	}

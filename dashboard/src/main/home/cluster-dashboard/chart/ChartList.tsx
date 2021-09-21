@@ -64,9 +64,6 @@ const ChartList: React.FunctionComponent<Props> = ({
       const res = await api.getCharts(
         "<token>",
         {
-          namespace: namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
           limit: 50,
           skip: 0,
           byDate: false,
@@ -81,7 +78,11 @@ const ChartList: React.FunctionComponent<Props> = ({
             "failed",
           ],
         },
-        { id: currentProject.id }
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: namespace,
+        }
       );
       const charts = res.data || [];
       setIsError(false);
@@ -97,9 +98,10 @@ const ChartList: React.FunctionComponent<Props> = ({
     websocketID: string,
     namespace: string
   ) => {
-    let apiPath = `/api/projects/${context.currentProject.id}/k8s/helm_releases?cluster_id=${context.currentCluster.id}`;
+    let apiPath = `/api/projects/${context.currentProject.id}/clusters/${context.currentCluster.id}/helm_release`;
+
     if (namespace) {
-      apiPath += `&namespace=${namespace}`;
+      apiPath += `?namespace=${namespace}`;
     }
 
     const wsConfig = {
@@ -150,7 +152,7 @@ const ChartList: React.FunctionComponent<Props> = ({
 
   const setupControllerWebsocket = (kind: string) => {
     let { currentCluster, currentProject } = context;
-    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
       onopen: () => {
@@ -187,7 +189,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   const setupJobWebsocket = (websocketID: string) => {
     const kind = "job";
     let { currentCluster, currentProject } = context;
-    const apiPath = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
       onopen: () => {

@@ -49,7 +49,7 @@ export const integrationList: any = {
       "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",
     label: "Upload Kubeconfig",
   },
-  docker: {
+  dockerhub: {
     icon:
       "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Docker Hub",

@@ -47,15 +47,13 @@ class RevisionSection extends Component<PropsType, StateType> {
   refreshHistory = () => {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
+    
     return api
       .getRevisions(
         "<token>",
         {
-          namespace: chart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
         },
-        { id: currentProject.id, name: chart.name }
+        { id: currentProject.id, namespace: chart.namespace, cluster_id: currentCluster.id, name: chart.name }
       )
       .then((res) => {
         res.data.sort((a: ChartType, b: ChartType) => {
@@ -78,7 +76,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
 
-    const apiPath = `/api/projects/${currentProject.id}/k8s/helm_releases?cluster_id=${currentCluster.id}&charts=${chart.name}`;
+    const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/helm_release?charts=${chart.name}`;
     const protocol = window.location.protocol == "https:" ? "wss" : "ws";
     const url = `${protocol}://${window.location.host}`;
 
@@ -167,13 +165,12 @@ class RevisionSection extends Component<PropsType, StateType> {
       .rollbackChart(
         "<token>",
         {
-          namespace: this.props.chart.namespace,
-          storage: StorageType.Secret,
           revision: revisionNumber,
         },
         {
           id: currentProject.id,
           name: this.props.chart.name,
+          namespace: this.props.chart.namespace,
           cluster_id: currentCluster.id,
         }
       )

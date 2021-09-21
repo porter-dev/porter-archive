@@ -87,7 +87,7 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 
 		// pgMount is mount for postgres container
 		pgMount := []mount.Mount{
-			mount.Mount{
+			{
 				Type:        mount.TypeVolume,
 				Source:      vol.Name,
 				Target:      "/var/lib/postgresql/data",
@@ -102,7 +102,7 @@ func StartPorter(opts *PorterStartOpts) (agent *Agent, id string, err error) {
 			Image:  "postgres:latest",
 			Mounts: pgMount,
 			VolumeMap: map[string]struct{}{
-				"porter_postgres": struct{}{},
+				"porter_postgres": {},
 			},
 			NetworkID: netID,
 			Env: []string{

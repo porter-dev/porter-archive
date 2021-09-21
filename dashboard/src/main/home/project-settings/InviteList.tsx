@@ -182,8 +182,8 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     try {
       api.removeCollaborator(
         "<token>",
-        {},
-        { project_id: currentProject.id, user_id }
+        { user_id },
+        { project_id: currentProject.id }
       );
       getData();
     } catch (error) {
@@ -209,7 +209,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         Header: "Role",
         accessor: "kind",
         Cell: ({ row }) => {
-          return <Role>{row.values.kind || "Admin"}</Role>;
+          return <Role>{row.values.kind || "Developer"}</Role>;
         },
       },
       {

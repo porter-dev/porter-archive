@@ -375,10 +375,8 @@ jobs:
         run: |
           docker build ./services/porter_cli_container \
             -t public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} \
-            -t public.ecr.aws/o1j4x7p4/porter-cli:latest \
             -f ./services/porter_cli_container/Dockerfile \
             --build-arg VERSION=${{steps.tag_name.outputs.tag}}
       - name: Push
         run: |
           docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
-          docker push public.ecr.aws/o1j4x7p4/porter-cli:latest

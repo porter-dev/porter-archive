@@ -42,7 +42,7 @@ const RepoList: React.FC<Props> = ({
   // TODO: Try to unhook before unmount
   useEffect(() => {
     api
-      .getGithubAccess("<token>", {}, {})
+      .getGithubAccounts("<token>", {}, {})
       .then(({ data }) => {
         setAccessData(data);
         setAccessLoading(false);

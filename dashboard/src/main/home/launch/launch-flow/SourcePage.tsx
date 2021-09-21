@@ -52,7 +52,7 @@ type StateType = {};
 const defaultActionConfig: ActionConfigType = {
   git_repo: "",
   image_repo_uri: "",
-  branch: "",
+  git_branch: "",
   git_repo_id: 0,
 };
 
@@ -147,7 +147,15 @@ class SourcePage extends Component<PropsType, StateType> {
     } = this.props;
     return (
       <StyledSourceBox>
-        <CloseButton onClick={() => setSourceType("")}>
+        <CloseButton
+          onClick={() => {
+            setSourceType("");
+            setDockerfilePath("");
+            setFolderPath("");
+            setProcfilePath("");
+            setProcfileProcess("");
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Subtitle>
@@ -230,17 +238,12 @@ class SourcePage extends Component<PropsType, StateType> {
   };
 
   handleContinue = () => {
-    const { sourceType, setPage } = this.props;
-
-    if (sourceType === "repo") {
-      setPage("workflow");
-    } else {
-      setPage("settings");
-    }
+    const { setPage } = this.props;
+    setPage("settings");
   };
 
   render() {
-    let { templateName, setTemplateName, setPage } = this.props;
+    let { templateName, setTemplateName } = this.props;
 
     return (
       <StyledSourcePage>

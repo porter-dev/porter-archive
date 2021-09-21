@@ -5,19 +5,27 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/porter-dev/porter/internal/config"
+	"github.com/porter-dev/porter/api/server/shared/config/loader"
+	lr "github.com/porter-dev/porter/internal/logger"
 )
 
 func main() {
-	appConf := config.FromEnv()
+	logger := lr.NewConsole(true)
 
-	resp, err := http.Get(fmt.Sprintf("http://localhost:%d/api/livez", appConf.Server.Port))
+	envConf, err := loader.FromEnv()
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
+		return
+	}
+
+	resp, err := http.Get(fmt.Sprintf("http://localhost:%d/api/livez", envConf.ServerConf.Port))
 
 	if err != nil || resp.StatusCode >= http.StatusBadRequest {
 		os.Exit(1)
 	}
 
-	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/api/readyz", appConf.Server.Port))
+	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/api/readyz", envConf.ServerConf.Port))
 
 	if err != nil || resp.StatusCode >= http.StatusBadRequest {
 		os.Exit(1)

@@ -44,15 +44,13 @@ const Chart: React.FunctionComponent<Props> = ({
       const { currentCluster, currentProject } = context;
       const res = await api.getChartControllers(
         "<token>",
+        {},
         {
+          name: chart.name,
           namespace: chart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          id: currentProject.id,
-          name: chart.name,
           revision: chart.version,
+          id: currentProject.id,
         }
       );
 

@@ -26,11 +26,15 @@ export default class CurrentError extends Component<PropsType, StateType> {
   }
 
   render() {
+    let currentError = this.props.currentError;
+    if (!React.isValidElement(this.props.currentError)) {
+      currentError = String(this.props.currentError);
+    }
     if (this.props.currentError) {
       if (!this.state.expanded) {
         return (
           <StyledCurrentError>
-            <ErrorText>Error: {this.props.currentError}</ErrorText>
+            <ErrorText>Error: {currentError}</ErrorText>
             <ExpandButton onClick={() => this.setState({ expanded: true })}>
               <i className="material-icons">launch</i>
             </ExpandButton>
@@ -53,7 +57,7 @@ export default class CurrentError extends Component<PropsType, StateType> {
         <Overlay>
           <ExpandedError>
             Porter encountered an error. Full error log:
-            <CodeBlock>{this.props.currentError}</CodeBlock>
+            <CodeBlock>{currentError}</CodeBlock>
             <ExpandButtonAlt onClick={() => this.setState({ expanded: false })}>
               <i className="material-icons">remove</i>
             </ExpandButtonAlt>

@@ -125,6 +125,14 @@ class Templates extends Component<PropsType, StateType> {
           this.props.history.push("/dashboard");
           return;
         }
+        // If its not web worker or job it means is an addon, and for now it's not supported
+        if (
+          !["web", "worker", "job"].includes(release?.chart?.metadata?.name)
+        ) {
+          this.context.setCurrentError("Addons don't support cloning yet!");
+          this.props.history.push("/dashboard");
+          return;
+        }
       }
 
       this.setState(
@@ -154,13 +162,13 @@ class Templates extends Component<PropsType, StateType> {
   }
 
   isTryingToClone = () => {
-    const queryParams = getQueryParams({ location });
+    const queryParams = getQueryParams(this.props);
     return queryParams.has("shouldClone");
   };
 
   areCloneQueryParamsValid = () => {
     const qp = getQueryParams(this.props);
-
+    
     const requiredParams = [
       "release_namespace",
       "release_template_version",
@@ -187,16 +195,13 @@ class Templates extends Component<PropsType, StateType> {
 
     return api.getChart<ChartTypeWithExtendedConfig>(
       "<token>",
-      {
-        namespace: queryParams.get("release_namespace"),
-        cluster_id: this.context?.currentCluster?.id,
-        storage: StorageType.Secret,
-      },
+      {},
       {
         id: this.context.currentProject.id,
         name: queryParams.get("release_name"),
-        // This will get by default the last available version
-        revision: Number(queryParams.get("release_version")),
+        revision: 0,
+        namespace: queryParams.get("release_namespace"),
+        cluster_id: this.context?.currentCluster?.id,
       }
     );
   };

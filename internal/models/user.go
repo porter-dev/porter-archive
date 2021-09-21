@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -20,16 +21,9 @@ type User struct {
 	GoogleUserID string
 }
 
-// UserExternal represents the User type that is sent over REST
-type UserExternal struct {
-	ID            uint   `json:"id"`
-	Email         string `json:"email"`
-	EmailVerified bool   `json:"email_verified"`
-}
-
-// Externalize generates an external User to be shared over REST
-func (u *User) Externalize() *UserExternal {
-	return &UserExternal{
+// ToUserType generates an external types.User to be shared over REST
+func (u *User) ToUserType() *types.User {
+	return &types.User{
 		ID:            u.ID,
 		Email:         u.Email,
 		EmailVerified: u.EmailVerified,

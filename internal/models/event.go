@@ -1,15 +1,8 @@
 package models
 
 import (
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
-)
-
-type EventStatus int64
-
-const (
-	EventStatusSuccess    EventStatus = 1
-	EventStatusInProgress             = 2
-	EventStatusFailed                 = 3
 )
 
 type EventContainer struct {
@@ -26,21 +19,12 @@ type SubEvent struct {
 	EventID string // events with the same id wil be treated the same, and the highest index one is retained
 	Name    string
 	Index   int64 // priority of the event, used for sorting
-	Status  EventStatus
+	Status  types.EventStatus
 	Info    string
 }
 
-type SubEventExternal struct {
-	EventID string      `json:"event_id"`
-	Name    string      `json:"name"`
-	Index   int64       `json:"index"`
-	Status  EventStatus `json:"status"`
-	Info    string      `json:"info"`
-	Time    int64       `json:"time""`
-}
-
-func (event *SubEvent) Externalize() SubEventExternal {
-	return SubEventExternal{
+func (event *SubEvent) ToSubEventType() types.SubEvent {
+	return types.SubEvent{
 		EventID: event.EventID,
 		Name:    event.Name,
 		Index:   event.Index,

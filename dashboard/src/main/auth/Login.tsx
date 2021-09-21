@@ -48,7 +48,7 @@ export default class Login extends Component<PropsType, StateType> {
 
     // get capabilities to case on github
     api
-      .getCapabilities("", {}, {})
+      .getMetadata("", {}, {})
       .then((res) => {
         this.setState({
           hasBasic: res.data?.basic_login,
@@ -93,7 +93,7 @@ export default class Login extends Component<PropsType, StateType> {
           }
         })
         .catch((err) =>
-          this.context.setCurrentError(err.response.data.errors[0])
+          this.context.setCurrentError(err.response.data.error)
         );
     }
   };

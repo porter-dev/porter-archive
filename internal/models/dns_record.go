@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -19,19 +20,8 @@ type DNSRecord struct {
 	ClusterID uint `json:"cluster_id"`
 }
 
-// DNSRecordExternal represents the DNSRecord type that is sent over REST
-type DNSRecordExternal struct {
-	ExternalURL string `json:"external_url"`
-
-	Endpoint string `json:"endpoint"`
-	Hostname string `json:"hostname"`
-
-	ClusterID uint `json:"cluster_id"`
-}
-
-// Externalize generates an external Project to be shared over REST
-func (p *DNSRecord) Externalize() *DNSRecordExternal {
-	return &DNSRecordExternal{
+func (p *DNSRecord) ToDNSRecordType() *types.DNSRecord {
+	return &types.DNSRecord{
 		ExternalURL: fmt.Sprintf("%s.%s", p.SubdomainPrefix, p.RootDomain),
 		Endpoint:    p.Endpoint,
 		Hostname:    p.Hostname,

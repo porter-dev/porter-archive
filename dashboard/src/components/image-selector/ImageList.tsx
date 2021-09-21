@@ -182,7 +182,7 @@ export default class ImageList extends Component<PropsType, StateType> {
       let icon =
         integrationList[image.kind] && integrationList[image.kind].icon;
       if (!icon) {
-        icon = integrationList["docker"].icon;
+        icon = integrationList["dockerhub"].icon;
       }
       return (
         <ImageItem

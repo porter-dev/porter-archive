@@ -114,9 +114,9 @@ class Home extends Component<PropsType, StateType> {
       });
   };
 
-  getCapabilities = () => {
+  getMetadata = () => {
     api
-      .getCapabilities("<token>", {}, {})
+      .getMetadata("<token>", {}, {})
       .then((res) => {
         this.context.setCapabilities(res.data);
       })
@@ -289,7 +289,7 @@ class Home extends Component<PropsType, StateType> {
     this.setState({ ghRedirect: urlParams.get("gh_oauth") !== null });
     urlParams.delete("gh_oauth");
     this.getProjects(defaultProjectId);
-    this.getCapabilities();
+    this.getMetadata();
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
@@ -305,7 +305,7 @@ class Home extends Component<PropsType, StateType> {
         this.checkDO();
       } else {
         this.initializeView();
-        this.getCapabilities();
+        this.getMetadata();
       }
     }
   }
@@ -445,55 +445,16 @@ class Home extends Component<PropsType, StateType> {
           if (!cluster.infra_id) continue;
 
           // Handle destroying infra we've provisioned
-          switch (cluster.service) {
-            case "eks":
-              api
-                .destroyEKS(
-                  "<token>",
-                  { eks_name: cluster.name },
+          api.destroyInfra(
+            "<token>",
+                  { name: cluster.name },
                   {
                     project_id: currentProject.id,
                     infra_id: cluster.infra_id,
                   }
-                )
-                .then(() =>
-                  console.log("destroyed provisioned infra:", cluster.infra_id)
-                )
-                .catch(console.log);
-              break;
-
-            case "gke":
-              api
-                .destroyGKE(
-                  "<token>",
-                  { gke_name: cluster.name },
-                  {
-                    project_id: currentProject.id,
-                    infra_id: cluster.infra_id,
-                  }
-                )
-                .then(() =>
-                  console.log("destroyed provisioned infra:", cluster.infra_id)
-                )
-                .catch(console.log);
-              break;
-
-            case "doks":
-              api
-                .destroyDOKS(
-                  "<token>",
-                  { doks_name: cluster.name },
-                  {
-                    project_id: currentProject.id,
-                    infra_id: cluster.infra_id,
-                  }
-                )
-                .then(() =>
-                  console.log("destroyed provisioned infra:", cluster.infra_id)
-                )
-                .catch(console.log);
-              break;
-          }
+          ).then(() =>
+            console.log("destroyed provisioned infra:", cluster.infra_id)
+          ).catch(console.log);
         }
       })
       .catch(console.log);

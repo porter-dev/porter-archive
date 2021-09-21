@@ -7,16 +7,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/porter-dev/porter/internal/repository/gorm"
-
-	"github.com/porter-dev/porter/server/api"
-
+	"github.com/porter-dev/porter/api/server/router"
+	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/config"
-	lr "github.com/porter-dev/porter/internal/logger"
-	"github.com/porter-dev/porter/server/router"
-
-	prov "github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 )
 
 // Version will be linked by an ldflag during build
@@ -33,75 +27,44 @@ func main() {
 		os.Exit(0)
 	}
 
-	appConf := config.FromEnv()
+	cl := loader.NewEnvLoader()
 
-	logger := lr.NewConsole(appConf.Debug)
-	db, err := adapter.New(&appConf.Db)
-
-	if err != nil {
-		logger.Fatal().Err(err).Msg("")
-		return
-	}
-
-	err = gorm.AutoMigrate(db)
+	config, err := cl.LoadConfig()
 
 	if err != nil {
-		logger.Fatal().Err(err).Msg("")
-		return
+		log.Fatal("Config loading failed: ", err)
 	}
 
-	var key [32]byte
-
-	for i, b := range []byte(appConf.Db.EncryptionKey) {
-		key[i] = b
-	}
-
-	repo := gorm.NewRepository(db, &key)
-
-	a, err := api.New(&api.AppConfig{
-		Version:    Version,
-		Logger:     logger,
-		Repository: repo,
-		ServerConf: appConf.Server,
-		RedisConf:  &appConf.Redis,
-		CapConf:    appConf.Capabilities,
-		DBConf:     appConf.Db,
-	})
-
-	if err != nil {
-		logger.Fatal().Err(err).Msg("")
-	}
-
-	if appConf.Redis.Enabled {
-		redis, err := adapter.NewRedisClient(&appConf.Redis)
+	if config.RedisConf.Enabled {
+		redis, err := adapter.NewRedisClient(config.RedisConf)
 
 		if err != nil {
-			logger.Fatal().Err(err).Msg("")
+			config.Logger.Fatal().Err(err).Msg("redis connection failed")
 			return
 		}
 
-		prov.InitGlobalStream(redis)
+		provisioner.InitGlobalStream(redis)
 
 		errorChan := make(chan error)
 
-		go prov.GlobalStreamListener(redis, *repo, a.AnalyticsClient, errorChan)
+		go provisioner.GlobalStreamListener(redis, config.Repo, config.AnalyticsClient, errorChan)
 	}
 
-	appRouter := router.New(a)
+	appRouter := router.NewAPIRouter(config)
 
-	address := fmt.Sprintf(":%d", appConf.Server.Port)
+	address := fmt.Sprintf(":%d", config.ServerConf.Port)
 
-	logger.Info().Msgf("Starting server %v", address)
+	config.Logger.Info().Msgf("Starting server %v", address)
 
 	s := &http.Server{
 		Addr:         address,
 		Handler:      appRouter,
-		ReadTimeout:  appConf.Server.TimeoutRead,
-		WriteTimeout: appConf.Server.TimeoutWrite,
-		IdleTimeout:  appConf.Server.TimeoutIdle,
+		ReadTimeout:  config.ServerConf.TimeoutRead,
+		WriteTimeout: config.ServerConf.TimeoutWrite,
+		IdleTimeout:  config.ServerConf.TimeoutIdle,
 	}
 
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal("Server startup failed", err)
+		config.Logger.Fatal().Err(err).Msg("Server startup failed")
 	}
 }

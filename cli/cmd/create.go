@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/gitutils"
 	"github.com/spf13/cobra"
@@ -92,7 +93,7 @@ func init() {
 		&localPath,
 		"path",
 		"p",
-		".",
+		"",
 		"if local build, the path to the build directory",
 	)
 
@@ -149,7 +150,7 @@ func init() {
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(resp *api.AuthCheckResponse, client *api.Client, args []string) error {
+func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	// check the kind
 	if _, exists := supportedKinds[args[0]]; !exists {
 		return fmt.Errorf("%s is not a supported type: specify web, job, or worker", args[0])

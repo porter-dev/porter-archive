@@ -20,6 +20,7 @@ type PropsType = {
   showStateDebugger?: boolean;
   isLaunch?: boolean;
   includeHiddenFields?: boolean;
+  hideBottomSpacer?: boolean;
 };
 
 const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
@@ -38,6 +39,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
   showStateDebugger,
   isLaunch,
   includeHiddenFields,
+  hideBottomSpacer,
 }) => {
   const hashCode = (s: string) => {
     return s?.split("").reduce(function (a, b) {
@@ -90,6 +92,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
           currentTab={currentTab}
           setCurrentTab={setCurrentTab}
           isLaunch={isLaunch}
+          hideSpacer={hideBottomSpacer}
         />
       </PorterFormContextProvider>
     </React.Fragment>

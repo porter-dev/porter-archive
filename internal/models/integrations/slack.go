@@ -1,6 +1,10 @@
 package integrations
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+
+	"github.com/porter-dev/porter/api/types"
+)
 
 // SlackIntegration is a webhook notifier to a specific channel in a Slack workspace.
 type SlackIntegration struct {
@@ -8,7 +12,7 @@ type SlackIntegration struct {
 	SharedOAuthModel
 
 	// The name of the auth mechanism
-	Client OAuthIntegrationClient `json:"client"`
+	Client types.OAuthIntegrationClient `json:"client"`
 
 	// The id of the user that linked this auth mechanism
 	UserID uint `json:"user_id"`
@@ -42,33 +46,8 @@ type SlackIntegration struct {
 	Webhook []byte
 }
 
-// SlackIntegrationExternal is an external SlackIntegration to be shared over
-// rest
-type SlackIntegrationExternal struct {
-	ID uint `json:"id"`
-
-	ProjectID uint `json:"project_id"`
-
-	// The ID for the Slack team
-	TeamID string `json:"team_id"`
-
-	// The name of the Slack team
-	TeamName string `json:"team_name"`
-
-	// The icon url for the Slack team
-	TeamIconURL string `json:"team_icon_url"`
-
-	// The channel name that the Slack app is installed in
-	Channel string `json:"channel"`
-
-	// The URL for configuring the workspace app instance
-	ConfigurationURL string `json:"configuration_url"`
-}
-
-// Externalize generates an external SlackIntegration to be shared over
-// rest
-func (s *SlackIntegration) Externalize() *SlackIntegrationExternal {
-	return &SlackIntegrationExternal{
+func (s *SlackIntegration) ToSlackIntegraionType() *types.SlackIntegration {
+	return &types.SlackIntegration{
 		ID:               s.ID,
 		ProjectID:        s.ProjectID,
 		TeamID:           s.TeamID,

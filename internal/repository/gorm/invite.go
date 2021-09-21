@@ -39,10 +39,10 @@ func (repo *InviteRepository) CreateInvite(invite *models.Invite) (*models.Invit
 }
 
 // ReadInvite gets an invite specified by a unique id
-func (repo *InviteRepository) ReadInvite(id uint) (*models.Invite, error) {
+func (repo *InviteRepository) ReadInvite(projectID, inviteID uint) (*models.Invite, error) {
 	invite := &models.Invite{}
 
-	if err := repo.db.Where("id = ?", id).First(&invite).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, inviteID).First(&invite).Error; err != nil {
 		return nil, err
 	}
 

@@ -26,13 +26,13 @@ func TestCreateHelmRepo(t *testing.T) {
 		ProjectID: tester.initProjects[0].Model.ID,
 	}
 
-	hr, err := tester.repo.HelmRepo.CreateHelmRepo(hr)
+	hr, err := tester.repo.HelmRepo().CreateHelmRepo(hr)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	hr, err = tester.repo.HelmRepo.ReadHelmRepo(hr.Model.ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, hr.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -62,7 +62,7 @@ func TestListHelmReposByProjectID(t *testing.T) {
 	initHelmRepo(tester, t)
 	defer cleanup(tester, t)
 
-	hrs, err := tester.repo.HelmRepo.ListHelmReposByProjectID(
+	hrs, err := tester.repo.HelmRepo().ListHelmReposByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -106,7 +106,7 @@ func TestUpdateHelmRepo(t *testing.T) {
 
 	hr.Name = "helm-repo-new-name"
 
-	hr, err := tester.repo.HelmRepo.UpdateHelmRepo(
+	hr, err := tester.repo.HelmRepo().UpdateHelmRepo(
 		hr,
 	)
 
@@ -114,7 +114,7 @@ func TestUpdateHelmRepo(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	hr, err = tester.repo.HelmRepo.ReadHelmRepo(tester.initHRs[0].ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, tester.initHRs[0].ID)
 
 	// make sure data is correct
 	expHelmRepo := models.HelmRepo{
@@ -153,13 +153,13 @@ func TestUpdateHelmRepoToken(t *testing.T) {
 		},
 	}
 
-	hr, err := tester.repo.HelmRepo.CreateHelmRepo(hr)
+	hr, err := tester.repo.HelmRepo().CreateHelmRepo(hr)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	hr, err = tester.repo.HelmRepo.ReadHelmRepo(hr.Model.ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, hr.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -182,11 +182,11 @@ func TestUpdateHelmRepoToken(t *testing.T) {
 	hr.TokenCache.Token = []byte("token-2")
 	hr.TokenCache.Expiry = time.Now().Add(24 * time.Hour)
 
-	hr, err = tester.repo.HelmRepo.UpdateHelmRepoTokenCache(&hr.TokenCache)
+	hr, err = tester.repo.HelmRepo().UpdateHelmRepoTokenCache(&hr.TokenCache)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
-	hr, err = tester.repo.HelmRepo.ReadHelmRepo(hr.Model.ID)
+	hr, err = tester.repo.HelmRepo().ReadHelmRepo(tester.initProjects[0].Model.ID, hr.Model.ID)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -220,25 +220,25 @@ func TestUpdateHelmRepoToken(t *testing.T) {
 // 	initRegistry(tester, t)
 // 	defer cleanup(tester, t)
 
-// 	reg, err := tester.repo.Registry.ReadRegistry(tester.initRegs[0].Model.ID)
+// 	reg, err := tester.repo.Registry().ReadRegistry(tester.initRegs[0].Model.ID)
 
 // 	if err != nil {
 // 		t.Fatalf("%v\n", err)
 // 	}
 
-// 	err = tester.repo.Registry.DeleteRegistry(reg)
+// 	err = tester.repo.Registry().DeleteRegistry(reg)
 
 // 	if err != nil {
 // 		t.Fatalf("%v\n", err)
 // 	}
 
-// 	_, err = tester.repo.Registry.ReadRegistry(tester.initRegs[0].Model.ID)
+// 	_, err = tester.repo.Registry().ReadRegistry(tester.initRegs[0].Model.ID)
 
 // 	if err != orm.ErrRecordNotFound {
 // 		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)
 // 	}
 
-// 	regs, err := tester.repo.Registry.ListRegistriesByProjectID(tester.initProjects[0].Model.ID)
+// 	regs, err := tester.repo.Registry().ListRegistriesByProjectID(tester.initProjects[0].Model.ID)
 
 // 	if err != nil {
 // 		t.Fatalf("%v\n", err)

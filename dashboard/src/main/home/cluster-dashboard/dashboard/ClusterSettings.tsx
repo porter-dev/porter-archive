@@ -18,13 +18,13 @@ const ClusterSettings: React.FC = () => {
       .overwriteAWSIntegration(
         "<token>",
         {
+          aws_integration_id: context.currentCluster.aws_integration_id,
           aws_access_key_id: accessKeyId,
           aws_secret_access_key: secretKey,
+          cluster_id: context.currentCluster.id,
         },
         {
-          projectID: context.currentProject.id,
-          awsIntegrationID: context.currentCluster.aws_integration_id,
-          cluster_id: context.currentCluster.id,
+          project_id: context.currentProject.id,
         }
       )
       .then(({ data }) => {

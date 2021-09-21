@@ -10,7 +10,6 @@ RUN apk update && apk add --no-cache gcc musl-dev git
 COPY go.mod go.sum ./
 COPY /cmd ./cmd
 COPY /internal ./internal
-COPY /server ./server
 COPY /api ./api
 
 RUN --mount=type=cache,target=$GOPATH/pkg/mod \

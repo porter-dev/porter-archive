@@ -9,7 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	"github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/porter-dev/porter/internal/templater/utils"
@@ -31,8 +32,8 @@ const (
 type DeployAgent struct {
 	App string
 
-	client         *api.Client
-	release        *api.GetReleaseResponse
+	client         *client.Client
+	release        *types.GetReleaseResponse
 	agent          *docker.Agent
 	opts           *DeployOpts
 	tag            string
@@ -52,7 +53,7 @@ type DeployOpts struct {
 
 // NewDeployAgent creates a new DeployAgent given a Porter API client, application
 // name, and DeployOpts.
-func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
+func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
 	deployAgent := &DeployAgent{
 		App:    app,
 		opts:   opts,
@@ -131,6 +132,7 @@ func NewDeployAgent(client *api.Client, app string, opts *DeployOpts) (*DeployAg
 		deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
 	} else {
 		deployAgent.imageRepo = release.GitActionConfig.ImageRepoURI
+		deployAgent.opts.LocalPath = release.GitActionConfig.FolderPath
 	}
 
 	deployAgent.tag = opts.OverrideTag
@@ -197,10 +199,20 @@ func (d *DeployAgent) Build() error {
 	var err error
 
 	if !d.opts.Local {
+		repoSplit := strings.Split(d.release.GitActionConfig.GitRepo, "/")
+
+		if len(repoSplit) != 2 {
+			return fmt.Errorf("invalid formatting of repo name")
+		}
+
 		zipResp, err := d.client.GetRepoZIPDownloadURL(
 			context.Background(),
 			d.opts.ProjectID,
-			d.release.GitActionConfig,
+			int64(d.release.GitActionConfig.GitRepoID),
+			"github",
+			repoSplit[0],
+			repoSplit[1],
+			d.release.GitActionConfig.GitBranch,
 		)
 
 		if err != nil {
@@ -314,10 +326,10 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 		context.Background(),
 		d.opts.ProjectID,
 		d.opts.ClusterID,
+		d.release.Namespace,
 		d.release.Name,
-		&api.UpgradeReleaseRequest{
-			Values:    string(bytes),
-			Namespace: d.release.Namespace,
+		&types.UpgradeReleaseRequest{
+			Values: string(bytes),
 		},
 	)
 }
@@ -448,8 +460,15 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	return res, nil
 }
 
-func (d *DeployAgent) StreamEvent(event api.Event) error {
-	return d.client.StreamEvent(event, d.opts.ProjectID, d.opts.ClusterID, d.release.Name, d.release.Namespace)
+func (d *DeployAgent) StreamEvent(event types.SubEvent) error {
+	return d.client.CreateEvent(
+		context.Background(),
+		d.opts.ProjectID, d.opts.ClusterID,
+		d.release.Namespace, d.release.Name,
+		&types.UpdateReleaseStepsRequest{
+			Event: event,
+		},
+	)
 }
 
 type NestedMapFieldNotFoundError struct {

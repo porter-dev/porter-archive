@@ -48,12 +48,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     api
       .listConfigMaps(
         "<token>",
-        {
-          namespace: this.props.namespace,
-          cluster_id: this.props.clusterId || this.context.currentCluster.id,
-        },
+        {},
         {
           id: this.context.currentProject.id,
+          namespace: this.props.namespace,
+          cluster_id: this.props.clusterId || this.context.currentCluster.id,
         }
       )
       .then((res) => {

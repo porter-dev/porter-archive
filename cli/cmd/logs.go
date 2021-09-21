@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -45,7 +46,7 @@ func init() {
 	)
 }
 
-func logs(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
+func logs(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	podsSimple, err := getPods(client, namespace, args[0])
 
 	if err != nil {

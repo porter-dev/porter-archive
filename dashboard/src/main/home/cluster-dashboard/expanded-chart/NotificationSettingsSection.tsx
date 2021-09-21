@@ -40,11 +40,11 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       .getNotificationConfig(
         "<token>",
         {
-          namespace: props.currentChart.namespace,
-          cluster_id: currentCluster.id,
         },
         {
           project_id: currentProject.id,
+          namespace: props.currentChart.namespace,
+          cluster_id: currentCluster.id,
           name: props.currentChart.name,
         }
       )
@@ -85,12 +85,12 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       .updateNotificationConfig(
         "<token>",
         {
-          namespace: props.currentChart.namespace,
-          cluster_id: currentCluster.id,
           payload,
         },
         {
           project_id: currentProject.id,
+          namespace: props.currentChart.namespace,
+          cluster_id: currentCluster.id,
           name: props.currentChart.name,
         }
       )

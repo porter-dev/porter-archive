@@ -8,20 +8,20 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/helm/pkg/repo"
 	"sigs.k8s.io/yaml"
 
+	"github.com/porter-dev/porter/api/types"
 	"helm.sh/helm/v3/pkg/chart"
 	chartloader "helm.sh/helm/v3/pkg/chart/loader"
 )
 
 // RepoIndexToPorterChartList converts an index file to a list of porter charts
-func RepoIndexToPorterChartList(index *repo.IndexFile) []*models.PorterChartList {
+func RepoIndexToPorterChartList(index *repo.IndexFile) types.ListTemplatesResponse {
 	// sort the entries before parsing
 	index.SortEntries()
 
-	porterCharts := make([]*models.PorterChartList, 0)
+	porterCharts := make(types.ListTemplatesResponse, 0)
 
 	for _, entryVersions := range index.Entries {
 		indexChart := entryVersions[0]
@@ -31,7 +31,7 @@ func RepoIndexToPorterChartList(index *repo.IndexFile) []*models.PorterChartList
 			versions = append(versions, entryVersion.Version)
 		}
 
-		porterChart := &models.PorterChartList{
+		porterChart := types.PorterTemplateSimple{
 			Name:        indexChart.Name,
 			Description: indexChart.Description,
 			Icon:        indexChart.Icon,
@@ -45,7 +45,7 @@ func RepoIndexToPorterChartList(index *repo.IndexFile) []*models.PorterChartList
 }
 
 // FindPorterChartInIndexList finds a chart by name given an index file and returns it
-func FindPorterChartInIndexList(index *repo.IndexFile, name string) *models.PorterChartList {
+func FindPorterChartInIndexList(index *repo.IndexFile, name string) *types.PorterTemplateSimple {
 	// sort the entries before parsing
 	index.SortEntries()
 
@@ -59,7 +59,7 @@ func FindPorterChartInIndexList(index *repo.IndexFile, name string) *models.Port
 				versions = append(versions, entryVersion.Version)
 			}
 
-			return &models.PorterChartList{
+			return &types.PorterTemplateSimple{
 				Name:        indexChart.Name,
 				Description: indexChart.Description,
 				Icon:        indexChart.Icon,

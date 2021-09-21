@@ -77,11 +77,11 @@ class JobList extends Component<PropsType, StateType> {
       .deleteJob(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
           id: currentProject.id,
           name: job.metadata?.name,
+          cluster_id: currentCluster.id,
           namespace: job.metadata?.namespace,
         }
       )
@@ -93,7 +93,7 @@ class JobList extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
         if (parsedErr) {
           err = parsedErr;
         }

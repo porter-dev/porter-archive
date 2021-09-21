@@ -47,7 +47,7 @@ const SettingsSection: React.FC<PropsType> = ({
     git_repo: "",
     image_repo_uri: "",
     git_repo_id: 0,
-    branch: "",
+    git_branch: "",
   });
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
@@ -66,11 +66,13 @@ const SettingsSection: React.FC<PropsType> = ({
       .getReleaseToken(
         "<token>",
         {
+        },
+        { 
+          id: currentProject.id, 
+          name: currentChart?.name,
           namespace: currentChart?.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        { id: currentProject.id, name: currentChart?.name }
+        }
       )
       .then((res) => {
         if (!isSubscribed) {
@@ -115,13 +117,12 @@ const SettingsSection: React.FC<PropsType> = ({
       await api.upgradeChartValues(
         "<token>",
         {
-          namespace: currentChart?.namespace,
-          storage: StorageType.Secret,
           values: conf,
         },
         {
           id: currentProject.id,
           name: currentChart?.name,
+          namespace: currentChart?.namespace,
           cluster_id: currentCluster.id,
         }
       );
@@ -129,7 +130,7 @@ const SettingsSection: React.FC<PropsType> = ({
       refreshChart();
     } catch (err) {
       let parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -154,7 +155,6 @@ const SettingsSection: React.FC<PropsType> = ({
           chart_name,
           namespace,
           cluster_id,
-          storage: StorageType.Secret,
         }
       );
       setCreateWebhookButtonStatus("successful");
@@ -164,7 +164,7 @@ const SettingsSection: React.FC<PropsType> = ({
       }, 500);
     } catch (err) {
       let parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;

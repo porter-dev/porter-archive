@@ -40,15 +40,8 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
         .getChart(
           "<token>",
           {
-            namespace: namespace,
-            cluster_id: currentCluster.id,
-            storage: StorageType.Secret,
           },
-          {
-            name: chartName,
-            revision: Number(lastCheckedRevision),
-            id: currentProject.id,
-          }
+          { id: currentProject.id, namespace: namespace, cluster_id: currentCluster.id ,name: chartName, revision: Number(lastCheckedRevision), }
         )
         .then((res) => {
           this.setState({ currentChart: res.data, loading: false });

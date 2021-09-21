@@ -210,8 +210,8 @@ export interface RepoType {
 }
 
 export interface FileType {
-  Path: string;
-  Type: string;
+  path: string;
+  type: string;
 }
 
 export interface ProjectType {
@@ -254,7 +254,7 @@ export interface InviteType {
 
 export interface ActionConfigType {
   git_repo: string;
-  branch: string;
+  git_branch: string;
   image_repo_uri: string;
   git_repo_id: number;
 }

@@ -136,25 +136,29 @@ const RepoList: React.FC<Props> = ({
           <Loading />
         </LoadingWrapper>
       );
-    } else if (repoError || accessError) {
+    } else if (repoError) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
     } else if (repos.length == 0) {
-      return accessData.has_access ? (
+      if (accessError) {
+        return (
+          <LoadingWrapper>
+            No connected Github repos found.
+            <A href={"/api/integrations/github-app/oauth"}>
+              Authorize Porter to view your repositories.
+            </A>
+          </LoadingWrapper>
+        );
+      }
+
+      if (accessData.accounts?.length === 0) {
         <LoadingWrapper>
           No connected Github repos found. You can
           <A href={"/api/integrations/github-app/install"}>
             Install Porter in more repositories
           </A>
           .
-        </LoadingWrapper>
-      ) : (
-        <LoadingWrapper>
-          No connected Github repos found.
-          <A href={"/api/integrations/github-app/oauth"}>
-            Authorize Porter to view your repositories.
-          </A>
-        </LoadingWrapper>
-      );
+        </LoadingWrapper>;
+      }
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet

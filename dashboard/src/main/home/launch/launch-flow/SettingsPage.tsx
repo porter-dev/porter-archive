@@ -227,15 +227,10 @@ class SettingsPage extends Component<PropsType, StateType> {
     }
 
     if (hasSource) {
-      const [pageKey, pageName] =
-        sourceType === "repo"
-          ? ["workflow", "GitHub Actions"]
-          : ["source", "Source Settings"];
-
       return (
-        <BackButton width="155px" onClick={() => setPage(pageKey)}>
+        <BackButton width="155px" onClick={() => setPage("source")}>
           <i className="material-icons">first_page</i>
-          {pageName}
+          Source Settings
         </BackButton>
       );
     }

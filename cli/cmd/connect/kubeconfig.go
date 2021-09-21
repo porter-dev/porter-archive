@@ -15,8 +15,8 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
-	"github.com/porter-dev/porter/internal/models"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 )
 
 // Kubeconfig creates a service account for a project by parsing the local
@@ -41,10 +41,10 @@ func Kubeconfig(
 	}
 
 	// send kubeconfig to client
-	ccs, err := client.CreateProjectCandidates(
+	resp, err := client.CreateProjectCandidates(
 		context.Background(),
 		projectID,
-		&api.CreateProjectCandidatesRequest{
+		&types.CreateClusterCandidateRequest{
 			Kubeconfig: string(rawBytes),
 			IsLocal:    isLocal,
 		},
@@ -54,17 +54,19 @@ func Kubeconfig(
 		return 0, err
 	}
 
+	ccs := *resp
+
 	var lastClusterID uint
 
 	for _, cc := range ccs {
-		var cluster *models.ClusterExternal
+		var cluster *types.Cluster
 
 		if len(cc.Resolvers) > 0 {
-			allResolver := &models.ClusterResolverAll{}
+			allResolver := &types.ClusterResolverAll{}
 
 			for _, resolver := range cc.Resolvers {
 				switch resolver.Name {
-				case models.ClusterCAData:
+				case types.ClusterCAData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -85,13 +87,13 @@ func Kubeconfig(
 					if err != nil {
 						return 0, err
 					}
-				case models.ClusterLocalhost:
+				case types.ClusterLocalhost:
 					err := resolveLocalhostAction(allResolver)
 
 					if err != nil {
 						return 0, err
 					}
-				case models.ClientCertData:
+				case types.ClientCertData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -112,7 +114,7 @@ func Kubeconfig(
 					if err != nil {
 						return 0, err
 					}
-				case models.ClientKeyData:
+				case types.ClientKeyData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -133,7 +135,7 @@ func Kubeconfig(
 					if err != nil {
 						return 0, err
 					}
-				case models.OIDCIssuerData:
+				case types.OIDCIssuerData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -154,7 +156,7 @@ func Kubeconfig(
 					if err != nil {
 						return 0, err
 					}
-				case models.TokenData:
+				case types.TokenData:
 					absKubeconfigPath, err := local.ResolveKubeconfigPath(kubeconfigPath)
 
 					if err != nil {
@@ -175,7 +177,7 @@ func Kubeconfig(
 					if err != nil {
 						return 0, err
 					}
-				case models.GCPKeyData:
+				case types.GCPKeyData:
 					err := resolveGCPKeyAction(
 						cc.Server,
 						cc.Name,
@@ -185,7 +187,7 @@ func Kubeconfig(
 					if err != nil {
 						return 0, err
 					}
-				case models.AWSData:
+				case types.AWSData:
 					err := resolveAWSAction(
 						cc.Server,
 						cc.Name,
@@ -212,7 +214,7 @@ func Kubeconfig(
 				return 0, err
 			}
 
-			clExt := models.ClusterExternal(*resp)
+			clExt := types.Cluster(*resp)
 
 			cluster = &clExt
 		} else {
@@ -226,9 +228,7 @@ func Kubeconfig(
 				return 0, err
 			}
 
-			clExt := models.ClusterExternal(*resp)
-
-			cluster = &clExt
+			cluster = resp.Cluster
 		}
 
 		color.New(color.FgGreen).Printf("created cluster %s with id %d\n", cluster.Name, cluster.ID)
@@ -241,7 +241,7 @@ func Kubeconfig(
 // resolves a cluster ca data action
 func resolveClusterCAAction(
 	filename string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
@@ -255,7 +255,7 @@ func resolveClusterCAAction(
 }
 
 func resolveLocalhostAction(
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	resolver.ClusterHostname = "host.docker.internal"
 
@@ -265,7 +265,7 @@ func resolveLocalhostAction(
 // resolves a client cert data action
 func resolveClientCertAction(
 	filename string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
@@ -281,7 +281,7 @@ func resolveClientCertAction(
 // resolves a client key data action
 func resolveClientKeyAction(
 	filename string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
@@ -297,7 +297,7 @@ func resolveClientKeyAction(
 // resolves an oidc issuer data action
 func resolveOIDCIssuerAction(
 	filename string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
@@ -313,7 +313,7 @@ func resolveOIDCIssuerAction(
 // resolves a token data action
 func resolveTokenDataAction(
 	filename string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	fileBytes, err := ioutil.ReadFile(filename)
 
@@ -330,7 +330,7 @@ func resolveTokenDataAction(
 func resolveGCPKeyAction(
 	endpoint string,
 	clusterName string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
@@ -400,7 +400,7 @@ Would you like to proceed? %s `,
 func resolveGCPKeyActionManual(
 	endpoint string,
 	clusterName string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	keyFileLocation, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the full path to a service account key file.
 Key file location: `))
@@ -433,7 +433,7 @@ func resolveAWSAction(
 	awsClusterIDGuess string,
 	kubeconfigPath string,
 	contextName string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
@@ -480,7 +480,7 @@ func resolveAWSActionManual(
 	endpoint string,
 	clusterName string,
 	awsClusterIDGuess string,
-	resolver *models.ClusterResolverAll,
+	resolver *types.ClusterResolverAll,
 ) error {
 	// query to see if the AWS cluster ID guess is correct
 	var clusterID string

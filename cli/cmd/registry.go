@@ -9,7 +9,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -99,11 +100,11 @@ func init() {
 	registryImageCmd.AddCommand(registryImageListCmd)
 }
 
-func listRegistries(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	pID := config.Project
 
 	// get the list of namespaces
-	registries, err := client.ListRegistries(
+	resp, err := client.ListRegistries(
 		context.Background(),
 		pID,
 	)
@@ -111,6 +112,8 @@ func listRegistries(user *api.AuthCheckResponse, client *api.Client, args []stri
 	if err != nil {
 		return err
 	}
+
+	registries := *resp
 
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
@@ -132,7 +135,7 @@ func listRegistries(user *api.AuthCheckResponse, client *api.Client, args []stri
 	return nil
 }
 
-func deleteRegistry(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the registry with id %s? %s `,
@@ -164,12 +167,12 @@ func deleteRegistry(user *api.AuthCheckResponse, client *api.Client, args []stri
 	return nil
 }
 
-func listRepos(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	pID := config.Project
 	rID := config.Registry
 
 	// get the list of namespaces
-	repos, err := client.ListRegistryRepositories(
+	resp, err := client.ListRegistryRepositories(
 		context.Background(),
 		pID,
 		rID,
@@ -178,6 +181,8 @@ func listRepos(user *api.AuthCheckResponse, client *api.Client, args []string) e
 	if err != nil {
 		return err
 	}
+
+	repos := *resp
 
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
@@ -193,13 +198,13 @@ func listRepos(user *api.AuthCheckResponse, client *api.Client, args []string) e
 	return nil
 }
 
-func listImages(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func listImages(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	pID := config.Project
 	rID := config.Registry
 	repoName := args[0]
 
 	// get the list of namespaces
-	imgs, err := client.ListImages(
+	resp, err := client.ListImages(
 		context.Background(),
 		pID,
 		rID,
@@ -209,6 +214,8 @@ func listImages(user *api.AuthCheckResponse, client *api.Client, args []string) 
 	if err != nil {
 		return err
 	}
+
+	imgs := *resp
 
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)

@@ -93,7 +93,7 @@ func QueryPrometheus(
 	clientset kubernetes.Interface,
 	service *v1.Service,
 	opts *QueryOpts,
-) ([]byte, error) {
+) ([]*promParsedSingletonQuery, error) {
 	if len(service.Spec.Ports) == 0 {
 		return nil, fmt.Errorf("prometheus service has no exposed ports to query")
 	}
@@ -221,10 +221,14 @@ type promParsedSingletonQuery struct {
 	Results []promParsedSingletonQueryResult `json:"results"`
 }
 
-func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
+func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
 	rawQueryObj := &promRawQuery{}
 
-	json.Unmarshal(rawQuery, rawQueryObj)
+	err := json.Unmarshal(rawQuery, rawQueryObj)
+
+	if err != nil {
+		return nil, err
+	}
 
 	res := make([]*promParsedSingletonQuery, 0)
 
@@ -266,7 +270,7 @@ func parseQuery(rawQuery []byte, metric string) ([]byte, error) {
 		res = append(res, singleton)
 	}
 
-	return json.Marshal(res)
+	return res, nil
 }
 
 func getSelectionRegex(kind, name string) (string, error) {

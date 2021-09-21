@@ -91,10 +91,10 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
           .getReleaseSteps(
               "<token>",
               {
-                cluster_id: currentCluster.id,
-                namespace: props.currentChart.namespace,
               },
               {
+                cluster_id: currentCluster.id,
+                namespace: props.currentChart.namespace,
                 id: currentProject.id,
                 name: props.currentChart.name,
               }

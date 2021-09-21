@@ -1,4 +1,4 @@
-You can create one-time jobs or cron jobs on Porter, which can be linked [from your Github repo](https://docs.getporter.dev/docs/applications) or [from an existing Docker image registry](https://docs.getporter.dev/docs/deploying-from-docker-image-registry). Cron jobs are meant to run on a schedule using a specified [cron expression](https://en.wikipedia.org/wiki/Cron#CRON_expression), while one-time jobs are meant to be triggered manually or on every push to your Github repository. Here are some use-cases for each type of job:
+You can create one-time jobs or cron jobs on Porter, which can be linked [from your Github repo](https://docs.getporter.dev/docs/applications) or [from an existing Docker image registry](https://docs.getporter.dev/docs/deploying-from-docker-image-registry). Cron jobs are meant to run on a schedule using a specified [cron expression](https://en.wikipedia.org/wiki/Cron#CRON_expression), while one-time jobs are meant to be triggered manually. Here are some use-cases for each type of job:
 
 - Run one-time jobs for database migration scripts, data processing, or generally scripts that are designed to run to completion on an unpredictable schedule
 - Run cron jobs for tasks that should run on a specified schedule, such as scraping data at a specified interval, cleaning up rows in a database, taking backups of a DB, or sending batch notifications at a specified time every day
@@ -23,11 +23,20 @@ To re-run the job, simply click the "Rerun job" button in the bottom right corne
 
 ## Running One-Time Jobs from Github Repositories
 
-When you set up a one-time job to deploy from a Github repository, the job will automatically be run on each push to a specific branch in the Github repository. There are cases where it is useful to run jobs on each push to your `main` branch: for example, running a schema migration script so that your data schema is always up to date. However, if you do not want the job to run frequently, you should create a branch that you push to only when you want the job to be re-run. 
+When you set up a one-time job to deploy from a Github repository, the job will **not** run automatically -- the Github action will simply update the image used to run the job. 
 
-> 🚧
-> 
-> **Note:** we are working on a better solution for deploying jobs from a Github repository, so that the job only rebuilds when you want it to. This will be addressed in the next release.
+To get the Github action to run the job automatically, you can use [this Github action](https://github.com/porter-dev/porter-run-job-action). For example:
+
+```yaml
+# ... the rest of your Github action
+    - name: Run Porter job
+      uses: porter-dev/porter-run-job-action@v0.1.0
+      with:
+        job: <job-name> # TODO: replace w/ name of your job
+        cluster: <cluster-id> # TODO: replace w/ cluster ID
+        project: <project-id> # TODO: replace w/ project ID
+        token: ${{ secrets.PORTER_TOKEN_12 }}
+```
 
 # Deploying a Cron Job
 

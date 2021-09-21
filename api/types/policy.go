@@ -3,12 +3,17 @@ package types
 type PermissionScope string
 
 const (
-	UserScope        PermissionScope = "user"
-	ProjectScope     PermissionScope = "project"
-	ClusterScope     PermissionScope = "cluster"
-	NamespaceScope   PermissionScope = "namespace"
-	SettingsScope    PermissionScope = "settings"
-	ApplicationScope PermissionScope = "application"
+	UserScope            PermissionScope = "user"
+	ProjectScope         PermissionScope = "project"
+	ClusterScope         PermissionScope = "cluster"
+	RegistryScope        PermissionScope = "registry"
+	InviteScope          PermissionScope = "invite"
+	HelmRepoScope        PermissionScope = "helm_repo"
+	InfraScope           PermissionScope = "infra"
+	GitInstallationScope PermissionScope = "git_installation"
+	NamespaceScope       PermissionScope = "namespace"
+	SettingsScope        PermissionScope = "settings"
+	ReleaseScope         PermissionScope = "release"
 )
 
 type NameOrUInt struct {
@@ -25,47 +30,25 @@ type PolicyDocument struct {
 
 type ScopeTree map[PermissionScope]ScopeTree
 
-/* ScopeHeirarchy describes the scope tree:
-			Project
-		   /	   \
-		Cluster   Settings
-		/
-	Namespace
-       |
-	 Release
+/* ScopeHeirarchy describes the tree of scopes, i.e. Cluster, Registry, and Settings
+are children of Project, Namespace is a child of Cluster, etc.
 */
 var ScopeHeirarchy = ScopeTree{
 	ProjectScope: {
 		ClusterScope: {
 			NamespaceScope: {
-				ApplicationScope: {},
+				ReleaseScope: {},
 			},
 		},
-		SettingsScope: {},
+		RegistryScope:        {},
+		HelmRepoScope:        {},
+		GitInstallationScope: {},
+		InfraScope:           {},
+		SettingsScope:        {},
 	},
 }
 
 type Policy []*PolicyDocument
-
-type APIVerb string
-
-const (
-	APIVerbGet    APIVerb = "get"
-	APIVerbCreate APIVerb = "create"
-	APIVerbList   APIVerb = "list"
-	APIVerbUpdate APIVerb = "update"
-	APIVerbDelete APIVerb = "delete"
-)
-
-type APIVerbGroup []APIVerb
-
-func ReadVerbGroup() APIVerbGroup {
-	return []APIVerb{APIVerbGet, APIVerbList}
-}
-
-func ReadWriteVerbGroup() APIVerbGroup {
-	return []APIVerb{APIVerbGet, APIVerbList, APIVerbCreate, APIVerbUpdate, APIVerbDelete}
-}
 
 var AdminPolicy = []*PolicyDocument{
 	{

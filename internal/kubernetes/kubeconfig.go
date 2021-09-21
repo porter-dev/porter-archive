@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -85,80 +86,6 @@ func GetClusterCandidatesFromKubeconfig(
 	return res, nil
 }
 
-// GetServiceAccountCandidates parses a kubeconfig for a list of service account
-// candidates.
-//
-// The local boolean represents whether the auth mechanism should be designated as
-// "local": if so, the auth mechanism uses local plugins/mechanisms purely from the
-// kubeconfig.
-// func GetServiceAccountCandidates(kubeconfig []byte, local bool) ([]*models.ServiceAccountCandidate, error) {
-// 	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	rawConf, err := config.RawConfig()
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	res := make([]*models.ServiceAccountCandidate, 0)
-
-// 	for contextName, context := range rawConf.Contexts {
-// 		clusterName := context.Cluster
-// 		awsClusterID := ""
-// 		authInfoName := context.AuthInfo
-
-// 		resolvers := make([]models.ServiceAccountResolver, 0)
-// 		var integration string
-
-// 		if local {
-// 			integration = models.Local
-// 		} else {
-// 			// get the auth mechanism and resolvers
-// 			integration, resolvers = parseAuthInfoForResolvers(rawConf.AuthInfos[authInfoName])
-// 			clusterResolvers := parseClusterForResolvers(rawConf.Clusters[clusterName])
-// 			resolvers = append(resolvers, clusterResolvers...)
-
-// 			// if auth mechanism is unsupported, we'll skip it
-// 			if integration == models.NotAvailable {
-// 				continue
-// 			} else if integration == models.AWS {
-// 				// if the auth mechanism is AWS, we need to parse more explicitly
-// 				// for the cluster id
-// 				awsClusterID = parseAuthInfoForAWSClusterID(rawConf.AuthInfos[authInfoName], clusterName)
-// 			}
-// 		}
-
-// 		// construct the raw kubeconfig that's relevant for that context
-// 		contextConf, err := getConfigForContext(&rawConf, contextName)
-
-// 		if err != nil {
-// 			continue
-// 		}
-
-// 		rawBytes, err := clientcmd.Write(*contextConf)
-
-// 		if err == nil {
-// 			// create the candidate service account
-// 			res = append(res, &models.ServiceAccountCandidate{
-// 				Resolvers:           resolvers,
-// 				Kind:              "connector",
-// 				ContextName:       contextName,
-// 				ClusterName:       clusterName,
-// 				ClusterEndpoint:   rawConf.Clusters[clusterName].Server,
-// 				Integration:     integration,
-// 				AWSClusterIDGuess: awsClusterID,
-// 				Kubeconfig:        rawBytes,
-// 			})
-// 		}
-// 	}
-
-// 	return res, nil
-// }
-
 // GetRawConfigFromBytes returns the clientcmdapi.Config from kubeconfig
 // bytes
 func GetRawConfigFromBytes(kubeconfig []byte) (*api.Config, error) {
@@ -198,7 +125,7 @@ func parseAuthInfoForResolvers(authInfo *api.AuthInfo) (authMechanism models.Clu
 			fnBytes, _ := json.Marshal(&fn)
 
 			resolvers = append(resolvers, models.ClusterResolver{
-				Name:     models.ClientCertData,
+				Name:     types.ClientCertData,
 				Resolved: false,
 				Data:     fnBytes,
 			})
@@ -212,7 +139,7 @@ func parseAuthInfoForResolvers(authInfo *api.AuthInfo) (authMechanism models.Clu
 			fnBytes, _ := json.Marshal(&fn)
 
 			resolvers = append(resolvers, models.ClusterResolver{
-				Name:     models.ClientKeyData,
+				Name:     types.ClientKeyData,
 				Resolved: false,
 				Data:     fnBytes,
 			})
@@ -235,8 +162,8 @@ func parseAuthInfoForResolvers(authInfo *api.AuthInfo) (authMechanism models.Clu
 				fnBytes, _ := json.Marshal(&fn)
 
 				return models.OIDC, []models.ClusterResolver{
-					models.ClusterResolver{
-						Name:     models.OIDCIssuerData,
+					{
+						Name:     types.OIDCIssuerData,
 						Resolved: false,
 						Data:     fnBytes,
 					},
@@ -246,8 +173,8 @@ func parseAuthInfoForResolvers(authInfo *api.AuthInfo) (authMechanism models.Clu
 			return models.OIDC, resolvers
 		case "gcp":
 			return models.GCP, []models.ClusterResolver{
-				models.ClusterResolver{
-					Name:     models.GCPKeyData,
+				{
+					Name:     types.GCPKeyData,
 					Resolved: false,
 				},
 			}
@@ -257,8 +184,8 @@ func parseAuthInfoForResolvers(authInfo *api.AuthInfo) (authMechanism models.Clu
 	if authInfo.Exec != nil {
 		if authInfo.Exec.Command == "aws" || authInfo.Exec.Command == "aws-iam-authenticator" {
 			return models.AWS, []models.ClusterResolver{
-				models.ClusterResolver{
-					Name:     models.AWSData,
+				{
+					Name:     types.AWSData,
 					Resolved: false,
 				},
 			}
@@ -274,8 +201,8 @@ func parseAuthInfoForResolvers(authInfo *api.AuthInfo) (authMechanism models.Clu
 			fnBytes, _ := json.Marshal(&fn)
 
 			return models.Bearer, []models.ClusterResolver{
-				models.ClusterResolver{
-					Name:     models.TokenData,
+				{
+					Name:     types.TokenData,
 					Resolved: false,
 					Data:     fnBytes,
 				},
@@ -305,7 +232,7 @@ func parseClusterForResolvers(cluster *api.Cluster) (resolvers []models.ClusterR
 		fnBytes, _ := json.Marshal(&fn)
 
 		resolvers = append(resolvers, models.ClusterResolver{
-			Name:     models.ClusterCAData,
+			Name:     types.ClusterCAData,
 			Resolved: false,
 			Data:     fnBytes,
 		})
@@ -316,7 +243,7 @@ func parseClusterForResolvers(cluster *api.Cluster) (resolvers []models.ClusterR
 	if err == nil {
 		if hostname := serverURL.Hostname(); hostname == "127.0.0.1" || hostname == "localhost" {
 			resolvers = append(resolvers, models.ClusterResolver{
-				Name:     models.ClusterLocalhost,
+				Name:     types.ClusterLocalhost,
 				Resolved: false,
 			})
 		}

@@ -3,6 +3,7 @@ package models
 import (
 	"gorm.io/gorm"
 
+	"github.com/porter-dev/porter/api/types"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -41,24 +42,17 @@ type Project struct {
 	GCPIntegrations   []ints.GCPIntegration   `json:"gcp_integrations"`
 }
 
-// ProjectExternal represents the Project type that is sent over REST
-type ProjectExternal struct {
-	ID       uint              `json:"id"`
-	Name     string            `json:"name"`
-	GitRepos []GitRepoExternal `json:"git_repos,omitempty"`
-}
+// ToProjectType generates an external types.Project to be shared over REST
+func (p *Project) ToProjectType() *types.Project {
+	roles := make([]*types.Role, 0)
 
-// Externalize generates an external Project to be shared over REST
-func (p *Project) Externalize() *ProjectExternal {
-	repos := make([]GitRepoExternal, 0)
-
-	for _, repo := range p.GitRepos {
-		repos = append(repos, *repo.Externalize())
+	for _, role := range p.Roles {
+		roles = append(roles, role.ToRoleType())
 	}
 
-	return &ProjectExternal{
-		ID:       p.ID,
-		Name:     p.Name,
-		GitRepos: repos,
+	return &types.Project{
+		ID:    p.ID,
+		Name:  p.Name,
+		Roles: roles,
 	}
 }

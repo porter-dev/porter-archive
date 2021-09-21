@@ -8,7 +8,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	token "sigs.k8s.io/aws-iam-authenticator/pkg/token"
+	"github.com/porter-dev/porter/api/types"
+	"sigs.k8s.io/aws-iam-authenticator/pkg/token"
 )
 
 // AWSIntegration is an auth mechanism that uses a AWS IAM user to
@@ -46,41 +47,12 @@ type AWSIntegration struct {
 	AWSSessionToken []byte `json:"aws_session_token"`
 }
 
-// AWSIntegrationExternal is a AWSIntegration to be shared over REST
-type AWSIntegrationExternal struct {
-	ID uint `json:"id"`
-
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-
-	// The AWS arn this is integration is linked to
-	AWSArn string `json:"aws_arn"`
-}
-
-// Externalize generates an external KubeIntegration to be shared over REST
-func (a *AWSIntegration) Externalize() *AWSIntegrationExternal {
-	return &AWSIntegrationExternal{
+func (a *AWSIntegration) ToAWSIntegrationType() *types.AWSIntegration {
+	return &types.AWSIntegration{
 		ID:        a.ID,
 		UserID:    a.UserID,
 		ProjectID: a.ProjectID,
 		AWSArn:    a.AWSArn,
-	}
-}
-
-// ToProjectIntegration converts an aws integration to a project integration
-func (a *AWSIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            a.ID,
-		ProjectID:     a.ProjectID,
-		AuthMechanism: "aws",
-		Category:      category,
-		Service:       service,
 	}
 }
 

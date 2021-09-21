@@ -196,15 +196,13 @@ class Templates extends Component<PropsType, StateType> {
     return api.getChart<ChartTypeWithExtendedConfig>(
       "<token>",
       {
-        namespace: queryParams.get("release_namespace"),
-        cluster_id: this.context?.currentCluster?.id,
-        storage: StorageType.Secret,
       },
       {
         id: this.context.currentProject.id,
         name: queryParams.get("release_name"),
-        // This will get by default the last available version
-        revision: Number(queryParams.get("release_version")),
+        revision: 0,
+        namespace: queryParams.get("release_namespace"),
+        cluster_id: this.context?.currentCluster?.id,
       }
     );
   };

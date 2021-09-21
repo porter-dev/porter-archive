@@ -44,7 +44,7 @@ Porter will look for a `Dockerfile` located at the root of the current directory
 To point to a Dockerfile, you should pass the **relative path** to the Dockerfile from the root directory of the source code:
 
 ```sh
-porter create web --name web-test --dockerfile /my/nested/Dockerfile
+porter create web --app web-test --dockerfile /my/nested/Dockerfile
 ```
 
 To use a cloud-native buildpack instead of a Dockerfile, you can specify the method directly:

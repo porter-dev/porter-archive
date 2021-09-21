@@ -135,8 +135,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         });
       })
       .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.error;
+        let parsedErr = err?.response?.data?.error;
 
         err = parsedErr || err.message || JSON.stringify(err);
 
@@ -238,8 +237,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
               resolve(res?.data?.external_url);
             })
             .catch((err) => {
-              let parsedErr =
-                err?.response?.data?.error;
+              let parsedErr = err?.response?.data?.error;
               err = parsedErr || err.message || JSON.stringify(err);
               setSaveValuesStatus(`Could not create subdomain: ${err}`);
 
@@ -291,8 +289,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         }, 1000);
       })
       .catch((err: any) => {
-        let parsedErr =
-          err?.response?.data?.error;
+        let parsedErr = err?.response?.data?.error;
         err = parsedErr || err.message || JSON.stringify(err);
         setSaveValuesStatus(`Could not deploy template: ${err}`);
         setCurrentError(err);
@@ -340,20 +337,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       setTemplateName(newTemplateName);
     }
 
-    if (currentPage === "workflow" && currentTab === "porter") {
-      const fullActionConfig = getFullActionConfig();
-      return (
-        <WorkflowPage
-          name={templateName}
-          namespace={selectedNamespace}
-          fullActionConfig={fullActionConfig}
-          shouldCreateWorkflow={shouldCreateWorkflow}
-          setShouldCreateWorkflow={setShouldCreateWorkflow}
-          setPage={setCurrentPage}
-        />
-      );
-    }
-
+    const fullActionConfig = getFullActionConfig();
     // Display main (non-source) settings page
     return (
       <SettingsPage
@@ -370,6 +354,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         form={form}
         valuesToOverride={valuesToOverride}
         clearValuesToOverride={() => setValuesToOverride(null)}
+        fullActionConfig={fullActionConfig}
       />
     );
   };

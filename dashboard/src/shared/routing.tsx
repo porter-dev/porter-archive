@@ -59,9 +59,7 @@ export const pushFiltered = (
 
 export const getQueryParams = (props: any) => {
   const searchParams = props.location.search;
-  if (searchParams) {
-    return new URLSearchParams(searchParams);
-  }
+  return new URLSearchParams(searchParams);
 };
 
 export const getQueryParam = (props: any, paramName: string) => {

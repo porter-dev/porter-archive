@@ -40,7 +40,7 @@ func (t *TemplateListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		repoURL = t.Config().ServerConf.DefaultApplicationHelmRepoURL
 	}
 
-	repoIndex, err := loader.LoadRepoIndexPublic(request.RepoURL)
+	repoIndex, err := loader.LoadRepoIndexPublic(repoURL)
 
 	if err != nil {
 		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))

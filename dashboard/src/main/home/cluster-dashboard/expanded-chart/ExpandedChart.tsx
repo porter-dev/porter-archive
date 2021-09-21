@@ -93,13 +93,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setIsLoadingChartData(true);
     const res = await api.getChart(
       "<token>",
-      {
-        namespace: chart.namespace,
-        cluster_id: currentCluster.id,
-        storage: StorageType.Secret,
-      },
+      {},
       {
         name: chart.name,
+        namespace: chart.namespace,
+        cluster_id: currentCluster.id,
         revision: chart.version,
         id: currentProject.id,
       }
@@ -130,15 +128,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
     try {
       const { data: chartControllers } = await api.getChartControllers(
         "<token>",
+        {},
         {
+          name: chart.name,
           namespace: chart.namespace,
           cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
-        },
-        {
-          id: currentProject.id,
-          name: chart.name,
           revision: chart.version,
+          id: currentProject.id,
         }
       );
 
@@ -161,7 +157,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const setupWebsocket = (kind: string) => {
-    const apiEndpoint = `/api/projects/${currentProject.id}/k8s/${kind}/status?cluster_id=${currentCluster.id}`;
+    const apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
       onmessage(evt: MessageEvent) {
@@ -201,13 +197,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
       const res = await api.getChartComponents(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
         },
         {
           id: currentProject.id,
           name: currentChart.name,
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
           revision: currentChart.version,
         }
       );
@@ -249,12 +244,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
       await api.upgradeChartValues(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          storage: StorageType.Secret,
           values: valuesYaml,
         },
         {
           id: currentProject.id,
+          namespace: currentChart.namespace,
           name: currentChart.name,
           cluster_id: currentCluster.id,
         }
@@ -269,7 +263,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       });
     } catch (err) {
       const parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -303,13 +297,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
         await api.upgradeChartValues(
           "<token>",
           {
-            namespace: currentChart.namespace,
-            storage: StorageType.Secret,
             values: valuesYaml,
             version: version,
           },
           {
             id: currentProject.id,
+            namespace: currentChart.namespace,
             name: currentChart.name,
             cluster_id: currentCluster.id,
           }
@@ -325,7 +318,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         cb && cb();
       } catch (err) {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
@@ -581,7 +574,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
         {},
         {
           namespace: currentChart.namespace,
-          storage: StorageType.Secret,
           name: currentChart.name,
           id: currentProject.id,
           cluster_id: currentCluster.id,
@@ -635,11 +627,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
       .getIngress(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
           id: currentProject.id,
           name: ingressName,
+          cluster_id: currentCluster.id,
           namespace: `${currentChart.namespace}`,
         }
       )

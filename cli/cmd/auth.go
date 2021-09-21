@@ -7,7 +7,8 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	loginBrowser "github.com/porter-dev/porter/cli/cmd/login"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
@@ -25,7 +26,7 @@ var loginCmd = &cobra.Command{
 		err := login()
 
 		if err != nil {
-			color.Red("Error logging in:", err.Error())
+			color.Red("Error logging in: %s\n", err.Error())
 			os.Exit(1)
 		}
 	},
@@ -38,7 +39,7 @@ var registerCmd = &cobra.Command{
 		err := register()
 
 		if err != nil {
-			color.Red("Error registering:", err.Error())
+			color.Red("Error registering: %s\n", err.Error())
 			os.Exit(1)
 		}
 	},
@@ -76,9 +77,9 @@ func init() {
 func login() error {
 	client := api.NewClientWithToken(config.Host+"/api", config.Token)
 
-	user, _ := client.AuthCheck(context.Background())
+	user, err := client.AuthCheck(context.Background())
 
-	if user != nil {
+	if err == nil {
 		// set the token if the user calls login with the --token flag or the PORTER_TOKEN env
 		if config.Token != "" {
 			config.SetToken(config.Token)
@@ -143,7 +144,7 @@ func login() error {
 
 	user, err = client.AuthCheck(context.Background())
 
-	if user == nil {
+	if err != nil {
 		color.Red("Invalid token.")
 		return err
 	}
@@ -155,11 +156,13 @@ func login() error {
 
 func setProjectForUser(client *api.Client, userID uint) error {
 	// get a list of projects, and set the current project
-	projects, err := client.ListUserProjects(context.Background(), userID)
+	resp, err := client.ListUserProjects(context.Background())
 
 	if err != nil {
 		return err
 	}
+
+	projects := *resp
 
 	if len(projects) > 0 {
 		config.SetProject(projects[0].ID)
@@ -193,7 +196,7 @@ func loginManual() error {
 		return err
 	}
 
-	_user, err := client.Login(context.Background(), &api.LoginRequest{
+	_, err = client.Login(context.Background(), &types.LoginUserRequest{
 		Email:    username,
 		Password: pw,
 	})
@@ -208,11 +211,13 @@ func loginManual() error {
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
 	// get a list of projects, and set the current project
-	projects, err := client.ListUserProjects(context.Background(), _user.ID)
+	resp, err := client.ListUserProjects(context.Background())
 
 	if err != nil {
 		return err
 	}
+
+	projects := *resp
 
 	if len(projects) > 0 {
 		config.SetProject(projects[0].ID)
@@ -244,7 +249,7 @@ func register() error {
 
 	client := GetAPIClient(config)
 
-	resp, err := client.CreateUser(context.Background(), &api.CreateUserRequest{
+	resp, err := client.CreateUser(context.Background(), &types.CreateUserRequest{
 		Email:    username,
 		Password: pw,
 	})
@@ -258,7 +263,7 @@ func register() error {
 	return nil
 }
 
-func logout(user *api.AuthCheckResponse, client *api.Client, args []string) error {
+func logout(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	err := client.Logout(context.Background())
 
 	if err != nil {

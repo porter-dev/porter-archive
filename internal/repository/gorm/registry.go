@@ -64,10 +64,10 @@ func (repo *RegistryRepository) CreateRegistry(reg *models.Registry) (*models.Re
 }
 
 // ReadRegistry gets a registry specified by a unique id
-func (repo *RegistryRepository) ReadRegistry(id uint) (*models.Registry, error) {
+func (repo *RegistryRepository) ReadRegistry(projectID, regID uint) (*models.Registry, error) {
 	reg := &models.Registry{}
 
-	if err := repo.db.Preload("TokenCache").Where("id = ?", id).First(&reg).Error; err != nil {
+	if err := repo.db.Preload("TokenCache").Where("project_id = ? AND id = ?", projectID, regID).First(&reg).Error; err != nil {
 		return nil, err
 	}
 

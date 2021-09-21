@@ -27,9 +27,10 @@ const DeleteNamespaceModal = () => {
     api
       .deleteNamespace(
         "<token>",
-        { name: currentModalData.metadata.name, cluster_id: currentCluster.id },
+        { name: currentModalData.metadata.name },
         {
           id: currentProject.id,
+          cluster_id: currentCluster.id,
         }
       )
       .then((res) => {

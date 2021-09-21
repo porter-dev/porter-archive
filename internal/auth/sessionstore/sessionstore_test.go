@@ -5,11 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/porter-dev/porter/internal/config"
-
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	test "github.com/porter-dev/porter/internal/repository/memory"
+	"github.com/porter-dev/porter/internal/repository/test"
 
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 )
@@ -33,9 +31,12 @@ var secret = "secret"
 func TestPGStore(t *testing.T) {
 	repo := test.NewRepository(true)
 
-	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecrets: []string{"secret"},
-	})
+	ss, err := sessionstore.NewStore(
+		&sessionstore.NewStoreOpts{
+			SessionRepository: repo.Session(),
+			CookieSecrets:     []string{"secret"},
+		},
+	)
 
 	if err != nil {
 		t.Fatal("Failed to get store", err)
@@ -128,16 +129,17 @@ func TestPGStore(t *testing.T) {
 	if err = ss.Save(req, headerOnlyResponseWriter(m), session); err != nil {
 		t.Fatal("Failed to save session:", err.Error())
 	}
-
-	t.Errorf("")
 }
 
 func TestSessionOptionsAreUniquePerSession(t *testing.T) {
 	repo := test.NewRepository(true)
 
-	ss, err := sessionstore.NewStore(repo, config.ServerConf{
-		CookieSecrets: []string{"secret"},
-	})
+	ss, err := sessionstore.NewStore(
+		&sessionstore.NewStoreOpts{
+			SessionRepository: repo.Session(),
+			CookieSecrets:     []string{"secret"},
+		},
+	)
 
 	if err != nil {
 		t.Fatal("Failed to get store", err)

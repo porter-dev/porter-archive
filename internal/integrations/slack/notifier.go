@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/porter-dev/porter/internal/models"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -53,10 +53,10 @@ type NotifyOpts struct {
 
 type SlackNotifier struct {
 	slackInts []*integrations.SlackIntegration
-	Config    *models.NotificationConfigExternal
+	Config    *types.NotificationConfig
 }
 
-func NewSlackNotifier(conf *models.NotificationConfigExternal, slackInts ...*integrations.SlackIntegration) Notifier {
+func NewSlackNotifier(conf *types.NotificationConfig, slackInts ...*integrations.SlackIntegration) Notifier {
 	return &SlackNotifier{
 		slackInts: slackInts,
 		Config:    conf,

@@ -3,7 +3,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/connect"
 	"github.com/spf13/cobra"
 )
@@ -91,19 +92,6 @@ var connectDOCRCmd = &cobra.Command{
 	},
 }
 
-var connectHRCmd = &cobra.Command{
-	Use:     "helmrepo",
-	Aliases: []string{"helm", "helmrepos"},
-	Short:   "Adds a Helm repository to a project",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, runConnectHelmRepoBasic)
-
-		if err != nil {
-			os.Exit(1)
-		}
-	},
-}
-
 func init() {
 	rootCmd.AddCommand(connectCmd)
 
@@ -128,10 +116,9 @@ func init() {
 	connectCmd.AddCommand(connectDockerhubCmd)
 	connectCmd.AddCommand(connectGCRCmd)
 	connectCmd.AddCommand(connectDOCRCmd)
-	connectCmd.AddCommand(connectHRCmd)
 }
 
-func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	isLocal := false
 
 	if config.Driver == "local" {
@@ -153,7 +140,7 @@ func runConnectKubeconfig(_ *api.AuthCheckResponse, client *api.Client, _ []stri
 	return config.SetCluster(id)
 }
 
-func runConnectECR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+func runConnectECR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.ECR(
 		client,
 		config.Project,
@@ -166,7 +153,7 @@ func runConnectECR(_ *api.AuthCheckResponse, client *api.Client, _ []string) err
 	return config.SetRegistry(regID)
 }
 
-func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+func runConnectGCR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.GCR(
 		client,
 		config.Project,
@@ -179,7 +166,7 @@ func runConnectGCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) err
 	return config.SetRegistry(regID)
 }
 
-func runConnectDOCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+func runConnectDOCR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.DOCR(
 		client,
 		config.Project,
@@ -192,7 +179,7 @@ func runConnectDOCR(_ *api.AuthCheckResponse, client *api.Client, _ []string) er
 	return config.SetRegistry(regID)
 }
 
-func runConnectDockerhub(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+func runConnectDockerhub(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.Dockerhub(
 		client,
 		config.Project,
@@ -205,7 +192,7 @@ func runConnectDockerhub(_ *api.AuthCheckResponse, client *api.Client, _ []strin
 	return config.SetRegistry(regID)
 }
 
-func runConnectRegistry(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
+func runConnectRegistry(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.Registry(
 		client,
 		config.Project,
@@ -216,17 +203,4 @@ func runConnectRegistry(_ *api.AuthCheckResponse, client *api.Client, _ []string
 	}
 
 	return config.SetRegistry(regID)
-}
-
-func runConnectHelmRepoBasic(_ *api.AuthCheckResponse, client *api.Client, _ []string) error {
-	hrID, err := connect.Helm(
-		client,
-		config.Project,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return config.SetHelmRepo(hrID)
 }

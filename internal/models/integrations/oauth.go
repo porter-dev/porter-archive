@@ -1,18 +1,10 @@
 package integrations
 
 import (
-	"gorm.io/gorm"
 	"time"
-)
 
-// OAuthIntegrationClient is the name of an OAuth mechanism client
-type OAuthIntegrationClient string
-
-// The supported oauth mechanism clients
-const (
-	OAuthGithub       OAuthIntegrationClient = "github"
-	OAuthDigitalOcean OAuthIntegrationClient = "do"
-	OAuthGoogle       OAuthIntegrationClient = "google"
+	"github.com/porter-dev/porter/api/types"
+	"gorm.io/gorm"
 )
 
 // SharedOAuthModel stores general fields needed for OAuth Integration
@@ -38,7 +30,7 @@ type OAuthIntegration struct {
 	SharedOAuthModel
 
 	// The name of the auth mechanism
-	Client OAuthIntegrationClient `json:"client"`
+	Client types.OAuthIntegrationClient `json:"client"`
 
 	// The id of the user that linked this auth mechanism
 	UserID uint `json:"user_id"`
@@ -61,40 +53,12 @@ type GithubAppOAuthIntegration struct {
 	UserID uint `json:"user_id"`
 }
 
-// OAuthIntegrationExternal is an OAuthIntegration to be shared over REST
-type OAuthIntegrationExternal struct {
-	ID uint `json:"id"`
-
-	// The name of the auth mechanism
-	Client OAuthIntegrationClient `json:"client"`
-
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-}
-
-// Externalize generates an external KubeIntegration to be shared over REST
-func (o *OAuthIntegration) Externalize() *OAuthIntegrationExternal {
-	return &OAuthIntegrationExternal{
+// ToOAuthIntegrationType generates an external OAuthIntegration to be shared over REST
+func (o *OAuthIntegration) ToOAuthIntegrationType() *types.OAuthIntegration {
+	return &types.OAuthIntegration{
 		ID:        o.ID,
 		Client:    o.Client,
 		UserID:    o.UserID,
 		ProjectID: o.ProjectID,
-	}
-}
-
-// ToProjectIntegration converts an oauth integration to a project integration
-func (o *OAuthIntegration) ToProjectIntegration(
-	category string,
-	service IntegrationService,
-) *ProjectIntegration {
-	return &ProjectIntegration{
-		ID:            o.ID,
-		ProjectID:     o.ProjectID,
-		AuthMechanism: "oauth",
-		Category:      category,
-		Service:       service,
 	}
 }

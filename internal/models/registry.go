@@ -3,6 +3,7 @@ package models
 import (
 	"strings"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
@@ -37,38 +38,17 @@ type Registry struct {
 	TokenCache integrations.RegTokenCache
 }
 
-// RegistryExternal is an external Registry to be shared over REST
-type RegistryExternal struct {
-	ID uint `json:"id"`
-
-	// The project that this integration belongs to
-	ProjectID uint `json:"project_id"`
-
-	// Name of the registry
-	Name string `json:"name"`
-
-	// URL of the registry
-	URL string `json:"url"`
-
-	// The integration service for this registry
-	Service integrations.IntegrationService `json:"service"`
-
-	// The infra id, if registry was provisioned with Porter
-	InfraID uint `json:"infra_id"`
-}
-
-// Externalize generates an external Registry to be shared over REST
-func (r *Registry) Externalize() *RegistryExternal {
-	var serv integrations.IntegrationService
+func (r *Registry) ToRegistryType() *types.Registry {
+	var serv types.RegistryService
 
 	if r.AWSIntegrationID != 0 {
-		serv = integrations.ECR
+		serv = types.ECR
 	} else if r.GCPIntegrationID != 0 {
-		serv = integrations.GCR
+		serv = types.GCR
 	} else if r.DOIntegrationID != 0 {
-		serv = integrations.DOCR
+		serv = types.DOCR
 	} else if strings.Contains(r.URL, "index.docker.io") {
-		serv = integrations.DockerHub
+		serv = types.DockerHub
 	}
 
 	uri := r.URL
@@ -78,7 +58,7 @@ func (r *Registry) Externalize() *RegistryExternal {
 		uri = splStr[1]
 	}
 
-	return &RegistryExternal{
+	return &types.Registry{
 		ID:        r.ID,
 		ProjectID: r.ProjectID,
 		Name:      r.Name,

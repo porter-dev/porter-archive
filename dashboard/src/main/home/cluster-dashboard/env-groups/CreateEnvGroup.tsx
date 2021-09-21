@@ -90,13 +90,13 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
         "<token>",
         {
           name: this.state.envGroupName,
-          namespace: this.state.selectedNamespace,
           variables: apiEnvVariables,
           secret_variables: secretEnvVariables,
         },
         {
           id: this.context.currentProject.id,
           cluster_id: this.props.currentCluster.id,
+          namespace: this.state.selectedNamespace,
         }
       )
       .then((res) => {
@@ -113,10 +113,11 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
     api
       .getNamespaces(
         "<token>",
+        {},
         {
+          id: currentProject.id,
           cluster_id: this.props.currentCluster.id,
-        },
-        { id: currentProject.id }
+        }
       )
       .then((res) => {
         if (res.data) {

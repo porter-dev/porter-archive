@@ -92,10 +92,11 @@ class SettingsPage extends Component<PropsType, StateType> {
     api
       .getNamespaces(
         "<token>",
+        {},
         {
+          id: currentProject.id,
           cluster_id: id,
-        },
-        { id: currentProject.id }
+        }
       )
       .then((res) => {
         if (res.data) {

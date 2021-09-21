@@ -2,6 +2,7 @@ import UnexpectedErrorPage from "components/UnexpectedErrorPage";
 import React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import * as Sentry from "@sentry/react";
+import StackTrace from "stacktrace-js";
 
 export type PorterErrorBoundaryProps<OnResetProps = {}> = {
   // Component or useful name to describe where the error boundary was setted
@@ -15,23 +16,25 @@ const PorterErrorBoundary: React.FC<PorterErrorBoundaryProps> = ({
   onReset,
   children,
 }) => {
-  const handleError = (error: Error, info: { componentStack: string }) => {
-    if (process.env.SENTRY_ENABLED) {
-      Sentry.captureException(error, (scope) => {
-        scope.setTags({
-          error_boundary_location: errorBoundaryLocation,
-          error_message: error?.message,
-          component_stack: info?.componentStack,
+  const handleError = (err: Error, info: { componentStack: string }) => {
+    StackTrace.fromError(err).then((error) => {
+      if (process.env.SENTRY_ENABLED) {
+        Sentry.captureException(error, (scope) => {
+          scope.setTags({
+            error_boundary_location: errorBoundaryLocation,
+            error_message: err?.message,
+            component_stack: info?.componentStack,
+          });
+          return scope;
         });
-        return scope;
-      });
-    }
+      }
 
-    window?.analytics?.track("React Error", {
-      location: errorBoundaryLocation,
-      error: error.message,
-      componentStack: info?.componentStack,
-      url: window.location.toString(),
+      window?.analytics?.track("React Error", {
+        location: errorBoundaryLocation,
+        error: error.toString(),
+        componentStack: info?.componentStack,
+        url: window.location.toString(),
+      });
     });
   };
 

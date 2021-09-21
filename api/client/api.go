@@ -104,8 +104,6 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 		return nil
 	}
 
-	fmt.Println(string(strData))
-
 	req, err := http.NewRequest(
 		"POST",
 		fmt.Sprintf("%s%s", c.BaseURL, relPath),

@@ -502,8 +502,10 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 		metav1.GetOptions{},
 	)
 
-	if err != nil {
-		return fmt.Errorf("Cannot get pod %s: %s", name, err.Error())
+	if err != nil && errors.IsNotFound(err) {
+		return IsNotFoundError
+	} else if err != nil {
+		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
 	container := pod.Spec.Containers[0].Name

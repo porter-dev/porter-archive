@@ -54,6 +54,8 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	release, err := helmAgent.GetRelease(name, int(version), false)
 
 	if err != nil {
+		// ugly casing since at the time of this commit Helm doesn't have an errors package.
+		// so we rely on the Helm error containing "not found"
 		if strings.Contains(err.Error(), "not found") {
 			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("release not found"),

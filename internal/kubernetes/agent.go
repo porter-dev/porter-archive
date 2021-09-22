@@ -486,11 +486,17 @@ func (a *Agent) GetPodsByLabel(selector string, namespace string) (*v1.PodList, 
 
 // DeletePod deletes a pod by name and namespace
 func (a *Agent) DeletePod(namespace string, name string) error {
-	return a.Clientset.CoreV1().Pods(namespace).Delete(
+	err := a.Clientset.CoreV1().Pods(namespace).Delete(
 		context.TODO(),
 		name,
 		metav1.DeleteOptions{},
 	)
+
+	if err != nil && errors.IsNotFound(err) {
+		return IsNotFoundError
+	}
+
+	return err
 }
 
 // GetPodLogs streams real-time logs from a given pod.

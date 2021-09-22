@@ -1,6 +1,8 @@
 package namespace
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -10,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -41,7 +44,14 @@ func (c *GetIngressHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ingress, err := agent.GetIngress(namespace, name)
 
-	if err != nil {
+	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("ingress %s/%s was not found", namespace, name),
+			http.StatusNotFound,
+		))
+
+		return
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

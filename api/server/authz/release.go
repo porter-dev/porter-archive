@@ -2,7 +2,9 @@ package authz
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -52,7 +54,17 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	release, err := helmAgent.GetRelease(name, int(version), false)
 
 	if err != nil {
-		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
+		// ugly casing since at the time of this commit Helm doesn't have an errors package.
+		// so we rely on the Helm error containing "not found"
+		if strings.Contains(err.Error(), "not found") {
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("release not found"),
+				http.StatusNotFound,
+			))
+		} else {
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
+		}
+
 		return
 	}
 

@@ -7,7 +7,9 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 )
 
@@ -41,7 +43,7 @@ Key file location: `))
 		integration, err := client.CreateGCPIntegration(
 			context.Background(),
 			projectID,
-			&api.CreateGCPIntegrationRequest{
+			&types.CreateGCPRequest{
 				GCPKeyData: string(bytes),
 			},
 		)
@@ -67,10 +69,10 @@ Registry URL: `))
 			return 0, err
 		}
 
-		reg, err := client.CreateGCR(
+		reg, err := client.CreateRegistry(
 			context.Background(),
 			projectID,
-			&api.CreateGCRRequest{
+			&types.CreateRegistryRequest{
 				Name:             regName,
 				GCPIntegrationID: integration.ID,
 				URL:              regURL,

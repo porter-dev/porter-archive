@@ -2,9 +2,10 @@ package parser
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"helm.sh/helm/v3/pkg/chart"
@@ -35,13 +36,26 @@ type ContextConfig struct {
 	TemplateWriter templater.TemplateWriter
 }
 
+// GetFormFromRelease returns the form by parsing a release's files. Returns nil if
+// the form is not found, throws an error if the form was found but there was a parsing
+// error.
+func GetFormFromRelease(def *ClientConfigDefault, rel *release.Release) (*types.FormYAML, error) {
+	for _, file := range rel.Chart.Files {
+		if strings.Contains(file.Name, "form.yaml") {
+			return FormYAMLFromBytes(def, file.Data, "")
+		}
+	}
+
+	return nil, nil
+}
+
 // FormYAMLFromBytes generates a usable form yaml from raw form config and a
 // set of default clients.
 //
 // stateType refers to the types of state that should be read. The two state types
 // are "live" and "declared" -- if stateType is "", this will read both live and
 // declared states.
-func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType string) (*models.FormYAML, error) {
+func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType string) (*types.FormYAML, error) {
 	form, err := unqueriedFormYAMLFromBytes(bytes)
 
 	if err != nil {
@@ -83,9 +97,9 @@ func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType string)
 }
 
 // unqueriedFormYAMLFromBytes returns a FormYAML without values queries populated
-func unqueriedFormYAMLFromBytes(bytes []byte) (*models.FormYAML, error) {
+func unqueriedFormYAMLFromBytes(bytes []byte) (*types.FormYAML, error) {
 	// parse bytes into object
-	form := &models.FormYAML{}
+	form := &types.FormYAML{}
 
 	err := yaml.Unmarshal(bytes, form)
 
@@ -94,7 +108,7 @@ func unqueriedFormYAMLFromBytes(bytes []byte) (*models.FormYAML, error) {
 	}
 
 	// populate all context fields, with default set to helm/values with no config
-	parent := &models.FormContext{
+	parent := &types.FormContext{
 		Type: "helm/values",
 	}
 
@@ -121,8 +135,8 @@ func unqueriedFormYAMLFromBytes(bytes []byte) (*models.FormYAML, error) {
 
 // create map[*FormContext]*ContextConfig
 // assumes all contexts populated
-func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML, stateType string) map[*models.FormContext]*ContextConfig {
-	lookup := make(map[*models.FormContext]*ContextConfig)
+func formToLookupTable(def *ClientConfigDefault, form *types.FormYAML, stateType string) map[*types.FormContext]*ContextConfig {
+	lookup := make(map[*types.FormContext]*ContextConfig)
 
 	for i, tab := range form.Tabs {
 		for j, section := range tab.Sections {
@@ -180,7 +194,7 @@ func formToLookupTable(def *ClientConfigDefault, form *models.FormYAML, stateTyp
 // TODO -- this needs to be able to construct new context configs based on
 // configuration for each context, but right now just uses the default config
 // for everything
-func formContextToContextConfig(def *ClientConfigDefault, context *models.FormContext, stateType string) *ContextConfig {
+func formContextToContextConfig(def *ClientConfigDefault, context *types.FormContext, stateType string) *ContextConfig {
 	res := &ContextConfig{}
 
 	if context.Type == "helm/values" && (stateType == "" || stateType == "declared") {

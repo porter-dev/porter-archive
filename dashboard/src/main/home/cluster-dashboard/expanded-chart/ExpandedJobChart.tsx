@@ -79,13 +79,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .getChart(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          cluster_id: currentCluster.id,
-          storage: StorageType.Secret,
         },
         {
           name: chart.name,
           revision: revision,
+          namespace: currentChart.namespace,
+          cluster_id: currentCluster.id,
           id: currentProject.id,
         }
       )
@@ -177,7 +176,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/job/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/job/status`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -239,7 +238,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentCluster, currentProject } = this.context;
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
     let ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/k8s/cronjob/status?cluster_id=${currentCluster.id}`
+      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/cronjob/status`
     );
     ws.onopen = () => {
       console.log("connected to websocket");
@@ -367,13 +366,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .upgradeChartValues(
         "<token>",
         {
-          namespace: this.state.currentChart.namespace,
-          storage: StorageType.Secret,
           values: conf,
         },
         {
           id: currentProject.id,
           name: this.state.currentChart.name,
+          namespace: this.state.currentChart.namespace,
           cluster_id: currentCluster.id,
         }
       )
@@ -383,7 +381,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         let parsedErr =
-          err?.response?.data?.errors && err.response.data.errors[0];
+          err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
@@ -410,11 +408,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       .getJobs(
         "<token>",
         {
-          cluster_id: currentCluster.id,
         },
         {
           id: currentProject.id,
-          chart: `${chart.chart.metadata.name}-${chart.chart.metadata.version}`,
+          cluster_id: currentCluster.id,
           namespace: chart.namespace,
           release_name: chart.name,
         }
@@ -584,7 +581,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         {},
         {
           namespace: currentChart.namespace,
-          storage: StorageType.Secret,
           name: currentChart.name,
           id: currentProject.id,
           cluster_id: currentCluster.id,
@@ -636,7 +632,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       cb && cb();
     } catch (err) {
       let parsedErr =
-        err?.response?.data?.errors && err.response.data.errors[0];
+        err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;

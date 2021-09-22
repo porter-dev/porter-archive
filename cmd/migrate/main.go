@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/config"
 	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
@@ -15,31 +14,36 @@ import (
 )
 
 func main() {
-	fmt.Println("running migrations...")
-
-	appConf := config.FromEnv()
-
 	logger := lr.NewConsole(true)
-	db, err := adapter.New(&appConf.Db)
+	logger.Info().Msg("running migrations")
+
+	envConf, err := loader.FromEnv()
 
 	if err != nil {
-		logger.Fatal().Err(err).Msg("")
+		logger.Fatal().Err(err).Msg("could not load env conf")
+		return
+	}
+
+	db, err := adapter.New(envConf.DBConf)
+
+	if err != nil {
+		logger.Fatal().Err(err).Msg("could not connect to the database")
 		return
 	}
 
 	err = gorm.AutoMigrate(db)
 
 	if err != nil {
-		logger.Fatal().Err(err).Msg("")
+		logger.Fatal().Err(err).Msg("gorm auto-migration failed")
 		return
 	}
 
 	if err := db.Raw("ALTER TABLE clusters DROP CONSTRAINT IF EXISTS fk_cluster_token_caches").Error; err != nil {
-		logger.Fatal().Err(err).Msg("")
+		logger.Fatal().Err(err).Msg("failed to drop cluster token cache constraint")
 		return
 	}
 	if err := db.Raw("ALTER TABLE cluster_token_caches DROP CONSTRAINT IF EXISTS fk_clusters_token_cache").Error; err != nil {
-		logger.Fatal().Err(err).Msg("")
+		logger.Fatal().Err(err).Msg("failed to drop clusters token cache constraint")
 		return
 	}
 
@@ -53,7 +57,7 @@ func main() {
 		err := keyrotate.Rotate(db, &oldKey, &newKey)
 
 		if err != nil {
-			panic(err)
+			logger.Fatal().Err(err).Msg("key rotation failed")
 		}
 	}
 }

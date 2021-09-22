@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/porter-dev/porter/api/types"
+
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 )
 
@@ -44,7 +46,7 @@ Token:`)
 	integration, err := client.CreateBasicAuthIntegration(
 		context.Background(),
 		projectID,
-		&api.CreateBasicAuthIntegrationRequest{
+		&types.CreateBasicRequest{
 			Username: username,
 			Password: password,
 		},
@@ -56,10 +58,10 @@ Token:`)
 
 	color.New(color.FgGreen).Printf("created basic auth integration with id %d\n", integration.ID)
 
-	reg, err := client.CreatePrivateRegistry(
+	reg, err := client.CreateRegistry(
 		context.Background(),
 		projectID,
-		&api.CreatePrivateRegistryRequest{
+		&types.CreateRegistryRequest{
 			URL:                fmt.Sprintf("index.docker.io/%s", repoName),
 			Name:               repoName,
 			BasicIntegrationID: integration.ID,

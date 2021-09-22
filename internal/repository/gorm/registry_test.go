@@ -25,13 +25,13 @@ func TestCreateRegistry(t *testing.T) {
 		ProjectID: tester.initProjects[0].Model.ID,
 	}
 
-	reg, err := tester.repo.Registry.CreateRegistry(reg)
+	reg, err := tester.repo.Registry().CreateRegistry(reg)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	reg, err = tester.repo.Registry.ReadRegistry(reg.Model.ID)
+	reg, err = tester.repo.Registry().ReadRegistry(tester.initProjects[0].Model.ID, reg.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -57,7 +57,7 @@ func TestListRegistriesByProjectID(t *testing.T) {
 	initRegistry(tester, t)
 	defer cleanup(tester, t)
 
-	regs, err := tester.repo.Registry.ListRegistriesByProjectID(
+	regs, err := tester.repo.Registry().ListRegistriesByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 
@@ -100,7 +100,7 @@ func TestUpdateRegistry(t *testing.T) {
 
 	reg.Name = "registry-new-name"
 
-	reg, err := tester.repo.Registry.UpdateRegistry(
+	reg, err := tester.repo.Registry().UpdateRegistry(
 		reg,
 	)
 
@@ -108,7 +108,7 @@ func TestUpdateRegistry(t *testing.T) {
 		t.Fatalf("%v\n", err)
 	}
 
-	reg, err = tester.repo.Registry.ReadRegistry(tester.initRegs[0].ID)
+	reg, err = tester.repo.Registry().ReadRegistry(tester.initProjects[0].Model.ID, tester.initRegs[0].ID)
 
 	// make sure data is correct
 	expRegistry := models.Registry{
@@ -145,13 +145,13 @@ func TestUpdateRegistryToken(t *testing.T) {
 		},
 	}
 
-	reg, err := tester.repo.Registry.CreateRegistry(reg)
+	reg, err := tester.repo.Registry().CreateRegistry(reg)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	reg, err = tester.repo.Registry.ReadRegistry(reg.Model.ID)
+	reg, err = tester.repo.Registry().ReadRegistry(tester.initProjects[0].Model.ID, reg.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -174,11 +174,11 @@ func TestUpdateRegistryToken(t *testing.T) {
 	reg.TokenCache.Token = []byte("token-2")
 	reg.TokenCache.Expiry = time.Now().Add(24 * time.Hour)
 
-	reg, err = tester.repo.Registry.UpdateRegistryTokenCache(&reg.TokenCache)
+	reg, err = tester.repo.Registry().UpdateRegistryTokenCache(&reg.TokenCache)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
-	reg, err = tester.repo.Registry.ReadRegistry(reg.Model.ID)
+	reg, err = tester.repo.Registry().ReadRegistry(tester.initProjects[0].Model.ID, reg.Model.ID)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -212,25 +212,25 @@ func TestDeleteRegistry(t *testing.T) {
 	initRegistry(tester, t)
 	defer cleanup(tester, t)
 
-	reg, err := tester.repo.Registry.ReadRegistry(tester.initRegs[0].Model.ID)
+	reg, err := tester.repo.Registry().ReadRegistry(tester.initProjects[0].Model.ID, tester.initRegs[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	err = tester.repo.Registry.DeleteRegistry(reg)
+	err = tester.repo.Registry().DeleteRegistry(reg)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	_, err = tester.repo.Registry.ReadRegistry(tester.initRegs[0].Model.ID)
+	_, err = tester.repo.Registry().ReadRegistry(tester.initProjects[0].Model.ID, tester.initRegs[0].Model.ID)
 
 	if err != orm.ErrRecordNotFound {
 		t.Fatalf("incorrect error: expected %v, got %v\n", orm.ErrRecordNotFound, err)
 	}
 
-	regs, err := tester.repo.Registry.ListRegistriesByProjectID(tester.initProjects[0].Model.ID)
+	regs, err := tester.repo.Registry().ListRegistriesByProjectID(tester.initProjects[0].Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)

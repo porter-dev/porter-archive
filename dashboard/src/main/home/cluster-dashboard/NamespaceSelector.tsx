@@ -29,15 +29,16 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
     api
       .getNamespaces(
         "<token>",
+        {},
         {
+          id: currentProject.id,
           cluster_id: currentCluster.id,
-        },
-        { id: currentProject.id }
+        }
       )
       .then((res) => {
         if (this._isMounted) {
           let namespaceOptions: { label: string; value: string }[] = [
-            { label: "All", value: "" },
+            { label: "All", value: "ALL" },
           ];
 
           // Set namespace from URL if specified
@@ -45,7 +46,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           let urlParams = new URLSearchParams(queryString);
           let urlNamespace = urlParams.get("namespace");
           if (urlNamespace === "ALL") {
-            urlNamespace = "";
+            urlNamespace = "ALL";
           }
 
           let defaultNamespace = "default";
@@ -66,8 +67,12 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
             }
           );
           this.setState({ namespaceOptions }, () => {
-            if (urlNamespace === "" || defaultNamespace === "") {
-              this.props.setNamespace("");
+            if (
+              urlNamespace === "" ||
+              defaultNamespace === "" ||
+              urlNamespace === "ALL"
+            ) {
+              this.props.setNamespace("ALL");
             } else if (this.props.namespace !== defaultNamespace) {
               this.props.setNamespace(defaultNamespace);
             }
@@ -76,7 +81,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
       })
       .catch((err) => {
         if (this._isMounted) {
-          this.setState({ namespaceOptions: [{ label: "All", value: "" }] });
+          this.setState({ namespaceOptions: [{ label: "All", value: "ALL" }] });
         }
       });
   };
@@ -96,6 +101,11 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
     this._isMounted = false;
   }
 
+  handleSetActive = (namespace: any) => {
+    console.log("SELECTED", namespace);
+    this.props.setNamespace(namespace);
+  };
+
   render() {
     return (
       <StyledNamespaceSelector>
@@ -104,7 +114,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
         </Label>
         <Selector
           activeValue={this.props.namespace}
-          setActiveValue={(namespace) => this.props.setNamespace(namespace)}
+          setActiveValue={this.handleSetActive}
           options={this.state.namespaceOptions}
           dropdownLabel="Namespace"
           width="150px"

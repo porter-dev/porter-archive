@@ -45,7 +45,7 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
           integrationList[integration.service] &&
           integrationList[integration.service].icon;
         let disabled =
-          integration.service === "kube" || integration.service === "docker";
+          integration.service === "kube" || integration.service === "dockerhub";
         return (
           <IntegrationOption
             key={i}

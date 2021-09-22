@@ -12,3 +12,6 @@ setup-env-files:
 
 build-cli: 
 	go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${VERSION}'" -a -tags cli -o $(BINDIR)/porter ./cli
+
+build-cli-dev:
+	go build -tags cli -o $(BINDIR)/porter ./cli

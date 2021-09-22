@@ -4,7 +4,7 @@ import api from "shared/api";
 
 import { Context } from "shared/Context";
 
-import { ChoiceType, ClusterType } from "shared/types";
+import { ChoiceType, ClusterType, FullActionConfigType } from "shared/types";
 
 import { isAlphanumeric } from "shared/common";
 
@@ -15,6 +15,7 @@ import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Selector from "components/Selector";
 import Loading from "components/Loading";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import WorkflowPage from "./WorkflowPage";
 
 type PropsType = WithAuthProps & {
   onSubmit: (x?: any) => void;
@@ -24,7 +25,7 @@ type PropsType = WithAuthProps & {
   form: any;
   valuesToOverride: any;
   clearValuesToOverride: () => void;
-
+  fullActionConfig: FullActionConfigType;
   templateName: string;
   setTemplateName: (x: string) => void;
   selectedNamespace: string;
@@ -92,10 +93,11 @@ class SettingsPage extends Component<PropsType, StateType> {
     api
       .getNamespaces(
         "<token>",
+        {},
         {
+          id: currentProject.id,
           cluster_id: id,
-        },
-        { id: currentProject.id }
+        }
       )
       .then((res) => {
         if (res.data) {
@@ -156,6 +158,7 @@ class SettingsPage extends Component<PropsType, StateType> {
               console.log(val);
               onSubmit(val);
             }}
+            hideBottomSpacer={!!this.props.fullActionConfig?.git_repo}
           />
         </FadeWrapper>
       );
@@ -224,15 +227,10 @@ class SettingsPage extends Component<PropsType, StateType> {
     }
 
     if (hasSource) {
-      const [pageKey, pageName] =
-        sourceType === "repo"
-          ? ["workflow", "GitHub Actions"]
-          : ["source", "Source Settings"];
-
       return (
-        <BackButton width="155px" onClick={() => setPage(pageKey)}>
+        <BackButton width="155px" onClick={() => setPage("source")}>
           <i className="material-icons">first_page</i>
-          {pageName}
+          Source Settings
         </BackButton>
       );
     }
@@ -250,6 +248,7 @@ class SettingsPage extends Component<PropsType, StateType> {
         <StyledSettingsPage>
           {this.renderHeaderSection()}
           {this.props.isCloning && this.getNameInput()}
+
           <Heading>Destination</Heading>
           <Helper>
             Specify the cluster and namespace you would like to deploy your
@@ -294,6 +293,13 @@ class SettingsPage extends Component<PropsType, StateType> {
             />
           </ClusterSection>
           {this.renderSettingsRegion()}
+          {this.props.fullActionConfig?.git_repo && (
+            <WorkflowPage
+              fullActionConfig={this.props.fullActionConfig}
+              name={this.props.templateName}
+              namespace={this.props.selectedNamespace}
+            />
+          )}
         </StyledSettingsPage>
       </PaddingWrapper>
     );

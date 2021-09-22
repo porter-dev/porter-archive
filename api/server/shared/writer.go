@@ -2,7 +2,9 @@ package shared
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"syscall"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -25,7 +27,11 @@ func NewDefaultResultWriter(conf *config.Config) ResultWriter {
 func (j *DefaultResultWriter) WriteResult(w http.ResponseWriter, r *http.Request, v interface{}) {
 	err := json.NewEncoder(w).Encode(v)
 
-	if err != nil {
+	if errors.Is(err, syscall.EPIPE) {
+		// broken pipe error, ignore. This means the client closed the connection while
+		// the server was sending bytes.
+		return
+	} else if err != nil {
 		apierrors.HandleAPIError(j.config, w, r, apierrors.NewErrInternal(err))
 	}
 }

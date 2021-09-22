@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -91,11 +92,18 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 					return
 				}
 
-				err = gaRunner.CreateEnvSecret()
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+						return
+					}
 				}
 			}
 		}

@@ -40,11 +40,11 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       .getNotificationConfig(
         "<token>",
         {
-          namespace: props.currentChart.namespace,
-          cluster_id: currentCluster.id,
         },
         {
           project_id: currentProject.id,
+          namespace: props.currentChart.namespace,
+          cluster_id: currentCluster.id,
           name: props.currentChart.name,
         }
       )
@@ -85,12 +85,12 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
       .updateNotificationConfig(
         "<token>",
         {
-          namespace: props.currentChart.namespace,
-          cluster_id: currentCluster.id,
           payload,
         },
         {
           project_id: currentProject.id,
+          namespace: props.currentChart.namespace,
+          cluster_id: currentCluster.id,
           name: props.currentChart.name,
         }
       )
@@ -103,7 +103,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
         setSaveLoading(false);
       });
   };
-
+  
   return (
     <>
       <Heading>Notification Settings</Heading>
@@ -120,7 +120,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
           {hasNotifications != null && !hasNotifications ? (
             <Banner type="warning">
               No integration has been set up for notifications.{" "}
-              <A href="http://localhost:8080/integrations/slack">
+              <A href={`${window.location.protocol}//${window.location.host}/integrations/slack`} >
                 Connect to Slack
               </A>
             </Banner>

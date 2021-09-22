@@ -19,6 +19,8 @@ interface AutoBuildpack {
 type PropsType = {
   actionConfig: ActionConfigType | null;
   branch: string;
+  dockerfilePath?: string;
+  folderPath: string;
   procfilePath?: string;
   setActionConfig: (x: ActionConfigType) => void;
   setProcfileProcess?: (x: string) => void;
@@ -35,6 +37,7 @@ type StateType = {
   dockerfiles: string[];
   processes: Record<string, string>;
   autoBuildpack: AutoBuildpack;
+  showingBuildContextPrompt: boolean;
 };
 
 export default class ContentsList extends Component<PropsType, StateType> {
@@ -49,6 +52,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
       valid: false,
       name: "",
     },
+    showingBuildContextPrompt: true,
   };
 
   componentDidMount() {
@@ -67,7 +71,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
     api
       .getBranchContents(
         "<token>",
-        { dir: this.state.currentDir },
+        { dir: this.state.currentDir || "./" },
         {
           project_id: currentProject.id,
           git_repo_id: actionConfig.git_repo_id,
@@ -81,14 +85,14 @@ export default class ContentsList extends Component<PropsType, StateType> {
         let files = [] as FileType[];
         let folders = [] as FileType[];
         res.data.map((x: FileType, i: number) => {
-          x.Type === "dir" ? folders.push(x) : files.push(x);
+          x.type === "dir" ? folders.push(x) : files.push(x);
         });
 
         folders.sort((a: FileType, b: FileType) => {
-          return a.Path < b.Path ? 1 : 0;
+          return a.path < b.path ? 1 : 0;
         });
         files.sort((a: FileType, b: FileType) => {
-          return a.Path < b.Path ? 1 : 0;
+          return a.path < b.path ? 1 : 0;
         });
         let contents = folders.concat(files);
 
@@ -166,17 +170,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
     } else if (error || !contents) {
       return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
     }
-
     return contents.map((item: FileType, i: number) => {
-      let splits = item.Path.split("/");
+      let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
-      if (item.Type === "dir") {
+      if (item.type === "dir") {
         return (
           <Item
             key={i}
-            isSelected={item.Path === this.state.currentDir}
+            isSelected={item.path === this.state.currentDir}
             lastItem={i === contents.length - 1}
-            onClick={() => this.setSubdirectory(item.Path)}
+            onClick={() => this.setSubdirectory(item.path)}
           >
             <img src={folder} />
             {fileName}
@@ -184,13 +187,13 @@ export default class ContentsList extends Component<PropsType, StateType> {
         );
       }
 
-      if (fileName.includes("Dockerfile")) {
+      if (fileName.includes("Dockerfile") && !this.props.dockerfilePath) {
         return (
           <FileItem
             key={i}
             lastItem={i === contents.length - 1}
             isADocker
-            onClick={() => this.props.setDockerfilePath(item.Path)}
+            onClick={() => this.props.setDockerfilePath(item.path)}
           >
             <img src={file} />
             {fileName}
@@ -228,15 +231,23 @@ export default class ContentsList extends Component<PropsType, StateType> {
     return (
       <FileItem lastItem={false}>
         <img src={info} />
-        Select Application Folder
+        Select{" "}
+        {this.props.dockerfilePath
+          ? "Docker Build Context"
+          : "Application Folder"}
       </FileItem>
     );
   };
 
   handleContinue = () => {
+    if (this.props.dockerfilePath) {
+      this.props.setFolderPath(this.state.currentDir || "./");
+      return;
+    }
+
     let dockerfiles = [] as string[];
     this.state.contents.forEach((item: FileType, i: number) => {
-      let splits = item.Path.split("/");
+      let splits = item.path.split("/");
       let fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
@@ -319,7 +330,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         </Overlay>
       );
     }
-    if (this.state.dockerfiles.length > 0) {
+    if (this.state.dockerfiles.length > 0 && !this.props.dockerfilePath) {
       return (
         <Overlay>
           <BgOverlay onClick={() => this.setState({ dockerfiles: [] })} />
@@ -361,6 +372,45 @@ export default class ContentsList extends Component<PropsType, StateType> {
           >
             No, I don't want to use a Dockerfile
           </ConfirmButton>
+        </Overlay>
+      );
+    }
+    if (
+      this.props.dockerfilePath &&
+      !this.props.folderPath &&
+      this.state.showingBuildContextPrompt
+    ) {
+      return (
+        <Overlay>
+          <BgOverlay onClick={() => this.props.setDockerfilePath("")} />
+          <CloseButton
+            onClick={() =>
+              this.props.setFolderPath(this.state.currentDir || "./")
+            }
+          >
+            <CloseButtonImg src={close} />
+          </CloseButton>
+          <Label>
+            Would you like to set the Docker build context to a different
+            directory?
+          </Label>
+          <MultiSelectRow>
+            <ConfirmButton
+              onClick={() => {
+                this.setState({ showingBuildContextPrompt: false });
+                this.setSubdirectory("");
+              }}
+            >
+              Yes
+            </ConfirmButton>
+            <ConfirmButton
+              onClick={() =>
+                this.props.setFolderPath(this.state.currentDir || "./")
+              }
+            >
+              No
+            </ConfirmButton>
+          </MultiSelectRow>
         </Overlay>
       );
     }
@@ -477,10 +527,16 @@ const Indicator = styled.div<{ selected: boolean }>`
 `;
 
 const Label = styled.div`
-  max-width: 420px;
+  max-width: 500px;
   line-height: 1.5em;
   text-align: center;
   font-size: 14px;
+`;
+
+const MultiSelectRow = styled.div`
+  display: flex;
+  min-width: 150px;
+  justify-content: space-between;
 `;
 
 const DockerfileList = styled.div`

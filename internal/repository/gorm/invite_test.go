@@ -27,13 +27,13 @@ func TestCreateInvite(t *testing.T) {
 		ProjectID: 1,
 	}
 
-	invite, err := tester.repo.Invite.CreateInvite(invite)
+	invite, err := tester.repo.Invite().CreateInvite(invite)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
-	invite, err = tester.repo.Invite.ReadInvite(invite.Model.ID)
+	invite, err = tester.repo.Invite().ReadInvite(1, invite.Model.ID)
 
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -67,7 +67,7 @@ func TestListInvitesByProjectID(t *testing.T) {
 	initInvite(tester, t)
 	defer cleanup(tester, t)
 
-	invites, err := tester.repo.Invite.ListInvitesByProjectID(
+	invites, err := tester.repo.Invite().ListInvitesByProjectID(
 		tester.initProjects[0].Model.ID,
 	)
 

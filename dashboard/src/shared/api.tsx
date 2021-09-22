@@ -10,7 +10,7 @@ import { FullActionConfigType, StorageType } from "./types";
  * @param {(err: Object, res: Object) => void} callback - Callback function.
  */
 
-const checkAuth = baseApi("GET", "/api/auth/check");
+const checkAuth = baseApi("GET", "/api/users/current");
 
 const connectECRRegistry = baseApi<
   {
@@ -47,16 +47,16 @@ const createAWSIntegration = baseApi<
 
 const overwriteAWSIntegration = baseApi<
   {
+    aws_integration_id: number;
     aws_access_key_id: string;
     aws_secret_access_key: string;
+    cluster_id: number;
   },
   {
-    projectID: number;
-    awsIntegrationID: number;
-    cluster_id: number;
+    project_id: number;
   }
 >("POST", (pathParams) => {
-  return `/api/projects/${pathParams.projectID}/integrations/aws/${pathParams.awsIntegrationID}/overwrite?cluster_id=${pathParams.cluster_id}`;
+  return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
 const createDOCR = baseApi<
@@ -174,17 +174,17 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
 });
 
 const createSubdomain = baseApi<
-  {
-    release_name: string;
-  },
+  {},
   {
     id: number;
+    release_name: string;
+    namespace: string;
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id } = pathParams;
+  let { cluster_id, id, namespace, release_name } = pathParams;
 
-  return `/api/projects/${id}/k8s/subdomain?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/subdomain`;
 });
 
 const deleteCluster = baseApi<
@@ -205,21 +205,19 @@ const deleteInvite = baseApi<{}, { id: number; invId: number }>(
 );
 
 const deletePod = baseApi<
-  {
-    cluster_id: number;
-  },
-  { name: string; namespace: string; id: number }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("DELETE", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}`;
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}`;
 });
 
 const getPodEvents = baseApi<
-  {
-    cluster_id: number;
-  },
-  { name: string; namespace: string; id: number }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/pods/${pathParams.namespace}/${pathParams.name}/events/list`;
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}/events`;
 });
 
 const deleteProject = baseApi<{}, { id: number }>("DELETE", (pathParams) => {
@@ -249,101 +247,90 @@ const deleteSlackIntegration = baseApi<
 const updateNotificationConfig = baseApi<
   {
     payload: any;
-    namespace: string;
-    cluster_id: number;
   },
   {
     project_id: number;
+    cluster_id: number;
+    namespace: string;
     name: string;
   }
 >("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+  let { project_id, cluster_id, namespace, name } = pathParams;
+
+  return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
 
 const getNotificationConfig = baseApi<
-  {
-    namespace: string;
-    cluster_id: number;
-  },
+  {},
   {
     project_id: number;
+    cluster_id: number;
+    namespace: string;
     name: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/releases/${pathParams.name}/notifications`;
+  let { project_id, cluster_id, namespace, name } = pathParams;
+
+  return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
 
-const generateGHAWorkflow = baseApi<
-  FullActionConfigType,
+const getGHAWorkflowTemplate = baseApi<
+  {
+    release_name: string;
+    github_action_config: FullActionConfigType;
+  },
   {
     cluster_id: number;
     project_id: number;
-    name: string;
     namespace: string;
   }
 >("POST", (pathParams) => {
-  const { name, namespace, cluster_id, project_id } = pathParams;
+  const { cluster_id, project_id, namespace } = pathParams;
 
-  return `/api/projects/${project_id}/ci/actions/generate?cluster_id=${cluster_id}&name=${name}&namespace=${namespace}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/gha_template`;
 });
 
 const deployTemplate = baseApi<
   {
-    templateName: string;
-    imageURL?: string;
-    formValues?: any;
-    storage: StorageType;
-    namespace: string;
+    template_name: string;
+    template_version: string;
+    image_url?: string;
+    values?: any;
     name: string;
-    githubActionConfig?: FullActionConfigType;
+    github_action_config?: FullActionConfigType;
   },
   {
     id: number;
     cluster_id: number;
-    name: string;
-    version: string;
+    namespace: string;
     repo_url?: string;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, name, version, repo_url } = pathParams;
+  let { cluster_id, id, namespace, repo_url } = pathParams;
 
   if (repo_url) {
-    return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
+    return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases?repo_url=${repo_url}`;
   }
-  return `/api/projects/${id}/deploy/${name}/${version}?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases`;
 });
 
 const deployAddon = baseApi<
   {
-    templateName: string;
-    formValues?: any;
-    storage: StorageType;
-    namespace: string;
+    template_name: string;
+    template_version: string;
+    values?: any;
     name: string;
   },
   {
     id: number;
     cluster_id: number;
-    name: string;
-    version: string;
+    namespace: string;
     repo_url?: string;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, name, version, repo_url } = pathParams;
+  let { cluster_id, id, namespace, repo_url } = pathParams;
 
-  return `/api/projects/${id}/deploy/addon/${name}/${version}?cluster_id=${cluster_id}&repo_url=${repo_url}`;
-});
-
-const destroyCluster = baseApi<
-  {
-    eks_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/addons?repo_url=${repo_url}`;
 });
 
 const detectBuildpack = baseApi<
@@ -418,51 +405,64 @@ const getBranches = baseApi<
 });
 
 const getChart = baseApi<
+  {},
   {
-    namespace: string;
+    id: number;
     cluster_id: number;
-    storage: StorageType;
-  },
-  { id: number; name: string; revision: number }
+    namespace: string;
+    name: string;
+    revision: number;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}`;
+  let { id, cluster_id, namespace, name, revision } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}`;
 });
 
 const getCharts = baseApi<
   {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
     limit: number;
     skip: number;
     byDate: boolean;
     statusFilter: string[];
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/releases`;
 });
 
 const getChartComponents = baseApi<
+  {},
   {
-    namespace: string;
+    id: number;
     cluster_id: number;
-    storage: StorageType;
-  },
-  { id: number; name: string; revision: number }
+    namespace: string;
+    name: string;
+    revision: number;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/components`;
+  let { id, cluster_id, namespace, name, revision } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/components`;
 });
 
 const getChartControllers = baseApi<
+  {},
   {
-    namespace: string;
+    id: number;
     cluster_id: number;
-    storage: StorageType;
-  },
-  { id: number; name: string; revision: number }
+    namespace: string;
+    name: string;
+    revision: number;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/${pathParams.revision}/controllers`;
+  let { id, cluster_id, namespace, name, revision } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/controllers`;
 });
 
 const getClusterIntegrations = baseApi("GET", "/api/integrations/cluster");
@@ -501,7 +501,7 @@ const getClusterNode = baseApi<
 >(
   "GET",
   (pathParams) =>
-    `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/node/${pathParams.nodeName}`
+    `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/nodes/${pathParams.nodeName}`
 );
 
 const getGitRepoList = baseApi<
@@ -554,12 +554,12 @@ const getInfra = baseApi<
 });
 
 const getIngress = baseApi<
-  {
-    cluster_id: number;
-  },
-  { name: string; namespace: string; id: number }
+  {},
+  { namespace: string; cluster_id: number; name: string; id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/ingress/${pathParams.name}`;
+  let { id, name, cluster_id, namespace } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/ingresses/${name}`;
 });
 
 const getInvites = baseApi<{}, { id: number }>("GET", (pathParams) => {
@@ -567,46 +567,43 @@ const getInvites = baseApi<{}, { id: number }>("GET", (pathParams) => {
 });
 
 const getJobs = baseApi<
-  {
-    cluster_id: number;
-  },
-  { chart: string; namespace: string; release_name: string; id: number }
+  {},
+  { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.chart}/${pathParams.release_name}/jobs`;
+  let { id, release_name, cluster_id, namespace } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs`;
 });
 
 const getJobStatus = baseApi<
-  {
-    cluster_id: number;
-  },
-  { name: string; namespace: string; id: number }
+  {},
+  { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/${pathParams.namespace}/${pathParams.name}/jobs/status`;
+  let { id, release_name, cluster_id, namespace } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs/status`;
 });
 
 const getJobPods = baseApi<
-  {
-    cluster_id: number;
-  },
-  { name: string; namespace: string; id: number }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/jobs/${pathParams.namespace}/${pathParams.name}/pods`;
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
 
 const getMatchingPods = baseApi<
   {
-    cluster_id: number;
     namespace: string;
     selectors: string[];
   },
-  { id: number }
+  { id: number; cluster_id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/pods`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/pods`;
 });
 
 const getMetrics = baseApi<
   {
-    cluster_id: number;
     metric: string;
     shouldsum: boolean;
     pods?: string[];
@@ -618,27 +615,32 @@ const getMetrics = baseApi<
     endrange: number;
     resolution: string;
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/metrics`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/metrics`;
 });
 
 const getNamespaces = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/namespaces`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces`;
 });
 
 const getNGINXIngresses = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/prometheus/ingresses`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/prometheus/ingresses`;
 });
 
 const getOAuthIds = baseApi<
@@ -665,76 +667,48 @@ const getProjectRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/repos`;
 });
 
-const getProjects = baseApi<{}, { id: number }>("GET", (pathParams) => {
-  return `/api/users/${pathParams.id}/projects`;
-});
+const getProjects = baseApi("GET", "/api/projects");
 
 const getPrometheusIsInstalled = baseApi<
+  {},
   {
+    id: number;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/prometheus/detect`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/prometheus/detect`;
 });
 
 const getRegistryIntegrations = baseApi("GET", "/api/integrations/registry");
 
 const getReleaseToken = baseApi<
-  {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
-  },
-  { name: string; id: number }
+  {},
+  { name: string; id: number; namespace: string; cluster_id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/webhook_token`;
+  let { id, cluster_id, namespace, name } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/webhook`;
 });
 
 const getReleaseSteps = baseApi<
-  {
-    namespace: string;
-    cluster_id: number;
-  },
-  { name: string; id: number }
+  {},
+  { name: string; id: number; namespace: string; cluster_id: number }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/steps`;
+  let { id, cluster_id, namespace, name } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/steps`;
 });
 
-const destroyEKS = baseApi<
+const destroyInfra = baseApi<
   {
-    eks_name: string;
+    name: string;
   },
   {
     project_id: number;
     infra_id: number;
   }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/eks/destroy`;
-});
-
-const destroyGKE = baseApi<
-  {
-    gke_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/gke/destroy`;
-});
-
-const destroyDOKS = baseApi<
-  {
-    doks_name: string;
-  },
-  {
-    project_id: number;
-    infra_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infra/${pathParams.infra_id}/doks/destroy`;
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}`;
 });
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
@@ -751,14 +725,12 @@ const getSlackIntegrations = baseApi<{}, { id: number }>(
 );
 
 const getRevisions = baseApi<
-  {
-    namespace: string;
-    cluster_id: number;
-    storage: StorageType;
-  },
-  { id: number; name: string }
+  {},
+  { id: number; cluster_id: number; namespace: string; name: string }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/releases/${pathParams.name}/history`;
+  let { id, cluster_id, namespace, name } = pathParams;
+
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/history`;
 });
 
 const getTemplateInfo = baseApi<
@@ -777,7 +749,7 @@ const getTemplateUpgradeNotes = baseApi<
   },
   { name: string; version: string }
 >("GET", (pathParams) => {
-  return `/api/templates/upgrade_notes/${pathParams.name}/${pathParams.version}`;
+  return `/api/templates/${pathParams.name}/${pathParams.version}/upgrade_notes`;
 });
 
 const getTemplates = baseApi<
@@ -787,12 +759,8 @@ const getTemplates = baseApi<
   {}
 >("GET", "/api/templates");
 
-const getUser = baseApi<{}, { id: number }>("GET", (pathParams) => {
-  return `/api/users/${pathParams.id}`;
-});
-
-const getCapabilities = baseApi<{}, {}>("GET", () => {
-  return `/api/capabilities`;
+const getMetadata = baseApi<{}, {}>("GET", () => {
+  return `/api/metadata`;
 });
 
 const getWelcome = baseApi<
@@ -816,8 +784,8 @@ const linkGithubProject = baseApi<
   return `/api/oauth/projects/${pathParams.project_id}/github`;
 });
 
-const getGithubAccess = baseApi<{}, {}>("GET", () => {
-  return `/api/integrations/github-app/access`;
+const getGithubAccounts = baseApi<{}, {}>("GET", () => {
+  return `/api/integrations/github-app/accounts`;
 });
 
 const logInUser = baseApi<{
@@ -855,18 +823,17 @@ const registerUser = baseApi<{
 
 const rollbackChart = baseApi<
   {
-    namespace: string;
-    storage: StorageType;
     revision: number;
   },
   {
     id: number;
     name: string;
+    namespace: string;
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/rollback?cluster_id=${cluster_id}`;
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/rollback`;
 });
 
 const uninstallTemplate = baseApi<
@@ -876,11 +843,10 @@ const uninstallTemplate = baseApi<
     name: string;
     cluster_id: number;
     namespace: string;
-    storage: StorageType;
   }
->("POST", (pathParams) => {
-  let { id, name, cluster_id, storage, namespace } = pathParams;
-  return `/api/projects/${id}/delete/${name}?cluster_id=${cluster_id}&namespace=${namespace}&storage=${storage}`;
+>("DELETE", (pathParams) => {
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0`;
 });
 
 const updateUser = baseApi<
@@ -895,89 +861,100 @@ const updateUser = baseApi<
 
 const upgradeChartValues = baseApi<
   {
-    namespace: string;
-    storage: StorageType;
     values: string;
     version?: string;
   },
   {
     id: number;
     name: string;
+    namespace: string;
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { id, name, cluster_id } = pathParams;
-  return `/api/projects/${id}/releases/${name}/upgrade?cluster_id=${cluster_id}`;
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
 });
 
 const listConfigMaps = baseApi<
+  {},
   {
+    id: number;
     namespace: string;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/configmap/list`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/list`;
 });
 
 const getConfigMap = baseApi<
   {
     name: string;
+  },
+  {
+    id: number;
     namespace: string;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/configmap`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap`;
 });
 
 const createConfigMap = baseApi<
   {
     name: string;
-    namespace: string;
     variables: Record<string, string>;
     secret_variables?: Record<string, string>;
   },
-  { id: number; cluster_id: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
 >("POST", (pathParams) => {
-  let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/configmap/create?cluster_id=${cluster_id}`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/create`;
 });
 
 const updateConfigMap = baseApi<
   {
     name: string;
-    namespace: string;
     variables: Record<string, string>;
     secret_variables?: Record<string, string>;
   },
-  { id: number; cluster_id: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
 >("POST", (pathParams) => {
   let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/configmap/update?cluster_id=${cluster_id}`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/update`;
 });
 
 const renameConfigMap = baseApi<
   {
     name: string;
-    namespace: string;
     new_name: string;
   },
-  { id: number; cluster_id: number }
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
 >("POST", (pathParams) => {
-  let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/configmap/rename?cluster_id=${cluster_id}`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/rename`;
 });
 
 const deleteConfigMap = baseApi<
   {
     name: string;
+  },
+  {
+    id: number;
     namespace: string;
     cluster_id: number;
-  },
-  { id: number }
+  }
 >("DELETE", (pathParams) => {
-  return `/api/projects/${pathParams.id}/k8s/configmap/delete`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/delete`;
 });
 
 const createNamespace = baseApi<
@@ -987,26 +964,28 @@ const createNamespace = baseApi<
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/namespaces/create?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/create`;
 });
 
 const deleteNamespace = baseApi<
   {
     name: string;
-    cluster_id: number;
   },
-  { id: number }
+  {
+    id: number;
+    cluster_id: number;
+  }
 >("DELETE", (pathParams) => {
-  let { id } = pathParams;
-  return `/api/projects/${id}/k8s/namespaces/delete`;
+  let { id, cluster_id } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/delete`;
 });
 
 const deleteJob = baseApi<
-  { cluster_id: number },
-  { name: string; namespace: string; id: number }
+  {},
+  { name: string; namespace: string; id: number; cluster_id: number }
 >("DELETE", (pathParams) => {
-  let { id, name, namespace } = pathParams;
-  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}`;
+  let { id, name, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}`;
 });
 
 const stopJob = baseApi<
@@ -1014,7 +993,7 @@ const stopJob = baseApi<
   { name: string; namespace: string; id: number; cluster_id: number }
 >("POST", (pathParams) => {
   let { id, name, namespace, cluster_id } = pathParams;
-  return `/api/projects/${id}/k8s/jobs/${namespace}/${name}/stop?cluster_id=${cluster_id}`;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/stop`;
 });
 
 const getAvailableRoles = baseApi<{}, { project_id: number }>(
@@ -1037,16 +1016,16 @@ const getCollaborators = baseApi<{}, { project_id: number }>(
 );
 
 const updateCollaborator = baseApi<
-  { kind: string },
-  { project_id: number; user_id: number }
->(
-  "POST",
-  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
-);
+  {
+    kind: string;
+    user_id: number;
+  },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/roles`);
 
-const removeCollaborator = baseApi<{}, { project_id: number; user_id: number }>(
+const removeCollaborator = baseApi<{ user_id: number }, { project_id: number }>(
   "DELETE",
-  ({ project_id, user_id }) => `/api/projects/${project_id}/roles/${user_id}`
+  ({ project_id }) => `/api/projects/${project_id}/roles`
 );
 
 const getPolicyDocument = baseApi<{}, { project_id: number }>(
@@ -1061,12 +1040,11 @@ const createWebhookToken = baseApi<
     chart_name: string;
     namespace: string;
     cluster_id: number;
-    storage: StorageType;
   }
 >(
   "POST",
-  ({ project_id, chart_name, namespace, cluster_id, storage }) =>
-    `/api/projects/${project_id}/releases/${chart_name}/webhook_token?namespace=${namespace}&cluster_id=${cluster_id}&storage=${storage}`
+  ({ project_id, chart_name, namespace, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${chart_name}/0/webhook`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -1102,13 +1080,11 @@ export default {
   createSubdomain,
   deployTemplate,
   deployAddon,
-  destroyEKS,
-  destroyGKE,
-  destroyDOKS,
+  destroyInfra,
   detectBuildpack,
   getBranchContents,
   getBranches,
-  getCapabilities,
+  getMetadata,
   getWelcome,
   getChart,
   getCharts,
@@ -1120,7 +1096,7 @@ export default {
   getClusterNodes,
   getClusterNode,
   getConfigMap,
-  generateGHAWorkflow,
+  getGHAWorkflowTemplate,
   getGitRepoList,
   getGitRepos,
   getImageRepos,
@@ -1153,9 +1129,8 @@ export default {
   getTemplateInfo,
   getTemplateUpgradeNotes,
   getTemplates,
-  getUser,
   linkGithubProject,
-  getGithubAccess,
+  getGithubAccounts,
   listConfigMaps,
   logInUser,
   logOutUser,

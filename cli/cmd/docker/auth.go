@@ -12,7 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -72,7 +73,7 @@ func (a *AuthGetter) GetGCRCredentials(serverURL string, projID uint) (user stri
 		token = cachedEntry.AuthorizationToken
 	} else {
 		// get a token from the server
-		tokenResp, err := a.Client.GetGCRAuthorizationToken(context.Background(), projID, &api.GetGCRTokenRequest{
+		tokenResp, err := a.Client.GetGCRAuthorizationToken(context.Background(), projID, &types.GetRegistryGCRTokenRequest{
 			ServerURL: serverURL,
 		})
 
@@ -104,7 +105,7 @@ func (a *AuthGetter) GetDOCRCredentials(serverURL string, projID uint) (user str
 	} else {
 
 		// get a token from the server
-		tokenResp, err := a.Client.GetDOCRAuthorizationToken(context.Background(), projID, &api.GetDOCRTokenRequest{
+		tokenResp, err := a.Client.GetDOCRAuthorizationToken(context.Background(), projID, &types.GetRegistryGCRTokenRequest{
 			ServerURL: serverURL,
 		})
 
@@ -152,7 +153,9 @@ func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user stri
 		token = cachedEntry.AuthorizationToken
 	} else {
 		// get a token from the server
-		tokenResp, err := a.Client.GetECRAuthorizationToken(context.Background(), projID, matches[3])
+		tokenResp, err := a.Client.GetECRAuthorizationToken(context.Background(), projID, &types.GetRegistryECRTokenRequest{
+			Region: matches[3],
+		})
 
 		if err != nil {
 			return "", "", err

@@ -52,10 +52,10 @@ func (repo *InfraRepository) CreateInfra(infra *models.Infra) (*models.Infra, er
 }
 
 // ReadInfra gets a aws infra specified by a unique id
-func (repo *InfraRepository) ReadInfra(id uint) (*models.Infra, error) {
+func (repo *InfraRepository) ReadInfra(projectID, infraID uint) (*models.Infra, error) {
 	infra := &models.Infra{}
 
-	if err := repo.db.Where("id = ?", id).First(&infra).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, infraID).First(&infra).Error; err != nil {
 		return nil, err
 	}
 

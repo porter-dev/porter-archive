@@ -9,7 +9,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/cli/cmd/api"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 )
@@ -68,8 +69,8 @@ func init() {
 	projectCmd.AddCommand(listProjectCmd)
 }
 
-func createProject(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
-	resp, err := client.CreateProject(context.Background(), &api.CreateProjectRequest{
+func createProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	resp, err := client.CreateProject(context.Background(), &types.CreateProjectRequest{
 		Name: args[0],
 	})
 
@@ -82,12 +83,14 @@ func createProject(_ *api.AuthCheckResponse, client *api.Client, args []string) 
 	return config.SetProject(resp.ID)
 }
 
-func listProjects(user *api.AuthCheckResponse, client *api.Client, args []string) error {
-	projects, err := client.ListUserProjects(context.Background(), user.ID)
+func listProjects(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	resp, err := client.ListUserProjects(context.Background())
 
 	if err != nil {
 		return err
 	}
+
+	projects := *resp
 
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
@@ -109,7 +112,7 @@ func listProjects(user *api.AuthCheckResponse, client *api.Client, args []string
 	return nil
 }
 
-func deleteProject(_ *api.AuthCheckResponse, client *api.Client, args []string) error {
+func deleteProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the project with id %s? %s `,
@@ -129,24 +132,26 @@ func deleteProject(_ *api.AuthCheckResponse, client *api.Client, args []string) 
 			return err
 		}
 
-		resp, err := client.DeleteProject(context.Background(), uint(id))
+		err = client.DeleteProject(context.Background(), uint(id))
 
 		if err != nil {
 			return err
 		}
 
-		color.New(color.FgGreen).Printf("Deleted project with name %s and id %d\n", resp.Name, resp.ID)
+		color.New(color.FgGreen).Printf("Deleted project with id %d\n", id)
 	}
 
 	return nil
 }
 
 func setProjectCluster(client *api.Client, projectID uint) error {
-	clusters, err := client.ListProjectClusters(context.Background(), projectID)
+	resp, err := client.ListProjectClusters(context.Background(), projectID)
 
 	if err != nil {
 		return err
 	}
+
+	clusters := *resp
 
 	if len(clusters) > 0 {
 		config.SetCluster(clusters[0].ID)

@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-const UnexpectedErrorPage: React.FC = ({ error, resetErrorBoundary }: any) => (
+const UnexpectedErrorPage = ({ error, resetError }: any) => (
   <>
     <StyledPageNotFound>
       <Mega>
@@ -9,7 +9,7 @@ const UnexpectedErrorPage: React.FC = ({ error, resetErrorBoundary }: any) => (
         <Inside>Unknown Error</Inside>
       </Mega>
       <Flex>
-        <BackButton width="140px" onClick={() => resetErrorBoundary(error)}>
+        <BackButton width="140px" onClick={() => resetError(error)}>
           <i className="material-icons">arrow_back</i>
           Reload page
         </BackButton>

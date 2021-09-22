@@ -39,8 +39,8 @@ type InitiateResetUserPasswordRequest struct {
 }
 
 type VerifyTokenFinalizeRequest struct {
-	TokenID uint   `schema:"token_id" form:"required"`
-	Token   string `schema:"token" form:"required"`
+	TokenID uint   `json:"token_id" schema:"token_id" form:"required"`
+	Token   string `json:"token" schema:"token" form:"required"`
 }
 
 type VerifyEmailFinalizeRequest struct {

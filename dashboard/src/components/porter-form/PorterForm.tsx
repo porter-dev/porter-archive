@@ -42,6 +42,7 @@ interface Props {
   currentTab: string;
   setCurrentTab: (nt: string) => void;
   isLaunch?: boolean;
+  hideSpacer?: boolean;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -204,7 +205,7 @@ const PorterForm: React.FC<Props> = (props) => {
       {props.showStateDebugger && (
         <Pre>{JSON.stringify(formState, undefined, 2)}</Pre>
       )}
-      <Spacer />
+      {!props.hideSpacer && <Spacer />}
     </>
   );
 };

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -103,6 +104,7 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 
 	// if agent not found in context, get the agent from out of cluster config
 	ooc := d.GetOutOfClusterConfig(cluster)
+	ooc.DefaultNamespace = getNamespaceFromRequest(r)
 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 
@@ -134,13 +136,7 @@ func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.
 		return nil, err
 	}
 
-	// look for namespace in context, otherwise go with default
-	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
-	namespace := "default"
-
-	if nsPolicy, ok := reqScopes[types.NamespaceScope]; ok {
-		namespace = nsPolicy.Resource.Name
-	}
+	namespace := getNamespaceFromRequest(r)
 
 	helmAgent, err := helm.GetAgentFromK8sAgent("secret", namespace, d.config.Logger, k8sAgent)
 
@@ -166,4 +162,20 @@ func (d *OutOfClusterAgentGetter) GetDynamicClient(r *http.Request, cluster *mod
 	}
 
 	return kubernetes.GetDynamicClientOutOfClusterConfig(d.GetOutOfClusterConfig(cluster))
+}
+
+func getNamespaceFromRequest(r *http.Request) string {
+	// look for namespace in context, otherwise go with default
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
+	namespace := "default"
+
+	if nsPolicy, ok := reqScopes[types.NamespaceScope]; ok {
+		namespace = nsPolicy.Resource.Name
+	}
+
+	if strings.ToLower(namespace) == "all" {
+		namespace = ""
+	}
+
+	return namespace
 }

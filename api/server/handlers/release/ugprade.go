@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 
+	semver "github.com/Masterminds/semver/v3"
+
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -16,6 +18,10 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/release"
+)
+
+var (
+	createEnvSecretConstraint, _ = semver.NewConstraint(" < 0.1.0")
 )
 
 type UpgradeReleaseHandler struct {
@@ -191,11 +197,18 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 					return
 				}
 
-				err = gaRunner.CreateEnvSecret()
+				actionVersion, err := semver.NewVersion(gaRunner.Version)
 
 				if err != nil {
 					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 					return
+				}
+
+				if createEnvSecretConstraint.Check(actionVersion) {
+					if err := gaRunner.CreateEnvSecret(); err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+						return
+					}
 				}
 			}
 		}

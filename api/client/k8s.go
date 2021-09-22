@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/types"
+	v1 "k8s.io/api/batch/v1"
 )
 
 // GetK8sNamespaces gets a namespaces list in a k8s cluster
@@ -64,6 +65,28 @@ func (c *Client) GetRelease(
 	)
 
 	return resp, err
+}
+
+func (c *Client) GetJobs(
+	ctx context.Context,
+	projectID, clusterID uint,
+	namespace, name string,
+) ([]v1.Job, error) {
+	respArr := make([]v1.Job, 0)
+
+	resp := &respArr
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/namespaces/%s/releases/%s/0/jobs",
+			projectID, clusterID,
+			namespace, name,
+		),
+		nil,
+		resp,
+	)
+
+	return *resp, err
 }
 
 // GetK8sAllPods gets all pods for a given release

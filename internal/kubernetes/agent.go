@@ -357,6 +357,8 @@ func (a *Agent) GetIngress(namespace string, name string) (*v1beta1.Ingress, err
 	)
 }
 
+var IsNotFoundError = fmt.Errorf("not found")
+
 // GetDeployment gets the deployment given the name and namespace
 func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
 	res, err := a.Clientset.AppsV1().Deployments(c.Namespace).Get(
@@ -365,7 +367,9 @@ func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
 		metav1.GetOptions{},
 	)
 
-	if err != nil {
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -382,7 +386,9 @@ func (a *Agent) GetStatefulSet(c grapher.Object) (*appsv1.StatefulSet, error) {
 		metav1.GetOptions{},
 	)
 
-	if err != nil {
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -399,7 +405,9 @@ func (a *Agent) GetReplicaSet(c grapher.Object) (*appsv1.ReplicaSet, error) {
 		metav1.GetOptions{},
 	)
 
-	if err != nil {
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -416,7 +424,9 @@ func (a *Agent) GetDaemonSet(c grapher.Object) (*appsv1.DaemonSet, error) {
 		metav1.GetOptions{},
 	)
 
-	if err != nil {
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -433,7 +443,9 @@ func (a *Agent) GetJob(c grapher.Object) (*batchv1.Job, error) {
 		metav1.GetOptions{},
 	)
 
-	if err != nil {
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -450,7 +462,9 @@ func (a *Agent) GetCronJob(c grapher.Object) (*batchv1beta1.CronJob, error) {
 		metav1.GetOptions{},
 	)
 
-	if err != nil {
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
 		return nil, err
 	}
 

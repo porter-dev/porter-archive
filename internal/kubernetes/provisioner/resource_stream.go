@@ -18,7 +18,7 @@ func ResourceStream(client *redis.Client, streamName string, conn *websocket.Con
 
 			if err != nil {
 				defer conn.Close()
-				errorchan <- err
+				errorchan <- nil
 				return
 			}
 		}
@@ -28,7 +28,6 @@ func ResourceStream(client *redis.Client, streamName string, conn *websocket.Con
 		lastID := "0-0"
 
 		for {
-
 			xstream, err := client.XRead(
 				context.Background(),
 				&redis.XReadArgs{

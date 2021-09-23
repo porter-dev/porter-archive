@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/models"
@@ -35,6 +36,16 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
+	}
+
+	if infra.Kind == types.InfraDOKS || infra.Kind == types.InfraGKE || infra.Kind == types.InfraEKS {
+		c.Config().AnalyticsClient.Track(analytics.ClusterDestroyingStartTrack(
+			&analytics.ClusterDestroyingStartTrackOpts{
+				ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, 0),
+				ClusterType:            infra.Kind,
+				InfraID:                infra.ID,
+			},
+		))
 	}
 
 	infra.Status = types.StatusDestroying

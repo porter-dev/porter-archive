@@ -36,7 +36,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
-	helmAgent, err := c.GetHelmAgent(r, cluster)
+	helmAgent, err := c.GetHelmAgent(r, cluster, "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

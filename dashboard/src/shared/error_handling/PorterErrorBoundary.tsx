@@ -2,8 +2,9 @@ import UnexpectedErrorPage from "components/UnexpectedErrorPage";
 import React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import * as Sentry from "@sentry/react";
-import StackTrace, { StackFrame } from "stacktrace-js";
+import StackTrace from "stacktrace-js";
 import { Context, Primitive } from "@sentry/types";
+import { stackFramesToString } from "./stack_trace_utils";
 
 export type PorterErrorBoundaryProps<OnResetProps = {}> = {
   // Component or useful name to describe where the error boundary was setted
@@ -20,13 +21,6 @@ export type PorterErrorBoundaryProps<OnResetProps = {}> = {
   };
 };
 
-const stackFramesToString = (stackFrames: StackFrame[]) => {
-  return stackFrames
-    .map(function (sf) {
-      return sf.toString();
-    })
-    .join("\n");
-};
 const PorterErrorBoundary: React.FC<PorterErrorBoundaryProps> = ({
   errorBoundaryLocation,
   onReset,

@@ -15,4 +15,10 @@ if (process.env.ENABLE_SENTRY) {
   SetupSentry();
 }
 
+function EnableErrorHandling() {
+  window.onerror = function (msg, file, line, col, error) {
+    StackTrace.fromError(error).then((err) => {});
+  };
+}
+
 ReactDOM.render(<App />, document.getElementById("output"));

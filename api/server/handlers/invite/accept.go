@@ -1,12 +1,10 @@
 package invite
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
-
-	"github.com/go-chi/chi"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -14,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type InviteAcceptHandler struct {
@@ -29,33 +28,28 @@ func NewInviteAcceptHandler(
 }
 
 func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	projectID, _ := requestutils.GetURLParamUint(r, types.URLParamProjectID)
 	token, _ := requestutils.GetURLParamString(r, types.URLParamInviteToken)
 
-	session, err := c.Config().Store.Get(r, c.Config().ServerConf.CookieName)
+	proj, err := c.Repo().Project().ReadProject(projectID)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	}
+		vals := url.Values{}
 
-	userID, _ := session.Values["user_id"].(uint)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			vals.Add("error", "Invalid invite token")
+		} else {
+			vals.Add("error", "Unknown error")
+		}
 
-	user, err := c.Repo().User().ReadUser(userID)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	projectID, err := strconv.ParseUint(chi.URLParam(r, "project_id"), 0, 64)
-
-	if err != nil || projectID == 0 {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", vals.Encode()), 302)
 		return
 	}
 
 	invite, err := c.Repo().Invite().ReadInviteByToken(token)
 
-	if err != nil || invite.ProjectID != uint(projectID) {
+	if err != nil || invite.ProjectID != proj.ID {
 		vals := url.Values{}
 		vals.Add("error", "Invalid invite token")
 		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", vals.Encode()), 302)
@@ -87,17 +81,10 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		kind = models.RoleDeveloper
 	}
 
-	project, err := c.Repo().Project().ReadProject(uint(projectID))
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	if _, err = c.Repo().Project().CreateProjectRole(project, &models.Role{
+	if _, err = c.Repo().Project().CreateProjectRole(proj, &models.Role{
 		Role: types.Role{
-			UserID:    userID,
-			ProjectID: project.ID,
+			UserID:    user.ID,
+			ProjectID: proj.ID,
 			Kind:      types.RoleKind(kind),
 		},
 	}); err != nil {
@@ -106,7 +93,7 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// update the invite
-	invite.UserID = userID
+	invite.UserID = user.ID
 
 	if _, err = c.Repo().Invite().UpdateInvite(invite); err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

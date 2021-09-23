@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/integrations/slack"
+	"gorm.io/gorm"
 )
 
 type WebhookHandler struct {
@@ -40,22 +41,39 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	release, err := c.Repo().Release().ReadReleaseByWebhookToken(token)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("release not found with given webhook"),
-			http.StatusBadRequest,
-		))
+		if err == gorm.ErrRecordNotFound {
+			// throw forbidden error, since we don't want a way to verify if webhooks exist
+			c.HandleAPIError(w, r, apierrors.NewErrForbidden(
+				fmt.Errorf("release not found with given webhook"),
+			))
 
+			return
+		}
+
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	cluster, err := c.Repo().Cluster().ReadCluster(release.ProjectID, release.ClusterID)
 
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// throw forbidden error, since we don't want a way to verify if the cluster and project
+			// still exist for a cluster that's been deleted
+			c.HandleAPIError(w, r, apierrors.NewErrForbidden(
+				fmt.Errorf("cluster %d in project %d not found for upgrade webhook", release.ClusterID, release.ProjectID),
+			))
+
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	helmAgent, err := c.GetHelmAgent(r, cluster)
+	// in this case, we retrieve the agent by passing in the namespace field directly, since
+	// it cannot be detected from the URL
+	helmAgent, err := c.GetHelmAgent(r, cluster, release.Namespace)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -69,6 +87,11 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rel, err := helmAgent.GetRelease(release.Name, 0, true)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
 	// repository is set to current repository by default
 	repository := rel.Config["image"].(map[string]interface{})["repository"]

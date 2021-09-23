@@ -54,8 +54,6 @@ class SettingsPage extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    window.scrollBy(0, -window.innerHeight);
-
     // Retrieve tab options
     let tabOptions = [] as ChoiceType[];
     this.props.form?.tabs.map((tab: any, i: number) => {

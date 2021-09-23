@@ -48,14 +48,18 @@ func (a *Agent) GetRelease(
 
 	release, err := cmd.Run(name)
 
-	if getDeps {
+	if err != nil {
+		return nil, err
+	}
+
+	if getDeps && release.Chart != nil && release.Chart.Metadata != nil {
 		for _, dep := range release.Chart.Metadata.Dependencies {
 			depExists := false
 
 			for _, currDep := range release.Chart.Dependencies() {
 				// we just case on name for now -- there might be edge cases we're missing
 				// but this will cover 99% of cases
-				if dep.Name == currDep.Name() {
+				if dep != nil && currDep != nil && dep.Name == currDep.Name() {
 					depExists = true
 					break
 				}

@@ -3,6 +3,7 @@ package router
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/logger"
@@ -52,8 +54,12 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	)
 
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
+	panicMW := &PanicMiddleware{config}
 
 	r.Route("/api", func(r chi.Router) {
+		// set panic middleware for all API endpoints to catch panics
+		r.Use(panicMW.Middleware)
+
 		// set the content type for all API endpoints and log all request info
 		r.Use(ContentTypeJSON)
 
@@ -283,5 +289,23 @@ func (mw *RequestLoggerMiddleware) Middleware(next http.Handler) http.Handler {
 		logger.AddLoggingRequestMeta(r, event)
 
 		event.Send()
+	})
+}
+
+type PanicMiddleware struct {
+	config *config.Config
+}
+
+func (pmw *PanicMiddleware) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			err := recover()
+
+			if err != nil {
+				apierrors.HandleAPIError(pmw.config, w, r, apierrors.NewErrInternal(fmt.Errorf("%v", err)))
+			}
+		}()
+
+		next.ServeHTTP(w, r)
 	})
 }

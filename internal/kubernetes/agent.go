@@ -350,11 +350,19 @@ func (a *Agent) GetJobPods(namespace, jobName string) ([]v1.Pod, error) {
 
 // GetIngress gets ingress given the name and namespace
 func (a *Agent) GetIngress(namespace string, name string) (*v1beta1.Ingress, error) {
-	return a.Clientset.ExtensionsV1beta1().Ingresses(namespace).Get(
+	resp, err := a.Clientset.ExtensionsV1beta1().Ingresses(namespace).Get(
 		context.TODO(),
 		name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 var IsNotFoundError = fmt.Errorf("not found")

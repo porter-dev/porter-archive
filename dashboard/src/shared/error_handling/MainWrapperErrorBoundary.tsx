@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Context } from "shared/Context";
-import PorterErrorBoundary from "shared/PorterErrorBoundary";
+import PorterErrorBoundary from "./PorterErrorBoundary";
 
 const MainWrapperErrorBoundary: React.FC = ({ children }) => {
   const location = "MainWrapperErrorBoundary";

@@ -30,7 +30,7 @@ func NewGetPodEventsHandler(
 
 func (c *GetPodEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	agent, err := c.GetAgent(r, cluster)
+	agent, err := c.GetAgent(r, cluster, "")
 	name, _ := requestutils.GetURLParamString(r, types.URLParamPodName)
 	namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
 

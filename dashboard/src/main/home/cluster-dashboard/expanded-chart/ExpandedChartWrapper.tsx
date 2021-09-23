@@ -33,15 +33,17 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { namespace, chartName } = match.params as any;
     let { currentProject, currentCluster } = this.context;
     if (currentProject && currentCluster) {
-      // TODO: add query for retrieving max revision #
-      const lastCheckedRevision = getQueryParam(this.props, "chart_revision");
-
       api
         .getChart(
           "<token>",
+          {},
           {
-          },
-          { id: currentProject.id, namespace: namespace, cluster_id: currentCluster.id ,name: chartName, revision: Number(lastCheckedRevision), }
+            id: currentProject.id,
+            namespace: namespace,
+            cluster_id: currentCluster.id,
+            name: chartName,
+            revision: 0,
+          }
         )
         .then((res) => {
           this.setState({ currentChart: res.data, loading: false });

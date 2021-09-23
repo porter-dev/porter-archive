@@ -28,7 +28,7 @@ func NewStopHandler(
 
 func (c *StopHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	agent, err := c.GetAgent(r, cluster)
+	agent, err := c.GetAgent(r, cluster, "")
 	name, _ := requestutils.GetURLParamString(r, types.URLParamJobName)
 	namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
 

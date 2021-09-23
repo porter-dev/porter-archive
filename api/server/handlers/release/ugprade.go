@@ -112,7 +112,11 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		conf.Chart = chart
 	}
 
-	helmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf)
+	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf)
+
+	if upgradeErr == nil && newHelmRelease != nil {
+		helmRelease = newHelmRelease
+	}
 
 	slackInts, _ := c.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(cluster.ProjectID)
 

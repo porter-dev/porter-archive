@@ -4,6 +4,7 @@ import { ContextProvider } from "../shared/Context";
 import Main from "./Main";
 import { RouteComponentProps, withRouter } from "react-router";
 import AuthProvider from "shared/auth/AuthContext";
+import MainWrapperErrorBoundary from "./MainWrapperErrorBoundary";
 
 type PropsType = RouteComponentProps & {};
 
@@ -15,7 +16,9 @@ class MainWrapper extends Component<PropsType, StateType> {
     return (
       <ContextProvider history={history} location={location}>
         <AuthProvider>
-          <Main />
+          <MainWrapperErrorBoundary>
+            <Main />
+          </MainWrapperErrorBoundary>
         </AuthProvider>
       </ContextProvider>
     );

@@ -27,8 +27,8 @@ func NewDefaultResultWriter(conf *config.Config) ResultWriter {
 func (j *DefaultResultWriter) WriteResult(w http.ResponseWriter, r *http.Request, v interface{}) {
 	err := json.NewEncoder(w).Encode(v)
 
-	if errors.Is(err, syscall.EPIPE) {
-		// broken pipe error, ignore. This means the client closed the connection while
+	if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) {
+		// either a broken pipe error or econnreset, ignore. This means the client closed the connection while
 		// the server was sending bytes.
 		return
 	} else if err != nil {

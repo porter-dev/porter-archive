@@ -30,12 +30,15 @@ func NewStreamStatusHandler(
 }
 
 func (c *StreamStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
+	conn, newRW, safeRW, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	w = newRW
+	defer conn.Close()
 
 	request := &types.StreamStatusRequest{}
 
@@ -54,7 +57,7 @@ func (c *StreamStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	kind, _ := requestutils.GetURLParamString(r, types.URLParamKind)
 
-	err = agent.StreamControllerStatus(conn, kind, request.Selectors)
+	err = agent.StreamControllerStatus(kind, request.Selectors, safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

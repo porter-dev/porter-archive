@@ -13,7 +13,10 @@ import (
 	"strings"
 	"time"
 
+	goerrors "errors"
+
 	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
@@ -32,7 +35,6 @@ import (
 
 	errors2 "errors"
 
-	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/internal/helm/grapher"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -41,9 +43,11 @@ import (
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -367,6 +371,14 @@ func (a *Agent) GetIngress(namespace string, name string) (*v1beta1.Ingress, err
 
 var IsNotFoundError = fmt.Errorf("not found")
 
+type BadRequestError struct {
+	msg string
+}
+
+func (e *BadRequestError) Error() string {
+	return e.msg
+}
+
 // GetDeployment gets the deployment given the name and namespace
 func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
 	res, err := a.Clientset.AppsV1().Deployments(c.Namespace).Get(
@@ -508,7 +520,7 @@ func (a *Agent) DeletePod(namespace string, name string) error {
 }
 
 // GetPodLogs streams real-time logs from a given pod.
-func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) error {
+func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.WebsocketSafeReadWriter) error {
 	// get the pod to read in the list of contains
 	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
 		context.Background(),
@@ -520,6 +532,19 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 		return IsNotFoundError
 	} else if err != nil {
 		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
+	}
+
+	// see if container is ready and able to open a stream. If not, wait for container
+	// to be ready.
+	err, isExited := a.waitForPod(pod)
+
+	if err != nil && goerrors.Is(err, IsNotFoundError) {
+		return IsNotFoundError
+	} else if err != nil {
+		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
+	} else if isExited {
+		// if exited, we return nil and simply close the stream
+		return nil
 	}
 
 	container := pod.Spec.Containers[0].Name
@@ -537,9 +562,14 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 
 	podLogs, err := req.Stream(context.TODO())
 
-	if err != nil {
+	// in the case of bad request errors, such as if the pod is stuck in "ContainerCreating",
+	// we'd like to pass this through to the client.
+	if err != nil && errors.IsBadRequest(err) {
+		return &BadRequestError{err.Error()}
+	} else if err != nil {
 		return fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
 	}
+
 	defer podLogs.Close()
 
 	r := bufio.NewReader(podLogs)
@@ -548,8 +578,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 	go func() {
 		// listens for websocket closing handshake
 		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
-				defer conn.Close()
+			if _, _, err := rw.ReadMessage(); err != nil {
 				errorchan <- nil
 				return
 			}
@@ -566,7 +595,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, conn *websocket.Conn) 
 			}
 
 			bytes, err := r.ReadBytes('\n')
-			if writeErr := conn.WriteMessage(websocket.TextMessage, bytes); writeErr != nil {
+			if _, writeErr := rw.Write(bytes); writeErr != nil {
 				errorchan <- writeErr
 				return
 			}
@@ -669,7 +698,7 @@ func (a *Agent) RunWebsocketTask(task func() error) error {
 
 // StreamControllerStatus streams controller status. Supports Deployment, StatefulSet, ReplicaSet, and DaemonSet
 // TODO: Support Jobs
-func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, selectors string) error {
+func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websocket.WebsocketSafeReadWriter) error {
 
 	run := func() error {
 		// selectors is an array of max length 1. StreamControllerStatus accepts calls without the selectors argument.
@@ -723,10 +752,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 					Object:    newObj,
 					Kind:      strings.ToLower(kind),
 				}
-				if writeErr := conn.WriteJSON(msg); writeErr != nil {
-					errorchan <- writeErr
-					return
-				}
+				rw.WriteJSONWithChannel(msg, errorchan)
 			},
 			AddFunc: func(obj interface{}) {
 				msg := Message{
@@ -734,11 +760,7 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 					Object:    obj,
 					Kind:      strings.ToLower(kind),
 				}
-
-				if writeErr := conn.WriteJSON(msg); writeErr != nil {
-					errorchan <- writeErr
-					return
-				}
+				rw.WriteJSONWithChannel(msg, errorchan)
 			},
 			DeleteFunc: func(obj interface{}) {
 				msg := Message{
@@ -746,19 +768,14 @@ func (a *Agent) StreamControllerStatus(conn *websocket.Conn, kind string, select
 					Object:    obj,
 					Kind:      strings.ToLower(kind),
 				}
-
-				if writeErr := conn.WriteJSON(msg); writeErr != nil {
-					errorchan <- writeErr
-					return
-				}
+				rw.WriteJSONWithChannel(msg, errorchan)
 			},
 		})
 
 		go func() {
 			// listens for websocket closing handshake
 			for {
-				if _, _, err := conn.ReadMessage(); err != nil {
-					conn.Close()
+				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
 					return
 				}
@@ -847,8 +864,7 @@ func parseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Relea
 	return helm_object, false, nil
 }
 
-func (a *Agent) StreamHelmReleases(conn *websocket.Conn, namespace string, chartList []string, selectors string) error {
-
+func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selectors string, rw *websocket.WebsocketSafeReadWriter) error {
 	run := func() error {
 		tweakListOptionsFunc := func(options *metav1.ListOptions) {
 			options.LabelSelector = selectors
@@ -898,10 +914,7 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, namespace string, chart
 					Object:    helm_object,
 				}
 
-				if writeErr := conn.WriteJSON(msg); writeErr != nil {
-					errorchan <- writeErr
-					return
-				}
+				rw.WriteJSONWithChannel(msg, errorchan)
 			},
 			AddFunc: func(obj interface{}) {
 				secretObj, ok := obj.(*v1.Secret)
@@ -927,10 +940,7 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, namespace string, chart
 					Object:    helm_object,
 				}
 
-				if writeErr := conn.WriteJSON(msg); writeErr != nil {
-					errorchan <- writeErr
-					return
-				}
+				rw.WriteJSONWithChannel(msg, errorchan)
 			},
 			DeleteFunc: func(obj interface{}) {
 				secretObj, ok := obj.(*v1.Secret)
@@ -956,18 +966,14 @@ func (a *Agent) StreamHelmReleases(conn *websocket.Conn, namespace string, chart
 					Object:    helm_object,
 				}
 
-				if writeErr := conn.WriteJSON(msg); writeErr != nil {
-					errorchan <- writeErr
-					return
-				}
+				rw.WriteJSONWithChannel(msg, errorchan)
 			},
 		})
 
 		go func() {
 			// listens for websocket closing handshake
 			for {
-				if _, _, err := conn.ReadMessage(); err != nil {
-					conn.Close()
+				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
 					return
 				}
@@ -1342,4 +1348,76 @@ func (a *Agent) CreateImagePullSecrets(
 	}
 
 	return res, nil
+}
+
+// helper that waits for pod to be ready
+func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
+	var (
+		w   watch.Interface
+		err error
+		ok  bool
+	)
+	// immediately after creating a pod, the API may return a 404. heuristically 1
+	// second seems to be plenty.
+	watchRetries := 3
+	for i := 0; i < watchRetries; i++ {
+		selector := fields.OneTermEqualSelector("metadata.name", pod.Name).String()
+		w, err = a.Clientset.CoreV1().
+			Pods(pod.Namespace).
+			Watch(context.Background(), metav1.ListOptions{FieldSelector: selector})
+
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if err != nil {
+		return err, false
+	}
+	defer w.Stop()
+	for {
+		select {
+		case <-time.After(time.Second * 30):
+			return goerrors.New("timed out waiting for pod"), false
+		case <-time.Tick(time.Second):
+			// poll every second in case we already missed the ready event while
+			// creating the listener.
+			pod, err = a.Clientset.CoreV1().
+				Pods(pod.Namespace).
+				Get(context.Background(), pod.Name, metav1.GetOptions{})
+
+			if err != nil && errors.IsNotFound(err) {
+				return IsNotFoundError, false
+			} else if err != nil {
+				return err, false
+			}
+
+			if isExited := isPodExited(pod); isExited || isPodReady(pod) {
+				return nil, isExited
+			}
+		case evt := <-w.ResultChan():
+			pod, ok = evt.Object.(*v1.Pod)
+			if !ok {
+				return fmt.Errorf("unexpected object type: %T", evt.Object), false
+			}
+			if isExited := isPodExited(pod); isExited || isPodReady(pod) {
+				return nil, isExited
+			}
+		}
+	}
+}
+
+func isPodReady(pod *v1.Pod) bool {
+	ready := false
+	conditions := pod.Status.Conditions
+	for i := range conditions {
+		if conditions[i].Type == v1.PodReady {
+			ready = pod.Status.Conditions[i].Status == v1.ConditionTrue
+		}
+	}
+	return ready
+}
+
+func isPodExited(pod *v1.Pod) bool {
+	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
 }

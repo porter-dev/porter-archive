@@ -5,6 +5,7 @@ jobs:
   backend-tests:
     name: Run Go tests
     runs-on: ubuntu-latest
+    steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2.1.4
       with:

@@ -73,6 +73,10 @@ const URLParamToken URLParam = "token"
 
 type WebhookRequest struct {
 	Commit string `schema:"commit"`
+
+	// NOTICE: deprecated. This field should no longer be used; it is not supported
+	// internally.
+	Repository string `schema:"repository"`
 }
 
 type GetGHATemplateRequest struct {

@@ -31,7 +31,7 @@ func NewGetJobsStatusHandler(
 func (c *GetJobsStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	agent, err := c.GetAgent(r, cluster)
+	agent, err := c.GetAgent(r, cluster, "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

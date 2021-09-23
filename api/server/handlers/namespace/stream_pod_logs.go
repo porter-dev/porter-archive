@@ -1,6 +1,8 @@
 package namespace
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -10,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -42,7 +45,7 @@ func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	agent, err := c.GetAgent(r, cluster)
+	agent, err := c.GetAgent(r, cluster, "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -51,7 +54,14 @@ func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	err = agent.GetPodLogs(namespace, name, conn)
 
-	if err != nil {
+	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("pod %s/%s was not found", namespace, name),
+			http.StatusNotFound,
+		))
+
+		return
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

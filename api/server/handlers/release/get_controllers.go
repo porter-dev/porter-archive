@@ -1,6 +1,7 @@
 package release
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -38,7 +39,7 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	agent, err := c.GetAgent(r, cluster)
+	agent, err := c.GetAgent(r, cluster, "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -54,7 +55,14 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		controller.Namespace = helmRelease.Namespace
 		rc, _, err := getController(controller, agent)
 
-		if err != nil {
+		if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("%s/%s of kind %s was not found", controller.Namespace, controller.Name, controller.Kind),
+				http.StatusNotFound,
+			))
+
+			return
+		} else if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}

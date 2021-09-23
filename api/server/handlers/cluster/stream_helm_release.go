@@ -29,12 +29,15 @@ func NewStreamHelmReleaseHandler(
 }
 
 func (c *StreamHelmReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
+	conn, newRW, safeRW, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	w = newRW
+	defer conn.Close()
 
 	request := &types.StreamHelmReleaseRequest{}
 
@@ -51,7 +54,7 @@ func (c *StreamHelmReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = agent.StreamHelmReleases(conn, request.Namespace, request.Charts, request.Selectors)
+	err = agent.StreamHelmReleases(request.Namespace, request.Charts, request.Selectors, safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

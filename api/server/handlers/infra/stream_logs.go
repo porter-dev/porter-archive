@@ -27,12 +27,15 @@ func NewInfraStreamLogsHandler(
 }
 
 func (c *InfraStreamLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
+	conn, newRW, safeRW, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	w = newRW
+	defer conn.Close()
 
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
@@ -43,7 +46,7 @@ func (c *InfraStreamLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = provisioner.ResourceStream(client, infra.GetUniqueName(), conn)
+	err = provisioner.ResourceStream(client, infra.GetUniqueName(), safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -33,12 +33,15 @@ func NewStreamPodLogsHandler(
 }
 
 func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
+	conn, newRW, safeRW, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	w = newRW
+	defer conn.Close()
 
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 	name, _ := requestutils.GetURLParamString(r, types.URLParamPodName)
@@ -52,12 +55,19 @@ func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = agent.GetPodLogs(namespace, name, conn)
+	err = agent.GetPodLogs(namespace, name, safeRW)
 
 	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("pod %s/%s was not found", namespace, name),
 			http.StatusNotFound,
+		))
+
+		return
+	} else if brErr := (kubernetes.BadRequestError{}); errors.As(err, &targetErr) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			&brErr,
+			http.StatusBadRequest,
 		))
 
 		return

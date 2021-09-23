@@ -72,8 +72,8 @@ func NewClusterContext(ctx context.Context, cluster *models.Cluster) context.Con
 type KubernetesAgentGetter interface {
 	GetOutOfClusterConfig(cluster *models.Cluster) *kubernetes.OutOfClusterConfig
 	GetDynamicClient(r *http.Request, cluster *models.Cluster) (dynamic.Interface, error)
-	GetAgent(r *http.Request, cluster *models.Cluster) (*kubernetes.Agent, error)
-	GetHelmAgent(r *http.Request, cluster *models.Cluster) (*helm.Agent, error)
+	GetAgent(r *http.Request, cluster *models.Cluster, namespace string) (*kubernetes.Agent, error)
+	GetHelmAgent(r *http.Request, cluster *models.Cluster, namespace string) (*helm.Agent, error)
 }
 
 type OutOfClusterAgentGetter struct {
@@ -92,7 +92,7 @@ func (d *OutOfClusterAgentGetter) GetOutOfClusterConfig(cluster *models.Cluster)
 	}
 }
 
-func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Cluster) (*kubernetes.Agent, error) {
+func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Cluster, namespace string) (*kubernetes.Agent, error) {
 	// look for the agent in context
 	ctxAgentVal := r.Context().Value(KubernetesAgentCtxKey)
 
@@ -104,7 +104,12 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 
 	// if agent not found in context, get the agent from out of cluster config
 	ooc := d.GetOutOfClusterConfig(cluster)
-	ooc.DefaultNamespace = getNamespaceFromRequest(r)
+
+	if namespace == "" {
+		ooc.DefaultNamespace = getNamespaceFromRequest(r)
+	} else {
+		ooc.DefaultNamespace = namespace
+	}
 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 
@@ -119,7 +124,7 @@ func (d *OutOfClusterAgentGetter) GetAgent(r *http.Request, cluster *models.Clus
 	return agent, nil
 }
 
-func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.Cluster) (*helm.Agent, error) {
+func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.Cluster, namespace string) (*helm.Agent, error) {
 	// look for the agent in context
 	ctxAgentVal := r.Context().Value(HelmAgentCtxKey)
 
@@ -130,13 +135,15 @@ func (d *OutOfClusterAgentGetter) GetHelmAgent(r *http.Request, cluster *models.
 	}
 
 	// if helm agent not found in context, construct it from k8s agent
-	k8sAgent, err := d.GetAgent(r, cluster)
+	k8sAgent, err := d.GetAgent(r, cluster, namespace)
 
 	if err != nil {
 		return nil, err
 	}
 
-	namespace := getNamespaceFromRequest(r)
+	if namespace == "" {
+		namespace = getNamespaceFromRequest(r)
+	}
 
 	helmAgent, err := helm.GetAgentFromK8sAgent("secret", namespace, d.config.Logger, k8sAgent)
 

@@ -16,6 +16,7 @@ type PorterHandler interface {
 	Config() *config.Config
 	Repo() repository.Repository
 	HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
+	HandleAPIErrorNoWrite(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
 	PopulateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error
 }
 
@@ -57,7 +58,11 @@ func (d *DefaultPorterHandler) Repo() repository.Repository {
 }
 
 func (d *DefaultPorterHandler) HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError) {
-	apierrors.HandleAPIError(d.Config(), w, r, err)
+	apierrors.HandleAPIError(d.Config(), w, r, err, true)
+}
+
+func (d *DefaultPorterHandler) HandleAPIErrorNoWrite(w http.ResponseWriter, r *http.Request, err apierrors.RequestError) {
+	apierrors.HandleAPIError(d.Config(), w, r, err, false)
 }
 
 func (d *DefaultPorterHandler) WriteResult(w http.ResponseWriter, r *http.Request, v interface{}) {

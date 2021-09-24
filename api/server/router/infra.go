@@ -121,6 +121,7 @@ func getInfraRoutes(
 				types.ProjectScope,
 				types.InfraScope,
 			},
+			IsWebsocket: true,
 		},
 	)
 

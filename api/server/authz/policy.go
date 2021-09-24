@@ -43,7 +43,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqScopes, reqErr := getRequestActionForEndpoint(r, h.endpointMeta)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(h.config, w, r, reqErr)
+		apierrors.HandleAPIError(h.config, w, r, reqErr, true)
 		return
 	}
 
@@ -54,7 +54,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	policyDocs, reqErr := h.loader.LoadPolicyDocuments(user.ID, projID)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(h.config, w, r, reqErr)
+		apierrors.HandleAPIError(h.config, w, r, reqErr, true)
 		return
 	}
 
@@ -67,6 +67,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w,
 			r,
 			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action for user %d in project %d", user.ID, projID)),
+			true,
 		)
 
 		return

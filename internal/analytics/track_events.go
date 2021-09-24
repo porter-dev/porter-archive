@@ -30,4 +30,8 @@ const (
 	ApplicationLaunchSuccess SegmentEvent = "Application Launch Success"
 
 	ApplicationDeploymentWebhook SegmentEvent = "Triggered Re-deploy via Webhook"
+
+	// delete events
+	ClusterDestroyingStart   SegmentEvent = "Cluster Destroying Start"
+	ClusterDestroyingSuccess SegmentEvent = "Cluster Destroying Success"
 )

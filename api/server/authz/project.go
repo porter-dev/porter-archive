@@ -2,12 +2,14 @@ package authz
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type ProjectScopedFactory struct {
@@ -38,7 +40,15 @@ func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	project, err := p.config.Repo.Project().ReadProject(projID)
 
 	if err != nil {
-		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
+		if err == gorm.ErrRecordNotFound {
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(
+				fmt.Errorf("project not found with id %d", projID),
+			), true)
+
+			return
+		}
+
+		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
 

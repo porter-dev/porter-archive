@@ -4,20 +4,17 @@ import (
 	"context"
 
 	redis "github.com/go-redis/redis/v8"
-	"github.com/gorilla/websocket"
+	"github.com/porter-dev/porter/api/server/shared/websocket"
 )
 
 // ResourceStream performs an XREAD operation on the given stream and outputs it to the given websocket conn.
-func ResourceStream(client *redis.Client, streamName string, conn *websocket.Conn) error {
+func ResourceStream(client *redis.Client, streamName string, rw *websocket.WebsocketSafeReadWriter) error {
 	errorchan := make(chan error)
 
 	go func() {
 		// listens for websocket closing handshake
 		for {
-			_, _, err := conn.ReadMessage()
-
-			if err != nil {
-				defer conn.Close()
+			if _, _, err := rw.ReadMessage(); err != nil {
 				errorchan <- nil
 				return
 			}
@@ -43,10 +40,7 @@ func ResourceStream(client *redis.Client, streamName string, conn *websocket.Con
 			messages := xstream[0].Messages
 			lastID = messages[len(messages)-1].ID
 
-			if writeErr := conn.WriteJSON(messages); writeErr != nil {
-				errorchan <- writeErr
-				return
-			}
+			rw.WriteJSONWithChannel(messages, errorchan)
 		}
 	}()
 

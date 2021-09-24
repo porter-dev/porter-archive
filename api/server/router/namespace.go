@@ -283,6 +283,7 @@ func getNamespaceRoutes(
 				types.ClusterScope,
 				types.NamespaceScope,
 			},
+			IsWebsocket: true,
 		},
 	)
 

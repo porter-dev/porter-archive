@@ -402,6 +402,16 @@ func GlobalStreamListener(
 				if err != nil {
 					continue
 				}
+
+				if infra.Kind == types.InfraDOKS || infra.Kind == types.InfraGKE || infra.Kind == types.InfraEKS {
+					analyticsClient.Track(analytics.ClusterDestroyingSuccessTrack(
+						&analytics.ClusterDestroyingSuccessTrackOpts{
+							ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(infra.CreatedByUserID, infra.ProjectID, 0),
+							ClusterType:            infra.Kind,
+							InfraID:                infra.ID,
+						},
+					))
+				}
 			}
 
 			// acknowledge the message as read

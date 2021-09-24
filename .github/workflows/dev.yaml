@@ -28,7 +28,7 @@ jobs:
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
-          NODE_ENV=production
+          NODE_ENV=development
           API_SERVER=dashboard.dev.getporter.dev
           DISCORD_KEY=${{secrets.DISCORD_KEY}}
           DISCORD_CID=${{secrets.DISCORD_CID}}
@@ -38,6 +38,7 @@ jobs:
           ADDON_CHART_REPO_URL=https://chart-addons.dev.getporter.dev
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
+          SENTRY_ENV=development
           EOL
       - name: Build
         run: |

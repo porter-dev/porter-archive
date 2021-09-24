@@ -442,3 +442,47 @@ func RegistryProvisioningSuccessTrack(opts *RegistryProvisioningSuccessTrackOpts
 		getDefaultSegmentTrack(additionalProps, RegistryProvisioningSuccess),
 	)
 }
+
+// ClusterDestroyingStartTrackOpts are the options for creating a track when a cluster
+// has started destroying
+type ClusterDestroyingStartTrackOpts struct {
+	*ClusterScopedTrackOpts
+
+	ClusterType types.InfraKind
+	InfraID     uint
+}
+
+// ClusterDestroyingStartTrack returns a track for when a cluster
+// has started destroying
+func ClusterDestroyingStartTrack(opts *ClusterDestroyingStartTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["cluster_type"] = opts.ClusterType
+	additionalProps["infra_id"] = opts.InfraID
+
+	return getSegmentClusterTrack(
+		opts.ClusterScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterDestroyingStart),
+	)
+}
+
+// ClusterDestroyingSuccessTrackOpts are the options for creating a track when a cluster
+// has successfully provisioned
+type ClusterDestroyingSuccessTrackOpts struct {
+	*ClusterScopedTrackOpts
+
+	ClusterType types.InfraKind
+	InfraID     uint
+}
+
+// ClusterDestroyingSuccessTrack returns a new track for when a cluster
+// has successfully provisioned
+func ClusterDestroyingSuccessTrack(opts *ClusterDestroyingSuccessTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["cluster_type"] = opts.ClusterType
+	additionalProps["infra_id"] = opts.InfraID
+
+	return getSegmentClusterTrack(
+		opts.ClusterScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterDestroyingSuccess),
+	)
+}

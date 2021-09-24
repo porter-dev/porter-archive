@@ -45,9 +45,9 @@ func (p *HelmRepoScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		if err == gorm.ErrRecordNotFound {
 			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(
 				fmt.Errorf("helm repo with id %d not found in project %d", helmRepoID, proj.ID),
-			))
+			), true)
 		} else {
-			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
 		}
 
 		return

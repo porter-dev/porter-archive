@@ -2,9 +2,9 @@ package config
 
 import (
 	"github.com/gorilla/sessions"
-	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm/urlcache"

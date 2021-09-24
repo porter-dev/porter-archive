@@ -28,6 +28,7 @@ module.exports = () => {
     entry: ["./src/index.tsx"],
     target: "web",
     mode: isDevelopment ? "development" : "production",
+    devtool: "source-map",
     module: {
       rules: [
         {

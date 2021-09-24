@@ -69,6 +69,7 @@ func (c *ProvisionDOCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Suffix:          suffix,
 		Status:          types.StatusCreating,
 		DOIntegrationID: request.DOIntegrationID,
+		CreatedByUserID: user.ID,
 	}
 
 	// handle write to the database

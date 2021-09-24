@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
+	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -30,13 +31,7 @@ func NewStreamStatusHandler(
 }
 
 func (c *StreamStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
+	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 	request := &types.StreamStatusRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -54,7 +49,7 @@ func (c *StreamStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	kind, _ := requestutils.GetURLParamString(r, types.URLParamKind)
 
-	err = agent.StreamControllerStatus(conn, kind, request.Selectors)
+	err = agent.StreamControllerStatus(kind, request.Selectors, safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

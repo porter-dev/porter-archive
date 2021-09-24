@@ -60,6 +60,9 @@ type APIRequestMetadata struct {
 
 	// Whether the endpoint should log
 	Quiet bool
+
+	// Whether the endpoint upgrades to a websocket
+	IsWebsocket bool
 }
 
 const RequestScopeCtxKey = "requestscopes"
@@ -68,3 +71,5 @@ type RequestAction struct {
 	Verb     APIVerb
 	Resource NameOrUInt
 }
+
+var RequestCtxWebsocketKey = "websocket"

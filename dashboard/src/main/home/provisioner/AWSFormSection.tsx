@@ -200,8 +200,8 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
         "<token>",
         {
           aws_region: awsRegion,
-          aws_access_key_id: awsAccessId,
-          aws_secret_access_key: awsSecretKey,
+          aws_access_key_id: awsAccessId.trim(),
+          aws_secret_access_key: awsSecretKey.trim(),
           aws_cluster_id: clusterName,
         },
         { id: currentProject.id }

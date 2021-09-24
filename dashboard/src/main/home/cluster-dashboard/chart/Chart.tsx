@@ -97,9 +97,7 @@ const Chart: React.FunctionComponent<Props> = ({
         let urlParams = new URLSearchParams(location.search);
         let cluster = urlParams.get("cluster");
         let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
-        pushFiltered({ location, history }, route, ["project_id"], {
-          chart_revision: chart.version,
-        });
+        pushFiltered({ location, history }, route, ["project_id"]);
       }}
     >
       <Title>

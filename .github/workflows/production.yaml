@@ -38,6 +38,7 @@ jobs:
           ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
+          SENTRY_ENV=production
           EOL
       - name: Build
         run: |

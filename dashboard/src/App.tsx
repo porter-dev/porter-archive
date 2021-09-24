@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { BrowserRouter } from "react-router-dom";
-import PorterErrorBoundary from "shared/PorterErrorBoundary";
+import PorterErrorBoundary from "shared/error_handling/PorterErrorBoundary";
 import styled, { createGlobalStyle } from "styled-components";
 
 import MainWrapper from "./main/MainWrapper";

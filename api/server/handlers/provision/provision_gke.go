@@ -69,6 +69,7 @@ func (c *ProvisionGKEHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Suffix:           suffix,
 		Status:           types.StatusCreating,
 		GCPIntegrationID: request.GCPIntegrationID,
+		CreatedByUserID:  user.ID,
 	}
 
 	// handle write to the database

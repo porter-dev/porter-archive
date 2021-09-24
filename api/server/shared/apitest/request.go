@@ -65,7 +65,7 @@ func (f *failingDecoderValidator) DecodeAndValidate(
 	r *http.Request,
 	v interface{},
 ) (ok bool) {
-	apierrors.HandleAPIError(f.config, w, r, apierrors.NewErrInternal(fmt.Errorf("fake error")))
+	apierrors.HandleAPIError(f.config, w, r, apierrors.NewErrInternal(fmt.Errorf("fake error")), true)
 	return false
 }
 

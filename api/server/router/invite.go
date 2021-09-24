@@ -116,6 +116,8 @@ func getInviteRoutes(
 				Parent:       basePath,
 				RelativePath: "/invites/{token}",
 			},
+			// only user scope is needed here. adding the project scope will prevent the user
+			// from joining the project, since they don't have a role in the project yet.
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 			},

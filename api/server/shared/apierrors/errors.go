@@ -95,6 +95,7 @@ func HandleAPIError(
 	w http.ResponseWriter,
 	r *http.Request,
 	err RequestError,
+	writeErr bool,
 ) {
 	extErrorStr := err.ExternalError()
 
@@ -116,24 +117,26 @@ func HandleAPIError(
 		config.Alerter.SendAlert(r.Context(), err, data)
 	}
 
-	// send the external error
-	resp := &types.ExternalError{
-		Error: extErrorStr,
-	}
+	if writeErr {
+		// send the external error
+		resp := &types.ExternalError{
+			Error: extErrorStr,
+		}
 
-	// write the status code
-	w.WriteHeader(err.GetStatusCode())
+		// write the status code
+		w.WriteHeader(err.GetStatusCode())
 
-	writerErr := json.NewEncoder(w).Encode(resp)
+		writerErr := json.NewEncoder(w).Encode(resp)
 
-	if writerErr != nil {
-		event := config.Logger.Error().
-			Err(writerErr)
+		if writerErr != nil {
+			event := config.Logger.Error().
+				Err(writerErr)
 
-		logger.AddLoggingContextScopes(r.Context(), event)
-		logger.AddLoggingRequestMeta(r, event)
+			logger.AddLoggingContextScopes(r.Context(), event)
+			logger.AddLoggingRequestMeta(r, event)
 
-		event.Send()
+			event.Send()
+		}
 	}
 
 	return

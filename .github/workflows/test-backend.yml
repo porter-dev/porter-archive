@@ -1,0 +1,13 @@
+name: Backend CI
+on:
+  - pull_request
+jobs:
+  backend-tests:
+    name: Run Go tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2.1.4
+      with:
+        go-version: '^1.15.1'
+    - run: go test ./...

@@ -69,6 +69,7 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Suffix:           suffix,
 		Status:           types.StatusCreating,
 		AWSIntegrationID: request.AWSIntegrationID,
+		CreatedByUserID:  user.ID,
 	}
 
 	// handle write to the database

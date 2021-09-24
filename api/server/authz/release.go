@@ -40,7 +40,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	helmAgent, err := p.agentGetter.GetHelmAgent(r, cluster, "")
 
 	if err != nil {
-		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
+		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
 
@@ -60,9 +60,9 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("release not found"),
 				http.StatusNotFound,
-			))
+			), true)
 		} else {
-			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err))
+			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
 		}
 
 		return

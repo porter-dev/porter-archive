@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
@@ -27,13 +28,7 @@ func NewInfraStreamLogsHandler(
 }
 
 func (c *InfraStreamLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := c.Config().WSUpgrader.Upgrade(w, r, nil)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
+	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
 	client, err := adapter.NewRedisClient(c.Config().RedisConf)
@@ -43,7 +38,7 @@ func (c *InfraStreamLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = provisioner.ResourceStream(client, infra.GetUniqueName(), conn)
+	err = provisioner.ResourceStream(client, infra.GetUniqueName(), safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

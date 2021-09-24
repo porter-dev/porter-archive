@@ -1,25 +1,19 @@
 package router
 
 import (
-	"bufio"
-	"errors"
-	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
+	"github.com/porter-dev/porter/api/server/router/middleware"
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/logger"
 )
 
 func NewAPIRouter(config *config.Config) *chi.Mux {
@@ -54,14 +48,14 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	)
 
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
-	panicMW := &PanicMiddleware{config}
+	panicMW := middleware.NewPanicMiddleware(config)
 
 	r.Route("/api", func(r chi.Router) {
 		// set panic middleware for all API endpoints to catch panics
 		r.Use(panicMW.Middleware)
 
 		// set the content type for all API endpoints and log all request info
-		r.Use(ContentTypeJSON)
+		r.Use(middleware.ContentTypeJSON)
 
 		baseRoutes := baseRegisterer.GetRoutes(
 			r,
@@ -190,7 +184,10 @@ func registerRoutes(config *config.Config, routes []*Route) {
 	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
 
 	// set up logging middleware to log information about the request
-	loggerMw := &RequestLoggerMiddleware{config.Logger}
+	loggerMw := middleware.NewRequestLoggerMiddleware(config.Logger)
+
+	// websocket middleware for upgrading requests
+	websocketMw := middleware.NewWebsocketMiddleware(config)
 
 	for _, route := range routes {
 		atomicGroup := route.Router.Group(nil)
@@ -232,80 +229,14 @@ func registerRoutes(config *config.Config, routes []*Route) {
 			atomicGroup.Use(loggerMw.Middleware)
 		}
 
+		if route.Endpoint.Metadata.IsWebsocket {
+			atomicGroup.Use(websocketMw.Middleware)
+		}
+
 		atomicGroup.Method(
 			string(route.Endpoint.Metadata.Method),
 			route.Endpoint.Metadata.Path.RelativePath,
 			route.Handler,
 		)
 	}
-}
-
-// ContentTypeJSON sets the content type for requests to application/json
-func ContentTypeJSON(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json;charset=utf8")
-		next.ServeHTTP(w, r)
-	})
-}
-
-type requestLoggerResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func newRequestLoggerResponseWriter(w http.ResponseWriter) *requestLoggerResponseWriter {
-	return &requestLoggerResponseWriter{w, http.StatusOK}
-}
-
-func (rw *requestLoggerResponseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
-}
-
-func (rw *requestLoggerResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	h, ok := rw.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, errors.New("ResponseWriter Interface does not support hijacking")
-	}
-	return h.Hijack()
-}
-
-type RequestLoggerMiddleware struct {
-	logger *logger.Logger
-}
-
-func (mw *RequestLoggerMiddleware) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		rw := newRequestLoggerResponseWriter(w)
-
-		next.ServeHTTP(rw, r)
-
-		latency := time.Since(start)
-
-		event := mw.logger.Info().Dur("latency", latency).Int("status", rw.statusCode)
-
-		logger.AddLoggingContextScopes(r.Context(), event)
-		logger.AddLoggingRequestMeta(r, event)
-
-		event.Send()
-	})
-}
-
-type PanicMiddleware struct {
-	config *config.Config
-}
-
-func (pmw *PanicMiddleware) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			err := recover()
-
-			if err != nil {
-				apierrors.HandleAPIError(pmw.config, w, r, apierrors.NewErrInternal(fmt.Errorf("%v", err)))
-			}
-		}()
-
-		next.ServeHTTP(w, r)
-	})
 }

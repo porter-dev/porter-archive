@@ -518,6 +518,7 @@ func getClusterRoutes(
 				types.ProjectScope,
 				types.ClusterScope,
 			},
+			IsWebsocket: true,
 		},
 	)
 
@@ -551,6 +552,7 @@ func getClusterRoutes(
 				types.ProjectScope,
 				types.ClusterScope,
 			},
+			IsWebsocket: true,
 		},
 	)
 

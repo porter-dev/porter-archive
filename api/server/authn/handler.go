@@ -153,7 +153,7 @@ func (authn *AuthN) nextWithUserID(w http.ResponseWriter, r *http.Request, userI
 func (authn *AuthN) sendForbiddenError(err error, w http.ResponseWriter, r *http.Request) {
 	reqErr := apierrors.NewErrForbidden(err)
 
-	apierrors.HandleAPIError(authn.config, w, r, reqErr)
+	apierrors.HandleAPIError(authn.config, w, r, reqErr, true)
 }
 
 var errInvalidToken = fmt.Errorf("authorization header exists, but token is not valid")

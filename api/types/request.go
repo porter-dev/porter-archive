@@ -63,6 +63,12 @@ type APIRequestMetadata struct {
 
 	// Whether the endpoint upgrades to a websocket
 	IsWebsocket bool
+
+	// Whether the endpoint should check for a usage limit
+	CheckUsage bool
+
+	// The usage metric that the request should check for, if CheckUsage
+	UsageMetric UsageMetric
 }
 
 const RequestScopeCtxKey = "requestscopes"

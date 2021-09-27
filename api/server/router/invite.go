@@ -64,6 +64,7 @@ func getInviteRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.SettingsScope,
 			},
 		},
 	)
@@ -91,7 +92,10 @@ func getInviteRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.SettingsScope,
 			},
+			CheckUsage:  true,
+			UsageMetric: types.Users,
 		},
 	)
 
@@ -122,6 +126,8 @@ func getInviteRoutes(
 				types.UserScope,
 			},
 			ShouldRedirect: true,
+			CheckUsage:     true,
+			UsageMetric:    types.Users,
 		},
 	)
 
@@ -145,6 +151,7 @@ func getInviteRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.SettingsScope,
 				types.InviteScope,
 			},
 		},
@@ -173,6 +180,7 @@ func getInviteRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.SettingsScope,
 				types.InviteScope,
 			},
 		},

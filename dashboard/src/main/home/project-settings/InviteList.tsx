@@ -25,7 +25,7 @@ export type Collaborator = {
 };
 
 const InvitePage: React.FunctionComponent<Props> = ({}) => {
-  const { currentProject, setCurrentModal, user } = useContext(Context);
+  const { currentProject, setCurrentModal, setCurrentError, user } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
   const [email, setEmail] = useState("");
@@ -115,7 +115,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         getData();
         setEmail("");
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        if (err.response.data?.error) {
+          setCurrentError(err.response.data?.error)
+        }
+
+        console.log(err)
+      });
   };
 
   const deleteInvite = (inviteId: number) => {
@@ -154,7 +160,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         )
       )
       .then(getData)
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        if (err.response.data?.error) {
+          setCurrentError(err.response.data?.error)
+        }
+
+        console.log(err)
+      });
   };
 
   const validateEmail = () => {

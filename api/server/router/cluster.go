@@ -153,6 +153,8 @@ func getClusterRoutes(
 				types.UserScope,
 				types.ProjectScope,
 			},
+			CheckUsage:  true,
+			UsageMetric: types.Clusters,
 		},
 	)
 

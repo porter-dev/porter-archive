@@ -29,6 +29,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.NotificationConfig{},
 		&models.EventContainer{},
 		&models.SubEvent{},
+		&models.ProjectUsage{},
+		&models.ProjectUsageCache{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

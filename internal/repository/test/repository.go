@@ -30,6 +30,7 @@ type TestRepository struct {
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
 	event                     repository.EventRepository
+	projectUsage              repository.ProjectUsageRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -130,6 +131,10 @@ func (t *TestRepository) NotificationConfig() repository.NotificationConfigRepos
 
 func (t *TestRepository) Event() repository.EventRepository {
 	return t.event
+}
+
+func (t *TestRepository) ProjectUsage() repository.ProjectUsageRepository {
+	return t.projectUsage
 }
 
 // NewRepository returns a Repository which persists users in memory

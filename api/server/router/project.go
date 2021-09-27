@@ -137,6 +137,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/usage -> project.NewProjectGetUsageHandler
+	getUsageEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/usage",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getUsageHandler := project.NewProjectGetUsageHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getUsageEndpoint,
+		Handler:  getUsageHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters -> cluster.NewClusterListHandler
 	listClusterEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -509,6 +536,8 @@ func getProjectRoutes(
 				types.UserScope,
 				types.ProjectScope,
 			},
+			CheckUsage:  true,
+			UsageMetric: types.Clusters,
 		},
 	)
 
@@ -565,6 +594,8 @@ func getProjectRoutes(
 				types.UserScope,
 				types.ProjectScope,
 			},
+			CheckUsage:  true,
+			UsageMetric: types.Clusters,
 		},
 	)
 
@@ -621,6 +652,8 @@ func getProjectRoutes(
 				types.UserScope,
 				types.ProjectScope,
 			},
+			CheckUsage:  true,
+			UsageMetric: types.Clusters,
 		},
 	)
 

@@ -7,12 +7,24 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
+type ProjectPlan string
+
+const (
+	ProjectPlanBasic      ProjectPlan = "basic"
+	ProjectPlanTeam       ProjectPlan = "team"
+	ProjectPlanGrowth     ProjectPlan = "growth"
+	ProjectPlanEnterprise ProjectPlan = "enterprise"
+)
+
 // Project type that extends gorm.Model
 type Project struct {
 	gorm.Model
 
 	Name  string `json:"name"`
 	Roles []Role `json:"roles"`
+
+	ProjectUsageID      uint
+	ProjectUsageCacheID uint
 
 	// linked repos
 	GitRepos []GitRepo `json:"git_repos,omitempty"`

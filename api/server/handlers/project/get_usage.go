@@ -143,5 +143,5 @@ func getResourceUsage(config *config.Config, clusters []*models.Cluster) (uint, 
 		totMem += totAlloc.Memory
 	}
 
-	return totCPU / 1000, totMem / (1000 * 1000), nil
+	return totCPU / 1000, totMem / (1024 * 1024), nil
 }

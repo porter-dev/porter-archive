@@ -9,8 +9,10 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
+import { getQueryParam } from "shared/routing";
 
-type PropsType = WithAuthProps & {};
+type PropsType = RouteComponentProps & WithAuthProps & {};
 
 type StateType = {
   projectName: string;
@@ -25,12 +27,28 @@ class ProjectSettings extends Component<PropsType, StateType> {
     tabOptions: [] as { value: string; label: string }[],
   };
 
+  componentDidUpdate(prevProps: PropsType) {
+    const selectedTab = getQueryParam(this.props, "selected_tab");
+    if (prevProps.location.search !== this.props.location.search) {
+      if (selectedTab) {
+        this.setState({ currentTab: selectedTab });
+      } else {
+        this.setState({ currentTab: "manage-access" });
+      }
+    }
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     this.setState({ projectName: currentProject.name });
     const tabOptions = [];
     tabOptions.push({ value: "manage-access", label: "Manage Access" });
+
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
+      tabOptions.push({
+        value: "billing",
+        label: "Billing",
+      });
       tabOptions.push({
         value: "additional-settings",
         label: "Additional Settings",
@@ -38,11 +56,26 @@ class ProjectSettings extends Component<PropsType, StateType> {
     }
 
     this.setState({ tabOptions });
+
+    const selectedTab = getQueryParam(this.props, "selected_tab");
+    if (selectedTab) {
+      this.setState({ currentTab: selectedTab });
+    }
   }
 
   renderTabContents = () => {
     if (!this.props.isAuthorized("settings", "", ["get", "delete"])) {
       return <InvitePage />;
+    }
+
+    if (this.state.currentTab === "billing") {
+      return (
+        <div>
+          <a href="https://www.youtube.com/watch?v=ETxmCCsMoD0&ab_channel=AbbaVEVO">
+            Money money money
+          </a>
+        </div>
+      );
     }
 
     if (this.state.currentTab === "manage-access") {
@@ -107,7 +140,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
 ProjectSettings.contextType = Context;
 
-export default withAuth(ProjectSettings);
+export default withRouter(withAuth(ProjectSettings));
 
 const Warning = styled.div`
   font-size: 13px;

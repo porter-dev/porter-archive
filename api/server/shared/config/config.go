@@ -17,8 +17,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var Version string = "dev-ce"
-
 type Config struct {
 	// Logger for logging
 	Logger *logger.Logger

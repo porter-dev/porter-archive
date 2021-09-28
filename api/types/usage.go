@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type UsageMetric string
 
 const (
@@ -58,4 +60,10 @@ var EnterprisePlan = ProjectUsage{
 type GetProjectUsageResponse struct {
 	Current ProjectUsage `json:"current"`
 	Limit   ProjectUsage `json:"limit"`
+
+	// Whether the usage is exceeded
+	IsExceeded bool `json:"exceeded"`
+
+	// When the usage has been exceeded since, if IsExceeded
+	ExceededSince *time.Time `json:"exceeded_since,omitempty"`
 }

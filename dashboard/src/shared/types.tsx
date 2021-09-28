@@ -296,6 +296,8 @@ export interface ContextProps {
   capabilities: CapabilityType;
   setCapabilities: (capabilities: CapabilityType) => void;
   clearContext: () => void;
+  edition: "ee" | "ce";
+  setEdition: (appVersion: string) => void;
 }
 
 export enum JobStatusType {
@@ -307,4 +309,22 @@ export enum JobStatusType {
 export interface JobStatusWithTimeType {
   status: JobStatusType;
   start_time: string;
+}
+
+export interface UsageData {
+  current: {
+    [key: string]: number;
+    resource_cpu: number;
+    resource_memory: number;
+    clusters: number;
+    users: number;
+  };
+  limit: {
+    [key: string]: number;
+    resource_cpu: number;
+    resource_memory: number;
+    clusters: number;
+    users: number;
+  };
+  exceeds: boolean;
 }

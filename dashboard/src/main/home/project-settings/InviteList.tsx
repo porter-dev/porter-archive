@@ -25,7 +25,13 @@ export type Collaborator = {
 };
 
 const InvitePage: React.FunctionComponent<Props> = ({}) => {
-  const { currentProject, setCurrentModal, setCurrentError, user } = useContext(Context);
+  const {
+    currentProject,
+    setCurrentModal,
+    setCurrentError,
+    user,
+    edition,
+  } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
   const [email, setEmail] = useState("");
@@ -117,10 +123,10 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       })
       .catch((err) => {
         if (err.response.data?.error) {
-          setCurrentError(err.response.data?.error)
+          setCurrentError(err.response.data?.error);
         }
 
-        console.log(err)
+        console.log(err);
       });
   };
 
@@ -162,10 +168,10 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       .then(getData)
       .catch((err) => {
         if (err.response.data?.error) {
-          setCurrentError(err.response.data?.error)
+          setCurrentError(err.response.data?.error);
         }
 
-        console.log(err)
+        console.log(err);
       });
   };
 
@@ -358,35 +364,43 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     return mappedInviteList || [];
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
+  const isEnterpriseEdition = () => {
+    return edition === "ee";
+  };
+
   return (
     <>
-      <Heading isAtTop={true}>Share Project</Heading>
-      <Helper>Generate a project invite for another user.</Helper>
-      <InputRowWrapper>
-        <InputRow
-          value={email}
-          type="text"
-          setValue={(newEmail: string) => setEmail(newEmail)}
-          width="100%"
-          placeholder="ex: mrp@getporter.dev"
-        />
-      </InputRowWrapper>
-      <Helper>Specify a role for this user.</Helper>
-      <RoleSelectorWrapper>
-        <RadioSelector
-          selected={role}
-          setSelected={setRole}
-          options={roleList}
-        />
-      </RoleSelectorWrapper>
-      <ButtonWrapper>
-        <InviteButton disabled={false} onClick={() => validateEmail()}>
-          Create Invite
-        </InviteButton>
-        {isInvalidEmail && (
-          <Invalid>Invalid email address. Please try again.</Invalid>
-        )}
-      </ButtonWrapper>
+      {isEnterpriseEdition() && (
+        <>
+          <Heading isAtTop={true}>Share Project</Heading>
+          <Helper>Generate a project invite for another user.</Helper>
+          <InputRowWrapper>
+            <InputRow
+              value={email}
+              type="text"
+              setValue={(newEmail: string) => setEmail(newEmail)}
+              width="100%"
+              placeholder="ex: mrp@getporter.dev"
+            />
+          </InputRowWrapper>
+          <Helper>Specify a role for this user.</Helper>
+          <RoleSelectorWrapper>
+            <RadioSelector
+              selected={role}
+              setSelected={setRole}
+              options={roleList}
+            />
+          </RoleSelectorWrapper>
+          <ButtonWrapper>
+            <InviteButton disabled={false} onClick={() => validateEmail()}>
+              Create Invite
+            </InviteButton>
+            {isInvalidEmail && (
+              <Invalid>Invalid email address. Please try again.</Invalid>
+            )}
+          </ButtonWrapper>
+        </>
+      )}
 
       <Heading>Invites & Collaborators</Heading>
       <Helper>Manage pending invites and view collaborators.</Helper>

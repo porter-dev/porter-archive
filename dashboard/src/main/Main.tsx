@@ -58,6 +58,7 @@ export default class Main extends Component<PropsType, StateType> {
     api
       .getMetadata("", {}, {})
       .then((res) => {
+        this.context.setEdition(res.data?.version);
         this.setState({ local: !res.data?.provisioner });
       })
       .catch((err) => console.log(err));
@@ -107,7 +108,7 @@ export default class Main extends Component<PropsType, StateType> {
       return <Loading />;
     }
 
-    // if logged in but not verified, block until email verification    
+    // if logged in but not verified, block until email verification
     if (
       !this.state.local &&
       this.state.isLoggedIn &&

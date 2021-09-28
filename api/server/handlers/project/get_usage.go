@@ -30,7 +30,7 @@ func (p *ProjectGetUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	res := &types.GetProjectUsageResponse{}
 
-	currUsage, limit, err := usage.GetUsage(p.Config(), proj)
+	currUsage, limit, usageCache, err := usage.GetUsage(p.Config(), proj)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -39,6 +39,8 @@ func (p *ProjectGetUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	res.Current = *currUsage
 	res.Limit = *limit
+	res.IsExceeded = usageCache.Exceeded
+	res.ExceededSince = usageCache.ExceededSince
 
 	p.WriteResult(w, r, res)
 }

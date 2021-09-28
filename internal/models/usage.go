@@ -50,6 +50,12 @@ type ProjectUsageCache struct {
 
 	// The memory usage, in bytes
 	ResourceMemory uint
+
+	// Whether the user is exceeding usage
+	Exceeded bool
+
+	// How long the user has been exceeding resource limits
+	ExceededSince *time.Time
 }
 
 func (p *ProjectUsageCache) Is24HrOld() bool {

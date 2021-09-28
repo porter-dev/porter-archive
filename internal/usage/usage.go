@@ -3,6 +3,7 @@ package usage
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -16,33 +17,34 @@ import (
 // GetUsage gets a project's current usage and usage limit
 func GetUsage(config *config.Config, proj *models.Project) (
 	current, limit *types.ProjectUsage,
+	resourceUse *models.ProjectUsageCache,
 	err error,
 ) {
 	limit, err = GetLimit(config, proj)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// query for the linked cluster counts
 	clusters, err := config.Repo.Cluster().ListClustersByProjectID(proj.ID)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// query for the linked user counts
 	roles, err := config.Repo.Project().ListProjectRoles(proj.ID)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	usageCache, err := config.Repo.ProjectUsage().ReadProjectUsageCache(proj.ID)
 	isCacheFound := true
 
 	if isCacheFound = !errors.Is(err, gorm.ErrRecordNotFound); err != nil && isCacheFound {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// if the usage cache is 24 hours old, was not found, or usage is over limit,
@@ -51,19 +53,33 @@ func GetUsage(config *config.Config, proj *models.Project) (
 		cpu, memory, err := getResourceUsage(config, clusters)
 
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 
 		if !isCacheFound {
-			usageCache, err = config.Repo.ProjectUsage().CreateProjectUsageCache(&models.ProjectUsageCache{
+			usageCache = &models.ProjectUsageCache{
 				ProjectID:      proj.ID,
 				ResourceCPU:    cpu,
 				ResourceMemory: memory,
-			})
+			}
 		} else {
 			usageCache.ResourceCPU = cpu
 			usageCache.ResourceMemory = memory
+		}
 
+		isExceeded := usageCache.ResourceCPU > limit.ResourceCPU || usageCache.ResourceMemory > limit.ResourceMemory
+
+		if !usageCache.Exceeded && isExceeded {
+			// update the usage cache with a time exceeded
+			currTime := time.Now()
+			usageCache.ExceededSince = &currTime
+		}
+
+		usageCache.Exceeded = isExceeded
+
+		if !isCacheFound {
+			usageCache, err = config.Repo.ProjectUsage().CreateProjectUsageCache(usageCache)
+		} else {
 			usageCache, err = config.Repo.ProjectUsage().UpdateProjectUsageCache(usageCache)
 		}
 	}
@@ -73,7 +89,7 @@ func GetUsage(config *config.Config, proj *models.Project) (
 		ResourceMemory: usageCache.ResourceMemory,
 		Clusters:       uint(len(clusters)),
 		Users:          uint(len(roles)),
-	}, limit, nil
+	}, limit, usageCache, nil
 }
 
 // gets the total resource usage across all nodes in all clusters

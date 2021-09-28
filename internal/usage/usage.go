@@ -5,42 +5,48 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/porter-dev/porter/api/server/authz"
-	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/nodes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
+	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 )
 
+type GetUsageOpts struct {
+	Repo    repository.Repository
+	DOConf  *oauth2.Config
+	Project *models.Project
+}
+
 // GetUsage gets a project's current usage and usage limit
-func GetUsage(config *config.Config, proj *models.Project) (
+func GetUsage(opts *GetUsageOpts) (
 	current, limit *types.ProjectUsage,
 	resourceUse *models.ProjectUsageCache,
 	err error,
 ) {
-	limit, err = GetLimit(config, proj)
+	limit, err = GetLimit(opts.Repo, opts.Project)
 
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	// query for the linked cluster counts
-	clusters, err := config.Repo.Cluster().ListClustersByProjectID(proj.ID)
+	clusters, err := opts.Repo.Cluster().ListClustersByProjectID(opts.Project.ID)
 
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	// query for the linked user counts
-	roles, err := config.Repo.Project().ListProjectRoles(proj.ID)
+	roles, err := opts.Repo.Project().ListProjectRoles(opts.Project.ID)
 
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	usageCache, err := config.Repo.ProjectUsage().ReadProjectUsageCache(proj.ID)
+	usageCache, err := opts.Repo.ProjectUsage().ReadProjectUsageCache(opts.Project.ID)
 	isCacheFound := true
 
 	if isCacheFound = !errors.Is(err, gorm.ErrRecordNotFound); err != nil && isCacheFound {
@@ -50,7 +56,7 @@ func GetUsage(config *config.Config, proj *models.Project) (
 	// if the usage cache is 24 hours old, was not found, or usage is over limit,
 	// re-query for the usage
 	if !isCacheFound || usageCache.Is24HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
-		cpu, memory, err := getResourceUsage(config, clusters)
+		cpu, memory, err := getResourceUsage(opts, clusters)
 
 		if err != nil {
 			return nil, nil, nil, err
@@ -58,7 +64,7 @@ func GetUsage(config *config.Config, proj *models.Project) (
 
 		if !isCacheFound {
 			usageCache = &models.ProjectUsageCache{
-				ProjectID:      proj.ID,
+				ProjectID:      opts.Project.ID,
 				ResourceCPU:    cpu,
 				ResourceMemory: memory,
 			}
@@ -78,9 +84,9 @@ func GetUsage(config *config.Config, proj *models.Project) (
 		usageCache.Exceeded = isExceeded
 
 		if !isCacheFound {
-			usageCache, err = config.Repo.ProjectUsage().CreateProjectUsageCache(usageCache)
+			usageCache, err = opts.Repo.ProjectUsage().CreateProjectUsageCache(usageCache)
 		} else {
-			usageCache, err = config.Repo.ProjectUsage().UpdateProjectUsageCache(usageCache)
+			usageCache, err = opts.Repo.ProjectUsage().UpdateProjectUsageCache(usageCache)
 		}
 	}
 
@@ -93,13 +99,15 @@ func GetUsage(config *config.Config, proj *models.Project) (
 }
 
 // gets the total resource usage across all nodes in all clusters
-func getResourceUsage(config *config.Config, clusters []*models.Cluster) (uint, uint, error) {
-	// TODO; pass this in?
+func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uint, error) {
 	var totCPU, totMem uint = 0, 0
-	getter := authz.NewOutOfClusterAgentGetter(config)
 
 	for _, cluster := range clusters {
-		ooc := getter.GetOutOfClusterConfig(cluster)
+		ooc := &kubernetes.OutOfClusterConfig{
+			Cluster:           cluster,
+			Repo:              opts.Repo,
+			DigitalOceanOAuth: opts.DOConf,
+		}
 
 		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 

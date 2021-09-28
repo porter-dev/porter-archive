@@ -1,7 +1,6 @@
 package usage
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/shared/config/env"
@@ -70,13 +69,9 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 	// get the count of the projects
 	var count int64
 
-	fmt.Println("COUNT OF PROJECTS:", count)
-
 	if err := u.db.Model(&models.Project{}).Count(&count).Error; err != nil {
 		return nil, err
 	}
-
-	fmt.Println("COUNT OF PROJECTS:", count)
 
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
@@ -95,17 +90,14 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 			})
 
 			if err != nil {
-				fmt.Printf("error: %s\n", err.Error())
 				continue
 			}
 
-			if cache.Exceeded {
-				res[project.ID] = &UsageTrackerResponse{
-					ResourceCPU:    cache.ResourceCPU,
-					ResourceMemory: cache.ResourceMemory,
-					Exceeded:       cache.Exceeded,
-					ExceededSince:  cache.ExceededSince,
-				}
+			res[project.ID] = &UsageTrackerResponse{
+				ResourceCPU:    cache.ResourceCPU,
+				ResourceMemory: cache.ResourceMemory,
+				Exceeded:       cache.Exceeded,
+				ExceededSince:  cache.ExceededSince,
 			}
 		}
 	}

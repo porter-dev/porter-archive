@@ -61,6 +61,7 @@ type UsageTrackerResponse struct {
 	ResourceMemory uint
 	Exceeded       bool
 	ExceededSince  *time.Time
+	Project        *models.Project
 }
 
 func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error) {
@@ -98,6 +99,7 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 				ResourceMemory: cache.ResourceMemory,
 				Exceeded:       cache.Exceeded,
 				ExceededSince:  cache.ExceededSince,
+				Project:        project,
 			}
 		}
 	}

@@ -122,5 +122,7 @@ func (u *Unavailable) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	apierrors.HandleAPIError(u.config, w, r, apierrors.NewErrPassThroughToClient(
 		fmt.Errorf("%s not available in community edition", u.handlerID),
 		http.StatusBadRequest,
-	), true)
+	), true, apierrors.ErrorOpts{
+		Code: types.ErrCodeUnavailable,
+	})
 }

@@ -64,9 +64,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
         .then((res) => {
           this.setState({ submitted: true });
         })
-        .catch((err) =>
-          this.context.setCurrentError(err.response.data.error)
-        );
+        .catch((err) => this.context.setCurrentError(err.response.data.error));
     }
   };
 

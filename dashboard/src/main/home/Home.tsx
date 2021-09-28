@@ -388,9 +388,7 @@ class Home extends Component<PropsType, StateType> {
             <Icon src={discordLogo} />
             Join Our Discord
           </DiscordButton>
-          {(this.context?.capabilities?.version === "production" ||
-            this.context?.capabilities?.version === "staging") &&
-            this.state.showWelcomeForm &&
+          {this.state.showWelcomeForm &&
             localStorage.getItem("welcomed") != "true" && (
               <>
                 <WelcomeForm
@@ -445,16 +443,19 @@ class Home extends Component<PropsType, StateType> {
           if (!cluster.infra_id) continue;
 
           // Handle destroying infra we've provisioned
-          api.destroyInfra(
-            "<token>",
-                  { name: cluster.name },
-                  {
-                    project_id: currentProject.id,
-                    infra_id: cluster.infra_id,
-                  }
-          ).then(() =>
-            console.log("destroyed provisioned infra:", cluster.infra_id)
-          ).catch(console.log);
+          api
+            .destroyInfra(
+              "<token>",
+              { name: cluster.name },
+              {
+                project_id: currentProject.id,
+                infra_id: cluster.infra_id,
+              }
+            )
+            .then(() =>
+              console.log("destroyed provisioned infra:", cluster.infra_id)
+            )
+            .catch(console.log);
         }
       })
       .catch(console.log);

@@ -171,11 +171,14 @@ const KeyValueArray: React.FC<Props> = (props) => {
                 const prevValues = prev.values.reduce((acc, currentValue) => {
                   acc[currentValue.key] = currentValue.value;
                   return acc;
-                }, {} as Record<string, string>)
+                }, {} as Record<string, string>);
 
                 // Deconstruct the two records/objects inside one to merge their values (this will override the old duped vars too)
                 // and convert the new object back to an array usable for the component
-                const newValues = Object.entries({...prevValues, ...values})?.map(([k, v]) => {
+                const newValues = Object.entries({
+                  ...prevValues,
+                  ...values,
+                })?.map(([k, v]) => {
                   return {
                     key: k,
                     value: v,
@@ -183,7 +186,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
                 });
 
                 return {
-                  values: [...newValues]
+                  values: [...newValues],
                 };
               });
             }}

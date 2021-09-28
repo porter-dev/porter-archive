@@ -88,27 +88,26 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
       if (!shouldRequest) return;
       setShouldRequest(false);
       api
-          .getReleaseSteps(
-              "<token>",
-              {
-              },
-              {
-                cluster_id: currentCluster.id,
-                namespace: props.currentChart.namespace,
-                id: currentProject.id,
-                name: props.currentChart.name,
-              }
-          )
-          .then((data) => {
-            setIsLoading(false);
-            filterData(data.data);
-          })
-          .catch((err) => {
-            setIsError(true);
-          })
-          .finally(() => {
-            setShouldRequest(true);
-          });
+        .getReleaseSteps(
+          "<token>",
+          {},
+          {
+            cluster_id: currentCluster.id,
+            namespace: props.currentChart.namespace,
+            id: currentProject.id,
+            name: props.currentChart.name,
+          }
+        )
+        .then((data) => {
+          setIsLoading(false);
+          filterData(data.data);
+        })
+        .catch((err) => {
+          setIsError(true);
+        })
+        .finally(() => {
+          setShouldRequest(true);
+        });
     };
 
     getData();
@@ -121,11 +120,7 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
   }, [currentProject, currentCluster, props.currentChart]);
 
   if (isError) {
-    return (
-        <Placeholder>
-          Error loading events.
-        </Placeholder>
-    )
+    return <Placeholder>Error loading events.</Placeholder>;
   }
 
   if (isLoading) {

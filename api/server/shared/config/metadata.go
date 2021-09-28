@@ -14,7 +14,7 @@ type Metadata struct {
 	Version            string `json:"version"`
 }
 
-func MetadataFromConf(sc *env.ServerConf) *Metadata {
+func MetadataFromConf(sc *env.ServerConf, version string) *Metadata {
 	return &Metadata{
 		// note: provisioning is set in the metadata after the loader is called
 		Provisioning:       false,
@@ -25,7 +25,7 @@ func MetadataFromConf(sc *env.ServerConf) *Metadata {
 		SlackNotifications: sc.SlackClientID != "" && sc.SlackClientSecret != "",
 		Email:              sc.SendgridAPIKey != "",
 		Analytics:          sc.SegmentClientKey != "",
-		Version:            Version,
+		Version:            version,
 	}
 }
 

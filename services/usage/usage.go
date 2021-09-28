@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/shared/config/env"
@@ -90,6 +91,7 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 			})
 
 			if err != nil {
+				fmt.Printf("error: %s\n", err.Error())
 				continue
 			}
 

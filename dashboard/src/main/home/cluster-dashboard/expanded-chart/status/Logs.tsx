@@ -180,8 +180,7 @@ export default class Logs extends Component<PropsType, StateType> {
     api
       .getPodEvents(
         "<token>",
-        {
-        },
+        {},
         {
           name: selectedPod?.metadata?.name,
           namespace: selectedPod?.metadata?.namespace,

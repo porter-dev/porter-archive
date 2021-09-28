@@ -136,8 +136,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     api
       .getChartControllers(
         "<token>",
-        {
-        },
+        {},
         {
           id: currentProject.id,
           name: currentChart.name,

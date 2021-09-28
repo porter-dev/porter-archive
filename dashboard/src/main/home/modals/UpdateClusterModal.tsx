@@ -59,16 +59,19 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         }
 
         // Handle destroying infra we've provisioned
-        api.destroyInfra(
-          "<token>",
-                { name: currentCluster.name },
-                {
-                  project_id: currentProject.id,
-                  infra_id: currentCluster.infra_id,
-                }
-        ).then(() =>
-          console.log("destroyed provisioned infra:", currentCluster.infra_id)
-        ).catch(console.log);
+        api
+          .destroyInfra(
+            "<token>",
+            { name: currentCluster.name },
+            {
+              project_id: currentProject.id,
+              infra_id: currentCluster.infra_id,
+            }
+          )
+          .then(() =>
+            console.log("destroyed provisioned infra:", currentCluster.infra_id)
+          )
+          .catch(console.log);
 
         this.props.setRefreshClusters(true);
         this.setState({ status: "successful", showDeleteOverlay: false });

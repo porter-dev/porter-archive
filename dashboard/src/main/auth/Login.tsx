@@ -92,9 +92,7 @@ export default class Login extends Component<PropsType, StateType> {
             authenticate();
           }
         })
-        .catch((err) =>
-          this.context.setCurrentError(err.response.data.error)
-        );
+        .catch((err) => this.context.setCurrentError(err.response.data.error));
     }
   };
 

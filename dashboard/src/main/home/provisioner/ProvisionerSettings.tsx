@@ -271,6 +271,7 @@ const Br = styled.div`
 
 const StyledProvisionerSettings = styled.div`
   position: relative;
+  z-index: 0;
 `;
 
 const PositionWrapper = styled.div<{ selectedProvider: string | null }>``;

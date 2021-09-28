@@ -307,7 +307,7 @@ class Home extends Component<PropsType, StateType> {
         )
         .then((res) => {
           const usage = res.data;
-          if (usage.exceeds) {
+          if (usage.exceeded) {
             this.context.setCurrentModal("UsageWarningModal", {
               usage,
             });

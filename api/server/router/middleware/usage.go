@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/usage"
 )
 
 type UsageMiddleware struct {
@@ -23,8 +24,10 @@ var UsageErrFmt = "usage limit reached for metric %s: limit %d, requested %d"
 
 func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
 		// get the project usage limits
-		currentUsage, limit, err := project.GetUsage(b.config, r)
+		currentUsage, limit, err := usage.GetUsage(b.config, proj)
 
 		if err != nil {
 			apierrors.HandleAPIError(

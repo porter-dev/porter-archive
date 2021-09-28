@@ -1,3 +1,5 @@
+// +build ee
+
 package invite
 
 import (
@@ -21,7 +23,7 @@ type InviteAcceptHandler struct {
 
 func NewInviteAcceptHandler(
 	config *config.Config,
-) *InviteAcceptHandler {
+) http.Handler {
 	return &InviteAcceptHandler{
 		PorterHandler: handlers.NewDefaultPorterHandler(config, nil, nil),
 	}

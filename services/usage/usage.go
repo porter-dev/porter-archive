@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/usage"
 	"golang.org/x/oauth2"
@@ -21,8 +22,11 @@ type UsageTracker struct {
 }
 
 type UsageTrackerOpts struct {
-	DBConf *env.DBConf
-	DOConf *oauth2.Config
+	DBConf         *env.DBConf
+	DOClientID     string
+	DOClientSecret string
+	DOScopes       []string
+	ServerURL      string
 }
 
 const stepSize = 100
@@ -42,7 +46,14 @@ func NewUsageTracker(opts *UsageTrackerOpts) (*UsageTracker, error) {
 
 	repo := rgorm.NewRepository(db, &key)
 
-	return &UsageTracker{db, repo, opts.DOConf}, nil
+	doConf := oauth.NewDigitalOceanClient(&oauth.Config{
+		ClientID:     opts.DOClientID,
+		ClientSecret: opts.DOClientSecret,
+		Scopes:       opts.DOScopes,
+		BaseURL:      opts.ServerURL,
+	})
+
+	return &UsageTracker{db, repo, doConf}, nil
 }
 
 type UsageTrackerResponse struct {

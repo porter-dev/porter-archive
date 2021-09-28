@@ -76,6 +76,8 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 		return nil, err
 	}
 
+	fmt.Println("COUNT OF PROJECTS:", count)
+
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		projects := []*models.Project{}

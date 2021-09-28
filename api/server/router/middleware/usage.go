@@ -27,7 +27,11 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 		proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 		// get the project usage limits
-		currentUsage, limit, _, err := usage.GetUsage(b.config, proj)
+		currentUsage, limit, _, err := usage.GetUsage(&usage.GetUsageOpts{
+			Project: proj,
+			DOConf:  b.config.DOConf,
+			Repo:    b.config.Repo,
+		})
 
 		if err != nil {
 			apierrors.HandleAPIError(

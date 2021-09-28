@@ -25,10 +25,12 @@ import (
 	lr "github.com/porter-dev/porter/internal/logger"
 )
 
-type EnvConfigLoader struct{}
+type EnvConfigLoader struct {
+	version string
+}
 
-func NewEnvLoader() config.ConfigLoader {
-	return &EnvConfigLoader{}
+func NewEnvLoader(version string) config.ConfigLoader {
+	return &EnvConfigLoader{version}
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
@@ -47,7 +49,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		RedisConf:  envConf.RedisConf,
 	}
 
-	res.Metadata = config.MetadataFromConf(envConf.ServerConf)
+	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
 
 	db, err := adapter.New(envConf.DBConf)
 

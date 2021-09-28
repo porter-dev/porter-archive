@@ -14,7 +14,7 @@ import (
 )
 
 // Version will be linked by an ldflag during build
-var Version string = "dev"
+var Version string = "dev-ce"
 
 func main() {
 	var versionFlag bool
@@ -27,7 +27,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	cl := loader.NewEnvLoader()
+	cl := loader.NewEnvLoader(Version)
 
 	config, err := cl.LoadConfig()
 

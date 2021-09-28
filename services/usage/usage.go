@@ -70,6 +70,8 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 	// get the count of the projects
 	var count int64
 
+	fmt.Println("COUNT OF PROJECTS:", count)
+
 	if err := u.db.Model(&models.Project{}).Count(&count).Error; err != nil {
 		return nil, err
 	}

@@ -26,25 +26,22 @@ type ProjectUsage struct {
 }
 
 var BasicPlan = ProjectUsage{
-	ResourceCPU: 10,
-	// 20 GB converted to Mebibytes
-	ResourceMemory: 19074,
+	ResourceCPU:    10,
+	ResourceMemory: 20000,
 	Clusters:       1,
 	Users:          1,
 }
 
 var TeamPlan = ProjectUsage{
-	ResourceCPU: 20,
-	// 40 GB converted to Mebibytes
-	ResourceMemory: 38148,
+	ResourceCPU:    20,
+	ResourceMemory: 40000,
 	Clusters:       3,
 	Users:          3,
 }
 
 var GrowthPlan = ProjectUsage{
-	ResourceCPU: 80,
-	// 160 GB converted to Mebibytes
-	ResourceMemory: 152592,
+	ResourceCPU:    80,
+	ResourceMemory: 160000,
 	Clusters:       0,
 	Users:          5,
 }

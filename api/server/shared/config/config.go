@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
+	"github.com/porter-dev/porter/internal/integrations/bind"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -76,15 +77,14 @@ type Config struct {
 	// jobs
 	ProvisionerAgent *kubernetes.Agent
 
-	// IngressAgent is the kubernetes client responsible for creating new ingress
-	// resources
-	IngressAgent *kubernetes.Agent
-
 	// DB is the gorm DB instance
 	DB *gorm.DB
 
 	// AnalyticsClient if Segment analytics reporting is enabled on the API instance
 	AnalyticsClient analytics.AnalyticsSegmentClient
+
+	// BindClient is a client for Bind DNS, if the Porter instance supports vanity URLs
+	BindClient *bind.Client
 }
 
 type ConfigLoader interface {

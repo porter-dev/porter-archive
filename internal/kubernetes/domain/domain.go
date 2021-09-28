@@ -6,14 +6,13 @@ import (
 	"net"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/integrations/bind"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/kubernetes"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // GetNGINXIngressServiceIP retrieves the external address of the nginx-ingress service
@@ -80,147 +79,18 @@ func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
 	}
 }
 
-func (e *DNSRecord) CreateDomain(clientset kubernetes.Interface) error {
-	// determine if IP address or domain
-	err := e.createIngress(clientset)
-
-	if err != nil {
-		return err
-	}
-
-	return e.createServiceWithEndpoint(clientset)
-}
-
-func (e *DNSRecord) createIngress(clientset kubernetes.Interface) error {
-	_, err := clientset.ExtensionsV1beta1().Ingresses("default").Create(
-		context.TODO(),
-		&v1beta1.Ingress{
-			ObjectMeta: metav1.ObjectMeta{
-				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":                  "nginx",
-					"nginx.ingress.kubernetes.io/ssl-redirect":     "true",
-					"nginx.ingress.kubernetes.io/backend-protocol": "HTTPS",
-					"nginx.ingress.kubernetes.io/upstream-vhost":   e.Hostname,
-				},
-				Name:      e.SubdomainPrefix,
-				Namespace: "default",
-			},
-			Spec: v1beta1.IngressSpec{
-				TLS: []v1beta1.IngressTLS{
-					{
-						Hosts:      []string{fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain)},
-						SecretName: "wildcard-cert-tls",
-					},
-				},
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain),
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: e.SubdomainPrefix,
-											ServicePort: intstr.IntOrString{
-												Type:   intstr.Int,
-												IntVal: 443,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		metav1.CreateOptions{},
-	)
-
-	return err
-}
-
-func (e *DNSRecord) createServiceWithEndpoint(clientset kubernetes.Interface) error {
-	// determine if endpoint needs to be created or external name is ok
+// CreateDomain creates a new record for the vanity domain
+func (e *DNSRecord) CreateDomain(bindClient *bind.Client) error {
 	isIPv4 := net.ParseIP(e.Endpoint) != nil
-
-	svcSpec := v1.ServiceSpec{
-		Ports: []v1.ServicePort{
-			{
-				Port: 80,
-				TargetPort: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: 80,
-				},
-				Name: "http",
-			},
-			{
-				Port: 443,
-				TargetPort: intstr.IntOrString{
-					Type:   intstr.Int,
-					IntVal: 443,
-				},
-				Name: "https",
-			},
-		},
-	}
-
-	// case service spec on ipv4
-	if isIPv4 {
-		svcSpec.ClusterIP = "None"
-	} else {
-		svcSpec.Type = "ExternalName"
-		svcSpec.ExternalName = e.Endpoint
-	}
-
-	// create service
-	_, err := clientset.CoreV1().Services("default").Create(
-		context.TODO(),
-		&v1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      e.SubdomainPrefix,
-				Namespace: "default",
-			},
-			Spec: svcSpec,
-		},
-		metav1.CreateOptions{},
-	)
-
-	if err != nil {
-		return err
-	}
+	domain := fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain)
 
 	if isIPv4 {
-		_, err = clientset.CoreV1().Endpoints("default").Create(
-			context.TODO(),
-			&v1.Endpoints{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      e.SubdomainPrefix,
-					Namespace: "default",
-				},
-				Subsets: []v1.EndpointSubset{
-					{
-						Addresses: []v1.EndpointAddress{
-							{
-								IP: e.Endpoint,
-							},
-						},
-						Ports: []v1.EndpointPort{
-							{
-								Name: "http",
-								Port: 80,
-							},
-							{
-								Name: "https",
-								Port: 443,
-							},
-						},
-					},
-				},
-			},
-			metav1.CreateOptions{},
-		)
+		// TODO: create A record
+		panic("unsupported")
 	}
 
-	return err
+	return bindClient.CreateCNAMERecord(&bind.CNAMEData{
+		Host:     e.Endpoint,
+		Hostname: domain,
+	})
 }

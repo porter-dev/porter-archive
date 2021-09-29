@@ -47,7 +47,7 @@
     "styled-components": "^5.2.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --coverage",
     "start": "webpack-dev-server",
     "build": "NODE_ENV=\"production\" webpack",
     "build-and-analyze": "ENABLE_ANALYZER=true NODE_ENV=\"production\" webpack"
@@ -59,11 +59,11 @@
     "@babel/preset-typescript": "^7.15.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
     "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
+    "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.1.2",
     "@types/d3-array": "^2.9.0",
     "@types/d3-time-format": "^3.0.0",
-    "@types/jest": "^24.0.0",
+    "@types/jest": "^24.9.1",
     "@types/js-base64": "^3.0.0",
     "@types/js-yaml": "^4.0.1",
     "@types/lodash": "^4.14.165",
@@ -86,6 +86,7 @@
     "babel-plugin-lodash": "^3.3.4",
     "file-loader": "^6.1.0",
     "html-webpack-plugin": "^4.5.0",
+    "jest": "^27.2.4",
     "prettier": "2.2.1",
     "qs": "^6.9.4",
     "react-refresh": "^0.10.0",

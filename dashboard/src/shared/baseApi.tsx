@@ -19,11 +19,9 @@ export const baseApi = <T extends {}, S = {}>(
 
     // Handle request type (can refactor)
     if (requestType === "POST") {
-      return axios.post(endpointString, params, {
-      });
+      return axios.post(endpointString, params, {});
     } else if (requestType === "PUT") {
-      return axios.put(endpointString, params, {
-      });
+      return axios.put(endpointString, params, {});
     } else if (requestType === "DELETE") {
       return axios.delete(
         endpointString + "?" + qs.stringify(params, { arrayFormat: "repeat" })

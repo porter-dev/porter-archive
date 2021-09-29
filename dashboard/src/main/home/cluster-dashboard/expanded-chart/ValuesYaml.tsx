@@ -77,8 +77,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         this.props.refreshChart();
       })
       .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.error;
+        let parsedErr = err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;

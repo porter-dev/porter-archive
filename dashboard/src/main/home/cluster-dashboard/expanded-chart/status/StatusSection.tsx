@@ -32,8 +32,7 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
     api
       .getChartControllers(
         "<token>",
-        {
-        },
+        {},
         {
           namespace: currentChart.namespace,
           cluster_id: currentCluster.id,

@@ -22,7 +22,7 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
 
   const submitForm = () => {
     api
-      .getWelcome(
+      .postWelcome(
         "<token>",
         {
           email: context.user && context.user.email,

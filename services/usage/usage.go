@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -64,6 +65,7 @@ type UsageTrackerResponse struct {
 	Exceeded      bool
 	ExceededSince *time.Time
 	Project       *models.Project
+	AdminEmails   []string
 }
 
 func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error) {
@@ -96,6 +98,27 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 				continue
 			}
 
+			// get the admin emails for the project
+			roles, err := u.repo.Project().ListProjectRoles(project.ID)
+
+			if err != nil {
+				continue
+			}
+
+			adminEmails := make([]string, 0)
+
+			for _, role := range roles {
+				if role.Kind == types.RoleAdmin {
+					user, err := u.repo.User().ReadUser(role.UserID)
+
+					if err != nil {
+						continue
+					}
+
+					adminEmails = append(adminEmails, user.Email)
+				}
+			}
+
 			res[project.ID] = &UsageTrackerResponse{
 				CPUUsage:      cache.ResourceCPU,
 				CPULimit:      limit.ResourceCPU,
@@ -104,6 +127,7 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 				Exceeded:      cache.Exceeded,
 				ExceededSince: cache.ExceededSince,
 				Project:       project,
+				AdminEmails:   adminEmails,
 			}
 		}
 	}

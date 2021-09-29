@@ -100,7 +100,7 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		resBytes, err := ioutil.ReadAll(res.Body)
 
 		if err != nil {

@@ -60,3 +60,10 @@ type FinalizeResetUserPasswordRequest struct {
 }
 
 type ListUserProjectsResponse []*Project
+
+type WelcomeWebhookRequest struct {
+	Email     string `json:"email" schema:"email"`
+	IsCompany bool   `json:"isCompany" schema:"isCompany"`
+	Company   string `json:"company" schema:"company"`
+	Role      string `json:"role" schema:"role"`
+}

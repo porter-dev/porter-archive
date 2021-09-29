@@ -48,6 +48,31 @@ func getUserRoutes(
 ) []*Route {
 	routes := make([]*Route, 0)
 
+	// POST /api/welcome -> user.NewUserWelcomeHandler
+	welcomeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/welcome",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	welcomeHandler := user.NewUserWelcomeHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: welcomeEndpoint,
+		Handler:  welcomeHandler,
+		Router:   r,
+	})
+
 	// GET /api/cli/login -> user.user.NewCLILoginHandler
 	cliLoginUserEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

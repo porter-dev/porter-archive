@@ -76,8 +76,7 @@ class JobList extends Component<PropsType, StateType> {
     api
       .deleteJob(
         "<token>",
-        {
-        },
+        {},
         {
           id: currentProject.id,
           name: job.metadata?.name,
@@ -92,8 +91,7 @@ class JobList extends Component<PropsType, StateType> {
         });
       })
       .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.error;
+        let parsedErr = err?.response?.data?.error;
         if (parsedErr) {
           err = parsedErr;
         }

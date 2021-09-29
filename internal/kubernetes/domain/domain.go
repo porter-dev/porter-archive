@@ -85,12 +85,8 @@ func (e *DNSRecord) CreateDomain(bindClient *bind.Client) error {
 	domain := fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain)
 
 	if isIPv4 {
-		// TODO: create A record
-		panic("unsupported")
+		return bindClient.CreateARecord(e.Endpoint, domain)
 	}
 
-	return bindClient.CreateCNAMERecord(&bind.CNAMEData{
-		Host:     e.Endpoint,
-		Hostname: domain,
-	})
+	return bindClient.CreateCNAMERecord(e.Endpoint, domain)
 }

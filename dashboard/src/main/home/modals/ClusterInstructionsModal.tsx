@@ -34,8 +34,8 @@ export default class ClusterInstructionsModal extends Component<
               <br />
               name=$(curl -s
               https://api.github.com/repos/porter-dev/porter/releases/latest |
-              grep "browser_download_url.*/porter_.*_Darwin_x86_64\.zip" | cut -d
-              ":" -f 2,3 | tr -d \")
+              grep "browser_download_url.*/porter_.*_Darwin_x86_64\.zip" | cut
+              -d ":" -f 2,3 | tr -d \")
               <br />
               name=$(basename $name)
               <br />

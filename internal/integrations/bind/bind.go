@@ -28,24 +28,42 @@ func NewClient(serverURL, apiKey string) *Client {
 	return &Client{apiKey, serverURL, httpClient}
 }
 
-// CNAMEData represents the data required to create or delete a CNAME record
+// RecordData represents the data required to create or delete an A/CNAME record
 // for the nameserver
-type CNAMEData struct {
-	Host     string `json:"host"`
+type RecordData struct {
+	Value    string `json:"value"`
+	Type     string `json:"type"`
 	Hostname string `json:"hostname"`
 }
 
 // CreateCNAMERecord creates a new CNAME record for the nameserver
-func (c *Client) CreateCNAMERecord(data *CNAMEData) error {
-	return c.sendRequest("POST", data)
+func (c *Client) CreateCNAMERecord(value, hostname string) error {
+	return c.sendRequest("POST", &RecordData{
+		Value:    value,
+		Type:     "CNAME",
+		Hostname: hostname,
+	})
 }
 
-// DeleteCNAMERecord deletes a new CNAME record for the nameserver
-func (c *Client) DeleteCNAMERecord(data *CNAMEData) error {
-	return c.sendRequest("DELETE", data)
+// CreateARecord creates a new A record for the nameserver
+func (c *Client) CreateARecord(value, hostname string) error {
+	return c.sendRequest("POST", &RecordData{
+		Value:    value,
+		Type:     "A",
+		Hostname: hostname,
+	})
 }
 
-func (c *Client) sendRequest(method string, data *CNAMEData) error {
+// DeleteARecord deletes a new A record for the nameserver
+func (c *Client) DeleteARecord(value, hostname string) error {
+	return c.sendRequest("DELETE", &RecordData{
+		Value:    value,
+		Type:     "A",
+		Hostname: hostname,
+	})
+}
+
+func (c *Client) sendRequest(method string, data *RecordData) error {
 	reqURL, err := url.Parse(c.serverURL)
 
 	if err != nil {

@@ -78,8 +78,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     api
       .getChart(
         "<token>",
-        {
-        },
+        {},
         {
           name: chart.name,
           revision: revision,
@@ -380,8 +379,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         this.refreshChart(0);
       })
       .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.error;
+        let parsedErr = err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
@@ -407,8 +405,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     api
       .getJobs(
         "<token>",
-        {
-        },
+        {},
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
@@ -631,8 +628,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
       cb && cb();
     } catch (err) {
-      let parsedErr =
-        err?.response?.data?.error;
+      let parsedErr = err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;

@@ -113,7 +113,7 @@ jobs:
           retention-days: 1
   notarize:
     name: Notarize Darwin binaries
-    runs-on: macos-latest
+    runs-on: macos-11
     needs: build
     steps:
       - name: Get tag name

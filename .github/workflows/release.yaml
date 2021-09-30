@@ -314,6 +314,28 @@ jobs:
           asset_path: ./release/windows/porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
           asset_name: porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
           asset_content_type: application/zip
+      - name: Upload Windows Server Release Asset
+        id: upload-windows-server-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TAG: ${{ github.ref }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/windows/portersvr_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
+          asset_name: portersvr_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
+          asset_content_type: application/zip
+      - name: Upload Windows Docker Credential Release Asset
+        id: upload-windows-docker-cred-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TAG: ${{ github.ref }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/windows/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
+          asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
+          asset_content_type: application/zip
       - name: Upload Static Release Asset
         id: upload-static-release-asset
         uses: actions/upload-release-asset@v1

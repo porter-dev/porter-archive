@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
@@ -23,7 +24,13 @@ import (
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	lr "github.com/porter-dev/porter/internal/logger"
+
+	pgorm "gorm.io/gorm"
 )
+
+var InstanceBillingManager billing.BillingManager
+var InstanceEnvConf *EnvConf
+var InstanceDB *pgorm.DB
 
 type EnvConfigLoader struct {
 	version string
@@ -33,33 +40,28 @@ func NewEnvLoader(version string) config.ConfigLoader {
 	return &EnvConfigLoader{version}
 }
 
+func sharedInit() {
+	InstanceEnvConf, _ = FromEnv()
+	InstanceDB, _ = adapter.New(InstanceEnvConf.DBConf)
+	InstanceBillingManager = &billing.NoopBillingManager{}
+}
+
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
-	envConf, err := FromEnv()
-
-	if err != nil {
-		return nil, err
-	}
-
+	envConf := InstanceEnvConf
 	sc := envConf.ServerConf
 
 	res = &config.Config{
-		Logger:     lr.NewConsole(sc.Debug),
-		ServerConf: sc,
-		DBConf:     envConf.DBConf,
-		RedisConf:  envConf.RedisConf,
+		Logger:         lr.NewConsole(sc.Debug),
+		ServerConf:     sc,
+		DBConf:         envConf.DBConf,
+		RedisConf:      envConf.RedisConf,
+		BillingManager: InstanceBillingManager,
 	}
 
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
+	res.DB = InstanceDB
 
-	db, err := adapter.New(envConf.DBConf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	res.DB = db
-
-	err = gorm.AutoMigrate(db)
+	err = gorm.AutoMigrate(InstanceDB)
 
 	if err != nil {
 		return nil, err
@@ -71,7 +73,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		key[i] = b
 	}
 
-	res.Repo = gorm.NewRepository(db, &key)
+	res.Repo = gorm.NewRepository(InstanceDB, &key)
 
 	// create the session store
 	res.Store, err = sessionstore.NewStore(

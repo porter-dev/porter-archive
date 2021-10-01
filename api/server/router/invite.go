@@ -126,8 +126,6 @@ func getInviteRoutes(
 				types.UserScope,
 			},
 			ShouldRedirect: true,
-			CheckUsage:     true,
-			UsageMetric:    types.Users,
 		},
 	)
 

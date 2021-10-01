@@ -61,3 +61,7 @@ type DeleteRoleRequest struct {
 type DeleteRoleResponse struct {
 	*Role
 }
+
+type GetBillingTokenResponse struct {
+	Token string `json:"token"`
+}

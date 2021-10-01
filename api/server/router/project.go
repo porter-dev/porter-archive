@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/project"
@@ -161,6 +162,59 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getUsageEndpoint,
 		Handler:  getUsageHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/billing/token -> billing.NewBillingGetTokenEndpoint
+	getBillingTokenEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/token",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	getBillingTokenHandler := billing.NewBillingGetTokenHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getBillingTokenEndpoint,
+		Handler:  getBillingTokenHandler,
+		Router:   r,
+	})
+
+	// GET /api/billing_webhook -> billing.NewBillingWebhookHandler
+	getBillingWebhookEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/billing_webhook",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	getBillingWebhookHandler := billing.NewBillingWebhookHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getBillingWebhookEndpoint,
+		Handler:  getBillingWebhookHandler,
 		Router:   r,
 	})
 

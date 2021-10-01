@@ -83,13 +83,15 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		kind = models.RoleDeveloper
 	}
 
-	if _, err = c.Repo().Project().CreateProjectRole(proj, &models.Role{
+	role := &models.Role{
 		Role: types.Role{
 			UserID:    user.ID,
 			ProjectID: proj.ID,
 			Kind:      types.RoleKind(kind),
 		},
-	}); err != nil {
+	}
+
+	if role, err = c.Repo().Project().CreateProjectRole(proj, role); err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -100,6 +102,25 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if _, err = c.Repo().Invite().UpdateInvite(invite); err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	// add project to billing team
+	teamID, err := c.Config().BillingManager.GetTeamID(proj)
+
+	if err != nil {
+		// we do not write error response, since setting up billing error can be
+		// resolved later and may not be fatal
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+	}
+
+	if teamID != "" {
+		err = c.Config().BillingManager.AddUserToTeam(teamID, user, role)
+
+		if err != nil {
+			// we do not write error response, since setting up billing error can be
+			// resolved later and may not be fatal
+			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		}
 	}
 
 	http.Redirect(w, r, "/dashboard", 302)

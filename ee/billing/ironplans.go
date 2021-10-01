@@ -24,8 +24,7 @@ import (
 	cemodels "github.com/porter-dev/porter/internal/models"
 )
 
-// Client contains an API client for a Bind DNS server wrapped
-// with a lightweight API
+// Client contains an API client for IronPlans
 type Client struct {
 	apiKey    string
 	serverURL string
@@ -41,31 +40,6 @@ func NewClient(serverURL, apiKey string, repo repository.EERepository) *Client {
 	}
 
 	return &Client{apiKey, serverURL, repo, httpClient}
-}
-
-// CreateTeamRequest creates a new team for billing
-type CreateTeamRequest struct {
-	Name string `json:"name"`
-}
-
-type AddTeammateRequest struct {
-	Role     RoleEnum `json:"role"`
-	Email    string   `json:"email"`
-	SourceID string   `json:"source_id"`
-	TeamID   string   `json:"team_id"`
-}
-
-type UpdateTeammateRequest struct {
-	Role RoleEnum `json:"role"`
-}
-
-type CreateIDTokenRequest struct {
-	Email  string `json:"customer_email"`
-	UserID string `json:"customer_source_id"`
-}
-
-type CreateIDTokenResponse struct {
-	Token string `json:"token"`
 }
 
 func (c *Client) CreateTeam(proj *cemodels.Project) (string, error) {
@@ -327,11 +301,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 	}
 
 	return nil
-}
-
-type SubscriptionWebhookRequest struct {
-	TeamID string `json:"team_id"`
-	Plan   Plan   `json:"plan"`
 }
 
 const (

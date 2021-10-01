@@ -52,3 +52,32 @@ type FeatureSpec struct {
 	MaxLimit   int64  `json:"max_limit"`
 	ProviderID string `json:"provider_id"`
 }
+
+type CreateTeamRequest struct {
+	Name string `json:"name"`
+}
+
+type AddTeammateRequest struct {
+	Role     RoleEnum `json:"role"`
+	Email    string   `json:"email"`
+	SourceID string   `json:"source_id"`
+	TeamID   string   `json:"team_id"`
+}
+
+type UpdateTeammateRequest struct {
+	Role RoleEnum `json:"role"`
+}
+
+type CreateIDTokenRequest struct {
+	Email  string `json:"customer_email"`
+	UserID string `json:"customer_source_id"`
+}
+
+type CreateIDTokenResponse struct {
+	Token string `json:"token"`
+}
+
+type SubscriptionWebhookRequest struct {
+	TeamID string `json:"team_id"`
+	Plan   Plan   `json:"plan"`
+}

@@ -11,6 +11,7 @@ import TitleSection from "components/TitleSection";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
 import { getQueryParam } from "shared/routing";
+import BillingPage from "./BillingPage";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -69,13 +70,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     }
 
     if (this.state.currentTab === "billing") {
-      return (
-        <div>
-          <a href="https://www.youtube.com/watch?v=ETxmCCsMoD0&ab_channel=AbbaVEVO">
-            Money money money
-          </a>
-        </div>
-      );
+      return <BillingPage />;
     }
 
     if (this.state.currentTab === "manage-access") {

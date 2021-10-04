@@ -14,6 +14,7 @@ type PropsType = {
   disabled?: boolean;
   isRequired?: boolean;
   className?: string;
+  maxLength?: number;
 };
 
 type StateType = {
@@ -74,6 +75,7 @@ export default class InputRow extends Component<PropsType, StateType> {
             type={type}
             value={value}
             onChange={this.handleChange}
+            maxLength={this.props.maxLength}
           />
           {unit ? <Unit>{unit}</Unit> : null}
         </InputWrapper>

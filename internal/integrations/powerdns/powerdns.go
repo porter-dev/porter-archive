@@ -39,7 +39,7 @@ type RR struct {
 	Type       string   `json:"type"`
 	ChangeType string   `json:"changetype"`
 	TTL        uint     `json:"ttl"`
-	Records    []Record `json:"record"`
+	Records    []Record `json:"records"`
 }
 
 type Record struct {
@@ -139,7 +139,7 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		resBytes, err := ioutil.ReadAll(res.Body)
 
 		if err != nil {

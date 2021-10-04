@@ -9,9 +9,12 @@ import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { useSnapshot } from "valtio";
 import { actions, OnboardingState } from "./OnboardingState";
+import Button from "components/Button";
+import { useRouting } from "shared/routing";
 
 export const NewProjectFC = () => {
   const snap = useSnapshot(OnboardingState);
+  const { pushFiltered } = useRouting();
 
   useEffect(() => {
     if (snap.userId !== null) {
@@ -22,7 +25,7 @@ export const NewProjectFC = () => {
   }, [snap.userId]);
 
   return (
-    <StyledNewProject>
+    <>
       <TitleSection>New Project</TitleSection>
       <Helper>
         Project name
@@ -51,7 +54,14 @@ export const NewProjectFC = () => {
           maxLength={25}
         />
       </InputWrapper>
-    </StyledNewProject>
+      <Button
+        onClick={() => {
+          pushFiltered("/onboarding/provision", []);
+        }}
+      >
+        Some stuff
+      </Button>
+    </>
   );
 };
 
@@ -105,21 +115,4 @@ const Warning = styled.span`
     props.highlight ? "#f5cb42" : ""};
   margin-left: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
     props.makeFlush ? "" : "5px"};
-`;
-
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const StyledNewProject = styled.div`
-  width: calc(90% - 130px);
-  min-width: 300px;
-  position: relative;
-  margin-top: calc(50vh - 340px);
 `;

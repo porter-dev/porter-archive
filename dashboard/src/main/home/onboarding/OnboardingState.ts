@@ -1,5 +1,6 @@
 import { ContextProps } from "shared/types";
 import { proxy } from "valtio";
+import { derive, devtools } from "valtio/utils";
 
 export type OnboardingStateType = {
   projectName: string;
@@ -13,6 +14,19 @@ export const OnboardingState = proxy<OnboardingStateType>({
   isProvisionerEnabled: null,
   userId: null,
 });
+
+derive(
+  {
+    isProjectNameValid(get) {
+      return get(OnboardingState).projectName;
+    },
+  },
+  {
+    proxy: OnboardingState,
+  }
+);
+
+devtools(OnboardingState, "Onboarding state");
 
 export const actions = {
   setProjectName: (name: string) => {
@@ -34,10 +48,10 @@ export const actions = {
     }
 
     const userId = context?.user?.id;
-    if (typeof userId === "boolean") {
-      actions.setIsProvisionerEnabled(userId);
+    if (typeof userId === "number") {
+      actions.setUserId(userId);
     } else {
-      actions.setIsProvisionerEnabled(null);
+      actions.setUserId(null);
     }
   },
 };

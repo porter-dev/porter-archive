@@ -4,10 +4,9 @@ import { useSnapshot } from "valtio";
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import { NewProjectFC } from "./NewProject";
 import { OnboardingState } from "./OnboardingState";
+import Provisioner from "./Provisioner";
 
 export const Routes = () => {
-  const snap = useSnapshot(OnboardingState);
-
   return (
     <>
       <Switch>
@@ -15,11 +14,7 @@ export const Routes = () => {
           <NewProjectFC />
         </Route>
         <Route path={`/onboarding/provision`}>
-          <ProvisionerSettings
-            isInNewProject={true}
-            projectName={snap.projectName}
-            provisioner={snap.isProvisionerEnabled}
-          />
+          <Provisioner />
         </Route>
       </Switch>
     </>

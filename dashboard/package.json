@@ -44,7 +44,8 @@
     "regenerator-runtime": "^0.13.9",
     "semver": "^7.3.5",
     "stacktrace-js": "^2.0.2",
-    "styled-components": "^5.2.0"
+    "styled-components": "^5.2.0",
+    "valtio": "^1.2.4"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

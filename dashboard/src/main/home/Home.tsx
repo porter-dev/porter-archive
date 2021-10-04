@@ -32,6 +32,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 import AccountSettingsModal from "./modals/AccountSettingsModal";
 import discordLogo from "../../assets/discord.svg";
+import Onboarding from "./onboarding/Onboarding";
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",
@@ -336,8 +337,9 @@ class Home extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let currentView = this.props.currentRoute;
+    console.log({ currentView });
 
-    if (this.context.currentProject && currentView !== "new-project") {
+    if (this.context.currentProject && currentView !== "onboarding") {
       if (
         currentView === "cluster-dashboard" ||
         currentView === "applications" ||
@@ -362,8 +364,8 @@ class Home extends Component<PropsType, StateType> {
         return <GuardedProjectSettings />;
       }
       return <Templates />;
-    } else if (currentView === "new-project") {
-      return <NewProject />;
+    } else if (currentView === "onboarding") {
+      return <Onboarding />;
     }
   };
 

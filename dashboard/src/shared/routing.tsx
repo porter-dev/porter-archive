@@ -1,3 +1,5 @@
+import { useHistory, useLocation } from "react-router";
+
 export type PorterUrl =
   | "dashboard"
   | "launch"
@@ -67,4 +69,28 @@ export const getQueryParams = (props: any) => {
 export const getQueryParam = (props: any, paramName: string) => {
   const searchParams = getQueryParams(props);
   return searchParams?.get(paramName);
+};
+
+export const useRouting = () => {
+  const location = useLocation();
+  const history = useHistory();
+
+  return {
+    pushQueryParams: (params: { [key: string]: unknown }) => {
+      return pushQueryParams({ location, history }, params);
+    },
+    pushFiltered: (
+      pathname: string,
+      keys: string[],
+      params?: { [key: string]: unknown }
+    ) => {
+      return pushFiltered({ location, history }, pathname, keys, params);
+    },
+    getQueryParams: () => {
+      return getQueryParams({ location });
+    },
+    getQueryParam: (paramName: string) => {
+      return getQueryParam({ location }, paramName);
+    },
+  };
 };

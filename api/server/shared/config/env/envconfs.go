@@ -55,9 +55,9 @@ type ServerConf struct {
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
 	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
 
-	// Bind client API key and the host of the Bind DNS API server
-	BindAPIServerURL string `env:"BIND_API_SERVER_URL"`
-	BindAPIKey       string `env:"BIND_API_KEY"`
+	// PowerDNS client API key and the host of the PowerDNS API server
+	PowerDNSAPIServerURL string `env:"POWER_DNS_API_SERVER_URL"`
+	PowerDNSAPIKey       string `env:"POWER_DNS_API_KEY"`
 
 	// Email for an admin user. On a self-hosted instance of Porter, the
 	// admin user is the only user that can log in and register. After the admin

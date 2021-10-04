@@ -6,7 +6,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/porter-dev/porter/internal/integrations/bind"
+	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	v1 "k8s.io/api/core/v1"
@@ -80,13 +80,13 @@ func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
 }
 
 // CreateDomain creates a new record for the vanity domain
-func (e *DNSRecord) CreateDomain(bindClient *bind.Client) error {
+func (e *DNSRecord) CreateDomain(powerDNSClient *powerdns.Client) error {
 	isIPv4 := net.ParseIP(e.Endpoint) != nil
 	domain := fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain)
 
 	if isIPv4 {
-		return bindClient.CreateARecord(e.Endpoint, domain)
+		return powerDNSClient.CreateARecord(e.Endpoint, domain)
 	}
 
-	return bindClient.CreateCNAMERecord(e.Endpoint, domain)
+	return powerDNSClient.CreateCNAMERecord(e.Endpoint, domain)
 }

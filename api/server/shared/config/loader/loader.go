@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
-	"github.com/porter-dev/porter/internal/integrations/bind"
+	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -193,8 +193,8 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	res.AnalyticsClient = analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, res.Logger)
 
-	if sc.BindAPIKey != "" && sc.BindAPIServerURL != "" {
-		res.BindClient = bind.NewClient(sc.BindAPIServerURL, sc.BindAPIKey)
+	if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
+		res.PowerDNSClient = powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)
 	}
 
 	return res, nil

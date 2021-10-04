@@ -8,7 +8,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
-	"github.com/porter-dev/porter/internal/integrations/bind"
+	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -83,8 +83,8 @@ type Config struct {
 	// AnalyticsClient if Segment analytics reporting is enabled on the API instance
 	AnalyticsClient analytics.AnalyticsSegmentClient
 
-	// BindClient is a client for Bind DNS, if the Porter instance supports vanity URLs
-	BindClient *bind.Client
+	// PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
+	PowerDNSClient *powerdns.Client
 }
 
 type ConfigLoader interface {

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { RouteComponentProps, Switch, withRouter } from "react-router";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -363,44 +363,6 @@ class Home extends Component<PropsType, StateType> {
     }
   };
 
-  renderSidebar = () => {
-    if (this.context.projects.length > 0) {
-      return (
-        <Sidebar
-          key="sidebar"
-          forceSidebar={this.state.forceSidebar}
-          setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
-          currentView={this.props.currentRoute}
-          forceRefreshClusters={this.state.forceRefreshClusters}
-          setRefreshClusters={(x: boolean) =>
-            this.setState({ forceRefreshClusters: x })
-          }
-        />
-      );
-    } else {
-      return (
-        <>
-          <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
-            <Icon src={discordLogo} />
-            Join Our Discord
-          </DiscordButton>
-          {this.state.showWelcomeForm &&
-            localStorage.getItem("welcomed") != "true" && (
-              <>
-                <WelcomeForm
-                  closeForm={() => this.setState({ showWelcomeForm: false })}
-                />
-                <Navbar
-                  logOut={this.props.logOut}
-                  currentView={this.props.currentRoute} // For form feedback
-                />
-              </>
-            )}
-        </>
-      );
-    }
-  };
-
   projectOverlayCall = () => {
     let { user, setProjects, setCurrentProject } = this.context;
     api
@@ -465,8 +427,10 @@ class Home extends Component<PropsType, StateType> {
       setCurrentModal,
       currentProject,
       currentOverlay,
+      projects,
     } = this.context;
 
+    const { cluster } = this.props.match.params as any;
     return (
       <StyledHome>
         <ModalHandler
@@ -481,7 +445,40 @@ class Home extends Component<PropsType, StateType> {
           />
         )}
 
-        {this.renderSidebar()}
+        {/* Render sidebar when there's at least one project */}
+        {projects?.length > 0 && cluster !== "new-project" ? (
+          <Sidebar
+            key="sidebar"
+            forceSidebar={this.state.forceSidebar}
+            setWelcome={(x: boolean) => this.setState({ showWelcome: x })}
+            currentView={this.props.currentRoute}
+            forceRefreshClusters={this.state.forceRefreshClusters}
+            setRefreshClusters={(x: boolean) =>
+              this.setState({ forceRefreshClusters: x })
+            }
+          />
+        ) : (
+          <>
+            <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+              <Icon src={discordLogo} />
+              Join Our Discord
+            </DiscordButton>
+            {/* This should only be shown on the first render of the app */}
+            {this.state.showWelcomeForm &&
+              localStorage.getItem("welcomed") != "true" &&
+              projects?.length === 0 && (
+                <>
+                  <WelcomeForm
+                    closeForm={() => this.setState({ showWelcomeForm: false })}
+                  />
+                  <Navbar
+                    logOut={this.props.logOut}
+                    currentView={this.props.currentRoute} // For form feedback
+                  />
+                </>
+              )}
+          </>
+        )}
 
         <ViewWrapper>
           <Navbar

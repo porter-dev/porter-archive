@@ -9,13 +9,11 @@ import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { useSnapshot } from "valtio";
 import { actions, OnboardingState } from "./OnboardingState";
-import Button from "components/Button";
 import { useRouting } from "shared/routing";
 
 export const NewProjectFC = () => {
   const snap = useSnapshot(OnboardingState);
   const { pushFiltered } = useRouting();
-
   useEffect(() => {
     if (snap.userId !== null) {
       window.analytics.track("provision_new-project", {
@@ -54,13 +52,14 @@ export const NewProjectFC = () => {
           maxLength={25}
         />
       </InputWrapper>
-      <Button
+      <NextButton
+        disabled={false}
         onClick={() => {
           pushFiltered("/onboarding/provision", []);
         }}
       >
-        Some stuff
-      </Button>
+        Create Project
+      </NextButton>
     </>
   );
 };
@@ -115,4 +114,34 @@ const Warning = styled.span`
     props.highlight ? "#f5cb42" : ""};
   margin-left: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
     props.makeFlush ? "" : "5px"};
+`;
+
+const NextButton = styled.button<{ disabled: boolean }>`
+  height: 35px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  margin-top: 13px;
+  text-align: left;
+  float: left;
+  margin-left: 0;
+  justify-content: center;
+  border: 0;
+  border-radius: 5px;
+  background: ${(props) => (!props.disabled ? "#616FEEcc" : "#aaaabb")};
+  box-shadow: ${(props) =>
+    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
+  user-select: none;
+  :focus {
+    outline: 0;
+  }
+  :hover {
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
+  margin-bottom: 10px;
 `;

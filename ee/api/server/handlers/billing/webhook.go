@@ -55,6 +55,12 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// newUsage will be nil if webhook event type is not "subscription", so return without
+	// updating usage in this case
+	if newUsage == nil {
+		return
+	}
+
 	// update the project's usage
 	_, err = c.Repo().ProjectUsage().ReadProjectUsage(newUsage.ProjectID)
 	notFound := errors.Is(err, gorm.ErrRecordNotFound)

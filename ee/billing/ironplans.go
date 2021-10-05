@@ -315,6 +315,11 @@ func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.Project
 		return nil, err
 	}
 
+	// if event type is not subscription, return wrong webhook event type error
+	if subscription.EventType != "subscription" {
+		return nil, nil
+	}
+
 	// get the project id linked to that team
 	projBilling, err := c.repo.ProjectBilling().ReadProjectBillingByTeamID(subscription.TeamID)
 

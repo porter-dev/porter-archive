@@ -209,7 +209,7 @@ func (c *Client) GetIDToken(projectID uint, user *cemodels.User) (token string, 
 	return token, nil
 }
 
-// VerifySignature verifies a webhook signature based on hmac protocal
+// VerifySignature verifies a webhook signature based on hmac protocol
 // https://docs.ironplans.com/webhook-events/webhook-events
 func (c *Client) VerifySignature(signature string, body []byte) bool {
 	if len(signature) != 71 || !strings.HasPrefix(signature, "sha256=") {

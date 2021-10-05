@@ -165,34 +165,6 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
     props.handleError();
   };
 
-  // Step 1: Create a project
-  // TODO: promisify this function
-  const createProject = async () => {
-    const { projectName } = props;
-    const { user, setProjects, setCurrentProject } = context;
-    try {
-      const project = await api
-        .createProject("<token>", { name: projectName }, {})
-        .then((res) => res.data);
-
-      // Need to set project list for dropdown
-      // TODO: consolidate into ProjectSection (case on exists in list on set)
-      const projectList = await api
-        .getProjects(
-          "<token>",
-          {},
-          {
-            id: user.userId,
-          }
-        )
-        .then((res) => res.data);
-      setProjects(projectList);
-      setCurrentProject(project);
-    } catch (error) {
-      catchError(error);
-    }
-  };
-
   const getAwsIntegrationId = async () => {
     const { currentProject } = context;
     try {
@@ -252,10 +224,6 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
     props?.trackOnSave();
     setButtonStatus("loading");
     const { projectName } = props;
-
-    if (projectName) {
-      await createProject();
-    }
 
     const awsIntegrationId = await getAwsIntegrationId();
 

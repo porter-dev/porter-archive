@@ -5,7 +5,7 @@ import { useSnapshot } from "valtio";
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import { OnboardingState } from "./OnboardingState";
 
-const Provisioner = () => {
+const ProvisionerForms = () => {
   const snap = useSnapshot(OnboardingState);
   return (
     <>
@@ -20,4 +20,4 @@ const Provisioner = () => {
   );
 };
 
-export default Provisioner;
+export default ProvisionerForms;

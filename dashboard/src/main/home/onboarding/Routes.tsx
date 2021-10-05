@@ -1,7 +1,7 @@
 import React from "react";
 import { Route, Switch } from "react-router";
 import { NewProjectFC } from "./NewProject";
-import Provisioner from "./Provisioner";
+import ProvisionerForms from "./ProvisionerForms";
 
 export const Routes = () => {
   return (
@@ -11,7 +11,7 @@ export const Routes = () => {
           <NewProjectFC />
         </Route>
         <Route path={`/onboarding/provision`}>
-          <Provisioner />
+          <ProvisionerForms />
         </Route>
       </Switch>
     </>

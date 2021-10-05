@@ -79,7 +79,7 @@ const AccountSettingsModal = () => {
           )}
 
           {/* Will be styled (and show what account is connected) later */}
-          {!accessError && accessData.accounts?.length >= 0 && (
+          {!accessError && accessData.username && (
             <Placeholder>
               <User>
                 You are currently authorized as <B>{accessData.username}</B> and

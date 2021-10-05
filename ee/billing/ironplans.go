@@ -217,7 +217,7 @@ func (c *Client) VerifySignature(signature string, body []byte) bool {
 	}
 
 	actual := make([]byte, 32)
-	_, err := hex.Decode(actual, []byte(signature))
+	_, err := hex.Decode(actual, []byte(signature[7:]))
 
 	if err != nil {
 		return false

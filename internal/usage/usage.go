@@ -2,7 +2,6 @@ package usage
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
@@ -112,13 +111,15 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 
 		if err != nil {
-			return 0, 0, fmt.Errorf("failed to get agent: %s", err.Error())
+			continue
+			// return 0, 0, fmt.Errorf("failed to get agent: %s", err.Error())
 		}
 
 		totAlloc, err := nodes.GetAllocatableResources(agent.Clientset)
 
 		if err != nil {
-			return 0, 0, fmt.Errorf("failed to get alloc: %s", err.Error())
+			continue
+			// return 0, 0, fmt.Errorf("failed to get alloc: %s", err.Error())
 		}
 
 		totCPU += totAlloc.CPU

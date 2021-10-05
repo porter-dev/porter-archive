@@ -42,7 +42,7 @@ jobs:
           EOL
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:latest -f ./docker/Dockerfile --build-arg version=production
+          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:latest -f ./ee/docker/ee.Dockerfile --build-arg version=production
       - name: Push
         run: |
           docker push gcr.io/porter-dev-273614/porter:latest

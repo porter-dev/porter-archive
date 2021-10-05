@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import styled from "styled-components";
 
 import gradient from "assets/gradient.png";
@@ -10,10 +10,14 @@ import TitleSection from "components/TitleSection";
 import { useSnapshot } from "valtio";
 import { actions, OnboardingState } from "./OnboardingState";
 import { useRouting } from "shared/routing";
+import { Context } from "shared/Context";
+import api from "shared/api";
 
 export const NewProjectFC = () => {
   const snap = useSnapshot(OnboardingState);
+  const { user, setProjects, setCurrentProject } = useContext(Context);
   const { pushFiltered } = useRouting();
+
   useEffect(() => {
     if (snap.userId !== null) {
       window.analytics.track("provision_new-project", {
@@ -21,6 +25,32 @@ export const NewProjectFC = () => {
       });
     }
   }, [snap.userId]);
+
+  const createProject = async () => {
+    const { projectName } = snap;
+
+    try {
+      const project = await api
+        .createProject("<token>", { name: projectName }, {})
+        .then((res) => res.data);
+
+      // Need to set project list for dropdown
+      // TODO: consolidate into ProjectSection (case on exists in list on set)
+      const projectList = await api
+        .getProjects(
+          "<token>",
+          {},
+          {
+            id: user.userId,
+          }
+        )
+        .then((res) => res.data);
+      setProjects(projectList);
+      setCurrentProject(project);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <>
@@ -52,6 +82,14 @@ export const NewProjectFC = () => {
           maxLength={25}
         />
       </InputWrapper>
+      <SaveButton
+        text="Submit"
+        disabled={!isAlphanumeric(projectName)}
+        onClick={this.onSkip}
+        status={buttonStatus}
+        makeFlush={true}
+        helper="Note: Provisioning can take up to 15 minutes"
+      />
       <NextButton
         disabled={false}
         onClick={() => {

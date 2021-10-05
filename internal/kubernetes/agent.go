@@ -536,15 +536,12 @@ func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.Websocke
 
 	// see if container is ready and able to open a stream. If not, wait for container
 	// to be ready.
-	err, isExited := a.waitForPod(pod)
+	err, _ = a.waitForPod(pod)
 
 	if err != nil && goerrors.Is(err, IsNotFoundError) {
 		return IsNotFoundError
 	} else if err != nil {
 		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
-	} else if isExited {
-		// if exited, we return nil and simply close the stream
-		return nil
 	}
 
 	container := pod.Spec.Containers[0].Name

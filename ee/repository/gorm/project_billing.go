@@ -38,7 +38,7 @@ func (repo *ProjectBillingRepository) ReadProjectBillingByProjectID(projID uint)
 func (repo *ProjectBillingRepository) ReadProjectBillingByTeamID(teamID string) (*models.ProjectBilling, error) {
 	projBilling := &models.ProjectBilling{}
 
-	if err := repo.db.Where("team_id = ?", teamID).First(&projBilling).Error; err != nil {
+	if err := repo.db.Where("billing_team_id = ?", teamID).First(&projBilling).Error; err != nil {
 		return nil, err
 	}
 

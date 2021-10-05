@@ -15,24 +15,18 @@ import Dashboard from "./dashboard/Dashboard";
 import WelcomeForm from "./WelcomeForm";
 import Integrations from "./integrations/Integrations";
 import Templates from "./launch/Launch";
-import ClusterInstructionsModal from "./modals/ClusterInstructionsModal";
-import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModal";
-import IntegrationsModal from "./modals/IntegrationsModal";
-import Modal from "./modals/Modal";
-import UpdateClusterModal from "./modals/UpdateClusterModal";
-import NamespaceModal from "./modals/NamespaceModal";
+
 import Navbar from "./navbar/Navbar";
-import NewProject from "./new-project/NewProject";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import PageNotFound from "components/PageNotFound";
-import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
+
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
-import AccountSettingsModal from "./modals/AccountSettingsModal";
 import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
+import ModalHandler from "./ModalHandler";
+
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",
@@ -471,94 +465,13 @@ class Home extends Component<PropsType, StateType> {
       setCurrentModal,
       currentProject,
       currentOverlay,
-      setCurrentOverlay,
     } = this.context;
 
     return (
       <StyledHome>
-        {currentModal === "ClusterInstructionsModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="760px"
-            height="650px"
-          >
-            <ClusterInstructionsModal />
-          </Modal>
-        )}
-
-        {/* We should be careful, as this component is named Update but is for deletion */}
-        {this.props.isAuthorized("cluster", "", ["get", "delete"]) &&
-          currentModal === "UpdateClusterModal" && (
-            <Modal
-              onRequestClose={() => setCurrentModal(null, null)}
-              width="565px"
-              height="275px"
-            >
-              <UpdateClusterModal
-                setRefreshClusters={(x: boolean) =>
-                  this.setState({ forceRefreshClusters: x })
-                }
-              />
-            </Modal>
-          )}
-        {currentModal === "IntegrationsModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="760px"
-            height="725px"
-          >
-            <IntegrationsModal />
-          </Modal>
-        )}
-        {currentModal === "IntegrationsInstructionsModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="760px"
-            height="650px"
-          >
-            <IntegrationsInstructionsModal />
-          </Modal>
-        )}
-        {this.props.isAuthorized("namespace", "", ["get", "create"]) &&
-          currentModal === "NamespaceModal" && (
-            <Modal
-              onRequestClose={() => setCurrentModal(null, null)}
-              width="600px"
-              height="220px"
-            >
-              <NamespaceModal />
-            </Modal>
-          )}
-        {this.props.isAuthorized("namespace", "", ["get", "delete"]) &&
-          currentModal === "DeleteNamespaceModal" && (
-            <Modal
-              onRequestClose={() => setCurrentModal(null, null)}
-              width="700px"
-              height="280px"
-            >
-              <DeleteNamespaceModal />
-            </Modal>
-          )}
-
-        {currentModal === "EditInviteOrCollaboratorModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="600px"
-            height="250px"
-          >
-            <EditInviteOrCollaboratorModal />
-          </Modal>
-        )}
-        {currentModal === "AccountSettingsModal" && (
-          <Modal
-            onRequestClose={() => setCurrentModal(null, null)}
-            width="760px"
-            height="440px"
-          >
-            <AccountSettingsModal />
-          </Modal>
-        )}
-
+        <ModalHandler
+          setRefreshClusters={(x) => this.setState({ forceRefreshClusters: x })}
+        />
         {currentOverlay && (
           <ConfirmOverlay
             show={true}

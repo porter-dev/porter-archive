@@ -62,7 +62,7 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	// update the project's usage
-	_, err = c.Repo().ProjectUsage().ReadProjectUsage(newUsage.ProjectID)
+	existingUsage, err := c.Repo().ProjectUsage().ReadProjectUsage(newUsage.ProjectID)
 	notFound := errors.Is(err, gorm.ErrRecordNotFound)
 
 	if !notFound && err != nil {
@@ -73,6 +73,7 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if notFound {
 		_, err = c.Repo().ProjectUsage().CreateProjectUsage(newUsage)
 	} else {
+		newUsage.ID = existingUsage.ID
 		_, err = c.Repo().ProjectUsage().UpdateProjectUsage(newUsage)
 	}
 

@@ -1,9 +1,6 @@
 import React from "react";
-import { Route, Switch, useRouteMatch } from "react-router";
-import { useSnapshot } from "valtio";
-import ProvisionerSettings from "../provisioner/ProvisionerSettings";
+import { Route, Switch } from "react-router";
 import { NewProjectFC } from "./NewProject";
-import { OnboardingState } from "./OnboardingState";
 import Provisioner from "./Provisioner";
 
 export const Routes = () => {

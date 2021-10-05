@@ -78,6 +78,7 @@ type CreateIDTokenResponse struct {
 }
 
 type SubscriptionWebhookRequest struct {
-	TeamID string `json:"team_id"`
-	Plan   Plan   `json:"plan"`
+	EventType string `json:"event_type"`
+	TeamID    string `json:"team_id"`
+	Plan      Plan   `json:"plan"`
 }

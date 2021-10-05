@@ -150,7 +150,7 @@ const RepoList: React.FC<Props> = ({
         );
       }
 
-      if (accessData.accounts?.length === 0) {
+      // if (accessData.accounts?.length === 0) {
         <LoadingWrapper>
           No connected Github repos found. You can
           <A href={"/api/integrations/github-app/install"}>
@@ -158,7 +158,7 @@ const RepoList: React.FC<Props> = ({
           </A>
           .
         </LoadingWrapper>;
-      }
+      // }
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet

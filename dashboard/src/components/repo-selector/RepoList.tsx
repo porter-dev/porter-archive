@@ -149,15 +149,17 @@ const RepoList: React.FC<Props> = ({
           </LoadingWrapper>
         );
       }
-
+      
       // if (accessData.accounts?.length === 0) {
+      return (
         <LoadingWrapper>
           No connected Github repos found. You can
           <A href={"/api/integrations/github-app/install"}>
             Install Porter in more repositories
           </A>
           .
-        </LoadingWrapper>;
+        </LoadingWrapper>
+      );
       // }
     }
 

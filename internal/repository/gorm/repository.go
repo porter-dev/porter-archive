@@ -31,6 +31,7 @@ type GormRepository struct {
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
 	event                     repository.EventRepository
+	projectUsage              repository.ProjectUsageRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -133,6 +134,10 @@ func (t *GormRepository) Event() repository.EventRepository {
 	return t.event
 }
 
+func (t *GormRepository) ProjectUsage() repository.ProjectUsageRepository {
+	return t.projectUsage
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
@@ -162,5 +167,6 @@ func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
 		event:                     NewEventRepository(db),
+		projectUsage:              NewProjectUsageRepository(db),
 	}
 }

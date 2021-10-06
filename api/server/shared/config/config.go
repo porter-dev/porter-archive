@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
@@ -85,6 +86,9 @@ type Config struct {
 
 	// AnalyticsClient if Segment analytics reporting is enabled on the API instance
 	AnalyticsClient analytics.AnalyticsSegmentClient
+
+	// BillingManager manages billing for Porter instances with billing enabled
+	BillingManager billing.BillingManager
 }
 
 type ConfigLoader interface {

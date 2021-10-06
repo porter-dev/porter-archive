@@ -1,3 +1,4 @@
+import { isAlphanumeric } from "shared/common";
 import { ContextProps } from "shared/types";
 import { proxy } from "valtio";
 import { derive, devtools } from "valtio/utils";
@@ -14,17 +15,6 @@ export const OnboardingState = proxy<OnboardingStateType>({
   isProvisionerEnabled: null,
   userId: null,
 });
-
-derive(
-  {
-    isProjectNameValid(get) {
-      return get(OnboardingState).projectName;
-    },
-  },
-  {
-    proxy: OnboardingState,
-  }
-);
 
 devtools(OnboardingState, "Onboarding state");
 

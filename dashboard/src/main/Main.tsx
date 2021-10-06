@@ -182,7 +182,6 @@ export default class Main extends Component<PropsType, StateType> {
           path={`/:baseRoute/:cluster?/:namespace?`}
           render={(routeProps) => {
             const baseRoute = routeProps.match.params.baseRoute;
-            console.log(PorterUrls.includes(baseRoute), baseRoute);
             if (
               this.state.isLoggedIn &&
               this.state.initialized &&

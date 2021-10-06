@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import gradient from "assets/gradient.png";
@@ -12,11 +12,18 @@ import { actions, OnboardingState } from "./OnboardingState";
 import { useRouting } from "shared/routing";
 import { Context } from "shared/Context";
 import api from "shared/api";
+import SaveButton from "components/SaveButton";
+
+type ValidationError = {
+  hasError: boolean;
+  description?: string;
+};
 
 export const NewProjectFC = () => {
   const snap = useSnapshot(OnboardingState);
   const { user, setProjects, setCurrentProject } = useContext(Context);
   const { pushFiltered } = useRouting();
+  const [buttonStatus, setButtonStatus] = useState("");
 
   useEffect(() => {
     if (snap.userId !== null) {
@@ -26,8 +33,43 @@ export const NewProjectFC = () => {
     }
   }, [snap.userId]);
 
+  const validateProjectName = (): ValidationError => {
+    const name = snap.projectName;
+    if (name === "") {
+      return {
+        hasError: true,
+        description: "The name cannot be empty. Please fill the input.",
+      };
+    }
+    if (!isAlphanumeric(name)) {
+      return {
+        hasError: true,
+        description:
+          'Please be sure that the text is alphanumeric. (lowercase letters, numbers, and "-" only)',
+      };
+    }
+    if (name.length > 25) {
+      return {
+        hasError: true,
+        description:
+          "The length of the name cannot be more than 25 characters.",
+      };
+    }
+
+    return {
+      hasError: false,
+    };
+  };
+
   const createProject = async () => {
     const { projectName } = snap;
+    setButtonStatus("loading");
+    const validation = validateProjectName();
+
+    if (validation.hasError) {
+      setButtonStatus(validation.description);
+      return;
+    }
 
     try {
       const project = await api
@@ -47,7 +89,11 @@ export const NewProjectFC = () => {
         .then((res) => res.data);
       setProjects(projectList);
       setCurrentProject(project);
+
+      pushFiltered("/onboarding/provision", []);
+      setButtonStatus("success");
     } catch (error) {
+      setButtonStatus("Couldn't create project, try again.");
       console.log(error);
     }
   };
@@ -57,11 +103,7 @@ export const NewProjectFC = () => {
       <TitleSection>New Project</TitleSection>
       <Helper>
         Project name
-        <Warning
-          highlight={
-            !isAlphanumeric(snap.projectName) && snap.projectName !== ""
-          }
-        >
+        <Warning highlight={validateProjectName().hasError}>
           (lowercase letters, numbers, and "-" only) 25 letters max length
         </Warning>
         <Required>*</Required>
@@ -76,31 +118,32 @@ export const NewProjectFC = () => {
         <InputRow
           type="string"
           value={snap.projectName}
-          setValue={(x: string) => actions.setProjectName(x)}
+          setValue={(x: string) => {
+            setButtonStatus("");
+            actions.setProjectName(x);
+          }}
           placeholder="ex: perspective-vortex"
           width="470px"
-          maxLength={25}
         />
       </InputWrapper>
-      <SaveButton
-        text="Submit"
-        disabled={!isAlphanumeric(projectName)}
-        onClick={this.onSkip}
+      <NewProjectSaveButton
+        text="Create Project"
+        disabled={false}
+        onClick={createProject}
         status={buttonStatus}
         makeFlush={true}
-        helper="Note: Provisioning can take up to 15 minutes"
+        clearPosition={true}
+        statusPosition="right"
+        saveText="Creating project..."
+        successText="Project created successfully!"
       />
-      <NextButton
-        disabled={false}
-        onClick={() => {
-          pushFiltered("/onboarding/provision", []);
-        }}
-      >
-        Create Project
-      </NextButton>
     </>
   );
 };
+
+const NewProjectSaveButton = styled(SaveButton)`
+  margin-top: 24px;
+`;
 
 const Required = styled.div`
   margin-left: 8px;
@@ -152,34 +195,4 @@ const Warning = styled.span`
     props.highlight ? "#f5cb42" : ""};
   margin-left: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
     props.makeFlush ? "" : "5px"};
-`;
-
-const NextButton = styled.button<{ disabled: boolean }>`
-  height: 35px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: white;
-  display: flex;
-  align-items: center;
-  padding: 0 15px;
-  margin-top: 13px;
-  text-align: left;
-  float: left;
-  margin-left: 0;
-  justify-content: center;
-  border: 0;
-  border-radius: 5px;
-  background: ${(props) => (!props.disabled ? "#616FEEcc" : "#aaaabb")};
-  box-shadow: ${(props) =>
-    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
-  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
-  user-select: none;
-  :focus {
-    outline: 0;
-  }
-  :hover {
-    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
-  }
-  margin-bottom: 10px;
 `;

@@ -3,17 +3,18 @@ package config
 import "github.com/porter-dev/porter/api/server/shared/config/env"
 
 type Metadata struct {
-	Provisioning       bool `json:"provisioner"`
-	Github             bool `json:"github"`
-	BasicLogin         bool `json:"basic_login"`
-	GithubLogin        bool `json:"github_login"`
-	GoogleLogin        bool `json:"google_login"`
-	SlackNotifications bool `json:"slack_notifications"`
-	Email              bool `json:"email"`
-	Analytics          bool `json:"analytics"`
+	Provisioning       bool   `json:"provisioner"`
+	Github             bool   `json:"github"`
+	BasicLogin         bool   `json:"basic_login"`
+	GithubLogin        bool   `json:"github_login"`
+	GoogleLogin        bool   `json:"google_login"`
+	SlackNotifications bool   `json:"slack_notifications"`
+	Email              bool   `json:"email"`
+	Analytics          bool   `json:"analytics"`
+	Version            string `json:"version"`
 }
 
-func MetadataFromConf(sc *env.ServerConf) *Metadata {
+func MetadataFromConf(sc *env.ServerConf, version string) *Metadata {
 	return &Metadata{
 		// note: provisioning is set in the metadata after the loader is called
 		Provisioning:       false,
@@ -24,6 +25,7 @@ func MetadataFromConf(sc *env.ServerConf) *Metadata {
 		SlackNotifications: sc.SlackClientID != "" && sc.SlackClientSecret != "",
 		Email:              sc.SendgridAPIKey != "",
 		Analytics:          sc.SegmentClientKey != "",
+		Version:            version,
 	}
 }
 

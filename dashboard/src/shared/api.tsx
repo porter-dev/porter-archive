@@ -1044,6 +1044,17 @@ const createWebhookToken = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${chart_name}/0/webhook`
 );
 
+const getUsage = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/usage`
+);
+
+// Used for billing purposes
+const getCustomerToken = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing/token`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1149,4 +1160,6 @@ export default {
   removeCollaborator,
   getPolicyDocument,
   createWebhookToken,
+  getUsage,
+  getCustomerToken,
 };

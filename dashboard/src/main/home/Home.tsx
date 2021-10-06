@@ -32,6 +32,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 import AccountSettingsModal from "./modals/AccountSettingsModal";
 import discordLogo from "../../assets/discord.svg";
+import UsageWarningModal from "./modals/UsageWarningModal";
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",
@@ -297,6 +298,24 @@ class Home extends Component<PropsType, StateType> {
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
+      api
+        .getUsage(
+          "<token>",
+          {},
+          { project_id: this.context?.currentProject?.id }
+        )
+        .then((res) => {
+          const usage = res.data;
+          if (usage.exceeded) {
+            this.context.setCurrentModal("UsageWarningModal", {
+              usage,
+            });
+          }
+        })
+        .catch(console.log);
+    }
+
     if (
       prevProps.currentProject !== this.props.currentProject ||
       (!prevProps.currentCluster && this.props.currentCluster)
@@ -554,6 +573,16 @@ class Home extends Component<PropsType, StateType> {
             height="440px"
           >
             <AccountSettingsModal />
+          </Modal>
+        )}
+
+        {currentModal === "UsageWarningModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="760px"
+            height="440px"
+          >
+            <UsageWarningModal />
           </Modal>
         )}
 

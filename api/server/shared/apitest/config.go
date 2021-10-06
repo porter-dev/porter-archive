@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository/test"
 )
@@ -57,6 +58,7 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 		TokenConf:       tokenConf,
 		UserNotifier:    notifier,
 		AnalyticsClient: analytics.InitializeAnalyticsSegmentClient("", l),
+		BillingManager:  &billing.NoopBillingManager{},
 	}, nil
 }
 

@@ -10,6 +10,7 @@ import (
 // ResourceStream performs an XREAD operation on the given stream and outputs it to the given websocket conn.
 func ResourceStream(client *redis.Client, streamName string, rw *websocket.WebsocketSafeReadWriter) error {
 	errorchan := make(chan error)
+	defer close(errorchan)
 
 	go func() {
 		// listens for websocket closing handshake
@@ -34,6 +35,7 @@ func ResourceStream(client *redis.Client, streamName string, rw *websocket.Webso
 			).Result()
 
 			if err != nil {
+				errorchan <- err
 				return
 			}
 
@@ -47,7 +49,6 @@ func ResourceStream(client *redis.Client, streamName string, rw *websocket.Webso
 	for {
 		select {
 		case err := <-errorchan:
-			close(errorchan)
 			client.Close()
 			return err
 		}

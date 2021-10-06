@@ -11,6 +11,11 @@ const Onboarding = () => {
     actions.initFromGlobalContext(context);
   }, [context]);
 
+  useEffect(() => {
+    return () => {
+      actions.clearState();
+    };
+  }, []);
   return (
     <StyledOnboarding>
       <Routes />

@@ -331,7 +331,6 @@ class Home extends Component<PropsType, StateType> {
 
   renderContents = () => {
     let currentView = this.props.currentRoute;
-    console.log({ currentView });
 
     if (this.context.currentProject && currentView !== "onboarding") {
       if (

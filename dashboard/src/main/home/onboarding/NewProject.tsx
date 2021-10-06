@@ -14,6 +14,8 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import SaveButton from "components/SaveButton";
 
+import backArrow from "assets/back_arrow.png";
+
 type ValidationError = {
   hasError: boolean;
   description?: string;
@@ -100,6 +102,15 @@ export const NewProjectFC = () => {
 
   return (
     <>
+      {!snap.isFirstProject && (
+        <BackButton
+          onClick={() => {
+            pushFiltered("/dashboard", []);
+          }}
+        >
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+      )}
       <TitleSection>New Project</TitleSection>
       <Helper>
         Project name
@@ -195,4 +206,29 @@ const Warning = styled.span`
     props.highlight ? "#f5cb42" : ""};
   margin-left: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
     props.makeFlush ? "" : "5px"};
+`;
+
+const BackButton = styled.div`
+  margin-bottom: 24px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
 `;

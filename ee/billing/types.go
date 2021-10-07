@@ -38,6 +38,10 @@ type Plan struct {
 	Features   []PlanFeature `json:"features"`
 }
 
+type ListPlansResponse struct {
+	Results []Plan `json:"results"`
+}
+
 type PlanFeature struct {
 	ID          string      `json:"id"`
 	IsActive    bool        `json:"is_active"`
@@ -81,4 +85,11 @@ type SubscriptionWebhookRequest struct {
 	EventType string `json:"event_type"`
 	TeamID    string `json:"team_id"`
 	Plan      Plan   `json:"plan"`
+}
+
+type CreateSubscriptionRequest struct {
+	PlanID     string `json:"plan_id"`
+	TeamID     string `json:"team_id"`
+	IsPaused   bool   `json:"is_paused"`
+	NextPlanID string `json:"next_plan_id"`
 }

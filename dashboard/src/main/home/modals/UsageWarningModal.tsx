@@ -17,7 +17,6 @@ const ReadableNameMap: {
 };
 
 const filterExceeded = (usage: UsageData) => {
-  console.log(usage);
   const current = usage.current;
   const limits = usage.limit;
   return Object.keys(usage.current).reduce((acc, key) => {
@@ -49,7 +48,7 @@ const UpgradeChartModal: React.FC<{}> = () => {
 
   useEffect(() => {
     if (usage) {
-      setFilteredUsage(filterExceeded(usage));
+      setFilteredUsage(usage);
     }
   }, [usage]);
 
@@ -64,26 +63,44 @@ const UpgradeChartModal: React.FC<{}> = () => {
           Your project is currently exceeding its resource usage limit.
         </Banner>
       <Br />
-      <DescriptionSection>
-        {
-          filteredUsage !== null && (
-            <>
-              <div>
-                <Label>CPU Usage: </Label>
-                <Stat isRed={filteredUsage.current["resource_cpu"] > filteredUsage.limit["resource_cpu"]}>
-                  {filteredUsage.current["resource_cpu"]} / {filteredUsage.limit["resource_cpu"]} vCPU
-                </Stat>
-              </div>
-              <div>
-                <Label>RAM Usage: </Label> 
-                <Stat isRed={filteredUsage.current["resource_memory"] > filteredUsage.limit["resource_memory"]}>
-                  {filteredUsage.current["resource_memory"]/1000} / {filteredUsage.limit["resource_memory"]/1000} GB
-                </Stat>
-              </div>
-            </>
-          )
-        }
-      </DescriptionSection>
+      {
+        filteredUsage !== null && (
+          <UsageSection>
+            <UsageBlock isRed={filteredUsage.current["resource_cpu"] > filteredUsage.limit["resource_cpu"]}>
+              <Label isRed={filteredUsage.current["resource_cpu"] > filteredUsage.limit["resource_cpu"]}>
+                CPU Usage
+              </Label>
+              <Stat isRed={filteredUsage.current["resource_cpu"] > filteredUsage.limit["resource_cpu"]}>
+                {filteredUsage.current["resource_cpu"]} / {filteredUsage.limit["resource_cpu"]} vCPU
+              </Stat>
+            </UsageBlock>
+            <UsageBlock isRed={filteredUsage.current["resource_memory"] > filteredUsage.limit["resource_memory"]}>
+              <Label isRed={filteredUsage.current["resource_memory"] > filteredUsage.limit["resource_memory"]}>
+                Memory Usage
+              </Label>
+              <Stat isRed={filteredUsage.current["resource_memory"] > filteredUsage.limit["resource_memory"]}>
+                {filteredUsage.current["resource_memory"]/1000} / {filteredUsage.limit["resource_memory"]/1000} GB
+              </Stat>
+            </UsageBlock>
+            <UsageBlock isRed={filteredUsage.current["users"] > filteredUsage.limit["users"]}>
+              <Label isRed={filteredUsage.current["users"] > filteredUsage.limit["users"]}>
+                Users
+              </Label>
+              <Stat isRed={filteredUsage.current["users"] > filteredUsage.limit["users"]}>
+                {filteredUsage.current["users"]} / {filteredUsage.limit["users"]} seats
+              </Stat>
+            </UsageBlock>
+            <UsageBlock isRed={filteredUsage.current["clusters"] > filteredUsage.limit["clusters"]}>
+              <Label isRed={filteredUsage.current["clusters"] > filteredUsage.limit["clusters"]}>
+                Clusters
+              </Label> 
+              <Stat isRed={filteredUsage.current["clusters"] > filteredUsage.limit["clusters"]}>
+                {filteredUsage.current["clusters"]} / {filteredUsage.limit["clusters"]} clusters
+              </Stat>
+            </UsageBlock>
+          </UsageSection>
+        )
+      }
       <Helper>
         You have <b>7 days</b> to resolve this issue before your access to the dashboard is restricted.
       </Helper>
@@ -106,20 +123,27 @@ const UpgradeChartModal: React.FC<{}> = () => {
 
 export default UpgradeChartModal;
 
+const UsageBlock = styled.div<{ isRed?: boolean }>`
+  border: 1px solid ${props => props.isRed ? "#ff385d" : "#ffffff55"};
+  border-radius: 5px;
+  padding: 18px;
+`;
+
 const Helper = styled.div`
   color: #aaaabb;
   margin-top: 12px;
 `;
 
-const Label = styled.div`
+const Label = styled.div<{ isRed?: boolean }>`
   margin-bottom: 10px;
   font-weight: 500;
+  color: ${props => props.isRed ? "#ff385d" : "#ffffff55"};
 `;
 
-const Stat = styled.div<{ isRed: boolean }>`
+const Stat = styled.div<{ isRed?: boolean }>`
   font-size: 20px;
   margin-bottom: 25px;
-  color: ${props => props.isRed ? "#ff385d" : "#ffffff"};
+  color: ${props => props.isRed ? "#ff385d" : "#ffffff55"};
 `;
 
 const Br = styled.div`
@@ -151,7 +175,11 @@ const Button = styled.button`
   bottom: 20px;
 `;
 
-const DescriptionSection = styled.div`
+const UsageSection = styled.div`
   margin-top: 10px;
   margin-bottom: 35px;
+  display: grid;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
 `;

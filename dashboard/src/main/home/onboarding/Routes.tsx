@@ -1,5 +1,6 @@
 import React from "react";
 import { Route, Switch } from "react-router";
+import ConnectGithub from "./github-connection/ConnectGithub";
 import { NewProjectFC } from "./NewProject";
 import ProvisionerForms from "./ProvisionerForms";
 
@@ -9,6 +10,9 @@ export const Routes = () => {
       <Switch>
         <Route path={`/onboarding/new-project`}>
           <NewProjectFC />
+        </Route>
+        <Route path={`/onboarding/integrations/step_1`}>
+          <ConnectGithub />
         </Route>
         <Route path={`/onboarding/provision`}>
           <ProvisionerForms />

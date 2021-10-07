@@ -51,6 +51,20 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// create default project usage restriction
+	_, err = p.Repo().ProjectUsage().CreateProjectUsage(&models.ProjectUsage{
+		ProjectID:      proj.ID,
+		ResourceCPU:    types.BasicPlan.ResourceCPU,
+		ResourceMemory: types.BasicPlan.ResourceMemory,
+		Clusters:       types.BasicPlan.Clusters,
+		Users:          types.BasicPlan.Users,
+	})
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	p.WriteResult(w, r, proj.ToProjectType())
 
 	// add project to billing team

@@ -13,6 +13,9 @@ type BillingManager interface {
 	// per same team)
 	CreateTeam(proj *models.Project) (teamID string, err error)
 
+	// DeleteTeam deletes a billing team.
+	DeleteTeam(proj *models.Project) (err error)
+
 	// GetTeamID gets the billing team id for a project
 	GetTeamID(proj *models.Project) (teamID string, err error)
 
@@ -44,6 +47,10 @@ type NoopBillingManager struct{}
 
 func (n *NoopBillingManager) CreateTeam(proj *models.Project) (teamID string, err error) {
 	return fmt.Sprintf("%d", proj.ID), nil
+}
+
+func (n *NoopBillingManager) DeleteTeam(proj *models.Project) (err error) {
+	return nil
 }
 
 func (n *NoopBillingManager) GetTeamID(proj *models.Project) (teamID string, err error) {

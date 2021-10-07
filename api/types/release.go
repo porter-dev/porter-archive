@@ -17,6 +17,7 @@ type Release struct {
 type PorterRelease struct {
 	ID              uint             `json:"id"`
 	WebhookToken    string           `json:"webhook_token"`
+	LatestVersion   string           `json:"latest_version"`
 	GitActionConfig *GitActionConfig `json:"git_action_config,omitempty"`
 	ImageRepoURI    string           `json:"image_repo_uri"`
 }

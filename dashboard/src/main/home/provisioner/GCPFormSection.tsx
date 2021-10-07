@@ -150,36 +150,7 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
     props.handleError();
   };
 
-  // Step 1: Create a project
-  const createProject = (callback?: any) => {
-    let { projectName } = props;
-    let { user, setProjects, setCurrentProject } = context;
-
-    api
-      .createProject("<token>", { name: projectName }, {})
-      .then((res) => {
-        let proj = res.data;
-
-        // Need to set project list for dropdown
-        // TODO: consolidate into ProjectSection (case on exists in list on set)
-        api
-          .getProjects(
-            "<token>",
-            {},
-            {
-              id: user.userId,
-            }
-          )
-          .then((res) => {
-            setProjects(res.data);
-            setCurrentProject(proj, () => callback && callback());
-          })
-          .catch(catchError);
-      })
-      .catch(catchError);
-  };
-
-  const provisionGCR = (id: number, callback?: any) => {
+  const provisionGCR = (id: number) => {
     console.log("Provisioning GCR");
     let { currentProject } = context;
 
@@ -260,11 +231,7 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
     setButtonStatus("loading");
     let { projectName } = props;
 
-    if (!projectName) {
-      handleCreateFlow();
-    } else {
-      createProject(handleCreateFlow);
-    }
+    handleCreateFlow();
   };
 
   const getButtonStatus = () => {

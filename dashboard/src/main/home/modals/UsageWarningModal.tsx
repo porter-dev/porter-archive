@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
+
+import Banner from "components/Banner";
 
 import { Context } from "shared/Context";
 import { UsageData } from "shared/types";
@@ -57,36 +58,38 @@ const UpgradeChartModal: React.FC<{}> = () => {
   }
   console.log({ usage, filteredUsage });
   return (
-    <StyledUpgradeChartModal>
-      <CloseButton onClick={() => setCurrentModal(null, null)}>
-        <CloseButtonImg src={close} />
-      </CloseButton>
-      <ModalTitle>Usage warning</ModalTitle>
-      You're current project is currently exceeding its usage limits. Your usage
-      limits are:
+    <>
+      <Br />
+        <Banner type="warning">
+          Your project is currently exceeding its resource usage limit.
+        </Banner>
+      <Br />
       <DescriptionSection>
-        {filteredUsage !== null &&
-          Object.entries(filteredUsage.limit).map(([key, value]) => {
-            return (
-              <div key={key}>
-                <b>{ReadableNameMap[key]}:</b> {value}
+        {
+          filteredUsage !== null && (
+            <>
+              <div>
+                <Label>CPU Usage: </Label>
+                <Stat isRed={filteredUsage.current["resource_cpu"] > filteredUsage.limit["resource_cpu"]}>
+                  {filteredUsage.current["resource_cpu"]} / {filteredUsage.limit["resource_cpu"]} vCPU
+                </Stat>
               </div>
-            );
-          })}
-      </DescriptionSection>
-      Your project is currently using:
-      <DescriptionSection>
-        {filteredUsage !== null &&
-          Object.entries(filteredUsage.current).map(([key, value]) => {
-            return (
-              <div key={key}>
-                <b>{ReadableNameMap[key]}:</b> {value}
+              <div>
+                <Label>RAM Usage: </Label> 
+                <Stat isRed={filteredUsage.current["resource_memory"] > filteredUsage.limit["resource_memory"]}>
+                  {filteredUsage.current["resource_memory"]/1000} / {filteredUsage.limit["resource_memory"]/1000} GB
+                </Stat>
               </div>
-            );
-          })}
+            </>
+          )
+        }
       </DescriptionSection>
-      You have currently <b>7 days</b> to resolve this issue before you loose
-      access to the Porter dashboard.
+      <Helper>
+        You have <b>7 days</b> to resolve this issue before your access to the dashboard is restricted.
+      </Helper>
+      <Helper>
+        Have a question about billing? Email us at <a target="_blank" href="mailto:contact@porter.run">contact@porter.run</a>.
+      </Helper>
       <Button
         as={Link}
         to={{
@@ -97,11 +100,32 @@ const UpgradeChartModal: React.FC<{}> = () => {
       >
         Take me to billing
       </Button>
-    </StyledUpgradeChartModal>
+    </>
   );
 };
 
 export default UpgradeChartModal;
+
+const Helper = styled.div`
+  color: #aaaabb;
+  margin-top: 12px;
+`;
+
+const Label = styled.div`
+  margin-bottom: 10px;
+  font-weight: 500;
+`;
+
+const Stat = styled.div<{ isRed: boolean }>`
+  font-size: 20px;
+  margin-bottom: 25px;
+  color: ${props => props.isRed ? "#ff385d" : "#ffffff"};
+`;
+
+const Br = styled.div`
+  width: 100%;
+  height: 5px;
+`;
 
 const Button = styled.button`
   height: 35px;
@@ -129,57 +153,5 @@ const Button = styled.button`
 
 const DescriptionSection = styled.div`
   margin-top: 10px;
-  margin-bottom: 10px;
-`;
-
-const ModalTitle = styled.div`
-  margin: 0px 0px 13px;
-  display: flex;
-  flex: 1;
-  font-family: Work Sans, sans-serif;
-  font-size: 24px;
-  color: #ffffff;
-  user-select: none;
-  font-weight: 700;
-  align-items: center;
-  position: relative;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
-const StyledUpgradeChartModal = styled.div`
-  width: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  padding: 25px 30px;
-  overflow: hidden;
-  border-radius: 6px;
-  background: #202227;
-  font-size: 13px;
-  line-height: 1.8em;
-  font-family: Work Sans, sans-serif;
+  margin-bottom: 35px;
 `;

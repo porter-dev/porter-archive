@@ -47,13 +47,17 @@ class RevisionSection extends Component<PropsType, StateType> {
   refreshHistory = () => {
     let { chart } = this.props;
     let { currentCluster, currentProject } = this.context;
-    
+
     return api
       .getRevisions(
         "<token>",
+        {},
         {
-        },
-        { id: currentProject.id, namespace: chart.namespace, cluster_id: currentCluster.id, name: chart.name }
+          id: currentProject.id,
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+          name: chart.name,
+        }
       )
       .then((res) => {
         res.data.sort((a: ChartType, b: ChartType) => {

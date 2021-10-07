@@ -65,10 +65,9 @@ const SettingsSection: React.FC<PropsType> = ({
     api
       .getReleaseToken(
         "<token>",
+        {},
         {
-        },
-        { 
-          id: currentProject.id, 
+          id: currentProject.id,
           name: currentChart?.name,
           namespace: currentChart?.namespace,
           cluster_id: currentCluster.id,
@@ -129,8 +128,7 @@ const SettingsSection: React.FC<PropsType> = ({
       setSaveValuesStatus("successful");
       refreshChart();
     } catch (err) {
-      let parsedErr =
-        err?.response?.data?.error;
+      let parsedErr = err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -163,8 +161,7 @@ const SettingsSection: React.FC<PropsType> = ({
         setWebhookToken(res.data.webhook_token);
       }, 500);
     } catch (err) {
-      let parsedErr =
-        err?.response?.data?.error;
+      let parsedErr = err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -288,17 +285,19 @@ const SettingsSection: React.FC<PropsType> = ({
   };
 
   const canBeCloned = () => {
-    if(chartWasDeployedWithGithub()) {
+    if (chartWasDeployedWithGithub()) {
       return false;
     }
 
     // If its not web worker or job it means is an addon, and for now it's not supported
-    if (!["web", "worker", "job"].includes(currentChart?.chart?.metadata?.name)) {
-      return false
+    if (
+      !["web", "worker", "job"].includes(currentChart?.chart?.metadata?.name)
+    ) {
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
   return (
     <Wrapper>

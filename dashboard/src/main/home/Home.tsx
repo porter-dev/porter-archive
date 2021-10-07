@@ -407,9 +407,7 @@ class Home extends Component<PropsType, StateType> {
             <Icon src={discordLogo} />
             Join Our Discord
           </DiscordButton>
-          {(this.context?.capabilities?.version === "production" ||
-            this.context?.capabilities?.version === "staging") &&
-            this.state.showWelcomeForm &&
+          {this.state.showWelcomeForm &&
             localStorage.getItem("welcomed") != "true" && (
               <>
                 <WelcomeForm
@@ -500,6 +498,7 @@ class Home extends Component<PropsType, StateType> {
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
             height="650px"
+            title="Connecting to an Existing Cluster"
           >
             <ClusterInstructionsModal />
           </Modal>
@@ -512,6 +511,7 @@ class Home extends Component<PropsType, StateType> {
               onRequestClose={() => setCurrentModal(null, null)}
               width="565px"
               height="275px"
+              title="Cluster Settings"
             >
               <UpdateClusterModal
                 setRefreshClusters={(x: boolean) =>
@@ -524,7 +524,8 @@ class Home extends Component<PropsType, StateType> {
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
-            height="725px"
+            height="380px"
+            title="Add a New Integration"
           >
             <IntegrationsModal />
           </Modal>
@@ -534,6 +535,7 @@ class Home extends Component<PropsType, StateType> {
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
             height="650px"
+            title="Connecting to an Image Registry"
           >
             <IntegrationsInstructionsModal />
           </Modal>
@@ -544,6 +546,7 @@ class Home extends Component<PropsType, StateType> {
               onRequestClose={() => setCurrentModal(null, null)}
               width="600px"
               height="220px"
+              title="Add Namespace"
             >
               <NamespaceModal />
             </Modal>
@@ -554,6 +557,7 @@ class Home extends Component<PropsType, StateType> {
               onRequestClose={() => setCurrentModal(null, null)}
               width="700px"
               height="280px"
+              title="Delete Namespace"
             >
               <DeleteNamespaceModal />
             </Modal>
@@ -573,6 +577,7 @@ class Home extends Component<PropsType, StateType> {
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
             height="440px"
+            title="Account Settings"
           >
             <AccountSettingsModal />
           </Modal>
@@ -582,7 +587,8 @@ class Home extends Component<PropsType, StateType> {
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
-            height="440px"
+            height="530px"
+            title="Usage Warning"
           >
             <UsageWarningModal />
           </Modal>

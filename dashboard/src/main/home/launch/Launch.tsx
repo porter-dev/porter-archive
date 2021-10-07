@@ -168,7 +168,7 @@ class Templates extends Component<PropsType, StateType> {
 
   areCloneQueryParamsValid = () => {
     const qp = getQueryParams(this.props);
-    
+
     const requiredParams = [
       "release_namespace",
       "release_template_version",
@@ -325,7 +325,7 @@ class Templates extends Component<PropsType, StateType> {
         <TemplatesWrapper>
           <TitleSection>
             Launch
-            <a href="https://docs.getporter.dev/docs/add-ons" target="_blank">
+            <a href="https://docs.porter.run/docs/addons" target="_blank">
               <i className="material-icons">help_outline</i>
             </a>
           </TitleSection>

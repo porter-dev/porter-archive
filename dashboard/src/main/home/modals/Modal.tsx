@@ -5,6 +5,7 @@ type PropsType = {
   onRequestClose: () => void;
   width?: string;
   height?: string;
+  title?: string;
 };
 
 type StateType = {};
@@ -38,12 +39,50 @@ export default class Modal extends Component<PropsType, StateType> {
     return (
       <Overlay>
         <StyledModal ref={this.wrapperRef} width={width} height={height}>
+          <CloseButton onClick={this.props.onRequestClose}>
+            <i className="material-icons">close</i>
+          </CloseButton>
+          { 
+            this.props.title && (
+              <ModalTitle>{this.props.title}</ModalTitle>
+            )
+          }
           {this.props.children}
         </StyledModal>
       </Overlay>
     );
   }
 }
+
+const ModalTitle = styled.div`
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  user-select: none;
+`;
+
+const CloseButton = styled.div`
+  position: absolute;
+  display: block;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  border-radius: 50%;
+  right: 15px;
+  top: 12px;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #aaaabb;
+  }
+`;
 
 const Overlay = styled.div`
   position: fixed;
@@ -67,11 +106,13 @@ const StyledModal = styled.div`
   max-width: 80vw;
   height: ${(props: { width?: string; height?: string }) =>
     props.height ? props.height : "425px"};
-  border-radius: 7px;
-  border: 0;
-  background-color: #202227;
   overflow: visible;
   padding: 25px 32px;
+  font-size: 13px;
+  border-radius: 10px;
+  background: #202227;
+  border: 1px solid #ffffff55;
+  color: #ffffff;
   animation: floatInModal 0.5s 0s;
   @keyframes floatInModal {
     from {

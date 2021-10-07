@@ -587,7 +587,7 @@ class Home extends Component<PropsType, StateType> {
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
-            height="420px"
+            height="530px"
             title="Usage Warning"
           >
             <UsageWarningModal />

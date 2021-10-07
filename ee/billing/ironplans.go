@@ -97,6 +97,16 @@ func (c *Client) CreateTeam(proj *cemodels.Project) (string, error) {
 	return resp.ID, err
 }
 
+func (c *Client) DeleteTeam(proj *cemodels.Project) error {
+	projBilling, err := c.repo.ProjectBilling().ReadProjectBillingByProjectID(proj.ID)
+
+	if err != nil {
+		return err
+	}
+
+	return c.deleteRequest(fmt.Sprintf("/teams/v1/%s", projBilling.BillingTeamID), nil, nil)
+}
+
 func (c *Client) GetTeamID(proj *cemodels.Project) (teamID string, err error) {
 	projBilling, err := c.repo.ProjectBilling().ReadProjectBillingByProjectID(proj.ID)
 

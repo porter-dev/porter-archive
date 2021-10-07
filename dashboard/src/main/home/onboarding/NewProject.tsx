@@ -78,8 +78,6 @@ export const NewProjectFC = () => {
         .createProject("<token>", { name: projectName }, {})
         .then((res) => res.data);
 
-      // Need to set project list for dropdown
-      // TODO: consolidate into ProjectSection (case on exists in list on set)
       const projectList = await api
         .getProjects(
           "<token>",
@@ -92,7 +90,7 @@ export const NewProjectFC = () => {
       setProjects(projectList);
       setCurrentProject(project);
 
-      pushFiltered("/onboarding/provision", []);
+      pushFiltered("/onboarding/integrations", []);
       setButtonStatus("success");
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");

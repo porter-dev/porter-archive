@@ -59,8 +59,7 @@ export default class JobResource extends Component<PropsType, StateType> {
       )
       .then((res) => {})
       .catch((err) => {
-        let parsedErr =
-          err?.response?.data?.error;
+        let parsedErr = err?.response?.data?.error;
         if (parsedErr) {
           err = parsedErr;
         }
@@ -74,8 +73,7 @@ export default class JobResource extends Component<PropsType, StateType> {
     api
       .getJobPods(
         "<token>",
-        {
-        },
+        {},
         {
           id: currentProject.id,
           name: this.props.job.metadata?.name,

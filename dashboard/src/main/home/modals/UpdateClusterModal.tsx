@@ -59,16 +59,19 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         }
 
         // Handle destroying infra we've provisioned
-        api.destroyInfra(
-          "<token>",
-                { name: currentCluster.name },
-                {
-                  project_id: currentProject.id,
-                  infra_id: currentCluster.infra_id,
-                }
-        ).then(() =>
-          console.log("destroyed provisioned infra:", currentCluster.infra_id)
-        ).catch(console.log);
+        api
+          .destroyInfra(
+            "<token>",
+            { name: currentCluster.name },
+            {
+              project_id: currentProject.id,
+              infra_id: currentCluster.infra_id,
+            }
+          )
+          .then(() =>
+            console.log("destroyed provisioned infra:", currentCluster.infra_id)
+          )
+          .catch(console.log);
 
         this.props.setRefreshClusters(true);
         this.setState({ status: "successful", showDeleteOverlay: false });
@@ -99,16 +102,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledUpdateProjectModal>
-        <CloseButton
-          onClick={() => {
-            this.context.setCurrentModal(null, null);
-          }}
-        >
-          <CloseButtonImg src={close} />
-        </CloseButton>
-
-        <ModalTitle>Cluster Settings</ModalTitle>
+      <>
         <Subtitle>Cluster name</Subtitle>
 
         <InputWrapper>
@@ -147,7 +141,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           onYes={this.handleDelete}
           onNo={() => this.setState({ showDeleteOverlay: false })}
         />
-      </StyledUpdateProjectModal>
+      </>
     );
   }
 }
@@ -229,53 +223,4 @@ const Subtitle = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   margin-bottom: -10px;
-`;
-
-const ModalTitle = styled.div`
-  margin: 0px 0px 13px;
-  display: flex;
-  flex: 1;
-  font-family: Work Sans, sans-serif;
-  font-size: 18px;
-  color: #ffffff;
-  user-select: none;
-  font-weight: 700;
-  align-items: center;
-  position: relative;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
-const StyledUpdateProjectModal = styled.div`
-  width: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  padding: 25px 30px;
-  overflow: hidden;
-  border-radius: 6px;
-  background: #202227;
 `;

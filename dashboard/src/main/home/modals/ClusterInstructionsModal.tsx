@@ -34,8 +34,8 @@ export default class ClusterInstructionsModal extends Component<
               <br />
               name=$(curl -s
               https://api.github.com/repos/porter-dev/porter/releases/latest |
-              grep "browser_download_url.*/porter_.*_Darwin_x86_64\.zip" | cut -d
-              ":" -f 2,3 | tr -d \")
+              grep "browser_download_url.*/porter_.*_Darwin_x86_64\.zip" | cut
+              -d ":" -f 2,3 | tr -d \")
               <br />
               name=$(basename $name)
               <br />
@@ -96,17 +96,7 @@ export default class ClusterInstructionsModal extends Component<
   render() {
     let { currentPage, currentTab } = this.state;
     return (
-      <StyledClusterInstructionsModal>
-        <CloseButton
-          onClick={() => {
-            this.context.setCurrentModal(null, null);
-          }}
-        >
-          <CloseButtonImg src={close} />
-        </CloseButton>
-
-        <ModalTitle>Connecting to an Existing Cluster</ModalTitle>
-
+      <>
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
@@ -139,7 +129,7 @@ export default class ClusterInstructionsModal extends Component<
             arrow_forward
           </i>
         </PageSection>
-      </StyledClusterInstructionsModal>
+      </>
     );
   }
 }
@@ -207,64 +197,4 @@ const Placeholder = styled.div`
 const Bold = styled.div`
   font-weight: 600;
   margin-bottom: 7px;
-`;
-
-const Subtitle = styled.div`
-  padding: 17px 0px 25px;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #aaaabb;
-  margin-top: 3px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const ModalTitle = styled.div`
-  margin: 0px 0px 13px;
-  display: flex;
-  flex: 1;
-  font-family: Work Sans, sans-serif;
-  font-size: 18px;
-  color: #ffffff;
-  user-select: none;
-  font-weight: 700;
-  align-items: center;
-  position: relative;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
-const StyledClusterInstructionsModal = styled.div`
-  width: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  padding: 25px 32px;
-  overflow: hidden;
-  border-radius: 6px;
-  background: #202227;
 `;

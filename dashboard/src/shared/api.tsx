@@ -763,15 +763,12 @@ const getMetadata = baseApi<{}, {}>("GET", () => {
   return `/api/metadata`;
 });
 
-const getWelcome = baseApi<
-  {
-    email: string;
-    isCompany: boolean;
-    company: string;
-    role: string;
-  },
-  {}
->("GET", () => {
+const postWelcome = baseApi<{
+  email: string;
+  isCompany: boolean;
+  company: string;
+  role: string;
+}>("POST", () => {
   return `/api/welcome`;
 });
 
@@ -1096,7 +1093,7 @@ export default {
   getBranchContents,
   getBranches,
   getMetadata,
-  getWelcome,
+  postWelcome,
   getChart,
   getCharts,
   getChartComponents,

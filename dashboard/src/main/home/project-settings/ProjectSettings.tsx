@@ -46,10 +46,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
     tabOptions.push({ value: "manage-access", label: "Manage Access" });
 
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
-      tabOptions.push({
-        value: "billing",
-        label: "Billing",
-      });
+      if (currentProject?.hasBilling) {
+        tabOptions.push({
+          value: "billing",
+          label: "Billing",
+        });
+      }
       tabOptions.push({
         value: "additional-settings",
         label: "Additional Settings",
@@ -69,7 +71,10 @@ class ProjectSettings extends Component<PropsType, StateType> {
       return <InvitePage />;
     }
 
-    if (this.state.currentTab === "billing") {
+    if (
+      this.state.currentTab === "billing" &&
+      this.context.currentProject?.hasBilling
+    ) {
       return <BillingPage />;
     }
 

@@ -28,9 +28,10 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 
 		// get the project usage limits
 		currentUsage, limit, _, err := usage.GetUsage(&usage.GetUsageOpts{
-			Project: proj,
-			DOConf:  b.config.DOConf,
-			Repo:    b.config.Repo,
+			Project:          proj,
+			DOConf:           b.config.DOConf,
+			Repo:             b.config.Repo,
+			WhitelistedUsers: b.config.WhitelistedUsers,
 		})
 
 		if err != nil {

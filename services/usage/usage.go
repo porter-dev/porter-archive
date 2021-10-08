@@ -17,17 +17,19 @@ import (
 )
 
 type UsageTracker struct {
-	db     *gorm.DB
-	repo   repository.Repository
-	doConf *oauth2.Config
+	db               *gorm.DB
+	repo             repository.Repository
+	doConf           *oauth2.Config
+	whitelistedUsers map[uint]uint
 }
 
 type UsageTrackerOpts struct {
-	DBConf         *env.DBConf
-	DOClientID     string
-	DOClientSecret string
-	DOScopes       []string
-	ServerURL      string
+	DBConf           *env.DBConf
+	DOClientID       string
+	DOClientSecret   string
+	DOScopes         []string
+	ServerURL        string
+	WhitelistedUsers map[uint]uint
 }
 
 const stepSize = 100
@@ -54,7 +56,7 @@ func NewUsageTracker(opts *UsageTrackerOpts) (*UsageTracker, error) {
 		BaseURL:      opts.ServerURL,
 	})
 
-	return &UsageTracker{db, repo, doConf}, nil
+	return &UsageTracker{db, repo, doConf, opts.WhitelistedUsers}, nil
 }
 
 type UsageTrackerResponse struct {
@@ -89,9 +91,10 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 		// go through each project
 		for _, project := range projects {
 			_, limit, cache, err := usage.GetUsage(&usage.GetUsageOpts{
-				Repo:    u.repo,
-				DOConf:  u.doConf,
-				Project: project,
+				Repo:             u.repo,
+				DOConf:           u.doConf,
+				Project:          project,
+				WhitelistedUsers: u.whitelistedUsers,
 			})
 
 			if err != nil {

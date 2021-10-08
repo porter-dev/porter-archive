@@ -5,7 +5,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import Cohere from "cohere-js";
 
-Cohere.init(process.env.COHERE_API);
+Cohere.init(process.env.COHERE_API_KEY);
 
 import ResetPasswordInit from "./auth/ResetPasswordInit";
 import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";

@@ -46,7 +46,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     tabOptions.push({ value: "manage-access", label: "Manage Access" });
 
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
-      if (currentProject?.hasBilling) {
+      if (this.context?.hasBillingEnabled) {
         tabOptions.push({
           value: "billing",
           label: "Billing",
@@ -73,7 +73,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
     if (
       this.state.currentTab === "billing" &&
-      this.context.currentProject?.hasBilling
+      this.context?.hasBillingEnabled
     ) {
       return <BillingPage />;
     }

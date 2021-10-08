@@ -14,9 +14,10 @@ import (
 )
 
 type GetUsageOpts struct {
-	Repo    repository.Repository
-	DOConf  *oauth2.Config
-	Project *models.Project
+	Repo             repository.Repository
+	DOConf           *oauth2.Config
+	Project          *models.Project
+	WhitelistedUsers map[uint]uint
 }
 
 // GetUsage gets a project's current usage and usage limit
@@ -43,6 +44,14 @@ func GetUsage(opts *GetUsageOpts) (
 
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	countedRoles := make([]models.Role, 0)
+
+	for _, role := range roles {
+		if _, exists := opts.WhitelistedUsers[role.UserID]; !exists {
+			countedRoles = append(countedRoles, role)
+		}
 	}
 
 	usageCache, err := opts.Repo.ProjectUsage().ReadProjectUsageCache(opts.Project.ID)
@@ -72,7 +81,7 @@ func GetUsage(opts *GetUsageOpts) (
 			usageCache.ResourceMemory = memory
 		}
 
-		isExceeded := isUsageExceeded(usageCache, limit, uint(len(roles)), uint(len(clusters)))
+		isExceeded := isUsageExceeded(usageCache, limit, uint(len(countedRoles)), uint(len(clusters)))
 
 		if !usageCache.Exceeded && isExceeded {
 			// update the usage cache with a time exceeded
@@ -89,11 +98,15 @@ func GetUsage(opts *GetUsageOpts) (
 		}
 	}
 
+	// we check whether it's currently exceeded based on the cache every time, since
+	// it's an inexpensive operation and involves no further DB lookups
+	usageCache.Exceeded = isUsageExceeded(usageCache, limit, uint(len(countedRoles)), uint(len(clusters)))
+
 	return &types.ProjectUsage{
 		ResourceCPU:    usageCache.ResourceCPU,
 		ResourceMemory: usageCache.ResourceMemory,
 		Clusters:       uint(len(clusters)),
-		Users:          uint(len(roles)),
+		Users:          uint(len(countedRoles)),
 	}, limit, usageCache, nil
 }
 

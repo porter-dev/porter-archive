@@ -180,6 +180,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		},
 	}
 
+	// construct the whitelisted users map
+	wlUsers := make(map[uint]uint)
+
+	for _, userID := range sc.WhitelistedUsers {
+		wlUsers[userID] = userID
+	}
+
+	res.WhitelistedUsers = wlUsers
+
 	res.URLCache = urlcache.Init(sc.DefaultApplicationHelmRepoURL, sc.DefaultAddonHelmRepoURL)
 
 	provAgent, err := getProvisionerAgent(sc)

@@ -31,9 +31,10 @@ func (p *ProjectGetUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	res := &types.GetProjectUsageResponse{}
 
 	currUsage, limit, usageCache, err := usage.GetUsage(&usage.GetUsageOpts{
-		Project: proj,
-		DOConf:  p.Config().DOConf,
-		Repo:    p.Repo(),
+		Project:          proj,
+		DOConf:           p.Config().DOConf,
+		Repo:             p.Repo(),
+		WhitelistedUsers: p.Config().WhitelistedUsers,
 	})
 
 	if err != nil {

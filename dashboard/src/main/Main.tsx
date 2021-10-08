@@ -48,6 +48,7 @@ export default class Main extends Component<PropsType, StateType> {
           Cohere.identify(
             res?.data?.id, 
             {
+              username: res?.data?.email,
               email: res?.data?.email, 
             }
           );

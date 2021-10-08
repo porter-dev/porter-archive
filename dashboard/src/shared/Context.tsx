@@ -5,6 +5,7 @@ import {
   ClusterType,
   ContextProps,
   ProjectType,
+  UsageData,
 } from "shared/types";
 
 import { pushQueryParams } from "shared/routing";
@@ -53,6 +54,8 @@ export interface GlobalContextType {
   setEdition: (appVersion: string) => void;
   hasBillingEnabled: boolean;
   setHasBillingEnabled: (isBillingEnabled: boolean) => void;
+  usage: UsageData;
+  setUsage: (usage: UsageData) => void;
 }
 
 /**
@@ -150,6 +153,10 @@ class ContextProvider extends Component<PropsType, StateType> {
     hasBillingEnabled: null,
     setHasBillingEnabled: (isBillingEnabled: boolean) => {
       this.setState({ hasBillingEnabled: isBillingEnabled });
+    },
+    usage: null,
+    setUsage: (usage: UsageData) => {
+      this.setState({ usage });
     },
   };
 

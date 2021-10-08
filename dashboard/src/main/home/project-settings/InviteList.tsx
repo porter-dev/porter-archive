@@ -366,12 +366,6 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
   const hasSeats = () => {
-    // TODO: if usage limit is 0, the project has unlimited seats. Otherwise, check
-    // the usage limit against the current usage. 
-    return true
-  }
-
-  const hasSeats = () => {
     // If usage limit is 0, the project has unlimited seats. Otherwise, check
     // the usage limit against the current usage.
     if (usage?.limit.users === 0) {

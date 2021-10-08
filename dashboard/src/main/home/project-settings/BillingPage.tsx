@@ -31,28 +31,28 @@ function BillingPage() {
         <PlanSelect
           theme={{
             base: {
-              customFont: 'Work Sans',
+              customFont: "Work Sans",
               fontFamily: '"Work Sans", sans-serif',
-              darkMode: 'on',
+              darkMode: "on",
               colors: {
-                primary: 'rgba(97, 111, 238, 0.8)',
-                secondary: 'rgb(103, 108, 124)',
-                danger: 'rgb(227, 54, 109)',
-                success: 'rgb(56, 168, 138)',
+                primary: "rgba(97, 111, 238, 0.8)",
+                secondary: "rgb(103, 108, 124)",
+                danger: "rgb(227, 54, 109)",
+                success: "rgb(56, 168, 138)",
               },
             },
             card: {
-              backgroundColor: 'rgb(38, 40, 47)',
-              boxShadow: 'rgb(0 0 0 / 33%) 0px 4px 15px 0px',
-              borderRadius: '8px',
-              border: '2px solid rgba(158, 180, 255, 0)',
+              backgroundColor: "rgb(38, 40, 47)",
+              boxShadow: "rgb(0 0 0 / 33%) 0px 4px 15px 0px",
+              borderRadius: "8px",
+              border: "2px solid rgba(158, 180, 255, 0)",
             },
             button: {
               base: {
-                boxShadow: 'rgb(0 0 0 / 19%) 0px 2px 5px 0px',
-                borderRadius: '5px',
-                fontSize: '14px',
-                fontWeight: '500',
+                boxShadow: "rgb(0 0 0 / 19%) 0px 2px 5px 0px",
+                borderRadius: "5px",
+                fontSize: "14px",
+                fontWeight: "500",
               },
             },
           }}

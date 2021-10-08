@@ -3,6 +3,9 @@ import { Route, Redirect, Switch } from "react-router-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import Cohere from "cohere-js";
+
+Cohere.init(process.env.COHERE_API_KEY);
 
 import ResetPasswordInit from "./auth/ResetPasswordInit";
 import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
@@ -42,6 +45,12 @@ export default class Main extends Component<PropsType, StateType> {
       .checkAuth("", {}, {})
       .then((res) => {
         if (res && res?.data) {
+          Cohere.identify(
+            res?.data?.id, 
+            {
+              email: res?.data?.email, 
+            }
+          );
           setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,

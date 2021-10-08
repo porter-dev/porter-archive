@@ -381,46 +381,40 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
   return (
     <>
-      {hasSeats() && (
-        <>
-          <Heading isAtTop={true}>Share Project</Heading>
-          <Helper>Generate a project invite for another user.</Helper>
-          <InputRowWrapper>
-            <InputRow
-              value={email}
-              type="text"
-              setValue={(newEmail: string) => setEmail(newEmail)}
-              width="100%"
-              placeholder="ex: mrp@getporter.dev"
-            />
-          </InputRowWrapper>
-          <Helper>Specify a role for this user.</Helper>
-          <RoleSelectorWrapper>
-            <RadioSelector
-              selected={role}
-              setSelected={setRole}
-              options={roleList}
-            />
-          </RoleSelectorWrapper>
-          <ButtonWrapper>
-            <InviteButton
-              disabled={!hasSeats()}
-              onClick={() => validateEmail()}
-            >
-              Create Invite
-            </InviteButton>
-            {isInvalidEmail && (
-              <Invalid>Invalid email address. Please try again.</Invalid>
-            )}
-            {!hasSeats() && (
-              <Invalid>
-                You need to upgrade your plan to invite more users to the
-                project
-              </Invalid>
-            )}
-          </ButtonWrapper>
-        </>
-      )}
+      <>
+        <Heading isAtTop={true}>Share Project</Heading>
+        <Helper>Generate a project invite for another user.</Helper>
+        <InputRowWrapper>
+          <InputRow
+            value={email}
+            type="text"
+            setValue={(newEmail: string) => setEmail(newEmail)}
+            width="100%"
+            placeholder="ex: mrp@getporter.dev"
+          />
+        </InputRowWrapper>
+        <Helper>Specify a role for this user.</Helper>
+        <RoleSelectorWrapper>
+          <RadioSelector
+            selected={role}
+            setSelected={setRole}
+            options={roleList}
+          />
+        </RoleSelectorWrapper>
+        <ButtonWrapper>
+          <InviteButton disabled={!hasSeats()} onClick={() => validateEmail()}>
+            Create Invite
+          </InviteButton>
+          {isInvalidEmail && (
+            <Invalid>Invalid email address. Please try again.</Invalid>
+          )}
+          {!hasSeats() && (
+            <Invalid>
+              You need to upgrade your plan to invite more users to the project
+            </Invalid>
+          )}
+        </ButtonWrapper>
+      </>
 
       <Heading>Invites & Collaborators</Heading>
       <Helper>Manage pending invites and view collaborators.</Helper>

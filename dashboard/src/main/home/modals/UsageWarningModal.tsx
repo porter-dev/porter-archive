@@ -37,6 +37,29 @@ const parseToReadableString = (
   }
 };
 
+const getRemainingDays = (date: string) => {
+  const start = new Date(date);
+
+  const _second = 1000;
+  const _minute = _second * 60;
+  const _hour = _minute * 60;
+  const _day = _hour * 24;
+  const end = new Date(date);
+  end.setDate(end.getDate() + 7);
+
+  let distance = end.getTime() - start.getTime();
+
+  if (distance < 0) {
+    return;
+  }
+  const days = Math.floor(distance / _day);
+  const hours = Math.floor((distance % _day) / _hour);
+  const minutes = Math.floor((distance % _hour) / _minute);
+  if (days > 0) return `${days} ${days > 1 ? "days" : "day"}`;
+  if (hours > 0) return `${hours} ${hours > 1 ? "hours" : "hour"}`;
+  return `${minutes} ${minutes > 1 ? "minutes" : "minute"}`;
+};
+
 const UpgradeChartModal: React.FC<{}> = () => {
   const { setCurrentModal, currentModalData } = useContext(Context);
   const [usage, setUsage] = useState<UsageData>(null);
@@ -78,8 +101,8 @@ const UpgradeChartModal: React.FC<{}> = () => {
         </UsageSection>
       )}
       <Helper>
-        You have <b>7 days</b> to resolve this issue before your access to the
-        dashboard is restricted.
+        You have <b>{getRemainingDays(usage.exceeded_since)}</b> to resolve this
+        issue before your access to the dashboard is restricted.
       </Helper>
       <Helper>
         Have a question about billing? Email us at{" "}

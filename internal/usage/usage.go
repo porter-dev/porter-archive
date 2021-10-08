@@ -72,7 +72,7 @@ func GetUsage(opts *GetUsageOpts) (
 			usageCache.ResourceMemory = memory
 		}
 
-		isExceeded := usageCache.ResourceCPU > limit.ResourceCPU || usageCache.ResourceMemory > limit.ResourceMemory
+		isExceeded := isUsageExceeded(usageCache, limit, uint(len(roles)), uint(len(clusters)))
 
 		if !usageCache.Exceeded && isExceeded {
 			// update the usage cache with a time exceeded
@@ -95,6 +95,15 @@ func GetUsage(opts *GetUsageOpts) (
 		Clusters:       uint(len(clusters)),
 		Users:          uint(len(roles)),
 	}, limit, usageCache, nil
+}
+
+func isUsageExceeded(usageCache *models.ProjectUsageCache, limit *types.ProjectUsage, numUsers, numClusters uint) bool {
+	isCPUExceeded := limit.ResourceCPU != 0 && usageCache.ResourceCPU > limit.ResourceCPU
+	isMemExceeded := limit.ResourceMemory != 0 && usageCache.ResourceMemory > limit.ResourceMemory
+	isUsersExceeded := limit.Users != 0 && numUsers > limit.Users
+	isClustersExceeded := limit.Clusters != 0 && numClusters > limit.Clusters
+
+	return isCPUExceeded || isMemExceeded || isUsersExceeded || isClustersExceeded
 }
 
 // gets the total resource usage across all nodes in all clusters

@@ -65,3 +65,7 @@ type DeleteRoleResponse struct {
 type GetBillingTokenResponse struct {
 	Token string `json:"token"`
 }
+
+type GetProjectBillingResponse struct {
+	HasBilling bool `json:"has_billing"`
+}

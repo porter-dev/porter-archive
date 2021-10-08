@@ -25,11 +25,7 @@ class NoClusterPlaceholder extends Component<PropsType, StateType> {
         <br />
         <br />
         1. If you're deploying from a repo{" "}
-        <A
-          onClick={() =>
-            window.open(`/api/oauth/projects/${currentProject.id}/github`)
-          }
-        >
+        <A href={"/api/integrations/github-app/oauth"}>
           link your GitHub account
         </A>
         <br />

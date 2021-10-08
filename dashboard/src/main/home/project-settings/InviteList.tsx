@@ -364,13 +364,15 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     return mappedInviteList || [];
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
-  const isEnterpriseEdition = () => {
-    return edition === "ee";
-  };
+  const hasSeats = () => {
+    // TODO: if usage limit is 0, the project has unlimited seats. Otherwise, check
+    // the usage limit against the current usage. 
+    return true
+  }
 
   return (
     <>
-      {isEnterpriseEdition() && (
+      {hasSeats() && (
         <>
           <Heading isAtTop={true}>Share Project</Heading>
           <Helper>Generate a project invite for another user.</Helper>

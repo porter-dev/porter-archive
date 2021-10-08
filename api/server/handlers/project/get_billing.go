@@ -26,12 +26,16 @@ func NewProjectGetBillingHandler(
 func (p *ProjectGetBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	res := &types.GetProjectBillingResponse{}
+	res := &types.GetProjectBillingResponse{
+		HasBilling: false,
+	}
 
-	// determine if the project has usage attached; if so, set has_billing to true
-	usage, _ := p.Repo().ProjectUsage().ReadProjectUsage(proj.ID)
+	if sc := p.Config().ServerConf; sc.IronPlansAPIKey != "" && sc.IronPlansServerURL != "" {
+		// determine if the project has usage attached; if so, set has_billing to true
+		usage, _ := p.Repo().ProjectUsage().ReadProjectUsage(proj.ID)
 
-	res.HasBilling = usage != nil
+		res.HasBilling = usage != nil
+	}
 
 	p.WriteResult(w, r, res)
 }

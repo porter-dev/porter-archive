@@ -326,4 +326,5 @@ export interface UsageData {
   current: Usage & { [key: string]: number };
   limit: Usage & { [key: string]: number };
   exceeds: boolean;
+  exceeded_since?: string;
 }

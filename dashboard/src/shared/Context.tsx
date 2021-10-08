@@ -51,6 +51,8 @@ export interface GlobalContextType {
   clearContext: () => void;
   edition: "ee" | "ce";
   setEdition: (appVersion: string) => void;
+  hasBillingEnabled: boolean;
+  setHasBillingEnabled: (isBillingEnabled: boolean) => void;
 }
 
 /**
@@ -144,6 +146,10 @@ class ContextProvider extends Component<PropsType, StateType> {
       if (edition === "ce" || edition === "ee") {
         this.setState({ edition });
       }
+    },
+    hasBillingEnabled: null,
+    setHasBillingEnabled: (isBillingEnabled: boolean) => {
+      this.setState({ hasBillingEnabled: isBillingEnabled });
     },
   };
 

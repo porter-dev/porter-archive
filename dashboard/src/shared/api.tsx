@@ -1055,6 +1055,11 @@ const getCustomerToken = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/billing/token`
 );
 
+const getHasBilling = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1162,4 +1167,5 @@ export default {
   createWebhookToken,
   getUsage,
   getCustomerToken,
+  getHasBilling,
 };

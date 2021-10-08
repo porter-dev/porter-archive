@@ -8,7 +8,7 @@ import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { useSnapshot } from "valtio";
-import { actions, OnboardingState } from "./OnboardingState";
+import { OnboardingState } from "./OnboardingState";
 import { useRouting } from "shared/routing";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -129,7 +129,7 @@ export const NewProjectFC = () => {
           value={snap.projectName}
           setValue={(x: string) => {
             setButtonStatus("");
-            actions.setProjectName(x);
+            OnboardingState.actions.setProjectName(x);
           }}
           placeholder="ex: perspective-vortex"
           width="470px"

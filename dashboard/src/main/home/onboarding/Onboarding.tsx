@@ -1,19 +1,19 @@
 import React, { useContext, useEffect } from "react";
 import { Context } from "shared/Context";
 import styled from "styled-components";
-import { actions } from "./OnboardingState";
+import { OnboardingState } from "./OnboardingState";
 import Routes from "./Routes";
 
 const Onboarding = () => {
   const context = useContext(Context);
 
   useEffect(() => {
-    actions.initFromGlobalContext(context);
+    OnboardingState.actions.initFromGlobalContext(context);
   }, [context]);
 
   useEffect(() => {
     return () => {
-      actions.clearState();
+      OnboardingState.actions.clearState();
     };
   }, []);
   return (

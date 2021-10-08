@@ -57,7 +57,7 @@ const ConnectSource = () => {
   }, []);
 
   const nextStep = () => {
-    pushFiltered("/onboarding/provision", []);
+    pushFiltered("/onboarding/registry", []);
   };
 
   return (

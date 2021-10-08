@@ -298,6 +298,8 @@ export interface ContextProps {
   clearContext: () => void;
   edition: "ee" | "ce";
   setEdition: (appVersion: string) => void;
+  hasBillingEnabled: boolean;
+  setHasBillingEnabled: (isBillingEnabled: boolean) => void;
 }
 
 export enum JobStatusType {

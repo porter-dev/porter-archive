@@ -106,7 +106,10 @@ class Dashboard extends Component<PropsType, StateType> {
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
       return <Provisioner setRefreshClusters={this.props.setRefreshClusters} />;
-    } else if (this.currentTab() === "create-cluster") {
+    } else if (
+      this.currentTab() === "create-cluster" &&
+      this.context.usage.current.clusters < this.context.usage.limit.clusters
+    ) {
       return (
         <>
           <Banner>
@@ -132,7 +135,11 @@ class Dashboard extends Component<PropsType, StateType> {
     let tabOptions = [{ label: "Project Overview", value: "overview" }];
 
     if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
-      tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
+      if (
+        this.context.usage.current.clusters < this.context.usage.limit.clusters
+      ) {
+        tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
+      }
     }
 
     tabOptions.push({ label: "Provisioner Status", value: "provisioner" });

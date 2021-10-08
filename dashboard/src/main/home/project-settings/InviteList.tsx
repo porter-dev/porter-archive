@@ -31,6 +31,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     setCurrentError,
     user,
     edition,
+    usage,
   } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
@@ -368,6 +369,20 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     return edition === "ee";
   };
 
+  const hasSeats = () => {
+    // If usage limit is 0, the project has unlimited seats. Otherwise, check
+    // the usage limit against the current usage.
+    if (usage?.limit.users === 0) {
+      return true;
+    }
+
+    return usage?.current.users < usage?.limit.users;
+  };
+
+  if (!usage) {
+    <Loading height={"30%"} />;
+  }
+
   return (
     <>
       {isEnterpriseEdition() && (
@@ -392,11 +407,20 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
             />
           </RoleSelectorWrapper>
           <ButtonWrapper>
-            <InviteButton disabled={false} onClick={() => validateEmail()}>
+            <InviteButton
+              disabled={!hasSeats()}
+              onClick={() => validateEmail()}
+            >
               Create Invite
             </InviteButton>
             {isInvalidEmail && (
               <Invalid>Invalid email address. Please try again.</Invalid>
+            )}
+            {!hasSeats() && (
+              <Invalid>
+                You need to upgrade your plan to invite more users to the
+                project
+              </Invalid>
             )}
           </ButtonWrapper>
         </>

@@ -28,8 +28,13 @@ func init() {
 	if InstanceEnvConf.ServerConf.IronPlansAPIKey != "" && InstanceEnvConf.ServerConf.IronPlansServerURL != "" {
 		serverURL := InstanceEnvConf.ServerConf.IronPlansServerURL
 		apiKey := InstanceEnvConf.ServerConf.IronPlansAPIKey
+		var err error
 
-		InstanceBillingManager = eeBilling.NewClient(serverURL, apiKey, eeRepo)
+		InstanceBillingManager, err = eeBilling.NewClient(serverURL, apiKey, eeRepo)
+
+		if err != nil {
+			panic(err)
+		}
 	} else {
 		InstanceBillingManager = &billing.NoopBillingManager{}
 	}

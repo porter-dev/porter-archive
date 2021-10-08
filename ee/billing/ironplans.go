@@ -31,15 +31,34 @@ type Client struct {
 	repo      repository.EERepository
 
 	httpClient *http.Client
+
+	defaultPlan *Plan
 }
 
 // NewClient creates a new billing API client
-func NewClient(serverURL, apiKey string, repo repository.EERepository) *Client {
+func NewClient(serverURL, apiKey string, repo repository.EERepository) (*Client, error) {
 	httpClient := &http.Client{
 		Timeout: time.Minute,
 	}
 
-	return &Client{apiKey, serverURL, repo, httpClient}
+	client := &Client{apiKey, serverURL, repo, httpClient, nil}
+
+	// get the default plans from the IronPlans API server
+	listResp := &ListPlansResponse{}
+	err := client.getRequest("/plans/v1", listResp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, plan := range listResp.Results {
+		if plan.Name == "Free" {
+			copyPlan := plan
+			client.defaultPlan = &copyPlan
+		}
+	}
+
+	return client, nil
 }
 
 func (c *Client) CreateTeam(proj *cemodels.Project) (string, error) {
@@ -52,6 +71,20 @@ func (c *Client) CreateTeam(proj *cemodels.Project) (string, error) {
 		return "", err
 	}
 
+	// put the user on the free plan, as the default behavior, if there is a default plan
+	if c.defaultPlan != nil {
+		err := c.postRequest("/subscriptions/v1", &CreateSubscriptionRequest{
+			PlanID:     c.defaultPlan.ID,
+			NextPlanID: c.defaultPlan.ID,
+			TeamID:     resp.ID,
+			IsPaused:   false,
+		}, nil)
+
+		if err != nil {
+			return "", fmt.Errorf("subscription creation failed: %s", err)
+		}
+	}
+
 	_, err = c.repo.ProjectBilling().CreateProjectBilling(&models.ProjectBilling{
 		ProjectID:     proj.ID,
 		BillingTeamID: resp.ID,
@@ -62,6 +95,16 @@ func (c *Client) CreateTeam(proj *cemodels.Project) (string, error) {
 	}
 
 	return resp.ID, err
+}
+
+func (c *Client) DeleteTeam(proj *cemodels.Project) error {
+	projBilling, err := c.repo.ProjectBilling().ReadProjectBillingByProjectID(proj.ID)
+
+	if err != nil {
+		return err
+	}
+
+	return c.deleteRequest(fmt.Sprintf("/teams/v1/%s", projBilling.BillingTeamID), nil, nil)
 }
 
 func (c *Client) GetTeamID(proj *cemodels.Project) (teamID string, err error) {
@@ -245,6 +288,54 @@ func (c *Client) deleteRequest(path string, data interface{}, dst interface{}) e
 	return c.writeRequest("DELETE", path, data, dst)
 }
 
+func (c *Client) getRequest(path string, dst interface{}) error {
+	reqURL, err := url.Parse(c.serverURL)
+
+	if err != nil {
+		return nil
+	}
+
+	reqURL.Path = path
+
+	req, err := http.NewRequest(
+		"GET",
+		reqURL.String(),
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	req.Header.Set("Accept", "application/json; charset=utf-8")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
+
+	res, err := c.httpClient.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
+		resBytes, err := ioutil.ReadAll(res.Body)
+
+		if err != nil {
+			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
+		}
+
+		return fmt.Errorf("request failed with status code %d: %s\n", res.StatusCode, string(resBytes))
+	}
+
+	if dst != nil {
+		return json.NewDecoder(res.Body).Decode(dst)
+	}
+
+	return nil
+}
+
 func (c *Client) writeRequest(method, path string, data interface{}, dst interface{}) error {
 	reqURL, err := url.Parse(c.serverURL)
 
@@ -262,6 +353,8 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("STR DATA IS", string(strData))
 	}
 
 	req, err := http.NewRequest(

@@ -2,7 +2,7 @@ import { ContextProps } from "shared/types";
 import { proxy } from "valtio";
 import { devtools } from "valtio/utils";
 import { SupportedProviders } from "./components/ProviderSelector";
-import { State as ConnectRegistryState } from "./ConnectRegistry/ConnectRegistryState";
+import { State as ConnectRegistryState } from "./steps/ConnectRegistry/ConnectRegistryState";
 
 export type OnboardingStateType = {
   [key: string]: unknown;
@@ -13,7 +13,6 @@ export type OnboardingStateType = {
   // Check if it's the first project that will be created
   isFirstProject: boolean | null;
 
-  selectedProvider: SupportedProviders | null;
   actions: typeof actions;
 };
 
@@ -70,6 +69,11 @@ const actions = {
         OnboardingState[key] = initialState[key];
       }
     });
+  },
+  saveState: () => {
+    const json = JSON.stringify(OnboardingState);
+    console.log(json);
+    localStorage.setItem("onboarding", json);
   },
 };
 

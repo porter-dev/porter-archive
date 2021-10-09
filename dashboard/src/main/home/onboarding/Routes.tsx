@@ -1,8 +1,8 @@
 import React from "react";
 import { Route, Switch } from "react-router";
-import ConnectRegistry from "./ConnectRegistry/ConnectRegistry";
-import ConnectSource from "./ConnectSource";
-import { NewProjectFC } from "./NewProject";
+import ConnectRegistry from "./steps/ConnectRegistry/ConnectRegistry";
+import ConnectSource from "./steps/ConnectSource";
+import { NewProjectFC } from "./steps/NewProject";
 import ProvisionerForms from "./ProvisionerForms";
 
 export const Routes = () => {

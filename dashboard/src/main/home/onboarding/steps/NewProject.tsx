@@ -8,7 +8,7 @@ import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { useSnapshot } from "valtio";
-import { OnboardingState } from "./OnboardingState";
+import { OnboardingState } from "../OnboardingState";
 import { useRouting } from "shared/routing";
 import { Context } from "shared/Context";
 import api from "shared/api";

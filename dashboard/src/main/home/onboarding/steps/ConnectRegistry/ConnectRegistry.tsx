@@ -5,7 +5,7 @@ import React from "react";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import ProviderSelector from "../components/ProviderSelector";
+import ProviderSelector from "../../components/ProviderSelector";
 
 import { State } from "./ConnectRegistryState";
 import FormFlowWrapper from "./forms/FormFlow";
@@ -14,7 +14,7 @@ const ConnectRegistry = () => {
   const snap = useSnapshot(State);
   const { pushFiltered } = useRouting();
   const nextStep = () => {
-    console.log("Good work boy!");
+    pushFiltered("/onboarding/provisioner", []);
   };
 
   return (

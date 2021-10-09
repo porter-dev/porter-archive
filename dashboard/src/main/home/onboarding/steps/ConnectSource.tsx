@@ -63,7 +63,7 @@ const ConnectSource = () => {
   return (
     <>
       <TitleSection>Getting Started</TitleSection>
-      <Subtitle>Step 1 of 2</Subtitle>
+      <Subtitle>Step 1 of 3</Subtitle>
       <Helper>
         To deploy applications from your repo, you need to connect a Github
         account

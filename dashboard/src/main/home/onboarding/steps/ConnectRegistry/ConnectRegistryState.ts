@@ -1,7 +1,7 @@
 import { proxy } from "valtio";
 import { devtools } from "valtio/utils";
 
-import { SupportedProviders } from "../components/ProviderSelector";
+import { SupportedProviders } from "../../components/ProviderSelector";
 
 type AllowedSteps = "credentials" | "settings" | "test_connection" | null;
 
@@ -29,5 +29,3 @@ const initialState: ConnectRegistryState = {
 };
 
 export const State = proxy(initialState);
-
-devtools(State, "ConnectRegistryState");

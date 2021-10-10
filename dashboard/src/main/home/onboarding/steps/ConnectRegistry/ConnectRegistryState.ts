@@ -1,7 +1,5 @@
 import { proxy } from "valtio";
-import { devtools } from "valtio/utils";
-
-import { SupportedProviders } from "../../components/ProviderSelector";
+import { SupportedProviders } from "../../types";
 
 type AllowedSteps = "credentials" | "settings" | "test_connection" | null;
 

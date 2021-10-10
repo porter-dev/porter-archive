@@ -1,7 +1,7 @@
 import { ContextProps } from "shared/types";
 import { proxy } from "valtio";
 import { devtools } from "valtio/utils";
-import { SupportedProviders } from "./components/ProviderSelector";
+import StepHandler from "./StepHandler";
 import { State as ConnectRegistryState } from "./steps/ConnectRegistry/ConnectRegistryState";
 
 export type OnboardingStateType = {
@@ -75,6 +75,7 @@ const actions = {
     console.log(json);
     localStorage.setItem("onboarding", json);
   },
+  restoreState: () => {},
 };
 
 const initialState: OnboardingStateType = {
@@ -85,6 +86,7 @@ const initialState: OnboardingStateType = {
   selectedProvider: null,
   actions,
   connectRegistry_state: ConnectRegistryState,
+  stepHandler_state: StepHandler,
 };
 
 export const OnboardingState = proxy<OnboardingStateType>(initialState);

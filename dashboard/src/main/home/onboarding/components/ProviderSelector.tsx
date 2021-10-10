@@ -1,12 +1,11 @@
 import React from "react";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
+import { SupportedProviders } from "../types";
 
 export type ProviderSelectorProps = {
   selectProvider: (provider: SupportedProviders) => void;
 };
-
-export type SupportedProviders = "aws" | "gcp" | "do";
 
 const providers: SupportedProviders[] = ["aws", "gcp", "do"];
 

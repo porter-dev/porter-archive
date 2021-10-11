@@ -23,7 +23,6 @@ const actions = {
     State.currentStep = "credentials";
   },
   restoreState(prevState: any) {
-    debugger;
     if (prevState.selectedProvider) {
       State.selectedProvider = prevState.selectedProvider;
     }

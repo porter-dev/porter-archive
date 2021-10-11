@@ -21,6 +21,7 @@ export const OFState = proxy({
       OFState.actions.saveState();
     },
     clearState: () => {
+      console.log("CLEARED STATE");
       StateHandler.actions.clearState();
       StepHandler.actions.clearState();
       ConnectRegistryState.actions.clearState();
@@ -42,21 +43,21 @@ export const OFState = proxy({
       }
       const prevState = JSON.parse(notParsedPrevState);
 
+      if (prevState.StepHandler.finishedOnboarding) {
+        return;
+      }
+
       if (prevState?.StateHandler) {
         StateHandler.actions.restoreState(prevState.StateHandler);
       }
       if (prevState?.StepHandler) {
         StepHandler.actions.restoreState(prevState.StepHandler);
       }
-      console.log(prevState);
-      debugger;
       if (prevState?.substates.connected_registry) {
-        console.log(prevState?.substates.connected_registry);
         ConnectRegistryState.actions.restoreState(
           prevState?.substates.connected_registry
         );
       }
-      console.log(prevState.substates.provision_resources);
       if (prevState?.substates.provision_resources) {
         ProvisionResourcesState.actions.restoreState(
           prevState?.substates?.provision_resources

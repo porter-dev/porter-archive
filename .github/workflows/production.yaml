@@ -30,6 +30,7 @@ jobs:
           cat >./dashboard/.env <<EOL
           NODE_ENV=production
           API_SERVER=dashboard.getporter.dev
+          COHERE_API_KEY=${{secrets.COHERE_API_KEY}}
           DISCORD_KEY=${{secrets.DISCORD_KEY}}
           DISCORD_CID=${{secrets.DISCORD_CID}}
           FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}

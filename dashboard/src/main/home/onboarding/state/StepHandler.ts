@@ -1,11 +1,13 @@
 import { proxy } from "valtio";
-import { StepKey, Steps } from "./types";
+import { StepKey, Steps } from "../types";
+import { StateKeys } from "./StateHandler";
 
 type Step = {
   previous?: StepKey;
   url: string;
   next?: StepKey;
   final?: true;
+  state_key: StateKeys;
 };
 
 export type FlowType = {
@@ -21,21 +23,25 @@ const flow: FlowType = {
     new_project: {
       url: "/onboarding/new-project",
       next: "connect_source",
+      state_key: "project",
     },
     connect_source: {
       previous: "new_project",
       url: "/onboarding/source",
       next: "connect_registry",
+      state_key: "connected_source",
     },
     connect_registry: {
       previous: "connect_source",
       url: "/onboarding/registry",
       next: "provision_resources",
+      state_key: "connected_registry",
     },
     provision_resources: {
       previous: "connect_registry",
       url: "/onboarding/provision",
       final: true,
+      state_key: "provision_resources",
     },
   },
 };

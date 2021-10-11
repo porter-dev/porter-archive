@@ -353,8 +353,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 		if err != nil {
 			return err
 		}
-
-		fmt.Println("STR DATA IS", string(strData))
 	}
 
 	req, err := http.NewRequest(
@@ -442,8 +440,6 @@ func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.Project
 			usage.Users = maxLimit
 		}
 	}
-
-	fmt.Println("USAGE IS", usage)
 
 	return usage, nil
 }

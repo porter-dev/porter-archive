@@ -53,7 +53,6 @@ export type AWSProvisionerConfig = {
   };
   settings: {
     cluster_name: string;
-    aws_region: string;
     aws_machine_type: string;
   };
 };

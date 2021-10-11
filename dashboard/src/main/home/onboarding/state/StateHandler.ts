@@ -15,6 +15,12 @@ export type ConnectedRegistryConfig =
   | DORegistryConfig
   | SkipRegistryConnection;
 
+export type ProvisionerConfig =
+  | AWSProvisionerConfig
+  | GCPProvisionerConfig
+  // | DOProvisionerConfig
+  | SkipProvisionConfig;
+
 export type ProjectData = {
   id: number;
   name: string;
@@ -28,11 +34,7 @@ export type OnboardingState = {
   project: ProjectData | null;
   connected_source: ConnectedSourceData | null;
   connected_registry: ConnectedRegistryConfig | null;
-  provision_resources:
-    | GCPProvisionerConfig
-    | AWSProvisionerConfig
-    | SkipProvisionConfig
-    | null;
+  provision_resources: ProvisionerConfig | null;
   actions: {
     restoreState: (state: OnboardingState) => void;
     clearState: () => void;

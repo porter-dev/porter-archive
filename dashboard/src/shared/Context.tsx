@@ -9,6 +9,7 @@ import {
 } from "shared/types";
 
 import { pushQueryParams } from "shared/routing";
+import api from "./api";
 
 const Context = React.createContext<Partial<ContextProps>>(null);
 
@@ -160,8 +161,19 @@ class ContextProvider extends Component<PropsType, StateType> {
     },
   };
 
+  queryUsage() {
+    api
+      .getUsage("<token>", {}, { project_id: this.state?.currentProject?.id })
+      .then((res) => {
+        this.state.setUsage(res.data);
+      });
+  }
   render() {
-    return <Provider value={this.state}>{this.props.children}</Provider>;
+    return (
+      <Provider value={{ ...this.state, queryUsage: this.queryUsage }}>
+        {this.props.children}
+      </Provider>
+    );
   }
 }
 

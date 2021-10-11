@@ -47,7 +47,7 @@ export type AWSProvisionerConfig = {
   skip: false;
   provider: "aws";
   credentials: {
-    id: string;
+    id: number;
     arn: string;
     region: string;
   };
@@ -61,10 +61,10 @@ export type GCPProvisionerConfig = {
   skip: false;
   provider: "gcp";
   credentials: {
-    id: string;
+    id: number;
+    region: string;
   };
   settings: {
-    gcp_region: string;
     cluster_name: string;
   };
 };

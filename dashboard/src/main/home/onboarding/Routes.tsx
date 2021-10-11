@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
-import { Route, Switch, useHistory, useLocation } from "react-router";
+import React from "react";
+import { Route, Switch } from "react-router";
 import ConnectRegistry from "./steps/ConnectRegistry/ConnectRegistry";
 import ConnectSource from "./steps/ConnectSource";
 import { NewProjectFC } from "./steps/NewProject";
-import ProvisionerForms from "./ProvisionerForms";
+import ProvisionResources from "./steps/ProvisionResources/ProvisionResources";
 
 export const Routes = () => {
   return (
@@ -19,7 +19,7 @@ export const Routes = () => {
           <ConnectRegistry />
         </Route>
         <Route path={`/onboarding/provision`}>
-          <ProvisionerForms />
+          <ProvisionResources />
         </Route>
       </Switch>
     </>

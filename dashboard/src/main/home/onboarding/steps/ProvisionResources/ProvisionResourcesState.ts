@@ -11,6 +11,7 @@ interface ConnectRegistryState {
   actions: {
     selectProvider: (provider: SupportedProviders) => void;
     clearState: () => void;
+    restoreState: (prevState: any) => void;
   };
 }
 
@@ -26,6 +27,20 @@ const initialState: ConnectRegistryState = {
     clearState() {
       State.selectedProvider = null;
       State.currentStep = "credentials";
+    },
+    restoreState(prevState: any) {
+      if (!prevState) {
+        return;
+      }
+      if (prevState.selectedProvider) {
+        State.selectedProvider = prevState.selectedProvider;
+      }
+      if (prevState.currentStep) {
+        State.currentStep = prevState.currentStep;
+      }
+      if (prevState.config) {
+        State.config = prevState.config;
+      }
     },
   },
 };

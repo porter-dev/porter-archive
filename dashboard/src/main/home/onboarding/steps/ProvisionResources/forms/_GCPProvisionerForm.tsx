@@ -1,13 +1,44 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
 import UploadArea from "components/form-components/UploadArea";
 import SaveButton from "components/SaveButton";
-import { GCPRegistryConfig } from "main/home/onboarding/types";
+import {
+  GCPProvisionerConfig,
+  GCPRegistryConfig,
+} from "main/home/onboarding/types";
 import React, { useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import { State } from "../ProvisionResourcesState";
+
+const regionOptions = [
+  { value: "asia-east1", label: "asia-east1" },
+  { value: "asia-east2", label: "asia-east2" },
+  { value: "asia-northeast1", label: "asia-northeast1" },
+  { value: "asia-northeast2", label: "asia-northeast2" },
+  { value: "asia-northeast3", label: "asia-northeast3" },
+  { value: "asia-south1", label: "asia-south1" },
+  { value: "asia-southeast1", label: "asia-southeast1" },
+  { value: "asia-southeast2", label: "asia-southeast2" },
+  { value: "australia-southeast1", label: "australia-southeast1" },
+  { value: "europe-north1", label: "europe-north1" },
+  { value: "europe-west1", label: "europe-west1" },
+  { value: "europe-west2", label: "europe-west2" },
+  { value: "europe-west3", label: "europe-west3" },
+  { value: "europe-west4", label: "europe-west4" },
+  { value: "europe-west6", label: "europe-west6" },
+  { value: "northamerica-northeast1", label: "northamerica-northeast1" },
+  { value: "southamerica-east1", label: "southamerica-east1" },
+  { value: "us-central1", label: "us-central1" },
+  { value: "us-east1", label: "us-east1" },
+  { value: "us-east4", label: "us-east4" },
+  { value: "us-west1", label: "us-west1" },
+  { value: "us-west2", label: "us-west2" },
+  { value: "us-west3", label: "us-west3" },
+  { value: "us-west4", label: "us-west4" },
+];
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;
@@ -15,6 +46,7 @@ export const CredentialsForm: React.FC<{
 }> = ({ nextFormStep, project }) => {
   const [projectId, setProjectId] = useState("");
   const [serviceAccountKey, setServiceAccountKey] = useState("");
+  const [region, setRegion] = useState("us-east1");
   const [buttonStatus, setButtonStatus] = useState("");
 
   const validate = () => {
@@ -80,6 +112,17 @@ export const CredentialsForm: React.FC<{
         height="100%"
         isRequired={true}
       />
+      <SelectRow
+        options={regionOptions}
+        width="100%"
+        value={region}
+        dropdownMaxHeight="240px"
+        setActiveValue={(x: string) => {
+          setRegion(x);
+        }}
+        label="📍 GCP Region"
+      />
+
       <SaveButton
         text="Continue"
         disabled={false}
@@ -94,28 +137,26 @@ export const CredentialsForm: React.FC<{
 };
 
 export const SettingsForm: React.FC<{
-  nextFormStep: (data: Partial<GCPRegistryConfig>) => void;
+  nextFormStep: (data: Partial<GCPProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  const [registryName, setRegistryName] = useState("");
-  const [registryUrl, setRegistryUrl] = useState("");
+  const [clusterName, setClusterName] = useState("");
   const [buttonStatus, setButtonStatus] = useState("");
   const snap = useSnapshot(State);
 
   const validate = () => {
-    if (!registryName) {
+    if (!clusterName) {
       return {
         hasError: true,
-        error: "Registry Name cannot be empty",
+        error: "Cluster Name cannot be empty",
       };
     }
-    if (!registryUrl) {
-      return {
-        hasError: true,
-        error: "Registry Url cannot be empty",
-      };
-    }
+
     return { hasError: false, error: "" };
+  };
+
+  const catchError = (error: any) => {
+    console.error(error);
   };
 
   const submit = async () => {
@@ -125,49 +166,58 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+    const integrationId = snap.config.credentials.id;
 
     setButtonStatus("loading");
 
-    await api.connectGCRRegistry(
-      "<token>",
-      {
-        name: registryName,
-        gcp_integration_id: snap.config.credentials.id,
-        url: registryUrl,
-      },
-      {
-        id: project.id,
-      }
-    );
+    await provisionGCR(integrationId);
+    await provisionGKE(integrationId);
     nextFormStep({
       settings: {
-        gcr_url: registryUrl,
-        registry_name: registryName,
+        cluster_name: clusterName,
       },
     });
   };
+
+  const provisionGCR = (id: number) => {
+    console.log("Provisioning GCR");
+
+    return api
+      .createGCR(
+        "<token>",
+        {
+          gcp_integration_id: id,
+        },
+        { project_id: project.id }
+      )
+      .catch(catchError);
+  };
+
+  const provisionGKE = (id: number) => {
+    console.log("Provisioning GKE");
+
+    return api
+      .createGKE(
+        "<token>",
+        {
+          gke_name: clusterName,
+          gcp_integration_id: id,
+        },
+        { project_id: project.id }
+      )
+      .catch(catchError);
+  };
+
   return (
     <>
       <InputRow
         type="text"
-        value={registryName}
-        setValue={(name: string) => setRegistryName(name)}
-        isRequired={true}
-        label="🏷️ Registry Name"
-        placeholder="ex: paper-straw"
-        width="100%"
-      />
-      <Helper>
-        GCR URI, in the form{" "}
-        <CodeBlock>[gcr_domain]/[gcp_project_id]</CodeBlock>. For example,{" "}
-        <CodeBlock>gcr.io/skynet-dev-172969</CodeBlock>.
-      </Helper>
-      <InputRow
-        type="text"
-        value={registryUrl}
-        setValue={(url: string) => setRegistryUrl(url)}
-        label="🔗 GCR URL"
-        placeholder="ex: gcr.io/skynet-dev-172969"
+        value={clusterName}
+        setValue={(x: string) => {
+          setClusterName(x);
+        }}
+        label="Cluster Name"
+        placeholder="ex: porter-cluster"
         width="100%"
         isRequired={true}
       />

@@ -1,17 +1,19 @@
-import { proxy } from "valtio";
-import { devtools } from "valtio/utils";
-import {
-  ConnectedRegistryConfig,
-  ConnectedSourceData,
-  ProjectData,
-  StateHandler,
-} from "./StateHandler";
+import { proxy, subscribe } from "valtio";
+import { devtools, subscribeKey } from "valtio/utils";
+import { StateHandler } from "./StateHandler";
 import { StepHandler } from "./StepHandler";
+import { State as ConnectRegistryState } from "../steps/ConnectRegistry/ConnectRegistryState";
+import { State as ProvisionResourcesState } from "../steps/ProvisionResources/ProvisionResourcesState";
 
 export const OFState = proxy({
   StateHandler,
   StepHandler,
+  subscriptions: [],
   actions: {
+    initializeState: (projectId: number) => {
+      OFState.actions.restoreState(projectId);
+      OFState.subscriptions = OFState.actions.subscribeToSubstates();
+    },
     nextStep: (data: any) => {
       const currentStep = StepHandler.currentStep;
       StateHandler[currentStep.state_key] = data;
@@ -21,6 +23,8 @@ export const OFState = proxy({
     clearState: () => {
       StateHandler.actions.clearState();
       StepHandler.actions.clearState();
+      ConnectRegistryState.actions.clearState();
+      ProvisionResourcesState.actions.clearState();
     },
     saveState: () => {
       const state = JSON.stringify(OFState);
@@ -44,7 +48,40 @@ export const OFState = proxy({
       if (prevState?.StepHandler) {
         StepHandler.actions.restoreState(prevState.StepHandler);
       }
+      console.log(prevState);
+      debugger;
+      if (prevState?.substates.connected_registry) {
+        console.log(prevState?.substates.connected_registry);
+        ConnectRegistryState.actions.restoreState(
+          prevState?.substates.connected_registry
+        );
+      }
+      console.log(prevState.substates.provision_resources);
+      if (prevState?.substates.provision_resources) {
+        ProvisionResourcesState.actions.restoreState(
+          prevState?.substates?.provision_resources
+        );
+      }
     },
+    // This is in charge of keeping track so the submodules doesn't have any external dependencies
+    subscribeToSubstates: () => {
+      return Object.keys(OFState.substates).map(
+        (key: "connected_registry" | "provision_resources") => {
+          return subscribe(OFState.substates[key], () => {
+            OFState.actions.saveState();
+          });
+        }
+      );
+    },
+    unsubscribeFromSubstates: () => {
+      OFState.subscriptions.forEach((unsubscribe) =>
+        typeof unsubscribe === "function" ? unsubscribe() : ""
+      );
+    },
+  },
+  substates: {
+    connected_registry: ConnectRegistryState,
+    provision_resources: ProvisionResourcesState,
   },
 });
 

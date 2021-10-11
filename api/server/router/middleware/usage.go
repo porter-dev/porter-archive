@@ -74,9 +74,9 @@ func allowUsage(
 ) bool {
 	switch metric {
 	case types.Users:
-		return plan.Users == 0 || plan.Users > current.Users+1
+		return plan.Users == 0 || plan.Users >= current.Users+1
 	case types.Clusters:
-		return plan.Clusters == 0 || plan.Clusters > current.Clusters+1
+		return plan.Clusters == 0 || plan.Clusters >= current.Clusters+1
 	default:
 		return false
 	}

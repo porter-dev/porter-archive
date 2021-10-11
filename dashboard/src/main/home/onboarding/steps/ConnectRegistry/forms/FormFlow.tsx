@@ -56,7 +56,7 @@ const FormFlowWrapper: React.FC<Props> = ({ nextStep }) => {
   const { currentProject } = useContext(Context);
 
   const nextFormStep = (
-    data: Partial<Exclude<ConnectedRegistryConfig, SkipRegistryConnection>>
+    data?: Partial<Exclude<ConnectedRegistryConfig, SkipRegistryConnection>>
   ) => {
     if (snap.currentStep === "credentials") {
       State.config.credentials = data.credentials;

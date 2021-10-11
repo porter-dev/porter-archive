@@ -443,6 +443,8 @@ func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.Project
 		}
 	}
 
+	fmt.Println("USAGE IS", usage)
+
 	return usage, nil
 }
 

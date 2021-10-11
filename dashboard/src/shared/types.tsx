@@ -302,7 +302,7 @@ export interface ContextProps {
   setHasBillingEnabled: (isBillingEnabled: boolean) => void;
   usage: UsageData;
   setUsage: (usage: UsageData) => void;
-  queryUsage: () => void;
+  queryUsage: () => Promise<void>;
 }
 
 export enum JobStatusType {

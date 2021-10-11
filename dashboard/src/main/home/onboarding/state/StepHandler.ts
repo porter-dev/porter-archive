@@ -38,6 +38,7 @@ const flow: FlowType = {
       state_key: "connected_registry",
     },
     provision_resources: {
+      final: true,
       previous: "connect_registry",
       url: "/onboarding/provision",
       state_key: "provision_resources",
@@ -78,6 +79,7 @@ export const StepHandler: StepHandlerType = proxy({
     clearState: () => {
       StepHandler.currentStepName = flow.initial;
       StepHandler.currentStep = flow.steps[flow.initial];
+      StepHandler.finishedOnboarding = false;
     },
     restoreState: (prevState) => {
       StepHandler.currentStepName = prevState.currentStepName;

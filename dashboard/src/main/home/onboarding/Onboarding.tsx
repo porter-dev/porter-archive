@@ -22,10 +22,16 @@ const Onboarding = () => {
 
   useEffect(() => {
     console.log(location);
-    if (snap.StepHandler.currentStep.url !== location.pathname) {
+    if (snap.StepHandler.finishedOnboarding) {
+      pushFiltered("/dashboard", []);
+    } else if (snap.StepHandler.currentStep.url !== location.pathname) {
       pushFiltered(snap.StepHandler.currentStep.url, []);
     }
-  }, [location.pathname, snap.StepHandler.currentStep.url]);
+  }, [
+    location.pathname,
+    snap.StepHandler.currentStep.url,
+    snap.StepHandler.finishedOnboarding,
+  ]);
 
   return (
     <StyledOnboarding>

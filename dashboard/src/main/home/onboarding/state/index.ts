@@ -24,10 +24,15 @@ export const OFState = proxy({
     },
     saveState: () => {
       const state = JSON.stringify(OFState);
-      localStorage.setItem(`${OFState.StateHandler.project.id}`, state);
+      localStorage.setItem(
+        `onboarding-${OFState.StateHandler.project.id}`,
+        state
+      );
     },
     restoreState: (projectId: number) => {
-      const notParsedPrevState = localStorage.getItem(`${projectId}`);
+      const notParsedPrevState = localStorage.getItem(
+        `onboarding-${projectId}`
+      );
       if (!notParsedPrevState) {
         return;
       }

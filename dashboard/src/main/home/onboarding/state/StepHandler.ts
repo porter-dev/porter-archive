@@ -40,7 +40,6 @@ const flow: FlowType = {
     provision_resources: {
       previous: "connect_registry",
       url: "/onboarding/provision",
-      final: true,
       state_key: "provision_resources",
     },
   },
@@ -50,8 +49,9 @@ type StepHandlerType = {
   flow: FlowType;
   currentStepName: StepKey;
   currentStep: Step;
+  finishedOnboarding: boolean;
   actions: {
-    nextStep: () => { redirectUrl: string };
+    nextStep: () => void;
     clearState: () => void;
     restoreState: (prevState: StepHandlerType) => void;
   };
@@ -61,21 +61,19 @@ export const StepHandler: StepHandlerType = proxy({
   flow,
   currentStepName: flow.initial,
   currentStep: flow.steps[flow.initial],
+  finishedOnboarding: false,
   actions: {
     nextStep: () => {
       const cs = StepHandler.currentStep;
       if (cs.final) {
-        return {
-          redirectUrl: "/dashboard?tab=provisioner",
-        };
+        StepHandler.finishedOnboarding = true;
+        return;
       }
       const nextStepName = cs.next;
       const nextStep = flow.steps[nextStepName];
       StepHandler.currentStep = nextStep;
       StepHandler.currentStepName = nextStepName;
-      return {
-        redirectUrl: nextStep.url,
-      };
+      return;
     },
     clearState: () => {
       StepHandler.currentStepName = flow.initial;

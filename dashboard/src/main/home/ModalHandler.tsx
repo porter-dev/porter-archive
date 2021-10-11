@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
 import Modal from "./modals/Modal";
@@ -15,9 +15,24 @@ const ModalHandler: React.FC<{
   setRefreshClusters: (x: boolean) => void;
 }> = ({ setRefreshClusters }) => {
   const [isAuth] = useAuth();
-  const { currentModal, setCurrentModal } = useContext(Context);
+  const { currentModal, setCurrentModal, currentProject } = useContext(Context);
+
+  useEffect(() => {
+    const projectOnboarding = localStorage.getItem(
+      `onboarding-${currentProject?.id}`
+    );
+    const parsedProjectOnboarding = JSON.parse(projectOnboarding);
+    if (parsedProjectOnboarding?.StepHandler?.finishedOnboarding === false) {
+      setCurrentModal("RedirectToOnboarding");
+    }
+  }, [currentProject?.id]);
+
   return (
     <>
+      {currentModal === "RedirectToOnboarding" && (
+        <a href="/onboarding/new-project"></a>
+      )}
+
       {currentModal === "ClusterInstructionsModal" && (
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}

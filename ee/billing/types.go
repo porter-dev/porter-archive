@@ -47,7 +47,6 @@ type PlanFeature struct {
 	IsActive    bool        `json:"is_active"`
 	Feature     Feature     `json:"feature"`
 	FeatureSpec FeatureSpec `json:"spec"`
-	MaxLimit    int64       `json:"max_limit"`
 }
 
 type Feature struct {

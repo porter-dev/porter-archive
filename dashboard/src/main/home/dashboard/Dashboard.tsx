@@ -136,7 +136,8 @@ class Dashboard extends Component<PropsType, StateType> {
 
     if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
       if (
-        this.context.usage.current.clusters < this.context.usage.limit.clusters
+        this.context?.usage?.current?.clusters <
+        this.context?.usage?.limit?.clusters
       ) {
         tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
       }

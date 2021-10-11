@@ -3,12 +3,14 @@ package release
 import (
 	"net/http"
 
+	semver "github.com/Masterminds/semver/v3"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater/parser"
 	"gorm.io/gorm"
@@ -53,6 +55,36 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else if err != gorm.ErrRecordNotFound {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	} else {
+		res.PorterRelease = &types.PorterRelease{}
+	}
+
+	// detect if Porter application chart and attempt to get the latest version
+	// from chart repo
+	cache := c.Config().URLCache
+	chartRepoURL, foundFirst := cache.GetURL(helmRelease.Chart.Metadata.Name)
+
+	if !foundFirst {
+		cache.Update()
+
+		chartRepoURL, _ = cache.GetURL(helmRelease.Chart.Metadata.Name)
+	}
+
+	if chartRepoURL != "" {
+		repoIndex, err := loader.LoadRepoIndexPublic(chartRepoURL)
+
+		if err == nil {
+			porterChart := loader.FindPorterChartInIndexList(repoIndex, res.Chart.Metadata.Name)
+			res.LatestVersion = res.Chart.Metadata.Version
+
+			// set latest version to the greater of porterChart.Versions and res.Chart.Metadata.Version
+			porterChartVersion, porterChartErr := semver.NewVersion(porterChart.Versions[0])
+			currChartVersion, currChartErr := semver.NewVersion(res.Chart.Metadata.Version)
+
+			if currChartErr == nil && porterChartErr == nil && porterChartVersion.GreaterThan(currChartVersion) {
+				res.LatestVersion = porterChart.Versions[0]
+			}
+		}
 	}
 
 	// look for the form using the dynamic client

@@ -608,14 +608,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       await api.upgradeChartValues(
         "<token>",
         {
-          namespace: currentChart.namespace,
-          storage: StorageType.Secret,
           values: valuesYaml,
           version: version,
         },
         {
           id: this.context.currentProject.id,
           name: currentChart.name,
+          namespace: currentChart.namespace,
           cluster_id: this.context.currentCluster.id,
         }
       );

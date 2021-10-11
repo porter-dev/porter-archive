@@ -62,7 +62,7 @@ const ConnectRegistry = () => {
             }}
           />
           <NextStep
-            text="Continue"
+            text="Skip step"
             disabled={false}
             onClick={() => nextStep(true)}
             status={""}

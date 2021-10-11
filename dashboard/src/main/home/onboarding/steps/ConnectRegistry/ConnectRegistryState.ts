@@ -22,6 +22,18 @@ const actions = {
     State.selectedProvider = null;
     State.currentStep = "credentials";
   },
+  restoreState(prevState: any) {
+    debugger;
+    if (prevState.selectedProvider) {
+      State.selectedProvider = prevState.selectedProvider;
+    }
+    if (prevState.currentStep) {
+      State.currentStep = prevState.currentStep;
+    }
+    if (prevState.config) {
+      State.config = prevState.config;
+    }
+  },
 };
 
 const initialState: ConnectRegistryState = {

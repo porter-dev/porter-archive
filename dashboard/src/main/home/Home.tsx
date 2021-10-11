@@ -135,7 +135,7 @@ class Home extends Component<PropsType, StateType> {
       .then((res) => {
         if (res.data) {
           if (res.data.length === 0) {
-            pushFiltered(this.props, "/new-project", ["project_id"]);
+            pushFiltered(this.props, "/onboarding/new-project", ["project_id"]);
           } else if (res.data.length > 0 && !currentProject) {
             setProjects(res.data);
 
@@ -373,7 +373,9 @@ class Home extends Component<PropsType, StateType> {
             setCurrentProject(res.data[0]);
           } else {
             setCurrentProject(null, () =>
-              pushFiltered(this.props, "/new-project", ["project_id"])
+              pushFiltered(this.props, "/onboarding/new-project", [
+                "project_id",
+              ])
             );
           }
           this.context.setCurrentModal(null, null);

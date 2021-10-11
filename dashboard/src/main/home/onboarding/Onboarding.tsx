@@ -14,7 +14,7 @@ const Onboarding = () => {
   const snap = useSnapshot(OFState);
 
   useEffect(() => {
-    OFState.actions.restoreState(context.currentProject?.id);
+    OFState.actions.initializeState(context.currentProject?.id);
     return () => {
       OFState.actions.clearState();
     };

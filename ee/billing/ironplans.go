@@ -431,7 +431,7 @@ func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.Project
 	for _, feature := range subscription.Plan.Features {
 		// look for slug of "cpus" and "memory"
 		maxLimit := uint(feature.MaxLimit)
-		switch feature.Slug {
+		switch feature.Feature.Slug {
 		case FeatureSlugCPU:
 			usage.ResourceCPU = maxLimit
 		case FeatureSlugMemory:

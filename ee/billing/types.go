@@ -45,9 +45,13 @@ type ListPlansResponse struct {
 type PlanFeature struct {
 	ID          string      `json:"id"`
 	IsActive    bool        `json:"is_active"`
+	Feature     Feature     `json:"feature"`
 	FeatureSpec FeatureSpec `json:"spec"`
-	Slug        string      `json:"slug"`
 	MaxLimit    int64       `json:"max_limit"`
+}
+
+type Feature struct {
+	Slug string `json:"slug"`
 }
 
 type FeatureSpec struct {

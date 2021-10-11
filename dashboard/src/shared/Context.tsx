@@ -57,6 +57,7 @@ export interface GlobalContextType {
   setHasBillingEnabled: (isBillingEnabled: boolean) => void;
   usage: UsageData;
   setUsage: (usage: UsageData) => void;
+  queryUsage: (retry?: number) => Promise<void>;
 }
 
 /**
@@ -159,21 +160,25 @@ class ContextProvider extends Component<PropsType, StateType> {
     setUsage: (usage: UsageData) => {
       this.setState({ usage });
     },
+    queryUsage: async (retry: number = 0) => {
+      api
+        .getUsage("<token>", {}, { project_id: this.state?.currentProject?.id })
+        .then((res) => {
+          if (JSON.stringify(res.data) !== JSON.stringify(this.state.usage)) {
+            this.state.setUsage(res.data);
+          } else {
+            if (retry < 10) {
+              setTimeout(() => {
+                this.state.queryUsage(retry + 1);
+              }, 1000);
+            }
+          }
+        });
+    },
   };
 
-  queryUsage() {
-    api
-      .getUsage("<token>", {}, { project_id: this.state?.currentProject?.id })
-      .then((res) => {
-        this.state.setUsage(res.data);
-      });
-  }
   render() {
-    return (
-      <Provider value={{ ...this.state, queryUsage: this.queryUsage }}>
-        {this.props.children}
-      </Provider>
-    );
+    return <Provider value={{ ...this.state }}>{this.props.children}</Provider>;
   }
 }
 

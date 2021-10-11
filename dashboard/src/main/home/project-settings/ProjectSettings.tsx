@@ -37,6 +37,26 @@ class ProjectSettings extends Component<PropsType, StateType> {
         this.setState({ currentTab: "manage-access" });
       }
     }
+    if (
+      this.context?.hasBillingEnabled &&
+      !this.state.tabOptions.find((t) => t.value === "billing")
+    ) {
+      const tabOptions = this.state.tabOptions;
+      tabOptions.splice(1, 0, { value: "billing", label: "Billing" });
+      this.setState({ tabOptions });
+      return;
+    }
+
+    if (
+      !this.context?.hasBillingEnabled &&
+      this.state.tabOptions.find((t) => t.value === "billing")
+    ) {
+      const tabOptions = this.state.tabOptions;
+      const billingIndex = this.state.tabOptions.findIndex(
+        (t) => t.value === "billing"
+      );
+      tabOptions.splice(billingIndex, 1);
+    }
   }
 
   componentDidMount() {

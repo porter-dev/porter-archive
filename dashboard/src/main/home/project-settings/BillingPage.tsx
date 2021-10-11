@@ -5,7 +5,7 @@ import { Context } from "shared/Context";
 
 function BillingPage() {
   const [customerToken, setCustomerToken] = useState("");
-  const { currentProject, setCurrentError } = useContext(Context);
+  const { currentProject, setCurrentError, queryUsage } = useContext(Context);
 
   useEffect(() => {
     let isSubscripted = true;
@@ -22,6 +22,7 @@ function BillingPage() {
       });
     return () => {
       isSubscripted = false;
+      queryUsage();
     };
   }, [currentProject?.id]);
 

@@ -1,4 +1,7 @@
-import React, { useMemo } from "react";
+import { ConnectedRegistryConfig } from "main/home/onboarding/state/StateHandler";
+import { SkipRegistryConnection } from "main/home/onboarding/types";
+import React, { useContext, useMemo } from "react";
+import { Context } from "shared/Context";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import { State } from "../ConnectRegistryState";
@@ -44,13 +47,22 @@ const FormTitle = {
   do: "Digital Ocean Container Registry",
 };
 
-const FormFlowWrapper: React.FC<{ nextStep: () => void }> = ({ nextStep }) => {
-  const snap = useSnapshot(State);
+type Props = {
+  nextStep: () => void;
+};
 
-  const nextFormStep = () => {
+const FormFlowWrapper: React.FC<Props> = ({ nextStep }) => {
+  const snap = useSnapshot(State);
+  const { currentProject } = useContext(Context);
+
+  const nextFormStep = (
+    data: Partial<Exclude<ConnectedRegistryConfig, SkipRegistryConnection>>
+  ) => {
     if (snap.currentStep === "credentials") {
+      State.config.credentials = data.credentials;
       State.currentStep = "settings";
     } else if (snap.currentStep === "settings") {
+      State.config.settings = data.settings;
       State.currentStep = "test_connection";
     } else if (snap.currentStep === "test_connection") {
       nextStep();
@@ -68,8 +80,9 @@ const FormFlowWrapper: React.FC<{ nextStep: () => void }> = ({ nextStep }) => {
       return null;
     }
 
-    return React.createElement(currentForm, {
+    return React.createElement(currentForm as any, {
       nextFormStep,
+      project: currentProject,
     });
   }, [snap.currentStep, snap.selectedProvider]);
 

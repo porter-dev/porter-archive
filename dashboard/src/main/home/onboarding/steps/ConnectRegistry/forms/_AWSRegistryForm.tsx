@@ -1,8 +1,12 @@
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
+import { AWSRegistryConfig } from "main/home/onboarding/types";
 import React, { useState } from "react";
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { useSnapshot } from "valtio";
+import { State } from "../ConnectRegistryState";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -27,12 +31,14 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
-export const CredentialsForm: React.FC<{ nextFormStep: () => void }> = ({
-  nextFormStep,
-}) => {
+export const CredentialsForm: React.FC<{
+  nextFormStep: (data: Partial<AWSRegistryConfig>) => void;
+  project: any;
+}> = ({ nextFormStep, project }) => {
   const [accessId, setAccessId] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [buttonStatus, setButtonStatus] = useState("");
+  const [awsRegion, setAWSRegion] = useState("us-east-1");
 
   const validate = () => {
     if (!accessId) {
@@ -59,8 +65,24 @@ export const CredentialsForm: React.FC<{ nextFormStep: () => void }> = ({
       setButtonStatus(validation.error);
       return;
     }
-    // TODO: Ask alex how to request the aws_integration_id on this step
-    nextFormStep();
+
+    const res = await api.createAWSIntegration(
+      "token",
+      {
+        aws_region: awsRegion,
+        aws_access_key_id: accessId,
+        aws_secret_access_key: secretKey,
+      },
+      {
+        id: project.id,
+      }
+    );
+
+    nextFormStep({
+      credentials: {
+        id: res.data.id,
+      },
+    });
   };
 
   return (
@@ -87,6 +109,16 @@ export const CredentialsForm: React.FC<{ nextFormStep: () => void }> = ({
         width="100%"
         isRequired={true}
       />
+      <SelectRow
+        options={regionOptions}
+        width="100%"
+        value={awsRegion}
+        dropdownMaxHeight="240px"
+        setActiveValue={(x: string) => {
+          setAWSRegion(x);
+        }}
+        label="📍 AWS Region"
+      />
       <SaveButton
         text="Continue"
         disabled={false}
@@ -100,13 +132,14 @@ export const CredentialsForm: React.FC<{ nextFormStep: () => void }> = ({
   );
 };
 
-export const SettingsForm: React.FC<{ nextFormStep: () => void }> = ({
-  nextFormStep,
-}) => {
+export const SettingsForm: React.FC<{
+  nextFormStep: (data: Partial<AWSRegistryConfig>) => void;
+  project: any;
+}> = ({ nextFormStep, project }) => {
+  const snap = useSnapshot(State);
   const [registryName, setRegistryName] = useState("");
-  const [awsRegion, setAWSRegion] = useState("us-east-1");
-  const [buttonStatus, setButtonStatus] = useState("");
 
+  const [buttonStatus, setButtonStatus] = useState("");
   const validate = () => {
     if (!registryName) {
       return {
@@ -127,7 +160,20 @@ export const SettingsForm: React.FC<{ nextFormStep: () => void }> = ({
       return;
     }
 
-    nextFormStep();
+    await api.connectECRRegistry(
+      "<token>",
+      {
+        name: registryName,
+        aws_integration_id: snap.config.credentials.id,
+      },
+      { id: project.id }
+    );
+
+    nextFormStep({
+      settings: {
+        registry_name: registryName,
+      },
+    });
   };
 
   return (
@@ -142,16 +188,7 @@ export const SettingsForm: React.FC<{ nextFormStep: () => void }> = ({
         placeholder="ex: porter-awesome-registry"
         width="100%"
       />
-      <SelectRow
-        options={regionOptions}
-        width="100%"
-        value={awsRegion}
-        dropdownMaxHeight="240px"
-        setActiveValue={(x: string) => {
-          setAWSRegion(x);
-        }}
-        label="📍 AWS Region"
-      />
+
       <SaveButton
         text="Connect Registry"
         disabled={false}

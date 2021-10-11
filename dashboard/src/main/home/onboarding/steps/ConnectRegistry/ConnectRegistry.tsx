@@ -1,11 +1,13 @@
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
-import React from "react";
+import React, { useState } from "react";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import ProviderSelector from "../../components/ProviderSelector";
+import { OFState } from "../../state";
+import { SupportedProviders } from "../../types";
 
 import { State } from "./ConnectRegistryState";
 import FormFlowWrapper from "./forms/FormFlow";
@@ -13,8 +15,23 @@ import FormFlowWrapper from "./forms/FormFlow";
 const ConnectRegistry = () => {
   const snap = useSnapshot(State);
   const { pushFiltered } = useRouting();
-  const nextStep = () => {
-    pushFiltered("/onboarding/provisioner", []);
+  const [selectedProvider, setSelectedProvider] = useState<
+    SupportedProviders | ""
+  >("");
+
+  const nextStep = (skipped: boolean) => {
+    if (skipped) {
+      OFState.actions.nextStep({
+        skip: true,
+      });
+      return;
+    }
+    OFState.actions.nextStep({
+      skip: false,
+      provider: selectedProvider,
+      credentials: snap.config.credentials,
+      settings: snap.config.settings,
+    });
   };
 
   return (
@@ -27,14 +44,18 @@ const ConnectRegistry = () => {
           : "Link to an existing docker registry or continue"}
       </Helper>
       {snap.selectedProvider ? (
-        <FormFlowWrapper nextStep={nextStep} />
+        <FormFlowWrapper nextStep={() => nextStep(false)} />
       ) : (
         <>
-          <ProviderSelector selectProvider={State.actions.selectProvider} />
+          <ProviderSelector
+            selectProvider={(provider) => {
+              State.selectedProvider = provider;
+            }}
+          />
           <NextStep
             text="Continue"
             disabled={false}
-            onClick={nextStep}
+            onClick={() => nextStep(true)}
             status={""}
             makeFlush={true}
             clearPosition={true}

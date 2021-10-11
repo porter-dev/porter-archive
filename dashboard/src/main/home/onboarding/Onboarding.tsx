@@ -3,31 +3,30 @@ import { useLocation } from "react-router";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
-import { OnboardingState } from "./OnboardingState";
+import { useSnapshot } from "valtio";
 import Routes from "./Routes";
-import StepHandler from "./StepHandler";
+import { OFState } from "./state";
 
 const Onboarding = () => {
   const context = useContext(Context);
   const location = useLocation();
   const { pushFiltered } = useRouting();
+  const snap = useSnapshot(OFState);
 
   useEffect(() => {
-    OnboardingState.actions.initFromGlobalContext(context);
-  }, [context]);
-
-  useEffect(() => {
-    OnboardingState.actions.restoreState();
+    OFState.actions.restoreState(context.currentProject?.id);
     return () => {
-      OnboardingState.actions.clearState();
+      OFState.actions.clearState();
     };
-  }, []);
+  }, [context.currentProject?.id]);
 
   useEffect(() => {
-    if (StepHandler.currentStep.url !== location.pathname) {
-      pushFiltered(StepHandler.currentStep.url, []);
+    console.log(location);
+    if (snap.StepHandler.currentStep.url !== location.pathname) {
+      pushFiltered(snap.StepHandler.currentStep.url, []);
     }
-  }, [location.pathname]);
+  }, [location.pathname, snap.StepHandler.currentStep.url]);
+
   return (
     <StyledOnboarding>
       <Routes />

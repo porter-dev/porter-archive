@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import api from "shared/api";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
+import { OFState } from "../state";
 
 interface GithubAppAccessData {
   username?: string;
@@ -23,7 +24,6 @@ interface GithubAppAccessData {
 const ConnectSource = () => {
   const [accountData, setAccountData] = useState<GithubAppAccessData>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { pushFiltered } = useRouting();
 
   const getAccounts = async () => {
     setIsLoading(true);
@@ -56,8 +56,10 @@ const ConnectSource = () => {
     };
   }, []);
 
-  const nextStep = () => {
-    pushFiltered("/onboarding/registry", []);
+  const nextStep = (selectedSource: "docker" | "github") => {
+    OFState.actions.nextStep({
+      source: selectedSource,
+    });
   };
 
   return (
@@ -75,7 +77,7 @@ const ConnectSource = () => {
           </ConnectToGithubButton>
           <Helper>
             No thanks, I want to deploy from a{" "}
-            <A onClick={nextStep}>Docker registry</A>
+            <A onClick={() => nextStep("docker")}>Docker registry</A>
           </Helper>
         </>
       )}
@@ -99,7 +101,7 @@ const ConnectSource = () => {
           <NextStep
             text="Continue"
             disabled={false}
-            onClick={nextStep}
+            onClick={() => nextStep("github")}
             status={""}
             makeFlush={true}
             clearPosition={true}

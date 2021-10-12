@@ -106,14 +106,14 @@ export const StateHandler = proxy({
     },
     saveResourceProvisioningCredentials: (credentials: any) => {
       StateHandler.provision_resources = {
-        ...StateHandler.connected_registry,
-        credentials,
+        ...StateHandler.provision_resources,
+        ...credentials,
       };
     },
     saveResourceProvisioningSettings: (settings: any) => {
       StateHandler.provision_resources = {
-        ...StateHandler.connected_registry,
-        settings,
+        ...StateHandler.provision_resources,
+        ...settings,
       };
     },
   },

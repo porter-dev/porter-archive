@@ -7,6 +7,7 @@ import ConnectRegistryWrapper from "./steps/ConnectRegistry/ConnectRegistryWrapp
 import ConnectSource from "./steps/ConnectSource";
 import { NewProjectFC } from "./steps/NewProject";
 import ProvisionResources from "./steps/ProvisionResources/ProvisionResources";
+import ProvisionResourcesWrapper from "./steps/ProvisionResources/ProvisionResourcesWrapper";
 
 const handleContinue = (data?: any) => {
   OFState.actions.nextStep("continue", data);
@@ -35,13 +36,7 @@ export const Routes = () => {
           <ConnectRegistryWrapper />
         </Route>
         <Route path={[`/onboarding/provision/:step?`]}>
-          <ProvisionResources
-            onSelectProvider={handleContinue}
-            onSaveSettings={handleContinue}
-            onSaveCredentials={handleContinue}
-            onSkip={handleSkip}
-            project={snap.StateHandler.project}
-          />
+          <ProvisionResourcesWrapper />
         </Route>
       </Switch>
     </>

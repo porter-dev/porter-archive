@@ -6,6 +6,7 @@ import { useParams } from "react-router";
 
 import styled from "styled-components";
 import ProviderSelector from "../../components/ProviderSelector";
+import { ConnectedRegistryConfig } from "../../state/StateHandler";
 import { SupportedProviders } from "../../types";
 
 import FormFlowWrapper from "./forms/FormFlow";

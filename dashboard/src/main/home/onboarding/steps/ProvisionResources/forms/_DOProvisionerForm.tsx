@@ -2,12 +2,12 @@ import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
+import { OFState } from "main/home/onboarding/state";
 import { DOProvisionerConfig } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import { State } from "../ProvisionResourcesState";
 
 const tierOptions = [
   { value: "basic", label: "Basic" },
@@ -70,7 +70,7 @@ export const SettingsForm: React.FC<{
   nextFormStep: (data: Partial<DOProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  const snap = useSnapshot(State);
+  const snap = useSnapshot(OFState);
   const [buttonStatus, setButtonStatus] = useState("");
   const [tier, setTier] = useState("basic");
   const [region, setRegion] = useState("nyc1");
@@ -136,12 +136,13 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
-    const integrationId = snap.config.credentials.id;
+    const integrationId = snap.StateHandler.provision_resources.credentials.id;
 
-    if (snap.shouldProvisionRegistry) {
-      await provisionDOCR(integrationId, tier);
+    if (snap.StateHandler.connected_registry.skip) {
+      // await provisionDOCR(integrationId, tier);
+      console.log("PROVISIONING REGISTRY");
     }
-    await provisionDOKS(integrationId, region, clusterName);
+    // await provisionDOKS(integrationId, region, clusterName);
 
     nextFormStep({
       settings: {

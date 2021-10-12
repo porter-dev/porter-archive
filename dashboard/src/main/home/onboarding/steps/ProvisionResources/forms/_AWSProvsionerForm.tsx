@@ -1,6 +1,7 @@
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
+import { OFState } from "main/home/onboarding/state";
 import {
   AWSProvisionerConfig,
   AWSRegistryConfig,
@@ -9,7 +10,6 @@ import React, { useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useSnapshot } from "valtio";
-import { State } from "../ProvisionResourcesState";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -69,21 +69,21 @@ export const CredentialsForm: React.FC<{
       return;
     }
 
-    const res = await api.createAWSIntegration(
-      "token",
-      {
-        aws_region: awsRegion,
-        aws_access_key_id: accessId,
-        aws_secret_access_key: secretKey,
-      },
-      {
-        id: project.id,
-      }
-    );
+    // const res = await api.createAWSIntegration(
+    //   "token",
+    //   {
+    //     aws_region: awsRegion,
+    //     aws_access_key_id: accessId,
+    //     aws_secret_access_key: secretKey,
+    //   },
+    //   {
+    //     id: project.id,
+    //   }
+    // );
 
     nextFormStep({
       credentials: {
-        id: res.data.id,
+        id: "res.data.id",
       },
     });
   };
@@ -148,7 +148,7 @@ export const SettingsForm: React.FC<{
   nextFormStep: (data: Partial<AWSProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  const snap = useSnapshot(State);
+  const snap = useSnapshot(OFState);
   const [clusterName, setClusterName] = useState("");
   const [machineType, setMachineType] = useState("t2.medium");
   const [buttonStatus, setButtonStatus] = useState("");
@@ -209,12 +209,13 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
-    const integrationId = `${snap.config.credentials.id}`;
+    const integrationId = `${snap.StateHandler.provision_resources.credentials.id}`;
 
-    if (snap.shouldProvisionRegistry) {
-      await provisionECR(integrationId);
+    if (snap.StateHandler.connected_registry.skip) {
+      // await provisionECR(integrationId);
+      console.log("PROVISIONING REGISTRY");
     }
-    await provisionEKS(integrationId);
+    // await provisionEKS(integrationId);
 
     nextFormStep({
       settings: {

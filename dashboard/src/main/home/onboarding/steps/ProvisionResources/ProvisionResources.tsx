@@ -1,15 +1,11 @@
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router";
-import { useRouting } from "shared/routing";
+import React from "react";
+import { useParams } from "react-router";
 import styled from "styled-components";
-import { useSnapshot } from "valtio";
 import ProviderSelector from "../../components/ProviderSelector";
-import { OFState } from "../../state";
 
-import { State } from "./ProvisionResourcesState";
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 import { SupportedProviders } from "../../types";
@@ -37,21 +33,7 @@ const ProvisionResources: React.FC<Props> = ({
   onSaveSettings,
   onSuccess,
 }) => {
-  // const globalFormSnap = useSnapshot(OFState);
-  // const { getQueryParam } = useRouting();
-  // const location = useLocation();
-
-  // useEffect(() => {
-  //   const provider = getQueryParam("provider");
-  //   if (provider === "aws" || provider === "gcp" || provider === "do") {
-  //     State.selectedProvider = provider;
-  //   }
-  // }, [location]);
-
-  // useEffect(() => {
-  //   const connectedRegistry = globalFormSnap.StateHandler.connected_registry;
-  //   State.shouldProvisionRegistry = !!connectedRegistry?.skip;
-  // }, [globalFormSnap.StateHandler.connected_registry]);
+  const { step } = useParams<{ step: any }>();
 
   return (
     <>
@@ -63,7 +45,13 @@ const ProvisionResources: React.FC<Props> = ({
       </Helper>
       {provider ? (
         provider !== "external" ? (
-          <FormFlowWrapper nextStep={() => nextStep(false)} />
+          <FormFlowWrapper
+            provider={provider}
+            currentStep={step}
+            onSaveCredentials={onSaveCredentials}
+            onSaveSettings={onSaveSettings}
+            project={project}
+          />
         ) : (
           <ConnectExternalCluster nextStep={onSuccess} project={project} />
         )

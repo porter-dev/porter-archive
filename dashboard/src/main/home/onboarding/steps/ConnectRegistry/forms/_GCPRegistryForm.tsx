@@ -8,7 +8,6 @@ import React, { useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import { State } from "../ConnectRegistryState";
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;

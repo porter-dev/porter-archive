@@ -138,7 +138,7 @@ const flow: FlowType = {
         },
         credentials: {
           url: "/onboarding/provision/credentials",
-          on: { continue: "settings" },
+          on: { continue: "provision_resources.settings" },
           parent: "provision_resources",
           execute: {
             on: {

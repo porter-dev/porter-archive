@@ -69,8 +69,8 @@ type UsageTrackerResponse struct {
 	ClusterLimit  uint
 	ClusterUsage  uint
 	Exceeded      bool
-	ExceededSince *time.Time
-	Project       *models.Project
+	ExceededSince time.Time
+	Project       models.Project
 	AdminEmails   []string
 }
 
@@ -136,8 +136,8 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 				ClusterUsage:  current.Clusters,
 				ClusterLimit:  limit.Clusters,
 				Exceeded:      cache.Exceeded,
-				ExceededSince: cache.ExceededSince,
-				Project:       project,
+				ExceededSince: *cache.ExceededSince,
+				Project:       *project,
 				AdminEmails:   adminEmails,
 			}
 		}

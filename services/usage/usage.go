@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"sync"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/shared/config/env"
@@ -84,6 +85,71 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 		return nil, err
 	}
 
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	worker := func(project *models.Project) error {
+		defer wg.Done()
+
+		current, limit, cache, err := usage.GetUsage(&usage.GetUsageOpts{
+			Repo:             u.repo,
+			DOConf:           u.doConf,
+			Project:          project,
+			WhitelistedUsers: u.whitelistedUsers,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		// get the admin emails for the project
+		roles, err := u.repo.Project().ListProjectRoles(project.ID)
+
+		if err != nil {
+			return err
+		}
+
+		adminEmails := make([]string, 0)
+
+		for _, role := range roles {
+			if role.Kind == types.RoleAdmin {
+				user, err := u.repo.User().ReadUser(role.UserID)
+
+				if err != nil {
+					continue
+				}
+
+				adminEmails = append(adminEmails, user.Email)
+			}
+		}
+
+		exceededSince := cache.ExceededSince
+
+		if exceededSince == nil {
+			now := time.Now()
+			exceededSince = &now
+		}
+
+		mu.Lock()
+		res[project.ID] = &UsageTrackerResponse{
+			CPUUsage:      cache.ResourceCPU,
+			CPULimit:      limit.ResourceCPU,
+			MemoryUsage:   cache.ResourceMemory,
+			MemoryLimit:   limit.ResourceMemory,
+			UserUsage:     current.Users,
+			UserLimit:     limit.Users,
+			ClusterUsage:  current.Clusters,
+			ClusterLimit:  limit.Clusters,
+			Exceeded:      cache.Exceeded,
+			ExceededSince: *exceededSince,
+			Project:       *project,
+			AdminEmails:   adminEmails,
+		}
+		mu.Unlock()
+
+		return nil
+	}
+
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
 		projects := []*models.Project{}
@@ -94,60 +160,11 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 
 		// go through each project
 		for _, project := range projects {
-			current, limit, cache, err := usage.GetUsage(&usage.GetUsageOpts{
-				Repo:             u.repo,
-				DOConf:           u.doConf,
-				Project:          project,
-				WhitelistedUsers: u.whitelistedUsers,
-			})
-
-			if err != nil {
-				continue
-			}
-
-			// get the admin emails for the project
-			roles, err := u.repo.Project().ListProjectRoles(project.ID)
-
-			if err != nil {
-				continue
-			}
-
-			adminEmails := make([]string, 0)
-
-			for _, role := range roles {
-				if role.Kind == types.RoleAdmin {
-					user, err := u.repo.User().ReadUser(role.UserID)
-
-					if err != nil {
-						continue
-					}
-
-					adminEmails = append(adminEmails, user.Email)
-				}
-			}
-
-			exceededSince := cache.ExceededSince
-
-			if exceededSince == nil {
-				now := time.Now()
-				exceededSince = &now
-			}
-
-			res[project.ID] = &UsageTrackerResponse{
-				CPUUsage:      cache.ResourceCPU,
-				CPULimit:      limit.ResourceCPU,
-				MemoryUsage:   cache.ResourceMemory,
-				MemoryLimit:   limit.ResourceMemory,
-				UserUsage:     current.Users,
-				UserLimit:     limit.Users,
-				ClusterUsage:  current.Clusters,
-				ClusterLimit:  limit.Clusters,
-				Exceeded:      cache.Exceeded,
-				ExceededSince: *exceededSince,
-				Project:       *project,
-				AdminEmails:   adminEmails,
-			}
+			wg.Add(1)
+			go worker(project)
 		}
+
+		wg.Wait()
 	}
 
 	return res, nil

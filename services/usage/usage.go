@@ -64,6 +64,10 @@ type UsageTrackerResponse struct {
 	CPUUsage      uint
 	MemoryLimit   uint
 	MemoryUsage   uint
+	UserLimit     uint
+	UserUsage     uint
+	ClusterLimit  uint
+	ClusterUsage  uint
 	Exceeded      bool
 	ExceededSince *time.Time
 	Project       *models.Project
@@ -90,7 +94,7 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 
 		// go through each project
 		for _, project := range projects {
-			_, limit, cache, err := usage.GetUsage(&usage.GetUsageOpts{
+			current, limit, cache, err := usage.GetUsage(&usage.GetUsageOpts{
 				Repo:             u.repo,
 				DOConf:           u.doConf,
 				Project:          project,
@@ -127,6 +131,10 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 				CPULimit:      limit.ResourceCPU,
 				MemoryUsage:   cache.ResourceMemory,
 				MemoryLimit:   limit.ResourceMemory,
+				UserUsage:     current.Users,
+				UserLimit:     limit.Users,
+				ClusterUsage:  current.Clusters,
+				ClusterLimit:  limit.Clusters,
 				Exceeded:      cache.Exceeded,
 				ExceededSince: cache.ExceededSince,
 				Project:       project,

@@ -2,7 +2,6 @@ package usage
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
@@ -66,8 +65,6 @@ func GetUsage(opts *GetUsageOpts) (
 	// re-query for the usage
 	if true || !isCacheFound || usageCache.Is1HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
 		cpu, memory, err := getResourceUsage(opts, clusters)
-
-		fmt.Println("RESOURCE USAGE IS", cpu, memory)
 
 		if err != nil {
 			return nil, nil, nil, err
@@ -136,20 +133,14 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 
 		if err != nil {
-			fmt.Printf("failed to get agent: %s\n", err.Error())
 			continue
-			// return 0, 0, fmt.Errorf("failed to get agent: %s", err.Error())
 		}
 
 		totAlloc, err := nodes.GetAllocatableResources(agent.Clientset)
 
 		if err != nil {
-			fmt.Printf("failed to get alloc: %s\n", err.Error())
 			continue
-			// return 0, 0, fmt.Errorf("failed to get alloc: %s", err.Error())
 		}
-
-		fmt.Println("TOT ALLOC IS", totAlloc, totAlloc.CPU, totAlloc.Memory, totCPU, totMem)
 
 		totCPU += totAlloc.CPU
 		totMem += totAlloc.Memory

@@ -1,31 +1,12 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
 import { DORegistryConfig } from "main/home/onboarding/types";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import { State } from "../ConnectRegistryState";
-
-const tierOptions = [
-  { value: "basic", label: "Basic" },
-  { value: "professional", label: "Professional" },
-];
-
-const regionOptions = [
-  { value: "ams3", label: "Amsterdam 3" },
-  { value: "blr1", label: "Bangalore 1" },
-  { value: "fra1", label: "Frankfurt 1" },
-  { value: "lon1", label: "London 1" },
-  { value: "nyc1", label: "New York 1" },
-  { value: "nyc3", label: "New York 3" },
-  { value: "sfo2", label: "San Francisco 2" },
-  { value: "sfo3", label: "San Francisco 3" },
-  { value: "sgp1", label: "Singapore 1" },
-  { value: "tor1", label: "Toronto 1" },
-];
 
 /**
  * This will redirect to DO, and we should pass the redirection URI to be /onboarding/registry?provider=do
@@ -54,6 +35,7 @@ export const CredentialsForm: React.FC<{
       }
     });
   }, []);
+
   return (
     <>
       <ConnectDigitalOceanButton

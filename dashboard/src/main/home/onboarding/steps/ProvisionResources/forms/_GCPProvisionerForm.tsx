@@ -3,6 +3,7 @@ import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import UploadArea from "components/form-components/UploadArea";
 import SaveButton from "components/SaveButton";
+import { OFState } from "main/home/onboarding/state";
 import {
   GCPProvisionerConfig,
   GCPRegistryConfig,
@@ -11,7 +12,6 @@ import React, { useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import { State } from "../ProvisionResourcesState";
 
 const regionOptions = [
   { value: "asia-east1", label: "asia-east1" },
@@ -71,21 +71,21 @@ export const CredentialsForm: React.FC<{
       return;
     }
     setButtonStatus("loading");
-    const gcpIntegration = await api
-      .createGCPIntegration(
-        "<token>",
-        {
-          gcp_region: "",
-          gcp_key_data: serviceAccountKey,
-          gcp_project_id: projectId,
-        },
-        { project_id: project.id }
-      )
-      .then((res) => res.data);
+    // const gcpIntegration = await api
+    //   .createGCPIntegration(
+    //     "<token>",
+    //     {
+    //       gcp_region: "",
+    //       gcp_key_data: serviceAccountKey,
+    //       gcp_project_id: projectId,
+    //     },
+    //     { project_id: project.id }
+    //   )
+    //   .then((res) => res.data);
 
     nextFormStep({
       credentials: {
-        id: gcpIntegration.id,
+        id: "gcpIntegration.id",
       },
     });
   };
@@ -142,7 +142,7 @@ export const SettingsForm: React.FC<{
 }> = ({ nextFormStep, project }) => {
   const [clusterName, setClusterName] = useState("");
   const [buttonStatus, setButtonStatus] = useState("");
-  const snap = useSnapshot(State);
+  const snap = useSnapshot(OFState);
 
   const validate = () => {
     if (!clusterName) {
@@ -166,14 +166,15 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
-    const integrationId = snap.config.credentials.id;
 
     setButtonStatus("loading");
+    const integrationId = snap.StateHandler.provision_resources.credentials.id;
 
-    if (snap.shouldProvisionRegistry) {
-      await provisionGCR(integrationId);
+    if (snap.StateHandler.connected_registry.skip) {
+      // await provisionGCR(integrationId);
+      console.log("PROVISIONING REGISTRY");
     }
-    await provisionGKE(integrationId);
+    // await provisionGKE(integrationId);
     nextFormStep({
       settings: {
         cluster_name: clusterName,

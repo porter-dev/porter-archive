@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
+	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -77,10 +78,6 @@ type Config struct {
 	// jobs
 	ProvisionerAgent *kubernetes.Agent
 
-	// IngressAgent is the kubernetes client responsible for creating new ingress
-	// resources
-	IngressAgent *kubernetes.Agent
-
 	// DB is the gorm DB instance
 	DB *gorm.DB
 
@@ -92,6 +89,9 @@ type Config struct {
 
 	// WhitelistedUsers do not count toward usage limits
 	WhitelistedUsers map[uint]uint
+
+  // PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
+	PowerDNSClient *powerdns.Client
 }
 
 type ConfigLoader interface {

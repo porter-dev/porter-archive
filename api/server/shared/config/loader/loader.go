@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
+	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -211,39 +212,17 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Metadata.Provisioning = true
 	}
 
-	ingressAgent, err := getIngressAgent(sc)
-
-	if err != nil {
-		return nil, err
-	}
-
-	res.IngressAgent = ingressAgent
-
 	res.AnalyticsClient = analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, res.Logger)
+
+	if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
+		res.PowerDNSClient = powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)
+	}
 
 	return res, nil
 }
 
 func getProvisionerAgent(sc *env.ServerConf) (*kubernetes.Agent, error) {
 	if sc.ProvisionerCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
-		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
-
-		if err != nil {
-			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
-		}
-
-		return agent, nil
-	} else if sc.ProvisionerCluster == "kubeconfig" {
-		return nil, fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
-	}
-
-	agent, _ := kubernetes.GetAgentInClusterConfig()
-
-	return agent, nil
-}
-
-func getIngressAgent(sc *env.ServerConf) (*kubernetes.Agent, error) {
-	if sc.IngressCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
 		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
 
 		if err != nil {

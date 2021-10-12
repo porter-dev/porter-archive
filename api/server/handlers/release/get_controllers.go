@@ -114,7 +114,23 @@ func getController(controller grapher.Object, agent *kubernetes.Agent) (rc inter
 			return nil, nil, err
 		}
 
-		return obj, obj.Spec.JobTemplate.Spec.Selector, nil
+		res := &metav1.LabelSelector{
+			MatchLabels: make(map[string]string),
+		}
+
+		for key, val := range obj.Spec.JobTemplate.Labels {
+			res.MatchLabels[key] = val
+		}
+
+		return obj, res, nil
+	case "job":
+		obj, err := agent.GetJob(controller)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return obj, obj.Spec.Selector, nil
 	}
 
 	return nil, nil, fmt.Errorf("not a valid controller")

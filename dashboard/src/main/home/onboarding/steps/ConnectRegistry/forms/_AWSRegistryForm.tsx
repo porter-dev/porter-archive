@@ -4,9 +4,8 @@ import SaveButton from "components/SaveButton";
 import { AWSRegistryConfig } from "main/home/onboarding/types";
 import React, { useState } from "react";
 import api from "shared/api";
-import { Context } from "shared/Context";
 import { useSnapshot } from "valtio";
-import { State } from "../ConnectRegistryState";
+import { OFState } from "../../../state/index";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -66,21 +65,21 @@ export const CredentialsForm: React.FC<{
       return;
     }
 
-    const res = await api.createAWSIntegration(
-      "token",
-      {
-        aws_region: awsRegion,
-        aws_access_key_id: accessId,
-        aws_secret_access_key: secretKey,
-      },
-      {
-        id: project.id,
-      }
-    );
+    // const res = await api.createAWSIntegration(
+    //   "token",
+    //   {
+    //     aws_region: awsRegion,
+    //     aws_access_key_id: accessId,
+    //     aws_secret_access_key: secretKey,
+    //   },
+    //   {
+    //     id: project.id,
+    //   }
+    // );
 
     nextFormStep({
       credentials: {
-        id: res.data.id,
+        id: "some_id",
       },
     });
   };
@@ -136,7 +135,7 @@ export const SettingsForm: React.FC<{
   nextFormStep: (data: Partial<AWSRegistryConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  const snap = useSnapshot(State);
+  const snap = useSnapshot(OFState);
   const [registryName, setRegistryName] = useState("");
 
   const [buttonStatus, setButtonStatus] = useState("");
@@ -160,14 +159,14 @@ export const SettingsForm: React.FC<{
       return;
     }
 
-    await api.connectECRRegistry(
-      "<token>",
-      {
-        name: registryName,
-        aws_integration_id: snap.config.credentials.id,
-      },
-      { id: project.id }
-    );
+    // await api.connectECRRegistry(
+    //   "<token>",
+    //   {
+    //     name: registryName,
+    //     aws_integration_id: snap.StateHandler.connected_registry.credentials.id,
+    //   },
+    //   { id: project.id }
+    // );
 
     nextFormStep({
       settings: {

@@ -7,7 +7,7 @@ const ConnectRegistryWrapper = () => {
   const snap = useSnapshot(OFState);
   return (
     <ConnectRegistry
-      provider={snap.StateHandler.connected_registry.provider}
+      provider={snap.StateHandler.connected_registry?.provider}
       project={snap.StateHandler.project}
       onSelectProvider={(provider) =>
         OFState.actions.nextStep("continue", provider)

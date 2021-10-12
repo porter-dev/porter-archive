@@ -166,5 +166,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		event:                     NewEventRepository(canQuery),
+		projectUsage:              NewProjectUsageRepository(canQuery),
 	}
 }

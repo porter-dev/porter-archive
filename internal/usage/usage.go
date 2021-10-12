@@ -147,6 +147,8 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 			// return 0, 0, fmt.Errorf("failed to get alloc: %s", err.Error())
 		}
 
+		fmt.Println("TOT ALLOC IS", totAlloc, totAlloc.CPU, totAlloc.Memory, totCPU, totMem)
+
 		totCPU += totAlloc.CPU
 		totMem += totAlloc.Memory
 	}

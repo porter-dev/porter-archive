@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/analytics"
@@ -29,7 +30,7 @@ import (
 )
 
 var InstanceBillingManager billing.BillingManager
-var InstanceEnvConf *EnvConf
+var InstanceEnvConf *envloader.EnvConf
 var InstanceDB *pgorm.DB
 
 type EnvConfigLoader struct {
@@ -41,8 +42,15 @@ func NewEnvLoader(version string) config.ConfigLoader {
 }
 
 func sharedInit() {
-	InstanceEnvConf, _ = FromEnv()
-	InstanceDB, _ = adapter.New(InstanceEnvConf.DBConf)
+	var err error
+	InstanceEnvConf, _ = envloader.FromEnv()
+
+	InstanceDB, err = adapter.New(InstanceEnvConf.DBConf)
+
+	if err != nil {
+		panic(err)
+	}
+
 	InstanceBillingManager = &billing.NoopBillingManager{}
 }
 

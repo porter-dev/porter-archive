@@ -1,7 +1,7 @@
 import { proxy, subscribe } from "valtio";
 import { devtools, subscribeKey } from "valtio/utils";
 import { StateHandler } from "./StateHandler";
-import { StepHandler } from "./StepHandler";
+import { Action, StepHandler } from "./StepHandler";
 import { State as ConnectRegistryState } from "../steps/ConnectRegistry/ConnectRegistryState";
 import { State as ProvisionResourcesState } from "../steps/ProvisionResources/ProvisionResourcesState";
 
@@ -14,10 +14,16 @@ export const OFState = proxy({
       OFState.actions.restoreState(projectId);
       OFState.subscriptions = OFState.actions.subscribeToSubstates();
     },
-    nextStep: (data: any) => {
-      const currentStep = StepHandler.currentStep;
-      StateHandler[currentStep.state_key] = data;
-      StepHandler.actions.nextStep();
+    nextStep: (action?: Action, data?: any) => {
+      const functionToExecute = StepHandler?.currentStep?.execute?.on[action];
+      if (functionToExecute) {
+        const actions: any = StateHandler.actions;
+        const executable = actions[functionToExecute];
+        if (typeof executable === "function") {
+          executable(data);
+        }
+      }
+      StepHandler.actions.nextStep(action);
       OFState.actions.saveState();
     },
     clearState: () => {
@@ -29,7 +35,7 @@ export const OFState = proxy({
     saveState: () => {
       const state = JSON.stringify(OFState);
       localStorage.setItem(
-        `onboarding-${OFState.StateHandler.project.id}`,
+        `onboarding-${OFState.StateHandler.project?.id}`,
         state
       );
     },
@@ -84,5 +90,3 @@ export const OFState = proxy({
     provision_resources: ProvisionResourcesState,
   },
 });
-
-devtools(OFState, "Onboarding flow state");

@@ -5,6 +5,7 @@ export enum Steps {
   CONNECT_SOURCE = "connect_source",
   CONNECT_REGISTRY = "connect_registry",
   PROVISION_RESOURCES = "provision_resources",
+  CLEAN_UP = "clean_up",
 }
 
 export type StepKey = `${Steps}`;
@@ -87,3 +88,29 @@ export type SkipProvisionConfig = {
 };
 
 export type SkipRegistryConnection = SkipProvisionConfig;
+
+interface Onboarding {
+  current_step: string;
+
+  project_id: number;
+  project_name: string;
+
+  connected_source: "docker" | "github";
+
+  skip_registry_connection: boolean;
+
+  registry_connection_credentials_id: number;
+  registry_connection_settings_url: string;
+  registry_connection_settings_name: string;
+
+  skip_resource_provision: boolean;
+
+  resource_provision_credentials_id: number;
+  resource_provision_credentials_arn: string;
+  resource_provision_credentials_region: string;
+
+  resource_provision_settings_cluster_name: string;
+  resource_provision_settings_region: string;
+  resource_provision_settings_tier: string;
+  resource_provision_settings_machine_type: string;
+}

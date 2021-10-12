@@ -12,39 +12,46 @@ import { OFState } from "../../state";
 import { State } from "./ProvisionResourcesState";
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
+import { SupportedProviders } from "../../types";
 
-const ProvisionResources = () => {
-  const snap = useSnapshot(State);
-  const globalFormSnap = useSnapshot(OFState);
-  const { getQueryParam } = useRouting();
-  const location = useLocation();
-
-  useEffect(() => {
-    const provider = getQueryParam("provider");
-    if (provider === "aws" || provider === "gcp" || provider === "do") {
-      State.selectedProvider = provider;
-    }
-  }, [location]);
-
-  useEffect(() => {
-    const connectedRegistry = globalFormSnap.StateHandler.connected_registry;
-    State.shouldProvisionRegistry = !!connectedRegistry?.skip;
-  }, [globalFormSnap.StateHandler.connected_registry]);
-
-  const nextStep = (skipped: boolean) => {
-    if (skipped) {
-      OFState.actions.nextStep({
-        skip: true,
-      });
-      return;
-    }
-    OFState.actions.nextStep({
-      skip: false,
-      provider: snap.selectedProvider,
-      credentials: snap.config.credentials,
-      settings: snap.config.settings,
-    });
+type Props = {
+  provider: SupportedProviders | "external";
+  project: {
+    id: number;
+    name: string;
   };
+  shouldProvisionRegistry: boolean;
+  onSelectProvider: (provider: SupportedProviders | "external") => void;
+  onSaveCredentials: (credentials: any) => void;
+  onSaveSettings: (settings: any) => void;
+  onSuccess: () => void;
+  onSkip: () => void;
+};
+
+const ProvisionResources: React.FC<Props> = ({
+  provider,
+  project,
+  shouldProvisionRegistry,
+  onSelectProvider,
+  onSaveCredentials,
+  onSaveSettings,
+  onSuccess,
+}) => {
+  // const globalFormSnap = useSnapshot(OFState);
+  // const { getQueryParam } = useRouting();
+  // const location = useLocation();
+
+  // useEffect(() => {
+  //   const provider = getQueryParam("provider");
+  //   if (provider === "aws" || provider === "gcp" || provider === "do") {
+  //     State.selectedProvider = provider;
+  //   }
+  // }, [location]);
+
+  // useEffect(() => {
+  //   const connectedRegistry = globalFormSnap.StateHandler.connected_registry;
+  //   State.shouldProvisionRegistry = !!connectedRegistry?.skip;
+  // }, [globalFormSnap.StateHandler.connected_registry]);
 
   return (
     <>
@@ -54,22 +61,19 @@ const ProvisionResources = () => {
         Porter automatically creates a cluster and registry in your cloud to run
         applications.
       </Helper>
-      {snap.selectedProvider ? (
-        snap.selectedProvider !== "external" ? (
+      {provider ? (
+        provider !== "external" ? (
           <FormFlowWrapper nextStep={() => nextStep(false)} />
         ) : (
-          <ConnectExternalCluster
-            nextStep={() => nextStep(true)}
-            project={globalFormSnap.StateHandler.project}
-          />
+          <ConnectExternalCluster nextStep={onSuccess} project={project} />
         )
       ) : (
         <>
           <ProviderSelector
             selectProvider={(provider) => {
-              State.selectedProvider = provider;
+              onSelectProvider(provider);
             }}
-            enableExternal={true}
+            enableExternal={!shouldProvisionRegistry}
           />
         </>
       )}

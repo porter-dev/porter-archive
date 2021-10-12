@@ -21,7 +21,9 @@ interface GithubAppAccessData {
  *
  * The other option would be skip integration, that will skip the whole github connection flow.
  */
-const ConnectSource = () => {
+const ConnectSource: React.FC<{
+  onSuccess: (data: any) => void;
+}> = ({ onSuccess }) => {
   const [accountData, setAccountData] = useState<GithubAppAccessData>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,9 +59,7 @@ const ConnectSource = () => {
   }, []);
 
   const nextStep = (selectedSource: "docker" | "github") => {
-    OFState.actions.nextStep({
-      source: selectedSource,
-    });
+    onSuccess(selectedSource);
   };
 
   return (

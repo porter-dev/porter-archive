@@ -2,6 +2,7 @@ package usage
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
@@ -65,6 +66,8 @@ func GetUsage(opts *GetUsageOpts) (
 	// re-query for the usage
 	if true || !isCacheFound || usageCache.Is1HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
 		cpu, memory, err := getResourceUsage(opts, clusters)
+
+		fmt.Println("RESOURCE USAGE IS", cpu, memory)
 
 		if err != nil {
 			return nil, nil, nil, err

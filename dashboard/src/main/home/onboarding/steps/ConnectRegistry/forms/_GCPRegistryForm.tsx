@@ -2,6 +2,7 @@ import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import UploadArea from "components/form-components/UploadArea";
 import SaveButton from "components/SaveButton";
+import { OFState } from "main/home/onboarding/state";
 import { GCPRegistryConfig } from "main/home/onboarding/types";
 import React, { useState } from "react";
 import api from "shared/api";
@@ -39,21 +40,21 @@ export const CredentialsForm: React.FC<{
       return;
     }
     setButtonStatus("loading");
-    const gcpIntegration = await api
-      .createGCPIntegration(
-        "<token>",
-        {
-          gcp_region: "",
-          gcp_key_data: serviceAccountKey,
-          gcp_project_id: projectId,
-        },
-        { project_id: project.id }
-      )
-      .then((res) => res.data);
+    // const gcpIntegration = await api
+    //   .createGCPIntegration(
+    //     "<token>",
+    //     {
+    //       gcp_region: "",
+    //       gcp_key_data: serviceAccountKey,
+    //       gcp_project_id: projectId,
+    //     },
+    //     { project_id: project.id }
+    //   )
+    //   .then((res) => res.data);
 
     nextFormStep({
       credentials: {
-        id: gcpIntegration.id,
+        id: "some_Id",
       },
     });
   };
@@ -100,7 +101,7 @@ export const SettingsForm: React.FC<{
   const [registryName, setRegistryName] = useState("");
   const [registryUrl, setRegistryUrl] = useState("");
   const [buttonStatus, setButtonStatus] = useState("");
-  const snap = useSnapshot(State);
+  const snap = useSnapshot(OFState);
 
   const validate = () => {
     if (!registryName) {
@@ -128,17 +129,17 @@ export const SettingsForm: React.FC<{
 
     setButtonStatus("loading");
 
-    await api.connectGCRRegistry(
-      "<token>",
-      {
-        name: registryName,
-        gcp_integration_id: snap.config.credentials.id,
-        url: registryUrl,
-      },
-      {
-        id: project.id,
-      }
-    );
+    // await api.connectGCRRegistry(
+    //   "<token>",
+    //   {
+    //     name: registryName,
+    //     gcp_integration_id: snap.StateHandler.connected_registry.credentials.id,
+    //     url: registryUrl,
+    //   },
+    //   {
+    //     id: project.id,
+    //   }
+    // );
     nextFormStep({
       settings: {
         gcr_url: registryUrl,

@@ -1,12 +1,12 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
+import { OFState } from "main/home/onboarding/state";
 import { DORegistryConfig } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import { State } from "../ConnectRegistryState";
 
 /**
  * This will redirect to DO, and we should pass the redirection URI to be /onboarding/registry?provider=do
@@ -55,14 +55,14 @@ export const SettingsForm: React.FC<{
   const [registryUrl, setRegistryUrl] = useState("basic");
   const [registryName, setRegistryName] = useState("");
   const [buttonStatus] = useState("");
-  const snap = useSnapshot(State);
+  const snap = useSnapshot(OFState);
 
   const submit = async () => {
     await api.connectDORegistry(
       "<token>",
       {
         name: registryName,
-        do_integration_id: snap.config.credentials.id,
+        do_integration_id: snap.StateHandler.connected_registry.credentials.id,
         url: registryUrl,
       },
       { project_id: project.id }

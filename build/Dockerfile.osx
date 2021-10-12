@@ -1,17 +1,14 @@
-ARG GO_VERSION=1.13.15
+ARG GO_VERSION=1.16
 
-FROM dockercore/golang-cross:${GO_VERSION}
+FROM golang:${GO_VERSION}
 
 RUN apt-get update && apt-get install -y zip unzip
 
 WORKDIR /go/src/github.com/docker/cli
 COPY    . .
 
-ENV CGO_ENABLED 1
 ENV GOOS darwin
 ENV GOARCH amd64
-ENV CC o64-clang
-ENV CXX o64-clang++
 
 RUN chmod +x ./scripts/build/osx.sh
 

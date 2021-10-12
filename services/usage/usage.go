@@ -126,6 +126,13 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 				}
 			}
 
+			exceededSince := cache.ExceededSince
+
+			if exceededSince == nil {
+				now := time.Now()
+				exceededSince = &now
+			}
+
 			res[project.ID] = &UsageTrackerResponse{
 				CPUUsage:      cache.ResourceCPU,
 				CPULimit:      limit.ResourceCPU,
@@ -136,7 +143,7 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 				ClusterUsage:  current.Clusters,
 				ClusterLimit:  limit.Clusters,
 				Exceeded:      cache.Exceeded,
-				ExceededSince: *cache.ExceededSince,
+				ExceededSince: *exceededSince,
 				Project:       *project,
 				AdminEmails:   adminEmails,
 			}

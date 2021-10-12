@@ -61,9 +61,9 @@ func GetUsage(opts *GetUsageOpts) (
 		return nil, nil, nil, err
 	}
 
-	// if the usage cache is 24 hours old, was not found, or usage is over limit,
+	// if the usage cache is 1 hour old, was not found, or usage is over limit,
 	// re-query for the usage
-	if !isCacheFound || usageCache.Is24HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
+	if !isCacheFound || usageCache.Is1HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
 		cpu, memory, err := getResourceUsage(opts, clusters)
 
 		if err != nil {

@@ -69,6 +69,19 @@ export type GCPProvisionerConfig = {
   };
 };
 
+export type DOProvisionerConfig = {
+  skip: false;
+  provider: "do";
+  credentials: {
+    id: number;
+  };
+  settings: {
+    region: string;
+    cluster_name: string;
+    tier: string;
+  };
+};
+
 export type SkipProvisionConfig = {
   skip: true;
 };

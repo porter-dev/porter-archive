@@ -4,34 +4,40 @@ import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
+import { devtools } from "valtio/utils";
 import Routes from "./Routes";
 import { OFState } from "./state";
+import { useSteps } from "./state/StepHandler";
 
 const Onboarding = () => {
-  const context = useContext(Context);
-  const location = useLocation();
-  const { pushFiltered } = useRouting();
-  const snap = useSnapshot(OFState);
+  useSteps();
 
   useEffect(() => {
-    OFState.actions.initializeState(context.currentProject?.id);
+    let sub = devtools(OFState, "Onboarding flow state");
     return () => {
-      OFState.actions.clearState();
+      sub();
     };
-  }, [context.currentProject?.id]);
+  }, []);
 
-  useEffect(() => {
-    if (snap.StepHandler.finishedOnboarding) {
-      OFState.actions.clearState();
-      pushFiltered("/dashboard", []);
-    } else if (snap.StepHandler?.currentStep?.url !== location.pathname) {
-      pushFiltered(snap.StepHandler.currentStep.url, []);
-    }
-  }, [
-    location.pathname,
-    snap.StepHandler?.currentStep?.url,
-    snap.StepHandler?.finishedOnboarding,
-  ]);
+  // useEffect(() => {
+  //   OFState.actions.initializeState(context.currentProject?.id);
+  //   return () => {
+  //     OFState.actions.clearState();
+  //   };
+  // }, [context.currentProject?.id]);
+
+  // useEffect(() => {
+  //   if (snap.StepHandler.finishedOnboarding) {
+  //     OFState.actions.clearState();
+  //     pushFiltered("/dashboard", []);
+  //   } else if (snap.StepHandler?.currentStep?.url !== location.pathname) {
+  //     pushFiltered(snap.StepHandler.currentStep.url, []);
+  //   }
+  // }, [
+  //   location.pathname,
+  //   snap.StepHandler?.currentStep?.url,
+  //   snap.StepHandler?.finishedOnboarding,
+  // ]);
 
   return (
     <StyledOnboarding>

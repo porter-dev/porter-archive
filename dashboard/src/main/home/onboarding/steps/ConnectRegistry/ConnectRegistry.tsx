@@ -1,72 +1,68 @@
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router";
-import { useRouting } from "shared/routing";
+import React, { useState } from "react";
+import { useParams } from "react-router";
+
 import styled from "styled-components";
-import { useSnapshot } from "valtio";
 import ProviderSelector from "../../components/ProviderSelector";
-import { OFState } from "../../state";
 import { SupportedProviders } from "../../types";
 
-import { State } from "./ConnectRegistryState";
 import FormFlowWrapper from "./forms/FormFlow";
 
-const ConnectRegistry = () => {
-  const snap = useSnapshot(State);
-  const { getQueryParam } = useRouting();
-  const location = useLocation();
-  const [selectedProvider, setSelectedProvider] = useState<
-    SupportedProviders | ""
-  >("");
-
-  useEffect(() => {
-    const provider = getQueryParam("provider");
-    if (provider === "aws" || provider === "gcp" || provider === "do") {
-      State.selectedProvider = provider;
-    }
-  }, [location]);
-
-  const nextStep = (skipped: boolean) => {
-    if (skipped) {
-      OFState.actions.nextStep({
-        skip: true,
-      });
-      return;
-    }
-    OFState.actions.nextStep({
-      skip: false,
-      provider: selectedProvider,
-      credentials: snap.config.credentials,
-      settings: snap.config.settings,
-    });
+const ConnectRegistry: React.FC<{
+  provider: SupportedProviders;
+  project: {
+    id: number;
+    name: string;
   };
+  onSelectProvider: (provider: SupportedProviders) => void;
+  onSaveCredentials: (credentials: any) => void;
+  onSaveSettings: (settings: any) => void;
+  onSuccess: () => void;
+  onSkip: () => void;
+}> = ({
+  onSelectProvider,
+  onSaveCredentials,
+  onSaveSettings,
+  onSuccess,
+  onSkip,
+  project,
+  provider,
+}) => {
+  const { step } = useParams<any>();
 
   return (
     <>
       <TitleSection>Getting Started</TitleSection>
       <Subtitle>Step 2 of 3</Subtitle>
       <Helper>
-        {snap.selectedProvider
+        {provider
           ? "Link to an existing Docker registry. Don't worry if you don't know what this is"
           : "Link to an existing docker registry or continue"}
       </Helper>
-      {snap.selectedProvider ? (
-        <FormFlowWrapper nextStep={() => nextStep(false)} />
+      {provider ? (
+        <FormFlowWrapper
+          provider={provider}
+          onSaveCredentials={onSaveCredentials}
+          onSaveSettings={onSaveSettings}
+          onSuccess={onSuccess}
+          project={project}
+          currentStep={step}
+        />
       ) : (
         <>
           <ProviderSelector
             selectProvider={(provider) => {
               if (provider !== "external") {
-                State.selectedProvider = provider;
+                onSelectProvider(provider);
               }
             }}
           />
           <NextStep
             text="Skip step"
             disabled={false}
-            onClick={() => nextStep(true)}
+            onClick={() => onSkip()}
             status={""}
             makeFlush={true}
             clearPosition={true}

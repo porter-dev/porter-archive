@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import gradient from "assets/gradient.png";
@@ -7,35 +7,26 @@ import { isAlphanumeric } from "shared/common";
 import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
-import { useSnapshot } from "valtio";
 import { useRouting } from "shared/routing";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import SaveButton from "components/SaveButton";
 
 import backArrow from "assets/back_arrow.png";
-import { OFState } from "../state";
 
 type ValidationError = {
   hasError: boolean;
   description?: string;
 };
 
-export const NewProjectFC = () => {
-  const snap = useSnapshot(OFState);
+export const NewProjectFC: React.FC<{
+  onSuccess: (projectData: { id: number; name: string }) => void;
+}> = ({ onSuccess }) => {
   const { user, setProjects, setCurrentProject } = useContext(Context);
   const { pushFiltered } = useRouting();
   const [buttonStatus, setButtonStatus] = useState("");
   const [name, setName] = useState("");
   const { projects } = useContext(Context);
-
-  // useEffect(() => {
-  //   if (snap.userId !== null) {
-  //     window.analytics.track("provision_new-project", {
-  //       userId: snap.userId,
-  //     });
-  //   }
-  // }, [snap.userId]);
 
   const isFirstProject = useMemo(() => {
     return !(projects?.length >= 1);
@@ -95,7 +86,7 @@ export const NewProjectFC = () => {
       setProjects(projectList);
       setCurrentProject(project);
 
-      OFState.actions.nextStep({
+      onSuccess({
         id: project.id,
         name: project.name,
       });

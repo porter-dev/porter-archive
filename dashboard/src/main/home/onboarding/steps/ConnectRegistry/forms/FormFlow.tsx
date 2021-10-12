@@ -1,10 +1,10 @@
 import { ConnectedRegistryConfig } from "main/home/onboarding/state/StateHandler";
-import { SkipRegistryConnection } from "main/home/onboarding/types";
-import React, { useContext, useMemo } from "react";
-import { Context } from "shared/Context";
+import {
+  SkipRegistryConnection,
+  SupportedProviders,
+} from "main/home/onboarding/types";
+import React, { useMemo } from "react";
 import styled from "styled-components";
-import { useSnapshot } from "valtio";
-import { State } from "../ConnectRegistryState";
 import {
   CredentialsForm as AWSCredentialsForm,
   SettingsForm as AWSSettingsForm,
@@ -48,55 +48,60 @@ const FormTitle = {
 };
 
 type Props = {
-  nextStep: () => void;
+  provider: SupportedProviders;
+  onSaveCredentials: (credentials: any) => void;
+  onSaveSettings: (settings: any) => void;
+  onSuccess: () => void;
+  project: { id: number; name: string };
+  currentStep: "credentials" | "settings" | "test_connection";
 };
 
-const FormFlowWrapper: React.FC<Props> = ({ nextStep }) => {
-  const snap = useSnapshot(State);
-  const { currentProject } = useContext(Context);
-
+const FormFlowWrapper: React.FC<Props> = ({
+  onSaveCredentials,
+  onSaveSettings,
+  onSuccess,
+  provider,
+  project,
+  currentStep,
+}) => {
   const nextFormStep = (
     data?: Partial<Exclude<ConnectedRegistryConfig, SkipRegistryConnection>>
   ) => {
-    if (snap.currentStep === "credentials") {
-      State.config.credentials = data.credentials;
-      State.currentStep = "settings";
-    } else if (snap.currentStep === "settings") {
-      State.config.settings = data.settings;
-      State.currentStep = "test_connection";
-    } else if (snap.currentStep === "test_connection") {
-      nextStep();
+    if (currentStep === "credentials") {
+      onSaveCredentials(data.credentials);
+    } else if (currentStep === "settings") {
+      onSaveSettings(data.settings);
+    } else if (currentStep === "test_connection") {
+      onSuccess();
     }
   };
 
   const CurrentForm = useMemo(() => {
-    const providerSteps = Forms[snap.selectedProvider];
+    const providerSteps = Forms[provider];
     if (!providerSteps) {
       return null;
     }
 
-    const currentForm = providerSteps[snap.currentStep];
+    const currentForm = providerSteps[currentStep];
     if (!currentForm) {
       return null;
     }
 
     return React.createElement(currentForm as any, {
       nextFormStep,
-      project: currentProject,
+      project,
     });
-  }, [snap.currentStep, snap.selectedProvider]);
+  }, [provider, currentStep]);
 
   return (
     <>
-      {FormTitle[snap.selectedProvider]}
+      {FormTitle[provider]}
       <Breadcrumb>
-        <Text bold={snap.currentStep === "credentials"}>Credentials</Text>
+        <Text bold={currentStep === "credentials"}>Credentials</Text>
         {" > "}
-        <Text bold={snap.currentStep === "settings"}>Settings</Text>
+        <Text bold={currentStep === "settings"}>Settings</Text>
         {" > "}
-        <Text bold={snap.currentStep === "test_connection"}>
-          Test Connection
-        </Text>
+        <Text bold={currentStep === "test_connection"}>Test Connection</Text>
       </Breadcrumb>
       {CurrentForm}
     </>

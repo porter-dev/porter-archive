@@ -58,7 +58,9 @@ const ConnectRegistry = () => {
         <>
           <ProviderSelector
             selectProvider={(provider) => {
-              State.selectedProvider = provider;
+              if (provider !== "external") {
+                State.selectedProvider = provider;
+              }
             }}
           />
           <NextStep

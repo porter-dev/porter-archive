@@ -2,11 +2,13 @@ import { proxy } from "valtio";
 import { ProvisionerConfig } from "../../state/StateHandler";
 import { SkipProvisionConfig, SupportedProviders } from "../../types";
 
-type AllowedSteps = "credentials" | "settings" | "status" | null;
+type AllowedSteps = "credentials" | "settings" | null;
 
 interface ConnectRegistryState {
-  selectedProvider: SupportedProviders | null;
+  selectedProvider: SupportedProviders | "external" | null;
+  shouldProvisionRegistry: boolean;
   currentStep: AllowedSteps;
+
   config: Partial<Exclude<ProvisionerConfig, SkipProvisionConfig>> | null;
   actions: {
     selectProvider: (provider: SupportedProviders) => void;
@@ -17,6 +19,7 @@ interface ConnectRegistryState {
 
 const initialState: ConnectRegistryState = {
   selectedProvider: null,
+  shouldProvisionRegistry: false,
   currentStep: "credentials",
   config: null,
   actions: {

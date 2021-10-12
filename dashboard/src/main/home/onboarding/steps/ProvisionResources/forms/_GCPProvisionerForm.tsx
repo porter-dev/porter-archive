@@ -170,7 +170,9 @@ export const SettingsForm: React.FC<{
 
     setButtonStatus("loading");
 
-    await provisionGCR(integrationId);
+    if (snap.shouldProvisionRegistry) {
+      await provisionGCR(integrationId);
+    }
     await provisionGKE(integrationId);
     nextFormStep({
       settings: {
@@ -234,6 +236,9 @@ export const SettingsForm: React.FC<{
   );
 };
 
+/**
+ * @todo Need to implement provisioner status here
+ */
 export const Status: React.FC<{
   nextFormStep: () => void;
   project: any;

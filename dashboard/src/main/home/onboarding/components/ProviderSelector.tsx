@@ -4,13 +4,17 @@ import styled from "styled-components";
 import { SupportedProviders } from "../types";
 
 export type ProviderSelectorProps = {
-  selectProvider: (provider: SupportedProviders) => void;
+  selectProvider: (
+    provider: SupportedProviders | (SupportedProviders | "external")
+  ) => void;
+  enableExternal?: boolean;
 };
 
 const providers: SupportedProviders[] = ["aws", "gcp", "do"];
 
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selectProvider,
+  enableExternal,
 }) => {
   return (
     <>
@@ -36,6 +40,26 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
             </Block>
           );
         })}
+        {enableExternal && (
+          <Block
+            key={"external"}
+            onClick={() => {
+              selectProvider("external");
+            }}
+          >
+            <Icon src={""} />
+            <BlockTitle>External Cluster</BlockTitle>
+            <CostSection
+              onClick={(e) => {
+                e.stopPropagation();
+                selectProvider("external");
+              }}
+            ></CostSection>
+            <BlockDescription>
+              Connect your own cluster via CLI.
+            </BlockDescription>
+          </Block>
+        )}
       </BlockList>
     </>
   );

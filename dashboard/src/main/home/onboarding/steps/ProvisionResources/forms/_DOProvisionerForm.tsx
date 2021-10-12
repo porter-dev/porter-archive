@@ -2,8 +2,8 @@ import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
-import { DORegistryConfig } from "main/home/onboarding/types";
-import React, { useContext, useEffect, useState } from "react";
+import { DOProvisionerConfig } from "main/home/onboarding/types";
+import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
@@ -28,7 +28,7 @@ const regionOptions = [
 ];
 
 /**
- * This will redirect to DO, and we should pass the redirection URI to be /onboarding/registry?provider=do
+ * This will redirect to DO, and we should pass the redirection URI to be /onboarding/provision?provider=do
  *
  * After the oauth flow comes back, the first render will go and check if it exists a integration_id for DO in the
  * current onboarding project, after getting it, the CredentialsForm will use nextFormStep to save the onboarding state.
@@ -36,7 +36,7 @@ const regionOptions = [
  * If it happens to be an error, it will be shown with the default error handling through the modal.
  */
 export const CredentialsForm: React.FC<{
-  nextFormStep: (data: Partial<DORegistryConfig>) => void;
+  nextFormStep: (data: Partial<DOProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
   useEffect(() => {
@@ -67,53 +67,120 @@ export const CredentialsForm: React.FC<{
 };
 
 export const SettingsForm: React.FC<{
-  nextFormStep: (data: Partial<DORegistryConfig>) => void;
+  nextFormStep: (data: Partial<DOProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  const [registryUrl, setRegistryUrl] = useState("basic");
-  const [registryName, setRegistryName] = useState("");
-  const [buttonStatus] = useState("");
   const snap = useSnapshot(State);
+  const [buttonStatus, setButtonStatus] = useState("");
+  const [tier, setTier] = useState("basic");
+  const [region, setRegion] = useState("nyc1");
+  const [clusterName, setClusterName] = useState("");
 
-  const submit = async () => {
-    await api.connectDORegistry(
+  const validate = () => {
+    if (!clusterName) {
+      return {
+        hasError: true,
+        error: "Cluster name cannot be empty",
+      };
+    }
+    if (clusterName.length > 25) {
+      return {
+        hasError: true,
+        error: "Cluster name cannot be longer than 25 characters",
+      };
+    }
+    return {
+      hasError: false,
+      error: "",
+    };
+  };
+
+  const provisionDOCR = async (integrationId: number, tier: string) => {
+    console.log("Provisioning DOCR...");
+    await api.createDOCR(
       "<token>",
       {
-        name: registryName,
-        do_integration_id: snap.config.credentials.id,
-        url: registryUrl,
+        do_integration_id: integrationId,
+        docr_name: project.name,
+        docr_subscription_tier: tier,
       },
-      { project_id: project.id }
+      {
+        project_id: project.id,
+      }
     );
+  };
+
+  const provisionDOKS = async (
+    integrationId: number,
+    region: string,
+    clusterName: string
+  ) => {
+    console.log("Provisioning DOKS...");
+    await api.createDOKS(
+      "<token>",
+      {
+        do_integration_id: integrationId,
+        doks_name: clusterName,
+        do_region: region,
+      },
+      {
+        project_id: project.id,
+      }
+    );
+  };
+
+  const submit = async () => {
+    const validation = validate();
+
+    if (validation.hasError) {
+      setButtonStatus(validation.error);
+      return;
+    }
+    const integrationId = snap.config.credentials.id;
+
+    if (snap.shouldProvisionRegistry) {
+      await provisionDOCR(integrationId, tier);
+    }
+    await provisionDOKS(integrationId, region, clusterName);
+
     nextFormStep({
       settings: {
-        registry_url: registryUrl,
+        region,
+        tier,
+        cluster_name: clusterName,
       },
     });
   };
 
   return (
     <>
-      <InputRow
-        type="text"
-        value={registryName}
-        setValue={(registryName: string) => setRegistryName(registryName)}
-        isRequired={true}
-        label="🏷️ Registry Name"
-        placeholder="ex: paper-straw"
+      <SelectRow
+        options={tierOptions}
         width="100%"
+        value={tier}
+        setActiveValue={(x: string) => {
+          setTier(x);
+        }}
+        label="💰 Subscription Tier"
       />
-      <Helper>
-        DOC R URI, in the form{" "}
-        <CodeBlock>registry.digitalocean.com/[REGISTRY_NAME]</CodeBlock>. For
-        example, <CodeBlock>registry.digitalocean.com/porter-test</CodeBlock>.
-      </Helper>
+      <SelectRow
+        options={regionOptions}
+        width="100%"
+        dropdownMaxHeight="240px"
+        value={region}
+        setActiveValue={(x: string) => {
+          setRegion(x);
+        }}
+        label="📍 DigitalOcean Region"
+      />
       <InputRow
         type="text"
-        value={registryUrl}
-        setValue={(url: string) => setRegistryUrl(url)}
-        label="🔗 GCR URL"
-        placeholder="ex: registry.digitalocean.com/porter-test"
+        value={clusterName}
+        setValue={(x: string) => {
+          setClusterName(x);
+        }}
+        label="Cluster Name"
+        placeholder="ex: porter-cluster"
         width="100%"
         isRequired={true}
       />
@@ -130,6 +197,9 @@ export const SettingsForm: React.FC<{
   );
 };
 
+/**
+ * @todo Need to implement provisioner status here
+ */
 export const Status: React.FC<{
   nextFormStep: () => void;
   project: any;

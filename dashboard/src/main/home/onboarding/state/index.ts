@@ -21,7 +21,6 @@ export const OFState = proxy({
       OFState.actions.saveState();
     },
     clearState: () => {
-      console.log("CLEARED STATE");
       StateHandler.actions.clearState();
       StepHandler.actions.clearState();
       ConnectRegistryState.actions.clearState();

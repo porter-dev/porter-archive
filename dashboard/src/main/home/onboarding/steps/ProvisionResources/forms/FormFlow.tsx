@@ -27,17 +27,17 @@ const Forms = {
   aws: {
     credentials: AWSCredentialsForm,
     settings: AWSSettingsForm,
-    status: AWSProvisionerStatus,
+    // status: AWSProvisionerStatus,
   },
   gcp: {
     credentials: GCPCredentialsForm,
     settings: GCPSettingsForm,
-    status: GCPProvisionerStatus,
+    // status: GCPProvisionerStatus,
   },
   do: {
     credentials: DOCredentialsForm,
     settings: DOSettingsForm,
-    status: DOProvisionerStatus,
+    // status: DOProvisionerStatus,
   },
 };
 
@@ -63,38 +63,36 @@ const FormFlowWrapper: React.FC<Props> = ({ nextStep }) => {
       State.currentStep = "settings";
     } else if (snap.currentStep === "settings") {
       State.config.settings = data.settings;
-      State.currentStep = "status";
-    } else if (snap.currentStep === "status") {
       nextStep();
     }
   };
 
   const CurrentForm = useMemo(() => {
-    const providerSteps = Forms[snap.selectedProvider];
-    if (!providerSteps) {
-      return null;
-    }
+    if (snap.selectedProvider !== "external") {
+      const providerSteps = Forms[snap.selectedProvider];
+      if (!providerSteps) {
+        return null;
+      }
 
-    const currentForm = providerSteps[snap.currentStep];
-    if (!currentForm) {
-      return null;
-    }
+      const currentForm = providerSteps[snap.currentStep];
+      if (!currentForm) {
+        return null;
+      }
 
-    return React.createElement(currentForm as any, {
-      nextFormStep,
-      project: currentProject,
-    });
+      return React.createElement(currentForm as any, {
+        nextFormStep,
+        project: currentProject,
+      });
+    }
   }, [snap.currentStep, snap.selectedProvider]);
 
   return (
     <>
-      {FormTitle[snap.selectedProvider]}
+      {snap.selectedProvider !== "external" && FormTitle[snap.selectedProvider]}
       <Breadcrumb>
         <Text bold={snap.currentStep === "credentials"}>Credentials</Text>
         {" > "}
         <Text bold={snap.currentStep === "settings"}>Settings</Text>
-        {" > "}
-        <Text bold={snap.currentStep === "status"}>Status</Text>
       </Breadcrumb>
       {CurrentForm}
     </>

@@ -209,6 +209,12 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+    const integrationId = `${snap.config.credentials.id}`;
+
+    if (snap.shouldProvisionRegistry) {
+      await provisionECR(integrationId);
+    }
+    await provisionEKS(integrationId);
 
     nextFormStep({
       settings: {
@@ -253,6 +259,9 @@ export const SettingsForm: React.FC<{
   );
 };
 
+/**
+ * @todo Need to implement provisioner status here
+ */
 export const Status: React.FC<{ nextFormStep: () => void }> = ({
   nextFormStep,
 }) => {

@@ -8,13 +8,14 @@ import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import ProviderSelector from "../../components/ProviderSelector";
 import { OFState } from "../../state";
-import { SupportedProviders } from "../../types";
 
 import { State } from "./ProvisionResourcesState";
 import FormFlowWrapper from "./forms/FormFlow";
+import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 
 const ProvisionResources = () => {
   const snap = useSnapshot(State);
+  const globalFormSnap = useSnapshot(OFState);
   const { getQueryParam } = useRouting();
   const location = useLocation();
 
@@ -24,6 +25,11 @@ const ProvisionResources = () => {
       State.selectedProvider = provider;
     }
   }, [location]);
+
+  useEffect(() => {
+    const connectedRegistry = globalFormSnap.StateHandler.connected_registry;
+    State.shouldProvisionRegistry = !!connectedRegistry?.skip;
+  }, [globalFormSnap.StateHandler.connected_registry]);
 
   const nextStep = (skipped: boolean) => {
     if (skipped) {
@@ -49,23 +55,21 @@ const ProvisionResources = () => {
         applications.
       </Helper>
       {snap.selectedProvider ? (
-        <FormFlowWrapper nextStep={() => nextStep(false)} />
+        snap.selectedProvider !== "external" ? (
+          <FormFlowWrapper nextStep={() => nextStep(false)} />
+        ) : (
+          <ConnectExternalCluster
+            nextStep={() => nextStep(true)}
+            project={globalFormSnap.StateHandler.project}
+          />
+        )
       ) : (
         <>
           <ProviderSelector
             selectProvider={(provider) => {
               State.selectedProvider = provider;
             }}
-          />
-          <NextStep
-            text="Skip step"
-            disabled={false}
-            onClick={() => nextStep(true)}
-            status={""}
-            makeFlush={true}
-            clearPosition={true}
-            statusPosition="right"
-            saveText=""
+            enableExternal={true}
           />
         </>
       )}

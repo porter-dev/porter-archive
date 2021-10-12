@@ -136,6 +136,7 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 
 		if err != nil {
+			fmt.Printf("failed to get agent: %s\n", err.Error())
 			continue
 			// return 0, 0, fmt.Errorf("failed to get agent: %s", err.Error())
 		}
@@ -143,6 +144,7 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 		totAlloc, err := nodes.GetAllocatableResources(agent.Clientset)
 
 		if err != nil {
+			fmt.Printf("failed to get alloc: %s\n", err.Error())
 			continue
 			// return 0, 0, fmt.Errorf("failed to get alloc: %s", err.Error())
 		}

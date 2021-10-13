@@ -69,3 +69,29 @@ type GetBillingTokenResponse struct {
 type GetProjectBillingResponse struct {
 	HasBilling bool `json:"has_billing"`
 }
+
+type StepEnum string
+
+const (
+	StepGithub StepEnum = "github"
+	StepTwo    StepEnum = "step_two"
+)
+
+type ConnectedSourceType string
+
+const (
+	ConnectedSourceTypeGithub = "github"
+	ConnectedSourceTypeDocker = "docker"
+)
+
+type OnboardingData struct {
+	CurrentStep            StepEnum            `json:"current_step"`
+	ConnectedSource        ConnectedSourceType `json:"connected_source"`
+	SkipRegistryConnection bool                `json:"skip_registry_connection"`
+	SkipResourceProvision  bool                `json:"skip_resource_provision"`
+	RegistryConnectionID   uint                `json:"registry_connection_id"`
+	RegistryInfraID        uint                `json:"registry_infra_id"`
+	ClusterInfraID         uint                `json:"cluster_infra_id"`
+}
+
+type UpdateOnboardingRequest OnboardingData

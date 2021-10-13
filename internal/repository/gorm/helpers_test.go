@@ -64,6 +64,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.Infra{},
 		&models.GitActionConfig{},
 		&models.Invite{},
+		&models.Onboarding{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

@@ -28,7 +28,7 @@ func (repo *ReleaseRepository) CreateRelease(release *models.Release) (*models.R
 // ReadRelease finds a single release based on their unique name and namespace pair.
 func (repo *ReleaseRepository) ReadRelease(clusterID uint, name, namespace string) (*models.Release, error) {
 	release := &models.Release{}
-	if err := repo.db.Preload("GitActionConfig").Where("cluster_id = ?", clusterID).Where("name = ?", name).Where("namespace = ?", namespace).First(&release).Error; err != nil {
+	if err := repo.db.Preload("GitActionConfig").Order("id desc").Where("cluster_id = ? AND name = ? AND namespace = ?", clusterID, name, namespace).First(&release).Error; err != nil {
 		return nil, err
 	}
 	return release, nil

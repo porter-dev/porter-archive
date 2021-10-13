@@ -1,4 +1,5 @@
 import { stackFramesToString } from "./stack_trace_utils";
+import StackTrace from "stacktrace-js";
 import * as Sentry from "@sentry/react";
 
 export function EnableErrorHandling() {

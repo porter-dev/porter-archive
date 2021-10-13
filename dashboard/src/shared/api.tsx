@@ -1071,6 +1071,16 @@ const getHasBilling = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/billing`
 );
 
+const getOnboardingState = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/onboarding`
+);
+
+const saveOnboardingState = baseApi<{}, { project_id: number }>(
+  "POST",
+  ({ project_id }) => `/api/projects/${project_id}/onboarding`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1180,4 +1190,6 @@ export default {
   getUsage,
   getCustomerToken,
   getHasBilling,
+  getOnboardingState,
+  saveOnboardingState,
 };

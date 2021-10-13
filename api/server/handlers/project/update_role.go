@@ -57,4 +57,12 @@ func (p *RoleUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.WriteResult(w, r, res)
+
+	err = p.Config().BillingManager.UpdateUserInTeam(role)
+
+	if err != nil {
+		// we do not write error response, since setting up billing error can be
+		// resolved later and may not be fatal
+		p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+	}
 }

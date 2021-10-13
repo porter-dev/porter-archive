@@ -9,8 +9,11 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
+import { getQueryParam } from "shared/routing";
+import BillingPage from "./BillingPage";
 
-type PropsType = WithAuthProps & {};
+type PropsType = RouteComponentProps & WithAuthProps & {};
 
 type StateType = {
   projectName: string;
@@ -25,12 +28,50 @@ class ProjectSettings extends Component<PropsType, StateType> {
     tabOptions: [] as { value: string; label: string }[],
   };
 
+  componentDidUpdate(prevProps: PropsType) {
+    const selectedTab = getQueryParam(this.props, "selected_tab");
+    if (prevProps.location.search !== this.props.location.search) {
+      if (selectedTab) {
+        this.setState({ currentTab: selectedTab });
+      } else {
+        this.setState({ currentTab: "manage-access" });
+      }
+    }
+    if (
+      this.context?.hasBillingEnabled &&
+      !this.state.tabOptions.find((t) => t.value === "billing")
+    ) {
+      const tabOptions = this.state.tabOptions;
+      tabOptions.splice(1, 0, { value: "billing", label: "Billing" });
+      this.setState({ tabOptions });
+      return;
+    }
+
+    if (
+      !this.context?.hasBillingEnabled &&
+      this.state.tabOptions.find((t) => t.value === "billing")
+    ) {
+      const tabOptions = this.state.tabOptions;
+      const billingIndex = this.state.tabOptions.findIndex(
+        (t) => t.value === "billing"
+      );
+      tabOptions.splice(billingIndex, 1);
+    }
+  }
+
   componentDidMount() {
     let { currentProject } = this.context;
     this.setState({ projectName: currentProject.name });
     const tabOptions = [];
     tabOptions.push({ value: "manage-access", label: "Manage Access" });
+
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
+      if (this.context?.hasBillingEnabled) {
+        tabOptions.push({
+          value: "billing",
+          label: "Billing",
+        });
+      }
       tabOptions.push({
         value: "additional-settings",
         label: "Additional Settings",
@@ -38,11 +79,23 @@ class ProjectSettings extends Component<PropsType, StateType> {
     }
 
     this.setState({ tabOptions });
+
+    const selectedTab = getQueryParam(this.props, "selected_tab");
+    if (selectedTab) {
+      this.setState({ currentTab: selectedTab });
+    }
   }
 
   renderTabContents = () => {
     if (!this.props.isAuthorized("settings", "", ["get", "delete"])) {
       return <InvitePage />;
+    }
+
+    if (
+      this.state.currentTab === "billing" &&
+      this.context?.hasBillingEnabled
+    ) {
+      return <BillingPage />;
     }
 
     if (this.state.currentTab === "manage-access") {
@@ -107,7 +160,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
 ProjectSettings.contextType = Context;
 
-export default withAuth(ProjectSettings);
+export default withRouter(withAuth(ProjectSettings));
 
 const Warning = styled.div`
   font-size: 13px;

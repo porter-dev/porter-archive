@@ -10,6 +10,34 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type TotalAllocatable struct {
+	CPU    uint
+	Memory uint
+}
+
+func GetAllocatableResources(clientset kubernetes.Interface) (*TotalAllocatable, error) {
+	nodeList, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var totCPU uint64 = 0
+	var totMem uint64 = 0
+
+	for _, node := range nodeList.Items {
+		capac := node.Status.Allocatable
+
+		totCPU += uint64(capac.Cpu().MilliValue())
+		totMem += capac.Memory().AsDec().UnscaledBig().Uint64()
+	}
+
+	return &TotalAllocatable{
+		CPU:    uint(totCPU),
+		Memory: uint(totMem),
+	}, nil
+}
+
 type NodeUsage struct {
 	cpuReqs                        string
 	memoryReqs                     string

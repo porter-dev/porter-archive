@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@ironplans/react": "^0.4.0",
     "@material-ui/core": "^4.11.3",
     "@sentry/react": "^6.13.2",
     "@sentry/tracing": "^6.13.2",

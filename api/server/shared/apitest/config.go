@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/config/loader"
+	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository/test"
 )
@@ -26,7 +27,7 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 	l := logger.New(true, os.Stdout)
 	repo := test.NewRepository(t.canQuery, t.failingRepoMethods...)
 
-	envConf, err := loader.FromEnv()
+	envConf, err := envloader.FromEnv()
 
 	if err != nil {
 		return nil, err
@@ -57,6 +58,7 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 		TokenConf:       tokenConf,
 		UserNotifier:    notifier,
 		AnalyticsClient: analytics.InitializeAnalyticsSegmentClient("", l),
+		BillingManager:  &billing.NoopBillingManager{},
 	}, nil
 }
 

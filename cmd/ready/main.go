@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/porter-dev/porter/api/server/shared/config/loader"
+	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	lr "github.com/porter-dev/porter/internal/logger"
 )
 
 func main() {
 	logger := lr.NewConsole(true)
 
-	envConf, err := loader.FromEnv()
+	envConf, err := envloader.FromEnv()
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")

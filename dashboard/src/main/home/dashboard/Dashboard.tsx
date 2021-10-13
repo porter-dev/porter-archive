@@ -106,15 +106,24 @@ class Dashboard extends Component<PropsType, StateType> {
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
       return <Provisioner setRefreshClusters={this.props.setRefreshClusters} />;
-    } else if (
-      this.currentTab() === "create-cluster" &&
-      this.context.usage.current.clusters < this.context.usage.limit.clusters
-    ) {
+    } else if (this.currentTab() === "create-cluster") {
+      let helperText = "Create a cluster to link to this project";
+      let helperIcon = "info";
+      let helperColor = "white";
+      if (
+        this.context.hasBillingEnabled &&
+        this.context.usage.current.clusters >= this.context.usage.limit.clusters
+      ) {
+        helperText =
+          "You need to update your billing to provision or connect a new cluster";
+        helperIcon = "warning";
+        helperColor = "#f5cb42";
+      }
       return (
         <>
-          <Banner>
-            <i className="material-icons">info</i>
-            Create a cluster to link to this project.
+          <Banner color={helperColor}>
+            <i className="material-icons">{helperIcon}</i>
+            {helperText}
           </Banner>
           <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
@@ -135,12 +144,7 @@ class Dashboard extends Component<PropsType, StateType> {
     let tabOptions = [{ label: "Project Overview", value: "overview" }];
 
     if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
-      if (
-        this.context?.usage?.current?.clusters <
-        this.context?.usage?.limit?.clusters
-      ) {
-        tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
-      }
+      tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
     }
 
     tabOptions.push({ label: "Provisioner Status", value: "provisioner" });
@@ -220,7 +224,7 @@ const DashboardWrapper = styled.div`
   padding-bottom: 100px;
 `;
 
-const Banner = styled.div`
+const Banner = styled.div<{ color: string }>`
   height: 40px;
   width: 100%;
   margin: 5px 0 30px;
@@ -230,6 +234,7 @@ const Banner = styled.div`
   padding-left: 15px;
   align-items: center;
   background: #ffffff11;
+  color: ${(props) => props.color};
   > i {
     margin-right: 10px;
     font-size: 18px;

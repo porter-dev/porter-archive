@@ -31,7 +31,7 @@ func (a *Agent) Build(opts *docker.BuildOpts) error {
 	buildOpts := pack.BuildOptions{
 		RelativeBaseDir: filepath.Dir(absPath),
 		Image:           fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
-		Builder:         "heroku/buildpacks:18",
+		Builder:         "paketobuildpacks/builder:full",
 		AppPath:         opts.BuildContext,
 		TrustBuilder:    true,
 		Env:             opts.Env,

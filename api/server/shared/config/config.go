@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -83,7 +84,13 @@ type Config struct {
 	// AnalyticsClient if Segment analytics reporting is enabled on the API instance
 	AnalyticsClient analytics.AnalyticsSegmentClient
 
-	// PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
+	// BillingManager manages billing for Porter instances with billing enabled
+	BillingManager billing.BillingManager
+
+	// WhitelistedUsers do not count toward usage limits
+	WhitelistedUsers map[uint]uint
+
+  // PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
 	PowerDNSClient *powerdns.Client
 }
 

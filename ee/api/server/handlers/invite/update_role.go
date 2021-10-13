@@ -1,3 +1,5 @@
+// +build ee
+
 package invite
 
 import (
@@ -18,7 +20,7 @@ type InviteUpdateRoleHandler struct {
 func NewInviteUpdateRoleHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
-) *InviteUpdateRoleHandler {
+) http.Handler {
 	return &InviteUpdateRoleHandler{
 		PorterHandlerReader: handlers.NewDefaultPorterHandler(config, decoderValidator, nil),
 	}

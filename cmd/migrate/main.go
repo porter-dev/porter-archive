@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/porter-dev/porter/api/server/shared/config/loader"
+	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
@@ -17,7 +17,7 @@ func main() {
 	logger := lr.NewConsole(true)
 	logger.Info().Msg("running migrations")
 
-	envConf, err := loader.FromEnv()
+	envConf, err := envloader.FromEnv()
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not load env conf")

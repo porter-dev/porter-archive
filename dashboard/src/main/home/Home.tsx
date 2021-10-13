@@ -32,6 +32,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 import AccountSettingsModal from "./modals/AccountSettingsModal";
 import discordLogo from "../../assets/discord.svg";
+import UsageWarningModal from "./modals/UsageWarningModal";
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",
@@ -292,11 +293,40 @@ class Home extends Component<PropsType, StateType> {
     this.getMetadata();
   }
 
+  async checkIfProjectHasBilling(projectId: number) {
+    const res = await api.getHasBilling(
+      "<token>",
+      {},
+      { project_id: projectId }
+    );
+    this.context.setHasBillingEnabled(res.data?.has_billing);
+  }
+
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
   // 1. Make sure clicking cluster in drawer shows cluster-dashboard
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
+    if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
+      this.checkIfProjectHasBilling(this?.context?.currentProject?.id);
+      api
+        .getUsage(
+          "<token>",
+          {},
+          { project_id: this.context?.currentProject?.id }
+        )
+        .then((res) => {
+          const usage = res.data;
+          this.context.setUsage(usage);
+          if (usage.exceeded) {
+            this.context.setCurrentModal("UsageWarningModal", {
+              usage,
+            });
+          }
+        })
+        .catch(console.log);
+    }
+
     if (
       prevProps.currentProject !== this.props.currentProject ||
       (!prevProps.currentCluster && this.props.currentCluster)
@@ -479,6 +509,7 @@ class Home extends Component<PropsType, StateType> {
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
             height="650px"
+            title="Connecting to an Existing Cluster"
           >
             <ClusterInstructionsModal />
           </Modal>
@@ -491,6 +522,7 @@ class Home extends Component<PropsType, StateType> {
               onRequestClose={() => setCurrentModal(null, null)}
               width="565px"
               height="275px"
+              title="Cluster Settings"
             >
               <UpdateClusterModal
                 setRefreshClusters={(x: boolean) =>
@@ -503,7 +535,8 @@ class Home extends Component<PropsType, StateType> {
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
-            height="725px"
+            height="380px"
+            title="Add a New Integration"
           >
             <IntegrationsModal />
           </Modal>
@@ -513,6 +546,7 @@ class Home extends Component<PropsType, StateType> {
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
             height="650px"
+            title="Connecting to an Image Registry"
           >
             <IntegrationsInstructionsModal />
           </Modal>
@@ -523,6 +557,7 @@ class Home extends Component<PropsType, StateType> {
               onRequestClose={() => setCurrentModal(null, null)}
               width="600px"
               height="220px"
+              title="Add Namespace"
             >
               <NamespaceModal />
             </Modal>
@@ -533,6 +568,7 @@ class Home extends Component<PropsType, StateType> {
               onRequestClose={() => setCurrentModal(null, null)}
               width="700px"
               height="280px"
+              title="Delete Namespace"
             >
               <DeleteNamespaceModal />
             </Modal>
@@ -552,8 +588,20 @@ class Home extends Component<PropsType, StateType> {
             onRequestClose={() => setCurrentModal(null, null)}
             width="760px"
             height="440px"
+            title="Account Settings"
           >
             <AccountSettingsModal />
+          </Modal>
+        )}
+
+        {currentModal === "UsageWarningModal" && (
+          <Modal
+            onRequestClose={() => setCurrentModal(null, null)}
+            width="760px"
+            height="530px"
+            title="Usage Warning"
+          >
+            <UsageWarningModal />
           </Modal>
         )}
 

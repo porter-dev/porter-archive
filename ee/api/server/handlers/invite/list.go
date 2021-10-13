@@ -1,3 +1,5 @@
+// +build ee
+
 package invite
 
 import (
@@ -18,7 +20,7 @@ type InvitesListHandler struct {
 func NewInvitesListHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *InvitesListHandler {
+) http.Handler {
 	return &InvitesListHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}

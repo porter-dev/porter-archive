@@ -265,7 +265,11 @@ func createGitAction(
 	// a git action config.
 	workflowYAML, githubErr := gaRunner.Setup()
 
-	if githubErr == nil && gaRunner.DryRun {
+	if gaRunner.DryRun {
+		if githubErr != nil {
+			return nil, nil, githubErr
+		}
+
 		return nil, workflowYAML, nil
 	}
 

@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import close from "assets/close.png";
 import github from "assets/github.png";
 
 import { Context } from "../../../shared/Context";
@@ -42,15 +41,6 @@ const AccountSettingsModal = () => {
 
   return (
     <>
-      <CloseButton
-        onClick={() => {
-          setCurrentModal(null, null);
-        }}
-      >
-        <CloseButtonImg src={close} />
-      </CloseButton>
-      <ModalTitle>Account Settings</ModalTitle>
-
       <TabSelector
         options={tabOptions}
         currentTab={currentTab}
@@ -179,68 +169,6 @@ const GitIcon = styled.img`
   margin-right: 10px;
   filter: brightness(120%);
   margin-left: 1px;
-`;
-
-const ModalTitle = styled.div`
-  margin: 0px 0px 13px;
-  display: flex;
-  flex: 1;
-  font-family: Work Sans, sans-serif;
-  font-size: 18px;
-  color: #ffffff;
-  user-select: none;
-  font-weight: 700;
-  align-items: center;
-  position: relative;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-
-  > i {
-    background: none;
-    border-radius: 3px;
-    display: flex;
-    font-size: 18px;
-    margin-top: 1px;
-    margin-right: 10px;
-    padding: 1px;
-    align-items: center;
-    justify-content: center;
-    color: #ffffffaa;
-    border: 0;
-  }
-`;
-
-const Subtitle = styled.div`
-  margin-top: 23px;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #aaaabb;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  margin-bottom: -10px;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
 `;
 
 const A = styled.a`

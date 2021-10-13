@@ -90,12 +90,17 @@ func (e *ErrPassThroughToClient) GetStatusCode() int {
 	return e.statusCode
 }
 
+type ErrorOpts struct {
+	Code uint
+}
+
 func HandleAPIError(
 	config *config.Config,
 	w http.ResponseWriter,
 	r *http.Request,
 	err RequestError,
 	writeErr bool,
+	opts ...ErrorOpts,
 ) {
 	extErrorStr := err.ExternalError()
 
@@ -121,6 +126,10 @@ func HandleAPIError(
 		// send the external error
 		resp := &types.ExternalError{
 			Error: extErrorStr,
+		}
+
+		if len(opts) > 0 {
+			resp.Code = opts[0].Code
 		}
 
 		// write the status code

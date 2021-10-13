@@ -68,6 +68,7 @@ export default class Main extends Component<PropsType, StateType> {
     api
       .getMetadata("", {}, {})
       .then((res) => {
+        this.context.setEdition(res.data?.version);
         this.setState({ local: !res.data?.provisioner });
       })
       .catch((err) => console.log(err));

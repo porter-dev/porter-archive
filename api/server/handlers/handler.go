@@ -108,3 +108,21 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(w http.ResponseWriter, r *ht
 
 	return nil
 }
+
+type Unavailable struct {
+	config    *config.Config
+	handlerID string
+}
+
+func NewUnavailable(config *config.Config, handlerID string) *Unavailable {
+	return &Unavailable{config, handlerID}
+}
+
+func (u *Unavailable) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	apierrors.HandleAPIError(u.config, w, r, apierrors.NewErrPassThroughToClient(
+		fmt.Errorf("%s not available in community edition", u.handlerID),
+		http.StatusBadRequest,
+	), true, apierrors.ErrorOpts{
+		Code: types.ErrCodeUnavailable,
+	})
+}

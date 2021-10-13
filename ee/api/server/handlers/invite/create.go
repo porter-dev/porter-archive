@@ -1,3 +1,5 @@
+// +build ee
+
 package invite
 
 import (
@@ -23,7 +25,7 @@ func NewInviteCreateHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *InviteCreateHandler {
+) http.Handler {
 	return &InviteCreateHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}

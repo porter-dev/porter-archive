@@ -259,23 +259,26 @@ func createGitAction(
 		DryRun:                 release == nil,
 	}
 
-	workflowYAML, err := gaRunner.Setup()
-
-	if err != nil {
-		return nil, nil, err
-	}
+	// Save the github err for after creating the git action config. However, we
+	// need to call Setup() in order to get the workflow file before writing the
+	// action config, in the case of a dry run, since the dry run does not create
+	// a git action config.
+	workflowYAML, githubErr := gaRunner.Setup()
 
 	if gaRunner.DryRun {
+		if githubErr != nil {
+			return nil, nil, githubErr
+		}
+
 		return nil, workflowYAML, nil
 	}
 
 	// handle write to the database
 	ga, err := config.Repo.GitActionConfig().CreateGitActionConfig(&models.GitActionConfig{
-		ReleaseID:    release.ID,
-		GitRepo:      request.GitRepo,
-		GitBranch:    request.GitBranch,
-		ImageRepoURI: request.ImageRepoURI,
-		// TODO: github installation id here?
+		ReleaseID:      release.ID,
+		GitRepo:        request.GitRepo,
+		GitBranch:      request.GitBranch,
+		ImageRepoURI:   request.ImageRepoURI,
 		GitRepoID:      request.GitRepoID,
 		DockerfilePath: request.DockerfilePath,
 		FolderPath:     request.FolderPath,
@@ -294,6 +297,10 @@ func createGitAction(
 
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if githubErr != nil {
+		return nil, nil, githubErr
 	}
 
 	return ga.ToGitActionConfigType(), workflowYAML, nil

@@ -1,3 +1,5 @@
+// +build ee
+
 package invite
 
 import (
@@ -18,7 +20,7 @@ type InviteDeleteHandler struct {
 
 func NewInviteDeleteHandler(
 	config *config.Config,
-) *InviteDeleteHandler {
+) http.Handler {
 	return &InviteDeleteHandler{
 		PorterHandler:         handlers.NewDefaultPorterHandler(config, nil, nil),
 		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),

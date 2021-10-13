@@ -5,9 +5,11 @@ import {
   ClusterType,
   ContextProps,
   ProjectType,
+  UsageData,
 } from "shared/types";
 
 import { pushQueryParams } from "shared/routing";
+import api from "./api";
 
 const Context = React.createContext<Partial<ContextProps>>(null);
 
@@ -49,6 +51,13 @@ export interface GlobalContextType {
   capabilities: CapabilityType;
   setCapabilities: (capabilities: CapabilityType) => void;
   clearContext: () => void;
+  edition: "ee" | "ce";
+  setEdition: (appVersion: string) => void;
+  hasBillingEnabled: boolean;
+  setHasBillingEnabled: (isBillingEnabled: boolean) => void;
+  usage: UsageData;
+  setUsage: (usage: UsageData) => void;
+  queryUsage: (retry?: number) => Promise<void>;
 }
 
 /**
@@ -135,10 +144,41 @@ class ContextProvider extends Component<PropsType, StateType> {
         devOpsMode: true,
       });
     },
+    edition: "ce",
+    setEdition: (version: string) => {
+      const [edition] = version.split("-").reverse();
+      // typesafe just in case we mess up something it will default to ce
+      if (edition === "ce" || edition === "ee") {
+        this.setState({ edition });
+      }
+    },
+    hasBillingEnabled: null,
+    setHasBillingEnabled: (isBillingEnabled: boolean) => {
+      this.setState({ hasBillingEnabled: isBillingEnabled });
+    },
+    usage: null,
+    setUsage: (usage: UsageData) => {
+      this.setState({ usage });
+    },
+    queryUsage: async (retry: number = 0) => {
+      api
+        .getUsage("<token>", {}, { project_id: this.state?.currentProject?.id })
+        .then((res) => {
+          if (JSON.stringify(res.data) !== JSON.stringify(this.state.usage)) {
+            this.state.setUsage(res.data);
+          } else {
+            if (retry < 10) {
+              setTimeout(() => {
+                this.state.queryUsage(retry + 1);
+              }, 1000);
+            }
+          }
+        });
+    },
   };
 
   render() {
-    return <Provider value={this.state}>{this.props.children}</Provider>;
+    return <Provider value={{ ...this.state }}>{this.props.children}</Provider>;
   }
 }
 

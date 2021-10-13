@@ -30,6 +30,7 @@ type TestRepository struct {
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
 	event                     repository.EventRepository
+	projectUsage              repository.ProjectUsageRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -132,6 +133,10 @@ func (t *TestRepository) Event() repository.EventRepository {
 	return t.event
 }
 
+func (t *TestRepository) ProjectUsage() repository.ProjectUsageRepository {
+	return t.projectUsage
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -161,5 +166,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		event:                     NewEventRepository(canQuery),
+		projectUsage:              NewProjectUsageRepository(canQuery),
 	}
 }

@@ -71,23 +71,27 @@ export const CredentialsForm: React.FC<{
       return;
     }
     setButtonStatus("loading");
-    // const gcpIntegration = await api
-    //   .createGCPIntegration(
-    //     "<token>",
-    //     {
-    //       gcp_region: "",
-    //       gcp_key_data: serviceAccountKey,
-    //       gcp_project_id: projectId,
-    //     },
-    //     { project_id: project.id }
-    //   )
-    //   .then((res) => res.data);
+    try {
+      const gcpIntegration = await api
+        .createGCPIntegration(
+          "<token>",
+          {
+            gcp_region: region,
+            gcp_key_data: serviceAccountKey,
+            gcp_project_id: projectId,
+          },
+          { project_id: project.id }
+        )
+        .then((res) => res.data);
 
-    nextFormStep({
-      credentials: {
-        id: "gcpIntegration.id",
-      },
-    });
+      nextFormStep({
+        credentials: {
+          id: gcpIntegration?.id,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Something went wrong, please try again");
+    }
   };
   return (
     <>

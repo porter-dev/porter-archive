@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/credentials"
 	"gorm.io/gorm"
 )
 
@@ -140,7 +141,7 @@ func (t *GormRepository) ProjectUsage() repository.ProjectUsageRepository {
 
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
-func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
+func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
 	return &GormRepository{
 		user:                      NewUserRepository(db),
 		session:                   NewSessionRepository(db),
@@ -159,9 +160,9 @@ func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
 		kubeIntegration:           NewKubeIntegrationRepository(db, key),
 		basicIntegration:          NewBasicIntegrationRepository(db, key),
 		oidcIntegration:           NewOIDCIntegrationRepository(db, key),
-		oauthIntegration:          NewOAuthIntegrationRepository(db, key),
-		gcpIntegration:            NewGCPIntegrationRepository(db, key),
-		awsIntegration:            NewAWSIntegrationRepository(db, key),
+		oauthIntegration:          NewOAuthIntegrationRepository(db, key, storageBackend),
+		gcpIntegration:            NewGCPIntegrationRepository(db, key, storageBackend),
+		awsIntegration:            NewAWSIntegrationRepository(db, key, storageBackend),
 		githubAppInstallation:     NewGithubAppInstallationRepository(db),
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),

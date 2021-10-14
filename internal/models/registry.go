@@ -59,11 +59,15 @@ func (r *Registry) ToRegistryType() *types.Registry {
 	}
 
 	return &types.Registry{
-		ID:        r.ID,
-		ProjectID: r.ProjectID,
-		Name:      r.Name,
-		URL:       uri,
-		Service:   serv,
-		InfraID:   r.InfraID,
+		ID:                 r.ID,
+		ProjectID:          r.ProjectID,
+		Name:               r.Name,
+		URL:                uri,
+		Service:            serv,
+		InfraID:            r.InfraID,
+		GCPIntegrationID:   r.GCPIntegrationID,
+		AWSIntegrationID:   r.AWSIntegrationID,
+		DOIntegrationID:    r.DOIntegrationID,
+		BasicIntegrationID: r.BasicIntegrationID,
 	}
 }

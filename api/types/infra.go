@@ -39,14 +39,14 @@ type Infra struct {
 	Status InfraStatus `json:"status"`
 
 	// The AWS integration that was used to create the infra
-	AWSIntegrationID uint `json:"aws_integration_id"`
+	AWSIntegrationID uint `json:"aws_integration_id,omitempty"`
 
 	// The GCP integration that was used to create the infra
-	GCPIntegrationID uint `json:"gcp_integration_id"`
+	GCPIntegrationID uint `json:"gcp_integration_id,omitempty"`
 
 	// The DO integration that was used to create the infra:
 	// this points to an OAuthIntegrationID
-	DOIntegrationID uint `json:"do_integration_id"`
+	DOIntegrationID uint `json:"do_integration_id,omitempty"`
 
 	// The last-applied, non-sensitive input variables to the provisioner. For now,
 	// this is a map[string]string since we marshal into env vars anyway, but

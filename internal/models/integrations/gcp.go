@@ -41,6 +41,7 @@ type GCPIntegration struct {
 
 func (g *GCPIntegration) ToGCPIntegrationType() *types.GCPIntegration {
 	return &types.GCPIntegration{
+		CreatedAt:    g.CreatedAt,
 		ID:           g.ID,
 		UserID:       g.UserID,
 		ProjectID:    g.ProjectID,

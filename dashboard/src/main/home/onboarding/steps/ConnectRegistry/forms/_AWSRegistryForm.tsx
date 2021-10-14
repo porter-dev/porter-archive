@@ -64,24 +64,28 @@ export const CredentialsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+    try {
+      const res = await api.createAWSIntegration(
+        "token",
+        {
+          aws_region: awsRegion,
+          aws_access_key_id: accessId,
+          aws_secret_access_key: secretKey,
+        },
+        {
+          id: project.id,
+        }
+      );
+      
+      nextFormStep({
+        credentials: {
+          id: res.data?.id,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Something went wrong, please try again")
+    }
 
-    // const res = await api.createAWSIntegration(
-    //   "token",
-    //   {
-    //     aws_region: awsRegion,
-    //     aws_access_key_id: accessId,
-    //     aws_secret_access_key: secretKey,
-    //   },
-    //   {
-    //     id: project.id,
-    //   }
-    // );
-
-    nextFormStep({
-      credentials: {
-        id: "some_id",
-      },
-    });
   };
 
   return (
@@ -158,21 +162,25 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+    try {
+      await api.connectECRRegistry(
+        "<token>",
+        {
+          name: registryName,
+          aws_integration_id: snap.StateHandler.connected_registry.credentials.id,
+        },
+        { id: project.id }
+      );
+      
+      nextFormStep({
+        settings: {
+          registry_name: registryName,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Couldn't connect registry.")
+    }
 
-    // await api.connectECRRegistry(
-    //   "<token>",
-    //   {
-    //     name: registryName,
-    //     aws_integration_id: snap.StateHandler.connected_registry.credentials.id,
-    //   },
-    //   { id: project.id }
-    // );
-
-    nextFormStep({
-      settings: {
-        registry_name: registryName,
-      },
-    });
   };
 
   return (

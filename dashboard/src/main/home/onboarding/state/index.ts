@@ -1,3 +1,4 @@
+import api from "shared/api";
 import { proxy, subscribe } from "valtio";
 import { devtools, subscribeKey } from "valtio/utils";
 import { Onboarding } from "../types";
@@ -9,8 +10,8 @@ export const OFState = proxy({
   StepHandler,
   subscriptions: [],
   actions: {
-    initializeState: (projectId: number) => {
-      OFState.actions.restoreState(projectId);
+    initializeState: (state: Onboarding) => {
+      OFState.actions.restoreState(state);
     },
     nextStep: (action?: Action, data?: any) => {
       const functionToExecute = StepHandler?.currentStep?.execute?.on[action];
@@ -30,19 +31,24 @@ export const OFState = proxy({
     },
     saveState: () => {
       const state = compressState(OFState);
-      localStorage.setItem(
-        `onboarding-${OFState.StateHandler.project?.id}`,
-        state
-      );
+      // localStorage.setItem(
+      //   `onboarding-${OFState.StateHandler.project?.id}`,
+      //   state
+      // );
+
+      api
+        .saveOnboardingState(
+          "<token>",
+          {
+            ...state,
+          },
+          { project_id: state.project_id }
+        )
+        .then((res) => console.log(res))
+        .catch((err) => console.log(err));
     },
-    restoreState: (projectId: number) => {
-      const notParsedPrevState = localStorage.getItem(
-        `onboarding-${projectId}`
-      );
-      if (!notParsedPrevState) {
-        return;
-      }
-      const prevState = decompressState(notParsedPrevState);
+    restoreState: (state: Onboarding) => {
+      const prevState = decompressState(state);
 
       if (prevState.StepHandler.currentStepName === "clean_up") {
         return;
@@ -93,11 +99,11 @@ const compressState = (state: typeof OFState) => {
       provision?.settings?.aws_machine_type,
   };
 
-  return JSON.stringify(onboarding_state);
+  return onboarding_state;
 };
 
-const decompressState = (prev_state: string) => {
-  const state: Onboarding = JSON.parse(prev_state);
+const decompressState = (prev_state: Onboarding) => {
+  const state: Onboarding = prev_state;
 
   const step = state.current_step;
   const project = {

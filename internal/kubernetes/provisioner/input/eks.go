@@ -9,6 +9,7 @@ type EKS struct {
 	AWSAccessKey string `json:"aws_access_key"`
 	AWSSecretKey string `json:"aws_secret_key"`
 	ClusterName  string `json:"cluster_name"`
+	MachineType  string `json:"machine_type"`
 }
 
 func (eks *EKS) GetInput() ([]byte, error) {

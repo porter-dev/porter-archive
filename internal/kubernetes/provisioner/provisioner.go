@@ -150,6 +150,7 @@ func (conf *Conf) GetProvisionerJobTemplate() (*batchv1.Job, error) {
 				AWSAccessKey: conf.AWS.AWSAccessKeyID,
 				AWSSecretKey: conf.AWS.AWSSecretAccessKey,
 				ClusterName:  conf.EKS.ClusterName,
+				MachineType:  conf.EKS.MachineType,
 			}
 
 			lastApplied, err := inputConf.GetInput()

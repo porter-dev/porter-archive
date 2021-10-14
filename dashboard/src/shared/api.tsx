@@ -33,6 +33,17 @@ const connectGCRRegistry = baseApi<
   return `/api/projects/${pathParams.id}/registries`;
 });
 
+const connectDORegistry = baseApi<
+  {
+    name: string;
+    do_integration_id: string;
+    url: string;
+  },
+  { project_id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/registries`;
+});
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -1060,6 +1071,7 @@ export default {
   checkAuth,
   connectECRRegistry,
   connectGCRRegistry,
+  connectDORegistry,
   createAWSIntegration,
   overwriteAWSIntegration,
   createDOCR,

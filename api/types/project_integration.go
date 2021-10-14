@@ -99,11 +99,11 @@ type GCPIntegration struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
-	// The GCP project id where the service account for this auth mechanism persists
-	GCPProjectID string `json:"gcp-project-id"`
+	// The GCP service account email for this credential
+	GCPSAEmail string `json:"gcp_sa_email"`
 
-	// The GCP user email that linked this service account
-	GCPUserEmail string `json:"gcp-user-email"`
+	// The GCP project id where the service account for this auth mechanism persists
+	GCPProjectID string `json:"gcp_project_id"`
 }
 
 type ListGCPResponse []*GCPIntegration

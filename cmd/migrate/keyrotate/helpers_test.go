@@ -92,7 +92,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 	tester.Key = &key
 	tester.DB = db
 
-	tester.repo = gorm.NewRepository(db, &key)
+	tester.repo = gorm.NewRepository(db, &key, nil)
 }
 
 func cleanup(tester *tester, t *testing.T) {

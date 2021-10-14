@@ -219,8 +219,6 @@ func (c *Client) writeRequest(method, path string, data interface{}, dst interfa
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 	req.Header.Set("X-Vault-Token", c.apiKey)
 
-	fmt.Println("URL IS", reqURL.String(), string(strData))
-
 	res, err := c.httpClient.Do(req)
 
 	if err != nil {

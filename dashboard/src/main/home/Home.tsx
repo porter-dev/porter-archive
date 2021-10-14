@@ -294,6 +294,9 @@ class Home extends Component<PropsType, StateType> {
   }
 
   async checkIfProjectHasBilling(projectId: number) {
+    if (!projectId) {
+      return false;
+    }
     try {
       const res = await api.getHasBilling(
         "<token>",

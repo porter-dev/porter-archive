@@ -56,6 +56,7 @@ type GithubAppOAuthIntegration struct {
 // ToOAuthIntegrationType generates an external OAuthIntegration to be shared over REST
 func (o *OAuthIntegration) ToOAuthIntegrationType() *types.OAuthIntegration {
 	return &types.OAuthIntegration{
+		CreatedAt: o.CreatedAt,
 		ID:        o.ID,
 		Client:    o.Client,
 		UserID:    o.UserID,

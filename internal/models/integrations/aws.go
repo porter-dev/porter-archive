@@ -49,6 +49,7 @@ type AWSIntegration struct {
 
 func (a *AWSIntegration) ToAWSIntegrationType() *types.AWSIntegration {
 	return &types.AWSIntegration{
+		CreatedAt: a.CreatedAt,
 		ID:        a.ID,
 		UserID:    a.UserID,
 		ProjectID: a.ProjectID,

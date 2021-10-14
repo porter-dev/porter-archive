@@ -85,13 +85,16 @@ const (
 )
 
 type OnboardingData struct {
-	CurrentStep            StepEnum            `json:"current_step"`
-	ConnectedSource        ConnectedSourceType `json:"connected_source"`
-	SkipRegistryConnection bool                `json:"skip_registry_connection"`
-	SkipResourceProvision  bool                `json:"skip_resource_provision"`
-	RegistryConnectionID   uint                `json:"registry_connection_id"`
-	RegistryInfraID        uint                `json:"registry_infra_id"`
-	ClusterInfraID         uint                `json:"cluster_infra_id"`
+	CurrentStep                    StepEnum            `json:"current_step"`
+	ConnectedSource                ConnectedSourceType `json:"connected_source"`
+	SkipRegistryConnection         bool                `json:"skip_registry_connection"`
+	SkipResourceProvision          bool                `json:"skip_resource_provision"`
+	RegistryConnectionID           uint                `json:"registry_connection_id"`
+	RegistryConnectionCredentialID uint                `json:"registry_connection_credential_id"`
+	RegistryInfraID                uint                `json:"registry_infra_id"`
+	RegistryInfraCredentialID      uint                `json:"registry_infra_credential_id"`
+	ClusterInfraID                 uint                `json:"cluster_infra_id"`
+	ClusterInfraCredentialID       uint                `json:"cluster_infra_credential_id"`
 }
 
 type UpdateOnboardingRequest OnboardingData

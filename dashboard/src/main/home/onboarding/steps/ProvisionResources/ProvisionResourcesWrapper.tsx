@@ -17,6 +17,8 @@ const ProvisionResourcesWrapper = () => {
       onSaveSettings={(data) => OFState.actions.nextStep("continue", data)}
       onSuccess={() => OFState.actions.nextStep("continue")}
       onSkip={() => OFState.actions.nextStep("skip")}
+      enable_go_back={snap.StepHandler.canGoBack}
+      goBack={() => OFState.actions.nextStep("go_back")}
     />
   );
 };

@@ -6,13 +6,14 @@ import { useParams } from "react-router";
 
 import styled from "styled-components";
 import ProviderSelector from "../../components/ProviderSelector";
-import { ConnectedRegistryConfig } from "../../state/StateHandler";
 import { SupportedProviders } from "../../types";
+import backArrow from "assets/back_arrow.png";
 
 import FormFlowWrapper from "./forms/FormFlow";
 
 const ConnectRegistry: React.FC<{
   provider: SupportedProviders;
+  enable_go_back: boolean;
   project: {
     id: number;
     name: string;
@@ -22,6 +23,7 @@ const ConnectRegistry: React.FC<{
   onSaveSettings: (settings: any) => void;
   onSuccess: () => void;
   onSkip: () => void;
+  goBack: () => void;
 }> = ({
   onSelectProvider,
   onSaveCredentials,
@@ -30,13 +32,24 @@ const ConnectRegistry: React.FC<{
   onSkip,
   project,
   provider,
+  enable_go_back,
+  goBack,
 }) => {
   const { step } = useParams<any>();
 
   return (
     <>
+      {enable_go_back && (
+        <BackButton
+          onClick={() => {
+            goBack();
+          }}
+        >
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+      )}
       <TitleSection>Getting Started</TitleSection>
-      <Subtitle>Step 2 of 3</Subtitle>
+      <Subtitle>Step 2 of 3 - Connect an Existing Registry (Optional)</Subtitle>
       <Helper>
         {provider
           ? "Link to an existing Docker registry. Don't worry if you don't know what this is"
@@ -85,4 +98,29 @@ const Subtitle = styled(TitleSection)`
 
 const NextStep = styled(SaveButton)`
   margin-top: 24px;
+`;
+
+const BackButton = styled.div`
+  margin-bottom: 24px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
 `;

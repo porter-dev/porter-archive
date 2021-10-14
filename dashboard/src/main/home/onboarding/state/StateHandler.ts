@@ -116,5 +116,11 @@ export const StateHandler = proxy({
         ...settings,
       };
     },
+    clearRegistryProvider: () => {
+      StateHandler.connected_registry.provider = "";
+    },
+    clearResourceProvisioningProvider: () => {
+      StateHandler.provision_resources.provider = "";
+    },
   },
 });

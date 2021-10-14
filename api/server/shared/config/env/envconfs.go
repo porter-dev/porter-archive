@@ -93,6 +93,10 @@ type DBConf struct {
 
 	SQLLite     bool   `env:"SQL_LITE,default=false"`
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
+
+	VaultPrefix    string `env:"VAULT_PREFIX,default=production"`
+	VaultAPIKey    string `env:"VAULT_API_KEY"`
+	VaultServerURL string `env:"VAULT_SERVER_URL"`
 }
 
 // RedisConf is the redis config required for the provisioner container

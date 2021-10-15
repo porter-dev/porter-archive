@@ -32,6 +32,7 @@ type GormRepository struct {
 	notificationConfig        repository.NotificationConfigRepository
 	event                     repository.EventRepository
 	projectUsage              repository.ProjectUsageRepository
+	onboarding                repository.ProjectOnboardingRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -138,6 +139,10 @@ func (t *GormRepository) ProjectUsage() repository.ProjectUsageRepository {
 	return t.projectUsage
 }
 
+func (t *GormRepository) Onboarding() repository.ProjectOnboardingRepository {
+	return t.onboarding
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
@@ -168,5 +173,6 @@ func NewRepository(db *gorm.DB, key *[32]byte) repository.Repository {
 		notificationConfig:        NewNotificationConfigRepository(db),
 		event:                     NewEventRepository(db),
 		projectUsage:              NewProjectUsageRepository(db),
+		onboarding:                NewProjectOnboardingRepository(db),
 	}
 }

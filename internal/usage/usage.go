@@ -14,9 +14,10 @@ import (
 )
 
 type GetUsageOpts struct {
-	Repo    repository.Repository
-	DOConf  *oauth2.Config
-	Project *models.Project
+	Repo             repository.Repository
+	DOConf           *oauth2.Config
+	Project          *models.Project
+	WhitelistedUsers map[uint]uint
 }
 
 // GetUsage gets a project's current usage and usage limit
@@ -45,6 +46,14 @@ func GetUsage(opts *GetUsageOpts) (
 		return nil, nil, nil, err
 	}
 
+	countedRoles := make([]models.Role, 0)
+
+	for _, role := range roles {
+		if _, exists := opts.WhitelistedUsers[role.UserID]; !exists {
+			countedRoles = append(countedRoles, role)
+		}
+	}
+
 	usageCache, err := opts.Repo.ProjectUsage().ReadProjectUsageCache(opts.Project.ID)
 	isCacheFound := true
 
@@ -52,9 +61,9 @@ func GetUsage(opts *GetUsageOpts) (
 		return nil, nil, nil, err
 	}
 
-	// if the usage cache is 24 hours old, was not found, or usage is over limit,
+	// if the usage cache is 1 hour old, was not found, or usage is over limit,
 	// re-query for the usage
-	if !isCacheFound || usageCache.Is24HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
+	if !isCacheFound || usageCache.Is1HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
 		cpu, memory, err := getResourceUsage(opts, clusters)
 
 		if err != nil {
@@ -72,7 +81,7 @@ func GetUsage(opts *GetUsageOpts) (
 			usageCache.ResourceMemory = memory
 		}
 
-		isExceeded := usageCache.ResourceCPU > limit.ResourceCPU || usageCache.ResourceMemory > limit.ResourceMemory
+		isExceeded := isUsageExceeded(usageCache, limit, uint(len(countedRoles)), uint(len(clusters)))
 
 		if !usageCache.Exceeded && isExceeded {
 			// update the usage cache with a time exceeded
@@ -89,12 +98,25 @@ func GetUsage(opts *GetUsageOpts) (
 		}
 	}
 
+	// we check whether it's currently exceeded based on the cache every time, since
+	// it's an inexpensive operation and involves no further DB lookups
+	usageCache.Exceeded = isUsageExceeded(usageCache, limit, uint(len(countedRoles)), uint(len(clusters)))
+
 	return &types.ProjectUsage{
 		ResourceCPU:    usageCache.ResourceCPU,
 		ResourceMemory: usageCache.ResourceMemory,
 		Clusters:       uint(len(clusters)),
-		Users:          uint(len(roles)),
+		Users:          uint(len(countedRoles)),
 	}, limit, usageCache, nil
+}
+
+func isUsageExceeded(usageCache *models.ProjectUsageCache, limit *types.ProjectUsage, numUsers, numClusters uint) bool {
+	isCPUExceeded := limit.ResourceCPU != 0 && usageCache.ResourceCPU > limit.ResourceCPU
+	isMemExceeded := limit.ResourceMemory != 0 && usageCache.ResourceMemory > limit.ResourceMemory
+	isUsersExceeded := limit.Users != 0 && numUsers > limit.Users
+	isClustersExceeded := limit.Clusters != 0 && numClusters > limit.Clusters
+
+	return isCPUExceeded || isMemExceeded || isUsersExceeded || isClustersExceeded
 }
 
 // gets the total resource usage across all nodes in all clusters
@@ -112,14 +134,12 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 
 		if err != nil {
 			continue
-			// return 0, 0, fmt.Errorf("failed to get agent: %s", err.Error())
 		}
 
 		totAlloc, err := nodes.GetAllocatableResources(agent.Clientset)
 
 		if err != nil {
 			continue
-			// return 0, 0, fmt.Errorf("failed to get alloc: %s", err.Error())
 		}
 
 		totCPU += totAlloc.CPU

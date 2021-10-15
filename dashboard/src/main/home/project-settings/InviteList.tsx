@@ -31,6 +31,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     setCurrentError,
     user,
     edition,
+    usage,
   } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
@@ -364,43 +365,56 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     return mappedInviteList || [];
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
-  const isEnterpriseEdition = () => {
-    return edition === "ee";
+  const hasSeats = () => {
+    // If usage limit is 0, the project has unlimited seats. Otherwise, check
+    // the usage limit against the current usage.
+    if (usage?.limit.users === 0) {
+      return true;
+    }
+
+    return usage?.current.users < usage?.limit.users;
   };
+
+  if (!usage) {
+    <Loading height={"30%"} />;
+  }
 
   return (
     <>
-      {isEnterpriseEdition() && (
-        <>
-          <Heading isAtTop={true}>Share Project</Heading>
-          <Helper>Generate a project invite for another user.</Helper>
-          <InputRowWrapper>
-            <InputRow
-              value={email}
-              type="text"
-              setValue={(newEmail: string) => setEmail(newEmail)}
-              width="100%"
-              placeholder="ex: mrp@getporter.dev"
-            />
-          </InputRowWrapper>
-          <Helper>Specify a role for this user.</Helper>
-          <RoleSelectorWrapper>
-            <RadioSelector
-              selected={role}
-              setSelected={setRole}
-              options={roleList}
-            />
-          </RoleSelectorWrapper>
-          <ButtonWrapper>
-            <InviteButton disabled={false} onClick={() => validateEmail()}>
-              Create Invite
-            </InviteButton>
-            {isInvalidEmail && (
-              <Invalid>Invalid email address. Please try again.</Invalid>
-            )}
-          </ButtonWrapper>
-        </>
-      )}
+      <>
+        <Heading isAtTop={true}>Share Project</Heading>
+        <Helper>Generate a project invite for another user.</Helper>
+        <InputRowWrapper>
+          <InputRow
+            value={email}
+            type="text"
+            setValue={(newEmail: string) => setEmail(newEmail)}
+            width="100%"
+            placeholder="ex: mrp@getporter.dev"
+          />
+        </InputRowWrapper>
+        <Helper>Specify a role for this user.</Helper>
+        <RoleSelectorWrapper>
+          <RadioSelector
+            selected={role}
+            setSelected={setRole}
+            options={roleList}
+          />
+        </RoleSelectorWrapper>
+        <ButtonWrapper>
+          <InviteButton disabled={!hasSeats()} onClick={() => validateEmail()}>
+            Create Invite
+          </InviteButton>
+          {isInvalidEmail && (
+            <Invalid>Invalid email address. Please try again.</Invalid>
+          )}
+          {!hasSeats() && (
+            <Invalid>
+              You need to upgrade your plan to invite more users to the project
+            </Invalid>
+          )}
+        </ButtonWrapper>
+      </>
 
       <Heading>Invites & Collaborators</Heading>
       <Helper>Manage pending invites and view collaborators.</Helper>

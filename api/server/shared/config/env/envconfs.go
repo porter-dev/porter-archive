@@ -51,6 +51,7 @@ type ServerConf struct {
 
 	IronPlansAPIKey    string `env:"IRON_PLANS_API_KEY"`
 	IronPlansServerURL string `env:"IRON_PLANS_SERVER_URL"`
+	WhitelistedUsers   []uint `env:"WHITELISTED_USERS"`
 
 	DOClientID                 string `env:"DO_CLIENT_ID"`
 	DOClientSecret             string `env:"DO_CLIENT_SECRET"`

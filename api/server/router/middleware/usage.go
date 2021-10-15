@@ -28,9 +28,10 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 
 		// get the project usage limits
 		currentUsage, limit, _, err := usage.GetUsage(&usage.GetUsageOpts{
-			Project: proj,
-			DOConf:  b.config.DOConf,
-			Repo:    b.config.Repo,
+			Project:          proj,
+			DOConf:           b.config.DOConf,
+			Repo:             b.config.Repo,
+			WhitelistedUsers: b.config.WhitelistedUsers,
 		})
 
 		if err != nil {
@@ -73,9 +74,9 @@ func allowUsage(
 ) bool {
 	switch metric {
 	case types.Users:
-		return plan.Users > current.Users+1
+		return plan.Users == 0 || plan.Users >= current.Users+1
 	case types.Clusters:
-		return plan.Clusters > current.Clusters+1
+		return plan.Clusters == 0 || plan.Clusters >= current.Clusters+1
 	default:
 		return false
 	}
@@ -93,7 +94,7 @@ func getMetricUsage(
 	case types.Users:
 		return plan.Users, current.Users
 	case types.Clusters:
-		return plan.Users, current.Users
+		return plan.Clusters, current.Clusters
 	default:
 		return 0, 0
 	}

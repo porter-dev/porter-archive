@@ -10,6 +10,7 @@ import { OFState } from "./state";
 import { useSteps } from "./state/StepHandler";
 
 const Onboarding = () => {
+  const context = useContext(Context);
   useSteps();
 
   useEffect(() => {
@@ -19,12 +20,12 @@ const Onboarding = () => {
     };
   }, []);
 
-  // useEffect(() => {
-  //   OFState.actions.initializeState(context.currentProject?.id);
-  //   return () => {
-  //     OFState.actions.clearState();
-  //   };
-  // }, [context.currentProject?.id]);
+  useEffect(() => {
+    OFState.actions.initializeState(context.currentProject?.id);
+    return () => {
+      OFState.actions.clearState();
+    };
+  }, [context.currentProject?.id]);
 
   // useEffect(() => {
   //   if (snap.StepHandler.finishedOnboarding) {

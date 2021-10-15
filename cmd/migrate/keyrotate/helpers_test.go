@@ -67,6 +67,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.ClusterResolver{},
 		&models.Infra{},
 		&models.GitActionConfig{},
+		&models.Onboarding{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

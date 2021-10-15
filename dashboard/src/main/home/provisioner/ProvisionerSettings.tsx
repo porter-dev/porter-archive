@@ -1,4 +1,10 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, {
+  Component,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -32,7 +38,7 @@ const ProvisionerSettings: React.FC<Props> = ({
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [highlightCosts, setHighlightCosts] = useState(true);
 
-  const { setCurrentError } = useContext(Context);
+  const { setCurrentError, usage, hasBillingEnabled } = useContext(Context);
   const location = useLocation();
   const history = useHistory();
 
@@ -41,6 +47,13 @@ const ProvisionerSettings: React.FC<Props> = ({
       handleSelectProvider("skipped");
     }
   }, [provisioner]);
+
+  const isUsageExceeded = useMemo(() => {
+    if (!hasBillingEnabled) {
+      return false;
+    }
+    return usage.current.clusters >= usage.limit.clusters;
+  }, [usage]);
 
   const handleSelectProvider = (newSelectedProvider: string) => {
     if (!isInNewProject) {
@@ -228,9 +241,12 @@ const ProvisionerSettings: React.FC<Props> = ({
             return (
               <Block
                 key={i}
+                disabled={isUsageExceeded}
                 onClick={() => {
-                  handleSelectProvider(provider);
-                  setHighlightCosts(false);
+                  if (!isUsageExceeded) {
+                    handleSelectProvider(provider);
+                    setHighlightCosts(false);
+                  }
                 }}
               >
                 <Icon src={providerInfo.icon} />
@@ -238,8 +254,10 @@ const ProvisionerSettings: React.FC<Props> = ({
                 <CostSection
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleSelectProvider(provider);
-                    setHighlightCosts(true);
+                    if (!isUsageExceeded) {
+                      handleSelectProvider(provider);
+                      setHighlightCosts(true);
+                    }
                   }}
                 >
                   {/*
@@ -341,10 +359,10 @@ const Block = styled.div<{ disabled?: boolean }>`
   font-weight: 500;
   padding: 3px 0px 5px;
   flex-direction: column;
-  align-item: center;
+  align-items: center;
   justify-content: space-between;
   height: 170px;
-  cursor: ${(props) => (props.disabled ? "" : "pointer")};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   color: #ffffff;
   position: relative;
   background: #26282f;
@@ -352,6 +370,7 @@ const Block = styled.div<{ disabled?: boolean }>`
   :hover {
     background: ${(props) => (props.disabled ? "" : "#ffffff11")};
   }
+  filter: ${({ disabled }) => (disabled ? "grayscale(1)" : "")};
 
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {

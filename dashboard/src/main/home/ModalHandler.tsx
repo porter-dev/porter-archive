@@ -11,6 +11,8 @@ import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 import AccountSettingsModal from "./modals/AccountSettingsModal";
 
+import UsageWarningModal from "./modals/UsageWarningModal";
+
 const ModalHandler: React.FC<{
   setRefreshClusters: (x: boolean) => void;
 }> = ({ setRefreshClusters }) => {
@@ -38,6 +40,7 @@ const ModalHandler: React.FC<{
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
           height="650px"
+          title="Connecting to an Existing Cluster"
         >
           <ClusterInstructionsModal />
         </Modal>
@@ -50,6 +53,7 @@ const ModalHandler: React.FC<{
             onRequestClose={() => setCurrentModal(null, null)}
             width="565px"
             height="275px"
+            title="Cluster Settings"
           >
             <UpdateClusterModal
               setRefreshClusters={(x: boolean) => setRefreshClusters(x)}
@@ -60,7 +64,8 @@ const ModalHandler: React.FC<{
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
-          height="725px"
+          height="380px"
+          title="Add a New Integration"
         >
           <IntegrationsModal />
         </Modal>
@@ -70,6 +75,7 @@ const ModalHandler: React.FC<{
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
           height="650px"
+          title="Connecting to an Image Registry"
         >
           <IntegrationsInstructionsModal />
         </Modal>
@@ -80,6 +86,7 @@ const ModalHandler: React.FC<{
             onRequestClose={() => setCurrentModal(null, null)}
             width="600px"
             height="220px"
+            title="Add Namespace"
           >
             <NamespaceModal />
           </Modal>
@@ -90,6 +97,7 @@ const ModalHandler: React.FC<{
             onRequestClose={() => setCurrentModal(null, null)}
             width="700px"
             height="280px"
+            title="Delete Namespace"
           >
             <DeleteNamespaceModal />
           </Modal>
@@ -109,8 +117,20 @@ const ModalHandler: React.FC<{
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
           height="440px"
+          title="Account Settings"
         >
           <AccountSettingsModal />
+        </Modal>
+      )}
+
+      {currentModal === "UsageWarningModal" && (
+        <Modal
+          onRequestClose={() => setCurrentModal(null, null)}
+          width="760px"
+          height="530px"
+          title="Usage Warning"
+        >
+          <UsageWarningModal />
         </Modal>
       )}
     </>

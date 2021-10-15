@@ -58,7 +58,7 @@ type ProjectUsageCache struct {
 	ExceededSince *time.Time
 }
 
-func (p *ProjectUsageCache) Is24HrOld() bool {
+func (p *ProjectUsageCache) Is1HrOld() bool {
 	timeSince := time.Now().Sub(p.UpdatedAt)
-	return timeSince > 24*time.Hour
+	return timeSince > 1*time.Hour
 }

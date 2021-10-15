@@ -3,6 +3,7 @@ package oauth_callback
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -78,8 +79,15 @@ func (p *OAuthCallbackDOHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if session.Values["query_params"] != "" {
-		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
+		// attempt to parse the redirect uri, if it fails just redirect to dashboard
+		redirectURI, err := url.Parse(redirectStr)
+
+		if err != nil {
+			http.Redirect(w, r, "/dashboard", 302)
+		}
+
+		http.Redirect(w, r, fmt.Sprintf("%s?%s", redirectURI.Path, redirectURI.RawQuery), 302)
 	} else {
 		http.Redirect(w, r, "/dashboard", 302)
 	}

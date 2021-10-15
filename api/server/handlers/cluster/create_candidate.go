@@ -67,7 +67,8 @@ func (c *CreateClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *http
 		// if the ClusterCandidate does not have any actions to perform, create the Cluster
 		// automatically
 		if len(cc.Resolvers) == 0 {
-			cluster, cc, err := createClusterFromCandidate(c.Repo(), proj, user, cc, &types.ClusterResolverAll{})
+			var cluster *models.Cluster
+			cluster, cc, err = createClusterFromCandidate(c.Repo(), proj, user, cc, &types.ClusterResolverAll{})
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

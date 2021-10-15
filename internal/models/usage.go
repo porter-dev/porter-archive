@@ -51,6 +51,12 @@ type ProjectUsageCache struct {
 	// The memory usage, in bytes
 	ResourceMemory uint
 
+	// The number of clusters
+	Clusters uint
+
+	// The number of users
+	Users uint
+
 	// Whether the user is exceeding usage
 	Exceeded bool
 

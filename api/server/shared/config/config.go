@@ -86,6 +86,10 @@ type Config struct {
 
 	// BillingManager manages billing for Porter instances with billing enabled
 	BillingManager billing.BillingManager
+
+	// WhitelistedUsers do not count toward usage limits
+	WhitelistedUsers map[uint]uint
+
 	// PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
 	PowerDNSClient *powerdns.Client
 }

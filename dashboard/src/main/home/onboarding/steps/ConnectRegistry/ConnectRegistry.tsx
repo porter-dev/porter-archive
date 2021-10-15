@@ -34,7 +34,7 @@ const ConnectRegistry: React.FC<{
   const { step } = useParams<any>();
 
   return (
-    <>
+    <div>
       <TitleSection>Getting Started</TitleSection>
       <Subtitle>Step 2 of 3</Subtitle>
       <Helper>
@@ -72,7 +72,7 @@ const ConnectRegistry: React.FC<{
           />
         </>
       )}
-    </>
+    </div>
   );
 };
 

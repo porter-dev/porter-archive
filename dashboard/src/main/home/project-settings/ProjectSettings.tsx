@@ -37,6 +37,26 @@ class ProjectSettings extends Component<PropsType, StateType> {
         this.setState({ currentTab: "manage-access" });
       }
     }
+    if (
+      this.context?.hasBillingEnabled &&
+      !this.state.tabOptions.find((t) => t.value === "billing")
+    ) {
+      const tabOptions = this.state.tabOptions;
+      tabOptions.splice(1, 0, { value: "billing", label: "Billing" });
+      this.setState({ tabOptions });
+      return;
+    }
+
+    if (
+      !this.context?.hasBillingEnabled &&
+      this.state.tabOptions.find((t) => t.value === "billing")
+    ) {
+      const tabOptions = this.state.tabOptions;
+      const billingIndex = this.state.tabOptions.findIndex(
+        (t) => t.value === "billing"
+      );
+      tabOptions.splice(billingIndex, 1);
+    }
   }
 
   componentDidMount() {
@@ -46,10 +66,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
     tabOptions.push({ value: "manage-access", label: "Manage Access" });
 
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
-      tabOptions.push({
-        value: "billing",
-        label: "Billing",
-      });
+      if (this.context?.hasBillingEnabled) {
+        tabOptions.push({
+          value: "billing",
+          label: "Billing",
+        });
+      }
       tabOptions.push({
         value: "additional-settings",
         label: "Additional Settings",
@@ -69,7 +91,10 @@ class ProjectSettings extends Component<PropsType, StateType> {
       return <InvitePage />;
     }
 
-    if (this.state.currentTab === "billing") {
+    if (
+      this.state.currentTab === "billing" &&
+      this.context?.hasBillingEnabled
+    ) {
       return <BillingPage />;
     }
 

@@ -89,7 +89,7 @@ export type SkipProvisionConfig = {
 
 export type SkipRegistryConnection = SkipProvisionConfig;
 
-interface Onboarding {
+export interface Onboarding {
   current_step: string;
 
   project_id: number;
@@ -99,12 +99,14 @@ interface Onboarding {
 
   skip_registry_connection: boolean;
 
+  registry_connection_provider: string;
   registry_connection_credentials_id: number;
   registry_connection_settings_url: string;
   registry_connection_settings_name: string;
 
   skip_resource_provision: boolean;
 
+  resource_provision_provider: string;
   resource_provision_credentials_id: number;
   resource_provision_credentials_arn: string;
   resource_provision_credentials_region: string;

@@ -187,8 +187,6 @@ const SlideWrapper = styled.div<{ delay?: string }>`
 `;
 
 const StyledNewProject = styled.div`
-  display: column;
-  align-item: center;
 `;
 
 const NewProjectSaveButton = styled(SaveButton)`

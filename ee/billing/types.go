@@ -38,12 +38,19 @@ type Plan struct {
 	Features   []PlanFeature `json:"features"`
 }
 
+type ListPlansResponse struct {
+	Results []Plan `json:"results"`
+}
+
 type PlanFeature struct {
 	ID          string      `json:"id"`
 	IsActive    bool        `json:"is_active"`
+	Feature     Feature     `json:"feature"`
 	FeatureSpec FeatureSpec `json:"spec"`
-	Slug        string      `json:"slug"`
-	MaxLimit    int64       `json:"max_limit"`
+}
+
+type Feature struct {
+	Slug string `json:"slug"`
 }
 
 type FeatureSpec struct {
@@ -81,4 +88,11 @@ type SubscriptionWebhookRequest struct {
 	EventType string `json:"event_type"`
 	TeamID    string `json:"team_id"`
 	Plan      Plan   `json:"plan"`
+}
+
+type CreateSubscriptionRequest struct {
+	PlanID     string `json:"plan_id"`
+	TeamID     string `json:"team_id"`
+	IsPaused   bool   `json:"is_paused"`
+	NextPlanID string `json:"next_plan_id"`
 }

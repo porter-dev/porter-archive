@@ -175,7 +175,7 @@ type StepHandlerType = {
   actions: {
     nextStep: (action?: Action) => void;
     clearState: () => void;
-    restoreState: (prevState: StepHandlerType) => void;
+    restoreState: (prevState: Partial<StepHandlerType>) => void;
     getStep: (nextStepName: string) => Step | SubStep;
   };
 };

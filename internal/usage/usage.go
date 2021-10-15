@@ -64,8 +64,6 @@ func GetUsage(opts *GetUsageOpts) (
 	if !isCacheFound {
 		usageCache = &models.ProjectUsageCache{
 			ProjectID: opts.Project.ID,
-			Clusters:  uint(len(clusters)),
-			Users:     uint(len(countedRoles)),
 		}
 	}
 

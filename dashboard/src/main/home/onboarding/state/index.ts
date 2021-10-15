@@ -1,6 +1,5 @@
 import api from "shared/api";
-import { proxy, subscribe } from "valtio";
-import { devtools, subscribeKey } from "valtio/utils";
+import { proxy } from "valtio";
 import { Onboarding } from "../types";
 import { StateHandler } from "./StateHandler";
 import { Action, StepHandler } from "./StepHandler";
@@ -31,10 +30,6 @@ export const OFState = proxy({
     },
     saveState: () => {
       const state = compressState(OFState);
-      // localStorage.setItem(
-      //   `onboarding-${OFState.StateHandler.project?.id}`,
-      //   state
-      // );
 
       api
         .saveOnboardingState(

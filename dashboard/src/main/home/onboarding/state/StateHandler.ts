@@ -7,7 +7,6 @@ import type {
   GCPRegistryConfig,
   SkipProvisionConfig,
   SkipRegistryConnection,
-  SupportedProviders,
 } from "../types";
 
 export type ConnectedRegistryConfig =

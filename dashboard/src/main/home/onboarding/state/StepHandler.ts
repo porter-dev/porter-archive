@@ -2,9 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { useRouting } from "shared/routing";
 import { proxy, useSnapshot } from "valtio";
-import { devtools } from "valtio/utils";
 import { StepKey, Steps } from "../types";
-import { StateKeys } from "./StateHandler";
 
 type Step = {
   url: string;

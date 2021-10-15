@@ -8,7 +8,6 @@ import {
 } from "main/home/onboarding/types";
 import React, { useState } from "react";
 import api from "shared/api";
-import { Context } from "shared/Context";
 import { useSnapshot } from "valtio";
 
 const regionOptions = [
@@ -81,15 +80,15 @@ export const CredentialsForm: React.FC<{
           id: project.id,
         }
       );
-      
+
       nextFormStep({
         credentials: {
           id: res.data?.id,
         },
       });
     } catch (error) {
-      setButtonStatus("Something went wrong, please try again")
-    }    
+      setButtonStatus("Something went wrong, please try again");
+    }
   };
 
   return (

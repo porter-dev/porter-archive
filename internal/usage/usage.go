@@ -32,6 +32,13 @@ func GetUsage(opts *GetUsageOpts) (
 		return nil, nil, nil, err
 	}
 
+	usageCache, err := opts.Repo.ProjectUsage().ReadProjectUsageCache(opts.Project.ID)
+	isCacheFound := true
+
+	if isCacheFound = !errors.Is(err, gorm.ErrRecordNotFound); err != nil && isCacheFound {
+		return nil, nil, nil, err
+	}
+
 	// query for the linked cluster counts
 	clusters, err := opts.Repo.Cluster().ListClustersByProjectID(opts.Project.ID)
 
@@ -54,69 +61,71 @@ func GetUsage(opts *GetUsageOpts) (
 		}
 	}
 
-	usageCache, err := opts.Repo.ProjectUsage().ReadProjectUsageCache(opts.Project.ID)
-	isCacheFound := true
-
-	if isCacheFound = !errors.Is(err, gorm.ErrRecordNotFound); err != nil && isCacheFound {
-		return nil, nil, nil, err
+	if !isCacheFound {
+		usageCache = &models.ProjectUsageCache{
+			ProjectID: opts.Project.ID,
+			Clusters:  uint(len(clusters)),
+			Users:     uint(len(countedRoles)),
+		}
 	}
 
-	// if the usage cache is 1 hour old, was not found, or usage is over limit,
-	// re-query for the usage
-	if !isCacheFound || usageCache.Is1HrOld() || usageCache.ResourceMemory > limit.ResourceMemory || usageCache.ResourceCPU > limit.ResourceCPU {
+	oldUsageCache := usageCache
+
+	usageCache.Clusters = uint(len(clusters))
+	usageCache.Users = uint(len(countedRoles))
+
+	// if the usage cache is 1 hour old, was not found, usage is currently over limit, or the clusters/users
+	// counts have changed, re-query for the usage
+	if true || !isCacheFound || usageCache.Is1HrOld() || isUsageExceeded(usageCache, limit) || isUsageChanged(oldUsageCache, usageCache) {
 		cpu, memory, err := getResourceUsage(opts, clusters)
 
 		if err != nil {
 			return nil, nil, nil, err
 		}
 
-		if !isCacheFound {
-			usageCache = &models.ProjectUsageCache{
-				ProjectID:      opts.Project.ID,
-				ResourceCPU:    cpu,
-				ResourceMemory: memory,
-			}
-		} else {
-			usageCache.ResourceCPU = cpu
-			usageCache.ResourceMemory = memory
-		}
-
-		isExceeded := isUsageExceeded(usageCache, limit, uint(len(countedRoles)), uint(len(clusters)))
-
-		if !usageCache.Exceeded && isExceeded {
-			// update the usage cache with a time exceeded
-			currTime := time.Now()
-			usageCache.ExceededSince = &currTime
-		}
-
-		usageCache.Exceeded = isExceeded
-
-		if !isCacheFound {
-			usageCache, err = opts.Repo.ProjectUsage().CreateProjectUsageCache(usageCache)
-		} else {
-			usageCache, err = opts.Repo.ProjectUsage().UpdateProjectUsageCache(usageCache)
-		}
+		usageCache.ResourceCPU = cpu
+		usageCache.ResourceMemory = memory
 	}
 
-	// we check whether it's currently exceeded based on the cache every time, since
-	// it's an inexpensive operation and involves no further DB lookups
-	usageCache.Exceeded = isUsageExceeded(usageCache, limit, uint(len(countedRoles)), uint(len(clusters)))
+	isExceeded := isUsageExceeded(usageCache, limit)
+
+	if !usageCache.Exceeded && isExceeded {
+		// update the usage cache with a time exceeded
+		currTime := time.Now()
+		usageCache.ExceededSince = &currTime
+	}
+
+	usageCache.Exceeded = isExceeded
+
+	if !isCacheFound {
+		usageCache, err = opts.Repo.ProjectUsage().CreateProjectUsageCache(usageCache)
+	} else if isUsageChanged(oldUsageCache, usageCache) {
+		usageCache, err = opts.Repo.ProjectUsage().UpdateProjectUsageCache(usageCache)
+	}
 
 	return &types.ProjectUsage{
 		ResourceCPU:    usageCache.ResourceCPU,
 		ResourceMemory: usageCache.ResourceMemory,
-		Clusters:       uint(len(clusters)),
-		Users:          uint(len(countedRoles)),
+		Clusters:       usageCache.Clusters,
+		Users:          usageCache.Users,
 	}, limit, usageCache, nil
 }
 
-func isUsageExceeded(usageCache *models.ProjectUsageCache, limit *types.ProjectUsage, numUsers, numClusters uint) bool {
+func isUsageExceeded(usageCache *models.ProjectUsageCache, limit *types.ProjectUsage) bool {
 	isCPUExceeded := limit.ResourceCPU != 0 && usageCache.ResourceCPU > limit.ResourceCPU
 	isMemExceeded := limit.ResourceMemory != 0 && usageCache.ResourceMemory > limit.ResourceMemory
-	isUsersExceeded := limit.Users != 0 && numUsers > limit.Users
-	isClustersExceeded := limit.Clusters != 0 && numClusters > limit.Clusters
+	isUsersExceeded := limit.Users != 0 && usageCache.Users > limit.Users
+	isClustersExceeded := limit.Clusters != 0 && usageCache.Clusters > limit.Clusters
 
 	return isCPUExceeded || isMemExceeded || isUsersExceeded || isClustersExceeded
+}
+
+func isUsageChanged(oldUsageCache, currUsageCache *models.ProjectUsageCache) bool {
+	return oldUsageCache.Exceeded != currUsageCache.Exceeded ||
+		oldUsageCache.Clusters != currUsageCache.Clusters ||
+		oldUsageCache.Users != currUsageCache.Users ||
+		oldUsageCache.ResourceCPU != currUsageCache.ResourceCPU ||
+		oldUsageCache.ResourceMemory != currUsageCache.ResourceMemory
 }
 
 // gets the total resource usage across all nodes in all clusters

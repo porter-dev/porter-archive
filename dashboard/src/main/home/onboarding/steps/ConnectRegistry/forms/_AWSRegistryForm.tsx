@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import api from "shared/api";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../../state/index";
+import IntegrationCategories from "main/home/integrations/IntegrationCategories";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -76,16 +77,15 @@ export const CredentialsForm: React.FC<{
           id: project.id,
         }
       );
-      
+
       nextFormStep({
         credentials: {
           id: res.data?.id,
         },
       });
     } catch (error) {
-      setButtonStatus("Something went wrong, please try again")
+      setButtonStatus("Something went wrong, please try again");
     }
-
   };
 
   return (
@@ -167,20 +167,20 @@ export const SettingsForm: React.FC<{
         "<token>",
         {
           name: registryName,
-          aws_integration_id: snap.StateHandler.connected_registry.credentials.id,
+          aws_integration_id:
+            snap.StateHandler.connected_registry.credentials.id,
         },
         { id: project.id }
       );
-      
+
       nextFormStep({
         settings: {
           registry_name: registryName,
         },
       });
     } catch (error) {
-      setButtonStatus("Couldn't connect registry.")
+      setButtonStatus("Couldn't connect registry.");
     }
-
   };
 
   return (
@@ -214,6 +214,7 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
 }) => {
   return (
     <>
+      <IntegrationCategories category={"registry"} />
       <SaveButton
         text="Continue"
         disabled={false}

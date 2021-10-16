@@ -56,8 +56,11 @@ func (p *OnboardingUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	onboarding.SkipRegistryConnection = request.SkipRegistryConnection
 	onboarding.SkipResourceProvision = request.SkipResourceProvision
 	onboarding.RegistryConnectionID = request.RegistryConnectionID
+	onboarding.RegistryConnectionCredentialID = request.RegistryConnectionCredentialID
 	onboarding.RegistryInfraID = request.RegistryInfraID
+	onboarding.RegistryInfraCredentialID = request.RegistryInfraCredentialID
 	onboarding.ClusterInfraID = request.ClusterInfraID
+	onboarding.ClusterInfraCredentialID = request.ClusterInfraCredentialID
 
 	if isNotFound {
 		// if not found, create onboarding struct

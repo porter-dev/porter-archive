@@ -90,7 +90,7 @@ export const NewProjectFC: React.FC<{
         id: project.id,
         name: project.name,
       });
-      setButtonStatus("success");
+      setButtonStatus("successful");
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");
       console.log(error);

@@ -1071,6 +1071,34 @@ const getHasBilling = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/billing`
 );
 
+const getOnboardingState = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/onboarding`
+);
+
+const saveOnboardingState = baseApi<{}, { project_id: number }>(
+  "POST",
+  ({ project_id }) => `/api/projects/${project_id}/onboarding`
+);
+
+const getOnboardingInfra = baseApi<
+  {},
+  { project_id: number; registry_infra_id: number }
+>(
+  "GET",
+  ({ project_id, registry_infra_id }) =>
+    `/api/projects/${project_id}/infras/${registry_infra_id}`
+);
+
+const getOnboardingRegistry = baseApi<
+  {},
+  { project_id: number; registry_connection_id: number }
+>(
+  "GET",
+  ({ project_id, registry_connection_id }) =>
+    `/api/projects/${project_id}/registries/${registry_connection_id}`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1180,4 +1208,8 @@ export default {
   getUsage,
   getCustomerToken,
   getHasBilling,
+  getOnboardingState,
+  saveOnboardingState,
+  getOnboardingInfra,
+  getOnboardingRegistry,
 };

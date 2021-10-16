@@ -9,9 +9,11 @@ import ProviderSelector from "../../components/ProviderSelector";
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 import { SupportedProviders } from "../../types";
+import backArrow from "assets/back_arrow.png";
 
 type Props = {
   provider: SupportedProviders | "external";
+  enable_go_back: boolean;
   project: {
     id: number;
     name: string;
@@ -22,6 +24,7 @@ type Props = {
   onSaveSettings: (settings: any) => void;
   onSuccess: () => void;
   onSkip: () => void;
+  goBack: () => void;
 };
 
 const ProvisionResources: React.FC<Props> = ({
@@ -32,13 +35,25 @@ const ProvisionResources: React.FC<Props> = ({
   onSaveCredentials,
   onSaveSettings,
   onSuccess,
+
+  enable_go_back,
+  goBack,
 }) => {
   const { step } = useParams<{ step: any }>();
 
   return (
-    <>
+    <div>
+      {enable_go_back && (
+        <BackButton
+          onClick={() => {
+            goBack();
+          }}
+        >
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+      )}
       <TitleSection>Getting Started</TitleSection>
-      <Subtitle>Step 3 of 3</Subtitle>
+      <Subtitle>Step 3 of 3 - Provision resources</Subtitle>
       <Helper>
         Porter automatically creates a cluster and registry in your cloud to run
         applications.
@@ -65,7 +80,7 @@ const ProvisionResources: React.FC<Props> = ({
           />
         </>
       )}
-    </>
+    </div>
   );
 };
 
@@ -78,4 +93,29 @@ const Subtitle = styled(TitleSection)`
 
 const NextStep = styled(SaveButton)`
   margin-top: 24px;
+`;
+
+const BackButton = styled.div`
+  margin-bottom: 24px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
 `;

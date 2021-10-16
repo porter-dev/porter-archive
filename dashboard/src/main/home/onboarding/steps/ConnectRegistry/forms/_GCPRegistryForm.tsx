@@ -39,24 +39,29 @@ export const CredentialsForm: React.FC<{
       return;
     }
     setButtonStatus("loading");
-    // const gcpIntegration = await api
-    //   .createGCPIntegration(
-    //     "<token>",
-    //     {
-    //       gcp_region: "",
-    //       gcp_key_data: serviceAccountKey,
-    //       gcp_project_id: projectId,
-    //     },
-    //     { project_id: project.id }
-    //   )
-    //   .then((res) => res.data);
+    try {
+      const gcpIntegration = await api
+        .createGCPIntegration(
+          "<token>",
+          {
+            gcp_region: "",
+            gcp_key_data: serviceAccountKey,
+            gcp_project_id: projectId,
+          },
+          { project_id: project.id }
+        )
+        .then((res) => res.data);
 
-    nextFormStep({
-      credentials: {
-        id: "some_Id",
-      },
-    });
+      nextFormStep({
+        credentials: {
+          id: gcpIntegration?.id,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Something went wrong, please try again");
+    }
   };
+
   return (
     <>
       <InputRow
@@ -128,23 +133,29 @@ export const SettingsForm: React.FC<{
 
     setButtonStatus("loading");
 
-    // await api.connectGCRRegistry(
-    //   "<token>",
-    //   {
-    //     name: registryName,
-    //     gcp_integration_id: snap.StateHandler.connected_registry.credentials.id,
-    //     url: registryUrl,
-    //   },
-    //   {
-    //     id: project.id,
-    //   }
-    // );
-    nextFormStep({
-      settings: {
-        gcr_url: registryUrl,
-        registry_name: registryName,
-      },
-    });
+    try {
+      await api.connectGCRRegistry(
+        "<token>",
+        {
+          name: registryName,
+          gcp_integration_id:
+            snap.StateHandler.connected_registry.credentials.id,
+          url: registryUrl,
+        },
+        {
+          id: project.id,
+        }
+      );
+
+      nextFormStep({
+        settings: {
+          gcr_url: registryUrl,
+          registry_name: registryName,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Couldn't connect registry.");
+    }
   };
   return (
     <>

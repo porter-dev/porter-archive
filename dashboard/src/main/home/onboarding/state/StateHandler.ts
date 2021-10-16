@@ -7,7 +7,6 @@ import type {
   GCPRegistryConfig,
   SkipProvisionConfig,
   SkipRegistryConnection,
-  SupportedProviders,
 } from "../types";
 
 export type ConnectedRegistryConfig =
@@ -115,6 +114,12 @@ export const StateHandler = proxy({
         ...StateHandler.provision_resources,
         ...settings,
       };
+    },
+    clearRegistryProvider: () => {
+      StateHandler.connected_registry.provider = "";
+    },
+    clearResourceProvisioningProvider: () => {
+      StateHandler.provision_resources.provider = "";
     },
   },
 });

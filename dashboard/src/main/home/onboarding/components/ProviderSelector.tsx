@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
 import { SupportedProviders } from "../types";
+import Selector from "components/Selector";
 
 export type ProviderSelectorProps = {
   selectProvider: (
@@ -12,60 +13,65 @@ export type ProviderSelectorProps = {
 
 const providers: SupportedProviders[] = ["aws", "gcp", "do"];
 
+const providerOptions = [
+  { 
+    value: "skip",
+    label: "Skip / I don't know what this is" 
+  },
+  { 
+    value: "aws",
+    icon: integrationList["aws"].icon,
+    label: "Amazon Elastic Container Registry (ECR)" 
+  },
+  { 
+    value: "gcp",
+    icon: integrationList["gcp"].icon,
+    label: "Google Cloud Registry (GCR)" 
+  },
+  { 
+    value: "do",
+    icon: integrationList["do"].icon,
+    label: "DigitalOcean Container Registry (DOCR)" 
+  },
+  { 
+    value: "external",
+    icon: integrationList["kubernetes"].icon,
+    label: "Link to an existing cluster"
+  }
+]
+
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selectProvider,
   enableExternal,
 }) => {
+  const [provider, setProvider] = useState("skip");
+
   return (
     <>
-      <BlockList>
-        {providers.map((provider, i: number) => {
-          let providerInfo = integrationList[provider];
-          return (
-            <Block
-              key={i}
-              onClick={() => {
-                selectProvider(provider);
-              }}
-            >
-              <Icon src={providerInfo.icon} />
-              <BlockTitle>{providerInfo.label}</BlockTitle>
-              <CostSection
-                onClick={(e) => {
-                  e.stopPropagation();
-                  selectProvider(provider);
-                }}
-              ></CostSection>
-              <BlockDescription>Hosted in your own cloud.</BlockDescription>
-            </Block>
-          );
-        })}
-        {enableExternal && (
-          <Block
-            key={"external"}
-            onClick={() => {
-              selectProvider("external");
-            }}
-          >
-            <Icon src={""} />
-            <BlockTitle>External Cluster</BlockTitle>
-            <CostSection
-              onClick={(e) => {
-                e.stopPropagation();
-                selectProvider("external");
-              }}
-            ></CostSection>
-            <BlockDescription>
-              Connect your own cluster via CLI.
-            </BlockDescription>
-          </Block>
-        )}
-      </BlockList>
+      <Br />
+      <Selector
+        activeValue={provider}
+        options={providerOptions}
+        setActiveValue={provider => {
+          setProvider(provider);
+          if (provider !== "skip" && provider !== "external") {
+            selectProvider(provider as SupportedProviders);
+          }
+        }}
+        width="100%"
+        height="45px"
+      />
+      <Br />
     </>
   );
 };
 
 export default ProviderSelector;
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const CostSection = styled.p`
   position: absolute;

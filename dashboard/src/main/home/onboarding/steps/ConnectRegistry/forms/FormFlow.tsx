@@ -94,8 +94,7 @@ const FormFlowWrapper: React.FC<Props> = ({
   }, [provider, currentStep]);
 
   return (
-    <>
-      {FormTitle[provider]}
+    <FormWrapper>
       <Breadcrumb>
         <Text bold={currentStep === "credentials"}>Credentials</Text>
         {" > "}
@@ -104,16 +103,24 @@ const FormFlowWrapper: React.FC<Props> = ({
         <Text bold={currentStep === "test_connection"}>Test Connection</Text>
       </Breadcrumb>
       {CurrentForm}
-    </>
+    </FormWrapper>
   );
 };
 
 export default FormFlowWrapper;
+
+const FormWrapper = styled.div`
+  background: #ffffff11;
+  margin-top: -10px;
+  padding: 20px;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+`;
 
 const Text = styled.span<{ bold: boolean }>`
   font-weight: ${(props) => (props.bold ? "600" : "normal")};
 `;
 
 const Breadcrumb = styled.div`
-  margin: 0 10px;
+  font-size: 13px;
 `;

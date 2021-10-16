@@ -3,9 +3,11 @@ import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
 import { AWSRegistryConfig } from "main/home/onboarding/types";
 import React, { useState } from "react";
+import styled from "styled-components";
 import api from "shared/api";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../../state/index";
+import IntegrationCategories from "main/home/integrations/IntegrationCategories";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -64,24 +66,27 @@ export const CredentialsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+    try {
+      const res = await api.createAWSIntegration(
+        "token",
+        {
+          aws_region: awsRegion,
+          aws_access_key_id: accessId,
+          aws_secret_access_key: secretKey,
+        },
+        {
+          id: project.id,
+        }
+      );
 
-    // const res = await api.createAWSIntegration(
-    //   "token",
-    //   {
-    //     aws_region: awsRegion,
-    //     aws_access_key_id: accessId,
-    //     aws_secret_access_key: secretKey,
-    //   },
-    //   {
-    //     id: project.id,
-    //   }
-    // );
-
-    nextFormStep({
-      credentials: {
-        id: "some_id",
-      },
-    });
+      nextFormStep({
+        credentials: {
+          id: res.data?.id,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Something went wrong, please try again");
+    }
   };
 
   return (
@@ -118,6 +123,7 @@ export const CredentialsForm: React.FC<{
         }}
         label="📍 AWS Region"
       />
+      <Br />
       <SaveButton
         text="Continue"
         disabled={false}
@@ -158,21 +164,25 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+    try {
+      await api.connectECRRegistry(
+        "<token>",
+        {
+          name: registryName,
+          aws_integration_id:
+            snap.StateHandler.connected_registry.credentials.id,
+        },
+        { id: project.id }
+      );
 
-    // await api.connectECRRegistry(
-    //   "<token>",
-    //   {
-    //     name: registryName,
-    //     aws_integration_id: snap.StateHandler.connected_registry.credentials.id,
-    //   },
-    //   { id: project.id }
-    // );
-
-    nextFormStep({
-      settings: {
-        registry_name: registryName,
-      },
-    });
+      nextFormStep({
+        settings: {
+          registry_name: registryName,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Couldn't connect registry.");
+    }
   };
 
   return (
@@ -206,6 +216,7 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
 }) => {
   return (
     <>
+      <IntegrationCategories category={"registry"} />
       <SaveButton
         text="Continue"
         disabled={false}
@@ -218,3 +229,8 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
     </>
   );
 };
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;

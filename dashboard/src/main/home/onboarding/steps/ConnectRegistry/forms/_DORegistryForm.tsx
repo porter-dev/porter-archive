@@ -4,6 +4,7 @@ import SaveButton from "components/SaveButton";
 import { OFState } from "main/home/onboarding/state";
 import { DORegistryConfig } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
@@ -20,6 +21,7 @@ export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<DORegistryConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
+  const location = useLocation();
   useEffect(() => {
     api.getOAuthIds("<token>", {}, { project_id: project?.id }).then((res) => {
       let tgtIntegration = res.data.find((integration: any) => {
@@ -36,11 +38,14 @@ export const CredentialsForm: React.FC<{
     });
   }, []);
 
+  const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+
+  const encoded_redirect_uri = encodeURIComponent(url);
   return (
     <>
       <ConnectDigitalOceanButton
         target={"_blank"}
-        href={`/api/projects/${project?.id}/oauth/digitalocean`}
+        href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
       >
         Connect Digital Ocean
       </ConnectDigitalOceanButton>

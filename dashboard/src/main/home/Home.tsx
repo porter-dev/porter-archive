@@ -288,12 +288,20 @@ class Home extends Component<PropsType, StateType> {
   }
 
   async checkIfProjectHasBilling(projectId: number) {
-    const res = await api.getHasBilling(
-      "<token>",
-      {},
-      { project_id: projectId }
-    );
-    this.context.setHasBillingEnabled(res.data?.has_billing);
+    if (!projectId) {
+      return false;
+    }
+    try {
+      const res = await api.getHasBilling(
+        "<token>",
+        {},
+        { project_id: projectId }
+      );
+      this.context.setHasBillingEnabled(res.data?.has_billing);
+      return res?.data?.has_billing;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
@@ -302,20 +310,25 @@ class Home extends Component<PropsType, StateType> {
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
-      this.checkIfProjectHasBilling(this?.context?.currentProject?.id);
-      api
-        .getUsage(
-          "<token>",
-          {},
-          { project_id: this.context?.currentProject?.id }
-        )
-        .then((res) => {
-          const usage = res.data;
-          this.context.setUsage(usage);
-          if (usage.exceeded) {
-            this.context.setCurrentModal("UsageWarningModal", {
-              usage,
-            });
+      this.checkIfProjectHasBilling(this?.context?.currentProject?.id)
+        .then((isBillingEnabled) => {
+          if (isBillingEnabled) {
+            api
+              .getUsage(
+                "<token>",
+                {},
+                { project_id: this.context?.currentProject?.id }
+              )
+              .then((res) => {
+                const usage = res.data;
+                this.context.setUsage(usage);
+                if (usage.exceeded) {
+                  this.context.setCurrentModal("UsageWarningModal", {
+                    usage,
+                  });
+                }
+              })
+              .catch(console.log);
           }
         })
         .catch(console.log);

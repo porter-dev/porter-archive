@@ -25,6 +25,9 @@ type GCPIntegration struct {
 	// The GCP project id where the service account for this auth mechanism persists
 	GCPProjectID string `json:"gcp_project_id"`
 
+	// The GCP service account email for this credential
+	GCPSAEmail string `json:"gcp_sa_email"`
+
 	// The GCP user email that linked this service account
 	GCPUserEmail string `json:"gcp-user-email"`
 
@@ -45,7 +48,7 @@ func (g *GCPIntegration) ToGCPIntegrationType() *types.GCPIntegration {
 		UserID:       g.UserID,
 		ProjectID:    g.ProjectID,
 		GCPProjectID: g.GCPProjectID,
-		GCPUserEmail: g.GCPUserEmail,
+		GCPSAEmail:   g.GCPSAEmail,
 	}
 }
 
@@ -124,4 +127,17 @@ func GCPProjectIDFromJSON(jsonData []byte) (string, error) {
 	}
 
 	return f.ProjectID, nil
+}
+
+// PopulateGCPMetadata uses the credentials file to get the GCP SA name and
+// project ID, and attaches it to the GCP credential
+func (g *GCPIntegration) PopulateGCPMetadata() {
+	var f credentialsFile
+
+	if err := json.Unmarshal(g.GCPKeyData, &f); err != nil {
+		return
+	}
+
+	g.GCPProjectID = f.ProjectID
+	g.GCPSAEmail = f.ClientEmail
 }

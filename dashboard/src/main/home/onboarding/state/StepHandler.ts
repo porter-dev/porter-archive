@@ -2,35 +2,29 @@ import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { useRouting } from "shared/routing";
 import { proxy, useSnapshot } from "valtio";
-import { devtools } from "valtio/utils";
 import { StepKey, Steps } from "../types";
-import { StateKeys } from "./StateHandler";
 
 type Step = {
-  previous?: StepKey;
   url: string;
   final?: true;
   substeps?: {
-    [key in string]: SubStep;
+    [key in string]: Step;
   };
   on?: ActionHandler;
   execute?: {
     on: {
       skip?: string;
       continue?: string;
+      go_back?: string;
     };
   };
 };
 
-type SubStep = Omit<Step, "previous"> & {
-  parent: StepKey;
-  previous?: string;
-};
-
-export type Action = "skip" | "continue";
+export type Action = "skip" | "continue" | "go_back";
 type ActionHandler = {
   skip?: string;
   continue: string;
+  go_back?: string;
 };
 
 export type FlowType = {
@@ -55,7 +49,6 @@ const flow: FlowType = {
       },
     },
     connect_source: {
-      previous: "new_project",
       url: "/onboarding/source",
       on: {
         continue: "connect_registry",
@@ -67,11 +60,11 @@ const flow: FlowType = {
       },
     },
     connect_registry: {
-      previous: "connect_source",
       url: "/onboarding/registry",
       on: {
         skip: "provision_resources",
         continue: "connect_registry.credentials",
+        go_back: "connect_source",
       },
       execute: {
         on: {
@@ -84,21 +77,23 @@ const flow: FlowType = {
           url: "/onboarding/registry/credentials",
           on: {
             continue: "connect_registry.settings",
+            go_back: "connect_registry",
           },
-          parent: "connect_registry",
+
           execute: {
             on: {
               continue: "saveRegistryCredentials",
+              go_back: "clearRegistryProvider",
             },
           },
         },
         settings: {
-          previous: "credentials",
           url: "/onboarding/registry/settings",
           on: {
             continue: "connect_registry.test_connection",
+            go_back: "connect_registry.credentials",
           },
-          parent: "connect_registry",
+
           execute: {
             on: {
               continue: "saveRegistrySettings",
@@ -106,21 +101,19 @@ const flow: FlowType = {
           },
         },
         test_connection: {
-          previous: "settings",
           url: "/onboarding/registry/test_connection",
           on: {
             continue: "provision_resources",
           },
-          parent: "connect_registry",
         },
       },
     },
     provision_resources: {
-      previous: "connect_registry",
       url: "/onboarding/provision",
       on: {
         skip: "provision_resources.connect_own_cluster",
         continue: "provision_resources.credentials",
+        go_back: "connect_registry",
       },
       execute: {
         on: {
@@ -133,26 +126,33 @@ const flow: FlowType = {
           url: "/onboarding/provision/connect_own_cluster",
           on: {
             continue: "clean_up",
+            go_back: "provision_resources",
           },
-          parent: "provision_resources",
+          execute: {
+            on: {
+              go_back: "clearResourceProvisioningProvider",
+            },
+          },
         },
         credentials: {
           url: "/onboarding/provision/credentials",
-          on: { continue: "provision_resources.settings" },
-          parent: "provision_resources",
+          on: {
+            continue: "provision_resources.settings",
+            go_back: "provision_resources",
+          },
           execute: {
             on: {
               continue: "saveResourceProvisioningCredentials",
+              go_back: "clearResourceProvisioningProvider",
             },
           },
         },
         settings: {
-          previous: "credentials",
           url: "/onboarding/provision/settings",
           on: {
             continue: "clean_up",
+            go_back: "provision_resources.credentials",
           },
-          parent: "provision_resources",
           execute: {
             on: {
               continue: "saveResourceProvisioningSettings",
@@ -171,12 +171,13 @@ const flow: FlowType = {
 type StepHandlerType = {
   flow: FlowType;
   currentStepName: string;
-  currentStep: Step | SubStep;
+  currentStep: Step;
+  canGoBack?: boolean;
   actions: {
     nextStep: (action?: Action) => void;
     clearState: () => void;
     restoreState: (prevState: Partial<StepHandlerType>) => void;
-    getStep: (nextStepName: string) => Step | SubStep;
+    getStep: (nextStepName: string) => Step;
   };
 };
 
@@ -199,9 +200,10 @@ export const StepHandler: StepHandlerType = proxy({
           "No next step name found, fix the action triggering nextStep"
         );
       }
-
+      const newStep = StepHandler.actions.getStep(nextStepName);
       StepHandler.currentStepName = nextStepName;
-      StepHandler.currentStep = StepHandler.actions.getStep(nextStepName);
+      StepHandler.currentStep = newStep;
+      StepHandler.canGoBack = !!newStep?.on?.go_back;
       return;
     },
     getStep: (nextStepName: string) => {
@@ -209,7 +211,7 @@ export const StepHandler: StepHandlerType = proxy({
 
       const step = flow.steps[stepName as Steps];
 
-      let nextStep: Step | SubStep = step;
+      let nextStep: Step = step;
 
       if (substep) {
         nextStep = step.substeps[substep];

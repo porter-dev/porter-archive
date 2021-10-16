@@ -41,6 +41,7 @@ const SelectWrapper = styled.div``;
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
+  font-size: 13px;
 `;
 
 const StyledSelectRow = styled.div`

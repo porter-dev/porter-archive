@@ -63,6 +63,10 @@ const ConnectSource: React.FC<{
     onSuccess(selectedSource);
   };
 
+  const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+
+  const encoded_redirect_uri = encodeURIComponent(url);
+
   return (
     <div>
       <FadeWrapper>
@@ -78,7 +82,9 @@ const ConnectSource: React.FC<{
         </Helper>
         {!isLoading && (!accountData || !accountData?.accounts?.length) && (
           <>
-            <ConnectToGithubButton href="/api/integrations/github-app/oauth">
+            <ConnectToGithubButton
+              href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+            >
               <GitHubIcon src={github} /> Connect to GitHub
             </ConnectToGithubButton>
             <Helper>

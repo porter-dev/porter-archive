@@ -1,4 +1,10 @@
-import React, { Component } from "react";
+import React, { useContext, useMemo, useState } from "react";
+
+import { useRouting } from "shared/routing";
+import api from "shared/api";
+import SaveButton from "components/SaveButton";
+
+import backArrow from "assets/back_arrow.png";
 import styled from "styled-components";
 
 import gradient from "assets/gradient.png";
@@ -7,80 +13,134 @@ import { isAlphanumeric } from "shared/common";
 
 import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
-import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import TitleSection from "components/TitleSection";
 
-type PropsType = {};
-
-type StateType = {
-  projectName: string;
-  selectedProvider: string | null;
+type ValidationError = {
+  hasError: boolean;
+  description?: string;
 };
 
-export default class NewProject extends Component<PropsType, StateType> {
-  state = {
-    projectName: "",
-    selectedProvider: null as string | null,
+export const NewProjectFC = () => {
+  const { user, setProjects, setCurrentProject } = useContext(Context);
+  const { pushFiltered } = useRouting();
+  const [buttonStatus, setButtonStatus] = useState("");
+  const [name, setName] = useState("");
+  const { projects } = useContext(Context);
+
+  const isFirstProject = useMemo(() => {
+    return !(projects?.length >= 1);
+  }, [projects]);
+
+  const validateProjectName = (): ValidationError => {
+    if (name === "") {
+      return {
+        hasError: true,
+        description: "The name cannot be empty. Please fill the input.",
+      };
+    }
+    if (!isAlphanumeric(name)) {
+      return {
+        hasError: true,
+        description:
+          'Please be sure that the text is alphanumeric. (lowercase letters, numbers, and "-" only)',
+      };
+    }
+    if (name.length > 25) {
+      return {
+        hasError: true,
+        description:
+          "The length of the name cannot be more than 25 characters.",
+      };
+    }
+
+    return {
+      hasError: false,
+    };
   };
 
-  componentDidMount() {
-    window.analytics.track("provision_new-project", {
-      userId: this.context.user?.id,
-    });
-  }
+  const createProject = async () => {
+    const projectName = name;
+    setButtonStatus("loading");
+    const validation = validateProjectName();
 
-  render() {
-    let { capabilities } = this.context;
-    let { projectName } = this.state;
-    return (
-      <StyledNewProject>
-        <TitleSection>New Project</TitleSection>
-        <Helper>
-          Project name
-          <Warning
-            highlight={
-              !isAlphanumeric(this.state.projectName) &&
-              this.state.projectName !== ""
-            }
-          >
-            (lowercase letters, numbers, and "-" only)
-          </Warning>
-          <Required>*</Required>
-        </Helper>
-        <InputWrapper>
-          <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Letter>
-              {this.state.projectName
-                ? this.state.projectName[0].toUpperCase()
-                : "-"}
-            </Letter>
-          </ProjectIcon>
-          <InputRow
-            type="string"
-            value={this.state.projectName}
-            setValue={(x: string) => this.setState({ projectName: x })}
-            placeholder="ex: perspective-vortex"
-            width="470px"
-          />
-        </InputWrapper>
-        <ProvisionerSettings
-          isInNewProject={true}
-          projectName={projectName}
-          provisioner={capabilities?.provisioner}
+    if (validation.hasError) {
+      setButtonStatus(validation.description);
+      return;
+    }
+
+    try {
+      const project = await api
+        .createProject("<token>", { name: projectName }, {})
+        .then((res) => res.data);
+
+      const projectList = await api
+        .getProjects(
+          "<token>",
+          {},
+          {
+            id: user.userId,
+          }
+        )
+        .then((res) => res.data);
+      setProjects(projectList);
+      setCurrentProject(project);
+      setButtonStatus("successful");
+    } catch (error) {
+      setButtonStatus("Couldn't create project, try again.");
+      console.log(error);
+    }
+  };
+
+  return (
+    <StyledNewProject>
+      {!isFirstProject && (
+        <BackButton
+          onClick={() => {
+            pushFiltered("/dashboard", []);
+          }}
+        >
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+      )}
+      <TitleSection>New Project</TitleSection>
+      <Helper>
+        Project name
+        <Warning highlight={validateProjectName().hasError}>
+          (lowercase letters, numbers, and "-" only) 25 letters max length
+        </Warning>
+        <Required>*</Required>
+      </Helper>
+      <InputWrapper>
+        <ProjectIcon>
+          <ProjectImage src={gradient} />
+          <Letter>{name ? name.toUpperCase().substring(0, 1) : "-"}</Letter>
+        </ProjectIcon>
+        <InputRow
+          type="string"
+          value={name}
+          setValue={(x: string) => {
+            setButtonStatus("");
+            setName(x);
+          }}
+          placeholder="ex: perspective-vortex"
+          width="470px"
+          disabled={buttonStatus === "loading"}
         />
-        <Br />
-      </StyledNewProject>
-    );
-  }
-}
-
-NewProject.contextType = Context;
-
-const Br = styled.div`
-  width: 100%;
-  height: 100px;
-`;
+      </InputWrapper>
+      <NewProjectSaveButton
+        text="Create Project"
+        disabled={false}
+        onClick={createProject}
+        status={buttonStatus}
+        makeFlush={true}
+        clearPosition={true}
+        statusPosition="right"
+        saveText="Creating project..."
+        successText="Project created successfully!"
+      />
+    </StyledNewProject>
+  );
+};
 
 const Required = styled.div`
   margin-left: 8px;
@@ -134,19 +194,38 @@ const Warning = styled.span`
     props.makeFlush ? "" : "5px"};
 `;
 
-const Title = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
 const StyledNewProject = styled.div`
   width: calc(90% - 130px);
   min-width: 300px;
   position: relative;
   margin-top: calc(50vh - 340px);
+`;
+
+const NewProjectSaveButton = styled(SaveButton)`
+  margin-top: 24px;
+`;
+
+const BackButton = styled.div`
+  margin-bottom: 24px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
 `;

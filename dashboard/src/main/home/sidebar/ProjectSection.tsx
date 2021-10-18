@@ -78,9 +78,7 @@ class ProjectSection extends Component<PropsType, StateType> {
               selected={false}
               lastItem={true}
               onClick={() =>
-                pushFiltered(this.props, "/onboarding/new-project", [
-                  "project_id",
-                ])
+                pushFiltered(this.props, "/new-project", ["project_id"])
               }
             >
               <ProjectIconAlt>+</ProjectIconAlt>
@@ -119,7 +117,7 @@ class ProjectSection extends Component<PropsType, StateType> {
     return (
       <InitializeButton
         onClick={() =>
-          pushFiltered(this.props, "new-project", ["project_id"], {
+          pushFiltered(this.props, "/new-project", ["project_id"], {
             new_project: true,
           })
         }

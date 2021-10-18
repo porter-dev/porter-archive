@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { RouteComponentProps, Switch, withRouter } from "react-router";
+import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -26,6 +26,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
+import { NewProjectFC } from "./new-project/NewProject";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -135,7 +136,7 @@ class Home extends Component<PropsType, StateType> {
       .then((res) => {
         if (res.data) {
           if (res.data.length === 0) {
-            pushFiltered(this.props, "/onboarding/new-project", ["project_id"]);
+            this.redirectToNewProject();
           } else if (res.data.length > 0 && !currentProject) {
             setProjects(res.data);
 
@@ -167,92 +168,9 @@ class Home extends Component<PropsType, StateType> {
       .catch(console.log);
   };
 
-  provisionDOCR = async (
-    integrationId: number,
-    tier: string,
-    callback?: any
-  ) => {
-    console.log("Provisioning DOCR...");
-    await api.createDOCR(
-      "<token>",
-      {
-        do_integration_id: integrationId,
-        docr_name: this.props.currentProject.name,
-        docr_subscription_tier: tier,
-      },
-      {
-        project_id: this.props.currentProject.id,
-      }
-    );
-    return callback();
-  };
-
-  provisionDOKS = async (
-    integrationId: number,
-    region: string,
-    clusterName: string
-  ) => {
-    console.log("Provisioning DOKS...");
-    await api.createDOKS(
-      "<token>",
-      {
-        do_integration_id: integrationId,
-        doks_name: clusterName,
-        do_region: region,
-      },
-      {
-        project_id: this.props.currentProject.id,
-      }
-    );
-    return pushFiltered(this.props, "/dashboard", ["project_id"], {
-      tab: "provisioner",
-    });
-  };
-
-  checkDO = () => {
-    let { currentProject } = this.props;
-    if (this.state.handleDO && currentProject?.id) {
-      api
-        .getOAuthIds(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-          }
-        )
-        .then((res) => {
-          let tgtIntegration = res.data.find((integration: any) => {
-            return integration.client === "do";
-          });
-          let queryString = window.location.search;
-          let urlParams = new URLSearchParams(queryString);
-          let tier = urlParams.get("tier");
-          let region = urlParams.get("region");
-          let clusterName = urlParams.get("cluster_name");
-          let infras = urlParams.getAll("infras");
-          if (infras.length === 2) {
-            this.provisionDOCR(tgtIntegration.id, tier, () => {
-              this.provisionDOKS(tgtIntegration.id, region, clusterName);
-            });
-          } else if (infras[0] === "docr") {
-            this.provisionDOCR(tgtIntegration.id, tier, () => {
-              pushFiltered(this.props, "/dashboard", ["project_id"], {
-                tab: "provisioner",
-              });
-            });
-          } else {
-            this.provisionDOKS(tgtIntegration.id, region, clusterName);
-          }
-        })
-        .catch(console.log);
-      this.setState({ handleDO: false });
-    }
-  };
-
   componentDidMount() {
+    this.checkOnboarding();
     let { match } = this.props;
-    let params = match.params as any;
-    let { cluster } = params;
 
     let { user } = this.context;
 
@@ -274,12 +192,7 @@ class Home extends Component<PropsType, StateType> {
       this.context.setCurrentError(err);
     }
 
-    let provision = urlParams.get("provision");
     let defaultProjectId = parseInt(urlParams.get("project_id"));
-    if (provision === "do") {
-      this.setState({ handleDO: true });
-      this.checkDO();
-    }
 
     this.setState({ ghRedirect: urlParams.get("gh_oauth") !== null });
     urlParams.delete("gh_oauth");
@@ -302,6 +215,17 @@ class Home extends Component<PropsType, StateType> {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async checkOnboarding() {
+    try {
+      const project_id = this.context?.currentProject?.id;
+      const res = await api.getOnboardingState("<token>", {}, { project_id });
+
+      if (res?.data && res?.data.current_step !== "clean_up") {
+        this.redirectToOnboarding();
+      }
+    } catch (error) {}
   }
 
   // TODO: Need to handle the following cases. Do a deep rearchitecture (Prov -> Dashboard?) if need be:
@@ -338,130 +262,78 @@ class Home extends Component<PropsType, StateType> {
       prevProps.currentProject !== this.props.currentProject ||
       (!prevProps.currentCluster && this.props.currentCluster)
     ) {
-      if (this.state.handleDO) {
-        this.checkDO();
-      } else {
-        this.initializeView();
-        this.getMetadata();
-      }
+      this.initializeView();
+      this.getMetadata();
     }
   }
 
-  // TODO: move into ClusterDashboard
-  renderDashboard = () => {
-    let { currentCluster } = this.context;
-    if (currentCluster?.id === -1) {
-      return <Loading />;
-    } else if (!currentCluster || !currentCluster.name) {
-      return (
-        <DashboardWrapper>
-          <PageNotFound />
-        </DashboardWrapper>
-      );
-    }
-    return (
-      <DashboardWrapper>
-        <ClusterDashboard
-          currentCluster={currentCluster}
-          setSidebar={(x: boolean) => this.setState({ forceSidebar: x })}
-          currentView={this.props.currentRoute}
-          // setCurrentView={(x: string) => this.setState({ currentView: x })}
-        />
-      </DashboardWrapper>
-    );
-  };
-
-  renderContents = () => {
-    let currentView = this.props.currentRoute;
-
-    if (this.context.currentProject && currentView !== "onboarding") {
-      if (
-        currentView === "cluster-dashboard" ||
-        currentView === "applications" ||
-        currentView === "jobs" ||
-        currentView === "env-groups"
-      ) {
-        return this.renderDashboard();
-      } else if (currentView === "dashboard") {
-        return (
-          <DashboardWrapper>
-            <Dashboard
-              projectId={this.context.currentProject?.id}
-              setRefreshClusters={(x: boolean) =>
-                this.setState({ forceRefreshClusters: x })
-              }
-            />
-          </DashboardWrapper>
-        );
-      } else if (currentView === "integrations") {
-        return <GuardedIntegrations />;
-      } else if (currentView === "project-settings") {
-        return <GuardedProjectSettings />;
-      }
-      return <Templates />;
-    } else if (currentView === "onboarding") {
-      return <Onboarding />;
-    }
-  };
-
-  projectOverlayCall = () => {
+  projectOverlayCall = async () => {
     let { user, setProjects, setCurrentProject } = this.context;
-    api
-      .getProjects("<token>", {}, { id: user.userId })
-      .then((res) => {
-        if (res.data) {
-          setProjects(res.data);
-          if (res.data.length > 0) {
-            setCurrentProject(res.data[0]);
-          } else {
-            setCurrentProject(null, () =>
-              pushFiltered(this.props, "/onboarding/new-project", [
-                "project_id",
-              ])
-            );
-          }
-          this.context.setCurrentModal(null, null);
-        }
-      })
-      .catch(console.log);
+    try {
+      const res = await api.getProjects("<token>", {}, { id: user.userId });
+      if (!res.data) {
+        this.context.setCurrentModal(null, null);
+        return;
+      }
+
+      setProjects(res.data);
+      if (!res.data.length) {
+        setCurrentProject(null, () => this.redirectToNewProject());
+      } else {
+        setCurrentProject(res.data[0]);
+      }
+      this.context.setCurrentModal(null, null);
+    } catch (error) {
+      /** @todo Centralize with error handler */
+      console.log(error);
+    }
   };
 
-  handleDelete = () => {
+  handleDelete = async () => {
     let { setCurrentModal, currentProject } = this.context;
     localStorage.removeItem(currentProject.id + "-cluster");
-    api
-      .deleteProject("<token>", {}, { id: currentProject.id })
-      .then(this.projectOverlayCall)
-      .catch(console.log);
+    try {
+      await api.deleteProject("<token>", {}, { id: currentProject?.id });
+      this.projectOverlayCall();
+    } catch (error) {
+      /** @todo Centralize with error handler */
+      console.log(error);
+    }
 
-    // Loop through and delete infra of all clusters we've provisioned
-    api
-      .getClusters("<token>", {}, { id: currentProject.id })
-      .then((res) => {
-        // TODO: promise.map
-        for (var i = 0; i < res.data.length; i++) {
-          let cluster = res.data[i];
-          if (!cluster.infra_id) continue;
+    try {
+      const res = await api.getClusters<
+        {
+          infra_id?: number;
+          name: string;
+        }[]
+      >("<token>", {}, { id: currentProject?.id });
 
-          // Handle destroying infra we've provisioned
-          api
-            .destroyInfra(
-              "<token>",
-              { name: cluster.name },
-              {
-                project_id: currentProject.id,
-                infra_id: cluster.infra_id,
-              }
-            )
-            .then(() =>
-              console.log("destroyed provisioned infra:", cluster.infra_id)
-            )
-            .catch(console.log);
+      const destroyInfraPromises = res.data.map((cluster) => {
+        if (!cluster.infra_id) {
+          return undefined;
         }
-      })
-      .catch(console.log);
+
+        return api.destroyInfra(
+          "<token>",
+          { name: cluster.name },
+          { project_id: currentProject.id, infra_id: cluster.infra_id }
+        );
+      });
+
+      await Promise.all(destroyInfraPromises);
+    } catch (error) {
+      console.log(error);
+    }
     setCurrentModal(null, null);
     pushFiltered(this.props, "/dashboard", []);
+  };
+
+  redirectToNewProject = () => {
+    pushFiltered(this.props, "/new-project", ["project_id"]);
+  };
+
+  redirectToOnboarding = () => {
+    pushFiltered(this.props, "/onboarding", ["project_id"]);
   };
 
   render() {
@@ -473,7 +345,7 @@ class Home extends Component<PropsType, StateType> {
       projects,
     } = this.context;
 
-    const { cluster } = this.props.match.params as any;
+    const { cluster, baseRoute } = this.props.match.params as any;
     return (
       <StyledHome>
         <ModalHandler
@@ -489,7 +361,7 @@ class Home extends Component<PropsType, StateType> {
         )}
 
         {/* Render sidebar when there's at least one project */}
-        {projects?.length > 0 && cluster !== "new-project" ? (
+        {projects?.length > 0 && baseRoute !== "new-project" ? (
           <Sidebar
             key="sidebar"
             forceSidebar={this.state.forceSidebar}
@@ -528,7 +400,77 @@ class Home extends Component<PropsType, StateType> {
             logOut={this.props.logOut}
             currentView={this.props.currentRoute} // For form feedback
           />
-          {this.renderContents()}
+
+          <Switch>
+            <Route
+              path="/new-project"
+              render={() => {
+                return <NewProjectFC />;
+              }}
+            ></Route>
+            <Route
+              path="/onboarding"
+              render={() => {
+                return <Onboarding></Onboarding>;
+              }}
+            />
+            <Route
+              path="/dashboard"
+              render={() => {
+                return (
+                  <DashboardWrapper>
+                    <Dashboard
+                      projectId={this.context.currentProject?.id}
+                      setRefreshClusters={(x: boolean) =>
+                        this.setState({ forceRefreshClusters: x })
+                      }
+                    />
+                  </DashboardWrapper>
+                );
+              }}
+            />
+            <Route
+              path={[
+                "/cluster-dashboard",
+                "/applications",
+                "/jobs",
+                "/env-groups",
+              ]}
+              render={() => {
+                let { currentCluster } = this.context;
+                if (currentCluster?.id === -1) {
+                  return <Loading />;
+                } else if (!currentCluster || !currentCluster.name) {
+                  return (
+                    <DashboardWrapper>
+                      <PageNotFound />
+                    </DashboardWrapper>
+                  );
+                }
+                return (
+                  <DashboardWrapper>
+                    <ClusterDashboard
+                      currentCluster={currentCluster}
+                      setSidebar={(x: boolean) =>
+                        this.setState({ forceSidebar: x })
+                      }
+                      currentView={this.props.currentRoute}
+                      // setCurrentView={(x: string) => this.setState({ currentView: x })}
+                    />
+                  </DashboardWrapper>
+                );
+              }}
+            />
+            <Route
+              path={"/integrations"}
+              render={() => <GuardedIntegrations />}
+            />
+            <Route
+              path={"/project-settings"}
+              render={() => <GuardedProjectSettings />}
+            />
+            <Route path={"*"} render={() => <Templates />} />
+          </Switch>
         </ViewWrapper>
 
         <ConfirmOverlay

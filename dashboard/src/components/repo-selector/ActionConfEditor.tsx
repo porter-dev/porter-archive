@@ -69,7 +69,7 @@ const ActionConfEditor: React.FC<Props> = (props) => {
     );
   } else if (
     // select dockerfile or buildpack build context
-    (!props.dockerfilePath && !props.folderPath) ||
+    (!props.dockerfilePath && !props.folderPath && !props.procfileProcess) ||
     // select procfile process
     (props.procfilePath &&
       props.folderPath &&

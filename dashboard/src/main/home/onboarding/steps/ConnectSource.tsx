@@ -98,7 +98,10 @@ const ConnectSource: React.FC<{
             <List>
               {accountData?.accounts.map((name, i) => {
                 return (
-                  <Row key={i} isLastItem={i === accountData.accounts.length - 1}>
+                  <Row
+                    key={i}
+                    isLastItem={i === accountData.accounts.length - 1}
+                  >
                     <i className="material-icons">bookmark</i>
                     {name}
                   </Row>
@@ -147,7 +150,7 @@ const FadeWrapper = styled.div<{ delay?: string }>`
 
 const SlideWrapper = styled.div<{ delay?: string }>`
   opacity: 0;
-  animation: slideIn 0.7s ${props => props.delay || "1.3s"};
+  animation: slideIn 0.7s ${(props) => props.delay || "1.3s"};
   animation-fill-mode: forwards;
 
   @keyframes slideIn {

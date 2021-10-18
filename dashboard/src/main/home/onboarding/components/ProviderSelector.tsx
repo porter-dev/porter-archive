@@ -14,31 +14,31 @@ export type ProviderSelectorProps = {
 const providers: SupportedProviders[] = ["aws", "gcp", "do"];
 
 const providerOptions = [
-  { 
+  {
     value: "skip",
-    label: "Skip / I don't know what this is" 
+    label: "Skip / I don't know what this is",
   },
-  { 
+  {
     value: "aws",
     icon: integrationList["aws"].icon,
-    label: "Amazon Elastic Container Registry (ECR)" 
+    label: "Amazon Elastic Container Registry (ECR)",
   },
-  { 
+  {
     value: "gcp",
     icon: integrationList["gcp"].icon,
-    label: "Google Cloud Registry (GCR)" 
+    label: "Google Cloud Registry (GCR)",
   },
-  { 
+  {
     value: "do",
     icon: integrationList["do"].icon,
-    label: "DigitalOcean Container Registry (DOCR)" 
+    label: "DigitalOcean Container Registry (DOCR)",
   },
-  { 
+  {
     value: "external",
     icon: integrationList["kubernetes"].icon,
-    label: "Link to an existing cluster"
-  }
-]
+    label: "Link to an existing cluster",
+  },
+];
 
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selectProvider,
@@ -52,7 +52,7 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
       <Selector
         activeValue={provider}
         options={providerOptions}
-        setActiveValue={provider => {
+        setActiveValue={(provider) => {
           setProvider(provider);
           if (provider !== "skip" && provider !== "external") {
             selectProvider(provider as SupportedProviders);

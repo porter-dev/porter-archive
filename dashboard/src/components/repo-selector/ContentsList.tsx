@@ -425,7 +425,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
             <p>
               <b>{this.state.autoBuildpack.name}</b> buildpack was{" "}
               <a
-                href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+                href="https://docs.porter.run/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
                 target="_blank"
               >
                 detected automatically
@@ -440,7 +440,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
           <FlexWrapper>
             <UseButton onClick={this.handleContinue}>Continue</UseButton>
             <StatusWrapper
-              href="https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
+              href="https://docs.porter.run/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks"
               target="_blank"
             >
               <i className="material-icons">help_outline</i>

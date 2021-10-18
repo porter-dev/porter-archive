@@ -20,7 +20,7 @@ You will be redirected to the list of environment groups, and your new environme
 
 ![Load env group](https://files.readme.io/c909d6a-env-groups-4.png "env-groups-4.png")
 
-You can then select your environment group and click "Load Selected Env Group", which will automatically populate the environment group variables that you previously set. You can modify these environment variables in this tab, for example if you'd like to add environment variables that aren't currently in the environment group. To view all deployment options, head over to our [application deployment docs](https://docs.getporter.dev/docs/add-ons). 
+You can then select your environment group and click "Load Selected Env Group", which will automatically populate the environment group variables that you previously set. You can modify these environment variables in this tab, for example if you'd like to add environment variables that aren't currently in the environment group. To view all deployment options, head over to our [application deployment docs](https://docs.porter.run/docs/addons). 
 
 # 🔒 Creating secret environment variables
 

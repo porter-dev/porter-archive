@@ -9,11 +9,13 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -24,41 +26,51 @@ import (
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	lr "github.com/porter-dev/porter/internal/logger"
+
+	pgorm "gorm.io/gorm"
 )
 
-type EnvConfigLoader struct{}
+var InstanceBillingManager billing.BillingManager
+var InstanceEnvConf *envloader.EnvConf
+var InstanceDB *pgorm.DB
 
-func NewEnvLoader() config.ConfigLoader {
-	return &EnvConfigLoader{}
+type EnvConfigLoader struct {
+	version string
+}
+
+func NewEnvLoader(version string) config.ConfigLoader {
+	return &EnvConfigLoader{version}
+}
+
+func sharedInit() {
+	var err error
+	InstanceEnvConf, _ = envloader.FromEnv()
+
+	InstanceDB, err = adapter.New(InstanceEnvConf.DBConf)
+
+	if err != nil {
+		panic(err)
+	}
+
+	InstanceBillingManager = &billing.NoopBillingManager{}
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
-	envConf, err := FromEnv()
-
-	if err != nil {
-		return nil, err
-	}
-
+	envConf := InstanceEnvConf
 	sc := envConf.ServerConf
 
 	res = &config.Config{
-		Logger:     lr.NewConsole(sc.Debug),
-		ServerConf: sc,
-		DBConf:     envConf.DBConf,
-		RedisConf:  envConf.RedisConf,
+		Logger:         lr.NewConsole(sc.Debug),
+		ServerConf:     sc,
+		DBConf:         envConf.DBConf,
+		RedisConf:      envConf.RedisConf,
+		BillingManager: InstanceBillingManager,
 	}
 
-	res.Metadata = config.MetadataFromConf(envConf.ServerConf)
+	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
+	res.DB = InstanceDB
 
-	db, err := adapter.New(envConf.DBConf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	res.DB = db
-
-	err = gorm.AutoMigrate(db)
+	err = gorm.AutoMigrate(InstanceDB)
 
 	if err != nil {
 		return nil, err
@@ -70,7 +82,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		key[i] = b
 	}
 
-	res.Repo = gorm.NewRepository(db, &key)
+	res.Repo = gorm.NewRepository(InstanceDB, &key)
 
 	// create the session store
 	res.Store, err = sessionstore.NewStore(
@@ -176,6 +188,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			},
 		},
 	}
+
+	// construct the whitelisted users map
+	wlUsers := make(map[uint]uint)
+
+	for _, userID := range sc.WhitelistedUsers {
+		wlUsers[userID] = userID
+	}
+
+	res.WhitelistedUsers = wlUsers
 
 	res.URLCache = urlcache.Init(sc.DefaultApplicationHelmRepoURL, sc.DefaultAddonHelmRepoURL)
 

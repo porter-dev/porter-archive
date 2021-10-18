@@ -85,6 +85,7 @@ export const NewProjectFC = () => {
       setProjects(projectList);
       setCurrentProject(project);
       setButtonStatus("successful");
+      pushFiltered("/onboarding", []);
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");
       console.log(error);
@@ -236,7 +237,6 @@ const StyledNewProject = styled.div`
   width: calc(90% - 130px);
   min-width: 300px;
   position: relative;
-  background: red;
   margin-top: calc(50vh - 340px);
 `;
 

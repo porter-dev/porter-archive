@@ -49,20 +49,20 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
 
         if (!disabled) {
           return (
-          <IntegrationOption
-            key={i}
-            disabled={disabled}
-            onClick={() => {
-              if (!disabled) {
-                setCurrentIntegration(integration.service);
-                this.context.setCurrentModal(null, null);
-              }
-            }}
-          >
-            <Icon src={icon && icon} />
-            <Label>{integrationList[integration.service].label}</Label>
-          </IntegrationOption>
-        );
+            <IntegrationOption
+              key={i}
+              disabled={disabled}
+              onClick={() => {
+                if (!disabled) {
+                  setCurrentIntegration(integration.service);
+                  this.context.setCurrentModal(null, null);
+                }
+              }}
+            >
+              <Icon src={icon && icon} />
+              <Label>{integrationList[integration.service].label}</Label>
+            </IntegrationOption>
+          );
         }
       });
     }

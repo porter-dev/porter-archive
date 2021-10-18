@@ -5,7 +5,7 @@ import { Context } from "shared/Context";
 type PropsType = {
   activeValue: string;
   refreshOptions?: () => void;
-  options: { value: string; label: string, icon?: any }[];
+  options: { value: string; label: string; icon?: any }[];
   addButton?: boolean;
   setActiveValue: (x: string) => void;
   width: string;
@@ -58,7 +58,7 @@ export default class Selector extends Component<PropsType, StateType> {
   renderOptionList = () => {
     let { options, activeValue } = this.props;
     return options.map(
-      (option: { value: string; label: string, icon?: any }, i: number) => {
+      (option: { value: string; label: string; icon?: any }, i: number) => {
         return (
           <Option
             key={i}
@@ -67,11 +67,11 @@ export default class Selector extends Component<PropsType, StateType> {
             onClick={() => this.handleOptionClick(option)}
             lastItem={i === options.length - 1}
           >
-            {
-              option.icon && (
-                <Icon><img src={option.icon} /></Icon>
-              )
-            }
+            {option.icon && (
+              <Icon>
+                <img src={option.icon} />
+              </Icon>
+            )}
             {option.label}
           </Option>
         );
@@ -139,14 +139,14 @@ export default class Selector extends Component<PropsType, StateType> {
     });
     return (
       <>
-        {
-          icon && (
-            <Icon><img src={icon} /></Icon>
-          )
-        }
+        {icon && (
+          <Icon>
+            <img src={icon} />
+          </Icon>
+        )}
       </>
-    )
-  }
+    );
+  };
 
   render() {
     let { activeValue } = this.props;
@@ -195,7 +195,7 @@ const Icon = styled.div`
   align-items: center;
   justify-content: center;
   overflow: visible;
-  
+
   > img {
     height: 18px;
     width: auto;
@@ -241,16 +241,16 @@ const NewOption = styled.div`
   }
 `;
 
-const Option = styled.div<{ 
-  selected: boolean; 
+const Option = styled.div<{
+  selected: boolean;
   lastItem: boolean;
   height: string;
 }>`
   width: 100%;
   border-top: 1px solid #00000000;
   border-bottom: 1px solid
-    ${props => props.lastItem ? "#ffffff00" : "#ffffff15"};
-  height: ${props => props.height || "37px"};
+    ${(props) => (props.lastItem ? "#ffffff00" : "#ffffff15")};
+  height: ${(props) => props.height || "37px"};
   font-size: 13px;
   align-items: center;
   display: flex;
@@ -261,7 +261,7 @@ const Option = styled.div<{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: ${props => props.selected ? "#ffffff11" : ""};
+  background: ${(props) => (props.selected ? "#ffffff11" : "")};
 
   :hover {
     background: #ffffff22;

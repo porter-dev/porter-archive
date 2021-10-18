@@ -13,9 +13,11 @@ const Onboarding = () => {
   useSteps();
 
   useEffect(() => {
-    let sub = devtools(OFState, "Onboarding flow state");
+    let unsub = devtools(OFState, "Onboarding flow state");
     return () => {
-      sub();
+      if (typeof unsub === "function") {
+        unsub();
+      }
     };
   }, []);
 
@@ -105,19 +107,6 @@ const Onboarding = () => {
       OFState.actions.clearState();
     };
   }, [context.currentProject?.id]);
-
-  // useEffect(() => {
-  //   if (snap.StepHandler.finishedOnboarding) {
-  //     OFState.actions.clearState();
-  //     pushFiltered("/dashboard", []);
-  //   } else if (snap.StepHandler?.currentStep?.url !== location.pathname) {
-  //     pushFiltered(snap.StepHandler.currentStep.url, []);
-  //   }
-  // }, [
-  //   location.pathname,
-  //   snap.StepHandler?.currentStep?.url,
-  //   snap.StepHandler?.finishedOnboarding,
-  // ]);
 
   return (
     <StyledOnboarding>

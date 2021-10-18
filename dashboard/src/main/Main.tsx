@@ -45,13 +45,10 @@ export default class Main extends Component<PropsType, StateType> {
       .checkAuth("", {}, {})
       .then((res) => {
         if (res && res?.data) {
-          Cohere.identify(
-            res?.data?.id, 
-            {
-              displayName: res?.data?.email,
-              email: res?.data?.email, 
-            }
-          );
+          Cohere.identify(res?.data?.id, {
+            displayName: res?.data?.email,
+            email: res?.data?.email,
+          });
           setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,

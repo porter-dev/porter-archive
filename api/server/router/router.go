@@ -233,6 +233,12 @@ func registerRoutes(config *config.Config, routes []*Route) {
 			atomicGroup.Use(websocketMw.Middleware)
 		}
 
+		if route.Endpoint.Metadata.CheckUsage {
+			usageMW := middleware.NewUsageMiddleware(config, route.Endpoint.Metadata.UsageMetric)
+
+			atomicGroup.Use(usageMW.Middleware)
+		}
+
 		atomicGroup.Method(
 			string(route.Endpoint.Metadata.Method),
 			route.Endpoint.Metadata.Path.RelativePath,

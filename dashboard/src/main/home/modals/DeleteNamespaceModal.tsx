@@ -20,7 +20,7 @@ const DeleteNamespaceModal = () => {
   const [status, setStatus] = useState<string>(null as string);
   const deleteNamespace = () => {
     if (namespaceNameForDelition !== currentModalData.metadata.name) {
-      setStatus("Please insert the name of the namespace to confirm deletion");
+      setStatus("Please enter the name of this namespace to confirm deletion");
       return;
     }
 
@@ -47,16 +47,7 @@ const DeleteNamespaceModal = () => {
   };
 
   return (
-    <StyledUpdateProjectModal>
-      <CloseButton
-        onClick={() => {
-          setCurrentModal(null, null);
-        }}
-      >
-        <CloseButtonImg src={close} />
-      </CloseButton>
-
-      <ModalTitle>Delete Namespace</ModalTitle>
+    <>
       <Subtitle>
         Please insert the name of the namespace to delete it:
         <DangerText>{" " + currentModalData.metadata.name}</DangerText>
@@ -84,7 +75,7 @@ const DeleteNamespaceModal = () => {
         onClick={() => deleteNamespace()}
         status={status}
       />
-    </StyledUpdateProjectModal>
+    </>
   );
 };
 
@@ -131,55 +122,6 @@ const Subtitle = styled.div`
   white-space: nowrap;
   text-overflow: ellipsis;
   margin-bottom: -10px;
-`;
-
-const ModalTitle = styled.div`
-  margin: 0px 0px 13px;
-  display: flex;
-  flex: 1;
-  font-family: Work Sans, sans-serif;
-  font-size: 18px;
-  color: #ffffff;
-  user-select: none;
-  font-weight: 700;
-  align-items: center;
-  position: relative;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-`;
-
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
-const StyledUpdateProjectModal = styled.div`
-  width: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  padding: 25px 30px;
-  overflow: hidden;
-  border-radius: 6px;
-  background: #202227;
 `;
 
 const Warning = styled.div`

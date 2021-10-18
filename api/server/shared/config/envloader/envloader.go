@@ -1,4 +1,4 @@
-package loader
+package envloader
 
 import (
 	"fmt"

@@ -8,7 +8,7 @@ type CreateVaultSecretRequest struct {
 	Data interface{} `json:"data"`
 }
 
-type GetVaultSecretGenericResponse struct {
+type VaultGetResponse struct {
 	RequestID string `json:"request_id"`
 }
 
@@ -19,7 +19,7 @@ type VaultMetadata struct {
 }
 
 type GetOAuthCredentialResponse struct {
-	*GetVaultSecretGenericResponse
+	*VaultGetResponse
 	Data *GetOAuthCredentialData `json:"data"`
 }
 
@@ -29,7 +29,7 @@ type GetOAuthCredentialData struct {
 }
 
 type GetGCPCredentialResponse struct {
-	*GetVaultSecretGenericResponse
+	*VaultGetResponse
 	Data *GetGCPCredentialData `json:"data"`
 }
 
@@ -39,11 +39,34 @@ type GetGCPCredentialData struct {
 }
 
 type GetAWSCredentialResponse struct {
-	*GetVaultSecretGenericResponse
+	*VaultGetResponse
 	Data *GetAWSCredentialData `json:"data"`
 }
 
 type GetAWSCredentialData struct {
 	Metadata *VaultMetadata             `json:"metadata"`
 	Data     *credentials.AWSCredential `json:"data"`
+}
+
+type CreatePolicyRequest struct {
+	Policy string `json:"policy"`
+}
+
+type CreateTokenRequest struct {
+	Policies []string `json:"policies"`
+	Meta     Meta     `json:"meta"`
+	TTL      string   `json:"ttl"`
+}
+
+type Meta struct {
+	User string `json:"user"`
+}
+
+type CreateTokenResponse struct {
+	*VaultGetResponse
+	Auth *TokenAuth `json:"auth"`
+}
+
+type TokenAuth struct {
+	Token string `json:"client_token"`
 }

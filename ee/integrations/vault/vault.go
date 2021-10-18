@@ -40,13 +40,13 @@ func (c *Client) WriteOAuthCredential(
 		Data: data,
 	}
 
-	return c.postRequest(c.getOAuthCredentialPath(oauthIntegration), reqData, nil)
+	return c.postRequest(fmt.Sprintf("/v1/%s", c.getOAuthCredentialPath(oauthIntegration)), reqData, nil)
 }
 
 func (c *Client) GetOAuthCredential(oauthIntegration *integrations.OAuthIntegration) (*credentials.OAuthCredential, error) {
 	resp := &GetOAuthCredentialResponse{}
 
-	err := c.getRequest(c.getOAuthCredentialPath(oauthIntegration), resp)
+	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getOAuthCredentialPath(oauthIntegration)), resp)
 
 	if err != nil {
 		return nil, err
@@ -55,9 +55,16 @@ func (c *Client) GetOAuthCredential(oauthIntegration *integrations.OAuthIntegrat
 	return resp.Data.Data, nil
 }
 
+func (c *Client) CreateOAuthToken(oauthIntegration *integrations.OAuthIntegration) (string, error) {
+	credPath := c.getOAuthCredentialPath(oauthIntegration)
+	policyName := fmt.Sprintf("access-%d-oauth-%d", oauthIntegration.ProjectID, oauthIntegration.ID)
+
+	return c.getToken(credPath, policyName)
+}
+
 func (c *Client) getOAuthCredentialPath(oauthIntegration *integrations.OAuthIntegration) string {
 	return fmt.Sprintf(
-		"/v1/kv/data/secret/%s/%d/oauth/%d",
+		"kv/data/secret/%s/%d/oauth/%d",
 		c.secretPrefix,
 		oauthIntegration.ProjectID,
 		oauthIntegration.ID,
@@ -71,13 +78,13 @@ func (c *Client) WriteGCPCredential(
 		Data: data,
 	}
 
-	return c.postRequest(c.getGCPCredentialPath(gcpIntegration), reqData, nil)
+	return c.postRequest(fmt.Sprintf("/v1/%s", c.getGCPCredentialPath(gcpIntegration)), reqData, nil)
 }
 
 func (c *Client) GetGCPCredential(gcpIntegration *integrations.GCPIntegration) (*credentials.GCPCredential, error) {
 	resp := &GetGCPCredentialResponse{}
 
-	err := c.getRequest(c.getGCPCredentialPath(gcpIntegration), resp)
+	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getGCPCredentialPath(gcpIntegration)), resp)
 
 	if err != nil {
 		return nil, err
@@ -86,9 +93,16 @@ func (c *Client) GetGCPCredential(gcpIntegration *integrations.GCPIntegration) (
 	return resp.Data.Data, nil
 }
 
+func (c *Client) CreateGCPToken(gcpIntegration *integrations.GCPIntegration) (string, error) {
+	credPath := c.getGCPCredentialPath(gcpIntegration)
+	policyName := fmt.Sprintf("access-%d-gcp-%d", gcpIntegration.ProjectID, gcpIntegration.ID)
+
+	return c.getToken(credPath, policyName)
+}
+
 func (c *Client) getGCPCredentialPath(gcpIntegration *integrations.GCPIntegration) string {
 	return fmt.Sprintf(
-		"/v1/kv/data/secret/%s/%d/gcp/%d",
+		"kv/data/secret/%s/%d/gcp/%d",
 		c.secretPrefix,
 		gcpIntegration.ProjectID,
 		gcpIntegration.ID,
@@ -102,13 +116,13 @@ func (c *Client) WriteAWSCredential(
 		Data: data,
 	}
 
-	return c.postRequest(c.getAWSCredentialPath(awsIntegration), reqData, nil)
+	return c.postRequest(fmt.Sprintf("/v1/%s", c.getAWSCredentialPath(awsIntegration)), reqData, nil)
 }
 
 func (c *Client) GetAWSCredential(awsIntegration *integrations.AWSIntegration) (*credentials.AWSCredential, error) {
 	resp := &GetAWSCredentialResponse{}
 
-	err := c.getRequest(c.getAWSCredentialPath(awsIntegration), resp)
+	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getAWSCredentialPath(awsIntegration)), resp)
 
 	if err != nil {
 		return nil, err
@@ -117,13 +131,56 @@ func (c *Client) GetAWSCredential(awsIntegration *integrations.AWSIntegration) (
 	return resp.Data.Data, nil
 }
 
+func (c *Client) CreateAWSToken(awsIntegration *integrations.AWSIntegration) (string, error) {
+	credPath := c.getAWSCredentialPath(awsIntegration)
+	policyName := fmt.Sprintf("access-%d-aws-%d", awsIntegration.ProjectID, awsIntegration.ID)
+
+	return c.getToken(credPath, policyName)
+}
+
 func (c *Client) getAWSCredentialPath(awsIntegration *integrations.AWSIntegration) string {
 	return fmt.Sprintf(
-		"/v1/kv/data/secret/%s/%d/aws/%d",
+		"kv/data/secret/%s/%d/aws/%d",
 		c.secretPrefix,
 		awsIntegration.ProjectID,
 		awsIntegration.ID,
 	)
+}
+
+const readOnlyPolicyTemplate = `path "%s" {
+  capabilities = ["read"]
+}`
+
+func (c *Client) getToken(credPath, policyName string) (string, error) {
+	policy := fmt.Sprintf(readOnlyPolicyTemplate, credPath)
+
+	policyReq := &CreatePolicyRequest{
+		Policy: policy,
+	}
+
+	err := c.postRequest(fmt.Sprintf("/v1/sys/policy/%s", policyName), policyReq, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	tokenReq := &CreateTokenRequest{
+		Policies: []string{policyName},
+		Meta: Meta{
+			User: policyName,
+		},
+		TTL: "6h",
+	}
+
+	tokenResp := &CreateTokenResponse{}
+
+	err = c.postRequest("/v1/auth/token/create", tokenReq, tokenResp)
+
+	if err != nil {
+		return "", err
+	}
+
+	return tokenResp.Auth.Token, nil
 }
 
 func (c *Client) postRequest(path string, data interface{}, dst interface{}) error {

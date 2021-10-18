@@ -33,6 +33,7 @@ type GormRepository struct {
 	notificationConfig        repository.NotificationConfigRepository
 	event                     repository.EventRepository
 	projectUsage              repository.ProjectUsageRepository
+	ceToken                   repository.CredentialsExchangeTokenRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -139,6 +140,10 @@ func (t *GormRepository) ProjectUsage() repository.ProjectUsageRepository {
 	return t.projectUsage
 }
 
+func (t *GormRepository) CredentialsExchangeToken() repository.CredentialsExchangeTokenRepository {
+	return t.ceToken
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -169,5 +174,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		notificationConfig:        NewNotificationConfigRepository(db),
 		event:                     NewEventRepository(db),
 		projectUsage:              NewProjectUsageRepository(db),
+		ceToken:                   NewCredentialsExchangeTokenRepository(db),
 	}
 }

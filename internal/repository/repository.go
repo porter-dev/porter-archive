@@ -27,4 +27,5 @@ type Repository interface {
 	NotificationConfig() NotificationConfigRepository
 	Event() EventRepository
 	ProjectUsage() ProjectUsageRepository
+	CredentialsExchangeToken() CredentialsExchangeTokenRepository
 }

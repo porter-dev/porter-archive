@@ -11,7 +11,7 @@ import {
   SettingsForm as AWSSettingsForm,
   TestRegistryConnection as AWSTestRegistryConnection,
 } from "./_AWSRegistryForm";
-
+import { integrationList } from "shared/common";
 import {
   CredentialsForm as DOCredentialsForm,
   SettingsForm as DOSettingsForm,
@@ -43,9 +43,18 @@ const Forms = {
 };
 
 const FormTitle = {
-  aws: "Amazon Elastic Container Registry (ECR)",
-  gcp: "Google Container Registry (GCR)",
-  do: "Digital Ocean Container Registry",
+  aws: {
+    label: "Amazon Elastic Container Registry (ECR)",
+    icon: integrationList["aws"].icon,
+  },
+  gcp: {
+    label: "Google Container Registry (GCR)",
+    icon: integrationList["gcp"].icon,
+  },
+  do: {
+    label: "Digital Ocean Container Registry (DOCR)",
+    icon: integrationList["do"].icon,
+  },
 };
 
 type Props = {
@@ -96,6 +105,13 @@ const FormFlowWrapper: React.FC<Props> = ({
 
   return (
     <FormWrapper>
+      <FormHeader>
+        <CloseButton onClick={() => alert("go back")}>
+          <i className="material-icons">keyboard_backspace</i>
+        </CloseButton>
+        <img src={FormTitle[provider].icon} />
+        {FormTitle[provider].label}
+      </FormHeader>
       <Breadcrumb 
         currentStep={currentStep}
         steps={[
@@ -112,10 +128,47 @@ const FormFlowWrapper: React.FC<Props> = ({
 
 export default FormFlowWrapper;
 
+const CloseButton = styled.div`
+  width: 30px;
+  height: 30px;
+  margin-left: -5px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  border-radius: 50%;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #aaaabb;
+  }
+`;
+
+const FormHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 13px;
+  margin-top: -2px;
+  font-weight: 500;
+
+  > img {
+    height: 18px;
+    margin-right: 12px;
+  }
+`;
+
 const FormWrapper = styled.div`
   background: #ffffff11;
-  margin-top: -10px;
+  margin-top: 25px;
   padding: 20px;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  border-radius: 5px;
+  position: relative;
 `;

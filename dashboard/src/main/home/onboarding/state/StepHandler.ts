@@ -37,19 +37,6 @@ export type FlowType = {
 const flow: FlowType = {
   initial: "connect_source",
   steps: {
-    /*
-    new_project: {
-      url: "/onboarding/new-project",
-      on: {
-        continue: "connect_source",
-      },
-      execute: {
-        on: {
-          continue: "saveProjectData",
-        },
-      },
-    },
-    */
     connect_source: {
       url: "/onboarding/source",
       on: {
@@ -180,6 +167,7 @@ type StepHandlerType = {
     clearState: () => void;
     restoreState: (prevState: Partial<StepHandlerType>) => void;
     getStep: (nextStepName: string) => Step;
+    goTo: (step: string) => void;
   };
 };
 
@@ -219,6 +207,18 @@ export const StepHandler: StepHandlerType = proxy({
         nextStep = step.substeps[substep];
       }
       return nextStep;
+    },
+    goTo: (step: string) => {
+      const newStep = StepHandler.actions.getStep(step);
+      if (!newStep) {
+        throw new Error(
+          "No next step name found, fix the action triggering nextStep"
+        );
+      }
+      StepHandler.currentStepName = step;
+      StepHandler.currentStep = newStep;
+      StepHandler.canGoBack = !!newStep?.on?.go_back;
+      return;
     },
     clearState: () => {
       StepHandler.currentStepName = flow.initial;

@@ -24,6 +24,10 @@ export const OFState = proxy({
       StepHandler.actions.nextStep(action);
       OFState.actions.saveState();
     },
+    goTo: (step: string) => {
+      StepHandler.actions.goTo(step);
+      OFState.actions.saveState();
+    },
     clearState: () => {
       StateHandler.actions.clearState();
       StepHandler.actions.clearState();

@@ -55,13 +55,7 @@ const ConnectRegistry: React.FC<{
           ? "Link to an existing Docker registry. Don't worry if you don't know what this is."
           : "Link to an existing Docker registry or continue."}
       </Helper>
-      <ProviderSelector
-        selectProvider={(provider) => {
-          if (provider !== "external") {
-            onSelectProvider(provider);
-          }
-        }}
-      />
+
       {provider ? (
         <FormFlowWrapper
           provider={provider}
@@ -72,16 +66,26 @@ const ConnectRegistry: React.FC<{
           currentStep={step}
         />
       ) : (
-        <NextStep
-          text="Continue"
-          disabled={false}
-          onClick={() => onSkip()}
-          status={""}
-          makeFlush={true}
-          clearPosition={true}
-          statusPosition="right"
-          saveText=""
-        />
+        <>
+          <ProviderSelector
+            enableSkip
+            selectProvider={(provider) => {
+              if (provider !== "external") {
+                onSelectProvider(provider);
+              }
+            }}
+          />
+          <NextStep
+            text="Continue"
+            disabled={false}
+            onClick={() => onSkip()}
+            status={""}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText=""
+          />
+        </>
       )}
     </Div>
   );

@@ -23,19 +23,22 @@ export const CredentialsForm: React.FC<{
 }> = ({ nextFormStep, project }) => {
   const location = useLocation();
   useEffect(() => {
-    api.getOAuthIds("<token>", {}, { project_id: project?.id }).then((res) => {
-      let tgtIntegration = res.data.find((integration: any) => {
-        return integration.client === "do";
-      });
-
-      if (tgtIntegration) {
-        nextFormStep({
-          credentials: {
-            id: tgtIntegration.id,
-          },
+    api
+      .getOAuthIds("<token>", {}, { project_id: project?.id })
+      .then((res) => {
+        let tgtIntegration = res.data.find((integration: any) => {
+          return integration.client === "do";
         });
-      }
-    });
+
+        if (tgtIntegration) {
+          nextFormStep({
+            credentials: {
+              id: tgtIntegration.id,
+            },
+          });
+        }
+      })
+      .catch(console.log);
   }, []);
 
   const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;

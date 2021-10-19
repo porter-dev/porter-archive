@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from "react";
+import Loading from "components/Loading";
+import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
@@ -10,6 +11,7 @@ import { Onboarding as OnboardingSaveType } from "./types";
 
 const Onboarding = () => {
   const context = useContext(Context);
+  const [isLoading, setIsLoading] = useState(true);
   useSteps();
 
   useEffect(() => {
@@ -96,22 +98,21 @@ const Onboarding = () => {
   };
 
   useEffect(() => {
-    if (context?.currentProject?.id) {
+    if (context.currentProject) {
       getData(context.currentProject).then((data) => {
         if (data) {
           OFState.actions.initializeState(data);
         }
+        setIsLoading(false);
       });
     }
     return () => {
       OFState.actions.clearState();
     };
-  }, [context.currentProject?.id]);
+  }, [context.currentProject]);
 
   return (
-    <StyledOnboarding>
-      <Routes />
-    </StyledOnboarding>
+    <StyledOnboarding>{isLoading ? <Loading /> : <Routes />}</StyledOnboarding>
   );
 };
 

@@ -142,10 +142,9 @@ export const SettingsForm: React.FC<{
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
 
     if (snap.StateHandler.connected_registry.skip) {
-      // await provisionDOCR(integrationId, tier);
-      console.log("PROVISIONING REGISTRY");
+      await provisionDOCR(integrationId, tier);
     }
-    // await provisionDOKS(integrationId, region, clusterName);
+    await provisionDOKS(integrationId, region, clusterName);
 
     nextFormStep({
       settings: {

@@ -176,10 +176,9 @@ export const SettingsForm: React.FC<{
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
 
     if (snap.StateHandler.connected_registry.skip) {
-      // await provisionGCR(integrationId);
-      console.log("PROVISIONING REGISTRY");
+      await provisionGCR(integrationId);
     }
-    // await provisionGKE(integrationId);
+    await provisionGKE(integrationId);
     nextFormStep({
       settings: {
         cluster_name: clusterName,

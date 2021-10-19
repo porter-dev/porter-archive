@@ -216,10 +216,9 @@ export const SettingsForm: React.FC<{
     const integrationId = `${snap.StateHandler.provision_resources.credentials.id}`;
 
     if (snap.StateHandler.connected_registry.skip) {
-      // await provisionECR(integrationId);
-      console.log("PROVISIONING REGISTRY");
+      await provisionECR(integrationId);
     }
-    // await provisionEKS(integrationId);
+    await provisionEKS(integrationId);
 
     nextFormStep({
       settings: {

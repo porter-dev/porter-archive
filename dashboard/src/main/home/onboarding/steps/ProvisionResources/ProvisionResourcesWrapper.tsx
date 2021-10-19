@@ -4,7 +4,7 @@ import { OFState } from "../../state";
 import ProvisionResources from "./ProvisionResources";
 
 const ProvisionResourcesWrapper = () => {
-  const snap = useSnapshot(OFState);
+  const snap = useSnapshot(OFState);  
   return (
     <ProvisionResources
       shouldProvisionRegistry={snap.StateHandler.connected_registry?.skip}

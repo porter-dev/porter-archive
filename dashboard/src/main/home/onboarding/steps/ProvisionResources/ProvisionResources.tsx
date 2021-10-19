@@ -5,7 +5,6 @@ import React from "react";
 import { useParams } from "react-router";
 import styled from "styled-components";
 import ProviderSelector from "../../components/ProviderSelector";
-import ProvisionerStatus from "components/ProvisionerStatus";
 
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
@@ -64,9 +63,6 @@ const ProvisionResources: React.FC<Props> = ({
         applications.
       </Helper>
 
-      {/* <ProvisionerStatus /> */}
-
-      
       {provider ? (
         provider !== "external" ? (
           <FormFlowWrapper
@@ -85,11 +81,11 @@ const ProvisionResources: React.FC<Props> = ({
             selectProvider={(provider) => {
               onSelectProvider(provider);
             }}
+            enableSkip={false}
             enableExternal={!shouldProvisionRegistry}
           />
         </>
       )}
-     
     </div>
   );
 };

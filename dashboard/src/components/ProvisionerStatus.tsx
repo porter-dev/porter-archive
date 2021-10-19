@@ -24,6 +24,8 @@ export interface TFResource {
 const nameMap : { [key: string]: string } = {
   "eks": "Elastic Kubernetes Service (EKS)",
   "ecr": "Elastic Container Registry (ECR)",
+  "doks": "DigitalOcean Kubernetes Service (DOKS)",
+  "docr": "DigitalOcean Container Registry (DOCR)",
 }
 
 const ProvisionerStatus: React.FC<Props> = (props) => {

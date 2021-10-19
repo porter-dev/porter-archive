@@ -248,23 +248,25 @@ export const Status: React.FC<{
     const filter : string[] = ["doks", "docr"]
 
     api.getInfra("<token>", {}, { project_id: project?.id }).then((res) => {
-      var matchedInfras : Map<string, any>
+      var matchedInfras : Map<string, any> = new Map()
 
       res.data.forEach((infra : any) => {
-        if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id < infra.id) {
-          matchedInfras.set(infra.Kind, infra)
+        if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id || 0 < infra.id) {
+          matchedInfras.set(infra.kind, infra)
         }
       })
 
+      var modules : TFModule[] = []
+
       // query for desired and current state, and convert to tf module
-      matchedInfras.forEach((kind, infra : any) => {
+      matchedInfras.forEach((infra : any) => {
         api.getInfraDesired("<token>", {}, { project_id: project?.id, infra_id: infra?.id }).then((resDesired) => {
           api.getInfraCurrent("<token>", {}, { project_id: project?.id, infra_id: infra?.id }).then((resCurrent) => {
             var desired = resDesired.data
             var current = resCurrent.data
 
             // convert current state to a lookup table
-            var currentMap : Map<string, string>
+            var currentMap : Map<string, string> = new Map()
 
             current?.resources?.forEach((val : any) => {
               currentMap.set(val?.type + "." + val?.name, "")
@@ -286,10 +288,12 @@ export const Status: React.FC<{
               resources: resources,
             }
 
-            setTFModules([...tfModules, module])
+            modules.push(module)
           })
         })
       });
+
+      setTFModules(modules)
     })
   }, [])
 

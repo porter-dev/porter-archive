@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,8 +10,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -43,7 +44,7 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// get the AWS integration
+	// get the AWS integration, to check that integration exists and belongs to the project
 	awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(proj.ID, request.AWSIntegrationID)
 
 	if err != nil {
@@ -63,6 +64,14 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	lastApplied, err := json.Marshal(request)
+
+	// parse infra last applied into ECR config
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	infra := &models.Infra{
 		Kind:             types.InfraECR,
 		ProjectID:        proj.ID,
@@ -70,6 +79,7 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Status:           types.StatusCreating,
 		AWSIntegrationID: request.AWSIntegrationID,
 		CreatedByUserID:  user.ID,
+		LastApplied:      lastApplied,
 	}
 
 	// handle write to the database
@@ -80,21 +90,26 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// launch provisioning pod
-	_, err = c.Config().ProvisionerAgent.ProvisionECR(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           proj.ID,
-			Repo:                c.Repo(),
-			Infra:               infra,
-			Operation:           provisioner.Apply,
-			PGConf:              c.Config().DBConf,
-			RedisConf:           c.Config().RedisConf,
-			ProvImageTag:        c.Config().ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: c.Config().ServerConf.ProvisionerImagePullSecret,
-		},
-		awsInt,
-		request.ECRName,
-	)
+	opts, err := GetSharedProvisionerOpts(c.Config(), infra)
+
+	vaultToken := ""
+
+	if c.Config().CredentialBackend != nil {
+		vaultToken, err = c.Config().CredentialBackend.CreateAWSToken(awsInt)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.ECR = &ecr.Conf{
+		ECRName: request.ECRName,
+	}
+	opts.OperationKind = provisioner.Apply
+
+	err = c.Config().ProvisionerAgent.Provision(opts)
 
 	if err != nil {
 		infra.Status = types.StatusError

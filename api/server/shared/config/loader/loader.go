@@ -62,11 +62,12 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	sc := envConf.ServerConf
 
 	res = &config.Config{
-		Logger:         lr.NewConsole(sc.Debug),
-		ServerConf:     sc,
-		DBConf:         envConf.DBConf,
-		RedisConf:      envConf.RedisConf,
-		BillingManager: InstanceBillingManager,
+		Logger:            lr.NewConsole(sc.Debug),
+		ServerConf:        sc,
+		DBConf:            envConf.DBConf,
+		RedisConf:         envConf.RedisConf,
+		BillingManager:    InstanceBillingManager,
+		CredentialBackend: InstanceCredentialBackend,
 	}
 
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)

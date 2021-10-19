@@ -92,6 +92,11 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	opts, err := GetSharedProvisionerOpts(c.Config(), infra)
 
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	vaultToken := ""
 
 	if c.Config().CredentialBackend != nil {

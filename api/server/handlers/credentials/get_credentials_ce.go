@@ -20,5 +20,5 @@ func NewGetCredentialsHandler(
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) http.Handler {
-	return handlers.NewUnavailable(config, "invite_update_role")
+	return handlers.NewUnavailable(config, "get_credential")
 }

@@ -39,11 +39,7 @@ const ProvisionResources: React.FC<Props> = ({
   enable_go_back,
   goBack,
 }) => {
-  // TODO: remove this
-  // const { step } = useParams<{ step: any }>();
-
-  
-  const step = "status"
+  const { step } = useParams<{ step: any }>();
 
   return (
     <div>

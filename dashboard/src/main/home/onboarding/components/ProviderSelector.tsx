@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
 import { SupportedProviders } from "../types";
@@ -9,54 +9,96 @@ export type ProviderSelectorProps = {
     provider: SupportedProviders | (SupportedProviders | "external")
   ) => void;
   enableExternal?: boolean;
+  enableSkip?: boolean;
 };
 
-const providers: SupportedProviders[] = ["aws", "gcp", "do"];
-
-const providerOptions = [
-  { 
-    value: "skip",
-    label: "Skip / I don't know what this is" 
-  },
-  { 
+const baseOptions = [
+  {
     value: "aws",
     icon: integrationList["aws"].icon,
-    label: "Amazon Elastic Container Registry (ECR)" 
+    label: "Amazon Elastic Container Registry (ECR)",
   },
-  { 
+  {
     value: "gcp",
     icon: integrationList["gcp"].icon,
-    label: "Google Cloud Registry (GCR)" 
+    label: "Google Cloud Registry (GCR)",
   },
-  { 
+  {
     value: "do",
     icon: integrationList["do"].icon,
-    label: "DigitalOcean Container Registry (DOCR)" 
+    label: "DigitalOcean Container Registry (DOCR)",
   },
-  { 
-    value: "external",
-    icon: integrationList["kubernetes"].icon,
-    label: "Link to an existing cluster"
-  }
-]
+];
+
+const skipOption = {
+  value: "skip",
+  label: "Skip / I don't know what this is",
+  icon: "",
+};
+
+const externalOption = {
+  value: "external",
+  icon: integrationList["kubernetes"].icon,
+  label: "Link to an existing cluster",
+};
+
+const dummyOption = {
+  value: "dummy",
+  icon: "",
+  label: "Select a provider",
+};
 
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selectProvider,
   enableExternal,
+  enableSkip,
 }) => {
-  const [provider, setProvider] = useState("skip");
+  const [provider, setProvider] = useState(() => {
+    if (enableSkip) {
+      return "skip";
+    }
+
+    return "dummy";
+  });
+
+  const availableOptions = useMemo(() => {
+    let options = baseOptions;
+    if (enableSkip) {
+      // Check if dummy option was deleted or not
+      const dummyOptionIndex = options.findIndex((o) => o.value === "dummy");
+      if (dummyOptionIndex >= 0) {
+        options.splice(dummyOptionIndex, 1);
+      }
+      options.unshift(skipOption);
+    } else {
+      // Check if skip option was deleted or not
+      const skipOptionIndex = options.findIndex((o) => o.value === "skip");
+      if (skipOptionIndex >= 0) {
+        options.splice(skipOptionIndex, 1);
+      }
+      if (!options.find((o) => o.value === "dummy")) {
+        options.unshift(dummyOption);
+      }
+    }
+
+    if (enableExternal) {
+      if (!options.find((o) => o.value === "external")) {
+        options.push(externalOption);
+      }
+    }
+
+    return options;
+  }, [enableSkip, enableExternal]);
 
   return (
     <>
       <Br />
       <Selector
         activeValue={provider}
-        options={providerOptions}
-        setActiveValue={provider => {
+        options={availableOptions}
+        setActiveValue={(provider) => {
           setProvider(provider);
-          if (provider !== "skip" && provider !== "external") {
-            selectProvider(provider as SupportedProviders);
-          }
+          selectProvider(provider as SupportedProviders);
         }}
         width="100%"
         height="45px"

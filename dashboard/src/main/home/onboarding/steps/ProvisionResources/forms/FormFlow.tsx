@@ -4,13 +4,14 @@ import {
   SupportedProviders,
 } from "main/home/onboarding/types";
 import React, { useContext, useMemo } from "react";
-import { Context } from "shared/Context";
 import styled from "styled-components";
+import Breadcrumb from "components/Breadcrumb";
+import { integrationList } from "shared/common";
 import {
   CredentialsForm as AWSCredentialsForm,
   SettingsForm as AWSSettingsForm,
   Status as AWSProvisionerStatus,
-} from "./_AWSProvsionerForm";
+} from "./_AWSProvisionerForm";
 
 import {
   CredentialsForm as DOCredentialsForm,
@@ -43,9 +44,22 @@ const Forms = {
 };
 
 const FormTitle = {
-  aws: "Amazon Web Services (AWS)",
-  gcp: "Google Cloud Platform  (GCP)",
-  do: "Digital Ocean",
+  aws: {
+    label: "Amazon Web Services (AWS)",
+    icon: integrationList["aws"].icon,
+  },
+  gcp: {
+    label: "Google Cloud Platform (GCP)",
+    icon: integrationList["gcp"].icon,
+  },
+  do: {
+    label: "Digital Ocean (DO)",
+    icon: integrationList["do"].icon,
+  },
+  external: {
+    label: "Connect an existing cluster",
+    icon: integrationList["kubernetes"],
+  }
 };
 
 type Props = {
@@ -93,24 +107,71 @@ const FormFlowWrapper: React.FC<Props> = ({
   }, [currentStep, provider]);
 
   return (
-    <>
-      {provider !== "external" && FormTitle[provider]}
-      <Breadcrumb>
-        <Text bold={currentStep === "credentials"}>Credentials</Text>
-        {" > "}
-        <Text bold={currentStep === "settings"}>Settings</Text>
-      </Breadcrumb>
+    <FormWrapper>
+      <FormHeader>
+        <CloseButton onClick={() => alert("go back")}>
+          <i className="material-icons">keyboard_backspace</i>
+        </CloseButton>
+        <img src={FormTitle[provider].icon} />
+        {FormTitle[provider].label}
+      </FormHeader>
+      <Breadcrumb
+        currentStep={currentStep}
+        steps={[
+          { value: "credentials", label: "Credentials" },
+          { value: "settings", label: "Settings" },
+        ]}
+        onClickStep={(step: string) => alert(step)}
+      />
       {CurrentForm}
-    </>
+    </FormWrapper>
   );
 };
 
 export default FormFlowWrapper;
 
-const Text = styled.span<{ bold: boolean }>`
-  font-weight: ${(props) => (props.bold ? "600" : "normal")};
+const CloseButton = styled.div`
+  width: 30px;
+  height: 30px;
+  margin-left: -5px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  border-radius: 50%;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #aaaabb;
+  }
 `;
 
-const Breadcrumb = styled.div`
-  margin: 0 10px;
+const FormHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 13px;
+  margin-top: -2px;
+  font-weight: 500;
+
+  > img {
+    height: 18px;
+    margin-right: 12px;
+  }
+`;
+
+const FormWrapper = styled.div`
+  background: #ffffff0a;
+  margin-top: 25px;
+  padding: 20px 20px 23px;
+  border-radius: 5px;
+  position: relative;
+  border: 1px solid #ffffff55;
 `;

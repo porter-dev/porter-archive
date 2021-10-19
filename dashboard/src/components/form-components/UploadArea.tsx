@@ -112,7 +112,7 @@ const DNDArea = styled.div`
   padding: 5px 10px;
   margin-right: 8px;
   width: 100%;
-  height: 150px;
+  height: 80px;
   cursor: pointer;
 `;
 

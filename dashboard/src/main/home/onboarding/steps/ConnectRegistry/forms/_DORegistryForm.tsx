@@ -45,14 +45,12 @@ export const CredentialsForm: React.FC<{
 
   const encoded_redirect_uri = encodeURIComponent(url);
   return (
-    <>
-      <ConnectDigitalOceanButton
-        target={"_blank"}
-        href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
-      >
-        Connect Digital Ocean
-      </ConnectDigitalOceanButton>
-    </>
+    <ConnectDigitalOceanButton
+      target={"_blank"}
+      href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
+    >
+      Connect Digital Ocean
+    </ConnectDigitalOceanButton>
   );
 };
 
@@ -157,6 +155,7 @@ const CodeBlock = styled.span`
 const ConnectDigitalOceanButton = styled.a`
   width: 200px;
   justify-content: center;
+  margin-top: 22px;
   border-radius: 5px;
   display: flex;
   flex-direction: row;

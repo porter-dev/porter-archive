@@ -110,15 +110,29 @@ const Onboarding = () => {
   }, [context.currentProject]);
 
   return (
-    <StyledOnboarding>{isLoading ? <Loading /> : <Routes />}</StyledOnboarding>
+    <StyledOnboarding>
+      {isLoading ? <Loading /> : <Routes />}
+    </StyledOnboarding>
   );
 };
 
 export default Onboarding;
 
+const ViewWrapper = styled.div`
+  width: 100%;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  margin-top: -10vh;
+  height: 111%;
+  padding-top: 600px;
+  padding-bottom: 300px;
+`;
+
 const StyledOnboarding = styled.div`
   max-width: 700px;
   width: 50%;
+  z-index: 999;
   display: flex;
   align-items: center;
   margin-top: -6%;

@@ -88,8 +88,9 @@ const ProvisionResources: React.FC<Props> = ({
 
 export default ProvisionResources;
 
-const Subtitle = styled(TitleSection)`
+const Subtitle = styled.div`
   font-size: 16px;
+  font-weight: 500;
   margin-top: 16px;
 `;
 

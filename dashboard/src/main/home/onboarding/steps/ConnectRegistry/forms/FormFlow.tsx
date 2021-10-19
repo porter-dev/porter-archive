@@ -45,11 +45,11 @@ const Forms = {
 const FormTitle = {
   aws: {
     label: "Amazon Elastic Container Registry (ECR)",
-    icon: integrationList["aws"].icon,
+    icon: integrationList["ecr"].icon,
   },
   gcp: {
     label: "Google Container Registry (GCR)",
-    icon: integrationList["gcp"].icon,
+    icon: integrationList["gcr"].icon,
   },
   do: {
     label: "Digital Ocean Container Registry (DOCR)",
@@ -160,15 +160,16 @@ const FormHeader = styled.div`
   font-weight: 500;
 
   > img {
-    height: 18px;
+    height: 22px;
     margin-right: 12px;
   }
 `;
 
 const FormWrapper = styled.div`
-  background: #ffffff11;
+  background: #ffffff0a;
   margin-top: 25px;
-  padding: 20px;
+  padding: 20px 20px 23px;
   border-radius: 5px;
   position: relative;
+  border: 1px solid #ffffff55;
 `;

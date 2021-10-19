@@ -116,6 +116,7 @@ export const CredentialsForm: React.FC<{
       <SelectRow
         options={regionOptions}
         width="100%"
+        scrollBuffer={true}
         value={awsRegion}
         dropdownMaxHeight="240px"
         setActiveValue={(x: string) => {

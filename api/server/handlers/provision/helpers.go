@@ -11,20 +11,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func CreateCEToken(conf *config.Config, infra *models.Infra) (*models.CredentialsExchangeToken, error) {
+func CreateCEToken(conf *config.Config, infra *models.Infra) (*models.CredentialsExchangeToken, string, error) {
 	// convert the form to a project model
 	expiry := time.Now().Add(6 * time.Hour)
 
 	rawToken, err := random.StringWithCharset(32, "")
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	ceToken := &models.CredentialsExchangeToken{
@@ -40,14 +40,14 @@ func CreateCEToken(conf *config.Config, infra *models.Infra) (*models.Credential
 	ceToken, err = conf.Repo.CredentialsExchangeToken().CreateCredentialsExchangeToken(ceToken)
 
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return ceToken, nil
+	return ceToken, rawToken, nil
 }
 
 func GetSharedProvisionerOpts(conf *config.Config, infra *models.Infra) (*provisioner.ProvisionOpts, error) {
-	ceToken, err := CreateCEToken(conf, infra)
+	ceToken, rawToken, err := CreateCEToken(conf, infra)
 
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func GetSharedProvisionerOpts(conf *config.Config, infra *models.Infra) (*provis
 		TFHTTPBackendURL:    conf.ServerConf.ProvisionerBackendURL,
 		CredentialExchange: &provisioner.ProvisionCredentialExchange{
 			CredExchangeEndpoint: fmt.Sprintf("%s/api/internal/credentials", conf.ServerConf.ServerURL),
-			CredExchangeToken:    string(ceToken.Token),
+			CredExchangeToken:    rawToken,
 			CredExchangeID:       ceToken.ID,
 		},
 	}, nil

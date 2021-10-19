@@ -178,14 +178,16 @@ export const SettingsForm: React.FC<{
     console.log("Started provision ECR");
 
     try {
-      await api.provisionECR(
-        "<token>",
-        {
-          aws_integration_id: awsIntegrationId,
-          ecr_name: `${project.name}-registry`,
-        },
-        { id: project.id }
-      );
+      return await api
+        .provisionECR(
+          "<token>",
+          {
+            aws_integration_id: awsIntegrationId,
+            ecr_name: `${project.name}-registry`,
+          },
+          { id: project.id }
+        )
+        .then((res) => res?.data);
     } catch (error) {
       catchError(error);
     }
@@ -193,15 +195,17 @@ export const SettingsForm: React.FC<{
 
   const provisionEKS = async (awsIntegrationId: number) => {
     try {
-      await api.provisionEKS(
-        "<token>",
-        {
-          aws_integration_id: awsIntegrationId,
-          eks_name: clusterName,
-          machine_type: machineType,
-        },
-        { id: project.id }
-      );
+      return await api
+        .provisionEKS(
+          "<token>",
+          {
+            aws_integration_id: awsIntegrationId,
+            eks_name: clusterName,
+            machine_type: machineType,
+          },
+          { id: project.id }
+        )
+        .then((res) => res?.data);
     } catch (error) {
       catchError(error);
     }
@@ -214,14 +218,17 @@ export const SettingsForm: React.FC<{
       return;
     }
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
-
+    let registryProvisionResponse = null;
+    let clusterProvisionResponse = null;
     if (snap.StateHandler.connected_registry.skip) {
-      await provisionECR(integrationId);
+      registryProvisionResponse = await provisionECR(integrationId);
     }
-    await provisionEKS(integrationId);
+    clusterProvisionResponse = await provisionEKS(integrationId);
 
     nextFormStep({
       settings: {
+        registry_infra_id: registryProvisionResponse?.id,
+        cluster_infra_id: clusterProvisionResponse?.id,
         cluster_name: clusterName,
         aws_machine_type: machineType,
       },
@@ -267,9 +274,11 @@ export const Status: React.FC<{
   nextFormStep: () => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  return <SharedStatus
-    nextFormStep={nextFormStep}
-    project={project}
-    filter={["eks", "ecr"]}
-  />
+  return (
+    <SharedStatus
+      nextFormStep={nextFormStep}
+      project={project}
+      filter={["eks", "ecr"]}
+    />
+  );
 };

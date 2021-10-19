@@ -1,7 +1,10 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
-import ProvisionerStatus, { TFModule, TFResource } from "components/ProvisionerStatus";
+import ProvisionerStatus, {
+  TFModule,
+  TFResource,
+} from "components/ProvisionerStatus";
 import SaveButton from "components/SaveButton";
 import { OFState } from "main/home/onboarding/state";
 import { DOProvisionerConfig } from "main/home/onboarding/types";
@@ -98,19 +101,29 @@ export const SettingsForm: React.FC<{
     };
   };
 
+  const catchError = (error: any) => {
+    console.error(error);
+  };
+
   const provisionDOCR = async (integrationId: number, tier: string) => {
     console.log("Provisioning DOCR...");
-    await api.createDOCR(
-      "<token>",
-      {
-        do_integration_id: integrationId,
-        docr_name: project.name,
-        docr_subscription_tier: tier,
-      },
-      {
-        project_id: project.id,
-      }
-    );
+    try {
+      return await api
+        .createDOCR(
+          "<token>",
+          {
+            do_integration_id: integrationId,
+            docr_name: project.name,
+            docr_subscription_tier: tier,
+          },
+          {
+            project_id: project.id,
+          }
+        )
+        .then((res) => res?.data);
+    } catch (error) {
+      catchError(error);
+    }
   };
 
   const provisionDOKS = async (
@@ -119,17 +132,23 @@ export const SettingsForm: React.FC<{
     clusterName: string
   ) => {
     console.log("Provisioning DOKS...");
-    await api.createDOKS(
-      "<token>",
-      {
-        do_integration_id: integrationId,
-        doks_name: clusterName,
-        do_region: region,
-      },
-      {
-        project_id: project.id,
-      }
-    );
+    try {
+      return await api
+        .createDOKS(
+          "<token>",
+          {
+            do_integration_id: integrationId,
+            doks_name: clusterName,
+            do_region: region,
+          },
+          {
+            project_id: project.id,
+          }
+        )
+        .then((res) => res?.data);
+    } catch (error) {
+      catchError(error);
+    }
   };
 
   const submit = async () => {
@@ -140,17 +159,25 @@ export const SettingsForm: React.FC<{
       return;
     }
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
+    let registryProvisionResponse = null;
+    let clusterProvisionResponse = null;
 
     if (snap.StateHandler.connected_registry.skip) {
-      await provisionDOCR(integrationId, tier);
+      registryProvisionResponse = await provisionDOCR(integrationId, tier);
     }
-    await provisionDOKS(integrationId, region, clusterName);
+    clusterProvisionResponse = await provisionDOKS(
+      integrationId,
+      region,
+      clusterName
+    );
 
     nextFormStep({
       settings: {
         region,
         tier,
         cluster_name: clusterName,
+        registry_infra_id: registryProvisionResponse?.id,
+        cluster_infra_id: clusterProvisionResponse?.id,
       },
     });
   };
@@ -204,11 +231,13 @@ export const Status: React.FC<{
   nextFormStep: () => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  return <SharedStatus
-    nextFormStep={nextFormStep}
-    project={project}
-    filter={["doks", "docr"]}
-  />
+  return (
+    <SharedStatus
+      nextFormStep={nextFormStep}
+      project={project}
+      filter={["doks", "docr"]}
+    />
+  );
 };
 
 const CodeBlock = styled.span`

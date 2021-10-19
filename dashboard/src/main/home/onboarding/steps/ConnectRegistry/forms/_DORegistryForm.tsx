@@ -66,17 +66,21 @@ export const SettingsForm: React.FC<{
   const snap = useSnapshot(OFState);
 
   const submit = async () => {
-    await api.connectDORegistry(
-      "<token>",
-      {
-        name: registryName,
-        do_integration_id: snap.StateHandler.connected_registry.credentials.id,
-        url: registryUrl,
-      },
-      { project_id: project.id }
-    );
+    const data = await api
+      .connectDORegistry(
+        "<token>",
+        {
+          name: registryName,
+          do_integration_id:
+            snap.StateHandler.connected_registry.credentials.id,
+          url: registryUrl,
+        },
+        { project_id: project.id }
+      )
+      .then((res) => res?.data);
     nextFormStep({
       settings: {
+        registry_connection_id: data?.id,
         registry_url: registryUrl,
       },
     });

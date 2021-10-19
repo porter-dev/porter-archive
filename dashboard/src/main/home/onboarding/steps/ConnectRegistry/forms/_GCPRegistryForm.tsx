@@ -134,21 +134,24 @@ export const SettingsForm: React.FC<{
     setButtonStatus("loading");
 
     try {
-      await api.connectGCRRegistry(
-        "<token>",
-        {
-          name: registryName,
-          gcp_integration_id:
-            snap.StateHandler.connected_registry.credentials.id,
-          url: registryUrl,
-        },
-        {
-          id: project.id,
-        }
-      );
+      const data = await api
+        .connectGCRRegistry(
+          "<token>",
+          {
+            name: registryName,
+            gcp_integration_id:
+              snap.StateHandler.connected_registry.credentials.id,
+            url: registryUrl,
+          },
+          {
+            id: project.id,
+          }
+        )
+        .then((res) => res?.data);
 
       nextFormStep({
         settings: {
+          registry_connection_id: data.id,
           gcr_url: registryUrl,
           registry_name: registryName,
         },

@@ -175,13 +175,18 @@ export const SettingsForm: React.FC<{
     setButtonStatus("loading");
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
 
+    let registryProvisionResponse = null;
+    let clusterProvisionResponse = null;
     if (snap.StateHandler.connected_registry.skip) {
-      await provisionGCR(integrationId);
+      registryProvisionResponse = await provisionGCR(integrationId);
     }
-    await provisionGKE(integrationId);
+    clusterProvisionResponse = await provisionGKE(integrationId);
+
     nextFormStep({
       settings: {
         cluster_name: clusterName,
+        registry_infra_id: registryProvisionResponse?.id,
+        cluster_infra_id: clusterProvisionResponse?.id,
       },
     });
   };
@@ -197,6 +202,7 @@ export const SettingsForm: React.FC<{
         },
         { project_id: project.id }
       )
+      .then((res) => res?.data)
       .catch(catchError);
   };
 
@@ -212,6 +218,7 @@ export const SettingsForm: React.FC<{
         },
         { project_id: project.id }
       )
+      .then((res) => res?.data)
       .catch(catchError);
   };
 
@@ -245,11 +252,13 @@ export const Status: React.FC<{
   nextFormStep: () => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  return <SharedStatus
-    nextFormStep={nextFormStep}
-    project={project}
-    filter={["gke", "gcr"]}
-  />
+  return (
+    <SharedStatus
+      nextFormStep={nextFormStep}
+      project={project}
+      filter={["gke", "gcr"]}
+    />
+  );
 };
 
 const CodeBlock = styled.span`

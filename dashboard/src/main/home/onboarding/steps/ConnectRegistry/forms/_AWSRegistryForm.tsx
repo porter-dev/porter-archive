@@ -165,18 +165,21 @@ export const SettingsForm: React.FC<{
       return;
     }
     try {
-      await api.connectECRRegistry(
-        "<token>",
-        {
-          name: registryName,
-          aws_integration_id:
-            snap.StateHandler.connected_registry.credentials.id,
-        },
-        { id: project.id }
-      );
+      const data = await api
+        .connectECRRegistry(
+          "<token>",
+          {
+            name: registryName,
+            aws_integration_id:
+              snap.StateHandler.connected_registry.credentials.id,
+          },
+          { id: project.id }
+        )
+        .then((res) => res?.data);
 
       nextFormStep({
         settings: {
+          registry_connection_id: data?.id,
           registry_name: registryName,
         },
       });

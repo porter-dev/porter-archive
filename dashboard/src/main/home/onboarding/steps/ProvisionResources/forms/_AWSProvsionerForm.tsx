@@ -174,7 +174,7 @@ export const SettingsForm: React.FC<{
     console.error(error);
   };
 
-  const provisionECR = async (awsIntegrationId: string) => {
+  const provisionECR = async (awsIntegrationId: number) => {
     console.log("Started provision ECR");
 
     try {
@@ -191,7 +191,7 @@ export const SettingsForm: React.FC<{
     }
   };
 
-  const provisionEKS = async (awsIntegrationId: string) => {
+  const provisionEKS = async (awsIntegrationId: number) => {
     try {
       await api.provisionEKS(
         "<token>",
@@ -213,7 +213,7 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
-    const integrationId = `${snap.StateHandler.provision_resources.credentials.id}`;
+    const integrationId = snap.StateHandler.provision_resources.credentials.id;
 
     if (snap.StateHandler.connected_registry.skip) {
       await provisionECR(integrationId);

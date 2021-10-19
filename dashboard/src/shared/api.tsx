@@ -826,7 +826,7 @@ const logOutUser = baseApi("POST", "/api/logout");
 const provisionECR = baseApi<
   {
     ecr_name: string;
-    aws_integration_id: string;
+    aws_integration_id: number;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -836,7 +836,7 @@ const provisionECR = baseApi<
 const provisionEKS = baseApi<
   {
     eks_name: string;
-    aws_integration_id: string;
+    aws_integration_id: number;
     machine_type: string;
   },
   { id: number }

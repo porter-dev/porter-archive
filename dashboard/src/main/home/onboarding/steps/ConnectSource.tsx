@@ -69,64 +69,58 @@ const ConnectSource: React.FC<{
 
   return (
     <div>
-      <FadeWrapper>
-        <TitleSection>Getting Started</TitleSection>
-      </FadeWrapper>
-      <FadeWrapper delay="0.5s">
-        <Subtitle>Step 1 of 3 - Connect to GitHub</Subtitle>
-      </FadeWrapper>
-      <SlideWrapper delay="1.0s">
-        <Helper>
-          To deploy applications from your repo, you need to connect a Github
-          account.
-        </Helper>
-        {!isLoading && (!accountData || !accountData?.accounts?.length) && (
-          <>
-            <ConnectToGithubButton
-              href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
-            >
-              <GitHubIcon src={github} /> Connect to GitHub
-            </ConnectToGithubButton>
-            <Helper>
-              No thanks, I want to deploy from a
-              <A onClick={() => nextStep("docker")}>Docker registry</A>.
-            </Helper>
-          </>
-        )}
-        {!isLoading && accountData?.accounts.length && (
-          <>
-            <List>
-              {accountData?.accounts.map((name, i) => {
-                return (
-                  <Row
-                    key={i}
-                    isLastItem={i === accountData.accounts.length - 1}
-                  >
-                    <i className="material-icons">bookmark</i>
-                    {name}
-                  </Row>
-                );
-              })}
-            </List>
-            <br />
-            Don't see the right repos?{" "}
-            <A href={"/api/integrations/github-app/install"}>
-              Install Porter in more repositories
-            </A>
-            <NextStep
-              text="Continue"
-              disabled={false}
-              onClick={() => nextStep("github")}
-              status={""}
-              makeFlush={true}
-              clearPosition={true}
-              statusPosition="right"
-              saveText=""
-              successText="Project created successfully!"
-            />
-          </>
-        )}
-      </SlideWrapper>
+      <TitleSection>Getting Started</TitleSection>
+      <Subtitle>Step 1 of 3 - Connect to GitHub</Subtitle>
+      <Helper>
+        To deploy applications from your repo, you need to connect a Github
+        account.
+      </Helper>
+      {!isLoading && (!accountData || !accountData?.accounts?.length) && (
+        <>
+          <ConnectToGithubButton
+            href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+          >
+            <GitHubIcon src={github} /> Connect to GitHub
+          </ConnectToGithubButton>
+          <Helper>
+            No thanks, I want to deploy from a
+            <A onClick={() => nextStep("docker")}>Docker registry</A>.
+          </Helper>
+        </>
+      )}
+      {!isLoading && accountData?.accounts.length && (
+        <>
+          <List>
+            {accountData?.accounts.map((name, i) => {
+              return (
+                <Row
+                  key={i}
+                  isLastItem={i === accountData.accounts.length - 1}
+                >
+                  <i className="material-icons">bookmark</i>
+                  {name}
+                </Row>
+              );
+            })}
+          </List>
+          <br />
+          Don't see the right repos?{" "}
+          <A href={"/api/integrations/github-app/install"}>
+            Install Porter in more repositories
+          </A>
+          <NextStep
+            text="Continue"
+            disabled={false}
+            onClick={() => nextStep("github")}
+            status={""}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText=""
+            successText="Project created successfully!"
+          />
+        </>
+      )}
     </div>
   );
 };

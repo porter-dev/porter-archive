@@ -73,7 +73,7 @@ const ConnectRegistry: React.FC<{
         />
       ) : (
         <NextStep
-          text="Skip step"
+          text="Continue"
           disabled={false}
           onClick={() => onSkip()}
           status={""}

@@ -35,8 +35,9 @@ export type FlowType = {
 };
 
 const flow: FlowType = {
-  initial: "new_project",
+  initial: "connect_source",
   steps: {
+    /*
     new_project: {
       url: "/onboarding/new-project",
       on: {
@@ -48,6 +49,7 @@ const flow: FlowType = {
         },
       },
     },
+    */
     connect_source: {
       url: "/onboarding/source",
       on: {

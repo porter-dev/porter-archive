@@ -4,14 +4,14 @@ import { OFState } from "../../state";
 import ProvisionResources from "./ProvisionResources";
 
 const ProvisionResourcesWrapper = () => {
-  const snap = useSnapshot(OFState);  
+  const snap = useSnapshot(OFState);
   return (
     <ProvisionResources
       shouldProvisionRegistry={snap.StateHandler.connected_registry?.skip}
       provider={snap.StateHandler.provision_resources?.provider}
       project={snap.StateHandler.project}
-      onSelectProvider={(provider) =>
-        OFState.actions.nextStep("continue", provider)
+      onSelectProvider={(provider: string) =>
+        provider !== "dummy" && OFState.actions.nextStep("continue", provider)
       }
       onSaveCredentials={(data) => OFState.actions.nextStep("continue", data)}
       onSaveSettings={(data) => OFState.actions.nextStep("continue", data)}

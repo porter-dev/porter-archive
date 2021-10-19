@@ -7,6 +7,7 @@ import (
 type EKS struct {
 	AWSRegion   string `json:"aws_region"`
 	ClusterName string `json:"cluster_name"`
+	MachineType string `json:"machine_type"`
 }
 
 func (eks *EKS) GetInput() ([]byte, error) {

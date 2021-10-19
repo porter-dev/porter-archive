@@ -564,6 +564,26 @@ const getInfra = baseApi<
   return `/api/projects/${pathParams.project_id}/infra`;
 });
 
+const getInfraDesired = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/desired`;
+});
+
+const getInfraCurrent = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/current`;
+});
+
 const getIngress = baseApi<
   {},
   { namespace: string; cluster_id: number; name: string; id: number }
@@ -1155,6 +1175,8 @@ export default {
   getImageRepos,
   getImageTags,
   getInfra,
+  getInfraDesired,
+  getInfraCurrent,
   getIngress,
   getInvites,
   getJobs,

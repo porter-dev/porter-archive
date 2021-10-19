@@ -1,6 +1,7 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
+import ProvisionerStatus, { TFModule, TFResource } from "components/ProvisionerStatus";
 import SaveButton from "components/SaveButton";
 import { OFState } from "main/home/onboarding/state";
 import { DOProvisionerConfig } from "main/home/onboarding/types";
@@ -8,6 +9,7 @@ import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 
 const tierOptions = [
   { value: "basic", label: "Basic" },
@@ -204,10 +206,111 @@ export const SettingsForm: React.FC<{
 export const Status: React.FC<{
   nextFormStep: () => void;
   project: any;
-}> = ({ nextFormStep }) => {
+}> = ({ nextFormStep, project }) => {
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeWebsocket,
+    closeAllWebsockets,
+  } = useWebsockets();
+
+  const [tfModules, setTFModules] = useState<TFModule[]>([]);
+
+  const setupInfraWebsocket = (
+    websocketID: string,
+    module: TFModule
+  ) => {
+    let apiPath = `/api/projects/${project?.id}/infras/${module.id}/logs`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log(`connected to websocket: ${websocketID}`);
+      },
+      onmessage: (evt: MessageEvent) => {
+        console.log("EVENT IS", evt)
+      },
+
+      onclose: () => {
+        console.log(`closing websocket: ${websocketID}`);
+      },
+
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(websocketID);
+      },
+    };
+
+    newWebsocket(websocketID, apiPath, wsConfig);
+    openWebsocket(websocketID);
+  };
+
+  useEffect(() => {
+    const filter : string[] = ["doks", "docr"]
+
+    api.getInfra("<token>", {}, { project_id: project?.id }).then((res) => {
+      var matchedInfras : Map<string, any>
+
+      res.data.forEach((infra : any) => {
+        if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id < infra.id) {
+          matchedInfras.set(infra.Kind, infra)
+        }
+      })
+
+      // query for desired and current state, and convert to tf module
+      matchedInfras.forEach((kind, infra : any) => {
+        api.getInfraDesired("<token>", {}, { project_id: project?.id, infra_id: infra?.id }).then((resDesired) => {
+          api.getInfraCurrent("<token>", {}, { project_id: project?.id, infra_id: infra?.id }).then((resCurrent) => {
+            var desired = resDesired.data
+            var current = resCurrent.data
+
+            // convert current state to a lookup table
+            var currentMap : Map<string, string>
+
+            current?.resources?.forEach((val : any) => {
+              currentMap.set(val?.type + "." + val?.name, "")
+            })
+
+            // map desired state to list of resources
+            var resources : TFResource[] = desired?.map((val : any) => {
+              return {
+                addr: val?.addr,
+                provisioned: currentMap.has(val?.addr),
+                // TODO: add error types
+                error: "",
+              }
+            })
+
+            var module : TFModule = {
+              id: infra.id,
+              kind: infra.kind,
+              resources: resources,
+            }
+
+            setTFModules([...tfModules, module])
+          })
+        })
+      });
+    })
+  }, [])
+
+  useEffect(() => {
+    tfModules.forEach((val) => {
+      setupInfraWebsocket(val.id + "", val);
+    })
+
+    return () => {
+      tfModules.forEach((val) => {
+        closeWebsocket(val.id + "");        
+      })
+    };
+  }, [tfModules]);
+
   return (
     <>
-      <SaveButton
+      <ProvisionerStatus 
+        modules={tfModules}
+      />
+      {/* <SaveButton
         text="Continue"
         disabled={false}
         onClick={nextFormStep}
@@ -215,7 +318,7 @@ export const Status: React.FC<{
         clearPosition={true}
         status={""}
         statusPosition={"right"}
-      />
+      /> */}
     </>
   );
 };

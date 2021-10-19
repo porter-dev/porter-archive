@@ -62,7 +62,7 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   });
 
   const availableOptions = useMemo(() => {
-    let options = baseOptions;
+    let options = [...baseOptions];
     if (enableSkip) {
       // Check if dummy option was deleted or not
       const dummyOptionIndex = options.findIndex((o) => o.value === "dummy");
@@ -87,7 +87,7 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
       }
     }
 
-    return options;
+    return [...options];
   }, [enableSkip, enableExternal]);
 
   return (

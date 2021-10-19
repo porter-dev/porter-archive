@@ -136,6 +136,62 @@ func getInfraRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/infras/{infra_id}/current -> infra.NewInfraGetHandler
+	getCurrentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/current",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	getCurrentHandler := infra.NewInfraGetCurrentHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getCurrentEndpoint,
+		Handler:  getCurrentHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/infras/{infra_id}/desired -> infra.NewInfraGetHandler
+	getDesiredEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/desired",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	getDesiredHandler := infra.NewInfraGetDesiredHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getDesiredEndpoint,
+		Handler:  getDesiredHandler,
+		Router:   r,
+	})
+
 	// DELETE /api/projects/{project_id}/infras/{infra_id} -> infra.NewInfraDeleteHandler
 	deleteEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

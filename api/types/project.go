@@ -91,10 +91,13 @@ type OnboardingData struct {
 	SkipResourceProvision          bool                `json:"skip_resource_provision"`
 	RegistryConnectionID           uint                `json:"registry_connection_id"`
 	RegistryConnectionCredentialID uint                `json:"registry_connection_credential_id"`
+	RegistryConnectionProvider     string              `json:"registry_connection_provider"`
 	RegistryInfraID                uint                `json:"registry_infra_id"`
 	RegistryInfraCredentialID      uint                `json:"registry_infra_credential_id"`
+	RegistryInfraProvider          string              `json:"registry_infra_provider"`
 	ClusterInfraID                 uint                `json:"cluster_infra_id"`
 	ClusterInfraCredentialID       uint                `json:"cluster_infra_credential_id"`
+	ClusterInfraProvider           string              `json:"cluster_infra_provider"`
 }
 
 type UpdateOnboardingRequest OnboardingData

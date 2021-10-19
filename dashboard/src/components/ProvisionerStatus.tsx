@@ -34,7 +34,6 @@ const ProvisionerStatus: React.FC<Props> = () => {
 
   return (
     <StyledProvisionerStatus>
-      <InfraWrapper>
         <InfraObject>
           <InfraHeader>
             {renderStatus("successful")}
@@ -44,8 +43,6 @@ const ProvisionerStatus: React.FC<Props> = () => {
             <LoadingFill status="successful" width="100%" />
           </LoadingBar>
         </InfraObject>
-      </InfraWrapper>
-      <InfraWrapper>
         <InfraObject>
           <InfraHeader>
             {renderStatus("loading")}
@@ -55,8 +52,6 @@ const ProvisionerStatus: React.FC<Props> = () => {
             <LoadingFill status="loading" width="90%" />
           </LoadingBar>
         </InfraObject>
-      </InfraWrapper>
-      <InfraWrapper>
         <InfraObject>
           <InfraHeader>
             {renderStatus("error")}
@@ -65,11 +60,10 @@ const ProvisionerStatus: React.FC<Props> = () => {
           <LoadingBar>
             <LoadingFill status="error" width="10%" />
           </LoadingBar>
+          <ExpandedError>
+            422 validation error: autoscaling failed because sometimes infrastructure is a bit mysterious and hard to predict.
+          </ExpandedError>
         </InfraObject>
-        <ExpandedError>
-          422 validation error: autoscaling failed because sometimes infrastructure is a bit mysterious and hard to predict.
-        </ExpandedError>
-      </InfraWrapper>
     </StyledProvisionerStatus>
   );
 };
@@ -78,11 +72,12 @@ export default ProvisionerStatus;
 
 const ExpandedError = styled.div`
   background: #ffffff22;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  border-radius: 5px;
   padding: 15px;
   font-size: 13px;
   font-family: monospace;
+  border: 1px solid #aaaabb;
+  margin-top: 17px;
 `;
 
 const LoadingFill = styled.div<{ width: string, status: string }>`
@@ -151,9 +146,6 @@ const InfraObject = styled.div`
   padding: 15px 15px 17px;
   border: 1px solid #aaaabb;
   border-radius: 5px;
-`;
-
-const InfraWrapper = styled.div`
   margin-bottom: 10px;
 `;
 

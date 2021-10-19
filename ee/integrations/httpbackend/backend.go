@@ -30,12 +30,20 @@ func (c *Client) GetCurrentState(name string) (*TFState, error) {
 	return resp, err
 }
 
+type GetDesiredStateResp struct {
+	Data *DesiredTFState `json:"data"`
+}
+
 func (c *Client) GetDesiredState(name string) (*DesiredTFState, error) {
-	resp := &DesiredTFState{}
+	resp := &GetDesiredStateResp{}
 
 	err := c.getRequest(fmt.Sprintf("%s/%s/state", c.backendURL, name), resp)
 
-	return resp, err
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Data, nil
 }
 
 func (c *Client) getRequest(path string, dst interface{}) error {

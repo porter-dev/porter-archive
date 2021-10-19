@@ -5,10 +5,9 @@ import (
 )
 
 type GKE struct {
-	GCPCredentials string `json:"gcp_credentials"`
-	GCPRegion      string `json:"gcp_region"`
-	GCPProjectID   string `json:"gcp_project_id"`
-	ClusterName    string `json:"cluster_name"`
+	GCPRegion    string `json:"gcp_region"`
+	GCPProjectID string `json:"gcp_project_id"`
+	ClusterName  string `json:"cluster_name"`
 }
 
 func (gke *GKE) GetInput() ([]byte, error) {

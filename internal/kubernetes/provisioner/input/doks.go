@@ -6,7 +6,6 @@ import (
 
 type DOKS struct {
 	DORegion    string `json:"do_region"`
-	DOToken     string `json:"do_token"`
 	ClusterName string `json:"cluster_name"`
 }
 

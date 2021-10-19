@@ -5,7 +5,6 @@ import (
 )
 
 type DOCR struct {
-	DOToken              string `json:"do_token"`
 	DOCRName             string `json:"docr_name"`
 	DOCRSubscriptionTier string `json:"docr_subscription_tier"`
 }

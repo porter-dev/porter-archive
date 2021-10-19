@@ -13,6 +13,10 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -60,14 +64,14 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch infra.Kind {
 	case types.InfraECR:
 		err = destroyECR(c.Config(), infra)
-		// case types.InfraEKS:
-		// 	err = destroyEKS(c.Repo(), c.Config(), infra, request.Name)
-		// case types.InfraDOCR:
-		// 	err = destroyDOCR(c.Repo(), c.Config(), infra, request.Name)
-		// case types.InfraDOKS:
-		// 	err = destroyDOKS(c.Repo(), c.Config(), infra, request.Name)
-		// case types.InfraGKE:
-		// 	err = destroyGKE(c.Repo(), c.Config(), infra, request.Name)
+	case types.InfraEKS:
+		err = destroyEKS(c.Config(), infra)
+	case types.InfraDOCR:
+		err = destroyDOCR(c.Config(), infra)
+	case types.InfraDOKS:
+		err = destroyDOKS(c.Config(), infra)
+	case types.InfraGKE:
+		err = destroyGKE(c.Config(), infra)
 	}
 
 	if err != nil {
@@ -113,107 +117,156 @@ func destroyECR(conf *config.Config, infra *models.Infra) error {
 	return err
 }
 
-// func destroyEKS(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-// 	awsInt, err := repo.AWSIntegration().ReadAWSIntegration(infra.ProjectID, infra.AWSIntegrationID)
+func destroyEKS(conf *config.Config, infra *models.Infra) error {
+	lastAppliedEKS := &types.CreateEKSInfraRequest{}
 
-// 	if err != nil {
-// 		return err
-// 	}
+	// parse infra last applied into EKS config
+	if err := json.Unmarshal(infra.LastApplied, lastAppliedEKS); err != nil {
+		return err
+	}
 
-// 	_, err = conf.ProvisionerAgent.ProvisionEKS(
-// 		&kubernetes.SharedProvisionOpts{
-// 			ProjectID:           infra.ProjectID,
-// 			Repo:                repo,
-// 			Infra:               infra,
-// 			Operation:           provisioner.Destroy,
-// 			PGConf:              conf.DBConf,
-// 			RedisConf:           conf.RedisConf,
-// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-// 		},
-// 		awsInt,
-// 		name,
-// 		"",
-// 	)
+	awsInt, err := conf.Repo.AWSIntegration().ReadAWSIntegration(infra.ProjectID, infra.AWSIntegrationID)
 
-// 	return err
-// }
+	if err != nil {
+		return err
+	}
 
-// func destroyDOCR(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-// 	doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
+	opts, err := provision.GetSharedProvisionerOpts(conf, infra)
 
-// 	if err != nil {
-// 		return err
-// 	}
+	vaultToken := ""
 
-// 	_, err = conf.ProvisionerAgent.ProvisionDOCR(
-// 		&kubernetes.SharedProvisionOpts{
-// 			ProjectID:           infra.ProjectID,
-// 			Repo:                repo,
-// 			Infra:               infra,
-// 			Operation:           provisioner.Destroy,
-// 			PGConf:              conf.DBConf,
-// 			RedisConf:           conf.RedisConf,
-// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-// 		},
-// 		doInt,
-// 		conf.DOConf,
-// 		name,
-// 		"",
-// 	)
+	if conf.CredentialBackend != nil {
+		vaultToken, err = conf.CredentialBackend.CreateAWSToken(awsInt)
 
-// 	return err
-// }
+		if err != nil {
+			return err
+		}
+	}
 
-// func destroyDOKS(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-// 	doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.EKS = &eks.Conf{
+		ClusterName: lastAppliedEKS.EKSName,
+		MachineType: lastAppliedEKS.MachineType,
+	}
+	opts.OperationKind = provisioner.Destroy
 
-// 	if err != nil {
-// 		return err
-// 	}
+	err = conf.ProvisionerAgent.Provision(opts)
 
-// 	_, err = conf.ProvisionerAgent.ProvisionDOKS(
-// 		&kubernetes.SharedProvisionOpts{
-// 			ProjectID:           infra.ProjectID,
-// 			Repo:                repo,
-// 			Infra:               infra,
-// 			Operation:           provisioner.Destroy,
-// 			PGConf:              conf.DBConf,
-// 			RedisConf:           conf.RedisConf,
-// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-// 		},
-// 		doInt,
-// 		conf.DOConf,
-// 		"",
-// 		name,
-// 	)
+	return err
+}
 
-// 	return err
-// }
+func destroyDOCR(conf *config.Config, infra *models.Infra) error {
+	lastAppliedDOCR := &types.CreateDOCRInfraRequest{}
 
-// func destroyGKE(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-// 	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(infra.ProjectID, infra.GCPIntegrationID)
+	// parse infra last applied into DOCR config
+	if err := json.Unmarshal(infra.LastApplied, lastAppliedDOCR); err != nil {
+		return err
+	}
 
-// 	if err != nil {
-// 		return err
-// 	}
+	doInt, err := conf.Repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
 
-// 	_, err = conf.ProvisionerAgent.ProvisionGKE(
-// 		&kubernetes.SharedProvisionOpts{
-// 			ProjectID:           infra.ProjectID,
-// 			Repo:                repo,
-// 			Infra:               infra,
-// 			Operation:           provisioner.Destroy,
-// 			PGConf:              conf.DBConf,
-// 			RedisConf:           conf.RedisConf,
-// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-// 		},
-// 		gcpInt,
-// 		name,
-// 	)
+	if err != nil {
+		return err
+	}
 
-// 	return err
-// }
+	opts, err := provision.GetSharedProvisionerOpts(conf, infra)
+
+	vaultToken := ""
+
+	if conf.CredentialBackend != nil {
+		vaultToken, err = conf.CredentialBackend.CreateOAuthToken(doInt)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.DOCR = &docr.Conf{
+		DOCRName:             lastAppliedDOCR.DOCRName,
+		DOCRSubscriptionTier: lastAppliedDOCR.DOCRSubscriptionTier,
+	}
+
+	opts.OperationKind = provisioner.Destroy
+
+	err = conf.ProvisionerAgent.Provision(opts)
+
+	return err
+}
+
+func destroyDOKS(conf *config.Config, infra *models.Infra) error {
+	lastAppliedDOKS := &types.CreateDOKSInfraRequest{}
+
+	// parse infra last applied into DOKS config
+	if err := json.Unmarshal(infra.LastApplied, lastAppliedDOKS); err != nil {
+		return err
+	}
+
+	doInt, err := conf.Repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
+
+	if err != nil {
+		return err
+	}
+
+	opts, err := provision.GetSharedProvisionerOpts(conf, infra)
+
+	vaultToken := ""
+
+	if conf.CredentialBackend != nil {
+		vaultToken, err = conf.CredentialBackend.CreateOAuthToken(doInt)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.DOKS = &doks.Conf{
+		DORegion:        lastAppliedDOKS.DORegion,
+		DOKSClusterName: lastAppliedDOKS.DOKSName,
+	}
+
+	opts.OperationKind = provisioner.Destroy
+
+	err = conf.ProvisionerAgent.Provision(opts)
+
+	return err
+}
+
+func destroyGKE(conf *config.Config, infra *models.Infra) error {
+	lastAppliedGKE := &types.CreateGKEInfraRequest{}
+
+	// parse infra last applied into DOKS config
+	if err := json.Unmarshal(infra.LastApplied, lastAppliedGKE); err != nil {
+		return err
+	}
+
+	gcpInt, err := conf.Repo.GCPIntegration().ReadGCPIntegration(infra.ProjectID, infra.GCPIntegrationID)
+
+	if err != nil {
+		return err
+	}
+
+	opts, err := provision.GetSharedProvisionerOpts(conf, infra)
+
+	vaultToken := ""
+
+	if conf.CredentialBackend != nil {
+		vaultToken, err = conf.CredentialBackend.CreateGCPToken(gcpInt)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.GKE = &gke.Conf{
+		ClusterName: lastAppliedGKE.GKEName,
+	}
+
+	opts.OperationKind = provisioner.Destroy
+
+	err = conf.ProvisionerAgent.Provision(opts)
+
+	return err
+}

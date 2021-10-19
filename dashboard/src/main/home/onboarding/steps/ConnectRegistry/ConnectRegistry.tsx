@@ -56,12 +56,12 @@ const ConnectRegistry: React.FC<{
           : "Link to an existing Docker registry or continue."}
       </Helper>
       <ProviderSelector
-          selectProvider={(provider) => {
-            if (provider !== "external") {
-              onSelectProvider(provider);
-            }
-          }}
-        />
+        selectProvider={(provider) => {
+          if (provider !== "external") {
+            onSelectProvider(provider);
+          }
+        }}
+      />
       {provider ? (
         <FormFlowWrapper
           provider={provider}
@@ -73,7 +73,7 @@ const ConnectRegistry: React.FC<{
         />
       ) : (
         <NextStep
-          text="Skip step"
+          text="Continue"
           disabled={false}
           onClick={() => onSkip()}
           status={""}
@@ -110,7 +110,7 @@ const FadeWrapper = styled.div<{ delay?: string }>`
 
 const SlideWrapper = styled.div<{ delay?: string }>`
   opacity: 0;
-  animation: slideIn 0.7s ${props => props.delay || "1.3s"};
+  animation: slideIn 0.7s ${(props) => props.delay || "1.3s"};
   animation-fill-mode: forwards;
 
   @keyframes slideIn {

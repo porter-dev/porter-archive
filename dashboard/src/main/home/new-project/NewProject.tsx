@@ -8,6 +8,7 @@ import backArrow from "assets/back_arrow.png";
 import styled from "styled-components";
 
 import gradient from "assets/gradient.png";
+import PageIllustration from "components/PageIllustration";
 import { Context } from "shared/Context";
 import { isAlphanumeric } from "shared/common";
 
@@ -93,61 +94,76 @@ export const NewProjectFC = () => {
   };
 
   return (
-    <StyledNewProject>
-      {!isFirstProject && (
-        <BackButton
-          onClick={() => {
-            pushFiltered("/dashboard", []);
-          }}
-        >
-          <BackButtonImg src={backArrow} />
-        </BackButton>
-      )}
-      <FadeWrapper>
-        <TitleSection>New Project</TitleSection>
-      </FadeWrapper>
-      <FadeWrapper delay="0.7s">
-        <Helper>
-          Project name
-          <Warning highlight={validateProjectName().hasError}>
-            (lowercase letters, numbers, and "-" only)
-          </Warning>
-          <Required>*</Required>
-        </Helper>
-      </FadeWrapper>
-      <SlideWrapper delay="1.2s">
-        <InputWrapper>
-          <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Letter>{name ? name.toUpperCase().substring(0, 1) : "-"}</Letter>
-          </ProjectIcon>
-          <InputRow
-            type="string"
-            value={name}
-            setValue={(x: string) => {
-              setButtonStatus("");
-              setName(x);
-            }}
-            placeholder="ex: perspective-vortex"
-            width="470px"
-            disabled={buttonStatus === "loading"}
+    <Wrapper>
+      <StyledNewProject>
+        <PageIllustration />
+        <FadeWrapper>
+          {!isFirstProject && (
+            <BackButton
+              onClick={() => {
+                pushFiltered("/dashboard", []);
+              }}
+            >
+              <BackButtonImg src={backArrow} />
+            </BackButton>
+          )}
+          <TitleSection>New Project</TitleSection>
+        </FadeWrapper>
+        <FadeWrapper delay="0.7s">
+          <Helper>
+            Project name
+            <Warning highlight={validateProjectName().hasError}>
+              (lowercase letters, numbers, and "-" only)
+            </Warning>
+            <Required>*</Required>
+          </Helper>
+        </FadeWrapper>
+        <SlideWrapper delay="1.2s">
+          <InputWrapper>
+            <ProjectIcon>
+              <ProjectImage src={gradient} />
+              <Letter>{name ? name.toUpperCase().substring(0, 1) : "-"}</Letter>
+            </ProjectIcon>
+            <InputRow
+              type="string"
+              value={name}
+              setValue={(x: string) => {
+                setButtonStatus("");
+                setName(x);
+              }}
+              placeholder="ex: perspective-vortex"
+              width="470px"
+              disabled={buttonStatus === "loading"}
+            />
+          </InputWrapper>
+          <NewProjectSaveButton
+            text="Create Project"
+            disabled={false}
+            onClick={createProject}
+            status={buttonStatus}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText="Creating project..."
+            successText="Project created successfully!"
           />
-        </InputWrapper>
-        <NewProjectSaveButton
-          text="Create Project"
-          disabled={false}
-          onClick={createProject}
-          status={buttonStatus}
-          makeFlush={true}
-          clearPosition={true}
-          statusPosition="right"
-          saveText="Creating project..."
-          successText="Project created successfully!"
-        />
-      </SlideWrapper>
-    </StyledNewProject>
+        </SlideWrapper>
+      </StyledNewProject>
+    </Wrapper>
   );
 };
+
+const Wrapper = styled.div`
+  max-width: 700px;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -6%;
+  padding-bottom: 5%;
+  min-width: 300px;
+  position: relative;
+`;
 
 const FadeWrapper = styled.div<{ delay?: string }>`
   opacity: 0;
@@ -234,10 +250,8 @@ const Warning = styled.span`
 `;
 
 const StyledNewProject = styled.div`
-  width: calc(90% - 130px);
   min-width: 300px;
   position: relative;
-  margin-top: calc(50vh - 340px);
 `;
 
 const NewProjectSaveButton = styled(SaveButton)`

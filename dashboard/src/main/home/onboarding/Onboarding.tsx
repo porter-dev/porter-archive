@@ -44,7 +44,9 @@ const Onboarding = () => {
         odata = response.data;
       }
     } catch (error) {
-      return null;
+      console.error(
+        "Gouldn't get any previous state, going with a brand new onboarding!"
+      );
     }
 
     let registry_connection_data = null;
@@ -67,7 +69,6 @@ const Onboarding = () => {
         console.error("Couldn't get registry connection data");
       }
     }
-
     let provision_connection_data = null;
     if (odata?.registry_infra_id) {
       try {
@@ -87,7 +88,6 @@ const Onboarding = () => {
         console.error("Couldn't get infra data");
       }
     }
-
     return {
       project_id,
       project_name,
@@ -100,9 +100,7 @@ const Onboarding = () => {
   useEffect(() => {
     if (context.currentProject) {
       getData(context.currentProject).then((data) => {
-        if (data) {
-          OFState.actions.initializeState(data);
-        }
+        OFState.actions.initializeState(data);
         setIsLoading(false);
       });
     }

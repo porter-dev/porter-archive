@@ -225,6 +225,12 @@ export const StepHandler: StepHandlerType = proxy({
       StepHandler.currentStep = flow.steps[flow.initial];
     },
     restoreState: (prevState) => {
+      if (
+        !prevState?.currentStepName ||
+        typeof prevState.currentStepName !== "string"
+      ) {
+        return;
+      }
       StepHandler.currentStepName = prevState.currentStepName;
       StepHandler.currentStep = StepHandler.actions.getStep(
         prevState.currentStepName

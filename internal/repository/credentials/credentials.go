@@ -36,8 +36,11 @@ type AWSCredential struct {
 type CredentialStorage interface {
 	WriteOAuthCredential(oauthIntegration *integrations.OAuthIntegration, data *OAuthCredential) error
 	GetOAuthCredential(oauthIntegration *integrations.OAuthIntegration) (*OAuthCredential, error)
+	CreateOAuthToken(oauthIntegration *integrations.OAuthIntegration) (string, error)
 	WriteGCPCredential(gcpIntegration *integrations.GCPIntegration, data *GCPCredential) error
 	GetGCPCredential(gcpIntegration *integrations.GCPIntegration) (*GCPCredential, error)
+	CreateGCPToken(gcpIntegration *integrations.GCPIntegration) (string, error)
 	WriteAWSCredential(awsIntegration *integrations.AWSIntegration, data *AWSCredential) error
 	GetAWSCredential(awsIntegration *integrations.AWSIntegration) (*AWSCredential, error)
+	CreateAWSToken(awsIntegration *integrations.AWSIntegration) (string, error)
 }

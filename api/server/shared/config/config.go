@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/credentials"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 )
@@ -90,8 +91,12 @@ type Config struct {
 	// WhitelistedUsers do not count toward usage limits
 	WhitelistedUsers map[uint]uint
 
-  // PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
+	// PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
 	PowerDNSClient *powerdns.Client
+
+	// CredentialBackend is the backend for credential storage, if external cred storage (like Vault)
+	// is used
+	CredentialBackend credentials.CredentialStorage
 }
 
 type ConfigLoader interface {

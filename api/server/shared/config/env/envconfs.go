@@ -53,11 +53,15 @@ type ServerConf struct {
 	IronPlansServerURL string `env:"IRON_PLANS_SERVER_URL"`
 	WhitelistedUsers   []uint `env:"WHITELISTED_USERS"`
 
-	DOClientID                 string `env:"DO_CLIENT_ID"`
-	DOClientSecret             string `env:"DO_CLIENT_SECRET"`
+	DOClientID     string `env:"DO_CLIENT_ID"`
+	DOClientSecret string `env:"DO_CLIENT_SECRET"`
+
+	// Options for the provisioner jobs
 	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
-	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
+	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
+
+	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
 	// PowerDNS client API key and the host of the PowerDNS API server
 	PowerDNSAPIServerURL string `env:"POWER_DNS_API_SERVER_URL"`

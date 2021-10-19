@@ -1,18 +1,19 @@
 package infra
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/provision"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
 )
 
 type InfraDeleteHandler struct {
@@ -58,15 +59,15 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch infra.Kind {
 	case types.InfraECR:
-		err = destroyECR(c.Repo(), c.Config(), infra, request.Name)
-	case types.InfraEKS:
-		err = destroyEKS(c.Repo(), c.Config(), infra, request.Name)
-	case types.InfraDOCR:
-		err = destroyDOCR(c.Repo(), c.Config(), infra, request.Name)
-	case types.InfraDOKS:
-		err = destroyDOKS(c.Repo(), c.Config(), infra, request.Name)
-	case types.InfraGKE:
-		err = destroyGKE(c.Repo(), c.Config(), infra, request.Name)
+		err = destroyECR(c.Config(), infra)
+		// case types.InfraEKS:
+		// 	err = destroyEKS(c.Repo(), c.Config(), infra, request.Name)
+		// case types.InfraDOCR:
+		// 	err = destroyDOCR(c.Repo(), c.Config(), infra, request.Name)
+		// case types.InfraDOKS:
+		// 	err = destroyDOKS(c.Repo(), c.Config(), infra, request.Name)
+		// case types.InfraGKE:
+		// 	err = destroyGKE(c.Repo(), c.Config(), infra, request.Name)
 	}
 
 	if err != nil {
@@ -75,132 +76,144 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func destroyECR(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-	awsInt, err := repo.AWSIntegration().ReadAWSIntegration(infra.ProjectID, infra.AWSIntegrationID)
+func destroyECR(conf *config.Config, infra *models.Infra) error {
+	lastAppliedECR := &types.CreateECRInfraRequest{}
+
+	// parse infra last applied into ECR config
+	if err := json.Unmarshal(infra.LastApplied, lastAppliedECR); err != nil {
+		return err
+	}
+
+	awsInt, err := conf.Repo.AWSIntegration().ReadAWSIntegration(infra.ProjectID, infra.AWSIntegrationID)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = conf.ProvisionerAgent.ProvisionECR(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           infra.ProjectID,
-			Repo:                repo,
-			Infra:               infra,
-			Operation:           provisioner.Destroy,
-			PGConf:              conf.DBConf,
-			RedisConf:           conf.RedisConf,
-			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-		},
-		awsInt,
-		name,
-	)
+	opts, err := provision.GetSharedProvisionerOpts(conf, infra)
 
-	return err
-}
+	vaultToken := ""
 
-func destroyEKS(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-	awsInt, err := repo.AWSIntegration().ReadAWSIntegration(infra.ProjectID, infra.AWSIntegrationID)
+	if conf.CredentialBackend != nil {
+		vaultToken, err = conf.CredentialBackend.CreateAWSToken(awsInt)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
-	_, err = conf.ProvisionerAgent.ProvisionEKS(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           infra.ProjectID,
-			Repo:                repo,
-			Infra:               infra,
-			Operation:           provisioner.Destroy,
-			PGConf:              conf.DBConf,
-			RedisConf:           conf.RedisConf,
-			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-		},
-		awsInt,
-		name,
-		"",
-	)
-
-	return err
-}
-
-func destroyDOCR(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-	doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
-
-	if err != nil {
-		return err
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.ECR = &ecr.Conf{
+		ECRName: lastAppliedECR.ECRName,
 	}
+	opts.OperationKind = provisioner.Destroy
 
-	_, err = conf.ProvisionerAgent.ProvisionDOCR(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           infra.ProjectID,
-			Repo:                repo,
-			Infra:               infra,
-			Operation:           provisioner.Destroy,
-			PGConf:              conf.DBConf,
-			RedisConf:           conf.RedisConf,
-			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-		},
-		doInt,
-		conf.DOConf,
-		name,
-		"",
-	)
+	err = conf.ProvisionerAgent.Provision(opts)
 
 	return err
 }
 
-func destroyDOKS(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-	doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
+// func destroyEKS(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
+// 	awsInt, err := repo.AWSIntegration().ReadAWSIntegration(infra.ProjectID, infra.AWSIntegrationID)
 
-	if err != nil {
-		return err
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = conf.ProvisionerAgent.ProvisionDOKS(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           infra.ProjectID,
-			Repo:                repo,
-			Infra:               infra,
-			Operation:           provisioner.Destroy,
-			PGConf:              conf.DBConf,
-			RedisConf:           conf.RedisConf,
-			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-		},
-		doInt,
-		conf.DOConf,
-		"",
-		name,
-	)
+// 	_, err = conf.ProvisionerAgent.ProvisionEKS(
+// 		&kubernetes.SharedProvisionOpts{
+// 			ProjectID:           infra.ProjectID,
+// 			Repo:                repo,
+// 			Infra:               infra,
+// 			Operation:           provisioner.Destroy,
+// 			PGConf:              conf.DBConf,
+// 			RedisConf:           conf.RedisConf,
+// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
+// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
+// 		},
+// 		awsInt,
+// 		name,
+// 		"",
+// 	)
 
-	return err
-}
+// 	return err
+// }
 
-func destroyGKE(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
-	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(infra.ProjectID, infra.GCPIntegrationID)
+// func destroyDOCR(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
+// 	doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
 
-	if err != nil {
-		return err
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = conf.ProvisionerAgent.ProvisionGKE(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           infra.ProjectID,
-			Repo:                repo,
-			Infra:               infra,
-			Operation:           provisioner.Destroy,
-			PGConf:              conf.DBConf,
-			RedisConf:           conf.RedisConf,
-			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
-		},
-		gcpInt,
-		name,
-	)
+// 	_, err = conf.ProvisionerAgent.ProvisionDOCR(
+// 		&kubernetes.SharedProvisionOpts{
+// 			ProjectID:           infra.ProjectID,
+// 			Repo:                repo,
+// 			Infra:               infra,
+// 			Operation:           provisioner.Destroy,
+// 			PGConf:              conf.DBConf,
+// 			RedisConf:           conf.RedisConf,
+// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
+// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
+// 		},
+// 		doInt,
+// 		conf.DOConf,
+// 		name,
+// 		"",
+// 	)
 
-	return err
-}
+// 	return err
+// }
+
+// func destroyDOKS(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
+// 	doInt, err := repo.OAuthIntegration().ReadOAuthIntegration(infra.ProjectID, infra.DOIntegrationID)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	_, err = conf.ProvisionerAgent.ProvisionDOKS(
+// 		&kubernetes.SharedProvisionOpts{
+// 			ProjectID:           infra.ProjectID,
+// 			Repo:                repo,
+// 			Infra:               infra,
+// 			Operation:           provisioner.Destroy,
+// 			PGConf:              conf.DBConf,
+// 			RedisConf:           conf.RedisConf,
+// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
+// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
+// 		},
+// 		doInt,
+// 		conf.DOConf,
+// 		"",
+// 		name,
+// 	)
+
+// 	return err
+// }
+
+// func destroyGKE(repo repository.Repository, conf *config.Config, infra *models.Infra, name string) error {
+// 	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(infra.ProjectID, infra.GCPIntegrationID)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	_, err = conf.ProvisionerAgent.ProvisionGKE(
+// 		&kubernetes.SharedProvisionOpts{
+// 			ProjectID:           infra.ProjectID,
+// 			Repo:                repo,
+// 			Infra:               infra,
+// 			Operation:           provisioner.Destroy,
+// 			PGConf:              conf.DBConf,
+// 			RedisConf:           conf.RedisConf,
+// 			ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
+// 			ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
+// 		},
+// 		gcpInt,
+// 		name,
+// 	)
+
+// 	return err
+// }

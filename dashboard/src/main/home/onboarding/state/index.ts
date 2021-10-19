@@ -46,20 +46,19 @@ export const OFState = proxy({
         .then((res) => console.log(res))
         .catch((err) => console.log(err));
     },
-    restoreState: (state: Onboarding) => {
-      return;
-      // const prevState = decompressState(state);
+    restoreState: (state: any) => {
+      const prevState = decompressState(state);
 
-      // if (prevState.StepHandler.currentStepName === "clean_up") {
-      //   return;
-      // }
+      if (prevState.StepHandler.currentStepName === "clean_up") {
+        return;
+      }
 
-      // if (prevState?.StateHandler) {
-      //   StateHandler.actions.restoreState(prevState.StateHandler);
-      // }
-      // if (prevState?.StepHandler) {
-      //   StepHandler.actions.restoreState(prevState.StepHandler);
-      // }
+      if (prevState?.StateHandler) {
+        StateHandler.actions.restoreState(prevState.StateHandler);
+      }
+      if (prevState?.StepHandler) {
+        StepHandler.actions.restoreState(prevState.StepHandler);
+      }
     },
   },
 });
@@ -93,64 +92,64 @@ const compressState = (state: typeof OFState) => {
   return onboarding_state;
 };
 
-// const decompressState = (prev_state: Onboarding) => {
-//   const state: Onboarding = prev_state;
+const decompressState = (prev_state: any) => {
+  const state: any = prev_state;
 
-//   const step = state.current_step;
-//   const project = {
-//     id: state.project_id,
-//     name: state.project_name,
-//   };
+  const step = state.current_step;
+  const project = {
+    id: state.project_id,
+    name: state.project_name,
+  };
 
-//   let registry: any = {
-//     skip: state.skip_registry_connection,
-//     provider: state.registry_connection_provider,
-//     credentials: {
-//       id: state.registry_connection_credential_id,
-//     },
-//     settings: {
-//       registry_name: state.registry_connection_settings_name,
-//     },
-//   };
+  let registry: any = {
+    skip: state.skip_registry_connection,
+    provider: state.registry_connection_provider,
+    credentials: {
+      id: state.registry_connection_credential_id,
+    },
+    settings: {
+      registry_name: state.registry_connection_settings_name,
+    },
+  };
 
-//   if (registry.provider === "gcp") {
-//     registry.settings.gcr_url = state.registry_connection_settings_url;
-//   } else if (registry.provider === "do") {
-//     registry.settings.registry_url = state.registry_connection_settings_url;
-//   }
+  if (registry.provider === "gcp") {
+    registry.settings.gcr_url = state.registry_connection_settings_url;
+  } else if (registry.provider === "do") {
+    registry.settings.registry_url = state.registry_connection_settings_url;
+  }
 
-//   let provision: any = {
-//     skip: state.skip_resource_provision,
-//     provider: state.resource_provision_provider,
-//     credentials: {
-//       id: state.resource_provision_credentials_id,
-//     },
-//     settings: {
-//       cluster_name: state.resource_provision_settings_cluster_name,
-//     },
-//   };
+  let provision: any = {
+    skip: state.skip_resource_provision,
+    provider: state.resource_provision_provider,
+    credentials: {
+      id: state.resource_provision_credentials_id,
+    },
+    settings: {
+      cluster_name: state.resource_provision_settings_cluster_name,
+    },
+  };
 
-//   if (provision.provider === "gcp") {
-//     provision.credentials.region = state.resource_provision_credentials_region;
-//   } else if (provision.provider === "aws") {
-//     provision.credentials.region = state.resource_provision_credentials_region;
-//     provision.credentials.arn = state.resource_provision_credentials_arn;
-//     provision.settings.aws_machine_type =
-//       state.resource_provision_settings_machine_type;
-//   } else if (provision.provider === "do") {
-//     provision.settings.tier = state.resource_provision_settings_tier;
-//     provision.settings.region = state.resource_provision_settings_region;
-//   }
+  if (provision.provider === "gcp") {
+    provision.credentials.region = state.resource_provision_credentials_region;
+  } else if (provision.provider === "aws") {
+    provision.credentials.region = state.resource_provision_credentials_region;
+    provision.credentials.arn = state.resource_provision_credentials_arn;
+    provision.settings.aws_machine_type =
+      state.resource_provision_settings_machine_type;
+  } else if (provision.provider === "do") {
+    provision.settings.tier = state.resource_provision_settings_tier;
+    provision.settings.region = state.resource_provision_settings_region;
+  }
 
-//   return {
-//     StepHandler: {
-//       currentStepName: step,
-//     },
-//     StateHandler: {
-//       project,
-//       connected_source: state.connected_source,
-//       connected_registry: registry,
-//       provision_resources: provision,
-//     },
-//   };
-// };
+  return {
+    StepHandler: {
+      currentStepName: step,
+    },
+    StateHandler: {
+      project,
+      connected_source: state.connected_source,
+      connected_registry: registry,
+      provision_resources: provision,
+    },
+  };
+};

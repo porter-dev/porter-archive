@@ -157,7 +157,7 @@ const Block = styled.div<{ disabled?: boolean }>`
   font-weight: 500;
   padding: 3px 0px 5px;
   flex-direction: column;
-  align-item: center;
+  align-items: center;
   justify-content: space-between;
   height: 170px;
   cursor: ${(props) => (props.disabled ? "" : "pointer")};

@@ -18,7 +18,7 @@ const ConnectRegistry: React.FC<{
     id: number;
     name: string;
   };
-  onSelectProvider: (provider: SupportedProviders) => void;
+  onSelectProvider: (provider: SupportedProviders | "skip") => void;
   onSaveCredentials: (credentials: any) => void;
   onSaveSettings: (settings: any) => void;
   onSuccess: () => void;

@@ -10,7 +10,7 @@ const ConnectRegistryWrapper = () => {
       provider={snap.StateHandler.connected_registry?.provider}
       project={snap.StateHandler.project}
       onSelectProvider={(provider) =>
-        OFState.actions.nextStep("continue", provider)
+        provider !== "skip" && OFState.actions.nextStep("continue", provider)
       }
       onSaveCredentials={(data) => OFState.actions.nextStep("continue", data)}
       onSaveSettings={(data) => OFState.actions.nextStep("continue", data)}

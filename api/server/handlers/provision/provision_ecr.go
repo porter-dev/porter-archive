@@ -110,7 +110,8 @@ func (c *ProvisionECRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	opts.CredentialExchange.VaultToken = vaultToken
 	opts.ECR = &ecr.Conf{
-		ECRName: request.ECRName,
+		AWSRegion: awsInt.AWSRegion,
+		ECRName:   request.ECRName,
 	}
 	opts.OperationKind = provisioner.Apply
 

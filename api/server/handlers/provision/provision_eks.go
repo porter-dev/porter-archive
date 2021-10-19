@@ -110,6 +110,7 @@ func (c *ProvisionEKSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	opts.CredentialExchange.VaultToken = vaultToken
 	opts.EKS = &eks.Conf{
+		AWSRegion:   awsInt.AWSRegion,
 		ClusterName: request.EKSName,
 		MachineType: request.MachineType,
 	}

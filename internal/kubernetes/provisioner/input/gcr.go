@@ -5,9 +5,8 @@ import (
 )
 
 type GCR struct {
-	GCPCredentials string `json:"gcp_credentials"`
-	GCPRegion      string `json:"gcp_region"`
-	GCPProjectID   string `json:"gcp_project_id"`
+	GCPRegion    string `json:"gcp_region"`
+	GCPProjectID string `json:"gcp_project_id"`
 }
 
 func (gcr *GCR) GetInput() ([]byte, error) {

@@ -28,4 +28,5 @@ type Repository interface {
 	Event() EventRepository
 	ProjectUsage() ProjectUsageRepository
 	Onboarding() ProjectOnboardingRepository
+	CredentialsExchangeToken() CredentialsExchangeTokenRepository
 }

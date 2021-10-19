@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,8 +10,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -43,7 +44,7 @@ func (c *ProvisionDOKSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// get the AWS integration
+	// get the DO integration, to check that integration exists and belongs to the project
 	doInt, err := c.Repo().OAuthIntegration().ReadOAuthIntegration(proj.ID, request.DOIntegrationID)
 
 	if err != nil {
@@ -63,6 +64,14 @@ func (c *ProvisionDOKSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	lastApplied, err := json.Marshal(request)
+
+	// parse infra last applied into DOKS config
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	infra := &models.Infra{
 		Kind:            types.InfraDOKS,
 		ProjectID:       proj.ID,
@@ -70,6 +79,7 @@ func (c *ProvisionDOKSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Status:          types.StatusCreating,
 		DOIntegrationID: request.DOIntegrationID,
 		CreatedByUserID: user.ID,
+		LastApplied:     lastApplied,
 	}
 
 	// handle write to the database
@@ -80,23 +90,33 @@ func (c *ProvisionDOKSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// launch provisioning pod
-	_, err = c.Config().ProvisionerAgent.ProvisionDOKS(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           proj.ID,
-			Repo:                c.Repo(),
-			Infra:               infra,
-			Operation:           provisioner.Apply,
-			PGConf:              c.Config().DBConf,
-			RedisConf:           c.Config().RedisConf,
-			ProvImageTag:        c.Config().ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: c.Config().ServerConf.ProvisionerImagePullSecret,
-		},
-		doInt,
-		c.Config().DOConf,
-		request.DORegion,
-		request.DOKSName,
-	)
+	opts, err := GetSharedProvisionerOpts(c.Config(), infra)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	vaultToken := ""
+
+	if c.Config().CredentialBackend != nil {
+		vaultToken, err = c.Config().CredentialBackend.CreateOAuthToken(doInt)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.DOKS = &doks.Conf{
+		DORegion:        request.DORegion,
+		DOKSClusterName: request.DOKSName,
+	}
+
+	opts.OperationKind = provisioner.Apply
+
+	err = c.Config().ProvisionerAgent.Provision(opts)
 
 	if err != nil {
 		infra.Status = types.StatusError

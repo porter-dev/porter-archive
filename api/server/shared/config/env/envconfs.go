@@ -53,11 +53,15 @@ type ServerConf struct {
 	IronPlansServerURL string `env:"IRON_PLANS_SERVER_URL"`
 	WhitelistedUsers   []uint `env:"WHITELISTED_USERS"`
 
-	DOClientID                 string `env:"DO_CLIENT_ID"`
-	DOClientSecret             string `env:"DO_CLIENT_SECRET"`
+	DOClientID     string `env:"DO_CLIENT_ID"`
+	DOClientSecret string `env:"DO_CLIENT_SECRET"`
+
+	// Options for the provisioner jobs
 	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
-	SegmentClientKey           string `env:"SEGMENT_CLIENT_KEY"`
+	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
+
+	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
 	// PowerDNS client API key and the host of the PowerDNS API server
 	PowerDNSAPIServerURL string `env:"POWER_DNS_API_SERVER_URL"`
@@ -93,6 +97,10 @@ type DBConf struct {
 
 	SQLLite     bool   `env:"SQL_LITE,default=false"`
 	SQLLitePath string `env:"SQL_LITE_PATH,default=/porter/porter.db"`
+
+	VaultPrefix    string `env:"VAULT_PREFIX,default=production"`
+	VaultAPIKey    string `env:"VAULT_API_KEY"`
+	VaultServerURL string `env:"VAULT_SERVER_URL"`
 }
 
 // RedisConf is the redis config required for the provisioner container

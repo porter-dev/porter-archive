@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,7 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -43,7 +43,7 @@ func (c *ProvisionGCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// get the AWS integration
+	// get the GCP integration, to check that integration exists and belongs to the project
 	gcpInt, err := c.Repo().GCPIntegration().ReadGCPIntegration(proj.ID, request.GCPIntegrationID)
 
 	if err != nil {
@@ -63,6 +63,14 @@ func (c *ProvisionGCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	lastApplied, err := json.Marshal(request)
+
+	// parse infra last applied into GCR config
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	infra := &models.Infra{
 		Kind:             types.InfraGCR,
 		ProjectID:        proj.ID,
@@ -70,6 +78,7 @@ func (c *ProvisionGCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Status:           types.StatusCreating,
 		GCPIntegrationID: request.GCPIntegrationID,
 		CreatedByUserID:  user.ID,
+		LastApplied:      lastApplied,
 	}
 
 	// handle write to the database
@@ -80,20 +89,28 @@ func (c *ProvisionGCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// launch provisioning pod
-	_, err = c.Config().ProvisionerAgent.ProvisionGCR(
-		&kubernetes.SharedProvisionOpts{
-			ProjectID:           proj.ID,
-			Repo:                c.Repo(),
-			Infra:               infra,
-			Operation:           provisioner.Apply,
-			PGConf:              c.Config().DBConf,
-			RedisConf:           c.Config().RedisConf,
-			ProvImageTag:        c.Config().ServerConf.ProvisionerImageTag,
-			ProvImagePullSecret: c.Config().ServerConf.ProvisionerImagePullSecret,
-		},
-		gcpInt,
-	)
+	opts, err := GetSharedProvisionerOpts(c.Config(), infra)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	vaultToken := ""
+
+	if c.Config().CredentialBackend != nil {
+		vaultToken, err = c.Config().CredentialBackend.CreateGCPToken(gcpInt)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	opts.CredentialExchange.VaultToken = vaultToken
+	opts.OperationKind = provisioner.Apply
+
+	err = c.Config().ProvisionerAgent.Provision(opts)
 
 	if err != nil {
 		infra.Status = types.StatusError

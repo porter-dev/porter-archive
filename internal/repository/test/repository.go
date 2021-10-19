@@ -32,6 +32,7 @@ type TestRepository struct {
 	event                     repository.EventRepository
 	projectUsage              repository.ProjectUsageRepository
 	onboarding                repository.ProjectOnboardingRepository
+	ceToken                   repository.CredentialsExchangeTokenRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -138,8 +139,13 @@ func (t *TestRepository) ProjectUsage() repository.ProjectUsageRepository {
 	return t.projectUsage
 }
 
+<<<<<<< HEAD
 func (t *TestRepository) Onboarding() repository.ProjectOnboardingRepository {
 	return t.onboarding
+=======
+func (t *TestRepository) CredentialsExchangeToken() repository.CredentialsExchangeTokenRepository {
+	return t.ceToken
+>>>>>>> belanger/por-132-vault-storage-backend
 }
 
 // NewRepository returns a Repository which persists users in memory
@@ -172,6 +178,10 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		event:                     NewEventRepository(canQuery),
 		projectUsage:              NewProjectUsageRepository(canQuery),
+<<<<<<< HEAD
 		onboarding:                NewProjectOnboardingRepository(canQuery),
+=======
+		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
+>>>>>>> belanger/por-132-vault-storage-backend
 	}
 }

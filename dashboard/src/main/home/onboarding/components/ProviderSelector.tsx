@@ -45,7 +45,7 @@ const externalOption = {
 const dummyOption = {
   value: "dummy",
   icon: "",
-  label: "Select a provider",
+  label: "Select a cloud provider",
 };
 
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
@@ -58,7 +58,7 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
       return "skip";
     }
 
-    return "dummy";
+    return null;
   });
 
   const availableOptions = useMemo(() => {
@@ -75,9 +75,6 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
       const skipOptionIndex = options.findIndex((o) => o.value === "skip");
       if (skipOptionIndex >= 0) {
         options.splice(skipOptionIndex, 1);
-      }
-      if (!options.find((o) => o.value === "dummy")) {
-        options.unshift(dummyOption);
       }
     }
 
@@ -96,6 +93,7 @@ const ProviderSelector: React.FC<ProviderSelectorProps> = ({
       <Selector
         activeValue={provider}
         options={availableOptions}
+        placeholder="Select a cloud provider"
         setActiveValue={(provider) => {
           setProvider(provider);
           selectProvider(provider as SupportedProviders);

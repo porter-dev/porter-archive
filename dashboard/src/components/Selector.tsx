@@ -14,6 +14,8 @@ type PropsType = {
   dropdownWidth?: string;
   dropdownMaxHeight?: string;
   closeOverlay?: boolean;
+  placeholder?: string;
+  scrollBuffer?: boolean;
 };
 
 type StateType = {};
@@ -103,20 +105,23 @@ export default class Selector extends Component<PropsType, StateType> {
   renderDropdown = () => {
     if (this.state.expanded) {
       return (
-        <Dropdown
-          ref={this.wrapperRef}
-          dropdownWidth={
-            this.props.dropdownWidth
-              ? this.props.dropdownWidth
-              : this.props.width
-          }
-          dropdownMaxHeight={this.props.dropdownMaxHeight}
-          onClick={() => this.setState({ expanded: false })}
-        >
-          {this.renderDropdownLabel()}
-          {this.renderOptionList()}
-          {this.renderAddButton()}
-        </Dropdown>
+        <DropdownWrapper>
+          <Dropdown
+            ref={this.wrapperRef}
+            dropdownWidth={
+              this.props.dropdownWidth
+                ? this.props.dropdownWidth
+                : this.props.width
+            }
+            dropdownMaxHeight={this.props.dropdownMaxHeight}
+            onClick={() => this.setState({ expanded: false })}
+          >
+            {this.renderDropdownLabel()}
+            {this.renderOptionList()}
+            {this.renderAddButton()}
+          </Dropdown>
+          {this.props.scrollBuffer && <ScrollBuffer />}
+        </DropdownWrapper>
       );
     }
   };
@@ -168,7 +173,13 @@ export default class Selector extends Component<PropsType, StateType> {
           <Flex>
             {this.renderIcon()}
             <TextWrap>
-              {activeValue === "" ? "All" : this.getLabel(activeValue)}
+              {
+                activeValue ? (
+                  activeValue === "" ? "All" : this.getLabel(activeValue)
+                ) : (
+                  this.props.placeholder
+                )
+              }
             </TextWrap>
           </Flex>
           <i className="material-icons">arrow_drop_down</i>
@@ -180,6 +191,18 @@ export default class Selector extends Component<PropsType, StateType> {
 }
 
 Selector.contextType = Context;
+
+const DropdownWrapper = styled.div`
+  position: absolute;
+  width: 100%;
+  right: 0;
+  top: calc(100% + 5px);
+`;
+
+const ScrollBuffer = styled.div`
+  width: 100%;
+  height: 50px;
+`;
 
 const Flex = styled.div`
   display: flex;
@@ -278,9 +301,6 @@ const CloseOverlay = styled.div`
 `;
 
 const Dropdown = styled.div`
-  position: absolute;
-  right: 0;
-  top: calc(100% + 5px);
   background: #26282f;
   width: ${(props: { dropdownWidth: string; dropdownMaxHeight: string }) =>
     props.dropdownWidth};

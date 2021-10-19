@@ -121,13 +121,14 @@ export const CredentialsForm: React.FC<{
         options={regionOptions}
         width="100%"
         value={region}
+        scrollBuffer={true}
         dropdownMaxHeight="240px"
         setActiveValue={(x: string) => {
           setRegion(x);
         }}
         label="📍 GCP Region"
       />
-
+      <Br />
       <SaveButton
         text="Continue"
         disabled={false}
@@ -260,6 +261,11 @@ export const Status: React.FC<{
     />
   );
 };
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const CodeBlock = styled.span`
   display: inline-block;

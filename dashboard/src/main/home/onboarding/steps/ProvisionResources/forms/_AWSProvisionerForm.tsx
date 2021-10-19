@@ -1,3 +1,4 @@
+import styled from "styled-components";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
@@ -120,12 +121,14 @@ export const CredentialsForm: React.FC<{
         options={regionOptions}
         width="100%"
         value={awsRegion}
+        scrollBuffer={true}
         dropdownMaxHeight="240px"
         setActiveValue={(x: string) => {
           setAWSRegion(x);
         }}
         label="📍 AWS Region"
       />
+      <Br />
       <SaveButton
         text="Continue"
         disabled={false}
@@ -257,6 +260,7 @@ export const SettingsForm: React.FC<{
         }}
         label="⚙️ AWS Machine Type"
       />
+      <Br />
       <SaveButton
         text="Provision resources"
         disabled={false}
@@ -282,3 +286,8 @@ export const Status: React.FC<{
     />
   );
 };
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;

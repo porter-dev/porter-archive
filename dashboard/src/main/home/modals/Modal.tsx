@@ -42,11 +42,7 @@ export default class Modal extends Component<PropsType, StateType> {
           <CloseButton onClick={this.props.onRequestClose}>
             <i className="material-icons">close</i>
           </CloseButton>
-          { 
-            this.props.title && (
-              <ModalTitle>{this.props.title}</ModalTitle>
-            )
-          }
+          {this.props.title && <ModalTitle>{this.props.title}</ModalTitle>}
           {this.props.children}
         </StyledModal>
       </Overlay>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Route, Switch } from "react-router";
+import { Redirect } from "react-router-dom";
 import { OFState } from "./state";
 import ConnectRegistryWrapper from "./steps/ConnectRegistry/ConnectRegistryWrapper";
 import ConnectSource from "./steps/ConnectSource";

@@ -411,7 +411,7 @@ class Home extends Component<PropsType, StateType> {
             <Route
               path="/onboarding"
               render={() => {
-                return <Onboarding></Onboarding>;
+                return <Onboarding />;
               }}
             />
             <Route

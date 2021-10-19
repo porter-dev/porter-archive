@@ -28,17 +28,17 @@ const Forms = {
   aws: {
     credentials: AWSCredentialsForm,
     settings: AWSSettingsForm,
-    // status: AWSProvisionerStatus,
+    status: AWSProvisionerStatus,
   },
   gcp: {
     credentials: GCPCredentialsForm,
     settings: GCPSettingsForm,
-    // status: GCPProvisionerStatus,
+    status: GCPProvisionerStatus,
   },
   do: {
     credentials: DOCredentialsForm,
     settings: DOSettingsForm,
-    // status: DOProvisionerStatus,
+    status: DOProvisionerStatus,
   },
 };
 
@@ -52,7 +52,7 @@ type Props = {
   onSaveCredentials: (credentials: any) => void;
   onSaveSettings: (settings: any) => void;
   provider: SupportedProviders | "external";
-  currentStep: "credentials" | "settings";
+  currentStep: "credentials" | "settings" | "status";
   project: { id: number; name: string };
 };
 

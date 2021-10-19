@@ -6,9 +6,28 @@ import loading from "assets/loading.gif";
 import styled from "styled-components";
 
 type Props = {
+  modules : TFModule[]
 };
 
-const ProvisionerStatus: React.FC<Props> = () => {
+export interface TFModule {
+  id: number
+  kind: string
+  resources: TFResource[]
+}
+
+export interface TFResource {
+  addr: string,
+  provisioned: boolean,
+  error: string,
+}
+
+const nameMap : { [key: string]: string } = {
+  "eks": "Elastic Kubernetes Service (EKS)",
+  "ecr": "Elastic Container Registry (ECR)",
+}
+
+const ProvisionerStatus: React.FC<Props> = (props) => {
+  const { modules } = props;
 
   const renderStatus = (status: string) => {
     if (status === "successful") {
@@ -32,18 +51,64 @@ const ProvisionerStatus: React.FC<Props> = () => {
     }
   };
 
+  const renderModules = () => {
+    return modules.map((val) => {
+      const totalResources = val.resources?.length
+      const provisionedResources = val.resources?.filter((resource) => {
+        return resource.provisioned
+      }).length
+
+      var errors : string[] = []
+
+      const hasError = val.resources?.filter((resource) => {
+        if (resource.error !== "") {
+          errors.push(resource.error)
+        }
+
+        return resource.error !== ""
+      }).length > 0
+
+      const width = 100 * (provisionedResources / (totalResources * 1.0))
+
+      var error = null
+
+      if (hasError) {
+        error = errors.map((error) => {
+          return <ExpandedError>{error}</ExpandedError>
+        })
+      }
+
+      var loadingFill 
+      var status 
+
+      if (hasError) {
+        loadingFill = <LoadingFill status="error" width={width + "%"} />
+        status = renderStatus("error")
+      } else if (width == 100) {
+        loadingFill = <LoadingFill status="successful" width={width + "%"} />
+        status = renderStatus("successful")
+      } else {
+        loadingFill = <LoadingFill status="loading" width={width + "%"} />
+        status = renderStatus("loading")
+      }
+
+      return <InfraObject key={val.id}>
+        <InfraHeader>
+          {status}
+          {nameMap[val.kind]}
+        </InfraHeader>
+        <LoadingBar>
+          {loadingFill}
+        </LoadingBar>
+        {error}
+      </InfraObject>
+    })
+  }
+
   return (
     <StyledProvisionerStatus>
-        <InfraObject>
-          <InfraHeader>
-            {renderStatus("successful")}
-            Elastic Kubernetes Service (EKS)
-          </InfraHeader>
-          <LoadingBar>
-            <LoadingFill status="successful" width="100%" />
-          </LoadingBar>
-        </InfraObject>
-        <InfraObject>
+        {renderModules()}
+        {/* <InfraObject>
           <InfraHeader>
             {renderStatus("loading")}
             Elastic Kubernetes Service (EKS)
@@ -63,7 +128,7 @@ const ProvisionerStatus: React.FC<Props> = () => {
           <ExpandedError>
             422 validation error: autoscaling failed because sometimes infrastructure is a bit mysterious and hard to predict.
           </ExpandedError>
-        </InfraObject>
+        </InfraObject> */}
     </StyledProvisionerStatus>
   );
 };

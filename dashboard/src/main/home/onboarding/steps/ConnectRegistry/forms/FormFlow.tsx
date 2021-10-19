@@ -1,4 +1,5 @@
 import { ConnectedRegistryConfig } from "main/home/onboarding/state/StateHandler";
+import Breadcrumb from "components/Breadcrumb";
 import {
   SkipRegistryConnection,
   SupportedProviders,
@@ -95,13 +96,15 @@ const FormFlowWrapper: React.FC<Props> = ({
 
   return (
     <FormWrapper>
-      <Breadcrumb>
-        <Text bold={currentStep === "credentials"}>Credentials</Text>
-        {" > "}
-        <Text bold={currentStep === "settings"}>Settings</Text>
-        {" > "}
-        <Text bold={currentStep === "test_connection"}>Test Connection</Text>
-      </Breadcrumb>
+      <Breadcrumb 
+        currentStep={currentStep}
+        steps={[
+          { value: "credentials", label: "Credentials" },
+          { value: "settings", label: "Settings" },
+          { value: "test_connection", label: "Test Connection" },
+        ]}
+        onClickStep={(step: string) => alert(step)}
+      />
       {CurrentForm}
     </FormWrapper>
   );
@@ -115,12 +118,4 @@ const FormWrapper = styled.div`
   padding: 20px;
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
-`;
-
-const Text = styled.span<{ bold: boolean }>`
-  font-weight: ${(props) => (props.bold ? "600" : "normal")};
-`;
-
-const Breadcrumb = styled.div`
-  font-size: 13px;
 `;

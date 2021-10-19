@@ -57,7 +57,7 @@ const Onboarding = () => {
             registry_connection_id: odata.registry_connection_id,
           }
         );
-        console.log(response);
+        //console.log(response);
         if (response.data) {
           registry_connection_data = response.data;
         }

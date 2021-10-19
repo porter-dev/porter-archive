@@ -9,6 +9,7 @@ import {
 import React, { useState } from "react";
 import api from "shared/api";
 import { useSnapshot } from "valtio";
+import { SharedStatus } from "./Status";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -263,23 +264,13 @@ export const SettingsForm: React.FC<{
   );
 };
 
-/**
- * @todo Need to implement provisioner status here
- */
-export const Status: React.FC<{ nextFormStep: () => void }> = ({
-  nextFormStep,
-}) => {
-  return (
-    <>
-      <SaveButton
-        text="Continue"
-        disabled={false}
-        onClick={nextFormStep}
-        makeFlush={true}
-        clearPosition={true}
-        status={""}
-        statusPosition={"right"}
-      />
-    </>
-  );
+export const Status: React.FC<{
+  nextFormStep: () => void;
+  project: any;
+}> = ({ nextFormStep, project }) => {
+  return <SharedStatus
+    nextFormStep={nextFormStep}
+    project={project}
+    filter={["eks", "ecr"]}
+  />
 };

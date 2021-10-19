@@ -12,6 +12,7 @@ import React, { useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
+import { SharedStatus } from "./Status";
 
 const regionOptions = [
   { value: "asia-east1", label: "asia-east1" },
@@ -241,26 +242,15 @@ export const SettingsForm: React.FC<{
   );
 };
 
-/**
- * @todo Need to implement provisioner status here
- */
 export const Status: React.FC<{
   nextFormStep: () => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  return (
-    <>
-      <SaveButton
-        text="Continue"
-        disabled={false}
-        onClick={nextFormStep}
-        makeFlush={true}
-        clearPosition={true}
-        status={""}
-        statusPosition={"right"}
-      />
-    </>
-  );
+  return <SharedStatus
+    nextFormStep={nextFormStep}
+    project={project}
+    filter={["gke", "gcr"]}
+  />
 };
 
 const CodeBlock = styled.span`

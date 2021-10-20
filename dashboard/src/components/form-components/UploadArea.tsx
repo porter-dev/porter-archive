@@ -89,6 +89,7 @@ const Message = styled.div`
   display: flex;
   align-items: center;
   vertical-align: middle;
+  font-size: 13px;
 `;
 
 const Required = styled.div`

@@ -204,7 +204,7 @@ class Home extends Component<PropsType, StateType> {
       this.props.history.location.pathname &&
       !this.props.history.location.pathname.includes("onboarding")
     ) {
-      //this.context.setCurrentModal("RedirectToOnboardingModal");
+      this.context.setCurrentModal("RedirectToOnboardingModal");
     }
   }
 
@@ -251,7 +251,7 @@ class Home extends Component<PropsType, StateType> {
       !this.props.history.location.pathname.includes("new-project") &&
       !this.props.history.location.pathname.includes("project-settings")
     ) {
-      //this.context.setCurrentModal("RedirectToOnboardingModal");
+      this.context.setCurrentModal("RedirectToOnboardingModal");
     }
     if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
       this.checkOnboarding();

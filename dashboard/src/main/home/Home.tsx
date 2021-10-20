@@ -200,7 +200,7 @@ class Home extends Component<PropsType, StateType> {
     this.getMetadata();
 
     if (
-      !this.context.hasFinishedOnboarding && 
+      !this.context.hasFinishedOnboarding &&
       this.props.history.location.pathname &&
       !this.props.history.location.pathname.includes("onboarding")
     ) {
@@ -230,6 +230,11 @@ class Home extends Component<PropsType, StateType> {
       const project_id = this.context?.currentProject?.id;
       const res = await api.getOnboardingState("<token>", {}, { project_id });
 
+      if (res.status === 404) {
+        this.context.setHasFinishedOnboarding(true);
+        return;
+      }
+
       if (res?.data && res?.data.current_step !== "clean_up") {
         this.context.setHasFinishedOnboarding(false);
       } else {
@@ -244,7 +249,7 @@ class Home extends Component<PropsType, StateType> {
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
     if (
-      !this.context.hasFinishedOnboarding && 
+      !this.context.hasFinishedOnboarding &&
       prevProps.match.url !== this.props.match.url &&
       this.props.history.location.pathname &&
       !this.props.history.location.pathname.includes("onboarding") &&

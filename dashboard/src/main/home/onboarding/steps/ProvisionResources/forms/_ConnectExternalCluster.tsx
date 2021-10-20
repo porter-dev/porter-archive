@@ -86,6 +86,11 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) 
               <br />
               sudo mv ./porter /usr/local/bin/porter
             </Code>
+          </Placeholder>
+        );
+      case 1:
+        return (
+          <Placeholder>
             3. Log in to the Porter CLI:
             <Code>
               porter config set-host {location.protocol + "//" + location.host}
@@ -99,8 +104,8 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) 
               porter connect kubeconfig
             </Code>
           </Placeholder>
-        );
-      case 1:
+        )
+      case 2:
         return (
           <Placeholder>
             <Bold>Passing a kubeconfig explicitly</Bold>

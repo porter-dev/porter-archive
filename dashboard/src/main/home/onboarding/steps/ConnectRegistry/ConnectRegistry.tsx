@@ -67,6 +67,7 @@ const ConnectRegistry: React.FC<{
           project={project}
           currentStep={step}
           goBack={goBack}
+          enable_go_back={enable_go_back}
         />
       ) : (
         <>

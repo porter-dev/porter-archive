@@ -36,7 +36,7 @@ const StyledBreadcrumb = styled.div`
 `;
 
 const Crumb = styled.span<{ bold: boolean }>`
-  font-weight: ${props => props.bold ? "600" : "normal"};
-  color: ${props => props.bold ? "#ffffff" : "#aaaabb"};
+  font-weight: ${(props) => (props.bold ? "600" : "normal")};
+  color: ${(props) => (props.bold ? "#ffffff" : "#aaaabb")};
   font-size: 13px;
 `;

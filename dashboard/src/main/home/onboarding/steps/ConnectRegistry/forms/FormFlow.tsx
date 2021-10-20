@@ -65,6 +65,7 @@ type Props = {
   project: { id: number; name: string };
   currentStep: "credentials" | "settings" | "test_connection";
   goBack: () => void;
+  enable_go_back: boolean;
 };
 
 const FormFlowWrapper: React.FC<Props> = ({
@@ -75,6 +76,7 @@ const FormFlowWrapper: React.FC<Props> = ({
   project,
   currentStep,
   goBack,
+  enable_go_back,
 }) => {
   const nextFormStep = (
     data?: Partial<Exclude<ConnectedRegistryConfig, SkipRegistryConnection>>
@@ -108,9 +110,11 @@ const FormFlowWrapper: React.FC<Props> = ({
   return (
     <FormWrapper>
       <FormHeader>
-        <CloseButton onClick={() => goBack()}>
-          <i className="material-icons">keyboard_backspace</i>
-        </CloseButton>
+        {enable_go_back && (
+          <CloseButton onClick={() => goBack()}>
+            <i className="material-icons">keyboard_backspace</i>
+          </CloseButton>
+        )}
         {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
         {FormTitle[provider] && FormTitle[provider].label}
       </FormHeader>

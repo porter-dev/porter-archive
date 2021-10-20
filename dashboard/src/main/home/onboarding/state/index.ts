@@ -105,17 +105,17 @@ const decompressState = (prev_state: any) => {
     skip: state.skip_registry_connection,
     provider: state.registry_connection_provider,
     credentials: {
-      id: state.registry_connection_credential_id,
+      id: state?.registry_connection_data?.id,
     },
     settings: {
-      registry_name: state.registry_connection_settings_name,
+      registry_name: state?.registry_connection_data?.name,
     },
   };
 
   if (registry.provider === "gcp") {
-    registry.settings.gcr_url = state.registry_connection_settings_url;
+    registry.settings.gcr_url = state.registry_connection_data?.url;
   } else if (registry.provider === "do") {
-    registry.settings.registry_url = state.registry_connection_settings_url;
+    registry.settings.registry_url = state.registry_connection_data?.url;
   }
 
   let provision: any = {

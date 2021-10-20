@@ -10,6 +10,7 @@ import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 import { SupportedProviders } from "../../types";
 import backArrow from "assets/back_arrow.png";
+import { SharedStatus } from "./forms/Status";
 
 type Props = {
   provider: SupportedProviders | "external";
@@ -41,6 +42,52 @@ const ProvisionResources: React.FC<Props> = ({
 }) => {
   const { step } = useParams<{ step: any }>();
 
+  const Content = () => {
+    switch (step) {
+      case "credentials":
+      case "settings":
+        return (
+          <>
+            <FormFlowWrapper
+              provider={provider}
+              currentStep={step}
+              onSaveCredentials={onSaveCredentials}
+              onSaveSettings={onSaveSettings}
+              project={project}
+            />
+          </>
+        );
+      case "status":
+        return (
+          <>
+            <SharedStatus
+              project={project}
+              filter={[]}
+              nextFormStep={console.log}
+            />
+          </>
+        );
+      case "connect_own_cluster":
+        return (
+          <>
+            <ConnectExternalCluster nextStep={onSuccess} project={project} />
+          </>
+        );
+      default:
+        return (
+          <>
+            <ProviderSelector
+              selectProvider={(provider) => {
+                onSelectProvider(provider);
+              }}
+              enableSkip={false}
+              enableExternal={!shouldProvisionRegistry}
+            />
+          </>
+        );
+    }
+  };
+
   return (
     <div>
       {enable_go_back && (
@@ -58,30 +105,7 @@ const ProvisionResources: React.FC<Props> = ({
         Porter automatically creates a cluster and registry in your cloud to run
         applications.
       </Helper>
-
-      {provider ? (
-        provider !== "external" ? (
-          <FormFlowWrapper
-            provider={provider}
-            currentStep={step}
-            onSaveCredentials={onSaveCredentials}
-            onSaveSettings={onSaveSettings}
-            project={project}
-          />
-        ) : (
-          <ConnectExternalCluster nextStep={onSuccess} project={project} />
-        )
-      ) : (
-        <>
-          <ProviderSelector
-            selectProvider={(provider) => {
-              onSelectProvider(provider);
-            }}
-            enableSkip={false}
-            enableExternal={!shouldProvisionRegistry}
-          />
-        </>
-      )}
+      {Content()}
     </div>
   );
 };

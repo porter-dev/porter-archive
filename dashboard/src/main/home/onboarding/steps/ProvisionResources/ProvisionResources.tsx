@@ -57,6 +57,7 @@ const ProvisionResources: React.FC<Props> = ({
               onSaveCredentials={onSaveCredentials}
               onSaveSettings={onSaveSettings}
               project={project}
+              goBack={goBack}
             />
           </>
         );

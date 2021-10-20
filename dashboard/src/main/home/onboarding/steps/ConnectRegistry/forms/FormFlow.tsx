@@ -112,7 +112,7 @@ const FormFlowWrapper: React.FC<Props> = ({
           <i className="material-icons">keyboard_backspace</i>
         </CloseButton>
         {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
-        {FormTitle[provider].label}
+        {FormTitle[provider] && FormTitle[provider].label}
       </FormHeader>
       <Breadcrumb
         currentStep={currentStep}

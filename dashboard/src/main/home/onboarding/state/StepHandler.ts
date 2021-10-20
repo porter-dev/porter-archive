@@ -170,7 +170,7 @@ const flow: FlowType = {
     },
     clean_up: {
       final: true,
-      url: "/dashboard?tab=provisioner",
+      url: "/applications",
     },
   },
 };

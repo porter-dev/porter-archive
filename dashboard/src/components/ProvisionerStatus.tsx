@@ -12,7 +12,9 @@ type Props = {
 export interface TFModule {
   id: number
   kind: string
-  resources: TFResource[]
+  status: string
+  // optional resources, if not created
+  resources?: TFResource[]
 }
 
 export interface TFResourceError {

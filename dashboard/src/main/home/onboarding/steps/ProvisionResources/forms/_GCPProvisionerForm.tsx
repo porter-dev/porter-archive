@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import { SharedStatus } from "./Status";
+import { SharedStatus } from "./SharedStatus";
 
 const regionOptions = [
   { value: "asia-east1", label: "asia-east1" },

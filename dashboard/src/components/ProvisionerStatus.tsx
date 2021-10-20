@@ -15,10 +15,15 @@ export interface TFModule {
   resources: TFResource[]
 }
 
+export interface TFResourceError {
+  errored_out: boolean
+  error_context?: string
+}
+
 export interface TFResource {
   addr: string,
   provisioned: boolean,
-  error: string,
+  errored: TFResourceError,
 }
 
 const nameMap : { [key: string]: string } = {
@@ -63,11 +68,11 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
       var errors : string[] = []
 
       const hasError = val.resources?.filter((resource) => {
-        if (resource.error !== "") {
-          errors.push(resource.error)
+        if (resource.errored?.errored_out) {
+          errors.push(resource.errored?.error_context)
         }
 
-        return resource.error !== ""
+        return resource.errored?.errored_out
       }).length > 0
 
       const width = 100 * (provisionedResources / (totalResources * 1.0))
@@ -110,27 +115,6 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
   return (
     <StyledProvisionerStatus>
         {renderModules()}
-        {/* <InfraObject>
-          <InfraHeader>
-            {renderStatus("loading")}
-            Elastic Kubernetes Service (EKS)
-          </InfraHeader>
-          <LoadingBar>
-            <LoadingFill status="loading" width="90%" />
-          </LoadingBar>
-        </InfraObject>
-        <InfraObject>
-          <InfraHeader>
-            {renderStatus("error")}
-            Elastic Container Registry (ECR)
-          </InfraHeader>
-          <LoadingBar>
-            <LoadingFill status="error" width="10%" />
-          </LoadingBar>
-          <ExpandedError>
-            422 validation error: autoscaling failed because sometimes infrastructure is a bit mysterious and hard to predict.
-          </ExpandedError>
-        </InfraObject> */}
     </StyledProvisionerStatus>
   );
 };

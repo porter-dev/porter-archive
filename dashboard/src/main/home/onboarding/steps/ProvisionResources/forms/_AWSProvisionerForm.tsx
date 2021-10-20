@@ -10,7 +10,7 @@ import {
 import React, { useState } from "react";
 import api from "shared/api";
 import { useSnapshot } from "valtio";
-import { SharedStatus } from "./Status";
+import { SharedStatus } from "./SharedStatus";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },

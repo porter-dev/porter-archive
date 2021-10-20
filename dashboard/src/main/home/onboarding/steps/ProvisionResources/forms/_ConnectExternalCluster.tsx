@@ -131,7 +131,7 @@ const PageCount = styled.div`
 `;
 
 const PageSection = styled.div`
-  position: absolute;
+  position: relative;
   bottom: 22px;
   right: 20px;
   display: flex;
@@ -237,11 +237,7 @@ const CloseButtonImg = styled.img`
 
 const StyledClusterInstructionsModal = styled.div`
   width: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
   height: 100%;
-  padding: 25px 32px;
   overflow: hidden;
   border-radius: 6px;
   background: #202227;

@@ -130,55 +130,60 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) 
   };
 
   return (
-    <StyledClusterInstructionsModal>
-      <FormHeader>
-        <CloseButton onClick={() => goBack()}>
-          <i className="material-icons">keyboard_backspace</i>
-        </CloseButton>
-        <img src={integrationList["kubernetes"].icon} />
-        Link an existing cluster
-      </FormHeader>
-      <TabSelector
-        options={tabOptions}
-        currentTab={currentTab}
-        setCurrentTab={(value: string) => setCurrentTab(value)}
-      />
+    <Wrapper>
+      <StyledClusterInstructionsModal>
+        <FormHeader>
+          <CloseButton onClick={() => goBack()}>
+            <i className="material-icons">keyboard_backspace</i>
+          </CloseButton>
+          <img src={integrationList["kubernetes"].icon} />
+          Link an existing cluster
+        </FormHeader>
+        <TabSelector
+          options={tabOptions}
+          currentTab={currentTab}
+          setCurrentTab={(value: string) => setCurrentTab(value)}
+        />
 
-      {renderPage()}
-      <PageSection>
-        <PageCount>{currentPage + 1}/2</PageCount>
-        <i
-          className="material-icons"
-          onClick={() =>
-            currentPage > 0 ? setCurrentPage(currentPage - 1) : null
-          }
-        >
-          arrow_back
-        </i>
-        <i
-          className="material-icons"
-          onClick={() =>
-            currentPage < 1 ? setCurrentPage(currentPage + 1) : null
-          }
-        >
-          arrow_forward
-        </i>
-      </PageSection>
+        {renderPage()}
+        <PageSection>
+          <PageCount>{currentPage + 1}/3</PageCount>
+          <i
+            className="material-icons"
+            onClick={() =>
+              currentPage > 0 ? setCurrentPage(currentPage - 1) : null
+            }
+          >
+            arrow_back
+          </i>
+          <i
+            className="material-icons"
+            onClick={() =>
+              currentPage < 2 ? setCurrentPage(currentPage + 1) : null
+            }
+          >
+            arrow_forward
+          </i>
+        </PageSection>
+      </StyledClusterInstructionsModal>
       <NextStep
         text="Continue"
         disabled={!enableContinue}
         onClick={() => nextStep()}
-        status={""}
+        status={!enableContinue ? "No connected cluster detected" : "Connected cluster detected."}
         makeFlush={true}
         clearPosition={true}
         statusPosition="right"
         saveText=""
       />
-    </StyledClusterInstructionsModal>
+    </Wrapper>
   );
 };
 
 export default ConnectExternalCluster;
+
+const Wrapper = styled.div`
+`;
 
 const CloseButton = styled.div`
   width: 30px;
@@ -218,7 +223,7 @@ const FormHeader = styled.div`
 `;
 
 const NextStep = styled(SaveButton)`
-  margin-top: 24px;
+  margin-top: 25px;
 `;
 
 const PageCount = styled.div`
@@ -228,9 +233,9 @@ const PageCount = styled.div`
 `;
 
 const PageSection = styled.div`
-  position: relative;
-  bottom: 22px;
-  right: 20px;
+  position: absolute;
+  bottom: 12px;
+  right: 15px;
   display: flex;
   align-items: center;
   font-size: 13px;
@@ -276,6 +281,7 @@ const Placeholder = styled.div`
   margin-left: 0px;
   margin-top: 25px;
   line-height: 1.6em;
+  width: 550px;
   user-select: none;
 `;
 
@@ -312,9 +318,10 @@ const ModalTitle = styled.div`
 
 const StyledClusterInstructionsModal = styled.div`
   width: 100%;
-  padding: 20px 20px 23px;
+  padding: 20px 20px 35px;
   border-radius: 5px;
   overflow: hidden;
+  position: relative;
   background: #ffffff0a;
   border: 1px solid #ffffff55;
 `;

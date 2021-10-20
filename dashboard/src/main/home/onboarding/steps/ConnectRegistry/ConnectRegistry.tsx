@@ -5,7 +5,9 @@ import React from "react";
 import { useParams } from "react-router";
 
 import styled from "styled-components";
-import ProviderSelector from "../../components/ProviderSelector";
+import ProviderSelector, {
+  registryOptions,
+} from "../../components/ProviderSelector";
 import { SupportedProviders } from "../../types";
 import backArrow from "assets/back_arrow.png";
 
@@ -68,12 +70,12 @@ const ConnectRegistry: React.FC<{
       ) : (
         <>
           <ProviderSelector
-            enableSkip
             selectProvider={(provider) => {
               if (provider !== "external") {
                 onSelectProvider(provider);
               }
             }}
+            options={registryOptions}
           />
           <NextStep
             text="Continue"

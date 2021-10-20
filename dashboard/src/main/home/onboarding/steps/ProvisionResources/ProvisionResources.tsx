@@ -4,7 +4,10 @@ import TitleSection from "components/TitleSection";
 import React from "react";
 import { useParams } from "react-router";
 import styled from "styled-components";
-import ProviderSelector from "../../components/ProviderSelector";
+import ProviderSelector, {
+  provisionerOptions,
+  provisionerOptionsWithExternal,
+} from "../../components/ProviderSelector";
 
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
@@ -54,6 +57,7 @@ const ProvisionResources: React.FC<Props> = ({
               onSaveCredentials={onSaveCredentials}
               onSaveSettings={onSaveSettings}
               project={project}
+              goBack={goBack}
             />
           </>
         );
@@ -80,8 +84,11 @@ const ProvisionResources: React.FC<Props> = ({
               selectProvider={(provider) => {
                 onSelectProvider(provider);
               }}
-              enableSkip={false}
-              enableExternal={!shouldProvisionRegistry}
+              options={
+                shouldProvisionRegistry
+                  ? provisionerOptions
+                  : provisionerOptionsWithExternal
+              }
             />
           </>
         );

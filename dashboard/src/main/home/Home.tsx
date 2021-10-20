@@ -198,6 +198,14 @@ class Home extends Component<PropsType, StateType> {
     urlParams.delete("gh_oauth");
     this.getProjects(defaultProjectId);
     this.getMetadata();
+
+    if (
+      !this.context.hasFinishedOnboarding && 
+      this.props.history.location.pathname &&
+      !this.props.history.location.pathname.includes("onboarding")
+    ) {
+      this.context.setCurrentModal("RedirectToOnboardingModal");
+    }
   }
 
   async checkIfProjectHasBilling(projectId: number) {
@@ -223,7 +231,6 @@ class Home extends Component<PropsType, StateType> {
       const res = await api.getOnboardingState("<token>", {}, { project_id });
 
       if (res?.data && res?.data.current_step !== "clean_up") {
-        // this.redirectToOnboarding();
         this.context.setHasFinishedOnboarding(false);
       } else {
         this.context.setHasFinishedOnboarding(true);
@@ -236,6 +243,16 @@ class Home extends Component<PropsType, StateType> {
   // 2. Make sure switching projects shows appropriate initial view (dashboard || provisioner)
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
+    if (
+      !this.context.hasFinishedOnboarding && 
+      prevProps.match.url !== this.props.match.url &&
+      this.props.history.location.pathname &&
+      !this.props.history.location.pathname.includes("onboarding") &&
+      !this.props.history.location.pathname.includes("new-project") &&
+      !this.props.history.location.pathname.includes("project-settings")
+    ) {
+      this.context.setCurrentModal("RedirectToOnboardingModal");
+    }
     if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
       this.checkOnboarding();
       this.checkIfProjectHasBilling(this?.context?.currentProject?.id)

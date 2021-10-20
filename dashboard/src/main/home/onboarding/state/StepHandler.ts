@@ -93,6 +93,12 @@ const flow: FlowType = {
           url: "/onboarding/registry/test_connection",
           on: {
             continue: "provision_resources",
+            /**
+             * Enable this go_back as soon as connect registry
+             * has a proper way of listing the registries and
+             * manage them inside the step
+             */
+            // go_back: "connect_registry",
           },
         },
       },
@@ -102,7 +108,12 @@ const flow: FlowType = {
       on: {
         skip: "provision_resources.connect_own_cluster",
         continue: "provision_resources.credentials",
-        go_back: "connect_registry",
+        /**
+         * Enable this go_back as soon as connect registry
+         * has a proper way of listing the registries and
+         * manage them inside the step
+         */
+        // go_back: "connect_registry",
       },
       execute: {
         on: {

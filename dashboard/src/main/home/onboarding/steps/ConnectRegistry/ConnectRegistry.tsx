@@ -58,7 +58,7 @@ const ConnectRegistry: React.FC<{
           : "Link to an existing Docker registry or continue."}
       </Helper>
 
-      {provider ? (
+      {step ? (
         <FormFlowWrapper
           provider={provider}
           onSaveCredentials={onSaveCredentials}
@@ -66,6 +66,7 @@ const ConnectRegistry: React.FC<{
           onSuccess={onSuccess}
           project={project}
           currentStep={step}
+          goBack={goBack}
         />
       ) : (
         <>

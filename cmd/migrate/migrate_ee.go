@@ -12,8 +12,8 @@ import (
 )
 
 func InstanceMigrate(db *gorm.DB, dbConf *env.DBConf) error {
-	if shouldVaultRotate() {
-		if err := migrate.MigrateVault(db, dbConf); err != nil {
+	if shouldRotateInit, shouldRotateFinalize := shouldVaultRotate(); shouldRotateInit {
+		if err := migrate.MigrateVault(db, dbConf, shouldRotateFinalize); err != nil {
 			return err
 		}
 	}
@@ -23,17 +23,18 @@ func InstanceMigrate(db *gorm.DB, dbConf *env.DBConf) error {
 
 type VaultMigrateConf struct {
 	// we add a dummy field to avoid empty struct issue with envdecode
-	DummyField   string `env:"ASDF,default=asdf"`
-	VaultMigrate bool   `env:"VAULT_MIGRATE"`
+	DummyField           string `env:"ASDF,default=asdf"`
+	VaultMigrateInit     bool   `env:"VAULT_MIGRATE_INIT"`
+	VaultMigrateFinalize bool   `env:"VAULT_MIGRATE_FINALIZE"`
 }
 
-func shouldVaultRotate() bool {
+func shouldVaultRotate() (bool, bool) {
 	var c VaultMigrateConf
 
 	if err := envdecode.StrictDecode(&c); err != nil {
 		log.Fatalf("Failed to decode Vault migration conf: %s", err)
-		return false
+		return false, false
 	}
 
-	return c.VaultMigrate
+	return c.VaultMigrateInit, c.VaultMigrateFinalize
 }

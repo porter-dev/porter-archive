@@ -51,7 +51,7 @@ export const CredentialsForm: React.FC<{
       target={"_blank"}
       href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
     >
-      Connect Digital Ocean
+      Sign in to Digital Ocean
     </ConnectDigitalOceanButton>
   );
 };
@@ -136,6 +136,7 @@ export const TestRegistryConnection: React.FC<{
   return (
     <>
       <RegistryImageList
+        registryType="docker"
         project={snap.project}
         registry_id={snap.connected_registry.settings.registry_connection_id}
       />

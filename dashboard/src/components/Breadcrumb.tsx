@@ -6,7 +6,7 @@ import styled from "styled-components";
 type Props = {
   currentStep: string;
   steps: { value: string; label: string }[];
-  onClickStep: (step: string) => void;
+  onClickStep?: (step: string) => void;
 };
 
 const Breadcrumb: React.FC<Props> = ({ currentStep, steps, onClickStep }) => {

@@ -213,6 +213,7 @@ export const TestRegistryConnection: React.FC<{
   return (
     <>
       <RegistryImageList
+        registryType="gcr"
         project={snap.project}
         registry_id={snap.connected_registry.settings.registry_connection_id}
       />

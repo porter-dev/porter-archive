@@ -66,7 +66,7 @@ export const CredentialsForm: React.FC<{
         target={"_blank"}
         href={`/api/projects/${project?.id}/oauth/digitalocean`}
       >
-        Connect Digital Ocean
+        Sign In to Digital Ocean
       </ConnectDigitalOceanButton>
     </>
   );
@@ -265,6 +265,7 @@ const ConnectDigitalOceanButton = styled.a`
   flex-direction: row;
   align-items: center;
   font-size: 13px;
+  margin-top: 22px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
   color: white;

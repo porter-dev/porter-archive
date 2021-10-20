@@ -45,6 +45,7 @@ const RegistryImageList: React.FC<{
 
   return (
     <>
+      <Helper>Porter was able to successfully connect to your registry:</Helper>
       <ImageList>
 
         {
@@ -60,7 +61,6 @@ const RegistryImageList: React.FC<{
           )
         }
       </ImageList>
-      <Helper>Porter was able to successfully connect to your registry.</Helper>
       <Br />
     </>
   );
@@ -80,7 +80,7 @@ const Placeholder = styled.div`
 
 const Br = styled.div`
   width: 100%;
-  height: 10px;
+  height: 15px;
 `;
 
 const ImageRow = styled.div<{ isLast?: boolean }>`
@@ -102,6 +102,8 @@ const ImageRow = styled.div<{ isLast?: boolean }>`
 const ImageList = styled.div`
   border-radius: 5px;
   border: 1px solid #aaaabb;
+  max-height: 300px;
+  overflow-y: auto;
   background: #ffffff11;
-  margin: 25px 0 20px;
+  margin: 20px 0 20px;
 `;

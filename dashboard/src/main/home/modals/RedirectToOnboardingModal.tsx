@@ -5,12 +5,22 @@ import api from "../../../shared/api";
 import Loading from "../../../components/Loading";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
+import { Link } from "react-router-dom";
+import { Context } from "shared/Context";
 
 const RedirectToOnboardingModal = () => {
+  const { setCurrentModal } = useContext(Context);
+
   return (
     <>
-      <Helper>You need to complete the onboarding process in order to use Porter.</Helper>
-      <ContinueButton href="/onboarding">
+      <Helper>
+        You need to complete the onboarding process in order to use Porter.
+      </Helper>
+      <ContinueButton
+        as={Link}
+        to="/onboarding"
+        onClick={() => setCurrentModal(null, null)}
+      >
         <i className="material-icons">east</i>
         Continue Setup
       </ContinueButton>
@@ -35,7 +45,7 @@ const ContinueButton = styled.a`
   margin-top: 25px;
   width: 160px;
   border-radius: 5px;
-  background: #616FEEcc;
+  background: #616feecc;
   box-shadow: 0 2px 5px 0 #00000030;
   cursor: pointer;
   user-select: none;

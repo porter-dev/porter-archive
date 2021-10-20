@@ -1,7 +1,9 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
+import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
 import { OFState } from "main/home/onboarding/state";
+import { StateHandler } from "main/home/onboarding/state/StateHandler";
 import { DORegistryConfig } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router";
@@ -86,7 +88,9 @@ export const SettingsForm: React.FC<{
 
   return (
     <>
-      <Helper>Provide a name for Porter to use when displaying your registry.</Helper>
+      <Helper>
+        Provide a name for Porter to use when displaying your registry.
+      </Helper>
       <InputRow
         type="text"
         value={registryName}
@@ -128,8 +132,13 @@ export const TestRegistryConnection: React.FC<{
   nextFormStep: () => void;
   project: any;
 }> = ({ nextFormStep }) => {
+  const snap = useSnapshot(StateHandler);
   return (
     <>
+      <RegistryImageList
+        project={snap.project}
+        registry_id={snap.connected_registry.settings.registry_connection_id}
+      />
       <SaveButton
         text="Continue"
         disabled={false}

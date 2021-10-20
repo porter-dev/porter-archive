@@ -201,7 +201,7 @@ export const SettingsForm: React.FC<{
         placeholder="ex: porter-awesome-registry"
         width="100%"
       />
-
+      <Br />
       <SaveButton
         text="Connect Registry"
         disabled={false}
@@ -221,6 +221,7 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
   return (
     <>
       <IntegrationCategories category={"registry"} />
+      <Br />
       <SaveButton
         text="Continue"
         disabled={false}

@@ -108,6 +108,7 @@ const decompressState = (prev_state: any) => {
       id: state?.registry_connection_data?.id,
     },
     settings: {
+      registry_connection_id: state?.registry_connection_id,
       registry_name: state?.registry_connection_data?.name,
     },
   };

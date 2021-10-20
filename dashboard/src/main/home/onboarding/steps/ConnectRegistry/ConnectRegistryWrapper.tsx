@@ -16,7 +16,7 @@ const ConnectRegistryWrapper = () => {
       onSaveSettings={(data) => OFState.actions.nextStep("continue", data)}
       onSuccess={() => OFState.actions.nextStep("continue")}
       onSkip={() => OFState.actions.nextStep("skip")}
-      enable_go_back={snap.StepHandler.canGoBack}
+      enable_go_back={snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow}
       goBack={() => OFState.actions.nextStep("go_back")}
     />
   );

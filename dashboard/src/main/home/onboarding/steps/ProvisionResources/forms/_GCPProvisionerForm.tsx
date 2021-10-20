@@ -257,7 +257,7 @@ export const Status: React.FC<{
   return (
     <SharedStatus
       nextFormStep={nextFormStep}
-      project={project}
+      project_id={project?.id}
       filter={["gke", "gcr"]}
     />
   );

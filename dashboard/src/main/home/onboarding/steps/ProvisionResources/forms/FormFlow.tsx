@@ -62,6 +62,7 @@ type Props = {
   provider: SupportedProviders | "external";
   currentStep: "credentials" | "settings";
   project: { id: number; name: string };
+  goBack: () => void;
 };
 
 const FormFlowWrapper: React.FC<Props> = ({
@@ -70,6 +71,7 @@ const FormFlowWrapper: React.FC<Props> = ({
   provider,
   currentStep,
   project,
+  goBack,
 }) => {
   const nextFormStep = (
     data?: Partial<Exclude<ProvisionerConfig, SkipProvisionConfig>>
@@ -103,11 +105,11 @@ const FormFlowWrapper: React.FC<Props> = ({
   return (
     <FormWrapper>
       <FormHeader>
-        <CloseButton onClick={() => alert("go back")}>
+        <CloseButton onClick={() => goBack()}>
           <i className="material-icons">keyboard_backspace</i>
         </CloseButton>
-        <img src={FormTitle[provider].icon} />
-        {FormTitle[provider].label}
+        {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
+        {FormTitle[provider] && FormTitle[provider].label}
       </FormHeader>
       <Breadcrumb
         currentStep={currentStep}
@@ -115,7 +117,6 @@ const FormFlowWrapper: React.FC<Props> = ({
           { value: "credentials", label: "Credentials" },
           { value: "settings", label: "Settings" },
         ]}
-        onClickStep={(step: string) => alert(step)}
       />
       {CurrentForm}
     </FormWrapper>

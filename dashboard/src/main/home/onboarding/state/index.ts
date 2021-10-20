@@ -121,9 +121,9 @@ const decompressState = (prev_state: any) => {
 
   let provision: any = {
     skip: state.skip_resource_provision,
-    provider: state.resource_provision_provider,
+    provider: state.cluster_infra_provider,
     credentials: {
-      id: state.resource_provision_credentials_id,
+      id: state.cluster_infra_credential_id,
     },
     settings: {
       cluster_name: state.resource_provision_settings_cluster_name,

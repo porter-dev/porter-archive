@@ -8,19 +8,27 @@ export type ProviderSelectorProps = {
   selectProvider: (
     provider: SupportedProviders | (SupportedProviders | "external")
   ) => void;
-  enableExternal?: boolean;
-  enableSkip?: boolean;
+  options: {
+    value: string;
+    icon: string;
+    label: string;
+  }[];
 };
 
-const baseOptions = [
+export const registryOptions = [
+  {
+    value: "skip",
+    label: "Skip / I don't know what this is",
+    icon: "",
+  },
   {
     value: "aws",
-    icon: integrationList["aws"]?.icon,
+    icon: integrationList["ecr"]?.icon,
     label: "Amazon Elastic Container Registry (ECR)",
   },
   {
     value: "gcp",
-    icon: integrationList["gcp"]?.icon,
+    icon: integrationList["gcr"]?.icon,
     label: "Google Cloud Registry (GCR)",
   },
   {
@@ -30,69 +38,50 @@ const baseOptions = [
   },
 ];
 
-const skipOption = {
-  value: "skip",
-  label: "Skip / I don't know what this is",
-  icon: "",
-};
+export const provisionerOptions = [
+  {
+    value: "aws",
+    icon: integrationList["aws"]?.icon,
+    label: "Amazon Web Services (AWS)",
+  },
+  {
+    value: "gcp",
+    icon: integrationList["gcp"]?.icon,
+    label: "Google Cloud Platform (GCP)",
+  },
+  {
+    value: "do",
+    icon: integrationList["do"]?.icon,
+    label: "DigitalOcean (DO)",
+  },
+];
 
-const externalOption = {
-  value: "external",
-  icon: integrationList["kubernetes"]?.icon,
-  label: "Link to an existing cluster",
-};
-
-const dummyOption = {
-  value: "dummy",
-  icon: "",
-  label: "Select a cloud provider",
-};
+export const provisionerOptionsWithExternal = [
+  ...provisionerOptions,
+  {
+    value: "external",
+    icon: integrationList["kubernetes"]?.icon,
+    label: "Link to an existing cluster",
+  },
+];
 
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selectProvider,
-  enableExternal,
-  enableSkip,
+  options,
 }) => {
   const [provider, setProvider] = useState(() => {
-    if (enableSkip) {
+    if (options.find((o) => o.value === "skip")) {
       return "skip";
     }
-
     return null;
   });
-
-  const availableOptions = useMemo(() => {
-    let options = [...baseOptions];
-    if (enableSkip) {
-      // Check if dummy option was deleted or not
-      const dummyOptionIndex = options.findIndex((o) => o.value === "dummy");
-      if (dummyOptionIndex >= 0) {
-        options.splice(dummyOptionIndex, 1);
-      }
-      options.unshift(skipOption);
-    } else {
-      // Check if skip option was deleted or not
-      const skipOptionIndex = options.findIndex((o) => o.value === "skip");
-      if (skipOptionIndex >= 0) {
-        options.splice(skipOptionIndex, 1);
-      }
-    }
-
-    if (enableExternal) {
-      if (!options.find((o) => o.value === "external")) {
-        options.push(externalOption);
-      }
-    }
-
-    return [...options];
-  }, [enableSkip, enableExternal]);
 
   return (
     <>
       <Br />
       <Selector
         activeValue={provider}
-        options={availableOptions}
+        options={options}
         placeholder="Select a cloud provider"
         setActiveValue={(provider) => {
           setProvider(provider);

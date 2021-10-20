@@ -5,7 +5,9 @@ import React from "react";
 import { useParams } from "react-router";
 
 import styled from "styled-components";
-import ProviderSelector from "../../components/ProviderSelector";
+import ProviderSelector, {
+  registryOptions,
+} from "../../components/ProviderSelector";
 import { SupportedProviders } from "../../types";
 import backArrow from "assets/back_arrow.png";
 
@@ -56,7 +58,7 @@ const ConnectRegistry: React.FC<{
           : "Link to an existing Docker registry or continue."}
       </Helper>
 
-      {provider ? (
+      {step ? (
         <FormFlowWrapper
           provider={provider}
           onSaveCredentials={onSaveCredentials}
@@ -64,16 +66,17 @@ const ConnectRegistry: React.FC<{
           onSuccess={onSuccess}
           project={project}
           currentStep={step}
+          goBack={goBack}
         />
       ) : (
         <>
           <ProviderSelector
-            enableSkip
             selectProvider={(provider) => {
               if (provider !== "external") {
                 onSelectProvider(provider);
               }
             }}
+            options={registryOptions}
           />
           <NextStep
             text="Continue"

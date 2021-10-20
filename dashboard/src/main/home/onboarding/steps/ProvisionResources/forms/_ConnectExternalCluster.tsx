@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import TabSelector from "components/TabSelector";
+import api from "shared/api";
+import SaveButton from "components/SaveButton";
 
 type Props = {
   nextStep: () => void;
@@ -19,6 +21,36 @@ const tabOptions = [{ label: "MacOS", value: "mac" }];
 const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [currentTab, setCurrentTab] = useState("mac");
+  const [enableContinue, setEnableContinue] = useState(false);
+
+  const getClusters = async (
+    status: { isSubscribed: boolean },
+    retryCount = 0
+  ) => {
+    try {
+      api.getClusters("<token>", {}, { id: project.id }).then((res) => {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          if (status.isSubscribed) {
+            setEnableContinue(true);
+          }
+        } else {
+          if (status.isSubscribed) {
+            setTimeout(() => {
+              getClusters(status, retryCount + 1);
+            }, 1000);
+          }
+        }
+      });
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    let status = { isSubscribed: true };
+    getClusters(status);
+    return () => {
+      status.isSubscribed = false;
+    };
+  }, []);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -118,11 +150,25 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project }) => {
           arrow_forward
         </i>
       </PageSection>
+      <NextStep
+        text="Continue"
+        disabled={!enableContinue}
+        onClick={() => nextStep()}
+        status={""}
+        makeFlush={true}
+        clearPosition={true}
+        statusPosition="right"
+        saveText=""
+      />
     </StyledClusterInstructionsModal>
   );
 };
 
 export default ConnectExternalCluster;
+
+const NextStep = styled(SaveButton)`
+  margin-top: 24px;
+`;
 
 const PageCount = styled.div`
   margin-right: 9px;

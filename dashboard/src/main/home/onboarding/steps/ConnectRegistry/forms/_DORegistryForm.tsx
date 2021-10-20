@@ -86,6 +86,7 @@ export const SettingsForm: React.FC<{
 
   return (
     <>
+      <Helper>Provide a name for Porter to use when displaying your registry.</Helper>
       <InputRow
         type="text"
         value={registryName}
@@ -144,7 +145,7 @@ export const TestRegistryConnection: React.FC<{
 
 const Br = styled.div`
   width: 100%;
-  height: 10px;
+  height: 15px;
 `;
 
 const CodeBlock = styled.span`

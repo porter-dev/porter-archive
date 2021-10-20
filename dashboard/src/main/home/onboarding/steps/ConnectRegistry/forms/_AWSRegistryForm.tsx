@@ -1,5 +1,6 @@
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
+import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import { AWSRegistryConfig } from "main/home/onboarding/types";
 import React, { useState } from "react";
@@ -9,7 +10,7 @@ import { useSnapshot } from "valtio";
 import { OFState } from "../../../state/index";
 import IntegrationCategories from "main/home/integrations/IntegrationCategories";
 import { StateHandler } from "main/home/onboarding/state/StateHandler";
-import RegistryImageList from "main/home/onboarding/components/RegistryList";
+import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -193,6 +194,7 @@ export const SettingsForm: React.FC<{
 
   return (
     <>
+      <Helper>Provide a name for Porter to use when displaying your registry.</Helper>
       <InputRow
         type="text"
         value={registryName}
@@ -243,5 +245,5 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
 
 const Br = styled.div`
   width: 100%;
-  height: 10px;
+  height: 15px;
 `;

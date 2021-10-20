@@ -234,6 +234,7 @@ class Home extends Component<PropsType, StateType> {
   // 3. Make sure initializing from URL (DO oauth) displays the appropriate initial view
   componentDidUpdate(prevProps: PropsType) {
     if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
+      this.checkOnboarding();
       this.checkIfProjectHasBilling(this?.context?.currentProject?.id)
         .then((isBillingEnabled) => {
           if (isBillingEnabled) {
@@ -333,7 +334,7 @@ class Home extends Component<PropsType, StateType> {
   };
 
   redirectToOnboarding = () => {
-    pushFiltered(this.props, "/onboarding", ["project_id"]);
+    pushFiltered(this.props, "/onboarding", []);
   };
 
   render() {

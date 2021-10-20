@@ -15,17 +15,17 @@ export type ProviderSelectorProps = {
 const baseOptions = [
   {
     value: "aws",
-    icon: integrationList["aws"].icon,
+    icon: integrationList["aws"]?.icon,
     label: "Amazon Elastic Container Registry (ECR)",
   },
   {
     value: "gcp",
-    icon: integrationList["gcp"].icon,
+    icon: integrationList["gcp"]?.icon,
     label: "Google Cloud Registry (GCR)",
   },
   {
     value: "do",
-    icon: integrationList["do"].icon,
+    icon: integrationList["do"]?.icon,
     label: "DigitalOcean Container Registry (DOCR)",
   },
 ];
@@ -38,7 +38,7 @@ const skipOption = {
 
 const externalOption = {
   value: "external",
-  icon: integrationList["kubernetes"].icon,
+  icon: integrationList["kubernetes"]?.icon,
   label: "Link to an existing cluster",
 };
 

@@ -10,9 +10,13 @@ const ProvisionResourcesWrapper = () => {
       shouldProvisionRegistry={snap.StateHandler.connected_registry?.skip}
       provider={snap.StateHandler.provision_resources?.provider}
       project={snap.StateHandler.project}
-      onSelectProvider={(provider: string) =>
-        provider !== "dummy" && OFState.actions.nextStep("continue", provider)
-      }
+      onSelectProvider={(provider: string) => {
+        if (provider !== "external") {
+          OFState.actions.nextStep("continue", provider);
+          return;
+        }
+        OFState.actions.nextStep("skip");
+      }}
       onSaveCredentials={(data) => OFState.actions.nextStep("continue", data)}
       onSaveSettings={(data) => OFState.actions.nextStep("continue", data)}
       onSuccess={() => OFState.actions.nextStep("continue")}

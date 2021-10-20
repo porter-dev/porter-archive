@@ -21,11 +21,7 @@ const ProvisionResourcesWrapper = () => {
       onSaveSettings={(data) => OFState.actions.nextStep("continue", data)}
       onSuccess={() => OFState.actions.nextStep("continue")}
       onSkip={() => OFState.actions.nextStep("skip")}
-      enable_go_back={
-        snap.StepHandler.canGoBack &&
-        (!snap.StepHandler.isSubFlow ||
-          snap.StepHandler.currentStepName.includes("connect_own_cluster"))
-      }
+      enable_go_back={snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow}
       goBack={() => OFState.actions.nextStep("go_back")}
     />
   );

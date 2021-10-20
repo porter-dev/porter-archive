@@ -50,47 +50,43 @@ const ProvisionResources: React.FC<Props> = ({
       case "credentials":
       case "settings":
         return (
-          <>
-            <FormFlowWrapper
-              provider={provider}
-              currentStep={step}
-              onSaveCredentials={onSaveCredentials}
-              onSaveSettings={onSaveSettings}
-              project={project}
-              goBack={goBack}
-            />
-          </>
+          <FormFlowWrapper
+            provider={provider}
+            currentStep={step}
+            onSaveCredentials={onSaveCredentials}
+            onSaveSettings={onSaveSettings}
+            project={project}
+            goBack={goBack}
+          />
         );
       case "status":
         return (
-          <>
-            <SharedStatus
-              project_id={project?.id}
-              filter={[]}
-              nextFormStep={console.log}
-            />
-          </>
+          <SharedStatus
+            project_id={project?.id}
+            filter={[]}
+            nextFormStep={console.log}
+          />
         );
       case "connect_own_cluster":
         return (
-          <>
-            <ConnectExternalCluster nextStep={onSuccess} project={project} />
-          </>
+          <ConnectExternalCluster 
+            nextStep={onSuccess} 
+            project={project} 
+            goBack={goBack}
+          />
         );
       default:
         return (
-          <>
-            <ProviderSelector
-              selectProvider={(provider) => {
-                onSelectProvider(provider);
-              }}
-              options={
-                shouldProvisionRegistry
-                  ? provisionerOptions
-                  : provisionerOptionsWithExternal
-              }
-            />
-          </>
+          <ProviderSelector
+            selectProvider={(provider) => {
+              onSelectProvider(provider);
+            }}
+            options={
+              shouldProvisionRegistry
+                ? provisionerOptions
+                : provisionerOptionsWithExternal
+            }
+          />
         );
     }
   };

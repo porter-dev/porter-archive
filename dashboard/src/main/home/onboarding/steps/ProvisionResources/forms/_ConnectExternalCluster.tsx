@@ -3,6 +3,7 @@ import styled from "styled-components";
 import TabSelector from "components/TabSelector";
 import api from "shared/api";
 import SaveButton from "components/SaveButton";
+import { integrationList } from "shared/common";
 
 type Props = {
   nextStep: () => void;
@@ -10,6 +11,7 @@ type Props = {
     id: number;
     name: string;
   };
+  goBack: () => void;
 };
 
 const tabOptions = [{ label: "MacOS", value: "mac" }];
@@ -18,7 +20,7 @@ const tabOptions = [{ label: "MacOS", value: "mac" }];
  * @todo Poll the available clusters until there's at least one connected
  * to the project
  */
-const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project }) => {
+const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [currentTab, setCurrentTab] = useState("mac");
   const [enableContinue, setEnableContinue] = useState(false);
@@ -124,6 +126,13 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project }) => {
 
   return (
     <StyledClusterInstructionsModal>
+      <FormHeader>
+        <CloseButton onClick={() => goBack()}>
+          <i className="material-icons">keyboard_backspace</i>
+        </CloseButton>
+        <img src={integrationList["kubernetes"].icon} />
+        Link an existing cluster
+      </FormHeader>
       <TabSelector
         options={tabOptions}
         currentTab={currentTab}
@@ -165,6 +174,43 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project }) => {
 };
 
 export default ConnectExternalCluster;
+
+const CloseButton = styled.div`
+  width: 30px;
+  height: 30px;
+  margin-left: -5px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  border-radius: 50%;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #aaaabb;
+  }
+`;
+
+const FormHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 13px;
+  margin-top: -2px;
+  font-weight: 500;
+
+  > img {
+    height: 18px;
+    margin-right: 12px;
+  }
+`;
 
 const NextStep = styled(SaveButton)`
   margin-top: 24px;
@@ -259,32 +305,11 @@ const ModalTitle = styled.div`
   text-overflow: ellipsis;
 `;
 
-const CloseButton = styled.div`
-  position: absolute;
-  display: block;
-  width: 40px;
-  height: 40px;
-  padding: 13px 0 12px 0;
-  z-index: 1;
-  text-align: center;
-  border-radius: 50%;
-  right: 15px;
-  top: 12px;
-  cursor: pointer;
-  :hover {
-    background-color: #ffffff11;
-  }
-`;
-
-const CloseButtonImg = styled.img`
-  width: 14px;
-  margin: 0 auto;
-`;
-
 const StyledClusterInstructionsModal = styled.div`
   width: 100%;
-  height: 100%;
+  padding: 20px 20px 23px;
+  border-radius: 5px;
   overflow: hidden;
-  border-radius: 6px;
-  background: #202227;
+  background: #ffffff0a;
+  border: 1px solid #ffffff55;
 `;

@@ -61,7 +61,7 @@ export const provisionerOptionsWithExternal = [
   {
     value: "external",
     icon: integrationList["kubernetes"]?.icon,
-    label: "Link to an existing cluster",
+    label: "Link an existing cluster",
   },
 ];
 

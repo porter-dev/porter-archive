@@ -15,7 +15,7 @@ import (
 // process 100 records at a time
 const stepSize = 100
 
-func MigrateVault(db *gorm.DB, dbConf *env.DBConf) error {
+func MigrateVault(db *gorm.DB, dbConf *env.DBConf, shouldFinalize bool) error {
 	var vaultClient *vault.Client
 
 	if dbConf.VaultAPIKey != "" && dbConf.VaultServerURL != "" && dbConf.VaultPrefix != "" {
@@ -28,7 +28,7 @@ func MigrateVault(db *gorm.DB, dbConf *env.DBConf) error {
 		return fmt.Errorf("env variables not properly set for vault migration")
 	}
 
-	err := migrateOAuthIntegrationModel(db, vaultClient)
+	err := migrateOAuthIntegrationModel(db, vaultClient, shouldFinalize)
 
 	if err != nil {
 		fmt.Printf("failed on oauth migration: %v\n", err)
@@ -36,7 +36,7 @@ func MigrateVault(db *gorm.DB, dbConf *env.DBConf) error {
 		return err
 	}
 
-	err = migrateGCPIntegrationModel(db, vaultClient)
+	err = migrateGCPIntegrationModel(db, vaultClient, shouldFinalize)
 
 	if err != nil {
 		fmt.Printf("failed on gcp migration: %v\n", err)
@@ -44,7 +44,7 @@ func MigrateVault(db *gorm.DB, dbConf *env.DBConf) error {
 		return err
 	}
 
-	err = migrateAWSIntegrationModel(db, vaultClient)
+	err = migrateAWSIntegrationModel(db, vaultClient, shouldFinalize)
 
 	if err != nil {
 		fmt.Printf("failed on aws migration: %v\n", err)
@@ -55,7 +55,7 @@ func MigrateVault(db *gorm.DB, dbConf *env.DBConf) error {
 	return nil
 }
 
-func migrateOAuthIntegrationModel(db *gorm.DB, client *vault.Client) error {
+func migrateOAuthIntegrationModel(db *gorm.DB, client *vault.Client, shouldFinalize bool) error {
 	// get count of model
 	var count int64
 
@@ -96,42 +96,44 @@ func migrateOAuthIntegrationModel(db *gorm.DB, client *vault.Client) error {
 
 	fmt.Printf("migrated %d oauth integrations with %d errors\n", count, len(errors))
 
-	saveErrors := make(map[uint]error, 0)
+	if shouldFinalize {
+		saveErrors := make(map[uint]error, 0)
 
-	// iterate a second time, clearing the data
-	// iterate (count / stepSize) + 1 times using Limit and Offset
-	for i := 0; i < (int(count)/stepSize)+1; i++ {
-		oauths := []*ints.OAuthIntegration{}
+		// iterate a second time, clearing the data
+		// iterate (count / stepSize) + 1 times using Limit and Offset
+		for i := 0; i < (int(count)/stepSize)+1; i++ {
+			oauths := []*ints.OAuthIntegration{}
 
-		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&oauths).Error; err != nil {
-			return err
-		}
+			if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&oauths).Error; err != nil {
+				return err
+			}
 
-		// decrypt with the old key
-		for _, oauth := range oauths {
-			if _, found := errors[oauth.ID]; !found {
-				// clear the data from the db, and save
-				oauth.ClientID = []byte{}
-				oauth.AccessToken = []byte{}
-				oauth.RefreshToken = []byte{}
+			// decrypt with the old key
+			for _, oauth := range oauths {
+				if _, found := errors[oauth.ID]; !found {
+					// clear the data from the db, and save
+					oauth.ClientID = []byte{}
+					oauth.AccessToken = []byte{}
+					oauth.RefreshToken = []byte{}
 
-				if err := db.Save(oauth).Error; err != nil {
-					saveErrors[oauth.ID] = err
+					if err := db.Save(oauth).Error; err != nil {
+						saveErrors[oauth.ID] = err
+					}
 				}
 			}
 		}
-	}
 
-	fmt.Printf("cleared %d oauth integrations with %d errors\n", count, len(saveErrors))
+		fmt.Printf("cleared %d oauth integrations with %d errors\n", count, len(saveErrors))
 
-	for saveErrorID, saveError := range saveErrors {
-		fmt.Printf("oauth save error on ID %d: %v\n", saveErrorID, saveError)
+		for saveErrorID, saveError := range saveErrors {
+			fmt.Printf("oauth save error on ID %d: %v\n", saveErrorID, saveError)
+		}
 	}
 
 	return nil
 }
 
-func migrateGCPIntegrationModel(db *gorm.DB, client *vault.Client) error {
+func migrateGCPIntegrationModel(db *gorm.DB, client *vault.Client, shouldFinalize bool) error {
 	// get count of model
 	var count int64
 
@@ -170,40 +172,42 @@ func migrateGCPIntegrationModel(db *gorm.DB, client *vault.Client) error {
 
 	fmt.Printf("migrated %d gcp integrations with %d errors\n", count, len(errors))
 
-	saveErrors := make(map[uint]error, 0)
+	if shouldFinalize {
+		saveErrors := make(map[uint]error, 0)
 
-	// iterate a second time, clearing the data
-	// iterate (count / stepSize) + 1 times using Limit and Offset
-	for i := 0; i < (int(count)/stepSize)+1; i++ {
-		gcps := []*ints.GCPIntegration{}
+		// iterate a second time, clearing the data
+		// iterate (count / stepSize) + 1 times using Limit and Offset
+		for i := 0; i < (int(count)/stepSize)+1; i++ {
+			gcps := []*ints.GCPIntegration{}
 
-		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&gcps).Error; err != nil {
-			return err
-		}
+			if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&gcps).Error; err != nil {
+				return err
+			}
 
-		// decrypt with the old key
-		for _, gcp := range gcps {
-			if _, found := errors[gcp.ID]; !found {
-				// clear the data from the db, and save
-				gcp.GCPKeyData = []byte{}
+			// decrypt with the old key
+			for _, gcp := range gcps {
+				if _, found := errors[gcp.ID]; !found {
+					// clear the data from the db, and save
+					gcp.GCPKeyData = []byte{}
 
-				if err := db.Save(gcp).Error; err != nil {
-					saveErrors[gcp.ID] = err
+					if err := db.Save(gcp).Error; err != nil {
+						saveErrors[gcp.ID] = err
+					}
 				}
 			}
 		}
-	}
 
-	fmt.Printf("cleared %d gcp integrations with %d errors\n", count, len(saveErrors))
+		fmt.Printf("cleared %d gcp integrations with %d errors\n", count, len(saveErrors))
 
-	for saveErrorID, saveError := range saveErrors {
-		fmt.Printf("gcp save error on ID %d: %v\n", saveErrorID, saveError)
+		for saveErrorID, saveError := range saveErrors {
+			fmt.Printf("gcp save error on ID %d: %v\n", saveErrorID, saveError)
+		}
 	}
 
 	return nil
 }
 
-func migrateAWSIntegrationModel(db *gorm.DB, client *vault.Client) error {
+func migrateAWSIntegrationModel(db *gorm.DB, client *vault.Client, shouldFinalize bool) error {
 	// get count of model
 	var count int64
 
@@ -245,37 +249,39 @@ func migrateAWSIntegrationModel(db *gorm.DB, client *vault.Client) error {
 
 	fmt.Printf("migrated %d aws integrations with %d errors\n", count, len(errors))
 
-	saveErrors := make(map[uint]error, 0)
+	if shouldFinalize {
+		saveErrors := make(map[uint]error, 0)
 
-	// iterate a second time, clearing the data
-	// iterate (count / stepSize) + 1 times using Limit and Offset
-	for i := 0; i < (int(count)/stepSize)+1; i++ {
-		awss := []*ints.AWSIntegration{}
+		// iterate a second time, clearing the data
+		// iterate (count / stepSize) + 1 times using Limit and Offset
+		for i := 0; i < (int(count)/stepSize)+1; i++ {
+			awss := []*ints.AWSIntegration{}
 
-		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&awss).Error; err != nil {
-			return err
-		}
+			if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&awss).Error; err != nil {
+				return err
+			}
 
-		// decrypt with the old key
-		for _, aws := range awss {
-			if _, found := errors[aws.ID]; !found {
-				// clear the data from the db, and save
-				aws.AWSAccessKeyID = []byte{}
-				aws.AWSClusterID = []byte{}
-				aws.AWSSecretAccessKey = []byte{}
-				aws.AWSSessionToken = []byte{}
+			// decrypt with the old key
+			for _, aws := range awss {
+				if _, found := errors[aws.ID]; !found {
+					// clear the data from the db, and save
+					aws.AWSAccessKeyID = []byte{}
+					aws.AWSClusterID = []byte{}
+					aws.AWSSecretAccessKey = []byte{}
+					aws.AWSSessionToken = []byte{}
 
-				if err := db.Save(aws).Error; err != nil {
-					saveErrors[aws.ID] = err
+					if err := db.Save(aws).Error; err != nil {
+						saveErrors[aws.ID] = err
+					}
 				}
 			}
 		}
-	}
 
-	fmt.Printf("cleared %d aws integrations with %d errors\n", count, len(saveErrors))
+		fmt.Printf("cleared %d aws integrations with %d errors\n", count, len(saveErrors))
 
-	for saveErrorID, saveError := range saveErrors {
-		fmt.Printf("aws save error on ID %d: %v\n", saveErrorID, saveError)
+		for saveErrorID, saveError := range saveErrors {
+			fmt.Printf("aws save error on ID %d: %v\n", saveErrorID, saveError)
+		}
 	}
 
 	return nil

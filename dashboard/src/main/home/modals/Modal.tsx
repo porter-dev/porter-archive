@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 type PropsType = {
-  onRequestClose: () => void;
+  onRequestClose?: () => void;
   width?: string;
   height?: string;
   title?: string;
@@ -26,6 +26,7 @@ export default class Modal extends Component<PropsType, StateType> {
 
   handleClickOutside = (event: any) => {
     if (
+      this.props.onRequestClose &&
       this.wrapperRef &&
       this.wrapperRef.current &&
       !this.wrapperRef.current.contains(event.target)
@@ -39,9 +40,13 @@ export default class Modal extends Component<PropsType, StateType> {
     return (
       <Overlay>
         <StyledModal ref={this.wrapperRef} width={width} height={height}>
-          <CloseButton onClick={this.props.onRequestClose}>
-            <i className="material-icons">close</i>
-          </CloseButton>
+          {
+            this.props.onRequestClose && (
+              <CloseButton onClick={this.props.onRequestClose}>
+                <i className="material-icons">close</i>
+              </CloseButton>
+            )
+          }
           {this.props.title && <ModalTitle>{this.props.title}</ModalTitle>}
           {this.props.children}
         </StyledModal>

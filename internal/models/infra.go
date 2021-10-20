@@ -54,6 +54,8 @@ type Infra struct {
 func (i *Infra) ToInfraType() *types.Infra {
 	return &types.Infra{
 		ID:               i.ID,
+		CreatedAt:        i.CreatedAt,
+		UpdatedAt:        i.UpdatedAt,
 		ProjectID:        i.ProjectID,
 		Kind:             i.Kind,
 		Status:           i.Status,

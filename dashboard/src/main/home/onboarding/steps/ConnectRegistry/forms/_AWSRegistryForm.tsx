@@ -8,6 +8,8 @@ import api from "shared/api";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../../state/index";
 import IntegrationCategories from "main/home/integrations/IntegrationCategories";
+import { StateHandler } from "main/home/onboarding/state/StateHandler";
+import RegistryImageList from "main/home/onboarding/components/RegistryList";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -218,9 +220,14 @@ export const SettingsForm: React.FC<{
 export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
   nextFormStep,
 }) => {
+  const snap = useSnapshot(StateHandler);
+  console.log(snap.connected_registry.settings);
   return (
     <>
-      <IntegrationCategories category={"registry"} />
+      <RegistryImageList
+        project={snap.project}
+        registry_id={snap.connected_registry.settings.registry_connection_id}
+      />
       <SaveButton
         text="Continue"
         disabled={false}

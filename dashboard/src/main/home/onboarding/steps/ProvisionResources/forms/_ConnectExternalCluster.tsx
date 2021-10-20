@@ -170,7 +170,7 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) 
         text="Continue"
         disabled={!enableContinue}
         onClick={() => nextStep()}
-        status={!enableContinue ? "No connected cluster detected" : "Connected cluster detected."}
+        status={!enableContinue ? "No connected cluster detected" : "successful"}
         makeFlush={true}
         clearPosition={true}
         statusPosition="right"

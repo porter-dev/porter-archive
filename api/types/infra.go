@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // InfraStatus is the status that an infrastructure can take
 type InfraStatus string
 
@@ -28,6 +30,9 @@ const (
 
 type Infra struct {
 	ID uint `json:"id"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`

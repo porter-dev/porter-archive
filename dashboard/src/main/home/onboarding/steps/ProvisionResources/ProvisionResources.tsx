@@ -10,7 +10,7 @@ import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 import { SupportedProviders } from "../../types";
 import backArrow from "assets/back_arrow.png";
-import { SharedStatus } from "./forms/Status";
+import { SharedStatus } from "./forms/SharedStatus";
 
 type Props = {
   provider: SupportedProviders | "external";
@@ -61,7 +61,7 @@ const ProvisionResources: React.FC<Props> = ({
         return (
           <>
             <SharedStatus
-              project={project}
+              project_id={project?.id}
               filter={[]}
               nextFormStep={console.log}
             />

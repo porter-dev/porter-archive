@@ -227,6 +227,7 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
   return (
     <>
       <RegistryImageList
+        registryType="ecr"
         project={snap.project}
         registry_id={snap.connected_registry.settings.registry_connection_id}
       />

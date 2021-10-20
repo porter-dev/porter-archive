@@ -52,7 +52,7 @@ export const SharedStatus: React.FC<{
         res.data.forEach((infra : any) => {
           // if filter list is empty, add infra automatically
           if (filter.length == 0) {
-            matchedInfras.set(infra.kind, infra)
+            matchedInfras.set(infra.kind + "-" + infra.id, infra)
           } else if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id || 0 < infra.id) {
             matchedInfras.set(infra.kind, infra)
           }

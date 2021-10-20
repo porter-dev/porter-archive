@@ -109,6 +109,7 @@ const StyledModal = styled.div`
     props.height ? props.height : "425px"};
   overflow: visible;
   padding: 25px 32px;
+  z-index: 999;
   font-size: 13px;
   border-radius: 10px;
   background: #202227;

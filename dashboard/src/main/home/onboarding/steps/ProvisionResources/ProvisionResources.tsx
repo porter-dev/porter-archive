@@ -61,7 +61,7 @@ const ProvisionResources: React.FC<Props> = ({
         return (
           <>
             <SharedStatus
-              project={project}
+              project_id={project.id}
               filter={[]}
               nextFormStep={console.log}
             />

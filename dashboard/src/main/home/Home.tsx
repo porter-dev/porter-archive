@@ -223,7 +223,10 @@ class Home extends Component<PropsType, StateType> {
       const res = await api.getOnboardingState("<token>", {}, { project_id });
 
       if (res?.data && res?.data.current_step !== "clean_up") {
-        this.redirectToOnboarding();
+        // this.redirectToOnboarding();
+        this.context.setHasFinishedOnboarding(false);
+      } else {
+        this.context.setHasFinishedOnboarding(true);
       }
     } catch (error) {}
   }

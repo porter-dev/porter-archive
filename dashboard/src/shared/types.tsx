@@ -303,6 +303,8 @@ export interface ContextProps {
   usage: UsageData;
   setUsage: (usage: UsageData) => void;
   queryUsage: () => Promise<void>;
+  hasFinishedOnboarding: boolean;
+  setHasFinishedOnboarding: (onboardingStatus: boolean) => void;
 }
 
 export enum JobStatusType {

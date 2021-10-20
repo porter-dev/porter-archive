@@ -13,7 +13,7 @@ import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import { useWebsockets } from "shared/hooks/useWebsockets";
-import { SharedStatus } from "./Status";
+import { SharedStatus } from "./SharedStatus";
 
 const tierOptions = [
   { value: "basic", label: "Basic" },

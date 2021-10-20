@@ -5,9 +5,9 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 
 export const SharedStatus: React.FC<{
     nextFormStep: () => void;
-    project: any;
+    project_id: number;
     filter: string[];
-  }> = ({ nextFormStep, project, filter }) => {
+  }> = ({ nextFormStep, project_id, filter }) => {
     const {
       newWebsocket,
       openWebsocket,
@@ -21,7 +21,7 @@ export const SharedStatus: React.FC<{
       websocketID: string,
       module: TFModule
     ) => {
-      let apiPath = `/api/projects/${project?.id}/infras/${module.id}/logs`;
+      let apiPath = `/api/projects/${project_id}/infras/${module.id}/logs`;
   
       const wsConfig = {
         onopen: () => {
@@ -46,7 +46,7 @@ export const SharedStatus: React.FC<{
     };
   
     useEffect(() => {  
-      api.getInfra("<token>", {}, { project_id: project?.id }).then((res) => {
+      api.getInfra("<token>", {}, { project_id: project_id }).then((res) => {
         var matchedInfras : Map<string, any> = new Map()
   
         res.data.forEach((infra : any) => {
@@ -59,8 +59,8 @@ export const SharedStatus: React.FC<{
   
         // query for desired and current state, and convert to tf module
         matchedInfras.forEach((infra : any) => {
-          api.getInfraDesired("<token>", {}, { project_id: project?.id, infra_id: infra?.id }).then((resDesired) => {
-            api.getInfraCurrent("<token>", {}, { project_id: project?.id, infra_id: infra?.id }).then((resCurrent) => {
+          api.getInfraDesired("<token>", {}, { project_id: project_id, infra_id: infra?.id }).then((resDesired) => {
+            api.getInfraCurrent("<token>", {}, { project_id: project_id, infra_id: infra?.id }).then((resCurrent) => {
               var desired = resDesired.data
               var current = resCurrent.data
   
@@ -76,8 +76,10 @@ export const SharedStatus: React.FC<{
                 return {
                   addr: val?.addr,
                   provisioned: currentMap.has(val?.addr),
-                  // TODO: add error types
-                  error: "",
+                  errored: {
+                    errored_out: val?.errored?.errored_out,
+                    error_context: val?.errored?.error_context,
+                  },
                 }
               })
   

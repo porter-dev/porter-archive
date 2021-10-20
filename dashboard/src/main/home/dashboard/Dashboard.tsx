@@ -16,6 +16,7 @@ import TitleSection from "components/TitleSection";
 
 import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { SharedStatus } from "../onboarding/steps/ProvisionResources/forms/SharedStatus";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -105,7 +106,11 @@ class Dashboard extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
-      return <Provisioner setRefreshClusters={this.props.setRefreshClusters} />;
+      return <SharedStatus 
+        filter={["doks", "docr", "eks", "ecr", "gke", "gcr"]} 
+        project_id={this.props.projectId} 
+        nextFormStep={() => null} 
+      />
     } else if (this.currentTab() === "create-cluster") {
       let helperText = "Create a cluster to link to this project";
       let helperIcon = "info";

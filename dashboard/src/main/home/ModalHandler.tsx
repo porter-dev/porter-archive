@@ -10,6 +10,7 @@ import NamespaceModal from "./modals/NamespaceModal";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
 import AccountSettingsModal from "./modals/AccountSettingsModal";
+import RedirectToOnboardingModal from "./modals/RedirectToOnboardingModal";
 
 import UsageWarningModal from "./modals/UsageWarningModal";
 
@@ -31,8 +32,14 @@ const ModalHandler: React.FC<{
 
   return (
     <>
-      {currentModal === "RedirectToOnboarding" && (
-        <a href="/onboarding/new-project"></a>
+      {currentModal === "RedirectToOnboardingModal" && (
+        <Modal
+          width="600px"
+          height="180px"
+          title="You're almost ready..."
+        >
+          <RedirectToOnboardingModal />
+        </Modal>
       )}
 
       {currentModal === "ClusterInstructionsModal" && (

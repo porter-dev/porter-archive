@@ -50,7 +50,10 @@ export const SharedStatus: React.FC<{
         var matchedInfras : Map<string, any> = new Map()
   
         res.data.forEach((infra : any) => {
-          if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id || 0 < infra.id) {
+          // if filter list is empty, add infra automatically
+          if (filter.length == 0) {
+            matchedInfras.set(infra.kind, infra)
+          } else if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id || 0 < infra.id) {
             matchedInfras.set(infra.kind, infra)
           }
         })

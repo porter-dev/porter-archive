@@ -77,7 +77,7 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
         return resource.errored?.errored_out
       }).length > 0
 
-      const width = 100 * (provisionedResources / (totalResources * 1.0))
+      const width = 100 * (provisionedResources / (totalResources * 1.0)) || 100
 
       var error = null
 
@@ -85,12 +85,14 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
         error = errors.map((error) => {
           return <ExpandedError>{error}</ExpandedError>
         })
+      } else if (val.status == "destroyed") {
+        error = <ExpandedError>This infrastructure was destroyed.</ExpandedError>
       }
 
       var loadingFill 
       var status 
 
-      if (hasError) {
+      if (hasError || val.status == "destroyed") {
         loadingFill = <LoadingFill status="error" width={width + "%"} />
         status = renderStatus("error")
       } else if (width == 100) {

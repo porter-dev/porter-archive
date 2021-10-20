@@ -107,7 +107,7 @@ class Dashboard extends Component<PropsType, StateType> {
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
       return <SharedStatus 
-        filter={["doks", "docr", "eks", "ecr", "gke", "gcr"]} 
+        filter={[]} 
         project_id={this.props.projectId} 
         nextFormStep={() => null} 
       />

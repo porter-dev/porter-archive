@@ -6,7 +6,7 @@ import loading from "assets/loading.gif";
 import styled from "styled-components";
 
 type Props = {
-  modules : TFModule[]
+  modules: TFModule[];
 };
 
 export interface TFModule {
@@ -28,12 +28,12 @@ export interface TFResource {
   errored: TFResourceError,
 }
 
-const nameMap : { [key: string]: string } = {
-  "eks": "Elastic Kubernetes Service (EKS)",
-  "ecr": "Elastic Container Registry (ECR)",
-  "doks": "DigitalOcean Kubernetes Service (DOKS)",
-  "docr": "DigitalOcean Container Registry (DOCR)",
-}
+const nameMap: { [key: string]: string } = {
+  eks: "Elastic Kubernetes Service (EKS)",
+  ecr: "Elastic Container Registry (ECR)",
+  doks: "DigitalOcean Kubernetes Service (DOKS)",
+  docr: "DigitalOcean Container Registry (DOCR)",
+};
 
 const ProvisionerStatus: React.FC<Props> = (props) => {
   const { modules } = props;
@@ -62,12 +62,12 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
 
   const renderModules = () => {
     return modules.map((val) => {
-      const totalResources = val.resources?.length
+      const totalResources = val.resources?.length;
       const provisionedResources = val.resources?.filter((resource) => {
-        return resource.provisioned
-      }).length
+        return resource.provisioned;
+      }).length;
 
-      var errors : string[] = []
+      var errors: string[] = [];
 
       const hasError = val.resources?.filter((resource) => {
         if (resource.errored?.errored_out) {
@@ -79,7 +79,7 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
 
       const width = 100 * (provisionedResources / (totalResources * 1.0)) || 100
 
-      var error = null
+      var error = null;
 
       if (hasError) {
         error = errors.map((error) => {
@@ -89,32 +89,32 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
         error = <ExpandedError>This infrastructure was destroyed.</ExpandedError>
       }
 
-      var loadingFill 
-      var status 
+      var loadingFill;
+      var status;
 
       if (hasError || val.status == "destroyed") {
         loadingFill = <LoadingFill status="error" width={width + "%"} />
         status = renderStatus("error")
       } else if (width == 100) {
-        loadingFill = <LoadingFill status="successful" width={width + "%"} />
-        status = renderStatus("successful")
+        loadingFill = <LoadingFill status="successful" width={width + "%"} />;
+        status = renderStatus("successful");
       } else {
-        loadingFill = <LoadingFill status="loading" width={width + "%"} />
-        status = renderStatus("loading")
+        loadingFill = <LoadingFill status="loading" width={width + "%"} />;
+        status = renderStatus("loading");
       }
 
-      return <InfraObject key={val.id}>
-        <InfraHeader>
-          {status}
-          {nameMap[val.kind]}
-        </InfraHeader>
-        <LoadingBar>
-          {loadingFill}
-        </LoadingBar>
-        {error}
-      </InfraObject>
-    })
-  }
+      return (
+        <InfraObject key={val.id}>
+          <InfraHeader>
+            {status}
+            {nameMap[val.kind]}
+          </InfraHeader>
+          <LoadingBar>{loadingFill}</LoadingBar>
+          {error}
+        </InfraObject>
+      );
+    });
+  };
 
   return (
     <StyledProvisionerStatus>
@@ -135,11 +135,14 @@ const ExpandedError = styled.div`
   margin-top: 17px;
 `;
 
-const LoadingFill = styled.div<{ width: string, status: string }>`
-  width: ${props => props.width};
-  background: ${props => props.status === "successful" ? "rgb(56, 168, 138)" : (
-    props.status === "error" ? "#fcba03" : "linear-gradient(to right, #8ce1ff, #616FEE)"
-  )};
+const LoadingFill = styled.div<{ width: string; status: string }>`
+  width: ${(props) => props.width};
+  background: ${(props) =>
+    props.status === "successful"
+      ? "rgb(56, 168, 138)"
+      : props.status === "error"
+      ? "#fcba03"
+      : "linear-gradient(to right, #8ce1ff, #616FEE)"};
   height: 100%;
   background-size: 250% 100%;
   animation: moving-gradient 2s infinite;
@@ -171,7 +174,7 @@ const StatusIcon = styled.div<{ successful?: boolean }>`
     font-size: 18px;
     margin-right: 10px;
     float: left;
-    color: ${props => props.successful ? "rgb(56, 168, 138)" : "#fcba03"};
+    color: ${(props) => (props.successful ? "rgb(56, 168, 138)" : "#fcba03")};
   }
 `;
 

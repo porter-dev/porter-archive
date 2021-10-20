@@ -3,43 +3,37 @@ import {
   SkipProvisionConfig,
   SupportedProviders,
 } from "main/home/onboarding/types";
-import React, { useContext, useMemo } from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
 import Breadcrumb from "components/Breadcrumb";
 import { integrationList } from "shared/common";
 import {
   CredentialsForm as AWSCredentialsForm,
   SettingsForm as AWSSettingsForm,
-  Status as AWSProvisionerStatus,
 } from "./_AWSProvisionerForm";
 
 import {
   CredentialsForm as DOCredentialsForm,
   SettingsForm as DOSettingsForm,
-  Status as DOProvisionerStatus,
 } from "./_DOProvisionerForm";
 
 import {
   CredentialsForm as GCPCredentialsForm,
   SettingsForm as GCPSettingsForm,
-  Status as GCPProvisionerStatus,
 } from "./_GCPProvisionerForm";
 
 const Forms = {
   aws: {
     credentials: AWSCredentialsForm,
     settings: AWSSettingsForm,
-    status: AWSProvisionerStatus,
   },
   gcp: {
     credentials: GCPCredentialsForm,
     settings: GCPSettingsForm,
-    status: GCPProvisionerStatus,
   },
   do: {
     credentials: DOCredentialsForm,
     settings: DOSettingsForm,
-    status: DOProvisionerStatus,
   },
 };
 
@@ -59,14 +53,14 @@ const FormTitle = {
   external: {
     label: "Connect an existing cluster",
     icon: integrationList["kubernetes"],
-  }
+  },
 };
 
 type Props = {
   onSaveCredentials: (credentials: any) => void;
   onSaveSettings: (settings: any) => void;
   provider: SupportedProviders | "external";
-  currentStep: "credentials" | "settings" | "status";
+  currentStep: "credentials" | "settings";
   project: { id: number; name: string };
 };
 

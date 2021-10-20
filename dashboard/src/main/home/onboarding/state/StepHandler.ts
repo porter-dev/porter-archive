@@ -139,13 +139,20 @@ const flow: FlowType = {
         settings: {
           url: "/onboarding/provision/settings",
           on: {
-            continue: "clean_up",
+            continue: "provision_resources.status",
             go_back: "provision_resources.credentials",
           },
           execute: {
             on: {
               continue: "saveResourceProvisioningSettings",
             },
+          },
+        },
+        status: {
+          url: "/onboarding/provision/status",
+          on: {
+            continue: "clean_up",
+            go_back: "provision_resources.credentials",
           },
         },
       },
@@ -162,12 +169,13 @@ type StepHandlerType = {
   currentStepName: string;
   currentStep: Step;
   canGoBack?: boolean;
+  isSubFlow?: boolean;
   actions: {
     nextStep: (action?: Action) => void;
     clearState: () => void;
     restoreState: (prevState: Partial<StepHandlerType>) => void;
-    getStep: (nextStepName: string) => Step;
     goTo: (step: string) => void;
+    setNewCurrentStep: (stepName: string) => { hasError: boolean };
   };
 };
 
@@ -175,6 +183,7 @@ export const StepHandler: StepHandlerType = proxy({
   flow,
   currentStepName: flow.initial,
   currentStep: flow.steps[flow.initial],
+  isSubFlow: false,
   actions: {
     nextStep: (action: Action = "continue") => {
       const cs = StepHandler.currentStep;
@@ -190,10 +199,7 @@ export const StepHandler: StepHandlerType = proxy({
           "No next step name found, fix the action triggering nextStep"
         );
       }
-      const newStep = StepHandler.actions.getStep(nextStepName);
-      StepHandler.currentStepName = nextStepName;
-      StepHandler.currentStep = newStep;
-      StepHandler.canGoBack = !!newStep?.on?.go_back;
+      StepHandler.actions.setNewCurrentStep(nextStepName);
       return;
     },
     getStep: (nextStepName: string) => {
@@ -206,23 +212,18 @@ export const StepHandler: StepHandlerType = proxy({
       if (substep) {
         nextStep = step.substeps[substep];
       }
-      return nextStep;
+      return { step: nextStep, isChild: !!substep };
     },
     goTo: (step: string) => {
-      const newStep = StepHandler.actions.getStep(step);
-      if (!newStep) {
+      const status = StepHandler.actions.setNewCurrentStep(step);
+      if (status.hasError) {
         throw new Error(
           "No next step name found, fix the action triggering nextStep"
         );
       }
-      StepHandler.currentStepName = step;
-      StepHandler.currentStep = newStep;
-      StepHandler.canGoBack = !!newStep?.on?.go_back;
-      return;
     },
     clearState: () => {
-      StepHandler.currentStepName = flow.initial;
-      StepHandler.currentStep = flow.steps[flow.initial];
+      StepHandler.actions.setNewCurrentStep(flow.initial);
     },
     restoreState: (prevState) => {
       if (
@@ -231,22 +232,50 @@ export const StepHandler: StepHandlerType = proxy({
       ) {
         return;
       }
-      StepHandler.currentStepName = prevState.currentStepName;
-      StepHandler.currentStep = StepHandler.actions.getStep(
-        prevState.currentStepName
-      );
+      const stepName = prevState.currentStepName;
+
+      StepHandler.actions.setNewCurrentStep(stepName);
+    },
+    setNewCurrentStep: (newStepName: string) => {
+      const [stepName, substep] = newStepName?.split(".");
+
+      const isChild = !!substep;
+      const step = flow.steps[stepName as Steps];
+
+      let nextStep: Step = step;
+
+      if (isChild) {
+        nextStep = step.substeps[substep];
+      }
+
+      if (!nextStep) {
+        return {
+          hasError: true,
+        };
+      }
+
+      StepHandler.currentStepName = newStepName;
+      StepHandler.currentStep = nextStep;
+      StepHandler.canGoBack = !!nextStep?.on?.go_back;
+      StepHandler.isSubFlow = isChild;
+      return {
+        hasError: false,
+      };
     },
   },
 });
 
-export const useSteps = () => {
+export const useSteps = (isParentLoading?: boolean) => {
   const snap = useSnapshot(StepHandler);
   const location = useLocation();
   const { pushFiltered } = useRouting();
   useEffect(() => {
+    if (isParentLoading) {
+      return;
+    }
     if (snap.currentStepName === "clean_up") {
       StepHandler.actions.clearState();
     }
     pushFiltered(snap.currentStep.url, ["tab"]);
-  }, [location.pathname, snap.currentStep?.url]);
+  }, [location.pathname, snap.currentStep?.url, isParentLoading]);
 };

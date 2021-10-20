@@ -12,7 +12,7 @@ import { Onboarding as OnboardingSaveType } from "./types";
 const Onboarding = () => {
   const context = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  useSteps();
+  useSteps(isLoading);
 
   useEffect(() => {
     let unsub = devtools(OFState, "Onboarding flow state");
@@ -92,8 +92,8 @@ const Onboarding = () => {
       project_id,
       project_name,
       ...(odata || {}),
-      ...(registry_connection_data || {}),
-      ...(provision_connection_data || {}),
+      ...({ registry_connection_data } || {}),
+      ...({ provision_connection_data } || {}),
     };
   };
 
@@ -110,9 +110,7 @@ const Onboarding = () => {
   }, [context.currentProject]);
 
   return (
-    <StyledOnboarding>
-      {isLoading ? <Loading /> : <Routes />}
-    </StyledOnboarding>
+    <StyledOnboarding>{isLoading ? <Loading /> : <Routes />}</StyledOnboarding>
   );
 };
 

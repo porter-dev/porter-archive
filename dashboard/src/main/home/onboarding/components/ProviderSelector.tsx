@@ -23,12 +23,12 @@ export const registryOptions = [
   },
   {
     value: "aws",
-    icon: integrationList["aws"]?.icon,
+    icon: integrationList["ecr"]?.icon,
     label: "Amazon Elastic Container Registry (ECR)",
   },
   {
     value: "gcp",
-    icon: integrationList["gcp"]?.icon,
+    icon: integrationList["gcr"]?.icon,
     label: "Google Cloud Registry (GCR)",
   },
   {

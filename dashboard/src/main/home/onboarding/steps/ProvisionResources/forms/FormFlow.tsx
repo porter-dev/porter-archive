@@ -115,7 +115,6 @@ const FormFlowWrapper: React.FC<Props> = ({
           { value: "credentials", label: "Credentials" },
           { value: "settings", label: "Settings" },
         ]}
-        onClickStep={(step: string) => alert(step)}
       />
       {CurrentForm}
     </FormWrapper>

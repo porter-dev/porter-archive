@@ -130,7 +130,7 @@ const ViewWrapper = styled.div`
 const StyledOnboarding = styled.div`
   max-width: 700px;
   width: 50%;
-  z-index: 999;
+  z-index: 1;
   display: flex;
   align-items: center;
   margin-top: -6%;

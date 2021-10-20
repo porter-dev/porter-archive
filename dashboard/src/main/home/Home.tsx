@@ -247,7 +247,9 @@ class Home extends Component<PropsType, StateType> {
       !this.context.hasFinishedOnboarding && 
       prevProps.match.url !== this.props.match.url &&
       this.props.history.location.pathname &&
-      !this.props.history.location.pathname.includes("onboarding")
+      !this.props.history.location.pathname.includes("onboarding") &&
+      !this.props.history.location.pathname.includes("new-project") &&
+      !this.props.history.location.pathname.includes("project-settings")
     ) {
       this.context.setCurrentModal("RedirectToOnboardingModal");
     }
@@ -415,6 +417,11 @@ class Home extends Component<PropsType, StateType> {
         )}
 
         <ViewWrapper>
+          <Navbar
+            logOut={this.props.logOut}
+            currentView={this.props.currentRoute} // For form feedback
+          />
+
           <Switch>
             <Route
               path="/new-project"
@@ -485,10 +492,6 @@ class Home extends Component<PropsType, StateType> {
             />
             <Route path={"*"} render={() => <Templates />} />
           </Switch>
-          <Navbar
-            logOut={this.props.logOut}
-            currentView={this.props.currentRoute} // For form feedback
-          />
         </ViewWrapper>
 
         <ConfirmOverlay

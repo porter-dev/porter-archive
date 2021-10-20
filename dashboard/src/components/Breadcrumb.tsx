@@ -6,7 +6,7 @@ import styled from "styled-components";
 type Props = {
   currentStep: string;
   steps: { value: string, label: string }[];
-  onClickStep: (step: string) => void;
+  onClickStep?: (step: string) => void;
 };
 
 const Breadcrumb: React.FC<Props> = ({ currentStep, steps, onClickStep }) => {
@@ -17,7 +17,7 @@ const Breadcrumb: React.FC<Props> = ({ currentStep, steps, onClickStep }) => {
           <>
           <Crumb
             bold={currentStep === step.value}
-            onClick={() => onClickStep(step.value)}
+            onClick={() => onClickStep && onClickStep(step.value)}
           >
             {step.label}
           </Crumb>
@@ -32,10 +32,11 @@ const Breadcrumb: React.FC<Props> = ({ currentStep, steps, onClickStep }) => {
 export default Breadcrumb;
 
 const StyledBreadcrumb = styled.div`
+  color: #aaaabb;
 `;
 
 const Crumb = styled.span<{ bold: boolean }>`
-  font-weight: ${(props) => (props.bold ? "600" : "normal")};
+  font-weight: ${props => props.bold ? "600" : "normal"};
+  color: ${props => props.bold ? "#ffffff" : "#aaaabb"};
   font-size: 13px;
-  cursor: pointer;
 `;

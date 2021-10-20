@@ -109,7 +109,7 @@ const FormFlowWrapper: React.FC<Props> = ({
         <CloseButton onClick={() => alert("go back")}>
           <i className="material-icons">keyboard_backspace</i>
         </CloseButton>
-        <img src={FormTitle[provider].icon} />
+        {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
         {FormTitle[provider].label}
       </FormHeader>
       <Breadcrumb 

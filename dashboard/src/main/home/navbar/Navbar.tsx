@@ -241,7 +241,7 @@ const StyledNavbar = styled.div`
   align-items: center;
   padding-right: 5px;
   justify-content: flex-end;
-  z-index: 1;
+  z-index: 999;
 `;
 
 const NavButton = styled.a`

@@ -147,6 +147,7 @@ export const SharedStatus: React.FC<{
     useEffect(() => {  
       api.getInfra("<token>", {}, { project_id: project_id }).then((res) => {
         var matchedInfras : Map<string, any> = new Map()
+        var numCreated = 0
   
         res.data.forEach((infra : any) => {
           // if filter list is empty, add infra automatically
@@ -155,8 +156,15 @@ export const SharedStatus: React.FC<{
           } else if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id || 0 < infra.id) {
             matchedInfras.set(infra.kind, infra)
           }
+
+          numCreated += infra?.status == "created" ? 1 : 0
         })
           
+        // if all created, call next form step
+        if (numCreated == res.data.length) {
+          nextFormStep()
+        }
+
         // query for desired and current state, and convert to tf module
         matchedInfras.forEach((infra : any) => {
           var module : TFModule = {

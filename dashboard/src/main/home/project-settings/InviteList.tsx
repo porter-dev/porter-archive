@@ -366,6 +366,9 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
   const hasSeats = () => {
+    if (String(edition) === "dev-ee") {
+      return true;
+    }
     // If usage limit is 0, the project has unlimited seats. Otherwise, check
     // the usage limit against the current usage.
     if (usage?.limit.users === 0) {

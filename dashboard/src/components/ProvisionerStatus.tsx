@@ -63,8 +63,19 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
     }
   };
 
+  const readableDate = (s: string) => {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} on ${date}`;
+  };
+
   const renderModules = () => {
     return modules.map(val => {
+      console.log(val)
       const totalResources = val.resources?.length;
       const provisionedResources = val.resources?.filter((resource) => {
         return resource.provisioned;
@@ -117,11 +128,14 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
       return (
         <InfraObject key={val.id}>
           <InfraHeader>
+            <Flex>
             {status}
             {
               integrationList[val.kind] && <Icon src={integrationList[val.kind].icon} />
             }
             {nameMap[val.kind]}
+            </Flex>
+            <Timestamp>Started {readableDate(val.created_at)}</Timestamp>
           </InfraHeader>
           <LoadingBar>{loadingFill}</LoadingBar>
           <ErrorWrapper>
@@ -140,6 +154,17 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
 };
 
 export default ProvisionerStatus;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Timestamp = styled.div`
+  font-size: 13px;
+  font-weight: 400;
+  color: #ffffff55;
+`;
 
 const Icon = styled.img`
   height: 20px;
@@ -235,11 +260,13 @@ const InfraObject = styled.div`
   border: 1px solid #aaaabb;
   border-radius: 5px;
   margin-bottom: 10px;
+  position: relative;
 `;
 
 const InfraHeader = styled.div`
   font-size: 13px;
   font-weight: 500;
+  justify-content: space-between;
   padding: 0 15px;
   display: flex;
   align-items: center;

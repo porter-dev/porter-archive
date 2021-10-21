@@ -92,29 +92,28 @@ const ConnectSource: React.FC<{
         <>
           <Helper>Porter currently has access to:</Helper>
           <List>
-            {
-              accountData?.accounts.length > 0 ? (
-                accountData?.accounts.map((name, i) => {
-                  return (
-                    <Row
-                      key={i}
-                      isLastItem={i === accountData.accounts.length - 1}
-                    >
-                      <i className="material-icons">bookmark</i>
-                      {name}
-                    </Row>
-                  );
-                })
-              ) : (
-                <Placeholder>No repositories found.</Placeholder>
-              )
-            }
+            {accountData?.accounts.length > 0 ? (
+              accountData?.accounts.map((name, i) => {
+                return (
+                  <Row
+                    key={i}
+                    isLastItem={i === accountData.accounts.length - 1}
+                  >
+                    <i className="material-icons">bookmark</i>
+                    {name}
+                  </Row>
+                );
+              })
+            ) : (
+              <Placeholder>No repositories found.</Placeholder>
+            )}
           </List>
           <Helper>
             Don't see the right repos?{" "}
             <A href={"/api/integrations/github-app/install"}>
               Install Porter in more repositories
-            </A>.
+            </A>
+            .
           </Helper>
           <NextStep
             text="Continue"

@@ -57,6 +57,7 @@ func GetSharedProvisionerOpts(conf *config.Config, infra *models.Infra) (*provis
 		DryRun:              true,
 		Infra:               infra,
 		ProvImageTag:        conf.ServerConf.ProvisionerImageTag,
+		ProvJobNamespace:    conf.ServerConf.ProvisionerJobNamespace,
 		ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
 		TFHTTPBackendURL:    conf.ServerConf.ProvisionerBackendURL,
 		CredentialExchange: &provisioner.ProvisionCredentialExchange{

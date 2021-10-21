@@ -110,11 +110,21 @@ const ProvisionResources: React.FC<Props> = ({
         applications.
       </Helper>
       {Content()}
+      <Br />
+      <Helper>
+        Note: Provisioning can take up to 15 minutes.
+      </Helper>
     </div>
   );
 };
 
 export default ProvisionResources;
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+  margin-top: -3px;
+`;
 
 const Subtitle = styled.div`
   font-size: 16px;

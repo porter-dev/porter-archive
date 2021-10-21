@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
 import Modal from "./modals/Modal";
@@ -13,12 +13,20 @@ import AccountSettingsModal from "./modals/AccountSettingsModal";
 import RedirectToOnboardingModal from "./modals/RedirectToOnboardingModal";
 
 import UsageWarningModal from "./modals/UsageWarningModal";
+import api from "shared/api";
 
 const ModalHandler: React.FC<{
   setRefreshClusters: (x: boolean) => void;
 }> = ({ setRefreshClusters }) => {
   const [isAuth] = useAuth();
-  const { currentModal, setCurrentModal, currentProject } = useContext(Context);
+  const {
+    currentModal,
+    setCurrentModal,
+    currentProject,
+    setHasFinishedOnboarding,
+  } = useContext(Context);
+
+  const [modal, setModal] = useState("");
 
   useEffect(() => {
     const projectOnboarding = localStorage.getItem(
@@ -30,19 +38,54 @@ const ModalHandler: React.FC<{
     }
   }, [currentProject?.id]);
 
+  const checkOnboarding = async () => {
+    try {
+      const project_id = currentProject?.id;
+      const res = await api.getOnboardingState("<token>", {}, { project_id });
+
+      if (res.status === 404) {
+        return {
+          finished: true,
+        };
+      }
+
+      if (res?.data && res?.data.current_step !== "clean_up") {
+        return {
+          finished: false,
+        };
+      } else {
+        return {
+          finished: true,
+        };
+      }
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    if (currentModal === "RedirectToOnboardingModal") {
+      checkOnboarding().then((status) => {
+        if (status?.finished) {
+          setCurrentModal(null, null);
+          setHasFinishedOnboarding(true);
+        } else {
+          setHasFinishedOnboarding(false);
+          setModal("RedirectToOnboardingModal");
+        }
+      });
+    } else {
+      setModal(currentModal);
+    }
+  }, [currentModal]);
+
   return (
     <>
-      {currentModal === "RedirectToOnboardingModal" && (
-        <Modal
-          width="600px"
-          height="180px"
-          title="You're almost ready..."
-        >
+      {modal === "RedirectToOnboardingModal" && (
+        <Modal width="600px" height="180px" title="You're almost ready...">
           <RedirectToOnboardingModal />
         </Modal>
       )}
 
-      {currentModal === "ClusterInstructionsModal" && (
+      {modal === "ClusterInstructionsModal" && (
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
@@ -55,7 +98,7 @@ const ModalHandler: React.FC<{
 
       {/* We should be careful, as this component is named Update but is for deletion */}
       {isAuth("cluster", "", ["get", "delete"]) &&
-        currentModal === "UpdateClusterModal" && (
+        modal === "UpdateClusterModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="565px"
@@ -67,7 +110,7 @@ const ModalHandler: React.FC<{
             />
           </Modal>
         )}
-      {currentModal === "IntegrationsModal" && (
+      {modal === "IntegrationsModal" && (
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
@@ -77,7 +120,7 @@ const ModalHandler: React.FC<{
           <IntegrationsModal />
         </Modal>
       )}
-      {currentModal === "IntegrationsInstructionsModal" && (
+      {modal === "IntegrationsInstructionsModal" && (
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
@@ -88,7 +131,7 @@ const ModalHandler: React.FC<{
         </Modal>
       )}
       {isAuth("namespace", "", ["get", "create"]) &&
-        currentModal === "NamespaceModal" && (
+        modal === "NamespaceModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="600px"
@@ -99,7 +142,7 @@ const ModalHandler: React.FC<{
           </Modal>
         )}
       {isAuth("namespace", "", ["get", "delete"]) &&
-        currentModal === "DeleteNamespaceModal" && (
+        modal === "DeleteNamespaceModal" && (
           <Modal
             onRequestClose={() => setCurrentModal(null, null)}
             width="700px"
@@ -110,7 +153,7 @@ const ModalHandler: React.FC<{
           </Modal>
         )}
 
-      {currentModal === "EditInviteOrCollaboratorModal" && (
+      {modal === "EditInviteOrCollaboratorModal" && (
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="600px"
@@ -119,7 +162,7 @@ const ModalHandler: React.FC<{
           <EditInviteOrCollaboratorModal />
         </Modal>
       )}
-      {currentModal === "AccountSettingsModal" && (
+      {modal === "AccountSettingsModal" && (
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"
@@ -130,7 +173,7 @@ const ModalHandler: React.FC<{
         </Modal>
       )}
 
-      {currentModal === "UsageWarningModal" && (
+      {modal === "UsageWarningModal" && (
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="760px"

@@ -49,10 +49,6 @@ export const OFState = proxy({
     restoreState: (state: any) => {
       const prevState = decompressState(state);
 
-      if (prevState.StepHandler.currentStepName === "clean_up") {
-        return;
-      }
-
       if (prevState?.StateHandler) {
         StateHandler.actions.restoreState(prevState.StateHandler);
       }

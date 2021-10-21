@@ -239,9 +239,10 @@ func (c *Client) GetIDToken(projectID uint, user *cemodels.User) (token string, 
 			Model: &gorm.Model{
 				ID: userBilling.ID,
 			},
-			ProjectID: projectID,
-			UserID:    user.ID,
-			Token:     []byte(token),
+			ProjectID:  projectID,
+			UserID:     user.ID,
+			Token:      []byte(token),
+			TeammateID: userBilling.TeammateID,
 		})
 
 		if err != nil {

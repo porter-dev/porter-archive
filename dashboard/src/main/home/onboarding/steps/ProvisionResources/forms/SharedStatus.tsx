@@ -1,4 +1,4 @@
-import ProvisionerStatus, { TFModule, TFResource } from "components/ProvisionerStatus";
+import ProvisionerStatus, { TFModule, TFResource, TFResourceError } from "components/ProvisionerStatus";
 import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import { useWebsockets } from "shared/hooks/useWebsockets";
@@ -16,10 +16,59 @@ export const SharedStatus: React.FC<{
     } = useWebsockets();
   
     const [tfModules, setTFModules] = useState<TFModule[]>([]);
+
+    const updateTFModules = (
+      index : number,
+      addedResources : TFResource[],
+      erroredResources : TFResource[],
+      globalErrors : TFResourceError[],
+    ) => {
+      if (!tfModules[index]?.resources) {
+        tfModules[index].resources = []
+      }
+
+      if (!tfModules[index]?.global_errors) {
+        tfModules[index].global_errors = []
+      }
+
+      let resources = tfModules[index].resources
+
+      // construct map of tf resources addresses to indices
+      let resourceAddrMap = new Map<string, number>()
+
+      tfModules[index].resources.forEach((resource, index) => {
+        resourceAddrMap.set(resource.addr, index)
+      });
+
+      for (let addedResource of addedResources) {
+        // if exists, update state to provisioned
+        if (resourceAddrMap.has(addedResource.addr)) {
+          resources[resourceAddrMap.get(addedResource.addr)] = addedResource
+        } else {
+          resources.push(addedResource)
+          resourceAddrMap.set(addedResource.addr, resources.length - 1)
+        }
+      }
+
+      for (let erroredResource of erroredResources) {
+        // if exists, update state to provisioned
+        if (resourceAddrMap.has(erroredResource.addr)) {
+          resources[resourceAddrMap.get(erroredResource.addr)] = erroredResource
+        } else {
+          resources.push(erroredResource)
+          resourceAddrMap.set(erroredResource.addr, resources.length - 1)
+        }
+      }
+
+      tfModules[index].global_errors = [...tfModules[index].global_errors, ...globalErrors]
+
+      setTFModules([...tfModules])
+    }
   
     const setupInfraWebsocket = (
       websocketID: string,
-      module: TFModule
+      module: TFModule,
+      index: number,
     ) => {
       let apiPath = `/api/projects/${project_id}/infras/${module.id}/logs`;
   
@@ -28,7 +77,50 @@ export const SharedStatus: React.FC<{
           console.log(`connected to websocket: ${websocketID}`);
         },
         onmessage: (evt: MessageEvent) => {
-          console.log("EVENT IS", evt)
+          // parse the data
+          let parsedData = JSON.parse(evt.data)
+
+          let addedResources : TFResource[] = []
+          let erroredResources : TFResource[] = []
+          let globalErrors : TFResourceError[] = []
+
+          for (let streamVal of parsedData) {
+            let streamValData = JSON.parse(streamVal?.Values?.data)
+
+            switch (streamValData?.type) {
+              case "apply_complete":
+                addedResources.push({
+                  addr: streamValData?.hook?.resource?.addr,
+                  provisioned: true,
+                  errored: {
+                    errored_out: false,
+                  },
+                })
+
+                break
+              case "diagnostic":
+                if (streamValData["@level"] == "error") {
+                  if (streamValData?.hook?.resource?.addr != "") {
+                    erroredResources.push({
+                      addr: streamValData?.hook?.resource?.addr,
+                      provisioned: false,
+                      errored: {
+                        errored_out: true,
+                        error_context: streamValData["@message"],
+                      },
+                    })
+                  } else {
+                    globalErrors.push({
+                      errored_out: true,
+                      error_context: streamValData["@message"],
+                    })
+                  }
+                }
+              default:
+            }
+          }
+
+          updateTFModules(index, addedResources, erroredResources, globalErrors)
         },
   
         onclose: () => {
@@ -57,9 +149,7 @@ export const SharedStatus: React.FC<{
             matchedInfras.set(infra.kind, infra)
           }
         })
-  
-        var modules : TFModule[] = []
-        
+          
         // query for desired and current state, and convert to tf module
         matchedInfras.forEach((infra : any) => {
           var module : TFModule = {
@@ -98,24 +188,18 @@ export const SharedStatus: React.FC<{
             }).catch((err) => console.log(err))
           }
 
-          modules.push(module)
+          tfModules.push(module)
         });
   
-        setTFModules(modules)
+        setTFModules([...tfModules])
+
+        tfModules.forEach((val, index) => {
+          setupInfraWebsocket(val.id + "", val, index);
+        }) 
       })
+
+      return closeAllWebsockets
     }, [])
-  
-    useEffect(() => {
-      tfModules.forEach((val) => {
-        setupInfraWebsocket(val.id + "", val);
-      })
-  
-      return () => {
-        tfModules.forEach((val) => {
-          closeWebsocket(val.id + "");        
-        })
-      };
-    }, [tfModules]);
   
     return (
       <>

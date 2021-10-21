@@ -13,6 +13,7 @@ export interface TFModule {
   id: number
   kind: string
   status: string
+  global_errors?: TFResourceError[]
   // optional resources, if not created
   resources?: TFResource[]
 }
@@ -33,11 +34,11 @@ const nameMap: { [key: string]: string } = {
   ecr: "Elastic Container Registry (ECR)",
   doks: "DigitalOcean Kubernetes Service (DOKS)",
   docr: "DigitalOcean Container Registry (DOCR)",
+  gke: "Google Kubernetes Engine (GKE)",
+  gcr: "Google Container Registry (GCR)",
 };
 
-const ProvisionerStatus: React.FC<Props> = (props) => {
-  const { modules } = props;
-
+const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
   const renderStatus = (status: string) => {
     if (status === "successful") {
       return (
@@ -67,9 +68,9 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
         return resource.provisioned;
       }).length;
 
-      var errors: string[] = [];
+      let errors: string[] = [];
 
-      const hasError = val.resources?.filter((resource) => {
+      let hasError = val.resources?.filter((resource) => {
         if (resource.errored?.errored_out) {
           errors.push(resource.errored?.error_context)
         }
@@ -77,20 +78,27 @@ const ProvisionerStatus: React.FC<Props> = (props) => {
         return resource.errored?.errored_out
       }).length > 0
 
+      if (val.global_errors) {
+        for (let globalErr of val.global_errors) {
+          errors.push("Global error: " + globalErr.error_context)
+          hasError = true
+        }
+      }
+
       const width = 100 * (provisionedResources / (totalResources * 1.0)) || 100
 
-      var error = null;
+      let error = null;
 
       if (hasError) {
-        error = errors.map((error) => {
-          return <ExpandedError>{error}</ExpandedError>
+        error = errors.map((error, index) => {
+          return <ExpandedError key={index}>{error}</ExpandedError>
         })
       } else if (val.status == "destroyed") {
         error = <ExpandedError>This infrastructure was destroyed.</ExpandedError>
       }
 
-      var loadingFill;
-      var status;
+      let loadingFill;
+      let status;
 
       if (hasError || val.status == "destroyed") {
         loadingFill = <LoadingFill status="error" width={width + "%"} />

@@ -64,7 +64,7 @@ const ProvisionResources: React.FC<Props> = ({
           <SharedStatus
             project_id={project?.id}
             filter={[]}
-            nextFormStep={console.log}
+            nextFormStep={onSuccess}
           />
         );
       case "connect_own_cluster":

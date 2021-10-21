@@ -1,5 +1,6 @@
 import { Steps } from "main/home/onboarding/types";
 import React, { useState } from "react";
+import { integrationList } from "shared/common";
 
 import loading from "assets/loading.gif";
 
@@ -62,7 +63,7 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
   };
 
   const renderModules = () => {
-    return modules.map((val) => {
+    return modules.map(val => {
       const totalResources = val.resources?.length;
       const provisionedResources = val.resources?.filter((resource) => {
         return resource.provisioned;
@@ -116,10 +117,15 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
         <InfraObject key={val.id}>
           <InfraHeader>
             {status}
+            {
+              integrationList[val.kind] && <Icon src={integrationList[val.kind].icon} />
+            }
             {nameMap[val.kind]}
           </InfraHeader>
           <LoadingBar>{loadingFill}</LoadingBar>
-          {error}
+          <ErrorWrapper>
+            {error}
+          </ErrorWrapper>
         </InfraObject>
       );
     });
@@ -127,12 +133,25 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
 
   return (
     <StyledProvisionerStatus>
-        {renderModules()}
+      {renderModules()}
     </StyledProvisionerStatus>
   );
 };
 
 export default ProvisionerStatus;
+
+const Icon = styled.img`
+  height: 20px;
+  margin-right: 10px;
+`;
+
+const ErrorWrapper = styled.div`
+  max-height: 150px;
+  margin-top: 20px;
+  overflow-y: auto;
+  user-select: text;
+  padding: 0 15px;
+`;
 
 const ExpandedError = styled.div`
   background: #ffffff22;
@@ -141,7 +160,8 @@ const ExpandedError = styled.div`
   font-size: 13px;
   font-family: monospace;
   border: 1px solid #aaaabb;
-  margin-top: 17px;
+  margin-bottom: 17px;
+  padding-bottom: 17px;
 `;
 
 const LoadingFill = styled.div<{ width: string; status: string }>`
@@ -199,10 +219,10 @@ const StyledProvisionerStatus = styled.div`
 `;
 
 const LoadingBar = styled.div`
-  width: 100%;
+  width: calc(100% - 30px);
   background: #ffffff22;
   border: 100px;
-  margin: 15px 0 0;
+  margin: 15px 15px 0;
   height: 18px;
   overflow: hidden;
   border-radius: 100px;
@@ -210,7 +230,7 @@ const LoadingBar = styled.div`
 
 const InfraObject = styled.div`
   background: #ffffff22;
-  padding: 15px 15px 17px;
+  padding: 15px 0 0;
   border: 1px solid #aaaabb;
   border-radius: 5px;
   margin-bottom: 10px;
@@ -219,6 +239,7 @@ const InfraObject = styled.div`
 const InfraHeader = styled.div`
   font-size: 13px;
   font-weight: 500;
+  padding: 0 15px;
   display: flex;
   align-items: center;
 `;

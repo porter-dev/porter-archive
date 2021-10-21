@@ -112,6 +112,7 @@ class Dashboard extends Component<PropsType, StateType> {
       let helperColor = "white";
       if (
         this.context.hasBillingEnabled &&
+        this.context.usage.current.clusters !== 0 &&
         this.context.usage.current.clusters >= this.context.usage.limit.clusters
       ) {
         helperText =

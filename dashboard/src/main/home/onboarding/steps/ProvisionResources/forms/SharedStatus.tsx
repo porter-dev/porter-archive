@@ -178,6 +178,7 @@ export const SharedStatus: React.FC<{
           id: infra.id,
           kind: infra.kind,
           status: infra.status,
+          created_at: infra.created_at,
         };
 
         if (infra?.status != "created" && infra?.status != "destroyed") {

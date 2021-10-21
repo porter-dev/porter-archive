@@ -237,9 +237,11 @@ export const SharedStatus: React.FC<{
     return closeAllWebsockets;
   }, []);
 
+  let sortedModules = tfModules.sort((a, b) => b.id < a.id ? -1 : b.id > a.id ? 1 : 0)
+
   return (
     <>
-      <ProvisionerStatus modules={tfModules} />
+      <ProvisionerStatus modules={sortedModules} />
     </>
   );
 };

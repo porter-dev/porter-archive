@@ -70,6 +70,10 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
 
       let errors: string[] = [];
 
+      if (val.status == "destroyed") {
+        errors.push("Note: this infrastructure was automatically destroyed.")
+      }
+
       let hasError = val.resources?.filter((resource) => {
         if (resource.errored?.errored_out) {
           errors.push(resource.errored?.error_context)
@@ -93,10 +97,7 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
         error = errors.map((error, index) => {
           return <ExpandedError key={index}>{error}</ExpandedError>
         })
-      } else if (val.status == "destroyed") {
-        error = <ExpandedError>This infrastructure was destroyed.</ExpandedError>
-      }
-
+      } 
       let loadingFill;
       let status;
 

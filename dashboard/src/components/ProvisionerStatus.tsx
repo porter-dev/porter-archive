@@ -85,7 +85,7 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
         }
       }
 
-      const width = 100 * (provisionedResources / (totalResources * 1.0)) || 100
+      const width = 100 * (provisionedResources / (totalResources * 1.0)) || 0
 
       let error = null;
 

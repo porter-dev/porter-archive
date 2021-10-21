@@ -228,6 +228,9 @@ class Home extends Component<PropsType, StateType> {
   async checkOnboarding() {
     try {
       const project_id = this.context?.currentProject?.id;
+      if (!project_id) {
+        return;
+      }
       const res = await api.getOnboardingState("<token>", {}, { project_id });
 
       if (res.status === 404) {

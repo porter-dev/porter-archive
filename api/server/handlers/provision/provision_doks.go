@@ -112,6 +112,7 @@ func (c *ProvisionDOKSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	opts.DOKS = &doks.Conf{
 		DORegion:        request.DORegion,
 		DOKSClusterName: request.DOKSName,
+		IssuerEmail:     request.IssuerEmail,
 	}
 
 	opts.OperationKind = provisioner.Apply

@@ -34,6 +34,7 @@ type ProvisionOpts struct {
 	DryRun              bool
 	Infra               *models.Infra
 	ProvImageTag        string
+	ProvJobNamespace    string
 	ProvImagePullSecret string
 	TFHTTPBackendURL    string
 	CredentialExchange  *ProvisionCredentialExchange
@@ -83,7 +84,7 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      opts.Infra.GetUniqueName(),
-			Namespace: "default",
+			Namespace: opts.ProvJobNamespace,
 			Labels:    labels,
 		},
 		Spec: batchv1.JobSpec{

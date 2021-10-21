@@ -59,6 +59,7 @@ type ServerConf struct {
 	// Options for the provisioner jobs
 	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
+	ProvisionerJobNamespace    string `env:"PROV_JOB_NAMESPACE,default=default"`
 	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
 
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`

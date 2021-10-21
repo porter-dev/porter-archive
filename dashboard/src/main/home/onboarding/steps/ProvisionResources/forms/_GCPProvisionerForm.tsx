@@ -238,7 +238,7 @@ export const SettingsForm: React.FC<{
       />
       <Br />
       <SaveButton
-        text="Continue"
+        text="Provision resources"
         disabled={false}
         onClick={submit}
         makeFlush={true}

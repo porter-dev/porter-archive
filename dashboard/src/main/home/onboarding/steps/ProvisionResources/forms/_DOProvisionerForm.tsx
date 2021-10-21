@@ -216,7 +216,7 @@ export const SettingsForm: React.FC<{
       />
       <Br />
       <SaveButton
-        text="Connect Registry"
+        text="Provision resources"
         disabled={false}
         onClick={submit}
         makeFlush={true}

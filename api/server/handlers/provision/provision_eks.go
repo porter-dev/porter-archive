@@ -113,6 +113,7 @@ func (c *ProvisionEKSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		AWSRegion:   awsInt.AWSRegion,
 		ClusterName: request.EKSName,
 		MachineType: request.MachineType,
+		IssuerEmail: request.IssuerEmail,
 	}
 	opts.OperationKind = provisioner.Apply
 

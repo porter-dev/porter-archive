@@ -261,6 +261,7 @@ class Home extends Component<PropsType, StateType> {
     ) {
       this.context.setCurrentModal("RedirectToOnboardingModal");
     }
+
     if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
       this.checkOnboarding();
       this.checkIfProjectHasBilling(this?.context?.currentProject?.id)

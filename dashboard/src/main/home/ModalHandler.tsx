@@ -14,6 +14,7 @@ import RedirectToOnboardingModal from "./modals/RedirectToOnboardingModal";
 
 import UsageWarningModal from "./modals/UsageWarningModal";
 import api from "shared/api";
+import { AxiosError } from "axios";
 
 const ModalHandler: React.FC<{
   setRefreshClusters: (x: boolean) => void;
@@ -43,12 +44,6 @@ const ModalHandler: React.FC<{
       const project_id = currentProject?.id;
       const res = await api.getOnboardingState("<token>", {}, { project_id });
 
-      if (res.status === 404) {
-        return {
-          finished: true,
-        };
-      }
-
       if (res?.data && res?.data.current_step !== "clean_up") {
         return {
           finished: false,
@@ -58,7 +53,14 @@ const ModalHandler: React.FC<{
           finished: true,
         };
       }
-    } catch (error) {}
+    } catch (error) {
+      const err: AxiosError = error;
+      if (err.response.status === 404) {
+        return {
+          finished: true,
+        };
+      }
+    }
   };
 
   useEffect(() => {

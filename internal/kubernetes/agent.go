@@ -990,7 +990,7 @@ func (a *Agent) Provision(
 	}
 
 	// apply the provisioner job template
-	_, err = a.Clientset.BatchV1().Jobs("default").Create(
+	_, err = a.Clientset.BatchV1().Jobs(opts.ProvJobNamespace).Create(
 		context.TODO(),
 		job,
 		metav1.CreateOptions{},

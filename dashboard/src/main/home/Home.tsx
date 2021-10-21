@@ -79,37 +79,6 @@ class Home extends Component<PropsType, StateType> {
     showWelcomeForm: true,
   };
 
-  // TODO: Refactor and prevent flash + multiple reload
-  initializeView = () => {
-    let { currentProject } = this.props;
-
-    if (!currentProject) return;
-
-    api
-      .getInfra(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        let creating = false;
-
-        for (var i = 0; i < res.data.length; i++) {
-          creating = res.data[i].status === "creating";
-        }
-        if (creating) {
-          pushFiltered(this.props, "/dashboard", ["project_id"], {
-            tab: "provisioner",
-          });
-        } else if (this.state.ghRedirect) {
-          pushFiltered(this.props, "/integrations", ["project_id"]);
-          this.setState({ ghRedirect: false });
-        }
-      });
-  };
-
   getMetadata = () => {
     api
       .getMetadata("<token>", {}, {})
@@ -158,9 +127,7 @@ class Home extends Component<PropsType, StateType> {
                   foundProject = project;
                 }
               });
-              setCurrentProject(foundProject || res.data[0], () =>
-                this.initializeView()
-              );
+              setCurrentProject(foundProject || res.data[0]);
             }
           }
         }
@@ -292,7 +259,6 @@ class Home extends Component<PropsType, StateType> {
       prevProps.currentProject !== this.props.currentProject ||
       (!prevProps.currentCluster && this.props.currentCluster)
     ) {
-      this.initializeView();
       this.getMetadata();
     }
   }

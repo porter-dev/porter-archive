@@ -63,19 +63,21 @@ const ModalHandler: React.FC<{
 
   useEffect(() => {
     if (currentModal === "RedirectToOnboardingModal") {
-      checkOnboarding().then((status) => {
-        if (status?.finished) {
-          setCurrentModal(null, null);
-          setHasFinishedOnboarding(true);
-        } else {
-          setHasFinishedOnboarding(false);
-          setModal("RedirectToOnboardingModal");
-        }
-      });
+      if (currentProject?.id) {
+        checkOnboarding().then((status) => {
+          if (status?.finished) {
+            setCurrentModal(null, null);
+            setHasFinishedOnboarding(true);
+          } else {
+            setHasFinishedOnboarding(false);
+            setModal("RedirectToOnboardingModal");
+          }
+        });
+      }
     } else {
       setModal(currentModal);
     }
-  }, [currentModal]);
+  }, [currentModal, currentProject]);
 
   return (
     <>

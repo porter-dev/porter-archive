@@ -90,24 +90,32 @@ const ConnectSource: React.FC<{
       )}
       {!isLoading && accountData?.accounts.length && (
         <>
+          <Helper>Porter currently has access to:</Helper>
           <List>
-            {accountData?.accounts.map((name, i) => {
-              return (
-                <Row
-                  key={i}
-                  isLastItem={i === accountData.accounts.length - 1}
-                >
-                  <i className="material-icons">bookmark</i>
-                  {name}
-                </Row>
-              );
-            })}
+            {
+              accountData?.accounts.length > 0 ? (
+                accountData?.accounts.map((name, i) => {
+                  return (
+                    <Row
+                      key={i}
+                      isLastItem={i === accountData.accounts.length - 1}
+                    >
+                      <i className="material-icons">bookmark</i>
+                      {name}
+                    </Row>
+                  );
+                })
+              ) : (
+                <Placeholder>No repositories found.</Placeholder>
+              )
+            }
           </List>
-          <br />
-          Don't see the right repos?{" "}
-          <A href={"/api/integrations/github-app/install"}>
-            Install Porter in more repositories
-          </A>
+          <Helper>
+            Don't see the right repos?{" "}
+            <A href={"/api/integrations/github-app/install"}>
+              Install Porter in more repositories
+            </A>.
+          </Helper>
           <NextStep
             text="Continue"
             disabled={false}
@@ -126,6 +134,16 @@ const ConnectSource: React.FC<{
 };
 
 export default ConnectSource;
+
+const Placeholder = styled.div`
+  width: 100%;
+  height: 80px;
+  color: #aaaabb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+`;
 
 const FadeWrapper = styled.div<{ delay?: string }>`
   opacity: 0;
@@ -181,7 +199,7 @@ const List = styled.div`
   background: #ffffff11;
   border-radius: 5px;
   margin-top: 20px;
-  border: 1px solid #ffffff44;
+  border: 1px solid #aaaabb;
   max-height: 200px;
   overflow-y: auto;
 `;
@@ -190,6 +208,7 @@ const Row = styled.div<{ isLastItem?: boolean }>`
   width: 100%;
   height: 35px;
   color: #ffffff55;
+  font-size: 13px;
   display: flex;
   align-items: center;
   border-bottom: ${(props) => (props.isLastItem ? "" : "1px solid #ffffff44")};

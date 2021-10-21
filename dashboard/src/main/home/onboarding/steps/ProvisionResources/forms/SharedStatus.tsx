@@ -11,7 +11,7 @@ export const SharedStatus: React.FC<{
   nextFormStep: () => void;
   project_id: number;
   filter: string[];
-  goBack?: () => void;
+  goBack?: any;
 }> = ({ nextFormStep, project_id, filter, goBack }) => {
   const {
     newWebsocket,

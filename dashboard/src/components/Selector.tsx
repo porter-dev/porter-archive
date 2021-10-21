@@ -196,6 +196,7 @@ const DropdownWrapper = styled.div`
   position: absolute;
   width: 100%;
   right: 0;
+  z-index: 1;
   top: calc(100% + 5px);
 `;
 

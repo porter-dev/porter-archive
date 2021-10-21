@@ -65,13 +65,14 @@ const ProvisionResources: React.FC<Props> = ({
             project_id={project?.id}
             filter={[]}
             nextFormStep={onSuccess}
+            goBack={goBack}
           />
         );
       case "connect_own_cluster":
         return (
-          <ConnectExternalCluster 
-            nextStep={onSuccess} 
-            project={project} 
+          <ConnectExternalCluster
+            nextStep={onSuccess}
+            project={project}
             goBack={goBack}
           />
         );

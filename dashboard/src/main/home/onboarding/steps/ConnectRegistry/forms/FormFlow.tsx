@@ -110,7 +110,7 @@ const FormFlowWrapper: React.FC<Props> = ({
   return (
     <FormWrapper>
       <FormHeader>
-        {enable_go_back && (
+        {currentStep !== "test_connection" && (
           <CloseButton onClick={() => goBack()}>
             <i className="material-icons">keyboard_backspace</i>
           </CloseButton>

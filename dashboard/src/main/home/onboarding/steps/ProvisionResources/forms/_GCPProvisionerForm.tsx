@@ -146,7 +146,7 @@ export const SettingsForm: React.FC<{
   nextFormStep: (data: Partial<GCPProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  const [clusterName, setClusterName] = useState("");
+  const [clusterName, setClusterName] = useState(`${project.name}-cluster`);
   const [buttonStatus, setButtonStatus] = useState("");
   const snap = useSnapshot(OFState);
 

@@ -80,7 +80,7 @@ export const SettingsForm: React.FC<{
   const [buttonStatus, setButtonStatus] = useState("");
   const [tier, setTier] = useState("basic");
   const [region, setRegion] = useState("nyc1");
-  const [clusterName, setClusterName] = useState("");
+  const [clusterName, setClusterName] = useState(`${project.name}-cluster`);
 
   const validate = () => {
     if (!clusterName) {

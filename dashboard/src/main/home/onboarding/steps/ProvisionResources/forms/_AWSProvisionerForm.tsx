@@ -156,7 +156,7 @@ export const SettingsForm: React.FC<{
   project: any;
 }> = ({ nextFormStep, project }) => {
   const snap = useSnapshot(OFState);
-  const [clusterName, setClusterName] = useState("");
+  const [clusterName, setClusterName] = useState(`${project.name}-cluster`);
   const [machineType, setMachineType] = useState("t2.medium");
   const [buttonStatus, setButtonStatus] = useState("");
 
@@ -223,7 +223,10 @@ export const SettingsForm: React.FC<{
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
     let registryProvisionResponse = null;
     let clusterProvisionResponse = null;
-    if (snap.StateHandler.connected_registry.skip) {
+
+    const shouldProvisionECR = snap.StateHandler.connected_registry.skip;
+
+    if (shouldProvisionECR) {
       registryProvisionResponse = await provisionECR(integrationId);
     }
     clusterProvisionResponse = await provisionEKS(integrationId);
@@ -246,8 +249,8 @@ export const SettingsForm: React.FC<{
         setValue={(x) => {
           setClusterName(String(x));
         }}
-        label="🏷️ Registry Name"
-        placeholder="ex: porter-awesome-registry"
+        label="Cluster Name"
+        placeholder="ex: porter-cluster"
         width="100%"
       />
       <SelectRow

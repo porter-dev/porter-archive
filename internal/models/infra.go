@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/kubernetes/provisioner/input"
 )
 
 // Infra represents the metadata for an infrastructure type provisioned on
@@ -72,70 +71,58 @@ func (i *Infra) SafelyGetLastApplied() map[string]string {
 
 	switch i.Kind {
 	case types.InfraECR:
-		lastApplied := &input.ECR{}
+		lastApplied := &types.CreateECRInfraRequest{}
 
 		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
 			return resp
 		}
 
-		resp["region"] = lastApplied.AWSRegion
+		resp["ecr_name"] = lastApplied.ECRName
 
 		return resp
 	case types.InfraEKS:
-		lastApplied := &input.EKS{}
+		lastApplied := &types.CreateEKSInfraRequest{}
 
 		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
 			return resp
 		}
 
-		resp["region"] = lastApplied.AWSRegion
-		resp["cluster_name"] = lastApplied.ClusterName
+		resp["eks_name"] = lastApplied.EKSName
 		resp["machine_type"] = lastApplied.MachineType
 
 		return resp
 	case types.InfraGCR:
-		lastApplied := &input.GCR{}
-
-		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
-			return resp
-		}
-
-		resp["project_id"] = lastApplied.GCPProjectID
-		resp["region"] = lastApplied.GCPRegion
-
 		return resp
 	case types.InfraGKE:
-		lastApplied := &input.GKE{}
+		lastApplied := &types.CreateGKEInfraRequest{}
 
 		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
 			return resp
 		}
 
-		resp["project_id"] = lastApplied.GCPProjectID
-		resp["region"] = lastApplied.GCPRegion
-		resp["cluster_name"] = lastApplied.ClusterName
+		resp["gke_name"] = lastApplied.GKEName
 
 		return resp
 	case types.InfraDOCR:
-		lastApplied := &input.DOCR{}
+		lastApplied := &types.CreateDOCRInfraRequest{}
 
 		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
 			return resp
 		}
 
-		resp["name"] = lastApplied.DOCRName
-		resp["subscription_tier"] = lastApplied.DOCRSubscriptionTier
+		resp["docr_name"] = lastApplied.DOCRName
+		resp["docr_subscription_tier"] = lastApplied.DOCRSubscriptionTier
 
 		return resp
 	case types.InfraDOKS:
-		lastApplied := &input.DOKS{}
+		lastApplied := &types.CreateDOKSInfraRequest{}
 
 		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
 			return resp
 		}
 
-		resp["cluster_name"] = lastApplied.ClusterName
-		resp["region"] = lastApplied.DORegion
+		resp["cluster_name"] = lastApplied.DOKSName
+		resp["do_region"] = lastApplied.DORegion
 
 		return resp
 	}

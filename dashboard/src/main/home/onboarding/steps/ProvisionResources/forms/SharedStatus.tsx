@@ -62,6 +62,13 @@ export const SharedStatus: React.FC<{
 
       tfModules[index].global_errors = [...tfModules[index].global_errors, ...globalErrors]
 
+      // remove duplicate global errors
+      tfModules[index].global_errors = tfModules[index].global_errors.filter((error, index, self) =>
+        index === self.findIndex((e) => (
+          e.error_context === error.error_context
+        ))
+      )
+
       setTFModules([...tfModules])
     }
   

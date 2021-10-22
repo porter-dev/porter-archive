@@ -109,6 +109,12 @@ const Onboarding = () => {
     };
   }, [context.currentProject]);
 
+  useEffect(() => {
+    if (context?.user?.email) {
+      OFState.StateHandler.user_email = context.user.email;
+    }
+  }, [context.user]);
+
   return (
     <StyledOnboarding>{isLoading ? <Loading /> : <Routes />}</StyledOnboarding>
   );

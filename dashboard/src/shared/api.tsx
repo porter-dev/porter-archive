@@ -75,6 +75,7 @@ const createDOCR = baseApi<
     do_integration_id: number;
     docr_name: string;
     docr_subscription_tier: string;
+    issuer_email: string;
   },
   {
     project_id: number;
@@ -88,6 +89,7 @@ const createDOKS = baseApi<
     do_integration_id: number;
     doks_name: string;
     do_region: string;
+    issuer_email: string;
   },
   {
     project_id: number;
@@ -116,6 +118,7 @@ const createGCPIntegration = baseApi<
 const createGCR = baseApi<
   {
     gcp_integration_id: number;
+    issuer_email: string;
   },
   {
     project_id: number;
@@ -128,6 +131,7 @@ const createGKE = baseApi<
   {
     gcp_integration_id: number;
     gke_name: string;
+    issuer_email: string;
   },
   {
     project_id: number;
@@ -827,6 +831,7 @@ const provisionECR = baseApi<
   {
     ecr_name: string;
     aws_integration_id: number;
+    issuer_email: string;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -838,6 +843,7 @@ const provisionEKS = baseApi<
     eks_name: string;
     aws_integration_id: number;
     machine_type: string;
+    issuer_email: string;
   },
   { id: number }
 >("POST", (pathParams) => {

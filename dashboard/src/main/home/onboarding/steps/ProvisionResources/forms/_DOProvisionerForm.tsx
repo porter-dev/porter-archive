@@ -14,6 +14,7 @@ import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import { SharedStatus } from "./SharedStatus";
+import Loading from "components/Loading";
 
 const tierOptions = [
   { value: "basic", label: "Basic" },
@@ -33,6 +34,16 @@ const regionOptions = [
   { value: "tor1", label: "Toronto 1" },
 ];
 
+const readableDate = (s: string) => {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${time} on ${date}`;
+};
+
 /**
  * This will redirect to DO, and we should pass the redirection URI to be /onboarding/provision?provider=do
  *
@@ -45,34 +56,77 @@ export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<DOProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
+  const snap = useSnapshot(OFState);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [connectedAccount, setConnectedAccount] = useState(null);
+
   useEffect(() => {
     api.getOAuthIds("<token>", {}, { project_id: project?.id }).then((res) => {
-      let tgtIntegration = res.data.find((integration: any) => {
+      let integrations = res.data.filter((integration: any) => {
         return integration.client === "do";
       });
 
-      if (tgtIntegration) {
-        nextFormStep({
-          credentials: {
-            id: tgtIntegration.id,
-          },
+      if (Array.isArray(integrations) && integrations.length) {
+        // Sort decendant
+        integrations.sort((a, b) => b.id - a.id);
+        let lastUsed = integrations.find((i) => {
+          i.id === snap.StateHandler?.provision_resources?.credentials?.id;
         });
+        if (!lastUsed) {
+          lastUsed = integrations[0];
+        }
+        setConnectedAccount(lastUsed);
       }
+      setIsLoading(false);
     });
   }, []);
+
+  const submit = (integrationId: number) => {
+    nextFormStep({
+      credentials: {
+        id: integrationId,
+      },
+    });
+  };
 
   const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
 
   const encoded_redirect_uri = encodeURIComponent(url);
 
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
     <>
+      {connectedAccount !== null && (
+        <div>
+          <div>Connected account: {connectedAccount.client}</div>
+          <div>Connected at: {readableDate(connectedAccount.created_at)}</div>
+        </div>
+      )}
       <ConnectDigitalOceanButton
         target={"_blank"}
         href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
       >
-        Sign In to Digital Ocean
+        {connectedAccount !== null
+          ? "Connect another account"
+          : "Sign In to Digital Ocean"}
       </ConnectDigitalOceanButton>
+
+      <Br />
+      {connectedAccount !== null && (
+        <SaveButton
+          text="Continue with connected account"
+          disabled={false}
+          onClick={() => submit(connectedAccount.id)}
+          makeFlush={true}
+          clearPosition={true}
+          status={""}
+          statusPosition={"right"}
+        />
+      )}
     </>
   );
 };

@@ -110,6 +110,22 @@ export const SettingsForm: React.FC<{
     console.error(error);
   };
 
+  const hasRegistryProvisioned = (
+    infras: { kind: string; status: string }[]
+  ) => {
+    return !!infras.find(
+      (i) => ["docr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
+    );
+  };
+
+  const hasClusterProvisioned = (
+    infras: { kind: string; status: string }[]
+  ) => {
+    return !!infras.find(
+      (i) => ["doks", "gks", "eks"].includes(i.kind) && i.status === "created"
+    );
+  };
+
   const provisionDOCR = async (integrationId: number, tier: string) => {
     console.log("Provisioning DOCR...");
     try {
@@ -165,18 +181,34 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+
+    let infras = [];
+    try {
+      infras = await api
+        .getInfra("<token>", {}, { project_id: project?.id })
+        .then((res) => res?.data);
+    } catch (error) {
+      setButtonStatus("Something went wrong, try again later");
+      return;
+    }
+
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
     let registryProvisionResponse = null;
     let clusterProvisionResponse = null;
 
     if (snap.StateHandler.connected_registry.skip) {
-      registryProvisionResponse = await provisionDOCR(integrationId, tier);
+      if (!hasRegistryProvisioned(infras)) {
+        registryProvisionResponse = await provisionDOCR(integrationId, tier);
+      }
     }
-    clusterProvisionResponse = await provisionDOKS(
-      integrationId,
-      region,
-      clusterName
-    );
+
+    if (!hasClusterProvisioned(infras)) {
+      clusterProvisionResponse = await provisionDOKS(
+        integrationId,
+        region,
+        clusterName
+      );
+    }
 
     nextFormStep({
       settings: {

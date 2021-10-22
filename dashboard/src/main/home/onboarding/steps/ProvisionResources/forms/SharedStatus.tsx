@@ -8,11 +8,10 @@ import api from "shared/api";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 
 export const SharedStatus: React.FC<{
-  nextFormStep: () => void;
+  setInfraStatus: (status: { hasError: boolean; description?: string }) => void;
   project_id: number;
   filter: string[];
-  goBack?: any;
-}> = ({ nextFormStep, project_id, filter, goBack }) => {
+}> = ({ setInfraStatus, project_id, filter }) => {
   const {
     newWebsocket,
     openWebsocket,
@@ -48,8 +47,8 @@ export const SharedStatus: React.FC<{
     for (let addedResource of addedResources) {
       // if exists, update state to provisioned
       if (resourceAddrMap.has(addedResource.addr)) {
-        let currResource = resources[resourceAddrMap.get(addedResource.addr)]
-        addedResource.errored = currResource.errored
+        let currResource = resources[resourceAddrMap.get(addedResource.addr)];
+        addedResource.errored = currResource.errored;
         resources[resourceAddrMap.get(addedResource.addr)] = addedResource;
       } else {
         resources.push(addedResource);
@@ -80,6 +79,73 @@ export const SharedStatus: React.FC<{
 
     setTFModules([...tfModules]);
   };
+
+  useEffect(() => {
+    // recompute tf module state each time, to see if infra is ready
+    if (tfModules.length > 0) {
+      // see if all tf modules are in a "created" state
+      if (
+        tfModules.filter((val) => val.status == "created").length ==
+        tfModules.length
+      ) {
+        setInfraStatus({
+          hasError: false,
+        });
+        return;
+      }
+
+      if (
+        tfModules.filter((val) => val.status == "error").length ==
+        tfModules.length
+      ) {
+        setInfraStatus({
+          hasError: true,
+        });
+        return;
+      }
+
+      // otherwise, check that all resources in each module are provisioned. Each module
+      // must have more than one resource
+      let numModulesSuccessful = 0;
+      let numModulesErrored = 0;
+
+      for (let tfModule of tfModules) {
+        if (tfModule.status == "created") {
+          numModulesSuccessful++;
+        } else if (tfModule.status == "error") {
+          numModulesErrored++;
+        } else {
+          let resLength = tfModule.resources?.length;
+          if (resLength > 0) {
+            numModulesSuccessful +=
+              tfModule.resources.filter((resource) => resource.provisioned)
+                .length == resLength
+                ? 1
+                : 0;
+
+            numModulesErrored +=
+              tfModule.resources.filter(
+                (resource) => resource.errored?.errored_out
+              ).length > 0
+                ? 1
+                : 0;
+          }
+        }
+      }
+
+      if (numModulesSuccessful == tfModules.length) {
+        setInfraStatus({
+          hasError: false,
+        });
+      } else if (numModulesErrored + numModulesSuccessful == tfModules.length) {
+        // otherwise, if all modules are either in an error state or successful,
+        // set the status to error
+        setInfraStatus({
+          hasError: true,
+        });
+      }
+    }
+  }, [tfModules]);
 
   const setupInfraWebsocket = (
     websocketID: string,
@@ -132,6 +198,10 @@ export const SharedStatus: React.FC<{
                   });
                 }
               }
+            case "change_summary":
+              if (streamValData.changes.add != 0) {
+                updateDesiredState(index, module);
+              }
             default:
           }
         }
@@ -153,26 +223,79 @@ export const SharedStatus: React.FC<{
     openWebsocket(websocketID);
   };
 
+  const mergeCurrentAndDesired = (
+    index: number,
+    desired: any,
+    currentMap: Map<string, string>
+  ) => {
+    // map desired state to list of resources
+    var addedResources: TFResource[] = desired?.map((val: any) => {
+      return {
+        addr: val?.addr,
+        provisioned: currentMap.has(val?.addr),
+        errored: {
+          errored_out: val?.errored?.errored_out,
+          error_context: val?.errored?.error_context,
+        },
+      };
+    });
+
+    updateTFModules(index, addedResources, [], []);
+  };
+
+  const updateDesiredState = (index: number, val: TFModule) => {
+    api
+      .getInfraDesired(
+        "<token>",
+        {},
+        { project_id: project_id, infra_id: val?.id }
+      )
+      .then((resDesired) => {
+        api
+          .getInfraCurrent(
+            "<token>",
+            {},
+            { project_id: project_id, infra_id: val?.id }
+          )
+          .then((resCurrent) => {
+            var desired = resDesired.data;
+            var current = resCurrent.data;
+
+            // convert current state to a lookup table
+            var currentMap: Map<string, string> = new Map();
+
+            current?.resources?.forEach((val: any) => {
+              currentMap.set(val?.type + "." + val?.name, "");
+            });
+
+            mergeCurrentAndDesired(index, desired, currentMap);
+          })
+          .catch((err) => {
+            var desired = resDesired.data;
+            var currentMap: Map<string, string> = new Map();
+
+            // merge with empty current map
+            mergeCurrentAndDesired(index, desired, currentMap);
+          });
+      })
+      .catch((err) => console.log(err));
+  };
+
   useEffect(() => {
     api.getInfra("<token>", {}, { project_id: project_id }).then((res) => {
-      var matchedInfras : Map<string, any> = new Map()
-        var numCreated = 0
-  
-        res.data.forEach((infra : any) => {
-          // if filter list is empty, add infra automatically
-          if (filter.length == 0) {
-            matchedInfras.set(infra.kind + "-" + infra.id, infra)
-          } else if (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id || 0 < infra.id) {
-            matchedInfras.set(infra.kind, infra)
-          }
+      var matchedInfras: Map<string, any> = new Map();
 
-          numCreated += infra?.status == "created" ? 1 : 0
-        })
-          
-        // if all created, call next form step
-        if (numCreated == res.data.length) {
-          nextFormStep()
+      res.data.forEach((infra: any) => {
+        // if filter list is empty, add infra automatically
+        if (filter.length == 0) {
+          matchedInfras.set(infra.kind + "-" + infra.id, infra);
+        } else if (
+          (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id) ||
+          0 < infra.id
+        ) {
+          matchedInfras.set(infra.kind, infra);
         }
+      });
 
       // query for desired and current state, and convert to tf module
       matchedInfras.forEach((infra: any) => {
@@ -190,59 +313,18 @@ export const SharedStatus: React.FC<{
 
       tfModules.forEach((val, index) => {
         if (val?.status != "created" && val?.status != "destroyed") {
-          api
-            .getInfraDesired(
-              "<token>",
-              {},
-              { project_id: project_id, infra_id: val?.id }
-            )
-            .then((resDesired) => {
-              api
-                .getInfraCurrent(
-                  "<token>",
-                  {},
-                  { project_id: project_id, infra_id: val?.id }
-                )
-                .then((resCurrent) => {
-                  var desired = resDesired.data;
-                  var current = resCurrent.data;
-
-                  // convert current state to a lookup table
-                  var currentMap: Map<string, string> = new Map();
-
-                  current?.resources?.forEach((val: any) => {
-                    currentMap.set(val?.type + "." + val?.name, "");
-                  });
-
-                  // map desired state to list of resources
-                  var addedResources: TFResource[] = desired?.map((val: any) => {
-                    return {
-                      addr: val?.addr,
-                      provisioned: currentMap.has(val?.addr),
-                      errored: {
-                        errored_out: val?.errored?.errored_out,
-                        error_context: val?.errored?.error_context,
-                      },
-                    };
-                  });
-
-                  updateTFModules(index, addedResources, [], [])
-                })
-                .catch((err) => console.log(err));
-            })
-            .catch((err) => console.log(err));
+          updateDesiredState(index, val);
+          setupInfraWebsocket(val.id + "", val, index);
         }
-      })
-
-      tfModules.forEach((val, index) => {
-        setupInfraWebsocket(val.id + "", val, index);
       });
     });
 
     return closeAllWebsockets;
   }, []);
 
-  let sortedModules = tfModules.sort((a, b) => b.id < a.id ? -1 : b.id > a.id ? 1 : 0)
+  let sortedModules = tfModules.sort((a, b) =>
+    b.id < a.id ? -1 : b.id > a.id ? 1 : 0
+  );
 
   return (
     <>

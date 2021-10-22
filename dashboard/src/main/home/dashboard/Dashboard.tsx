@@ -106,11 +106,13 @@ class Dashboard extends Component<PropsType, StateType> {
 
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
-      return <SharedStatus 
-        filter={[]} 
-        project_id={this.props.projectId} 
-        nextFormStep={() => null} 
-      />
+      return (
+        <SharedStatus
+          filter={[]}
+          project_id={this.props.projectId}
+          setInfraStatus={(val: string) => null}
+        />
+      );
     } else if (this.currentTab() === "create-cluster") {
       let helperText = "Create a cluster to link to this project";
       let helperIcon = "info";

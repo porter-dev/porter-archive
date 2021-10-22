@@ -1,7 +1,7 @@
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router";
 import styled from "styled-components";
 import ProviderSelector, {
@@ -28,7 +28,7 @@ type Props = {
   onSaveSettings: (settings: any) => void;
   onSuccess: () => void;
   onSkip: () => void;
-  goBack: () => void;
+  goBack: (data?: any) => void;
 };
 
 const ProvisionResources: React.FC<Props> = ({
@@ -44,6 +44,58 @@ const ProvisionResources: React.FC<Props> = ({
   goBack,
 }) => {
   const { step } = useParams<{ step: any }>();
+  const [infraStatus, setInfraStatus] = useState<{
+    hasError: boolean;
+    description?: string;
+  }>(null);
+
+  const renderSaveButton = () => {
+    if (infraStatus && !infraStatus.hasError) {
+      return (
+        <>
+          <Br height="15px" />
+          <SaveButton
+            text="Continue"
+            disabled={false}
+            onClick={onSuccess}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText=""
+          />
+        </>
+      );
+    } else if (infraStatus) {
+      return (
+        <>
+          <Br height="15px" />
+          <SaveButton
+            text="Resolve Errors"
+            status="Encountered errors while provisioning."
+            disabled={false}
+            onClick={() => goBack(infraStatus.description)}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText=""
+          />
+        </>
+      );
+    }
+  };
+
+  const getFilterOpts = (): string[] => {
+    switch (provider) {
+      case "aws":
+        return ["eks", "ecr"];
+      case "gcp":
+        return ["gke", "gcr"];
+      case "do":
+        return ["doks", "docr"];
+    }
+
+    return [];
+  };
 
   const Content = () => {
     switch (step) {
@@ -64,24 +116,12 @@ const ProvisionResources: React.FC<Props> = ({
           <>
             <SharedStatus
               project_id={project?.id}
-              filter={[]}
-              nextFormStep={onSuccess}
-              goBack={goBack}
+              filter={getFilterOpts()}
+              setInfraStatus={setInfraStatus}
             />
             <Br />
-            <Helper>
-              Note: Provisioning can take up to 15 minutes.
-            </Helper>
-            <Br height="15px" />
-            <SaveButton
-              text="Continue"
-              disabled={false}
-              onClick={() => alert("continue")}
-              makeFlush={true}
-              clearPosition={true}
-              statusPosition="right"
-              saveText=""
-            />
+            <Helper>Note: Provisioning can take up to 15 minutes.</Helper>
+            {renderSaveButton()}
           </>
         );
       case "connect_own_cluster":
@@ -149,7 +189,7 @@ export default ProvisionResources;
 
 const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: ${props => props.height || "1px"};
+  height: ${(props) => props.height || "1px"};
   margin-top: -3px;
 `;
 

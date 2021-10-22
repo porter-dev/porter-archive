@@ -8,11 +8,10 @@ import api from "shared/api";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 
 export const SharedStatus: React.FC<{
-  nextFormStep: () => void;
+  setInfraStatus: (status: string) => void;
   project_id: number;
   filter: string[];
-  goBack?: any;
-}> = ({ nextFormStep, project_id, filter, goBack }) => {
+}> = ({ setInfraStatus, project_id, filter }) => {
   const {
     newWebsocket,
     openWebsocket,
@@ -80,6 +79,65 @@ export const SharedStatus: React.FC<{
 
     setTFModules([...tfModules]);
   };
+
+  useEffect(() => {
+    setInfraStatus("created");
+
+    // recompute tf module state each time, to see if infra is ready
+    if (tfModules.length > 0) {
+      // see if all tf modules are in a "created" state
+      if (
+        tfModules.filter((val) => val.status == "created").length ==
+        tfModules.length
+      ) {
+        setInfraStatus("created");
+        return;
+      }
+
+      if (
+        tfModules.filter((val) => val.status == "error").length ==
+        tfModules.length
+      ) {
+        setInfraStatus("error");
+        return;
+      }
+
+      // otherwise, check that all resources in each module are provisioned. Each module
+      // must have more than one resource
+      let numModulesSuccessful = 0;
+      let numModulesErrored = 0;
+
+      for (let tfModule of tfModules) {
+        if (tfModule.status == "created") {
+          numModulesSuccessful++;
+        } else if (tfModule.status == "error") {
+          numModulesErrored++;
+        } else {
+          let resLength = tfModule.resources?.length;
+          if (resLength > 0) {
+            numModulesSuccessful +=
+              tfModule.resources.filter((resource) => resource.provisioned)
+                .length == resLength
+                ? 1
+                : 0;
+
+            numModulesErrored +=
+              tfModule.resources.filter(
+                (resource) => resource.errored?.errored_out
+              ).length > 0
+                ? 1
+                : 0;
+          }
+        }
+      }
+
+      if (numModulesSuccessful == tfModules.length) {
+        setInfraStatus("created");
+      } else if (numModulesErrored == tfModules.length) {
+        setInfraStatus("error");
+      }
+    }
+  }, [tfModules]);
 
   const setupInfraWebsocket = (
     websocketID: string,
@@ -218,7 +276,6 @@ export const SharedStatus: React.FC<{
   useEffect(() => {
     api.getInfra("<token>", {}, { project_id: project_id }).then((res) => {
       var matchedInfras: Map<string, any> = new Map();
-      var numCreated = 0;
 
       res.data.forEach((infra: any) => {
         // if filter list is empty, add infra automatically
@@ -230,14 +287,7 @@ export const SharedStatus: React.FC<{
         ) {
           matchedInfras.set(infra.kind, infra);
         }
-
-        numCreated += infra?.status == "created" ? 1 : 0;
       });
-
-      // if all created, call next form step
-      if (numCreated == res.data.length) {
-        nextFormStep();
-      }
 
       // query for desired and current state, and convert to tf module
       matchedInfras.forEach((infra: any) => {

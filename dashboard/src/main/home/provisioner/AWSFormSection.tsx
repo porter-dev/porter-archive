@@ -56,6 +56,7 @@ const regionOptions = [
 
 const machineTypeOptions = [
   { value: "t2.medium", label: "t2.medium" },
+  { value: "t2.large", label: "t2.large" },
   { value: "t2.xlarge", label: "t2.xlarge" },
   { value: "t2.2xlarge", label: "t2.2xlarge" },
   { value: "t3.medium", label: "t3.medium" },

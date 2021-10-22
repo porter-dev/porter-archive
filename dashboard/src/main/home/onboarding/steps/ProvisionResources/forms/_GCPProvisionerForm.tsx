@@ -200,6 +200,7 @@ export const SettingsForm: React.FC<{
         "<token>",
         {
           gcp_integration_id: id,
+          issuer_email: snap.StateHandler.user_email,
         },
         { project_id: project.id }
       )
@@ -216,6 +217,7 @@ export const SettingsForm: React.FC<{
         {
           gke_name: clusterName,
           gcp_integration_id: id,
+          issuer_email: snap.StateHandler.user_email,
         },
         { project_id: project.id }
       )

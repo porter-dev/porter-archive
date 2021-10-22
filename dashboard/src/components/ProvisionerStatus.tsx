@@ -11,24 +11,24 @@ type Props = {
 };
 
 export interface TFModule {
-  id: number
-  kind: string
-  status: string
-  created_at: string
-  global_errors?: TFResourceError[]
+  id: number;
+  kind: string;
+  status: string;
+  created_at: string;
+  global_errors?: TFResourceError[];
   // optional resources, if not created
-  resources?: TFResource[]
+  resources?: TFResource[];
 }
 
 export interface TFResourceError {
-  errored_out: boolean
-  error_context?: string
+  errored_out: boolean;
+  error_context?: string;
 }
 
 export interface TFResource {
-  addr: string,
-  provisioned: boolean,
-  errored: TFResourceError,
+  addr: string;
+  provisioned: boolean;
+  errored: TFResourceError;
 }
 
 const nameMap: { [key: string]: string } = {
@@ -74,8 +74,8 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
   };
 
   const renderModules = () => {
-    return modules.map(val => {
-      console.log(val)
+    return modules.map((val) => {
+      console.log(val);
       const totalResources = val.resources?.length;
       const provisionedResources = val.resources?.filter((resource) => {
         return resource.provisioned;
@@ -84,39 +84,43 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
       let errors: string[] = [];
 
       if (val.status == "destroyed") {
-        errors.push("Note: this infrastructure was automatically destroyed.")
+        errors.push("Note: this infrastructure was automatically destroyed.");
       }
 
-      let hasError = val.resources?.filter((resource) => {
-        if (resource.errored?.errored_out) {
-          errors.push(resource.errored?.error_context)
-        }
+      let hasError =
+        val.resources?.filter((resource) => {
+          if (resource.errored?.errored_out) {
+            errors.push(resource.errored?.error_context);
+          }
 
-        return resource.errored?.errored_out
-      }).length > 0
+          return resource.errored?.errored_out;
+        }).length > 0;
 
       if (val.global_errors) {
         for (let globalErr of val.global_errors) {
-          errors.push("Global error: " + globalErr.error_context)
-          hasError = true
+          errors.push("Global error: " + globalErr.error_context);
+          hasError = true;
         }
       }
 
-      const width = 100 * (provisionedResources / (totalResources * 1.0)) || 0
+      const width =
+        val.status == "created"
+          ? 100
+          : 100 * (provisionedResources / (totalResources * 1.0)) || 0;
 
       let error = null;
 
       if (hasError) {
         error = errors.map((error, index) => {
-          return <ExpandedError key={index}>{error}</ExpandedError>
-        })
-      } 
+          return <ExpandedError key={index}>{error}</ExpandedError>;
+        });
+      }
       let loadingFill;
       let status;
 
       if (hasError || val.status == "destroyed") {
-        loadingFill = <LoadingFill status="error" width={width + "%"} />
-        status = renderStatus("error")
+        loadingFill = <LoadingFill status="error" width={width + "%"} />;
+        status = renderStatus("error");
       } else if (width == 100) {
         loadingFill = <LoadingFill status="successful" width={width + "%"} />;
         status = renderStatus("successful");
@@ -129,28 +133,22 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
         <InfraObject key={val.id}>
           <InfraHeader>
             <Flex>
-            {status}
-            {
-              integrationList[val.kind] && <Icon src={integrationList[val.kind].icon} />
-            }
-            {nameMap[val.kind]}
+              {status}
+              {integrationList[val.kind] && (
+                <Icon src={integrationList[val.kind].icon} />
+              )}
+              {nameMap[val.kind]}
             </Flex>
             <Timestamp>Started {readableDate(val.created_at)}</Timestamp>
           </InfraHeader>
           <LoadingBar>{loadingFill}</LoadingBar>
-          <ErrorWrapper>
-            {error}
-          </ErrorWrapper>
+          <ErrorWrapper>{error}</ErrorWrapper>
         </InfraObject>
       );
     });
   };
 
-  return (
-    <StyledProvisionerStatus>
-      {renderModules()}
-    </StyledProvisionerStatus>
-  );
+  return <StyledProvisionerStatus>{renderModules()}</StyledProvisionerStatus>;
 };
 
 export default ProvisionerStatus;

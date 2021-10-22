@@ -51,6 +51,7 @@ export const StateHandler = proxy({
   connected_source: null,
   connected_registry: null,
   provision_resources: null,
+  current_error: null,
   actions: {
     restoreState: (prevState: any) => {
       StateHandler.project = prevState.project;
@@ -122,6 +123,9 @@ export const StateHandler = proxy({
     },
     clearResourceProvisioningProvider: () => {
       StateHandler.provision_resources.provider = "";
+    },
+    saveCurrentError: (data: any) => {
+      StateHandler.current_error = data;
     },
   },
 });

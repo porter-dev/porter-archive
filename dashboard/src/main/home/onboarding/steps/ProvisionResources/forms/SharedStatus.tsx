@@ -8,7 +8,7 @@ import api from "shared/api";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 
 export const SharedStatus: React.FC<{
-  setInfraStatus: (status: string) => void;
+  setInfraStatus: (status: { hasError: boolean; description?: string }) => void;
   project_id: number;
   filter: string[];
 }> = ({ setInfraStatus, project_id, filter }) => {
@@ -88,7 +88,9 @@ export const SharedStatus: React.FC<{
         tfModules.filter((val) => val.status == "created").length ==
         tfModules.length
       ) {
-        setInfraStatus("created");
+        setInfraStatus({
+          hasError: false,
+        });
         return;
       }
 
@@ -96,7 +98,9 @@ export const SharedStatus: React.FC<{
         tfModules.filter((val) => val.status == "error").length ==
         tfModules.length
       ) {
-        setInfraStatus("error");
+        setInfraStatus({
+          hasError: true,
+        });
         return;
       }
 
@@ -130,11 +134,15 @@ export const SharedStatus: React.FC<{
       }
 
       if (numModulesSuccessful == tfModules.length) {
-        setInfraStatus("created");
+        setInfraStatus({
+          hasError: false,
+        });
       } else if (numModulesErrored + numModulesSuccessful == tfModules.length) {
         // otherwise, if all modules are either in an error state or successful,
         // set the status to error
-        setInfraStatus("error");
+        setInfraStatus({
+          hasError: true,
+        });
       }
     }
   }, [tfModules]);
@@ -295,7 +303,6 @@ export const SharedStatus: React.FC<{
           id: infra.id,
           kind: infra.kind,
           status: infra.status,
-          got_desired: false,
           created_at: infra.created_at,
         };
 

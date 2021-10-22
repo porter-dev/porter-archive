@@ -15,6 +15,7 @@ export interface TFModule {
   kind: string
   status: string
   created_at: string
+  got_desired: boolean
   global_errors?: TFResourceError[]
   // optional resources, if not created
   resources?: TFResource[]

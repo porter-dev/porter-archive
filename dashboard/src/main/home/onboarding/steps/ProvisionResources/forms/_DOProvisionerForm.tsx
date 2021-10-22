@@ -60,11 +60,16 @@ export const CredentialsForm: React.FC<{
       }
     });
   }, []);
+
+  const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+
+  const encoded_redirect_uri = encodeURIComponent(url);
+
   return (
     <>
       <ConnectDigitalOceanButton
         target={"_blank"}
-        href={`/api/projects/${project?.id}/oauth/digitalocean`}
+        href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
       >
         Sign In to Digital Ocean
       </ConnectDigitalOceanButton>

@@ -61,12 +61,28 @@ const ProvisionResources: React.FC<Props> = ({
         );
       case "status":
         return (
-          <SharedStatus
-            project_id={project?.id}
-            filter={[]}
-            nextFormStep={onSuccess}
-            goBack={goBack}
-          />
+          <>
+            <SharedStatus
+              project_id={project?.id}
+              filter={[]}
+              nextFormStep={onSuccess}
+              goBack={goBack}
+            />
+            <Br />
+            <Helper>
+              Note: Provisioning can take up to 15 minutes.
+            </Helper>
+            <Br height="15px" />
+            <SaveButton
+              text="Continue"
+              disabled={false}
+              onClick={() => alert("continue")}
+              makeFlush={true}
+              clearPosition={true}
+              statusPosition="right"
+              saveText=""
+            />
+          </>
         );
       case "connect_own_cluster":
         return (
@@ -110,19 +126,15 @@ const ProvisionResources: React.FC<Props> = ({
         applications.
       </Helper>
       {Content()}
-      <Br />
-      <Helper>
-        Note: Provisioning can take up to 15 minutes.
-      </Helper>
     </div>
   );
 };
 
 export default ProvisionResources;
 
-const Br = styled.div`
+const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: 1px;
+  height: ${props => props.height || "1px"};
   margin-top: -3px;
 `;
 

@@ -115,6 +115,7 @@ export const SettingsForm: React.FC<{
             do_integration_id: integrationId,
             docr_name: project.name,
             docr_subscription_tier: tier,
+            issuer_email: snap.StateHandler.user_email,
           },
           {
             project_id: project.id,
@@ -140,6 +141,7 @@ export const SettingsForm: React.FC<{
             do_integration_id: integrationId,
             doks_name: clusterName,
             do_region: region,
+            issuer_email: snap.StateHandler.user_email,
           },
           {
             project_id: project.id,

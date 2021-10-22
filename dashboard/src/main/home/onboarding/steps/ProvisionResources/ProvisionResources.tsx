@@ -50,7 +50,7 @@ const ProvisionResources: React.FC<Props> = ({
   }>(null);
 
   const renderSaveButton = () => {
-    if (!infraStatus?.hasError) {
+    if (infraStatus && !infraStatus.hasError) {
       return (
         <>
           <Br height="15px" />
@@ -65,7 +65,7 @@ const ProvisionResources: React.FC<Props> = ({
           />
         </>
       );
-    } else {
+    } else if (infraStatus) {
       return (
         <>
           <Br height="15px" />

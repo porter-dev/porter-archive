@@ -81,8 +81,6 @@ export const SharedStatus: React.FC<{
   };
 
   useEffect(() => {
-    setInfraStatus("created");
-
     // recompute tf module state each time, to see if infra is ready
     if (tfModules.length > 0) {
       // see if all tf modules are in a "created" state
@@ -133,7 +131,9 @@ export const SharedStatus: React.FC<{
 
       if (numModulesSuccessful == tfModules.length) {
         setInfraStatus("created");
-      } else if (numModulesErrored == tfModules.length) {
+      } else if (numModulesErrored + numModulesSuccessful == tfModules.length) {
+        // otherwise, if all modules are either in an error state or successful,
+        // set the status to error
         setInfraStatus("error");
       }
     }

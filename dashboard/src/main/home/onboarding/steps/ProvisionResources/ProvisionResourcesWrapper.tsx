@@ -22,7 +22,7 @@ const ProvisionResourcesWrapper = () => {
       onSuccess={() => OFState.actions.nextStep("continue")}
       onSkip={() => OFState.actions.nextStep("skip")}
       enable_go_back={snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow}
-      goBack={() => OFState.actions.nextStep("go_back")}
+      goBack={(data: any) => OFState.actions.nextStep("go_back", data)}
     />
   );
 };

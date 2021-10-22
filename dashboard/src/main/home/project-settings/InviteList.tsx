@@ -30,8 +30,9 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     setCurrentModal,
     setCurrentError,
     user,
-    edition,
     usage,
+    hasBillingEnabled,
+    edition,
   } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
@@ -365,20 +366,24 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     return mappedInviteList || [];
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
-  const hasSeats = () => {
+  const hasSeats = useMemo(() => {
     if (String(edition) === "dev-ee") {
       return true;
     }
-    // If usage limit is 0, the project has unlimited seats. Otherwise, check
-    // the usage limit against the current usage.
-    if (usage?.limit.users === 0) {
+
+    if (!hasBillingEnabled) {
       return true;
     }
 
+    if (usage?.limit.users === 0) {
+      // If usage limit is 0, the project has unlimited seats. Otherwise, check
+      // the usage limit against the current usage.
+      return true;
+    }
     return usage?.current.users < usage?.limit.users;
-  };
+  }, [hasBillingEnabled, usage, edition]);
 
-  if (!usage) {
+  if (hasBillingEnabled === null && usage === null) {
     <Loading height={"30%"} />;
   }
 
@@ -405,13 +410,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           />
         </RoleSelectorWrapper>
         <ButtonWrapper>
-          <InviteButton disabled={!hasSeats()} onClick={() => validateEmail()}>
+          <InviteButton disabled={!hasSeats} onClick={() => validateEmail()}>
             Create Invite
           </InviteButton>
           {isInvalidEmail && (
             <Invalid>Invalid email address. Please try again.</Invalid>
           )}
-          {!hasSeats() && (
+          {!hasSeats && (
             <Invalid>
               You need to upgrade your plan to invite more users to the project
             </Invalid>

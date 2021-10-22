@@ -161,6 +161,22 @@ export const SettingsForm: React.FC<{
     return { hasError: false, error: "" };
   };
 
+  const hasRegistryProvisioned = (
+    infras: { kind: string; status: string }[]
+  ) => {
+    return !!infras.find(
+      (i) => ["docr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
+    );
+  };
+
+  const hasClusterProvisioned = (
+    infras: { kind: string; status: string }[]
+  ) => {
+    return !!infras.find(
+      (i) => ["doks", "gks", "eks"].includes(i.kind) && i.status === "created"
+    );
+  };
+
   const catchError = (error: any) => {
     console.error(error);
   };
@@ -168,20 +184,36 @@ export const SettingsForm: React.FC<{
   const submit = async () => {
     const validation = validate();
 
+    setButtonStatus("loading");
+
     if (validation.hasError) {
       setButtonStatus(validation.error);
       return;
     }
 
-    setButtonStatus("loading");
+    let infras = [];
+
+    try {
+      infras = await api
+        .getInfra("<token>", {}, { project_id: project?.id })
+        .then((res) => res?.data);
+    } catch (error) {
+      setButtonStatus("Something went wrong, try again later");
+      return;
+    }
+
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
 
     let registryProvisionResponse = null;
     let clusterProvisionResponse = null;
     if (snap.StateHandler.connected_registry.skip) {
-      registryProvisionResponse = await provisionGCR(integrationId);
+      if (!hasRegistryProvisioned(infras)) {
+        registryProvisionResponse = await provisionGCR(integrationId);
+      }
     }
-    clusterProvisionResponse = await provisionGKE(integrationId);
+    if (!hasClusterProvisioned(infras)) {
+      clusterProvisionResponse = await provisionGKE(integrationId);
+    }
 
     nextFormStep({
       settings: {
@@ -192,27 +224,29 @@ export const SettingsForm: React.FC<{
     });
   };
 
-  const provisionGCR = (id: number) => {
+  const provisionGCR = async (id: number) => {
     console.log("Provisioning GCR");
 
-    return api
-      .createGCR(
+    try {
+      const res = await api.createGCR(
         "<token>",
         {
           gcp_integration_id: id,
           issuer_email: snap.StateHandler.user_email,
         },
         { project_id: project.id }
-      )
-      .then((res) => res?.data)
-      .catch(catchError);
+      );
+      return res?.data;
+    } catch (error) {
+      return catchError(error);
+    }
   };
 
-  const provisionGKE = (id: number) => {
+  const provisionGKE = async (id: number) => {
     console.log("Provisioning GKE");
 
-    return api
-      .createGKE(
+    try {
+      const res = await api.createGKE(
         "<token>",
         {
           gke_name: clusterName,
@@ -220,9 +254,11 @@ export const SettingsForm: React.FC<{
           issuer_email: snap.StateHandler.user_email,
         },
         { project_id: project.id }
-      )
-      .then((res) => res?.data)
-      .catch(catchError);
+      );
+      return res?.data;
+    } catch (error) {
+      return catchError(error);
+    }
   };
 
   return (

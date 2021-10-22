@@ -252,19 +252,6 @@ export const SettingsForm: React.FC<{
   );
 };
 
-export const Status: React.FC<{
-  nextFormStep: () => void;
-  project: any;
-}> = ({ nextFormStep, project }) => {
-  return (
-    <SharedStatus
-      nextFormStep={nextFormStep}
-      project_id={project?.id}
-      filter={["gke", "gcr"]}
-    />
-  );
-};
-
 const Br = styled.div`
   width: 100%;
   height: 15px;

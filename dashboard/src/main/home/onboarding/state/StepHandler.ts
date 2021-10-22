@@ -165,6 +165,11 @@ const flow: FlowType = {
             continue: "clean_up",
             go_back: "provision_resources.credentials",
           },
+          execute: {
+            on: {
+              go_back: "saveCurrentError",
+            },
+          },
         },
       },
     },

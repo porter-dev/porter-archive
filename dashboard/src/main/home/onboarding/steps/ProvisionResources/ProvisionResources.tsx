@@ -28,7 +28,7 @@ type Props = {
   onSaveSettings: (settings: any) => void;
   onSuccess: () => void;
   onSkip: () => void;
-  goBack: () => void;
+  goBack: (data?: any) => void;
 };
 
 const ProvisionResources: React.FC<Props> = ({
@@ -44,10 +44,13 @@ const ProvisionResources: React.FC<Props> = ({
   goBack,
 }) => {
   const { step } = useParams<{ step: any }>();
-  const [infraStatus, setInfraStatus] = useState("creating");
+  const [infraStatus, setInfraStatus] = useState<{
+    hasError: boolean;
+    description?: string;
+  }>(null);
 
   const renderSaveButton = () => {
-    if (infraStatus == "created") {
+    if (!infraStatus.hasError) {
       return (
         <>
           <Br height="15px" />
@@ -62,7 +65,7 @@ const ProvisionResources: React.FC<Props> = ({
           />
         </>
       );
-    } else if (infraStatus == "error") {
+    } else {
       return (
         <>
           <Br height="15px" />
@@ -70,7 +73,7 @@ const ProvisionResources: React.FC<Props> = ({
             text="Resolve Errors"
             status="Encountered errors while provisioning."
             disabled={false}
-            onClick={goBack}
+            onClick={() => goBack(infraStatus.description)}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"

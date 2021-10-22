@@ -48,6 +48,8 @@ export const SharedStatus: React.FC<{
     for (let addedResource of addedResources) {
       // if exists, update state to provisioned
       if (resourceAddrMap.has(addedResource.addr)) {
+        let currResource = resources[resourceAddrMap.get(addedResource.addr)]
+        addedResource.errored = currResource.errored
         resources[resourceAddrMap.get(addedResource.addr)] = addedResource;
       } else {
         resources.push(addedResource);
@@ -181,19 +183,25 @@ export const SharedStatus: React.FC<{
           created_at: infra.created_at,
         };
 
-        if (infra?.status != "created" && infra?.status != "destroyed") {
+        tfModules.push(module);
+      });
+
+      setTFModules([...tfModules]);
+
+      tfModules.forEach((val, index) => {
+        if (val?.status != "created" && val?.status != "destroyed") {
           api
             .getInfraDesired(
               "<token>",
               {},
-              { project_id: project_id, infra_id: infra?.id }
+              { project_id: project_id, infra_id: val?.id }
             )
             .then((resDesired) => {
               api
                 .getInfraCurrent(
                   "<token>",
                   {},
-                  { project_id: project_id, infra_id: infra?.id }
+                  { project_id: project_id, infra_id: val?.id }
                 )
                 .then((resCurrent) => {
                   var desired = resDesired.data;
@@ -207,7 +215,7 @@ export const SharedStatus: React.FC<{
                   });
 
                   // map desired state to list of resources
-                  var resources: TFResource[] = desired?.map((val: any) => {
+                  var addedResources: TFResource[] = desired?.map((val: any) => {
                     return {
                       addr: val?.addr,
                       provisioned: currentMap.has(val?.addr),
@@ -218,17 +226,13 @@ export const SharedStatus: React.FC<{
                     };
                   });
 
-                  module.resources = resources;
+                  updateTFModules(index, addedResources, [], [])
                 })
                 .catch((err) => console.log(err));
             })
             .catch((err) => console.log(err));
         }
-
-        tfModules.push(module);
-      });
-
-      setTFModules([...tfModules]);
+      })
 
       tfModules.forEach((val, index) => {
         setupInfraWebsocket(val.id + "", val, index);

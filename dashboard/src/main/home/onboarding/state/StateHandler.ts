@@ -31,6 +31,7 @@ export type ConnectedSourceData = {
 };
 
 export type OnboardingState = {
+  user_email: string;
   project: ProjectData | null;
   connected_source: ConnectedSourceData | null;
   connected_registry: any | null;
@@ -45,6 +46,7 @@ export type OnboardingState = {
 export type StateKeys = keyof Omit<OnboardingState, "actions">;
 
 export const StateHandler = proxy({
+  user_email: null,
   project: null,
   connected_source: null,
   connected_registry: null,

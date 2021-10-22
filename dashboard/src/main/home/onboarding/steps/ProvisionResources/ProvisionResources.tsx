@@ -126,6 +126,21 @@ const ProvisionResources: React.FC<Props> = ({
         applications.
       </Helper>
       {Content()}
+      <Br />
+            <Helper>
+              Note: Provisioning can take up to 15 minutes.
+            </Helper>
+            <Br height="15px" />
+            <SaveButton
+              text="Retry Provisioning"
+              disabled={false}
+              onClick={() => alert("continue")}
+              makeFlush={true}
+              status="There was an error provisioning"
+              clearPosition={true}
+              statusPosition="right"
+              saveText=""
+            />
     </div>
   );
 };

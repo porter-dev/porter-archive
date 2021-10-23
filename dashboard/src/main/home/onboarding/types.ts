@@ -13,7 +13,7 @@ export type AWSRegistryConfig = {
   skip: false;
   provider: "aws";
   credentials: {
-    id: string;
+    id: number;
   };
   settings: {
     registry_connection_id: number;
@@ -25,7 +25,7 @@ export type GCPRegistryConfig = {
   skip: false;
   provider: "gcp";
   credentials: {
-    id: string;
+    id: number;
   };
   settings: {
     registry_connection_id: number;
@@ -38,7 +38,7 @@ export type DORegistryConfig = {
   skip: false;
   provider: "do";
   credentials: {
-    id: string;
+    id: number;
   };
   settings: {
     registry_connection_id: number;

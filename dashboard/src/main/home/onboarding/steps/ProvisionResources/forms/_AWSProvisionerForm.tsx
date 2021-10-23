@@ -177,6 +177,22 @@ export const SettingsForm: React.FC<{
     console.error(error);
   };
 
+  const hasRegistryProvisioned = (
+    infras: { kind: string; status: string }[]
+  ) => {
+    return !!infras.find(
+      (i) => ["docr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
+    );
+  };
+
+  const hasClusterProvisioned = (
+    infras: { kind: string; status: string }[]
+  ) => {
+    return !!infras.find(
+      (i) => ["doks", "gks", "eks"].includes(i.kind) && i.status === "created"
+    );
+  };
+
   const provisionECR = async (awsIntegrationId: number) => {
     console.log("Started provision ECR");
 
@@ -222,16 +238,33 @@ export const SettingsForm: React.FC<{
       setButtonStatus(validation.error);
       return;
     }
+
+    let infras = [];
+
+    try {
+      infras = await api
+        .getInfra("<token>", {}, { project_id: project?.id })
+        .then((res) => res?.data);
+    } catch (error) {
+      setButtonStatus("Something went wrong, try again later");
+      return;
+    }
+
     const integrationId = snap.StateHandler.provision_resources.credentials.id;
+
     let registryProvisionResponse = null;
     let clusterProvisionResponse = null;
 
     const shouldProvisionECR = snap.StateHandler.connected_registry.skip;
 
     if (shouldProvisionECR) {
-      registryProvisionResponse = await provisionECR(integrationId);
+      if (!hasRegistryProvisioned(infras)) {
+        registryProvisionResponse = await provisionECR(integrationId);
+      }
     }
-    clusterProvisionResponse = await provisionEKS(integrationId);
+    if (!hasClusterProvisioned(infras)) {
+      clusterProvisionResponse = await provisionEKS(integrationId);
+    }
 
     nextFormStep({
       settings: {

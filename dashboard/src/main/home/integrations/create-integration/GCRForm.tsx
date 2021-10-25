@@ -16,7 +16,6 @@ type PropsType = {
 
 type StateType = {
   credentialsName: string;
-  gcpRegion: string;
   serviceAccountKey: string;
   gcpProjectID: string;
   url: string;
@@ -25,7 +24,6 @@ type StateType = {
 export default class GCRForm extends Component<PropsType, StateType> {
   state = {
     credentialsName: "",
-    gcpRegion: "",
     serviceAccountKey: "",
     gcpProjectID: "",
     url: "",
@@ -48,7 +46,6 @@ export default class GCRForm extends Component<PropsType, StateType> {
       .createGCPIntegration(
         "<token>",
         {
-          gcp_region: this.state.gcpRegion,
           gcp_key_data: this.state.serviceAccountKey,
           gcp_project_id: this.state.gcpProjectID,
         },

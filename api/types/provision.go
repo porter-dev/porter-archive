@@ -21,6 +21,7 @@ type CreateGCRInfraRequest struct {
 
 type CreateGKEInfraRequest struct {
 	GKEName          string `json:"gke_name" form:"required"`
+	GCPRegion        string `json:"gcp_region" form:"required"`
 	IssuerEmail      string `json:"issuer_email" form:"required"`
 	ProjectID        uint   `json:"-" form:"required"`
 	GCPIntegrationID uint   `json:"gcp_integration_id" form:"required"`

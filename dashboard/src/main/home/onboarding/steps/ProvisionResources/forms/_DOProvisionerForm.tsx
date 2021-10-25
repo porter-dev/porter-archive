@@ -107,7 +107,6 @@ export const CredentialsForm: React.FC<{
         </div>
       )}
       <ConnectDigitalOceanButton
-        target={"_blank"}
         href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
       >
         {connectedAccount !== null

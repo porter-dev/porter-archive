@@ -110,7 +110,9 @@ const ConnectSource: React.FC<{
           </List>
           <Helper>
             Don't see the right repos?{" "}
-            <A href={"/api/integrations/github-app/install"}>
+            <A
+              href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+            >
               Install Porter in more repositories
             </A>
             .

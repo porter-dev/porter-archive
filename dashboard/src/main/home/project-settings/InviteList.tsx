@@ -32,6 +32,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     user,
     usage,
     hasBillingEnabled,
+    edition,
   } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
@@ -366,6 +367,10 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
 
   const hasSeats = useMemo(() => {
+    if (String(edition) === "dev-ee") {
+      return true;
+    }
+
     if (!hasBillingEnabled) {
       return true;
     }
@@ -376,7 +381,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       return true;
     }
     return usage?.current.users < usage?.limit.users;
-  }, [hasBillingEnabled, usage]);
+  }, [hasBillingEnabled, usage, edition]);
 
   if (hasBillingEnabled === null && usage === null) {
     <Loading height={"30%"} />;

@@ -125,31 +125,6 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
     return;
   };
 
-  // Step 1: Create a project
-  const createProject = (callback?: any) => {
-    let { projectName } = props;
-    let { user, setProjects, setCurrentProject } = context;
-
-    api
-      .createProject("<token>", { name: projectName }, {})
-      .then(async (res) => {
-        let proj = res.data;
-
-        // Need to set project list for dropdown
-        // TODO: consolidate into ProjectSection (case on exists in list on set)
-        const res_1 = await api.getProjects(
-          "<token>",
-          {},
-          {
-            id: user.userId,
-          }
-        );
-        setProjects(res_1.data);
-        setCurrentProject(proj, () => callback && callback(proj.id));
-      })
-      .catch(catchError);
-  };
-
   const doRedirect = (projectId: number) => {
     let redirectUrl = `/api/projects/${projectId}/oauth/digitalocean?project_id=${projectId}&provision=do`;
     redirectUrl += `&tier=${subscriptionTier}&region=${doRegion}&cluster_name=${clusterName}`;
@@ -163,14 +138,8 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   // TODO: handle generically (with > 2 steps)
   const onCreateDO = () => {
     props?.trackOnSave();
-    let { projectName } = props;
     let { currentProject } = context;
-
-    if (!projectName) {
-      doRedirect(currentProject.id);
-    } else {
-      createProject((projectId: number) => doRedirect(projectId));
-    }
+    doRedirect(currentProject.id);
   };
 
   const getButtonStatus = () => {

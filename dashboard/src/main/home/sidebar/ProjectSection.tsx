@@ -116,7 +116,11 @@ class ProjectSection extends Component<PropsType, StateType> {
     }
     return (
       <InitializeButton
-        onClick={() => pushFiltered(this.props, "new-project", ["project_id"])}
+        onClick={() =>
+          pushFiltered(this.props, "/new-project", ["project_id"], {
+            new_project: true,
+          })
+        }
       >
         <Plus>+</Plus> Create a Project
       </InitializeButton>

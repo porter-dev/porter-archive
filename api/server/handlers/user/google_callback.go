@@ -91,8 +91,15 @@ func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		startEmailVerification(p.Config(), w, r, user)
 	}
 
-	if session.Values["query_params"] != "" {
-		http.Redirect(w, r, fmt.Sprintf("/dashboard?%s", session.Values["query_params"]), 302)
+	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
+		// attempt to parse the redirect uri, if it fails just redirect to dashboard
+		redirectURI, err := url.Parse(redirectStr)
+
+		if err != nil {
+			http.Redirect(w, r, "/dashboard", 302)
+		}
+
+		http.Redirect(w, r, fmt.Sprintf("%s?%s", redirectURI.Path, redirectURI.RawQuery), 302)
 	} else {
 		http.Redirect(w, r, "/dashboard", 302)
 	}

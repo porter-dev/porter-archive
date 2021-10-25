@@ -51,6 +51,17 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// create onboarding flow set to the first step
+	_, err = p.Repo().Onboarding().CreateProjectOnboarding(&models.Onboarding{
+		ProjectID:   proj.ID,
+		CurrentStep: types.StepConnectSource,
+	})
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	// create default project usage restriction
 	_, err = p.Repo().ProjectUsage().CreateProjectUsage(&models.ProjectUsage{
 		ProjectID:      proj.ID,

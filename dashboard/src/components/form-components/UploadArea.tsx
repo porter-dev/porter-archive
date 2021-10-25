@@ -89,6 +89,7 @@ const Message = styled.div`
   display: flex;
   align-items: center;
   vertical-align: middle;
+  font-size: 13px;
 `;
 
 const Required = styled.div`
@@ -112,7 +113,7 @@ const DNDArea = styled.div`
   padding: 5px 10px;
   margin-right: 8px;
   width: 100%;
-  height: 150px;
+  height: 80px;
   cursor: pointer;
 `;
 
@@ -126,5 +127,5 @@ const Label = styled.div`
 `;
 
 const StyledUploadArea = styled.div`
-  margin-top: 20px;
+  margin-bottom: 20px;
 `;

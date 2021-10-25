@@ -87,7 +87,7 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      opts.Infra.GetUniqueName(),
+			Name:      fmt.Sprintf("%s-%s", string(opts.OperationKind), opts.Infra.GetUniqueName()),
 			Namespace: opts.ProvJobNamespace,
 			Labels:    labels,
 		},

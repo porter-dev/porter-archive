@@ -76,7 +76,6 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
 
   const renderModules = () => {
     return modules.map((val) => {
-      console.log(val);
       const totalResources = val.resources?.length;
       const provisionedResources = val.resources?.filter((resource) => {
         return resource.provisioned;

@@ -203,7 +203,6 @@ export const SettingsForm: React.FC<{
           {
             aws_integration_id: awsIntegrationId,
             ecr_name: `${project.name}-registry`,
-            issuer_email: snap.StateHandler.user_email,
           },
           { id: project.id }
         )

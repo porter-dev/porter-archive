@@ -77,6 +77,10 @@ export const StateHandler = proxy({
       };
     },
     saveRegistryProvider: (provider: string) => {
+      if (provider === StateHandler.connected_registry?.provider) {
+        return;
+      }
+
       StateHandler.connected_registry = {
         skip: false,
         provider: provider as any,
@@ -101,6 +105,10 @@ export const StateHandler = proxy({
       };
     },
     saveResourceProvisioningProvider: (provider: string) => {
+      if (provider === StateHandler.provision_resources?.provider) {
+        return;
+      }
+
       StateHandler.provision_resources = {
         skip: provider === "external",
         provider: provider as any,

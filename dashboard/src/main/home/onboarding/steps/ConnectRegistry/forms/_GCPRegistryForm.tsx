@@ -46,7 +46,6 @@ export const CredentialsForm: React.FC<{
         .createGCPIntegration(
           "<token>",
           {
-            gcp_region: "",
             gcp_key_data: serviceAccountKey,
             gcp_project_id: projectId,
           },
@@ -213,7 +212,6 @@ export const TestRegistryConnection: React.FC<{
   return (
     <>
       <RegistryImageList
-        registryType="gcr"
         project={snap.project}
         registry_id={snap.connected_registry.settings.registry_connection_id}
       />

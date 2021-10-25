@@ -185,7 +185,20 @@ export const CredentialsForm: React.FC<{
           label="📍 AWS Region"
         />
         <Br />
-        <SaveButton
+        {lastConnectedAccount && (
+          <CancelButton
+            text="Cancel"
+            disabled={false}
+            onClick={() => setShowForm(false)}
+            makeFlush={true}
+            clearPosition={true}
+            status={""}
+            statusPosition={"right"}
+            color={"#fc4976"}
+          />
+        )}
+
+        <SubmitButton
           text="Continue"
           disabled={false}
           onClick={submit}
@@ -193,6 +206,7 @@ export const CredentialsForm: React.FC<{
           clearPosition={true}
           status={buttonStatus}
           statusPosition={"right"}
+          disableLeftMargin={!lastConnectedAccount}
         />
       </>
     );
@@ -200,16 +214,31 @@ export const CredentialsForm: React.FC<{
 
   return (
     <>
-      <div>
-        Last connected account:
-        <div>
-          <b>ARN: </b>
-          {lastConnectedAccount?.aws_arn}
-        </div>
-        <div>
-          <b>Connected on:</b> {readableDate(lastConnectedAccount?.created_at)}
-        </div>
-      </div>
+      <Helper>Connected account:</Helper>
+      <PreviewRow>
+        <Flex>
+          <i className="material-icons">account_circle</i>
+          <FlexColumn>
+            <FlexColumn>
+              <b>ARN:</b>
+              <SelectableSpan>
+                &#8226; {lastConnectedAccount.aws_arn}
+              </SelectableSpan>
+            </FlexColumn>
+          </FlexColumn>
+        </Flex>
+        <FlexColumnWithMargin marginLeft={"14px"}>
+          <span>Connected at</span>
+          {readableDate(lastConnectedAccount.created_at)}
+        </FlexColumnWithMargin>
+      </PreviewRow>
+      <Helper>
+        Want to use a different account?{" "}
+        <A onClick={() => setShowForm(true)} href="#">
+          Connect another account
+        </A>
+        .
+      </Helper>
       <Br />
       <SaveButton
         text="Connect another account"
@@ -344,4 +373,54 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
 const Br = styled.div`
   width: 100%;
   height: 15px;
+`;
+
+const A = styled.a`
+  cursor: pointer;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  color: #ffffff;
+  align-items: center;
+  > i {
+    color: #aaaabb;
+    font-size: 20px;
+    margin-right: 10px;
+  }
+`;
+
+const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const FlexColumnWithMargin = styled(FlexColumn)`
+  margin-left: ${(props: { marginLeft: string }) => props.marginLeft};
+`;
+
+const SelectableSpan = styled.span`
+  user-select: text;
+`;
+
+const PreviewRow = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #ffffff55;
+  background: #ffffff11;
+  border: 1px solid #aaaabb;
+  justify-content: space-between;
+  font-size: 13px;
+  border-radius: 5px;
+`;
+
+const CancelButton = styled(SaveButton)`
+  display: inline-block;
+`;
+
+const SubmitButton = styled(SaveButton)`
+  display: inline-block;
+  margin-left: ${(props: { disableLeftMargin: boolean }) =>
+    props.disableLeftMargin ? "" : "16px"};
 `;

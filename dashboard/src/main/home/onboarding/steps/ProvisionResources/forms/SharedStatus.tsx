@@ -134,15 +134,27 @@ export const SharedStatus: React.FC<{
                 ? 1
                 : 0;
 
+            // if there's a global error, or the number of resources that errored_out is
+            // greater than 0, this resource is in an error state
             numModulesErrored +=
+              tfModule.global_errors?.length > 0 ||
               tfModule.resources.filter(
                 (resource) => resource.errored?.errored_out
               ).length > 0
                 ? 1
                 : 0;
+          } else if (tfModule.global_errors?.length > 0) {
+            numModulesErrored += 1;
           }
         }
       }
+
+      console.log(
+        "NUMS ARE",
+        numModulesSuccessful,
+        numModulesErrored,
+        tfModules.length
+      );
 
       if (numModulesSuccessful == tfModules.length) {
         setInfraStatus({
@@ -155,6 +167,8 @@ export const SharedStatus: React.FC<{
           hasError: true,
         });
       }
+    } else {
+      setInfraStatus(null);
     }
   }, [tfModules]);
 

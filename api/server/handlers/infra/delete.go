@@ -107,9 +107,12 @@ func destroyECR(conf *config.Config, infra *models.Infra) error {
 	}
 
 	opts.CredentialExchange.VaultToken = vaultToken
+
 	opts.ECR = &ecr.Conf{
-		ECRName: lastAppliedECR.ECRName,
+		AWSRegion: awsInt.AWSRegion,
+		ECRName:   lastAppliedECR.ECRName,
 	}
+
 	opts.OperationKind = provisioner.Destroy
 
 	err = conf.ProvisionerAgent.Provision(opts)
@@ -144,9 +147,12 @@ func destroyEKS(conf *config.Config, infra *models.Infra) error {
 	}
 
 	opts.CredentialExchange.VaultToken = vaultToken
+
 	opts.EKS = &eks.Conf{
+		AWSRegion:   awsInt.AWSRegion,
 		ClusterName: lastAppliedEKS.EKSName,
 		MachineType: lastAppliedEKS.MachineType,
+		IssuerEmail: lastAppliedEKS.IssuerEmail,
 	}
 	opts.OperationKind = provisioner.Destroy
 
@@ -182,6 +188,7 @@ func destroyDOCR(conf *config.Config, infra *models.Infra) error {
 	}
 
 	opts.CredentialExchange.VaultToken = vaultToken
+
 	opts.DOCR = &docr.Conf{
 		DOCRName:             lastAppliedDOCR.DOCRName,
 		DOCRSubscriptionTier: lastAppliedDOCR.DOCRSubscriptionTier,
@@ -221,9 +228,11 @@ func destroyDOKS(conf *config.Config, infra *models.Infra) error {
 	}
 
 	opts.CredentialExchange.VaultToken = vaultToken
+
 	opts.DOKS = &doks.Conf{
 		DORegion:        lastAppliedDOKS.DORegion,
 		DOKSClusterName: lastAppliedDOKS.DOKSName,
+		IssuerEmail:     lastAppliedDOKS.IssuerEmail,
 	}
 
 	opts.OperationKind = provisioner.Destroy
@@ -261,7 +270,10 @@ func destroyGKE(conf *config.Config, infra *models.Infra) error {
 
 	opts.CredentialExchange.VaultToken = vaultToken
 	opts.GKE = &gke.Conf{
-		ClusterName: lastAppliedGKE.GKEName,
+		GCPProjectID: gcpInt.GCPProjectID,
+		GCPRegion:    lastAppliedGKE.GCPRegion,
+		ClusterName:  lastAppliedGKE.GKEName,
+		IssuerEmail:  lastAppliedGKE.IssuerEmail,
 	}
 
 	opts.OperationKind = provisioner.Destroy

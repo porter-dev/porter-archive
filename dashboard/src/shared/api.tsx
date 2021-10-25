@@ -44,6 +44,16 @@ const connectDORegistry = baseApi<
   return `/api/projects/${pathParams.project_id}/registries`;
 });
 
+const getAWSIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/aws`
+);
+
+const getGCPIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/gcp`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -75,7 +85,6 @@ const createDOCR = baseApi<
     do_integration_id: number;
     docr_name: string;
     docr_subscription_tier: string;
-    issuer_email: string;
   },
   {
     project_id: number;
@@ -104,7 +113,6 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 
 const createGCPIntegration = baseApi<
   {
-    gcp_region: string;
     gcp_key_data: string;
     gcp_project_id: string;
   },
@@ -118,7 +126,6 @@ const createGCPIntegration = baseApi<
 const createGCR = baseApi<
   {
     gcp_integration_id: number;
-    issuer_email: string;
   },
   {
     project_id: number;
@@ -129,6 +136,7 @@ const createGCR = baseApi<
 
 const createGKE = baseApi<
   {
+    gcp_region: string;
     gcp_integration_id: number;
     gke_name: string;
     issuer_email: string;
@@ -831,7 +839,6 @@ const provisionECR = baseApi<
   {
     ecr_name: string;
     aws_integration_id: number;
-    issuer_email: string;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -1131,6 +1138,8 @@ export default {
   connectECRRegistry,
   connectGCRRegistry,
   connectDORegistry,
+  getAWSIntegration,
+  getGCPIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
   createDOCR,

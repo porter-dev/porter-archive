@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gcr"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -107,6 +108,9 @@ func (c *ProvisionGCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	opts.GCR = &gcr.Conf{
+		GCPProjectID: gcpInt.GCPProjectID,
+	}
 	opts.CredentialExchange.VaultToken = vaultToken
 	opts.OperationKind = provisioner.Apply
 

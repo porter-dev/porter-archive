@@ -190,7 +190,6 @@ export const SettingsForm: React.FC<{
             do_integration_id: integrationId,
             docr_name: project.name,
             docr_subscription_tier: tier,
-            issuer_email: snap.StateHandler.user_email,
           },
           {
             project_id: project.id,

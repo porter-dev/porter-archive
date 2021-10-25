@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gcr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
 	"github.com/porter-dev/porter/internal/models"
 	batchv1 "k8s.io/api/batch/v1"
@@ -43,6 +44,7 @@ type ProvisionOpts struct {
 	// resource-specific opts
 	ECR  *ecr.Conf
 	EKS  *eks.Conf
+	GCR  *gcr.Conf
 	GKE  *gke.Conf
 	DOCR *docr.Conf
 	DOKS *doks.Conf
@@ -73,6 +75,8 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 		env = opts.ECR.AttachECREnv(env)
 	case types.InfraEKS:
 		env = opts.EKS.AttachEKSEnv(env)
+	case types.InfraGCR:
+		env = opts.GCR.AttachGCREnv(env)
 	case types.InfraGKE:
 		env = opts.GKE.AttachGKEEnv(env)
 	case types.InfraDOCR:

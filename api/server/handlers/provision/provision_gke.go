@@ -110,8 +110,10 @@ func (c *ProvisionGKEHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	opts.CredentialExchange.VaultToken = vaultToken
 	opts.GKE = &gke.Conf{
-		ClusterName: request.GKEName,
-		IssuerEmail: request.IssuerEmail,
+		GCPProjectID: gcpInt.GCPProjectID,
+		GCPRegion:    request.GCPRegion,
+		ClusterName:  request.GKEName,
+		IssuerEmail:  request.IssuerEmail,
 	}
 
 	opts.OperationKind = provisioner.Apply

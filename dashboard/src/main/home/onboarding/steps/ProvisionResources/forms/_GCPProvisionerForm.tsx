@@ -47,7 +47,6 @@ export const CredentialsForm: React.FC<{
 }> = ({ nextFormStep, project }) => {
   const [projectId, setProjectId] = useState("");
   const [serviceAccountKey, setServiceAccountKey] = useState("");
-  const [region, setRegion] = useState("us-east1");
   const [buttonStatus, setButtonStatus] = useState("");
 
   const validate = () => {
@@ -77,7 +76,6 @@ export const CredentialsForm: React.FC<{
         .createGCPIntegration(
           "<token>",
           {
-            gcp_region: region,
             gcp_key_data: serviceAccountKey,
             gcp_project_id: projectId,
           },
@@ -117,18 +115,6 @@ export const CredentialsForm: React.FC<{
         height="100%"
         isRequired={true}
       />
-      <SelectRow
-        options={regionOptions}
-        width="100%"
-        value={region}
-        scrollBuffer={true}
-        dropdownMaxHeight="240px"
-        setActiveValue={(x: string) => {
-          setRegion(x);
-        }}
-        label="📍 GCP Region"
-      />
-      <Br />
       <SaveButton
         text="Continue"
         disabled={false}
@@ -146,6 +132,7 @@ export const SettingsForm: React.FC<{
   nextFormStep: (data: Partial<GCPProvisionerConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
+  const [region, setRegion] = useState("us-east1");
   const [clusterName, setClusterName] = useState(`${project.name}-cluster`);
   const [buttonStatus, setButtonStatus] = useState("");
   const snap = useSnapshot(OFState);
@@ -232,7 +219,6 @@ export const SettingsForm: React.FC<{
         "<token>",
         {
           gcp_integration_id: id,
-          issuer_email: snap.StateHandler.user_email,
         },
         { project_id: project.id }
       );
@@ -249,6 +235,7 @@ export const SettingsForm: React.FC<{
       const res = await api.createGKE(
         "<token>",
         {
+          gcp_region: region,
           gke_name: clusterName,
           gcp_integration_id: id,
           issuer_email: snap.StateHandler.user_email,
@@ -273,6 +260,17 @@ export const SettingsForm: React.FC<{
         placeholder="ex: porter-cluster"
         width="100%"
         isRequired={true}
+      />
+      <SelectRow
+        options={regionOptions}
+        width="100%"
+        value={region}
+        scrollBuffer={true}
+        dropdownMaxHeight="240px"
+        setActiveValue={(x: string) => {
+          setRegion(x);
+        }}
+        label="📍 GCP Region"
       />
       <Br />
       <SaveButton

@@ -151,7 +151,6 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
   };
 
   const provisionGCR = (id: number) => {
-    console.log("Provisioning GCR");
     let { currentProject } = context;
 
     return api
@@ -166,7 +165,6 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
   };
 
   const provisionGKE = (id: number) => {
-    console.log("Provisioning GKE");
     let { currentProject } = context;
 
     api

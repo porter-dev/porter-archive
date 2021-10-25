@@ -91,7 +91,9 @@ export const CredentialsForm: React.FC<{
         integrations.sort((a, b) => b.id - a.id);
 
         let lastUsed = integrations.find((i) => {
-          i.id === snap.StateHandler?.provision_resources?.credentials?.id;
+          return (
+            i.id === snap.StateHandler?.provision_resources?.credentials?.id
+          );
         });
 
         if (!lastUsed) {
@@ -209,8 +211,12 @@ export const CredentialsForm: React.FC<{
       <div>
         Last connected account:
         <div>
-          <b>ARN: </b>
-          {lastConnectedAccount?.aws_arn}
+          <b>Project id: </b>
+          {lastConnectedAccount?.gcp_project_id}
+        </div>
+        <div>
+          <b>Service account email: </b>
+          {lastConnectedAccount?.gcp_sa_email}
         </div>
         <div>
           <b>Connected on:</b> {readableDate(lastConnectedAccount?.created_at)}

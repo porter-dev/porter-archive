@@ -36,7 +36,7 @@ export const CredentialsForm: React.FC<{
 
   useEffect(() => {
     api
-      .getAWSIntegration("<token>", {}, { project_id: project.id })
+      .getGCPIntegration("<token>", {}, { project_id: project.id })
       .then((res) => {
         let integrations = res.data;
         if (!Array.isArray(integrations) || !integrations.length) {
@@ -45,7 +45,9 @@ export const CredentialsForm: React.FC<{
         }
 
         let lastUsed = integrations.find((i) => {
-          i.id === snap.StateHandler?.connected_registry?.credentials?.id;
+          return (
+            i.id === snap.StateHandler?.connected_registry?.credentials?.id
+          );
         });
 
         if (!lastUsed) {
@@ -163,8 +165,12 @@ export const CredentialsForm: React.FC<{
       <div>
         Last connected account:
         <div>
-          <b>ARN: </b>
-          {lastConnectedAccount?.aws_arn}
+          <b>Project id: </b>
+          {lastConnectedAccount?.gcp_project_id}
+        </div>
+        <div>
+          <b>Service account email: </b>
+          {lastConnectedAccount?.gcp_sa_email}
         </div>
         <div>
           <b>Connected on:</b> {readableDate(lastConnectedAccount?.created_at)}

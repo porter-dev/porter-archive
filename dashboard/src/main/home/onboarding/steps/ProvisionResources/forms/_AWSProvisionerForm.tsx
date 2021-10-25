@@ -86,7 +86,9 @@ export const CredentialsForm: React.FC<{
         integrations.sort((a, b) => b.id - a.id);
 
         let lastUsed = integrations.find((i) => {
-          i.id === snap.StateHandler?.provision_resources?.credentials?.id;
+          return (
+            i.id === snap.StateHandler?.provision_resources?.credentials?.id
+          );
         });
 
         if (!lastUsed) {

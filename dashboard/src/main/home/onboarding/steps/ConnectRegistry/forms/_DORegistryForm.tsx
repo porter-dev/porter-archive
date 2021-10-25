@@ -49,7 +49,7 @@ export const CredentialsForm: React.FC<{
         // Sort decendant
         integrations.sort((a, b) => b.id - a.id);
         let lastUsed = integrations.find((i) => {
-          i.id === snap.StateHandler?.provision_resources?.credentials?.id;
+          i.id === snap.StateHandler?.connected_registry?.credentials?.id;
         });
         if (!lastUsed) {
           lastUsed = integrations[0];
@@ -85,7 +85,6 @@ export const CredentialsForm: React.FC<{
         </div>
       )}
       <ConnectDigitalOceanButton
-        target={"_blank"}
         href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
       >
         {connectedAccount !== null

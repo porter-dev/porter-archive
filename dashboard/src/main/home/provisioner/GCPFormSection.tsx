@@ -151,7 +151,6 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
   };
 
   const provisionGCR = (id: number) => {
-    console.log("Provisioning GCR");
     let { currentProject } = context;
 
     return api
@@ -166,15 +165,16 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
   };
 
   const provisionGKE = (id: number) => {
-    console.log("Provisioning GKE");
     let { currentProject } = context;
 
     api
       .createGKE(
         "<token>",
         {
+          gcp_region: gcpRegion,
           gke_name: clusterName,
           gcp_integration_id: id,
+          issuer_email: context.user.email,
         },
         { project_id: currentProject.id }
       )
@@ -192,7 +192,6 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
       .createGCPIntegration(
         "<token>",
         {
-          gcp_region: gcpRegion,
           gcp_key_data: gcpKeyData,
           gcp_project_id: gcpProjectId,
         },

@@ -107,7 +107,6 @@ export const CredentialsForm: React.FC<{
         </div>
       )}
       <ConnectDigitalOceanButton
-        target={"_blank"}
         href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
       >
         {connectedAccount !== null
@@ -190,7 +189,6 @@ export const SettingsForm: React.FC<{
             do_integration_id: integrationId,
             docr_name: project.name,
             docr_subscription_tier: tier,
-            issuer_email: snap.StateHandler.user_email,
           },
           {
             project_id: project.id,

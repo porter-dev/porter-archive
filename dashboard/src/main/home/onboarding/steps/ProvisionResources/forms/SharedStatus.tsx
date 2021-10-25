@@ -25,7 +25,8 @@ export const SharedStatus: React.FC<{
     index: number,
     addedResources: TFResource[],
     erroredResources: TFResource[],
-    globalErrors: TFResourceError[]
+    globalErrors: TFResourceError[],
+    gotDesired?: boolean
   ) => {
     if (!tfModules[index]?.resources) {
       tfModules[index].resources = [];
@@ -33,6 +34,10 @@ export const SharedStatus: React.FC<{
 
     if (!tfModules[index]?.global_errors) {
       tfModules[index].global_errors = [];
+    }
+
+    if (gotDesired) {
+      tfModules[index].got_desired = true;
     }
 
     let resources = tfModules[index].resources;
@@ -53,6 +58,12 @@ export const SharedStatus: React.FC<{
       } else {
         resources.push(addedResource);
         resourceAddrMap.set(addedResource.addr, resources.length - 1);
+
+        // if the resource is being added but there's not a desired state, re-query for the
+        // desired state
+        if (!tfModules[index].got_desired) {
+          updateDesiredState(index, tfModules[index]);
+        }
       }
     }
 
@@ -123,12 +134,17 @@ export const SharedStatus: React.FC<{
                 ? 1
                 : 0;
 
+            // if there's a global error, or the number of resources that errored_out is
+            // greater than 0, this resource is in an error state
             numModulesErrored +=
+              tfModule.global_errors?.length > 0 ||
               tfModule.resources.filter(
                 (resource) => resource.errored?.errored_out
               ).length > 0
                 ? 1
                 : 0;
+          } else if (tfModule.global_errors?.length > 0) {
+            numModulesErrored += 1;
           }
         }
       }
@@ -144,6 +160,8 @@ export const SharedStatus: React.FC<{
           hasError: true,
         });
       }
+    } else {
+      setInfraStatus(null);
     }
   }, [tfModules]);
 
@@ -240,7 +258,7 @@ export const SharedStatus: React.FC<{
       };
     });
 
-    updateTFModules(index, addedResources, [], []);
+    updateTFModules(index, addedResources, [], [], true);
   };
 
   const updateDesiredState = (index: number, val: TFModule) => {
@@ -290,8 +308,8 @@ export const SharedStatus: React.FC<{
         if (filter.length == 0) {
           matchedInfras.set(infra.kind + "-" + infra.id, infra);
         } else if (
-          (filter.includes(infra.kind) && matchedInfras.get(infra.Kind)?.id) ||
-          0 < infra.id
+          filter.includes(infra.kind) &&
+          (matchedInfras.get(infra.Kind)?.id || 0 < infra.id)
         ) {
           matchedInfras.set(infra.kind, infra);
         }
@@ -303,6 +321,7 @@ export const SharedStatus: React.FC<{
           id: infra.id,
           kind: infra.kind,
           status: infra.status,
+          got_desired: false,
           created_at: infra.created_at,
         };
 

@@ -26,6 +26,14 @@ type OAuthIntegration struct {
 
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
+
+	// (optional) an identifying email on the target identity provider.
+	// for example, for DigitalOcean this is the user's email.
+	TargetEmail string `json:"target_email,omitempty"`
+
+	// (optional) an identifying string on the target identity provider.
+	// for example, for DigitalOcean this is the target project name.
+	TargetName string `json:"target_id,omitempty"`
 }
 
 type ListOAuthResponse []*OAuthIntegration

@@ -3,7 +3,7 @@ import SelectRow from "components/form-components/SelectRow";
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import { AWSRegistryConfig } from "main/home/onboarding/types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import { useSnapshot } from "valtio";
@@ -11,6 +11,7 @@ import { OFState } from "../../../state/index";
 import IntegrationCategories from "main/home/integrations/IntegrationCategories";
 import { StateHandler } from "main/home/onboarding/state/StateHandler";
 import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
+import Loading from "components/Loading";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -35,14 +36,59 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
+const readableDate = (s: string) => {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${time} on ${date}`;
+};
+
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<AWSRegistryConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
+  const snap = useSnapshot(OFState);
   const [accessId, setAccessId] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [buttonStatus, setButtonStatus] = useState("");
   const [awsRegion, setAWSRegion] = useState("us-east-1");
+  const [showForm, setShowForm] = useState(false);
+  const [lastConnectedAccount, setLastConnectedAccount] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .getAWSIntegration("<token>", {}, { project_id: project.id })
+      .then((res) => {
+        let integrations = res.data;
+        if (!Array.isArray(integrations) || !integrations.length) {
+          setShowForm(true);
+          return;
+        }
+
+        let lastUsed = integrations.find((i) => {
+          i.id === snap.StateHandler?.connected_registry?.credentials?.id;
+        });
+
+        if (!lastUsed) {
+          setShowForm(true);
+          return;
+        }
+
+        setLastConnectedAccount(lastUsed);
+        setShowForm(false);
+      })
+      .catch((err) => {
+        setShowForm(true);
+        console.error(err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   const validate = () => {
     if (!accessId) {
@@ -82,56 +128,103 @@ export const CredentialsForm: React.FC<{
         }
       );
 
-      nextFormStep({
-        credentials: {
-          id: res.data?.id,
-        },
-      });
+      continueToNextStep(res.data?.id);
     } catch (error) {
       setButtonStatus("Something went wrong, please try again");
     }
   };
 
+  const continueToNextStep = (integration_id: number) => {
+    nextFormStep({
+      credentials: {
+        id: integration_id,
+      },
+    });
+  };
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (showForm) {
+    return (
+      <>
+        <InputRow
+          type="text"
+          value={accessId}
+          setValue={(x: string) => {
+            setAccessId(x);
+          }}
+          label="👤 AWS Access ID"
+          placeholder="ex: AKIAIOSFODNN7EXAMPLE"
+          width="100%"
+          isRequired={true}
+        />
+        <InputRow
+          type="password"
+          value={secretKey}
+          setValue={(x: string) => {
+            setSecretKey(x);
+          }}
+          label="🔒 AWS Secret Key"
+          placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+          width="100%"
+          isRequired={true}
+        />
+        <SelectRow
+          options={regionOptions}
+          width="100%"
+          scrollBuffer={true}
+          value={awsRegion}
+          dropdownMaxHeight="240px"
+          setActiveValue={(x: string) => {
+            setAWSRegion(x);
+          }}
+          label="📍 AWS Region"
+        />
+        <Br />
+        <SaveButton
+          text="Continue"
+          disabled={false}
+          onClick={submit}
+          makeFlush={true}
+          clearPosition={true}
+          status={buttonStatus}
+          statusPosition={"right"}
+        />
+      </>
+    );
+  }
+
   return (
     <>
-      <InputRow
-        type="text"
-        value={accessId}
-        setValue={(x: string) => {
-          setAccessId(x);
-        }}
-        label="👤 AWS Access ID"
-        placeholder="ex: AKIAIOSFODNN7EXAMPLE"
-        width="100%"
-        isRequired={true}
-      />
-      <InputRow
-        type="password"
-        value={secretKey}
-        setValue={(x: string) => {
-          setSecretKey(x);
-        }}
-        label="🔒 AWS Secret Key"
-        placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
-        width="100%"
-        isRequired={true}
-      />
-      <SelectRow
-        options={regionOptions}
-        width="100%"
-        scrollBuffer={true}
-        value={awsRegion}
-        dropdownMaxHeight="240px"
-        setActiveValue={(x: string) => {
-          setAWSRegion(x);
-        }}
-        label="📍 AWS Region"
-      />
+      <div>
+        Last connected account:
+        <div>
+          <b>ARN: </b>
+          {lastConnectedAccount?.aws_arn}
+        </div>
+        <div>
+          <b>Connected on:</b> {readableDate(lastConnectedAccount?.created_at)}
+        </div>
+      </div>
       <Br />
       <SaveButton
-        text="Continue"
+        text="Connect another account"
         disabled={false}
-        onClick={submit}
+        onClick={() => setShowForm(true)}
+        makeFlush={true}
+        clearPosition={true}
+        status={""}
+        statusPosition={"right"}
+      />
+      <Br />
+      <b>Or</b>
+      <Br />
+      <SaveButton
+        text="Continue with current account"
+        disabled={false}
+        onClick={() => continueToNextStep(lastConnectedAccount?.id)}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}
@@ -194,7 +287,9 @@ export const SettingsForm: React.FC<{
 
   return (
     <>
-      <Helper>Provide a name for Porter to use when displaying your registry.</Helper>
+      <Helper>
+        Provide a name for Porter to use when displaying your registry.
+      </Helper>
       <InputRow
         type="text"
         value={registryName}

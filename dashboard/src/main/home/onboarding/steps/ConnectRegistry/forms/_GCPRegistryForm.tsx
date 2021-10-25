@@ -1,23 +1,69 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import UploadArea from "components/form-components/UploadArea";
+import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
 import { OFState } from "main/home/onboarding/state";
 import { StateHandler } from "main/home/onboarding/state/StateHandler";
 import { GCPRegistryConfig } from "main/home/onboarding/types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
+
+const readableDate = (s: string) => {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${time} on ${date}`;
+};
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
+  const snap = useSnapshot(OFState);
   const [projectId, setProjectId] = useState("");
   const [serviceAccountKey, setServiceAccountKey] = useState("");
   const [buttonStatus, setButtonStatus] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [lastConnectedAccount, setLastConnectedAccount] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .getAWSIntegration("<token>", {}, { project_id: project.id })
+      .then((res) => {
+        let integrations = res.data;
+        if (!Array.isArray(integrations) || !integrations.length) {
+          setShowForm(true);
+          return;
+        }
+
+        let lastUsed = integrations.find((i) => {
+          i.id === snap.StateHandler?.connected_registry?.credentials?.id;
+        });
+
+        if (!lastUsed) {
+          setShowForm(true);
+          return;
+        }
+
+        setLastConnectedAccount(lastUsed);
+        setShowForm(false);
+      })
+      .catch((err) => {
+        setShowForm(true);
+        console.error(err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   const validate = () => {
     if (!projectId) {
@@ -63,34 +109,84 @@ export const CredentialsForm: React.FC<{
     }
   };
 
+  const continueToNextStep = (integration_id: number) => {
+    nextFormStep({
+      credentials: {
+        id: integration_id,
+      },
+    });
+  };
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (showForm) {
+    return (
+      <>
+        <InputRow
+          type="text"
+          value={projectId}
+          setValue={(x: string) => {
+            setProjectId(x);
+          }}
+          label="🏷️ GCP Project ID"
+          placeholder="ex: blindfold-ceiling-24601"
+          width="100%"
+          isRequired={true}
+        />
+
+        <Helper>Service account credentials for GCP permissions.</Helper>
+        <UploadArea
+          setValue={(x: any) => setServiceAccountKey(x)}
+          label="🔒 GCP Key Data (JSON)"
+          placeholder="Choose a file or drag it here."
+          width="100%"
+          height="100%"
+          isRequired={true}
+        />
+        <Br />
+        <SaveButton
+          text="Continue"
+          disabled={false}
+          onClick={submit}
+          makeFlush={true}
+          clearPosition={true}
+          status={buttonStatus}
+          statusPosition={"right"}
+        />
+      </>
+    );
+  }
   return (
     <>
-      <InputRow
-        type="text"
-        value={projectId}
-        setValue={(x: string) => {
-          setProjectId(x);
-        }}
-        label="🏷️ GCP Project ID"
-        placeholder="ex: blindfold-ceiling-24601"
-        width="100%"
-        isRequired={true}
-      />
-
-      <Helper>Service account credentials for GCP permissions.</Helper>
-      <UploadArea
-        setValue={(x: any) => setServiceAccountKey(x)}
-        label="🔒 GCP Key Data (JSON)"
-        placeholder="Choose a file or drag it here."
-        width="100%"
-        height="100%"
-        isRequired={true}
-      />
+      <div>
+        Last connected account:
+        <div>
+          <b>ARN: </b>
+          {lastConnectedAccount?.aws_arn}
+        </div>
+        <div>
+          <b>Connected on:</b> {readableDate(lastConnectedAccount?.created_at)}
+        </div>
+      </div>
       <Br />
       <SaveButton
-        text="Continue"
+        text="Connect another account"
         disabled={false}
-        onClick={submit}
+        onClick={() => setShowForm(true)}
+        makeFlush={true}
+        clearPosition={true}
+        status={""}
+        statusPosition={"right"}
+      />
+      <Br />
+      <b>Or</b>
+      <Br />
+      <SaveButton
+        text="Continue with current account"
+        disabled={false}
+        onClick={() => continueToNextStep(lastConnectedAccount?.id)}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}

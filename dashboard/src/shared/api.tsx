@@ -33,6 +33,27 @@ const connectGCRRegistry = baseApi<
   return `/api/projects/${pathParams.id}/registries`;
 });
 
+const connectDORegistry = baseApi<
+  {
+    name: string;
+    do_integration_id: string;
+    url: string;
+  },
+  { project_id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/registries`;
+});
+
+const getAWSIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/aws`
+);
+
+const getGCPIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/gcp`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -77,6 +98,7 @@ const createDOKS = baseApi<
     do_integration_id: number;
     doks_name: string;
     do_region: string;
+    issuer_email: string;
   },
   {
     project_id: number;
@@ -91,7 +113,6 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 
 const createGCPIntegration = baseApi<
   {
-    gcp_region: string;
     gcp_key_data: string;
     gcp_project_id: string;
   },
@@ -115,8 +136,10 @@ const createGCR = baseApi<
 
 const createGKE = baseApi<
   {
+    gcp_region: string;
     gcp_integration_id: number;
     gke_name: string;
+    issuer_email: string;
   },
   {
     project_id: number;
@@ -553,6 +576,26 @@ const getInfra = baseApi<
   return `/api/projects/${pathParams.project_id}/infra`;
 });
 
+const getInfraDesired = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/desired`;
+});
+
+const getInfraCurrent = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/current`;
+});
+
 const getIngress = baseApi<
   {},
   { namespace: string; cluster_id: number; name: string; id: number }
@@ -795,7 +838,7 @@ const logOutUser = baseApi("POST", "/api/logout");
 const provisionECR = baseApi<
   {
     ecr_name: string;
-    aws_integration_id: string;
+    aws_integration_id: number;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -805,8 +848,9 @@ const provisionECR = baseApi<
 const provisionEKS = baseApi<
   {
     eks_name: string;
-    aws_integration_id: string;
+    aws_integration_id: number;
     machine_type: string;
+    issuer_email: string;
   },
   { id: number }
 >("POST", (pathParams) => {
@@ -1060,11 +1104,42 @@ const getHasBilling = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/billing`
 );
 
+const getOnboardingState = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/onboarding`
+);
+
+const saveOnboardingState = baseApi<{}, { project_id: number }>(
+  "POST",
+  ({ project_id }) => `/api/projects/${project_id}/onboarding`
+);
+
+const getOnboardingInfra = baseApi<
+  {},
+  { project_id: number; registry_infra_id: number }
+>(
+  "GET",
+  ({ project_id, registry_infra_id }) =>
+    `/api/projects/${project_id}/infras/${registry_infra_id}`
+);
+
+const getOnboardingRegistry = baseApi<
+  {},
+  { project_id: number; registry_connection_id: number }
+>(
+  "GET",
+  ({ project_id, registry_connection_id }) =>
+    `/api/projects/${project_id}/registries/${registry_connection_id}`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
   connectECRRegistry,
   connectGCRRegistry,
+  connectDORegistry,
+  getAWSIntegration,
+  getGCPIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
   createDOCR,
@@ -1115,6 +1190,8 @@ export default {
   getImageRepos,
   getImageTags,
   getInfra,
+  getInfraDesired,
+  getInfraCurrent,
   getIngress,
   getInvites,
   getJobs,
@@ -1168,4 +1245,8 @@ export default {
   getUsage,
   getCustomerToken,
   getHasBilling,
+  getOnboardingState,
+  saveOnboardingState,
+  getOnboardingInfra,
+  getOnboardingRegistry,
 };

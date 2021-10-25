@@ -100,7 +100,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
             namespace={this.state.namespace}
             sortType={this.state.sortType}
             setExpandedEnvGroup={(envGroup: any) => {
-              this.setState({ expandedEnvGroup: envGroup })
+              this.setState({ expandedEnvGroup: envGroup });
             }}
           />
         </>
@@ -112,7 +112,10 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
     if (this.state.expandedEnvGroup) {
       return (
         <ExpandedEnvGroup
-          namespace={this.state.expandedEnvGroup?.metadata?.namespace || this.state.namespace}
+          namespace={
+            this.state.expandedEnvGroup?.metadata?.namespace ||
+            this.state.namespace
+          }
           currentCluster={this.props.currentCluster}
           envGroup={this.state.expandedEnvGroup}
           closeExpanded={() => this.setState({ expandedEnvGroup: null })}

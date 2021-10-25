@@ -16,6 +16,9 @@ type Props = {
   makeFlush?: boolean;
   clearPosition?: boolean;
   statusPosition?: "right" | "left";
+  // Provide the classname to modify styles from other components
+  className?: string;
+  successText?: string;
 };
 
 const SaveButton: React.FC<Props> = (props) => {
@@ -25,7 +28,9 @@ const SaveButton: React.FC<Props> = (props) => {
         return (
           <StatusWrapper position={props.statusPosition} successful={true}>
             <i className="material-icons">done</i>
-            <StatusTextWrapper>Successfully updated</StatusTextWrapper>
+            <StatusTextWrapper>
+              {props?.successText || "Successfully updated"}
+            </StatusTextWrapper>
           </StatusWrapper>
         );
       } else if (props.status === "loading") {
@@ -65,6 +70,7 @@ const SaveButton: React.FC<Props> = (props) => {
     <ButtonWrapper
       makeFlush={props.makeFlush}
       clearPosition={props.clearPosition}
+      className={props.className}
     >
       {props.statusPosition !== "right" && <div>{renderStatus()}</div>}
       <Button

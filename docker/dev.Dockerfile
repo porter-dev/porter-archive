@@ -10,8 +10,7 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -ldflags '-w -s' -a -o ./bin/migrate ./cmd/migrate \
-    && chmod +x /porter/docker/bin/*
+RUN chmod +x /porter/docker/bin/*
 
 # for live reloading of go container
 RUN go get github.com/cosmtrek/air

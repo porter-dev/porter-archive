@@ -138,6 +138,62 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/onboarding -> project.NewProjectGetOnboardingHandler
+	getOnboardingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/onboarding",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getOnboardingHandler := project.NewOnboardingGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getOnboardingEndpoint,
+		Handler:  getOnboardingHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/onboarding -> project.NewProjectGetOnboardingHandler
+	updateOnboardingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/onboarding",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	updateOnboardingHandler := project.NewOnboardingUpdateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateOnboardingEndpoint,
+		Handler:  updateOnboardingHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/usage -> project.NewProjectGetUsageHandler
 	getUsageEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

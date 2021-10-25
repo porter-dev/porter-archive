@@ -79,6 +79,33 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/integrations/do -> project_integration.NewListDOHandler
+	listDOEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/do",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listDOHandler := project_integration.NewListDOHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listDOEndpoint,
+		Handler:  listDOHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/integrations/basic -> project_integration.NewCreateBasicHandler
 	createBasicEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -135,6 +162,33 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/integrations/aws -> project_integration.NewListAWSHandler
+	listAWSEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/aws",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listAWSHandler := project_integration.NewListAWSHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listAWSEndpoint,
+		Handler:  listAWSHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/integrations/aws/overwrite -> project_integration.NewOverwriteAWSHandler
 	overwriteAWSEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -188,6 +242,33 @@ func getProjectIntegrationRoutes(
 	routes = append(routes, &Route{
 		Endpoint: createGCPEndpoint,
 		Handler:  createGCPHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gcp -> project_integration.NewListGCPHandler
+	listGCPEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gcp",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGCPHandler := project_integration.NewListGCPHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGCPEndpoint,
+		Handler:  listGCPHandler,
 		Router:   r,
 	})
 

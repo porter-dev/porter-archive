@@ -11,6 +11,7 @@ type PropsType = {
   dropdownLabel?: string;
   width?: string;
   dropdownMaxHeight?: string;
+  scrollBuffer?: boolean;
 };
 
 type StateType = {};
@@ -22,6 +23,7 @@ export default class SelectRow extends Component<PropsType, StateType> {
         <Label>{this.props.label}</Label>
         <SelectWrapper>
           <Selector
+            scrollBuffer={this.props.scrollBuffer}
             activeValue={this.props.value}
             setActiveValue={this.props.setActiveValue}
             options={this.props.options}
@@ -41,6 +43,7 @@ const SelectWrapper = styled.div``;
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
+  font-size: 13px;
 `;
 
 const StyledSelectRow = styled.div`

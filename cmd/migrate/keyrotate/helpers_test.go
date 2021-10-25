@@ -67,6 +67,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.ClusterResolver{},
 		&models.Infra{},
 		&models.GitActionConfig{},
+		&models.Onboarding{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -92,7 +93,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 	tester.Key = &key
 	tester.DB = db
 
-	tester.repo = gorm.NewRepository(db, &key)
+	tester.repo = gorm.NewRepository(db, &key, nil)
 }
 
 func cleanup(tester *tester, t *testing.T) {

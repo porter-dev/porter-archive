@@ -90,7 +90,7 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(w http.ResponseWriter, r *ht
 
 	// need state parameter to validate when redirected
 	session.Values["state"] = state
-	session.Values["query_params"] = r.URL.RawQuery
+	session.Values["redirect_uri"] = r.URL.Query().Get("redirect_uri")
 
 	if isProject {
 		project, _ := r.Context().Value(types.ProjectScope).(*models.Project)

@@ -106,12 +106,8 @@ func GlobalStreamListener(
 
 		// parse messages from the global stream
 		for _, msg := range xstreams[0].Messages {
-			fmt.Println("GOT REDIS GLOBAL MSG", msg, msg.Values["id"], msg.Values["status"])
-
 			// parse the id to identify the infra
 			kind, projID, infraID, err := models.ParseUniqueName(fmt.Sprintf("%v", msg.Values["id"]))
-
-			fmt.Println("PARSED DATA IS", kind, projID, infraID, err)
 
 			if fmt.Sprintf("%v", msg.Values["status"]) == "created" {
 				infra, err := repo.Infra().ReadInfra(projID, infraID)

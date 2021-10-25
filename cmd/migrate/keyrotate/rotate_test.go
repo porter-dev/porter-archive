@@ -471,7 +471,7 @@ func TestOAuthIntegrationModelRotation(t *testing.T) {
 	}
 
 	// very all oauths decoded properly
-	repo := gorm.NewOAuthIntegrationRepository(tester.DB, &newKey).(*gorm.OAuthIntegrationRepository)
+	repo := gorm.NewOAuthIntegrationRepository(tester.DB, &newKey, nil).(*gorm.OAuthIntegrationRepository)
 
 	oauths := []*ints.OAuthIntegration{}
 
@@ -527,7 +527,7 @@ func TestGCPIntegrationModelRotation(t *testing.T) {
 	}
 
 	// very all gcps decoded properly
-	repo := gorm.NewGCPIntegrationRepository(tester.DB, &newKey).(*gorm.GCPIntegrationRepository)
+	repo := gorm.NewGCPIntegrationRepository(tester.DB, &newKey, nil).(*gorm.GCPIntegrationRepository)
 
 	gcps := []*ints.GCPIntegration{}
 
@@ -575,7 +575,7 @@ func TestAWSIntegrationModelRotation(t *testing.T) {
 	}
 
 	// very all awss decoded properly
-	repo := gorm.NewAWSIntegrationRepository(tester.DB, &newKey).(*gorm.AWSIntegrationRepository)
+	repo := gorm.NewAWSIntegrationRepository(tester.DB, &newKey, nil).(*gorm.AWSIntegrationRepository)
 
 	awss := []*ints.AWSIntegration{}
 

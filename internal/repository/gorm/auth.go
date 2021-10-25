@@ -3,6 +3,7 @@ package gorm
 import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/credentials"
 	"gorm.io/gorm"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
@@ -81,10 +82,6 @@ func (repo *KubeIntegrationRepository) ListKubeIntegrationsByProjectID(
 
 	if err := repo.db.Where("project_id = ?", projectID).Find(&kis).Error; err != nil {
 		return nil, err
-	}
-
-	for _, ki := range kis {
-		repo.DecryptKubeIntegrationData(ki, repo.key)
 	}
 
 	return kis, nil
@@ -303,10 +300,6 @@ func (repo *BasicIntegrationRepository) ListBasicIntegrationsByProjectID(
 		return nil, err
 	}
 
-	for _, basic := range basics {
-		repo.DecryptBasicIntegrationData(basic, repo.key)
-	}
-
 	return basics, nil
 }
 
@@ -441,10 +434,6 @@ func (repo *OIDCIntegrationRepository) ListOIDCIntegrationsByProjectID(
 
 	if err := repo.db.Where("project_id = ?", projectID).Find(&oidcs).Error; err != nil {
 		return nil, err
-	}
-
-	for _, oidc := range oidcs {
-		repo.DecryptOIDCIntegrationData(oidc, repo.key)
 	}
 
 	return oidcs, nil
@@ -590,8 +579,9 @@ func (repo *OIDCIntegrationRepository) DecryptOIDCIntegrationData(
 
 // OAuthIntegrationRepository uses gorm.DB for querying the database
 type OAuthIntegrationRepository struct {
-	db  *gorm.DB
-	key *[32]byte
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
 }
 
 // NewOAuthIntegrationRepository returns a OAuthIntegrationRepository which uses
@@ -600,8 +590,9 @@ type OAuthIntegrationRepository struct {
 func NewOAuthIntegrationRepository(
 	db *gorm.DB,
 	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
 ) repository.OAuthIntegrationRepository {
-	return &OAuthIntegrationRepository{db, key}
+	return &OAuthIntegrationRepository{db, key, storageBackend}
 }
 
 // CreateOAuthIntegration creates a new oauth auth mechanism
@@ -612,6 +603,19 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 
 	if err != nil {
 		return nil, err
+	}
+
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.OAuthCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.AccessToken = am.AccessToken
+		credentialData.RefreshToken = am.RefreshToken
+		credentialData.ClientID = am.ClientID
+		am.AccessToken = []byte{}
+		am.RefreshToken = []byte{}
+		am.ClientID = []byte{}
 	}
 
 	project := &models.Project{}
@@ -630,6 +634,14 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 		return nil, err
 	}
 
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteOAuthCredential(am, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return am, nil
 }
 
@@ -641,6 +653,18 @@ func (repo *OAuthIntegrationRepository) ReadOAuthIntegration(
 
 	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&oauth).Error; err != nil {
 		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		credentialData, err := repo.storageBackend.GetOAuthCredential(oauth)
+
+		if err != nil {
+			return nil, err
+		}
+
+		oauth.AccessToken = credentialData.AccessToken
+		oauth.RefreshToken = credentialData.RefreshToken
+		oauth.ClientID = credentialData.ClientID
 	}
 
 	err := repo.DecryptOAuthIntegrationData(oauth, repo.key)
@@ -663,10 +687,6 @@ func (repo *OAuthIntegrationRepository) ListOAuthIntegrationsByProjectID(
 		return nil, err
 	}
 
-	for _, oauth := range oauths {
-		repo.DecryptOAuthIntegrationData(oauth, repo.key)
-	}
-
 	return oauths, nil
 }
 
@@ -680,6 +700,19 @@ func (repo *OAuthIntegrationRepository) UpdateOAuthIntegration(
 		return nil, err
 	}
 
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.OAuthCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.AccessToken = am.AccessToken
+		credentialData.RefreshToken = am.RefreshToken
+		credentialData.ClientID = am.ClientID
+		am.AccessToken = []byte{}
+		am.RefreshToken = []byte{}
+		am.ClientID = []byte{}
+	}
+
 	if err := repo.db.Save(am).Error; err != nil {
 		return nil, err
 	}
@@ -688,6 +721,14 @@ func (repo *OAuthIntegrationRepository) UpdateOAuthIntegration(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteOAuthCredential(am, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return am, nil
@@ -773,8 +814,9 @@ func (repo *OAuthIntegrationRepository) DecryptOAuthIntegrationData(
 
 // GCPIntegrationRepository uses gorm.DB for querying the database
 type GCPIntegrationRepository struct {
-	db  *gorm.DB
-	key *[32]byte
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
 }
 
 // NewGCPIntegrationRepository returns a GCPIntegrationRepository which uses
@@ -783,8 +825,9 @@ type GCPIntegrationRepository struct {
 func NewGCPIntegrationRepository(
 	db *gorm.DB,
 	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
 ) repository.GCPIntegrationRepository {
-	return &GCPIntegrationRepository{db, key}
+	return &GCPIntegrationRepository{db, key, storageBackend}
 }
 
 // CreateGCPIntegration creates a new gcp auth mechanism
@@ -795,6 +838,15 @@ func (repo *GCPIntegrationRepository) CreateGCPIntegration(
 
 	if err != nil {
 		return nil, err
+	}
+
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.GCPCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.GCPKeyData = am.GCPKeyData
+		am.GCPKeyData = []byte{}
 	}
 
 	project := &models.Project{}
@@ -813,6 +865,14 @@ func (repo *GCPIntegrationRepository) CreateGCPIntegration(
 		return nil, err
 	}
 
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteGCPCredential(am, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return am, nil
 }
 
@@ -824,6 +884,16 @@ func (repo *GCPIntegrationRepository) ReadGCPIntegration(
 
 	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&gcp).Error; err != nil {
 		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		credentialData, err := repo.storageBackend.GetGCPCredential(gcp)
+
+		if err != nil {
+			return nil, err
+		}
+
+		gcp.GCPKeyData = credentialData.GCPKeyData
 	}
 
 	err := repo.DecryptGCPIntegrationData(gcp, repo.key)
@@ -844,10 +914,6 @@ func (repo *GCPIntegrationRepository) ListGCPIntegrationsByProjectID(
 
 	if err := repo.db.Where("project_id = ?", projectID).Find(&gcps).Error; err != nil {
 		return nil, err
-	}
-
-	for _, gcp := range gcps {
-		repo.DecryptGCPIntegrationData(gcp, repo.key)
 	}
 
 	return gcps, nil
@@ -893,8 +959,9 @@ func (repo *GCPIntegrationRepository) DecryptGCPIntegrationData(
 
 // AWSIntegrationRepository uses gorm.DB for querying the database
 type AWSIntegrationRepository struct {
-	db  *gorm.DB
-	key *[32]byte
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
 }
 
 // NewAWSIntegrationRepository returns a AWSIntegrationRepository which uses
@@ -903,8 +970,9 @@ type AWSIntegrationRepository struct {
 func NewAWSIntegrationRepository(
 	db *gorm.DB,
 	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
 ) repository.AWSIntegrationRepository {
-	return &AWSIntegrationRepository{db, key}
+	return &AWSIntegrationRepository{db, key, storageBackend}
 }
 
 // CreateAWSIntegration creates a new aws auth mechanism
@@ -915,6 +983,21 @@ func (repo *AWSIntegrationRepository) CreateAWSIntegration(
 
 	if err != nil {
 		return nil, err
+	}
+
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.AWSCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.AWSAccessKeyID = am.AWSAccessKeyID
+		credentialData.AWSClusterID = am.AWSClusterID
+		credentialData.AWSSecretAccessKey = am.AWSSecretAccessKey
+		credentialData.AWSSessionToken = am.AWSSessionToken
+		am.AWSAccessKeyID = []byte{}
+		am.AWSClusterID = []byte{}
+		am.AWSSecretAccessKey = []byte{}
+		am.AWSSessionToken = []byte{}
 	}
 
 	project := &models.Project{}
@@ -933,6 +1016,14 @@ func (repo *AWSIntegrationRepository) CreateAWSIntegration(
 		return nil, err
 	}
 
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteAWSCredential(am, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return am, nil
 }
 
@@ -946,8 +1037,31 @@ func (repo *AWSIntegrationRepository) OverwriteAWSIntegration(
 		return nil, err
 	}
 
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.AWSCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.AWSAccessKeyID = am.AWSAccessKeyID
+		credentialData.AWSClusterID = am.AWSClusterID
+		credentialData.AWSSecretAccessKey = am.AWSSecretAccessKey
+		credentialData.AWSSessionToken = am.AWSSessionToken
+		am.AWSAccessKeyID = []byte{}
+		am.AWSClusterID = []byte{}
+		am.AWSSecretAccessKey = []byte{}
+		am.AWSSessionToken = []byte{}
+	}
+
 	if err := repo.db.Save(am).Error; err != nil {
 		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteAWSCredential(am, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return am, nil
@@ -961,6 +1075,19 @@ func (repo *AWSIntegrationRepository) ReadAWSIntegration(
 
 	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&aws).Error; err != nil {
 		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		credentialData, err := repo.storageBackend.GetAWSCredential(aws)
+
+		if err != nil {
+			return nil, err
+		}
+
+		aws.AWSAccessKeyID = credentialData.AWSAccessKeyID
+		aws.AWSClusterID = credentialData.AWSClusterID
+		aws.AWSSecretAccessKey = credentialData.AWSSecretAccessKey
+		aws.AWSSessionToken = credentialData.AWSSessionToken
 	}
 
 	err := repo.DecryptAWSIntegrationData(aws, repo.key)
@@ -981,10 +1108,6 @@ func (repo *AWSIntegrationRepository) ListAWSIntegrationsByProjectID(
 
 	if err := repo.db.Where("project_id = ?", projectID).Find(&awss).Error; err != nil {
 		return nil, err
-	}
-
-	for _, aws := range awss {
-		repo.DecryptAWSIntegrationData(aws, repo.key)
 	}
 
 	return awss, nil

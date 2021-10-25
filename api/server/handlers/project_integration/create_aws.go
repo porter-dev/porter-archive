@@ -53,7 +53,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateAWSIntegration(request *types.CreateAWSRequest, projectID, userID uint) *ints.AWSIntegration {
-	return &ints.AWSIntegration{
+	resp := &ints.AWSIntegration{
 		UserID:             userID,
 		ProjectID:          projectID,
 		AWSRegion:          request.AWSRegion,
@@ -61,4 +61,9 @@ func CreateAWSIntegration(request *types.CreateAWSRequest, projectID, userID uin
 		AWSAccessKeyID:     []byte(request.AWSAccessKeyID),
 		AWSSecretAccessKey: []byte(request.AWSSecretAccessKey),
 	}
+
+	// attempt to populate the ARN
+	resp.PopulateAWSArn()
+
+	return resp
 }

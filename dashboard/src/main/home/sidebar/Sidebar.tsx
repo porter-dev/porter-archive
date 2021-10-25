@@ -267,17 +267,21 @@ class Sidebar extends Component<PropsType, StateType> {
 
           <br />
 
-          <SidebarLabel>Current Cluster</SidebarLabel>
-          <ClusterSection
-            forceCloseDrawer={this.state.forceCloseDrawer}
-            releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
-            setWelcome={this.props.setWelcome}
-            currentView={currentView}
-            isSelected={false}
-            forceRefreshClusters={this.props.forceRefreshClusters}
-            setRefreshClusters={this.props.setRefreshClusters}
-          />
-          {this.renderClusterContent()}
+          {this.context.hasFinishedOnboarding && (
+            <>
+              <SidebarLabel>Current Cluster</SidebarLabel>
+              <ClusterSection
+                forceCloseDrawer={this.state.forceCloseDrawer}
+                releaseDrawer={() => this.setState({ forceCloseDrawer: false })}
+                setWelcome={this.props.setWelcome}
+                currentView={currentView}
+                isSelected={false}
+                forceRefreshClusters={this.props.forceRefreshClusters}
+                setRefreshClusters={this.props.setRefreshClusters}
+              />
+              {this.renderClusterContent()}
+            </>
+          )}
         </>
       );
     }

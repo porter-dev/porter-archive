@@ -23,6 +23,19 @@ type Registry struct {
 
 	// The infra id, if registry was provisioned with Porter
 	InfraID uint `json:"infra_id"`
+
+	// The AWS integration that was used to create or connect the registry
+	AWSIntegrationID uint `json:"aws_integration_id,omitempty"`
+
+	// The GCP integration that was used to create or connect the registry
+	GCPIntegrationID uint `json:"gcp_integration_id,omitempty"`
+
+	// The DO integration that was used to create or connect the registry:
+	// this points to an OAuthIntegrationID
+	DOIntegrationID uint `json:"do_integration_id,omitempty"`
+
+	// The basic integration that was used to connect the registry:
+	BasicIntegrationID uint `json:"basic_integration_id,omitempty"`
 }
 
 // Repository is a collection of images

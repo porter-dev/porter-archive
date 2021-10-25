@@ -160,7 +160,12 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
-        let object = event.Object;
+        let object = event?.Object;
+
+        if (!object?.metadata?.kind) {
+          return;
+        }
+
         object.metadata.kind = event.Kind;
 
         setControllers((oldControllers) => ({

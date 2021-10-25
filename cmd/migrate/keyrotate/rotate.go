@@ -574,7 +574,7 @@ func rotateOAuthIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	}
 
 	// cluster-scoped repository
-	repo := gorm.NewOAuthIntegrationRepository(db, oldKey).(*gorm.OAuthIntegrationRepository)
+	repo := gorm.NewOAuthIntegrationRepository(db, oldKey, nil).(*gorm.OAuthIntegrationRepository)
 
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
@@ -629,7 +629,7 @@ func rotateGCPIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	}
 
 	// cluster-scoped repository
-	repo := gorm.NewGCPIntegrationRepository(db, oldKey).(*gorm.GCPIntegrationRepository)
+	repo := gorm.NewGCPIntegrationRepository(db, oldKey, nil).(*gorm.GCPIntegrationRepository)
 
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {
@@ -682,7 +682,7 @@ func rotateAWSIntegrationModel(db *_gorm.DB, oldKey, newKey *[32]byte) error {
 	}
 
 	// cluster-scoped repository
-	repo := gorm.NewAWSIntegrationRepository(db, oldKey).(*gorm.AWSIntegrationRepository)
+	repo := gorm.NewAWSIntegrationRepository(db, oldKey, nil).(*gorm.AWSIntegrationRepository)
 
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {

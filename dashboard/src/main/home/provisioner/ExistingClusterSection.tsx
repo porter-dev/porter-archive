@@ -24,39 +24,14 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
     buttonStatus: "",
   };
 
-  onCreateProject = () => {
+  onSkip = () => {
     this.props?.trackOnSave();
-    let { projectName } = this.props;
-    let { user, setProjects, setCurrentProject } = this.context;
 
     this.setState({ buttonStatus: "loading" });
-    api
-      .createProject("<token>", { name: projectName }, {})
-      .then((res) =>
-        api.getProjects(
-          "<token>",
-          {},
-          {
-            id: user.userId,
-          }
-        )
-      )
-      .then((res) => {
-        if (res.data) {
-          setProjects(res.data);
-          if (res.data.length > 0) {
-            let proj = res.data.find((el: ProjectType) => {
-              return el.name === projectName;
-            });
-            setCurrentProject(proj, () =>
-              pushFiltered(this.props, "/dashboard", ["project_id"], {
-                tab: "overview",
-              })
-            );
-          }
-        }
-      })
-      .catch(console.log);
+
+    pushFiltered(this.props, "/dashboard", ["project_id"], {
+      tab: "overview",
+    });
   };
 
   render() {
@@ -72,7 +47,7 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
         <SaveButton
           text="Submit"
           disabled={!isAlphanumeric(projectName)}
-          onClick={this.onCreateProject}
+          onClick={this.onSkip}
           status={buttonStatus}
           makeFlush={true}
           helper="Note: Provisioning can take up to 15 minutes"

@@ -1,3 +1,5 @@
+// +build ee
+
 package usage
 
 import (
@@ -6,6 +8,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -14,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 
+	"github.com/porter-dev/porter/internal/repository/credentials"
 	rgorm "github.com/porter-dev/porter/internal/repository/gorm"
 )
 
@@ -42,13 +46,23 @@ func NewUsageTracker(opts *UsageTrackerOpts) (*UsageTracker, error) {
 		return nil, err
 	}
 
+	var credBackend credentials.CredentialStorage
+
+	if opts.DBConf.VaultAPIKey != "" && opts.DBConf.VaultServerURL != "" && opts.DBConf.VaultPrefix != "" {
+		credBackend = vault.NewClient(
+			opts.DBConf.VaultServerURL,
+			opts.DBConf.VaultAPIKey,
+			opts.DBConf.VaultPrefix,
+		)
+	}
+
 	var key [32]byte
 
 	for i, b := range []byte(opts.DBConf.EncryptionKey) {
 		key[i] = b
 	}
 
-	repo := rgorm.NewRepository(db, &key)
+	repo := rgorm.NewRepository(db, &key, credBackend)
 
 	doConf := oauth.NewDigitalOceanClient(&oauth.Config{
 		ClientID:     opts.DOClientID,

@@ -60,6 +60,10 @@ func main() {
 			logger.Fatal().Err(err).Msg("key rotation failed")
 		}
 	}
+
+	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
+		logger.Fatal().Err(err).Msg("vault migration failed")
+	}
 }
 
 type RotateConf struct {

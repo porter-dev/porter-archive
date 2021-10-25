@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -51,11 +52,82 @@ type Infra struct {
 // ToInfraType generates an external Infra to be shared over REST
 func (i *Infra) ToInfraType() *types.Infra {
 	return &types.Infra{
-		ID:        i.ID,
-		ProjectID: i.ProjectID,
-		Kind:      i.Kind,
-		Status:    i.Status,
+		ID:               i.ID,
+		CreatedAt:        i.CreatedAt,
+		UpdatedAt:        i.UpdatedAt,
+		ProjectID:        i.ProjectID,
+		Kind:             i.Kind,
+		Status:           i.Status,
+		AWSIntegrationID: i.AWSIntegrationID,
+		DOIntegrationID:  i.DOIntegrationID,
+		GCPIntegrationID: i.GCPIntegrationID,
+		LastApplied:      i.SafelyGetLastApplied(),
 	}
+}
+
+// SafeGetLastApplied gets non-sensitive values for the last applied configuration
+func (i *Infra) SafelyGetLastApplied() map[string]string {
+	resp := make(map[string]string)
+
+	switch i.Kind {
+	case types.InfraECR:
+		lastApplied := &types.CreateECRInfraRequest{}
+
+		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
+			return resp
+		}
+
+		resp["ecr_name"] = lastApplied.ECRName
+
+		return resp
+	case types.InfraEKS:
+		lastApplied := &types.CreateEKSInfraRequest{}
+
+		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
+			return resp
+		}
+
+		resp["eks_name"] = lastApplied.EKSName
+		resp["machine_type"] = lastApplied.MachineType
+
+		return resp
+	case types.InfraGCR:
+		return resp
+	case types.InfraGKE:
+		lastApplied := &types.CreateGKEInfraRequest{}
+
+		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
+			return resp
+		}
+
+		resp["gke_name"] = lastApplied.GKEName
+
+		return resp
+	case types.InfraDOCR:
+		lastApplied := &types.CreateDOCRInfraRequest{}
+
+		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
+			return resp
+		}
+
+		resp["docr_name"] = lastApplied.DOCRName
+		resp["docr_subscription_tier"] = lastApplied.DOCRSubscriptionTier
+
+		return resp
+	case types.InfraDOKS:
+		lastApplied := &types.CreateDOKSInfraRequest{}
+
+		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
+			return resp
+		}
+
+		resp["cluster_name"] = lastApplied.DOKSName
+		resp["do_region"] = lastApplied.DORegion
+
+		return resp
+	}
+
+	return resp
 }
 
 // GetID returns the unique id for this infra

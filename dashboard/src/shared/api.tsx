@@ -49,6 +49,11 @@ const getAWSIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/aws`
 );
 
+const getGCPIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/gcp`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -1134,6 +1139,7 @@ export default {
   connectGCRRegistry,
   connectDORegistry,
   getAWSIntegration,
+  getGCPIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
   createDOCR,

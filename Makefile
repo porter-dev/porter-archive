@@ -4,6 +4,9 @@ VERSION ?= dev
 start-dev: install setup-env-files
 	bash ./scripts/dev-environment/StartDevServer.sh
 
+run-migrate-dev: install setup-env-files
+	bash ./scripts/dev-environment/RunMigrateDev.sh
+
 install: 
 	bash ./scripts/dev-environment/SetupEnvironment.sh
 

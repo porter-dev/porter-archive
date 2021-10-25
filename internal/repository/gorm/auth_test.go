@@ -81,13 +81,16 @@ func TestListKubeIntegrationsByProjectID(t *testing.T) {
 		Mechanism:  ints.KubeLocal,
 		ProjectID:  tester.initProjects[0].ID,
 		UserID:     tester.initUsers[0].ID,
-		Kubeconfig: []byte("current-context: testing\n"),
+		Kubeconfig: []byte(""),
 	}
 
 	ki := kis[0]
 
 	// reset fields for reflect.DeepEqual
 	ki.Model = orm.Model{}
+
+	// list methods don't decrypt, so don't check those
+	ki.Kubeconfig = []byte("")
 
 	if diff := deep.Equal(expKI, *ki); diff != nil {
 		t.Errorf("incorrect kube integration")
@@ -166,14 +169,18 @@ func TestListBasicIntegrationsByProjectID(t *testing.T) {
 	expBasic := ints.BasicIntegration{
 		ProjectID: tester.initProjects[0].ID,
 		UserID:    tester.initUsers[0].ID,
-		Username:  []byte("username"),
-		Password:  []byte("password"),
+		Username:  []byte(""),
+		Password:  []byte(""),
 	}
 
 	basic := basics[0]
 
 	// reset fields for reflect.DeepEqual
 	basic.Model = orm.Model{}
+
+	// list methods don't decrypt, so don't check those
+	basic.Username = []byte("")
+	basic.Password = []byte("")
 
 	if diff := deep.Equal(expBasic, *basic); diff != nil {
 		t.Errorf("incorrect basic integration")
@@ -257,17 +264,24 @@ func TestListOIDCIntegrationsByProjectID(t *testing.T) {
 		Client:       ints.OIDCKube,
 		ProjectID:    tester.initProjects[0].ID,
 		UserID:       tester.initUsers[0].ID,
-		IssuerURL:    []byte("https://oidc.example.com"),
-		ClientID:     []byte("exampleclientid"),
-		ClientSecret: []byte("exampleclientsecret"),
-		IDToken:      []byte("idtoken"),
-		RefreshToken: []byte("refreshtoken"),
+		IssuerURL:    []byte(""),
+		ClientID:     []byte(""),
+		ClientSecret: []byte(""),
+		IDToken:      []byte(""),
+		RefreshToken: []byte(""),
 	}
 
 	oidc := oidcs[0]
 
 	// reset fields for reflect.DeepEqual
 	oidc.Model = orm.Model{}
+
+	// list methods don't decrypt, so don't check those
+	oidc.IssuerURL = []byte("")
+	oidc.ClientID = []byte("")
+	oidc.ClientSecret = []byte("")
+	oidc.IDToken = []byte("")
+	oidc.RefreshToken = []byte("")
 
 	if diff := deep.Equal(expOIDC, *oidc); diff != nil {
 		t.Errorf("incorrect oidc integration")
@@ -349,9 +363,9 @@ func TestListOAuthIntegrationsByProjectID(t *testing.T) {
 	// make sure data is correct
 	expOAuth := ints.OAuthIntegration{
 		SharedOAuthModel: ints.SharedOAuthModel{
-			ClientID:     []byte("exampleclientid"),
-			AccessToken:  []byte("idtoken"),
-			RefreshToken: []byte("refreshtoken"),
+			ClientID:     []byte(""),
+			AccessToken:  []byte(""),
+			RefreshToken: []byte(""),
 		},
 		Client:    types.OAuthGithub,
 		ProjectID: tester.initProjects[0].ID,
@@ -362,6 +376,11 @@ func TestListOAuthIntegrationsByProjectID(t *testing.T) {
 
 	// reset fields for reflect.DeepEqual
 	oauth.Model = orm.Model{}
+
+	// list methods don't decrypt, so don't check those
+	oauth.SharedOAuthModel.ClientID = []byte("")
+	oauth.SharedOAuthModel.AccessToken = []byte("")
+	oauth.SharedOAuthModel.RefreshToken = []byte("")
 
 	if diff := deep.Equal(expOAuth, *oauth); diff != nil {
 		t.Errorf("incorrect oauth integration")
@@ -443,13 +462,16 @@ func TestListGCPIntegrationsByProjectID(t *testing.T) {
 		UserID:       tester.initUsers[0].ID,
 		GCPProjectID: "test-proj-123456",
 		GCPUserEmail: "test@test.it",
-		GCPKeyData:   []byte("{\"test\":\"key\"}"),
+		GCPKeyData:   []byte(""),
 	}
 
 	gcp := gcps[0]
 
 	// reset fields for reflect.DeepEqual
 	gcp.Model = orm.Model{}
+
+	// list methods don't decrypt, so don't check those
+	gcp.GCPKeyData = []byte("")
 
 	if diff := deep.Equal(expGCP, *gcp); diff != nil {
 		t.Errorf("incorrect gcp integration")
@@ -581,16 +603,22 @@ func TestListAWSIntegrationsByProjectID(t *testing.T) {
 	expAWS := ints.AWSIntegration{
 		ProjectID:          tester.initProjects[0].ID,
 		UserID:             tester.initUsers[0].ID,
-		AWSClusterID:       []byte("example-cluster-0"),
-		AWSAccessKeyID:     []byte("accesskey"),
-		AWSSecretAccessKey: []byte("secret"),
-		AWSSessionToken:    []byte("optional"),
+		AWSClusterID:       []byte(""),
+		AWSAccessKeyID:     []byte(""),
+		AWSSecretAccessKey: []byte(""),
+		AWSSessionToken:    []byte(""),
 	}
 
 	aws := awss[0]
 
 	// reset fields for reflect.DeepEqual
 	aws.Model = orm.Model{}
+
+	// list methods don't decrypt, so don't check those
+	aws.AWSClusterID = []byte("")
+	aws.AWSAccessKeyID = []byte("")
+	aws.AWSSecretAccessKey = []byte("")
+	aws.AWSSessionToken = []byte("")
 
 	if diff := deep.Equal(expAWS, *aws); diff != nil {
 		t.Errorf("incorrect aws integration")

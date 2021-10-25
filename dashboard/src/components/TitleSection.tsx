@@ -6,6 +6,7 @@ interface Props {
   icon?: any;
   iconWidth?: string;
   capitalize?: boolean;
+  className?: string;
   handleNavBack?: () => void;
 }
 
@@ -15,9 +16,10 @@ const TitleSection: React.FC<Props> = ({
   iconWidth,
   capitalize,
   handleNavBack,
+  className,
 }) => {
   return (
-    <StyledTitleSection>
+    <StyledTitleSection className={className}>
       {handleNavBack && (
         <BackButton>
           <i className="material-icons" onClick={handleNavBack}>
@@ -36,8 +38,8 @@ export default TitleSection;
 const BackButton = styled.div`
   > i {
     cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
+    font-size: 24px;
+    color: #969fbbaa;
     margin-right: 10px;
     padding: 3px;
     margin-left: 0px;

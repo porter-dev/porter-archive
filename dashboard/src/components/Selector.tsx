@@ -5,7 +5,7 @@ import { Context } from "shared/Context";
 type PropsType = {
   activeValue: string;
   refreshOptions?: () => void;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; icon?: any }[];
   addButton?: boolean;
   setActiveValue: (x: string) => void;
   width: string;
@@ -14,6 +14,8 @@ type PropsType = {
   dropdownWidth?: string;
   dropdownMaxHeight?: string;
   closeOverlay?: boolean;
+  placeholder?: string;
+  scrollBuffer?: boolean;
 };
 
 type StateType = {};
@@ -58,14 +60,20 @@ export default class Selector extends Component<PropsType, StateType> {
   renderOptionList = () => {
     let { options, activeValue } = this.props;
     return options.map(
-      (option: { value: string; label: string }, i: number) => {
+      (option: { value: string; label: string; icon?: any }, i: number) => {
         return (
           <Option
             key={i}
+            height={this.props.height}
             selected={option.value === activeValue}
             onClick={() => this.handleOptionClick(option)}
             lastItem={i === options.length - 1}
           >
+            {option.icon && (
+              <Icon>
+                <img src={option.icon} />
+              </Icon>
+            )}
             {option.label}
           </Option>
         );
@@ -97,20 +105,23 @@ export default class Selector extends Component<PropsType, StateType> {
   renderDropdown = () => {
     if (this.state.expanded) {
       return (
-        <Dropdown
-          ref={this.wrapperRef}
-          dropdownWidth={
-            this.props.dropdownWidth
-              ? this.props.dropdownWidth
-              : this.props.width
-          }
-          dropdownMaxHeight={this.props.dropdownMaxHeight}
-          onClick={() => this.setState({ expanded: false })}
-        >
-          {this.renderDropdownLabel()}
-          {this.renderOptionList()}
-          {this.renderAddButton()}
-        </Dropdown>
+        <DropdownWrapper>
+          <Dropdown
+            ref={this.wrapperRef}
+            dropdownWidth={
+              this.props.dropdownWidth
+                ? this.props.dropdownWidth
+                : this.props.width
+            }
+            dropdownMaxHeight={this.props.dropdownMaxHeight}
+            onClick={() => this.setState({ expanded: false })}
+          >
+            {this.renderDropdownLabel()}
+            {this.renderOptionList()}
+            {this.renderAddButton()}
+          </Dropdown>
+          {this.props.scrollBuffer && <ScrollBuffer />}
+        </DropdownWrapper>
       );
     }
   };
@@ -122,6 +133,24 @@ export default class Selector extends Component<PropsType, StateType> {
     if (tgt) {
       return tgt.label;
     }
+  };
+
+  renderIcon = () => {
+    var icon;
+    this.props.options.forEach((option: any) => {
+      if (option.icon && option.value === this.props.activeValue) {
+        icon = option.icon;
+      }
+    });
+    return (
+      <>
+        {icon && (
+          <Icon>
+            <img src={icon} />
+          </Icon>
+        )}
+      </>
+    );
   };
 
   render() {
@@ -141,9 +170,18 @@ export default class Selector extends Component<PropsType, StateType> {
           width={this.props.width}
           height={this.props.height}
         >
-          <TextWrap>
-            {activeValue === "" ? "All" : this.getLabel(activeValue)}
-          </TextWrap>
+          <Flex>
+            {this.renderIcon()}
+            <TextWrap>
+              {
+                activeValue ? (
+                  activeValue === "" ? "All" : this.getLabel(activeValue)
+                ) : (
+                  this.props.placeholder
+                )
+              }
+            </TextWrap>
+          </Flex>
           <i className="material-icons">arrow_drop_down</i>
         </MainSelector>
         {this.renderDropdown()}
@@ -153,6 +191,40 @@ export default class Selector extends Component<PropsType, StateType> {
 }
 
 Selector.contextType = Context;
+
+const DropdownWrapper = styled.div`
+  position: absolute;
+  width: 100%;
+  right: 0;
+  z-index: 1;
+  top: calc(100% + 5px);
+`;
+
+const ScrollBuffer = styled.div`
+  width: 100%;
+  height: 50px;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Icon = styled.div`
+  height: 20px;
+  width: 30px;
+  margin-left: -5px;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+
+  > img {
+    height: 18px;
+    width: auto;
+  }
+`;
 
 const Plus = styled.div`
   margin-right: 10px;
@@ -193,15 +265,19 @@ const NewOption = styled.div`
   }
 `;
 
-const Option = styled.div`
+const Option = styled.div<{
+  selected: boolean;
+  lastItem: boolean;
+  height: string;
+}>`
   width: 100%;
   border-top: 1px solid #00000000;
   border-bottom: 1px solid
-    ${(props: { selected: boolean; lastItem: boolean }) =>
-      props.lastItem ? "#ffffff00" : "#ffffff15"};
-  height: 37px;
+    ${(props) => (props.lastItem ? "#ffffff00" : "#ffffff15")};
+  height: ${(props) => props.height || "37px"};
   font-size: 13px;
-  padding-top: 9px;
+  align-items: center;
+  display: flex;
   align-items: center;
   padding-left: 15px;
   cursor: pointer;
@@ -209,8 +285,7 @@ const Option = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: ${(props: { selected: boolean; lastItem: boolean }) =>
-    props.selected ? "#ffffff11" : ""};
+  background: ${(props) => (props.selected ? "#ffffff11" : "")};
 
   :hover {
     background: #ffffff22;
@@ -227,9 +302,6 @@ const CloseOverlay = styled.div`
 `;
 
 const Dropdown = styled.div`
-  position: absolute;
-  right: 0;
-  top: calc(100% + 5px);
   background: #26282f;
   width: ${(props: { dropdownWidth: string; dropdownMaxHeight: string }) =>
     props.dropdownWidth};
@@ -255,11 +327,11 @@ const MainSelector = styled.div`
   border: 1px solid #ffffff55;
   font-size: 13px;
   padding: 5px 10px;
-  padding-left: 12px;
+  padding-left: 15px;
   border-radius: 3px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   cursor: pointer;
   background: ${(props: {
     expanded: boolean;

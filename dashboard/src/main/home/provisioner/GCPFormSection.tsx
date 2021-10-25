@@ -150,37 +150,7 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
     props.handleError();
   };
 
-  // Step 1: Create a project
-  const createProject = (callback?: any) => {
-    let { projectName } = props;
-    let { user, setProjects, setCurrentProject } = context;
-
-    api
-      .createProject("<token>", { name: projectName }, {})
-      .then((res) => {
-        let proj = res.data;
-
-        // Need to set project list for dropdown
-        // TODO: consolidate into ProjectSection (case on exists in list on set)
-        api
-          .getProjects(
-            "<token>",
-            {},
-            {
-              id: user.userId,
-            }
-          )
-          .then((res) => {
-            setProjects(res.data);
-            setCurrentProject(proj, () => callback && callback());
-          })
-          .catch(catchError);
-      })
-      .catch(catchError);
-  };
-
-  const provisionGCR = (id: number, callback?: any) => {
-    console.log("Provisioning GCR");
+  const provisionGCR = (id: number) => {
     let { currentProject } = context;
 
     return api
@@ -195,15 +165,16 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
   };
 
   const provisionGKE = (id: number) => {
-    console.log("Provisioning GKE");
     let { currentProject } = context;
 
     api
       .createGKE(
         "<token>",
         {
+          gcp_region: gcpRegion,
           gke_name: clusterName,
           gcp_integration_id: id,
+          issuer_email: context.user.email,
         },
         { project_id: currentProject.id }
       )
@@ -221,7 +192,6 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
       .createGCPIntegration(
         "<token>",
         {
-          gcp_region: gcpRegion,
           gcp_key_data: gcpKeyData,
           gcp_project_id: gcpProjectId,
         },
@@ -260,11 +230,7 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
     setButtonStatus("loading");
     let { projectName } = props;
 
-    if (!projectName) {
-      handleCreateFlow();
-    } else {
-      createProject(handleCreateFlow);
-    }
+    handleCreateFlow();
   };
 
   const getButtonStatus = () => {

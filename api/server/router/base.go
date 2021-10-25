@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/credentials"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/healthcheck"
 	"github.com/porter-dev/porter/api/server/handlers/metadata"
@@ -482,6 +483,31 @@ func GetBaseRoutes(
 	routes = append(routes, &Route{
 		Endpoint: googleLoginCallbackEndpoint,
 		Handler:  googleLoginCallbackHandler,
+		Router:   r,
+	})
+
+	// GET /api/internal/credentials
+	getCredentialsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/internal/credentials",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	getCredentialsHandler := credentials.NewGetCredentialsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getCredentialsEndpoint,
+		Handler:  getCredentialsHandler,
 		Router:   r,
 	})
 

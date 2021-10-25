@@ -65,8 +65,8 @@ const UpgradeChartModal: React.FC<{}> = () => {
   const [usage, setUsage] = useState<UsageData>(null);
 
   useEffect(() => {
-    if (currentModalData.usage) {
-      const currentUsage: UsageData = currentModalData.usage;
+    if (currentModalData?.usage) {
+      const currentUsage: UsageData = currentModalData?.usage;
       setUsage(currentUsage);
     }
   }, [currentModalData?.usage]);

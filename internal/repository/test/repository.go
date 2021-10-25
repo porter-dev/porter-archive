@@ -31,6 +31,8 @@ type TestRepository struct {
 	notificationConfig        repository.NotificationConfigRepository
 	event                     repository.EventRepository
 	projectUsage              repository.ProjectUsageRepository
+	onboarding                repository.ProjectOnboardingRepository
+	ceToken                   repository.CredentialsExchangeTokenRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -137,6 +139,14 @@ func (t *TestRepository) ProjectUsage() repository.ProjectUsageRepository {
 	return t.projectUsage
 }
 
+func (t *TestRepository) Onboarding() repository.ProjectOnboardingRepository {
+	return t.onboarding
+}
+
+func (t *TestRepository) CredentialsExchangeToken() repository.CredentialsExchangeTokenRepository {
+	return t.ceToken
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -167,5 +177,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		event:                     NewEventRepository(canQuery),
 		projectUsage:              NewProjectUsageRepository(canQuery),
+		onboarding:                NewProjectOnboardingRepository(canQuery),
+		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
 	}
 }

@@ -73,8 +73,8 @@ type GetProjectBillingResponse struct {
 type StepEnum string
 
 const (
-	StepGithub StepEnum = "github"
-	StepTwo    StepEnum = "step_two"
+	StepConnectSource StepEnum = "connect_source"
+	StepGithub        StepEnum = "github"
 )
 
 type ConnectedSourceType string

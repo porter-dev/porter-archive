@@ -44,6 +44,11 @@ const connectDORegistry = baseApi<
   return `/api/projects/${pathParams.project_id}/registries`;
 });
 
+const getAWSIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/aws`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -1128,6 +1133,7 @@ export default {
   connectECRRegistry,
   connectGCRRegistry,
   connectDORegistry,
+  getAWSIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
   createDOCR,

@@ -193,7 +193,19 @@ export const CredentialsForm: React.FC<{
           height="100%"
           isRequired={true}
         />
-        <SaveButton
+        {lastConnectedAccount && (
+          <CancelButton
+            text="Cancel"
+            disabled={false}
+            onClick={() => setShowForm(false)}
+            makeFlush={true}
+            clearPosition={true}
+            status={""}
+            statusPosition={"right"}
+            color={"#fc4976"}
+          />
+        )}
+        <SubmitButton
           text="Continue"
           disabled={false}
           onClick={submit}
@@ -201,6 +213,7 @@ export const CredentialsForm: React.FC<{
           clearPosition={true}
           status={buttonStatus}
           statusPosition={"right"}
+          disableLeftMargin={!lastConnectedAccount}
         />
       </>
     );
@@ -208,35 +221,42 @@ export const CredentialsForm: React.FC<{
 
   return (
     <>
-      <div>
-        Last connected account:
-        <div>
-          <b>Project id: </b>
-          {lastConnectedAccount?.gcp_project_id}
-        </div>
-        <div>
-          <b>Service account email: </b>
-          {lastConnectedAccount?.gcp_sa_email}
-        </div>
-        <div>
-          <b>Connected on:</b> {readableDate(lastConnectedAccount?.created_at)}
-        </div>
-      </div>
+      <Helper>Connected account:</Helper>
+      <PreviewRow>
+        <Flex>
+          <i className="material-icons">account_circle</i>
+          <FlexColumn>
+            <FlexColumn>
+              <b>Project ID:</b>
+              <SelectableSpan>
+                &#8226; {lastConnectedAccount.gcp_project_id}
+              </SelectableSpan>
+            </FlexColumn>
+            <FlexColumn>
+              <b>Service account:</b>
+              <SelectableSpan>
+                &#8226; {lastConnectedAccount?.gcp_sa_email}
+              </SelectableSpan>
+            </FlexColumn>
+          </FlexColumn>
+        </Flex>
+        <FlexColumnWithMargin marginLeft={"14px"}>
+          <span>Connected at</span>
+          {readableDate(lastConnectedAccount.created_at)}
+        </FlexColumnWithMargin>
+      </PreviewRow>
+      <Helper>
+        Want to use a different account?{" "}
+        <A onClick={() => setShowForm(true)} href="#">
+          Connect another account
+        </A>
+        .
+      </Helper>
+
       <Br />
+
       <SaveButton
-        text="Connect another account"
-        disabled={false}
-        onClick={() => setShowForm(true)}
-        makeFlush={true}
-        clearPosition={true}
-        status={""}
-        statusPosition={"right"}
-      />
-      <Br />
-      <b>Or</b>
-      <Br />
-      <SaveButton
-        text="Continue with current account"
+        text="Continue"
         disabled={false}
         onClick={() => continueToNextStep(lastConnectedAccount?.id)}
         makeFlush={true}
@@ -420,4 +440,54 @@ const CodeBlock = styled.span`
   padding: 2px 3px;
   margin-top: -2px;
   user-select: text;
+`;
+
+const A = styled.a`
+  cursor: pointer;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  color: #ffffff;
+  align-items: center;
+  > i {
+    color: #aaaabb;
+    font-size: 20px;
+    margin-right: 10px;
+  }
+`;
+
+const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const FlexColumnWithMargin = styled(FlexColumn)`
+  margin-left: ${(props: { marginLeft: string }) => props.marginLeft};
+`;
+
+const SelectableSpan = styled.span`
+  user-select: text;
+`;
+
+const PreviewRow = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #ffffff55;
+  background: #ffffff11;
+  border: 1px solid #aaaabb;
+  justify-content: space-between;
+  font-size: 13px;
+  border-radius: 5px;
+`;
+
+const CancelButton = styled(SaveButton)`
+  display: inline-block;
+`;
+
+const SubmitButton = styled(SaveButton)`
+  display: inline-block;
+  margin-left: ${(props: { disableLeftMargin: boolean }) =>
+    props.disableLeftMargin ? "" : "16px"};
 `;

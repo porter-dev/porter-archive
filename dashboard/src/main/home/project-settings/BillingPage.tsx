@@ -5,6 +5,7 @@ import { Context } from "shared/Context";
 
 function BillingPage() {
   const [customerToken, setCustomerToken] = useState("");
+  const [teamID, setTeamID] = useState("");
   const { currentProject, setCurrentError, queryUsage } = useContext(Context);
 
   useEffect(() => {
@@ -14,7 +15,9 @@ function BillingPage() {
       .then((res) => {
         if (isSubscripted) {
           const token = res?.data?.token;
+          const teamID = res?.data?.team_id;
           setCustomerToken(token);
+          setTeamID(teamID);
         }
       })
       .catch((err) => {
@@ -28,7 +31,7 @@ function BillingPage() {
 
   return (
     <div style={{ height: "1000px" }}>
-      <CustomerProvider token={customerToken}>
+      <CustomerProvider token={customerToken} teamId={teamID}>
         <PlanSelect
           theme={{
             base: {

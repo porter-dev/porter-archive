@@ -52,7 +52,7 @@ const FormTitle = {
     icon: integrationList["gcr"].icon,
   },
   do: {
-    label: "Digital Ocean Container Registry (DOCR)",
+    label: "DigitalOcean Container Registry (DOCR)",
     icon: integrationList["do"].icon,
   },
 };

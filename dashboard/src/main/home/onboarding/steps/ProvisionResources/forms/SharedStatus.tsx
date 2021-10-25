@@ -149,13 +149,6 @@ export const SharedStatus: React.FC<{
         }
       }
 
-      console.log(
-        "NUMS ARE",
-        numModulesSuccessful,
-        numModulesErrored,
-        tfModules.length
-      );
-
       if (numModulesSuccessful == tfModules.length) {
         setInfraStatus({
           hasError: false,

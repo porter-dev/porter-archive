@@ -186,13 +186,16 @@ func (c *Client) RemoveUserFromTeam(role *cemodels.Role) error {
 }
 
 // GetIDToken gets an id token for a user in a project, creating the ID token if necessary
-func (c *Client) GetIDToken(projectID uint, user *cemodels.User) (token string, err error) {
-	// attempt to read the user billing data from the
-	userBilling, err := c.repo.UserBilling().ReadUserBilling(projectID, user.ID)
+func (c *Client) GetIDToken(proj *cemodels.Project, user *cemodels.User) (token string, teamID string, err error) {
+	// attempt to get a team ID for the project
+	teamID, err = c.GetTeamID(proj)
+
+	// attempt to read the user billing data from the project
+	userBilling, err := c.repo.UserBilling().ReadUserBilling(proj.ID, user.ID)
 	notFound := errors.Is(err, gorm.ErrRecordNotFound)
 
 	if !notFound && err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if !notFound {
@@ -204,14 +207,14 @@ func (c *Client) GetIDToken(projectID uint, user *cemodels.User) (token string, 
 
 			// if JWT token has not expired, return the token
 			if !isTokExpired {
-				return token, nil
+				return token, teamID, nil
 			}
 		}
 	}
 
 	req := &CreateIDTokenRequest{
 		Email:  user.Email,
-		UserID: fmt.Sprintf("%d-%d", projectID, user.ID),
+		UserID: fmt.Sprintf("%d-%d", proj.ID, user.ID),
 	}
 
 	resp := &CreateIDTokenResponse{}
@@ -219,38 +222,38 @@ func (c *Client) GetIDToken(projectID uint, user *cemodels.User) (token string, 
 	err = c.postRequest("/customers/v1/token", req, resp)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	token = resp.Token
 
 	if notFound {
 		_, err := c.repo.UserBilling().CreateUserBilling(&models.UserBilling{
-			ProjectID: projectID,
+			ProjectID: proj.ID,
 			UserID:    user.ID,
 			Token:     []byte(token),
 		})
 
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 	} else {
 		_, err := c.repo.UserBilling().UpdateUserBilling(&models.UserBilling{
 			Model: &gorm.Model{
 				ID: userBilling.ID,
 			},
-			ProjectID:  projectID,
+			ProjectID:  proj.ID,
 			UserID:     user.ID,
 			Token:      []byte(token),
 			TeammateID: userBilling.TeammateID,
 		})
 
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
 
-	return token, nil
+	return token, teamID, nil
 }
 
 // VerifySignature verifies a webhook signature based on hmac protocol

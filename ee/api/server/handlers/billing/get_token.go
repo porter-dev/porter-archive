@@ -52,7 +52,7 @@ func (c *BillingGetTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	token, err := c.Config().BillingManager.GetIDToken(proj.ID, user)
+	token, teamID, err := c.Config().BillingManager.GetIDToken(proj, user)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -60,6 +60,7 @@ func (c *BillingGetTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	c.WriteResult(w, r, &types.GetBillingTokenResponse{
-		Token: token,
+		Token:  token,
+		TeamID: teamID,
 	})
 }

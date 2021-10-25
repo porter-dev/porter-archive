@@ -309,7 +309,7 @@ export const SharedStatus: React.FC<{
           matchedInfras.set(infra.kind + "-" + infra.id, infra);
         } else if (
           filter.includes(infra.kind) &&
-          matchedInfras.get(infra.Kind)?.id < infra.id
+          (matchedInfras.get(infra.Kind)?.id || 0 < infra.id)
         ) {
           matchedInfras.set(infra.kind, infra);
         }

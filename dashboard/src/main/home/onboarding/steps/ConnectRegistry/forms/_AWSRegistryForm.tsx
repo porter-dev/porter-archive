@@ -70,7 +70,9 @@ export const CredentialsForm: React.FC<{
         }
 
         let lastUsed = integrations.find((i) => {
-          i.id === snap.StateHandler?.connected_registry?.credentials?.id;
+          return (
+            i.id === snap.StateHandler?.connected_registry?.credentials?.id
+          );
         });
 
         if (!lastUsed) {

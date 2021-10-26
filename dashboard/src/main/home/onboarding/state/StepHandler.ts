@@ -72,7 +72,6 @@ const flow: FlowType = {
           execute: {
             on: {
               continue: "saveRegistryCredentials",
-              go_back: "clearRegistryProvider",
             },
           },
         },
@@ -143,7 +142,6 @@ const flow: FlowType = {
           execute: {
             on: {
               continue: "saveResourceProvisioningCredentials",
-              go_back: "clearResourceProvisioningProvider",
             },
           },
         },

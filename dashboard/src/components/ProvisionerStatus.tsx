@@ -107,9 +107,11 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
       errors = errors.filter(
         (error, index, self) =>
           index ===
-          self.findIndex(
-            (e) => e === error || e.includes(error) || error.includes(e)
-          )
+          self.findIndex((e) => {
+            if (e && error) {
+              return e === error || e.includes(error) || error.includes(e);
+            }
+          })
       );
 
       const width =

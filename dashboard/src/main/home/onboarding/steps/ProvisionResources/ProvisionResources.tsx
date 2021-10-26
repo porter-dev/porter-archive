@@ -49,6 +49,10 @@ const ProvisionResources: React.FC<Props> = () => {
   };
 
   const renderSaveButton = () => {
+    if (typeof infraStatus?.hasError !== "boolean") {
+      return;
+    }
+
     if (infraStatus && !infraStatus.hasError) {
       return (
         <>

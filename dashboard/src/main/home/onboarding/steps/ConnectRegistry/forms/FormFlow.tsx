@@ -46,14 +46,17 @@ const FormTitle = {
   aws: {
     label: "Amazon Elastic Container Registry (ECR)",
     icon: integrationList["ecr"].icon,
+    doc: "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#amazon-elastic-container-registry-ecr"
   },
   gcp: {
     label: "Google Container Registry (GCR)",
     icon: integrationList["gcr"].icon,
+    doc: "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#google-container-registry-gcr"
   },
   do: {
     label: "DigitalOcean Container Registry (DOCR)",
     icon: integrationList["do"].icon,
+    doc: "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#digitalocean-container-registry"
   },
 };
 
@@ -109,15 +112,21 @@ const FormFlowWrapper: React.FC<Props> = ({
 
   return (
     <FormWrapper>
-      <FormHeader>
-        {currentStep !== "test_connection" && (
-          <CloseButton onClick={() => goBack()}>
-            <i className="material-icons">keyboard_backspace</i>
-          </CloseButton>
-        )}
-        {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
-        {FormTitle[provider] && FormTitle[provider].label}
-      </FormHeader>
+      <Header>
+        <FormHeader>
+          {currentStep !== "test_connection" && (
+            <CloseButton onClick={() => goBack()}>
+              <i className="material-icons">keyboard_backspace</i>
+            </CloseButton>
+          )}
+          {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
+          {FormTitle[provider] && FormTitle[provider].label}
+        </FormHeader>
+        <GuideButton href={FormTitle[provider].doc} target="_blank">
+            <i className="material-icons-outlined">help</i>
+            Guide
+        </GuideButton>
+      </Header>
       <Breadcrumb
         currentStep={currentStep}
         steps={[
@@ -132,6 +141,41 @@ const FormFlowWrapper: React.FC<Props> = ({
 };
 
 export default FormFlowWrapper;
+
+const Header = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`
+
+const GuideButton = styled.a`
+  display: flex;
+  align-items: center;
+  margin-top: -17px;
+  margin-left: 20px;
+  color: #aaaabb;
+  font-size: 13px;
+  border: 1px solid #aaaabb;
+  padding: 5px 10px;
+  padding-left: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+
+    > i {
+      color: #ffffff;
+    }
+  }
+
+  > i {
+    color: #aaaabb;
+    font-size: 16px;
+    margin-right: 7px;
+  }
+`;
 
 const CloseButton = styled.div`
   width: 30px;
@@ -163,6 +207,7 @@ const FormHeader = styled.div`
   font-size: 13px;
   margin-top: -2px;
   font-weight: 500;
+  width: 100%;
 
   > img {
     height: 22px;

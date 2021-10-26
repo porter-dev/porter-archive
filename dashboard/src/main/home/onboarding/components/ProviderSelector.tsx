@@ -24,17 +24,17 @@ export const registryOptions = [
   {
     value: "aws",
     icon: integrationList["ecr"]?.icon,
-    label: "Amazon Elastic Container Registry (ECR)",
+    label: "Amazon Elastic Container Registry (ECR)"
   },
   {
     value: "gcp",
     icon: integrationList["gcr"]?.icon,
-    label: "Google Cloud Registry (GCR)",
+    label: "Google Cloud Registry (GCR)"
   },
   {
     value: "do",
     icon: integrationList["do"]?.icon,
-    label: "DigitalOcean Container Registry (DOCR)",
+    label: "DigitalOcean Container Registry (DOCR)"
   },
 ];
 
@@ -42,17 +42,17 @@ export const provisionerOptions = [
   {
     value: "aws",
     icon: integrationList["aws"]?.icon,
-    label: "Amazon Web Services (AWS)",
+    label: "Amazon Web Services (AWS)"
   },
   {
     value: "gcp",
     icon: integrationList["gcp"]?.icon,
-    label: "Google Cloud Platform (GCP)",
+    label: "Google Cloud Platform (GCP)"
   },
   {
     value: "do",
     icon: integrationList["do"]?.icon,
-    label: "DigitalOcean (DO)",
+    label: "DigitalOcean (DO)"
   },
 ];
 

@@ -51,7 +51,12 @@ const ConnectRegistry: React.FC<{
         </BackButton>
       )}
       <TitleSection>Getting Started</TitleSection>
-      <Subtitle>Step 2 of 3 - Connect an existing registry (Optional)</Subtitle>
+      <Subtitle>
+        Step 2 of 3 - Connect an existing registry (Optional)
+        <a href="https://docs.porter.run/docs/linking-up-application-source#connecting-an-existing-image-registry" target="_blank">
+            <i className="material-icons">help_outline</i>
+        </a>
+      </Subtitle>
       <Helper>
         {provider
           ? "Link to an existing Docker registry. Don't worry if you don't know what this is."
@@ -137,6 +142,20 @@ const Subtitle = styled.div`
   font-size: 16px;
   font-weight: 500;
   margin-top: 16px;
+
+  display: flex;
+  align-items; center;
+  > a {
+    > i {
+      font-size: 18px;
+      margin-left: 10px;
+      margin-top: 1px;
+      color: #8590ff;
+      :hover {
+        color: #aaaabb;
+      }
+    }
+  }
 `;
 
 const NextStep = styled(SaveButton)`

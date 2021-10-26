@@ -70,7 +70,15 @@ const ConnectSource: React.FC<{
   return (
     <div>
       <TitleSection>Getting Started</TitleSection>
-      <Subtitle>Step 1 of 3 - Connect to GitHub</Subtitle>
+      <Subtitle>
+        Step 1 of 3 - Connect to GitHub
+        <a
+          href="https://docs.porter.run/docs/linking-up-application-source"
+          target="_blank"
+        >
+          <i className="material-icons">help_outline</i>
+        </a>
+      </Subtitle>
       <Helper>
         To deploy applications from your repo, you need to connect a Github
         account.
@@ -225,6 +233,19 @@ const Subtitle = styled.div`
   font-size: 16px;
   font-weight: 500;
   margin-top: 16px;
+  display: flex;
+  align-items; center;
+  > a {
+    > i {
+      font-size: 18px;
+      margin-left: 10px;
+      margin-top: 1px;
+      color: #8590ff;
+      :hover {
+        color: #aaaabb;
+      }
+    }
+  }
 `;
 
 const ConnectToGithubButton = styled.a`

@@ -193,6 +193,7 @@ export const CredentialsForm: React.FC<{
           height="100%"
           isRequired={true}
         />
+        <Br />
         <Flex>
           {lastConnectedAccount && (
             <SaveButton
@@ -230,7 +231,8 @@ export const CredentialsForm: React.FC<{
           {lastConnectedAccount?.gcp_sa_email || "n/a"}
         </Flex>
         <Right>
-          Connected at {readableDate(lastConnectedAccount.created_at)}
+          Connected at{" "}
+          {readableDate(lastConnectedAccount.created_at)}
         </Right>
       </PreviewRow>
       <Helper>

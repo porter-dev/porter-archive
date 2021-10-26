@@ -32,7 +32,7 @@ type BillingManager interface {
 
 	// GetIDToken retrieves a billing token for a user. The billing token can be exchanged
 	// to view billing information.
-	GetIDToken(projectID uint, user *models.User) (token string, err error)
+	GetIDToken(proj *models.Project, user *models.User) (token string, teamID string, err error)
 
 	// ParseProjectUsageFromWebhook parses the project usage from a webhook payload sent
 	// from a billing agent
@@ -69,8 +69,8 @@ func (n *NoopBillingManager) RemoveUserFromTeam(role *models.Role) error {
 	return nil
 }
 
-func (n *NoopBillingManager) GetIDToken(projectID uint, user *models.User) (token string, err error) {
-	return "", nil
+func (n *NoopBillingManager) GetIDToken(proj *models.Project, user *models.User) (token string, teamID string, err error) {
+	return "", "", nil
 }
 
 func (n *NoopBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error) {

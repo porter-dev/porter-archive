@@ -25,8 +25,8 @@ type PropsType = {
 };
 
 const provisionOptions = [
-  { value: "docr", label: "Digital Ocean Container Registry" },
-  { value: "doks", label: "Digital Ocean Kubernetes Service" },
+  { value: "docr", label: "DigitalOcean Container Registry" },
+  { value: "doks", label: "DigitalOcean Kubernetes Service" },
 ];
 
 const tierOptions = [

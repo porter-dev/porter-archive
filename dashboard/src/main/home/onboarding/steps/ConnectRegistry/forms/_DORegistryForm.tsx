@@ -76,26 +76,52 @@ export const CredentialsForm: React.FC<{
     return <Loading />;
   }
 
+  let content = "Project name: n/a";
+
+  if (connectedAccount?.target_email) {
+    content = `${connectedAccount?.target_email}`;
+  }
+
+  if (connectedAccount?.target_id) {
+    content = `${connectedAccount?.target_id}`;
+  }
+
   return (
     <>
       {connectedAccount !== null && (
-        <div>
-          <div>Connected account: {connectedAccount.client}</div>
-          <div>Connected at: {readableDate(connectedAccount.created_at)}</div>
-        </div>
+        <>
+          <Helper>Connected account:</Helper>
+          <PreviewRow>
+            <Flex>
+              <i className="material-icons">account_circle</i>
+              {content}
+            </Flex>
+            <Right>Connected at {readableDate(connectedAccount.created_at)}</Right>
+          </PreviewRow>
+        </>
       )}
-      <ConnectDigitalOceanButton
-        href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
-      >
-        {connectedAccount !== null
-          ? "Connect another account"
-          : "Sign In to Digital Ocean"}
-      </ConnectDigitalOceanButton>
+      {connectedAccount !== null ? (
+        <Helper>
+          Want to use a different account?{" "}
+          <A
+            href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
+          >
+            Sign in to DigitalOcean
+          </A>
+          .
+        </Helper>
+      ) : (
+        <ConnectDigitalOceanButton
+          href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
+        >
+          Sign In to DigitalOcean
+        </ConnectDigitalOceanButton>
+      )}
 
-      <Br />
+      <Br height="5px" />
       {connectedAccount !== null && (
         <SaveButton
-          text="Continue with connected account"
+          text="Continue"
           disabled={false}
           onClick={() => submit(connectedAccount.id)}
           makeFlush={true}
@@ -153,7 +179,7 @@ export const SettingsForm: React.FC<{
         width="100%"
       />
       <Helper>
-        DOC R URI, in the form{" "}
+        DOCR URI, in the form{" "}
         <CodeBlock>registry.digitalocean.com/[REGISTRY_NAME]</CodeBlock>. For
         example, <CodeBlock>registry.digitalocean.com/porter-test</CodeBlock>.
       </Helper>
@@ -161,7 +187,7 @@ export const SettingsForm: React.FC<{
         type="text"
         value={registryUrl}
         setValue={(url: string) => setRegistryUrl(url)}
-        label="🔗 GCR URL"
+        label="🔗 DOCR URL"
         placeholder="ex: registry.digitalocean.com/porter-test"
         width="100%"
         isRequired={true}
@@ -205,9 +231,40 @@ export const TestRegistryConnection: React.FC<{
   );
 };
 
-const Br = styled.div`
+const A = styled.a`
+  cursor: pointer;
+`;
+
+const Right = styled.div`
+  text-align: right;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  color: #ffffff;
+  align-items: center;
+  > i {
+    color: #aaaabb;
+    font-size: 20px;
+    margin-right: 10px;
+  }
+`;
+
+const PreviewRow = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #ffffff55;
+  background: #ffffff11;
+  border: 1px solid #aaaabb;
+  justify-content: space-between;
+  font-size: 13px;
+  border-radius: 5px;
+`;
+
+const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: 15px;
+  height: ${(props) => props.height || "15px"};
 `;
 
 const CodeBlock = styled.span`

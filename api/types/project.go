@@ -63,7 +63,8 @@ type DeleteRoleResponse struct {
 }
 
 type GetBillingTokenResponse struct {
-	Token string `json:"token"`
+	Token  string `json:"token"`
+	TeamID string `json:"team_id"`
 }
 
 type GetProjectBillingResponse struct {

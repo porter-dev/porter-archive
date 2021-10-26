@@ -173,13 +173,11 @@ export default class Selector extends Component<PropsType, StateType> {
           <Flex>
             {this.renderIcon()}
             <TextWrap>
-              {
-                activeValue ? (
-                  activeValue === "" ? "All" : this.getLabel(activeValue)
-                ) : (
-                  this.props.placeholder
-                )
-              }
+              {activeValue
+                ? activeValue === ""
+                  ? "All"
+                  : this.getLabel(activeValue)
+                : this.props.placeholder}
             </TextWrap>
           </Flex>
           <i className="material-icons">arrow_drop_down</i>

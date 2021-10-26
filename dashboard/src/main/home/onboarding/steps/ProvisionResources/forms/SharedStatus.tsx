@@ -326,7 +326,7 @@ export const SharedStatus: React.FC<{
       setTFModules([...tfModules]);
 
       tfModules.forEach((val, index) => {
-        if (val?.status != "created" && val?.status != "destroyed") {
+        if (val?.status != "created") {
           updateDesiredState(index, val);
           setupInfraWebsocket(val.id + "", val, index);
         }

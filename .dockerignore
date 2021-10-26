@@ -1,1 +1,4 @@
 /dashboard/node_modules
+.env
+docker/.env
+*.db

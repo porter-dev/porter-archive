@@ -8,8 +8,8 @@ export const infraNames: any = {
   eks: "Elastic Kubernetes Service (EKS)",
   gcr: "Google Container Registry (GCR)",
   gke: "Google Kubernetes Engine (GKE)",
-  docr: "Digital Ocean Container Registry",
-  doks: "Digital Ocean Kubernetes Service",
+  docr: "DigitalOcean Container Registry",
+  doks: "DigitalOcean Kubernetes Service",
 };
 
 export const integrationList: any = {

@@ -230,8 +230,7 @@ export const CredentialsForm: React.FC<{
           {lastConnectedAccount?.gcp_sa_email || "n/a"}
         </Flex>
         <Right>
-          Connected at{" "}
-          {readableDate(lastConnectedAccount.created_at)}
+          Connected at {readableDate(lastConnectedAccount.created_at)}
         </Right>
       </PreviewRow>
       <Helper>

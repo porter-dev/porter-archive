@@ -41,22 +41,22 @@ const FormTitle = {
   aws: {
     label: "Amazon Web Services (AWS)",
     icon: integrationList["aws"].icon,
-    doc: "https://docs.porter.run/docs/getting-started-on-aws"
+    doc: "https://docs.porter.run/docs/getting-started-on-aws",
   },
   gcp: {
     label: "Google Cloud Platform (GCP)",
     icon: integrationList["gcp"].icon,
-    doc: "https://docs.porter.run/docs/provisioning-on-google-cloud"
+    doc: "https://docs.porter.run/docs/provisioning-on-google-cloud",
   },
   do: {
     label: "DigitalOcean (DO)",
     icon: integrationList["do"].icon,
-    doc: "https://docs.porter.run/docs/provisioning-on-digital-ocean"
+    doc: "https://docs.porter.run/docs/provisioning-on-digital-ocean",
   },
   external: {
     label: "Connect an existing cluster",
     icon: integrationList["kubernetes"],
-    doc: ""
+    doc: "",
   },
 };
 
@@ -116,10 +116,10 @@ const FormFlowWrapper: React.FC<Props> = ({
           {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
           {FormTitle[provider] && FormTitle[provider].label}
         </FormHeader>
-          <GuideButton href={FormTitle[provider].doc} target="_blank">
-              <i className="material-icons-outlined">help</i>
-              Guide
-          </GuideButton>
+        <GuideButton href={FormTitle[provider].doc} target="_blank">
+          <i className="material-icons-outlined">help</i>
+          Guide
+        </GuideButton>
       </Header>
       <Breadcrumb
         currentStep={currentStep}
@@ -139,7 +139,7 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-`
+`;
 
 const GuideButton = styled.a`
   display: flex;

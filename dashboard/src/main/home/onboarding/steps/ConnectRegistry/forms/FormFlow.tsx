@@ -46,17 +46,20 @@ const FormTitle = {
   aws: {
     label: "Amazon Elastic Container Registry (ECR)",
     icon: integrationList["ecr"].icon,
-    doc: "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#amazon-elastic-container-registry-ecr"
+    doc:
+      "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#amazon-elastic-container-registry-ecr",
   },
   gcp: {
     label: "Google Container Registry (GCR)",
     icon: integrationList["gcr"].icon,
-    doc: "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#google-container-registry-gcr"
+    doc:
+      "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#google-container-registry-gcr",
   },
   do: {
     label: "DigitalOcean Container Registry (DOCR)",
     icon: integrationList["do"].icon,
-    doc: "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#digitalocean-container-registry"
+    doc:
+      "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#digitalocean-container-registry",
   },
 };
 
@@ -123,8 +126,8 @@ const FormFlowWrapper: React.FC<Props> = ({
           {FormTitle[provider] && FormTitle[provider].label}
         </FormHeader>
         <GuideButton href={FormTitle[provider].doc} target="_blank">
-            <i className="material-icons-outlined">help</i>
-            Guide
+          <i className="material-icons-outlined">help</i>
+          Guide
         </GuideButton>
       </Header>
       <Breadcrumb
@@ -146,7 +149,7 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-`
+`;
 
 const GuideButton = styled.a`
   display: flex;

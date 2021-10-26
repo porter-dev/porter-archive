@@ -1,4 +1,7 @@
-import { ProvisionerConfig } from "main/home/onboarding/state/StateHandler";
+import {
+  ProvisionerConfig,
+  StateHandler,
+} from "main/home/onboarding/state/StateHandler";
 import {
   SkipProvisionConfig,
   SupportedProviders,
@@ -21,6 +24,8 @@ import {
   CredentialsForm as GCPCredentialsForm,
   SettingsForm as GCPSettingsForm,
 } from "./_GCPProvisionerForm";
+import { OFState } from "main/home/onboarding/state";
+import { useSnapshot } from "valtio";
 
 const Forms = {
   aws: {
@@ -61,29 +66,33 @@ const FormTitle = {
 };
 
 type Props = {
-  onSaveCredentials: (credentials: any) => void;
-  onSaveSettings: (settings: any) => void;
-  provider: SupportedProviders | "external";
   currentStep: "credentials" | "settings";
-  project: { id: number; name: string };
-  goBack: () => void;
 };
 
-const FormFlowWrapper: React.FC<Props> = ({
-  onSaveCredentials,
-  onSaveSettings,
-  provider,
-  currentStep,
-  project,
-  goBack,
-}) => {
+const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
+  const snap = useSnapshot(StateHandler);
+
+  const provider = snap.provision_resources?.provider as
+    | SupportedProviders
+    | "external";
+
+  const project = snap.project;
+
+  const handleContinue = (data: any) => {
+    OFState.actions.nextStep("continue", data);
+  };
+
+  const handleGoBack = () => {
+    OFState.actions.nextStep("go_back");
+  };
+
   const nextFormStep = (
     data?: Partial<Exclude<ProvisionerConfig, SkipProvisionConfig>>
   ) => {
     if (currentStep === "credentials") {
-      onSaveCredentials(data);
+      handleContinue(data);
     } else if (currentStep === "settings") {
-      onSaveSettings(data);
+      handleContinue(data);
     }
   };
 
@@ -110,7 +119,7 @@ const FormFlowWrapper: React.FC<Props> = ({
     <FormWrapper>
       <Header>
         <FormHeader>
-          <CloseButton onClick={() => goBack()}>
+          <CloseButton onClick={() => handleGoBack()}>
             <i className="material-icons">keyboard_backspace</i>
           </CloseButton>
           {FormTitle[provider] && <img src={FormTitle[provider].icon} />}

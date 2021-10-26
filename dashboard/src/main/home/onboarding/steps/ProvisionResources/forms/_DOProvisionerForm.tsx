@@ -106,7 +106,7 @@ export const CredentialsForm: React.FC<{
           <PreviewRow>
             <Flex>
               <i className="material-icons">account_circle</i>
-              Project name: {connectedAccount.target_id}
+              Project name: {connectedAccount.target_id || "n/a"}
             </Flex>
             <div>Connected at {readableDate(connectedAccount.created_at)}</div>
           </PreviewRow>

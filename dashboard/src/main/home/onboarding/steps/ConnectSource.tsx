@@ -72,7 +72,10 @@ const ConnectSource: React.FC<{
       <TitleSection>Getting Started</TitleSection>
       <Subtitle>
         Step 1 of 3 - Connect to GitHub
-        <a href="https://docs.porter.run/docs/linking-up-application-source" target="_blank">
+        <a
+          href="https://docs.porter.run/docs/linking-up-application-source"
+          target="_blank"
+        >
           <i className="material-icons">help_outline</i>
         </a>
       </Subtitle>

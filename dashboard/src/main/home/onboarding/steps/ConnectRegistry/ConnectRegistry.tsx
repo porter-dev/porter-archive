@@ -53,8 +53,11 @@ const ConnectRegistry: React.FC<{
       <TitleSection>Getting Started</TitleSection>
       <Subtitle>
         Step 2 of 3 - Connect an existing registry (Optional)
-        <a href="https://docs.porter.run/docs/linking-up-application-source#connecting-an-existing-image-registry" target="_blank">
-            <i className="material-icons">help_outline</i>
+        <a
+          href="https://docs.porter.run/docs/linking-up-application-source#connecting-an-existing-image-registry"
+          target="_blank"
+        >
+          <i className="material-icons">help_outline</i>
         </a>
       </Subtitle>
       <Helper>

@@ -96,7 +96,9 @@ export const CredentialsForm: React.FC<{
               <i className="material-icons">account_circle</i>
               {content}
             </Flex>
-            <Right>Connected at {readableDate(connectedAccount.created_at)}</Right>
+            <Right>
+              Connected at {readableDate(connectedAccount.created_at)}
+            </Right>
           </PreviewRow>
         </>
       )}

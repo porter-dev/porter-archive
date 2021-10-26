@@ -21,15 +21,13 @@ export default class SelectRow extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledSelectRow>
-        <Wrapper> 
-        <Label>
-          {this.props.label}
-        </Label>
-        { this.props.doc ? 
-          <a href={this.props.doc} target="_blank">
+        <Wrapper>
+          <Label>{this.props.label}</Label>
+          {this.props.doc ? (
+            <a href={this.props.doc} target="_blank">
               <i className="material-icons">help_outline</i>
-          </a> : null
-        }
+            </a>
+          ) : null}
         </Wrapper>
         <SelectWrapper>
           <Selector
@@ -65,7 +63,7 @@ const Wrapper = styled.div`
       }
     }
   }
-`
+`;
 
 const Label = styled.div`
   color: #ffffff;

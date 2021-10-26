@@ -211,6 +211,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           aws_integration_id: awsIntegrationId,
           eks_name: clusterName,
           machine_type: awsMachineType,
+          issuer_email: context.user.email,
         },
         { id: currentProject.id }
       );

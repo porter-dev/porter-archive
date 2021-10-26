@@ -187,7 +187,7 @@ export const CredentialsForm: React.FC<{
         <Br />
         <Flex>
           {lastConnectedAccount && (
-            <SaveButton
+            <CancelButton
               text="Cancel"
               disabled={false}
               onClick={() => setShowForm(false)}
@@ -351,6 +351,10 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
   );
 };
 
+const CancelButton = styled(SaveButton)`
+  z-index: 0;
+`;
+
 const Right = styled.div`
   text-align: right;
 `;
@@ -401,6 +405,7 @@ const PreviewRow = styled.div`
 `;
 
 const SubmitButton = styled(SaveButton)`
+  z-index: 0;
   margin-left: ${(props: { disableLeftMargin: boolean }) =>
     props.disableLeftMargin ? "" : "16px"};
 `;

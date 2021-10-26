@@ -222,8 +222,7 @@ export const CredentialsForm: React.FC<{
           {lastConnectedAccount.aws_arn || "arn: n/a"}
         </Flex>
         <Right>
-          Connected at{" "}
-          {readableDate(lastConnectedAccount.created_at)}
+          Connected at {readableDate(lastConnectedAccount.created_at)}
         </Right>
       </PreviewRow>
       <Helper>

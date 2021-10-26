@@ -424,6 +424,7 @@ export const SettingsForm: React.FC<{
           setMachineType(x);
         }}
         label="⚙️ AWS Machine Type"
+        doc="https://docs.porter.run/docs/provisioning-infrastructure#which-instance-type-should-i-select"
       />
       <Br />
       <SaveButton

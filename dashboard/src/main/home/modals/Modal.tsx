@@ -40,13 +40,11 @@ export default class Modal extends Component<PropsType, StateType> {
     return (
       <Overlay>
         <StyledModal ref={this.wrapperRef} width={width} height={height}>
-          {
-            this.props.onRequestClose && (
-              <CloseButton onClick={this.props.onRequestClose}>
-                <i className="material-icons">close</i>
-              </CloseButton>
-            )
-          }
+          {this.props.onRequestClose && (
+            <CloseButton onClick={this.props.onRequestClose}>
+              <i className="material-icons">close</i>
+            </CloseButton>
+          )}
           {this.props.title && <ModalTitle>{this.props.title}</ModalTitle>}
           {this.props.children}
         </StyledModal>

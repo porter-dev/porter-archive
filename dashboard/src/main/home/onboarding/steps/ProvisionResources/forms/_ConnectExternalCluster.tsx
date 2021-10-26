@@ -20,7 +20,11 @@ const tabOptions = [{ label: "MacOS", value: "mac" }];
  * @todo Poll the available clusters until there's at least one connected
  * to the project
  */
-const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) => {
+const ConnectExternalCluster: React.FC<Props> = ({
+  nextStep,
+  project,
+  goBack,
+}) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [currentTab, setCurrentTab] = useState("mac");
   const [enableContinue, setEnableContinue] = useState(false);
@@ -104,7 +108,7 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) 
               porter connect kubeconfig
             </Code>
           </Placeholder>
-        )
+        );
       case 2:
         return (
           <Placeholder>
@@ -170,7 +174,9 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) 
         text="Continue"
         disabled={!enableContinue}
         onClick={() => nextStep()}
-        status={!enableContinue ? "No connected cluster detected" : "successful"}
+        status={
+          !enableContinue ? "No connected cluster detected" : "successful"
+        }
         makeFlush={true}
         clearPosition={true}
         statusPosition="right"
@@ -182,8 +188,7 @@ const ConnectExternalCluster: React.FC<Props> = ({ nextStep, project, goBack }) 
 
 export default ConnectExternalCluster;
 
-const Wrapper = styled.div`
-`;
+const Wrapper = styled.div``;
 
 const CloseButton = styled.div`
   width: 30px;

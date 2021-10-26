@@ -1,7 +1,7 @@
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import styled from "styled-components";
@@ -13,15 +13,52 @@ import backArrow from "assets/back_arrow.png";
 import FormFlowWrapper from "./forms/FormFlow";
 import { OFState } from "../../state";
 import { useSnapshot } from "valtio";
+import api from "shared/api";
+import Loading from "components/Loading";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);
   const { step } = useParams<any>();
+  const [connectedRegistries, setConnectedRegistries] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const currentProvider = snap.StateHandler.connected_registry?.provider;
 
   const enableGoBack =
     snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow;
+
+  useEffect(() => {
+    let isSubscribed = true;
+    const projectId = snap.StateHandler?.project?.id;
+
+    if (typeof projectId === "number") {
+      api
+        .getProjectRegistries("<token>", {}, { id: projectId })
+        .then((res) => {
+          const registries = res?.data;
+          if (isSubscribed) {
+            if (Array.isArray(registries) && registries.length) {
+              setConnectedRegistries(registries);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          if (isSubscribed) {
+            setConnectedRegistries(null);
+          }
+        })
+        .finally(() => {
+          if (isSubscribed) {
+            setIsLoading(false);
+          }
+        });
+    }
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [snap.StateHandler?.project]);
 
   const handleGoBack = () => {
     OFState.actions.nextStep("go_back");
@@ -34,6 +71,22 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
   const handleSelectProvider = (provider: string) => {
     provider !== "skip" && OFState.actions.nextStep("continue", provider);
   };
+
+  const selectorOptions = useMemo(() => {
+    const options = [...registryOptions];
+    if (Array.isArray(connectedRegistries) && connectedRegistries.length) {
+      const newOptions = options.filter((o) => o.value !== "skip");
+      return [
+        {
+          value: "use_current",
+          label: "Continue with current",
+          icon: "",
+        },
+        ...newOptions,
+      ];
+    }
+    return options;
+  }, [connectedRegistries]);
 
   return (
     <Div>
@@ -61,18 +114,36 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
           ? "Link to an existing Docker registry. Don't worry if you don't know what this is."
           : "Link to an existing Docker registry or continue."}
       </Helper>
-
-      {step ? (
+      {isLoading && <Loading />}
+      {!isLoading &&
+        connectedRegistries?.length &&
+        connectedRegistries.map((registry: any) => {
+          return (
+            <>
+              <div>
+                {registry?.name}
+                {registry?.service}
+                {registry?.url}
+              </div>
+            </>
+          );
+        })}
+      {!isLoading && step ? (
         <FormFlowWrapper currentStep={step} />
       ) : (
         <>
           <ProviderSelector
+            defaultOption={
+              Array.isArray(connectedRegistries) && connectedRegistries.length
+                ? "use_current"
+                : "skip"
+            }
             selectProvider={(provider) => {
               if (provider !== "external") {
                 handleSelectProvider(provider);
               }
             }}
-            options={registryOptions}
+            options={selectorOptions}
           />
           <NextStep
             text="Continue"

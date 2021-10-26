@@ -101,7 +101,7 @@ const decompressState = (prev_state: any) => {
     skip: state.skip_registry_connection,
     provider: state.registry_connection_provider,
     credentials: {
-      id: state?.registry_connection_data?.id,
+      id: state?.registry_connection_credential_id,
     },
     settings: {
       registry_connection_id: state?.registry_connection_id,

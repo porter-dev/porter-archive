@@ -82,12 +82,6 @@ export const SharedStatus: React.FC<{
       ...globalErrors,
     ];
 
-    // remove duplicate global errors
-    tfModules[index].global_errors = tfModules[index].global_errors.filter(
-      (error, index, self) =>
-        index === self.findIndex((e) => e.error_context === error.error_context)
-    );
-
     setTFModules([...tfModules]);
   };
 
@@ -111,6 +105,7 @@ export const SharedStatus: React.FC<{
       ) {
         setInfraStatus({
           hasError: true,
+          description: "Encountered error while provisioning",
         });
         return;
       }

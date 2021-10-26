@@ -98,10 +98,19 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
 
       if (val.global_errors) {
         for (let globalErr of val.global_errors) {
-          errors.push("Global error: " + globalErr.error_context);
+          errors.push(globalErr.error_context);
           hasError = true;
         }
       }
+
+      // remove duplicate errors
+      errors = errors.filter(
+        (error, index, self) =>
+          index ===
+          self.findIndex(
+            (e) => e === error || e.includes(error) || error.includes(e)
+          )
+      );
 
       const width =
         val.status == "created"

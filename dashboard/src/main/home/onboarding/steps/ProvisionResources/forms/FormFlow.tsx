@@ -47,7 +47,7 @@ const FormTitle = {
     icon: integrationList["gcp"].icon,
   },
   do: {
-    label: "Digital Ocean (DO)",
+    label: "DigitalOcean (DO)",
     icon: integrationList["do"].icon,
   },
   external: {

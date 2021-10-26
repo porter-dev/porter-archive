@@ -8,43 +8,39 @@ import styled from "styled-components";
 import ProviderSelector, {
   registryOptions,
 } from "../../components/ProviderSelector";
-import { SupportedProviders } from "../../types";
 import backArrow from "assets/back_arrow.png";
 
 import FormFlowWrapper from "./forms/FormFlow";
+import { OFState } from "../../state";
+import { useSnapshot } from "valtio";
 
-const ConnectRegistry: React.FC<{
-  provider: SupportedProviders;
-  enable_go_back: boolean;
-  project: {
-    id: number;
-    name: string;
-  };
-  onSelectProvider: (provider: SupportedProviders | "skip") => void;
-  onSaveCredentials: (credentials: any) => void;
-  onSaveSettings: (settings: any) => void;
-  onSuccess: () => void;
-  onSkip: () => void;
-  goBack: () => void;
-}> = ({
-  onSelectProvider,
-  onSaveCredentials,
-  onSaveSettings,
-  onSuccess,
-  onSkip,
-  project,
-  provider,
-  enable_go_back,
-  goBack,
-}) => {
+const ConnectRegistry: React.FC<{}> = ({}) => {
+  const snap = useSnapshot(OFState);
   const { step } = useParams<any>();
+
+  const currentProvider = snap.StateHandler.connected_registry?.provider;
+
+  const enableGoBack =
+    snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow;
+
+  const handleGoBack = () => {
+    OFState.actions.nextStep("go_back");
+  };
+
+  const handleSkip = () => {
+    OFState.actions.nextStep("skip");
+  };
+
+  const handleSelectProvider = (provider: string) => {
+    provider !== "skip" && OFState.actions.nextStep("continue", provider);
+  };
 
   return (
     <Div>
-      {enable_go_back && (
+      {enableGoBack && (
         <BackButton
           onClick={() => {
-            goBack();
+            handleGoBack();
           }}
         >
           <BackButtonImg src={backArrow} />
@@ -61,28 +57,19 @@ const ConnectRegistry: React.FC<{
         </a>
       </Subtitle>
       <Helper>
-        {provider
+        {currentProvider
           ? "Link to an existing Docker registry. Don't worry if you don't know what this is."
           : "Link to an existing Docker registry or continue."}
       </Helper>
 
       {step ? (
-        <FormFlowWrapper
-          provider={provider}
-          onSaveCredentials={onSaveCredentials}
-          onSaveSettings={onSaveSettings}
-          onSuccess={onSuccess}
-          project={project}
-          currentStep={step}
-          goBack={goBack}
-          enable_go_back={enable_go_back}
-        />
+        <FormFlowWrapper currentStep={step} />
       ) : (
         <>
           <ProviderSelector
             selectProvider={(provider) => {
               if (provider !== "external") {
-                onSelectProvider(provider);
+                handleSelectProvider(provider);
               }
             }}
             options={registryOptions}
@@ -90,7 +77,7 @@ const ConnectRegistry: React.FC<{
           <NextStep
             text="Continue"
             disabled={false}
-            onClick={() => onSkip()}
+            onClick={() => handleSkip()}
             status={""}
             makeFlush={true}
             clearPosition={true}
@@ -109,45 +96,13 @@ const Div = styled.div`
   width: 100%;
 `;
 
-const FadeWrapper = styled.div<{ delay?: string }>`
-  opacity: 0;
-  animation: fadeIn 0.5s ${(props) => props.delay || "0.2s"};
-  animation-fill-mode: forwards;
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const SlideWrapper = styled.div<{ delay?: string }>`
-  opacity: 0;
-  animation: slideIn 0.7s ${(props) => props.delay || "1.3s"};
-  animation-fill-mode: forwards;
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-`;
-
 const Subtitle = styled.div`
   font-size: 16px;
   font-weight: 500;
   margin-top: 16px;
 
   display: flex;
-  align-items; center;
+  align-items: center;
   > a {
     > i {
       font-size: 18px;

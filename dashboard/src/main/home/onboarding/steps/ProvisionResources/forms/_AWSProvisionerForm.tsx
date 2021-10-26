@@ -7,10 +7,12 @@ import {
   AWSProvisionerConfig,
   AWSRegistryConfig,
 } from "main/home/onboarding/types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import { useSnapshot } from "valtio";
 import { SharedStatus } from "./SharedStatus";
+import Loading from "components/Loading";
+import Helper from "components/form-components/Helper";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -35,14 +37,77 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
+const readableDate = (s: string) => {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${time} on ${date}`;
+};
+
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<AWSRegistryConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
+  const snap = useSnapshot(OFState);
   const [accessId, setAccessId] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [awsRegion, setAWSRegion] = useState("us-east-1");
   const [buttonStatus, setButtonStatus] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [lastConnectedAccount, setLastConnectedAccount] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .getAWSIntegration("<token>", {}, { project_id: project.id })
+      .then((res) => {
+        let integrations = res.data;
+        if (!Array.isArray(integrations) || !integrations.length) {
+          setShowForm(true);
+          return;
+        }
+
+        // DO NOT USE THE INTEGRATION ID FROM THE CONNECTED REGISTRY
+        integrations = integrations.filter((i) => {
+          return (
+            i.id !== snap.StateHandler?.connected_registry?.credentials?.id
+          );
+        });
+
+        // filter can change the type from integrations so just in case
+        // we check again that integrations is an array
+        if (!Array.isArray(integrations) || !integrations) {
+          setShowForm(true);
+          return;
+        }
+
+        integrations.sort((a, b) => b.id - a.id);
+
+        let lastUsed = integrations.find((i) => {
+          return (
+            i.id === snap.StateHandler?.provision_resources?.credentials?.id
+          );
+        });
+
+        if (!lastUsed) {
+          setShowForm(true);
+          return;
+        }
+
+        setLastConnectedAccount(lastUsed);
+        setShowForm(false);
+      })
+      .catch((err) => {
+        setShowForm(true);
+        console.error(err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   const validate = () => {
     if (!accessId) {
@@ -83,56 +148,113 @@ export const CredentialsForm: React.FC<{
         }
       );
 
-      nextFormStep({
-        credentials: {
-          id: res.data?.id,
-        },
-      });
+      continueToNextStep(res.data?.id);
     } catch (error) {
       setButtonStatus("Something went wrong, please try again");
     }
   };
 
+  const continueToNextStep = (integration_id: number) => {
+    nextFormStep({
+      credentials: {
+        id: integration_id,
+      },
+    });
+  };
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (showForm) {
+    return (
+      <div>
+        <InputRow
+          type="text"
+          value={accessId}
+          setValue={(x: string) => {
+            setAccessId(x);
+          }}
+          label="👤 AWS Access ID"
+          placeholder="ex: AKIAIOSFODNN7EXAMPLE"
+          width="100%"
+          isRequired={true}
+        />
+        <InputRow
+          type="password"
+          value={secretKey}
+          setValue={(x: string) => {
+            setSecretKey(x);
+          }}
+          label="🔒 AWS Secret Key"
+          placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+          width="100%"
+          isRequired={true}
+        />
+        <SelectRow
+          options={regionOptions}
+          width="100%"
+          value={awsRegion}
+          scrollBuffer={true}
+          dropdownMaxHeight="240px"
+          setActiveValue={(x: string) => {
+            setAWSRegion(x);
+          }}
+          label="📍 AWS Region"
+        />
+        <Br />
+        <Flex>
+          {lastConnectedAccount && (
+            <SaveButton
+              text="Cancel"
+              disabled={false}
+              onClick={() => setShowForm(false)}
+              makeFlush={true}
+              clearPosition={true}
+              status=""
+              statusPosition="right"
+              color="#fc4976"
+            />
+          )}
+          <SubmitButton
+            text="Continue"
+            disabled={false}
+            onClick={submit}
+            makeFlush={true}
+            clearPosition={true}
+            status={buttonStatus}
+            statusPosition={"right"}
+            disableLeftMargin={!lastConnectedAccount}
+          />
+        </Flex>
+      </div>
+    );
+  }
+
   return (
     <>
-      <InputRow
-        type="text"
-        value={accessId}
-        setValue={(x: string) => {
-          setAccessId(x);
-        }}
-        label="👤 AWS Access ID"
-        placeholder="ex: AKIAIOSFODNN7EXAMPLE"
-        width="100%"
-        isRequired={true}
-      />
-      <InputRow
-        type="password"
-        value={secretKey}
-        setValue={(x: string) => {
-          setSecretKey(x);
-        }}
-        label="🔒 AWS Secret Key"
-        placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
-        width="100%"
-        isRequired={true}
-      />
-      <SelectRow
-        options={regionOptions}
-        width="100%"
-        value={awsRegion}
-        scrollBuffer={true}
-        dropdownMaxHeight="240px"
-        setActiveValue={(x: string) => {
-          setAWSRegion(x);
-        }}
-        label="📍 AWS Region"
-      />
-      <Br />
+      <Helper>Connected account:</Helper>
+      <PreviewRow>
+        <Flex>
+          <i className="material-icons">account_circle</i>
+          {lastConnectedAccount.aws_arn || "arn: n/a"}
+        </Flex>
+        <Right>
+          Connected at{" "}
+          {readableDate(lastConnectedAccount.created_at)}
+        </Right>
+      </PreviewRow>
+      <Helper>
+        Want to use a different account?{" "}
+        <A onClick={() => setShowForm(true)} href="#">
+          Connect another account
+        </A>
+        .
+      </Helper>
       <SaveButton
         text="Continue"
         disabled={false}
-        onClick={submit}
+        onClick={() => continueToNextStep(lastConnectedAccount?.id)}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}
@@ -311,7 +433,56 @@ export const SettingsForm: React.FC<{
   );
 };
 
+const Right = styled.div`
+  text-align: right;
+`;
+
 const Br = styled.div`
   width: 100%;
   height: 15px;
+`;
+
+const SubmitButton = styled(SaveButton)`
+  margin-left: ${(props: { disableLeftMargin: boolean }) =>
+    props.disableLeftMargin ? "" : "16px"};
+`;
+
+const A = styled.a`
+  cursor: pointer;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  color: #ffffff;
+  align-items: center;
+  > i {
+    color: #aaaabb;
+    font-size: 20px;
+    margin-right: 10px;
+  }
+`;
+
+const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const FlexColumnWithMargin = styled(FlexColumn)`
+  margin-left: ${(props: { marginLeft: string }) => props.marginLeft};
+`;
+
+const SelectableSpan = styled.span`
+  user-select: text;
+`;
+
+const PreviewRow = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #ffffff55;
+  background: #ffffff11;
+  border: 1px solid #aaaabb;
+  justify-content: space-between;
+  font-size: 13px;
+  border-radius: 5px;
 `;

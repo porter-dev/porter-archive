@@ -101,11 +101,11 @@ export const CredentialsForm: React.FC<{
   let content = "Project name: n/a";
 
   if (connectedAccount?.target_email) {
-    content = `User email: ${connectedAccount?.target_email}`;
+    content = `${connectedAccount?.target_email}`;
   }
 
   if (connectedAccount?.target_id) {
-    content = `Project name: ${connectedAccount?.target_id}`;
+    content = `${connectedAccount?.target_id}`;
   }
 
   return (
@@ -118,7 +118,7 @@ export const CredentialsForm: React.FC<{
               <i className="material-icons">account_circle</i>
               {content}
             </Flex>
-            <div>Connected at {readableDate(connectedAccount.created_at)}</div>
+            <Right>Connected at {readableDate(connectedAccount.created_at)}</Right>
           </PreviewRow>
         </>
       )}
@@ -344,6 +344,11 @@ export const SettingsForm: React.FC<{
     </>
   );
 };
+
+const Right = styled.div`
+  text-align: right;
+  margin-left: 10px;
+`;
 
 const A = styled.a`
   cursor: pointer;

@@ -104,6 +104,7 @@ func (a *AWSIntegration) PopulateAWSArn() error {
 func (a *AWSIntegration) GetBearerToken(
 	getTokenCache GetTokenCacheFunc,
 	setTokenCache SetTokenCacheFunc,
+	clusterID string,
 ) (string, error) {
 	cache, err := getTokenCache()
 
@@ -126,9 +127,15 @@ func (a *AWSIntegration) GetBearerToken(
 		return "", err
 	}
 
+	clusterIDGuess := string(a.AWSClusterID)
+
+	if clusterIDGuess == "" {
+		clusterIDGuess = clusterID
+	}
+
 	tok, err := generator.GetWithOptions(&token.GetTokenOptions{
 		Session:   sess,
-		ClusterID: string(a.AWSClusterID),
+		ClusterID: clusterID,
 	})
 
 	if err != nil {

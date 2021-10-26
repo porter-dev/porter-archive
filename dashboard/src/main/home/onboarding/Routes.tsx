@@ -3,7 +3,7 @@ import { Route, Switch } from "react-router";
 import { OFState } from "./state";
 import ConnectRegistry from "./steps/ConnectRegistry/ConnectRegistry";
 import ConnectSource from "./steps/ConnectSource";
-import ProvisionResourcesWrapper from "./steps/ProvisionResources/ProvisionResourcesWrapper";
+import ProvisionResources from "./steps/ProvisionResources/ProvisionResources";
 
 export const Routes = () => {
   return (
@@ -18,7 +18,7 @@ export const Routes = () => {
           <ConnectRegistry />
         </Route>
         <Route path={[`/onboarding/provision/:step?`]}>
-          <ProvisionResourcesWrapper />
+          <ProvisionResources />
         </Route>
       </Switch>
     </>

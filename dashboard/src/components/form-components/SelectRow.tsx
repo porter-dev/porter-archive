@@ -12,6 +12,7 @@ type PropsType = {
   width?: string;
   dropdownMaxHeight?: string;
   scrollBuffer?: boolean;
+  doc?: string;
 };
 
 type StateType = {};
@@ -20,7 +21,14 @@ export default class SelectRow extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledSelectRow>
-        <Label>{this.props.label}</Label>
+        <Wrapper>
+          <Label>{this.props.label}</Label>
+          {this.props.doc ? (
+            <a href={this.props.doc} target="_blank">
+              <i className="material-icons">help_outline</i>
+            </a>
+          ) : null}
+        </Wrapper>
         <SelectWrapper>
           <Selector
             scrollBuffer={this.props.scrollBuffer}
@@ -39,6 +47,23 @@ export default class SelectRow extends Component<PropsType, StateType> {
 }
 
 const SelectWrapper = styled.div``;
+
+const Wrapper = styled.div`
+  display: flex;
+  align-items; center;
+
+  > a {
+    > i {
+      font-size: 18px;
+      margin-left: 8px;
+      margin-top: 2px;
+      color: #8590ff;
+      :hover {
+        color: #aaaabb;
+      }
+    }
+  }
+`;
 
 const Label = styled.div`
   color: #ffffff;

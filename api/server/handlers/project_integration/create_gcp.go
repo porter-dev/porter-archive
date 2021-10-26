@@ -53,11 +53,15 @@ func (p *CreateGCPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateGCPIntegration(request *types.CreateGCPRequest, projectID, userID uint) *ints.GCPIntegration {
-	return &ints.GCPIntegration{
+	resp := &ints.GCPIntegration{
 		UserID:       userID,
 		ProjectID:    projectID,
 		GCPKeyData:   []byte(request.GCPKeyData),
 		GCPProjectID: request.GCPProjectID,
 		GCPRegion:    request.GCPRegion,
 	}
+
+	resp.PopulateGCPMetadata()
+
+	return resp
 }

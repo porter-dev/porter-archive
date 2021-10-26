@@ -23,6 +23,7 @@ import (
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
+	"github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 
 	lr "github.com/porter-dev/porter/internal/logger"
@@ -33,6 +34,7 @@ import (
 var InstanceBillingManager billing.BillingManager
 var InstanceEnvConf *envloader.EnvConf
 var InstanceDB *pgorm.DB
+var InstanceCredentialBackend credentials.CredentialStorage
 
 type EnvConfigLoader struct {
 	version string
@@ -60,11 +62,12 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	sc := envConf.ServerConf
 
 	res = &config.Config{
-		Logger:         lr.NewConsole(sc.Debug),
-		ServerConf:     sc,
-		DBConf:         envConf.DBConf,
-		RedisConf:      envConf.RedisConf,
-		BillingManager: InstanceBillingManager,
+		Logger:            lr.NewConsole(sc.Debug),
+		ServerConf:        sc,
+		DBConf:            envConf.DBConf,
+		RedisConf:         envConf.RedisConf,
+		BillingManager:    InstanceBillingManager,
+		CredentialBackend: InstanceCredentialBackend,
 	}
 
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
@@ -82,7 +85,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		key[i] = b
 	}
 
-	res.Repo = gorm.NewRepository(InstanceDB, &key)
+	res.Repo = gorm.NewRepository(InstanceDB, &key, InstanceCredentialBackend)
 
 	// create the session store
 	res.Store, err = sessionstore.NewStore(

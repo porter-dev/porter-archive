@@ -1,16 +1,13 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
+
 import styled from "styled-components";
 
-type PropsType = {};
+type Props = {};
 
-type StateType = {};
+export const Boilerplate: React.FC<Props> = (props) => {
+  const [someState, setSomeState] = useState("");
 
-export default class Boilerplate extends Component<PropsType, StateType> {
-  state = {};
-
-  render() {
-    return <StyledBoilerplate>boilerplate</StyledBoilerplate>;
-  }
-}
+  return <StyledBoilerplate></StyledBoilerplate>;
+};
 
 const StyledBoilerplate = styled.div``;

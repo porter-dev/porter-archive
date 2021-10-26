@@ -16,7 +16,6 @@ type PropsType = {
 
 type StateType = {
   credentialsName: string;
-  gcpRegion: string;
   serviceAccountKey: string;
   gcpProjectID: string;
   url: string;
@@ -25,22 +24,15 @@ type StateType = {
 export default class GCRForm extends Component<PropsType, StateType> {
   state = {
     credentialsName: "",
-    gcpRegion: "",
     serviceAccountKey: "",
     gcpProjectID: "",
     url: "",
   };
 
   isDisabled = (): boolean => {
-    let {
-      credentialsName,
-      gcpRegion,
-      gcpProjectID,
-      serviceAccountKey,
-    } = this.state;
+    let { credentialsName, gcpProjectID, serviceAccountKey } = this.state;
     if (
       credentialsName === "" ||
-      gcpRegion === "" ||
       serviceAccountKey === "" ||
       gcpProjectID === ""
     ) {
@@ -58,7 +50,6 @@ export default class GCRForm extends Component<PropsType, StateType> {
       .createGCPIntegration(
         "<token>",
         {
-          gcp_region: this.state.gcpRegion,
           gcp_key_data: this.state.serviceAccountKey,
           gcp_project_id: this.state.gcpProjectID,
         },
@@ -106,14 +97,6 @@ export default class GCRForm extends Component<PropsType, StateType> {
           />
           <Heading>GCP Settings</Heading>
           <Helper>Service account credentials for GCP permissions.</Helper>
-          <InputRow
-            type="text"
-            value={this.state.gcpRegion}
-            setValue={(gcpRegion: string) => this.setState({ gcpRegion })}
-            label="📍 GCP Region"
-            placeholder="ex: uranus-north3"
-            width="100%"
-          />
           <TextArea
             value={this.state.serviceAccountKey}
             setValue={(serviceAccountKey: string) =>

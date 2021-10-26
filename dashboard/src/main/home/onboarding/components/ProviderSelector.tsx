@@ -13,6 +13,7 @@ export type ProviderSelectorProps = {
     icon: string;
     label: string;
   }[];
+  defaultOption?: string;
 };
 
 export const registryOptions = [
@@ -68,8 +69,12 @@ export const provisionerOptionsWithExternal = [
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selectProvider,
   options,
+  defaultOption,
 }) => {
   const [provider, setProvider] = useState(() => {
+    if (typeof defaultOption === "string") {
+      return defaultOption;
+    }
     if (options.find((o) => o.value === "skip")) {
       return "skip";
     }

@@ -112,7 +112,7 @@ const flow: FlowType = {
          * has a proper way of listing the registries and
          * manage them inside the step
          */
-        // go_back: "connect_registry",
+        go_back: "connect_registry",
       },
       execute: {
         on: {

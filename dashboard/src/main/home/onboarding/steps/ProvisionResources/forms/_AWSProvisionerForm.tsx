@@ -205,7 +205,7 @@ export const CredentialsForm: React.FC<{
         <Br />
         <Flex>
           {lastConnectedAccount && (
-            <SaveButton
+            <CancelButton
               text="Cancel"
               disabled={false}
               onClick={() => setShowForm(false)}
@@ -433,6 +433,10 @@ export const SettingsForm: React.FC<{
   );
 };
 
+const CancelButton = styled(SaveButton)`
+  z-index: 0;
+`;
+
 const Right = styled.div`
   text-align: right;
 `;
@@ -443,6 +447,7 @@ const Br = styled.div`
 `;
 
 const SubmitButton = styled(SaveButton)`
+  z-index: 0;
   margin-left: ${(props: { disableLeftMargin: boolean }) =>
     props.disableLeftMargin ? "" : "16px"};
 `;

@@ -76,6 +76,16 @@ export const CredentialsForm: React.FC<{
     return <Loading />;
   }
 
+  let content = "Project name: n/a";
+
+  if (connectedAccount?.target_email) {
+    content = `${connectedAccount?.target_email}`;
+  }
+
+  if (connectedAccount?.target_id) {
+    content = `${connectedAccount?.target_id}`;
+  }
+
   return (
     <>
       {connectedAccount !== null && (
@@ -84,30 +94,29 @@ export const CredentialsForm: React.FC<{
           <PreviewRow>
             <Flex>
               <i className="material-icons">account_circle</i>
-              Name: {connectedAccount.client}
+              {content}
             </Flex>
-            <div>Connected at {readableDate(connectedAccount.created_at)}</div>
+            <Right>Connected at {readableDate(connectedAccount.created_at)}</Right>
           </PreviewRow>
         </>
       )}
-      {
-        connectedAccount !== null ? (
-          <Helper>
-            Want to use a different account?{" "}
-            <A 
-             href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
-            >
-              Sign in to DigitalOcean
-            </A>.
-          </Helper>
-        ) : (
-          <ConnectDigitalOceanButton
+      {connectedAccount !== null ? (
+        <Helper>
+          Want to use a different account?{" "}
+          <A
             href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
           >
-            Sign In to DigitalOcean
-          </ConnectDigitalOceanButton>
-        )
-      }
+            Sign in to DigitalOcean
+          </A>
+          .
+        </Helper>
+      ) : (
+        <ConnectDigitalOceanButton
+          href={`/api/projects/${project?.id}/oauth/digitalocean?redirect_uri=${encoded_redirect_uri}`}
+        >
+          Sign In to DigitalOcean
+        </ConnectDigitalOceanButton>
+      )}
 
       <Br height="5px" />
       {connectedAccount !== null && (
@@ -226,6 +235,10 @@ const A = styled.a`
   cursor: pointer;
 `;
 
+const Right = styled.div`
+  text-align: right;
+`;
+
 const Flex = styled.div`
   display: flex;
   color: #ffffff;
@@ -251,7 +264,7 @@ const PreviewRow = styled.div`
 
 const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: ${props => props.height || "15px"};
+  height: ${(props) => props.height || "15px"};
 `;
 
 const CodeBlock = styled.span`

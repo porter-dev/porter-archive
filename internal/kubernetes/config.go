@@ -329,7 +329,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			return nil, err
 		}
 
-		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache)
+		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, cluster.Name)
 
 		if err != nil {
 			return nil, err

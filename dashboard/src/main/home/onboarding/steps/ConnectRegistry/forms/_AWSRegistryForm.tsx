@@ -185,29 +185,30 @@ export const CredentialsForm: React.FC<{
           label="📍 AWS Region"
         />
         <Br />
-        {lastConnectedAccount && (
-          <CancelButton
-            text="Cancel"
+        <Flex>
+          {lastConnectedAccount && (
+            <SaveButton
+              text="Cancel"
+              disabled={false}
+              onClick={() => setShowForm(false)}
+              makeFlush={true}
+              clearPosition={true}
+              status=""
+              statusPosition="right"
+              color="#fc4976"
+            />
+          )}
+          <SubmitButton
+            text="Continue"
             disabled={false}
-            onClick={() => setShowForm(false)}
+            onClick={submit}
             makeFlush={true}
             clearPosition={true}
-            status={""}
+            status={buttonStatus}
             statusPosition={"right"}
-            color={"#fc4976"}
+            disableLeftMargin={!lastConnectedAccount}
           />
-        )}
-
-        <SubmitButton
-          text="Continue"
-          disabled={false}
-          onClick={submit}
-          makeFlush={true}
-          clearPosition={true}
-          status={buttonStatus}
-          statusPosition={"right"}
-          disableLeftMargin={!lastConnectedAccount}
-        />
+        </Flex>
       </>
     );
   }
@@ -218,19 +219,12 @@ export const CredentialsForm: React.FC<{
       <PreviewRow>
         <Flex>
           <i className="material-icons">account_circle</i>
-          <FlexColumn>
-            <FlexColumn>
-              <b>ARN:</b>
-              <SelectableSpan>
-                &#8226; {lastConnectedAccount.aws_arn}
-              </SelectableSpan>
-            </FlexColumn>
-          </FlexColumn>
+          {lastConnectedAccount.aws_arn || "arn: n/a"}
         </Flex>
-        <FlexColumnWithMargin marginLeft={"14px"}>
-          <span>Connected at</span>
+        <Right>
+          Connected at{" "}
           {readableDate(lastConnectedAccount.created_at)}
-        </FlexColumnWithMargin>
+        </Right>
       </PreviewRow>
       <Helper>
         Want to use a different account?{" "}
@@ -241,19 +235,7 @@ export const CredentialsForm: React.FC<{
       </Helper>
       <Br />
       <SaveButton
-        text="Connect another account"
-        disabled={false}
-        onClick={() => setShowForm(true)}
-        makeFlush={true}
-        clearPosition={true}
-        status={""}
-        statusPosition={"right"}
-      />
-      <Br />
-      <b>Or</b>
-      <Br />
-      <SaveButton
-        text="Continue with current account"
+        text="Continue"
         disabled={false}
         onClick={() => continueToNextStep(lastConnectedAccount?.id)}
         makeFlush={true}
@@ -370,6 +352,10 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
   );
 };
 
+const Right = styled.div`
+  text-align: right;
+`;
+
 const Br = styled.div`
   width: 100%;
   height: 15px;
@@ -415,12 +401,7 @@ const PreviewRow = styled.div`
   border-radius: 5px;
 `;
 
-const CancelButton = styled(SaveButton)`
-  display: inline-block;
-`;
-
 const SubmitButton = styled(SaveButton)`
-  display: inline-block;
   margin-left: ${(props: { disableLeftMargin: boolean }) =>
     props.disableLeftMargin ? "" : "16px"};
 `;

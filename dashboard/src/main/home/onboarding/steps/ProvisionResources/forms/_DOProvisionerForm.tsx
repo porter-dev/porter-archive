@@ -98,6 +98,16 @@ export const CredentialsForm: React.FC<{
     return <Loading />;
   }
 
+  let content = "Project name: n/a";
+
+  if (connectedAccount?.target_email) {
+    content = `${connectedAccount?.target_email}`;
+  }
+
+  if (connectedAccount?.target_id) {
+    content = `${connectedAccount?.target_id}`;
+  }
+
   return (
     <>
       {connectedAccount !== null && (
@@ -106,9 +116,9 @@ export const CredentialsForm: React.FC<{
           <PreviewRow>
             <Flex>
               <i className="material-icons">account_circle</i>
-              Project name: {connectedAccount.target_id || "n/a"}
+              {content}
             </Flex>
-            <div>Connected at {readableDate(connectedAccount.created_at)}</div>
+            <Right>Connected at {readableDate(connectedAccount.created_at)}</Right>
           </PreviewRow>
         </>
       )}
@@ -334,6 +344,11 @@ export const SettingsForm: React.FC<{
     </>
   );
 };
+
+const Right = styled.div`
+  text-align: right;
+  margin-left: 10px;
+`;
 
 const A = styled.a`
   cursor: pointer;

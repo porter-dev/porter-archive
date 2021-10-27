@@ -11,45 +11,48 @@ import ProviderSelector, {
 
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
-import { SupportedProviders } from "../../types";
 import backArrow from "assets/back_arrow.png";
 import { SharedStatus } from "./forms/SharedStatus";
+import { useSnapshot } from "valtio";
+import { OFState } from "../../state";
 
-type Props = {
-  provider: SupportedProviders | "external";
-  enable_go_back: boolean;
-  project: {
-    id: number;
-    name: string;
-  };
-  shouldProvisionRegistry: boolean;
-  onSelectProvider: (provider: SupportedProviders | "external") => void;
-  onSaveCredentials: (credentials: any) => void;
-  onSaveSettings: (settings: any) => void;
-  onSuccess: () => void;
-  onSkip: () => void;
-  goBack: (data?: any) => void;
-};
+type Props = {};
 
-const ProvisionResources: React.FC<Props> = ({
-  provider,
-  project,
-  shouldProvisionRegistry,
-  onSelectProvider,
-  onSaveCredentials,
-  onSaveSettings,
-  onSuccess,
-
-  enable_go_back,
-  goBack,
-}) => {
+const ProvisionResources: React.FC<Props> = () => {
+  const snap = useSnapshot(OFState);
   const { step } = useParams<{ step: any }>();
   const [infraStatus, setInfraStatus] = useState<{
     hasError: boolean;
     description?: string;
   }>(null);
 
+  const shouldProvisionRegistry = !!snap.StateHandler.connected_registry?.skip;
+  const provider = snap.StateHandler.provision_resources?.provider;
+  const project = snap.StateHandler.project;
+  const enableGoBack =
+    snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow;
+
+  const handleContinue = (data?: any) => {
+    OFState.actions.nextStep("continue", data);
+  };
+
+  const handleGoBack = (data?: any) => {
+    OFState.actions.nextStep("go_back", data);
+  };
+
+  const handleSelectProvider = (provider: string) => {
+    if (provider !== "external") {
+      OFState.actions.nextStep("continue", provider);
+      return;
+    }
+    OFState.actions.nextStep("skip");
+  };
+
   const renderSaveButton = () => {
+    if (typeof infraStatus?.hasError !== "boolean") {
+      return;
+    }
+
     if (infraStatus && !infraStatus.hasError) {
       return (
         <>
@@ -57,7 +60,7 @@ const ProvisionResources: React.FC<Props> = ({
           <SaveButton
             text="Continue"
             disabled={false}
-            onClick={onSuccess}
+            onClick={() => handleContinue()}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"
@@ -73,7 +76,7 @@ const ProvisionResources: React.FC<Props> = ({
             text="Resolve Errors"
             status="Encountered errors while provisioning."
             disabled={false}
-            onClick={() => goBack(infraStatus.description)}
+            onClick={() => handleGoBack(infraStatus.description)}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"
@@ -101,16 +104,7 @@ const ProvisionResources: React.FC<Props> = ({
     switch (step) {
       case "credentials":
       case "settings":
-        return (
-          <FormFlowWrapper
-            provider={provider}
-            currentStep={step}
-            onSaveCredentials={onSaveCredentials}
-            onSaveSettings={onSaveSettings}
-            project={project}
-            goBack={goBack}
-          />
-        );
+        return <FormFlowWrapper currentStep={step} />;
       case "status":
         return (
           <>
@@ -127,17 +121,15 @@ const ProvisionResources: React.FC<Props> = ({
       case "connect_own_cluster":
         return (
           <ConnectExternalCluster
-            nextStep={onSuccess}
+            nextStep={handleContinue}
             project={project}
-            goBack={goBack}
+            goBack={handleGoBack}
           />
         );
       default:
         return (
           <ProviderSelector
-            selectProvider={(provider) => {
-              onSelectProvider(provider);
-            }}
+            selectProvider={handleSelectProvider}
             options={
               shouldProvisionRegistry
                 ? provisionerOptions
@@ -150,10 +142,10 @@ const ProvisionResources: React.FC<Props> = ({
 
   return (
     <div>
-      {enable_go_back && (
+      {enableGoBack && (
         <BackButton
           onClick={() => {
-            goBack();
+            handleGoBack();
           }}
         >
           <BackButtonImg src={backArrow} />

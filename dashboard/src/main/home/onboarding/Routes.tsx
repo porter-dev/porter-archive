@@ -1,10 +1,9 @@
 import React from "react";
 import { Route, Switch } from "react-router";
-import { Redirect } from "react-router-dom";
 import { OFState } from "./state";
-import ConnectRegistryWrapper from "./steps/ConnectRegistry/ConnectRegistryWrapper";
+import ConnectRegistry from "./steps/ConnectRegistry/ConnectRegistry";
 import ConnectSource from "./steps/ConnectSource";
-import ProvisionResourcesWrapper from "./steps/ProvisionResources/ProvisionResourcesWrapper";
+import ProvisionResources from "./steps/ProvisionResources/ProvisionResources";
 
 export const Routes = () => {
   return (
@@ -16,10 +15,10 @@ export const Routes = () => {
           />
         </Route>
         <Route path={["/onboarding/registry/:step?"]}>
-          <ConnectRegistryWrapper />
+          <ConnectRegistry />
         </Route>
         <Route path={[`/onboarding/provision/:step?`]}>
-          <ProvisionResourcesWrapper />
+          <ProvisionResources />
         </Route>
       </Switch>
     </>

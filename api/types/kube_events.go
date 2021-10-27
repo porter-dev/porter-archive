@@ -2,6 +2,10 @@ package types
 
 import "time"
 
+const (
+	URLParamKubeEventID = "kube_event_id"
+)
+
 // CreateKubeEventRequest is the type for creating a new kube event
 type CreateKubeEventRequest struct {
 	ResourceType string    `json:"resource_type"`

@@ -8,22 +8,22 @@ const (
 
 // CreateKubeEventRequest is the type for creating a new kube event
 type CreateKubeEventRequest struct {
-	ResourceType string    `json:"resource_type"`
-	Name         string    `json:"name"`
+	ResourceType string    `json:"resource_type" form:"required"`
+	Name         string    `json:"name" form:"required"`
 	OwnerType    string    `json:"owner_type"`
 	OwnerName    string    `json:"owner_name"`
-	EventType    string    `json:"event_type"`
-	Namespace    string    `json:"namespace"`
-	Message      string    `json:"message"`
+	EventType    string    `json:"event_type" form:"required"`
+	Namespace    string    `json:"namespace" form:"required"`
+	Message      string    `json:"message" form:"required"`
 	Reason       string    `json:"reason"`
-	Timestamp    time.Time `json:"timestamp"`
+	Timestamp    time.Time `json:"timestamp" form:"required"`
 	Data         []string  `json:"data"`
 }
 
 type KubeEventBasic struct {
-	ID        uint
-	ProjectID uint
-	ClusterID uint
+	ID        uint `json:"id"`
+	ProjectID uint `json:"project_id"`
+	ClusterID uint `json:"cluster_id"`
 
 	ResourceType string    `json:"resource_type"`
 	Name         string    `json:"name"`

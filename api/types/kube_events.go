@@ -13,7 +13,7 @@ type CreateKubeEventRequest struct {
 	OwnerType    string    `json:"owner_type"`
 	OwnerName    string    `json:"owner_name"`
 	EventType    string    `json:"event_type" form:"required"`
-	Namespace    string    `json:"namespace" form:"required"`
+	Namespace    string    `json:"namespace"`
 	Message      string    `json:"message" form:"required"`
 	Reason       string    `json:"reason"`
 	Timestamp    time.Time `json:"timestamp" form:"required"`

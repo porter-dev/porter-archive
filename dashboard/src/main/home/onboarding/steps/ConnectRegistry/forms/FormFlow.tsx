@@ -1,4 +1,7 @@
-import { ConnectedRegistryConfig } from "main/home/onboarding/state/StateHandler";
+import {
+  ConnectedRegistryConfig,
+  StateHandler,
+} from "main/home/onboarding/state/StateHandler";
 import Breadcrumb from "components/Breadcrumb";
 import {
   SkipRegistryConnection,
@@ -23,6 +26,8 @@ import {
   SettingsForm as GCPSettingsForm,
   TestRegistryConnection as GCPTestRegistryConnection,
 } from "./_GCPRegistryForm";
+import { OFState } from "main/home/onboarding/state";
+import { useSnapshot } from "valtio";
 
 const Forms = {
   aws: {
@@ -64,35 +69,32 @@ const FormTitle = {
 };
 
 type Props = {
-  provider: SupportedProviders;
-  onSaveCredentials: (credentials: any) => void;
-  onSaveSettings: (settings: any) => void;
-  onSuccess: () => void;
-  project: { id: number; name: string };
   currentStep: "credentials" | "settings" | "test_connection";
-  goBack: () => void;
-  enable_go_back: boolean;
 };
 
-const FormFlowWrapper: React.FC<Props> = ({
-  onSaveCredentials,
-  onSaveSettings,
-  onSuccess,
-  provider,
-  project,
-  currentStep,
-  goBack,
-  enable_go_back,
-}) => {
+const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
+  const snap = useSnapshot(StateHandler);
+
+  const provider = snap.connected_registry.provider as SupportedProviders;
+  const project = snap.project;
+
+  const handleContinue = (data?: any) => {
+    OFState.actions.nextStep("continue", data);
+  };
+
+  const handleGoBack = () => {
+    OFState.actions.nextStep("go_back");
+  };
+
   const nextFormStep = (
     data?: Partial<Exclude<ConnectedRegistryConfig, SkipRegistryConnection>>
   ) => {
     if (currentStep === "credentials") {
-      onSaveCredentials(data.credentials);
+      handleContinue(data.credentials);
     } else if (currentStep === "settings") {
-      onSaveSettings(data.settings);
+      handleContinue(data.settings);
     } else if (currentStep === "test_connection") {
-      onSuccess();
+      handleContinue();
     }
   };
 
@@ -118,7 +120,7 @@ const FormFlowWrapper: React.FC<Props> = ({
       <Header>
         <FormHeader>
           {currentStep !== "test_connection" && (
-            <CloseButton onClick={() => goBack()}>
+            <CloseButton onClick={() => handleGoBack()}>
               <i className="material-icons">keyboard_backspace</i>
             </CloseButton>
           )}

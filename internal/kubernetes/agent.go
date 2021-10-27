@@ -267,6 +267,17 @@ func (a *Agent) ListNamespaces() (*v1.NamespaceList, error) {
 
 // CreateNamespace creates a namespace with the given name.
 func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
+	// check if namespace exists
+	checkNS, err := a.Clientset.CoreV1().Namespaces().Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	if err == nil && checkNS != nil {
+		return checkNS, nil
+	}
+
 	namespace := v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -287,6 +298,20 @@ func (a *Agent) DeleteNamespace(name string) error {
 		name,
 		metav1.DeleteOptions{},
 	)
+}
+
+func (a *Agent) GetPorterAgent() (*appsv1.Deployment, error) {
+	depl, err := a.Clientset.AppsV1().Deployments("porter-agent-system").Get(
+		context.TODO(),
+		"porter-agent-controller-manager",
+		metav1.GetOptions{},
+	)
+
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	}
+
+	return depl, err
 }
 
 // ListJobsByLabel lists jobs in a namespace matching a label

@@ -50,7 +50,7 @@ func (c *GetReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	res := make(types.GetReleaseStepsResponse, 0)
 
 	if release.EventContainer != 0 {
-		subevents, err := c.Repo().Event().ReadEventsByContainerID(release.EventContainer)
+		subevents, err := c.Repo().BuildEvent().ReadEventsByContainerID(release.EventContainer)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -24,6 +24,21 @@ export type EventContainer = {
   started_at: number;
 };
 
+export type KubeEvent = {
+  cluster_id: number;
+  event_type: string;
+  id: number;
+  message: string;
+  name: string;
+  namespace: string;
+  owner_name: string;
+  owner_type: string;
+  project_id: number;
+  reason: string;
+  resource_type: string;
+  timestamp: string;
+};
+
 type Props = {
   currentChart: ChartType;
 };
@@ -31,12 +46,15 @@ type Props = {
 const REFRESH_TIME = 15000;
 
 const EventsTab: React.FunctionComponent<Props> = (props) => {
+  const { currentChart } = props;
   const { currentCluster, currentProject } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [shouldRequest, setShouldRequest] = useState(true);
   const [eventData, setEventData] = useState<EventContainer[]>([]); // most recent event is last
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
+  const [hasPorterAgent, setHasPorterAgent] = useState(false);
+  const [kubeEvents, setKubeEvents] = useState<KubeEvent[] | null>(null);
 
   // sort by time, ensure sequences are monotonically increasing by time, collapse by id
   const filterData = (data: Event[]) => {
@@ -93,9 +111,9 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
           {},
           {
             cluster_id: currentCluster.id,
-            namespace: props.currentChart.namespace,
+            namespace: currentChart.namespace,
             id: currentProject.id,
-            name: props.currentChart.name,
+            name: currentChart.name,
           }
         )
         .then((data) => {
@@ -111,17 +129,86 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
     };
 
     getData();
-    const id = window.setInterval(getData, REFRESH_TIME);
+    // const id = window.setInterval(getData, REFRESH_TIME);
 
     return () => {
       setIsLoading(true);
-      window.clearInterval(id);
+      // window.clearInterval(id);
     };
-  }, [currentProject, currentCluster, props.currentChart]);
+  }, [currentProject, currentCluster, currentChart]);
 
-  if (isError) {
-    return <Placeholder>Error loading events.</Placeholder>;
+  useEffect(() => {
+    let isSubscribed = true;
+
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    api
+      .detectPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then(() => {
+        setHasPorterAgent(true);
+      })
+      .catch(() => {
+        setHasPorterAgent(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [currentProject, currentCluster]);
+
+  useEffect(() => {
+    let isSubscribed = true;
+
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+    if (hasPorterAgent) {
+      api
+        .getKubeEvents("<token>", {}, { project_id, cluster_id })
+        .then((res) => {
+          setKubeEvents(res.data);
+          setIsLoading(false);
+        })
+        .catch((error) => console.log(error));
+    }
+  }, [currentProject, currentCluster, hasPorterAgent]);
+
+  const installPorterAgent = () => {
+    const project_id = currentProject?.id;
+    const cluster_id = currentCluster?.id;
+
+    api
+      .installPorterAgent("<token>", {}, { project_id, cluster_id })
+      .then(() => {
+        setHasPorterAgent(true);
+      })
+      .catch(() => {
+        setHasPorterAgent(false);
+      });
+  };
+
+  const parseToEvent = (kubeEvent: KubeEvent, index: number): Event => {
+    return {
+      event_id: `${kubeEvent.id}`,
+      index,
+      info: kubeEvent.message,
+      name: kubeEvent.name,
+      status: 0,
+      time: new Date(kubeEvent.timestamp).getTime(),
+    };
+  };
+
+  if (!hasPorterAgent) {
+    return (
+      <InstallPorterAgentButton onClick={() => installPorterAgent()}>
+        Install porter agent
+      </InstallPorterAgentButton>
+    );
   }
+
+  // if (isError) {
+  //   return <Placeholder>Error loading events.</Placeholder>;
+  // }
 
   if (isLoading) {
     return (
@@ -131,7 +218,7 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
     );
   }
 
-  if (eventData.length === 0) {
+  if (eventData.length === 0 && !kubeEvents?.length) {
     return (
       <Placeholder>
         <i className="material-icons">category</i>
@@ -154,6 +241,18 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
 
   return (
     <EventsGrid>
+      {kubeEvents.map(parseToEvent).map((event, i) => {
+        return (
+          <React.Fragment key={i}>
+            <EventCard
+              event={event}
+              selectEvent={() => {
+                console.log("SELECTED", event);
+              }}
+            />
+          </React.Fragment>
+        );
+      })}
       {eventData
         .slice(0)
         .reverse()

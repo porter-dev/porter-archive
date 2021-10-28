@@ -1,6 +1,7 @@
 package gorm_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -15,25 +16,26 @@ import (
 )
 
 type tester struct {
-	repo         repository.Repository
-	key          *[32]byte
-	dbFileName   string
-	initUsers    []*models.User
-	initProjects []*models.Project
-	initGRs      []*models.GitRepo
-	initRegs     []*models.Registry
-	initClusters []*models.Cluster
-	initHRs      []*models.HelmRepo
-	initInfras   []*models.Infra
-	initReleases []*models.Release
-	initInvites  []*models.Invite
-	initCCs      []*models.ClusterCandidate
-	initKIs      []*ints.KubeIntegration
-	initBasics   []*ints.BasicIntegration
-	initOIDCs    []*ints.OIDCIntegration
-	initOAuths   []*ints.OAuthIntegration
-	initGCPs     []*ints.GCPIntegration
-	initAWSs     []*ints.AWSIntegration
+	repo           repository.Repository
+	key            *[32]byte
+	dbFileName     string
+	initUsers      []*models.User
+	initProjects   []*models.Project
+	initGRs        []*models.GitRepo
+	initRegs       []*models.Registry
+	initClusters   []*models.Cluster
+	initHRs        []*models.HelmRepo
+	initInfras     []*models.Infra
+	initReleases   []*models.Release
+	initInvites    []*models.Invite
+	initKubeEvents []*models.KubeEvent
+	initCCs        []*models.ClusterCandidate
+	initKIs        []*ints.KubeIntegration
+	initBasics     []*ints.BasicIntegration
+	initOIDCs      []*ints.OIDCIntegration
+	initOAuths     []*ints.OAuthIntegration
+	initGCPs       []*ints.GCPIntegration
+	initAWSs       []*ints.AWSIntegration
 }
 
 func setupTestEnv(tester *tester, t *testing.T) {
@@ -64,6 +66,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.Infra{},
 		&models.GitActionConfig{},
 		&models.Invite{},
+		&models.KubeEvent{},
 		&models.Onboarding{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
@@ -547,4 +550,44 @@ func initRelease(tester *tester, t *testing.T) {
 	}
 
 	tester.initReleases = append(tester.initReleases, release)
+}
+
+func initKubeEvents(tester *tester, t *testing.T) {
+	t.Helper()
+
+	if len(tester.initProjects) == 0 {
+		initProject(tester, t)
+	}
+
+	initEvents := make([]*models.KubeEvent, 0)
+
+	// init 100 events for testing purposes
+	for i := 0; i < 100; i++ {
+		refType := "pod"
+
+		if i >= 50 {
+			refType = "node"
+		}
+
+		event := &models.KubeEvent{
+			ProjectID: tester.initProjects[0].Model.ID,
+			ClusterID: tester.initClusters[0].Model.ID,
+			EventType: refType,
+			Name:      fmt.Sprintf("%s-example-%d", refType, i),
+			Namespace: "default",
+			Message:   "Pod killed",
+			Reason:    "OOM: memory limit exceeded",
+			Data:      []byte("log from pod\nlog2 from pod"),
+		}
+
+		event, err := tester.repo.KubeEvent().CreateEvent(event)
+
+		if err != nil {
+			t.Fatalf("%v\n", err)
+		}
+
+		initEvents = append(initEvents, event)
+	}
+
+	tester.initKubeEvents = initEvents
 }

@@ -11,6 +11,7 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
           return (
             <ExpandableResource
               key={i}
+              button={props?.settings?.options["resource-button"]}
               resource={resource}
               isLast={i === props.value.length - 1}
               roundAllCorners={true}

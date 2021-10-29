@@ -143,14 +143,32 @@ tabs:
   - name: section_one
     contents: 
     - type: heading
-      label: 💾 Certificates
+      label: Certificates
     - type: resource-list
+      settings:
+        options:
+          resource-button:
+            name: "Manual Refresh"
+            description: "This will delete the existing certificate resource."
+            actions:
+            - delete:
+                scope: release
+                relative_uri: /crd
       value: |
         .items[] | { 
-            name: "\(.spec.dnsNames | join(","))", 
-            label: "\(.metadata.namespace)/\(.metadata.name)",
-            status: .status.conditions[0].reason,
-            timestamp: .status.conditions[0].lastTransitionTime,
-            message: [.status.conditions[].message] | unique | join(","),
-            data: {}
+          metadata: .metadata,
+          name: "\(.spec.dnsNames | join(","))", 
+          label: "\(.metadata.namespace)/\(.metadata.name)",
+          status: (
+            ([.status.conditions[].type] | index("Ready")) as $index | (
+              if $index then (
+                if .status.conditions[$index].status == "True" then "Ready" else "Not Ready" end
+              ) else (
+                "Not Ready"
+              ) end
+            )
+          ),
+          timestamp: .status.conditions[0].lastTransitionTime | fromdate | strftime("%Y-%m-%d"),
+          message: [.status.conditions[].message] | unique | join(","),
+          data: {}
         }`

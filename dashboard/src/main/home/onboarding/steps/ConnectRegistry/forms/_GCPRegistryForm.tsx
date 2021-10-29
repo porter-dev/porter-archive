@@ -324,6 +324,7 @@ export const TestRegistryConnection: React.FC<{
       <RegistryImageList
         project={snap.project}
         registry_id={snap.connected_registry.settings.registry_connection_id}
+        registryType={"gcr"}
       />
       <SaveButton
         text="Continue"

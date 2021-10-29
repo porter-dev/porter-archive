@@ -6,6 +6,7 @@ import ResourceTab from "./ResourceTab";
 
 type PropsType = {
   resource: any;
+  button: any;
   handleClick?: () => void;
   selected?: boolean;
   isLast?: boolean;
@@ -19,7 +20,10 @@ export default class ExpandableResource extends Component<
   StateType
 > {
   render() {
-    let { resource } = this.props;
+    let { resource, button } = this.props;
+
+    console.log("BUTTON IS", button, resource);
+
     return (
       <ResourceTab
         label={resource.label}

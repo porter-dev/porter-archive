@@ -39,6 +39,11 @@ export interface ServiceIPListField extends GenericField {
 export interface ResourceListField extends GenericField {
   type: "resource-list";
   value: any[];
+  settings?: {
+    options?: {
+      "resource-button": any,
+    }
+  }
 }
 
 export interface VeleroBackupField extends GenericField {

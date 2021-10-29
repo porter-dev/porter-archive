@@ -135,7 +135,7 @@ func (a *AWSIntegration) GetBearerToken(
 
 	tok, err := generator.GetWithOptions(&token.GetTokenOptions{
 		Session:   sess,
-		ClusterID: clusterID,
+		ClusterID: clusterIDGuess,
 	})
 
 	if err != nil {

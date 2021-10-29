@@ -1,6 +1,7 @@
 package release
 
 import (
+	"fmt"
 	"net/http"
 
 	semver "github.com/Masterminds/semver/v3"
@@ -108,6 +109,48 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		res.Form = form
 	}
+	// if form not populated, detect common charts
+	if res.Form == nil {
+		// for now just case by name
+		if res.Release.Chart.Name() == "cert-manager" {
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, []byte(certManagerForm), "")
+
+			if err == nil {
+				res.Form = formYAML
+			}
+
+			fmt.Println("ERROR IS", err)
+		}
+	}
+
+	fmt.Println("FORM YAML IS", res.Form)
 
 	c.WriteResult(w, r, res)
 }
+
+const certManagerForm string = `tags:
+- hello
+tabs:
+- name: main
+  context:
+    type: cluster
+    config:
+      group: cert-manager.io
+      version: v1
+      resource: certificates
+  label: Certificates
+  sections:
+  - name: section_one
+    contents: 
+    - type: heading
+      label: 💾 Certificates
+    - type: resource-list
+      value: |
+        .items[] | { 
+            name: "\(.spec.dnsNames | join(","))", 
+            label: "\(.metadata.namespace)/\(.metadata.name)",
+            status: .status.conditions[0].reason,
+            timestamp: .status.conditions[0].lastTransitionTime,
+            message: [.status.conditions[].message] | unique | join(","),
+            data: {}
+        }`

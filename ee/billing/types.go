@@ -38,6 +38,49 @@ type Plan struct {
 	Features   []PlanFeature `json:"features"`
 }
 
+type CreatePlanRequest struct {
+	Name               string                   `json:"name"`
+	IsActive           bool                     `json:"is_active"`
+	IsPublic           bool                     `json:"is_public"`
+	IsTrialAllowed     bool                     `json:"is_trial_allowed"`
+	PerMonthPriceCents uint                     `json:"per_month_price_cents"`
+	PerYearPriceCents  uint                     `json:"per_year_price_cents"`
+	ReplacePlanID      *string                  `json:"replace_plan_id"`
+	Features           []*CreatePlanFeature     `json:"features"`
+	TeamsAccess        []*CreatePlanTeamsAccess `json:"teams_access"`
+}
+
+type CreatePlanFeature struct {
+	FeatureID string `json:"feature_id"`
+	SpecID    string `json:"spec_id"`
+	Display   string `json:"display"`
+	Sort      uint   `json:"sort"`
+	IsActive  bool   `json:"is_active"`
+}
+
+type CreatePlanTeamsAccess struct {
+	TeamID string `json:"team_id"`
+	Revoke bool   `json:"revoke"`
+}
+
+type CreateFeatureSpecRequest struct {
+	Name          string `json:"name"`
+	RecordPeriod  string `json:"record_period"`
+	Aggregation   string `json:"aggregation"`
+	MaxLimit      uint   `json:"max_limit"`
+	UnitPrice     uint   `json:"unit_price"`
+	UnitsIncluded uint   `json:"units_included"`
+}
+
+type CreateFeaturespecResponse struct {
+	*CreateFeatureSpecRequest
+	ID string `json:"id"`
+}
+
+type ListFeaturesResponse struct {
+	Results []Feature `json:"results"`
+}
+
 type ListPlansResponse struct {
 	Results []Plan `json:"results"`
 }
@@ -50,6 +93,7 @@ type PlanFeature struct {
 }
 
 type Feature struct {
+	ID   string `json:"id"`
 	Slug string `json:"slug"`
 }
 

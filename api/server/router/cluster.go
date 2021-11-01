@@ -477,11 +477,11 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/agent/install -> cluster.NewInstallAgentHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/agent/install -> cluster.NewInstallAgentHandler
 	installAgentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: relPath + "/agent/install",

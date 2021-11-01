@@ -32,7 +32,8 @@ type Client struct {
 
 	httpClient *http.Client
 
-	defaultPlan *Plan
+	defaultPlanID string
+	customPlanID  string
 }
 
 // NewClient creates a new billing API client
@@ -41,22 +42,23 @@ func NewClient(serverURL, apiKey string, repo repository.EERepository) (*Client,
 		Timeout: time.Minute,
 	}
 
-	client := &Client{apiKey, serverURL, repo, httpClient, nil}
+	client := &Client{apiKey, serverURL, repo, httpClient, "", ""}
 
 	// get the default plans from the IronPlans API server
-	listResp := &ListPlansResponse{}
-	err := client.getRequest("/plans/v1", listResp)
+	defPlanID, err := client.GetExistingPublicPlan("Free")
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, plan := range listResp.Results {
-		if plan.Name == "Free" {
-			copyPlan := plan
-			client.defaultPlan = &copyPlan
-		}
+	customPlanID, err := client.GetExistingPublicPlan("Enterprise")
+
+	if err != nil {
+		return nil, err
 	}
+
+	client.defaultPlanID = defPlanID
+	client.customPlanID = customPlanID
 
 	return client, nil
 }
@@ -72,13 +74,8 @@ func (c *Client) CreateTeam(proj *cemodels.Project) (string, error) {
 	}
 
 	// put the user on the free plan, as the default behavior, if there is a default plan
-	if c.defaultPlan != nil {
-		err := c.postRequest("/subscriptions/v1", &CreateSubscriptionRequest{
-			PlanID:     c.defaultPlan.ID,
-			NextPlanID: c.defaultPlan.ID,
-			TeamID:     resp.ID,
-			IsPaused:   false,
-		}, nil)
+	if c.defaultPlanID != "" {
+		err = c.CreateOrUpdateSubscription(resp.ID, c.defaultPlanID)
 
 		if err != nil {
 			return "", fmt.Errorf("subscription creation failed: %s", err)
@@ -117,7 +114,194 @@ func (c *Client) GetTeamID(proj *cemodels.Project) (teamID string, err error) {
 	return projBilling.BillingTeamID, nil
 }
 
+func (c *Client) CreatePlan(teamID string, proj *cemodels.Project, planSpec *types.AddProjectBillingRequest) (string, error) {
+	// construct basic plan object
+	planFeatures := make([]*CreatePlanFeature, 0)
+
+	userDisplay := fmt.Sprintf("Up to %d users", planSpec.Users)
+
+	if planSpec.Users == 0 {
+		userDisplay = fmt.Sprintf("Unlimited users")
+	}
+
+	clusterDisplay := fmt.Sprintf("Up to %d clusters", planSpec.Clusters)
+
+	if planSpec.Clusters == 0 {
+		clusterDisplay = fmt.Sprintf("Unlimited clusters")
+	}
+
+	cpuDisplay := fmt.Sprintf("Up to %d CPUs", planSpec.CPU)
+
+	if planSpec.CPU == 0 {
+		cpuDisplay = fmt.Sprintf("Unlimited CPU")
+	}
+
+	ramDisplay := fmt.Sprintf("Up to %d GB RAM", planSpec.Memory)
+
+	if planSpec.Memory == 0 {
+		ramDisplay = fmt.Sprintf("Unlimited RAM")
+	}
+
+	planFeatures = append(planFeatures, &CreatePlanFeature{
+		Display: userDisplay,
+	})
+	planFeatures = append(planFeatures, &CreatePlanFeature{
+		Display: clusterDisplay,
+	})
+	planFeatures = append(planFeatures, &CreatePlanFeature{
+		Display: cpuDisplay,
+	})
+	planFeatures = append(planFeatures, &CreatePlanFeature{
+		Display: ramDisplay,
+	})
+
+	var customPlanID *string
+
+	if c.customPlanID != "" {
+		customPlanID = &c.customPlanID
+	}
+
+	createPlanReq := &CreatePlanRequest{
+		Name:               proj.Name,
+		IsActive:           true,
+		IsPublic:           false,
+		IsTrialAllowed:     true,
+		ReplacePlanID:      customPlanID,
+		PerMonthPriceCents: planSpec.Price,
+		PerYearPriceCents:  12 * planSpec.Price,
+		Features:           planFeatures,
+		TeamsAccess: []*CreatePlanTeamsAccess{
+			{
+				TeamID: teamID,
+				Revoke: false,
+			},
+		},
+	}
+
+	// find all relevant feature IDs
+	listResp := &ListFeaturesResponse{}
+	err := c.getRequest("/features/v1", listResp)
+
+	if err != nil {
+		return "", err
+	}
+
+	// create a feature spec per feature ID, and add to features array for plan
+	for _, feature := range listResp.Results {
+		featureSpec := &CreateFeatureSpecRequest{
+			Name:         "unnamed",
+			RecordPeriod: "monthly",
+			Aggregation:  "sum",
+			UnitPrice:    0,
+		}
+
+		switch feature.Slug {
+		case FeatureSlugUsers:
+			featureSpec.MaxLimit = planSpec.Users
+			featureSpec.UnitsIncluded = planSpec.Users
+		case FeatureSlugClusters:
+			featureSpec.MaxLimit = planSpec.Clusters
+			featureSpec.UnitsIncluded = planSpec.Clusters
+		case FeatureSlugCPU:
+			featureSpec.MaxLimit = planSpec.CPU
+			featureSpec.UnitsIncluded = planSpec.CPU
+		case FeatureSlugMemory:
+			featureSpec.MaxLimit = planSpec.Memory
+			featureSpec.UnitsIncluded = planSpec.Memory
+		// continue on default behavior so that feature spec is not created for
+		// features that don't match a slug
+		default:
+			continue
+		}
+
+		// create the feature spec
+		resp := &CreateFeaturespecResponse{}
+		err = c.postRequest("/featurespecs/v1/", featureSpec, resp)
+
+		if err != nil {
+			return "", err
+		}
+
+		var index int
+		switch feature.Slug {
+		case FeatureSlugUsers:
+			index = 0
+		case FeatureSlugClusters:
+			index = 1
+		case FeatureSlugCPU:
+			index = 2
+		case FeatureSlugMemory:
+			index = 3
+		}
+
+		createPlanReq.Features[index].FeatureID = feature.ID
+		createPlanReq.Features[index].SpecID = resp.ID
+	}
+
+	// create the plan and return the plan ID
+	planResp := &Plan{}
+
+	err = c.postRequest("/plans/v1/", createPlanReq, planResp)
+
+	if err != nil {
+		return "", err
+	}
+
+	return planResp.ID, nil
+}
+
+func (c *Client) CreateOrUpdateSubscription(teamID, planID string) error {
+	// determine if subscription already exists by reading the team ID and seeing if the subscription
+	// field has an ID attached
+	teamResp := &Team{}
+	err := c.getRequest(fmt.Sprintf("/teams/v1/%s", teamID), teamResp)
+
+	if err != nil {
+		return err
+	}
+
+	subReq := &CreateSubscriptionRequest{
+		PlanID:     planID,
+		NextPlanID: c.defaultPlanID,
+		TeamID:     teamID,
+		IsPaused:   false,
+	}
+
+	// if subscription ID is not empty, perform a PUT request to update the subscription
+	if teamResp.Subscription.ID != "" {
+		err = c.putRequest(fmt.Sprintf("/subscriptions/v1/%s", teamResp.Subscription.ID), subReq, nil)
+	} else {
+		err = c.postRequest("/subscriptions/v1", subReq, nil)
+	}
+
+	return err
+}
+
+func (c *Client) GetExistingPublicPlan(planName string) (string, error) {
+	listResp := &ListPlansResponse{}
+	err := c.getRequest("/plans/v1/", listResp, map[string]string{"is_public": "true"})
+
+	if err != nil {
+		return "", err
+	}
+
+	for _, plan := range listResp.Results {
+		if plan.Name == planName {
+			return plan.ID, nil
+		}
+	}
+
+	return "", fmt.Errorf("plan not found")
+}
+
 func (c *Client) AddUserToTeam(teamID string, user *cemodels.User, role *cemodels.Role) error {
+	// determine if user is already in team/has user billing
+	userBilling, err := c.repo.UserBilling().ReadUserBilling(role.ProjectID, user.ID)
+
+	if userBilling != nil {
+		return nil
+	}
+
 	roleEnum := RoleEnumMember
 
 	// if user's role is admin, add them to the team as an owner
@@ -134,7 +318,7 @@ func (c *Client) AddUserToTeam(teamID string, user *cemodels.User, role *cemodel
 
 	resp := &Teammate{}
 
-	err := c.postRequest("/team_memberships/v1", req, resp)
+	err = c.postRequest("/team_memberships/v1", req, resp)
 
 	if err != nil {
 		return err
@@ -292,7 +476,7 @@ func (c *Client) deleteRequest(path string, data interface{}, dst interface{}) e
 	return c.writeRequest("DELETE", path, data, dst)
 }
 
-func (c *Client) getRequest(path string, dst interface{}) error {
+func (c *Client) getRequest(path string, dst interface{}, query ...map[string]string) error {
 	reqURL, err := url.Parse(c.serverURL)
 
 	if err != nil {
@@ -300,6 +484,15 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 	}
 
 	reqURL.Path = path
+
+	q := reqURL.Query()
+	for _, queryGroup := range query {
+		for key, val := range queryGroup {
+			q.Add(key, val)
+		}
+	}
+
+	reqURL.RawQuery = q.Encode()
 
 	req, err := http.NewRequest(
 		"GET",

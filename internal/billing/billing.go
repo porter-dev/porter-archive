@@ -3,6 +3,7 @@ package billing
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -18,6 +19,15 @@ type BillingManager interface {
 
 	// GetTeamID gets the billing team id for a project
 	GetTeamID(proj *models.Project) (teamID string, err error)
+
+	// CreatePlan creates a new plan based on the requested limits
+	CreatePlan(teamID string, proj *models.Project, planSpec *types.AddProjectBillingRequest) (string, error)
+
+	// CreateOrUpdateSubscription creates or updates a new subscription to a plan, based on a team and plan ID
+	CreateOrUpdateSubscription(teamID, planID string) error
+
+	// GetExistingPublicPlan returns an existing public plan based on a name
+	GetExistingPublicPlan(planName string) (string, error)
 
 	// AddUserToTeam adds a user to a team, and cases on whether the user can view
 	// billing based on the role.
@@ -55,6 +65,18 @@ func (n *NoopBillingManager) DeleteTeam(proj *models.Project) (err error) {
 
 func (n *NoopBillingManager) GetTeamID(proj *models.Project) (teamID string, err error) {
 	return fmt.Sprintf("%d", proj.ID), nil
+}
+
+func (n *NoopBillingManager) CreatePlan(teamID string, proj *models.Project, planSpec *types.AddProjectBillingRequest) (string, error) {
+	return "", nil
+}
+
+func (n *NoopBillingManager) CreateOrUpdateSubscription(teamID, planID string) error {
+	return nil
+}
+
+func (n *NoopBillingManager) GetExistingPublicPlan(planName string) (string, error) {
+	return "", nil
 }
 
 func (n *NoopBillingManager) AddUserToTeam(teamID string, user *models.User, role *models.Role) error {

@@ -34,3 +34,15 @@ func NewBillingWebhookHandler(
 ) http.Handler {
 	return handlers.NewUnavailable(config, "billing_webhook")
 }
+
+type BillingAddProjectHandler struct {
+	handlers.PorterHandlerReader
+	handlers.Unavailable
+}
+
+func NewBillingAddProjectHandler(
+	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
+) http.Handler {
+	return handlers.NewUnavailable(config, "billing_add_project")
+}

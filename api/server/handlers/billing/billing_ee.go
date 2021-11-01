@@ -22,7 +22,13 @@ var NewBillingWebhookHandler func(
 	decoderValidator shared.RequestDecoderValidator,
 ) http.Handler
 
+var NewBillingAddProjectHandler func(
+	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
+) http.Handler
+
 func init() {
 	NewBillingGetTokenHandler = billing.NewBillingGetTokenHandler
 	NewBillingWebhookHandler = billing.NewBillingWebhookHandler
+	NewBillingAddProjectHandler = billing.NewBillingAddProjectHandler
 }

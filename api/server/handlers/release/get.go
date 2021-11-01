@@ -148,12 +148,18 @@ tabs:
       settings:
         options:
           resource-button:
-            name: "Manual Refresh"
-            description: "This will delete the existing certificate resource."
+            name: "Renew Certificate"
+            description: "This will delete the existing certificate resource, triggering a new certificate request."
             actions:
             - delete:
-                scope: release
+                scope: namespace
                 relative_uri: /crd
+                context:
+                  type: cluster
+                  config:
+                    group: cert-manager.io
+                    version: v1
+                    resource: certificates
       value: |
         .items[] | { 
           metadata: .metadata,

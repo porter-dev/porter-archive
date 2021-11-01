@@ -1,10 +1,12 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-
+import { useWebsockets } from "shared/hooks/useWebsockets";
 import ResourceTab from "./ResourceTab";
+import SaveButton from "./SaveButton";
+import { baseApi } from "shared/baseApi";
 
-type PropsType = {
+type Props = {
   resource: any;
   button: any;
   handleClick?: () => void;
@@ -13,50 +15,107 @@ type PropsType = {
   roundAllCorners?: boolean;
 };
 
-type StateType = any;
+const ExpandableResource: React.FC<Props> = (props) => {
+  const { resource, button } = props;
+  const { currentCluster, currentProject } = useContext(Context);
 
-export default class ExpandableResource extends Component<
-  PropsType,
-  StateType
-> {
-  render() {
-    let { resource, button } = this.props;
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
 
-    console.log("BUTTON IS", button, resource);
+  useEffect(() => {
+    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/cert-manager/releases/cert-manager/0/form_stream?`;
+    apiEndpoint += "resource=certificates&group=cert-manager.io&version=v1";
 
-    return (
-      <ResourceTab
-        label={resource.label}
-        name={resource.name}
-        status={{ label: resource.status }}
-      >
-        <ExpandedWrapper>
-          <StatusSection>
-            <StatusHeader>
-              <Status>
-                <Key>Status:</Key> {resource.status}
-              </Status>
-              <Timestamp>Updated {resource.timestamp}</Timestamp>
-            </StatusHeader>
-            {resource.message}
-          </StatusSection>
-          {Object.keys(this.props.resource.data).map(
-            (key: string, i: number) => {
-              return (
-                <Pair key={i}>
-                  <Key>{key}:</Key>
-                  {this.props.resource.data[key]}
-                </Pair>
-              );
-            }
-          )}
-        </ExpandedWrapper>
-      </ResourceTab>
-    );
-  }
-}
+    const wsConfig = {
+      onmessage(evt: MessageEvent) {
+        console.log("EVENT IS", evt);
+      },
+      onerror() {
+        closeWebsocket("testing");
+      },
+    };
 
-ExpandableResource.contextType = Context;
+    newWebsocket("testing", apiEndpoint, wsConfig);
+    openWebsocket("testing");
+  }, []);
+
+  let onSave = () => {
+    let projID = currentProject.id;
+    let clusterID = currentCluster.id;
+    let config = button.actions[0].delete.context.config;
+
+    // TODO: construct the endpoint scope, right now we're just using release scope
+    let uri = `/api/projects/${projID}/clusters/${clusterID}/namespaces/${resource.metadata.namespace}${button.actions[0].delete.relative_uri}`;
+
+    // compute the endpoint using button and target context
+    baseApi<
+      {
+        name: string;
+        namespace: string;
+        group: string;
+        version: string;
+        resource: string;
+      },
+      {}
+    >("DELETE", uri)(
+      "<token>",
+      {
+        name: resource.metadata.name,
+        namespace: resource.metadata.namespace,
+        group: config.group,
+        version: config.version,
+        resource: config.resource,
+      },
+      {}
+    )
+      .then((res) => {
+        console.log("RES IS", res);
+      })
+      .catch((err) => console.log(err));
+  };
+
+  return (
+    <ResourceTab
+      label={resource.label}
+      name={resource.name}
+      status={{ label: resource.status }}
+    >
+      <ExpandedWrapper>
+        <StatusSection>
+          <StatusHeader>
+            <Status>
+              <Key>Status:</Key> {resource.status}
+            </Status>
+            <Timestamp>Updated {resource.timestamp}</Timestamp>
+          </StatusHeader>
+          {resource.message}
+        </StatusSection>
+        {Object.keys(resource.data).map((key: string, i: number) => {
+          return (
+            <Pair key={i}>
+              <Key>{key}:</Key>
+              {resource.data[key]}
+            </Pair>
+          );
+        })}
+        <StyledSaveButton
+          onClick={onSave}
+          clearPosition={true}
+          text={button.name}
+          helper={button.description}
+          statusPosition={"right"}
+          className="expanded-save-button"
+        />
+      </ExpandedWrapper>
+    </ResourceTab>
+  );
+};
+
+export default ExpandableResource;
 
 const Timestamp = styled.div`
   font-size: 12px;
@@ -100,4 +159,8 @@ const Key = styled.div`
   font-weight: bold;
   color: #ffffff;
   margin-right: 8px;
+`;
+
+const StyledSaveButton = styled(SaveButton)`
+  margin-top: 20px;
 `;

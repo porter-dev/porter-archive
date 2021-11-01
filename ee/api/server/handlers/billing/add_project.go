@@ -39,6 +39,12 @@ func NewBillingAddProjectHandler(
 // 5. If team was created, finds all roles in the team. Adds all roles as a team member to the project billing. Updates UserBilling models.
 func (c *BillingAddProjectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// validation for internal token
+	// if internal token is empty, throw forbidden error; this server is misconfigured
+	if c.Config().ServerConf.RetoolToken == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("internal retool token does not exist: re-configure the server")))
+		return
+	}
+
 	reqToken := r.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Bearer")
 

@@ -391,7 +391,7 @@ class Home extends Component<PropsType, StateType> {
           </>
         )}
 
-        <ViewWrapper>
+        <ViewWrapper id="HomeViewWrapper">
           <Navbar
             logOut={this.props.logOut}
             currentView={this.props.currentRoute} // For form feedback

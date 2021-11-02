@@ -118,7 +118,7 @@ const EventsTab = () => {
         next={fetchData}
         hasMore={hasMore}
         loader={<h4>Loading...</h4>}
-        scrollableTarget="MainViewWrapper"
+        scrollableTarget="HomeViewWrapper"
       >
         {/* {kubeEvents.map((_, index) => (
           <div key={index}>div - #{index}</div>

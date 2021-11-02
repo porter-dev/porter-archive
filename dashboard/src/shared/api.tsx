@@ -1150,11 +1150,15 @@ const installPorterAgent = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/agent/install`
 );
 
-const getKubeEvents = baseApi<{}, { project_id: number; cluster_id: number }>(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/kube_events`
-);
+const getKubeEvents = baseApi<
+  {},
+  { project_id: number; cluster_id: number; skipBy: number }
+>("GET", ({ project_id, cluster_id, skipBy }) => {
+  if (skipBy > 0) {
+    return `/api/projects/${project_id}/clusters/${cluster_id}/kube_events?skip=${skipBy}`;
+  }
+  return `/api/projects/${project_id}/clusters/${cluster_id}/kube_events`;
+});
 
 const getKubeEvent = baseApi<
   {},

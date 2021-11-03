@@ -38,7 +38,6 @@ const EventsTab = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [kubeEvents, setKubeEvents] = useState<KubeEvent[]>([]);
-  const [hasErrors, setHasErrors] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
 
@@ -63,7 +62,9 @@ const EventsTab = () => {
   }, [currentProject, currentCluster]);
 
   useEffect(() => {
-    fetchData(true);
+    fetchData(true).then(() => {
+      setIsLoading(false);
+    });
   }, [
     currentProject?.id,
     currentCluster?.id,
@@ -110,8 +111,6 @@ const EventsTab = () => {
           setHasMore(true);
         }
       }
-
-      setIsLoading(false);
     } catch (error) {
       console.log(error);
     }
@@ -141,6 +140,12 @@ const EventsTab = () => {
       time: new Date(kubeEvent.timestamp).getTime(),
     };
   };
+
+  if (isLoading) {
+    <Placeholder>
+      <Loading />
+    </Placeholder>;
+  }
 
   if (!hasPorterAgent) {
     return (

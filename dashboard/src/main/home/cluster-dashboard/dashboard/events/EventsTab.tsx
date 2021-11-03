@@ -9,6 +9,7 @@ import api from "shared/api";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Event } from "../../expanded-chart/events/EventsTab";
 import { unionBy } from "lodash";
+import Dropdown from "components/Dropdown";
 
 export type KubeEvent = {
   cluster_id: number;
@@ -25,6 +26,11 @@ export type KubeEvent = {
   timestamp: string;
 };
 
+const availableResourceTypes = [
+  { label: "Pods", value: "pod" },
+  { label: "HPA", value: "hpa" },
+];
+
 const EventsTab = () => {
   const { currentCluster, currentProject } = useContext(Context);
 
@@ -34,6 +40,7 @@ const EventsTab = () => {
   const [kubeEvents, setKubeEvents] = useState<KubeEvent[]>([]);
   const [hasErrors, setHasErrors] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -57,32 +64,56 @@ const EventsTab = () => {
 
   useEffect(() => {
     fetchData(true);
-  }, [currentProject?.id, currentCluster?.id, hasPorterAgent]);
+  }, [
+    currentProject?.id,
+    currentCluster?.id,
+    hasPorterAgent,
+    resourceType?.value,
+  ]);
 
   const fetchData = async (clear?: boolean) => {
+    if (!hasPorterAgent) {
+      return;
+    }
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
-    const skipBy = kubeEvents?.length;
-    console.log("PREVIOUS", kubeEvents?.length);
-    if (hasPorterAgent) {
-      api
-        .getKubeEvents("<token>", {}, { project_id, cluster_id, skipBy })
-        .then((res) => {
-          if (clear) {
-            setKubeEvents(res.data);
-          } else {
-            const newEvents = unionBy(kubeEvents, res.data, "id");
-            setKubeEvents(newEvents);
-            if (newEvents.length === kubeEvents?.length) {
-              setHasMore(false);
-            } else {
-              setHasMore(true);
-            }
-          }
+    let skipBy;
+    if (!clear) {
+      skipBy = kubeEvents?.length;
+    } else {
+      setHasMore(true);
+    }
 
-          setIsLoading(false);
-        })
-        .catch((error) => console.log(error));
+    const type = resourceType?.value;
+    try {
+      const newKubeEvents = await api
+        .getKubeEvents(
+          "<token>",
+          { skip: skipBy, type },
+          { project_id, cluster_id }
+        )
+        .then((res) => res.data);
+
+      if (!newKubeEvents?.length) {
+        setHasMore(false);
+        return;
+      }
+
+      if (clear) {
+        setKubeEvents(newKubeEvents);
+      } else {
+        const newEvents = unionBy(kubeEvents, newKubeEvents, "id");
+        setKubeEvents(newEvents);
+        if (newEvents.length === kubeEvents?.length) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+      }
+
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -126,35 +157,78 @@ const EventsTab = () => {
   }
 
   return (
-    <EventsGrid>
-      <InfiniteScroll
-        dataLength={kubeEvents.length}
-        next={fetchData}
-        hasMore={hasMore}
-        loader={<h4>Loading...</h4>}
-        scrollableTarget="HomeViewWrapper"
-      >
-        {/* {kubeEvents.map((_, index) => (
+    <EventsPageWrapper>
+      <ControlRow>
+        <Dropdown
+          selectedOption={resourceType}
+          options={availableResourceTypes}
+          onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
+        />
+        {/* <RightFilters> */}
+        {/* <Dropdown
+            selectedOption={currentLimit}
+            options={availableLimitOptions}
+            onSelect={(o) =>
+              setCurrentLimit({ ...o, value: o.value as number })
+            }
+          />
+        </RightFilters> */}
+      </ControlRow>
+      <EventsGrid>
+        <InfiniteScroll
+          dataLength={kubeEvents.length}
+          next={fetchData}
+          hasMore={hasMore}
+          loader={<h4>Loading...</h4>}
+          scrollableTarget="HomeViewWrapper"
+          endMessage={
+            <h4>No events were found for the resource type you specified</h4>
+          }
+        >
+          {/* {kubeEvents.map((_, index) => (
           <div key={index}>div - #{index}</div>
         ))} */}
-        {kubeEvents.map(parseToEvent).map((event, i) => {
-          return (
-            <React.Fragment key={i}>
-              <EventCard
-                event={event as Event}
-                selectEvent={() => {
-                  console.log("SELECTED", event);
-                }}
-              />
-            </React.Fragment>
-          );
-        })}
-      </InfiniteScroll>
-    </EventsGrid>
+          {kubeEvents.map(parseToEvent).map((event, i) => {
+            return (
+              <React.Fragment key={i}>
+                <EventCard
+                  event={event as Event}
+                  selectEvent={() => {
+                    console.log("SELECTED", event);
+                  }}
+                />
+              </React.Fragment>
+            );
+          })}
+        </InfiniteScroll>
+      </EventsGrid>
+    </EventsPageWrapper>
   );
 };
 
 export default EventsTab;
+
+const RightFilters = styled.div`
+  display: flex;
+  > div {
+    :not(:last-child) {
+      margin-right: 15px;
+    }
+  }
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+  padding-left: 0px;
+`;
+
+const EventsPageWrapper = styled.div`
+  margin-top: 35px;
+  padding-bottom: 80px;
+`;
 
 const EventsGrid = styled.div`
   display: grid;

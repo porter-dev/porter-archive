@@ -261,59 +261,31 @@ func GetServerURLFromTag(image string) (string, error) {
 
 	domain := reference.Domain(named)
 
-	// if domain name is empty, use index.docker.io/v1
 	if domain == "" {
+		// if domain name is empty, use index.docker.io/v1
 		return "index.docker.io/v1", nil
+	} else if matches := ecrPattern.FindStringSubmatch(image); len(matches) >= 3 {
+		// if this matches ECR, just use the domain name
+		return domain, nil
+	} else if strings.Contains(image, "gcr.io") || strings.Contains(image, "registry.digitalocean.com") {
+		// if this matches GCR or DOCR, use the first path component
+		return fmt.Sprintf("%s/%s", domain, strings.Split(reference.Path(named), "/")[0]), nil
 	}
 
-	return domain, nil
+	// otherwise, best-guess is to get components of path that aren't the image name
+	pathParts := strings.Split(reference.Path(named), "/")
+	nonImagePath := ""
 
-	// else if matches := ecrPattern.FindStringSubmatch(image); matches >= 3 {
-	// 	// if this matches ECR, just use the domain name
-	// 	return domain, nil
-	// } else if strings.Contains(image, "gcr.io") || strings.Contains(image, "registry.digitalocean.com") {
-	// 	// if this matches GCR or DOCR, use the first path component
-	// 	return fmt.Sprintf("%s/%s", domain, strings.Split(path, "/")[0]), nil
-	// }
+	if len(pathParts) > 1 {
+		nonImagePath = strings.Join(pathParts[0:len(pathParts)-1], "/")
+	}
 
-	// // otherwise, best-guess is to get components of path that aren't the image name
-	// pathParts := strings.Split(path, "/")
-	// nonImagePath := ""
+	if err != nil {
+		return "", err
+	}
 
-	// if len(pathParts) > 1 {
-	// 	nonImagePath = strings.Join(pathParts[0:len(pathParts)-1], "/")
-	// }
-
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// return fmt.Sprintf("%s/%s", domain, nonImagePath), nil
+	return fmt.Sprintf("%s/%s", domain, nonImagePath), nil
 }
-
-// func imagePush(dockerClient *client.Client) error {
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
-// 	defer cancel()
-
-// 	authConfigBytes, _ := json.Marshal(authConfig)
-// 	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
-
-// 	tag := dockerRegistryUserID + "/node-hello"
-// 	opts := types.ImagePushOptions{RegistryAuth: authConfigEncoded}
-// 	rd, err := dockerClient.ImagePush(ctx, tag, opts)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	defer rd.Close()
-
-// 	err = print(rd)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
 
 // WaitForContainerStop waits until a container has stopped to exit
 func (a *Agent) WaitForContainerStop(id string) error {

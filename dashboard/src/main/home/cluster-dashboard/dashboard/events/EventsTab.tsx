@@ -4,31 +4,16 @@ import { Context } from "shared/Context";
 import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
 import EventDetail from "components/events/EventDetail";
-import { ChartType } from "shared/types";
+import { ChartType, KubeEvent } from "shared/types";
 import api from "shared/api";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { Event } from "../../expanded-chart/events/EventsTab";
 import { unionBy } from "lodash";
 import Dropdown from "components/Dropdown";
-
-export type KubeEvent = {
-  cluster_id: number;
-  event_type: string;
-  id: number;
-  message: string;
-  name: string;
-  namespace: string;
-  owner_name: string;
-  owner_type: string;
-  project_id: number;
-  reason: string;
-  resource_type: string;
-  timestamp: string;
-};
 
 const availableResourceTypes = [
   { label: "Pods", value: "pod" },
   { label: "HPA", value: "hpa" },
+  { label: "Nodes", value: "node" },
 ];
 
 const EventsTab = () => {
@@ -62,9 +47,18 @@ const EventsTab = () => {
   }, [currentProject, currentCluster]);
 
   useEffect(() => {
-    fetchData(true).then(() => {
-      setIsLoading(false);
-    });
+    let isSubscribed = true;
+    if (hasPorterAgent) {
+      fetchData(true).then(() => {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      });
+    }
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [
     currentProject?.id,
     currentCluster?.id,
@@ -73,9 +67,6 @@ const EventsTab = () => {
   ]);
 
   const fetchData = async (clear?: boolean) => {
-    if (!hasPorterAgent) {
-      return;
-    }
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
     let skipBy;
@@ -88,11 +79,7 @@ const EventsTab = () => {
     const type = resourceType?.value;
     try {
       const newKubeEvents = await api
-        .getKubeEvents(
-          "<token>",
-          { skip: skipBy, type },
-          { project_id, cluster_id }
-        )
+        .getKubeEvents("<token>", { skip: skipBy }, { project_id, cluster_id })
         .then((res) => res.data);
 
       if (!newKubeEvents?.length) {
@@ -116,6 +103,10 @@ const EventsTab = () => {
     }
   };
 
+  useEffect(() => {
+    console.log(isLoading);
+  }, [isLoading]);
+
   const installPorterAgent = () => {
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
@@ -130,21 +121,12 @@ const EventsTab = () => {
       });
   };
 
-  const parseToEvent = (kubeEvent: KubeEvent, index: number): Event => {
-    return {
-      event_id: `${kubeEvent.id}`,
-      index,
-      info: kubeEvent.message,
-      name: kubeEvent.name,
-      status: 0,
-      time: new Date(kubeEvent.timestamp).getTime(),
-    };
-  };
-
   if (isLoading) {
-    <Placeholder>
-      <Loading />
-    </Placeholder>;
+    return (
+      <Placeholder>
+        <Loading />
+      </Placeholder>
+    );
   }
 
   if (!hasPorterAgent) {
@@ -193,11 +175,11 @@ const EventsTab = () => {
           {/* {kubeEvents.map((_, index) => (
           <div key={index}>div - #{index}</div>
         ))} */}
-          {kubeEvents.map(parseToEvent).map((event, i) => {
+          {kubeEvents.map((event, i) => {
             return (
               <React.Fragment key={i}>
                 <EventCard
-                  event={event as Event}
+                  event={event}
                   selectEvent={() => {
                     console.log("SELECTED", event);
                   }}

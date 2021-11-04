@@ -104,26 +104,17 @@ func FormStreamer(
 	on templater.OnDataStream,
 	stopCh <-chan struct{},
 ) error {
-
-	fmt.Println("HERE -2")
-
 	form, err := unqueriedFormYAMLFromBytes(bytes)
-	fmt.Println("HERE -1", form, err)
 
 	if err != nil {
 		return err
 	}
 
 	lookup := formToLookupTable(def, form, stateType)
-	fmt.Println("HERE -0.5", lookup)
 
 	for lookupContext, lookupVal := range lookup {
-		fmt.Println("HERE 0")
 		if lookupVal != nil && areContextsEqual(targetContext, lookupContext) {
-			fmt.Println("HERE 1")
 			err := lookupVal.TemplateReader.ReadStream(on, stopCh)
-
-			fmt.Println("HERE 2", err)
 
 			if err != nil {
 				continue

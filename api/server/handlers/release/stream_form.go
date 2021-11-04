@@ -1,8 +1,9 @@
 package release
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -32,9 +33,18 @@ func NewStreamFormHandler(
 	}
 }
 
-func onData(val map[string]interface{}) error {
-	fmt.Println("VAL IS", val)
-	return nil
+func getStreamWriter(rw *websocket.WebsocketSafeReadWriter) func(val map[string]interface{}) error {
+	return func(val map[string]interface{}) error {
+		// parse value into json
+		bytes, err := json.Marshal(val)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = rw.Write(bytes)
+		return err
+	}
 }
 
 func (c *StreamFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -62,17 +72,22 @@ func (c *StreamFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		HelmRelease:   helmRelease,
 	}
 
-	formData := []byte(certManagerForm)
+	var formData []byte
 
-	// TODO: move this back
-	// var formData []byte
+	for _, file := range helmRelease.Chart.Files {
+		if strings.Contains(file.Name, "form.yaml") {
+			formData = file.Data
+			break
+		}
+	}
 
-	// for _, file := range helmRelease.Chart.Files {
-	// 	if strings.Contains(file.Name, "form.yaml") {
-	// 		formData = file.Data
-	// 		break
-	// 	}
-	// }
+	// if form data isn't found, look for common charts
+	if formData == nil {
+		// for now just case by name
+		if helmRelease.Chart.Name() == "cert-manager" {
+			formData = []byte(certManagerForm)
+		}
+	}
 
 	stopper := make(chan struct{})
 	errorchan := make(chan error)
@@ -87,6 +102,8 @@ func (c *StreamFormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+
+	onData := getStreamWriter(safeRW)
 
 	err = parser.FormStreamer(parserDef, formData, "", &types.FormContext{
 		Type: "cluster",

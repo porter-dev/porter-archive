@@ -2,7 +2,6 @@ package dynamic
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/porter-dev/porter/internal/templater/utils"
@@ -120,15 +119,13 @@ func (r *TemplateReader) ReadStream(
 			u := obj.(*unstructured.Unstructured)
 
 			queryObj := make(map[string]interface{})
-			queryObj["items"] = []interface{}{u}
+			queryObj["items"] = []interface{}{u.Object}
 
 			data, err := utils.QueryValues(queryObj, r.Queries)
 
 			if err != nil {
 				return
 			}
-
-			fmt.Println("DATA IS", data)
 
 			pkt["data"] = data
 			on(pkt)
@@ -139,7 +136,10 @@ func (r *TemplateReader) ReadStream(
 
 			u := newObj.(*unstructured.Unstructured)
 
-			data, err := utils.QueryValues(u.Object, r.Queries)
+			queryObj := make(map[string]interface{})
+			queryObj["items"] = []interface{}{u.Object}
+
+			data, err := utils.QueryValues(queryObj, r.Queries)
 
 			if err != nil {
 				return
@@ -154,7 +154,10 @@ func (r *TemplateReader) ReadStream(
 
 			u := obj.(*unstructured.Unstructured)
 
-			data, err := utils.QueryValues(u.Object, r.Queries)
+			queryObj := make(map[string]interface{})
+			queryObj["items"] = []interface{}{u.Object}
+
+			data, err := utils.QueryValues(queryObj, r.Queries)
 
 			if err != nil {
 				return

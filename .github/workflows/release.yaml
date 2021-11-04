@@ -76,7 +76,7 @@ jobs:
         run: |
           go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter ./cmd/docker-credential-porter/ &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./portersvr ./cmd/app/ &
+          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./portersvr ./cmd/app/ &
           wait
         env:
           GOOS: linux

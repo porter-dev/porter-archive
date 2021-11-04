@@ -34,7 +34,7 @@ jobs:
           cat ./dashboard/.env
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile --build-arg version=${{steps.tag_name.outputs.tag}}
+          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./ee/docker/ee.Dockerfile --build-arg version=${{steps.tag_name.outputs.tag}}
       - name: Push
         run: |
           docker push porter1/porter:${{steps.tag_name.outputs.tag}}

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Usage: job_killer.sh [-c]? [grace_period_seconds] [process_pattern]
+# Usage: job_killer.sh [-c]? [grace_period_seconds] [process_pattern] [sidecar]?
 #
 # This script waits for a termination signal and gracefully terminates another process before exiting. 
 # 
@@ -24,9 +24,11 @@ if $kill_child_procs
 then
   grace_period_seconds=$2
   target=$3
+  sidecar=$4
 else
   grace_period_seconds=$1
   target=$2
+  sidecar=$3
 fi  
 
 pattern="$(printf '[%s]%s' $(echo $target | cut -c 1) $(echo $target | cut -c 2-))"
@@ -87,4 +89,10 @@ if [ -n "$target_pid" ]; then
     child=$!
 
     wait "$child"
+fi
+
+# run the sidecar killer, this will terminate any additional sidecars if necessary
+if [ -n "$sidecar" ]; then
+    echo "killing sidecar command: $sidecar"
+    ./sidecar_killer.sh $sidecar
 fi

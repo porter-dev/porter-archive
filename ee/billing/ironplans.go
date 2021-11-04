@@ -269,12 +269,15 @@ func (c *Client) CreateOrUpdateSubscription(teamID, planID string) error {
 
 	// if subscription ID is not empty, perform a PUT request to update the subscription
 	if teamResp.Subscription.ID != "" {
-		err = c.putRequest(fmt.Sprintf("/subscriptions/v1/%s", teamResp.Subscription.ID), subReq, nil)
-	} else {
-		err = c.postRequest("/subscriptions/v1", subReq, nil)
+		// delete the subscription
+		err = c.deleteRequest(fmt.Sprintf("/subscriptions/v1/%s/purge/", teamResp.Subscription.ID), nil, nil)
+
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	return c.postRequest("/subscriptions/v1", subReq, nil)
 }
 
 func (c *Client) GetExistingPublicPlan(planName string) (string, error) {

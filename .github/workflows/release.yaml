@@ -34,7 +34,7 @@ jobs:
           cat ./dashboard/.env
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./docker/Dockerfile --build-arg version=${{steps.tag_name.outputs.tag}}
+          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./ee/docker/ee.Dockerfile --build-arg version=${{steps.tag_name.outputs.tag}}
       - name: Push
         run: |
           docker push porter1/porter:${{steps.tag_name.outputs.tag}}
@@ -76,7 +76,7 @@ jobs:
         run: |
           go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter ./cmd/docker-credential-porter/ &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./portersvr ./cmd/app/ &
+          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./portersvr ./cmd/app/ &
           wait
         env:
           GOOS: linux

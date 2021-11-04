@@ -1,141 +1,29 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-
-import loadingSrc from "assets/loading.gif";
 import { Context } from "shared/Context";
-import { ChartType } from "../../../../../shared/types";
-import api from "../../../../../shared/api";
-import EventCard from "./EventCard";
+import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
-import EventDetail from "./EventDetail";
+import EventDetail from "components/events/EventDetail";
+import { ChartType, KubeEvent } from "shared/types";
+import api from "shared/api";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { unionBy } from "lodash";
+import Dropdown from "components/Dropdown";
 
-export type Event = {
-  event_id: string;
-  index: number;
-  info: string;
-  name: string;
-  status: number;
-  time: number;
-};
+const availableResourceTypes = [
+  { label: "Pods", value: "pod" },
+  { label: "HPA", value: "hpa" },
+];
 
-export type EventContainer = {
-  events: Event[];
-  name: string;
-  started_at: number;
-};
-
-export type KubeEvent = {
-  cluster_id: number;
-  event_type: string;
-  id: number;
-  message: string;
-  name: string;
-  namespace: string;
-  owner_name: string;
-  owner_type: string;
-  project_id: number;
-  reason: string;
-  resource_type: string;
-  timestamp: string;
-};
-
-type Props = {
-  currentChart: ChartType;
-};
-
-const REFRESH_TIME = 15000;
-
-const EventsTab: React.FunctionComponent<Props> = (props) => {
-  const { currentChart } = props;
+const EventsTab = () => {
   const { currentCluster, currentProject } = useContext(Context);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [shouldRequest, setShouldRequest] = useState(true);
-  const [eventData, setEventData] = useState<EventContainer[]>([]); // most recent event is last
-  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
+
   const [hasPorterAgent, setHasPorterAgent] = useState(false);
-  const [kubeEvents, setKubeEvents] = useState<KubeEvent[] | null>(null);
 
-  // sort by time, ensure sequences are monotonically increasing by time, collapse by id
-  const filterData = (data: Event[]) => {
-    data = data.sort((a, b) => a.time - b.time);
-
-    if (data.length == 0) return;
-
-    let seq: Event[][] = [];
-    let cur: Event[] = [data[0]];
-
-    for (let i = 1; i < data.length; ++i) {
-      if (data[i].index < data[i - 1].index) {
-        seq.push(cur);
-        cur = [];
-      }
-      cur.push(data[i]);
-    }
-    if (cur) seq.push(cur);
-
-    let ret: EventContainer[] = [];
-    seq.forEach((j) => {
-      j.push({
-        event_id: "",
-        index: 0,
-        info: "",
-        name: "",
-        status: 0,
-        time: 0,
-      });
-
-      let fin: EventContainer = {
-        events: [],
-        name: "Deployment",
-        started_at: j[0].time,
-      };
-      for (let i = 0; i < j.length - 1; ++i) {
-        if (j[i].event_id != j[i + 1].event_id) {
-          fin.events.push(j[i]);
-        }
-      }
-      ret.push(fin);
-    });
-
-    setEventData(ret);
-  };
-
-  useEffect(() => {
-    const getData = () => {
-      if (!shouldRequest) return;
-      setShouldRequest(false);
-      api
-        .getReleaseSteps(
-          "<token>",
-          {},
-          {
-            cluster_id: currentCluster.id,
-            namespace: currentChart.namespace,
-            id: currentProject.id,
-            name: currentChart.name,
-          }
-        )
-        .then((data) => {
-          setIsLoading(false);
-          filterData(data.data);
-        })
-        .catch((err) => {
-          setIsError(true);
-        })
-        .finally(() => {
-          setShouldRequest(true);
-        });
-    };
-
-    getData();
-    // const id = window.setInterval(getData, REFRESH_TIME);
-
-    return () => {
-      setIsLoading(true);
-      // window.clearInterval(id);
-    };
-  }, [currentProject, currentCluster, currentChart]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [kubeEvents, setKubeEvents] = useState<KubeEvent[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -159,19 +47,64 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
 
   useEffect(() => {
     let isSubscribed = true;
+    if (hasPorterAgent) {
+      fetchData(true).then(() => {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      });
+    }
 
+    return () => {
+      isSubscribed = false;
+    };
+  }, [
+    currentProject?.id,
+    currentCluster?.id,
+    hasPorterAgent,
+    resourceType?.value,
+  ]);
+
+  const fetchData = async (clear?: boolean) => {
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
-    if (hasPorterAgent) {
-      api
-        .getKubeEvents("<token>", {}, { project_id, cluster_id })
-        .then((res) => {
-          setKubeEvents(res.data);
-          setIsLoading(false);
-        })
-        .catch((error) => console.log(error));
+    let skipBy;
+    if (!clear) {
+      skipBy = kubeEvents?.length;
+    } else {
+      setHasMore(true);
     }
-  }, [currentProject, currentCluster, hasPorterAgent]);
+
+    const type = resourceType?.value;
+    try {
+      const newKubeEvents = await api
+        .getKubeEvents("<token>", { skip: skipBy }, { project_id, cluster_id })
+        .then((res) => res.data);
+
+      if (!newKubeEvents?.length) {
+        setHasMore(false);
+        return;
+      }
+
+      if (clear) {
+        setKubeEvents(newKubeEvents);
+      } else {
+        const newEvents = unionBy(kubeEvents, newKubeEvents, "id");
+        setKubeEvents(newEvents);
+        if (newEvents.length === kubeEvents?.length) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    console.log(isLoading);
+  }, [isLoading]);
 
   const installPorterAgent = () => {
     const project_id = currentProject?.id;
@@ -187,29 +120,6 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
       });
   };
 
-  const parseToEvent = (kubeEvent: KubeEvent, index: number): Event => {
-    return {
-      event_id: `${kubeEvent.id}`,
-      index,
-      info: kubeEvent.message,
-      name: kubeEvent.name,
-      status: 0,
-      time: new Date(kubeEvent.timestamp).getTime(),
-    };
-  };
-
-  if (!hasPorterAgent) {
-    return (
-      <InstallPorterAgentButton onClick={() => installPorterAgent()}>
-        Install porter agent
-      </InstallPorterAgentButton>
-    );
-  }
-
-  // if (isError) {
-  //   return <Placeholder>Error loading events.</Placeholder>;
-  // }
-
   if (isLoading) {
     return (
       <Placeholder>
@@ -218,67 +128,98 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
     );
   }
 
-  if (eventData.length === 0 && !kubeEvents?.length) {
+  if (!hasPorterAgent) {
     return (
       <Placeholder>
-        <i className="material-icons">category</i>
-        No application events found.
+        <div>
+          <Header>We coulnd't detect porter agent :(</Header>
+          In order to use the events tab you should install the porter agent!
+          <InstallPorterAgentButton onClick={() => installPorterAgent()}>
+            <i className="material-icons">add</i> Install porter agent
+          </InstallPorterAgentButton>
+        </div>
       </Placeholder>
     );
   }
 
-  if (selectedEvent !== null) {
-    return (
-      <EventDetail
-        container={eventData[selectedEvent]}
-        resetSelection={() => {
-          setSelectedEvent(null);
-          return null;
-        }}
-      />
-    );
-  }
-
   return (
-    <EventsGrid>
-      {kubeEvents.map(parseToEvent).map((event, i) => {
-        return (
-          <React.Fragment key={i}>
-            <EventCard
-              event={event}
-              selectEvent={() => {
-                console.log("SELECTED", event);
-              }}
-            />
-          </React.Fragment>
-        );
-      })}
-      {eventData
-        .slice(0)
-        .reverse()
-        .map((dat, i) => {
-          console.log(dat.started_at);
-          return (
-            <React.Fragment key={dat.started_at}>
-              <EventCard
-                event={dat.events[dat.events.length - 1]}
-                selectEvent={() => {
-                  setSelectedEvent(eventData.length - i - 1);
-                }}
-                overrideName={"Deployment"}
-              />
-            </React.Fragment>
-          );
-        })}
-    </EventsGrid>
+    <EventsPageWrapper>
+      <ControlRow>
+        <Dropdown
+          selectedOption={resourceType}
+          options={availableResourceTypes}
+          onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
+        />
+        {/* <RightFilters> */}
+        {/* <Dropdown
+            selectedOption={currentLimit}
+            options={availableLimitOptions}
+            onSelect={(o) =>
+              setCurrentLimit({ ...o, value: o.value as number })
+            }
+          />
+        </RightFilters> */}
+      </ControlRow>
+      <EventsGrid>
+        <InfiniteScroll
+          dataLength={kubeEvents.length}
+          next={fetchData}
+          hasMore={hasMore}
+          loader={<h4>Loading...</h4>}
+          scrollableTarget="HomeViewWrapper"
+          endMessage={
+            <h4>No events were found for the resource type you specified</h4>
+          }
+        >
+          {/* {kubeEvents.map((_, index) => (
+          <div key={index}>div - #{index}</div>
+        ))} */}
+          {kubeEvents.map((event, i) => {
+            return (
+              <React.Fragment key={i}>
+                <EventCard
+                  event={event}
+                  selectEvent={() => {
+                    console.log("SELECTED", event);
+                  }}
+                />
+              </React.Fragment>
+            );
+          })}
+        </InfiniteScroll>
+      </EventsGrid>
+    </EventsPageWrapper>
   );
 };
 
 export default EventsTab;
 
+const RightFilters = styled.div`
+  display: flex;
+  > div {
+    :not(:last-child) {
+      margin-right: 15px;
+    }
+  }
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+  padding-left: 0px;
+`;
+
 const EventsPageWrapper = styled.div`
   margin-top: 35px;
   padding-bottom: 80px;
+`;
+
+const EventsGrid = styled.div`
+  display: grid;
+  grid-row-gap: 15px;
+  grid-template-columns: 1;
 `;
 
 const InstallPorterAgentButton = styled.button`
@@ -304,14 +245,12 @@ const InstallPorterAgentButton = styled.button`
   box-shadow: 0 5px 8px 0px #00000010;
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
-
   background: ${(props: { disabled?: boolean }) =>
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
       props.disabled ? "" : "#505edddd"};
   }
-
   > i {
     color: white;
     width: 18px;
@@ -327,19 +266,16 @@ const InstallPorterAgentButton = styled.button`
 `;
 
 const Placeholder = styled.div`
+  min-height: 200px;
+  height: 20vh;
+  padding: 30px;
+  padding-bottom: 90px;
+  font-size: 13px;
+  color: #ffffff44;
   width: 100%;
-  min-height: 300px;
-  height: 40vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff44;
-  font-size: 14px;
-
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-  }
 `;
 
 const Header = styled.div`
@@ -347,17 +283,4 @@ const Header = styled.div`
   color: #aaaabb;
   font-size: 16px;
   margin-bottom: 15px;
-`;
-
-const Spinner = styled.img`
-  width: 15px;
-  height: 15px;
-  margin-right: 12px;
-  margin-bottom: -2px;
-`;
-
-const EventsGrid = styled.div`
-  display: grid;
-  grid-row-gap: 15px;
-  grid-template-columns: 1;
 `;

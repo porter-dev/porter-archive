@@ -331,3 +331,18 @@ export interface UsageData {
   exceeds: boolean;
   exceeded_since?: string;
 }
+
+export type KubeEvent = {
+  cluster_id: number;
+  event_type: string;
+  id: number;
+  message: string;
+  name: string;
+  namespace: string;
+  owner_name: string;
+  owner_type: string;
+  project_id: number;
+  reason: string;
+  resource_type: string;
+  timestamp: string;
+};

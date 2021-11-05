@@ -38,18 +38,17 @@ func (c *ListKubeEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// handle write to the database
-	kubeEvents, err := c.Repo().KubeEvent().ListEventsByProjectID(proj.ID, cluster.ID, request, false)
+	kubeEvents, err := c.Repo().KubeEvent().ListEventsByProjectID(proj.ID, cluster.ID, request)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	resp := make([]*types.KubeEventBasic, 0)
+	resp := make([]*types.KubeEvent, 0)
 
 	for _, kubeEvent := range kubeEvents {
-		resp = append(resp, kubeEvent.ToKubeEventBasicType())
+		resp = append(resp, kubeEvent.ToKubeEventType())
 	}
 
 	c.WriteResult(w, r, resp)

@@ -50,12 +50,23 @@ func (n *KubeEventRepository) ReadEvent(id uint, projID uint, clusterID uint) (*
 	panic("not implemented") // TODO: Implement
 }
 
+func (n *KubeEventRepository) ReadEventByGroup(
+	projID uint,
+	clusterID uint,
+	opts *types.GroupOptions,
+) (*models.KubeEvent, error) {
+	panic("not implemented") // TODO: Implement
+}
+
 func (n *KubeEventRepository) ListEventsByProjectID(
 	projectID uint,
 	clusterID uint,
 	opts *types.ListKubeEventRequest,
-	shouldDecrypt bool,
 ) ([]*models.KubeEvent, error) {
+	panic("not implemented") // TODO: Implement
+}
+
+func (n *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEvent *models.KubeSubEvent) error {
 	panic("not implemented") // TODO: Implement
 }
 

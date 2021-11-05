@@ -6,46 +6,59 @@ const (
 	URLParamKubeEventID = "kube_event_id"
 )
 
-// CreateKubeEventRequest is the type for creating a new kube event
-type CreateKubeEventRequest struct {
-	ResourceType string    `json:"resource_type" form:"required"`
-	Name         string    `json:"name" form:"required"`
-	OwnerType    string    `json:"owner_type"`
-	OwnerName    string    `json:"owner_name"`
-	EventType    string    `json:"event_type" form:"required"`
-	Namespace    string    `json:"namespace"`
-	Message      string    `json:"message" form:"required"`
-	Reason       string    `json:"reason"`
-	Timestamp    time.Time `json:"timestamp" form:"required"`
-	Data         []string  `json:"data"`
+type KubeEventType string
+
+const (
+	KubeEventTypeCritical KubeEventType = "critical"
+	KubeEventTypeNormal   KubeEventType = "normal"
+)
+
+type GroupOptions struct {
+	ResourceType  string
+	Name          string
+	Namespace     string
+	ThresholdTime time.Time
 }
 
-type KubeEventBasic struct {
+// CreateKubeEventRequest is the type for creating a new kube event
+type CreateKubeEventRequest struct {
+	ResourceType string        `json:"resource_type" form:"required"`
+	Name         string        `json:"name" form:"required"`
+	OwnerType    string        `json:"owner_type"`
+	OwnerName    string        `json:"owner_name"`
+	EventType    KubeEventType `json:"event_type" form:"required"`
+	Namespace    string        `json:"namespace"`
+	Message      string        `json:"message" form:"required"`
+	Reason       string        `json:"reason"`
+	Timestamp    time.Time     `json:"timestamp" form:"required"`
+}
+
+type KubeEvent struct {
+	UpdatedAt time.Time `json:"updated_at"`
+
 	ID        uint `json:"id"`
 	ProjectID uint `json:"project_id"`
 	ClusterID uint `json:"cluster_id"`
 
-	ResourceType string    `json:"resource_type"`
-	Name         string    `json:"name"`
-	OwnerType    string    `json:"owner_type"`
-	OwnerName    string    `json:"owner_name"`
-	EventType    string    `json:"event_type"`
-	Namespace    string    `json:"namespace"`
-	Message      string    `json:"message"`
-	Reason       string    `json:"reason"`
-	Timestamp    time.Time `json:"timestamp"`
+	ResourceType string `json:"resource_type"`
+	Name         string `json:"name"`
+	OwnerType    string `json:"owner_type"`
+	OwnerName    string `json:"owner_name"`
+	Namespace    string `json:"namespace"`
+
+	SubEvents []*KubeSubEvent `json:"sub_events"`
 }
 
-type KubeEvent struct {
-	*KubeEventBasic
-
-	Data []byte `json:"data"`
+type KubeSubEvent struct {
+	EventType KubeEventType `json:"event_type"`
+	Message   string        `json:"message"`
+	Reason    string        `json:"reason"`
+	Timestamp time.Time     `json:"timestamp"`
 }
 
 type ListKubeEventRequest struct {
-	Limit int    `schema:"limit"`
-	Skip  int    `schema:"skip"`
-	Type  string `schema:"type"`
+	Limit int `schema:"limit"`
+	Skip  int `schema:"skip"`
 
 	// can only be "timestamp" for now
 	SortBy string `schema:"sort_by"`
@@ -54,4 +67,12 @@ type ListKubeEventRequest struct {
 	OwnerName string `schema:"owner_name"`
 
 	ResourceType string `schema:"resource_type"`
+}
+
+type GetKubeEventLogsRequest struct {
+	Timestamp int `schema:"timestamp"`
+}
+
+type GetKubeEventLogsResponse struct {
+	Logs []string `json:"logs"`
 }

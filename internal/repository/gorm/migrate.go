@@ -30,6 +30,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.EventContainer{},
 		&models.SubEvent{},
 		&models.KubeEvent{},
+		&models.KubeSubEvent{},
 		&models.ProjectUsage{},
 		&models.ProjectUsageCache{},
 		&models.Onboarding{},

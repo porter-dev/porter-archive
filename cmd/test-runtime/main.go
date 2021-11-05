@@ -25,27 +25,21 @@ func main() {
 	_, err := detect(packit.DetectContext{
 		WorkingDir: workingDir,
 	})
-	if err != nil {
-		log.Println(err)
-	} else {
+	if err == nil {
 		log.Println("go.mod project detected")
 		return
 	}
 
 	/* Next, check if it is a Gopkg.toml */
 	_, err = os.Stat(filepath.Join(workingDir, "Gopkg.toml"))
-	if err != nil {
-		log.Println("Not a Gopkg.toml project")
-	} else {
+	if err == nil {
 		log.Println("Gopkg.toml project detected")
 		return
 	}
 
 	/* Finally, check if it is a Go vendor */
 	_, err = os.Stat(filepath.Join(workingDir, "vendor"))
-	if err != nil {
-		log.Println("Not a Go vendor project")
-	} else {
+	if err == nil {
 		log.Println("Go vendor project detected")
 		return
 	}

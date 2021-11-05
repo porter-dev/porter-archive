@@ -4,7 +4,11 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { KubeEvent } from "shared/types";
 
-export const useKubeEvents = (resourceType: "NODE" | "POD" | "HPA") => {
+export const useKubeEvents = (
+  resourceType: "NODE" | "POD" | "HPA",
+  ownerName?: string,
+  ownerType?: string
+) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [hasPorterAgent, setHasPorterAgent] = useState(false);
 
@@ -46,7 +50,14 @@ export const useKubeEvents = (resourceType: "NODE" | "POD" | "HPA") => {
     return () => {
       isSubscribed = false;
     };
-  }, [currentProject?.id, currentCluster?.id, hasPorterAgent, resourceType]);
+  }, [
+    currentProject?.id,
+    currentCluster?.id,
+    hasPorterAgent,
+    resourceType,
+    ownerType,
+    ownerName,
+  ]);
 
   const fetchData = async (clear?: boolean) => {
     const project_id = currentProject?.id;
@@ -59,11 +70,17 @@ export const useKubeEvents = (resourceType: "NODE" | "POD" | "HPA") => {
     }
 
     const type = resourceType;
+
     try {
       const data = await api
         .getKubeEvents(
           "<token>",
-          { skip: skipBy, resource_type: type },
+          {
+            skip: skipBy,
+            resource_type: type,
+            owner_name: ownerName,
+            owner_type: ownerType,
+          },
           { project_id, cluster_id }
         )
         .then((res) => res.data);

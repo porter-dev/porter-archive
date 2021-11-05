@@ -1,14 +1,10 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
-import { Context } from "shared/Context";
 import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
-import EventDetail from "components/events/EventDetail";
-import { ChartType, KubeEvent } from "shared/types";
-import api from "shared/api";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { unionBy } from "lodash";
 import Dropdown from "components/Dropdown";
+import { useKubeEvents } from "components/events/useEvents";
 
 const availableResourceTypes = [
   { label: "Pods", value: "pod" },
@@ -16,109 +12,16 @@ const availableResourceTypes = [
 ];
 
 const EventsTab = () => {
-  const { currentCluster, currentProject } = useContext(Context);
-
-  const [hasPorterAgent, setHasPorterAgent] = useState(false);
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [kubeEvents, setKubeEvents] = useState<KubeEvent[]>([]);
-  const [hasMore, setHasMore] = useState(true);
   const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
 
-  useEffect(() => {
-    let isSubscribed = true;
-
-    const project_id = currentProject?.id;
-    const cluster_id = currentCluster?.id;
-
-    api
-      .detectPorterAgent("<token>", {}, { project_id, cluster_id })
-      .then(() => {
-        setHasPorterAgent(true);
-      })
-      .catch(() => {
-        setHasPorterAgent(false);
-      });
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [currentProject, currentCluster]);
-
-  useEffect(() => {
-    let isSubscribed = true;
-    if (hasPorterAgent) {
-      fetchData(true).then(() => {
-        if (isSubscribed) {
-          setIsLoading(false);
-        }
-      });
-    }
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [
-    currentProject?.id,
-    currentCluster?.id,
+  const {
+    isLoading,
     hasPorterAgent,
-    resourceType?.value,
-  ]);
-
-  const fetchData = async (clear?: boolean) => {
-    const project_id = currentProject?.id;
-    const cluster_id = currentCluster?.id;
-    let skipBy;
-    if (!clear) {
-      skipBy = kubeEvents?.length;
-    } else {
-      setHasMore(true);
-    }
-
-    const type = resourceType?.value;
-    try {
-      const newKubeEvents = await api
-        .getKubeEvents("<token>", { skip: skipBy }, { project_id, cluster_id })
-        .then((res) => res.data);
-
-      if (!newKubeEvents?.length) {
-        setHasMore(false);
-        return;
-      }
-
-      if (clear) {
-        setKubeEvents(newKubeEvents);
-      } else {
-        const newEvents = unionBy(kubeEvents, newKubeEvents, "id");
-        setKubeEvents(newEvents);
-        if (newEvents.length === kubeEvents?.length) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    console.log(isLoading);
-  }, [isLoading]);
-
-  const installPorterAgent = () => {
-    const project_id = currentProject?.id;
-    const cluster_id = currentCluster?.id;
-
-    api
-      .installPorterAgent("<token>", {}, { project_id, cluster_id })
-      .then(() => {
-        setHasPorterAgent(true);
-      })
-      .catch(() => {
-        setHasPorterAgent(false);
-      });
-  };
+    triggerInstall,
+    kubeEvents,
+    loadMoreEvents,
+    hasMore,
+  } = useKubeEvents(resourceType.value as any);
 
   if (isLoading) {
     return (
@@ -134,7 +37,7 @@ const EventsTab = () => {
         <div>
           <Header>We coulnd't detect porter agent :(</Header>
           In order to use the events tab you should install the porter agent!
-          <InstallPorterAgentButton onClick={() => installPorterAgent()}>
+          <InstallPorterAgentButton onClick={() => triggerInstall()}>
             <i className="material-icons">add</i> Install porter agent
           </InstallPorterAgentButton>
         </div>
@@ -163,7 +66,7 @@ const EventsTab = () => {
       <EventsGrid>
         <InfiniteScroll
           dataLength={kubeEvents.length}
-          next={fetchData}
+          next={loadMoreEvents}
           hasMore={hasMore}
           loader={<h4>Loading...</h4>}
           scrollableTarget="HomeViewWrapper"

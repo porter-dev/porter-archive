@@ -1151,7 +1151,7 @@ const installPorterAgent = baseApi<
 );
 
 const getKubeEvents = baseApi<
-  { skip: number },
+  { skip: number; resource_type: string },
   { project_id: number; cluster_id: number }
 >("GET", ({ project_id, cluster_id }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/kube_events`;

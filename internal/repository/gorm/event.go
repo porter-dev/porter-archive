@@ -153,6 +153,13 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 		)
 	}
 
+	if listOpts.ResourceType != "" {
+		query = query.Where(
+			"resource_type = ?",
+			listOpts.ResourceType,
+		)
+	}
+
 	query = query.Limit(listOpts.Limit).Offset(listOpts.Skip)
 
 	if listOpts.SortBy == "timestamp" {

@@ -52,4 +52,6 @@ type ListKubeEventRequest struct {
 
 	OwnerType string `schema:"owner_type"`
 	OwnerName string `schema:"owner_name"`
+
+	ResourceType string `schema:"resource_type"`
 }

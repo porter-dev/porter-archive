@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -82,12 +83,6 @@ func NewKubeEventRepository(db *gorm.DB, key *[32]byte) repository.KubeEventRepo
 func (repo *KubeEventRepository) CreateEvent(
 	event *models.KubeEvent,
 ) (*models.KubeEvent, error) {
-	err := repo.EncryptKubeEventData(event, repo.key)
-
-	if err != nil {
-		return nil, err
-	}
-
 	if err := repo.db.Create(event).Error; err != nil {
 		return nil, err
 	}
@@ -101,8 +96,7 @@ func (repo *KubeEventRepository) ReadEvent(
 ) (*models.KubeEvent, error) {
 	event := &models.KubeEvent{}
 
-	// preload Clusters association
-	if err := repo.db.Where(
+	if err := repo.db.Preload("SubEvents").Where(
 		"id = ? AND project_id = ? AND cluster_id = ?",
 		id,
 		projID,
@@ -111,9 +105,41 @@ func (repo *KubeEventRepository) ReadEvent(
 		return nil, err
 	}
 
-	err := repo.DecryptKubeEventData(event, repo.key)
+	// subEvents := make([]models.KubeSubEvent, 0)
 
-	if err != nil {
+	// if err := repo.db.Where("kube_event_id = ?", event.ID).Find(&subEvents).Error; err != nil {
+	// 	return nil, err
+	// }
+
+	// event.SubEvents = subEvents
+
+	return event, nil
+}
+
+// ReadEventByGroup finds an event by a set of options which group events together
+func (repo *KubeEventRepository) ReadEventByGroup(
+	projID uint,
+	clusterID uint,
+	opts *types.GroupOptions,
+) (*models.KubeEvent, error) {
+	event := &models.KubeEvent{}
+
+	query := repo.db.Debug().Preload("SubEvents").
+		Where("project_id = ? AND cluster_id = ? AND name = ? AND resource_type = ?", projID, clusterID, opts.Name, opts.ResourceType)
+
+	// construct query for timestamp
+	query = query.Where(
+		"updated_at >= ?", opts.ThresholdTime,
+	)
+
+	if opts.Namespace != "" {
+		query = query.Where(
+			"namespace = ?",
+			strings.ToLower(opts.Namespace),
+		)
+	}
+
+	if err := query.First(&event).Error; err != nil {
 		return nil, err
 	}
 
@@ -126,8 +152,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 	projectID uint,
 	clusterID uint,
 	opts *types.ListKubeEventRequest,
-	shouldDecrypt bool,
-) ([]*models.KubeEvent, error) {
+) ([]*models.KubeEvent, int64, error) {
 	listOpts := opts
 
 	if listOpts.Limit == 0 {
@@ -136,14 +161,8 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 
 	events := []*models.KubeEvent{}
 
-	query := repo.db.Where("project_id = ? AND cluster_id = ?", projectID, clusterID)
-
-	if listOpts.Type != "" {
-		query = query.Where(
-			"event_type = ?",
-			strings.ToLower(listOpts.Type),
-		)
-	}
+	// preload the subevents
+	query := repo.db.Preload("SubEvents").Where("project_id = ? AND cluster_id = ?", projectID, clusterID)
 
 	if listOpts.OwnerName != "" && listOpts.OwnerType != "" {
 		query = query.Where(
@@ -160,69 +179,46 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 		)
 	}
 
+	if listOpts.SortBy == "timestamp" {
+		// sort by the updated_at field
+		query = query.Order("updated_at desc").Order("id desc")
+	}
+
+	// get the count before limit and offset
+	var count int64
+
+	if err := query.Model([]*models.KubeEvent{}).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
 	query = query.Limit(listOpts.Limit).Offset(listOpts.Skip)
 
-	if listOpts.SortBy == "timestamp" {
-		query = query.Order("timestamp desc").Order("id desc")
-	}
-
 	if err := query.Find(&events).Error; err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	if shouldDecrypt {
-		for _, event := range events {
-			repo.DecryptKubeEventData(event, repo.key)
-		}
+	return events, count, nil
+}
+
+// AppendSubEvent will add a subevent to an existing event
+func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEvent *models.KubeSubEvent) error {
+	subEvent.KubeEventID = event.ID
+
+	if err := repo.db.Create(subEvent).Error; err != nil {
+		return err
 	}
 
-	return events, nil
+	event.UpdatedAt = time.Now()
+
+	return repo.db.Save(event).Error
 }
 
 // DeleteEvent deletes an event by ID
 func (repo *KubeEventRepository) DeleteEvent(
 	id uint,
 ) error {
-	if err := repo.db.Where("id = ?", id).Delete(&models.KubeEvent{}).Error; err != nil {
+	if err := repo.db.Preload("SubEvents").Where("id = ?", id).Delete(&models.KubeEvent{}).Error; err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// EncryptEventData will encrypt the event data before
-// writing to the DB
-func (repo *KubeEventRepository) EncryptKubeEventData(
-	event *models.KubeEvent,
-	key *[32]byte,
-) error {
-	if len(event.Data) > 0 {
-		cipherData, err := repository.Encrypt(event.Data, key)
-
-		if err != nil {
-			return err
-		}
-
-		event.Data = cipherData
-	}
-
-	return nil
-}
-
-// DecryptEventData will decrypt the event data before
-// returning it from the DB
-func (repo *KubeEventRepository) DecryptKubeEventData(
-	event *models.KubeEvent,
-	key *[32]byte,
-) error {
-	if len(event.Data) > 0 {
-		plaintext, err := repository.Decrypt(event.Data, key)
-
-		if err != nil {
-			return err
-		}
-
-		event.Data = plaintext
 	}
 
 	return nil

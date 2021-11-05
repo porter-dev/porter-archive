@@ -67,6 +67,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.GitActionConfig{},
 		&models.Invite{},
 		&models.KubeEvent{},
+		&models.KubeSubEvent{},
 		&models.Onboarding{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
@@ -570,14 +571,11 @@ func initKubeEvents(tester *tester, t *testing.T) {
 		}
 
 		event := &models.KubeEvent{
-			ProjectID: tester.initProjects[0].Model.ID,
-			ClusterID: tester.initClusters[0].Model.ID,
-			EventType: refType,
-			Name:      fmt.Sprintf("%s-example-%d", refType, i),
-			Namespace: "default",
-			Message:   "Pod killed",
-			Reason:    "OOM: memory limit exceeded",
-			Data:      []byte("log from pod\nlog2 from pod"),
+			ProjectID:    tester.initProjects[0].Model.ID,
+			ClusterID:    tester.initClusters[0].Model.ID,
+			Name:         fmt.Sprintf("%s-example-%d", refType, i),
+			Namespace:    "default",
+			ResourceType: refType,
 		}
 
 		event, err := tester.repo.KubeEvent().CreateEvent(event)
@@ -585,6 +583,21 @@ func initKubeEvents(tester *tester, t *testing.T) {
 		if err != nil {
 			t.Fatalf("%v\n", err)
 		}
+
+		// append a sub event as well
+		subEvent := &models.KubeSubEvent{
+			EventType: "pod",
+			Message:   "Pod killed",
+			Reason:    "OOM: memory limit exceeded",
+		}
+
+		err = tester.repo.KubeEvent().AppendSubEvent(event, subEvent)
+
+		if err != nil {
+			t.Fatalf("%v\n", err)
+		}
+
+		event.SubEvents = []models.KubeSubEvent{*subEvent}
 
 		initEvents = append(initEvents, event)
 	}

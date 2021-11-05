@@ -1,7 +1,6 @@
 package gorm_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -45,10 +44,6 @@ func TestCreateKubeEvent(t *testing.T) {
 		Reason:    "OOM: memory limit exceeded",
 		Timestamp: time.Now(),
 	}
-
-	bytes, err := json.Marshal(subEvent)
-
-	t.Errorf("BYTES ARE %s", string(bytes))
 
 	copySubEvent := *subEvent
 	copySubEvent.KubeEventID = 1
@@ -179,7 +174,7 @@ func TestListKubeEventsByProjectIDWithSortBy(t *testing.T) {
 func testListKubeEventsByProjectID(tester *tester, t *testing.T, clusterID uint, decrypt bool, opts *types.ListKubeEventRequest, expKubeEvents []*models.KubeEvent) {
 	t.Helper()
 
-	events, err := tester.repo.KubeEvent().ListEventsByProjectID(
+	events, _, err := tester.repo.KubeEvent().ListEventsByProjectID(
 		tester.initProjects[0].Model.ID,
 		clusterID,
 		opts,

@@ -69,6 +69,14 @@ type ListKubeEventRequest struct {
 	ResourceType string `schema:"resource_type"`
 }
 
+type ListKubeEventsResponse struct {
+	Count int64 `json:"count"`
+	Limit int   `json:"limit"`
+	Skip  int   `json:"skip"`
+
+	KubeEvents []*KubeEvent `json:"kube_events"`
+}
+
 type GetKubeEventLogsRequest struct {
 	Timestamp int `schema:"timestamp"`
 }

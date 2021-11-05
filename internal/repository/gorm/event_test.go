@@ -3,6 +3,7 @@ package gorm_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/api/types"
@@ -24,12 +25,8 @@ func TestCreateKubeEvent(t *testing.T) {
 	event := &models.KubeEvent{
 		ProjectID: tester.initProjects[0].Model.ID,
 		ClusterID: tester.initClusters[0].Model.ID,
-		EventType: "pod",
 		Name:      "pod-example-1",
 		Namespace: "default",
-		Message:   "Pod killed",
-		Reason:    "OOM: memory limit exceeded",
-		Data:      []byte("log from pod\nlog2 from pod"),
 	}
 
 	copyKubeEvent := *event
@@ -39,6 +36,25 @@ func TestCreateKubeEvent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
+
+	// append a sub event as well
+	subEvent := &models.KubeSubEvent{
+		EventType: "pod",
+		Message:   "Pod killed",
+		Reason:    "OOM: memory limit exceeded",
+		Timestamp: time.Now(),
+	}
+
+	copySubEvent := *subEvent
+	copySubEvent.KubeEventID = 1
+
+	err = tester.repo.KubeEvent().AppendSubEvent(event, subEvent)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	copyKubeEvent.SubEvents = []models.KubeSubEvent{copySubEvent}
 
 	event, err = tester.repo.KubeEvent().ReadEvent(event.Model.ID, 1, 1)
 
@@ -52,9 +68,46 @@ func TestCreateKubeEvent(t *testing.T) {
 	}
 
 	event.Model = gorm.Model{}
+	event.SubEvents[0].Model = gorm.Model{}
 
 	if diff := deep.Equal(event, &copyKubeEvent); diff != nil {
-		t.Errorf("tokens not equal:")
+		t.Errorf("events not equal:")
+		t.Error(diff)
+	}
+}
+
+func TestReadKubeEventsByGroup(t *testing.T) {
+	suffix, _ := repository.GenerateRandomBytes(4)
+
+	tester := &tester{
+		dbFileName: fmt.Sprintf("./porter_read_event_%s.db", suffix),
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initCluster(tester, t)
+	initKubeEvents(tester, t)
+	defer cleanup(tester, t)
+
+	event, err := tester.repo.KubeEvent().ReadEventByGroup(
+		tester.initProjects[0].Model.ID,
+		tester.initClusters[0].Model.ID,
+		&types.GroupOptions{
+			Name:          "pod-example-1",
+			Namespace:     "default",
+			ResourceType:  "pod",
+			ThresholdTime: time.Now().Add(-15 * time.Minute),
+		},
+	)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	expKubeEvent := tester.initKubeEvents[1]
+
+	if diff := deep.Equal(expKubeEvent, event); diff != nil {
+		t.Errorf("incorrect events")
 		t.Error(diff)
 	}
 }
@@ -73,8 +126,8 @@ func TestListKubeEventsByProjectIDWithLimit(t *testing.T) {
 	defer cleanup(tester, t)
 
 	testListKubeEventsByProjectID(tester, t, 1, true, &types.ListKubeEventRequest{
-		Limit: 10,
-		Type:  "node",
+		Limit:        10,
+		ResourceType: "node",
 	}, tester.initKubeEvents[50:60])
 }
 
@@ -111,21 +164,20 @@ func TestListKubeEventsByProjectIDWithSortBy(t *testing.T) {
 	defer cleanup(tester, t)
 
 	testListKubeEventsByProjectID(tester, t, 1, true, &types.ListKubeEventRequest{
-		Limit:  1,
-		Skip:   0,
-		Type:   "node",
-		SortBy: "timestamp",
+		Limit:        1,
+		Skip:         0,
+		ResourceType: "node",
+		SortBy:       "timestamp",
 	}, tester.initKubeEvents[99:])
 }
 
 func testListKubeEventsByProjectID(tester *tester, t *testing.T, clusterID uint, decrypt bool, opts *types.ListKubeEventRequest, expKubeEvents []*models.KubeEvent) {
 	t.Helper()
 
-	events, err := tester.repo.KubeEvent().ListEventsByProjectID(
+	events, _, err := tester.repo.KubeEvent().ListEventsByProjectID(
 		tester.initProjects[0].Model.ID,
 		clusterID,
 		opts,
-		decrypt,
 	)
 
 	if err != nil {
@@ -135,10 +187,6 @@ func testListKubeEventsByProjectID(tester *tester, t *testing.T, clusterID uint,
 	// make sure data is correct
 	if len(events) != len(expKubeEvents) {
 		t.Fatalf("length of events incorrect: expected %d, got %d\n", len(expKubeEvents), len(events))
-	}
-
-	for _, expKubeEvent := range expKubeEvents {
-		expKubeEvent.Data = []byte("log from pod\nlog2 from pod")
 	}
 
 	if diff := deep.Equal(expKubeEvents, events); diff != nil {

@@ -351,7 +351,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "events":
-        return <EventsTab currentChart={chart} />;
+        return <EventsTab controllers={controllers} />;
       case "status":
         if (isLoadingChartData) {
           return (

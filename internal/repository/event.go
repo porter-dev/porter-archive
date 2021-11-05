@@ -23,6 +23,6 @@ type KubeEventRepository interface {
 		projectID uint,
 		clusterID uint,
 		opts *types.ListKubeEventRequest,
-	) ([]*models.KubeEvent, error)
+	) ([]*models.KubeEvent, int64, error)
 	DeleteEvent(id uint) error
 }

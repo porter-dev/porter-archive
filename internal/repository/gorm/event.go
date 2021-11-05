@@ -152,7 +152,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 	projectID uint,
 	clusterID uint,
 	opts *types.ListKubeEventRequest,
-) ([]*models.KubeEvent, error) {
+) ([]*models.KubeEvent, int64, error) {
 	listOpts := opts
 
 	if listOpts.Limit == 0 {
@@ -179,18 +179,25 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 		)
 	}
 
-	query = query.Limit(listOpts.Limit).Offset(listOpts.Skip)
-
 	if listOpts.SortBy == "timestamp" {
 		// sort by the updated_at field
 		query = query.Order("updated_at desc").Order("id desc")
 	}
 
-	if err := query.Find(&events).Error; err != nil {
-		return nil, err
+	// get the count before limit and offset
+	var count int64
+
+	if err := query.Model([]*models.KubeEvent{}).Count(&count).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return events, nil
+	query = query.Limit(listOpts.Limit).Offset(listOpts.Skip)
+
+	if err := query.Find(&events).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return events, count, nil
 }
 
 // AppendSubEvent will add a subevent to an existing event

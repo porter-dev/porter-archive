@@ -62,7 +62,7 @@ func (n *KubeEventRepository) ListEventsByProjectID(
 	projectID uint,
 	clusterID uint,
 	opts *types.ListKubeEventRequest,
-) ([]*models.KubeEvent, error) {
+) ([]*models.KubeEvent, int64, error) {
 	panic("not implemented") // TODO: Implement
 }
 

@@ -36,12 +36,18 @@ func main() {
 	_, err = os.Stat(filepath.Join(workingDir, "Gopkg.toml"))
 	if err != nil {
 		log.Println("Not a Gopkg.toml project")
+	} else {
+		log.Println("Gopkg.toml project detected")
+		return
 	}
 
 	/* Finally, check if it is a Go vendor */
 	_, err = os.Stat(filepath.Join(workingDir, "vendor"))
 	if err != nil {
 		log.Println("Not a Go vendor project")
+	} else {
+		log.Println("Go vendor project detected")
+		return
 	}
 
 	/* Not a Go project */

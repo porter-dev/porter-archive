@@ -59,15 +59,6 @@ const EventsTab = () => {
           options={availableResourceTypes}
           onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
         />
-        {/* <RightFilters> */}
-        {/* <Dropdown
-            selectedOption={currentLimit}
-            options={availableLimitOptions}
-            onSelect={(o) =>
-              setCurrentLimit({ ...o, value: o.value as number })
-            }
-          />
-        </RightFilters> */}
       </ControlRow>
       <EventsGrid>
         <InfiniteScroll
@@ -80,9 +71,6 @@ const EventsTab = () => {
             <h4>No events were found for the resource type you specified</h4>
           }
         >
-          {/* {kubeEvents.map((_, index) => (
-          <div key={index}>div - #{index}</div>
-        ))} */}
           {kubeEvents.map((event, i) => {
             return (
               <React.Fragment key={i}>

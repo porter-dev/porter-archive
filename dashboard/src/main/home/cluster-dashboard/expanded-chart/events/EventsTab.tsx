@@ -1,19 +1,47 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
 import InfiniteScroll from "react-infinite-scroll-component";
 import Dropdown from "components/Dropdown";
 import { useKubeEvents } from "components/events/useEvents";
+import { ChartType } from "shared/types";
+import _, { isObject } from "lodash";
 
 const availableResourceTypes = [
   { label: "Pods", value: "pod" },
   { label: "HPA", value: "hpa" },
 ];
 
-const EventsTab = () => {
+const EventsTab: React.FC<{
+  controllers: Record<string, Record<string, any>>;
+}> = (props) => {
+  const { controllers } = props;
   const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
 
+  const [selectedControllerKey, setSelectedControllerKey] = useState(null);
+
+  const controllerOptions = useMemo(() => {
+    if (typeof controllers !== "object") {
+      return [];
+    }
+
+    return Object.entries(controllers).map(([key, value]) => ({
+      label: value?.metadata?.name,
+      value: key,
+    }));
+  }, [controllers]);
+
+  const currentControllerOption = useMemo(() => {
+    return (
+      controllerOptions?.find((c) => c.value === selectedControllerKey) ||
+      controllerOptions[0]
+    );
+  }, [selectedControllerKey, controllerOptions]);
+
+  const selectedController = controllers[currentControllerOption?.value];
+
+  console.log(controllers, currentControllerOption);
   const {
     isLoading,
     hasPorterAgent,
@@ -21,9 +49,15 @@ const EventsTab = () => {
     kubeEvents,
     loadMoreEvents,
     hasMore,
-  } = useKubeEvents(resourceType.value as any);
+  } = useKubeEvents(
+    resourceType.value as any,
+    selectedController?.metadata?.name,
+    selectedController?.kind
+  );
 
-  if (isLoading) {
+  const hasControllers = controllers && Object.keys(controllers)?.length;
+
+  if (isLoading || !hasControllers) {
     return (
       <Placeholder>
         <Loading />
@@ -53,15 +87,13 @@ const EventsTab = () => {
           options={availableResourceTypes}
           onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
         />
-        {/* <RightFilters> */}
-        {/* <Dropdown
-            selectedOption={currentLimit}
-            options={availableLimitOptions}
-            onSelect={(o) =>
-              setCurrentLimit({ ...o, value: o.value as number })
-            }
+        <RightFilters>
+          <Dropdown
+            selectedOption={currentControllerOption}
+            options={controllerOptions}
+            onSelect={(o) => setSelectedControllerKey(o?.value)}
           />
-        </RightFilters> */}
+        </RightFilters>
       </ControlRow>
       <EventsGrid>
         <InfiniteScroll
@@ -74,9 +106,6 @@ const EventsTab = () => {
             <h4>No events were found for the resource type you specified</h4>
           }
         >
-          {/* {kubeEvents.map((_, index) => (
-          <div key={index}>div - #{index}</div>
-        ))} */}
           {kubeEvents.map((event, i) => {
             return (
               <React.Fragment key={i}>

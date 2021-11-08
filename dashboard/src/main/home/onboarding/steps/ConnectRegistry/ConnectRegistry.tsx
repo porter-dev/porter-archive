@@ -16,6 +16,7 @@ import { useSnapshot } from "valtio";
 import api from "shared/api";
 import Loading from "components/Loading";
 import { integrationList } from "shared/common";
+import Registry from "./components/Registry";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);
@@ -29,37 +30,48 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
     snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow;
 
   useEffect(() => {
-    let isSubscribed = true;
-    const projectId = snap.StateHandler?.project?.id;
+    let hookState = { isSubscribed: true };
 
-    if (typeof projectId === "number") {
-      api
-        .getProjectRegistries("<token>", {}, { id: projectId })
-        .then((res) => {
-          const registries = res?.data;
-          if (isSubscribed) {
-            if (Array.isArray(registries) && registries.length) {
-              setConnectedRegistries(registries);
-            }
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          if (isSubscribed) {
-            setConnectedRegistries(null);
-          }
-        })
-        .finally(() => {
-          if (isSubscribed) {
-            setIsLoading(false);
-          }
-        });
-    }
+    getRegistries(hookState);
 
     return () => {
-      isSubscribed = false;
+      hookState.isSubscribed = false;
     };
   }, [snap.StateHandler?.project]);
+
+  const getRegistries = async (
+    props: { isSubscribed: boolean } = { isSubscribed: true }
+  ) => {
+    const projectId = snap.StateHandler?.project?.id;
+
+    if (typeof projectId !== "number") {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await api.getProjectRegistries(
+        "<token>",
+        {},
+        { id: projectId }
+      );
+      const registries = res?.data;
+      if (props.isSubscribed) {
+        if (Array.isArray(registries)) {
+          setConnectedRegistries(registries);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      if (props.isSubscribed) {
+        setConnectedRegistries(null);
+      }
+    } finally {
+      if (props.isSubscribed) {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const handleGoBack = () => {
     OFState.actions.nextStep("go_back");
@@ -120,7 +132,6 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
           ? "Link to an existing Docker registry. Don't worry if you don't know what this is."
           : "Link to an existing Docker registry or continue."}
       </Helper>
-      {isLoading && <Loading />}
 
       {!isLoading && step ? (
         <FormFlowWrapper currentStep={step} />
@@ -139,39 +150,17 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
             }}
             options={selectorOptions}
           />
+          {isLoading && <Loading />}
 
-          {connectedRegistries?.length && (
+          {!!connectedRegistries?.length && (
             <IntegrationList>
-              {connectedRegistries.map((registry: any) => {
-                const icon = integrationList[registry?.service]?.icon;
-                const subtitle = integrationList[registry?.service]?.label;
-
-                return (
-                  <React.Fragment key={registry.name}>
-                    <Integration>
-                      <MainRow disabled={false}>
-                        <Flex>
-                          <Icon src={icon && icon} />
-                          <Description>
-                            <Label>{registry?.name}</Label>
-                            <IntegrationSubtitle>
-                              {subtitle}
-                            </IntegrationSubtitle>
-                          </Description>
-                        </Flex>
-                        <MaterialIconTray disabled={false}>
-                          <I
-                            className="material-icons"
-                            onClick={() => console.log("DELETE")}
-                          >
-                            delete
-                          </I>
-                        </MaterialIconTray>
-                      </MainRow>
-                    </Integration>
-                  </React.Fragment>
-                );
-              })}
+              {connectedRegistries.map((registry: any) => (
+                <Registry
+                  key={registry.name}
+                  registry={registry}
+                  onDelete={getRegistries}
+                />
+              ))}
             </IntegrationList>
           )}
           <NextStep
@@ -201,105 +190,8 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
 
 export default ConnectRegistry;
 
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
 const IntegrationList = styled.div`
   margin-top: 14px;
-`;
-
-const Integration = styled.div`
-  margin-left: -2px;
-  display: flex;
-  flex-direction: column;
-  background: #26282f;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
-`;
-
-const IntegrationSubtitle = styled.div`
-  color: #aaaabb;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  padding-top: 5px;
-`;
-
-const Icon = styled.img`
-  width: 30px;
-  margin-right: 18px;
-`;
-
-const I = styled.i`
-  :hover {
-    cursor: pointer;
-  }
-`;
-
-const MainRow = styled.div`
-  height: 70px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 25px;
-  border-radius: 5px;
-  :hover {
-    background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#ffffff11"};
-    > i {
-      background: ${(props: { disabled: boolean }) =>
-        props.disabled ? "" : "#ffffff11"};
-    }
-  }
-
-  > i {
-    border-radius: 20px;
-    font-size: 18px;
-    padding: 5px;
-    color: #ffffff44;
-    margin-right: -7px;
-    :hover {
-      background: ${(props: { disabled: boolean }) =>
-        props.disabled ? "" : "#ffffff11"};
-    }
-  }
-`;
-
-const MaterialIconTray = styled.div`
-  max-width: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  > i {
-    background: #26282f;
-    border-radius: 20px;
-    font-size: 18px;
-    padding: 5px;
-    margin: 0 5px;
-    color: #ffffff44;
-    :hover {
-      background: ${(props: { disabled: boolean }) =>
-        props.disabled ? "" : "#ffffff11"};
-    }
-  }
-`;
-
-const Description = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-`;
-
-const Label = styled.div`
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 500;
 `;
 
 const Div = styled.div`

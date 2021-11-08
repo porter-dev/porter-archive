@@ -20,6 +20,7 @@ export const SharedStatus: React.FC<{
   } = useWebsockets();
 
   const [tfModules, setTFModules] = useState<TFModule[]>([]);
+  const [isLoadingState, setIsLoadingState] = useState(true);
 
   const updateTFModules = (
     index: number,
@@ -86,6 +87,9 @@ export const SharedStatus: React.FC<{
   };
 
   useEffect(() => {
+    if (isLoadingState) {
+      return;
+    }
     // recompute tf module state each time, to see if infra is ready
     if (tfModules.length > 0) {
       // see if all tf modules are in a "created" state
@@ -158,7 +162,7 @@ export const SharedStatus: React.FC<{
     } else {
       setInfraStatus(null);
     }
-  }, [tfModules]);
+  }, [tfModules, isLoadingState]);
 
   const setupInfraWebsocket = (
     websocketID: string,
@@ -257,6 +261,7 @@ export const SharedStatus: React.FC<{
   };
 
   const updateDesiredState = (index: number, val: TFModule) => {
+    setIsLoadingState(true);
     api
       .getInfraDesired(
         "<token>",
@@ -289,9 +294,15 @@ export const SharedStatus: React.FC<{
 
             // merge with empty current map
             mergeCurrentAndDesired(index, desired, currentMap);
+          })
+          .finally(() => {
+            setIsLoadingState(true);
           });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+        setIsLoadingState(true);
+      });
   };
 
   useEffect(() => {

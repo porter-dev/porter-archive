@@ -30,6 +30,7 @@ export const useKubeEvents = (
       })
       .catch(() => {
         setHasPorterAgent(false);
+        setIsLoading(false);
       });
 
     return () => {

@@ -7,9 +7,11 @@ import (
 
 	condaenvupdate "github.com/paketo-buildpacks/conda-env-update"
 	gomodvendor "github.com/paketo-buildpacks/go-mod-vendor"
+	npminstall "github.com/paketo-buildpacks/npm-install"
 	"github.com/paketo-buildpacks/packit"
 	pipenvinstall "github.com/paketo-buildpacks/pipenv-install"
 	pythonstart "github.com/paketo-buildpacks/python-start"
+	yarninstall "github.com/paketo-buildpacks/yarn-install"
 )
 
 const GoModLocation = "go.mod"
@@ -95,6 +97,30 @@ func detectPython() {
 }
 
 func detectNode() {
+	/* Check for yarn project */
+	yarnProjectPathParser := yarninstall.NewProjectPathParser()
+	yarnVersionParser := yarninstall.NewPackageJSONParser()
+	detect := yarninstall.Detect(yarnProjectPathParser, yarnVersionParser)
+	_, err := detect(packit.DetectContext{
+		WorkingDir: workingDir,
+	})
+	if err == nil {
+		log.Println("Node yarn project detected")
+		return
+	}
+
+	/* Check for npm project */
+	npmProjectPathParser := npminstall.NewProjectPathParser()
+	npmVersionParser := npminstall.NewPackageJSONParser()
+	detect = npminstall.Detect(npmProjectPathParser, npmVersionParser)
+	_, err = detect(packit.DetectContext{
+		WorkingDir: workingDir,
+	})
+	if err == nil {
+		log.Println("Node npm project detected")
+		return
+	}
+
 	/* Not a Node project */
 	log.Println("Not a Node project")
 }

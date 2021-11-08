@@ -15,6 +15,7 @@ import { OFState } from "../../state";
 import { useSnapshot } from "valtio";
 import api from "shared/api";
 import Loading from "components/Loading";
+import { integrationList } from "shared/common";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);
@@ -120,23 +121,40 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
           : "Link to an existing Docker registry or continue."}
       </Helper>
       {isLoading && <Loading />}
-      {!isLoading &&
-        connectedRegistries?.length &&
-        connectedRegistries.map((registry: any) => {
-          return (
-            <React.Fragment key={registry.name}>
-              <div>
-                {registry?.name}
-                {registry?.service}
-                {registry?.url}
-              </div>
-            </React.Fragment>
-          );
-        })}
+
       {!isLoading && step ? (
         <FormFlowWrapper currentStep={step} />
       ) : (
         <>
+          {connectedRegistries?.length &&
+            connectedRegistries.map((registry: any) => {
+              const icon = integrationList[registry?.service]?.icon;
+              const subtitle = integrationList[registry?.service]?.label;
+
+              return (
+                <React.Fragment key={registry.name}>
+                  <Integration>
+                    <MainRow disabled={false}>
+                      <Flex>
+                        <Icon src={icon && icon} />
+                        <Description>
+                          <Label>{registry?.name}</Label>
+                          <IntegrationSubtitle>{subtitle}</IntegrationSubtitle>
+                        </Description>
+                      </Flex>
+                      <MaterialIconTray disabled={false}>
+                        <I
+                          className="material-icons"
+                          onClick={() => console.log("DELETE")}
+                        >
+                          delete
+                        </I>
+                      </MaterialIconTray>
+                    </MainRow>
+                  </Integration>
+                </React.Fragment>
+              );
+            })}
           <ProviderSelector
             defaultOption={
               Array.isArray(connectedRegistries) && connectedRegistries.length
@@ -176,6 +194,103 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
 };
 
 export default ConnectRegistry;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Integration = styled.div`
+  margin-left: -2px;
+  display: flex;
+  flex-direction: column;
+  background: #26282f;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px 0px #00000055;
+`;
+
+const IntegrationSubtitle = styled.div`
+  color: #aaaabb;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  padding-top: 5px;
+`;
+
+const Icon = styled.img`
+  width: 30px;
+  margin-right: 18px;
+`;
+
+const I = styled.i`
+  :hover {
+    cursor: pointer;
+  }
+`;
+
+const MainRow = styled.div`
+  height: 70px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px;
+  border-radius: 5px;
+  :hover {
+    background: ${(props: { disabled: boolean }) =>
+      props.disabled ? "" : "#ffffff11"};
+    > i {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
+    }
+  }
+
+  > i {
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    color: #ffffff44;
+    margin-right: -7px;
+    :hover {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
+    }
+  }
+`;
+
+const MaterialIconTray = styled.div`
+  max-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  > i {
+    background: #26282f;
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    margin: 0 5px;
+    color: #ffffff44;
+    :hover {
+      background: ${(props: { disabled: boolean }) =>
+        props.disabled ? "" : "#ffffff11"};
+    }
+  }
+`;
+
+const Description = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+`;
+
+const Label = styled.div`
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+`;
 
 const Div = styled.div`
   width: 100%;

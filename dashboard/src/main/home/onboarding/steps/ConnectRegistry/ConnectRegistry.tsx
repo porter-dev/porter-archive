@@ -119,13 +119,13 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
         connectedRegistries?.length &&
         connectedRegistries.map((registry: any) => {
           return (
-            <>
+            <React.Fragment key={registry.name}>
               <div>
                 {registry?.name}
                 {registry?.service}
                 {registry?.url}
               </div>
-            </>
+            </React.Fragment>
           );
         })}
       {!isLoading && step ? (

@@ -81,6 +81,9 @@ type ServerConf struct {
 	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
 
 	WelcomeFormWebhook string `env:"WELCOME_FORM_WEBHOOK"`
+
+	// Token for internal retool to authenticate to internal API endpoints
+	RetoolToken string `env:"RETOOL_TOKEN"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

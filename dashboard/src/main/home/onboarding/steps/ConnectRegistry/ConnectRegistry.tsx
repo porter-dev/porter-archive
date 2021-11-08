@@ -72,6 +72,11 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
     provider !== "skip" && OFState.actions.nextStep("continue", provider);
   };
 
+  const handleContinueWithCurrent = () => {
+    const connectedRegistry = connectedRegistries[0];
+    OFState.actions.nextStep("continue_with_current", connectedRegistry);
+  };
+
   const selectorOptions = useMemo(() => {
     const options = [...registryOptions];
     if (Array.isArray(connectedRegistries) && connectedRegistries.length) {
@@ -148,7 +153,16 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
           <NextStep
             text="Continue"
             disabled={false}
-            onClick={() => handleSkip()}
+            onClick={() => {
+              if (
+                Array.isArray(connectedRegistries) &&
+                connectedRegistries.length
+              ) {
+                handleContinueWithCurrent();
+              } else {
+                handleSkip();
+              }
+            }}
             status={""}
             makeFlush={true}
             clearPosition={true}

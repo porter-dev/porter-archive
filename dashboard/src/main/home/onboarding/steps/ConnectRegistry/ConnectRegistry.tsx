@@ -126,35 +126,6 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
         <FormFlowWrapper currentStep={step} />
       ) : (
         <>
-          {connectedRegistries?.length &&
-            connectedRegistries.map((registry: any) => {
-              const icon = integrationList[registry?.service]?.icon;
-              const subtitle = integrationList[registry?.service]?.label;
-
-              return (
-                <React.Fragment key={registry.name}>
-                  <Integration>
-                    <MainRow disabled={false}>
-                      <Flex>
-                        <Icon src={icon && icon} />
-                        <Description>
-                          <Label>{registry?.name}</Label>
-                          <IntegrationSubtitle>{subtitle}</IntegrationSubtitle>
-                        </Description>
-                      </Flex>
-                      <MaterialIconTray disabled={false}>
-                        <I
-                          className="material-icons"
-                          onClick={() => console.log("DELETE")}
-                        >
-                          delete
-                        </I>
-                      </MaterialIconTray>
-                    </MainRow>
-                  </Integration>
-                </React.Fragment>
-              );
-            })}
           <ProviderSelector
             defaultOption={
               Array.isArray(connectedRegistries) && connectedRegistries.length
@@ -168,6 +139,41 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
             }}
             options={selectorOptions}
           />
+
+          {connectedRegistries?.length && (
+            <IntegrationList>
+              {connectedRegistries.map((registry: any) => {
+                const icon = integrationList[registry?.service]?.icon;
+                const subtitle = integrationList[registry?.service]?.label;
+
+                return (
+                  <React.Fragment key={registry.name}>
+                    <Integration>
+                      <MainRow disabled={false}>
+                        <Flex>
+                          <Icon src={icon && icon} />
+                          <Description>
+                            <Label>{registry?.name}</Label>
+                            <IntegrationSubtitle>
+                              {subtitle}
+                            </IntegrationSubtitle>
+                          </Description>
+                        </Flex>
+                        <MaterialIconTray disabled={false}>
+                          <I
+                            className="material-icons"
+                            onClick={() => console.log("DELETE")}
+                          >
+                            delete
+                          </I>
+                        </MaterialIconTray>
+                      </MainRow>
+                    </Integration>
+                  </React.Fragment>
+                );
+              })}
+            </IntegrationList>
+          )}
           <NextStep
             text="Continue"
             disabled={false}
@@ -199,6 +205,10 @@ const Flex = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+const IntegrationList = styled.div`
+  margin-top: 14px;
 `;
 
 const Integration = styled.div`

@@ -5,12 +5,16 @@ import (
 	"os"
 	"path/filepath"
 
+	bundleinstall "github.com/paketo-buildpacks/bundle-install"
 	condaenvupdate "github.com/paketo-buildpacks/conda-env-update"
 	gomodvendor "github.com/paketo-buildpacks/go-mod-vendor"
 	npminstall "github.com/paketo-buildpacks/npm-install"
 	"github.com/paketo-buildpacks/packit"
 	pipenvinstall "github.com/paketo-buildpacks/pipenv-install"
 	pythonstart "github.com/paketo-buildpacks/python-start"
+	"github.com/paketo-buildpacks/rackup"
+	railsassets "github.com/paketo-buildpacks/rails-assets"
+	"github.com/paketo-buildpacks/rake"
 	yarninstall "github.com/paketo-buildpacks/yarn-install"
 )
 
@@ -126,6 +130,50 @@ func detectNode() {
 }
 
 func detectRuby() {
+	/* Check for Gemfile project */
+	gemfileParser := bundleinstall.NewGemfileParser()
+	detect := bundleinstall.Detect(gemfileParser)
+	_, err := detect(packit.DetectContext{
+		WorkingDir: workingDir,
+	})
+	if err == nil {
+		log.Println("Ruby Gemfile project detected")
+		return
+	}
+
+	/* Check for rackup project  */
+	gemParser := rackup.NewGemfileLockParser()
+	detect = rackup.Detect(gemParser)
+	_, err = detect(packit.DetectContext{
+		WorkingDir: workingDir,
+	})
+	if err == nil {
+		log.Println("Ruby rackup project detected")
+		return
+	}
+
+	/* Check for Rails app with assets */
+	railsGemfileParser := railsassets.NewGemfileParser()
+	detect = railsassets.Detect(railsGemfileParser)
+	_, err = detect(packit.DetectContext{
+		WorkingDir: workingDir,
+	})
+	if err == nil {
+		log.Println("Ruby rails project detected")
+		return
+	}
+
+	/* Check for rakefile project */
+	rakeGemfileParser := rake.NewGemfileParser()
+	detect = rake.Detect(rakeGemfileParser)
+	_, err = detect(packit.DetectContext{
+		WorkingDir: workingDir,
+	})
+	if err == nil {
+		log.Println("Ruby rakefile project detected")
+		return
+	}
+
 	/* Not a Ruby project */
 	log.Println("Not a Ruby project")
 }

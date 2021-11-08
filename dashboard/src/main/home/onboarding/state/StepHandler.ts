@@ -16,15 +16,17 @@ type Step = {
       skip?: string;
       continue?: string;
       go_back?: string;
+      continue_with_current?: string;
     };
   };
 };
 
-export type Action = "skip" | "continue" | "go_back";
+export type Action = "skip" | "continue" | "go_back" | "continue_with_current";
 type ActionHandler = {
   skip?: string;
   continue: string;
   go_back?: string;
+  continue_with_current?: string;
 };
 
 export type FlowType = {
@@ -53,12 +55,14 @@ const flow: FlowType = {
       on: {
         skip: "provision_resources",
         continue: "connect_registry.credentials",
+        continue_with_current: "provision_resources",
         go_back: "connect_source",
       },
       execute: {
         on: {
           skip: "skipRegistryConnection",
           continue: "saveRegistryProvider",
+          continue_with_current: "saveRegistryAndContinue",
         },
       },
       substeps: {

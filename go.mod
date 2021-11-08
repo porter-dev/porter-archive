@@ -41,9 +41,11 @@ require (
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/paketo-buildpacks/conda-env-update v0.2.2
 	github.com/paketo-buildpacks/go-mod-vendor v0.3.1
+	github.com/paketo-buildpacks/npm-install v0.5.0
 	github.com/paketo-buildpacks/packit v1.3.0
 	github.com/paketo-buildpacks/pipenv-install v0.2.3
 	github.com/paketo-buildpacks/python-start v0.7.0
+	github.com/paketo-buildpacks/yarn-install v0.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.5.2 // indirect
 	github.com/rs/zerolog v1.20.0

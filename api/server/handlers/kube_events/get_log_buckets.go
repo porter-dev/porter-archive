@@ -16,23 +16,23 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetKubeEventLogsHandler struct {
+type GetKubeEventLogBucketsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetKubeEventLogsHandler(
+func NewGetKubeEventLogBucketsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetKubeEventLogsHandler {
-	return &GetKubeEventLogsHandler{
+) *GetKubeEventLogBucketsHandler {
+	return &GetKubeEventLogBucketsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetKubeEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetKubeEventLogBucketsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	kubeEventID, _ := requestutils.GetURLParamUint(r, types.URLParamKubeEventID)
@@ -75,8 +75,7 @@ func (c *GetKubeEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	resp, err := porter_agent.GetLogsFromPorterAgent(agent.Clientset, agentSvc, &porter_agent.LogPathOpts{
-		Timestamp: req.Timestamp,
+	resp, err := porter_agent.GetLogBucketsFromPorterAgent(agent.Clientset, agentSvc, &porter_agent.LogBucketPathOpts{
 		Pod:       kubeEvent.Name,
 		Namespace: kubeEvent.Namespace,
 	})
@@ -91,7 +90,7 @@ func (c *GetKubeEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	c.WriteResult(w, r, &types.GetKubeEventLogsResponse{
-		Logs: resp.Logs,
+	c.WriteResult(w, r, &types.GetKubeEventLogBucketsResponse{
+		LogBuckets: resp.AvailableBuckets,
 	})
 }

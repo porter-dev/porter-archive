@@ -84,3 +84,7 @@ type GetKubeEventLogsRequest struct {
 type GetKubeEventLogsResponse struct {
 	Logs []string `json:"logs"`
 }
+
+type GetKubeEventLogBucketsResponse struct {
+	LogBuckets []string `json:"log_buckets"`
+}

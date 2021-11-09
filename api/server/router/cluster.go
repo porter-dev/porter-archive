@@ -593,6 +593,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/kube_events/{kube_event_id}/logs -> kube_events.NewGetKubeEventLogsHandler
+	getKubeEventLogBucketsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/kube_events/{%s}/log_buckets", relPath, types.URLParamKubeEventID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getKubeEventLogBucketsHandler := kube_events.NewGetKubeEventLogBucketsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getKubeEventLogBucketsEndpoint,
+		Handler:  getKubeEventLogBucketsHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/kube_events -> kube_events.NewCreateKubeEventHandler
 	createKubeEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

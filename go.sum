@@ -1056,10 +1056,10 @@ github.com/paketo-buildpacks/conda-env-update v0.2.2 h1:0bT6Se/r/06Gc3sBeg+OJ/9B
 github.com/paketo-buildpacks/conda-env-update v0.2.2/go.mod h1:OKSG9rf9ClDLcoHA3JJgbRECShCpNJKrmkYgIiYAu9k=
 github.com/paketo-buildpacks/go-mod-vendor v0.3.1 h1:4ltB7mmMg2dGRNDLxwPMLoY98rePUhny/6L0QUn8aYU=
 github.com/paketo-buildpacks/go-mod-vendor v0.3.1/go.mod h1:ycd4yAggQShyoQg+bXZyaxazx/Nms98f1SH9NkG/I3k=
-github.com/paketo-buildpacks/node-module-bom v0.1.2 h1:mJSBiuMzOlqlZ22nJR8Akxorv0PECM60k6hWz+RMxIE=
-github.com/paketo-buildpacks/node-module-bom v0.1.2/go.mod h1:gLG2ixUiwOanH2iy/wEdipfhEUXIoEHzgtK1eYYzGl4=
 github.com/paketo-buildpacks/node-run-script v0.2.0 h1:IAmnpavIuBM49RaKDIK/OdRbo12TfdUCzJ88CvYe4Kk=
 github.com/paketo-buildpacks/node-run-script v0.2.0/go.mod h1:5SexxOVrn+IfafiZthaFNUo/DM0ugOA83kWAffkPbVE=
+github.com/paketo-buildpacks/node-start v0.5.0 h1:R9FXIiXYaTig6PlG335GDoCR2v9z9M6d3eLdiI/T5LU=
+github.com/paketo-buildpacks/node-start v0.5.0/go.mod h1:5aYa3S+AWUHDSGJQD6oa8xUfIXN0o7AmWzKMealO5zw=
 github.com/paketo-buildpacks/npm-install v0.5.0 h1:PWIdaa14IcLllbv1LyZa5mVh5r6DbpdB3bDSxz5+r94=
 github.com/paketo-buildpacks/npm-install v0.5.0/go.mod h1:lJ+qayMglLeNbeDxnppIMTKKKNDO+sejM5qiPCBMwzw=
 github.com/paketo-buildpacks/occam v0.0.22/go.mod h1:aPNRyPEgYp4a01O4UKAuFWYnRmY4ujeuV3x6yAa1hxs=

@@ -1,0 +1,136 @@
+api = "0.4"
+
+[buildpack]
+  homepage = "https://github.com/paketo-buildpacks/nodejs"
+  id = "paketo-buildpacks/nodejs"
+  name = "Paketo Node.js Buildpack"
+
+[metadata]
+  include-files = ["buildpack.toml"]
+
+[[order]]
+
+  [[order.group]]
+    id = "paketo-buildpacks/ca-certificates"
+    optional = true
+    version = "2.4.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-engine"
+    version = "0.10.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/yarn"
+    version = "0.4.3"
+
+  [[order.group]]
+    id = "paketo-buildpacks/yarn-install"
+    version = "0.5.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-module-bom"
+    optional = true
+    version = "0.1.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-run-script"
+    optional = true
+    version = "0.2.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/yarn-start"
+    version = "0.4.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/procfile"
+    optional = true
+    version = "4.4.1"
+
+  [[order.group]]
+    id = "paketo-buildpacks/environment-variables"
+    optional = true
+    version = "3.2.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/image-labels"
+    optional = true
+    version = "3.2.3"
+
+[[order]]
+
+  [[order.group]]
+    id = "paketo-buildpacks/ca-certificates"
+    optional = true
+    version = "2.4.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-engine"
+    version = "0.10.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/npm-install"
+    version = "0.5.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-module-bom"
+    optional = true
+    version = "0.1.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-run-script"
+    optional = true
+    version = "0.2.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/npm-start"
+    version = "0.5.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/procfile"
+    optional = true
+    version = "4.4.1"
+
+  [[order.group]]
+    id = "paketo-buildpacks/environment-variables"
+    optional = true
+    version = "3.2.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/image-labels"
+    optional = true
+    version = "3.2.3"
+
+[[order]]
+
+  [[order.group]]
+    id = "paketo-buildpacks/ca-certificates"
+    optional = true
+    version = "2.4.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-engine"
+    version = "0.10.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-module-bom"
+    optional = true
+    version = "0.1.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/node-start"
+    version = "0.5.0"
+
+  [[order.group]]
+    id = "paketo-buildpacks/procfile"
+    optional = true
+    version = "4.4.1"
+
+  [[order.group]]
+    id = "paketo-buildpacks/environment-variables"
+    optional = true
+    version = "3.2.2"
+
+  [[order.group]]
+    id = "paketo-buildpacks/image-labels"
+    optional = true
+    version = "3.2.3"

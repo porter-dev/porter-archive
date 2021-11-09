@@ -145,8 +145,9 @@ func main() {
 	workingDir = os.Args[1]
 
 	nodeRuntime := runtimes.NewNodeRuntime()
-	buildpackInfo := nodeRuntime.Detect(workingDir)
-	if buildpackInfo != nil {
+	buildpackInfo, data := nodeRuntime.Detect(workingDir)
+	if data != nil {
+		fmt.Println(data)
 		for i := 0; i < len(buildpackInfo.Packs); i++ {
 			fmt.Println(buildpackInfo.Packs[i])
 		}

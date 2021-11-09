@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	nodemodulebom "github.com/paketo-buildpacks/node-module-bom"
 	noderunscript "github.com/paketo-buildpacks/node-run-script"
+	nodestart "github.com/paketo-buildpacks/node-start"
 	npminstall "github.com/paketo-buildpacks/npm-install"
 	"github.com/paketo-buildpacks/packit"
 	yarninstall "github.com/paketo-buildpacks/yarn-install"
@@ -151,8 +151,8 @@ func (runtime *nodeRuntime) detectStandalone(results chan struct {
 	string
 	bool
 }, workingDir string) {
-	// FIXME: the detect function seems to be working for non-node projects as well?
-	detect := nodemodulebom.Detect()
+	appFinder := nodestart.NewNodeApplicationFinder()
+	detect := nodestart.Detect(appFinder)
 	_, err := detect(packit.DetectContext{
 		WorkingDir: workingDir,
 	})
@@ -193,29 +193,33 @@ func (runtime *nodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string
 	}
 
 	if atLeastOne {
-		// it is safe to assume that the project contains a package.json
-		packageJSONPath := filepath.Join(workingDir, "package.json")
+		if detected[yarn] || detected[npm] {
+			// it is safe to assume that the project contains a package.json
+			packageJSONPath := filepath.Join(workingDir, "package.json")
 
-		scriptManager := noderunscript.NewScriptManager()
-		scripts, err := scriptManager.GetPackageScripts(workingDir)
-		if err != nil {
-			fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
-			os.Exit(1)
+			scriptManager := noderunscript.NewScriptManager()
+			scripts, err := scriptManager.GetPackageScripts(workingDir)
+			if err != nil {
+				fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
+				os.Exit(1)
+			}
+
+			packageJSONParser := npminstall.NewPackageJSONParser()
+			engineVersion, err := packageJSONParser.ParseVersion(packageJSONPath)
+			if err != nil {
+				fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
+				os.Exit(1)
+			}
+
+			if detected[yarn] {
+				return *runtime.packs[yarn], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
+			} else {
+				return *runtime.packs[npm], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
+			}
 		}
 
-		packageJSONParser := npminstall.NewPackageJSONParser()
-		engineVersion, err := packageJSONParser.ParseVersion(packageJSONPath)
-		if err != nil {
-			fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
-			os.Exit(1)
-		}
-
-		if detected[yarn] {
-			return *runtime.packs[yarn], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
-		} else if detected[npm] {
-			return *runtime.packs[npm], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
-		} else if detected[standalone] {
-			return *runtime.packs[standalone], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
+		if detected[standalone] {
+			return *runtime.packs[standalone], map[string]interface{}{}
 		}
 	}
 

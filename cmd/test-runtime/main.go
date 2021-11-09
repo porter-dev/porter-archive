@@ -14,7 +14,7 @@ import (
 	"github.com/paketo-buildpacks/rackup"
 	railsassets "github.com/paketo-buildpacks/rails-assets"
 	"github.com/paketo-buildpacks/rake"
-	"github.com/porter-dev/porter/cmd/test-runtime/runtimes"
+	"github.com/porter-dev/porter/internal/integrations/buildpacks"
 )
 
 const GoModLocation = "go.mod"
@@ -144,7 +144,7 @@ func main() {
 
 	workingDir = os.Args[1]
 
-	nodeRuntime := runtimes.NewNodeRuntime()
+	nodeRuntime := buildpacks.NewCLINodeRuntime()
 	buildpackInfo, data := nodeRuntime.Detect(workingDir)
 	if data != nil {
 		fmt.Println(data)

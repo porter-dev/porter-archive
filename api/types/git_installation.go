@@ -40,8 +40,9 @@ type GetBuildpackRequest struct {
 }
 
 type GetBuildpackResponse struct {
-	Valid bool   `json:"valid"`
-	Name  string `json:"name"`
+	Name    string                 `json:"name"`
+	Runtime string                 `json:"runtime"`
+	Config  map[string]interface{} `json:"config"`
 }
 
 type GetContentsRequest struct {

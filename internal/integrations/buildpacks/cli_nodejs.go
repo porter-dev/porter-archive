@@ -1,4 +1,4 @@
-package runtimes
+package buildpacks
 
 import (
 	"fmt"
@@ -14,19 +14,14 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-const (
-	yarn = "yarn"
-	npm  = "npm"
+const nodejsTomlFile = "nodejs.buildpack.toml"
 
-	nodejsTomlFile = "nodejs.buildpack.toml"
-)
-
-type nodeRuntime struct {
+type cliNodeRuntime struct {
 	packs map[string]*BuildpackInfo
 	wg    sync.WaitGroup
 }
 
-func NewNodeRuntime() *nodeRuntime {
+func NewCLINodeRuntime() *cliNodeRuntime {
 	packs := make(map[string]*BuildpackInfo)
 
 	buildpackToml, err := toml.LoadFile(filepath.Join(getExecPath(), nodejsTomlFile))
@@ -94,12 +89,12 @@ func NewNodeRuntime() *nodeRuntime {
 	packs[standalone].addEnvVar("BP_LAUNCHPOINT", "")
 	packs[standalone].addEnvVar("BP_LIVE_RELOAD_ENABLED", "")
 
-	return &nodeRuntime{
+	return &cliNodeRuntime{
 		packs: packs,
 	}
 }
 
-func (runtime *nodeRuntime) detectYarn(results chan struct {
+func (runtime *cliNodeRuntime) detectYarn(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -123,7 +118,7 @@ func (runtime *nodeRuntime) detectYarn(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *nodeRuntime) detectNPM(results chan struct {
+func (runtime *cliNodeRuntime) detectNPM(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -147,7 +142,7 @@ func (runtime *nodeRuntime) detectNPM(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *nodeRuntime) detectStandalone(results chan struct {
+func (runtime *cliNodeRuntime) detectStandalone(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -170,7 +165,7 @@ func (runtime *nodeRuntime) detectStandalone(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *nodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
+func (runtime *cliNodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
 	results := make(chan struct {
 		string
 		bool

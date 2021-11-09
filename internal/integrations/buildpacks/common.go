@@ -1,11 +1,17 @@
-package runtimes
+package buildpacks
 
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/google/go-github/github"
 )
 
-const standalone = "standalone"
+const (
+	yarn       = "yarn"
+	npm        = "npm"
+	standalone = "standalone"
+)
 
 type buildpackOrderGroupInfo struct {
 	ID       string
@@ -42,6 +48,10 @@ func getExecPath() string {
 	return filepath.Dir(ex)
 }
 
-type Runtime interface {
+type CLIRuntime interface {
 	Detect(string) (BuildpackInfo, map[string]interface{})
+}
+
+type APIRuntime interface {
+	Detect([]*github.RepositoryContent) map[string]interface{}
 }

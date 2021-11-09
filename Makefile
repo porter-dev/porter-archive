@@ -20,5 +20,5 @@ build-cli-dev:
 	go build -tags cli -o $(BINDIR)/porter ./cli
 
 test-runtime:
-	cp ./cmd/test-runtime/buildpacks/nodejs.buildpack.toml $(BINDIR)/
+	cp ./cmd/test-runtime/buildpacks-toml/nodejs.buildpack.toml $(BINDIR)/
 	go build -tags test-runtime -o $(BINDIR)/test-runtime ./cmd/test-runtime

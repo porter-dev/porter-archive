@@ -62,6 +62,7 @@ func (k *KubeEvent) ToKubeEventType() *types.KubeEvent {
 	}
 
 	return &types.KubeEvent{
+		CreatedAt:    k.CreatedAt,
 		UpdatedAt:    k.UpdatedAt,
 		ID:           k.ID,
 		ProjectID:    k.ProjectID,

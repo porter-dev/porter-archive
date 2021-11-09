@@ -34,6 +34,7 @@ type CreateKubeEventRequest struct {
 }
 
 type KubeEvent struct {
+	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
 	ID        uint `json:"id"`

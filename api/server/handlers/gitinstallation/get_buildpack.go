@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/integrations/buildpacks"
 )
 
 type GithubGetBuildpackHandler struct {
@@ -71,33 +72,16 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var BREQS = map[string]string{
-		"requirements.txt": "Python",
-		"Gemfile":          "Ruby",
-		"package.json":     "Node.js",
-		"pom.xml":          "Java",
-		"composer.json":    "PHP",
-	}
+	res := &types.GetBuildpackResponse{}
 
-	res := &types.GetBuildpackResponse{
-		Valid: true,
-	}
-
-	matches := 0
-
-	for i := range directoryContents {
-		name := *directoryContents[i].Name
-
-		bname, ok := BREQS[name]
-		if ok {
-			matches++
-			res.Name = bname
+	nodeRuntime := buildpacks.NewAPINodeRuntime()
+	config := nodeRuntime.Detect(directoryContents)
+	if config != nil {
+		res.Name = "Node.js"
+		res.Runtime = config["runtime"].(string)
+		if res.Runtime != "node-standalone" {
+			res.Config = map[string]interface{}{"scripts": config["scripts"], "node_engine": config["node_engine"]}
 		}
-	}
-
-	if matches != 1 {
-		res.Valid = false
-		res.Name = ""
 	}
 
 	c.WriteResult(w, r, res)

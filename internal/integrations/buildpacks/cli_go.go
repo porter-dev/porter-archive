@@ -1,4 +1,4 @@
-package runtimes
+package buildpacks
 
 import (
 	"sync"
@@ -7,7 +7,7 @@ import (
 	"github.com/paketo-buildpacks/packit"
 )
 
-type goRuntime struct {
+type cliGoRuntime struct {
 	packs map[string]*BuildpackInfo
 	wg    sync.WaitGroup
 }
@@ -17,7 +17,7 @@ const (
 	dep = "dep"
 )
 
-func NewGoRuntime() *goRuntime {
+func NewCLIGoRuntime() *cliGoRuntime {
 	packs := make(map[string]*BuildpackInfo)
 
 	// mod
@@ -29,12 +29,12 @@ func NewGoRuntime() *goRuntime {
 	// go build
 	packs[standalone] = newBuildpackInfo()
 
-	return &goRuntime{
+	return &cliGoRuntime{
 		packs: packs,
 	}
 }
 
-func (runtime *goRuntime) detectMod(results chan struct {
+func (runtime *cliGoRuntime) detectMod(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -58,7 +58,7 @@ func (runtime *goRuntime) detectMod(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *goRuntime) detectDep(results chan struct {
+func (runtime *cliGoRuntime) detectDep(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -66,7 +66,7 @@ func (runtime *goRuntime) detectDep(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *goRuntime) detectStandalone(results chan struct {
+func (runtime *cliGoRuntime) detectStandalone(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -74,7 +74,7 @@ func (runtime *goRuntime) detectStandalone(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *goRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
+func (runtime *cliGoRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
 	results := make(chan struct {
 		string
 		bool

@@ -207,13 +207,19 @@ func (runtime *nodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string
 			os.Exit(1)
 		}
 		scripts := packageJSONContents["scripts"].(map[string]interface{})
+		packageJSONParser := npminstall.NewPackageJSONParser()
+		engineVersion, err := packageJSONParser.ParseVersion(packageJSONPath)
+		if err != nil {
+			fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
+			os.Exit(1)
+		}
 
 		if detected[yarn] {
-			return *runtime.packs[yarn], map[string]interface{}{"scripts": scripts}
+			return *runtime.packs[yarn], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
 		} else if detected[npm] {
-			return *runtime.packs[npm], map[string]interface{}{"scripts": scripts}
+			return *runtime.packs[npm], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
 		} else if detected[standalone] {
-			return *runtime.packs[standalone], map[string]interface{}{"scripts": scripts}
+			return *runtime.packs[standalone], map[string]interface{}{"scripts": scripts, "engine_version": engineVersion}
 		}
 	}
 

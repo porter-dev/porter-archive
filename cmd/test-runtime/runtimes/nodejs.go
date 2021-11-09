@@ -7,11 +7,11 @@ import (
 	"sync"
 
 	nodemodulebom "github.com/paketo-buildpacks/node-module-bom"
+	noderunscript "github.com/paketo-buildpacks/node-run-script"
 	npminstall "github.com/paketo-buildpacks/npm-install"
 	"github.com/paketo-buildpacks/packit"
 	yarninstall "github.com/paketo-buildpacks/yarn-install"
 	"github.com/pelletier/go-toml"
-	"k8s.io/apimachinery/pkg/util/json"
 )
 
 const (
@@ -194,19 +194,15 @@ func (runtime *nodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string
 
 	if atLeastOne {
 		// it is safe to assume that the project contains a package.json
-		var packageJSONContents map[string]interface{}
 		packageJSONPath := filepath.Join(workingDir, "package.json")
-		data, err := os.ReadFile(packageJSONPath)
+
+		scriptManager := noderunscript.NewScriptManager()
+		scripts, err := scriptManager.GetPackageScripts(workingDir)
 		if err != nil {
 			fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
 			os.Exit(1)
 		}
-		err = json.Unmarshal(data, &packageJSONContents)
-		if err != nil {
-			fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
-			os.Exit(1)
-		}
-		scripts := packageJSONContents["scripts"].(map[string]interface{})
+
 		packageJSONParser := npminstall.NewPackageJSONParser()
 		engineVersion, err := packageJSONParser.ParseVersion(packageJSONPath)
 		if err != nil {

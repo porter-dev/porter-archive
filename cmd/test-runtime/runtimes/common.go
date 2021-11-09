@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 )
 
+const standalone = "standalone"
+
 type buildpackOrderGroupInfo struct {
 	ID       string
 	Optional bool

@@ -35,6 +35,9 @@ func (a *Agent) Build(opts *docker.BuildOpts) error {
 		AppPath:         opts.BuildContext,
 		TrustBuilder:    true,
 		Env:             opts.Env,
+		// Builder:            "paketobuildpacks/builder:tiny",
+		// DefaultProcessType: "some-custom-command from Procfile",
+		// Buildpacks:         []string{"gcr.io/paketo-buildpacks/procfile"},
 	}
 
 	return client.Build(context, buildOpts)

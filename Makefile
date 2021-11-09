@@ -7,14 +7,18 @@ start-dev: install setup-env-files
 run-migrate-dev: install setup-env-files
 	bash ./scripts/dev-environment/RunMigrateDev.sh
 
-install: 
+install:
 	bash ./scripts/dev-environment/SetupEnvironment.sh
 
-setup-env-files: 
+setup-env-files:
 	bash ./scripts/dev-environment/CreateDefaultEnvFiles.sh
 
-build-cli: 
+build-cli:
 	go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${VERSION}'" -a -tags cli -o $(BINDIR)/porter ./cli
 
 build-cli-dev:
 	go build -tags cli -o $(BINDIR)/porter ./cli
+
+test-runtime:
+	cp ./cmd/test-runtime/buildpacks-toml/nodejs.buildpack.toml $(BINDIR)/
+	go build -tags test-runtime -o $(BINDIR)/test-runtime ./cmd/test-runtime

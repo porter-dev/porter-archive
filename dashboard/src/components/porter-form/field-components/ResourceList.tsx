@@ -1,9 +1,41 @@
-import React from "react";
+import React, { useEffect, useContext } from "react";
 import { ResourceListField } from "../types";
+import { Context } from "shared/Context";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 import ExpandableResource from "../../ExpandableResource";
 import styled from "styled-components";
 
 const ResourceList: React.FC<ResourceListField> = (props) => {
+  const { currentCluster, currentProject } = useContext(Context);
+
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
+
+  useEffect(() => {
+    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/cert-manager/releases/cert-manager/0/form_stream?`;
+    apiEndpoint += "resource=certificates&group=cert-manager.io&version=v1";
+
+    const wsConfig = {
+      onmessage(evt: MessageEvent) {
+        console.log("EVENT IS", evt);
+      },
+      onerror() {
+        closeWebsocket("testing");
+      },
+    };
+
+    newWebsocket("testing", apiEndpoint, wsConfig);
+    openWebsocket("testing");
+
+    return () => {
+      closeAllWebsockets();
+    };
+  }, []);
+
   return (
     <ResourceListWrapper>
       {props.value?.map((resource: any, i: number) => {

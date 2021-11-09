@@ -19,30 +19,6 @@ const ExpandableResource: React.FC<Props> = (props) => {
   const { resource, button } = props;
   const { currentCluster, currentProject } = useContext(Context);
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
-
-  useEffect(() => {
-    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/cert-manager/releases/cert-manager/0/form_stream?`;
-    apiEndpoint += "resource=certificates&group=cert-manager.io&version=v1";
-
-    const wsConfig = {
-      onmessage(evt: MessageEvent) {
-        console.log("EVENT IS", evt);
-      },
-      onerror() {
-        closeWebsocket("testing");
-      },
-    };
-
-    newWebsocket("testing", apiEndpoint, wsConfig);
-    openWebsocket("testing");
-  }, []);
-
   let onSave = () => {
     let projID = currentProject.id;
     let clusterID = currentCluster.id;

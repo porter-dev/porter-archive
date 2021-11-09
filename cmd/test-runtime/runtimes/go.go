@@ -85,6 +85,7 @@ func (runtime *goRuntime) Detect(workingDir string) (BuildpackInfo, map[string]i
 	go runtime.detectDep(results, workingDir)
 	go runtime.detectStandalone(results, workingDir)
 	runtime.wg.Wait()
+	close(results)
 
 	return BuildpackInfo{}, nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/paketo-buildpacks/packit"
 	yarninstall "github.com/paketo-buildpacks/yarn-install"
 	"github.com/pelletier/go-toml"
+	"k8s.io/apimachinery/pkg/util/json"
 )
 
 const (
@@ -171,7 +172,7 @@ func (runtime *NodeRuntime) detectStandalone(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *NodeRuntime) Detect(workingDir string) *BuildpackInfo {
+func (runtime *NodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
 	results := make(chan struct {
 		string
 		bool
@@ -184,18 +185,39 @@ func (runtime *NodeRuntime) Detect(workingDir string) *BuildpackInfo {
 	runtime.wg.Wait()
 	close(results)
 
+	atLeastOne := false
 	detected := make(map[string]bool)
 	for result := range results {
+		if result.bool {
+			atLeastOne = true
+		}
 		detected[result.string] = result.bool
 	}
 
-	if detected[yarn] {
-		return runtime.packs[yarn]
-	} else if detected[npm] {
-		return runtime.packs[npm]
-	} else if detected[standalone] {
-		return runtime.packs[standalone]
+	if atLeastOne {
+		// it is safe to assume that the project contains a package.json
+		var packageJSONContents map[string]interface{}
+		packageJSONPath := filepath.Join(workingDir, "package.json")
+		data, err := os.ReadFile(packageJSONPath)
+		if err != nil {
+			fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
+			os.Exit(1)
+		}
+		err = json.Unmarshal(data, &packageJSONContents)
+		if err != nil {
+			fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
+			os.Exit(1)
+		}
+		scripts := packageJSONContents["scripts"].(map[string]interface{})
+
+		if detected[yarn] {
+			return *runtime.packs[yarn], map[string]interface{}{"scripts": scripts}
+		} else if detected[npm] {
+			return *runtime.packs[npm], map[string]interface{}{"scripts": scripts}
+		} else if detected[standalone] {
+			return *runtime.packs[standalone], map[string]interface{}{"scripts": scripts}
+		}
 	}
 
-	return nil
+	return BuildpackInfo{}, nil
 }

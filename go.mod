@@ -50,7 +50,7 @@ require (
 	github.com/paketo-buildpacks/rails-assets v0.3.0
 	github.com/paketo-buildpacks/rake v0.1.0
 	github.com/paketo-buildpacks/yarn-install v0.5.0
-	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/pelletier/go-toml v1.9.4
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.5.2 // indirect
 	github.com/rs/zerolog v1.20.0

@@ -3,6 +3,7 @@ package kube_events
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -44,7 +45,7 @@ func (c *GetKubeEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	// if the kube event is not a pod type, throw a bad request error to the user
-	if kubeEvent.ResourceType != "pod" {
+	if strings.ToLower(kubeEvent.ResourceType) != "pod" {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("event resource type must be pod to get logs"),
 			http.StatusBadRequest,

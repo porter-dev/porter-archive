@@ -25,17 +25,17 @@ type SimpleIngress struct {
 	Namespace string `json:"namespace"`
 }
 
-type PathOpts struct {
+type LogPathOpts struct {
 	Timestamp int
 	Pod       string
 	Namespace string
 }
 
-func QueryPorterAgent(
+func GetLogsFromPorterAgent(
 	clientset kubernetes.Interface,
 	service *v1.Service,
-	opts *PathOpts,
-) (*AgentResp, error) {
+	opts *LogPathOpts,
+) (*AgentLogsResp, error) {
 	if len(service.Spec.Ports) == 0 {
 		return nil, fmt.Errorf("agent service has no exposed ports to query")
 	}
@@ -54,16 +54,65 @@ func QueryPorterAgent(
 		return nil, err
 	}
 
-	return parseQuery(rawQuery)
+	return parseLogQuery(rawQuery)
 }
 
-type AgentResp struct {
+type LogBucketPathOpts struct {
+	Pod       string
+	Namespace string
+}
+
+func GetLogBucketsFromPorterAgent(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	opts *LogBucketPathOpts,
+) (*AgentLogBucketsResp, error) {
+	if len(service.Spec.Ports) == 0 {
+		return nil, fmt.Errorf("agent service has no exposed ports to query")
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		fmt.Sprintf("/pod/%s/ns/%s/logbucket", opts.Pod, opts.Namespace),
+		nil,
+	)
+
+	rawQuery, err := resp.DoRaw(context.TODO())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return parseLogBucketsQuery(rawQuery)
+}
+
+type AgentLogsResp struct {
 	Logs          []string `json:"logs"`
 	MatchedBucket int      `json:"matchedBucket"`
+	Error         string   `json:"error"`
 }
 
-func parseQuery(rawQuery []byte) (*AgentResp, error) {
-	resp := &AgentResp{}
+func parseLogQuery(rawQuery []byte) (*AgentLogsResp, error) {
+	resp := &AgentLogsResp{}
+
+	err := json.Unmarshal(rawQuery, resp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+type AgentLogBucketsResp struct {
+	AvailableBuckets []string `json:"availableLogBuckets"`
+	Error            string   `json:"error"`
+}
+
+func parseLogBucketsQuery(rawQuery []byte) (*AgentLogBucketsResp, error) {
+	resp := &AgentLogBucketsResp{}
 
 	err := json.Unmarshal(rawQuery, resp)
 

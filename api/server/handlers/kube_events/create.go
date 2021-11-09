@@ -45,7 +45,7 @@ func (c *CreateKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Name:          request.Name,
 		Namespace:     request.Namespace,
 		ResourceType:  request.ResourceType,
-		ThresholdTime: time.Now().Add(-1 * time.Minute),
+		ThresholdTime: time.Now().Add(-15 * time.Minute),
 	})
 
 	foundMatchedEvent := kubeEvent != nil

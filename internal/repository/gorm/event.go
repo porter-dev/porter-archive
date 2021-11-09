@@ -83,6 +83,30 @@ func NewKubeEventRepository(db *gorm.DB, key *[32]byte) repository.KubeEventRepo
 func (repo *KubeEventRepository) CreateEvent(
 	event *models.KubeEvent,
 ) (*models.KubeEvent, error) {
+	// read the count of the events in the DB
+	query := repo.db.Where("project_id = ? AND cluster_id = ?", event.ProjectID, event.ClusterID)
+
+	var count int64
+
+	if err := query.Model([]*models.KubeEvent{}).Count(&count).Error; err != nil {
+		return nil, err
+	}
+
+	// if the count is greater than 500, remove the lowest-order event to implement a
+	// basic fixed-length buffer
+	if count >= 500 {
+		// find the id of the first match
+		matchedEvent := &models.KubeEvent{}
+
+		if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
+			return nil, err
+		}
+
+		if err := query.Delete(matchedEvent).Error; err != nil {
+			return nil, err
+		}
+	}
+
 	if err := repo.db.Create(event).Error; err != nil {
 		return nil, err
 	}
@@ -105,14 +129,6 @@ func (repo *KubeEventRepository) ReadEvent(
 		return nil, err
 	}
 
-	// subEvents := make([]models.KubeSubEvent, 0)
-
-	// if err := repo.db.Where("kube_event_id = ?", event.ID).Find(&subEvents).Error; err != nil {
-	// 	return nil, err
-	// }
-
-	// event.SubEvents = subEvents
-
 	return event, nil
 }
 
@@ -125,7 +141,7 @@ func (repo *KubeEventRepository) ReadEventByGroup(
 	event := &models.KubeEvent{}
 
 	query := repo.db.Debug().Preload("SubEvents").
-		Where("project_id = ? AND cluster_id = ? AND name = ? AND resource_type = ?", projID, clusterID, opts.Name, opts.ResourceType)
+		Where("project_id = ? AND cluster_id = ? AND name = ? AND LOWER(resource_type) = LOWER(?)", projID, clusterID, opts.Name, opts.ResourceType)
 
 	// construct query for timestamp
 	query = query.Where(
@@ -166,7 +182,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 
 	if listOpts.OwnerName != "" && listOpts.OwnerType != "" {
 		query = query.Where(
-			"owner_name = ? AND owner_type = ?",
+			"LOWER(owner_name) = LOWER(?) AND LOWER(owner_type) = LOWER(?)",
 			listOpts.OwnerName,
 			listOpts.OwnerType,
 		)
@@ -174,7 +190,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 
 	if listOpts.ResourceType != "" {
 		query = query.Where(
-			"resource_type = ?",
+			"LOWER(resource_type) = LOWER(?)",
 			listOpts.ResourceType,
 		)
 	}
@@ -203,6 +219,29 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 // AppendSubEvent will add a subevent to an existing event
 func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEvent *models.KubeSubEvent) error {
 	subEvent.KubeEventID = event.ID
+
+	var count int64
+
+	query := repo.db.Where("kube_event_id = ?", event.ID)
+
+	if err := query.Model([]*models.KubeSubEvent{}).Count(&count).Error; err != nil {
+		return err
+	}
+
+	// if the count is greater than 20, remove the lowest-order event to implement a
+	// basic fixed-length buffer
+	if count >= 20 {
+		// find the id of the first match
+		matchedEvent := &models.KubeSubEvent{}
+
+		if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
+			return err
+		}
+
+		if err := query.Delete(matchedEvent).Error; err != nil {
+			return err
+		}
+	}
 
 	if err := repo.db.Create(subEvent).Error; err != nil {
 		return err

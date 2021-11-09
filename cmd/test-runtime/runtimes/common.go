@@ -16,7 +16,6 @@ type BuildpackInfo struct {
 	// FIXME: env vars for https://github.com/paketo-buildpacks/environment-variables
 	//        and for https://github.com/paketo-buildpacks/image-labels
 	EnvVars map[string]string
-	Data    interface{}
 }
 
 func newBuildpackInfo() *BuildpackInfo {
@@ -42,5 +41,5 @@ func getExecPath() string {
 }
 
 type Runtime interface {
-	Detect(string) *BuildpackInfo
+	Detect(string) (BuildpackInfo, map[string]interface{})
 }

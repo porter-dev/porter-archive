@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Event } from "./EventsTab";
-import Loading from "../../../../../components/Loading";
+
+import Loading from "components/Loading";
+import { KubeEvent } from "shared/types";
 
 type CardProps = {
-  event: Event;
+  event: KubeEvent;
   selectEvent?: () => void;
   overrideName?: string;
 };
 
-export const getReadableDate = (s: number) => {
-  let ts = new Date(s * 1000);
+export const getReadableDate = (s: string) => {
+  let ts = new Date(s);
   let date = ts.toLocaleDateString();
   let time = ts.toLocaleTimeString([], {
     hour: "numeric",
@@ -27,15 +28,15 @@ const EventCard: React.FunctionComponent<CardProps> = ({
 }) => {
   return (
     <StyledCard onClick={() => selectEvent && selectEvent()}>
-      {event.status == 1 && (
+      {event.event_type === "normal" && (
         <Icon status="normal" className="material-icons-outlined">
           check
         </Icon>
       )}
-      {event.status == 2 && (
+      {/* {event.status == 2 && (
         <Icon className="material-icons-outlined">autorenew</Icon>
-      )}
-      {event.status == 3 && (
+      )} */}
+      {event.event_type === "critical" && (
         <Icon status="critical" className="material-icons-outlined">
           error
         </Icon>
@@ -44,13 +45,13 @@ const EventCard: React.FunctionComponent<CardProps> = ({
       <InfoWrapper>
         <EventName>
           {overrideName ? overrideName : event.name}
-          {event.status == 1 && " successful"}
-          {event.status == 2 && " in progress"}
-          {event.status == 3 && ` failed: ${event.info}`}
+          {event.event_type === "normal" && " successful"}
+          {/* {event.status == 2 && " in progress"} */}
+          {event.event_type === "critical" && ` failed: ${event.reason}`}
         </EventName>
         <TimestampContainer>
           <i className="material-icons-outlined">access_time</i>
-          {getReadableDate(event.time)}
+          {getReadableDate(event.timestamp)}
         </TimestampContainer>
       </InfoWrapper>
     </StyledCard>

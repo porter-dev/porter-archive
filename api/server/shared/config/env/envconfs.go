@@ -61,6 +61,7 @@ type ServerConf struct {
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
 	ProvisionerJobNamespace    string `env:"PROV_JOB_NAMESPACE,default=default"`
 	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
+	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://porter:8080"`
 
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 

@@ -15,25 +15,23 @@ import (
 )
 
 const (
-	yarn       = "yarn"
-	npm        = "npm"
-	standalone = "standalone"
+	yarn = "yarn"
+	npm  = "npm"
 
-	tomlFile = "nodejs.buildpack.toml"
+	nodejsTomlFile = "nodejs.buildpack.toml"
 )
 
-type NodeRuntime struct {
-	// An internal representation of https://github.com/paketo-buildpacks/nodejs/blob/main/buildpack.toml
+type nodeRuntime struct {
 	packs map[string]*BuildpackInfo
 	wg    sync.WaitGroup
 }
 
-func NewNodeRuntime() *NodeRuntime {
+func NewNodeRuntime() *nodeRuntime {
 	packs := make(map[string]*BuildpackInfo)
 
-	buildpackToml, err := toml.LoadFile(filepath.Join(getExecPath(), "nodejs.buildpack.toml"))
+	buildpackToml, err := toml.LoadFile(filepath.Join(getExecPath(), nodejsTomlFile))
 	if err != nil {
-		fmt.Printf("Error while reading %s: %v\n", tomlFile, err)
+		fmt.Printf("Error while reading %s: %v\n", nodejsTomlFile, err)
 		os.Exit(1)
 	}
 	order := buildpackToml.Get("order").([]*toml.Tree)
@@ -96,12 +94,12 @@ func NewNodeRuntime() *NodeRuntime {
 	packs[standalone].addEnvVar("BP_LAUNCHPOINT", "")
 	packs[standalone].addEnvVar("BP_LIVE_RELOAD_ENABLED", "")
 
-	return &NodeRuntime{
+	return &nodeRuntime{
 		packs: packs,
 	}
 }
 
-func (runtime *NodeRuntime) detectYarn(results chan struct {
+func (runtime *nodeRuntime) detectYarn(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -125,7 +123,7 @@ func (runtime *NodeRuntime) detectYarn(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *NodeRuntime) detectNPM(results chan struct {
+func (runtime *nodeRuntime) detectNPM(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -149,7 +147,7 @@ func (runtime *NodeRuntime) detectNPM(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *NodeRuntime) detectStandalone(results chan struct {
+func (runtime *nodeRuntime) detectStandalone(results chan struct {
 	string
 	bool
 }, workingDir string) {
@@ -172,7 +170,7 @@ func (runtime *NodeRuntime) detectStandalone(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *NodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
+func (runtime *nodeRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
 	results := make(chan struct {
 		string
 		bool

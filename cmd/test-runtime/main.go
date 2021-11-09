@@ -1,21 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
-	bundleinstall "github.com/paketo-buildpacks/bundle-install"
 	condaenvupdate "github.com/paketo-buildpacks/conda-env-update"
 	gomodvendor "github.com/paketo-buildpacks/go-mod-vendor"
-	npminstall "github.com/paketo-buildpacks/npm-install"
 	"github.com/paketo-buildpacks/packit"
 	pipenvinstall "github.com/paketo-buildpacks/pipenv-install"
 	pythonstart "github.com/paketo-buildpacks/python-start"
 	"github.com/paketo-buildpacks/rackup"
 	railsassets "github.com/paketo-buildpacks/rails-assets"
 	"github.com/paketo-buildpacks/rake"
-	yarninstall "github.com/paketo-buildpacks/yarn-install"
+	"github.com/porter-dev/porter/cmd/test-runtime/runtimes"
 )
 
 const GoModLocation = "go.mod"
@@ -100,51 +99,11 @@ func detectPython() {
 	log.Println("Not a Python project")
 }
 
-func detectNode() {
-	/* Check for yarn project */
-	yarnProjectPathParser := yarninstall.NewProjectPathParser()
-	yarnVersionParser := yarninstall.NewPackageJSONParser()
-	detect := yarninstall.Detect(yarnProjectPathParser, yarnVersionParser)
-	_, err := detect(packit.DetectContext{
-		WorkingDir: workingDir,
-	})
-	if err == nil {
-		log.Println("Node yarn project detected")
-		return
-	}
-
-	/* Check for npm project */
-	npmProjectPathParser := npminstall.NewProjectPathParser()
-	npmVersionParser := npminstall.NewPackageJSONParser()
-	detect = npminstall.Detect(npmProjectPathParser, npmVersionParser)
-	_, err = detect(packit.DetectContext{
-		WorkingDir: workingDir,
-	})
-	if err == nil {
-		log.Println("Node npm project detected")
-		return
-	}
-
-	/* Not a Node project */
-	log.Println("Not a Node project")
-}
-
 func detectRuby() {
-	/* Check for Gemfile project */
-	gemfileParser := bundleinstall.NewGemfileParser()
-	detect := bundleinstall.Detect(gemfileParser)
-	_, err := detect(packit.DetectContext{
-		WorkingDir: workingDir,
-	})
-	if err == nil {
-		log.Println("Ruby Gemfile project detected")
-		return
-	}
-
 	/* Check for rackup project  */
 	gemParser := rackup.NewGemfileLockParser()
-	detect = rackup.Detect(gemParser)
-	_, err = detect(packit.DetectContext{
+	detect := rackup.Detect(gemParser)
+	_, err := detect(packit.DetectContext{
 		WorkingDir: workingDir,
 	})
 	if err == nil {
@@ -185,8 +144,11 @@ func main() {
 
 	workingDir = os.Args[1]
 
-	detectGo()
-	detectPython()
-	detectNode()
-	detectRuby()
+	nodeRuntime := runtimes.NewNodeRuntime()
+	buildpackInfo := nodeRuntime.Detect(workingDir)
+	if buildpackInfo != nil {
+		for i := 0; i < len(buildpackInfo.Packs); i++ {
+			fmt.Println(buildpackInfo.Packs[i])
+		}
+	}
 }

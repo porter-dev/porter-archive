@@ -105,14 +105,6 @@ func (repo *KubeEventRepository) ReadEvent(
 		return nil, err
 	}
 
-	// subEvents := make([]models.KubeSubEvent, 0)
-
-	// if err := repo.db.Where("kube_event_id = ?", event.ID).Find(&subEvents).Error; err != nil {
-	// 	return nil, err
-	// }
-
-	// event.SubEvents = subEvents
-
 	return event, nil
 }
 
@@ -125,7 +117,7 @@ func (repo *KubeEventRepository) ReadEventByGroup(
 	event := &models.KubeEvent{}
 
 	query := repo.db.Debug().Preload("SubEvents").
-		Where("project_id = ? AND cluster_id = ? AND name = ? AND resource_type = ?", projID, clusterID, opts.Name, opts.ResourceType)
+		Where("project_id = ? AND cluster_id = ? AND name = ? AND LOWER(resource_type) = LOWER(?)", projID, clusterID, opts.Name, opts.ResourceType)
 
 	// construct query for timestamp
 	query = query.Where(
@@ -166,7 +158,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 
 	if listOpts.OwnerName != "" && listOpts.OwnerType != "" {
 		query = query.Where(
-			"owner_name = ? AND owner_type = ?",
+			"LOWER(owner_name) = LOWER(?) AND LOWER(owner_type) = LOWER(?)",
 			listOpts.OwnerName,
 			listOpts.OwnerType,
 		)
@@ -174,7 +166,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 
 	if listOpts.ResourceType != "" {
 		query = query.Where(
-			"resource_type = ?",
+			"LOWER(resource_type) = LOWER(?)",
 			listOpts.ResourceType,
 		)
 	}

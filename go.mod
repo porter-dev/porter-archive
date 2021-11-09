@@ -39,9 +39,9 @@ require (
 	github.com/moby/moby v20.10.6+incompatible
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
 	github.com/opencontainers/image-spec v1.0.1
-	github.com/paketo-buildpacks/bundle-install v0.2.4
 	github.com/paketo-buildpacks/conda-env-update v0.2.2
 	github.com/paketo-buildpacks/go-mod-vendor v0.3.1
+	github.com/paketo-buildpacks/node-module-bom v0.1.2
 	github.com/paketo-buildpacks/npm-install v0.5.0
 	github.com/paketo-buildpacks/packit v1.3.0
 	github.com/paketo-buildpacks/pipenv-install v0.2.3

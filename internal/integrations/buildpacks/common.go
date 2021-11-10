@@ -55,5 +55,5 @@ type CLIRuntime interface {
 }
 
 type APIRuntime interface {
-	Detect([]*github.RepositoryContent, string, string, github.RepositoryContentGetOptions) map[string]interface{}
+	Detect([]*github.RepositoryContent, string, string, string, github.RepositoryContentGetOptions) map[string]interface{}
 }

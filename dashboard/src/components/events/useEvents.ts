@@ -1,8 +1,9 @@
 import { unionBy } from "lodash";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { KubeEvent } from "shared/types";
+import { mockEvents } from "./mock";
 
 export const useKubeEvents = (
   resourceType: "NODE" | "POD" | "HPA",
@@ -17,6 +18,7 @@ export const useKubeEvents = (
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
+  // Check if the porter agent is installed or not
   useEffect(() => {
     let isSubscribed = true;
 
@@ -38,6 +40,7 @@ export const useKubeEvents = (
     };
   }, [currentProject, currentCluster]);
 
+  // Get events
   useEffect(() => {
     let isSubscribed = true;
     if (hasPorterAgent) {
@@ -98,15 +101,25 @@ export const useKubeEvents = (
 
       if (clear) {
         setKubeEvents(newKubeEvents);
-      } else {
-        const newEvents = unionBy(kubeEvents, newKubeEvents, "id");
-        setKubeEvents(newEvents);
-        if (newEvents.length === kubeEvents?.length) {
+
+        if (totalCount === newKubeEvents.length) {
           setHasMore(false);
         } else {
           setHasMore(true);
         }
+
+        return;
       }
+
+      const newEvents = unionBy(kubeEvents, newKubeEvents, "id");
+
+      if (totalCount === newEvents.length) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
+
+      setKubeEvents(newEvents);
     } catch (error) {
       console.log(error);
     }
@@ -126,10 +139,44 @@ export const useKubeEvents = (
       });
   };
 
+  const getLastSubEvent = (
+    subEvents: {
+      event_type: string;
+      message: string;
+      reason: string;
+      timestamp: string;
+    }[]
+  ) => {
+    const sortedEvents = subEvents
+      .map((s) => {
+        return {
+          ...s,
+          timestamp: new Date(s.timestamp).getTime(),
+        };
+      })
+      .sort((prev, next) => prev.timestamp - next.timestamp);
+
+    return sortedEvents[0];
+  };
+
+  // Fill up the data missing on events with the subevents
+  const processedKubeEvents = useMemo(() => {
+    return mockEvents.kube_events.map((e) => {
+      const lastSubEvent = getLastSubEvent(e.sub_events);
+
+      return {
+        ...e,
+        event_type: lastSubEvent.event_type,
+        timestamp: new Date(lastSubEvent.timestamp).toISOString(),
+        last_message: lastSubEvent.message,
+      };
+    });
+  }, [kubeEvents]);
+
   return {
     hasPorterAgent,
     isLoading,
-    kubeEvents,
+    kubeEvents: processedKubeEvents,
     hasMore,
     totalCount,
     loadMoreEvents: () => fetchData(),

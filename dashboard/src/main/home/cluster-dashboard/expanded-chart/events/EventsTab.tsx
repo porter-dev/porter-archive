@@ -95,22 +95,23 @@ const EventsTab: React.FC<{
           />
         </RightFilters>
       </ControlRow>
-      <EventsGrid>
-        <InfiniteScroll
-          dataLength={kubeEvents.length}
-          next={loadMoreEvents}
-          hasMore={hasMore}
-          loader={<h4>Loading...</h4>}
-          scrollableTarget="HomeViewWrapper"
-          endMessage={
-            <h4>No events were found for the resource type you specified</h4>
-          }
-        >
+
+      <InfiniteScroll
+        dataLength={kubeEvents.length}
+        next={loadMoreEvents}
+        hasMore={hasMore}
+        loader={<h4>Loading...</h4>}
+        scrollableTarget="HomeViewWrapper"
+        endMessage={
+          <h4>No events were found for the resource type you specified</h4>
+        }
+      >
+        <EventsGrid>
           {kubeEvents.map((event, i) => {
             return (
               <React.Fragment key={i}>
                 <EventCard
-                  event={event}
+                  event={event as any}
                   selectEvent={() => {
                     console.log("SELECTED", event);
                   }}
@@ -118,8 +119,8 @@ const EventsTab: React.FC<{
               </React.Fragment>
             );
           })}
-        </InfiniteScroll>
-      </EventsGrid>
+        </EventsGrid>
+      </InfiniteScroll>
     </EventsPageWrapper>
   );
 };

@@ -7,6 +7,7 @@ import Dropdown from "components/Dropdown";
 import { useKubeEvents } from "components/events/useEvents";
 import { ChartType } from "shared/types";
 import _, { isObject } from "lodash";
+import SubEventsList from "components/events/SubEventsList";
 
 const availableResourceTypes = [
   { label: "Pods", value: "pod" },
@@ -18,6 +19,7 @@ const EventsTab: React.FC<{
 }> = (props) => {
   const { controllers } = props;
   const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
+  const [currentEvent, setCurrentEvent] = useState(null);
 
   const [selectedControllerKey, setSelectedControllerKey] = useState(null);
 
@@ -79,6 +81,15 @@ const EventsTab: React.FC<{
     );
   }
 
+  if (currentEvent) {
+    return (
+      <SubEventsList
+        event={currentEvent}
+        clearSelectedEvent={() => setCurrentEvent(null)}
+      />
+    );
+  }
+
   return (
     <EventsPageWrapper>
       <ControlRow>
@@ -113,7 +124,7 @@ const EventsTab: React.FC<{
                 <EventCard
                   event={event as any}
                   selectEvent={() => {
-                    console.log("SELECTED", event);
+                    setCurrentEvent(event);
                   }}
                 />
               </React.Fragment>

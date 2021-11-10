@@ -3,6 +3,7 @@ package buildpacks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -113,9 +114,13 @@ func (runtime *apiNodeRuntime) Detect(
 		bool
 	}, 3)
 
+	fmt.Printf("Starting detection for a NodeJS runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(3)
+	fmt.Println("Checking for yarn")
 	go runtime.detectYarn(results, directoryContent)
+	fmt.Println("Checking for NPM")
 	go runtime.detectNPM(results, directoryContent)
+	fmt.Println("Checking for NodeJS standalone")
 	go runtime.detectStandalone(results, directoryContent)
 	runtime.wg.Wait()
 	close(results)
@@ -132,6 +137,7 @@ func (runtime *apiNodeRuntime) Detect(
 	if atLeastOne {
 		if detected[yarn] || detected[npm] {
 			// it is safe to assume that the project contains a package.json
+			fmt.Println("package.json file detected")
 			fileContent, _, _, err := runtime.ghClient.Repositories.GetContents(
 				context.Background(),
 				owner,
@@ -140,7 +146,7 @@ func (runtime *apiNodeRuntime) Detect(
 				&repoContentOptions,
 			)
 			if err != nil {
-				// FIXME: log somewhere
+				fmt.Printf("Error fetching contents of package.json: %v\n", err)
 				return nil
 			}
 			var packageJSON struct {
@@ -149,22 +155,35 @@ func (runtime *apiNodeRuntime) Detect(
 					Node string `json:"node"`
 				} `json:"engines"`
 			}
-			err = json.NewDecoder(strings.NewReader(*fileContent.Content)).Decode(&packageJSON)
+
+			data, err := fileContent.GetContent()
 			if err != nil {
-				// FIXME: log somewhere
+				fmt.Printf("Error calling GetContent() on package.json: %v\n", err)
+				return nil
+			}
+			err = json.NewDecoder(strings.NewReader(data)).Decode(&packageJSON)
+			if err != nil {
+				fmt.Printf("Error decoding package.json contents to struct: %v\n", err)
 				return nil
 			}
 
 			if detected[yarn] {
-				return map[string]interface{}{"runtime": yarn, "scripts": packageJSON.Scripts, "node_engine": packageJSON.Engines.Node}
+				fmt.Printf("NodeJS yarn runtime detected for %s/%s\n", owner, name)
+				return map[string]interface{}{
+					"runtime": yarn, "scripts": packageJSON.Scripts, "node_engine": packageJSON.Engines.Node,
+				}
 			} else {
-				return map[string]interface{}{"runtime": npm, "scripts": packageJSON.Scripts, "node_engine": packageJSON.Engines.Node}
-
+				fmt.Printf("NodeJS npm runtime detected for %s/%s\n", owner, name)
+				return map[string]interface{}{
+					"runtime": npm, "scripts": packageJSON.Scripts, "node_engine": packageJSON.Engines.Node,
+				}
 			}
 		}
 
+		fmt.Printf("NodeJS standalone runtime detected for %s/%s\n", owner, name)
 		return map[string]interface{}{"runtime": "node-standalone"}
 	}
 
+	fmt.Printf("No NodeJS runtime detected for %s/%s\n", owner, name)
 	return nil
 }

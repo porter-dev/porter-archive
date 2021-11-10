@@ -7,7 +7,17 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/github"
+)
+
+var (
+	lts = map[string]int{
+		"argon":   4,
+		"boron":   6,
+		"carbon":  8,
+		"dubnium": 10,
+	}
 )
 
 type apiNodeRuntime struct {
@@ -104,9 +114,70 @@ func (runtime *apiNodeRuntime) detectStandalone(results chan struct {
 	runtime.wg.Done()
 }
 
+// copied directly from https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
+func validateNvmrc(content string) (string, error) {
+	content = strings.TrimSpace(strings.ToLower(content))
+
+	if content == "lts/*" || content == "node" {
+		return content, nil
+	}
+
+	for key := range lts {
+		if content == strings.ToLower("lts/"+key) {
+			return content, nil
+		}
+	}
+
+	content = strings.TrimPrefix(content, "v")
+
+	if _, err := semver.NewConstraint(content); err != nil {
+		return "", fmt.Errorf("invalid version constraint specified in .nvmrc: %q", content)
+	}
+
+	return content, nil
+}
+
+// copied directly from https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
+func formatNvmrcContent(version string) string {
+	if version == "node" {
+		return "*"
+	}
+
+	if strings.HasPrefix(version, "lts") {
+		ltsName := strings.SplitN(version, "/", 2)[1]
+		if ltsName == "*" {
+			var maxVersion int
+			for _, versionValue := range lts {
+				if maxVersion < versionValue {
+					maxVersion = versionValue
+				}
+			}
+
+			return fmt.Sprintf("%d.*", maxVersion)
+		}
+
+		return fmt.Sprintf("%d.*", lts[ltsName])
+	}
+
+	return version
+}
+
+// copied directly from https://github.com/paketo-buildpacks/node-engine/blob/main/node_version_parser.go
+func validateNodeVersion(content string) (string, error) {
+	content = strings.TrimSpace(strings.ToLower(content))
+
+	content = strings.TrimPrefix(content, "v")
+
+	if _, err := semver.NewConstraint(content); err != nil {
+		return "", fmt.Errorf("invalid version constraint specified in .node-version: %q", content)
+	}
+
+	return content, nil
+}
+
 func (runtime *apiNodeRuntime) Detect(
 	directoryContent []*github.RepositoryContent,
-	owner string, name string,
+	owner, name, path string,
 	repoContentOptions github.RepositoryContentGetOptions,
 ) map[string]interface{} {
 	results := make(chan struct {
@@ -142,7 +213,7 @@ func (runtime *apiNodeRuntime) Detect(
 				context.Background(),
 				owner,
 				name,
-				"package.json",
+				fmt.Sprintf("%s/package.json", path),
 				&repoContentOptions,
 			)
 			if err != nil {
@@ -165,6 +236,83 @@ func (runtime *apiNodeRuntime) Detect(
 			if err != nil {
 				fmt.Printf("Error decoding package.json contents to struct: %v\n", err)
 				return nil
+			}
+
+			if packageJSON.Engines.Node == "" {
+				// we should now check for the node engine version in .nvmrc and then .node-version
+				nvmrcFound := false
+				nodeVersionFound := false
+				for i := 0; i < len(directoryContent); i++ {
+					name := directoryContent[i].GetName()
+					if name == ".nvmrc" {
+						nvmrcFound = true
+					} else if name == ".node-version" {
+						nodeVersionFound = true
+					}
+				}
+
+				if nvmrcFound {
+					// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
+					fileContent, _, _, err = runtime.ghClient.Repositories.GetContents(
+						context.Background(),
+						owner,
+						name,
+						fmt.Sprintf("%s/.nvmrc", path),
+						&repoContentOptions,
+					)
+					if err != nil {
+						fmt.Printf("Error fetching contents of .nvmrc: %v\n", err)
+						return nil
+					}
+					data, err = fileContent.GetContent()
+					if err != nil {
+						fmt.Printf("Error calling GetContent() on .nvmrc: %v\n", err)
+						return nil
+					}
+					nvmrcVersion, err := validateNvmrc(data)
+					if err != nil {
+						fmt.Printf("Error validating .nvmrc: %v\n", err)
+						return nil
+					}
+					nvmrcVersion = formatNvmrcContent(nvmrcVersion)
+
+					if nvmrcVersion != "*" {
+						packageJSON.Engines.Node = data
+					}
+				}
+
+				if packageJSON.Engines.Node == "" && nodeVersionFound {
+					// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/node_version_parser.go
+					fileContent, _, _, err = runtime.ghClient.Repositories.GetContents(
+						context.Background(),
+						owner,
+						name,
+						fmt.Sprintf("%s/.node-version", path),
+						&repoContentOptions,
+					)
+					if err != nil {
+						fmt.Printf("Error fetching contents of .node-version: %v\n", err)
+						return nil
+					}
+					data, err = fileContent.GetContent()
+					if err != nil {
+						fmt.Printf("Error calling GetContent() on .node-version: %v\n", err)
+						return nil
+					}
+					nodeVersion, err := validateNodeVersion(data)
+					if err != nil {
+						fmt.Printf("Error validating .node-version: %v\n", err)
+						return nil
+					}
+					if nodeVersion != "" {
+						packageJSON.Engines.Node = nodeVersion
+					}
+				}
+			}
+
+			if packageJSON.Engines.Node == "" {
+				// use the default node engine version from https://github.com/paketo-buildpacks/node-engine/blob/main/buildpack.toml
+				packageJSON.Engines.Node = "16.*.*"
 			}
 
 			if detected[yarn] {

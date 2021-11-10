@@ -150,27 +150,6 @@ func TestListKubeEventsByProjectIDWithSkip(t *testing.T) {
 	}, tester.initKubeEvents[10:35])
 }
 
-func TestListKubeEventsByProjectIDWithSortBy(t *testing.T) {
-	suffix, _ := repository.GenerateRandomBytes(4)
-
-	tester := &tester{
-		dbFileName: fmt.Sprintf("./porter_list_events_%s.db", suffix),
-	}
-
-	setupTestEnv(tester, t)
-	initProject(tester, t)
-	initCluster(tester, t)
-	initKubeEvents(tester, t)
-	defer cleanup(tester, t)
-
-	testListKubeEventsByProjectID(tester, t, 1, true, &types.ListKubeEventRequest{
-		Limit:        1,
-		Skip:         0,
-		ResourceType: "node",
-		SortBy:       "timestamp",
-	}, tester.initKubeEvents[99:])
-}
-
 func testListKubeEventsByProjectID(tester *tester, t *testing.T, clusterID uint, decrypt bool, opts *types.ListKubeEventRequest, expKubeEvents []*models.KubeEvent) {
 	t.Helper()
 

@@ -2,7 +2,9 @@ package kube_events
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -146,7 +148,15 @@ func notifyPodCrashing(
 		ClusterName: cluster.Name,
 		Name:        event.OwnerName,
 		Namespace:   event.Namespace,
-		URL:         config.ServerConf.ServerURL,
+		Info:        fmt.Sprintf("%s:%s", event.Reason, event.Message),
+		URL: fmt.Sprintf(
+			"%s/applications/%s/%s/%s?project_id=%d",
+			config.ServerConf.ServerURL,
+			url.PathEscape(cluster.Name),
+			matchedRel.Namespace,
+			matchedRel.Name,
+			cluster.ProjectID,
+		),
 	}
 
 	notifyOpts.Status = slack.StatusPodCrashed

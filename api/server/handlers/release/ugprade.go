@@ -144,12 +144,13 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		Name:        helmRelease.Name,
 		Namespace:   helmRelease.Namespace,
 		URL: fmt.Sprintf(
-			"%s/applications/%s/%s/%s",
+			"%s/applications/%s/%s/%s?project_id=%d",
 			c.Config().ServerConf.ServerURL,
 			url.PathEscape(cluster.Name),
-			cluster.Name,
+			helmRelease.Namespace,
 			helmRelease.Name,
-		) + fmt.Sprintf("?project_id=%d", cluster.ProjectID),
+			cluster.ProjectID,
+		),
 	}
 
 	if upgradeErr != nil {

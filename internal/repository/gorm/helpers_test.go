@@ -602,5 +602,21 @@ func initKubeEvents(tester *tester, t *testing.T) {
 		initEvents = append(initEvents, event)
 	}
 
+	for i := 99; i >= 0; i-- {
+		subEvent := &models.KubeSubEvent{
+			EventType: "pod",
+			Message:   "Pod killed",
+			Reason:    "OOM: memory limit exceeded",
+		}
+
+		err := tester.repo.KubeEvent().AppendSubEvent(initEvents[i], subEvent)
+
+		if err != nil {
+			t.Fatalf("%v\n", err)
+		}
+
+		initEvents[i].SubEvents = append(initEvents[i].SubEvents, *subEvent)
+	}
+
 	tester.initKubeEvents = initEvents
 }

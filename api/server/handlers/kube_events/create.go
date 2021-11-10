@@ -99,13 +99,30 @@ func notifyPodCrashing(
 	cluster *models.Cluster,
 	event *types.CreateKubeEventRequest,
 ) error {
-	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
-
-	notifier := slack.NewSlackNotifier(&types.NotificationConfig{
+	notifConfig := &types.NotificationConfig{
 		Enabled: true,
 		Success: true,
 		Failure: true,
-	}, slackInts...)
+	}
+
+	// attempt to get a matching Porter release to get the notification configuration
+	matchedRel := getMatchedPorterRelease(config, cluster.ID, event.OwnerName, event.Namespace)
+
+	if matchedRel != nil {
+		conf, err := config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
+
+		if !conf.ShouldNotify() {
+			return nil
+		}
+
+		if err == nil && conf != nil {
+			notifConfig = conf.ToNotificationConfigType()
+		}
+	}
+
+	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
+
+	notifier := slack.NewSlackNotifier(notifConfig, slackInts...)
 
 	notifyOpts := &slack.NotifyOpts{
 		ProjectID:   cluster.ProjectID,
@@ -119,4 +136,27 @@ func notifyPodCrashing(
 	notifyOpts.Status = slack.StatusPodCrashed
 
 	return notifier.Notify(notifyOpts)
+}
+
+// getMatchedPorterRelease attempts to find a matching Porter release from the name of a controller.
+// For example, if the controller has a suffix "-web", it is likely a Porter web application, and
+// so we query for a Porter release with a matching name. Returns nil if no match is found
+func getMatchedPorterRelease(config *config.Config, clusterID uint, ownerName, namespace string) *models.Release {
+	matchingName := ""
+
+	if strings.Contains(ownerName, "-web") {
+		matchingName = strings.Split(ownerName, "-web")[0]
+	} else if strings.Contains(ownerName, "-worker") {
+		matchingName = strings.Split(ownerName, "-worker")[0]
+	} else if strings.Contains(ownerName, "-job") {
+		matchingName = strings.Split(ownerName, "-job")[0]
+	}
+
+	rel, err := config.Repo.Release().ReadRelease(clusterID, matchingName, namespace)
+
+	if err != nil {
+		return nil
+	}
+
+	return rel
 }

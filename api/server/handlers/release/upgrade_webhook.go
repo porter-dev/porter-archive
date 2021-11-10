@@ -157,12 +157,13 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Name:        rel.Name,
 		Namespace:   rel.Namespace,
 		URL: fmt.Sprintf(
-			"%s/applications/%s/%s/%s",
+			"%s/applications/%s/%s/%s?project_id=%d",
 			c.Config().ServerConf.ServerURL,
 			url.PathEscape(cluster.Name),
 			release.Namespace,
 			rel.Name,
-		) + fmt.Sprintf("?project_id=%d", release.ProjectID),
+			cluster.ProjectID,
+		),
 	}
 
 	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf)

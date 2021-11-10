@@ -3,6 +3,7 @@ package buildpacks
 import (
 	"sync"
 
+	depensure "github.com/paketo-buildpacks/dep-ensure"
 	gomodvendor "github.com/paketo-buildpacks/go-mod-vendor"
 	"github.com/paketo-buildpacks/packit"
 )
@@ -11,11 +12,6 @@ type cliGoRuntime struct {
 	packs map[string]*BuildpackInfo
 	wg    sync.WaitGroup
 }
-
-const (
-	mod = "mod"
-	dep = "dep"
-)
 
 func NewCLIGoRuntime() *cliGoRuntime {
 	packs := make(map[string]*BuildpackInfo)
@@ -40,7 +36,6 @@ func (runtime *cliGoRuntime) detectMod(results chan struct {
 }, workingDir string) {
 	goModParser := gomodvendor.NewGoModParser()
 	detect := gomodvendor.Detect(goModParser)
-
 	_, err := detect(packit.DetectContext{
 		WorkingDir: workingDir,
 	})
@@ -62,7 +57,21 @@ func (runtime *cliGoRuntime) detectDep(results chan struct {
 	string
 	bool
 }, workingDir string) {
-
+	detect := depensure.Detect()
+	_, err := detect(packit.DetectContext{
+		WorkingDir: workingDir,
+	})
+	if err == nil {
+		results <- struct {
+			string
+			bool
+		}{dep, true}
+	} else {
+		results <- struct {
+			string
+			bool
+		}{dep, false}
+	}
 	runtime.wg.Done()
 }
 
@@ -70,7 +79,6 @@ func (runtime *cliGoRuntime) detectStandalone(results chan struct {
 	string
 	bool
 }, workingDir string) {
-
 	runtime.wg.Done()
 }
 

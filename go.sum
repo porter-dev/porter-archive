@@ -1054,6 +1054,8 @@ github.com/openzipkin/zipkin-go v0.2.2/go.mod h1:NaW6tEwdmWMaCDZzg8sh+IBNOxHMPnh
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
 github.com/paketo-buildpacks/conda-env-update v0.2.2 h1:0bT6Se/r/06Gc3sBeg+OJ/9BVIp8D/rEzeJNtvxOBSQ=
 github.com/paketo-buildpacks/conda-env-update v0.2.2/go.mod h1:OKSG9rf9ClDLcoHA3JJgbRECShCpNJKrmkYgIiYAu9k=
+github.com/paketo-buildpacks/dep-ensure v0.1.1 h1:/vPTihH/2Z7paIHzwrWkMeuOGtXxyv8zrhT64YMFBn0=
+github.com/paketo-buildpacks/dep-ensure v0.1.1/go.mod h1:r0bjiaauIgEdXKU+FDgvseqTAjWXYuOGXi2omjRJkYc=
 github.com/paketo-buildpacks/go-mod-vendor v0.3.1 h1:4ltB7mmMg2dGRNDLxwPMLoY98rePUhny/6L0QUn8aYU=
 github.com/paketo-buildpacks/go-mod-vendor v0.3.1/go.mod h1:ycd4yAggQShyoQg+bXZyaxazx/Nms98f1SH9NkG/I3k=
 github.com/paketo-buildpacks/node-run-script v0.2.0 h1:IAmnpavIuBM49RaKDIK/OdRbo12TfdUCzJ88CvYe4Kk=

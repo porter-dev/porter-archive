@@ -5,6 +5,7 @@ import Loading from "components/Loading";
 import InfiniteScroll from "react-infinite-scroll-component";
 import Dropdown from "components/Dropdown";
 import { useKubeEvents } from "components/events/useEvents";
+import SubEventsList from "components/events/SubEventsList";
 
 const availableResourceTypes = [
   { label: "Pods", value: "POD" },
@@ -14,6 +15,7 @@ const availableResourceTypes = [
 
 const EventsTab = () => {
   const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
+  const [currentEvent, setCurrentEvent] = useState(null);
 
   const {
     isLoading,
@@ -46,6 +48,15 @@ const EventsTab = () => {
     );
   }
 
+  if (currentEvent) {
+    return (
+      <SubEventsList
+        event={currentEvent}
+        clearSelectedEvent={() => setCurrentEvent(null)}
+      />
+    );
+  }
+
   return (
     <EventsPageWrapper>
       <ControlRow>
@@ -73,7 +84,7 @@ const EventsTab = () => {
                 <EventCard
                   event={event}
                   selectEvent={() => {
-                    console.log("SELECTED", event);
+                    setCurrentEvent(event);
                   }}
                 />
               </React.Fragment>

@@ -90,7 +90,7 @@ func GetLogBucketsFromPorterAgent(
 
 type AgentLogsResp struct {
 	Logs          []string `json:"logs"`
-	MatchedBucket int      `json:"matchedBucket"`
+	MatchedBucket string   `json:"matchedBucket"`
 	Error         string   `json:"error"`
 }
 

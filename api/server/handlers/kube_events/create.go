@@ -101,39 +101,39 @@ func notifyPodCrashing(
 	cluster *models.Cluster,
 	event *types.CreateKubeEventRequest,
 ) error {
-	notifConfig := &types.NotificationConfig{
-		Enabled: true,
-		Success: true,
-		Failure: true,
-	}
-
 	// attempt to get a matching Porter release to get the notification configuration
 	var conf *models.NotificationConfig
+	var notifConfig *types.NotificationConfig
 	var err error
 	matchedRel := getMatchedPorterRelease(config, cluster.ID, event.OwnerName, event.Namespace)
 
-	if matchedRel != nil {
-		conf, err = config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
+	// for now, we only notify for Porter releases that have been deployed through Porter
+	if matchedRel == nil {
+		return nil
+	}
 
-		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-			conf = &models.NotificationConfig{
-				Enabled: true,
-				Success: true,
-				Failure: true,
-			}
+	conf, err = config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
 
-			conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		conf = &models.NotificationConfig{
+			Enabled: true,
+			Success: true,
+			Failure: true,
+		}
 
-			if err == nil {
-				notifConfig = conf.ToNotificationConfigType()
-			}
-		} else if err == nil && conf != nil {
-			if !conf.ShouldNotify() {
-				return nil
-			}
+		conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
 
+		if err == nil {
 			notifConfig = conf.ToNotificationConfigType()
 		}
+	} else if err != nil {
+		return err
+	} else if err == nil && conf != nil {
+		if !conf.ShouldNotify() {
+			return nil
+		}
+
+		notifConfig = conf.ToNotificationConfigType()
 	}
 
 	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)

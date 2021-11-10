@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 
 import Feedback from "./Feedback";
+import Help from "./Help";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Select } from "@material-ui/core";
 
@@ -55,14 +56,13 @@ class Navbar extends Component<PropsType, StateType> {
   };
 
   renderFeedbackButton = () => {
-    if (this.context?.capabilities?.provisioner) {
-      return <Feedback currentView={this.props.currentView} />;
-    }
+    return <Feedback currentView={this.props.currentView} />;
   };
 
   render() {
     return (
       <StyledNavbar>
+        <Help/>
         {this.renderFeedbackButton()}
         <NavButton
           selected={this.state.showDropdown}
@@ -243,6 +243,20 @@ const StyledNavbar = styled.div`
   justify-content: flex-end;
   z-index: 1;
 `;
+
+const HelpIcon = styled.div`
+> a {
+  > i {
+    font-size: 18px;
+    margin-left: 8px;
+    margin-top: 2px;
+    color: #8590ff;
+    :hover {
+      color: #aaaabb;
+    }
+  }
+}
+`
 
 const NavButton = styled.a`
   display: flex;

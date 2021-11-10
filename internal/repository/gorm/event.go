@@ -84,37 +84,41 @@ func NewKubeEventRepository(db *gorm.DB, key *[32]byte) repository.KubeEventRepo
 func (repo *KubeEventRepository) CreateEvent(
 	event *models.KubeEvent,
 ) (*models.KubeEvent, error) {
-	// read the count of the events in the DB
-	query := repo.db.Where("project_id = ? AND cluster_id = ?", event.ProjectID, event.ClusterID)
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		// read the count of the events in the DB
+		query := tx.Debug().Where("project_id = ? AND cluster_id = ?", event.ProjectID, event.ClusterID)
 
-	var count int64
+		var count int64
 
-	if err := query.Model([]*models.KubeEvent{}).Count(&count).Error; err != nil {
-		return nil, err
-	}
-
-	fmt.Println("COUNT IS", event.Name, count)
-
-	// if the count is greater than 500, remove the lowest-order event to implement a
-	// basic fixed-length buffer
-	if count >= 500 {
-		// find the id of the first match
-		matchedEvent := &models.KubeEvent{}
-
-		if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
-			return nil, err
+		if err := query.Model([]*models.KubeEvent{}).Count(&count).Error; err != nil {
+			return err
 		}
 
-		if err := query.Unscoped().Delete(matchedEvent).Error; err != nil {
-			return nil, err
+		fmt.Println("COUNT IS", event.Name, count)
+
+		// if the count is greater than 500, remove the lowest-order event to implement a
+		// basic fixed-length buffer
+		if count >= 500 {
+			// find the id of the first match
+			matchedEvent := &models.KubeEvent{}
+
+			if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
+				return err
+			}
+
+			if err := query.Unscoped().Select("SubEvents").Delete(matchedEvent).Error; err != nil {
+				return err
+			}
 		}
-	}
 
-	if err := repo.db.Create(event).Error; err != nil {
-		return nil, err
-	}
+		if err := tx.Debug().Create(event).Error; err != nil {
+			return err
+		}
 
-	return event, nil
+		return nil
+	})
+
+	return event, err
 }
 
 // ReadEvent finds an event by id
@@ -218,45 +222,47 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEvent *models.KubeSubEvent) error {
 	subEvent.KubeEventID = event.ID
 
-	var count int64
+	return repo.db.Transaction(func(tx *gorm.DB) error {
+		var count int64
 
-	query := repo.db.Debug().Where("kube_event_id = ?", event.ID)
+		query := tx.Debug().Where("kube_event_id = ?", event.ID)
 
-	if err := query.Model([]*models.KubeSubEvent{}).Count(&count).Error; err != nil {
-		return err
-	}
-
-	fmt.Println("COUNT IS", event.Name, count)
-
-	// if the count is greater than 20, remove the lowest-order event to implement a
-	// basic fixed-length buffer
-	if count >= 20 {
-		// find the id of the first match
-		matchedEvent := &models.KubeSubEvent{}
-
-		if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
+		if err := query.Model([]*models.KubeSubEvent{}).Count(&count).Error; err != nil {
 			return err
 		}
 
-		if err := query.Unscoped().Delete(matchedEvent).Error; err != nil {
+		fmt.Println("COUNT IS", event.Name, count)
+
+		// if the count is greater than 20, remove the lowest-order event to implement a
+		// basic fixed-length buffer
+		if count >= 20 {
+			// find the id of the first match
+			matchedEvent := &models.KubeSubEvent{}
+
+			if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
+				return err
+			}
+
+			if err := query.Unscoped().Delete(matchedEvent).Error; err != nil {
+				return err
+			}
+		}
+
+		if err := tx.Create(subEvent).Error; err != nil {
 			return err
 		}
-	}
 
-	if err := repo.db.Create(subEvent).Error; err != nil {
-		return err
-	}
+		event.UpdatedAt = time.Now()
 
-	event.UpdatedAt = time.Now()
-
-	return repo.db.Save(event).Error
+		return tx.Save(event).Error
+	})
 }
 
 // DeleteEvent deletes an event by ID
 func (repo *KubeEventRepository) DeleteEvent(
 	id uint,
 ) error {
-	if err := repo.db.Preload("SubEvents").Where("id = ?", id).Unscoped().Delete(&models.KubeEvent{}).Error; err != nil {
+	if err := repo.db.Unscoped().Select("SubEvents").Where("id = ?", id).Delete(&models.KubeEvent{}).Error; err != nil {
 		return err
 	}
 

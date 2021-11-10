@@ -19,39 +19,41 @@ const SubEventsList: React.FC<{
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
     const kube_event_id = event?.id;
-
+    let updatedEvent: any = null;
     try {
-      const updatedEvent = await api
+      updatedEvent = await api
         .getKubeEvent("<token>", {}, { project_id, cluster_id, kube_event_id })
         .then((res) => res?.data);
+    } catch (error) {
+      console.error(error);
+    }
 
+    let logBucketsParsed = [];
+    try {
       const logBucketsData = await api
         .getLogBuckets("token", {}, { project_id, cluster_id, kube_event_id })
         .then((res) => res?.data);
 
-      const logBucketsParsed = logBucketsData.log_buckets.map(
-        (bucket: string) => {
-          const [
-            _resourceType,
-            _namespace,
-            resource_name,
-            timestamp,
-          ] = bucket.split(":");
-          return {
-            event_type: "log_bucket",
-            resource_name,
-            timestamp: new Date(timestamp).toUTCString(),
-            parent_id: updatedEvent?.id,
-          };
-        }
-      );
-
-      setSubEvents([...updatedEvent.sub_events, ...logBucketsParsed]);
+      logBucketsParsed = logBucketsData.log_buckets.map((bucket: string) => {
+        const [
+          _resourceType,
+          _namespace,
+          resource_name,
+          timestamp,
+        ] = bucket.split(":");
+        return {
+          event_type: "log_bucket",
+          resource_name,
+          timestamp: new Date(timestamp).toUTCString(),
+          parent_id: updatedEvent?.id,
+        };
+      });
     } catch (error) {
       console.error(error);
-    } finally {
-      setIsLoading(false);
     }
+
+    setSubEvents([...updatedEvent.sub_events, ...logBucketsParsed]);
+    setIsLoading(false);
   };
 
   useEffect(() => {

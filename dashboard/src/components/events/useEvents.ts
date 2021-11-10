@@ -153,23 +153,29 @@ export const useKubeEvents = (
           timestamp: new Date(s.timestamp).getTime(),
         };
       })
-      .sort((prev, next) => prev.timestamp - next.timestamp);
+      .sort((prev, next) => next.timestamp - prev.timestamp);
 
     return sortedEvents[0];
   };
 
   // Fill up the data missing on events with the subevents
   const processedKubeEvents = useMemo(() => {
-    return kubeEvents.map((e: any) => {
-      const lastSubEvent = getLastSubEvent(e.sub_events);
+    return kubeEvents
+      .map((e: any) => {
+        const lastSubEvent = getLastSubEvent(e.sub_events);
 
-      return {
-        ...e,
-        event_type: lastSubEvent.event_type,
-        timestamp: new Date(lastSubEvent.timestamp).toISOString(),
-        last_message: lastSubEvent.message,
-      };
-    });
+        return {
+          ...e,
+          event_type: lastSubEvent.event_type,
+          timestamp: new Date(lastSubEvent.timestamp).getTime(),
+          last_message: lastSubEvent.message,
+        };
+      })
+      .sort((prev, next) => next.timestamp - prev.timestamp)
+      .map((s) => ({
+        ...s,
+        timestamp: new Date(s.timestamp).toUTCString(),
+      }));
   }, [kubeEvents]);
 
   return {

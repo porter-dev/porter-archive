@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # Webpack build environment
 # -------------------------
-FROM node:latest as build-webpack
+FROM node:lts as build-webpack
 WORKDIR /webpack
 
 COPY ./dashboard ./

@@ -41,7 +41,7 @@ const RegistryImageList: React.FC<{
         integrationList[registryType] && integrationList[registryType].icon
       );
     } else {
-      return integrationList["docker"].icon;
+      return integrationList["dockerhub"].icon;
     }
   };
 

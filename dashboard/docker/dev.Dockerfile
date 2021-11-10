@@ -1,6 +1,6 @@
 # Development environment
 # -----------------------
-FROM node:latest
+FROM node:lts
 WORKDIR /webpack
 
 COPY package*.json ./

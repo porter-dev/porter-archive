@@ -106,10 +106,12 @@ func notifyPodCrashing(
 	}
 
 	// attempt to get a matching Porter release to get the notification configuration
+	var conf *models.NotificationConfig
+	var err error
 	matchedRel := getMatchedPorterRelease(config, cluster.ID, event.OwnerName, event.Namespace)
 
 	if matchedRel != nil {
-		conf, err := config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
+		conf, err = config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
 
 		if !conf.ShouldNotify() {
 			return nil
@@ -135,7 +137,19 @@ func notifyPodCrashing(
 
 	notifyOpts.Status = slack.StatusPodCrashed
 
-	return notifier.Notify(notifyOpts)
+	err = notifier.Notify(notifyOpts)
+
+	if err != nil {
+		return err
+	}
+
+	// update the last updated time
+	if matchedRel != nil {
+		conf.LastNotifiedTime = time.Now()
+		conf, err = config.Repo.NotificationConfig().UpdateNotificationConfig(conf)
+	}
+
+	return err
 }
 
 // getMatchedPorterRelease attempts to find a matching Porter release from the name of a controller.

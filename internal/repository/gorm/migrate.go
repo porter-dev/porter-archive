@@ -33,6 +33,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.ProjectUsageCache{},
 		&models.Onboarding{},
 		&models.CredentialsExchangeToken{},
+		&models.BuildConfig{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

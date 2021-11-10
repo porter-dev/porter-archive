@@ -106,7 +106,7 @@ func (repo *KubeEventRepository) CreateEvent(
 				return err
 			}
 
-			if err := query.Unscoped().Select("SubEvents").Delete(matchedEvent).Error; err != nil {
+			if err := query.Unscoped().Preload("SubEvents").Delete(matchedEvent).Error; err != nil {
 				return err
 			}
 		}
@@ -262,7 +262,7 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 func (repo *KubeEventRepository) DeleteEvent(
 	id uint,
 ) error {
-	if err := repo.db.Unscoped().Select("SubEvents").Where("id = ?", id).Delete(&models.KubeEvent{}).Error; err != nil {
+	if err := repo.db.Unscoped().Preload("SubEvents").Where("id = ?", id).Delete(&models.KubeEvent{}).Error; err != nil {
 		return err
 	}
 

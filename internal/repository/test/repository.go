@@ -33,6 +33,7 @@ type TestRepository struct {
 	projectUsage              repository.ProjectUsageRepository
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
+	buildConfig               repository.BuildConfigRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -147,6 +148,10 @@ func (t *TestRepository) CredentialsExchangeToken() repository.CredentialsExchan
 	return t.ceToken
 }
 
+func (t *TestRepository) BuildConfig() repository.BuildConfigRepository {
+	return t.buildConfig
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -179,5 +184,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		projectUsage:              NewProjectUsageRepository(canQuery),
 		onboarding:                NewProjectOnboardingRepository(canQuery),
 		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
+		buildConfig:               NewBuildConfigRepository(canQuery),
 	}
 }

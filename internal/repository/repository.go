@@ -29,4 +29,5 @@ type Repository interface {
 	ProjectUsage() ProjectUsageRepository
 	Onboarding() ProjectOnboardingRepository
 	CredentialsExchangeToken() CredentialsExchangeTokenRepository
+	BuildConfig() BuildConfigRepository
 }

@@ -197,7 +197,7 @@ func getHelmMessageBlock(opts *NotifyOpts) *SlackBlock {
 
 func getPodCrashedMessageBlock(opts *NotifyOpts) *SlackBlock {
 	md := fmt.Sprintf(
-		":x: Your application %s crashed on Porter. <%s|View the new release.>",
+		":x: Your application %s crashed on Porter. <%s|View the application.>",
 		"`"+opts.Name+"`",
 		opts.URL,
 	)

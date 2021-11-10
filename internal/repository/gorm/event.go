@@ -195,8 +195,6 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 		)
 	}
 
-	query = query.Order("updated_at desc").Order("id desc")
-
 	// get the count before limit and offset
 	var count int64
 
@@ -204,7 +202,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 		return nil, 0, err
 	}
 
-	query = query.Limit(listOpts.Limit).Offset(listOpts.Skip)
+	query = query.Order("updated_at desc").Order("id desc").Limit(listOpts.Limit).Offset(listOpts.Skip)
 
 	if err := query.Find(&events).Error; err != nil {
 		return nil, 0, err

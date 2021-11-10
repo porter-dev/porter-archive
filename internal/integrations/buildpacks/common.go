@@ -16,16 +16,16 @@ const (
 )
 
 type buildpackOrderGroupInfo struct {
-	ID       string
-	Optional bool
-	Version  string
+	ID       string `json:"id"`
+	Optional bool   `json:"optional"`
+	Version  string `json:"version"`
 }
 
 type BuildpackInfo struct {
-	Packs []buildpackOrderGroupInfo
+	Packs []buildpackOrderGroupInfo `json:"packs"`
 	// FIXME: env vars for https://github.com/paketo-buildpacks/environment-variables
 	//        and for https://github.com/paketo-buildpacks/image-labels
-	EnvVars map[string]string
+	EnvVars map[string]string `json:"env_vars"`
 }
 
 func newBuildpackInfo() *BuildpackInfo {

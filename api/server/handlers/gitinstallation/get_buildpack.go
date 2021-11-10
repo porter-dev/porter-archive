@@ -79,6 +79,7 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if config != nil {
 		res.Name = "Node.js"
 		res.Runtime = config["runtime"].(string)
+		res.Buildpacks = config["buildpacks"].([]*buildpacks.BuildpackInfo)
 		if res.Runtime != "node-standalone" {
 			res.Config = map[string]interface{}{"scripts": config["scripts"], "node_engine": config["node_engine"]}
 		}

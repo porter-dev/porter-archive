@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/github"
+	"github.com/pelletier/go-toml"
 )
 
 var (
@@ -23,11 +25,102 @@ var (
 type apiNodeRuntime struct {
 	ghClient *github.Client
 	wg       sync.WaitGroup
+	packs    map[string]*BuildpackInfo
 }
 
 func NewAPINodeRuntime(client *github.Client) *apiNodeRuntime {
+	packs := make(map[string]*BuildpackInfo)
+
+	repoRelease, _, err := client.Repositories.GetLatestRelease(context.Background(), "paketo-buildpacks", "nodejs")
+	if err != nil {
+		fmt.Printf("Error fetching latest release for packeto-buildpacks/nodejs: %v\n", err)
+		return nil
+	}
+	fileContent, _, _, err := client.Repositories.GetContents(
+		context.Background(), "packeto-buildpacks", "nodejs", "buildpack.toml",
+		&github.RepositoryContentGetOptions{
+			Ref: *repoRelease.TagName,
+		},
+	)
+	if err != nil {
+		fmt.Printf("Error fetching contents of buildpack.toml for packeto-buildpacks/node: %v\n", err)
+		return nil
+	}
+
+	data, err := fileContent.GetContent()
+	if err != nil {
+		fmt.Printf("Error calling GetContent() on buildpack.toml for packeto-buildpacks/node: %v\n", err)
+		return nil
+	}
+
+	buildpackToml, err := toml.Load(data)
+	if err != nil {
+		fmt.Printf("Error while reading %s: %v\n", nodejsTomlFile, err)
+		os.Exit(1)
+	}
+	order := buildpackToml.Get("order").([]*toml.Tree)
+
+	// yarn
+	packs[yarn] = newBuildpackInfo()
+	yarnGroup := order[0].GetArray("group").([]*toml.Tree)
+	for i := 0; i < len(yarnGroup); i++ {
+		packs[yarn].addPack(
+			buildpackOrderGroupInfo{
+				ID:       yarnGroup[i].Get("id").(string),
+				Optional: yarnGroup[i].GetDefault("optional", false).(bool),
+				Version:  yarnGroup[i].Get("version").(string),
+			},
+		)
+	}
+	packs[yarn].addEnvVar("SSL_CERT_DIR", "")
+	packs[yarn].addEnvVar("SSL_CERT_FILE", "")
+	packs[yarn].addEnvVar("BP_NODE_OPTIMIZE_MEMORY", "")
+	packs[yarn].addEnvVar("BP_NODE_PROJECT_PATH", "")
+	packs[yarn].addEnvVar("BP_NODE_VERSION", "")
+	packs[yarn].addEnvVar("BP_NODE_RUN_SCRIPTS", "")
+
+	// npm
+	packs[npm] = newBuildpackInfo()
+	npmGroup := order[1].GetArray("group").([]*toml.Tree)
+	for i := 0; i < len(npmGroup); i++ {
+		packs[npm].addPack(
+			buildpackOrderGroupInfo{
+				ID:       npmGroup[i].Get("id").(string),
+				Optional: npmGroup[i].GetDefault("optional", false).(bool),
+				Version:  npmGroup[i].Get("version").(string),
+			},
+		)
+	}
+	packs[npm].addEnvVar("SSL_CERT_DIR", "")
+	packs[npm].addEnvVar("SSL_CERT_FILE", "")
+	packs[npm].addEnvVar("BP_NODE_OPTIMIZE_MEMORY", "")
+	packs[npm].addEnvVar("BP_NODE_PROJECT_PATH", "")
+	packs[npm].addEnvVar("BP_NODE_VERSION", "")
+	packs[npm].addEnvVar("BP_NODE_RUN_SCRIPTS", "")
+
+	// no package manager
+	packs[standalone] = newBuildpackInfo()
+	standaloneGroup := order[2].GetArray("group").([]*toml.Tree)
+	for i := 0; i < len(standaloneGroup); i++ {
+		packs[standalone].addPack(
+			buildpackOrderGroupInfo{
+				ID:       standaloneGroup[i].Get("id").(string),
+				Optional: standaloneGroup[i].GetDefault("optional", false).(bool),
+				Version:  standaloneGroup[i].Get("version").(string),
+			},
+		)
+	}
+	packs[standalone].addEnvVar("SSL_CERT_DIR", "")
+	packs[standalone].addEnvVar("SSL_CERT_FILE", "")
+	packs[standalone].addEnvVar("BP_NODE_OPTIMIZE_MEMORY", "")
+	packs[standalone].addEnvVar("BP_NODE_PROJECT_PATH", "")
+	packs[standalone].addEnvVar("BP_NODE_VERSION", "")
+	packs[standalone].addEnvVar("BP_LAUNCHPOINT", "")
+	packs[standalone].addEnvVar("BP_LIVE_RELOAD_ENABLED", "")
+
 	return &apiNodeRuntime{
 		ghClient: client,
+		packs:    packs,
 	}
 }
 
@@ -318,18 +411,27 @@ func (runtime *apiNodeRuntime) Detect(
 			if detected[yarn] {
 				fmt.Printf("NodeJS yarn runtime detected for %s/%s\n", owner, name)
 				return map[string]interface{}{
-					"runtime": yarn, "scripts": packageJSON.Scripts, "node_engine": packageJSON.Engines.Node,
+					"buildpacks":  runtime.packs[yarn],
+					"runtime":     yarn,
+					"scripts":     packageJSON.Scripts,
+					"node_engine": packageJSON.Engines.Node,
 				}
 			} else {
 				fmt.Printf("NodeJS npm runtime detected for %s/%s\n", owner, name)
 				return map[string]interface{}{
-					"runtime": npm, "scripts": packageJSON.Scripts, "node_engine": packageJSON.Engines.Node,
+					"buildpacks":  runtime.packs[npm],
+					"runtime":     npm,
+					"scripts":     packageJSON.Scripts,
+					"node_engine": packageJSON.Engines.Node,
 				}
 			}
 		}
 
 		fmt.Printf("NodeJS standalone runtime detected for %s/%s\n", owner, name)
-		return map[string]interface{}{"runtime": "node-standalone"}
+		return map[string]interface{}{
+			"buildpacks": runtime.packs[standalone],
+			"runtime":    "node-standalone",
+		}
 	}
 
 	fmt.Printf("No NodeJS runtime detected for %s/%s\n", owner, name)

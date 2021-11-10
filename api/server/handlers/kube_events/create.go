@@ -1,6 +1,7 @@
 package kube_events
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type CreateKubeEventHandler struct {
@@ -113,11 +115,23 @@ func notifyPodCrashing(
 	if matchedRel != nil {
 		conf, err = config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
 
-		if !conf.ShouldNotify() {
-			return nil
-		}
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			conf = &models.NotificationConfig{
+				Enabled: true,
+				Success: true,
+				Failure: true,
+			}
 
-		if err == nil && conf != nil {
+			conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
+
+			if err == nil {
+				notifConfig = conf.ToNotificationConfigType()
+			}
+		} else if err == nil && conf != nil {
+			if !conf.ShouldNotify() {
+				return nil
+			}
+
 			notifConfig = conf.ToNotificationConfigType()
 		}
 	}
@@ -144,7 +158,7 @@ func notifyPodCrashing(
 	}
 
 	// update the last updated time
-	if matchedRel != nil {
+	if matchedRel != nil && conf != nil {
 		conf.LastNotifiedTime = time.Now()
 		conf, err = config.Repo.NotificationConfig().UpdateNotificationConfig(conf)
 	}

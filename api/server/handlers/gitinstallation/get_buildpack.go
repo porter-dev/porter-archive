@@ -75,7 +75,7 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	res := &types.GetBuildpackResponse{}
 
 	nodeRuntime := buildpacks.NewAPINodeRuntime(client)
-	config := nodeRuntime.Detect(directoryContents, owner, name, repoContentOptions)
+	config := nodeRuntime.Detect(directoryContents, owner, name, request.Dir, repoContentOptions)
 	if config != nil {
 		res.Name = "Node.js"
 		res.Runtime = config["runtime"].(string)

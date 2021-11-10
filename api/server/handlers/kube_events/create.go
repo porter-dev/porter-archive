@@ -2,6 +2,7 @@ package kube_events
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -10,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -81,4 +83,40 @@ func (c *CreateKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusCreated)
+
+	if strings.ToLower(string(request.EventType)) == "critical" && strings.ToLower(request.ResourceType) == "pod" {
+		err := notifyPodCrashing(c.Config(), proj, cluster, request)
+
+		if err != nil {
+			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		}
+	}
+}
+
+func notifyPodCrashing(
+	config *config.Config,
+	project *models.Project,
+	cluster *models.Cluster,
+	event *types.CreateKubeEventRequest,
+) error {
+	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
+
+	notifier := slack.NewSlackNotifier(&types.NotificationConfig{
+		Enabled: true,
+		Success: true,
+		Failure: true,
+	}, slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   cluster.ProjectID,
+		ClusterID:   cluster.ID,
+		ClusterName: cluster.Name,
+		Name:        event.OwnerName,
+		Namespace:   event.Namespace,
+		URL:         config.ServerConf.ServerURL,
+	}
+
+	notifyOpts.Status = slack.StatusPodCrashed
+
+	return notifier.Notify(notifyOpts)
 }

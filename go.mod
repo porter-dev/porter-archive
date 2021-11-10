@@ -40,6 +40,7 @@ require (
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/paketo-buildpacks/conda-env-update v0.2.2
+	github.com/paketo-buildpacks/dep-ensure v0.1.1
 	github.com/paketo-buildpacks/go-mod-vendor v0.3.1
 	github.com/paketo-buildpacks/node-run-script v0.2.0
 	github.com/paketo-buildpacks/node-start v0.5.0

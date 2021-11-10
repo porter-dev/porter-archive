@@ -3,7 +3,6 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { KubeEvent } from "shared/types";
-import { mockEvents } from "./mock";
 
 export const useKubeEvents = (
   resourceType: "NODE" | "POD" | "HPA",
@@ -161,7 +160,7 @@ export const useKubeEvents = (
 
   // Fill up the data missing on events with the subevents
   const processedKubeEvents = useMemo(() => {
-    return mockEvents.kube_events.map((e) => {
+    return kubeEvents.map((e: any) => {
       const lastSubEvent = getLastSubEvent(e.sub_events);
 
       return {

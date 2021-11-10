@@ -1,15 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import { Context } from "shared/Context";
 import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
-import EventDetail from "components/events/EventDetail";
-import { ChartType, KubeEvent } from "shared/types";
-import api from "shared/api";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { unionBy } from "lodash";
 import Dropdown from "components/Dropdown";
 import { useKubeEvents } from "components/events/useEvents";
+import SubEventsList from "components/events/SubEventsList";
 
 const availableResourceTypes = [
   { label: "Pods", value: "POD" },
@@ -19,6 +15,7 @@ const availableResourceTypes = [
 
 const EventsTab = () => {
   const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
+  const [currentEvent, setCurrentEvent] = useState(null);
 
   const {
     isLoading,
@@ -51,6 +48,15 @@ const EventsTab = () => {
     );
   }
 
+  if (currentEvent) {
+    return (
+      <SubEventsList
+        event={currentEvent}
+        clearSelectedEvent={() => setCurrentEvent(null)}
+      />
+    );
+  }
+
   return (
     <EventsPageWrapper>
       <ControlRow>
@@ -60,31 +66,32 @@ const EventsTab = () => {
           onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
         />
       </ControlRow>
-      <EventsGrid>
-        <InfiniteScroll
-          dataLength={kubeEvents.length}
-          next={loadMoreEvents}
-          hasMore={hasMore}
-          loader={<h4>Loading...</h4>}
-          scrollableTarget="HomeViewWrapper"
-          endMessage={
-            <h4>No events were found for the resource type you specified</h4>
-          }
-        >
+
+      <InfiniteScroll
+        dataLength={kubeEvents.length}
+        next={loadMoreEvents}
+        hasMore={hasMore}
+        loader={<h4>Loading...</h4>}
+        scrollableTarget="HomeViewWrapper"
+        endMessage={
+          <h4>No events were found for the resource type you specified</h4>
+        }
+      >
+        <EventsGrid>
           {kubeEvents.map((event, i) => {
             return (
               <React.Fragment key={i}>
                 <EventCard
                   event={event}
                   selectEvent={() => {
-                    console.log("SELECTED", event);
+                    setCurrentEvent(event);
                   }}
                 />
               </React.Fragment>
             );
           })}
-        </InfiniteScroll>
-      </EventsGrid>
+        </EventsGrid>
+      </InfiniteScroll>
     </EventsPageWrapper>
   );
 };

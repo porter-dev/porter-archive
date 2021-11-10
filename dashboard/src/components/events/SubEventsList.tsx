@@ -44,7 +44,7 @@ const SubEventsList: React.FC<{
         return {
           event_type: "log_bucket",
           resource_name,
-          timestamp: new Date(timestamp).toUTCString(),
+          timestamp: new Date(Number(timestamp)).toUTCString(),
           parent_id: updatedEvent?.id,
         };
       });

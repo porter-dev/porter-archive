@@ -10,6 +10,8 @@ import (
 const (
 	yarn       = "yarn"
 	npm        = "npm"
+	mod        = "mod"
+	dep        = "dep"
 	standalone = "standalone"
 )
 

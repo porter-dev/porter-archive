@@ -168,7 +168,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf)
 
 	if err != nil {
-		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Status = slack.StatusHelmFailed
 		notifyOpts.Info = err.Error()
 
 		notifier.Notify(notifyOpts)
@@ -181,7 +181,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Status = slack.StatusHelmDeployed
 	notifyOpts.Version = rel.Version
 
 	notifier.Notify(notifyOpts)

@@ -153,7 +153,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	if upgradeErr != nil {
-		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Status = slack.StatusHelmFailed
 		notifyOpts.Info = upgradeErr.Error()
 
 		notifier.Notify(notifyOpts)
@@ -166,7 +166,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	notifyOpts.Status = string(helmRelease.Info.Status)
+	notifyOpts.Status = slack.StatusHelmDeployed
 	notifyOpts.Version = helmRelease.Version
 
 	notifier.Notify(notifyOpts)

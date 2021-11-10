@@ -1,6 +1,7 @@
 package buildpacks
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"sync"
@@ -9,11 +10,14 @@ import (
 )
 
 type apiNodeRuntime struct {
-	wg sync.WaitGroup
+	ghClient *github.Client
+	wg       sync.WaitGroup
 }
 
-func NewAPINodeRuntime() *apiNodeRuntime {
-	return &apiNodeRuntime{}
+func NewAPINodeRuntime(client *github.Client) *apiNodeRuntime {
+	return &apiNodeRuntime{
+		ghClient: client,
+	}
 }
 
 func (runtime *apiNodeRuntime) detectYarn(results chan struct {
@@ -99,7 +103,11 @@ func (runtime *apiNodeRuntime) detectStandalone(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiNodeRuntime) Detect(directoryContent []*github.RepositoryContent) map[string]interface{} {
+func (runtime *apiNodeRuntime) Detect(
+	directoryContent []*github.RepositoryContent,
+	owner string, name string,
+	repoContentOptions github.RepositoryContentGetOptions,
+) map[string]interface{} {
 	results := make(chan struct {
 		string
 		bool
@@ -124,15 +132,13 @@ func (runtime *apiNodeRuntime) Detect(directoryContent []*github.RepositoryConte
 	if atLeastOne {
 		if detected[yarn] || detected[npm] {
 			// it is safe to assume that the project contains a package.json
-			var packageJSONRef *github.RepositoryContent
-			for i := 0; i < len(directoryContent); i++ {
-				name := directoryContent[i].GetName()
-				if name == "package.json" {
-					packageJSONRef = directoryContent[i]
-					break
-				}
-			}
-			content, err := packageJSONRef.GetContent()
+			fileContent, _, _, err := runtime.ghClient.Repositories.GetContents(
+				context.Background(),
+				owner,
+				name,
+				"package.json",
+				&repoContentOptions,
+			)
 			if err != nil {
 				// FIXME: log somewhere
 				return nil
@@ -143,7 +149,7 @@ func (runtime *apiNodeRuntime) Detect(directoryContent []*github.RepositoryConte
 					Node string `json:"node"`
 				} `json:"engines"`
 			}
-			err = json.NewDecoder(strings.NewReader(content)).Decode(&packageJSON)
+			err = json.NewDecoder(strings.NewReader(*fileContent.Content)).Decode(&packageJSON)
 			if err != nil {
 				// FIXME: log somewhere
 				return nil

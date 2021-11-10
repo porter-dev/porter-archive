@@ -195,10 +195,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 		)
 	}
 
-	if listOpts.SortBy == "timestamp" {
-		// sort by the updated_at field
-		query = query.Order("updated_at desc").Order("id desc")
-	}
+	query = query.Order("updated_at desc").Order("id desc")
 
 	// get the count before limit and offset
 	var count int64

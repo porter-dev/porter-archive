@@ -1,7 +1,9 @@
 package kube_events
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -10,7 +12,9 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type CreateKubeEventHandler struct {
@@ -81,4 +85,106 @@ func (c *CreateKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusCreated)
+
+	if strings.ToLower(string(request.EventType)) == "critical" && strings.ToLower(request.ResourceType) == "pod" {
+		err := notifyPodCrashing(c.Config(), proj, cluster, request)
+
+		if err != nil {
+			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		}
+	}
+}
+
+func notifyPodCrashing(
+	config *config.Config,
+	project *models.Project,
+	cluster *models.Cluster,
+	event *types.CreateKubeEventRequest,
+) error {
+	notifConfig := &types.NotificationConfig{
+		Enabled: true,
+		Success: true,
+		Failure: true,
+	}
+
+	// attempt to get a matching Porter release to get the notification configuration
+	var conf *models.NotificationConfig
+	var err error
+	matchedRel := getMatchedPorterRelease(config, cluster.ID, event.OwnerName, event.Namespace)
+
+	if matchedRel != nil {
+		conf, err = config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
+
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			conf = &models.NotificationConfig{
+				Enabled: true,
+				Success: true,
+				Failure: true,
+			}
+
+			conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
+
+			if err == nil {
+				notifConfig = conf.ToNotificationConfigType()
+			}
+		} else if err == nil && conf != nil {
+			if !conf.ShouldNotify() {
+				return nil
+			}
+
+			notifConfig = conf.ToNotificationConfigType()
+		}
+	}
+
+	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
+
+	notifier := slack.NewSlackNotifier(notifConfig, slackInts...)
+
+	notifyOpts := &slack.NotifyOpts{
+		ProjectID:   cluster.ProjectID,
+		ClusterID:   cluster.ID,
+		ClusterName: cluster.Name,
+		Name:        event.OwnerName,
+		Namespace:   event.Namespace,
+		URL:         config.ServerConf.ServerURL,
+	}
+
+	notifyOpts.Status = slack.StatusPodCrashed
+
+	err = notifier.Notify(notifyOpts)
+
+	if err != nil {
+		return err
+	}
+
+	// update the last updated time
+	if matchedRel != nil && conf != nil {
+		conf.LastNotifiedTime = time.Now()
+		conf, err = config.Repo.NotificationConfig().UpdateNotificationConfig(conf)
+	}
+
+	return err
+}
+
+// getMatchedPorterRelease attempts to find a matching Porter release from the name of a controller.
+// For example, if the controller has a suffix "-web", it is likely a Porter web application, and
+// so we query for a Porter release with a matching name. Returns nil if no match is found
+func getMatchedPorterRelease(config *config.Config, clusterID uint, ownerName, namespace string) *models.Release {
+	matchingName := ""
+
+	if strings.Contains(ownerName, "-web") {
+		matchingName = strings.Split(ownerName, "-web")[0]
+	} else if strings.Contains(ownerName, "-worker") {
+		matchingName = strings.Split(ownerName, "-worker")[0]
+	} else if strings.Contains(ownerName, "-job") {
+		matchingName = strings.Split(ownerName, "-job")[0]
+	}
+
+	rel, err := config.Repo.Release().ReadRelease(clusterID, matchingName, namespace)
+
+	if err != nil {
+		return nil
+	}
+
+	return rel
 }

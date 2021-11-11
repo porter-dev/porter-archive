@@ -235,7 +235,7 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEvent *models.KubeSubEvent) error {
 	subEvent.KubeEventID = event.ID
 
-	return repo.db.Transaction(func(tx *gorm.DB) error {
+	return repo.db.Debug().Transaction(func(tx *gorm.DB) error {
 		var count int64
 
 		query := tx.Debug().Where("kube_event_id = ?", event.ID)
@@ -249,7 +249,7 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 		// if the count is greater than 20, remove the lowest-order events to implement a
 		// basic fixed-length buffer
 		if count >= 20 {
-			err := tx.Exec(`
+			err := tx.Debug().Exec(`
 			  DELETE FROM kube_sub_events 
 			  WHERE kube_event_id = ? AND 
 			  id NOT IN (
@@ -262,7 +262,7 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 			}
 		}
 
-		if err := tx.Create(subEvent).Error; err != nil {
+		if err := tx.Debug().Create(subEvent).Error; err != nil {
 			return err
 		}
 

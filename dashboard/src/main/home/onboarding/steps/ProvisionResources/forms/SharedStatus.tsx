@@ -3,9 +3,10 @@ import ProvisionerStatus, {
   TFResource,
   TFResourceError,
 } from "components/ProvisionerStatus";
+import { unionBy } from "lodash";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
-import { useWebsockets } from "shared/hooks/useWebsockets";
+import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 
 export const SharedStatus: React.FC<{
   setInfraStatus: (status: { hasError: boolean; description?: string }) => void;
@@ -435,6 +436,21 @@ type Desired = {
   resource_type: string;
 };
 
+type InfraCurrentResponse = {
+  version: number;
+  terraform_version: string;
+  serial: number;
+  lineage: string;
+  outputs: any;
+  resources: {
+    instances: any[];
+    mode: string;
+    name: string;
+    provider: string;
+    type: string;
+  }[];
+};
+
 export const StatusPage = ({
   filter: infraFilters,
   project_id,
@@ -446,13 +462,13 @@ export const StatusPage = ({
     closeWebsocket,
     closeAllWebsockets,
   } = useWebsockets();
-  const [isLoading, setIsLoading] = useState(true);
-  const [_tfModules, setTFModules] = useState<TFModule[]>([]);
+
   const {
     tfModules,
     initModule,
     updateDesired,
     updateModuleResources,
+    updateGlobalErrorsForModule,
   } = useTFModules();
 
   const infraExistsOnFilter = (currentInfra: Infra) => {
@@ -497,7 +513,8 @@ export const StatusPage = ({
         .then((res) => res?.data);
 
       updateDesired(infra_id, desired);
-      getProvisionedModules(infra_id);
+      await getProvisionedModules(infra_id);
+      connectToLiveUpdateModule(infra_id);
     } catch (error) {
       console.error(error);
       setTimeout(() => {
@@ -509,22 +526,147 @@ export const StatusPage = ({
   const getProvisionedModules = async (infra_id: number) => {
     try {
       const current = await api
-        .getInfraCurrent("<token>", {}, { project_id, infra_id })
+        .getInfraCurrent<InfraCurrentResponse>(
+          "<token>",
+          {},
+          { project_id, infra_id }
+        )
         .then((res) => res?.data);
-      console.log(current);
-      const provisionedResources = current?.resources?.map((resource: any) => {
-        return {
-          addr: `${resource?.type}.${resource?.name}`,
-        };
-      });
-      console.log(provisionedResources);
+
+      const provisionedResources: TFResource[] = current?.resources?.map(
+        (resource: any) => {
+          return {
+            addr: `${resource?.type}.${resource?.name}`,
+            provisioned: true,
+            errored: {
+              errored_out: false,
+            },
+          } as TFResource;
+        }
+      );
+
       updateModuleResources(infra_id, provisionedResources);
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const connectToLiveUpdateModule = (infra_id: number) => {
+    const websocketId = `${infra_id}`;
+    const apiPath = `/api/projects/${project_id}/infras/${infra_id}/logs`;
+
+    const wsConfig: NewWebsocketOptions = {
+      onopen: () => {
+        console.log(`connected to websocket for infra_id: ${websocketId}`);
+      },
+      onmessage: (evt: MessageEvent) => {
+        // parse the data
+        const parsedData = JSON.parse(evt.data);
+
+        const addedResources: TFResource[] = [];
+        const erroredResources: TFResource[] = [];
+        const globalErrors: TFResourceError[] = [];
+
+        for (const streamVal of parsedData) {
+          const streamValData = JSON.parse(streamVal?.Values?.data);
+
+          switch (streamValData?.type) {
+            case "apply_complete":
+              addedResources.push({
+                addr: streamValData?.hook?.resource?.addr,
+                provisioned: true,
+                errored: {
+                  errored_out: false,
+                },
+              });
+
+              break;
+            case "diagnostic":
+              if (streamValData["@level"] == "error") {
+                if (streamValData?.hook?.resource?.addr !== "") {
+                  erroredResources.push({
+                    addr: streamValData?.hook?.resource?.addr,
+                    provisioned: false,
+                    errored: {
+                      errored_out: true,
+                      error_context: streamValData["@message"],
+                    },
+                  });
+                } else {
+                  globalErrors.push({
+                    errored_out: true,
+                    error_context: streamValData["@message"],
+                  });
+                }
+              }
+            case "change_summary":
+            // console.log(streamValData);
+            // if (
+            //   streamValData.changes.add != 0 &&
+            //   streamValData["@level"] === "error"
+            // ) {
+            //   getDesiredState(infra_id, false);
+            // }
+            default:
+          }
+        }
+
+        updateModuleResources(infra_id, [
+          ...addedResources,
+          ...erroredResources,
+        ]);
+
+        updateGlobalErrorsForModule(infra_id, globalErrors);
+      },
+
+      onclose: () => {
+        console.log(`closing websocket for infra_id: ${websocketId}`);
+      },
+
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(`${websocketId}`);
+      },
+    };
+
+    newWebsocket(websocketId, apiPath, wsConfig);
+    openWebsocket(websocketId);
   };
 
   useEffect(() => {
     getInfras();
+    return () => {
+      closeAllWebsockets();
+    };
   }, []);
+
+  useEffect(() => {
+    if (!tfModules?.length) {
+      setInfraStatus(null);
+      return;
+    }
+    const hasModuleWithError = tfModules.find(
+      (module) => module.status === "error"
+    );
+    const hasModuleInCreatingState = tfModules.find(
+      (module) => module.status === "creating"
+    );
+
+    if (hasModuleInCreatingState) {
+      setInfraStatus(null);
+      return;
+    }
+
+    if (!hasModuleInCreatingState && !hasModuleWithError) {
+      setInfraStatus({ hasError: false });
+      return;
+    }
+
+    if (!hasModuleInCreatingState && hasModuleWithError) {
+      setInfraStatus({ hasError: true });
+      return;
+    }
+  }, [tfModules]);
 
   const sortedModules = tfModules.sort((a, b) =>
     b.id < a.id ? -1 : b.id > a.id ? 1 : 0
@@ -595,24 +737,66 @@ const useTFModules = () => {
 
   const updateModuleResources = (
     infraId: number,
-    provisionedResources: { addr: string }[]
+    updatedResources: TFResource[]
   ) => {
     const selectedModule = getModule(infraId);
-    debugger;
-    const updatedResources = selectedModule.resources.map((resource) => {
-      const resourceWasProvisioned = !!provisionedResources.find(
-        (pr) => pr.addr === resource.addr
+
+    const updatedModuleResources = selectedModule.resources.map((resource) => {
+      const correspondedResource: TFResource = updatedResources.find(
+        (updatedResource) => updatedResource.addr === resource.addr
       );
+      if (!correspondedResource) {
+        return resource;
+      }
+      let errored = undefined;
+
+      if (correspondedResource?.errored) {
+        errored = {
+          ...(correspondedResource?.errored || {}),
+        };
+      }
 
       return {
         ...resource,
-        provisioned: resourceWasProvisioned,
+        provisioned: correspondedResource.provisioned,
+        errored,
       };
     });
 
-    selectedModule.resources = updatedResources;
+    selectedModule.resources = updatedModuleResources;
+
+    const isModuleCreated =
+      selectedModule.resources.every((resource) => {
+        return resource.provisioned;
+      }) && !selectedModule.global_errors?.length;
+
+    const isModuleOnError =
+      selectedModule.resources.find((resource) => {
+        return resource.errored?.errored_out;
+      }) || selectedModule.global_errors?.length;
+
+    if (isModuleCreated) {
+      selectedModule.status = "created";
+    } else if (isModuleOnError) {
+      selectedModule.status = "error";
+    } else {
+      selectedModule.status = selectedModule.status;
+    }
 
     setModule(infraId, selectedModule);
+  };
+
+  const updateGlobalErrorsForModule = (
+    infraId: number,
+    globalErrors: TFResourceError[]
+  ) => {
+    const module = getModule(infraId);
+
+    module.global_errors = [...(module.global_errors || []), ...globalErrors];
+    if (globalErrors.length) {
+      module.status = "error";
+    }
+    setModule(infraId, module);
   };
 
   return {
@@ -620,5 +804,6 @@ const useTFModules = () => {
     initModule,
     updateDesired,
     updateModuleResources,
+    updateGlobalErrorsForModule,
   };
 };

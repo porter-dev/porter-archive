@@ -22,7 +22,7 @@ export interface TFModule {
 }
 
 export interface TFResourceError {
-  errored_out: boolean;
+  errored_out?: boolean;
   error_context?: string;
 }
 

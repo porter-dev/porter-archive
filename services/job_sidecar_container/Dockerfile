@@ -5,6 +5,6 @@ RUN apk --no-cache add procps coreutils
 
 COPY *.sh .
 
-RUN ["chmod", "+x", "./job_killer.sh", "./signal.sh"]
+RUN ["chmod", "+x", "./job_killer.sh", "./signal.sh", "./sidecar_killer.sh"]
 
 ENTRYPOINT ["./job_killer.sh"]

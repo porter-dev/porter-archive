@@ -1,16 +1,12 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Event } from "./EventsTab";
-import Loading from "../../../../../components/Loading";
 
 type CardProps = {
-  event: Event;
-  selectEvent?: () => void;
-  overrideName?: string;
+  subEvent: any;
 };
 
-export const getReadableDate = (s: number) => {
-  let ts = new Date(s * 1000);
+const getReadableDate = (s: number) => {
+  let ts = new Date(s);
   let date = ts.toLocaleDateString();
   let time = ts.toLocaleTimeString([], {
     hour: "numeric",
@@ -19,57 +15,49 @@ export const getReadableDate = (s: number) => {
   return `${time} ${date}`;
 };
 
-// Rename to Event Card
-const EventCard: React.FunctionComponent<CardProps> = ({
-  event,
-  selectEvent,
-  overrideName,
-}) => {
+const SubEventCard: React.FunctionComponent<CardProps> = ({ subEvent }) => {
   return (
-    <StyledCard onClick={() => selectEvent && selectEvent()}>
-      {event.status == 1 && (
-        <Icon status="normal" className="material-icons-outlined">
-          check
+    <StyledCard>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <Icon
+          status={subEvent.event_type.toLowerCase() as any}
+          className="material-icons-outlined"
+        >
+          {subEvent.event_type.toLowerCase() === "critical"
+            ? "report_problem"
+            : "info"}
         </Icon>
-      )}
-      {event.status == 2 && (
-        <Icon className="material-icons-outlined">autorenew</Icon>
-      )}
-      {event.status == 3 && (
-        <Icon status="critical" className="material-icons-outlined">
-          error
-        </Icon>
-      )}
-
-      <InfoWrapper>
-        <EventName>
-          {overrideName ? overrideName : event.name}
-          {event.status == 1 && " successful"}
-          {event.status == 2 && " in progress"}
-          {event.status == 3 && ` failed: ${event.info}`}
-        </EventName>
-        <TimestampContainer>
-          <i className="material-icons-outlined">access_time</i>
-          {getReadableDate(event.time)}
-        </TimestampContainer>
-      </InfoWrapper>
+        <InfoWrapper>
+          <div>
+            <EventName>Event type: {subEvent.event_type}</EventName>
+            <EventReason>Detail: {subEvent.message}</EventReason>
+          </div>
+        </InfoWrapper>
+      </div>
+      <TimestampContainer>
+        <i className="material-icons-outlined">access_time</i>
+        {getReadableDate(subEvent.timestamp)}
+      </TimestampContainer>
     </StyledCard>
   );
 };
 
-export default EventCard;
+export default SubEventCard;
 
 const StyledCard = styled.div`
   display: flex;
+  flex-direction: row;
   align-items: center;
   border: 1px solid #ffffff44;
   background: #ffffff08;
   margin-bottom: 10px;
   border-radius: 10px;
   padding-left: 20px;
+  padding-right: 20px;
   overflow: hidden;
   height: 80px;
   cursor: pointer;
+  justify-content: space-between;
 
   :hover {
     background: #ffffff11;
@@ -111,10 +99,18 @@ const TimestampContainer = styled.div`
   color: #ffffff55;
   font-size: 13px;
   margin-top: 8px;
+  justify-self: flex-end;
 
   > i {
     margin-right: 5px;
     font-size: 18px;
     margin-left: -1px;
   }
+`;
+
+const EventReason = styled.div`
+  font-size: 16px;
+  font-family: "Work Sans", sans-serif;
+  color: #ffffff;
+  margin-top: 8px;
 `;

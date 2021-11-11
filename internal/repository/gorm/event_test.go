@@ -150,6 +150,32 @@ func TestListKubeEventsByProjectIDWithSkip(t *testing.T) {
 	}, tester.initKubeEvents[10:35])
 }
 
+func TestDeleteKubeEvents(t *testing.T) {
+	suffix, _ := repository.GenerateRandomBytes(4)
+
+	tester := &tester{
+		dbFileName: fmt.Sprintf("./porter_delete_events_%s.db", suffix),
+	}
+
+	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initCluster(tester, t)
+	initKubeEvents(tester, t)
+	defer cleanup(tester, t)
+
+	// delete a specific event and then test list again
+	err := tester.repo.KubeEvent().DeleteEvent(11)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	testListKubeEventsByProjectID(tester, t, 1, true, &types.ListKubeEventRequest{
+		Limit: 25,
+		Skip:  10,
+	}, tester.initKubeEvents[11:36])
+}
+
 func testListKubeEventsByProjectID(tester *tester, t *testing.T, clusterID uint, decrypt bool, opts *types.ListKubeEventRequest, expKubeEvents []*models.KubeEvent) {
 	t.Helper()
 

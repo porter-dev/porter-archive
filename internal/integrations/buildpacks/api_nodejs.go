@@ -32,7 +32,7 @@ func NewAPINodeRuntime() APIRuntime {
 }
 
 // FIXME: should be called once at the top-level somewhere in the backend
-func populatePacks(client *github.Client) map[string]*BuildpackInfo {
+func populateNodePacks(client *github.Client) map[string]*BuildpackInfo {
 	packs := make(map[string]*BuildpackInfo)
 
 	repoRelease, _, err := client.Repositories.GetLatestRelease(context.Background(), "paketo-buildpacks", "nodejs")
@@ -47,19 +47,19 @@ func populatePacks(client *github.Client) map[string]*BuildpackInfo {
 		},
 	)
 	if err != nil {
-		fmt.Printf("Error fetching contents of buildpack.toml for packeto-buildpacks/node: %v\n", err)
+		fmt.Printf("Error fetching contents of buildpack.toml for packeto-buildpacks/nodejs: %v\n", err)
 		return nil
 	}
 
 	data, err := fileContent.GetContent()
 	if err != nil {
-		fmt.Printf("Error calling GetContent() on buildpack.toml for packeto-buildpacks/node: %v\n", err)
+		fmt.Printf("Error calling GetContent() on buildpack.toml for packeto-buildpacks/nodejs: %v\n", err)
 		return nil
 	}
 
 	buildpackToml, err := toml.Load(data)
 	if err != nil {
-		fmt.Printf("Error while reading %s: %v\n", nodejsTomlFile, err)
+		fmt.Printf("Error while reading buildpack.toml from packeto-buildpacks/nodejs: %v\n", err)
 		os.Exit(1)
 	}
 	order := buildpackToml.Get("order").([]*toml.Tree)
@@ -275,7 +275,7 @@ func (runtime *apiNodeRuntime) Detect(
 	owner, name, path string,
 	repoContentOptions github.RepositoryContentGetOptions,
 ) *RuntimeResponse {
-	runtime.packs = populatePacks(client)
+	runtime.packs = populateNodePacks(client)
 
 	results := make(chan struct {
 		string
@@ -293,150 +293,144 @@ func (runtime *apiNodeRuntime) Detect(
 	runtime.wg.Wait()
 	close(results)
 
-	atLeastOne := false
 	detected := make(map[string]bool)
 	for result := range results {
-		if result.bool {
-			atLeastOne = true
-		}
 		detected[result.string] = result.bool
 	}
 
-	if atLeastOne {
-		if detected[yarn] || detected[npm] {
-			// it is safe to assume that the project contains a package.json
-			fmt.Println("package.json file detected")
-			fileContent, _, _, err := client.Repositories.GetContents(
-				context.Background(),
-				owner,
-				name,
-				fmt.Sprintf("%s/package.json", path),
-				&repoContentOptions,
-			)
-			if err != nil {
-				fmt.Printf("Error fetching contents of package.json: %v\n", err)
-				return nil
-			}
-			var packageJSON struct {
-				Scripts map[string]string `json:"scripts"`
-				Engines struct {
-					Node string `json:"node"`
-				} `json:"engines"`
-			}
+	if detected[yarn] || detected[npm] {
+		// it is safe to assume that the project contains a package.json
+		fmt.Println("package.json file detected")
+		fileContent, _, _, err := client.Repositories.GetContents(
+			context.Background(),
+			owner,
+			name,
+			fmt.Sprintf("%s/package.json", path),
+			&repoContentOptions,
+		)
+		if err != nil {
+			fmt.Printf("Error fetching contents of package.json: %v\n", err)
+			return nil
+		}
+		var packageJSON struct {
+			Scripts map[string]string `json:"scripts"`
+			Engines struct {
+				Node string `json:"node"`
+			} `json:"engines"`
+		}
 
-			data, err := fileContent.GetContent()
-			if err != nil {
-				fmt.Printf("Error calling GetContent() on package.json: %v\n", err)
-				return nil
-			}
-			err = json.NewDecoder(strings.NewReader(data)).Decode(&packageJSON)
-			if err != nil {
-				fmt.Printf("Error decoding package.json contents to struct: %v\n", err)
-				return nil
-			}
+		data, err := fileContent.GetContent()
+		if err != nil {
+			fmt.Printf("Error calling GetContent() on package.json: %v\n", err)
+			return nil
+		}
+		err = json.NewDecoder(strings.NewReader(data)).Decode(&packageJSON)
+		if err != nil {
+			fmt.Printf("Error decoding package.json contents to struct: %v\n", err)
+			return nil
+		}
 
-			if packageJSON.Engines.Node == "" {
-				// we should now check for the node engine version in .nvmrc and then .node-version
-				nvmrcFound := false
-				nodeVersionFound := false
-				for i := 0; i < len(directoryContent); i++ {
-					name := directoryContent[i].GetName()
-					if name == ".nvmrc" {
-						nvmrcFound = true
-					} else if name == ".node-version" {
-						nodeVersionFound = true
-					}
-				}
-
-				if nvmrcFound {
-					// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
-					fileContent, _, _, err = client.Repositories.GetContents(
-						context.Background(),
-						owner,
-						name,
-						fmt.Sprintf("%s/.nvmrc", path),
-						&repoContentOptions,
-					)
-					if err != nil {
-						fmt.Printf("Error fetching contents of .nvmrc: %v\n", err)
-						return nil
-					}
-					data, err = fileContent.GetContent()
-					if err != nil {
-						fmt.Printf("Error calling GetContent() on .nvmrc: %v\n", err)
-						return nil
-					}
-					nvmrcVersion, err := validateNvmrc(data)
-					if err != nil {
-						fmt.Printf("Error validating .nvmrc: %v\n", err)
-						return nil
-					}
-					nvmrcVersion = formatNvmrcContent(nvmrcVersion)
-
-					if nvmrcVersion != "*" {
-						packageJSON.Engines.Node = data
-					}
-				}
-
-				if packageJSON.Engines.Node == "" && nodeVersionFound {
-					// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/node_version_parser.go
-					fileContent, _, _, err = client.Repositories.GetContents(
-						context.Background(),
-						owner,
-						name,
-						fmt.Sprintf("%s/.node-version", path),
-						&repoContentOptions,
-					)
-					if err != nil {
-						fmt.Printf("Error fetching contents of .node-version: %v\n", err)
-						return nil
-					}
-					data, err = fileContent.GetContent()
-					if err != nil {
-						fmt.Printf("Error calling GetContent() on .node-version: %v\n", err)
-						return nil
-					}
-					nodeVersion, err := validateNodeVersion(data)
-					if err != nil {
-						fmt.Printf("Error validating .node-version: %v\n", err)
-						return nil
-					}
-					if nodeVersion != "" {
-						packageJSON.Engines.Node = nodeVersion
-					}
+		if packageJSON.Engines.Node == "" {
+			// we should now check for the node engine version in .nvmrc and then .node-version
+			nvmrcFound := false
+			nodeVersionFound := false
+			for i := 0; i < len(directoryContent); i++ {
+				name := directoryContent[i].GetName()
+				if name == ".nvmrc" {
+					nvmrcFound = true
+				} else if name == ".node-version" {
+					nodeVersionFound = true
 				}
 			}
 
-			if packageJSON.Engines.Node == "" {
-				// use the default node engine version from https://github.com/paketo-buildpacks/node-engine/blob/main/buildpack.toml
-				packageJSON.Engines.Node = "16.*.*"
+			if nvmrcFound {
+				// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
+				fileContent, _, _, err = client.Repositories.GetContents(
+					context.Background(),
+					owner,
+					name,
+					fmt.Sprintf("%s/.nvmrc", path),
+					&repoContentOptions,
+				)
+				if err != nil {
+					fmt.Printf("Error fetching contents of .nvmrc: %v\n", err)
+					return nil
+				}
+				data, err = fileContent.GetContent()
+				if err != nil {
+					fmt.Printf("Error calling GetContent() on .nvmrc: %v\n", err)
+					return nil
+				}
+				nvmrcVersion, err := validateNvmrc(data)
+				if err != nil {
+					fmt.Printf("Error validating .nvmrc: %v\n", err)
+					return nil
+				}
+				nvmrcVersion = formatNvmrcContent(nvmrcVersion)
+
+				if nvmrcVersion != "*" {
+					packageJSON.Engines.Node = data
+				}
 			}
 
-			if detected[yarn] {
-				fmt.Printf("NodeJS yarn runtime detected for %s/%s\n", owner, name)
-				return &RuntimeResponse{
-					Name:       "Node.js",
-					Buildpacks: runtime.packs[yarn],
-					Runtime:    yarn,
-					Config: map[string]interface{}{
-						"scripts":     packageJSON.Scripts,
-						"node_engine": packageJSON.Engines.Node,
-					},
+			if packageJSON.Engines.Node == "" && nodeVersionFound {
+				// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/node_version_parser.go
+				fileContent, _, _, err = client.Repositories.GetContents(
+					context.Background(),
+					owner,
+					name,
+					fmt.Sprintf("%s/.node-version", path),
+					&repoContentOptions,
+				)
+				if err != nil {
+					fmt.Printf("Error fetching contents of .node-version: %v\n", err)
+					return nil
 				}
-			} else {
-				fmt.Printf("NodeJS npm runtime detected for %s/%s\n", owner, name)
-				return &RuntimeResponse{
-					Name:       "Node.js",
-					Buildpacks: runtime.packs[npm],
-					Runtime:    npm,
-					Config: map[string]interface{}{
-						"scripts":     packageJSON.Scripts,
-						"node_engine": packageJSON.Engines.Node,
-					},
+				data, err = fileContent.GetContent()
+				if err != nil {
+					fmt.Printf("Error calling GetContent() on .node-version: %v\n", err)
+					return nil
+				}
+				nodeVersion, err := validateNodeVersion(data)
+				if err != nil {
+					fmt.Printf("Error validating .node-version: %v\n", err)
+					return nil
+				}
+				if nodeVersion != "" {
+					packageJSON.Engines.Node = nodeVersion
 				}
 			}
 		}
 
+		if packageJSON.Engines.Node == "" {
+			// use the default node engine version from https://github.com/paketo-buildpacks/node-engine/blob/main/buildpack.toml
+			packageJSON.Engines.Node = "16.*.*"
+		}
+
+		if detected[yarn] {
+			fmt.Printf("NodeJS yarn runtime detected for %s/%s\n", owner, name)
+			return &RuntimeResponse{
+				Name:       "Node.js",
+				Buildpacks: runtime.packs[yarn],
+				Runtime:    yarn,
+				Config: map[string]interface{}{
+					"scripts":     packageJSON.Scripts,
+					"node_engine": packageJSON.Engines.Node,
+				},
+			}
+		} else {
+			fmt.Printf("NodeJS npm runtime detected for %s/%s\n", owner, name)
+			return &RuntimeResponse{
+				Name:       "Node.js",
+				Buildpacks: runtime.packs[npm],
+				Runtime:    npm,
+				Config: map[string]interface{}{
+					"scripts":     packageJSON.Scripts,
+					"node_engine": packageJSON.Engines.Node,
+				},
+			}
+		}
+	} else if detected[standalone] {
 		fmt.Printf("NodeJS standalone runtime detected for %s/%s\n", owner, name)
 		return &RuntimeResponse{
 			Name:       "Node.js",

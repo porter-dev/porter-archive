@@ -85,7 +85,7 @@ func (repo *KubeEventRepository) CreateEvent(
 	event *models.KubeEvent,
 ) (*models.KubeEvent, error) {
 	// read the count of the events in the DB
-	query := repo.db.Debug().Where("project_id = ? AND cluster_id = ?", event.ProjectID, event.ClusterID)
+	query := repo.db.Where("project_id = ? AND cluster_id = ?", event.ProjectID, event.ClusterID)
 
 	var count int64
 
@@ -99,7 +99,7 @@ func (repo *KubeEventRepository) CreateEvent(
 	// basic fixed-length buffer
 	if count >= 500 {
 		// first, delete the matching sub events
-		err := repo.db.Debug().Exec(`
+		err := repo.db.Exec(`
 		  DELETE FROM kube_sub_events 
 		  WHERE kube_event_id NOT IN (
 			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY updated_at desc, id desc LIMIT 499
@@ -111,7 +111,7 @@ func (repo *KubeEventRepository) CreateEvent(
 		}
 
 		// then, delete the matching events
-		err = repo.db.Debug().Exec(`
+		err = repo.db.Exec(`
 		  DELETE FROM kube_events 
 		  WHERE (project_id = ? AND cluster_id = ?) AND id NOT IN (
 			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY updated_at desc, id desc LIMIT 499
@@ -123,7 +123,7 @@ func (repo *KubeEventRepository) CreateEvent(
 		}
 	}
 
-	if err := repo.db.Debug().Create(event).Error; err != nil {
+	if err := repo.db.Create(event).Error; err != nil {
 		return nil, err
 	}
 
@@ -233,7 +233,7 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 
 	var count int64
 
-	query := repo.db.Debug().Where("kube_event_id = ?", event.ID)
+	query := repo.db.Where("kube_event_id = ?", event.ID)
 
 	if err := query.Model([]*models.KubeSubEvent{}).Count(&count).Error; err != nil {
 		return err
@@ -244,7 +244,7 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 	// if the count is greater than 20, remove the lowest-order events to implement a
 	// basic fixed-length buffer
 	if count >= 20 {
-		err := repo.db.Debug().Exec(`
+		err := repo.db.Exec(`
 			  DELETE FROM kube_sub_events 
 			  WHERE kube_event_id = ? AND 
 			  id NOT IN (
@@ -265,12 +265,12 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 		},
 	}
 
-	if err := repo.db.Debug().Model(shallowCopy).Association("SubEvents").Append(subEvent); err != nil {
+	if err := repo.db.Model(shallowCopy).Association("SubEvents").Append(subEvent); err != nil {
 		return err
 	}
 
 	// only update the updated_at field for the event
-	if err := repo.db.Debug().Model(shallowCopy).Update("updated_at", time.Now()).Error; err != nil {
+	if err := repo.db.Model(shallowCopy).Update("updated_at", time.Now()).Error; err != nil {
 		return err
 	}
 
@@ -289,10 +289,10 @@ func (repo *KubeEventRepository) DeleteEvent(
 
 func deleteEventPermanently(id uint, db *gorm.DB) error {
 	// delete all subevents first
-	if err := db.Debug().Unscoped().Where("kube_event_id = ?", id).Delete(&models.KubeSubEvent{}).Error; err != nil {
+	if err := db.Unscoped().Where("kube_event_id = ?", id).Delete(&models.KubeSubEvent{}).Error; err != nil {
 		return err
 	}
 
 	// delete event
-	return db.Debug().Preload("SubEvents").Unscoped().Where("id = ?", id).Delete(&models.KubeEvent{}).Error
+	return db.Preload("SubEvents").Unscoped().Where("id = ?", id).Delete(&models.KubeEvent{}).Error
 }

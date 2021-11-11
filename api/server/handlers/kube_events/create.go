@@ -151,8 +151,6 @@ func notifyPodCrashing(
 		notifConfig = conf.ToNotificationConfigType()
 	}
 
-	fmt.Println("CONF IS", conf, notifConfig, conf.ShouldNotify(), conf.LastNotifiedTime, time.Now().Add(-10*time.Minute))
-
 	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
 
 	notifier := slack.NewSlackNotifier(notifConfig, slackInts...)

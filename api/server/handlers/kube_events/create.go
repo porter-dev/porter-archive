@@ -125,18 +125,27 @@ func notifyPodCrashing(
 
 		conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
 
-		if err == nil {
-			notifConfig = conf.ToNotificationConfigType()
+		if err != nil {
+			fmt.Println("GOT AN ERROR 0", err)
+
+			return err
 		}
+
+		notifConfig = conf.ToNotificationConfigType()
 	} else if err != nil {
+		fmt.Println("GOT AN ERROR 1", err)
+
 		return err
 	} else if err == nil && conf != nil {
 		if !conf.ShouldNotify() {
+			fmt.Println("SHOULD NOTIFY WAS", conf.ShouldNotify())
 			return nil
 		}
 
 		notifConfig = conf.ToNotificationConfigType()
 	}
+
+	fmt.Println("CONF IS", conf, notifConfig, conf.ShouldNotify(), conf.LastNotifiedTime, time.Now().Add(-10*time.Minute))
 
 	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
 

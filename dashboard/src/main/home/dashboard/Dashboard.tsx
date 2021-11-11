@@ -16,7 +16,7 @@ import TitleSection from "components/TitleSection";
 
 import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { SharedStatus } from "../onboarding/steps/ProvisionResources/forms/SharedStatus";
+import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/SharedStatus";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -107,10 +107,10 @@ class Dashboard extends Component<PropsType, StateType> {
   renderTabContents = () => {
     if (this.currentTab() === "provisioner") {
       return (
-        <SharedStatus
+        <StatusPage
           filter={[]}
           project_id={this.props.projectId}
-          setInfraStatus={(val: string) => null}
+          setInfraStatus={() => null}
         />
       );
     } else if (this.currentTab() === "create-cluster") {

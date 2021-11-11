@@ -257,12 +257,27 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 		}
 	}
 
-	if err := repo.db.Debug().Model(event).Association("SubEvents").Append(subEvent); err != nil {
+	// we construct a shallow copy here that just populates the primary key, because otherwise gorm
+	// attempts to write subevents that have already been written via the association.
+	shallowCopy := &models.KubeEvent{
+		Model: gorm.Model{
+			ID: event.ID,
+		},
+	}
+
+	if err := repo.db.Debug().Model(shallowCopy).Association("SubEvents").Append(subEvent); err != nil {
 		return err
 	}
 
 	// only update the updated_at field for the event
-	return repo.db.Debug().Model(event).Update("updated_at", time.Now()).Error
+	if err := repo.db.Debug().Model(shallowCopy).Update("updated_at", time.Now()).Error; err != nil {
+		return err
+	}
+
+	event.SubEvents = append(event.SubEvents, shallowCopy.SubEvents...)
+	event.UpdatedAt = shallowCopy.UpdatedAt
+
+	return nil
 }
 
 // DeleteEvent deletes an event by ID

@@ -126,19 +126,25 @@ func notifyPodCrashing(
 		conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
 
 		if err != nil {
-			fmt.Println("GOT AN ERROR 0", err)
+			return err
+		}
 
+		if err != nil {
+			return err
+		}
+
+		matchedRel.NotificationConfig = conf.ID
+		matchedRel, err = config.Repo.Release().UpdateRelease(matchedRel)
+
+		if err != nil {
 			return err
 		}
 
 		notifConfig = conf.ToNotificationConfigType()
 	} else if err != nil {
-		fmt.Println("GOT AN ERROR 1", err)
-
 		return err
 	} else if err == nil && conf != nil {
 		if !conf.ShouldNotify() {
-			fmt.Println("SHOULD NOTIFY WAS", conf.ShouldNotify())
 			return nil
 		}
 

@@ -12,6 +12,9 @@ const (
 	npm        = "npm"
 	mod        = "mod"
 	dep        = "dep"
+	pipenv     = "pipenv"
+	pip        = "pip"
+	conda      = "conda"
 	standalone = "standalone"
 )
 
@@ -76,4 +79,5 @@ type APIRuntime interface {
 var APIRuntimes = []APIRuntime{
 	NewAPIGoRuntime(),
 	NewAPINodeRuntime(),
+	NewAPIPythonRuntime(),
 }

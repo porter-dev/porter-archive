@@ -89,29 +89,26 @@ func (runtime *apiGoRuntime) Detect(
 	runtime.wg.Wait()
 	close(results)
 
-	atLeastOne := false
 	detected := make(map[string]bool)
 	for result := range results {
-		if result.bool {
-			atLeastOne = true
-		}
 		detected[result.string] = result.bool
 	}
 
-	if atLeastOne {
-		// TODO: how to access config values for Go projects
-		if detected[mod] {
-			return &RuntimeResponse{
-				Name:    "Go",
-				Runtime: mod,
-			}
-		} else if detected[dep] {
-			return &RuntimeResponse{
-				Name:    "Go",
-				Runtime: dep,
-			}
+	// TODO: how to access config values for Go projects
+	if detected[mod] {
+		fmt.Printf("Go mod runtime detected for %s/%s\n", owner, name)
+		return &RuntimeResponse{
+			Name:    "Go",
+			Runtime: mod,
+		}
+	} else if detected[dep] {
+		fmt.Printf("Go dep runtime detected for %s/%s\n", owner, name)
+		return &RuntimeResponse{
+			Name:    "Go",
+			Runtime: dep,
 		}
 	}
 
+	fmt.Printf("No Go runtime detected for %s/%s\n", owner, name)
 	return nil
 }

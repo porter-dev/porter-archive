@@ -3,7 +3,7 @@ import ProvisionerStatus, {
   TFResource,
   TFResourceError,
 } from "components/ProvisionerStatus";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 
@@ -23,8 +23,8 @@ export const SharedStatus: React.FC<{
   const [isLoadingState, setIsLoadingState] = useState(true);
 
   const updateTFModules = (
-    index: number,
-    addedResources: TFResource[],
+    index: number, // TF module index
+    addedResources: TFResource[], //
     erroredResources: TFResource[],
     globalErrors: TFResourceError[],
     gotDesired?: boolean
@@ -281,11 +281,11 @@ export const SharedStatus: React.FC<{
 
             // convert current state to a lookup table
             var currentMap: Map<string, string> = new Map();
-
+            debugger;
             current?.resources?.forEach((val: any) => {
               currentMap.set(val?.type + "." + val?.name, "");
             });
-
+            console.log(current);
             mergeCurrentAndDesired(index, desired, currentMap);
           })
           .catch((err) => {
@@ -362,4 +362,263 @@ export const SharedStatus: React.FC<{
       <ProvisionerStatus modules={sortedModules} />
     </>
   );
+};
+
+type Props = {
+  setInfraStatus: (status: { hasError: boolean; description?: string }) => void;
+  project_id: number;
+  filter: string[];
+};
+
+const infra = [
+  {
+    id: 2758,
+    created_at: "2021-11-09T19:24:00.485269Z",
+    updated_at: "2021-11-09T19:24:17.820528Z",
+    project_id: 2380,
+    kind: "docr",
+    status: "created",
+    do_integration_id: 1717,
+    last_applied: { docr_name: "aide", docr_subscription_tier: "basic" },
+  },
+  {
+    id: 2759,
+    created_at: "2021-11-09T19:24:00.66398Z",
+    updated_at: "2021-11-09T19:33:39.913885Z",
+    project_id: 2380,
+    kind: "doks",
+    status: "created",
+    do_integration_id: 1717,
+    last_applied: { cluster_name: "aide-cluster", do_region: "nyc1" },
+  },
+];
+
+type Infra = {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  project_id: number;
+  kind: string;
+  status: string;
+  last_applied: any;
+};
+
+interface TMPTFModule {
+  id: number;
+  kind: string;
+  status: string;
+  created_at: string;
+  global_errors?: TFResourceError[];
+  got_desired: boolean;
+  // optional resources, if not created
+  resources?: TFResource[];
+  desired?: TFResource[];
+}
+
+const desiredExample = {
+  addr: "google_compute_address.lb",
+  errored: { errored_out: false },
+  implied_provider: "google",
+  resource: "google_compute_address.lb",
+  resource_name: "lb",
+  resource_type: "google_compute_address",
+};
+
+type Desired = {
+  addr: string;
+  errored:
+    | { errored_out: false }
+    | { errored_out: true; error_context: string };
+  implied_provider: string;
+  resource: string;
+  resource_name: string;
+  resource_type: string;
+};
+
+export const StatusPage = ({
+  filter: infraFilters,
+  project_id,
+  setInfraStatus,
+}: Props) => {
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeWebsocket,
+    closeAllWebsockets,
+  } = useWebsockets();
+  const [isLoading, setIsLoading] = useState(true);
+  const [_tfModules, setTFModules] = useState<TFModule[]>([]);
+  const {
+    tfModules,
+    initModule,
+    updateDesired,
+    updateModuleResources,
+  } = useTFModules();
+
+  const infraExistsOnFilter = (currentInfra: Infra) => {
+    if (!Array.isArray(infraFilters) || !infraFilters?.length) {
+      return true;
+    }
+
+    if (infraFilters.includes(currentInfra.kind)) {
+      return true;
+    }
+    return false;
+  };
+
+  const getInfras = async () => {
+    try {
+      const res = await api.getInfra<Infra[]>(
+        "<token>",
+        {},
+        { project_id: project_id }
+      );
+      const matchedInfras = res.data.filter(infraExistsOnFilter);
+
+      // Check if all infras are created then enable continue button
+      if (matchedInfras.every((infra) => infra.status === "created")) {
+        setInfraStatus({
+          hasError: false,
+        });
+      }
+
+      // Init tf modules based on matched infras
+      matchedInfras.forEach((infra) => {
+        initModule(infra);
+        getDesiredState(infra.id);
+      });
+    } catch (error) {}
+  };
+
+  const getDesiredState = async (infra_id: number) => {
+    try {
+      const desired = await api
+        .getInfraDesired("<token>", {}, { project_id, infra_id })
+        .then((res) => res?.data);
+
+      updateDesired(infra_id, desired);
+      getProvisionedModules(infra_id);
+    } catch (error) {
+      console.error(error);
+      setTimeout(() => {
+        getDesiredState(infra_id);
+      }, 500);
+    }
+  };
+
+  const getProvisionedModules = async (infra_id: number) => {
+    try {
+      const current = await api
+        .getInfraCurrent("<token>", {}, { project_id, infra_id })
+        .then((res) => res?.data);
+      console.log(current);
+      const provisionedResources = current?.resources?.map((resource: any) => {
+        return {
+          addr: `${resource?.type}.${resource?.name}`,
+        };
+      });
+      console.log(provisionedResources);
+      updateModuleResources(infra_id, provisionedResources);
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    getInfras();
+  }, []);
+
+  const sortedModules = tfModules.sort((a, b) =>
+    b.id < a.id ? -1 : b.id > a.id ? 1 : 0
+  );
+
+  return <ProvisionerStatus modules={sortedModules} />;
+};
+
+type TFModulesState = {
+  [key: number]: TFModule;
+};
+
+const useTFModules = () => {
+  const modules = useRef<TFModulesState>({});
+  const [tfModules, setTfModules] = useState<TFModule[]>([]);
+
+  const updateTFModules = (): void => {
+    if (typeof modules.current !== "object") {
+      setTfModules([]);
+    }
+
+    const sortedModules = Object.values(modules.current).sort((a, b) =>
+      b.id < a.id ? -1 : b.id > a.id ? 1 : 0
+    );
+    setTfModules(sortedModules);
+  };
+
+  const initModule = (infra: Infra) => {
+    const module: TFModule = {
+      id: infra.id,
+      kind: infra.kind,
+      status: infra.status,
+      got_desired: false,
+      created_at: infra.created_at,
+    };
+    modules.current[infra.id] = module;
+  };
+
+  const setModule = (infraId: number, module: TFModule) => {
+    modules.current = {
+      ...modules.current,
+      [infraId]: module,
+    };
+    updateTFModules();
+  };
+
+  const getModule = (infraId: number) => {
+    return { ...modules.current[infraId] };
+  };
+
+  const updateDesired = (infraId: number, desired: Desired[]) => {
+    const selectedModule = getModule(infraId);
+
+    if (!Array.isArray(selectedModule?.resources)) {
+      selectedModule.resources = [];
+    }
+
+    selectedModule.resources = desired.map((d) => {
+      return {
+        addr: d.addr,
+        errored: d.errored,
+        provisioned: false,
+      };
+    });
+
+    setModule(infraId, selectedModule);
+  };
+
+  const updateModuleResources = (
+    infraId: number,
+    provisionedResources: { addr: string }[]
+  ) => {
+    const selectedModule = getModule(infraId);
+    debugger;
+    const updatedResources = selectedModule.resources.map((resource) => {
+      const resourceWasProvisioned = !!provisionedResources.find(
+        (pr) => pr.addr === resource.addr
+      );
+
+      return {
+        ...resource,
+        provisioned: resourceWasProvisioned,
+      };
+    });
+
+    selectedModule.resources = updatedResources;
+
+    setModule(infraId, selectedModule);
+  };
+
+  return {
+    tfModules,
+    initModule,
+    updateDesired,
+    updateModuleResources,
+  };
 };

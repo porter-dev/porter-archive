@@ -12,7 +12,7 @@ import ProviderSelector, {
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 import backArrow from "assets/back_arrow.png";
-import { SharedStatus } from "./forms/SharedStatus";
+import { SharedStatus, StatusPage } from "./forms/SharedStatus";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
 
@@ -108,7 +108,7 @@ const ProvisionResources: React.FC<Props> = () => {
       case "status":
         return (
           <>
-            <SharedStatus
+            <StatusPage
               project_id={project?.id}
               filter={getFilterOpts()}
               setInfraStatus={setInfraStatus}

@@ -23,12 +23,16 @@ var (
 )
 
 type apiNodeRuntime struct {
-	ghClient *github.Client
-	wg       sync.WaitGroup
-	packs    map[string]*BuildpackInfo
+	wg    sync.WaitGroup
+	packs map[string]*BuildpackInfo
 }
 
-func NewAPINodeRuntime(client *github.Client) *apiNodeRuntime {
+func NewAPINodeRuntime() APIRuntime {
+	return &apiNodeRuntime{}
+}
+
+// FIXME: should be called once at the top-level somewhere in the backend
+func populatePacks(client *github.Client) map[string]*BuildpackInfo {
 	packs := make(map[string]*BuildpackInfo)
 
 	repoRelease, _, err := client.Repositories.GetLatestRelease(context.Background(), "paketo-buildpacks", "nodejs")
@@ -118,10 +122,7 @@ func NewAPINodeRuntime(client *github.Client) *apiNodeRuntime {
 	packs[standalone].addEnvVar("BP_LAUNCHPOINT", "")
 	packs[standalone].addEnvVar("BP_LIVE_RELOAD_ENABLED", "")
 
-	return &apiNodeRuntime{
-		ghClient: client,
-		packs:    packs,
-	}
+	return packs
 }
 
 func (runtime *apiNodeRuntime) detectYarn(results chan struct {
@@ -269,10 +270,13 @@ func validateNodeVersion(content string) (string, error) {
 }
 
 func (runtime *apiNodeRuntime) Detect(
+	client *github.Client,
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,
 	repoContentOptions github.RepositoryContentGetOptions,
-) map[string]interface{} {
+) *RuntimeResponse {
+	runtime.packs = populatePacks(client)
+
 	results := make(chan struct {
 		string
 		bool
@@ -302,7 +306,7 @@ func (runtime *apiNodeRuntime) Detect(
 		if detected[yarn] || detected[npm] {
 			// it is safe to assume that the project contains a package.json
 			fmt.Println("package.json file detected")
-			fileContent, _, _, err := runtime.ghClient.Repositories.GetContents(
+			fileContent, _, _, err := client.Repositories.GetContents(
 				context.Background(),
 				owner,
 				name,
@@ -346,7 +350,7 @@ func (runtime *apiNodeRuntime) Detect(
 
 				if nvmrcFound {
 					// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
-					fileContent, _, _, err = runtime.ghClient.Repositories.GetContents(
+					fileContent, _, _, err = client.Repositories.GetContents(
 						context.Background(),
 						owner,
 						name,
@@ -376,7 +380,7 @@ func (runtime *apiNodeRuntime) Detect(
 
 				if packageJSON.Engines.Node == "" && nodeVersionFound {
 					// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/node_version_parser.go
-					fileContent, _, _, err = runtime.ghClient.Repositories.GetContents(
+					fileContent, _, _, err = client.Repositories.GetContents(
 						context.Background(),
 						owner,
 						name,
@@ -410,27 +414,34 @@ func (runtime *apiNodeRuntime) Detect(
 
 			if detected[yarn] {
 				fmt.Printf("NodeJS yarn runtime detected for %s/%s\n", owner, name)
-				return map[string]interface{}{
-					"buildpacks":  runtime.packs[yarn],
-					"runtime":     yarn,
-					"scripts":     packageJSON.Scripts,
-					"node_engine": packageJSON.Engines.Node,
+				return &RuntimeResponse{
+					Name:       "Node.js",
+					Buildpacks: runtime.packs[yarn],
+					Runtime:    yarn,
+					Config: map[string]interface{}{
+						"scripts":     packageJSON.Scripts,
+						"node_engine": packageJSON.Engines.Node,
+					},
 				}
 			} else {
 				fmt.Printf("NodeJS npm runtime detected for %s/%s\n", owner, name)
-				return map[string]interface{}{
-					"buildpacks":  runtime.packs[npm],
-					"runtime":     npm,
-					"scripts":     packageJSON.Scripts,
-					"node_engine": packageJSON.Engines.Node,
+				return &RuntimeResponse{
+					Name:       "Node.js",
+					Buildpacks: runtime.packs[npm],
+					Runtime:    npm,
+					Config: map[string]interface{}{
+						"scripts":     packageJSON.Scripts,
+						"node_engine": packageJSON.Engines.Node,
+					},
 				}
 			}
 		}
 
 		fmt.Printf("NodeJS standalone runtime detected for %s/%s\n", owner, name)
-		return map[string]interface{}{
-			"buildpacks": runtime.packs[standalone],
-			"runtime":    "node-standalone",
+		return &RuntimeResponse{
+			Name:       "Node.js",
+			Buildpacks: runtime.packs[standalone],
+			Runtime:    standalone,
 		}
 	}
 

@@ -9,25 +9,15 @@ import (
 )
 
 type cliGoRuntime struct {
-	packs map[string]*BuildpackInfo
-	wg    sync.WaitGroup
+	wg sync.WaitGroup
 }
 
-func NewCLIGoRuntime() *cliGoRuntime {
-	packs := make(map[string]*BuildpackInfo)
+func NewCLIGoRuntime() CLIRuntime {
+	// adding packs to the Go runtime does not make sense
+	// since we will be using a Packaeto builder that
+	// already comes with the Go buildpack
 
-	// mod
-	packs[mod] = newBuildpackInfo()
-
-	// dep
-	packs[dep] = newBuildpackInfo()
-
-	// go build
-	packs[standalone] = newBuildpackInfo()
-
-	return &cliGoRuntime{
-		packs: packs,
-	}
+	return &cliGoRuntime{}
 }
 
 func (runtime *cliGoRuntime) detectMod(results chan struct {
@@ -75,13 +65,6 @@ func (runtime *cliGoRuntime) detectDep(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *cliGoRuntime) detectStandalone(results chan struct {
-	string
-	bool
-}, workingDir string) {
-	runtime.wg.Done()
-}
-
 func (runtime *cliGoRuntime) Detect(workingDir string) (BuildpackInfo, map[string]interface{}) {
 	results := make(chan struct {
 		string
@@ -91,7 +74,6 @@ func (runtime *cliGoRuntime) Detect(workingDir string) (BuildpackInfo, map[strin
 	runtime.wg.Add(3)
 	go runtime.detectMod(results, workingDir)
 	go runtime.detectDep(results, workingDir)
-	go runtime.detectStandalone(results, workingDir)
 	runtime.wg.Wait()
 	close(results)
 

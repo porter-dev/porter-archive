@@ -1,7 +1,5 @@
 package types
 
-import "github.com/porter-dev/porter/internal/integrations/buildpacks"
-
 type GitInstallation struct {
 	ID uint `json:"id"`
 
@@ -39,13 +37,6 @@ type GithubDirectoryRequest struct {
 
 type GetBuildpackRequest struct {
 	GithubDirectoryRequest
-}
-
-type GetBuildpackResponse struct {
-	Name       string                      `json:"name"`
-	Runtime    string                      `json:"runtime"`
-	Buildpacks []*buildpacks.BuildpackInfo `json:"buildpacks"`
-	Config     map[string]interface{}      `json:"config"`
 }
 
 type GetContentsRequest struct {

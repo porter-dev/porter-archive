@@ -3,6 +3,7 @@ package gitinstallation
 import (
 	"context"
 	"net/http"
+	"sync"
 
 	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -72,17 +73,26 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	res := &types.GetBuildpackResponse{}
+	var wg sync.WaitGroup
+	wg.Add(len(buildpacks.APIRuntimes))
+	detectResults := make(chan *buildpacks.RuntimeResponse, len(buildpacks.APIRuntimes))
+	for i := range buildpacks.APIRuntimes {
+		go func(idx int) {
+			detectResults <- buildpacks.APIRuntimes[idx].Detect(
+				client, directoryContents, owner, name, request.Dir, repoContentOptions,
+			)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+	close(detectResults)
 
-	nodeRuntime := buildpacks.NewAPINodeRuntime(client)
-	config := nodeRuntime.Detect(directoryContents, owner, name, request.Dir, repoContentOptions)
-	if config != nil {
-		res.Name = "Node.js"
-		res.Runtime = config["runtime"].(string)
-		if res.Runtime != "node-standalone" {
-			res.Config = map[string]interface{}{"scripts": config["scripts"], "node_engine": config["node_engine"]}
+	var matches []*buildpacks.RuntimeResponse
+	for detectRes := range detectResults {
+		if detectRes != nil {
+			matches = append(matches, detectRes)
 		}
 	}
 
-	c.WriteResult(w, r, res)
+	c.WriteResult(w, r, matches)
 }

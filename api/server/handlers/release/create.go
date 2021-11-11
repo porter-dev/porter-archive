@@ -1,6 +1,7 @@
 package release
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -132,6 +133,13 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+	}
+
+	_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
@@ -304,6 +312,42 @@ func createGitAction(
 	}
 
 	return ga.ToGitActionConfigType(), workflowYAML, nil
+}
+
+func createBuildConfig(
+	config *config.Config,
+	release *models.Release,
+	bcRequest *types.CreateBuildConfigRequest,
+) (*types.BuildConfig, error) {
+	data, err := json.Marshal(bcRequest.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	buildpacks, err := json.Marshal(bcRequest.Buildpacks)
+	if err != nil {
+		return nil, err
+	}
+
+	// handle write to the database
+	bc, err := config.Repo.BuildConfig().CreateBuildConfig(&models.BuildConfig{
+		Name:       bcRequest.Name,
+		Runtime:    bcRequest.Runtime,
+		Buildpacks: buildpacks,
+		Config:     data,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	release.BuildConfig = bc.ID
+
+	_, err = config.Repo.Release().UpdateRelease(release)
+	if err != nil {
+		return nil, err
+	}
+
+	return bc.ToBuildConfigType(), nil
 }
 
 type containerEnvConfig struct {

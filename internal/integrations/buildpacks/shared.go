@@ -12,20 +12,23 @@ const (
 	npm        = "npm"
 	mod        = "mod"
 	dep        = "dep"
+	pipenv     = "pipenv"
+	pip        = "pip"
+	conda      = "conda"
 	standalone = "standalone"
 )
 
 type buildpackOrderGroupInfo struct {
-	ID       string
-	Optional bool
-	Version  string
+	ID       string `json:"id"`
+	Optional bool   `json:"optional"`
+	Version  string `json:"version"`
 }
 
 type BuildpackInfo struct {
-	Packs []buildpackOrderGroupInfo
+	Packs []buildpackOrderGroupInfo `json:"packs"`
 	// FIXME: env vars for https://github.com/paketo-buildpacks/environment-variables
 	//        and for https://github.com/paketo-buildpacks/image-labels
-	EnvVars map[string]string
+	EnvVars map[string]string `json:"env_vars"`
 }
 
 func newBuildpackInfo() *BuildpackInfo {
@@ -50,10 +53,31 @@ func getExecPath() string {
 	return filepath.Dir(ex)
 }
 
+type RuntimeResponse struct {
+	Name       string                 `json:"name"`
+	Buildpacks *BuildpackInfo         `json:"buildpacks"`
+	Runtime    string                 `json:"runtime"`
+	Config     map[string]interface{} `json:"config"`
+}
+
 type CLIRuntime interface {
 	Detect(string) (BuildpackInfo, map[string]interface{})
 }
 
 type APIRuntime interface {
-	Detect([]*github.RepositoryContent, string, string, string, github.RepositoryContentGetOptions) map[string]interface{}
+	Detect(
+		*github.Client,
+		[]*github.RepositoryContent,
+		string,
+		string,
+		string,
+		github.RepositoryContentGetOptions,
+	) *RuntimeResponse
+}
+
+// APIRuntimes is a list of all API runtimes
+var APIRuntimes = []APIRuntime{
+	NewAPIGoRuntime(),
+	NewAPINodeRuntime(),
+	NewAPIPythonRuntime(),
 }

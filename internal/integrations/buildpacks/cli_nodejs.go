@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	nodeengine "github.com/paketo-buildpacks/node-engine"
 	noderunscript "github.com/paketo-buildpacks/node-run-script"
 	nodestart "github.com/paketo-buildpacks/node-start"
 	npminstall "github.com/paketo-buildpacks/npm-install"
@@ -21,7 +22,7 @@ type cliNodeRuntime struct {
 	wg    sync.WaitGroup
 }
 
-func NewCLINodeRuntime() *cliNodeRuntime {
+func NewCLINodeRuntime() CLIRuntime {
 	packs := make(map[string]*BuildpackInfo)
 
 	buildpackToml, err := toml.LoadFile(filepath.Join(getExecPath(), nodejsTomlFile))
@@ -191,19 +192,40 @@ func (runtime *cliNodeRuntime) Detect(workingDir string) (BuildpackInfo, map[str
 		if detected[yarn] || detected[npm] {
 			// it is safe to assume that the project contains a package.json
 			packageJSONPath := filepath.Join(workingDir, "package.json")
+			nvmrcPath := filepath.Join(workingDir, ".nvmrc")
+			nodeVersionPath := filepath.Join(workingDir, ".node-version")
 
 			scriptManager := noderunscript.NewScriptManager()
 			scripts, err := scriptManager.GetPackageScripts(workingDir)
 			if err != nil {
 				fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
-				os.Exit(1)
 			}
 
 			packageJSONParser := npminstall.NewPackageJSONParser()
 			engineVersion, err := packageJSONParser.ParseVersion(packageJSONPath)
 			if err != nil {
 				fmt.Printf("Error reading %s: %v\n", packageJSONPath, err)
-				os.Exit(1)
+			}
+
+			if engineVersion == "" {
+				nvmrcParser := nodeengine.NewNvmrcParser()
+				engineVersion, err = nvmrcParser.ParseVersion(nvmrcPath)
+				if err != nil {
+					fmt.Printf("Error reading %s: %v\n", nvmrcPath, err)
+				}
+			}
+
+			if engineVersion == "" {
+				versionParser := nodeengine.NewNodeVersionParser()
+				engineVersion, err = versionParser.ParseVersion(nodeVersionPath)
+				if err != nil {
+					fmt.Printf("Error reading %s: %v\n", nodeVersionPath, err)
+				}
+			}
+
+			if engineVersion == "" {
+				// taken from https://github.com/paketo-buildpacks/node-engine/blob/main/buildpack.toml
+				engineVersion = "16.*.*"
 			}
 
 			if detected[yarn] {

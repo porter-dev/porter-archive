@@ -39,12 +39,6 @@ type GetBuildpackRequest struct {
 	GithubDirectoryRequest
 }
 
-type GetBuildpackResponse struct {
-	Name    string                 `json:"name"`
-	Runtime string                 `json:"runtime"`
-	Config  map[string]interface{} `json:"config"`
-}
-
 type GetContentsRequest struct {
 	GithubDirectoryRequest
 }

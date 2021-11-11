@@ -16,7 +16,7 @@ import TitleSection from "components/TitleSection";
 
 import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/SharedStatus";
+import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {

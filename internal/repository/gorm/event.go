@@ -99,16 +99,25 @@ func (repo *KubeEventRepository) CreateEvent(
 		// if the count is greater than 500, remove the lowest-order event to implement a
 		// basic fixed-length buffer
 		if count >= 500 {
-			// find the id of the first match
-			matchedEvent := &models.KubeEvent{}
+			// first, delete the matching sub events
+			err := tx.Debug().Exec(`
+			  DELETE FROM kube_sub_events 
+			  WHERE kube_event_id NOT IN (
+				SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY updated_at desc, id desc LIMIT 500
+			  )
+			`, event.ProjectID, event.ClusterID).Error
 
-			if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
+			if err != nil {
 				return err
 			}
 
-			err := tx.Debug().Transaction(func(tx2 *gorm.DB) error {
-				return deleteEventPermanently(matchedEvent.ID, tx2)
-			})
+			// then, delete the matching events
+			err = tx.Debug().Exec(`
+			  DELETE FROM kube_events 
+			  WHERE (project_id = ? AND cluster_id = ?) AND id NOT IN (
+				SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY updated_at desc, id desc LIMIT 500
+			  )
+			`, event.ProjectID, event.ClusterID, event.ProjectID, event.ClusterID).Error
 
 			if err != nil {
 				return err
@@ -237,17 +246,18 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 
 		fmt.Println("COUNT IS", event.Name, count)
 
-		// if the count is greater than 20, remove the lowest-order event to implement a
+		// if the count is greater than 20, remove the lowest-order events to implement a
 		// basic fixed-length buffer
 		if count >= 20 {
-			// find the id of the first match
-			matchedEvent := &models.KubeSubEvent{}
+			err := tx.Exec(`
+			  DELETE FROM kube_sub_events 
+			  WHERE kube_event_id = ? AND 
+			  id NOT IN (
+				SELECT id FROM kube_sub_events k2 WHERE k2.kube_event_id = ? ORDER BY updated_at desc, id desc LIMIT 20
+			  )
+			`, event.ID, event.ID).Error
 
-			if err := query.Order("updated_at asc").Order("id asc").First(matchedEvent).Error; err != nil {
-				return err
-			}
-
-			if err := query.Unscoped().Delete(matchedEvent).Error; err != nil {
+			if err != nil {
 				return err
 			}
 		}

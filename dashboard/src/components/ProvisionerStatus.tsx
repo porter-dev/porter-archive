@@ -4,7 +4,7 @@ import { integrationList } from "shared/common";
 
 import loading from "assets/loading.gif";
 
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 type Props = {
   modules: TFModule[];
@@ -199,6 +199,16 @@ const ExpandedError = styled.div`
   padding-bottom: 17px;
 `;
 
+const movingGradient = keyframes`
+  0% {
+      background-position: left bottom;
+  }
+
+  100% {
+      background-position: right bottom;
+  }
+`;
+
 const LoadingFill = styled.div<{ width: string; status: string }>`
   width: ${(props) => props.width};
   background: ${(props) =>
@@ -209,19 +219,9 @@ const LoadingFill = styled.div<{ width: string; status: string }>`
       : "linear-gradient(to right, #8ce1ff, #616FEE)"};
   height: 100%;
   background-size: 250% 100%;
-  animation: moving-gradient 2s infinite;
+  animation: ${movingGradient} 2s infinite;
   animation-timing-function: ease-in-out;
   animation-direction: alternate;
-
-  @keyframes moving-gradient {
-    0% {
-        background-position: left bottom;
-    }
-
-    100% {
-        background-position: right bottom;
-    }
-  }​
 `;
 
 const StatusIcon = styled.div<{ successful?: boolean }>`

@@ -593,7 +593,7 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/kube_events/{kube_event_id}/logs -> kube_events.NewGetKubeEventLogsHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/kube_events/{kube_event_id}/log_buckets -> kube_events.NewGetKubeEventLogBucketsHandler
 	getKubeEventLogBucketsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

@@ -12,7 +12,7 @@ import ProviderSelector, {
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 import backArrow from "assets/back_arrow.png";
-import { StatusPage } from "./forms/SharedStatus";
+import { StatusPage } from "./forms/StatusPage";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
 

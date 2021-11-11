@@ -1058,6 +1058,8 @@ github.com/paketo-buildpacks/dep-ensure v0.1.1 h1:/vPTihH/2Z7paIHzwrWkMeuOGtXxyv
 github.com/paketo-buildpacks/dep-ensure v0.1.1/go.mod h1:r0bjiaauIgEdXKU+FDgvseqTAjWXYuOGXi2omjRJkYc=
 github.com/paketo-buildpacks/go-mod-vendor v0.3.1 h1:4ltB7mmMg2dGRNDLxwPMLoY98rePUhny/6L0QUn8aYU=
 github.com/paketo-buildpacks/go-mod-vendor v0.3.1/go.mod h1:ycd4yAggQShyoQg+bXZyaxazx/Nms98f1SH9NkG/I3k=
+github.com/paketo-buildpacks/node-engine v0.10.0 h1:mY1bbd0QIQRUAS0NE9V8ktc3JGnq+eSO9CL+C1Rd+bw=
+github.com/paketo-buildpacks/node-engine v0.10.0/go.mod h1:CUppwO2je0YQsN8VX+DgJwG0cyUNkbjVoOWFoeJ0A5M=
 github.com/paketo-buildpacks/node-run-script v0.2.0 h1:IAmnpavIuBM49RaKDIK/OdRbo12TfdUCzJ88CvYe4Kk=
 github.com/paketo-buildpacks/node-run-script v0.2.0/go.mod h1:5SexxOVrn+IfafiZthaFNUo/DM0ugOA83kWAffkPbVE=
 github.com/paketo-buildpacks/node-start v0.5.0 h1:R9FXIiXYaTig6PlG335GDoCR2v9z9M6d3eLdiI/T5LU=

@@ -50,10 +50,30 @@ func getExecPath() string {
 	return filepath.Dir(ex)
 }
 
+type RuntimeResponse struct {
+	Name       string                 `json:"name"`
+	Buildpacks *BuildpackInfo         `json:"buildpacks"`
+	Runtime    string                 `json:"runtime"`
+	Config     map[string]interface{} `json:"config"`
+}
+
 type CLIRuntime interface {
 	Detect(string) (BuildpackInfo, map[string]interface{})
 }
 
 type APIRuntime interface {
-	Detect([]*github.RepositoryContent, string, string, string, github.RepositoryContentGetOptions) map[string]interface{}
+	Detect(
+		*github.Client,
+		[]*github.RepositoryContent,
+		string,
+		string,
+		string,
+		github.RepositoryContentGetOptions,
+	) *RuntimeResponse
+}
+
+// APIRuntimes is a list of all API runtimes
+var APIRuntimes = []APIRuntime{
+	NewAPIGoRuntime(),
+	NewAPINodeRuntime(),
 }

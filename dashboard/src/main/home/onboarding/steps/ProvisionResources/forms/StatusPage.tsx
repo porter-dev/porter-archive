@@ -3,8 +3,7 @@ import ProvisionerStatus, {
   TFResource,
   TFResourceError,
 } from "components/ProvisionerStatus";
-import { unionBy } from "lodash";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 
@@ -51,7 +50,7 @@ type InfraCurrentResponse = {
 };
 
 export const StatusPage = ({
-  filter: infraFilters,
+  filter: selectedFilters,
   project_id,
   setInfraStatus,
 }: Props) => {
@@ -70,15 +69,45 @@ export const StatusPage = ({
     updateGlobalErrorsForModule,
   } = useTFModules();
 
-  const infraExistsOnFilter = (currentInfra: Infra) => {
-    if (!Array.isArray(infraFilters) || !infraFilters?.length) {
+  const filterBySelectedInfras = (currentInfra: Infra) => {
+    if (!Array.isArray(selectedFilters) || !selectedFilters?.length) {
       return true;
     }
 
-    if (infraFilters.includes(currentInfra.kind)) {
+    if (selectedFilters.includes(currentInfra.kind)) {
       return true;
     }
     return false;
+  };
+
+  const getLatestInfras = (infras: Infra[]) => {
+    // Create a map with the relation infra.kind => infra
+    // This will allow us to keep only one infra per kind.
+    const infraMap = new Map<string, Infra>();
+
+    infras.forEach((infra) => {
+      // Get last infra from that kind, kind being gke, ecr, etc.
+      const latestSavedInfra = infraMap.get(infra.kind);
+
+      // If infra doesn't exists, it means its the first one appearing so we save it
+      if (!latestSavedInfra) {
+        infraMap.set(infra.kind, infra);
+        return;
+      }
+
+      // Check if the latest saved infra was recent than the one we're currently iterating
+      // If the current one iterating is newer, then we update the map!
+      if (
+        new Date(infra.created_at).getTime() >
+        new Date(latestSavedInfra.created_at).getTime()
+      ) {
+        infraMap.set(infra.kind, infra);
+        return;
+      }
+    });
+
+    // Get the array from the values of the array.
+    return Array.from(infraMap.values());
   };
 
   const getInfras = async () => {
@@ -88,18 +117,26 @@ export const StatusPage = ({
         {},
         { project_id: project_id }
       );
-      const matchedInfras = res.data.filter(infraExistsOnFilter);
+      // Filter infras based on what we care only, usually on the onboarding we'll want only the ones
+      // currently being provisioned
+      const matchedInfras = res.data.filter(filterBySelectedInfras);
+
+      // Get latest infras for each kind of infra on the array.
+      const latestMatchedInfras = getLatestInfras(matchedInfras);
 
       // Check if all infras are created then enable continue button
-      if (matchedInfras.every((infra) => infra.status === "created")) {
+      if (latestMatchedInfras.every((infra) => infra.status === "created")) {
         setInfraStatus({
           hasError: false,
         });
       }
 
       // Init tf modules based on matched infras
-      matchedInfras.forEach((infra) => {
+      latestMatchedInfras.forEach((infra) => {
+        // Init the module for the hook
         initModule(infra);
+
+        // Update all the resources needed for the current infra
         getDesiredState(infra.id);
       });
     } catch (error) {}
@@ -112,7 +149,10 @@ export const StatusPage = ({
         .then((res) => res?.data);
 
       updateDesired(infra_id, desired);
+      // Check if we have some modules already provisioned
       await getProvisionedModules(infra_id);
+
+      // Connect to websocket that will provide live info of the provisioning for this infra
       connectToLiveUpdateModule(infra_id);
     } catch (error) {
       console.error(error);
@@ -198,14 +238,6 @@ export const StatusPage = ({
                   });
                 }
               }
-            case "change_summary":
-            // console.log(streamValData);
-            // if (
-            //   streamValData.changes.add != 0 &&
-            //   streamValData["@level"] === "error"
-            // ) {
-            //   getDesiredState(infra_id, false);
-            // }
             default:
           }
         }
@@ -275,13 +307,19 @@ export const StatusPage = ({
 };
 
 type TFModulesState = {
-  [key: number]: TFModule;
+  [infraId: number]: TFModule;
 };
 
 const useTFModules = () => {
+  // Use a ref to keep track of all the Terraform modules
   const modules = useRef<TFModulesState>({});
+
+  // Use state to keep the reactive array of terraform modules
   const [tfModules, setTfModules] = useState<TFModule[]>([]);
 
+  /**
+   * This will map out the ref containing all the terraform modules and return a sorted array.
+   */
   const updateTFModules = (): void => {
     if (typeof modules.current !== "object") {
       setTfModules([]);
@@ -293,6 +331,14 @@ const useTFModules = () => {
     setTfModules(sortedModules);
   };
 
+  /**
+   * Init a TFModule based on a Infra, this infra is usually more basic
+   * and doesn't contain all the resources that it actually needs.
+   * The initialized TFModule will be used to keep track if the infra
+   * changed from creating status to another one.
+   *
+   * @param infra Infra object used to initialize the terraform module used to track provisioning status
+   */
   const initModule = (infra: Infra) => {
     const module: TFModule = {
       id: infra.id,
@@ -301,9 +347,16 @@ const useTFModules = () => {
       got_desired: false,
       created_at: infra.created_at,
     };
-    modules.current[infra.id] = module;
+    setModule(infra.id, module);
   };
 
+  /**
+   * Add or replace if existed, this function will set the module into the ref
+   * and call the updateTFModules to update the array used to show the infras
+   *
+   * @param infraId Infra ID to be updated
+   * @param module New updated module
+   */
   const setModule = (infraId: number, module: TFModule) => {
     modules.current = {
       ...modules.current,
@@ -316,6 +369,10 @@ const useTFModules = () => {
     return { ...modules.current[infraId] };
   };
 
+  /**
+   * @param infraId Module to be updated
+   * @param desired All the desired resources that are going to be needed to complete provisioning
+   */
   const updateDesired = (infraId: number, desired: Desired[]) => {
     const selectedModule = getModule(infraId);
 
@@ -334,6 +391,10 @@ const useTFModules = () => {
     setModule(infraId, selectedModule);
   };
 
+  /**
+   * @param infraId Module to be updated
+   * @param updatedResources Updated resources array, this may contain one or more objects with some status updates.
+   */
   const updateModuleResources = (
     infraId: number,
     updatedResources: TFResource[]
@@ -385,6 +446,10 @@ const useTFModules = () => {
     setModule(infraId, selectedModule);
   };
 
+  /**
+   * @param infraId Module to be updated
+   * @param globalErrors Errors that may not belong to a resource but appeared during provisioning
+   */
   const updateGlobalErrorsForModule = (
     infraId: number,
     globalErrors: TFResourceError[]

@@ -597,8 +597,6 @@ func initKubeEvents(tester *tester, t *testing.T) {
 			t.Fatalf("%v\n", err)
 		}
 
-		event.SubEvents = []models.KubeSubEvent{*subEvent}
-
 		initEvents = append(initEvents, event)
 	}
 
@@ -614,8 +612,6 @@ func initKubeEvents(tester *tester, t *testing.T) {
 		if err != nil {
 			t.Fatalf("%v\n", err)
 		}
-
-		initEvents[i].SubEvents = append(initEvents[i].SubEvents, *subEvent)
 	}
 
 	tester.initKubeEvents = initEvents

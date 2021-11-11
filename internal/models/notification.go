@@ -35,5 +35,5 @@ func (conf *NotificationConfig) ShouldNotify() bool {
 
 func notifLimitToTime(notifTime string) time.Time {
 	// TODO: compute a time that's not just 5 min
-	return time.Now().Add(-5 * time.Minute)
+	return time.Now().Add(-10 * time.Minute)
 }

@@ -71,10 +71,10 @@ const EventsTab: React.FC<{
     return (
       <Placeholder>
         <div>
-          <Header>We coulnd't detect porter agent :(</Header>
-          In order to use the events tab you should install the porter agent!
+          <Header>We couldn't detect the Porter agent on your cluster</Header>
+          In order to use the events tab, you need to install the Porter agent on your cluster.
           <InstallPorterAgentButton onClick={() => triggerInstall()}>
-            <i className="material-icons">add</i> Install porter agent
+            <i className="material-icons">add</i> Install Porter agent
           </InstallPorterAgentButton>
         </div>
       </Placeholder>
@@ -175,12 +175,12 @@ const InstallPorterAgentButton = styled.button`
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
   border: none;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   padding: 0px 8px;
   padding-bottom: 1px;
-  margin-top: 10px;
+  margin-top: 20px;
   font-weight: 500;
   padding-right: 15px;
   overflow: hidden;
@@ -190,10 +190,9 @@ const InstallPorterAgentButton = styled.button`
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
   background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+    props.disabled ? "#aaaabbee" : "#5561C0"};
   :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    filter: ${props => !props.disabled ? "brightness(120%)" : ""};
   }
   > i {
     color: white;
@@ -210,12 +209,14 @@ const InstallPorterAgentButton = styled.button`
 `;
 
 const Placeholder = styled.div`
-  min-height: 200px;
-  height: 20vh;
   padding: 30px;
-  padding-bottom: 90px;
+  padding-bottom: 40px;
   font-size: 13px;
   color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff11;
+  border-radius: 10px;
   width: 100%;
   display: flex;
   align-items: center;

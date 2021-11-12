@@ -14,6 +14,125 @@ const availableResourceTypes = [
   { label: "HPA", value: "hpa" },
 ];
 
+const fakeKubeEvents = [
+  {
+    event_type: "normal",
+    resource_type: "pod",
+    name: "some-resource-name",
+    last_message: "This is the last message I sent randomly",
+    sub_events: [
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+    ] as any[],
+    timestamp: "2021-11-12T22:23:21+00:00"
+  },
+  {
+    event_type: "critical",
+    resource_type: "pod",
+    name: "some-resource-name",
+    last_message: "This is the last message I sent randomly",
+    sub_events: [
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+    ] as any[],
+    timestamp: "2021-11-12T22:23:21+00:00"
+  },
+  {
+    event_type: "normal",
+    resource_type: "pod",
+    name: "some-resource-name",
+    last_message: "This is the last message I sent randomly",
+    sub_events: [
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+    ] as any[],
+    timestamp: "2021-11-12T22:23:21+00:00"
+  },
+  {
+    event_type: "normal",
+    resource_type: "pod",
+    name: "some-resource-name",
+    last_message: "This is the last message I sent randomly",
+    sub_events: [
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+      {
+        event_type: "normal",
+        resource_type: "pod",
+        name: "some-resource-name",
+        last_message: "This is the last message I sent randomly",
+        sub_events: [] as any[],
+        timestamp: "2021-11-12T22:23:21+00:00"
+      },
+    ] as any[],
+    timestamp: "2021-11-12T22:23:21+00:00"
+  },
+  {
+    event_type: "normal",
+    resource_type: "pod",
+    name: "some-resource-name",
+    last_message: "This is the last message I sent randomly",
+    sub_events: [] as any[],
+    timestamp: "2021-11-12T22:23:21+00:00"
+  },
+  {
+    event_type: "normal",
+    resource_type: "pod",
+    name: "some-resource-name",
+    last_message: "This is the last message I sent randomly",
+    sub_events: [] as any[],
+    timestamp: "2021-11-12T22:23:21+00:00"
+  },
+]
+
 const EventsTab: React.FC<{
   controllers: Record<string, Record<string, any>>;
 }> = (props) => {
@@ -93,72 +212,91 @@ const EventsTab: React.FC<{
 
   return (
     <EventsPageWrapper>
-      <ControlRow>
-        <Dropdown
-          selectedOption={resourceType}
-          options={availableResourceTypes}
-          onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
-        />
-        <RightFilters>
-          <Dropdown
-            selectedOption={currentControllerOption}
-            options={controllerOptions}
-            onSelect={(o) => setSelectedControllerKey(o?.value)}
-          />
-        </RightFilters>
-      </ControlRow>
+      {
+        kubeEvents.length > 0 ? (
+          <>
+            <ControlRow>
+              {/*
+              <Dropdown
+                selectedOption={resourceType}
+                options={availableResourceTypes}
+                onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
+              />
+              */}
+              <Label>Controller -</Label>
+              <Dropdown
+                selectedOption={currentControllerOption}
+                options={controllerOptions}
+                onSelect={(o) => setSelectedControllerKey(o?.value)}
+              />
+            </ControlRow>
 
-      <InfiniteScroll
-        dataLength={kubeEvents.length}
-        next={loadMoreEvents}
-        hasMore={hasMore}
-        loader={<h4>Loading...</h4>}
-        scrollableTarget="HomeViewWrapper"
-        endMessage={
-          <h4>No events were found for the resource type you specified</h4>
-        }
-      >
-        <EventsGrid>
-          {kubeEvents.map((event, i) => {
-            return (
-              <React.Fragment key={i}>
-                <EventCard
-                  event={event as any}
-                  selectEvent={() => {
-                    setCurrentEvent(event);
-                  }}
-                />
-              </React.Fragment>
-            );
-          })}
-        </EventsGrid>
-      </InfiniteScroll>
+            <InfiniteScroll
+              dataLength={kubeEvents.length}
+              next={loadMoreEvents}
+              hasMore={hasMore}
+              loader={<h4>Loading...</h4>}
+              scrollableTarget="HomeViewWrapper"
+            >
+              <EventsGrid>
+                {kubeEvents.map((event, i) => {
+                  return (
+                    <React.Fragment key={i}>
+                      <EventCard
+                        event={event as any}
+                        selectEvent={() => {
+                          setCurrentEvent(event);
+                        }}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </EventsGrid>
+            </InfiniteScroll>
+          </>
+        ) : (
+          <Placeholder>
+            <i className="material-icons">search</i>
+            No matching events were found.
+          </Placeholder>
+        )
+      }
     </EventsPageWrapper>
   );
 };
 
 export default EventsTab;
 
-const RightFilters = styled.div`
-  display: flex;
-  > div {
-    :not(:last-child) {
-      margin-right: 15px;
-    }
-  }
+const Label = styled.div`
+  color: #ffffff44;
+  margin-right: 8px;
+  font-size: 13px;
 `;
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 35px;
+  margin-bottom: 30px;
   padding-left: 0px;
+  font-size: 13px;
 `;
 
 const EventsPageWrapper = styled.div`
-  margin-top: 35px;
-  padding-bottom: 80px;
+  font-size: 13px;
+  border-radius: 8px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;
 
 const EventsGrid = styled.div`
@@ -217,11 +355,16 @@ const Placeholder = styled.div`
   min-height: 400px;
   height: 50vh;
   background: #ffffff11;
-  border-radius: 10px;
+  border-radius: 8px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  > i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
 `;
 
 const Header = styled.div`

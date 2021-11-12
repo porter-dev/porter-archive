@@ -114,6 +114,8 @@ type NotificationConfig struct {
 	Enabled bool `json:"enabled"`
 	Success bool `json:"success"`
 	Failure bool `json:"failure"`
+
+	NotifLimit string `json:"notif_limit"`
 }
 
 type GetNotificationConfigResponse struct {

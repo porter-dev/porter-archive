@@ -4,7 +4,7 @@
 
 go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=$1'" -a -tags cli -o ./porter.exe ./cli &
 go build -ldflags="-w -s -X 'main.Version=$1'" -a -o ./docker-credential-porter.exe ./cmd/docker-credential-porter/ &
-go build -ldflags="-w -s -X 'main.Version=$1'" -a -o ./portersvr.exe ./cmd/app/ &
+go build -ldflags="-w -s -X 'main.Version=$1'" -a -tags ee -o ./portersvr.exe ./cmd/app/ &
 wait
 
 mkdir -p /release/windows

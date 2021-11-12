@@ -11,7 +11,10 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
 const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = () => {
-  const env = dotenv.config().parsed;
+  let env = dotenv.config().parsed;
+  if (!env) {
+    env = process.env;
+  }
   const envKeys = Object.keys(env).reduce((prev, next) => {
     prev[`process.env.${next}`] = JSON.stringify(env[next]);
     return prev;

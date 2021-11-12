@@ -61,6 +61,7 @@ type ServerConf struct {
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
 	ProvisionerJobNamespace    string `env:"PROV_JOB_NAMESPACE,default=default"`
 	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
+	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://porter:8080"`
 
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
@@ -81,6 +82,9 @@ type ServerConf struct {
 	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
 
 	WelcomeFormWebhook string `env:"WELCOME_FORM_WEBHOOK"`
+
+	// Token for internal retool to authenticate to internal API endpoints
+	RetoolToken string `env:"RETOOL_TOKEN"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

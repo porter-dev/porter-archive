@@ -4,8 +4,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import discordLogo from "../../../assets/discord.svg";
 
-type PropsType = {
-};
+type PropsType = {};
 
 type StateType = {
   showHelpDropdown: boolean;
@@ -13,7 +12,7 @@ type StateType = {
 
 export default class Help extends Component<PropsType, StateType> {
   state = {
-      showHelpDropdown: false,
+    showHelpDropdown: false,
   };
 
   renderHelpDropdown = () => {
@@ -27,28 +26,29 @@ export default class Help extends Component<PropsType, StateType> {
               })
             }
           />
-          <Dropdown
-            dropdownWidth="155px"
-            dropdownMaxHeight="300px"
-          >
-            <Option onClick={()=> {
-                window.open('https://docs.porter.run', '_blank').focus();}
-            }>
-            <i className="material-icons-outlined">book</i>
-                Documentation
+          <Dropdown dropdownWidth="155px" dropdownMaxHeight="300px">
+            <Option
+              onClick={() => {
+                window.open("https://docs.porter.run", "_blank").focus();
+              }}
+            >
+              <i className="material-icons-outlined">book</i>
+              Documentation
             </Option>
-            <Line/>
-            <Option onClick={() => {
-              window.open('https://discord.gg/Vbse9vJtPU', '_blank').focus();
-            }}>
-            <Icon src={discordLogo} />
+            <Line />
+            <Option
+              onClick={() => {
+                window.open("https://discord.gg/Vbse9vJtPU", "_blank").focus();
+              }}
+            >
+              <Icon src={discordLogo} />
               Community
             </Option>
-            <Line/>
-            <Option id={'intercom_help'}>
-            <i className="material-icons-outlined">message</i>
-                Message us
-            </Option>            
+            <Line />
+            <Option id={"intercom_help"}>
+              <i className="material-icons-outlined">message</i>
+              Message us
+            </Option>
           </Dropdown>
         </>
       );
@@ -77,31 +77,31 @@ export default class Help extends Component<PropsType, StateType> {
 Help.contextType = Context;
 
 const Option = styled.div`
-    margin-left: 15px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 120px;
-    height: 40px;
-    color: #ffffff88;
+  margin-left: 15px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 120px;
+  height: 40px;
+  color: #ffffff88;
+  cursor: pointer;
+  > i {
+    opacity: 50%;
+    color: white;
+    margin-right: 7px;
+    font-size: 20px;
     cursor: pointer;
-    > i {
-        opacity: 50%;
-        color: white;
-        margin-right: 7px;
-        font-size: 20px;
-        cursor: pointer;
-    }
-`
+  }
+`;
 
 const Line = styled.div`
-    height: 1px;
-    z-index: 0;
-    left: 0;
-    background: #aaaabb55;
-    width: 100%;
-`
+  height: 1px;
+  z-index: 0;
+  left: 0;
+  background: #aaaabb55;
+  width: 100%;
+`;
 
 const CloseOverlay = styled.div`
   position: fixed;
@@ -203,9 +203,9 @@ const FeedbackButton = styled(NavButton)`
 `;
 
 const Icon = styled.img`
-    margin-left: -2px;
-    height: 25px;
-    width: 25px;
-    opacity: 50%;
-    margin-right: 5px;
-`
+  margin-left: -2px;
+  height: 25px;
+  width: 25px;
+  opacity: 50%;
+  margin-right: 5px;
+`;

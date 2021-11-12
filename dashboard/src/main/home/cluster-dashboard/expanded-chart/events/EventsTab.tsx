@@ -72,7 +72,8 @@ const EventsTab: React.FC<{
       <Placeholder>
         <div>
           <Header>We couldn't detect the Porter agent on your cluster</Header>
-          In order to use the events tab, you need to install the Porter agent on your cluster.
+          In order to use the events tab, you need to install the Porter agent
+          on your cluster.
           <InstallPorterAgentButton onClick={() => triggerInstall()}>
             <i className="material-icons">add</i> Install Porter agent
           </InstallPorterAgentButton>
@@ -192,7 +193,7 @@ const InstallPorterAgentButton = styled.button`
   background: ${(props: { disabled?: boolean }) =>
     props.disabled ? "#aaaabbee" : "#5561C0"};
   :hover {
-    filter: ${props => !props.disabled ? "brightness(120%)" : ""};
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
   > i {
     color: white;

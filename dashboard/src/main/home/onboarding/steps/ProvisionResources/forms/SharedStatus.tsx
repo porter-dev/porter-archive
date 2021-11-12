@@ -334,6 +334,12 @@ export const SharedStatus: React.FC<{
         tfModules.push(module);
       });
 
+      if (tfModules.every((m) => m.status === "created")) {
+        setInfraStatus({
+          hasError: false,
+        });
+      }
+
       setTFModules([...tfModules]);
 
       tfModules.forEach((val, index) => {

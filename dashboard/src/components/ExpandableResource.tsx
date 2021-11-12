@@ -48,10 +48,18 @@ const ExpandableResource: React.FC<Props> = (props) => {
       },
       {}
     )
-      .then((res) => {
-        console.log("RES IS", res);
-      })
+      .then((res) => {})
       .catch((err) => console.log(err));
+  };
+
+  const readableDate = (s: string) => {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} on ${date}`;
   };
 
   return (
@@ -66,7 +74,7 @@ const ExpandableResource: React.FC<Props> = (props) => {
             <Status>
               <Key>Status:</Key> {resource.status}
             </Status>
-            <Timestamp>Updated {resource.timestamp}</Timestamp>
+            <Timestamp>Updated {readableDate(resource.timestamp)}</Timestamp>
           </StatusHeader>
           {resource.message}
         </StatusSection>

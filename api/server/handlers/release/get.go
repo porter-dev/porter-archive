@@ -174,7 +174,7 @@ tabs:
               ) end
             )
           ),
-          timestamp: .status.conditions[0].lastTransitionTime | fromdate | strftime("%Y-%m-%d"),
+          timestamp: .status.conditions[0].lastTransitionTime,
           message: [.status.conditions[].message] | unique | join(","),
           data: {}
         }`

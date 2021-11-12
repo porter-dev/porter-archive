@@ -46,8 +46,10 @@ const LogBucketCard: React.FunctionComponent<LogBucketCardProps> = ({
   };
 
   useEffect(() => {
-    getLogsForBucket();
-  }, [currentProject, currentCluster, logEvent]);
+    if (isExpanded && (!Array.isArray(logs) || !logs.length)) {
+      getLogsForBucket();
+    }
+  }, [currentProject, currentCluster, logEvent, isExpanded]);
 
   return (
     <StyledCard>

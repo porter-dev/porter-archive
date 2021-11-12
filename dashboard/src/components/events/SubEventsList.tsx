@@ -52,7 +52,24 @@ const SubEventsList: React.FC<{
       console.error(error);
     }
 
-    setSubEvents([...updatedEvent.sub_events, ...logBucketsParsed]);
+    const subEventsSorted = (updatedEvent.sub_events as any[])
+      .map((s: any) => ({
+        ...s,
+        timestamp: new Date(s.timestamp).getTime(),
+      }))
+      .sort((prev: any, next: any) => next.timestamp - prev.timestamp);
+
+    const firstEvent = subEventsSorted.shift();
+    const lastEvent = subEventsSorted.pop();
+
+    const filteredLogBuckets = (logBucketsParsed as any[]).filter((bucket) => {
+      const bucketTime = new Date(bucket.timestamp).getTime();
+      return (
+        bucketTime >= lastEvent.timestamp && bucketTime <= firstEvent.timestamp
+      );
+    });
+
+    setSubEvents([...updatedEvent.sub_events, ...filteredLogBuckets]);
     setIsLoading(false);
   };
 

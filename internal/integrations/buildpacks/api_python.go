@@ -22,29 +22,29 @@ func populatePythonPacks(client *github.Client) map[string]*BuildpackInfo {
 
 	repoRelease, _, err := client.Repositories.GetLatestRelease(context.Background(), "paketo-buildpacks", "python")
 	if err != nil {
-		fmt.Printf("Error fetching latest release for packeto-buildpacks/python: %v\n", err)
+		fmt.Printf("Error fetching latest release for paketo-buildpacks/python: %v\n", err)
 		return nil
 	}
 	fileContent, _, _, err := client.Repositories.GetContents(
-		context.Background(), "packeto-buildpacks", "python", "buildpack.toml",
+		context.Background(), "paketo-buildpacks", "python", "buildpack.toml",
 		&github.RepositoryContentGetOptions{
 			Ref: *repoRelease.TagName,
 		},
 	)
 	if err != nil {
-		fmt.Printf("Error fetching contents of buildpack.toml for packeto-buildpacks/python: %v\n", err)
+		fmt.Printf("Error fetching contents of buildpack.toml for paketo-buildpacks/python: %v\n", err)
 		return nil
 	}
 
 	data, err := fileContent.GetContent()
 	if err != nil {
-		fmt.Printf("Error calling GetContent() on buildpack.toml for packeto-buildpacks/python: %v\n", err)
+		fmt.Printf("Error calling GetContent() on buildpack.toml for paketo-buildpacks/python: %v\n", err)
 		return nil
 	}
 
 	buildpackToml, err := toml.Load(data)
 	if err != nil {
-		fmt.Printf("Error while reading buildpack.toml from packeto-buildpacks/python: %v\n", err)
+		fmt.Printf("Error while reading buildpack.toml from paketo-buildpacks/python: %v\n", err)
 		os.Exit(1)
 	}
 	order := buildpackToml.Get("order").([]*toml.Tree)

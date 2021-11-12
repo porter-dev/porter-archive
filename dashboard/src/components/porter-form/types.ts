@@ -39,6 +39,13 @@ export interface ServiceIPListField extends GenericField {
 export interface ResourceListField extends GenericField {
   type: "resource-list";
   value: any[];
+  context?: {
+    config?: {
+      group: string
+      version: string
+      resource: string
+    }
+  },
   settings?: {
     options?: {
       "resource-button": any,

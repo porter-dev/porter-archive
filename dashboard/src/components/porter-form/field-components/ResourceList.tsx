@@ -3,10 +3,12 @@ import { ResourceListField } from "../types";
 import { Context } from "shared/Context";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import ExpandableResource from "../../ExpandableResource";
+import { PorterFormContext } from "components/porter-form/PorterFormContextProvider";
 import styled from "styled-components";
 
 const ResourceList: React.FC<ResourceListField> = (props) => {
   const { currentCluster, currentProject } = useContext(Context);
+  const { formState } = useContext(PorterFormContext);
 
   const {
     newWebsocket,
@@ -16,8 +18,9 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
   } = useWebsockets();
 
   useEffect(() => {
-    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/cert-manager/releases/cert-manager/0/form_stream?`;
-    apiEndpoint += "resource=certificates&group=cert-manager.io&version=v1";
+    let { group, version, resource } = props.context.config;
+    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${formState.variables.namespace}/releases/${formState.variables.currentChart.name}/0/form_stream?`;
+    apiEndpoint += `resource=${resource}&group=${group}&version=${version}`;
 
     const wsConfig = {
       onmessage(evt: MessageEvent) {

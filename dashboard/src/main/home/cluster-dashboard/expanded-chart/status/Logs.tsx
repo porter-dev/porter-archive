@@ -434,6 +434,7 @@ const LogStream = styled.div`
   flex: 1;
   float: right;
   height: 100%;
+  font-size: 13px;
   background: #121318;
   user-select: text;
   max-width: 65%;

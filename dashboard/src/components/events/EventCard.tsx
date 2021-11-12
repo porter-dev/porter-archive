@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import Loading from "components/Loading";
-import { KubeEvent } from "shared/types";
-
 type CardProps = {
   event: any;
   selectEvent?: (event: any) => void;
@@ -29,7 +26,10 @@ const EventCard: React.FunctionComponent<CardProps> = ({
   const [showTooltip, setShowTooltip] = useState(false);
   return (
     <>
-      <StyledCard>
+      <StyledCard 
+        onClick={() => selectEvent(event)}
+        status={event.event_type.toLowerCase() as any}
+      >
         <ContentContainer>
           <Icon
             status={event.event_type.toLowerCase() as any}
@@ -42,23 +42,10 @@ const EventCard: React.FunctionComponent<CardProps> = ({
               <Helper>{event.resource_type}:</Helper>
               {event.name}
             </EventName>
-            <EventReason>
-              <Helper>Last message seen:</Helper>
-              {event.last_message}
-            </EventReason>
+            <EventReason>{event.last_message}</EventReason>
           </EventInformation>
         </ContentContainer>
-        <ActionContainer hasOneChild={event.event_type === "normal"}>
-          {event.sub_events?.length && (
-            <HistoryButton
-              onClick={() => selectEvent(event)}
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-            >
-              <span className="material-icons-outlined">manage_search</span>
-              {showTooltip && <Tooltip>Open logs</Tooltip>}
-            </HistoryButton>
-          )}
+        <ActionContainer>
           <TimestampContainer>
             <TimestampIcon className="material-icons-outlined">
               access_time
@@ -95,21 +82,22 @@ export default EventCard;
 //   }
 // `;
 
-const StyledCard = styled.div`
+const StyledCard = styled.div<{ status: string }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #ffffff44;
+  border: 1px solid ${({ status }) => status === "critical" ? "#ff385d" : "#ffffff44"};
   background: #ffffff08;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   border-radius: 10px;
-  padding: 20px 14px 14px 14px;
+  padding: 14px;
   overflow: hidden;
-  height: 95px;
+  height: 80px;
+  font-size: 13px;
   cursor: pointer;
   :hover {
     background: #ffffff11;
-    border: 1px solid #ffffff66;
+    border: 1px solid ${({ status }) => status === "critical" ? "#ff385d" : "#ffffff66"};
   }
   animation: fadeIn 0.5s;
   @keyframes fadeIn {
@@ -129,11 +117,11 @@ const ContentContainer = styled.div`
   align-items: center;
 `;
 
-const Icon = styled.span`
-  font-size: 35px;
-  margin-right: 14px;
-  color: ${({ status }: { status: "critical" | "normal" }) =>
-    status === "critical" ? "red" : "green"};
+const Icon = styled.span<{ status: "critical" | "normal" }>`
+  font-size: 20px;
+  margin-left: 10px;
+  margin-right: 20px;
+  color: ${({ status }) => status === "critical" ? "#ff385d" : "#aaaabb"};
 `;
 
 const EventInformation = styled.div`
@@ -144,36 +132,28 @@ const EventInformation = styled.div`
 `;
 
 const EventName = styled.div`
-  font-size: 14px;
   font-family: "Work Sans", sans-serif;
   font-weight: 500;
   color: #ffffff;
 `;
 
 const Helper = styled.span`
-  font-size: 14px;
   text-transform: capitalize;
   color: #ffffff44;
   margin-right: 5px;
 `;
 
 const EventReason = styled.div`
-  font-size: 16px;
   font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  margin-top: 8px;
+  color: #aaaabb;
+  margin-top: 5px;
 `;
 
 const ActionContainer = styled.div`
-  width: max-content;
   display: flex;
   align-items: center;
   white-space: nowrap;
   height: 100%;
-  flex-direction: column;
-  justify-content: ${(props: { hasOneChild: boolean }) => {
-    return props.hasOneChild ? "flex-end" : "space-between";
-  }};
 `;
 
 const HistoryButton = styled.button`
@@ -229,10 +209,14 @@ const TimestampContainer = styled.div`
   white-space: nowrap;
   align-items: center;
   justify-self: flex-end;
+  color: #ffffff55;
+  margin-right: 10px;
+  font-size: 13px;
   min-width: 130px;
   justify-content: space-between;
 `;
 
 const TimestampIcon = styled.span`
-  margin-right: 5px;
+  margin-right: 7px;
+  font-size: 18px;
 `;

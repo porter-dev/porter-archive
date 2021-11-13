@@ -96,7 +96,7 @@ const ConnectSource: React.FC<{
           </Helper>
         </>
       )}
-      {!isLoading && accountData?.accounts.length && (
+      {!isLoading && accountData?.accounts?.length && (
         <>
           <Helper>Porter currently has access to:</Helper>
           <List>

@@ -213,7 +213,7 @@ const EventsTab: React.FC<{
   return (
     <EventsPageWrapper>
       {
-        kubeEvents.length > 0 ? (
+        fakeKubeEvents.length > 0 ? (
           <>
             <ControlRow>
               {/*
@@ -232,14 +232,14 @@ const EventsTab: React.FC<{
             </ControlRow>
 
             <InfiniteScroll
-              dataLength={kubeEvents.length}
+              dataLength={fakeKubeEvents.length}
               next={loadMoreEvents}
               hasMore={hasMore}
               loader={<h4>Loading...</h4>}
               scrollableTarget="HomeViewWrapper"
             >
               <EventsGrid>
-                {kubeEvents.map((event, i) => {
+                {fakeKubeEvents.map((event, i) => {
                   return (
                     <React.Fragment key={i}>
                       <EventCard

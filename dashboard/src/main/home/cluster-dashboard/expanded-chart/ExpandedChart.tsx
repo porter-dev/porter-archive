@@ -82,6 +82,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
+  const [fullScreenLogs, setFullScreenLogs] = useState<boolean>(false);
 
   const {
     newWebsocket,
@@ -383,7 +384,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </Placeholder>
           );
         } else {
-          return <StatusSection currentChart={chart} />;
+          return <StatusSection currentChart={chart} setFullScreenLogs={() => setFullScreenLogs(true)} />;
         }
       case "settings":
         return (
@@ -662,6 +663,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   return (
     <>
+      { 
+        fullScreenLogs ? (
+          <StatusSection
+            fullscreen={true} 
+            currentChart={currentChart} 
+            setFullScreenLogs={() => setFullScreenLogs(false)}
+          />
+        ) : (
       <StyledExpandedChart>
         <HeaderWrapper>
           <BackButton onClick={props.closeChart}>
@@ -758,6 +767,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           </>
         )}
       </StyledExpandedChart>
+    )}
     </>
   );
 };

@@ -194,7 +194,7 @@ const ModalHandler: React.FC<{
           onRequestClose={() => setCurrentModal(null, null)}
           width="600px"
           height="240px"
-          title="Do you wanna skip onboarding?"
+          title="Would you like to skip project setup?"
         >
           <SkipOnboardingModal />
         </Modal>

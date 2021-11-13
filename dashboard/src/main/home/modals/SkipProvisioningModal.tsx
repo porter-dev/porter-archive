@@ -14,28 +14,18 @@ const SkipOnboardingModal = () => {
   return (
     <>
       <Subtitle>
-        Looks like you already know how to setup your project!
+        Porter has detected an existing Kubernetes cluster that was connected
+        via the CLI. For custom setups, you can skip the project setup flow.
       </Subtitle>
-      <Subtitle>
-        We've found a cluster connected to your project, although you probably
-        know how to setup everything by your own, we still wanted to ask you!
-      </Subtitle>
-      <Subtitle>Do you wanna skip onboarding?</Subtitle>
+      <Subtitle>Do you want to skip project setup?</Subtitle>
       <ActionsWrapper>
         <ActionButton
-          text="Yes, take me out"
+          text="Yes, skip setup"
           color="#616FEEcc"
           onClick={() =>
             typeof currentModalData?.skipOnboarding === "function" &&
             currentModalData.skipOnboarding()
           }
-          status={""}
-          clearPosition
-        />
-        <ActionButton
-          text="Continue onboarding"
-          color="#616FEEcc"
-          onClick={() => setCurrentModal(null, null)}
           status={""}
           clearPosition
         />

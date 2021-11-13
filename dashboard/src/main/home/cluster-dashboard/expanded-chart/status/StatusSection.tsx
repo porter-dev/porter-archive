@@ -5,6 +5,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType, StorageType } from "shared/types";
 import Loading from "components/Loading";
+import backArrow from "assets/back_arrow.png";
 
 import Logs from "./Logs";
 import ControllerTab from "./ControllerTab";
@@ -12,10 +13,14 @@ import ControllerTab from "./ControllerTab";
 type Props = {
   selectors?: string[];
   currentChart: ChartType;
+  fullscreen?: boolean;
+  setFullScreenLogs?: any;
 };
 
 const StatusSectionFC: React.FunctionComponent<Props> = ({
   currentChart,
+  fullscreen,
+  setFullScreenLogs,
   selectors,
 }) => {
   const [selectedPod, setSelectedPod] = useState<any>({});
@@ -126,10 +131,107 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
     );
   };
 
-  return <StyledStatusSection>{renderStatusSection()}</StyledStatusSection>;
+  return (
+    <>
+      {
+        fullscreen ? (
+          <FullScreen>
+            <AbsoluteTitle>
+              <BackButton
+                onClick={setFullScreenLogs}
+              >
+                <i className="material-icons">navigate_before</i>
+              </BackButton>
+              Status ({currentChart.name})
+            </AbsoluteTitle>
+            <FullScreenButton top="70px" onClick={setFullScreenLogs}>
+              <i className="material-icons">close_fullscreen</i>
+            </FullScreenButton>
+            {renderStatusSection()}
+          </FullScreen>
+        ) : (
+          <StyledStatusSection>
+            <FullScreenButton onClick={setFullScreenLogs}>
+              <i className="material-icons">open_in_full</i>
+            </FullScreenButton>
+            {renderStatusSection()}
+          </StyledStatusSection>
+        )
+      }
+    </>
+  );
 };
 
 export default StatusSectionFC;
+
+const FullScreenButton = styled.div<{ top?: string }>`
+  position: absolute;
+  top: ${props => props.top || "10px"};
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  background: #ffffff11;
+  border: 1px solid #aaaabb;
+
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    font-size: 14px;
+  }
+`;
+
+const BackButton = styled.div`
+  display: flex;
+  width: 30px;
+  z-index: 999;
+  cursor: pointer;
+  height: 30px;
+  align-items: center;
+  margin-right: 15px;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  > i {
+    font-size: 18px;
+  }
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 12px;
+  opacity: 0.75;
+`;
+
+
+const AbsoluteTitle = styled.div`
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  font-size: 18px;
+  font-weight: 500;
+  user-select: text;
+`;
 
 const TabWrapper = styled.div`
   width: 35%;
@@ -161,6 +263,15 @@ const StyledStatusSection = styled.div`
       transform: translateY(0px);
     }
   }
+`;
+
+const FullScreen = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding-top: 60px;
 `;
 
 const Wrapper = styled.div`

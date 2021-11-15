@@ -5,6 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.81.0
 	github.com/AlecAivazis/survey/v2 v2.2.9
+	github.com/BurntSushi/toml v0.4.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/aws/aws-sdk-go v1.35.4
 	github.com/bradleyfalzon/ghinstallation v1.1.1
@@ -32,27 +33,16 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
 	github.com/gorilla/websocket v1.4.2
+	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/itchyny/gojq v0.12.1
 	github.com/joeshaw/envdecode v0.0.0-20200121155833-099f1fc765bd
 	github.com/kris-nova/logger v0.0.0-20181127235838-fd0d87064b06
 	github.com/kris-nova/lolgopher v0.0.0-20180921204813-313b3abb0d9b // indirect
+	github.com/mattn/go-runewidth v0.0.12 // indirect
 	github.com/moby/moby v20.10.6+incompatible
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
+	github.com/onsi/gomega v1.16.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1
-	github.com/paketo-buildpacks/conda-env-update v0.2.2
-	github.com/paketo-buildpacks/dep-ensure v0.1.1
-	github.com/paketo-buildpacks/go-mod-vendor v0.3.1
-	github.com/paketo-buildpacks/node-engine v0.10.0
-	github.com/paketo-buildpacks/node-run-script v0.2.0
-	github.com/paketo-buildpacks/node-start v0.5.0
-	github.com/paketo-buildpacks/npm-install v0.5.0
-	github.com/paketo-buildpacks/packit v1.3.0
-	github.com/paketo-buildpacks/pipenv-install v0.2.3
-	github.com/paketo-buildpacks/python-start v0.7.0
-	github.com/paketo-buildpacks/rackup v0.1.0
-	github.com/paketo-buildpacks/rails-assets v0.3.0
-	github.com/paketo-buildpacks/rake v0.1.0
-	github.com/paketo-buildpacks/yarn-install v0.5.0
 	github.com/pelletier/go-toml v1.9.4
 	github.com/pkg/errors v0.9.1
 	github.com/rogpeppe/go-internal v1.5.2 // indirect
@@ -67,6 +57,7 @@ require (
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/mod v0.5.0 // indirect
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	golang.org/x/sys v0.0.0-20210819135213-f52c844e1c1c // indirect
 	google.golang.org/api v0.44.0

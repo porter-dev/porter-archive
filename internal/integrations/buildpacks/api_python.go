@@ -255,26 +255,30 @@ func (runtime *apiPythonRuntime) Detect(
 	if detected[pipenv] {
 		fmt.Printf("Python pipenv runtime detected for %s/%s\n", owner, name)
 		return &RuntimeResponse{
-			Name:    "Python",
-			Runtime: pipenv,
+			Name:       "Python",
+			Runtime:    pipenv,
+			Buildpacks: runtime.packs[pipenv],
 		}
 	} else if detected[pip] {
 		fmt.Printf("Python pip runtime detected for %s/%s\n", owner, name)
 		return &RuntimeResponse{
-			Name:    "Python",
-			Runtime: pip,
+			Name:       "Python",
+			Runtime:    pip,
+			Buildpacks: runtime.packs[pip],
 		}
 	} else if detected[conda] {
 		fmt.Printf("Python conda runtime detected for %s/%s\n", owner, name)
 		return &RuntimeResponse{
-			Name:    "Python",
-			Runtime: conda,
+			Name:       "Python",
+			Runtime:    conda,
+			Buildpacks: runtime.packs[conda],
 		}
 	} else if detected[standalone] {
 		fmt.Printf("Python standalone runtime detected for %s/%s\n", owner, name)
 		return &RuntimeResponse{
-			Name:    "Python",
-			Runtime: standalone,
+			Name:       "Python",
+			Runtime:    standalone,
+			Buildpacks: runtime.packs[standalone],
 		}
 	}
 

@@ -8,13 +8,28 @@ import (
 )
 
 const (
-	yarn       = "yarn"
-	npm        = "npm"
-	mod        = "mod"
-	dep        = "dep"
-	pipenv     = "pipenv"
-	pip        = "pip"
-	conda      = "conda"
+	// NodeJS
+	yarn = "yarn"
+	npm  = "npm"
+
+	// Go
+	mod = "mod"
+	dep = "dep"
+
+	// Python
+	pipenv = "pipenv"
+	pip    = "pip"
+	conda  = "conda"
+
+	// Ruby
+	puma      = "puma"
+	thin      = "thin"
+	unicorn   = "unicorn"
+	passenger = "passenger"
+	rackup    = "rackup"
+	rake      = "rake"
+
+	// Common
 	standalone = "standalone"
 )
 
@@ -66,12 +81,12 @@ type CLIRuntime interface {
 
 type APIRuntime interface {
 	Detect(
-		*github.Client,
-		[]*github.RepositoryContent,
-		string,
-		string,
-		string,
-		github.RepositoryContentGetOptions,
+		*github.Client, // github client to pull contents of files
+		[]*github.RepositoryContent, // the root folder structure of the git repo
+		string, // owner
+		string, // name
+		string, // path
+		github.RepositoryContentGetOptions, // SHA, branch or tag
 	) *RuntimeResponse
 }
 
@@ -80,4 +95,5 @@ var APIRuntimes = []APIRuntime{
 	NewAPIGoRuntime(),
 	NewAPINodeRuntime(),
 	NewAPIPythonRuntime(),
+	NewAPIRubyRuntime(),
 }

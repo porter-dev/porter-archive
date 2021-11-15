@@ -1,9 +1,6 @@
 package buildpacks
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/google/go-github/github"
 )
 
@@ -60,14 +57,6 @@ func (info *BuildpackInfo) addEnvVar(id string, val string) {
 	info.EnvVars[id] = val
 }
 
-func getExecPath() string {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	return filepath.Dir(ex)
-}
-
 type RuntimeResponse struct {
 	Name       string                 `json:"name"`
 	Buildpacks *BuildpackInfo         `json:"buildpacks"`
@@ -75,11 +64,7 @@ type RuntimeResponse struct {
 	Config     map[string]interface{} `json:"config"`
 }
 
-type CLIRuntime interface {
-	Detect(string) (BuildpackInfo, map[string]interface{})
-}
-
-type APIRuntime interface {
+type Runtime interface {
 	Detect(
 		*github.Client, // github client to pull contents of files
 		[]*github.RepositoryContent, // the root folder structure of the git repo
@@ -90,10 +75,10 @@ type APIRuntime interface {
 	) *RuntimeResponse
 }
 
-// APIRuntimes is a list of all API runtimes
-var APIRuntimes = []APIRuntime{
-	NewAPIGoRuntime(),
-	NewAPINodeRuntime(),
-	NewAPIPythonRuntime(),
-	NewAPIRubyRuntime(),
+// Runtimes is a list of all API runtimes
+var Runtimes = []Runtime{
+	NewGoRuntime(),
+	NewNodeRuntime(),
+	NewPythonRuntime(),
+	NewRubyRuntime(),
 }

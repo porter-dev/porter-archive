@@ -11,7 +11,7 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-type apiPythonRuntime struct {
+type pythonRuntime struct {
 	wg    sync.WaitGroup
 	packs map[string]*BuildpackInfo
 }
@@ -104,11 +104,11 @@ func populatePythonPacks(client *github.Client) map[string]*BuildpackInfo {
 	return packs
 }
 
-func NewAPIPythonRuntime() APIRuntime {
-	return &apiPythonRuntime{}
+func NewPythonRuntime() Runtime {
+	return &pythonRuntime{}
 }
 
-func (runtime *apiPythonRuntime) detectPipenv(results chan struct {
+func (runtime *pythonRuntime) detectPipenv(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -139,7 +139,7 @@ func (runtime *apiPythonRuntime) detectPipenv(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiPythonRuntime) detectPip(results chan struct {
+func (runtime *pythonRuntime) detectPip(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -164,7 +164,7 @@ func (runtime *apiPythonRuntime) detectPip(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiPythonRuntime) detectConda(results chan struct {
+func (runtime *pythonRuntime) detectConda(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -194,7 +194,7 @@ func (runtime *apiPythonRuntime) detectConda(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiPythonRuntime) detectStandalone(results chan struct {
+func (runtime *pythonRuntime) detectStandalone(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -220,7 +220,7 @@ func (runtime *apiPythonRuntime) detectStandalone(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiPythonRuntime) Detect(
+func (runtime *pythonRuntime) Detect(
 	client *github.Client,
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,

@@ -74,11 +74,11 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(len(buildpacks.APIRuntimes))
-	detectResults := make(chan *buildpacks.RuntimeResponse, len(buildpacks.APIRuntimes))
-	for i := range buildpacks.APIRuntimes {
+	wg.Add(len(buildpacks.Runtimes))
+	detectResults := make(chan *buildpacks.RuntimeResponse, len(buildpacks.Runtimes))
+	for i := range buildpacks.Runtimes {
 		go func(idx int) {
-			detectResults <- buildpacks.APIRuntimes[idx].Detect(
+			detectResults <- buildpacks.Runtimes[idx].Detect(
 				client, directoryContents, owner, name, request.Dir, repoContentOptions,
 			)
 			wg.Done()

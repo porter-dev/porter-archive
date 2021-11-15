@@ -37,6 +37,7 @@ func (runtime *apiGoRuntime) detectMod(results chan struct {
 			bool
 		}{mod, false}
 	}
+	runtime.wg.Done()
 }
 
 func (runtime *apiGoRuntime) detectDep(results chan struct {
@@ -67,6 +68,7 @@ func (runtime *apiGoRuntime) detectDep(results chan struct {
 			bool
 		}{dep, false}
 	}
+	runtime.wg.Done()
 }
 
 func (runtime *apiGoRuntime) Detect(

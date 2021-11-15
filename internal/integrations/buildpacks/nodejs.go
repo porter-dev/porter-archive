@@ -22,13 +22,13 @@ var (
 	}
 )
 
-type apiNodeRuntime struct {
+type nodejsRuntime struct {
 	wg    sync.WaitGroup
 	packs map[string]*BuildpackInfo
 }
 
-func NewAPINodeRuntime() APIRuntime {
-	return &apiNodeRuntime{}
+func NewNodeRuntime() Runtime {
+	return &nodejsRuntime{}
 }
 
 // FIXME: should be called once at the top-level somewhere in the backend
@@ -125,7 +125,7 @@ func populateNodePacks(client *github.Client) map[string]*BuildpackInfo {
 	return packs
 }
 
-func (runtime *apiNodeRuntime) detectYarn(results chan struct {
+func (runtime *nodejsRuntime) detectYarn(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -156,7 +156,7 @@ func (runtime *apiNodeRuntime) detectYarn(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiNodeRuntime) detectNPM(results chan struct {
+func (runtime *nodejsRuntime) detectNPM(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -182,7 +182,7 @@ func (runtime *apiNodeRuntime) detectNPM(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiNodeRuntime) detectStandalone(results chan struct {
+func (runtime *nodejsRuntime) detectStandalone(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -269,7 +269,7 @@ func validateNodeVersion(content string) (string, error) {
 	return content, nil
 }
 
-func (runtime *apiNodeRuntime) Detect(
+func (runtime *nodejsRuntime) Detect(
 	client *github.Client,
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,

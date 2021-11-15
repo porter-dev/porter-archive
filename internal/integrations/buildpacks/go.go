@@ -7,15 +7,15 @@ import (
 	"github.com/google/go-github/github"
 )
 
-type apiGoRuntime struct {
+type goRuntime struct {
 	wg sync.WaitGroup
 }
 
-func NewAPIGoRuntime() APIRuntime {
-	return &apiGoRuntime{}
+func NewGoRuntime() Runtime {
+	return &goRuntime{}
 }
 
-func (runtime *apiGoRuntime) detectMod(results chan struct {
+func (runtime *goRuntime) detectMod(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -40,7 +40,7 @@ func (runtime *apiGoRuntime) detectMod(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiGoRuntime) detectDep(results chan struct {
+func (runtime *goRuntime) detectDep(results chan struct {
 	string
 	bool
 }, directoryContent []*github.RepositoryContent) {
@@ -71,7 +71,7 @@ func (runtime *apiGoRuntime) detectDep(results chan struct {
 	runtime.wg.Done()
 }
 
-func (runtime *apiGoRuntime) Detect(
+func (runtime *goRuntime) Detect(
 	client *github.Client,
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,

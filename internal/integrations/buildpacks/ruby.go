@@ -13,7 +13,7 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-type apiRubyRuntime struct {
+type rubyRuntime struct {
 	wg    sync.WaitGroup
 	packs map[string]*BuildpackInfo
 }
@@ -132,11 +132,11 @@ func populateRubyPacks(client *github.Client) map[string]*BuildpackInfo {
 	return packs
 }
 
-func NewAPIRubyRuntime() APIRuntime {
-	return &apiRubyRuntime{}
+func NewRubyRuntime() Runtime {
+	return &rubyRuntime{}
 }
 
-func (runtime *apiRubyRuntime) detectPuma(gemfileContent string, results chan struct {
+func (runtime *rubyRuntime) detectPuma(gemfileContent string, results chan struct {
 	string
 	bool
 }) {
@@ -165,7 +165,7 @@ func (runtime *apiRubyRuntime) detectPuma(gemfileContent string, results chan st
 	runtime.wg.Done()
 }
 
-func (runtime *apiRubyRuntime) detectThin(gemfileContent string, results chan struct {
+func (runtime *rubyRuntime) detectThin(gemfileContent string, results chan struct {
 	string
 	bool
 }) {
@@ -194,7 +194,7 @@ func (runtime *apiRubyRuntime) detectThin(gemfileContent string, results chan st
 	runtime.wg.Done()
 }
 
-func (runtime *apiRubyRuntime) detectUnicorn(gemfileContent string, results chan struct {
+func (runtime *rubyRuntime) detectUnicorn(gemfileContent string, results chan struct {
 	string
 	bool
 }) {
@@ -223,7 +223,7 @@ func (runtime *apiRubyRuntime) detectUnicorn(gemfileContent string, results chan
 	runtime.wg.Done()
 }
 
-func (runtime *apiRubyRuntime) detectPassenger(gemfileContent string, results chan struct {
+func (runtime *rubyRuntime) detectPassenger(gemfileContent string, results chan struct {
 	string
 	bool
 }) {
@@ -252,7 +252,7 @@ func (runtime *apiRubyRuntime) detectPassenger(gemfileContent string, results ch
 	runtime.wg.Done()
 }
 
-func (runtime *apiRubyRuntime) detectRackup(
+func (runtime *rubyRuntime) detectRackup(
 	client *github.Client, owner, name string,
 	repoContentOptions github.RepositoryContentGetOptions, results chan struct {
 		string
@@ -299,7 +299,7 @@ func (runtime *apiRubyRuntime) detectRackup(
 	runtime.wg.Done()
 }
 
-func (runtime *apiRubyRuntime) detectRake(gemfileContent string, results chan struct {
+func (runtime *rubyRuntime) detectRake(gemfileContent string, results chan struct {
 	string
 	bool
 }) {
@@ -328,7 +328,7 @@ func (runtime *apiRubyRuntime) detectRake(gemfileContent string, results chan st
 	runtime.wg.Done()
 }
 
-func (runtime *apiRubyRuntime) Detect(
+func (runtime *rubyRuntime) Detect(
 	client *github.Client,
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,

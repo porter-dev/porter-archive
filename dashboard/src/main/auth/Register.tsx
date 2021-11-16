@@ -434,9 +434,9 @@ const Prompt = styled.div`
 `;
 
 const Logo = styled.img`
-  width: 140px;
-  margin-top: 50px;
-  margin-bottom: 35px;
+  width: 110px;
+  margin-top: 45px;
+  margin-bottom: 30px;
   user-select: none;
 `;
 

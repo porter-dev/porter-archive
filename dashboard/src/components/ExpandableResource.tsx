@@ -1,7 +1,6 @@
 import React, { Component, useContext, useEffect } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-import { useWebsockets } from "shared/hooks/useWebsockets";
 import ResourceTab from "./ResourceTab";
 import SaveButton from "./SaveButton";
 import { baseApi } from "shared/baseApi";

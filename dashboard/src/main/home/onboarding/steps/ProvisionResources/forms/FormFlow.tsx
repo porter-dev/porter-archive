@@ -125,7 +125,7 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
           {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
           {FormTitle[provider] && FormTitle[provider].label}
         </FormHeader>
-        <GuideButton href={FormTitle[provider].doc} target="_blank">
+        <GuideButton href={FormTitle[provider]?.doc} target="_blank">
           <i className="material-icons-outlined">help</i>
           Guide
         </GuideButton>

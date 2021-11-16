@@ -19,7 +19,7 @@ const ExpandableResource: React.FC<Props> = (props) => {
   const { resource, button } = props;
   const { currentCluster, currentProject } = useContext(Context);
 
-  let onSave = () => {
+  const onSave = () => {
     let projID = currentProject.id;
     let clusterID = currentCluster.id;
     let config = button.actions[0].delete.context.config;

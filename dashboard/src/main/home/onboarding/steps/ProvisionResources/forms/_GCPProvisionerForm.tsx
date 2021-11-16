@@ -13,7 +13,6 @@ import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import { SharedStatus } from "./SharedStatus";
 
 const regionOptions = [
   { value: "asia-east1", label: "asia-east1" },
@@ -231,8 +230,7 @@ export const CredentialsForm: React.FC<{
           {lastConnectedAccount?.gcp_sa_email || "n/a"}
         </Flex>
         <Right>
-          Connected at{" "}
-          {readableDate(lastConnectedAccount.created_at)}
+          Connected at {readableDate(lastConnectedAccount.created_at)}
         </Right>
       </PreviewRow>
       <Helper>

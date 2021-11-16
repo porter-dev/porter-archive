@@ -1,10 +1,6 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
-import ProvisionerStatus, {
-  TFModule,
-  TFResource,
-} from "components/ProvisionerStatus";
 import SaveButton from "components/SaveButton";
 import { OFState } from "main/home/onboarding/state";
 import { DOProvisionerConfig } from "main/home/onboarding/types";
@@ -12,8 +8,6 @@ import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-import { useWebsockets } from "shared/hooks/useWebsockets";
-import { SharedStatus } from "./SharedStatus";
 import Loading from "components/Loading";
 
 const tierOptions = [

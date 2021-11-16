@@ -1,7 +1,6 @@
 package release
 
 import (
-	"fmt"
 	"net/http"
 
 	semver "github.com/Masterminds/semver/v3"
@@ -118,12 +117,8 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				res.Form = formYAML
 			}
-
-			fmt.Println("ERROR IS", err)
 		}
 	}
-
-	fmt.Println("FORM YAML IS", res.Form)
 
 	c.WriteResult(w, r, res)
 }

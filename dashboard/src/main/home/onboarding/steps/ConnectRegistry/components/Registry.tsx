@@ -7,20 +7,18 @@ import { Context } from "shared/Context";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 
-const fakePromise = (shouldThrow: boolean) =>
-  new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (shouldThrow) {
-        reject("error");
-      } else {
-        resolve("success");
-      }
-    }, 2000);
-  });
+const serviceToProvider: {
+  [key: string]: string;
+} = {
+  docr: "do",
+  ecr: "aws",
+  gcr: "gcp",
+};
 
 const Registry: React.FC<{ registry: any; onDelete: () => void }> = (props) => {
   const { registry, onDelete } = props;
-  const icon = integrationList[registry?.service]?.icon;
+  const service = serviceToProvider[registry?.service];
+  const icon = integrationList[service || registry?.service]?.icon;
   const subtitle = integrationList[registry?.service]?.label;
   const snap = useSnapshot(OFState);
   const { setCurrentError } = useContext(Context);

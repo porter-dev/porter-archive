@@ -104,7 +104,7 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	form, err := parser.GetFormFromRelease(parserDef, helmRelease)
 
 	if err != nil {
-		// TODO: log non-fatal parsing error
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 	} else {
 		res.Form = form
 	}

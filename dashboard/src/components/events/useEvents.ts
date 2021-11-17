@@ -161,6 +161,15 @@ export const useKubeEvents = (
   // Fill up the data missing on events with the subevents
   const processedKubeEvents = useMemo(() => {
     return kubeEvents
+      .filter((event) => {
+        if (
+          !Array.isArray(event?.sub_events) ||
+          event.sub_events.length === 0
+        ) {
+          return false;
+        }
+        return true;
+      })
       .map((e: any) => {
         const lastSubEvent = getLastSubEvent(e.sub_events);
 

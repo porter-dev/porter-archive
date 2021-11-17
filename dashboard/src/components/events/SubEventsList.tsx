@@ -7,6 +7,16 @@ import SubEventCard from "./sub-events/SubEventCard";
 import Loading from "components/Loading";
 import LogBucketCard from "./sub-events/LogBucketCard";
 
+const getReadableDate = (s: number) => {
+  let ts = new Date(s);
+  let date = ts.toLocaleDateString();
+  let time = ts.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${time} ${date}`;
+};
+
 const SubEventsList: React.FC<{
   clearSelectedEvent: () => void;
   event: any;
@@ -94,53 +104,189 @@ const SubEventsList: React.FC<{
   }, [subEvents]);
 
   return (
-    <>
+    <Timeline>
       <ControlRow>
-        <div>
-          <BackButton onClick={clearSelectedEvent}>
-            <BackButtonImg src={backArrow} />
-          </BackButton>
-        </div>
+        <BackButton onClick={clearSelectedEvent}>
+          <i className="material-icons">close</i>
+        </BackButton>
+        <Icon
+          status={event.event_type.toLowerCase() as any}
+          className="material-icons-outlined"
+        >
+          {event.event_type === "critical" ? "report_problem" : "info"}
+        </Icon>
+        Pod {event.name} crashed
       </ControlRow>
       {isLoading ? (
-        <Loading />
+        <Placeholder>
+          <Loading />
+        </Placeholder>
       ) : sortedSubEvents?.length ? (
         <EventsGrid>
-          {sortedSubEvents.map((subEvent: any) => {
+          <Rail />
+          {sortedSubEvents.map((subEvent: any, i: number) => {
             if (subEvent?.event_type === "log_bucket") {
-              return <LogBucketCard logEvent={subEvent} />;
+              return (
+                <Wrapper>
+                  <TimelineNode>
+                    <Penumbra>
+                      <Circle />
+                    </Penumbra>
+                    {getReadableDate(subEvent.timestamp)}
+                  </TimelineNode>
+                  <LogBucketCard logEvent={subEvent} />
+                  {i === sortedSubEvents.length - 1 && <RailCover />}
+                </Wrapper>
+              );
             }
-            return <SubEventCard subEvent={subEvent} />;
+            return (
+              <Wrapper>
+                <TimelineNode>
+                  <Penumbra>
+                    <Circle />
+                  </Penumbra>
+                  {getReadableDate(subEvent.timestamp)}
+                </TimelineNode>
+                <SubEventCard subEvent={subEvent} />
+                {i === sortedSubEvents.length - 1 && <RailCover />}
+              </Wrapper>
+            );
           })}
         </EventsGrid>
       ) : (
-        "No sub events found for this resource "
+        <Placeholder>
+          <i className="material-icons">search</i>
+          No sub-events were found.
+        </Placeholder>
       )}
-    </>
+    </Timeline>
   );
 };
 
 export default SubEventsList;
 
+const Placeholder = styled.div`
+  padding: 30px;
+  padding-bottom: 40px;
+  font-size: 13px;
+  color: #ffffff44;
+  min-height: 340px;
+  margin-top: 20px;
+  background: #ffffff08;
+  height: calc(50vh - 60px);
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  > i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
+`;
+
+const RailCover = styled.div`
+  background: #202227;
+  height: 100%;
+  width: 35px;
+  position: absolute;
+  top: 20px;
+  left: 0;
+`;
+
+const Penumbra = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #202227;
+  padding: 8px;
+  border-radius: 30px;
+  margin-right: 4px;
+`;
+
+const TimelineNode = styled.div`
+  position: absolute;
+  top: 0;
+  left: 7px;
+  display: flex;
+  align-items: center;
+  color: #aaaabb;
+  font-size: 13px;
+`;
+
+const Circle = styled.div`
+  width: 7px;
+  height: 7px;
+  border-radius: 20px;
+  background: #aaaabb;
+`;
+
+const Wrapper = styled.div`
+  position: relative;
+  width: 100%;
+  padding-top: 35px;
+  padding-left: 35px;
+`;
+
+const Rail = styled.div`
+  position: absolute;
+  top: -8px;
+  left: 17px;
+  width: 3px;
+  height: 100%;
+  z-index: -1;
+  background: #36383d;
+`;
+
+const Timeline = styled.div`
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const Icon = styled.span<{ status: "critical" | "normal" }>`
+  font-size: 26px;
+  margin-left: 17px;
+  margin-right: 10px;
+  color: ${({ status }) => (status === "critical" ? "#ff385d" : "#aaaabb")};
+`;
+
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  margin-top: 35px;
-  margin-bottom: 35px;
+  margin-bottom: 15px;
   padding-left: 0px;
+  font-weight: 500;
 `;
 
 const BackButton = styled.div`
   display: flex;
-  width: 36px;
+  width: 37px;
+  z-index: 1;
   cursor: pointer;
-  height: 36px;
+  height: 37px;
   align-items: center;
   justify-content: center;
   border: 1px solid #ffffff55;
   border-radius: 100px;
   background: #ffffff11;
+
+  > i {
+    font-size: 20px;
+  }
+
   :hover {
     background: #ffffff22;
     > img {
@@ -149,13 +295,7 @@ const BackButton = styled.div`
   }
 `;
 
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
-`;
-
 const EventsGrid = styled.div`
-  display: grid;
-  grid-row-gap: 15px;
-  grid-template-columns: 1;
+  position: relative;
+  padding-top: 9px;
 `;

@@ -43,7 +43,6 @@ const EventsTab: React.FC<{
 
   const selectedController = controllers[currentControllerOption?.value];
 
-  console.log(controllers, currentControllerOption);
   const {
     isLoading,
     hasPorterAgent,
@@ -71,10 +70,11 @@ const EventsTab: React.FC<{
     return (
       <Placeholder>
         <div>
-          <Header>We coulnd't detect porter agent :(</Header>
-          In order to use the events tab you should install the porter agent!
+          <Header>We couldn't detect the Porter agent on your cluster</Header>
+          In order to use the events tab, you need to install the Porter agent
+          on your cluster.
           <InstallPorterAgentButton onClick={() => triggerInstall()}>
-            <i className="material-icons">add</i> Install porter agent
+            <i className="material-icons">add</i> Install Porter agent
           </InstallPorterAgentButton>
         </div>
       </Placeholder>
@@ -92,72 +92,89 @@ const EventsTab: React.FC<{
 
   return (
     <EventsPageWrapper>
-      <ControlRow>
-        <Dropdown
-          selectedOption={resourceType}
-          options={availableResourceTypes}
-          onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
-        />
-        <RightFilters>
-          <Dropdown
-            selectedOption={currentControllerOption}
-            options={controllerOptions}
-            onSelect={(o) => setSelectedControllerKey(o?.value)}
-          />
-        </RightFilters>
-      </ControlRow>
+      {kubeEvents.length > 0 ? (
+        <>
+          <ControlRow>
+            {/*
+              <Dropdown
+                selectedOption={resourceType}
+                options={availableResourceTypes}
+                onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
+              />
+              */}
+            <Label>Controller -</Label>
+            <Dropdown
+              selectedOption={currentControllerOption}
+              options={controllerOptions}
+              onSelect={(o) => setSelectedControllerKey(o?.value)}
+            />
+          </ControlRow>
 
-      <InfiniteScroll
-        dataLength={kubeEvents.length}
-        next={loadMoreEvents}
-        hasMore={hasMore}
-        loader={<h4>Loading...</h4>}
-        scrollableTarget="HomeViewWrapper"
-        endMessage={
-          <h4>No events were found for the resource type you specified</h4>
-        }
-      >
-        <EventsGrid>
-          {kubeEvents.map((event, i) => {
-            return (
-              <React.Fragment key={i}>
-                <EventCard
-                  event={event as any}
-                  selectEvent={() => {
-                    setCurrentEvent(event);
-                  }}
-                />
-              </React.Fragment>
-            );
-          })}
-        </EventsGrid>
-      </InfiniteScroll>
+          <InfiniteScroll
+            dataLength={kubeEvents.length}
+            next={loadMoreEvents}
+            hasMore={hasMore}
+            loader={<h4>Loading...</h4>}
+            scrollableTarget="HomeViewWrapper"
+          >
+            <EventsGrid>
+              {kubeEvents.map((event, i) => {
+                return (
+                  <React.Fragment key={i}>
+                    <EventCard
+                      event={event as any}
+                      selectEvent={() => {
+                        setCurrentEvent(event);
+                      }}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </EventsGrid>
+          </InfiniteScroll>
+        </>
+      ) : (
+        <Placeholder>
+          <i className="material-icons">search</i>
+          No matching events were found.
+        </Placeholder>
+      )}
     </EventsPageWrapper>
   );
 };
 
 export default EventsTab;
 
-const RightFilters = styled.div`
-  display: flex;
-  > div {
-    :not(:last-child) {
-      margin-right: 15px;
-    }
-  }
+const Label = styled.div`
+  color: #ffffff44;
+  margin-right: 8px;
+  font-size: 13px;
 `;
 
 const ControlRow = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 35px;
+  margin-bottom: 30px;
   padding-left: 0px;
+  font-size: 13px;
 `;
 
 const EventsPageWrapper = styled.div`
-  margin-top: 35px;
-  padding-bottom: 80px;
+  font-size: 13px;
+  border-radius: 8px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
 `;
 
 const EventsGrid = styled.div`
@@ -175,12 +192,12 @@ const InstallPorterAgentButton = styled.button`
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
   border: none;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   padding: 0px 8px;
   padding-bottom: 1px;
-  margin-top: 10px;
+  margin-top: 20px;
   font-weight: 500;
   padding-right: 15px;
   overflow: hidden;
@@ -190,10 +207,9 @@ const InstallPorterAgentButton = styled.button`
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
   background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+    props.disabled ? "#aaaabbee" : "#5561C0"};
   :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
   > i {
     color: white;
@@ -210,16 +226,23 @@ const InstallPorterAgentButton = styled.button`
 `;
 
 const Placeholder = styled.div`
-  min-height: 200px;
-  height: 20vh;
   padding: 30px;
-  padding-bottom: 90px;
+  padding-bottom: 40px;
   font-size: 13px;
   color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff08;
+  border-radius: 8px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  > i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
 `;
 
 const Header = styled.div`

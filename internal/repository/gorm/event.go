@@ -99,10 +99,10 @@ func (repo *KubeEventRepository) CreateEvent(
 	// basic fixed-length buffer
 	if count >= 500 {
 		// first, delete the matching sub events
-		err := repo.db.Exec(`
+		err := repo.db.Debug().Exec(`
 		  DELETE FROM kube_sub_events 
 		  WHERE kube_event_id NOT IN (
-			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY updated_at desc, id desc LIMIT 499
+			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY k2.updated_at desc, k2.id desc LIMIT 499
 		  )
 		`, event.ProjectID, event.ClusterID).Error
 
@@ -111,10 +111,10 @@ func (repo *KubeEventRepository) CreateEvent(
 		}
 
 		// then, delete the matching events
-		err = repo.db.Exec(`
+		err = repo.db.Debug().Exec(`
 		  DELETE FROM kube_events 
 		  WHERE (project_id = ? AND cluster_id = ?) AND id NOT IN (
-			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY updated_at desc, id desc LIMIT 499
+			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY k2.updated_at desc, k2.id desc LIMIT 499
 		  )
 		`, event.ProjectID, event.ClusterID, event.ProjectID, event.ClusterID).Error
 
@@ -239,7 +239,7 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 		return err
 	}
 
-	fmt.Println("COUNT IS", event.Name, count)
+	fmt.Println("COUNT IS (subevents)", event.Name, count)
 
 	// if the count is greater than 20, remove the lowest-order events to implement a
 	// basic fixed-length buffer
@@ -248,7 +248,7 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 			  DELETE FROM kube_sub_events 
 			  WHERE kube_event_id = ? AND 
 			  id NOT IN (
-				SELECT id FROM kube_sub_events k2 WHERE k2.kube_event_id = ? ORDER BY updated_at desc, id desc LIMIT 19
+				SELECT id FROM kube_sub_events k2 WHERE k2.kube_event_id = ? ORDER BY k2.updated_at desc, k2.id desc LIMIT 19
 			  )
 			`, event.ID, event.ID).Error
 

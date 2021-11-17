@@ -26,7 +26,7 @@ const EventCard: React.FunctionComponent<CardProps> = ({
   const [showTooltip, setShowTooltip] = useState(false);
   return (
     <>
-      <StyledCard 
+      <StyledCard
         onClick={() => selectEvent(event)}
         status={event.event_type.toLowerCase()}
       >
@@ -64,7 +64,8 @@ const StyledCard = styled.div<{ status: string }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid ${({ status }) => status === "critical" ? "#ff385d" : "#ffffff44"};
+  border: 1px solid
+    ${({ status }) => (status === "critical" ? "#ff385d" : "#ffffff44")};
   background: #ffffff08;
   margin-bottom: 5px;
   border-radius: 10px;
@@ -75,7 +76,8 @@ const StyledCard = styled.div<{ status: string }>`
   cursor: pointer;
   :hover {
     background: #ffffff11;
-    border: 1px solid ${({ status }) => status === "critical" ? "#ff385d" : "#ffffff66"};
+    border: 1px solid
+      ${({ status }) => (status === "critical" ? "#ff385d" : "#ffffff66")};
   }
   animation: fadeIn 0.5s;
   @keyframes fadeIn {
@@ -99,7 +101,7 @@ const Icon = styled.span<{ status: "critical" | "normal" }>`
   font-size: 20px;
   margin-left: 10px;
   margin-right: 20px;
-  color: ${({ status }) => status === "critical" ? "#ff385d" : "#aaaabb"};
+  color: ${({ status }) => (status === "critical" ? "#ff385d" : "#aaaabb")};
 `;
 
 const EventInformation = styled.div`

@@ -96,7 +96,7 @@ const Option = styled.div`
 
   :hover {
     color: #ffffff;
-    
+
     > img {
       opacity: 100%;
     }

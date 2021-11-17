@@ -60,46 +60,44 @@ const EventsTab = () => {
 
   return (
     <EventsPageWrapper>
-      {
-        kubeEvents.length > 0 ? (
-          <>
-            <ControlRow>
-              {/*
+      {kubeEvents.length > 0 ? (
+        <>
+          <ControlRow>
+            {/*
               <Dropdown
                 selectedOption={resourceType}
                 options={availableResourceTypes}
                 onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
               />
               */}
-            </ControlRow>
-            <InfiniteScroll
-              dataLength={kubeEvents.length}
-              next={loadMoreEvents}
-              hasMore={hasMore}
-              loader={<h4>Loading...</h4>}
-              scrollableTarget="HomeViewWrapper"
-            >
-              <EventsGrid>
-                {kubeEvents.map((event, i) => {
-                  return (
-                    <React.Fragment key={i}>
-                      <EventCard
-                        event={event}
-                        selectEvent={() => setCurrentEvent(event)}
-                      />
-                    </React.Fragment>
-                  );
-                })}
-              </EventsGrid>
-            </InfiniteScroll>
-          </>
-        ) : (
-          <Placeholder>
-            <i className="material-icons">search</i>
-            No matching events were found.
-          </Placeholder>
-        )
-      }
+          </ControlRow>
+          <InfiniteScroll
+            dataLength={kubeEvents.length}
+            next={loadMoreEvents}
+            hasMore={hasMore}
+            loader={<h4>Loading...</h4>}
+            scrollableTarget="HomeViewWrapper"
+          >
+            <EventsGrid>
+              {kubeEvents.map((event, i) => {
+                return (
+                  <React.Fragment key={i}>
+                    <EventCard
+                      event={event}
+                      selectEvent={() => setCurrentEvent(event)}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </EventsGrid>
+          </InfiniteScroll>
+        </>
+      ) : (
+        <Placeholder>
+          <i className="material-icons">search</i>
+          No matching events were found.
+        </Placeholder>
+      )}
     </EventsPageWrapper>
   );
 };

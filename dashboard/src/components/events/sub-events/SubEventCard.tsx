@@ -7,9 +7,7 @@ type CardProps = {
 
 const SubEventCard: React.FunctionComponent<CardProps> = ({ subEvent }) => {
   return (
-    <StyledCard
-      status={subEvent.event_type.toLowerCase()}
-    >
+    <StyledCard status={subEvent.event_type.toLowerCase()}>
       <Icon
         status={subEvent.event_type.toLowerCase() as any}
         className="material-icons-outlined"
@@ -29,7 +27,8 @@ const StyledCard = styled.div<{ status: string }>`
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  border: 1px solid ${({ status }) => status === "critical" ? "#ff385d" : "#ffffff44"};
+  border: 1px solid
+    ${({ status }) => (status === "critical" ? "#ff385d" : "#ffffff44")};
   background: #ffffff08;
   margin-bottom: 30px;
   border-radius: 10px;
@@ -54,5 +53,5 @@ const Icon = styled.span<{ status: "critical" | "normal" }>`
   font-size: 20px;
   margin-left: 10px;
   margin-right: 13px;
-  color: ${({ status }) => status === "critical" ? "#ff385d" : "#aaaabb"};
+  color: ${({ status }) => (status === "critical" ? "#ff385d" : "#aaaabb")};
 `;

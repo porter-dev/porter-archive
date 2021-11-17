@@ -135,9 +135,7 @@ const SubEventsList: React.FC<{
                     {getReadableDate(subEvent.timestamp)}
                   </TimelineNode>
                   <LogBucketCard logEvent={subEvent} />
-                  {i === sortedSubEvents.length - 1 && (
-                    <RailCover />
-                  )}
+                  {i === sortedSubEvents.length - 1 && <RailCover />}
                 </Wrapper>
               );
             }
@@ -150,9 +148,7 @@ const SubEventsList: React.FC<{
                   {getReadableDate(subEvent.timestamp)}
                 </TimelineNode>
                 <SubEventCard subEvent={subEvent} />
-                {i === sortedSubEvents.length - 1 && (
-                  <RailCover />
-                )}
+                {i === sortedSubEvents.length - 1 && <RailCover />}
               </Wrapper>
             );
           })}
@@ -240,7 +236,7 @@ const Rail = styled.div`
   width: 3px;
   height: 100%;
   z-index: -1;
-  background: #36383D;
+  background: #36383d;
 `;
 
 const Timeline = styled.div`
@@ -263,7 +259,7 @@ const Icon = styled.span<{ status: "critical" | "normal" }>`
   font-size: 26px;
   margin-left: 17px;
   margin-right: 10px;
-  color: ${({ status }) => status === "critical" ? "#ff385d" : "#aaaabb"};
+  color: ${({ status }) => (status === "critical" ? "#ff385d" : "#aaaabb")};
 `;
 
 const ControlRow = styled.div`

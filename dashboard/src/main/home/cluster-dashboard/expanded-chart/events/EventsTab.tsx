@@ -14,125 +14,6 @@ const availableResourceTypes = [
   { label: "HPA", value: "hpa" },
 ];
 
-const fakeKubeEvents = [
-  {
-    event_type: "normal",
-    resource_type: "pod",
-    name: "some-resource-name",
-    last_message: "This is the last message I sent randomly",
-    sub_events: [
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-    ] as any[],
-    timestamp: "2021-11-12T22:23:21+00:00"
-  },
-  {
-    event_type: "critical",
-    resource_type: "pod",
-    name: "some-resource-name",
-    last_message: "This is the last message I sent randomly",
-    sub_events: [
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-    ] as any[],
-    timestamp: "2021-11-12T22:23:21+00:00"
-  },
-  {
-    event_type: "normal",
-    resource_type: "pod",
-    name: "some-resource-name",
-    last_message: "This is the last message I sent randomly",
-    sub_events: [
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-    ] as any[],
-    timestamp: "2021-11-12T22:23:21+00:00"
-  },
-  {
-    event_type: "normal",
-    resource_type: "pod",
-    name: "some-resource-name",
-    last_message: "This is the last message I sent randomly",
-    sub_events: [
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-      {
-        event_type: "normal",
-        resource_type: "pod",
-        name: "some-resource-name",
-        last_message: "This is the last message I sent randomly",
-        sub_events: [] as any[],
-        timestamp: "2021-11-12T22:23:21+00:00"
-      },
-    ] as any[],
-    timestamp: "2021-11-12T22:23:21+00:00"
-  },
-  {
-    event_type: "normal",
-    resource_type: "pod",
-    name: "some-resource-name",
-    last_message: "This is the last message I sent randomly",
-    sub_events: [] as any[],
-    timestamp: "2021-11-12T22:23:21+00:00"
-  },
-  {
-    event_type: "normal",
-    resource_type: "pod",
-    name: "some-resource-name",
-    last_message: "This is the last message I sent randomly",
-    sub_events: [] as any[],
-    timestamp: "2021-11-12T22:23:21+00:00"
-  },
-]
-
 const EventsTab: React.FC<{
   controllers: Record<string, Record<string, any>>;
 }> = (props) => {
@@ -162,7 +43,6 @@ const EventsTab: React.FC<{
 
   const selectedController = controllers[currentControllerOption?.value];
 
-  console.log(controllers, currentControllerOption);
   const {
     isLoading,
     hasPorterAgent,
@@ -213,7 +93,7 @@ const EventsTab: React.FC<{
   return (
     <EventsPageWrapper>
       {
-        fakeKubeEvents.length > 0 ? (
+        kubeEvents.length > 0 ? (
           <>
             <ControlRow>
               {/*
@@ -232,14 +112,14 @@ const EventsTab: React.FC<{
             </ControlRow>
 
             <InfiniteScroll
-              dataLength={fakeKubeEvents.length}
+              dataLength={kubeEvents.length}
               next={loadMoreEvents}
               hasMore={hasMore}
               loader={<h4>Loading...</h4>}
               scrollableTarget="HomeViewWrapper"
             >
               <EventsGrid>
-                {fakeKubeEvents.map((event, i) => {
+                {kubeEvents.map((event, i) => {
                   return (
                     <React.Fragment key={i}>
                       <EventCard
@@ -354,7 +234,7 @@ const Placeholder = styled.div`
   color: #ffffff44;
   min-height: 400px;
   height: 50vh;
-  background: #ffffff11;
+  background: #ffffff08;
   border-radius: 8px;
   width: 100%;
   display: flex;

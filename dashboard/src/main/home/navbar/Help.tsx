@@ -77,7 +77,7 @@ export default class Help extends Component<PropsType, StateType> {
 Help.contextType = Context;
 
 const Option = styled.div`
-  margin-left: 15px;
+  margin-left: 12px;
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -89,9 +89,21 @@ const Option = styled.div`
   > i {
     opacity: 50%;
     color: white;
-    margin-right: 7px;
-    font-size: 20px;
+    margin-right: 9px;
+    font-size: 18px;
     cursor: pointer;
+  }
+
+  :hover {
+    color: #ffffff;
+    
+    > img {
+      opacity: 100%;
+    }
+
+    > i {
+      opacity: 100%;
+    }
   }
 `;
 
@@ -204,8 +216,8 @@ const FeedbackButton = styled(NavButton)`
 
 const Icon = styled.img`
   margin-left: -2px;
-  height: 25px;
-  width: 25px;
+  height: 22px;
+  width: 22px;
   opacity: 50%;
-  margin-right: 5px;
+  margin-right: 7px;
 `;

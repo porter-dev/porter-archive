@@ -92,55 +92,53 @@ const EventsTab: React.FC<{
 
   return (
     <EventsPageWrapper>
-      {
-        kubeEvents.length > 0 ? (
-          <>
-            <ControlRow>
-              {/*
+      {kubeEvents.length > 0 ? (
+        <>
+          <ControlRow>
+            {/*
               <Dropdown
                 selectedOption={resourceType}
                 options={availableResourceTypes}
                 onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
               />
               */}
-              <Label>Controller -</Label>
-              <Dropdown
-                selectedOption={currentControllerOption}
-                options={controllerOptions}
-                onSelect={(o) => setSelectedControllerKey(o?.value)}
-              />
-            </ControlRow>
+            <Label>Controller -</Label>
+            <Dropdown
+              selectedOption={currentControllerOption}
+              options={controllerOptions}
+              onSelect={(o) => setSelectedControllerKey(o?.value)}
+            />
+          </ControlRow>
 
-            <InfiniteScroll
-              dataLength={kubeEvents.length}
-              next={loadMoreEvents}
-              hasMore={hasMore}
-              loader={<h4>Loading...</h4>}
-              scrollableTarget="HomeViewWrapper"
-            >
-              <EventsGrid>
-                {kubeEvents.map((event, i) => {
-                  return (
-                    <React.Fragment key={i}>
-                      <EventCard
-                        event={event as any}
-                        selectEvent={() => {
-                          setCurrentEvent(event);
-                        }}
-                      />
-                    </React.Fragment>
-                  );
-                })}
-              </EventsGrid>
-            </InfiniteScroll>
-          </>
-        ) : (
-          <Placeholder>
-            <i className="material-icons">search</i>
-            No matching events were found.
-          </Placeholder>
-        )
-      }
+          <InfiniteScroll
+            dataLength={kubeEvents.length}
+            next={loadMoreEvents}
+            hasMore={hasMore}
+            loader={<h4>Loading...</h4>}
+            scrollableTarget="HomeViewWrapper"
+          >
+            <EventsGrid>
+              {kubeEvents.map((event, i) => {
+                return (
+                  <React.Fragment key={i}>
+                    <EventCard
+                      event={event as any}
+                      selectEvent={() => {
+                        setCurrentEvent(event);
+                      }}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </EventsGrid>
+          </InfiniteScroll>
+        </>
+      ) : (
+        <Placeholder>
+          <i className="material-icons">search</i>
+          No matching events were found.
+        </Placeholder>
+      )}
     </EventsPageWrapper>
   );
 };

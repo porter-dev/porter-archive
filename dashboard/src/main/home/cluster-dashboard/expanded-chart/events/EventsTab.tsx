@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
@@ -6,7 +6,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import Dropdown from "components/Dropdown";
 import { useKubeEvents } from "components/events/useEvents";
 import { ChartType } from "shared/types";
-import _, { isObject } from "lodash";
+import _, { isEmpty, isObject } from "lodash";
 import SubEventsList from "components/events/SubEventsList";
 
 const availableResourceTypes = [
@@ -22,6 +22,8 @@ const EventsTab: React.FC<{
   const [currentEvent, setCurrentEvent] = useState(null);
 
   const [selectedControllerKey, setSelectedControllerKey] = useState(null);
+
+  const [hasControllers, setHasControllers] = useState(null);
 
   const controllerOptions = useMemo(() => {
     if (typeof controllers !== "object") {
@@ -50,18 +52,41 @@ const EventsTab: React.FC<{
     kubeEvents,
     loadMoreEvents,
     hasMore,
-  } = useKubeEvents(
-    resourceType.value as any,
-    selectedController?.metadata?.name,
-    selectedController?.kind
-  );
+  } = useKubeEvents({
+    resourceType: resourceType.value as any,
+    ownerName: selectedController?.metadata?.name,
+    ownerType: selectedController?.kind,
+    shouldWaitForOwner: true,
+  });
 
-  const hasControllers = controllers && Object.keys(controllers)?.length;
+  useEffect(() => {
+    let timer: NodeJS.Timeout = null;
+    if (isEmpty(controllers)) {
+      timer = setTimeout(() => {
+        setHasControllers(false);
+      }, 10000);
+    }
 
-  if (isLoading || !hasControllers) {
+    return () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+    };
+  }, [controllers]);
+
+  if (isLoading && hasControllers === null) {
     return (
       <Placeholder>
         <Loading />
+      </Placeholder>
+    );
+  }
+
+  if (!hasControllers) {
+    return (
+      <Placeholder>
+        <i className="material-icons">search</i>
+        No matching events were found.
       </Placeholder>
     );
   }

@@ -1,7 +1,6 @@
 import React, { Component, useContext, useEffect } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-import { useWebsockets } from "shared/hooks/useWebsockets";
 import ResourceTab from "./ResourceTab";
 import SaveButton from "./SaveButton";
 import { baseApi } from "shared/baseApi";
@@ -19,7 +18,7 @@ const ExpandableResource: React.FC<Props> = (props) => {
   const { resource, button } = props;
   const { currentCluster, currentProject } = useContext(Context);
 
-  let onSave = () => {
+  const onSave = () => {
     let projID = currentProject.id;
     let clusterID = currentCluster.id;
     let config = button.actions[0].delete.context.config;

@@ -287,11 +287,15 @@ export const StatusPage = ({
     );
 
     const hasModuleWithTimerElapsed = moduleStatuses.find(
-      (module) => module.status === "failed"
+      (module) => module.status === "timed_out"
     );
 
     if (hasModuleWithTimerElapsed) {
-      setInfraStatus({ hasError: true });
+      setInfraStatus({
+        hasError: true,
+        description:
+          "We weren't able to provision after 45 minutes, please try again.",
+      });
       return;
     }
 
@@ -491,7 +495,7 @@ const useModuleChecker = (modules: TFModule[]) => {
   }>({});
 
   const [moduleStatuses, setModuleStatus] = useState<{
-    [timerModuleId: number]: "failed" | "creating" | "success";
+    [timerModuleId: number]: "timed_out" | "creating" | "success";
   }>({});
 
   const didModuleTimedOut = (infra: TFModule) => {
@@ -516,7 +520,8 @@ const useModuleChecker = (modules: TFModule[]) => {
     if (
       module.resources.every(
         (resource) => resource.provisioned || resource.errored?.errored_out
-      )
+      ) ||
+      module.global_errors.find((resourceError) => resourceError.errored_out)
     ) {
       return true;
     }
@@ -542,23 +547,25 @@ const useModuleChecker = (modules: TFModule[]) => {
         return;
       }
 
+      if (hasModuleBeenSuccessfullyProvisioned(module)) {
+        setModuleStatus((modulesStatus) => ({
+          ...modulesStatus,
+          [module.id]: "success",
+        }));
+        clearCheckerTimeout(module.id);
+        return;
+      }
+
       if (!hasModuleAnyResourcesProvisionedOrErrored(module)) {
         setModuleStatus((modulesStatus) => ({
           ...modulesStatus,
-          [module.id]: "failed",
+          [module.id]: "timed_out",
         }));
       } else {
-        if (hasModuleBeenSuccessfullyProvisioned(module)) {
-          setModuleStatus((modulesStatus) => ({
-            ...modulesStatus,
-            [module.id]: "success",
-          }));
-        } else {
-          setModuleStatus((modulesStatus) => ({
-            ...modulesStatus,
-            [module.id]: "creating",
-          }));
-        }
+        setModuleStatus((modulesStatus) => ({
+          ...modulesStatus,
+          [module.id]: "creating",
+        }));
       }
       clearCheckerTimeout(module.id);
     }, 1000);
@@ -598,7 +605,6 @@ const useModuleChecker = (modules: TFModule[]) => {
         moduleStatuses[module.id] &&
         moduleStatuses[module.id] !== "creating"
       ) {
-        console.log("Module failed or created", module.id);
         clearCheckerTimeout(module.id);
         return;
       }

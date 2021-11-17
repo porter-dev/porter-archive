@@ -74,7 +74,10 @@ const ProvisionResources: React.FC<Props> = () => {
           <Br height="15px" />
           <SaveButton
             text="Resolve Errors"
-            status="Encountered errors while provisioning."
+            status={
+              infraStatus?.description ||
+              "Encountered errors while provisioning."
+            }
             disabled={false}
             onClick={() => handleGoBack(infraStatus.description)}
             makeFlush={true}

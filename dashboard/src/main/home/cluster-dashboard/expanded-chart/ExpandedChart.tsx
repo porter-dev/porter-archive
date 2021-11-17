@@ -742,6 +742,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   valuesToOverride={{
                     namespace: props.namespace,
                     clusterId: currentCluster.id,
+                    currentChart: {
+                      name: currentChart.name,
+                    },
                   }}
                   renderTabContents={renderTabContents}
                   isReadOnly={

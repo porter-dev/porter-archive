@@ -96,6 +96,59 @@ func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType string)
 	return form, nil
 }
 
+func FormStreamer(
+	def *ClientConfigDefault,
+	bytes []byte,
+	stateType string,
+	targetContext *types.FormContext,
+	on templater.OnDataStream,
+	stopCh <-chan struct{},
+) error {
+	form, err := unqueriedFormYAMLFromBytes(bytes)
+
+	if err != nil {
+		return err
+	}
+
+	lookup := formToLookupTable(def, form, stateType)
+
+	for lookupContext, lookupVal := range lookup {
+		if lookupVal != nil && areContextsEqual(targetContext, lookupContext) {
+			err := lookupVal.TemplateReader.ReadStream(on, stopCh)
+
+			if err != nil {
+				continue
+			}
+		}
+	}
+
+	return nil
+}
+
+func areContextsEqual(context1, context2 *types.FormContext) bool {
+	if context1.Type != context2.Type {
+		return false
+	}
+
+	subset12 := isSubset(context1.Config, context2.Config)
+	subset21 := isSubset(context2.Config, context1.Config)
+
+	return subset12 && subset21
+}
+
+func isSubset(map1, map2 map[string]string) bool {
+	subset12 := true
+
+	for key1, val1 := range map1 {
+		if val2, exists := map2[key1]; !exists || val2 != val1 {
+			subset12 = false
+			break
+		}
+	}
+
+	return subset12
+}
+
 // unqueriedFormYAMLFromBytes returns a FormYAML without values queries populated
 func unqueriedFormYAMLFromBytes(bytes []byte) (*types.FormYAML, error) {
 	// parse bytes into object

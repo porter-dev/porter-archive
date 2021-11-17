@@ -3,7 +3,7 @@ import ProvisionerStatus, {
   TFResource,
   TFResourceError,
 } from "components/ProvisionerStatus";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 
@@ -68,6 +68,8 @@ export const StatusPage = ({
     updateModuleResources,
     updateGlobalErrorsForModule,
   } = useTFModules();
+
+  const { moduleStatuses } = useModuleChecker(tfModules);
 
   const filterBySelectedInfras = (currentInfra: Infra) => {
     if (!Array.isArray(selectedFilters) || !selectedFilters?.length) {
@@ -279,9 +281,23 @@ export const StatusPage = ({
     const hasModuleWithError = tfModules.find(
       (module) => module.status === "error"
     );
+
     const hasModuleInCreatingState = tfModules.find(
       (module) => module.status === "creating"
     );
+
+    const hasModuleWithTimerElapsed = moduleStatuses.find(
+      (module) => module.status === "timed_out"
+    );
+
+    if (hasModuleWithTimerElapsed) {
+      setInfraStatus({
+        hasError: true,
+        description:
+          "We weren't able to provision after 45 minutes, please try again.",
+      });
+      return;
+    }
 
     if (hasModuleInCreatingState) {
       setInfraStatus(null);
@@ -297,7 +313,7 @@ export const StatusPage = ({
       setInfraStatus({ hasError: true });
       return;
     }
-  }, [tfModules]);
+  }, [tfModules, moduleStatuses]);
 
   const sortedModules = tfModules.sort((a, b) =>
     b.id < a.id ? -1 : b.id > a.id ? 1 : 0
@@ -346,6 +362,7 @@ const useTFModules = () => {
       status: infra.status,
       got_desired: false,
       created_at: infra.created_at,
+      updated_at: infra.updated_at,
     };
     setModule(infra.id, module);
   };
@@ -469,5 +486,156 @@ const useTFModules = () => {
     updateDesired,
     updateModuleResources,
     updateGlobalErrorsForModule,
+  };
+};
+
+const useModuleChecker = (modules: TFModule[]) => {
+  const [timers, setTimers] = useState<{
+    [timerModuleId: number]: NodeJS.Timeout;
+  }>({});
+
+  const [moduleStatuses, setModuleStatus] = useState<{
+    [timerModuleId: number]: "timed_out" | "creating" | "success";
+  }>({});
+
+  const didModuleTimedOut = (infra: TFModule) => {
+    const last_updated = new Date(infra.updated_at).getTime();
+    const current_date = new Date().getTime();
+
+    let diff = (current_date - last_updated) / 1000 / 60;
+    const minutes_elapsed = Math.abs(Math.round(diff));
+
+    if (minutes_elapsed >= 45) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const hasModuleAnyResourcesProvisionedOrErrored = (module: TFModule) => {
+    if (!Array.isArray(module.resources)) {
+      return false;
+    }
+
+    if (
+      module.resources.every(
+        (resource) => resource.provisioned || resource.errored?.errored_out
+      ) ||
+      module.global_errors.find((resourceError) => resourceError.errored_out)
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const hasModuleBeenSuccessfullyProvisioned = (module: TFModule) => {
+    if (!Array.isArray(module.resources)) {
+      return false;
+    }
+
+    if (module.resources.every((resource) => resource.provisioned)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const setupTimeoutToCheckModuleTimeout = (module: TFModule) => {
+    const timer = setTimeout(() => {
+      if (!didModuleTimedOut(module)) {
+        return;
+      }
+
+      if (hasModuleBeenSuccessfullyProvisioned(module)) {
+        setModuleStatus((modulesStatus) => ({
+          ...modulesStatus,
+          [module.id]: "success",
+        }));
+        clearCheckerTimeout(module.id);
+        return;
+      }
+
+      if (!hasModuleAnyResourcesProvisionedOrErrored(module)) {
+        setModuleStatus((modulesStatus) => ({
+          ...modulesStatus,
+          [module.id]: "timed_out",
+        }));
+      } else {
+        setModuleStatus((modulesStatus) => ({
+          ...modulesStatus,
+          [module.id]: "creating",
+        }));
+      }
+      clearCheckerTimeout(module.id);
+    }, 1000);
+    return timer;
+  };
+
+  const clearCheckerTimeout = (moduleId: number) => {
+    const moduleInterval = timers[moduleId];
+    clearTimeout(moduleInterval);
+    setTimers((timers) => ({
+      ...timers,
+      [moduleId]: undefined,
+    }));
+  };
+
+  const clearCheckerTimers = () => {
+    if (typeof timers !== "object") {
+      return;
+    }
+
+    Object.entries(timers).forEach(([moduleId, intervalId]) => {
+      clearTimeout(intervalId);
+      setTimers((timers) => ({
+        ...timers,
+        [moduleId]: undefined,
+      }));
+    });
+  };
+
+  useEffect(() => {
+    modules.forEach((module) => {
+      if (timers[module.id]) {
+        clearTimeout(timers[module.id]);
+      }
+
+      if (
+        moduleStatuses[module.id] &&
+        moduleStatuses[module.id] !== "creating"
+      ) {
+        clearCheckerTimeout(module.id);
+        return;
+      }
+
+      const timerId = setupTimeoutToCheckModuleTimeout(module);
+
+      setTimers((timers) => ({
+        ...timers,
+        [module.id]: timerId,
+      }));
+    });
+
+    return () => {
+      clearCheckerTimers();
+    };
+  }, [modules, moduleStatuses]);
+
+  const moduleStatusesArray = useMemo(() => {
+    if (typeof moduleStatuses !== "object") {
+      return [];
+    }
+
+    return Object.entries(moduleStatuses).map(([moduleId, status]) => {
+      return {
+        id: moduleId,
+        status,
+      };
+    });
+  }, [moduleStatuses]);
+
+  return {
+    moduleStatuses: moduleStatusesArray,
   };
 };

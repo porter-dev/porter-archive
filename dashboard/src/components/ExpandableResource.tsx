@@ -1,58 +1,104 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-
 import ResourceTab from "./ResourceTab";
+import SaveButton from "./SaveButton";
+import { baseApi } from "shared/baseApi";
 
-type PropsType = {
+type Props = {
   resource: any;
+  button: any;
   handleClick?: () => void;
   selected?: boolean;
   isLast?: boolean;
   roundAllCorners?: boolean;
 };
 
-type StateType = any;
+const ExpandableResource: React.FC<Props> = (props) => {
+  const { resource, button } = props;
+  const { currentCluster, currentProject } = useContext(Context);
 
-export default class ExpandableResource extends Component<
-  PropsType,
-  StateType
-> {
-  render() {
-    let { resource } = this.props;
-    return (
-      <ResourceTab
-        label={resource.label}
-        name={resource.name}
-        status={{ label: resource.status }}
-      >
-        <ExpandedWrapper>
-          <StatusSection>
-            <StatusHeader>
-              <Status>
-                <Key>Status:</Key> {resource.status}
-              </Status>
-              <Timestamp>Updated {resource.timestamp}</Timestamp>
-            </StatusHeader>
-            {resource.message}
-          </StatusSection>
-          {Object.keys(this.props.resource.data).map(
-            (key: string, i: number) => {
-              return (
-                <Pair key={i}>
-                  <Key>{key}:</Key>
-                  {this.props.resource.data[key]}
-                </Pair>
-              );
-            }
-          )}
-        </ExpandedWrapper>
-      </ResourceTab>
-    );
-  }
-}
+  const onSave = () => {
+    let projID = currentProject.id;
+    let clusterID = currentCluster.id;
+    let config = button.actions[0].delete.context.config;
 
-ExpandableResource.contextType = Context;
+    // TODO: construct the endpoint scope, right now we're just using release scope
+    let uri = `/api/projects/${projID}/clusters/${clusterID}/namespaces/${resource.metadata.namespace}${button.actions[0].delete.relative_uri}`;
+
+    // compute the endpoint using button and target context
+    baseApi<
+      {
+        name: string;
+        namespace: string;
+        group: string;
+        version: string;
+        resource: string;
+      },
+      {}
+    >("DELETE", uri)(
+      "<token>",
+      {
+        name: resource.metadata.name,
+        namespace: resource.metadata.namespace,
+        group: config.group,
+        version: config.version,
+        resource: config.resource,
+      },
+      {}
+    )
+      .then((res) => {})
+      .catch((err) => console.log(err));
+  };
+
+  const readableDate = (s: string) => {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} on ${date}`;
+  };
+
+  return (
+    <ResourceTab
+      label={resource.label}
+      name={resource.name}
+      status={{ label: resource.status }}
+    >
+      <ExpandedWrapper>
+        <StatusSection>
+          <StatusHeader>
+            <Status>
+              <Key>Status:</Key> {resource.status}
+            </Status>
+            <Timestamp>Updated {readableDate(resource.timestamp)}</Timestamp>
+          </StatusHeader>
+          {resource.message}
+        </StatusSection>
+        {Object.keys(resource.data).map((key: string, i: number) => {
+          return (
+            <Pair key={i}>
+              <Key>{key}:</Key>
+              {resource.data[key]}
+            </Pair>
+          );
+        })}
+        <StyledSaveButton
+          onClick={onSave}
+          clearPosition={true}
+          text={button.name}
+          helper={button.description}
+          statusPosition={"right"}
+          className="expanded-save-button"
+        />
+      </ExpandedWrapper>
+    </ResourceTab>
+  );
+};
+
+export default ExpandableResource;
 
 const Timestamp = styled.div`
   font-size: 12px;
@@ -96,4 +142,8 @@ const Key = styled.div`
   font-weight: bold;
   color: #ffffff;
   margin-right: 8px;
+`;
+
+const StyledSaveButton = styled(SaveButton)`
+  margin-top: 20px;
 `;

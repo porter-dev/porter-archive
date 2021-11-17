@@ -104,10 +104,72 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	form, err := parser.GetFormFromRelease(parserDef, helmRelease)
 
 	if err != nil {
-		// TODO: log non-fatal parsing error
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 	} else {
 		res.Form = form
+	}
+	// if form not populated, detect common charts
+	if res.Form == nil {
+		// for now just case by name
+		if res.Release.Chart.Name() == "cert-manager" {
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, []byte(certManagerForm), "")
+
+			if err == nil {
+				res.Form = formYAML
+			}
+		}
 	}
 
 	c.WriteResult(w, r, res)
 }
+
+const certManagerForm string = `tags:
+- hello
+tabs:
+- name: main
+  context:
+    type: cluster
+    config:
+      group: cert-manager.io
+      version: v1
+      resource: certificates
+  label: Certificates
+  sections:
+  - name: section_one
+    contents: 
+    - type: heading
+      label: Certificates
+    - type: resource-list
+      settings:
+        options:
+          resource-button:
+            name: "Renew Certificate"
+            description: "This will delete the existing certificate resource, triggering a new certificate request."
+            actions:
+            - delete:
+                scope: namespace
+                relative_uri: /crd
+                context:
+                  type: cluster
+                  config:
+                    group: cert-manager.io
+                    version: v1
+                    resource: certificates
+      value: |
+        .items[] | { 
+          metadata: .metadata,
+          name: "\(.spec.dnsNames | join(","))", 
+          label: "\(.metadata.namespace)/\(.metadata.name)",
+          status: (
+            ([.status.conditions[].type] | index("Ready")) as $index | (
+              if $index then (
+                if .status.conditions[$index].status == "True" then "Ready" else "Not Ready" end
+              ) else (
+                "Not Ready"
+              ) end
+            )
+          ),
+          timestamp: .status.conditions[0].lastTransitionTime,
+          message: [.status.conditions[].message] | unique | join(","),
+          data: {}
+        }`

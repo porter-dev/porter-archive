@@ -75,6 +75,10 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(gith
 		return err
 	}
 
+	if p.config.GithubAppConf == nil {
+		return fmt.Errorf("config has invalid GithubAppConf")
+	}
+
 	if _, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
 		&p.config.GithubAppConf.Config,
 		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, p.config.Repo)); err != nil {

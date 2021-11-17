@@ -53,97 +53,56 @@ const LogBucketCard: React.FunctionComponent<LogBucketCardProps> = ({
 
   return (
     <StyledCard>
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <Icon className="material-icons-outlined">info</Icon>
-        <InfoWrapper>
-          <div>
-            <EventName>Logs for: {logEvent.resource_name}</EventName>
-          </div>
-        </InfoWrapper>
-      </div>
-      <InfoWrapper>
-        <TimestampContainer>
-          <i className="material-icons-outlined">access_time</i>
-          {getReadableDate(logEvent.timestamp)}
-        </TimestampContainer>
-        <button onClick={() => setIsExpanded((expanded) => !expanded)}>
-          Show more
-        </button>
-      </InfoWrapper>
-
       {/* Case: Is still getting logs and user triggered expanded */}
-      {isExpanded && isLoading && "Loading"}
+      {isLoading && (
+        <Loading>Loading . . .</Loading>
+      )}
       {/* Case: No logs found after the api call */}
-      {isExpanded && !isLoading && !logs?.length && "No logs found"}
+      {!isLoading && !logs?.length && (
+        <Loading>No logs found.</Loading>
+      )}
       {/* Case: Logs were found successfully  */}
-      {isExpanded &&
-        !isLoading &&
+      {!isLoading &&
         logs?.length &&
-        logs?.map((l) => <span>{l}</span>)}
+        logs?.map((l) => <Log>{l}</Log>)}
     </StyledCard>
   );
 };
 
 export default LogBucketCard;
 
+const Loading = styled.div`
+  margin-top: 5px;
+  margin-left: 5px;
+`;
+
+const Log = styled.div`
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+  color: white;
+`;
+
 const StyledCard = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
   border: 1px solid #ffffff44;
-  background: #ffffff08;
-  margin-bottom: 10px;
+  margin-bottom: 30px;
   border-radius: 10px;
-  padding-left: 20px;
-  padding-right: 20px;
-  overflow: hidden;
-  height: 80px;
-  cursor: pointer;
-  justify-content: space-between;
-
-  :hover {
-    background: #ffffff11;
-    border: 1px solid #ffffff66;
-  }
-`;
-
-const Icon = styled.span<{ status?: "critical" | "normal" }>`
-  font-size: 22px;
-  margin-right: 18px;
-  color: ${({ status }) =>
-    status ? (status === "critical" ? "#cc3d42" : "#38a88a") : "#efefef"};
-`;
-
-const InfoWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const EventName = styled.div`
+  padding: 14px;
+  padding-left: 13px;
   font-size: 13px;
-  font-family: "Work Sans", sans-serif;
-  font-weight: 500;
-  color: #ffffff;
-`;
+  background: #121318;
+  user-select: text;
+  overflow-wrap: break-word;
+  overflow-y: auto;
+  min-height: 55px;
+  color: #aaaabb;
 
-const TimestampContainer = styled.div`
-  display: flex;
-  align-items: center;
-  color: #ffffff55;
-  font-size: 13px;
-  margin-top: 8px;
-  justify-self: flex-end;
-
-  > i {
-    margin-right: 5px;
-    font-size: 18px;
-    margin-left: -1px;
+  animation: fadeIn 0.5s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
-`;
-
-const EventReason = styled.div`
-  font-size: 16px;
-  font-family: "Work Sans", sans-serif;
-  color: #ffffff;
-  margin-top: 8px;
 `;

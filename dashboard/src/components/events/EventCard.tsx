@@ -28,7 +28,7 @@ const EventCard: React.FunctionComponent<CardProps> = ({
     <>
       <StyledCard 
         onClick={() => selectEvent(event)}
-        status={event.event_type.toLowerCase() as any}
+        status={event.event_type.toLowerCase()}
       >
         <ContentContainer>
           <Icon
@@ -59,28 +59,6 @@ const EventCard: React.FunctionComponent<CardProps> = ({
 };
 
 export default EventCard;
-
-// const StyledCard = styled.div`
-//   background: #26282f;
-//   min-height: 100px;
-//   width: 100%;
-//   display: flex;
-
-//   align-items: center;
-//   border: 1px solid #26282f;
-//   box-shadow: 0 4px 15px 0px #00000055;
-//   border-radius: 8px;
-//   padding: 14px;
-//   animation: fadeIn 0.5s;
-//   @keyframes fadeIn {
-//     from {
-//       opacity: 0;
-//     }
-//     to {
-//       opacity: 1;
-//     }
-//   }
-// `;
 
 const StyledCard = styled.div<{ status: string }>`
   display: flex;

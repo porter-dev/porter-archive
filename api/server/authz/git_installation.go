@@ -76,7 +76,7 @@ func (p *GitInstallationScopedMiddleware) doesUserHaveGitInstallationAccess(gith
 	}
 
 	if _, _, err = oauth.GetAccessToken(oauthInt.SharedOAuthModel,
-		p.config.GithubConf,
+		&p.config.GithubAppConf.Config,
 		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, p.config.Repo)); err != nil {
 		return err
 	}

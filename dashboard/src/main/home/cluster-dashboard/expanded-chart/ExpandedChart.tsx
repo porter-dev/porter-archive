@@ -347,7 +347,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderTabContents = (currentTab: string) => {
     let { setSidebar } = props;
     let chart = currentChart;
-
+    console.log("CONTROLLERS", controllers);
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;

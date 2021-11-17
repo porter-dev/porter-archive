@@ -4,11 +4,19 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { KubeEvent } from "shared/types";
 
-export const useKubeEvents = (
-  resourceType: "NODE" | "POD" | "HPA",
-  ownerName?: string,
-  ownerType?: string
-) => {
+type UseKubeEventsProps = {
+  resourceType: "NODE" | "POD" | "HPA";
+  ownerName?: string;
+  ownerType?: string;
+  shouldWaitForOwner?: boolean;
+};
+
+export const useKubeEvents = ({
+  resourceType,
+  ownerName,
+  ownerType,
+  shouldWaitForOwner,
+}: UseKubeEventsProps) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [hasPorterAgent, setHasPorterAgent] = useState(false);
 
@@ -42,6 +50,13 @@ export const useKubeEvents = (
   // Get events
   useEffect(() => {
     let isSubscribed = true;
+
+    if (shouldWaitForOwner && !ownerName?.length && !ownerType?.length) {
+      return () => {
+        isSubscribed = false;
+      };
+    }
+
     if (hasPorterAgent) {
       fetchData(true).then(() => {
         if (isSubscribed) {

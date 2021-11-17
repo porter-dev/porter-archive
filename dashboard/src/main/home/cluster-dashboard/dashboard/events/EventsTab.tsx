@@ -24,7 +24,7 @@ const EventsTab = () => {
     kubeEvents,
     loadMoreEvents,
     hasMore,
-  } = useKubeEvents(resourceType.value as any);
+  } = useKubeEvents({ resourceType: resourceType.value as any });
 
   if (isLoading) {
     return (

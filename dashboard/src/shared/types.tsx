@@ -345,4 +345,5 @@ export type KubeEvent = {
   reason: string;
   resource_type: string;
   timestamp: string;
+  sub_events: any[];
 };

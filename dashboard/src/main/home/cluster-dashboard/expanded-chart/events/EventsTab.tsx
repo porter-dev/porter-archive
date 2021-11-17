@@ -61,11 +61,27 @@ const EventsTab: React.FC<{
 
   useEffect(() => {
     let timer: NodeJS.Timeout = null;
-    if (isEmpty(controllers)) {
-      timer = setTimeout(() => {
+
+    const checkControllers = (counter = 0) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+
+      if (isEmpty(controllers) && counter === 5) {
+        clearTimeout(timer);
         setHasControllers(false);
-      }, 10000);
-    }
+      } else {
+        if (isEmpty(controllers)) {
+          timer = setTimeout(() => {
+            checkControllers(counter + 1);
+          }, 2000);
+        } else {
+          setHasControllers(true);
+        }
+      }
+    };
+
+    checkControllers();
 
     return () => {
       if (timer !== null) {

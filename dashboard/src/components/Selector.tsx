@@ -23,6 +23,7 @@ type StateType = {};
 export default class Selector extends Component<PropsType, StateType> {
   state = {
     expanded: false,
+    showTooltip: false,
   };
 
   wrapperRef: any = React.createRef();
@@ -169,6 +170,8 @@ export default class Selector extends Component<PropsType, StateType> {
           expanded={this.state.expanded}
           width={this.props.width}
           height={this.props.height}
+          onMouseEnter={() => this.setState({ showTooltip: true })}
+          onMouseLeave={() => this.setState({ showTooltip: false })}
         >
           <Flex>
             {this.renderIcon()}
@@ -182,6 +185,15 @@ export default class Selector extends Component<PropsType, StateType> {
           </Flex>
           <i className="material-icons">arrow_drop_down</i>
         </MainSelector>
+        {this.state.showTooltip && (
+          <Tooltip>
+            {activeValue
+              ? activeValue === ""
+                ? "All"
+                : this.getLabel(activeValue)
+              : this.props.placeholder}
+          </Tooltip>
+        )}
         {this.renderDropdown()}
       </StyledSelector>
     );
@@ -206,6 +218,7 @@ const ScrollBuffer = styled.div`
 const Flex = styled.div`
   display: flex;
   align-items: center;
+  width: 85%;
 `;
 
 const Icon = styled.div`
@@ -263,16 +276,18 @@ const NewOption = styled.div`
   }
 `;
 
-const Option = styled.div<{
+type OptionProps = {
   selected: boolean;
   lastItem: boolean;
   height: string;
-}>`
+};
+
+const Option = styled.div`
   width: 100%;
   border-top: 1px solid #00000000;
   border-bottom: 1px solid
-    ${(props) => (props.lastItem ? "#ffffff00" : "#ffffff15")};
-  height: ${(props) => props.height || "37px"};
+    ${(props: OptionProps) => (props.lastItem ? "#ffffff00" : "#ffffff15")};
+  height: ${(props: OptionProps) => props.height || "37px"};
   font-size: 13px;
   align-items: center;
   display: flex;
@@ -283,7 +298,7 @@ const Option = styled.div<{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: ${(props) => (props.selected ? "#ffffff11" : "")};
+  background: ${(props: OptionProps) => (props.selected ? "#ffffff11" : "")};
 
   :hover {
     background: #ffffff22;
@@ -351,5 +366,37 @@ const MainSelector = styled.div`
       width: string;
       height?: string;
     }) => (props.expanded ? "rotate(180deg)" : "")};
+  }
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  left: 5px;
+  word-wrap: break-word;
+  top: 40px;
+  min-height: 18px;
+  width: fit-content;
+  padding: 5px 7px;
+  background: #272731;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  color: white;
+  text-transform: none;
+  font-size: 12px;
+  font-family: "Work Sans", sans-serif;
+  outline: 1px solid #ffffff55;
+  opacity: 0;
+  animation: faded-in 0.2s 0.15s;
+  animation-fill-mode: forwards;
+  @keyframes faded-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 `;

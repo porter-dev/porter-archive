@@ -1,7 +1,7 @@
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import styled from "styled-components";
@@ -13,15 +13,65 @@ import backArrow from "assets/back_arrow.png";
 import FormFlowWrapper from "./forms/FormFlow";
 import { OFState } from "../../state";
 import { useSnapshot } from "valtio";
+import api from "shared/api";
+import Loading from "components/Loading";
+import { integrationList } from "shared/common";
+import Registry from "./components/Registry";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);
   const { step } = useParams<any>();
+  const [connectedRegistries, setConnectedRegistries] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const currentProvider = snap.StateHandler.connected_registry?.provider;
 
   const enableGoBack =
     snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow;
+
+  useEffect(() => {
+    let hookState = { isSubscribed: true };
+
+    getRegistries(hookState);
+
+    return () => {
+      hookState.isSubscribed = false;
+    };
+  }, [snap.StateHandler?.project]);
+
+  const getRegistries = async (
+    props: { isSubscribed: boolean } = { isSubscribed: true }
+  ) => {
+    const projectId = snap.StateHandler?.project?.id;
+
+    if (typeof projectId !== "number") {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await api.getProjectRegistries(
+        "<token>",
+        {},
+        { id: projectId }
+      );
+      const registries = res?.data;
+      if (props.isSubscribed) {
+        if (Array.isArray(registries)) {
+          setConnectedRegistries(registries);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      if (props.isSubscribed) {
+        setConnectedRegistries(null);
+      }
+    } finally {
+      if (props.isSubscribed) {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const handleGoBack = () => {
     OFState.actions.nextStep("go_back");
@@ -34,6 +84,27 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
   const handleSelectProvider = (provider: string) => {
     provider !== "skip" && OFState.actions.nextStep("continue", provider);
   };
+
+  const handleContinueWithCurrent = () => {
+    const connectedRegistry = connectedRegistries[0];
+    OFState.actions.nextStep("continue_with_current", connectedRegistry);
+  };
+
+  const selectorOptions = useMemo(() => {
+    const options = [...registryOptions];
+    if (Array.isArray(connectedRegistries) && connectedRegistries.length) {
+      const newOptions = options.filter((o) => o.value !== "skip");
+      return [
+        {
+          value: "use_current",
+          label: "Continue with current",
+          icon: "",
+        },
+        ...newOptions,
+      ];
+    }
+    return options;
+  }, [connectedRegistries]);
 
   return (
     <Div>
@@ -62,22 +133,49 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
           : "Link to an existing Docker registry or continue."}
       </Helper>
 
-      {step ? (
+      {!isLoading && step ? (
         <FormFlowWrapper currentStep={step} />
       ) : (
         <>
           <ProviderSelector
+            defaultOption={
+              Array.isArray(connectedRegistries) && connectedRegistries.length
+                ? "use_current"
+                : "skip"
+            }
             selectProvider={(provider) => {
               if (provider !== "external") {
                 handleSelectProvider(provider);
               }
             }}
-            options={registryOptions}
+            options={selectorOptions}
           />
+          {isLoading && <Loading />}
+
+          {!!connectedRegistries?.length && (
+            <IntegrationList>
+              {connectedRegistries.map((registry: any) => (
+                <Registry
+                  key={registry.name}
+                  registry={registry}
+                  onDelete={getRegistries}
+                />
+              ))}
+            </IntegrationList>
+          )}
           <NextStep
             text="Continue"
             disabled={false}
-            onClick={() => handleSkip()}
+            onClick={() => {
+              if (
+                Array.isArray(connectedRegistries) &&
+                connectedRegistries.length
+              ) {
+                handleContinueWithCurrent();
+              } else {
+                handleSkip();
+              }
+            }}
             status={""}
             makeFlush={true}
             clearPosition={true}
@@ -91,6 +189,10 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
 };
 
 export default ConnectRegistry;
+
+const IntegrationList = styled.div`
+  margin-top: 14px;
+`;
 
 const Div = styled.div`
   width: 100%;

@@ -1,4 +1,4 @@
-package release
+package kube_events
 
 import (
 	"net/http"
@@ -11,56 +11,36 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"gorm.io/gorm"
 )
 
-type GetReleaseStepsHandler struct {
+type GetKubeEventHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetReleaseStepsHandler(
+func NewGetKubeEventHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetReleaseStepsHandler {
-	return &GetReleaseStepsHandler{
+) *GetKubeEventHandler {
+	return &GetKubeEventHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
-	namespace := r.Context().Value(types.NamespaceScope).(string)
+	kubeEventID, _ := requestutils.GetURLParamUint(r, types.URLParamKubeEventID)
 
-	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
+	// handle write to the database
+	kubeEvent, err := c.Repo().KubeEvent().ReadEvent(kubeEventID, proj.ID, cluster.ID)
 
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	res := make(types.GetReleaseStepsResponse, 0)
-
-	if release.EventContainer != 0 {
-		subevents, err := c.Repo().BuildEvent().ReadEventsByContainerID(release.EventContainer)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		for _, sub := range subevents {
-			res = append(res, sub.ToSubEventType())
-		}
-	}
-
-	c.WriteResult(w, r, res)
+	c.WriteResult(w, r, kubeEvent.ToKubeEventType())
 }

@@ -1,6 +1,5 @@
 import React, { useContext, useState } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -19,7 +18,7 @@ const DeleteNamespaceModal = () => {
   const [namespaceNameForDelition, setNamespaceNameForDelition] = useState("");
   const [status, setStatus] = useState<string>(null as string);
   const deleteNamespace = () => {
-    if (namespaceNameForDelition !== currentModalData.metadata.name) {
+    if (namespaceNameForDelition !== currentModalData?.metadata?.name) {
       setStatus("Please enter the name of this namespace to confirm deletion");
       return;
     }
@@ -27,7 +26,7 @@ const DeleteNamespaceModal = () => {
     api
       .deleteNamespace(
         "<token>",
-        { name: currentModalData.metadata.name },
+        { name: currentModalData?.metadata?.name },
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
@@ -50,7 +49,7 @@ const DeleteNamespaceModal = () => {
     <>
       <Subtitle>
         Please insert the name of the namespace to delete it:
-        <DangerText>{" " + currentModalData.metadata.name}</DangerText>
+        <DangerText>{" " + currentModalData?.metadata?.name}</DangerText>
       </Subtitle>
 
       <InputWrapper>
@@ -61,7 +60,7 @@ const DeleteNamespaceModal = () => {
           type="string"
           value={namespaceNameForDelition}
           setValue={(x: string) => setNamespaceNameForDelition(x)}
-          placeholder={currentModalData.metadata.name}
+          placeholder={currentModalData?.metadata?.name}
           width="480px"
         />
       </InputWrapper>

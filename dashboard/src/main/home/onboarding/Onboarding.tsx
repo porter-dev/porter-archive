@@ -115,6 +115,38 @@ const Onboarding = () => {
     }
   }, [context.user]);
 
+  const skipOnboarding = () => {
+    OFState.actions.goTo("clean_up");
+  };
+
+  const checkIfUserHasClusters = async () => {
+    const { setCurrentModal, currentProject } = context;
+
+    const project_id = currentProject?.id;
+
+    try {
+      if (typeof project_id !== "number") {
+        return;
+      }
+
+      const clusters = await api
+        .getClusters("<token>", {}, { id: project_id })
+        .then((res) => res?.data);
+
+      const hasClusters = Array.isArray(clusters) && clusters.length;
+
+      if (hasClusters) {
+        setCurrentModal("SkipOnboardingModal", { skipOnboarding });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    checkIfUserHasClusters();
+  }, [context?.currentProject?.id]);
+
   return (
     <StyledOnboarding>{isLoading ? <Loading /> : <Routes />}</StyledOnboarding>
   );

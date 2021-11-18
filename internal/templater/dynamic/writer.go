@@ -5,7 +5,6 @@ import (
 
 	"github.com/porter-dev/porter/internal/templater/utils"
 
-	"github.com/porter-dev/porter/internal/templater"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -37,7 +36,7 @@ func NewDynamicTemplateWriter(
 	client dynamic.Interface,
 	obj *Object,
 	base map[string]interface{},
-) templater.TemplateWriter {
+) *TemplateWriter {
 	w := &TemplateWriter{
 		Object: obj,
 		Client: client,
@@ -101,4 +100,9 @@ func (w *TemplateWriter) Update(vals map[string]interface{}) (map[string]interfa
 	}
 
 	return update.Object, nil
+}
+
+// Delete deletes a dynamic resource, this must be registered with the API server
+func (w *TemplateWriter) Delete() error {
+	return w.resource.Delete(context.TODO(), w.Object.Name, metav1.DeleteOptions{})
 }

@@ -347,12 +347,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderTabContents = (currentTab: string) => {
     let { setSidebar } = props;
     let chart = currentChart;
-
+    console.log("CONTROLLERS", controllers);
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "events":
-        return <EventsTab currentChart={chart} />;
+        return <EventsTab controllers={controllers} />;
       case "status":
         if (isLoadingChartData) {
           return (
@@ -384,7 +384,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </Placeholder>
           );
         } else {
-          return <StatusSection currentChart={chart} setFullScreenLogs={() => setFullScreenLogs(true)} />;
+          return (
+            <StatusSection
+              currentChart={chart}
+              setFullScreenLogs={() => setFullScreenLogs(true)}
+            />
+          );
         }
       case "settings":
         return (
@@ -663,114 +668,112 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   return (
     <>
-      { 
-        fullScreenLogs ? (
-          <StatusSection
-            fullscreen={true} 
-            currentChart={currentChart} 
-            setFullScreenLogs={() => setFullScreenLogs(false)}
-          />
-        ) : (
-      <StyledExpandedChart>
-        <HeaderWrapper>
-          <BackButton onClick={props.closeChart}>
-            <BackButtonImg src={backArrow} />
-          </BackButton>
-          <TitleSection
-            icon={currentChart.chart.metadata.icon}
-            iconWidth="33px"
-          >
-            {currentChart.name}
-            <DeploymentType currentChart={currentChart} />
-            <TagWrapper>
-              Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
-            </TagWrapper>
-          </TitleSection>
+      {fullScreenLogs ? (
+        <StatusSection
+          fullscreen={true}
+          currentChart={currentChart}
+          setFullScreenLogs={() => setFullScreenLogs(false)}
+        />
+      ) : (
+        <StyledExpandedChart>
+          <HeaderWrapper>
+            <BackButton onClick={props.closeChart}>
+              <BackButtonImg src={backArrow} />
+            </BackButton>
+            <TitleSection
+              icon={currentChart.chart.metadata.icon}
+              iconWidth="33px"
+            >
+              {currentChart.name}
+              <DeploymentType currentChart={currentChart} />
+              <TagWrapper>
+                Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
+              </TagWrapper>
+            </TitleSection>
 
-          {currentChart.chart.metadata.name != "worker" &&
-            currentChart.chart.metadata.name != "job" &&
-            renderUrl()}
-          <InfoWrapper>
-            <StatusIndicator
-              controllers={controllers}
-              status={currentChart.info.status}
-              margin_left={"0px"}
-            />
-            <LastDeployed>
-              <Dot>•</Dot>Last deployed
-              {" " + getReadableDate(currentChart.info.last_deployed)}
-            </LastDeployed>
-          </InfoWrapper>
-        </HeaderWrapper>
-        {deleting ? (
-          <>
-            <LineBreak />
-            <Placeholder>
-              <TextWrap>
-                <Header>
-                  <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
-                </Header>
-                You will be automatically redirected after deletion is complete.
-              </TextWrap>
-            </Placeholder>
-          </>
-        ) : (
-          <>
-            <RevisionSection
-              showRevisions={showRevisions}
-              toggleShowRevisions={() => {
-                setShowRevisions(!showRevisions);
-              }}
-              chart={currentChart}
-              refreshChart={() => getChartData(currentChart)}
-              setRevision={setRevision}
-              forceRefreshRevisions={forceRefreshRevisions}
-              refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-              status={chartStatus}
-              shouldUpdate={
-                currentChart.latest_version &&
-                currentChart.latest_version !==
-                  currentChart.chart.metadata.version
-              }
-              latestVersion={currentChart.latest_version}
-              upgradeVersion={handleUpgradeVersion}
-            />
-            {(isPreview || leftTabOptions.length > 0) && (
-              <BodyWrapper>
-                <PorterFormWrapper
-                  formData={currentChart.form}
-                  valuesToOverride={{
-                    namespace: props.namespace,
-                    clusterId: currentCluster.id,
-                    currentChart: {
-                      name: currentChart.name,
-                    },
-                  }}
-                  renderTabContents={renderTabContents}
-                  isReadOnly={
-                    imageIsPlaceholder ||
-                    !isAuthorized("application", "", ["get", "update"])
-                  }
-                  onSubmit={onSubmit}
-                  rightTabOptions={rightTabOptions}
-                  leftTabOptions={leftTabOptions}
-                  color={isPreview ? "#f5cb42" : null}
-                  addendum={
-                    <TabButton
-                      onClick={toggleDevOpsMode}
-                      devOpsMode={devOpsMode}
-                    >
-                      <i className="material-icons">offline_bolt</i> DevOps Mode
-                    </TabButton>
-                  }
-                  saveValuesStatus={saveValuesStatus}
-                />
-              </BodyWrapper>
-            )}
-          </>
-        )}
-      </StyledExpandedChart>
-    )}
+            {currentChart.chart.metadata.name != "worker" &&
+              currentChart.chart.metadata.name != "job" &&
+              renderUrl()}
+            <InfoWrapper>
+              <StatusIndicator
+                controllers={controllers}
+                status={currentChart.info.status}
+                margin_left={"0px"}
+              />
+              <LastDeployed>
+                <Dot>•</Dot>Last deployed
+                {" " + getReadableDate(currentChart.info.last_deployed)}
+              </LastDeployed>
+            </InfoWrapper>
+          </HeaderWrapper>
+          {deleting ? (
+            <>
+              <LineBreak />
+              <Placeholder>
+                <TextWrap>
+                  <Header>
+                    <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
+                  </Header>
+                  You will be automatically redirected after deletion is
+                  complete.
+                </TextWrap>
+              </Placeholder>
+            </>
+          ) : (
+            <>
+              <RevisionSection
+                showRevisions={showRevisions}
+                toggleShowRevisions={() => {
+                  setShowRevisions(!showRevisions);
+                }}
+                chart={currentChart}
+                refreshChart={() => getChartData(currentChart)}
+                setRevision={setRevision}
+                forceRefreshRevisions={forceRefreshRevisions}
+                refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                status={chartStatus}
+                shouldUpdate={
+                  currentChart.latest_version &&
+                  currentChart.latest_version !==
+                    currentChart.chart.metadata.version
+                }
+                latestVersion={currentChart.latest_version}
+                upgradeVersion={handleUpgradeVersion}
+              />
+              {(isPreview || leftTabOptions.length > 0) && (
+                <BodyWrapper>
+                  <PorterFormWrapper
+                    formData={currentChart.form}
+                    valuesToOverride={{
+                      namespace: props.namespace,
+                      clusterId: currentCluster.id,
+                    }}
+                    renderTabContents={renderTabContents}
+                    isReadOnly={
+                      imageIsPlaceholder ||
+                      !isAuthorized("application", "", ["get", "update"])
+                    }
+                    onSubmit={onSubmit}
+                    rightTabOptions={rightTabOptions}
+                    leftTabOptions={leftTabOptions}
+                    color={isPreview ? "#f5cb42" : null}
+                    addendum={
+                      <TabButton
+                        onClick={toggleDevOpsMode}
+                        devOpsMode={devOpsMode}
+                      >
+                        <i className="material-icons">offline_bolt</i> DevOps
+                        Mode
+                      </TabButton>
+                    }
+                    saveValuesStatus={saveValuesStatus}
+                  />
+                </BodyWrapper>
+              )}
+            </>
+          )}
+        </StyledExpandedChart>
+      )}
     </>
   );
 };

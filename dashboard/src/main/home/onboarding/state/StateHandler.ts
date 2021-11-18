@@ -76,6 +76,21 @@ export const StateHandler = proxy({
         skip: true,
       };
     },
+    saveRegistryAndContinue: (data: any) => {
+      const serviceToProvider = {
+        ecr: "aws",
+        gcr: "gcp",
+        dcr: "do",
+      };
+      const connectedRegistry = {
+        skip: false,
+        provider: (serviceToProvider as any)[data?.service],
+        credentials: {
+          id: data?.id,
+        },
+      };
+      StateHandler.connected_registry = connectedRegistry;
+    },
     saveRegistryProvider: (provider: string) => {
       if (provider === StateHandler.connected_registry?.provider) {
         return;

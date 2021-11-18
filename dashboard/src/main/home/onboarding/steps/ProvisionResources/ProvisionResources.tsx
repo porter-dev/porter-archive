@@ -12,7 +12,7 @@ import ProviderSelector, {
 import FormFlowWrapper from "./forms/FormFlow";
 import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
 import backArrow from "assets/back_arrow.png";
-import { SharedStatus } from "./forms/SharedStatus";
+import { StatusPage } from "./forms/StatusPage";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
 
@@ -74,7 +74,10 @@ const ProvisionResources: React.FC<Props> = () => {
           <Br height="15px" />
           <SaveButton
             text="Resolve Errors"
-            status="Encountered errors while provisioning."
+            status={
+              infraStatus?.description ||
+              "Encountered errors while provisioning."
+            }
             disabled={false}
             onClick={() => handleGoBack(infraStatus.description)}
             makeFlush={true}
@@ -108,7 +111,7 @@ const ProvisionResources: React.FC<Props> = () => {
       case "status":
         return (
           <>
-            <SharedStatus
+            <StatusPage
               project_id={project?.id}
               filter={getFilterOpts()}
               setInfraStatus={setInfraStatus}

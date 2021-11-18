@@ -234,6 +234,35 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/crd -> namespace.NewCRDDeleteHandler
+	deleteCRDEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/crd",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	deleteCRDHandler := namespace.NewCRDDeleteHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteCRDEndpoint,
+		Handler:  deleteCRDHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases -> namespace.NewListReleasesHandler
 	listReleasesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -46,10 +46,18 @@ const LogBucketCard: React.FunctionComponent<LogBucketCardProps> = ({
   };
 
   useEffect(() => {
-    if (isExpanded && (!Array.isArray(logs) || !logs.length)) {
+    if (!Array.isArray(logs) || !logs.length) {
       getLogsForBucket();
     }
   }, [currentProject, currentCluster, logEvent, isExpanded]);
+
+  // if (!isExpanded) {
+  //   <StyledCard>
+  //     <FlexCenter>
+  //       <button>Display logs</button>
+  //     </FlexCenter>
+  //   </StyledCard>;
+  // }
 
   return (
     <StyledCard>
@@ -74,6 +82,12 @@ const Log = styled.div`
   font-family: monospace, sans-serif;
   font-size: 12px;
   color: white;
+`;
+
+const FlexCenter = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const StyledCard = styled.div`

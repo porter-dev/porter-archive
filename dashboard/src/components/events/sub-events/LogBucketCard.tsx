@@ -1,20 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 type LogBucketCardProps = {
   logEvent: any;
-};
-
-const getReadableDate = (s: number) => {
-  let ts = new Date(s);
-  let date = ts.toLocaleDateString();
-  let time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} ${date}`;
 };
 
 const LogBucketCard: React.FunctionComponent<LogBucketCardProps> = ({
@@ -46,19 +36,37 @@ const LogBucketCard: React.FunctionComponent<LogBucketCardProps> = ({
   };
 
   useEffect(() => {
-    if (isExpanded && (!Array.isArray(logs) || !logs.length)) {
+    if (!isExpanded) {
+      return;
+    }
+
+    if (!Array.isArray(logs) || !logs.length) {
       getLogsForBucket();
     }
   }, [currentProject, currentCluster, logEvent, isExpanded]);
 
   return (
     <StyledCard>
-      {/* Case: Is still getting logs and user triggered expanded */}
-      {isLoading && <Loading>Loading . . .</Loading>}
-      {/* Case: No logs found after the api call */}
-      {!isLoading && !logs?.length && <Loading>No logs found.</Loading>}
-      {/* Case: Logs were found successfully  */}
-      {!isLoading && logs?.length && logs?.map((l) => <Log>{l}</Log>)}
+      <FlexCenter expandLogs={isExpanded}>
+        <ShowLogsButton
+          onClick={() => setIsExpanded((prevIsExpanded) => !prevIsExpanded)}
+        >
+          {isExpanded ? "Hide logs" : "Display logs"}
+          <ButtonIcon className="material-icons">
+            {isExpanded ? "arrow_drop_up" : "arrow_drop_down"}
+          </ButtonIcon>
+        </ShowLogsButton>
+      </FlexCenter>
+      {isExpanded && (
+        <>
+          {/* Case: Is still getting logs and user triggered expanded */}
+          {isLoading && <Loading>Loading . . .</Loading>}
+          {/* Case: No logs found after the api call */}
+          {!isLoading && !logs?.length && <Loading>No logs found.</Loading>}
+          {/* Case: Logs were found successfully  */}
+          {!isLoading && logs?.length && logs?.map((l) => <Log>{l}</Log>)}
+        </>
+      )}
     </StyledCard>
   );
 };
@@ -76,6 +84,36 @@ const Log = styled.div`
   color: white;
 `;
 
+const FlexCenter = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  ${(props: { expandLogs: boolean }) => {
+    if (!props.expandLogs) {
+      return "";
+    }
+
+    return `
+      border-bottom: solid 1px;
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+      border-color: #515256;
+    `;
+  }}
+  transition-property: all;
+  transition-duration: 0.5s;
+  transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
+`;
+
+const fadeInKeyframe = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
 const StyledCard = styled.div`
   border: 1px solid #ffffff44;
   margin-bottom: 30px;
@@ -90,13 +128,26 @@ const StyledCard = styled.div`
   min-height: 55px;
   color: #aaaabb;
 
-  animation: fadeIn 0.5s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  animation: ${fadeInKeyframe} 0.5s;
+`;
+
+const ShowLogsButton = styled.button`
+  border: solid 1px;
+  border-radius: 10px;
+  border-color: #515256;
+  color: white;
+  background: none;
+  padding: 8px 12px 8px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  :hover {
+    cursor: pointer;
+    background: #5152569c;
   }
+`;
+
+const ButtonIcon = styled.i`
+  padding-left: 5px;
 `;

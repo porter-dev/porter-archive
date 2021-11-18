@@ -102,7 +102,7 @@ func (repo *KubeEventRepository) CreateEvent(
 		err := repo.db.Debug().Exec(`
 		  DELETE FROM kube_sub_events 
 		  WHERE kube_event_id IN (
-			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) AND k3.id NOT IN (
+			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) AND k2.id NOT IN (
 			  SELECT id FROM kube_events k3 WHERE (k3.project_id = ? AND k3.cluster_id = ?) ORDER BY k3.updated_at desc, k3.id desc LIMIT 499
 			)
 		  )

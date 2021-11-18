@@ -101,10 +101,12 @@ func (repo *KubeEventRepository) CreateEvent(
 		// first, delete the matching sub events
 		err := repo.db.Debug().Exec(`
 		  DELETE FROM kube_sub_events 
-		  WHERE kube_event_id NOT IN (
-			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) ORDER BY k2.updated_at desc, k2.id desc LIMIT 499
+		  WHERE kube_event_id IN (
+			SELECT id FROM kube_events k2 WHERE (k2.project_id = ? AND k2.cluster_id = ?) AND k3.id NOT IN (
+			  SELECT id FROM kube_events k3 WHERE (k3.project_id = ? AND k3.cluster_id = ?) ORDER BY k3.updated_at desc, k3.id desc LIMIT 499
+			)
 		  )
-		`, event.ProjectID, event.ClusterID).Error
+		`, event.ProjectID, event.ClusterID, event.ProjectID, event.ClusterID).Error
 
 		if err != nil {
 			return nil, err

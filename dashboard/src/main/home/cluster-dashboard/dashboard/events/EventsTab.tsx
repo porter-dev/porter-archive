@@ -1,49 +1,21 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
 import InfiniteScroll from "react-infinite-scroll-component";
 import Dropdown from "components/Dropdown";
 import { useKubeEvents } from "components/events/useEvents";
-import { ChartType } from "shared/types";
-import _, { isEmpty, isObject } from "lodash";
 import SubEventsList from "components/events/SubEventsList";
 
 const availableResourceTypes = [
-  { label: "Pods", value: "pod" },
-  { label: "HPA", value: "hpa" },
+  { label: "Pods", value: "POD" },
+  { label: "HPA", value: "HPA" },
+  { label: "Nodes", value: "NODE" },
 ];
 
-const EventsTab: React.FC<{
-  controllers: Record<string, Record<string, any>>;
-}> = (props) => {
-  const { controllers } = props;
+const EventsTab = () => {
   const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
   const [currentEvent, setCurrentEvent] = useState(null);
-
-  const [selectedControllerKey, setSelectedControllerKey] = useState(null);
-
-  const [hasControllers, setHasControllers] = useState(null);
-
-  const controllerOptions = useMemo(() => {
-    if (typeof controllers !== "object") {
-      return [];
-    }
-
-    return Object.entries(controllers).map(([key, value]) => ({
-      label: value?.metadata?.name,
-      value: key,
-    }));
-  }, [controllers]);
-
-  const currentControllerOption = useMemo(() => {
-    return (
-      controllerOptions?.find((c) => c.value === selectedControllerKey) ||
-      controllerOptions[0]
-    );
-  }, [selectedControllerKey, controllerOptions]);
-
-  const selectedController = controllers[currentControllerOption?.value];
 
   const {
     isLoading,
@@ -52,57 +24,12 @@ const EventsTab: React.FC<{
     kubeEvents,
     loadMoreEvents,
     hasMore,
-  } = useKubeEvents({
-    resourceType: resourceType.value as any,
-    ownerName: selectedController?.metadata?.name,
-    ownerType: selectedController?.kind,
-    shouldWaitForOwner: true,
-  });
+  } = useKubeEvents({ resourceType: resourceType.value as any });
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout = null;
-
-    const checkControllers = (counter = 0) => {
-      if (timer !== null) {
-        clearTimeout(timer);
-      }
-
-      if (isEmpty(controllers) && counter === 5) {
-        clearTimeout(timer);
-        setHasControllers(false);
-      } else {
-        if (isEmpty(controllers)) {
-          timer = setTimeout(() => {
-            checkControllers(counter + 1);
-          }, 2000);
-        } else {
-          setHasControllers(true);
-        }
-      }
-    };
-
-    checkControllers();
-
-    return () => {
-      if (timer !== null) {
-        clearTimeout(timer);
-      }
-    };
-  }, [controllers]);
-
-  if (isLoading && hasControllers === null) {
+  if (isLoading) {
     return (
       <Placeholder>
         <Loading />
-      </Placeholder>
-    );
-  }
-
-  if (!hasControllers) {
-    return (
-      <Placeholder>
-        <i className="material-icons">search</i>
-        We coulnd't find any controllers for this application.
       </Placeholder>
     );
   }
@@ -143,14 +70,7 @@ const EventsTab: React.FC<{
                 onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
               />
               */}
-            <Label>Controller -</Label>
-            <Dropdown
-              selectedOption={currentControllerOption}
-              options={controllerOptions}
-              onSelect={(o) => setSelectedControllerKey(o?.value)}
-            />
           </ControlRow>
-
           <InfiniteScroll
             dataLength={kubeEvents.length}
             next={loadMoreEvents}
@@ -163,10 +83,8 @@ const EventsTab: React.FC<{
                 return (
                   <React.Fragment key={i}>
                     <EventCard
-                      event={event as any}
-                      selectEvent={() => {
-                        setCurrentEvent(event);
-                      }}
+                      event={event}
+                      selectEvent={() => setCurrentEvent(event)}
                     />
                   </React.Fragment>
                 );
@@ -202,6 +120,7 @@ const ControlRow = styled.div`
 
 const EventsPageWrapper = styled.div`
   font-size: 13px;
+  padding-bottom: 80px;
   border-radius: 8px;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
@@ -268,12 +187,13 @@ const InstallPorterAgentButton = styled.button`
 
 const Placeholder = styled.div`
   padding: 30px;
+  margin-top: 35px;
   padding-bottom: 40px;
   font-size: 13px;
   color: #ffffff44;
   min-height: 400px;
   height: 50vh;
-  background: #ffffff08;
+  background: #ffffff11;
   border-radius: 8px;
   width: 100%;
   display: flex;

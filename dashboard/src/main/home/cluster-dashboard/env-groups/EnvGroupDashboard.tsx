@@ -78,10 +78,6 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
               </Button>
             )}
             <SortFilterWrapper>
-              <SortSelector
-                setSortType={(sortType) => this.setState({ sortType })}
-                sortType={this.state.sortType}
-              />
               <NamespaceSelector
                 setNamespace={(namespace) =>
                   this.setState({ namespace }, () => {
@@ -91,6 +87,10 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                   })
                 }
                 namespace={this.state.namespace}
+              />
+              <SortSelector
+                setSortType={(sortType) => this.setState({ sortType })}
+                sortType={this.state.sortType}
               />
             </SortFilterWrapper>
           </ControlRow>
@@ -145,9 +145,11 @@ EnvGroupDashboard.contextType = Context;
 export default withRouter(withAuth(EnvGroupDashboard));
 
 const SortFilterWrapper = styled.div`
-  width: 468px;
   display: flex;
   justify-content: space-between;
+  > div:not(:first-child) {
+    margin-left: 30px;
+  }
 `;
 
 const ControlRow = styled.div`

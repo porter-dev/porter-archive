@@ -38,12 +38,14 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # Webpack build environment
 # -------------------------
-FROM node:lts as build-webpack
+FROM node:16 as build-webpack
 WORKDIR /webpack
 
 COPY ./dashboard ./
 
-RUN npm i
+RUN npm install -g npm@8.1
+
+RUN npm i --legacy-peer-deps
 
 ENV NODE_ENV=production
 

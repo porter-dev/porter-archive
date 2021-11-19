@@ -80,6 +80,7 @@ module.exports = () => {
       filename: "bundle.js",
       path: path.resolve(__dirname, "build"),
       publicPath: "/",
+      hashFunction: "xxhash64",
     },
     devServer: {
       historyApiFallback: true,

@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -34,7 +35,14 @@ func (c *InfraGetDesiredHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	// get the unique infra name and query from the TF HTTP backend
 	desired, err := client.GetDesiredState(infra.GetUniqueName())
 
-	if err != nil {
+	if err != nil && errors.Is(err, httpbackend.ErrNotFound) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			err,
+			http.StatusNotFound,
+		))
+
+		return
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

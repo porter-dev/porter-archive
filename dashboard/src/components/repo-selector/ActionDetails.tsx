@@ -145,6 +145,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
           value={this.props.folderPath}
         />
         {this.renderRegistrySection()}
+
         <Br />
 
         <Flex>
@@ -187,19 +188,6 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 
 ActionDetails.contextType = Context;
 
-const Highlight = styled.a`
-  color: #949eff;
-  text-decoration: none;
-  margin-left: 5px;
-  cursor: pointer;
-`;
-
-const Bold = styled.div`
-  font-weight: 800;
-  color: #ffffff;
-  margin-right: 5px;
-`;
-
 const Required = styled.div`
   margin-left: 8px;
   color: #fc4976;
@@ -208,19 +196,6 @@ const Required = styled.div`
 
 const Subtitle = styled.div`
   margin-top: 21px;
-`;
-
-const SubtitleAlt = styled.div`
-  padding: 11px 0px 16px;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #aaaabb;
-  line-height: 1.6em;
-  display: flex;
-  align-items: center;
-  margin-top: -3px;
-  margin-bottom: -7px;
-  font-weight: 400;
 `;
 
 const RegistryItem = styled.div`
@@ -338,10 +313,6 @@ const BackButton = styled.div`
   }
 `;
 
-const AdvancedHeader = styled.div`
-  margin-top: 15px;
-`;
-
 const Br = styled.div`
   width: 100%;
   height: 1px;
@@ -351,8 +322,4 @@ const Br = styled.div`
 const DarkMatter = styled.div`
   width: 100%;
   margin-bottom: -18px;
-`;
-
-const Holder = styled.div`
-  padding: 0px 12px 24px 12px;
 `;

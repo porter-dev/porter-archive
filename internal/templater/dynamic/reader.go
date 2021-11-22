@@ -118,7 +118,10 @@ func (r *TemplateReader) ReadStream(
 
 			u := obj.(*unstructured.Unstructured)
 
-			data, err := utils.QueryValues(u.Object, r.Queries)
+			queryObj := make(map[string]interface{})
+			queryObj["items"] = []interface{}{u.Object}
+
+			data, err := utils.QueryValues(queryObj, r.Queries)
 
 			if err != nil {
 				return
@@ -133,7 +136,10 @@ func (r *TemplateReader) ReadStream(
 
 			u := newObj.(*unstructured.Unstructured)
 
-			data, err := utils.QueryValues(u.Object, r.Queries)
+			queryObj := make(map[string]interface{})
+			queryObj["items"] = []interface{}{u.Object}
+
+			data, err := utils.QueryValues(queryObj, r.Queries)
 
 			if err != nil {
 				return
@@ -148,7 +154,10 @@ func (r *TemplateReader) ReadStream(
 
 			u := obj.(*unstructured.Unstructured)
 
-			data, err := utils.QueryValues(u.Object, r.Queries)
+			queryObj := make(map[string]interface{})
+			queryObj["items"] = []interface{}{u.Object}
+
+			data, err := utils.QueryValues(queryObj, r.Queries)
 
 			if err != nil {
 				return

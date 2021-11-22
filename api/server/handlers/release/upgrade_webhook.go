@@ -157,18 +157,19 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Name:        rel.Name,
 		Namespace:   rel.Namespace,
 		URL: fmt.Sprintf(
-			"%s/applications/%s/%s/%s",
+			"%s/applications/%s/%s/%s?project_id=%d",
 			c.Config().ServerConf.ServerURL,
 			url.PathEscape(cluster.Name),
 			release.Namespace,
 			rel.Name,
-		) + fmt.Sprintf("?project_id=%d", release.ProjectID),
+			cluster.ProjectID,
+		),
 	}
 
 	rel, err = helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf)
 
 	if err != nil {
-		notifyOpts.Status = slack.StatusFailed
+		notifyOpts.Status = slack.StatusHelmFailed
 		notifyOpts.Info = err.Error()
 
 		notifier.Notify(notifyOpts)
@@ -181,7 +182,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifyOpts.Status = string(rel.Info.Status)
+	notifyOpts.Status = slack.StatusHelmDeployed
 	notifyOpts.Version = rel.Version
 
 	notifier.Notify(notifyOpts)

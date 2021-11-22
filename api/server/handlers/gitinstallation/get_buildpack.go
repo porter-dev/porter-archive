@@ -15,6 +15,26 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/buildpacks"
 )
 
+func initBuilderInfo() map[string]*buildpacks.BuilderInfo {
+	builders := make(map[string]*buildpacks.BuilderInfo)
+	builders[buildpacks.PaketoBuilder] = &buildpacks.BuilderInfo{
+		Name: "Paketo",
+		Builders: []string{
+			"paketobuildpacks/builder:full",
+			"paketobuildpacks/builder:tiny",
+			"paketobuildpacks/builder:base",
+		},
+	}
+	builders[buildpacks.HerokuBuilder] = &buildpacks.BuilderInfo{
+		Name: "Heroku",
+		Builders: []string{
+			"heroku/buildpacks:20",
+			"heroku/buildpacks:18",
+		},
+	}
+	return builders
+}
+
 type GithubGetBuildpackHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
@@ -73,26 +93,23 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	builderInfoMap := initBuilderInfo()
 	var wg sync.WaitGroup
 	wg.Add(len(buildpacks.Runtimes))
-	detectResults := make(chan *buildpacks.RuntimeResponse, len(buildpacks.Runtimes))
 	for i := range buildpacks.Runtimes {
 		go func(idx int) {
-			detectResults <- buildpacks.Runtimes[idx].Detect(
+			buildpacks.Runtimes[idx].Detect(
 				client, directoryContents, owner, name, request.Dir, repoContentOptions,
+				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],
 			)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
-	close(detectResults)
 
-	var matches []*buildpacks.RuntimeResponse
-	for detectRes := range detectResults {
-		if detectRes != nil {
-			matches = append(matches, detectRes)
-		}
+	var builders []*buildpacks.BuilderInfo
+	for _, v := range builderInfoMap {
+		builders = append(builders, v)
 	}
-
-	c.WriteResult(w, r, matches)
+	c.WriteResult(w, r, builders)
 }

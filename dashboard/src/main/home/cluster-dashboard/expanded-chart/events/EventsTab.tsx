@@ -1,129 +1,96 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-
-import loadingSrc from "assets/loading.gif";
-import { Context } from "shared/Context";
-import { ChartType } from "../../../../../shared/types";
-import api from "../../../../../shared/api";
-import EventCard from "./EventCard";
+import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
-import EventDetail from "./EventDetail";
+import InfiniteScroll from "react-infinite-scroll-component";
+import Dropdown from "components/Dropdown";
+import { useKubeEvents } from "components/events/useEvents";
+import { ChartType } from "shared/types";
+import _, { isEmpty, isObject } from "lodash";
+import SubEventsList from "components/events/SubEventsList";
 
-export type Event = {
-  event_id: string;
-  index: number;
-  info: string;
-  name: string;
-  status: number;
-  time: number;
-};
+const availableResourceTypes = [
+  { label: "Pods", value: "pod" },
+  { label: "HPA", value: "hpa" },
+];
 
-export type EventContainer = {
-  events: Event[];
-  name: string;
-  started_at: number;
-};
+const EventsTab: React.FC<{
+  controllers: Record<string, Record<string, any>>;
+}> = (props) => {
+  const { controllers } = props;
+  const [resourceType, setResourceType] = useState(availableResourceTypes[0]);
+  const [currentEvent, setCurrentEvent] = useState(null);
 
-type Props = {
-  currentChart: ChartType;
-};
+  const [selectedControllerKey, setSelectedControllerKey] = useState(null);
 
-const REFRESH_TIME = 15000;
+  const [hasControllers, setHasControllers] = useState(null);
 
-const EventsTab: React.FunctionComponent<Props> = (props) => {
-  const { currentCluster, currentProject } = useContext(Context);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [shouldRequest, setShouldRequest] = useState(true);
-  const [eventData, setEventData] = useState<EventContainer[]>([]); // most recent event is last
-  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
-
-  // sort by time, ensure sequences are monotonically increasing by time, collapse by id
-  const filterData = (data: Event[]) => {
-    data = data.sort((a, b) => a.time - b.time);
-
-    if (data.length == 0) return;
-
-    let seq: Event[][] = [];
-    let cur: Event[] = [data[0]];
-
-    for (let i = 1; i < data.length; ++i) {
-      if (data[i].index < data[i - 1].index) {
-        seq.push(cur);
-        cur = [];
-      }
-      cur.push(data[i]);
+  const controllerOptions = useMemo(() => {
+    if (typeof controllers !== "object") {
+      return [];
     }
-    if (cur) seq.push(cur);
 
-    let ret: EventContainer[] = [];
-    seq.forEach((j) => {
-      j.push({
-        event_id: "",
-        index: 0,
-        info: "",
-        name: "",
-        status: 0,
-        time: 0,
-      });
+    return Object.entries(controllers).map(([key, value]) => ({
+      label: value?.metadata?.name,
+      value: key,
+    }));
+  }, [controllers]);
 
-      let fin: EventContainer = {
-        events: [],
-        name: "Deployment",
-        started_at: j[0].time,
-      };
-      for (let i = 0; i < j.length - 1; ++i) {
-        if (j[i].event_id != j[i + 1].event_id) {
-          fin.events.push(j[i]);
-        }
-      }
-      ret.push(fin);
-    });
+  const currentControllerOption = useMemo(() => {
+    return (
+      controllerOptions?.find((c) => c.value === selectedControllerKey) ||
+      controllerOptions[0]
+    );
+  }, [selectedControllerKey, controllerOptions]);
 
-    setEventData(ret);
-  };
+  const selectedController = controllers[currentControllerOption?.value];
+
+  const {
+    isLoading,
+    hasPorterAgent,
+    triggerInstall,
+    kubeEvents,
+    loadMoreEvents,
+    hasMore,
+  } = useKubeEvents({
+    resourceType: resourceType.value as any,
+    ownerName: selectedController?.metadata?.name,
+    ownerType: selectedController?.kind,
+    shouldWaitForOwner: true,
+  });
 
   useEffect(() => {
-    const getData = () => {
-      if (!shouldRequest) return;
-      setShouldRequest(false);
-      api
-        .getReleaseSteps(
-          "<token>",
-          {},
-          {
-            cluster_id: currentCluster.id,
-            namespace: props.currentChart.namespace,
-            id: currentProject.id,
-            name: props.currentChart.name,
-          }
-        )
-        .then((data) => {
-          setIsLoading(false);
-          filterData(data.data);
-        })
-        .catch((err) => {
-          setIsError(true);
-        })
-        .finally(() => {
-          setShouldRequest(true);
-        });
+    let timer: NodeJS.Timeout = null;
+
+    const checkControllers = (counter = 0) => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+
+      if (isEmpty(controllers) && counter === 5) {
+        clearTimeout(timer);
+        setHasControllers(false);
+      } else {
+        if (isEmpty(controllers)) {
+          timer = setTimeout(() => {
+            checkControllers(counter + 1);
+          }, 2000);
+        } else {
+          setHasControllers(true);
+        }
+      }
     };
 
-    getData();
-    const id = window.setInterval(getData, REFRESH_TIME);
+    checkControllers();
 
     return () => {
-      setIsLoading(true);
-      window.clearInterval(id);
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
     };
-  }, [currentProject, currentCluster, props.currentChart]);
+  }, [controllers]);
 
-  if (isError) {
-    return <Placeholder>Error loading events.</Placeholder>;
-  }
-
-  if (isLoading) {
+  if (isLoading && hasControllers === null) {
     return (
       <Placeholder>
         <Loading />
@@ -131,55 +98,130 @@ const EventsTab: React.FunctionComponent<Props> = (props) => {
     );
   }
 
-  if (eventData.length === 0) {
+  if (!hasControllers) {
     return (
       <Placeholder>
-        <i className="material-icons">category</i>
-        No application events found.
+        <i className="material-icons">search</i>
+        We coulnd't find any controllers for this application.
       </Placeholder>
     );
   }
 
-  if (selectedEvent !== null) {
+  if (!hasPorterAgent) {
     return (
-      <EventDetail
-        container={eventData[selectedEvent]}
-        resetSelection={() => {
-          setSelectedEvent(null);
-          return null;
-        }}
+      <Placeholder>
+        <div>
+          <Header>We couldn't detect the Porter agent on your cluster</Header>
+          In order to use the events tab, you need to install the Porter agent
+          on your cluster.
+          <InstallPorterAgentButton onClick={() => triggerInstall()}>
+            <i className="material-icons">add</i> Install Porter agent
+          </InstallPorterAgentButton>
+        </div>
+      </Placeholder>
+    );
+  }
+
+  if (currentEvent) {
+    return (
+      <SubEventsList
+        event={currentEvent}
+        clearSelectedEvent={() => setCurrentEvent(null)}
       />
     );
   }
 
   return (
-    <EventsGrid>
-      {eventData
-        .slice(0)
-        .reverse()
-        .map((dat, i) => {
-          console.log(dat.started_at);
-          return (
-            <React.Fragment key={dat.started_at}>
-              <EventCard
-                event={dat.events[dat.events.length - 1]}
-                selectEvent={() => {
-                  setSelectedEvent(eventData.length - i - 1);
-                }}
-                overrideName={"Deployment"}
+    <EventsPageWrapper>
+      {kubeEvents.length > 0 ? (
+        <>
+          <ControlRow>
+            {/*
+              <Dropdown
+                selectedOption={resourceType}
+                options={availableResourceTypes}
+                onSelect={(o) => setResourceType({ ...o, value: o.value as string })}
               />
-            </React.Fragment>
-          );
-        })}
-    </EventsGrid>
+              */}
+            <Label>Controller -</Label>
+            <Dropdown
+              selectedOption={currentControllerOption}
+              options={controllerOptions}
+              onSelect={(o) => setSelectedControllerKey(o?.value)}
+            />
+          </ControlRow>
+
+          <InfiniteScroll
+            dataLength={kubeEvents.length}
+            next={loadMoreEvents}
+            hasMore={hasMore}
+            loader={<h4>Loading...</h4>}
+            scrollableTarget="HomeViewWrapper"
+          >
+            <EventsGrid>
+              {kubeEvents.map((event, i) => {
+                return (
+                  <React.Fragment key={i}>
+                    <EventCard
+                      event={event as any}
+                      selectEvent={() => {
+                        setCurrentEvent(event);
+                      }}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </EventsGrid>
+          </InfiniteScroll>
+        </>
+      ) : (
+        <Placeholder>
+          <i className="material-icons">search</i>
+          No matching events were found.
+        </Placeholder>
+      )}
+    </EventsPageWrapper>
   );
 };
 
 export default EventsTab;
 
+const Label = styled.div`
+  color: #ffffff44;
+  margin-right: 8px;
+  font-size: 13px;
+`;
+
+const ControlRow = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-left: 0px;
+  font-size: 13px;
+`;
+
 const EventsPageWrapper = styled.div`
-  margin-top: 35px;
-  padding-bottom: 80px;
+  font-size: 13px;
+  border-radius: 8px;
+  animation: floatIn 0.3s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const EventsGrid = styled.div`
+  display: grid;
+  grid-row-gap: 15px;
+  grid-template-columns: 1;
 `;
 
 const InstallPorterAgentButton = styled.button`
@@ -191,12 +233,12 @@ const InstallPorterAgentButton = styled.button`
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
   border: none;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   padding: 0px 8px;
   padding-bottom: 1px;
-  margin-top: 10px;
+  margin-top: 20px;
   font-weight: 500;
   padding-right: 15px;
   overflow: hidden;
@@ -205,14 +247,11 @@ const InstallPorterAgentButton = styled.button`
   box-shadow: 0 5px 8px 0px #00000010;
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
-
   background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+    props.disabled ? "#aaaabbee" : "#5561C0"};
   :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
-
   > i {
     color: white;
     width: 18px;
@@ -228,18 +267,22 @@ const InstallPorterAgentButton = styled.button`
 `;
 
 const Placeholder = styled.div`
+  padding: 30px;
+  padding-bottom: 40px;
+  font-size: 13px;
+  color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff08;
+  border-radius: 8px;
   width: 100%;
-  min-height: 300px;
-  height: 40vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff44;
-  font-size: 14px;
 
   > i {
     font-size: 18px;
-    margin-right: 10px;
+    margin-right: 8px;
   }
 `;
 
@@ -248,17 +291,4 @@ const Header = styled.div`
   color: #aaaabb;
   font-size: 16px;
   margin-bottom: 15px;
-`;
-
-const Spinner = styled.img`
-  width: 15px;
-  height: 15px;
-  margin-right: 12px;
-  margin-bottom: -2px;
-`;
-
-const EventsGrid = styled.div`
-  display: grid;
-  grid-row-gap: 15px;
-  grid-template-columns: 1;
 `;

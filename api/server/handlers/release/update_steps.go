@@ -55,7 +55,7 @@ func (c *UpdateReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	if release.EventContainer == 0 {
 		// create new event container
-		container, err := c.Repo().Event().CreateEventContainer(&models.EventContainer{ReleaseID: release.ID})
+		container, err := c.Repo().BuildEvent().CreateEventContainer(&models.EventContainer{ReleaseID: release.ID})
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
@@ -72,14 +72,14 @@ func (c *UpdateReleaseStepsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	}
 
-	container, err := c.Repo().Event().ReadEventContainer(release.EventContainer)
+	container, err := c.Repo().BuildEvent().ReadEventContainer(release.EventContainer)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	if err := c.Repo().Event().AppendEvent(container, &models.SubEvent{
+	if err := c.Repo().BuildEvent().AppendEvent(container, &models.SubEvent{
 		EventContainerID: container.ID,
 		EventID:          request.Event.EventID,
 		Name:             request.Event.Name,

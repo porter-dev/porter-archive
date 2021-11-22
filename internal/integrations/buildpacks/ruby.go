@@ -4,132 +4,15 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/google/go-github/github"
-	"github.com/pelletier/go-toml"
 )
 
 type rubyRuntime struct {
-	wg    sync.WaitGroup
-	packs map[string]*BuildpackInfo
-}
-
-// FIXME: should be called once at the top-level somewhere in the backend
-func populateRubyPacks(client *github.Client) map[string]*BuildpackInfo {
-	packs := make(map[string]*BuildpackInfo)
-
-	repoRelease, _, err := client.Repositories.GetLatestRelease(context.Background(), "paketo-buildpacks", "ruby")
-	if err != nil {
-		fmt.Printf("Error fetching latest release for paketo-buildpacks/ruby: %v\n", err)
-		return nil
-	}
-	fileContent, _, _, err := client.Repositories.GetContents(
-		context.Background(), "paketo-buildpacks", "ruby", "buildpack.toml",
-		&github.RepositoryContentGetOptions{
-			Ref: *repoRelease.TagName,
-		},
-	)
-	if err != nil {
-		fmt.Printf("Error fetching contents of buildpack.toml for paketo-buildpacks/ruby: %v\n", err)
-		return nil
-	}
-
-	data, err := fileContent.GetContent()
-	if err != nil {
-		fmt.Printf("Error calling GetContent() on buildpack.toml for paketo-buildpacks/ruby: %v\n", err)
-		return nil
-	}
-
-	buildpackToml, err := toml.Load(data)
-	if err != nil {
-		fmt.Printf("Error while reading buildpack.toml from paketo-buildpacks/ruby: %v\n", err)
-		os.Exit(1)
-	}
-	order := buildpackToml.Get("order").([]*toml.Tree)
-
-	// puma
-	packs[puma] = newBuildpackInfo()
-	pumaGroup := order[0].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(pumaGroup); i++ {
-		packs[puma].addPack(
-			buildpackOrderGroupInfo{
-				ID:       pumaGroup[i].Get("id").(string),
-				Optional: pumaGroup[i].GetDefault("optional", false).(bool),
-				Version:  pumaGroup[i].Get("version").(string),
-			},
-		)
-	}
-
-	// thin
-	packs[thin] = newBuildpackInfo()
-	thinGroup := order[1].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(thinGroup); i++ {
-		packs[thin].addPack(
-			buildpackOrderGroupInfo{
-				ID:       thinGroup[i].Get("id").(string),
-				Optional: thinGroup[i].GetDefault("optional", false).(bool),
-				Version:  thinGroup[i].Get("version").(string),
-			},
-		)
-	}
-
-	// unicorn
-	packs[unicorn] = newBuildpackInfo()
-	unicornGroup := order[2].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(unicornGroup); i++ {
-		packs[unicorn].addPack(
-			buildpackOrderGroupInfo{
-				ID:       unicornGroup[i].Get("id").(string),
-				Optional: unicornGroup[i].GetDefault("optional", false).(bool),
-				Version:  unicornGroup[i].Get("version").(string),
-			},
-		)
-	}
-
-	// passenger
-	packs[passenger] = newBuildpackInfo()
-	passengerGroup := order[3].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(passengerGroup); i++ {
-		packs[passenger].addPack(
-			buildpackOrderGroupInfo{
-				ID:       passengerGroup[i].Get("id").(string),
-				Optional: passengerGroup[i].GetDefault("optional", false).(bool),
-				Version:  passengerGroup[i].Get("version").(string),
-			},
-		)
-	}
-
-	// rackup
-	packs[rackup] = newBuildpackInfo()
-	rackupGroup := order[4].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(rackupGroup); i++ {
-		packs[rackup].addPack(
-			buildpackOrderGroupInfo{
-				ID:       rackupGroup[i].Get("id").(string),
-				Optional: rackupGroup[i].GetDefault("optional", false).(bool),
-				Version:  rackupGroup[i].Get("version").(string),
-			},
-		)
-	}
-
-	// rake
-	packs[rake] = newBuildpackInfo()
-	rakeGroup := order[5].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(rakeGroup); i++ {
-		packs[rake].addPack(
-			buildpackOrderGroupInfo{
-				ID:       rakeGroup[i].Get("id").(string),
-				Optional: rakeGroup[i].GetDefault("optional", false).(bool),
-				Version:  rakeGroup[i].Get("version").(string),
-			},
-		)
-	}
-
-	return packs
+	wg sync.WaitGroup
 }
 
 func NewRubyRuntime() Runtime {
@@ -156,11 +39,6 @@ func (runtime *rubyRuntime) detectPuma(gemfileContent string, results chan struc
 			string
 			bool
 		}{puma, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{puma, false}
 	}
 	runtime.wg.Done()
 }
@@ -185,11 +63,6 @@ func (runtime *rubyRuntime) detectThin(gemfileContent string, results chan struc
 			string
 			bool
 		}{thin, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{thin, false}
 	}
 	runtime.wg.Done()
 }
@@ -214,11 +87,6 @@ func (runtime *rubyRuntime) detectUnicorn(gemfileContent string, results chan st
 			string
 			bool
 		}{unicorn, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{unicorn, false}
 	}
 	runtime.wg.Done()
 }
@@ -243,11 +111,6 @@ func (runtime *rubyRuntime) detectPassenger(gemfileContent string, results chan 
 			string
 			bool
 		}{passenger, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{passenger, false}
 	}
 	runtime.wg.Done()
 }
@@ -290,11 +153,6 @@ func (runtime *rubyRuntime) detectRackup(
 			string
 			bool
 		}{rackup, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{rackup, false}
 	}
 	runtime.wg.Done()
 }
@@ -319,11 +177,6 @@ func (runtime *rubyRuntime) detectRake(gemfileContent string, results chan struc
 			string
 			bool
 		}{rake, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{rake, false}
 	}
 	runtime.wg.Done()
 }
@@ -333,9 +186,8 @@ func (runtime *rubyRuntime) Detect(
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,
 	repoContentOptions github.RepositoryContentGetOptions,
-) *RuntimeResponse {
-	runtime.packs = populateRubyPacks(client)
-
+	paketo, heroku *BuilderInfo,
+) error {
 	gemfileFound := false
 	gemfileLockFound := false
 	configRuFound := false
@@ -353,20 +205,33 @@ func (runtime *rubyRuntime) Detect(
 		}
 	}
 
+	paketoBuildpackInfo := BuildpackInfo{
+		Name:      "Ruby",
+		Buildpack: "paketobuildpacks/ruby",
+	}
+	herokuBuildpackInfo := BuildpackInfo{
+		Name:      "Ruby",
+		Buildpack: "heroku/ruby",
+	}
+
 	if !gemfileFound {
 		fmt.Printf("No Ruby runtime detected for %s/%s\n", owner, name)
+		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
 		return nil
 	}
 
 	fileContent, _, _, err := client.Repositories.GetContents(context.Background(), owner, name, "Gemfile", &repoContentOptions)
 	if err != nil {
-		fmt.Printf("Error fetching contents of Gemfile for %s/%s: %v\n", owner, name, err)
-		return nil
+		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+		return fmt.Errorf("error fetching contents of Gemfile for %s/%s: %v", owner, name, err)
 	}
 	gemfileContent, err := fileContent.GetContent()
 	if err != nil {
-		fmt.Printf("Error calling GetContent() on Gemfile for %s/%s: %v\n", owner, name, err)
-		return nil
+		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+		return fmt.Errorf("error calling GetContent() on Gemfile for %s/%s: %v", owner, name, err)
 	}
 
 	count := 6
@@ -384,7 +249,7 @@ func (runtime *rubyRuntime) Detect(
 	results := make(chan struct {
 		string
 		bool
-	}, count)
+	})
 
 	fmt.Printf("Starting detection for a Ruby runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(count)
@@ -404,7 +269,7 @@ func (runtime *rubyRuntime) Detect(
 		}
 
 		fmt.Println("Checking for unicorn")
-		runtime.detectUnicorn(gemfileContent, results)
+		go runtime.detectUnicorn(gemfileContent, results)
 	}
 	fmt.Println("Checking for passenger")
 	go runtime.detectPassenger(gemfileContent, results)
@@ -414,60 +279,13 @@ func (runtime *rubyRuntime) Detect(
 	}
 	if rakefileFound {
 		fmt.Println("Checking for rake")
-		runtime.detectRake(gemfileContent, results)
+		go runtime.detectRake(gemfileContent, results)
 	}
 	runtime.wg.Wait()
 	close(results)
 
-	detected := make(map[string]bool)
-	for result := range results {
-		detected[result.string] = result.bool
-	}
+	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
 
-	// TODO: how to access config values for Ruby projects
-	if found, ok := detected[puma]; ok && found {
-		fmt.Printf("Ruby puma runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:       "Ruby",
-			Runtime:    puma,
-			Buildpacks: runtime.packs[puma],
-		}
-	} else if found, ok := detected[thin]; ok && found {
-		fmt.Printf("Ruby thin runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:       "Ruby",
-			Runtime:    thin,
-			Buildpacks: runtime.packs[thin],
-		}
-	} else if found, ok := detected[unicorn]; ok && found {
-		fmt.Printf("Ruby unicorn runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:       "Ruby",
-			Runtime:    unicorn,
-			Buildpacks: runtime.packs[unicorn],
-		}
-	} else if found, ok := detected[passenger]; ok && found {
-		fmt.Printf("Ruby passenger runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:       "Ruby",
-			Runtime:    passenger,
-			Buildpacks: runtime.packs[passenger],
-		}
-	} else if found, ok := detected[rackup]; ok && found {
-		fmt.Printf("Ruby rackup runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:       "Ruby",
-			Runtime:    rackup,
-			Buildpacks: runtime.packs[rackup],
-		}
-	} else if found, ok := detected[rake]; ok && found {
-		fmt.Printf("Ruby rake runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:       "Ruby",
-			Runtime:    rake,
-			Buildpacks: runtime.packs[rake],
-		}
-	}
-
-	panic("[api_ruby.go] This should ne never reached")
+	return nil
 }

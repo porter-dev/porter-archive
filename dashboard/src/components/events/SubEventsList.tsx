@@ -6,6 +6,7 @@ import { Context } from "shared/Context";
 import SubEventCard from "./sub-events/SubEventCard";
 import Loading from "components/Loading";
 import LogBucketCard from "./sub-events/LogBucketCard";
+import EventPodStatus from "./EventPodStatus";
 
 const getReadableDate = (s: number) => {
   let ts = new Date(s);
@@ -104,28 +105,46 @@ const SubEventsList: React.FC<{
   }, [subEvents]);
 
   return (
-    <Timeline>
-      <ControlRow>
-        <BackButton onClick={clearSelectedEvent}>
-          <i className="material-icons">close</i>
-        </BackButton>
-        <Icon
-          status={event.event_type.toLowerCase() as any}
-          className="material-icons-outlined"
-        >
-          {event.event_type === "critical" ? "report_problem" : "info"}
-        </Icon>
-        Pod {event.name} crashed
-      </ControlRow>
-      {isLoading ? (
-        <Placeholder>
-          <Loading />
-        </Placeholder>
-      ) : sortedSubEvents?.length ? (
-        <EventsGrid>
-          <Rail />
-          {sortedSubEvents.map((subEvent: any, i: number) => {
-            if (subEvent?.event_type === "log_bucket") {
+    <>
+      <EventPodStatus
+        controller={"default"}
+        podName={event.name}
+      ></EventPodStatus>
+      <Timeline>
+        <ControlRow>
+          <BackButton onClick={clearSelectedEvent}>
+            <i className="material-icons">close</i>
+          </BackButton>
+          <Icon
+            status={event.event_type.toLowerCase() as any}
+            className="material-icons-outlined"
+          >
+            {event.event_type === "critical" ? "report_problem" : "info"}
+          </Icon>
+          Pod {event.name} crashed
+        </ControlRow>
+        {isLoading ? (
+          <Placeholder>
+            <Loading />
+          </Placeholder>
+        ) : sortedSubEvents?.length ? (
+          <EventsGrid>
+            <Rail />
+            {sortedSubEvents.map((subEvent: any, i: number) => {
+              if (subEvent?.event_type === "log_bucket") {
+                return (
+                  <Wrapper>
+                    <TimelineNode>
+                      <Penumbra>
+                        <Circle />
+                      </Penumbra>
+                      {getReadableDate(subEvent.timestamp)}
+                    </TimelineNode>
+                    <LogBucketCard logEvent={subEvent} />
+                    {i === sortedSubEvents.length - 1 && <RailCover />}
+                  </Wrapper>
+                );
+              }
               return (
                 <Wrapper>
                   <TimelineNode>
@@ -134,32 +153,20 @@ const SubEventsList: React.FC<{
                     </Penumbra>
                     {getReadableDate(subEvent.timestamp)}
                   </TimelineNode>
-                  <LogBucketCard logEvent={subEvent} />
+                  <SubEventCard subEvent={subEvent} />
                   {i === sortedSubEvents.length - 1 && <RailCover />}
                 </Wrapper>
               );
-            }
-            return (
-              <Wrapper>
-                <TimelineNode>
-                  <Penumbra>
-                    <Circle />
-                  </Penumbra>
-                  {getReadableDate(subEvent.timestamp)}
-                </TimelineNode>
-                <SubEventCard subEvent={subEvent} />
-                {i === sortedSubEvents.length - 1 && <RailCover />}
-              </Wrapper>
-            );
-          })}
-        </EventsGrid>
-      ) : (
-        <Placeholder>
-          <i className="material-icons">search</i>
-          No sub-events were found.
-        </Placeholder>
-      )}
-    </Timeline>
+            })}
+          </EventsGrid>
+        ) : (
+          <Placeholder>
+            <i className="material-icons">search</i>
+            No sub-events were found.
+          </Placeholder>
+        )}
+      </Timeline>
+    </>
   );
 };
 

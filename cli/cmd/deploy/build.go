@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/pack"
 )
@@ -54,7 +55,7 @@ func (b *BuildAgent) BuildDocker(
 }
 
 // BuildPack uses the cloud-native buildpack client to build a container image
-func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag string) error {
+func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag string, buildConfig *types.BuildConfig) error {
 	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
 	if b.imageExists {
 		err := dockerAgent.TagImage(
@@ -81,7 +82,7 @@ func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag string) error
 	}
 
 	// call builder
-	err := packAgent.Build(opts)
+	err := packAgent.Build(opts, buildConfig)
 
 	if err != nil {
 		return err

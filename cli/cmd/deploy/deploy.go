@@ -272,7 +272,7 @@ func (d *DeployAgent) Build() error {
 		)
 	}
 
-	return buildAgent.BuildPack(d.agent, buildCtx, d.tag)
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, d.release.BuildConfig)
 }
 
 // Push pushes a local image to the remote repository linked in the release

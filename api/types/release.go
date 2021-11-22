@@ -20,6 +20,7 @@ type PorterRelease struct {
 	LatestVersion   string           `json:"latest_version"`
 	GitActionConfig *GitActionConfig `json:"git_action_config,omitempty"`
 	ImageRepoURI    string           `json:"image_repo_uri"`
+	BuildConfig     *BuildConfig     `json:"build_config"`
 }
 
 type GetReleaseResponse Release
@@ -45,6 +46,7 @@ type CreateReleaseRequest struct {
 
 	ImageURL           string                        `json:"image_url" form:"required"`
 	GithubActionConfig *CreateGitActionConfigRequest `json:"github_action_config,omitempty"`
+	BuildConfig        *CreateBuildConfigRequest     `json:"build_config" form:"required"`
 }
 
 type CreateAddonRequest struct {

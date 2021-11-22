@@ -1,5 +1,5 @@
-import React, { Component } from "react";
-import styled from "styled-components";
+import React, { Component, useContext, useEffect, useState } from "react";
+import styled, { keyframes } from "styled-components";
 
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
@@ -7,6 +7,9 @@ import api from "shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
 import InputRow from "../form-components/InputRow";
+import Selector from "components/Selector";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -23,40 +26,47 @@ type PropsType = {
   setFolderPath: (x: string) => void;
 };
 
-type StateType = {
-  dockerRepo: string;
-  error: boolean;
-  registries: any[] | null;
-  loading: boolean;
-};
+const ActionDetails: React.FC<PropsType> = (props) => {
+  const {
+    actionConfig,
+    branch,
+    dockerfilePath,
+    folderPath,
+    procfilePath,
+    selectedRegistry,
+    setActionConfig,
+    setDockerfilePath,
+    setFolderPath,
+    setProcfilePath,
+    setProcfileProcess,
+    setSelectedRegistry,
+  } = props;
 
-export default class ActionDetails extends Component<PropsType, StateType> {
-  state = {
-    dockerRepo: "",
-    error: false,
-    registries: null as any[] | null,
-    loading: true,
-  };
+  const { currentProject } = useContext(Context);
 
-  componentDidMount() {
-    // TODO: Handle custom registry case (unroll repos?)
+  const [dockerRepo, setDockerRepo] = useState("");
+  const [error, setError] = useState(false);
+  const [registries, setRegistries] = useState<any[]>(null);
+  const [loading, setLoading] = useState(true);
+  const [builders, setBuilders] = useState<any[]>(null);
+  const [currentBuilder, setCurrentBuilder] = useState(null);
+
+  useEffect(() => {
+    const project_id = currentProject.id;
+
     api
-      .getProjectRegistries(
-        "<token>",
-        {},
-        { id: this.context.currentProject.id }
-      )
+      .getProjectRegistries("<token>", {}, { id: project_id })
       .then((res: any) => {
-        this.setState({ registries: res.data, loading: false });
+        setRegistries(res.data);
+        setLoading(false);
         if (res.data.length === 1) {
-          this.props.setSelectedRegistry(res.data[0]);
+          setSelectedRegistry(res.data[0]);
         }
       })
       .catch((err: any) => console.log(err));
-  }
+  }, [currentProject]);
 
-  renderIntegrationList = () => {
-    let { loading, registries } = this.state;
+  const renderIntegrationList = () => {
     if (loading) {
       return (
         <LoadingWrapper>
@@ -67,20 +77,19 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 
     return registries.map((registry: any, i: number) => {
       let icon =
-        integrationList[registry.service] &&
-        integrationList[registry.service].icon;
+        integrationList[registry?.service] &&
+        integrationList[registry?.service]?.icon;
+
       if (!icon) {
-        icon = integrationList["dockerhub"].icon;
+        icon = integrationList["dockerhub"]?.icon;
       }
+
       return (
         <RegistryItem
           key={i}
-          isSelected={
-            this.props.selectedRegistry &&
-            registry.id === this.props.selectedRegistry.id
-          }
-          lastItem={i === registries.length - 1}
-          onClick={() => this.props.setSelectedRegistry(registry)}
+          isSelected={selectedRegistry && registry.id === selectedRegistry?.id}
+          lastItem={i === registries?.length - 1}
+          onClick={() => setSelectedRegistry(registry)}
         >
           <img src={icon && icon} />
           {registry.url}
@@ -89,8 +98,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
     });
   };
 
-  renderRegistrySection = () => {
-    let { registries } = this.state;
+  const renderRegistrySection = () => {
     if (!registries || registries.length === 0 || registries.length === 1) {
       return;
     } else {
@@ -100,93 +108,114 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             Select an Image Destination
             <Required>*</Required>
           </Subtitle>
-          <ExpandedWrapper>{this.renderIntegrationList()}</ExpandedWrapper>
+          <ExpandedWrapper>{renderIntegrationList()}</ExpandedWrapper>
         </>
       );
     }
   };
 
-  render() {
+  const renderBuildpacksList = () => {
+    const buildpackName = "Node.js";
     return (
-      <>
-        <DarkMatter />
-        <InputRow
-          disabled={true}
-          label="Git Repository"
-          type="text"
-          width="100%"
-          value={this.props.actionConfig.git_repo}
-        />
-        <InputRow
-          disabled={true}
-          label="Branch"
-          type="text"
-          width="100%"
-          value={this.props.branch}
-        />
-        {this.props.dockerfilePath && (
-          <InputRow
-            disabled={true}
-            label="Dockerfile Path"
-            type="text"
-            width="100%"
-            value={this.props.dockerfilePath}
-          />
-        )}
-        <InputRow
-          disabled={true}
-          label={
-            this.props.dockerfilePath
-              ? "Docker Build Context"
-              : "Application Folder"
-          }
-          type="text"
-          width="100%"
-          value={this.props.folderPath}
-        />
-        {this.renderRegistrySection()}
+      <StyledCard onClick={() => console.log("some")} status={"some"}>
+        <ContentContainer>
+          <Icon className="devicon-nodejs-plain colored" />
 
-        <Br />
-
-        <Flex>
-          <BackButton
-            width="140px"
-            onClick={() => {
-              this.props.setDockerfilePath(null);
-              this.props.setFolderPath(null);
-              this.props.setProcfilePath(null);
-              this.props.setProcfileProcess(null);
-              this.props.setSelectedRegistry(null);
-            }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select Folder
-          </BackButton>
-          {
-            // !this.props.procfilePath && !this.props.dockerfilePath ? (
-            //   <StatusWrapper>
-            //     <i className="material-icons">error_outline</i>
-            //     Procfile not detected.
-            //   </StatusWrapper>
-            // ) :
-            this.props.selectedRegistry ? (
-              <StatusWrapper successful={true}>
-                <i className="material-icons">done</i> Source selected
-              </StatusWrapper>
-            ) : (
-              <StatusWrapper>
-                <i className="material-icons">error_outline</i>A connected
-                container registry is required
-              </StatusWrapper>
-            )
-          }
-        </Flex>
-      </>
+          <EventInformation>
+            <EventName>
+              <Helper></Helper>
+              {buildpackName}
+            </EventName>
+          </EventInformation>
+        </ContentContainer>
+        <ActionContainer>
+          <DeleteButton>
+            <span className="material-icons">delete</span>
+          </DeleteButton>
+        </ActionContainer>
+      </StyledCard>
     );
-  }
-}
+  };
 
-ActionDetails.contextType = Context;
+  return (
+    <>
+      <DarkMatter />
+      <InputRow
+        disabled={true}
+        label="Git Repository"
+        type="text"
+        width="100%"
+        value={actionConfig?.git_repo}
+      />
+      <InputRow
+        disabled={true}
+        label="Branch"
+        type="text"
+        width="100%"
+        value={props?.branch}
+      />
+      {dockerfilePath && (
+        <InputRow
+          disabled={true}
+          label="Dockerfile Path"
+          type="text"
+          width="100%"
+          value={dockerfilePath}
+        />
+      )}
+      <InputRow
+        disabled={true}
+        label={dockerfilePath ? "Docker Build Context" : "Application Folder"}
+        type="text"
+        width="100%"
+        value={folderPath}
+      />
+      {renderRegistrySection()}
+
+      <Selector
+        activeValue={currentBuilder}
+        width="100%"
+        options={builders}
+        setActiveValue={(option) => setCurrentBuilder(option)}
+      />
+
+      <Heading>Buildpacks</Heading>
+      <Helper>
+        These are automatically detected buildpacks but you can change them if
+        you want
+      </Helper>
+      <Br />
+
+      <Flex>
+        <BackButton
+          width="140px"
+          onClick={() => {
+            setDockerfilePath(null);
+            setFolderPath(null);
+            setProcfilePath(null);
+            setProcfileProcess(null);
+            setSelectedRegistry(null);
+          }}
+        >
+          <i className="material-icons">keyboard_backspace</i>
+          Select Folder
+        </BackButton>
+        {selectedRegistry ? (
+          <StatusWrapper successful={true}>
+            <i className="material-icons">done</i> Source selected
+          </StatusWrapper>
+        ) : (
+          <StatusWrapper>
+            <i className="material-icons">error_outline</i>A connected container
+            registry is required
+          </StatusWrapper>
+        )}
+      </Flex>
+    </>
+  );
+};
+
+export default ActionDetails;
 
 const Required = styled.div`
   margin-left: 8px;
@@ -322,4 +351,89 @@ const Br = styled.div`
 const DarkMatter = styled.div`
   width: 100%;
   margin-bottom: -18px;
+`;
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const StyledCard = styled.div<{ status: string }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid "#ffffff44";
+  background: #ffffff08;
+  margin-bottom: 5px;
+  border-radius: 10px;
+  padding: 14px;
+  overflow: hidden;
+  height: 80px;
+  font-size: 13px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+    border: 1px solid "#ffffff66";
+  }
+  animation: ${fadeIn} 0.5s;
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+`;
+
+const Icon = styled.span`
+  font-size: 20px;
+  margin-left: 10px;
+  margin-right: 20px;
+`;
+
+const EventInformation = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+`;
+
+const EventName = styled.div`
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
+`;
+
+const EventReason = styled.div`
+  font-family: "Work Sans", sans-serif;
+  color: #aaaabb;
+  margin-top: 5px;
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+`;
+
+const DeleteButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  color: #ffffff44;
+  :hover {
+    background: #32343a;
+    cursor: pointer;
+  }
 `;

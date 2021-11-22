@@ -1,4 +1,10 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, {
+  Component,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled, { keyframes } from "styled-components";
 
 import { integrationList } from "shared/common";
@@ -26,6 +32,23 @@ type PropsType = {
   setFolderPath: (x: string) => void;
 };
 
+type Buildpack = {
+  name: string;
+  buildpack: string;
+  config: {
+    [key: string]: string;
+  };
+};
+
+type DetectedBuildpack = {
+  name: string;
+  builders: string[];
+  detected: Buildpack[];
+  others: Buildpack[];
+};
+
+type DetectBuildpackResponse = DetectedBuildpack[];
+
 const ActionDetails: React.FC<PropsType> = (props) => {
   const {
     actionConfig,
@@ -43,13 +66,14 @@ const ActionDetails: React.FC<PropsType> = (props) => {
   } = props;
 
   const { currentProject } = useContext(Context);
-
-  const [dockerRepo, setDockerRepo] = useState("");
-  const [error, setError] = useState(false);
   const [registries, setRegistries] = useState<any[]>(null);
   const [loading, setLoading] = useState(true);
-  const [builders, setBuilders] = useState<any[]>(null);
+  const [buildersOptions, setBuildersOptions] = useState<[]>(null);
   const [currentBuilder, setCurrentBuilder] = useState(null);
+  const [availableBuildpacks, setAvailableBuildpacks] = useState(null);
+  const [availableStacks, setAvailableStacks] = useState(null);
+  const [selectedStack, setSelectedStack] = useState(null);
+  const [selectedBuildpacks, setSelectedBuildpacks] = useState(null);
 
   useEffect(() => {
     const project_id = currentProject.id;
@@ -114,29 +138,6 @@ const ActionDetails: React.FC<PropsType> = (props) => {
     }
   };
 
-  const renderBuildpacksList = () => {
-    const buildpackName = "Node.js";
-    return (
-      <StyledCard onClick={() => console.log("some")} status={"some"}>
-        <ContentContainer>
-          <Icon className="devicon-nodejs-plain colored" />
-
-          <EventInformation>
-            <EventName>
-              <Helper></Helper>
-              {buildpackName}
-            </EventName>
-          </EventInformation>
-        </ContentContainer>
-        <ActionContainer>
-          <DeleteButton>
-            <span className="material-icons">delete</span>
-          </DeleteButton>
-        </ActionContainer>
-      </StyledCard>
-    );
-  };
-
   return (
     <>
       <DarkMatter />
@@ -171,19 +172,14 @@ const ActionDetails: React.FC<PropsType> = (props) => {
         value={folderPath}
       />
       {renderRegistrySection()}
-
-      <Selector
-        activeValue={currentBuilder}
-        width="100%"
-        options={builders}
-        setActiveValue={(option) => setCurrentBuilder(option)}
-      />
-
-      <Heading>Buildpacks</Heading>
-      <Helper>
-        These are automatically detected buildpacks but you can change them if
-        you want
-      </Helper>
+      {!dockerfilePath && (
+        <BuildpackSelection
+          actionConfig={actionConfig}
+          branch={branch}
+          folderPath={folderPath}
+          onChange={(config) => {}}
+        />
+      )}
       <Br />
 
       <Flex>
@@ -216,6 +212,184 @@ const ActionDetails: React.FC<PropsType> = (props) => {
 };
 
 export default ActionDetails;
+
+const DEFAULT_BUILDER_NAME = "paketo";
+const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
+const DEFAULT_HEROKU_STACK = "heroku:20";
+
+type BuildConfig = {
+  builder: string;
+  buildpacks: string[];
+  config: null | {
+    [key: string]: string;
+  };
+};
+
+const BuildpackSelection: React.FC<{
+  actionConfig: ActionConfigType;
+  folderPath: string;
+  branch: string;
+  onChange: (config: BuildConfig) => void;
+}> = ({ actionConfig, folderPath, branch }) => {
+  const { currentProject } = useContext(Context);
+
+  const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
+  const [selectedBuilder, setSelectedBuilder] = useState<string>(null);
+
+  const [stacks, setStacks] = useState<string[]>(null);
+  const [selectedStack, setSelectedStack] = useState<string>(null);
+
+  const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>(
+    null
+  );
+  const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
+    null
+  );
+
+  useEffect(() => {
+    api
+      .detectBuildpack<DetectBuildpackResponse>(
+        "<token>",
+        {
+          dir: folderPath || ".",
+        },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      )
+      .then(({ data }) => {
+        const builders = data;
+
+        const defaultBuilder = builders.find(
+          (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
+        );
+
+        const detectedBuildpacks = defaultBuilder.detected;
+        const availableBuildpacks = defaultBuilder.others;
+        const defaultStack = defaultBuilder.builders.find((stack) => {
+          return (
+            stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
+          );
+        });
+
+        setBuilders(builders);
+        setSelectedBuilder(defaultBuilder.name);
+
+        setStacks(defaultBuilder.builders);
+        setSelectedStack(defaultStack);
+
+        setSelectedBuildpacks(detectedBuildpacks);
+        setAvailableBuildpacks(availableBuildpacks);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, [currentProject, actionConfig]);
+
+  const builderOptions = useMemo(() => {
+    if (!Array.isArray(builders)) {
+      return;
+    }
+
+    return builders.map((builder) => ({
+      label: builder.name,
+      value: builder.name.toLowerCase(),
+    }));
+  }, [builders]);
+
+  const stackOptions = useMemo(() => {
+    if (!Array.isArray(stacks)) {
+      return;
+    }
+
+    return stacks.map((stack) => ({
+      label: stack,
+      value: stack.toLowerCase(),
+    }));
+  }, [stacks]);
+
+  const renderBuildpacksList = (buildpacks: Buildpack[]) => {
+    return buildpacks.map((buildpack) => {
+      const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
+
+      return (
+        <StyledCard onClick={() => console.log("some")} status={"some"}>
+          <ContentContainer>
+            <Icon className={icon} />
+            <EventInformation>
+              <EventName>{buildpack?.name}</EventName>
+            </EventInformation>
+          </ContentContainer>
+          <ActionContainer>
+            <DeleteButton
+              onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
+            >
+              <span className="material-icons">delete</span>
+            </DeleteButton>
+          </ActionContainer>
+        </StyledCard>
+      );
+    });
+  };
+
+  const handleRemoveBuildpack = (buildpackToRemove: string) => {
+    setSelectedBuildpacks((selBuildpacks) => {
+      const tmpSelectedBuildpacks = [...selBuildpacks];
+
+      const indexBuildpackToRemove = tmpSelectedBuildpacks.findIndex(
+        (buildpack) => buildpack.buildpack === buildpackToRemove
+      );
+      const buildpack = tmpSelectedBuildpacks[indexBuildpackToRemove];
+
+      setAvailableBuildpacks((availableBuildpacks) => [
+        ...availableBuildpacks,
+        buildpack,
+      ]);
+
+      tmpSelectedBuildpacks.splice(indexBuildpackToRemove, 1);
+
+      return [...tmpSelectedBuildpacks];
+    });
+  };
+
+  // const handleAddBuildpack = (buildpackToAdd: string) => {
+  //   setAvailableBuildpacks((avBuildpacks) => {
+  //     const tmpAvailableBuildpacks = [...avBuildpacks];
+  //     return []
+  //   })
+  // }
+
+  return (
+    <>
+      <>
+        <Selector
+          activeValue={selectedBuilder}
+          width="100%"
+          options={builderOptions}
+          setActiveValue={(option) => setSelectedBuilder(option)}
+        />
+        <Selector
+          activeValue={selectedStack}
+          width="100%"
+          options={stackOptions}
+          setActiveValue={(option) => setSelectedStack(option)}
+        />
+        <Heading>Buildpacks</Heading>
+        <Helper>
+          These are automatically detected buildpacks but you can change them if
+          you want
+        </Helper>
+
+        {renderBuildpacksList(availableBuildpacks)}
+      </>
+    </>
+  );
+};
 
 const Required = styled.div`
   margin-left: 8px;

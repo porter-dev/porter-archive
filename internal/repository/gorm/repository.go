@@ -31,7 +31,8 @@ type GormRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
-	event                     repository.EventRepository
+	buildEvent                repository.BuildEventRepository
+	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
@@ -134,8 +135,12 @@ func (t *GormRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
-func (t *GormRepository) Event() repository.EventRepository {
-	return t.event
+func (t *GormRepository) BuildEvent() repository.BuildEventRepository {
+	return t.buildEvent
+}
+
+func (t *GormRepository) KubeEvent() repository.KubeEventRepository {
+	return t.kubeEvent
 }
 
 func (t *GormRepository) ProjectUsage() repository.ProjectUsageRepository {
@@ -182,7 +187,8 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
-		event:                     NewEventRepository(db),
+		buildEvent:                NewBuildEventRepository(db),
+		kubeEvent:                 NewKubeEventRepository(db, key),
 		projectUsage:              NewProjectUsageRepository(db),
 		onboarding:                NewProjectOnboardingRepository(db),
 		ceToken:                   NewCredentialsExchangeTokenRepository(db),

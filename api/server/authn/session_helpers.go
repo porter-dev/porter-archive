@@ -12,25 +12,27 @@ func SaveUserAuthenticated(
 	r *http.Request,
 	config *config.Config,
 	user *models.User,
-) error {
+) (string, error) {
 	session, err := config.Store.Get(r, config.ServerConf.CookieName)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var redirect string
 
-	if valR := session.Values["redirect"]; valR != nil {
-		redirect = session.Values["redirect"].(string)
+	if valR := session.Values["redirect_uri"]; valR != nil {
+		redirect = session.Values["redirect_uri"].(string)
 	}
 
 	session.Values["authenticated"] = true
 	session.Values["user_id"] = user.ID
 	session.Values["email"] = user.Email
-	session.Values["redirect"] = redirect
 
-	return session.Save(r, w)
+	// we unset the redirect uri after login
+	session.Values["redirect_uri"] = ""
+
+	return redirect, session.Save(r, w)
 }
 
 func SaveUserUnauthenticated(

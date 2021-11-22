@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-github/github"
-	"github.com/pelletier/go-toml"
 )
 
 var (
@@ -23,106 +21,11 @@ var (
 )
 
 type nodejsRuntime struct {
-	wg    sync.WaitGroup
-	packs map[string]*BuildpackInfo
+	wg sync.WaitGroup
 }
 
 func NewNodeRuntime() Runtime {
 	return &nodejsRuntime{}
-}
-
-// FIXME: should be called once at the top-level somewhere in the backend
-func populateNodePacks(client *github.Client) map[string]*BuildpackInfo {
-	packs := make(map[string]*BuildpackInfo)
-
-	repoRelease, _, err := client.Repositories.GetLatestRelease(context.Background(), "paketo-buildpacks", "nodejs")
-	if err != nil {
-		fmt.Printf("Error fetching latest release for paketo-buildpacks/nodejs: %v\n", err)
-		return nil
-	}
-	fileContent, _, _, err := client.Repositories.GetContents(
-		context.Background(), "paketo-buildpacks", "nodejs", "buildpack.toml",
-		&github.RepositoryContentGetOptions{
-			Ref: *repoRelease.TagName,
-		},
-	)
-	if err != nil {
-		fmt.Printf("Error fetching contents of buildpack.toml for paketo-buildpacks/nodejs: %v\n", err)
-		return nil
-	}
-
-	data, err := fileContent.GetContent()
-	if err != nil {
-		fmt.Printf("Error calling GetContent() on buildpack.toml for paketo-buildpacks/nodejs: %v\n", err)
-		return nil
-	}
-
-	buildpackToml, err := toml.Load(data)
-	if err != nil {
-		fmt.Printf("Error while reading buildpack.toml from paketo-buildpacks/nodejs: %v\n", err)
-		os.Exit(1)
-	}
-	order := buildpackToml.Get("order").([]*toml.Tree)
-
-	// yarn
-	packs[yarn] = newBuildpackInfo()
-	yarnGroup := order[0].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(yarnGroup); i++ {
-		packs[yarn].addPack(
-			buildpackOrderGroupInfo{
-				ID:       yarnGroup[i].Get("id").(string),
-				Optional: yarnGroup[i].GetDefault("optional", false).(bool),
-				Version:  yarnGroup[i].Get("version").(string),
-			},
-		)
-	}
-	packs[yarn].addEnvVar("SSL_CERT_DIR", "")
-	packs[yarn].addEnvVar("SSL_CERT_FILE", "")
-	packs[yarn].addEnvVar("BP_NODE_OPTIMIZE_MEMORY", "")
-	packs[yarn].addEnvVar("BP_NODE_PROJECT_PATH", "")
-	packs[yarn].addEnvVar("BP_NODE_VERSION", "")
-	packs[yarn].addEnvVar("BP_NODE_RUN_SCRIPTS", "")
-
-	// npm
-	packs[npm] = newBuildpackInfo()
-	npmGroup := order[1].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(npmGroup); i++ {
-		packs[npm].addPack(
-			buildpackOrderGroupInfo{
-				ID:       npmGroup[i].Get("id").(string),
-				Optional: npmGroup[i].GetDefault("optional", false).(bool),
-				Version:  npmGroup[i].Get("version").(string),
-			},
-		)
-	}
-	packs[npm].addEnvVar("SSL_CERT_DIR", "")
-	packs[npm].addEnvVar("SSL_CERT_FILE", "")
-	packs[npm].addEnvVar("BP_NODE_OPTIMIZE_MEMORY", "")
-	packs[npm].addEnvVar("BP_NODE_PROJECT_PATH", "")
-	packs[npm].addEnvVar("BP_NODE_VERSION", "")
-	packs[npm].addEnvVar("BP_NODE_RUN_SCRIPTS", "")
-
-	// no package manager
-	packs[standalone] = newBuildpackInfo()
-	standaloneGroup := order[2].GetArray("group").([]*toml.Tree)
-	for i := 0; i < len(standaloneGroup); i++ {
-		packs[standalone].addPack(
-			buildpackOrderGroupInfo{
-				ID:       standaloneGroup[i].Get("id").(string),
-				Optional: standaloneGroup[i].GetDefault("optional", false).(bool),
-				Version:  standaloneGroup[i].Get("version").(string),
-			},
-		)
-	}
-	packs[standalone].addEnvVar("SSL_CERT_DIR", "")
-	packs[standalone].addEnvVar("SSL_CERT_FILE", "")
-	packs[standalone].addEnvVar("BP_NODE_OPTIMIZE_MEMORY", "")
-	packs[standalone].addEnvVar("BP_NODE_PROJECT_PATH", "")
-	packs[standalone].addEnvVar("BP_NODE_VERSION", "")
-	packs[standalone].addEnvVar("BP_LAUNCHPOINT", "")
-	packs[standalone].addEnvVar("BP_LIVE_RELOAD_ENABLED", "")
-
-	return packs
 }
 
 func (runtime *nodejsRuntime) detectYarn(results chan struct {
@@ -147,11 +50,6 @@ func (runtime *nodejsRuntime) detectYarn(results chan struct {
 			string
 			bool
 		}{yarn, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{yarn, false}
 	}
 	runtime.wg.Done()
 }
@@ -173,11 +71,6 @@ func (runtime *nodejsRuntime) detectNPM(results chan struct {
 			string
 			bool
 		}{npm, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{npm, false}
 	}
 	runtime.wg.Done()
 }
@@ -199,11 +92,6 @@ func (runtime *nodejsRuntime) detectStandalone(results chan struct {
 			string
 			bool
 		}{standalone, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{standalone, false}
 	}
 	runtime.wg.Done()
 }
@@ -274,13 +162,12 @@ func (runtime *nodejsRuntime) Detect(
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,
 	repoContentOptions github.RepositoryContentGetOptions,
-) *RuntimeResponse {
-	runtime.packs = populateNodePacks(client)
-
+	paketo, heroku *BuilderInfo,
+) error {
 	results := make(chan struct {
 		string
 		bool
-	}, 3)
+	})
 
 	fmt.Printf("Starting detection for a NodeJS runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(3)
@@ -293,12 +180,36 @@ func (runtime *nodejsRuntime) Detect(
 	runtime.wg.Wait()
 	close(results)
 
-	detected := make(map[string]bool)
-	for result := range results {
-		detected[result.string] = result.bool
+	paketoBuildpackInfo := BuildpackInfo{
+		Name:      "NodeJS",
+		Buildpack: "paketobuildpacks/nodejs",
+	}
+	herokuBuildpackInfo := BuildpackInfo{
+		Name:      "NodeJS",
+		Buildpack: "heroku/nodejs",
 	}
 
-	if detected[yarn] || detected[npm] {
+	if len(results) == 0 {
+		fmt.Printf("No NodeJS runtime detected for %s/%s\n", owner, name)
+		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+		return nil
+	}
+
+	foundYarn := false
+	foundNPM := false
+	foundStandalone := false
+	for result := range results {
+		if result.string == yarn {
+			foundYarn = true
+		} else if result.string == npm {
+			foundNPM = true
+		} else if result.string == standalone {
+			foundStandalone = true
+		}
+	}
+
+	if foundYarn || foundNPM {
 		// it is safe to assume that the project contains a package.json
 		fmt.Println("package.json file detected")
 		fileContent, _, _, err := client.Repositories.GetContents(
@@ -309,8 +220,9 @@ func (runtime *nodejsRuntime) Detect(
 			&repoContentOptions,
 		)
 		if err != nil {
-			fmt.Printf("Error fetching contents of package.json: %v\n", err)
-			return nil
+			paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+			heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+			return fmt.Errorf("error fetching contents of package.json: %v", err)
 		}
 		var packageJSON struct {
 			Scripts map[string]string `json:"scripts"`
@@ -321,13 +233,15 @@ func (runtime *nodejsRuntime) Detect(
 
 		data, err := fileContent.GetContent()
 		if err != nil {
-			fmt.Printf("Error calling GetContent() on package.json: %v\n", err)
-			return nil
+			paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+			heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+			return fmt.Errorf("error calling GetContent() on package.json: %v", err)
 		}
 		err = json.NewDecoder(strings.NewReader(data)).Decode(&packageJSON)
 		if err != nil {
-			fmt.Printf("Error decoding package.json contents to struct: %v\n", err)
-			return nil
+			paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+			heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+			return fmt.Errorf("error decoding package.json contents to struct: %v", err)
 		}
 
 		if packageJSON.Engines.Node == "" {
@@ -353,18 +267,21 @@ func (runtime *nodejsRuntime) Detect(
 					&repoContentOptions,
 				)
 				if err != nil {
-					fmt.Printf("Error fetching contents of .nvmrc: %v\n", err)
-					return nil
+					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+					return fmt.Errorf("error fetching contents of .nvmrc: %v", err)
 				}
 				data, err = fileContent.GetContent()
 				if err != nil {
-					fmt.Printf("Error calling GetContent() on .nvmrc: %v\n", err)
-					return nil
+					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+					return fmt.Errorf("error calling GetContent() on .nvmrc: %v", err)
 				}
 				nvmrcVersion, err := validateNvmrc(data)
 				if err != nil {
-					fmt.Printf("Error validating .nvmrc: %v\n", err)
-					return nil
+					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+					return fmt.Errorf("error validating .nvmrc: %v", err)
 				}
 				nvmrcVersion = formatNvmrcContent(nvmrcVersion)
 
@@ -383,18 +300,21 @@ func (runtime *nodejsRuntime) Detect(
 					&repoContentOptions,
 				)
 				if err != nil {
-					fmt.Printf("Error fetching contents of .node-version: %v\n", err)
-					return nil
+					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+					return fmt.Errorf("error fetching contents of .node-version: %v", err)
 				}
 				data, err = fileContent.GetContent()
 				if err != nil {
-					fmt.Printf("Error calling GetContent() on .node-version: %v\n", err)
-					return nil
+					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+					return fmt.Errorf("error calling GetContent() on .node-version: %v", err)
 				}
 				nodeVersion, err := validateNodeVersion(data)
 				if err != nil {
-					fmt.Printf("Error validating .node-version: %v\n", err)
-					return nil
+					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+					return fmt.Errorf("error validating .node-version: %v", err)
 				}
 				if nodeVersion != "" {
 					packageJSON.Engines.Node = nodeVersion
@@ -407,38 +327,17 @@ func (runtime *nodejsRuntime) Detect(
 			packageJSON.Engines.Node = "16.*.*"
 		}
 
-		if detected[yarn] {
-			fmt.Printf("NodeJS yarn runtime detected for %s/%s\n", owner, name)
-			return &RuntimeResponse{
-				Name:       "Node.js",
-				Buildpacks: runtime.packs[yarn],
-				Runtime:    yarn,
-				Config: map[string]interface{}{
-					"scripts":     packageJSON.Scripts,
-					"node_engine": packageJSON.Engines.Node,
-				},
-			}
-		} else {
-			fmt.Printf("NodeJS npm runtime detected for %s/%s\n", owner, name)
-			return &RuntimeResponse{
-				Name:       "Node.js",
-				Buildpacks: runtime.packs[npm],
-				Runtime:    npm,
-				Config: map[string]interface{}{
-					"scripts":     packageJSON.Scripts,
-					"node_engine": packageJSON.Engines.Node,
-				},
-			}
-		}
-	} else if detected[standalone] {
-		fmt.Printf("NodeJS standalone runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:       "Node.js",
-			Buildpacks: runtime.packs[standalone],
-			Runtime:    standalone,
-		}
+		paketoBuildpackInfo.Config["scripts"] = packageJSON.Scripts
+		paketoBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
+		paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+
+		herokuBuildpackInfo.Config["scripts"] = packageJSON.Scripts
+		herokuBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
+		heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
+	} else if foundStandalone {
+		paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+		heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
 	}
 
-	fmt.Printf("No NodeJS runtime detected for %s/%s\n", owner, name)
 	return nil
 }

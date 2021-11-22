@@ -31,11 +31,6 @@ func (runtime *goRuntime) detectMod(results chan struct {
 			string
 			bool
 		}{mod, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{mod, false}
 	}
 	runtime.wg.Done()
 }
@@ -62,11 +57,6 @@ func (runtime *goRuntime) detectDep(results chan struct {
 			string
 			bool
 		}{dep, true}
-	} else {
-		results <- struct {
-			string
-			bool
-		}{dep, false}
 	}
 	runtime.wg.Done()
 }
@@ -76,7 +66,8 @@ func (runtime *goRuntime) Detect(
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,
 	repoContentOptions github.RepositoryContentGetOptions,
-) *RuntimeResponse {
+	paketo, heroku *BuilderInfo,
+) error {
 	results := make(chan struct {
 		string
 		bool
@@ -91,26 +82,29 @@ func (runtime *goRuntime) Detect(
 	runtime.wg.Wait()
 	close(results)
 
+	paketoBuildpackInfo := BuildpackInfo{
+		Name:      "Go",
+		Buildpack: "paketobuildpacks/go",
+	}
+	herokuBuildpackInfo := BuildpackInfo{
+		Name:      "Go",
+		Buildpack: "heroku/go",
+	}
+
+	if len(results) == 0 {
+		fmt.Printf("No Go runtime detected for %s/%s\n", owner, name)
+		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+		return nil
+	}
+
 	detected := make(map[string]bool)
 	for result := range results {
 		detected[result.string] = result.bool
 	}
 
-	// TODO: how to access config values for Go projects
-	if detected[mod] {
-		fmt.Printf("Go mod runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:    "Go",
-			Runtime: mod,
-		}
-	} else if detected[dep] {
-		fmt.Printf("Go dep runtime detected for %s/%s\n", owner, name)
-		return &RuntimeResponse{
-			Name:    "Go",
-			Runtime: dep,
-		}
-	}
+	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
 
-	fmt.Printf("No Go runtime detected for %s/%s\n", owner, name)
 	return nil
 }

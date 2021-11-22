@@ -29,7 +29,8 @@ type TestRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
-	event                     repository.EventRepository
+	buildEvent                repository.BuildEventRepository
+	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
@@ -132,8 +133,12 @@ func (t *TestRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
-func (t *TestRepository) Event() repository.EventRepository {
-	return t.event
+func (t *TestRepository) BuildEvent() repository.BuildEventRepository {
+	return t.buildEvent
+}
+
+func (t *TestRepository) KubeEvent() repository.KubeEventRepository {
+	return t.kubeEvent
 }
 
 func (t *TestRepository) ProjectUsage() repository.ProjectUsageRepository {
@@ -180,7 +185,8 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
-		event:                     NewEventRepository(canQuery),
+		buildEvent:                NewBuildEventRepository(canQuery),
+		kubeEvent:                 NewKubeEventRepository(canQuery),
 		projectUsage:              NewProjectUsageRepository(canQuery),
 		onboarding:                NewProjectOnboardingRepository(canQuery),
 		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),

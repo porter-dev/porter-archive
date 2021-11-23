@@ -118,7 +118,7 @@ func (runtime *pythonRuntime) Detect(
 	results := make(chan struct {
 		string
 		bool
-	})
+	}, 4)
 
 	fmt.Printf("Starting detection for a Python runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(4)

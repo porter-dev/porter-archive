@@ -188,6 +188,8 @@ func (runtime *rubyRuntime) Detect(
 	repoContentOptions github.RepositoryContentGetOptions,
 	paketo, heroku *BuilderInfo,
 ) error {
+	fmt.Printf("Starting detection for a Ruby runtime for %s/%s\n", owner, name)
+
 	gemfileFound := false
 	gemfileLockFound := false
 	configRuFound := false
@@ -249,7 +251,7 @@ func (runtime *rubyRuntime) Detect(
 	results := make(chan struct {
 		string
 		bool
-	})
+	}, count)
 
 	fmt.Printf("Starting detection for a Ruby runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(count)

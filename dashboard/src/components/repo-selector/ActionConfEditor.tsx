@@ -37,8 +37,7 @@ const defaultActionConfig: ActionConfigType = {
 const ActionConfEditor: React.FC<Props> = (props) => {
   const { actionConfig, setBranch, setActionConfig, branch } = props;
 
-  // RET2:
-  if (!actionConfig.git_repo && false) {
+  if (!actionConfig.git_repo) {
     return (
       <ExpandedWrapperAlt>
         <RepoList
@@ -48,7 +47,7 @@ const ActionConfEditor: React.FC<Props> = (props) => {
         />
       </ExpandedWrapperAlt>
     );
-  } else if (!branch && false) {
+  } else if (!branch) {
     return (
       <>
         <ExpandedWrapperAlt>

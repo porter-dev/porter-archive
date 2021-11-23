@@ -174,7 +174,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
       {!dockerfilePath && (
         <>
           <Heading>
-            <ExpandHeader 
+            <ExpandHeader
               onClick={() => setShowBuildpacksConfig((prev) => !prev)}
               isExpanded={showBuildpacksConfig}
             >
@@ -274,8 +274,7 @@ export const BuildpackSelection: React.FC<{
   }, [selectedBuilder, selectedStack, selectedBuildpacks]);
 
   useEffect(() => {
-    // RET2:
-    /*api
+    api
       .detectBuildpack<DetectBuildpackResponse>(
         "<token>",
         {
@@ -289,8 +288,8 @@ export const BuildpackSelection: React.FC<{
           name: actionConfig.git_repo.split("/")[1],
           branch: branch,
         }
-      )*/
-      getMockData()
+      )
+      // getMockData()
       .then(({ data }) => {
         const builders = data;
 
@@ -445,7 +444,7 @@ export const BuildpackSelection: React.FC<{
   }
 
   if (!stackOptions?.length || !builderOptions?.length) {
-    return <>Loading...</>;
+    return <Loading />;
   }
 
   return (
@@ -467,7 +466,8 @@ export const BuildpackSelection: React.FC<{
           label="Select your stack"
         />
         <Helper>
-          The following buildpacks were automatically detected. You can also manually add/remove buildpacks.
+          The following buildpacks were automatically detected. You can also
+          manually add/remove buildpacks.
         </Helper>
 
         {!!selectedBuildpacks?.length &&
@@ -567,7 +567,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
   cursor: pointer;
   > i {
     margin-left: 10px;
-    transform: ${props => props.isExpanded ? "" : "rotate(180deg)"};
+    transform: ${(props) => (props.isExpanded ? "" : "rotate(180deg)")};
   }
 `;
 

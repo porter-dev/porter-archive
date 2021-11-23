@@ -314,7 +314,7 @@ const BuildpackSelection: React.FC<{
   }, [stacks]);
 
   const renderBuildpacksList = (buildpacks: Buildpack[]) => {
-    return buildpacks.map((buildpack) => {
+    return buildpacks?.map((buildpack) => {
       const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
 
       return (
@@ -364,6 +364,14 @@ const BuildpackSelection: React.FC<{
   //   })
   // }
 
+  if (
+    !stackOptions?.length ||
+    !builderOptions?.length ||
+    !availableBuildpacks?.length
+  ) {
+    return <>Loading...</>;
+  }
+
   return (
     <>
       <>
@@ -385,7 +393,8 @@ const BuildpackSelection: React.FC<{
           you want
         </Helper>
 
-        {renderBuildpacksList(availableBuildpacks)}
+        {availableBuildpacks?.length &&
+          renderBuildpacksList(availableBuildpacks)}
       </>
     </>
   );

@@ -1,83 +1,69 @@
 package buildpacks
 
 import (
-	"os"
-	"path/filepath"
-
 	"github.com/google/go-github/github"
 )
 
 const (
-	yarn       = "yarn"
-	npm        = "npm"
-	mod        = "mod"
-	dep        = "dep"
-	pipenv     = "pipenv"
-	pip        = "pip"
-	conda      = "conda"
+	// NodeJS
+	yarn = "yarn"
+	npm  = "npm"
+
+	// Go
+	mod = "mod"
+	dep = "dep"
+
+	// Python
+	pipenv = "pipenv"
+	pip    = "pip"
+	conda  = "conda"
+
+	// Ruby
+	puma      = "puma"
+	thin      = "thin"
+	unicorn   = "unicorn"
+	passenger = "passenger"
+	rackup    = "rackup"
+	rake      = "rake"
+
+	// Common
 	standalone = "standalone"
+
+	// Builders
+	PaketoBuilder = "paketo"
+	HerokuBuilder = "heroku"
 )
 
-type buildpackOrderGroupInfo struct {
-	ID       string `json:"id"`
-	Optional bool   `json:"optional"`
-	Version  string `json:"version"`
-}
-
 type BuildpackInfo struct {
-	Packs []buildpackOrderGroupInfo `json:"packs"`
-	// FIXME: env vars for https://github.com/paketo-buildpacks/environment-variables
-	//        and for https://github.com/paketo-buildpacks/image-labels
-	EnvVars map[string]string `json:"env_vars"`
+	Name      string                 `json:"name"`
+	Buildpack string                 `json:"buildpack"`
+	Config    map[string]interface{} `json:"config"`
 }
 
-func newBuildpackInfo() *BuildpackInfo {
-	return &BuildpackInfo{
-		EnvVars: make(map[string]string),
-	}
+type BuilderInfo struct {
+	Name     string          `json:"name"`
+	Builders []string        `json:"builders"`
+	Detected []BuildpackInfo `json:"detected"`
+	Others   []BuildpackInfo `json:"others"`
 }
 
-func (info *BuildpackInfo) addPack(pack buildpackOrderGroupInfo) {
-	info.Packs = append(info.Packs, pack)
-}
-
-func (info *BuildpackInfo) addEnvVar(id string, val string) {
-	info.EnvVars[id] = val
-}
-
-func getExecPath() string {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	return filepath.Dir(ex)
-}
-
-type RuntimeResponse struct {
-	Name       string                 `json:"name"`
-	Buildpacks *BuildpackInfo         `json:"buildpacks"`
-	Runtime    string                 `json:"runtime"`
-	Config     map[string]interface{} `json:"config"`
-}
-
-type CLIRuntime interface {
-	Detect(string) (BuildpackInfo, map[string]interface{})
-}
-
-type APIRuntime interface {
+type Runtime interface {
 	Detect(
-		*github.Client,
-		[]*github.RepositoryContent,
-		string,
-		string,
-		string,
-		github.RepositoryContentGetOptions,
-	) *RuntimeResponse
+		*github.Client, // github client to pull contents of files
+		[]*github.RepositoryContent, // the root folder structure of the git repo
+		string, // owner
+		string, // name
+		string, // path
+		github.RepositoryContentGetOptions, // SHA, branch or tag
+		*BuilderInfo, // paketo
+		*BuilderInfo, // heroku
+	) error
 }
 
-// APIRuntimes is a list of all API runtimes
-var APIRuntimes = []APIRuntime{
-	NewAPIGoRuntime(),
-	NewAPINodeRuntime(),
-	NewAPIPythonRuntime(),
+// Runtimes is a list of all API runtimes
+var Runtimes = []Runtime{
+	NewGoRuntime(),
+	NewNodeRuntime(),
+	NewPythonRuntime(),
+	NewRubyRuntime(),
 }

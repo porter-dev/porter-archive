@@ -324,16 +324,10 @@ func createBuildConfig(
 		return nil, err
 	}
 
-	buildpacks, err := json.Marshal(bcRequest.Buildpacks)
-	if err != nil {
-		return nil, err
-	}
-
 	// handle write to the database
 	bc, err := config.Repo.BuildConfig().CreateBuildConfig(&models.BuildConfig{
-		Name:       bcRequest.Name,
-		Runtime:    bcRequest.Runtime,
-		Buildpacks: buildpacks,
+		Builder:    bcRequest.Builder,
+		Buildpacks: strings.Join(bcRequest.Buildpacks, ","),
 		Config:     data,
 	})
 	if err != nil {

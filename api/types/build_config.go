@@ -1,23 +1,20 @@
 package types
 
-import "github.com/porter-dev/porter/internal/integrations/buildpacks"
-
 // BuildConfig
 type BuildConfig struct {
-	Name       string `json:"name"`
-	Runtime    string `json:"runtime"`
-	Buildpacks []byte `json:"buildpacks"` // FIXME: should be a []string
-	Config     []byte `json:"data"`
+	Builder    string   `json:"builder"`
+	Buildpacks []string `json:"buildpacks"`
+	Config     []byte   `json:"data"`
 }
 
 type CreateBuildConfigRequest struct {
-	Name       string                      `json:"name" form:"required"`
-	Runtime    string                      `json:"runtime" form:"required"`
-	Buildpacks []*buildpacks.BuildpackInfo `json:"buildpacks"`
-	Config     map[string]interface{}      `json:"config,omitempty"`
+	Builder    string                 `json:"builder" form:"required"`
+	Buildpacks []string               `json:"buildpacks"`
+	Config     map[string]interface{} `json:"config,omitempty"`
 }
 
 type UpdateBuildConfigRequest struct {
-	Buildpacks []*buildpacks.BuildpackInfo `json:"buildpacks"`
-	Config     map[string]interface{}      `json:"config,omitempty"`
+	Builder    string                 `json:"builder"`
+	Buildpacks []string               `json:"buildpacks"`
+	Config     map[string]interface{} `json:"config,omitempty"`
 }

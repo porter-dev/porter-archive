@@ -58,5 +58,11 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		}
 	}
 
+	if buildConfig != nil {
+		buildOpts.Builder = buildConfig.Builder
+		buildOpts.Buildpacks = buildConfig.Buildpacks
+		// FIXME: use all the config vars
+	}
+
 	return client.Build(context, buildOpts)
 }

@@ -3,6 +3,7 @@ package release
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -56,19 +57,14 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	buildpacks, err := json.Marshal(request.Buildpacks)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	buildConfig := &models.BuildConfig{
-		Buildpacks: buildpacks,
+		Builder:    request.Builder,
+		Buildpacks: strings.Join(request.Buildpacks, ","),
 		Config:     config,
 	}
 
 	buildConfig.ID = release.BuildConfig
-	buildConfig, err = c.Repo().BuildConfig().UpdateBuildConfig(buildConfig)
+	_, err = c.Repo().BuildConfig().UpdateBuildConfig(buildConfig)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

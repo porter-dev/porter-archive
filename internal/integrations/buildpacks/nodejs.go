@@ -167,7 +167,7 @@ func (runtime *nodejsRuntime) Detect(
 	results := make(chan struct {
 		string
 		bool
-	})
+	}, 3)
 
 	fmt.Printf("Starting detection for a NodeJS runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(3)

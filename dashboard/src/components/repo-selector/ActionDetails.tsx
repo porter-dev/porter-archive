@@ -369,15 +369,7 @@ export const BuildpackSelection: React.FC<{
       const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
 
       return (
-        <StyledCard
-          onClick={() => {
-            if (action === "add") {
-              handleAddBuildpack(buildpack.buildpack);
-            } else {
-              handleRemoveBuildpack(buildpack.buildpack);
-            }
-          }}
-        >
+        <StyledCard>
           <ContentContainer>
             <Icon className={icon} />
             <EventInformation>
@@ -386,12 +378,16 @@ export const BuildpackSelection: React.FC<{
           </ContentContainer>
           <ActionContainer>
             {action === "add" && (
-              <DeleteButton>
+              <DeleteButton
+                onClick={() => handleAddBuildpack(buildpack.buildpack)}
+              >
                 <span className="material-icons-outlined">add</span>
               </DeleteButton>
             )}
             {action === "remove" && (
-              <DeleteButton>
+              <DeleteButton
+                onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
+              >
                 <span className="material-icons">delete</span>
               </DeleteButton>
             )}
@@ -728,11 +724,6 @@ const StyledCard = styled.div`
   overflow: hidden;
   height: 60px;
   font-size: 13px;
-  cursor: pointer;
-  :hover {
-    background: #ffffff11;
-    border: 1px solid #ffffff00;
-  }
   animation: ${fadeIn} 0.5s;
 `;
 

@@ -270,22 +270,22 @@ export const BuildpackSelection: React.FC<{
   }, [selectedBuilder, selectedStack, selectedBuildpacks]);
 
   useEffect(() => {
-    // api
-    //   .detectBuildpack<DetectBuildpackResponse>(
-    //     "<token>",
-    //     {
-    //       dir: folderPath || ".",
-    //     },
-    //     {
-    //       project_id: currentProject.id,
-    //       git_repo_id: actionConfig.git_repo_id,
-    //       kind: "github",
-    //       owner: actionConfig.git_repo.split("/")[0],
-    //       name: actionConfig.git_repo.split("/")[1],
-    //       branch: branch,
-    //     }
-    //   )
-    getMockData()
+    api
+      .detectBuildpack<DetectBuildpackResponse>(
+        "<token>",
+        {
+          dir: folderPath || ".",
+        },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      )
+      // getMockData()
       .then(({ data }) => {
         const builders = data;
 

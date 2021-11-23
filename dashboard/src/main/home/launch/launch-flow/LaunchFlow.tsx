@@ -64,6 +64,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const [folderPath, setFolderPath] = useState(null);
   const [selectedRegistry, setSelectedRegistry] = useState(null);
   const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
+  const [buildConfig, setBuildConfig] = useState();
 
   const generateRandomName = () => {
     const randomTemplateName = randomWords({ exactly: 3, join: "-" });
@@ -328,6 +329,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           setProcfilePath={setProcfilePath}
           selectedRegistry={selectedRegistry}
           setSelectedRegistry={setSelectedRegistry}
+          setBuildConfig={setBuildConfig}
         />
       );
     }

@@ -16,6 +16,7 @@ import InputRow from "../form-components/InputRow";
 import Selector from "components/Selector";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
+import SelectRow from "components/form-components/SelectRow";
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -30,6 +31,7 @@ type PropsType = {
   selectedRegistry: any;
   setDockerfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
+  setBuildConfig: (x: any) => void;
 };
 
 type Buildpack = {
@@ -63,17 +65,13 @@ const ActionDetails: React.FC<PropsType> = (props) => {
     setProcfilePath,
     setProcfileProcess,
     setSelectedRegistry,
+    setBuildConfig,
   } = props;
 
   const { currentProject } = useContext(Context);
   const [registries, setRegistries] = useState<any[]>(null);
   const [loading, setLoading] = useState(true);
-  const [buildersOptions, setBuildersOptions] = useState<[]>(null);
-  const [currentBuilder, setCurrentBuilder] = useState(null);
-  const [availableBuildpacks, setAvailableBuildpacks] = useState(null);
-  const [availableStacks, setAvailableStacks] = useState(null);
-  const [selectedStack, setSelectedStack] = useState(null);
-  const [selectedBuildpacks, setSelectedBuildpacks] = useState(null);
+  const [showBuildpacksConfig, setShowBuildpacksConfig] = useState(false);
 
   useEffect(() => {
     const project_id = currentProject.id;
@@ -173,12 +171,24 @@ const ActionDetails: React.FC<PropsType> = (props) => {
       />
       {renderRegistrySection()}
       {!dockerfilePath && (
-        <BuildpackSelection
-          actionConfig={actionConfig}
-          branch={branch}
-          folderPath={folderPath}
-          onChange={(config) => {}}
-        />
+        <>
+          <HighlightTrigger
+            onClick={() => setShowBuildpacksConfig((prev) => !prev)}
+          >
+            {showBuildpacksConfig
+              ? "Hide buildpacks config"
+              : "Show buildpacks config"}
+          </HighlightTrigger>
+          <BuildpackSelection
+            actionConfig={actionConfig}
+            branch={branch}
+            folderPath={folderPath}
+            onChange={(config) => {
+              setBuildConfig(config);
+            }}
+            hide={!showBuildpacksConfig}
+          />
+        </>
       )}
       <Br />
 
@@ -215,7 +225,7 @@ export default ActionDetails;
 
 const DEFAULT_BUILDER_NAME = "paketo";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
-const DEFAULT_HEROKU_STACK = "heroku:20";
+const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
 
 type BuildConfig = {
   builder: string;
@@ -225,12 +235,13 @@ type BuildConfig = {
   };
 };
 
-const BuildpackSelection: React.FC<{
+export const BuildpackSelection: React.FC<{
   actionConfig: ActionConfigType;
   folderPath: string;
   branch: string;
+  hide: boolean;
   onChange: (config: BuildConfig) => void;
-}> = ({ actionConfig, folderPath, branch }) => {
+}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
   const { currentProject } = useContext(Context);
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
@@ -247,21 +258,34 @@ const BuildpackSelection: React.FC<{
   );
 
   useEffect(() => {
-    api
-      .detectBuildpack<DetectBuildpackResponse>(
-        "<token>",
-        {
-          dir: folderPath || ".",
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      )
+    let buildConfig: BuildConfig = {} as BuildConfig;
+
+    buildConfig.builder = selectedStack;
+    buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
+      return buildpack.buildpack;
+    });
+    if (typeof onChange === "function") {
+      onChange(buildConfig);
+    }
+  }, [selectedBuilder, selectedStack, selectedBuildpacks]);
+
+  useEffect(() => {
+    // api
+    //   .detectBuildpack<DetectBuildpackResponse>(
+    //     "<token>",
+    //     {
+    //       dir: folderPath || ".",
+    //     },
+    //     {
+    //       project_id: currentProject.id,
+    //       git_repo_id: actionConfig.git_repo_id,
+    //       kind: "github",
+    //       owner: actionConfig.git_repo.split("/")[0],
+    //       name: actionConfig.git_repo.split("/")[1],
+    //       branch: branch,
+    //     }
+    //   )
+    getMockData()
       .then(({ data }) => {
         const builders = data;
 
@@ -278,7 +302,7 @@ const BuildpackSelection: React.FC<{
         });
 
         setBuilders(builders);
-        setSelectedBuilder(defaultBuilder.name);
+        setSelectedBuilder(defaultBuilder.name.toLowerCase());
 
         setStacks(defaultBuilder.builders);
         setSelectedStack(defaultStack);
@@ -313,12 +337,35 @@ const BuildpackSelection: React.FC<{
     }));
   }, [stacks]);
 
-  const renderBuildpacksList = (buildpacks: Buildpack[]) => {
+  const handleSelectBuilder = (builderName: string) => {
+    const builder = builders.find(
+      (b) => b.name.toLowerCase() === builderName.toLowerCase()
+    );
+    const detectedBuildpacks = builder.detected;
+    const availableBuildpacks = builder.others;
+    const defaultStack = builder.builders.find((stack) => {
+      return stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK;
+    });
+    setSelectedBuilder(builderName);
+    setBuilders(builders);
+    setSelectedBuilder(builderName.toLowerCase());
+
+    setStacks(builder.builders);
+    setSelectedStack(defaultStack);
+
+    setSelectedBuildpacks(detectedBuildpacks);
+    setAvailableBuildpacks(availableBuildpacks);
+  };
+
+  const renderBuildpacksList = (
+    buildpacks: Buildpack[],
+    action: "remove" | "add"
+  ) => {
     return buildpacks?.map((buildpack) => {
       const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
 
       return (
-        <StyledCard onClick={() => console.log("some")} status={"some"}>
+        <StyledCard>
           <ContentContainer>
             <Icon className={icon} />
             <EventInformation>
@@ -326,11 +373,20 @@ const BuildpackSelection: React.FC<{
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
-            <DeleteButton
-              onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
-            >
-              <span className="material-icons">delete</span>
-            </DeleteButton>
+            {action === "add" && (
+              <DeleteButton
+                onClick={() => handleAddBuildpack(buildpack.buildpack)}
+              >
+                <span className="material-icons-outlined">add</span>
+              </DeleteButton>
+            )}
+            {action === "remove" && (
+              <DeleteButton
+                onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
+              >
+                <span className="material-icons">delete</span>
+              </DeleteButton>
+            )}
           </ActionContainer>
         </StyledCard>
       );
@@ -357,35 +413,49 @@ const BuildpackSelection: React.FC<{
     });
   };
 
-  // const handleAddBuildpack = (buildpackToAdd: string) => {
-  //   setAvailableBuildpacks((avBuildpacks) => {
-  //     const tmpAvailableBuildpacks = [...avBuildpacks];
-  //     return []
-  //   })
-  // }
+  const handleAddBuildpack = (buildpackToAdd: string) => {
+    setAvailableBuildpacks((avBuildpacks) => {
+      const tmpAvailableBuildpacks = [...avBuildpacks];
+      const indexBuildpackToAdd = tmpAvailableBuildpacks.findIndex(
+        (buildpack) => buildpack.buildpack === buildpackToAdd
+      );
+      const buildpack = tmpAvailableBuildpacks[indexBuildpackToAdd];
 
-  if (
-    !stackOptions?.length ||
-    !builderOptions?.length ||
-    !availableBuildpacks?.length
-  ) {
+      setSelectedBuildpacks((selectedBuildpacks) => [
+        ...selectedBuildpacks,
+        buildpack,
+      ]);
+
+      tmpAvailableBuildpacks.splice(indexBuildpackToAdd, 1);
+      return [...tmpAvailableBuildpacks];
+    });
+  };
+
+  if (hide) {
+    return null;
+  }
+
+  if (!stackOptions?.length || !builderOptions?.length) {
     return <>Loading...</>;
   }
 
   return (
-    <>
+    <BuildpackConfigurationContainer>
       <>
-        <Selector
-          activeValue={selectedBuilder}
+        <SelectRow
+          value={selectedBuilder}
           width="100%"
           options={builderOptions}
-          setActiveValue={(option) => setSelectedBuilder(option)}
+          setActiveValue={(option) => handleSelectBuilder(option)}
+          label="Select a builder"
         />
-        <Selector
-          activeValue={selectedStack}
+
+        <SelectRow
+          value={selectedStack}
           width="100%"
           options={stackOptions}
           setActiveValue={(option) => setSelectedStack(option)}
+          label="Select your stack"
         />
         <Heading>Buildpacks</Heading>
         <Helper>
@@ -393,12 +463,107 @@ const BuildpackSelection: React.FC<{
           you want
         </Helper>
 
-        {availableBuildpacks?.length &&
-          renderBuildpacksList(availableBuildpacks)}
+        {!!selectedBuildpacks?.length &&
+          renderBuildpacksList(selectedBuildpacks, "remove")}
+
+        {!!availableBuildpacks?.length && (
+          <>
+            <Helper>Available buildpacks</Helper>
+            {renderBuildpacksList(availableBuildpacks, "add")}
+          </>
+        )}
       </>
-    </>
+    </BuildpackConfigurationContainer>
   );
 };
+
+const getMockData = () =>
+  new Promise<{ data: DetectBuildpackResponse }>((res) => {
+    setTimeout(() => res({ data: mock_data }), 1000);
+  });
+
+const mock_data: DetectBuildpackResponse = [
+  {
+    name: "Paketo",
+    builders: [
+      "paketobuildpacks/builder:full",
+      "paketobuildpacks/builder:tiny",
+      "paketobuildpacks/builder:base",
+    ],
+    detected: [
+      {
+        name: "NodeJS",
+        buildpack: "paketobuildpacks/nodejs",
+        config: null,
+      },
+    ],
+    others: [
+      {
+        name: "Python",
+        buildpack: "paketobuildpacks/python",
+        config: null,
+      },
+      {
+        name: "Go",
+        buildpack: "paketobuildpacks/go",
+        config: null,
+      },
+      {
+        name: "Ruby",
+        buildpack: "paketobuildpacks/ruby",
+        config: null,
+      },
+    ],
+  },
+  {
+    name: "Heroku",
+    builders: ["heroku/buildpacks:20", "heroku/buildpacks:18"],
+    detected: [
+      {
+        name: "NodeJS",
+        buildpack: "heroku/nodejs",
+        config: null,
+      },
+      {
+        name: "Python",
+        buildpack: "heroku/python",
+        config: null,
+      },
+    ],
+    others: [
+      {
+        name: "Go",
+        buildpack: "heroku/go",
+        config: null,
+      },
+      {
+        name: "Ruby",
+        buildpack: "heroku/ruby",
+        config: null,
+      },
+    ],
+  },
+];
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const BuildpackConfigurationContainer = styled.div`
+  animation: ${fadeIn} 0.75s;
+`;
+
+const HighlightTrigger = styled.span`
+  color: #8590ff;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline;
+`;
 
 const Required = styled.div`
   margin-left: 8px;
@@ -536,16 +701,7 @@ const DarkMatter = styled.div`
   margin-bottom: -18px;
 `;
 
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-`;
-
-const StyledCard = styled.div<{ status: string }>`
+const StyledCard = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;

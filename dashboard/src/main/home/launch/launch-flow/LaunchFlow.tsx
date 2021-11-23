@@ -269,6 +269,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           template_version: props.currentTemplate?.currentVersion || "latest",
           name: release_name,
           github_action_config: githubActionConfig,
+          build_config: buildConfig,
         },
         {
           id: currentProject.id,

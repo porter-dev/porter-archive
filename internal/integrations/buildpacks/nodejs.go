@@ -327,10 +327,12 @@ func (runtime *nodejsRuntime) Detect(
 			packageJSON.Engines.Node = "16.*.*"
 		}
 
+		paketoBuildpackInfo.Config = make(map[string]interface{})
 		paketoBuildpackInfo.Config["scripts"] = packageJSON.Scripts
 		paketoBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
 		paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
 
+		herokuBuildpackInfo.Config = make(map[string]interface{})
 		herokuBuildpackInfo.Config["scripts"] = packageJSON.Scripts
 		herokuBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
 		heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)

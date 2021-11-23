@@ -139,9 +139,10 @@ const ActionDetails: React.FC<PropsType> = (props) => {
   return (
     <>
       <DarkMatter />
+      <Heading>GitHub Settings</Heading>
       <InputRow
         disabled={true}
-        label="Git Repository"
+        label="Git repository"
         type="text"
         width="100%"
         value={actionConfig?.git_repo}
@@ -156,7 +157,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
       {dockerfilePath && (
         <InputRow
           disabled={true}
-          label="Dockerfile Path"
+          label="Dockerfile path"
           type="text"
           width="100%"
           value={dockerfilePath}
@@ -164,7 +165,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
       )}
       <InputRow
         disabled={true}
-        label={dockerfilePath ? "Docker Build Context" : "Application Folder"}
+        label={dockerfilePath ? "Docker build context" : "Application folder"}
         type="text"
         width="100%"
         value={folderPath}
@@ -172,13 +173,15 @@ const ActionDetails: React.FC<PropsType> = (props) => {
       {renderRegistrySection()}
       {!dockerfilePath && (
         <>
-          <HighlightTrigger
-            onClick={() => setShowBuildpacksConfig((prev) => !prev)}
-          >
-            {showBuildpacksConfig
-              ? "Hide buildpacks config"
-              : "Show buildpacks config"}
-          </HighlightTrigger>
+          <Heading>
+            <ExpandHeader 
+              onClick={() => setShowBuildpacksConfig((prev) => !prev)}
+              isExpanded={showBuildpacksConfig}
+            >
+              Buildpacks Settings
+              <i className="material-icons">arrow_drop_down</i>
+            </ExpandHeader>
+          </Heading>
           <BuildpackSelection
             actionConfig={actionConfig}
             branch={branch}
@@ -188,6 +191,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
             }}
             hide={!showBuildpacksConfig}
           />
+          <Buffer />
         </>
       )}
       <Br />
@@ -270,7 +274,8 @@ export const BuildpackSelection: React.FC<{
   }, [selectedBuilder, selectedStack, selectedBuildpacks]);
 
   useEffect(() => {
-    api
+    // RET2:
+    /*api
       .detectBuildpack<DetectBuildpackResponse>(
         "<token>",
         {
@@ -284,8 +289,8 @@ export const BuildpackSelection: React.FC<{
           name: actionConfig.git_repo.split("/")[1],
           branch: branch,
         }
-      )
-      // getMockData()
+      )*/
+      getMockData()
       .then(({ data }) => {
         const builders = data;
 
@@ -365,7 +370,15 @@ export const BuildpackSelection: React.FC<{
       const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
 
       return (
-        <StyledCard>
+        <StyledCard
+          onClick={() => {
+            if (action === "add") {
+              handleAddBuildpack(buildpack.buildpack);
+            } else {
+              handleRemoveBuildpack(buildpack.buildpack);
+            }
+          }}
+        >
           <ContentContainer>
             <Icon className={icon} />
             <EventInformation>
@@ -374,16 +387,12 @@ export const BuildpackSelection: React.FC<{
           </ContentContainer>
           <ActionContainer>
             {action === "add" && (
-              <DeleteButton
-                onClick={() => handleAddBuildpack(buildpack.buildpack)}
-              >
+              <DeleteButton>
                 <span className="material-icons-outlined">add</span>
               </DeleteButton>
             )}
             {action === "remove" && (
-              <DeleteButton
-                onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
-              >
+              <DeleteButton>
                 <span className="material-icons">delete</span>
               </DeleteButton>
             )}
@@ -457,10 +466,8 @@ export const BuildpackSelection: React.FC<{
           setActiveValue={(option) => setSelectedStack(option)}
           label="Select your stack"
         />
-        <Heading>Buildpacks</Heading>
         <Helper>
-          These are automatically detected buildpacks but you can change them if
-          you want
+          The following buildpacks were automatically detected. You can also manually add/remove buildpacks.
         </Helper>
 
         {!!selectedBuildpacks?.length &&
@@ -468,7 +475,7 @@ export const BuildpackSelection: React.FC<{
 
         {!!availableBuildpacks?.length && (
           <>
-            <Helper>Available buildpacks</Helper>
+            <Helper>Available buildpacks:</Helper>
             {renderBuildpacksList(availableBuildpacks, "add")}
           </>
         )}
@@ -554,15 +561,23 @@ const fadeIn = keyframes`
   }
 `;
 
+const ExpandHeader = styled.div<{ isExpanded: boolean }>`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  > i {
+    margin-left: 10px;
+    transform: ${props => props.isExpanded ? "" : "rotate(180deg)"};
+  }
+`;
+
 const BuildpackConfigurationContainer = styled.div`
   animation: ${fadeIn} 0.75s;
 `;
 
-const HighlightTrigger = styled.span`
-  color: #8590ff;
-  text-decoration: none;
-  cursor: pointer;
-  display: inline;
+const Buffer = styled.div`
+  width: 100%;
+  height: 8px;
 `;
 
 const Required = styled.div`
@@ -698,25 +713,25 @@ const Br = styled.div`
 
 const DarkMatter = styled.div`
   width: 100%;
-  margin-bottom: -18px;
+  margin-bottom: -28px;
 `;
 
 const StyledCard = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid "#ffffff44";
+  border: 1px solid #ffffff00;
   background: #ffffff08;
   margin-bottom: 5px;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 14px;
   overflow: hidden;
-  height: 80px;
+  height: 60px;
   font-size: 13px;
   cursor: pointer;
   :hover {
     background: #ffffff11;
-    border: 1px solid "#ffffff66";
+    border: 1px solid #ffffff00;
   }
   animation: ${fadeIn} 0.5s;
 `;
@@ -770,9 +785,9 @@ const DeleteButton = styled.button`
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  color: #ffffff44;
-  :hover {
-    background: #32343a;
-    cursor: pointer;
+  color: #aaaabb;
+
+  > span {
+    font-size: 20px;
   }
 `;

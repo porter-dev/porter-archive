@@ -24,6 +24,7 @@ func (runtime *goRuntime) detectMod(results chan struct {
 		name := directoryContent[i].GetName()
 		if name == "go.mod" {
 			goModFound = true
+			break
 		}
 	}
 	if goModFound {
@@ -98,11 +99,7 @@ func (runtime *goRuntime) Detect(
 		return nil
 	}
 
-	detected := make(map[string]bool)
-	for result := range results {
-		detected[result.string] = result.bool
-	}
-
+	fmt.Printf("Go runtime detected for %s/%s\n", owner, name)
 	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
 	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
 

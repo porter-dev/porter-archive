@@ -38,17 +38,16 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # Webpack build environment
 # -------------------------
-FROM node:lts as build-webpack
+FROM node:16 as build-webpack
 WORKDIR /webpack
 
 COPY ./dashboard ./
 
-RUN npm i
+RUN npm install -g npm@8.1
+
+RUN npm i --legacy-peer-deps
 
 ENV NODE_ENV=production
-
-# TODO: remove this, but gets around https://github.com/webpack/webpack/issues/14532 for now
-ENV NODE_OPTIONS=--openssl-legacy-provider
 
 RUN npm run build
 

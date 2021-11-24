@@ -6,4 +6,5 @@ import "github.com/porter-dev/porter/internal/models"
 type BuildConfigRepository interface {
 	CreateBuildConfig(*models.BuildConfig) (*models.BuildConfig, error)
 	UpdateBuildConfig(*models.BuildConfig) (*models.BuildConfig, error)
+	GetBuildConfig(uint) (*models.BuildConfig, error)
 }

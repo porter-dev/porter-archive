@@ -21,8 +21,8 @@ type GetPodHandler struct {
 func NewGetPodHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *DeletePodHandler {
-	return &DeletePodHandler{
+) *GetPodHandler {
+	return &GetPodHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
@@ -30,9 +30,22 @@ func NewGetPodHandler(
 
 func (c *GetPodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
 	agent, err := c.GetAgent(r, cluster, "")
-	name, _ := requestutils.GetURLParamString(r, types.URLParamPodName)
-	namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	name, err := requestutils.GetURLParamString(r, types.URLParamPodName)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	namespace, err := requestutils.GetURLParamString(r, types.URLParamNamespace)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

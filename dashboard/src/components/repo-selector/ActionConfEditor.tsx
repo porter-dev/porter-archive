@@ -24,7 +24,6 @@ type Props = {
   setFolderPath: (x: string) => void;
   setSelectedRegistry: (x: any) => void;
   selectedRegistry: any;
-  setBuildConfig: (x: any) => void;
 };
 
 const defaultActionConfig: ActionConfigType = {
@@ -122,7 +121,6 @@ const ActionConfEditor: React.FC<Props> = (props) => {
       folderPath={props.folderPath}
       setSelectedRegistry={props.setSelectedRegistry}
       selectedRegistry={props.selectedRegistry}
-      setBuildConfig={props.setBuildConfig}
     />
   );
 };

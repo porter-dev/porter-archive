@@ -20,7 +20,8 @@ const getReadableDate = (s: number) => {
 const SubEventsList: React.FC<{
   clearSelectedEvent: () => void;
   event: any;
-}> = ({ event, clearSelectedEvent }) => {
+  enableTopMargin?: boolean;
+}> = ({ event, clearSelectedEvent, enableTopMargin }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const {
     status,
@@ -114,7 +115,7 @@ const SubEventsList: React.FC<{
 
   return (
     <>
-      <Timeline>
+      <Timeline enableTopMargin={enableTopMargin}>
         <ControlRow>
           <BackButton onClick={clearSelectedEvent}>
             <i className="material-icons">close</i>
@@ -279,6 +280,8 @@ const Rail = styled.div`
 `;
 
 const Timeline = styled.div`
+  margin-top: ${(props: { enableTopMargin: boolean }) =>
+    props.enableTopMargin ? "30px" : "unset"};
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;

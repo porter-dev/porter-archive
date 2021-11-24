@@ -11,7 +11,7 @@ type BuildConfig struct {
 	gorm.Model
 
 	Name       string `json:"name"`
-	Builder    string `json:"runtime"`
+	Builder    string `json:"builder"`
 	Buildpacks string `json:"buildpacks"`
 	Config     []byte `json:"config"`
 }

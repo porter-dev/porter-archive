@@ -4,7 +4,7 @@ package types
 type BuildConfig struct {
 	Builder    string   `json:"builder"`
 	Buildpacks []string `json:"buildpacks"`
-	Config     []byte   `json:"data"`
+	Config     []byte   `json:"config"`
 }
 
 type CreateBuildConfigRequest struct {

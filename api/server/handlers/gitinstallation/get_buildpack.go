@@ -2,6 +2,7 @@ package gitinstallation
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -21,8 +22,6 @@ func initBuilderInfo() map[string]*buildpacks.BuilderInfo {
 		Name: "Paketo",
 		Builders: []string{
 			"paketobuildpacks/builder:full",
-			"paketobuildpacks/builder:tiny",
-			"paketobuildpacks/builder:base",
 		},
 	}
 	builders[buildpacks.HerokuBuilder] = &buildpacks.BuilderInfo{
@@ -98,6 +97,12 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	wg.Add(len(buildpacks.Runtimes))
 	for i := range buildpacks.Runtimes {
 		go func(idx int) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("panic detected in runtime detection")))
+					return
+				}
+			}()
 			buildpacks.Runtimes[idx].Detect(
 				client, directoryContents, owner, name, request.Dir, repoContentOptions,
 				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],

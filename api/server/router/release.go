@@ -293,6 +293,36 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/buildconfig -> release.NewUpdateBuildConfigHandler
+	updateBuildConfigEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/releases/{name}/buildconfig",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	updateBuildConfigHandler := release.NewUpdateBuildConfigHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateBuildConfigEndpoint,
+		Handler:  updateBuildConfigHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/webhook -> release.NewGetWebhookHandler
 	getWebhookEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -22,9 +22,14 @@ const SubEventsList: React.FC<{
   event: any;
 }> = ({ event, clearSelectedEvent }) => {
   const { currentProject, currentCluster } = useContext(Context);
-  const { status } = useLastSeenPodStatus({
+  const {
+    status,
+    hasError: hasPodStatusErrored,
+    isLoading: isPodStatusLoading,
+  } = useLastSeenPodStatus({
     podName: event.name,
     namespace: event.namespace,
+    resource_type: event.resource_type,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [subEvents, setSubEvents] = useState(null);
@@ -122,10 +127,26 @@ const SubEventsList: React.FC<{
           </Icon>
           <div>
             Pod {event.name} crashed
-            <StyledHelper>
-              Last seen pod status: {status}{" "}
-              <StatusColor status={status}></StatusColor>
-            </StyledHelper>
+            {event?.resource_type?.toLowerCase() === "pod" && (
+              <StyledHelper>
+                {hasPodStatusErrored ? (
+                  "We couldn't retrieve last pod status, please try again later"
+                ) : (
+                  <>
+                    {isPodStatusLoading ? (
+                      "Loading last seen pod status"
+                    ) : (
+                      <>
+                        Last seen pod status: {status}{" "}
+                        <StatusColor
+                          status={status?.toLowerCase()}
+                        ></StatusColor>
+                      </>
+                    )}
+                  </>
+                )}
+              </StyledHelper>
+            )}
           </div>
         </ControlRow>
         {isLoading ? (
@@ -327,7 +348,7 @@ const StatusColor = styled.div`
   background: ${(props: { status: string }) =>
     props.status === "running"
       ? "#4797ff"
-      : props.status === "failed"
+      : props.status === "failed" || props.status === "deleted"
       ? "#ed5f85"
       : props.status === "completed"
       ? "#00d12a"

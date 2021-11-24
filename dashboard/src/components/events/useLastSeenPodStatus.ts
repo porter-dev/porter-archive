@@ -5,11 +5,15 @@ import { Context } from "shared/Context";
 const useLastSeenPodStatus = ({
   podName,
   namespace,
+  resource_type,
 }: {
   podName: string;
   namespace: string;
+  resource_type: string;
 }) => {
   const [status, setCurrentStatus] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const { currentProject, currentCluster } = useContext(Context);
 
   const getPodStatus = (status: any) => {
@@ -58,15 +62,27 @@ const useLastSeenPodStatus = ({
       console.log(getPodStatus(res.data.status));
 
       setCurrentStatus(getPodStatus(res.data.status));
-    } catch (error) {}
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        setCurrentStatus("Deleted");
+      } else {
+        setHasError(true);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
-    updatePods();
-  }, [podName, namespace]);
+    if (resource_type?.toLowerCase() === "pod") {
+      updatePods();
+    }
+  }, [podName, namespace, resource_type]);
 
   return {
     status,
+    isLoading,
+    hasError,
   };
 };
 

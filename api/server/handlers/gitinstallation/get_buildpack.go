@@ -2,7 +2,9 @@ package gitinstallation
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -11,7 +13,26 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/integrations/buildpacks"
 )
+
+func initBuilderInfo() map[string]*buildpacks.BuilderInfo {
+	builders := make(map[string]*buildpacks.BuilderInfo)
+	builders[buildpacks.PaketoBuilder] = &buildpacks.BuilderInfo{
+		Name: "Paketo",
+		Builders: []string{
+			"paketobuildpacks/builder:full",
+		},
+	}
+	builders[buildpacks.HerokuBuilder] = &buildpacks.BuilderInfo{
+		Name: "Heroku",
+		Builders: []string{
+			"heroku/buildpacks:20",
+			"heroku/buildpacks:18",
+		},
+	}
+	return builders
+}
 
 type GithubGetBuildpackHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -71,34 +92,29 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var BREQS = map[string]string{
-		"requirements.txt": "Python",
-		"Gemfile":          "Ruby",
-		"package.json":     "Node.js",
-		"pom.xml":          "Java",
-		"composer.json":    "PHP",
+	builderInfoMap := initBuilderInfo()
+	var wg sync.WaitGroup
+	wg.Add(len(buildpacks.Runtimes))
+	for i := range buildpacks.Runtimes {
+		go func(idx int) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("panic detected in runtime detection")))
+					return
+				}
+			}()
+			buildpacks.Runtimes[idx].Detect(
+				client, directoryContents, owner, name, request.Dir, repoContentOptions,
+				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],
+			)
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 
-	res := &types.GetBuildpackResponse{
-		Valid: true,
+	var builders []*buildpacks.BuilderInfo
+	for _, v := range builderInfoMap {
+		builders = append(builders, v)
 	}
-
-	matches := 0
-
-	for i := range directoryContents {
-		name := *directoryContents[i].Name
-
-		bname, ok := BREQS[name]
-		if ok {
-			matches++
-			res.Name = bname
-		}
-	}
-
-	if matches != 1 {
-		res.Valid = false
-		res.Name = ""
-	}
-
-	c.WriteResult(w, r, res)
+	c.WriteResult(w, r, builders)
 }

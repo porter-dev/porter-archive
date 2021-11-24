@@ -125,13 +125,11 @@ func (runtime *rubyRuntime) detectRackup(
 	fileContent, _, _, err := client.Repositories.GetContents(context.Background(),
 		owner, name, "Gemfile.lock", &repoContentOptions)
 	if err != nil {
-		fmt.Printf("Error fetching contents of Gemfile.lock for %s/%s: %v\n", owner, name, err)
 		runtime.wg.Done()
 		return
 	}
 	gemfileLockContent, err := fileContent.GetContent()
 	if err != nil {
-		fmt.Printf("Error calling GetContent() on Gemfile.lock for %s/%s: %v\n", owner, name, err)
 		runtime.wg.Done()
 		return
 	}
@@ -188,8 +186,6 @@ func (runtime *rubyRuntime) Detect(
 	repoContentOptions github.RepositoryContentGetOptions,
 	paketo, heroku *BuilderInfo,
 ) error {
-	fmt.Printf("Starting detection for a Ruby runtime for %s/%s\n", owner, name)
-
 	gemfileFound := false
 	gemfileLockFound := false
 	configRuFound := false
@@ -217,7 +213,6 @@ func (runtime *rubyRuntime) Detect(
 	}
 
 	if !gemfileFound {
-		fmt.Printf("No Ruby runtime detected for %s/%s\n", owner, name)
 		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
 		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
 		return nil
@@ -253,16 +248,12 @@ func (runtime *rubyRuntime) Detect(
 		bool
 	}, count)
 
-	fmt.Printf("Starting detection for a Ruby runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(count)
-	fmt.Println("Checking for puma")
 	go runtime.detectPuma(gemfileContent, results)
-	fmt.Println("Checking for thin")
 	go runtime.detectThin(gemfileContent, results)
 	if configRuFound {
 		{
 			// FIXME: find a better, more readable way of doing this
-			fmt.Printf("Ruby rackup runtime detected for %s/%s\n", owner, name)
 			results <- struct {
 				string
 				bool
@@ -270,17 +261,13 @@ func (runtime *rubyRuntime) Detect(
 			runtime.wg.Done()
 		}
 
-		fmt.Println("Checking for unicorn")
 		go runtime.detectUnicorn(gemfileContent, results)
 	}
-	fmt.Println("Checking for passenger")
 	go runtime.detectPassenger(gemfileContent, results)
 	if !configRuFound && gemfileLockFound {
-		fmt.Println("Checking for rackup")
 		go runtime.detectRackup(client, owner, name, repoContentOptions, results)
 	}
 	if rakefileFound {
-		fmt.Println("Checking for rake")
 		go runtime.detectRake(gemfileContent, results)
 	}
 	runtime.wg.Wait()

@@ -169,13 +169,9 @@ func (runtime *nodejsRuntime) Detect(
 		bool
 	}, 3)
 
-	fmt.Printf("Starting detection for a NodeJS runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(3)
-	fmt.Println("Checking for yarn")
 	go runtime.detectYarn(results, directoryContent)
-	fmt.Println("Checking for NPM")
 	go runtime.detectNPM(results, directoryContent)
-	fmt.Println("Checking for NodeJS standalone")
 	go runtime.detectStandalone(results, directoryContent)
 	runtime.wg.Wait()
 	close(results)
@@ -190,7 +186,6 @@ func (runtime *nodejsRuntime) Detect(
 	}
 
 	if len(results) == 0 {
-		fmt.Printf("No NodeJS runtime detected for %s/%s\n", owner, name)
 		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
 		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
 		return nil
@@ -211,7 +206,6 @@ func (runtime *nodejsRuntime) Detect(
 
 	if foundYarn || foundNPM {
 		// it is safe to assume that the project contains a package.json
-		fmt.Println("package.json file detected")
 		fileContent, _, _, err := client.Repositories.GetContents(
 			context.Background(),
 			owner,

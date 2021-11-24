@@ -635,6 +635,20 @@ const getJobPods = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
 
+const getPodByName = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    name: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace, name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}`
+);
+
 const getMatchingPods = baseApi<
   {
     namespace: string;
@@ -1254,6 +1268,7 @@ export default {
   getJobs,
   getJobStatus,
   getJobPods,
+  getPodByName,
   getMatchingPods,
   getMetrics,
   getNamespaces,

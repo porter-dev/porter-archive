@@ -57,7 +57,7 @@ func (c *GetPodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	pod, err := agent.GetPodByName(name, namespace)
 
-	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
+	if errors.Is(err, kubernetes.IsNotFoundError) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("pod %s/%s was not found", namespace, name),
 			http.StatusNotFound,

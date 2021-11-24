@@ -1,12 +1,11 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import backArrow from "assets/back_arrow.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import SubEventCard from "./sub-events/SubEventCard";
 import Loading from "components/Loading";
 import LogBucketCard from "./sub-events/LogBucketCard";
-import EventPodStatus from "./EventPodStatus";
+import useLastSeenPodStatus from "./useLastSeenPodStatus";
 
 const getReadableDate = (s: number) => {
   let ts = new Date(s);
@@ -23,6 +22,10 @@ const SubEventsList: React.FC<{
   event: any;
 }> = ({ event, clearSelectedEvent }) => {
   const { currentProject, currentCluster } = useContext(Context);
+  const { status } = useLastSeenPodStatus({
+    podName: event.name,
+    namespace: event.namespace,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [subEvents, setSubEvents] = useState(null);
 
@@ -106,10 +109,6 @@ const SubEventsList: React.FC<{
 
   return (
     <>
-      <EventPodStatus
-        controller={"default"}
-        podName={event.name}
-      ></EventPodStatus>
       <Timeline>
         <ControlRow>
           <BackButton onClick={clearSelectedEvent}>
@@ -121,7 +120,13 @@ const SubEventsList: React.FC<{
           >
             {event.event_type === "critical" ? "report_problem" : "info"}
           </Icon>
-          Pod {event.name} crashed
+          <div>
+            Pod {event.name} crashed
+            <StyledHelper>
+              Last seen pod status: {status}{" "}
+              <StatusColor status={status}></StatusColor>
+            </StyledHelper>
+          </div>
         </ControlRow>
         {isLoading ? (
           <Placeholder>
@@ -171,6 +176,12 @@ const SubEventsList: React.FC<{
 };
 
 export default SubEventsList;
+
+const StyledHelper = styled.div`
+  color: #aaaabb;
+  line-height: 1.6em;
+  font-size: 13px;
+`;
 
 const Placeholder = styled.div`
   padding: 30px;
@@ -305,4 +316,21 @@ const BackButton = styled.div`
 const EventsGrid = styled.div`
   position: relative;
   padding-top: 9px;
+`;
+
+const StatusColor = styled.div`
+  display: inline-block;
+  margin-right: 7px;
+  width: 7px;
+  min-width: 7px;
+  height: 7px;
+  background: ${(props: { status: string }) =>
+    props.status === "running"
+      ? "#4797ff"
+      : props.status === "failed"
+      ? "#ed5f85"
+      : props.status === "completed"
+      ? "#00d12a"
+      : "#f5cb42"};
+  border-radius: 20px;
 `;

@@ -708,7 +708,13 @@ const DeleteButton = styled.button`
   justify-content: center;
   align-items: center;
   border-radius: 50%;
+  cursor: pointer;
   color: #aaaabb;
+
+  :hover {
+    background: #ffffff11;
+    border: 1px solid #ffffff44;
+  }
 
   > span {
     font-size: 20px;

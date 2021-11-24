@@ -531,6 +531,10 @@ func (a *Agent) GetPodByName(name string, namespace string) (*v1.Pod, error) {
 		return nil, IsNotFoundError
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	return pod, nil
 }
 

@@ -65,7 +65,9 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
         setControllers([]);
         setIsLoading(false);
       });
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+    };
   }, [currentProject, currentCluster, setCurrentError, currentChart]);
 
   const renderLogs = () => {

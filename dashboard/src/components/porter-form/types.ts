@@ -41,16 +41,16 @@ export interface ResourceListField extends GenericField {
   value: any[];
   context?: {
     config?: {
-      group: string;
-      version: string;
-      resource: string;
-    };
-  };
+      group: string
+      version: string
+      resource: string
+    }
+  },
   settings?: {
     options?: {
-      "resource-button": any;
-    };
-  };
+      "resource-button": any,
+    }
+  }
 }
 
 export interface VeleroBackupField extends GenericField {

@@ -35,3 +35,14 @@ func (repo *BuildConfigRepository) UpdateBuildConfig(bc *models.BuildConfig) (*m
 
 	return bc, nil
 }
+
+// GetBuildConfig returns a BuildConfig with the specified id
+func (repo *BuildConfigRepository) GetBuildConfig(id uint) (*models.BuildConfig, error) {
+	bc := &models.BuildConfig{}
+
+	if err := repo.db.First(bc, id).Error; err != nil {
+		return nil, err
+	}
+
+	return bc, nil
+}

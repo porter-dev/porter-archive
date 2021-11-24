@@ -35,7 +35,7 @@ const StyledCard = styled.div<{ status: string }>`
   padding: 14px;
   padding-left: 13px;
   overflow: hidden;
-  height: 55px;
+  min-height: 55px;
   font-size: 13px;
   color: #aaaabb;
   animation: fadeIn 0.5s;

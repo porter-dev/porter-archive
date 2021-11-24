@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import backArrow from "assets/back_arrow.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import SubEventCard from "./sub-events/SubEventCard";
 import Loading from "components/Loading";
 import LogBucketCard from "./sub-events/LogBucketCard";
+import useLastSeenPodStatus from "./useLastSeenPodStatus";
 
 const getReadableDate = (s: number) => {
   let ts = new Date(s);
@@ -20,8 +20,18 @@ const getReadableDate = (s: number) => {
 const SubEventsList: React.FC<{
   clearSelectedEvent: () => void;
   event: any;
-}> = ({ event, clearSelectedEvent }) => {
+  enableTopMargin?: boolean;
+}> = ({ event, clearSelectedEvent, enableTopMargin }) => {
   const { currentProject, currentCluster } = useContext(Context);
+  const {
+    status,
+    hasError: hasPodStatusErrored,
+    isLoading: isPodStatusLoading,
+  } = useLastSeenPodStatus({
+    podName: event.name,
+    namespace: event.namespace,
+    resource_type: event.resource_type,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [subEvents, setSubEvents] = useState(null);
 
@@ -104,28 +114,64 @@ const SubEventsList: React.FC<{
   }, [subEvents]);
 
   return (
-    <Timeline>
-      <ControlRow>
-        <BackButton onClick={clearSelectedEvent}>
-          <i className="material-icons">close</i>
-        </BackButton>
-        <Icon
-          status={event.event_type.toLowerCase() as any}
-          className="material-icons-outlined"
-        >
-          {event.event_type === "critical" ? "report_problem" : "info"}
-        </Icon>
-        Pod {event.name} crashed
-      </ControlRow>
-      {isLoading ? (
-        <Placeholder>
-          <Loading />
-        </Placeholder>
-      ) : sortedSubEvents?.length ? (
-        <EventsGrid>
-          <Rail />
-          {sortedSubEvents.map((subEvent: any, i: number) => {
-            if (subEvent?.event_type === "log_bucket") {
+    <>
+      <Timeline enableTopMargin={enableTopMargin}>
+        <ControlRow>
+          <BackButton onClick={clearSelectedEvent}>
+            <i className="material-icons">close</i>
+          </BackButton>
+          <Icon
+            status={event.event_type.toLowerCase() as any}
+            className="material-icons-outlined"
+          >
+            {event.event_type === "critical" ? "report_problem" : "info"}
+          </Icon>
+          <div>
+            Pod {event.name} crashed
+            {event?.resource_type?.toLowerCase() === "pod" && (
+              <StyledHelper>
+                {hasPodStatusErrored ? (
+                  "We couldn't retrieve last pod status, please try again later"
+                ) : (
+                  <>
+                    {isPodStatusLoading ? (
+                      "Loading last seen pod status"
+                    ) : (
+                      <>
+                        Last seen pod status: {status}{" "}
+                        <StatusColor
+                          status={status?.toLowerCase()}
+                        ></StatusColor>
+                      </>
+                    )}
+                  </>
+                )}
+              </StyledHelper>
+            )}
+          </div>
+        </ControlRow>
+        {isLoading ? (
+          <Placeholder>
+            <Loading />
+          </Placeholder>
+        ) : sortedSubEvents?.length ? (
+          <EventsGrid>
+            <Rail />
+            {sortedSubEvents.map((subEvent: any, i: number) => {
+              if (subEvent?.event_type === "log_bucket") {
+                return (
+                  <Wrapper>
+                    <TimelineNode>
+                      <Penumbra>
+                        <Circle />
+                      </Penumbra>
+                      {getReadableDate(subEvent.timestamp)}
+                    </TimelineNode>
+                    <LogBucketCard logEvent={subEvent} />
+                    {i === sortedSubEvents.length - 1 && <RailCover />}
+                  </Wrapper>
+                );
+              }
               return (
                 <Wrapper>
                   <TimelineNode>
@@ -134,36 +180,30 @@ const SubEventsList: React.FC<{
                     </Penumbra>
                     {getReadableDate(subEvent.timestamp)}
                   </TimelineNode>
-                  <LogBucketCard logEvent={subEvent} />
+                  <SubEventCard subEvent={subEvent} />
                   {i === sortedSubEvents.length - 1 && <RailCover />}
                 </Wrapper>
               );
-            }
-            return (
-              <Wrapper>
-                <TimelineNode>
-                  <Penumbra>
-                    <Circle />
-                  </Penumbra>
-                  {getReadableDate(subEvent.timestamp)}
-                </TimelineNode>
-                <SubEventCard subEvent={subEvent} />
-                {i === sortedSubEvents.length - 1 && <RailCover />}
-              </Wrapper>
-            );
-          })}
-        </EventsGrid>
-      ) : (
-        <Placeholder>
-          <i className="material-icons">search</i>
-          No sub-events were found.
-        </Placeholder>
-      )}
-    </Timeline>
+            })}
+          </EventsGrid>
+        ) : (
+          <Placeholder>
+            <i className="material-icons">search</i>
+            No sub-events were found.
+          </Placeholder>
+        )}
+      </Timeline>
+    </>
   );
 };
 
 export default SubEventsList;
+
+const StyledHelper = styled.div`
+  color: #aaaabb;
+  line-height: 1.6em;
+  font-size: 13px;
+`;
 
 const Placeholder = styled.div`
   padding: 30px;
@@ -240,6 +280,8 @@ const Rail = styled.div`
 `;
 
 const Timeline = styled.div`
+  margin-top: ${(props: { enableTopMargin: boolean }) =>
+    props.enableTopMargin ? "30px" : "unset"};
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
@@ -298,4 +340,21 @@ const BackButton = styled.div`
 const EventsGrid = styled.div`
   position: relative;
   padding-top: 9px;
+`;
+
+const StatusColor = styled.div`
+  display: inline-block;
+  margin-right: 7px;
+  width: 7px;
+  min-width: 7px;
+  height: 7px;
+  background: ${(props: { status: string }) =>
+    props.status === "running"
+      ? "#4797ff"
+      : props.status === "failed" || props.status === "deleted"
+      ? "#ed5f85"
+      : props.status === "completed"
+      ? "#00d12a"
+      : "#f5cb42"};
+  border-radius: 20px;
 `;

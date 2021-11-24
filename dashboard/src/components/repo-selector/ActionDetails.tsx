@@ -1,5 +1,11 @@
-import React, { Component } from "react";
-import styled from "styled-components";
+import React, {
+  Component,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import styled, { keyframes } from "styled-components";
 
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
@@ -7,6 +13,10 @@ import api from "shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
 import InputRow from "../form-components/InputRow";
+import Selector from "components/Selector";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import SelectRow from "components/form-components/SelectRow";
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -21,42 +31,64 @@ type PropsType = {
   selectedRegistry: any;
   setDockerfilePath: (x: string) => void;
   setFolderPath: (x: string) => void;
+  setBuildConfig: (x: any) => void;
 };
 
-type StateType = {
-  dockerRepo: string;
-  error: boolean;
-  registries: any[] | null;
-  loading: boolean;
-};
-
-export default class ActionDetails extends Component<PropsType, StateType> {
-  state = {
-    dockerRepo: "",
-    error: false,
-    registries: null as any[] | null,
-    loading: true,
+type Buildpack = {
+  name: string;
+  buildpack: string;
+  config: {
+    [key: string]: string;
   };
+};
 
-  componentDidMount() {
-    // TODO: Handle custom registry case (unroll repos?)
+type DetectedBuildpack = {
+  name: string;
+  builders: string[];
+  detected: Buildpack[];
+  others: Buildpack[];
+};
+
+type DetectBuildpackResponse = DetectedBuildpack[];
+
+const ActionDetails: React.FC<PropsType> = (props) => {
+  const {
+    actionConfig,
+    branch,
+    dockerfilePath,
+    folderPath,
+    procfilePath,
+    selectedRegistry,
+    setActionConfig,
+    setDockerfilePath,
+    setFolderPath,
+    setProcfilePath,
+    setProcfileProcess,
+    setSelectedRegistry,
+    setBuildConfig,
+  } = props;
+
+  const { currentProject } = useContext(Context);
+  const [registries, setRegistries] = useState<any[]>(null);
+  const [loading, setLoading] = useState(true);
+  const [showBuildpacksConfig, setShowBuildpacksConfig] = useState(false);
+
+  useEffect(() => {
+    const project_id = currentProject.id;
+
     api
-      .getProjectRegistries(
-        "<token>",
-        {},
-        { id: this.context.currentProject.id }
-      )
+      .getProjectRegistries("<token>", {}, { id: project_id })
       .then((res: any) => {
-        this.setState({ registries: res.data, loading: false });
+        setRegistries(res.data);
+        setLoading(false);
         if (res.data.length === 1) {
-          this.props.setSelectedRegistry(res.data[0]);
+          setSelectedRegistry(res.data[0]);
         }
       })
       .catch((err: any) => console.log(err));
-  }
+  }, [currentProject]);
 
-  renderIntegrationList = () => {
-    let { loading, registries } = this.state;
+  const renderIntegrationList = () => {
     if (loading) {
       return (
         <LoadingWrapper>
@@ -67,20 +99,19 @@ export default class ActionDetails extends Component<PropsType, StateType> {
 
     return registries.map((registry: any, i: number) => {
       let icon =
-        integrationList[registry.service] &&
-        integrationList[registry.service].icon;
+        integrationList[registry?.service] &&
+        integrationList[registry?.service]?.icon;
+
       if (!icon) {
-        icon = integrationList["dockerhub"].icon;
+        icon = integrationList["dockerhub"]?.icon;
       }
+
       return (
         <RegistryItem
           key={i}
-          isSelected={
-            this.props.selectedRegistry &&
-            registry.id === this.props.selectedRegistry.id
-          }
-          lastItem={i === registries.length - 1}
-          onClick={() => this.props.setSelectedRegistry(registry)}
+          isSelected={selectedRegistry && registry.id === selectedRegistry?.id}
+          lastItem={i === registries?.length - 1}
+          onClick={() => setSelectedRegistry(registry)}
         >
           <img src={icon && icon} />
           {registry.url}
@@ -89,8 +120,7 @@ export default class ActionDetails extends Component<PropsType, StateType> {
     });
   };
 
-  renderRegistrySection = () => {
-    let { registries } = this.state;
+  const renderRegistrySection = () => {
     if (!registries || registries.length === 0 || registries.length === 1) {
       return;
     } else {
@@ -100,104 +130,382 @@ export default class ActionDetails extends Component<PropsType, StateType> {
             Select an Image Destination
             <Required>*</Required>
           </Subtitle>
-          <ExpandedWrapper>{this.renderIntegrationList()}</ExpandedWrapper>
+          <ExpandedWrapper>{renderIntegrationList()}</ExpandedWrapper>
         </>
       );
     }
   };
 
-  render() {
-    return (
-      <>
-        <DarkMatter />
+  return (
+    <>
+      <DarkMatter />
+      <Heading>GitHub Settings</Heading>
+      <InputRow
+        disabled={true}
+        label="Git repository"
+        type="text"
+        width="100%"
+        value={actionConfig?.git_repo}
+      />
+      <InputRow
+        disabled={true}
+        label="Branch"
+        type="text"
+        width="100%"
+        value={props?.branch}
+      />
+      {dockerfilePath && (
         <InputRow
           disabled={true}
-          label="Git Repository"
+          label="Dockerfile path"
           type="text"
           width="100%"
-          value={this.props.actionConfig.git_repo}
+          value={dockerfilePath}
         />
-        <InputRow
-          disabled={true}
-          label="Branch"
-          type="text"
-          width="100%"
-          value={this.props.branch}
-        />
-        {this.props.dockerfilePath && (
-          <InputRow
-            disabled={true}
-            label="Dockerfile Path"
-            type="text"
-            width="100%"
-            value={this.props.dockerfilePath}
-          />
-        )}
-        <InputRow
-          disabled={true}
-          label={
-            this.props.dockerfilePath
-              ? "Docker Build Context"
-              : "Application Folder"
-          }
-          type="text"
-          width="100%"
-          value={this.props.folderPath}
-        />
-        {this.renderRegistrySection()}
-        <Br />
-
-        <Flex>
-          <BackButton
-            width="140px"
-            onClick={() => {
-              this.props.setDockerfilePath(null);
-              this.props.setFolderPath(null);
-              this.props.setProcfilePath(null);
-              this.props.setProcfileProcess(null);
-              this.props.setSelectedRegistry(null);
+      )}
+      <InputRow
+        disabled={true}
+        label={dockerfilePath ? "Docker build context" : "Application folder"}
+        type="text"
+        width="100%"
+        value={folderPath}
+      />
+      {renderRegistrySection()}
+      {!dockerfilePath && (
+        <>
+          <Heading>
+            <ExpandHeader
+              onClick={() => setShowBuildpacksConfig((prev) => !prev)}
+              isExpanded={showBuildpacksConfig}
+            >
+              Buildpacks Settings
+              <i className="material-icons">arrow_drop_down</i>
+            </ExpandHeader>
+          </Heading>
+          <BuildpackSelection
+            actionConfig={actionConfig}
+            branch={branch}
+            folderPath={folderPath}
+            onChange={(config) => {
+              setBuildConfig(config);
             }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select Folder
-          </BackButton>
-          {
-            // !this.props.procfilePath && !this.props.dockerfilePath ? (
-            //   <StatusWrapper>
-            //     <i className="material-icons">error_outline</i>
-            //     Procfile not detected.
-            //   </StatusWrapper>
-            // ) :
-            this.props.selectedRegistry ? (
-              <StatusWrapper successful={true}>
-                <i className="material-icons">done</i> Source selected
-              </StatusWrapper>
-            ) : (
-              <StatusWrapper>
-                <i className="material-icons">error_outline</i>A connected
-                container registry is required
-              </StatusWrapper>
-            )
-          }
-        </Flex>
-      </>
+            hide={!showBuildpacksConfig}
+          />
+          <Buffer />
+        </>
+      )}
+      <Br />
+
+      <Flex>
+        <BackButton
+          width="140px"
+          onClick={() => {
+            setDockerfilePath(null);
+            setFolderPath(null);
+            setProcfilePath(null);
+            setProcfileProcess(null);
+            setSelectedRegistry(null);
+          }}
+        >
+          <i className="material-icons">keyboard_backspace</i>
+          Select Folder
+        </BackButton>
+        {selectedRegistry ? (
+          <StatusWrapper successful={true}>
+            <i className="material-icons">done</i> Source selected
+          </StatusWrapper>
+        ) : (
+          <StatusWrapper>
+            <i className="material-icons">error_outline</i>A connected container
+            registry is required
+          </StatusWrapper>
+        )}
+      </Flex>
+    </>
+  );
+};
+
+export default ActionDetails;
+
+const DEFAULT_BUILDER_NAME = "paketo";
+const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
+const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
+
+type BuildConfig = {
+  builder: string;
+  buildpacks: string[];
+  config: null | {
+    [key: string]: string;
+  };
+};
+
+export const BuildpackSelection: React.FC<{
+  actionConfig: ActionConfigType;
+  folderPath: string;
+  branch: string;
+  hide: boolean;
+  onChange: (config: BuildConfig) => void;
+}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
+  const { currentProject } = useContext(Context);
+
+  const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
+  const [selectedBuilder, setSelectedBuilder] = useState<string>(null);
+
+  const [stacks, setStacks] = useState<string[]>(null);
+  const [selectedStack, setSelectedStack] = useState<string>(null);
+
+  const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>(
+    null
+  );
+  const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
+    null
+  );
+
+  useEffect(() => {
+    let buildConfig: BuildConfig = {} as BuildConfig;
+
+    buildConfig.builder = selectedStack;
+    buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
+      return buildpack.buildpack;
+    });
+    if (typeof onChange === "function") {
+      onChange(buildConfig);
+    }
+  }, [selectedBuilder, selectedStack, selectedBuildpacks]);
+
+  useEffect(() => {
+    api
+      .detectBuildpack<DetectBuildpackResponse>(
+        "<token>",
+        {
+          dir: folderPath || ".",
+        },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      )
+      // getMockData()
+      .then(({ data }) => {
+        const builders = data;
+
+        const defaultBuilder = builders.find(
+          (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
+        );
+
+        const detectedBuildpacks = defaultBuilder.detected;
+        const availableBuildpacks = defaultBuilder.others;
+        const defaultStack = defaultBuilder.builders.find((stack) => {
+          return (
+            stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
+          );
+        });
+
+        setBuilders(builders);
+        setSelectedBuilder(defaultBuilder.name.toLowerCase());
+
+        setStacks(defaultBuilder.builders);
+        setSelectedStack(defaultStack);
+
+        setSelectedBuildpacks(detectedBuildpacks);
+        setAvailableBuildpacks(availableBuildpacks);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, [currentProject, actionConfig]);
+
+  const builderOptions = useMemo(() => {
+    if (!Array.isArray(builders)) {
+      return;
+    }
+
+    return builders.map((builder) => ({
+      label: builder.name,
+      value: builder.name.toLowerCase(),
+    }));
+  }, [builders]);
+
+  const stackOptions = useMemo(() => {
+    if (!Array.isArray(stacks)) {
+      return;
+    }
+
+    return stacks.map((stack) => ({
+      label: stack,
+      value: stack.toLowerCase(),
+    }));
+  }, [stacks]);
+
+  const handleSelectBuilder = (builderName: string) => {
+    const builder = builders.find(
+      (b) => b.name.toLowerCase() === builderName.toLowerCase()
     );
+    const detectedBuildpacks = builder.detected;
+    const availableBuildpacks = builder.others;
+    const defaultStack = builder.builders.find((stack) => {
+      return stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK;
+    });
+    setSelectedBuilder(builderName);
+    setBuilders(builders);
+    setSelectedBuilder(builderName.toLowerCase());
+
+    setStacks(builder.builders);
+    setSelectedStack(defaultStack);
+
+    setSelectedBuildpacks(detectedBuildpacks);
+    setAvailableBuildpacks(availableBuildpacks);
+  };
+
+  const renderBuildpacksList = (
+    buildpacks: Buildpack[],
+    action: "remove" | "add"
+  ) => {
+    return buildpacks?.map((buildpack) => {
+      const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
+
+      return (
+        <StyledCard>
+          <ContentContainer>
+            <Icon className={icon} />
+            <EventInformation>
+              <EventName>{buildpack?.name}</EventName>
+            </EventInformation>
+          </ContentContainer>
+          <ActionContainer>
+            {action === "add" && (
+              <DeleteButton
+                onClick={() => handleAddBuildpack(buildpack.buildpack)}
+              >
+                <span className="material-icons-outlined">add</span>
+              </DeleteButton>
+            )}
+            {action === "remove" && (
+              <DeleteButton
+                onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
+              >
+                <span className="material-icons">delete</span>
+              </DeleteButton>
+            )}
+          </ActionContainer>
+        </StyledCard>
+      );
+    });
+  };
+
+  const handleRemoveBuildpack = (buildpackToRemove: string) => {
+    setSelectedBuildpacks((selBuildpacks) => {
+      const tmpSelectedBuildpacks = [...selBuildpacks];
+
+      const indexBuildpackToRemove = tmpSelectedBuildpacks.findIndex(
+        (buildpack) => buildpack.buildpack === buildpackToRemove
+      );
+      const buildpack = tmpSelectedBuildpacks[indexBuildpackToRemove];
+
+      setAvailableBuildpacks((availableBuildpacks) => [
+        ...availableBuildpacks,
+        buildpack,
+      ]);
+
+      tmpSelectedBuildpacks.splice(indexBuildpackToRemove, 1);
+
+      return [...tmpSelectedBuildpacks];
+    });
+  };
+
+  const handleAddBuildpack = (buildpackToAdd: string) => {
+    setAvailableBuildpacks((avBuildpacks) => {
+      const tmpAvailableBuildpacks = [...avBuildpacks];
+      const indexBuildpackToAdd = tmpAvailableBuildpacks.findIndex(
+        (buildpack) => buildpack.buildpack === buildpackToAdd
+      );
+      const buildpack = tmpAvailableBuildpacks[indexBuildpackToAdd];
+
+      setSelectedBuildpacks((selectedBuildpacks) => [
+        ...selectedBuildpacks,
+        buildpack,
+      ]);
+
+      tmpAvailableBuildpacks.splice(indexBuildpackToAdd, 1);
+      return [...tmpAvailableBuildpacks];
+    });
+  };
+
+  if (hide) {
+    return null;
   }
-}
 
-ActionDetails.contextType = Context;
+  if (!stackOptions?.length || !builderOptions?.length) {
+    return <Loading />;
+  }
 
-const Highlight = styled.a`
-  color: #949eff;
-  text-decoration: none;
-  margin-left: 5px;
-  cursor: pointer;
+  return (
+    <BuildpackConfigurationContainer>
+      <>
+        <SelectRow
+          value={selectedBuilder}
+          width="100%"
+          options={builderOptions}
+          setActiveValue={(option) => handleSelectBuilder(option)}
+          label="Select a builder"
+        />
+
+        <SelectRow
+          value={selectedStack}
+          width="100%"
+          options={stackOptions}
+          setActiveValue={(option) => setSelectedStack(option)}
+          label="Select your stack"
+        />
+        <Helper>
+          The following buildpacks were automatically detected. You can also
+          manually add/remove buildpacks.
+        </Helper>
+
+        {!!selectedBuildpacks?.length &&
+          renderBuildpacksList(selectedBuildpacks, "remove")}
+
+        {!!availableBuildpacks?.length && (
+          <>
+            <Helper>Available buildpacks:</Helper>
+            {renderBuildpacksList(availableBuildpacks, "add")}
+          </>
+        )}
+      </>
+    </BuildpackConfigurationContainer>
+  );
+};
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 `;
 
-const Bold = styled.div`
-  font-weight: 800;
-  color: #ffffff;
-  margin-right: 5px;
+const ExpandHeader = styled.div<{ isExpanded: boolean }>`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  > i {
+    margin-left: 10px;
+    transform: ${(props) => (props.isExpanded ? "" : "rotate(180deg)")};
+  }
+`;
+
+const BuildpackConfigurationContainer = styled.div`
+  animation: ${fadeIn} 0.75s;
+`;
+
+const Buffer = styled.div`
+  width: 100%;
+  height: 8px;
 `;
 
 const Required = styled.div`
@@ -208,19 +516,6 @@ const Required = styled.div`
 
 const Subtitle = styled.div`
   margin-top: 21px;
-`;
-
-const SubtitleAlt = styled.div`
-  padding: 11px 0px 16px;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #aaaabb;
-  line-height: 1.6em;
-  display: flex;
-  align-items: center;
-  margin-top: -3px;
-  margin-bottom: -7px;
-  font-weight: 400;
 `;
 
 const RegistryItem = styled.div`
@@ -338,10 +633,6 @@ const BackButton = styled.div`
   }
 `;
 
-const AdvancedHeader = styled.div`
-  margin-top: 15px;
-`;
-
 const Br = styled.div`
   width: 100%;
   height: 1px;
@@ -350,9 +641,76 @@ const Br = styled.div`
 
 const DarkMatter = styled.div`
   width: 100%;
-  margin-bottom: -18px;
+  margin-bottom: -28px;
 `;
 
-const Holder = styled.div`
-  padding: 0px 12px 24px 12px;
+const StyledCard = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #ffffff00;
+  background: #ffffff08;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  padding: 14px;
+  overflow: hidden;
+  height: 60px;
+  font-size: 13px;
+  animation: ${fadeIn} 0.5s;
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+`;
+
+const Icon = styled.span`
+  font-size: 20px;
+  margin-left: 10px;
+  margin-right: 20px;
+`;
+
+const EventInformation = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+`;
+
+const EventName = styled.div`
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
+`;
+
+const EventReason = styled.div`
+  font-family: "Work Sans", sans-serif;
+  color: #aaaabb;
+  margin-top: 5px;
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+`;
+
+const DeleteButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  color: #aaaabb;
+
+  > span {
+    font-size: 20px;
+  }
 `;

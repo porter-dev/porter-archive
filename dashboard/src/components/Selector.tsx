@@ -16,6 +16,7 @@ type PropsType = {
   closeOverlay?: boolean;
   placeholder?: string;
   scrollBuffer?: boolean;
+  disableTooltip?: boolean;
 };
 
 type StateType = {};
@@ -185,7 +186,7 @@ export default class Selector extends Component<PropsType, StateType> {
           </Flex>
           <i className="material-icons">arrow_drop_down</i>
         </MainSelector>
-        {this.state.showTooltip && (
+        {!this.props.disableTooltip && this.state.showTooltip && (
           <Tooltip>
             {activeValue
               ? activeValue === ""

@@ -521,11 +521,17 @@ func (a *Agent) GetPodsByLabel(selector string, namespace string) (*v1.PodList, 
 // GetPodByName retrieves a single instance of pod with given name
 func (a *Agent) GetPodByName(name string, namespace string) (*v1.Pod, error) {
 	// Get pod by name
-	return a.Clientset.CoreV1().Pods(namespace).Get(
+	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
 		context.TODO(),
 		name,
 		metav1.GetOptions{},
 	)
+
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	}
+
+	return pod, nil
 }
 
 // DeletePod deletes a pod by name and namespace

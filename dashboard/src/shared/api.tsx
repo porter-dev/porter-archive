@@ -321,6 +321,7 @@ const deployTemplate = baseApi<
     values?: any;
     name: string;
     github_action_config?: FullActionConfigType;
+    build_config?: any;
   },
   {
     id: number;

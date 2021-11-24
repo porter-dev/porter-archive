@@ -27,7 +27,6 @@ import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
-import { BuildpackSelection } from "components/repo-selector/ActionDetails";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [

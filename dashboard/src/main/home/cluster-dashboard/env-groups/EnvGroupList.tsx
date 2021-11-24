@@ -82,7 +82,7 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
   }
 
   componentDidUpdate(prevProps: PropsType) {
-    // Prevents reload when opening ClusterConfigModal
+    // Ret2: Prevents reload when opening ClusterConfigModal
     if (
       prevProps.currentCluster !== this.props.currentCluster ||
       prevProps.namespace !== this.props.namespace ||

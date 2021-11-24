@@ -64,7 +64,6 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const [folderPath, setFolderPath] = useState(null);
   const [selectedRegistry, setSelectedRegistry] = useState(null);
   const [shouldCreateWorkflow, setShouldCreateWorkflow] = useState(true);
-  const [buildConfig, setBuildConfig] = useState();
 
   const generateRandomName = () => {
     const randomTemplateName = randomWords({ exactly: 3, join: "-" });
@@ -269,7 +268,6 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           template_version: props.currentTemplate?.currentVersion || "latest",
           name: release_name,
           github_action_config: githubActionConfig,
-          build_config: buildConfig,
         },
         {
           id: currentProject.id,
@@ -330,7 +328,6 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           setProcfilePath={setProcfilePath}
           selectedRegistry={selectedRegistry}
           setSelectedRegistry={setSelectedRegistry}
-          setBuildConfig={setBuildConfig}
         />
       );
     }

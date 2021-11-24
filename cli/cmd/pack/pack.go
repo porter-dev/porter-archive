@@ -60,7 +60,9 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 
 	if buildConfig != nil {
 		buildOpts.Builder = buildConfig.Builder
-		buildOpts.Buildpacks = buildConfig.Buildpacks
+		if len(buildConfig.Buildpacks) > 0 {
+			buildOpts.Buildpacks = buildConfig.Buildpacks
+		}
 		// FIXME: use all the config vars
 	}
 

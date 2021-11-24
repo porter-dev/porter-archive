@@ -1,7 +1,6 @@
 package buildpacks
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -118,17 +117,12 @@ func (runtime *pythonRuntime) Detect(
 	results := make(chan struct {
 		string
 		bool
-	})
+	}, 4)
 
-	fmt.Printf("Starting detection for a Python runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(4)
-	fmt.Println("Checking for pipenv")
 	go runtime.detectPipenv(results, directoryContent)
-	fmt.Println("Checking for pip")
 	go runtime.detectPip(results, directoryContent)
-	fmt.Println("Checking for conda")
 	go runtime.detectConda(results, directoryContent)
-	fmt.Println("Checking for Python standalone")
 	go runtime.detectStandalone(results, directoryContent)
 	runtime.wg.Wait()
 	close(results)
@@ -143,7 +137,6 @@ func (runtime *pythonRuntime) Detect(
 	}
 
 	if len(results) == 0 {
-		fmt.Printf("No Python runtime detected for %s/%s\n", owner, name)
 		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
 		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
 		return nil

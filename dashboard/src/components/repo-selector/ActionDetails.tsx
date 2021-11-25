@@ -227,7 +227,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
 
 export default ActionDetails;
 
-const DEFAULT_BUILDER_NAME = "paketo";
+const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
 

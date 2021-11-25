@@ -29,6 +29,7 @@ func (b *BuildAgent) BuildDocker(
 	buildCtx,
 	dockerfilePath,
 	tag string,
+	currentTag string,
 ) error {
 	buildCtx, dockerfilePath, isDockerfileInCtx, err := ResolveDockerPaths(
 		basePath,
@@ -43,6 +44,7 @@ func (b *BuildAgent) BuildDocker(
 	opts := &docker.BuildOpts{
 		ImageRepo:         b.imageRepo,
 		Tag:               tag,
+		CurrentTag:		   currentTag,
 		BuildContext:      buildCtx,
 		Env:               b.env,
 		DockerfilePath:    dockerfilePath,

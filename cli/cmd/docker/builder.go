@@ -67,9 +67,6 @@ func (a *Agent) BuildLocal(opts *BuildOpts) error {
 		Tags: []string{
 			fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
 		},
-		CacheFrom: []string{
-			fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
-		},
 		Remove: true,
 	})
 

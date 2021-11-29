@@ -52,6 +52,17 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if release.GitActionConfig != nil {
 			res.GitActionConfig = release.GitActionConfig.ToGitActionConfigType()
 		}
+
+		if release.BuildConfig != 0 {
+			bc, err := c.Repo().BuildConfig().GetBuildConfig(release.BuildConfig)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			res.BuildConfig = bc.ToBuildConfigType()
+		}
 	} else if err != gorm.ErrRecordNotFound {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -136,7 +147,7 @@ tabs:
   label: Certificates
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: Certificates
     - type: resource-list
@@ -156,9 +167,9 @@ tabs:
                     version: v1
                     resource: certificates
       value: |
-        .items[] | { 
+        .items[] | {
           metadata: .metadata,
-          name: "\(.spec.dnsNames | join(","))", 
+          name: "\(.spec.dnsNames | join(","))",
           label: "\(.metadata.namespace)/\(.metadata.name)",
           status: (
             ([.status.conditions[].type] | index("Ready")) as $index | (

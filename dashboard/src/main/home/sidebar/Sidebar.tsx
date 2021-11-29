@@ -315,11 +315,12 @@ class Sidebar extends Component<PropsType, StateType> {
           <br />
 
           {this.renderProjectContents()}
-
+          {/*
           <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
             <Icon src={discordLogo} />
             Join Our Discord
           </DiscordButton>
+          */}
         </StyledSidebar>
       </>
     );

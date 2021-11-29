@@ -27,6 +27,7 @@ import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
+import { BuildpackSelection } from "components/repo-selector/ActionDetails";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -391,7 +392,7 @@ class Home extends Component<PropsType, StateType> {
           </>
         )}
 
-        <ViewWrapper>
+        <ViewWrapper id="HomeViewWrapper">
           <Navbar
             logOut={this.props.logOut}
             currentView={this.props.currentRoute} // For form feedback

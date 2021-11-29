@@ -142,6 +142,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
 const StyledResourceTab = styled.div`
   width: 100%;
   margin-bottom: 2px;
+  font-size: 13px;
   background: #ffffff11;
   border-bottom-left-radius: ${(props: {
     isLast: boolean;

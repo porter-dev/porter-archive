@@ -45,6 +45,7 @@ type PropsType = RouteComponentProps & {
   setFolderPath: (x: string) => void;
   selectedRegistry: any;
   setSelectedRegistry: (x: string) => void;
+  setBuildConfig: (x: any) => void;
 };
 
 type StateType = {};
@@ -144,6 +145,7 @@ class SourcePage extends Component<PropsType, StateType> {
       setFolderPath,
       selectedRegistry,
       setSelectedRegistry,
+      setBuildConfig,
     } = this.props;
     return (
       <StyledSourceBox>
@@ -207,6 +209,7 @@ class SourcePage extends Component<PropsType, StateType> {
           }}
           setSelectedRegistry={setSelectedRegistry}
           selectedRegistry={selectedRegistry}
+          setBuildConfig={setBuildConfig}
         />
         <br />
       </StyledSourceBox>

@@ -6,12 +6,13 @@ import (
 	"path/filepath"
 
 	"github.com/buildpacks/pack"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 )
 
 type Agent struct{}
 
-func (a *Agent) Build(opts *docker.BuildOpts) error {
+func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) error {
 	//create a context object
 	context := context.Background()
 
@@ -35,6 +36,14 @@ func (a *Agent) Build(opts *docker.BuildOpts) error {
 		AppPath:         opts.BuildContext,
 		TrustBuilder:    true,
 		Env:             opts.Env,
+	}
+
+	if buildConfig != nil {
+		buildOpts.Builder = buildConfig.Builder
+		if len(buildConfig.Buildpacks) > 0 {
+			buildOpts.Buildpacks = buildConfig.Buildpacks
+		}
+		// FIXME: use all the config vars
 	}
 
 	return client.Build(context, buildOpts)

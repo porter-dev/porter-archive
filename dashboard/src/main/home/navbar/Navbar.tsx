@@ -62,7 +62,7 @@ class Navbar extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledNavbar>
-        <Help/>
+        <Help />
         {this.renderFeedbackButton()}
         <NavButton
           selected={this.state.showDropdown}
@@ -245,18 +245,18 @@ const StyledNavbar = styled.div`
 `;
 
 const HelpIcon = styled.div`
-> a {
-  > i {
-    font-size: 18px;
-    margin-left: 8px;
-    margin-top: 2px;
-    color: #8590ff;
-    :hover {
-      color: #aaaabb;
+  > a {
+    > i {
+      font-size: 18px;
+      margin-left: 8px;
+      margin-top: 2px;
+      color: #8590ff;
+      :hover {
+        color: #aaaabb;
+      }
     }
   }
-}
-`
+`;
 
 const NavButton = styled.a`
   display: flex;

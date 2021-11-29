@@ -280,17 +280,18 @@ const BackButton = styled.div`
   }
 `;
 
-const ImageItem = styled.div<{ lastItem: boolean, isSelected: boolean }>`
+const ImageItem = styled.div<{ lastItem: boolean; isSelected: boolean }>`
   display: flex;
   width: 100%;
   font-size: 13px;
-  border-bottom: 1px solid ${props => props.lastItem ? "#00000000" : "#606166"};
+  border-bottom: 1px solid
+    ${(props) => (props.lastItem ? "#00000000" : "#606166")};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${props => props.isSelected ? "#ffffff11" : ""};
+  background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
   :hover {
     background: #ffffff22;
 

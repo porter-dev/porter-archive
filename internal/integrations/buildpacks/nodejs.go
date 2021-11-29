@@ -178,7 +178,7 @@ func (runtime *nodejsRuntime) Detect(
 
 	paketoBuildpackInfo := BuildpackInfo{
 		Name:      "NodeJS",
-		Buildpack: "paketobuildpacks/nodejs",
+		Buildpack: "gcr.io/paketo-buildpacks/nodejs",
 	}
 	herokuBuildpackInfo := BuildpackInfo{
 		Name:      "NodeJS",

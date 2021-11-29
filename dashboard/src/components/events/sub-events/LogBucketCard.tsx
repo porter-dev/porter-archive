@@ -77,7 +77,7 @@ const LogBucketCard: React.FunctionComponent<LogBucketCardProps> = ({
           {/* Case: No logs found after the api call */}
           {!isLoading && !logs?.length && <Loading>No logs found.</Loading>}
           {/* Case: Logs were found successfully  */}
-          {!isLoading && logs?.length && logs?.map((l) => <Log>{l}</Log>)}
+          {!isLoading && !!logs?.length && logs?.map((l) => <Log>{l}</Log>)}
         </>
       )}
     </StyledCard>

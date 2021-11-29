@@ -44,7 +44,7 @@ func (b *BuildAgent) BuildDocker(
 	opts := &docker.BuildOpts{
 		ImageRepo:         b.imageRepo,
 		Tag:               tag,
-		CurrentTag:		   currentTag,
+		CurrentTag:        currentTag,
 		BuildContext:      buildCtx,
 		Env:               b.env,
 		DockerfilePath:    dockerfilePath,

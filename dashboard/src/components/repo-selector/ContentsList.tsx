@@ -317,6 +317,12 @@ export default class ContentsList extends Component<PropsType, StateType> {
                 <Row
                   key={i}
                   onClick={() => {
+                    if (
+                      !this.props.folderPath ||
+                      this.props.folderPath === ""
+                    ) {
+                      this.props.setFolderPath("./");
+                    }
                     this.props.setProcfileProcess(process);
                   }}
                   isLast={processes.length - 1 === i}

@@ -77,7 +77,7 @@ const SaveButton: React.FC<Props> = (props) => {
         rounded={props.rounded}
         disabled={props.disabled}
         onClick={props.onClick}
-        color={props.color || "#616FEEcc"}
+        color={props.color || "#5561C0"}
       >
         {props.children || props.text}
       </Button>

@@ -321,6 +321,7 @@ const deployTemplate = baseApi<
     values?: any;
     name: string;
     github_action_config?: FullActionConfigType;
+    build_config?: any;
   },
   {
     id: number;
@@ -634,6 +635,20 @@ const getJobPods = baseApi<
   let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
+
+const getPodByName = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    name: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace, name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}`
+);
 
 const getMatchingPods = baseApi<
   {
@@ -1132,6 +1147,63 @@ const getOnboardingRegistry = baseApi<
     `/api/projects/${project_id}/registries/${registry_connection_id}`
 );
 
+const detectPorterAgent = baseApi<
+  {},
+  { project_id: number; cluster_id: number }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/agent/detect`
+);
+
+const installPorterAgent = baseApi<
+  {},
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ cluster_id, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/agent/install`
+);
+
+const getKubeEvents = baseApi<
+  {
+    skip: number;
+    resource_type: string;
+    owner_type?: string;
+    owner_name?: string;
+  },
+  { project_id: number; cluster_id: number }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/kube_events`;
+});
+
+const getKubeEvent = baseApi<
+  {},
+  { project_id: number; cluster_id: number; kube_event_id: number }
+>(
+  "GET",
+  ({ project_id, cluster_id, kube_event_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/kube_events/${kube_event_id}`
+);
+
+const getLogBuckets = baseApi<
+  {},
+  { project_id: number; cluster_id: number; kube_event_id: number }
+>(
+  "GET",
+  ({ project_id, cluster_id, kube_event_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/kube_events/${kube_event_id}/log_buckets`
+);
+
+const getLogBucketLogs = baseApi<
+  { timestamp: number },
+  { project_id: number; cluster_id: number; kube_event_id: number }
+>(
+  "GET",
+  ({ project_id, cluster_id, kube_event_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/kube_events/${kube_event_id}/logs`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1197,6 +1269,7 @@ export default {
   getJobs,
   getJobStatus,
   getJobPods,
+  getPodByName,
   getMatchingPods,
   getMetrics,
   getNamespaces,
@@ -1249,4 +1322,10 @@ export default {
   saveOnboardingState,
   getOnboardingInfra,
   getOnboardingRegistry,
+  detectPorterAgent,
+  installPorterAgent,
+  getKubeEvents,
+  getKubeEvent,
+  getLogBuckets,
+  getLogBucketLogs,
 };

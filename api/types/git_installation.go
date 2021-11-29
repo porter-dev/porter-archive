@@ -39,11 +39,6 @@ type GetBuildpackRequest struct {
 	GithubDirectoryRequest
 }
 
-type GetBuildpackResponse struct {
-	Valid bool   `json:"valid"`
-	Name  string `json:"name"`
-}
-
 type GetContentsRequest struct {
 	GithubDirectoryRequest
 }

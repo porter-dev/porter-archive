@@ -19,8 +19,9 @@ type Notifier interface {
 type DeploymentStatus string
 
 const (
-	StatusDeployed string = "deployed"
-	StatusFailed   string = "failed"
+	StatusHelmDeployed DeploymentStatus = "helm_deployed"
+	StatusPodCrashed   DeploymentStatus = "pod_crashed"
+	StatusHelmFailed   DeploymentStatus = "helm_failed"
 )
 
 type NotifyOpts struct {
@@ -34,7 +35,7 @@ type NotifyOpts struct {
 	ClusterName string
 
 	// Status is the current status of the deployment.
-	Status string
+	Status DeploymentStatus
 
 	// Info is any additional information about this status, such as an error message if
 	// the deployment failed.
@@ -82,36 +83,27 @@ func (s *SlackNotifier) Notify(opts *NotifyOpts) error {
 		if !s.Config.Enabled {
 			return nil
 		}
-		if opts.Status == StatusDeployed && !s.Config.Success {
+		if opts.Status == StatusHelmDeployed && !s.Config.Success {
 			return nil
 		}
-		if opts.Status == StatusFailed && !s.Config.Failure {
+		if opts.Status == StatusPodCrashed && !s.Config.Failure {
 			return nil
 		}
-	}
-
-	blocks := []*SlackBlock{
-		getMessageBlock(opts),
-		getDividerBlock(),
-		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+opts.Name+"`")),
-		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+opts.Namespace+"`")),
-		getMarkdownBlock(fmt.Sprintf("*Version:* %d", opts.Version)),
+		if opts.Status == StatusHelmFailed && !s.Config.Failure {
+			return nil
+		}
 	}
 
 	// we create a basic payload as a fallback if the detailed payload with "info" fails, due to
 	// marshaling errors on the Slack API side.
-	basicSlackPayload := &SlackPayload{
-		Blocks: blocks,
-	}
-
-	infoBlock := getInfoBlock(opts)
-
-	if infoBlock != nil {
-		blocks = append(blocks, infoBlock)
-	}
+	blocks, basicBlocks := getSlackBlocks(opts)
 
 	slackPayload := &SlackPayload{
 		Blocks: blocks,
+	}
+
+	basicSlackPayload := &SlackPayload{
+		Blocks: basicBlocks,
 	}
 
 	basicPayload, err := json.Marshal(basicSlackPayload)
@@ -143,6 +135,37 @@ func (s *SlackNotifier) Notify(opts *NotifyOpts) error {
 	return nil
 }
 
+func getSlackBlocks(opts *NotifyOpts) ([]*SlackBlock, []*SlackBlock) {
+	res := []*SlackBlock{}
+
+	if opts.Status == StatusHelmDeployed || opts.Status == StatusHelmFailed {
+		res = append(res, getHelmMessageBlock(opts))
+	} else if opts.Status == StatusPodCrashed {
+		res = append(res, getPodCrashedMessageBlock(opts))
+	}
+
+	res = append(
+		res,
+		getDividerBlock(),
+		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+opts.Name+"`")),
+		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+opts.Namespace+"`")),
+	)
+
+	if opts.Status == StatusHelmDeployed || opts.Status == StatusHelmFailed {
+		res = append(res, getMarkdownBlock(fmt.Sprintf("*Version:* %d", opts.Version)))
+	}
+
+	basicRes := res
+
+	infoBlock := getInfoBlock(opts)
+
+	if infoBlock != nil {
+		res = append(res, infoBlock)
+	}
+
+	return res, basicRes
+}
+
 func getDividerBlock() *SlackBlock {
 	return &SlackBlock{
 		Type: "divider",
@@ -159,15 +182,25 @@ func getMarkdownBlock(md string) *SlackBlock {
 	}
 }
 
-func getMessageBlock(opts *NotifyOpts) *SlackBlock {
+func getHelmMessageBlock(opts *NotifyOpts) *SlackBlock {
 	var md string
 
 	switch opts.Status {
-	case StatusDeployed:
-		md = getSuccessMessage(opts)
-	case StatusFailed:
-		md = getFailedMessage(opts)
+	case StatusHelmDeployed:
+		md = getHelmSuccessMessage(opts)
+	case StatusHelmFailed:
+		md = getHelmFailedMessage(opts)
 	}
+
+	return getMarkdownBlock(md)
+}
+
+func getPodCrashedMessageBlock(opts *NotifyOpts) *SlackBlock {
+	md := fmt.Sprintf(
+		":x: Your application %s crashed on Porter. <%s|View the application.>",
+		"`"+opts.Name+"`",
+		opts.URL,
+	)
 
 	return getMarkdownBlock(md)
 }
@@ -176,7 +209,9 @@ func getInfoBlock(opts *NotifyOpts) *SlackBlock {
 	var md string
 
 	switch opts.Status {
-	case StatusFailed:
+	case StatusHelmFailed:
+		md = getFailedInfoMessage(opts)
+	case StatusPodCrashed:
 		md = getFailedInfoMessage(opts)
 	default:
 		return nil
@@ -185,7 +220,7 @@ func getInfoBlock(opts *NotifyOpts) *SlackBlock {
 	return getMarkdownBlock(md)
 }
 
-func getSuccessMessage(opts *NotifyOpts) string {
+func getHelmSuccessMessage(opts *NotifyOpts) string {
 	return fmt.Sprintf(
 		":rocket: Your application %s was successfully updated on Porter! <%s|View the new release.>",
 		"`"+opts.Name+"`",
@@ -193,7 +228,7 @@ func getSuccessMessage(opts *NotifyOpts) string {
 	)
 }
 
-func getFailedMessage(opts *NotifyOpts) string {
+func getHelmFailedMessage(opts *NotifyOpts) string {
 	return fmt.Sprintf(
 		":x: Your application %s failed to deploy on Porter. <%s|View the status here.>",
 		"`"+opts.Name+"`",

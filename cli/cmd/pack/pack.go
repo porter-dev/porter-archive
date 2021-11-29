@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/buildpacks/pack"
 	"github.com/porter-dev/porter/api/types"
@@ -44,6 +45,10 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 			buildOpts.Buildpacks = buildConfig.Buildpacks
 		}
 		// FIXME: use all the config vars
+	}
+
+	if strings.HasPrefix(buildOpts.Builder, "paketo") {
+		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "porterhub/paketo-build-plan:latest")
 	}
 
 	return client.Build(context, buildOpts)

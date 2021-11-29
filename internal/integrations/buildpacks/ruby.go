@@ -205,7 +205,7 @@ func (runtime *rubyRuntime) Detect(
 
 	paketoBuildpackInfo := BuildpackInfo{
 		Name:      "Ruby",
-		Buildpack: "paketobuildpacks/ruby",
+		Buildpack: "gcr.io/paketo-buildpacks/ruby",
 	}
 	herokuBuildpackInfo := BuildpackInfo{
 		Name:      "Ruby",

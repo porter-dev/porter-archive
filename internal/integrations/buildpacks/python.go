@@ -129,7 +129,7 @@ func (runtime *pythonRuntime) Detect(
 
 	paketoBuildpackInfo := BuildpackInfo{
 		Name:      "Python",
-		Buildpack: "paketobuildpacks/python",
+		Buildpack: "gcr.io/paketo-buildpacks/python",
 	}
 	herokuBuildpackInfo := BuildpackInfo{
 		Name:      "Python",

@@ -28,7 +28,20 @@ const LogBucketCard: React.FunctionComponent<LogBucketCardProps> = ({
           { project_id, cluster_id, kube_event_id }
         )
         .then((res) => res?.data);
-      setLogs(logsData.logs);
+
+      if (!Array.isArray(logsData.logs)) {
+        setLogs([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const filteredLogs = logsData.logs.filter((log: string | unknown) => {
+        if (typeof log === "string") {
+          return log.length;
+        }
+        return false;
+      });
+      setLogs(filteredLogs);
       setIsLoading(false);
     } catch (error) {
       console.error(error);

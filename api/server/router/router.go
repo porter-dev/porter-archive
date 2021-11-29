@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
@@ -49,6 +50,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 	panicMW := middleware.NewPanicMiddleware(config)
+
+	r.Mount("/debug", chiMiddleware.Profiler())
 
 	r.Route("/api", func(r chi.Router) {
 		// set panic middleware for all API endpoints to catch panics

@@ -81,7 +81,7 @@ func (runtime *goRuntime) Detect(
 
 	paketoBuildpackInfo := BuildpackInfo{
 		Name:      "Go",
-		Buildpack: "paketobuildpacks/go",
+		Buildpack: "gcr.io/paketo-buildpacks/go",
 	}
 	herokuBuildpackInfo := BuildpackInfo{
 		Name:      "Go",

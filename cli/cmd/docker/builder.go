@@ -21,7 +21,7 @@ import (
 type BuildOpts struct {
 	ImageRepo         string
 	Tag               string
-	CurrentTag		  string
+	CurrentTag        string
 	BuildContext      string
 	DockerfilePath    string
 	IsDockerfileInCtx bool

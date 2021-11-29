@@ -32,8 +32,6 @@ const (
 	// Builders
 	PaketoBuilder = "paketo"
 	HerokuBuilder = "heroku"
-
-	DefaultBuilder = "heroku/buildpacks:20"
 )
 
 type BuildpackInfo struct {

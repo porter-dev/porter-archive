@@ -18,7 +18,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 	context := context.Background()
 
 	//initialize a pack client
-	client, err := pack.NewClient()
+	client, err := pack.NewClient(pack.WithLogger(newPackLogger()))
 
 	if err != nil {
 		return err

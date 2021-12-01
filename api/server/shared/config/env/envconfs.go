@@ -85,6 +85,9 @@ type ServerConf struct {
 
 	// Token for internal retool to authenticate to internal API endpoints
 	RetoolToken string `env:"RETOOL_TOKEN"`
+
+	// Enable pprof profiling endpoints
+	PprofEnabled bool `env:"PPROF_ENABLED,default=false"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

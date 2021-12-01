@@ -9,7 +9,7 @@ import styled from "styled-components";
  * will open this modal to let user skip onboarding and keep using porter.
  */
 const SkipOnboardingModal = () => {
-  const { currentModalData, setCurrentModal } = useContext(Context);
+  const { currentModalData, setHasFinishedOnboarding } = useContext(Context);
 
   return (
     <>
@@ -22,10 +22,12 @@ const SkipOnboardingModal = () => {
         <ActionButton
           text="Yes, skip setup"
           color="#616FEEcc"
-          onClick={() =>
-            typeof currentModalData?.skipOnboarding === "function" &&
-            currentModalData.skipOnboarding()
-          }
+          onClick={() => {
+            if (typeof currentModalData?.skipOnboarding === "function") {
+              currentModalData.skipOnboarding();
+            }
+            setHasFinishedOnboarding(true);
+          }}
           status={""}
           clearPosition
         />

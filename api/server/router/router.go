@@ -51,7 +51,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 	panicMW := middleware.NewPanicMiddleware(config)
 
-	r.Mount("/debug", chiMiddleware.Profiler())
+	if config.ServerConf.PprofEnabled {
+		r.Mount("/debug", chiMiddleware.Profiler())
+	}
 
 	r.Route("/api", func(r chi.Router) {
 		// set panic middleware for all API endpoints to catch panics

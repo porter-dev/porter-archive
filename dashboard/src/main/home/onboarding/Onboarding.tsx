@@ -135,7 +135,7 @@ const Onboarding = () => {
 
       const hasClusters = Array.isArray(clusters) && clusters.length;
 
-      if (hasClusters) {
+      if (hasClusters && !context.hasFinishedOnboarding) {
         setCurrentModal("SkipOnboardingModal", { skipOnboarding });
       }
     } catch (error) {

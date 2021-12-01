@@ -108,6 +108,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	fs := http.FileServer(http.Dir(staticFilePath))
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Frame-Options", "DENY")
+
 		if _, err := os.Stat(staticFilePath + r.RequestURI); os.IsNotExist(err) {
 			w.Header().Set("Cache-Control", "no-cache")
 

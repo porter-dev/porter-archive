@@ -6,7 +6,7 @@ import "time"
 type ServerConf struct {
 	Debug bool `env:"DEBUG,default=false"`
 
-	ServerURL            string        `env:"SERVER_URL,default=http://localhost:8080"`
+	ServerURL            string        `env:"SERVER_URL,default=http://http-backend-server:8080"`
 	Port                 int           `env:"SERVER_PORT,default=8080"`
 	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
 	CookieName           string        `env:"COOKIE_NAME,default=porter"`

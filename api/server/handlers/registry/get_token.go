@@ -137,7 +137,7 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 				return
 			}
 
-			token = string(tokenCache.Token)
+			token = tokenCache.AccessToken
 			expiresAt = &tokenCache.Expiry
 			break
 		}

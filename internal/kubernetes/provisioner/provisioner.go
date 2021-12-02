@@ -105,12 +105,28 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 						{
 							Name:            "provisioner",
 							Image:           "gcr.io/porter-dev-273614/provisioner:" + opts.ProvImageTag,
-							ImagePullPolicy: v1.PullAlways,
+							ImagePullPolicy: v1.PullIfNotPresent,
 							Args: []string{
 								string(opts.OperationKind),
 								string(opts.Infra.Kind),
 							},
 							Env: env,
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      "cloud-keys",
+									MountPath: "/root",
+								},
+							},
+						},
+					},
+					Volumes: []v1.Volume{
+						{
+							Name: "cloud-keys",
+							VolumeSource: v1.VolumeSource{
+								Secret: &v1.SecretVolumeSource{
+									SecretName: "cloud-creds",
+								},
+							},
 						},
 					},
 				},

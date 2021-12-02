@@ -6,8 +6,8 @@ import (
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/switchboard/internal/exec"
 	"github.com/porter-dev/switchboard/pkg/parser"
+	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	"github.com/porter-dev/switchboard/pkg/worker"
 	"github.com/spf13/cobra"
 )
@@ -54,7 +54,7 @@ func apply(user *types.GetAuthenticatedUserResponse, client *api.Client, args []
 
 	worker := worker.NewWorker()
 
-	return worker.Apply(resGroup, &exec.ApplyOpts{
+	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
 	})
 }

@@ -1,8 +1,5 @@
 Porter secures application endpoints with HTTPS and sets up custom domains using [cert-manager](https://cert-manager.io/) and [lets-encrypt](https://letsencrypt.org/). Below are the steps to set up custom domains on each cloud provider.
 
-# Choosing between `A` and `CNAME` records
-A basic rule of thumb you can follow whilst trying to choose between setting up an `A` records as opposed to a `CNAME` record for your cluster, is to see how your cluster's load balancer is exposed to the Internet. If your load balancer exposes a public IP, you should use an `A` record for your custom domain that points to the public IP - as is the case with GKE. If your load balancer exposes a FQDN, then you should use a `CNAME` record - this is common with EKS clusters that use AWS Network Load Balancers/Application Load Balancers.
-
 # Amazon Web Services (AWS)
 
 Porter provisions a EKS cluster and an ECR registry in your AWS account by default. Along with these resources, it also deploys both the `nginx-ingress` controller and cert-manager on the provisioned cluster - there is no need to separately install these components.
@@ -144,3 +141,7 @@ It might take a few minutes for the HTTPS Issuer instance to be ready. To be saf
 After you hit deploy, it might take a few minutes for the endpoint to be secured with HTTPS. Once that's done, you will be able to access endpoints on the domain you have specified. 
 
 With wildcard domain enabled, you can create deployments and expose them on domains without having to create another DNS record, as long as the domain matches the wildcard domain.
+
+# Choosing between `A` and `CNAME` records
+
+A basic rule of thumb you can follow whilst trying to choose between setting up an `A` records as opposed to a `CNAME` record for your cluster, is to see how your cluster's load balancer is exposed to the Internet. If your load balancer exposes a public IP, you should use an `A` record for your custom domain that points to the public IP - as is the case with GKE. If your load balancer exposes a FQDN, then you should use a `CNAME` record - this is common with EKS clusters that use AWS Network Load Balancers/Application Load Balancers.

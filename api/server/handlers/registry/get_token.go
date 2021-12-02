@@ -130,15 +130,19 @@ func (c *RegistryGetGCRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
 			_reg := registry.Registry(*reg)
 
-			tokenCache, err := _reg.GetGCRToken(c.Repo())
+			oauthTok, err := _reg.GetGCRToken(c.Repo())
 
-			if err != nil {
+			// if the oauth token is not nil, but the error is not nil, we still return the token
+			// but log an error
+			if oauthTok != nil && err != nil {
+				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+			} else if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
 
-			token = tokenCache.AccessToken
-			expiresAt = &tokenCache.Expiry
+			token = oauthTok.AccessToken
+			expiresAt = &oauthTok.Expiry
 			break
 		}
 	}

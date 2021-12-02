@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useLocation } from "react-router";
+import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import { proxy, useSnapshot } from "valtio";
 import { StepKey, Steps } from "../types";
@@ -287,12 +288,15 @@ export const useSteps = (isParentLoading?: boolean) => {
   const snap = useSnapshot(StepHandler);
   const location = useLocation();
   const { pushFiltered } = useRouting();
+  const { setHasFinishedOnboarding } = useContext(Context);
+
   useEffect(() => {
     if (isParentLoading) {
       return;
     }
     if (snap.currentStepName === "clean_up") {
       StepHandler.actions.clearState();
+      setHasFinishedOnboarding(true);
     }
     pushFiltered(snap.currentStep.url, ["tab"]);
   }, [location.pathname, snap.currentStep?.url, isParentLoading]);

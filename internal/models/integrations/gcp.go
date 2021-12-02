@@ -88,9 +88,9 @@ func (g *GCPIntegration) GetBearerToken(
 	}
 
 	// update the token cache
-	setTokenCache(tok.AccessToken, tok.Expiry)
+	err = setTokenCache(tok.AccessToken, tok.Expiry)
 
-	return tok, nil
+	return tok, err
 }
 
 // credentialsFile is the unmarshalled representation of a GCP credentials file.

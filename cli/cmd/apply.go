@@ -6,6 +6,7 @@ import (
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/switchboard/internal/exec"
 	"github.com/porter-dev/switchboard/pkg/parser"
 	"github.com/porter-dev/switchboard/pkg/worker"
 	"github.com/spf13/cobra"
@@ -51,7 +52,9 @@ func apply(user *types.GetAuthenticatedUserResponse, client *api.Client, args []
 		return err
 	}
 
-	return worker.Apply(resGroup, &worker.ApplyOpts{
+	worker := worker.NewWorker()
+
+	return worker.Apply(resGroup, &exec.ApplyOpts{
 		BasePath: basePath,
 	})
 }

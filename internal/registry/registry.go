@@ -83,11 +83,17 @@ type gcrJWT struct {
 	ExpiresInSec int    `json:"expires_in"`
 }
 
-type gcrRepositoryResp struct {
-	Repositories []string `json:"repositories"`
+type gcrErr struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
-func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, error) {
+type gcrRepositoryResp struct {
+	Repositories []string `json:"repositories"`
+	Errors       []gcrErr `json:"errors"`
+}
+
+func (r *Registry) GetGCRToken(repo repository.Repository) (*oauth2.Token, error) {
 	getTokenCache := r.getTokenCacheFunc(repo)
 
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
@@ -100,24 +106,11 @@ func (r *Registry) GetGCRToken(repo repository.Repository) (*ints.TokenCache, er
 	}
 
 	// get oauth2 access token
-	_, err = gcp.GetBearerToken(
+	return gcp.GetBearerToken(
 		getTokenCache,
 		r.setTokenCacheFunc(repo),
 		"https://www.googleapis.com/auth/devstorage.read_write",
 	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// it's now written to the token cache, so return
-	cache, err := getTokenCache()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return cache, nil
 }
 
 func (r *Registry) listGCRRepositories(
@@ -158,6 +151,15 @@ func (r *Registry) listGCRRepositories(
 
 	if err := json.NewDecoder(resp.Body).Decode(&gcrResp); err != nil {
 		return nil, fmt.Errorf("Could not read GCR repositories: %v", err)
+	}
+
+	if len(gcrResp.Errors) > 0 {
+		errMsg := ""
+		for _, gcrErr := range gcrResp.Errors {
+			errMsg += fmt.Sprintf(": Code %s, message %s", gcrErr.Code, gcrErr.Message)
+		}
+
+		return nil, fmt.Errorf(errMsg)
 	}
 
 	res := make([]*ptypes.RegistryRepository, 0)

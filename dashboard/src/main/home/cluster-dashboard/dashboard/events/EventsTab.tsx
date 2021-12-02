@@ -54,6 +54,7 @@ const EventsTab = () => {
       <SubEventsList
         event={currentEvent}
         clearSelectedEvent={() => setCurrentEvent(null)}
+        enableTopMargin
       />
     );
   }

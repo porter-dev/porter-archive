@@ -1,7 +1,6 @@
 package buildpacks
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/google/go-github/github"
@@ -74,18 +73,15 @@ func (runtime *goRuntime) Detect(
 		bool
 	}, 2)
 
-	fmt.Printf("Starting detection for a Go runtime for %s/%s\n", owner, name)
 	runtime.wg.Add(2)
-	fmt.Println("Checking for go-mod")
 	go runtime.detectMod(results, directoryContent)
-	fmt.Println("Checking for dep")
 	go runtime.detectDep(results, directoryContent)
 	runtime.wg.Wait()
 	close(results)
 
 	paketoBuildpackInfo := BuildpackInfo{
 		Name:      "Go",
-		Buildpack: "paketobuildpacks/go",
+		Buildpack: "gcr.io/paketo-buildpacks/go",
 	}
 	herokuBuildpackInfo := BuildpackInfo{
 		Name:      "Go",
@@ -93,13 +89,11 @@ func (runtime *goRuntime) Detect(
 	}
 
 	if len(results) == 0 {
-		fmt.Printf("No Go runtime detected for %s/%s\n", owner, name)
 		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
 		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
 		return nil
 	}
 
-	fmt.Printf("Go runtime detected for %s/%s\n", owner, name)
 	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
 	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
 

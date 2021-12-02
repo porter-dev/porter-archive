@@ -135,7 +135,9 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
+	if request.BuildConfig != nil {
+		_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
+	}
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

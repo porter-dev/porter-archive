@@ -238,10 +238,12 @@ func (d *DeployAgent) Build() error {
 		}
 	}
 
-	if d.tag == "" {
-		currImageSection := d.release.Config["image"].(map[string]interface{})
+	// retrieve current image to use for cache
+	currImageSection := d.release.Config["image"].(map[string]interface{})
+	currentTag := currImageSection["tag"].(string)
 
-		d.tag = currImageSection["tag"].(string)
+	if d.tag == "" {
+		d.tag = currentTag
 	}
 
 	err = d.pullCurrentReleaseImage()
@@ -269,6 +271,7 @@ func (d *DeployAgent) Build() error {
 			buildCtx,
 			d.dockerfilePath,
 			d.tag,
+			currentTag,
 		)
 	}
 

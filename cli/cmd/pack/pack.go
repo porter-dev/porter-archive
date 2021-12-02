@@ -2,14 +2,13 @@ package pack
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/buildpacks/pack"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
-	"github.com/porter-dev/porter/internal/integrations/buildpacks"
 )
 
 type Agent struct{}
@@ -19,7 +18,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 	context := context.Background()
 
 	//initialize a pack client
-	client, err := pack.NewClient()
+	client, err := pack.NewClient(pack.WithLogger(newPackLogger()))
 
 	if err != nil {
 		return err
@@ -38,24 +37,6 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		AppPath:         opts.BuildContext,
 		TrustBuilder:    true,
 		Env:             opts.Env,
-		// Builder:            "paketobuildpacks/builder:tiny",
-		// DefaultProcessType: "some-custom-command from Procfile",
-		// Buildpacks:         []string{"gcr.io/paketo-buildpacks/procfile"},
-	}
-
-	if buildConfig != nil {
-		var buildpacks buildpacks.BuildpackInfo
-		err = json.Unmarshal(buildConfig.Buildpacks, &buildpacks)
-		if err == nil {
-			var packs []string
-			for i := range buildpacks.Packs {
-				packs = append(packs, fmt.Sprintf("%s@%s", buildpacks.Packs[i].ID, buildpacks.Packs[i].Version))
-			}
-			if len(packs) > 0 {
-				buildOpts.Builder = "paketobuildpacks/builder:tiny"
-				buildOpts.Buildpacks = packs
-			}
-		}
 	}
 
 	if buildConfig != nil {
@@ -64,6 +45,10 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 			buildOpts.Buildpacks = buildConfig.Buildpacks
 		}
 		// FIXME: use all the config vars
+	}
+
+	if strings.HasPrefix(buildOpts.Builder, "heroku") {
+		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile")
 	}
 
 	return client.Build(context, buildOpts)

@@ -227,7 +227,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
 
 export default ActionDetails;
 
-const DEFAULT_BUILDER_NAME = "paketo";
+const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
 
@@ -254,11 +254,9 @@ export const BuildpackSelection: React.FC<{
   const [stacks, setStacks] = useState<string[]>(null);
   const [selectedStack, setSelectedStack] = useState<string>(null);
 
-  const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>(
-    null
-  );
+  const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>([]);
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
-    null
+    []
   );
 
   useEffect(() => {
@@ -479,74 +477,6 @@ export const BuildpackSelection: React.FC<{
     </BuildpackConfigurationContainer>
   );
 };
-
-const getMockData = () =>
-  new Promise<{ data: DetectBuildpackResponse }>((res) => {
-    setTimeout(() => res({ data: mock_data }), 1000);
-  });
-
-const mock_data: DetectBuildpackResponse = [
-  {
-    name: "Paketo",
-    builders: [
-      "paketobuildpacks/builder:full",
-      "paketobuildpacks/builder:tiny",
-      "paketobuildpacks/builder:base",
-    ],
-    detected: [
-      {
-        name: "NodeJS",
-        buildpack: "paketobuildpacks/nodejs",
-        config: null,
-      },
-    ],
-    others: [
-      {
-        name: "Python",
-        buildpack: "paketobuildpacks/python",
-        config: null,
-      },
-      {
-        name: "Go",
-        buildpack: "paketobuildpacks/go",
-        config: null,
-      },
-      {
-        name: "Ruby",
-        buildpack: "paketobuildpacks/ruby",
-        config: null,
-      },
-    ],
-  },
-  {
-    name: "Heroku",
-    builders: ["heroku/buildpacks:20", "heroku/buildpacks:18"],
-    detected: [
-      {
-        name: "NodeJS",
-        buildpack: "heroku/nodejs",
-        config: null,
-      },
-      {
-        name: "Python",
-        buildpack: "heroku/python",
-        config: null,
-      },
-    ],
-    others: [
-      {
-        name: "Go",
-        buildpack: "heroku/go",
-        config: null,
-      },
-      {
-        name: "Ruby",
-        buildpack: "heroku/ruby",
-        config: null,
-      },
-    ],
-  },
-];
 
 const fadeIn = keyframes`
   from {
@@ -776,7 +706,13 @@ const DeleteButton = styled.button`
   justify-content: center;
   align-items: center;
   border-radius: 50%;
+  cursor: pointer;
   color: #aaaabb;
+
+  :hover {
+    background: #ffffff11;
+    border: 1px solid #ffffff44;
+  }
 
   > span {
     font-size: 20px;

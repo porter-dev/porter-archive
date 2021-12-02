@@ -425,6 +425,39 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/pods/{name} -> namespace.NewGetPodHandler
+	getPodEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/pods/{%s}",
+					relPath,
+					types.URLParamPodName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	getPodHandler := namespace.NewGetPodHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getPodEndpoint,
+		Handler:  getPodHandler,
+		Router:   r,
+	})
+
 	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/pods/{name} -> namespace.NewDeletePodHandler
 	deletePodEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

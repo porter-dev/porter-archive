@@ -81,6 +81,7 @@ const EnvironmentDetail = () => {
           currentView="cluster-dashboard"
           sortType="Newest"
           namespace={environment.namespace}
+          disableBottomPadding
         />
       </ChartListWrapper>
       <LinkToActionsWrapper>

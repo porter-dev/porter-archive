@@ -20,25 +20,25 @@ const mockData: Environment[] = [
     id: 1,
     url: "http://some-url",
     pr_link: "https://githubsuper",
-    status: "some",
+    status: "deployed",
   },
   {
     id: 2,
     url: "http://some-url",
     pr_link: "https://githubsuper",
-    status: "some",
+    status: "deployed",
   },
   {
     id: 3,
     url: "http://some-url",
     pr_link: "https://githubsuper",
-    status: "some",
+    status: "deployed",
   },
   {
     id: 4,
     url: "http://some-url",
     pr_link: "https://githubsuper",
-    status: "some",
+    status: "deployed",
   },
 ];
 
@@ -110,7 +110,11 @@ const EnvironmentList = () => {
   }, [location.search, history]);
 
   if (showConnectRepoFlow) {
-    return <ConnectNewRepo />;
+    return (
+      <Container>
+        <ConnectNewRepo />
+      </Container>
+    );
   }
 
   if (isLoading) {
@@ -130,9 +134,12 @@ const EnvironmentList = () => {
   }
 
   return (
-    <>
+    <Container>
       <ControlRow>
-        <Button onClick={() => console.log("launch repo")}>
+        <Button
+          to={`${currentUrl}?selected_tab=preview_environments&action=connect-repo`}
+          onClick={() => console.log("launch repo")}
+        >
           <i className="material-icons">add</i> Add repository
         </Button>
         <SortFilterWrapper>
@@ -158,7 +165,7 @@ const EnvironmentList = () => {
               </DataAndIconContainer>
               <StatusContainer>
                 <Status>
-                  <StatusDot status="deployed" />
+                  <StatusDot status={env.status} />
                   {capitalize(env.status)}
                 </Status>
               </StatusContainer>
@@ -166,14 +173,17 @@ const EnvironmentList = () => {
           );
         })}
       </EventsGrid>
-    </>
+    </Container>
   );
 };
 
 export default EnvironmentList;
 
-const ControlRow = styled.div`
+const Container = styled.div`
   margin-top: 30px;
+`;
+
+const ControlRow = styled.div`
   display: flex;
   margin-left: auto;
   justify-content: space-between;
@@ -182,7 +192,7 @@ const ControlRow = styled.div`
   padding-left: 0px;
 `;
 
-const Button = styled.div`
+const Button = styled(DynamicLink)`
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -246,7 +256,7 @@ const EnvironmentCard = styled(DynamicLink)`
   border-radius: 8px;
   padding: 20px;
 
-  animation: fadeIn 0.5s;
+  animation: fadeIn 0.8s;
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -266,7 +276,7 @@ const EnvironmentCard = styled(DynamicLink)`
 
 const EventsGrid = styled.div`
   display: grid;
-  grid-row-gap: 15px;
+  grid-row-gap: 20px;
   grid-template-columns: 1;
 `;
 

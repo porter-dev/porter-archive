@@ -308,9 +308,12 @@ export const BuildpackSelection: React.FC<{
 
         setStacks(defaultBuilder.builders);
         setSelectedStack(defaultStack);
-
-        setSelectedBuildpacks(detectedBuildpacks);
-        setAvailableBuildpacks(availableBuildpacks);
+        if (!Array.isArray(detectedBuildpacks)) {
+          setSelectedBuildpacks([]);
+        }
+        if (!Array.isArray(availableBuildpacks)) {
+          setAvailableBuildpacks([]);
+        }
       })
       .catch((err) => {
         console.error(err);

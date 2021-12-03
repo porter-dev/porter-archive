@@ -1,12 +1,15 @@
+import DynamicLink from "components/DynamicLink";
 import React, { useEffect, useState } from "react";
-import { useHistory, useLocation } from "react-router";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { getQueryParam } from "shared/routing";
 import styled from "styled-components";
 import SortSelector from "../../SortSelector";
 import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
 import ConnectNewRepo from "./components/ConnectNewRepo";
+import pr_icon from "assets/pull_request_icon.svg";
 
 type Environment = {
+  id: number;
   url: string;
   pr_link: string;
   status: string;
@@ -14,21 +17,25 @@ type Environment = {
 
 const mockData: Environment[] = [
   {
+    id: 1,
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "some",
   },
   {
+    id: 2,
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "some",
   },
   {
+    id: 3,
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "some",
   },
   {
+    id: 4,
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "some",
@@ -38,16 +45,22 @@ const mockData: Environment[] = [
 const getMockData = () =>
   new Promise<{ data: Environment[] }>((resolve) => {
     setTimeout(() => {
-      // resolve({ data: mockData });
-      resolve({ data: [] });
+      resolve({ data: mockData });
+      // resolve({ data: [] });
     }, 2000);
   });
+
+const capitalize = (s: string) => {
+  return s.charAt(0).toUpperCase() + s.substring(1).toLowerCase();
+};
 
 const EnvironmentList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [environmentList, setEnvironmentList] = useState<Environment[]>([]);
   const [showConnectRepoFlow, setShowConnectRepoFlow] = useState(false);
+
+  const { url: currentUrl } = useRouteMatch();
 
   const location = useLocation();
   const history = useHistory();
@@ -117,7 +130,7 @@ const EnvironmentList = () => {
   }
 
   return (
-    <div>
+    <>
       <ControlRow>
         <Button onClick={() => console.log("launch repo")}>
           <i className="material-icons">add</i> Add repository
@@ -129,22 +142,38 @@ const EnvironmentList = () => {
           /> */}
         </SortFilterWrapper>
       </ControlRow>
-      {environmentList.map((env) => {
-        return (
-          <div key={env.pr_link}>
-            <span>{env.url}</span>
-            <span>{env.pr_link}</span>
-            <span>{env.status}</span>
-          </div>
-        );
-      })}
-    </div>
+      <EventsGrid>
+        {environmentList.map((env) => {
+          return (
+            <EnvironmentCard
+              to={`${currentUrl}/pr-env-detail/${env.id}`}
+              key={env.pr_link}
+            >
+              <DataAndIconContainer>
+                <PRIcon src={pr_icon} alt="pull request icon" />
+                <DataContainer>
+                  <DataPRUrl>URL: {env.url}</DataPRUrl>
+                  <DataPRLink>PR Link: {env.pr_link}</DataPRLink>
+                </DataContainer>
+              </DataAndIconContainer>
+              <StatusContainer>
+                <Status>
+                  <StatusDot status="deployed" />
+                  {capitalize(env.status)}
+                </Status>
+              </StatusContainer>
+            </EnvironmentCard>
+          );
+        })}
+      </EventsGrid>
+    </>
   );
 };
 
 export default EnvironmentList;
 
 const ControlRow = styled.div`
+  margin-top: 30px;
   display: flex;
   margin-left: auto;
   justify-content: space-between;
@@ -203,4 +232,98 @@ const SortFilterWrapper = styled.div`
   > div:not(:first-child) {
     margin-left: 30px;
   }
+`;
+
+const EnvironmentCard = styled(DynamicLink)`
+  background: #26282f;
+  min-height: 90px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #26282f;
+  box-shadow: 0 4px 15px 0px #00000055;
+  border-radius: 8px;
+  padding: 20px;
+
+  animation: fadeIn 0.5s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  :hover {
+    transform: scale(1.025);
+    box-shadow: 0 8px 20px 0px #00000030;
+    cursor: pointer;
+  }
+`;
+
+const EventsGrid = styled.div`
+  display: grid;
+  grid-row-gap: 15px;
+  grid-template-columns: 1;
+`;
+
+const DataContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+`;
+
+const StatusContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
+`;
+
+const DataPRUrl = styled.span`
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+`;
+
+const PRIcon = styled.img`
+  width: 25px;
+  margin-right: 10px;
+`;
+
+const DataAndIconContainer = styled.div`
+  display: flex;
+  height: 100%;
+`;
+
+const DataPRLink = styled.span`
+  font-size: 14px;
+  color: #a7a6bb;
+`;
+
+const Status = styled.span`
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  min-height: 17px;
+  color: #a7a6bb;
+`;
+
+const StatusDot = styled.div`
+  width: 8px;
+  height: 8px;
+  background: ${(props: { status: string }) =>
+    props.status === "deployed"
+      ? "#4797ff"
+      : props.status === "failed"
+      ? "#ed5f85"
+      : props.status === "completed"
+      ? "#00d12a"
+      : "#f5cb42"};
+  border-radius: 20px;
+  margin-left: 3px;
+  margin-right: 5px;
 `;

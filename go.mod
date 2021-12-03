@@ -37,6 +37,7 @@ require (
 	github.com/kris-nova/logger v0.0.0-20181127235838-fd0d87064b06
 	github.com/kris-nova/lolgopher v0.0.0-20180921204813-313b3abb0d9b // indirect
 	github.com/mattn/go-runewidth v0.0.12 // indirect
+	github.com/mitchellh/mapstructure v1.4.3
 	github.com/moby/moby v20.10.6+incompatible
 	github.com/moby/term v0.0.0-20210610120745-9d4ed1856297
 	github.com/onsi/gomega v1.16.0 // indirect
@@ -54,9 +55,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
-	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
-	golang.org/x/sys v0.0.0-20210819135213-f52c844e1c1c // indirect
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0

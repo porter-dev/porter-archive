@@ -3,8 +3,9 @@ package cmd
 import (
 	"io/ioutil"
 	"os"
-	"strconv"
+	"path/filepath"
 
+	"github.com/mitchellh/mapstructure"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -12,7 +13,6 @@ import (
 	"github.com/porter-dev/switchboard/pkg/parser"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
 	"github.com/porter-dev/switchboard/pkg/worker"
-	"github.com/porter-dev/switchboard/utils/objutils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -58,6 +58,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	}
 
 	worker := worker.NewWorker()
+	worker.RegisterDriver("", NewPorterDriver) // FIXME: workaround for when driver is not present
 	worker.RegisterDriver("porter.deploy", NewPorterDriver)
 
 	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
@@ -77,9 +78,18 @@ type Target struct {
 	Namespace string
 }
 
+type Config struct {
+	Build struct {
+		Method  string
+		Context string
+	}
+	Values map[string]interface{}
+}
+
 type Driver struct {
 	source      *Source
 	target      *Target
+	config      *Config
 	output      map[string]interface{}
 	lookupTable *map[string]drivers.Driver
 	logger      *zerolog.Logger
@@ -121,6 +131,14 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		}
 	}
 
+	if resource.Config != nil {
+		config, err := getConfig(resource.Config)
+		if err != nil {
+			return nil, err
+		}
+		driver.config = config
+	}
+
 	return driver, nil
 }
 
@@ -129,10 +147,21 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
-	app = resource.Name
+	// TODO: use source.repo, source.version, config.values
+	name = resource.Name
+	source = "local"
+	namespace = d.target.Namespace
+	if d.config != nil {
+		method = d.config.Build.Method
+		absPath, err := filepath.Abs(d.config.Build.Context)
+		if err != nil {
+			return nil, err
+		}
+		localPath = absPath
+	}
 	config.SetProject(d.target.Project)
 	config.SetCluster(d.target.Cluster)
-	err := updateFull(nil, GetAPIClient(config), []string{})
+	err := createFull(nil, GetAPIClient(config), []string{d.source.Name})
 	if err != nil {
 		return nil, err
 	}
@@ -147,23 +176,10 @@ func (d *Driver) Output() (map[string]interface{}, error) {
 func getSource(genericSource map[string]interface{}) (*Source, error) {
 	source := &Source{}
 
-	name, err := objutils.GetNestedString(genericSource, "name")
+	err := mapstructure.Decode(genericSource, source)
 	if err != nil {
 		return nil, err
 	}
-	source.Name = name
-
-	repo, err := objutils.GetNestedString(genericSource, "repo")
-	if err != nil {
-		return nil, err
-	}
-	source.Repo = repo
-
-	version, err := objutils.GetNestedString(genericSource, "version")
-	if err != nil {
-		return nil, err
-	}
-	source.Version = version
 
 	return source, nil
 }
@@ -171,31 +187,21 @@ func getSource(genericSource map[string]interface{}) (*Source, error) {
 func getTarget(genericTarget map[string]interface{}) (*Target, error) {
 	target := &Target{}
 
-	project, err := objutils.GetNestedString(genericTarget, "project")
+	err := mapstructure.Decode(genericTarget, target)
 	if err != nil {
 		return nil, err
 	}
-	projectNum, err := strconv.Atoi(project)
-	if err != nil {
-		return nil, err
-	}
-	target.Project = uint(projectNum)
-
-	cluster, err := objutils.GetNestedString(genericTarget, "cluster")
-	if err != nil {
-		return nil, err
-	}
-	clusterNum, err := strconv.Atoi(cluster)
-	if err != nil {
-		return nil, err
-	}
-	target.Cluster = uint(clusterNum)
-
-	namespace, err := objutils.GetNestedString(genericTarget, "namespace")
-	if err != nil {
-		return nil, err
-	}
-	target.Namespace = namespace
 
 	return target, nil
+}
+
+func getConfig(genericConfig map[string]interface{}) (*Config, error) {
+	config := &Config{}
+
+	err := mapstructure.Decode(genericConfig, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }

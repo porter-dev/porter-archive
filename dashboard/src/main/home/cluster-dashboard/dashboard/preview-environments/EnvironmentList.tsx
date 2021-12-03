@@ -8,11 +8,13 @@ import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments"
 import ConnectNewRepo from "./components/ConnectNewRepo";
 import pr_icon from "assets/pull_request_icon.svg";
 
-type Environment = {
+export type Environment = {
   id: number;
   url: string;
   pr_link: string;
   status: string;
+  namespace: string;
+  actions_link: string;
 };
 
 const mockData: Environment[] = [
@@ -21,24 +23,32 @@ const mockData: Environment[] = [
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "deployed",
+    namespace: "stuff",
+    actions_link: "https://githubsuperactions.com",
   },
   {
     id: 2,
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "deployed",
+    namespace: "stuff",
+    actions_link: "https://githubsuperactions.com",
   },
   {
     id: 3,
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "deployed",
+    namespace: "stuff",
+    actions_link: "https://githubsuperactions.com",
   },
   {
     id: 4,
     url: "http://some-url",
     pr_link: "https://githubsuper",
     status: "deployed",
+    namespace: "stuff",
+    actions_link: "https://githubsuperactions.com",
   },
 ];
 
@@ -50,7 +60,7 @@ const getMockData = () =>
     }, 2000);
   });
 
-const capitalize = (s: string) => {
+export const capitalize = (s: string) => {
   return s.charAt(0).toUpperCase() + s.substring(1).toLowerCase();
 };
 

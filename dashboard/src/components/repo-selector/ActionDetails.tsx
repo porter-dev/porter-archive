@@ -254,11 +254,9 @@ export const BuildpackSelection: React.FC<{
   const [stacks, setStacks] = useState<string[]>(null);
   const [selectedStack, setSelectedStack] = useState<string>(null);
 
-  const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>(
-    null
-  );
+  const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>([]);
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
-    null
+    []
   );
 
   useEffect(() => {

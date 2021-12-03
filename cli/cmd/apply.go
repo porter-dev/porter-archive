@@ -130,6 +130,8 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	app = resource.Name
+	config.SetProject(d.target.Project)
+	config.SetCluster(d.target.Cluster)
 	err := updateFull(nil, GetAPIClient(config), []string{})
 	if err != nil {
 		return nil, err

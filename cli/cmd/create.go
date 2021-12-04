@@ -22,30 +22,30 @@ var createCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Creates a new application with name given by the --app flag.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
-Creates a new application with name given by the --app flag and a "kind", which can be one of 
+Creates a new application with name given by the --app flag and a "kind", which can be one of
 web, worker, or job. For example:
 
   %s
 
-To modify the default configuration of the application, you can pass a values.yaml file in via the 
---values flag. 
+To modify the default configuration of the application, you can pass a values.yaml file in via the
+--values flag.
 
   %s
 
-To read more about the configuration options, go here: 
+To read more about the configuration options, go here:
 
 https://docs.getporter.dev/docs/deploying-from-the-cli#common-configuration-options
 
-This command will automatically build from a local path, and will create a new Docker image in your 
+This command will automatically build from a local path, and will create a new Docker image in your
 default Docker registry. The path can be configured via the --path flag. For example:
-  
+
   %s
 
-To connect the application to Github, so that the application rebuilds and redeploys on each push 
-to a Github branch, you can specify "--source github". If your local branch is set to track changes 
-from an upstream remote branch, Porter will try to use the connected remote and remote branch as the 
+To connect the application to Github, so that the application rebuilds and redeploys on each push
+to a Github branch, you can specify "--source github". If your local branch is set to track changes
+from an upstream remote branch, Porter will try to use the connected remote and remote branch as the
 Github repository to link to. Otherwise, Porter will use the remote given by origin. For example:
 
   %s
@@ -53,7 +53,7 @@ Github repository to link to. Otherwise, Porter will use the remote given by ori
 To deploy an application from a Docker registry, use "--source registry" and pass the image in via the
 --image flag. The image flag must be of the form repository:tag. For example:
 
-  %s 
+  %s
 `,
 		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter create\":"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app"),
@@ -76,6 +76,7 @@ var values string
 var source string
 var image string
 var registryURL string
+var valuesObj map[string]interface{}
 
 func init() {
 	rootCmd.AddCommand(createCmd)
@@ -156,11 +157,14 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		return fmt.Errorf("%s is not a supported type: specify web, job, or worker", args[0])
 	}
 
-	// read the values if necessary
-	valuesObj, err := readValuesFile()
+	var err error
 
-	if err != nil {
-		return err
+	// read the values if necessary
+	if valuesObj == nil {
+		valuesObj, err = readValuesFile()
+		if err != nil {
+			return err
+		}
 	}
 
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", args[0], name)

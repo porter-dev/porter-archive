@@ -169,7 +169,7 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	valuesObj = d.config.Values
 
 	_, err = client.GetRelease(context.Background(), config.Project, config.Cluster, d.target.Namespace, resource.Name)
-	if err != nil {
+	if err == nil {
 		// app exists
 		if resource.Name == "" {
 			return nil, fmt.Errorf("empty app name")
@@ -257,16 +257,20 @@ func getTarget(genericTarget map[string]interface{}) (*Target, error) {
 	target := &Target{}
 
 	// first read from env vars
-	project, err := strconv.Atoi(os.Getenv("PORTER_PROJECT"))
-	if err != nil {
-		return nil, err
+	if projectEnv := os.Getenv("PORTER_PROJECT"); projectEnv != "" {
+		project, err := strconv.Atoi(projectEnv)
+		if err != nil {
+			return nil, err
+		}
+		target.Project = uint(project)
 	}
-	target.Project = uint(project)
-	cluster, err := strconv.Atoi(os.Getenv("PORTER_CLUSTER"))
-	if err != nil {
-		return nil, err
+	if clusterEnv := os.Getenv("PORTER_CLUSTER"); clusterEnv != "" {
+		cluster, err := strconv.Atoi(clusterEnv)
+		if err != nil {
+			return nil, err
+		}
+		target.Cluster = uint(cluster)
 	}
-	target.Cluster = uint(cluster)
 	target.Namespace = os.Getenv("PORTER_NAMESPACE")
 
 	// next, check for values in the YAML file

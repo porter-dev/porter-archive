@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
+	"strconv"
 
+	"github.com/cli/cli/git"
 	"github.com/mitchellh/mapstructure"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -80,8 +83,9 @@ type Target struct {
 
 type Config struct {
 	Build struct {
-		Method  string
-		Context string
+		Method     string
+		Context    string
+		Dockerfile string
 	}
 	Values map[string]interface{}
 }
@@ -101,43 +105,23 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		logger:      opts.Logger,
 	}
 
-	if resource.Source != nil {
-		source, err := getSource(resource.Source)
-		if err != nil {
-			return nil, err
-		}
-		driver.source = source
-	} else {
-		// default source
-		driver.source = &Source{
-			Name:    "web",
-			Repo:    "https://charts.getporter.dev",
-			Version: "v0.13.0",
-		}
+	source, err := getSource(resource.Source)
+	if err != nil {
+		return nil, err
 	}
+	driver.source = source
 
-	if resource.Target != nil {
-		target, err := getTarget(resource.Target)
-		if err != nil {
-			return nil, err
-		}
-		driver.target = target
-	} else {
-		// default target
-		driver.target = &Target{
-			Project:   config.Project,
-			Cluster:   config.Cluster,
-			Namespace: "default",
-		}
+	target, err := getTarget(resource.Target)
+	if err != nil {
+		return nil, err
 	}
+	driver.target = target
 
-	if resource.Config != nil {
-		config, err := getConfig(resource.Config)
-		if err != nil {
-			return nil, err
-		}
-		driver.config = config
+	config, err := getConfig(resource.Config)
+	if err != nil {
+		return nil, err
 	}
+	driver.config = config
 
 	return driver, nil
 }
@@ -147,23 +131,82 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
+	client := GetAPIClient(config)
+
 	// TODO: use source.repo, source.version, config.values
-	name = resource.Name
-	source = "local"
+	config.SetProject(d.target.Project)
+	config.SetCluster(d.target.Cluster)
+
 	namespace = d.target.Namespace
-	if d.config != nil {
-		method = d.config.Build.Method
-		absPath, err := filepath.Abs(d.config.Build.Context)
+	existingNamespaces, err := client.GetK8sNamespaces(context.Background(), config.Project, config.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	namespaceFound := false
+	for _, ns := range existingNamespaces.Items {
+		if namespace == ns.Name {
+			namespaceFound = true
+			break
+		}
+	}
+	if !namespaceFound {
+		_, err := client.CreateNewK8sNamespace(
+			context.Background(), config.Project, config.Cluster, namespace)
 		if err != nil {
 			return nil, err
 		}
-		localPath = absPath
 	}
-	config.SetProject(d.target.Project)
-	config.SetCluster(d.target.Cluster)
-	err := createFull(nil, GetAPIClient(config), []string{d.source.Name})
+
+	method = d.config.Build.Method
+	if method == "" {
+		return nil, fmt.Errorf("method should either be \"docker\" or \"pack\"")
+	} else if method == "docker" {
+		dockerfile = d.config.Build.Dockerfile
+	}
+
+	localPath = d.config.Build.Context
+	source = "local"
+	valuesObj = d.config.Values
+
+	_, err = client.GetRelease(context.Background(), config.Project, config.Cluster, d.target.Namespace, resource.Name)
 	if err != nil {
-		return nil, err
+		// app exists
+		if resource.Name == "" {
+			return nil, fmt.Errorf("empty app name")
+		}
+		app = resource.Name
+		tag = os.Getenv("PORTER_TAG")
+		if tag == "" {
+			commit, err := git.LastCommit()
+			if err != nil {
+				return nil, err
+			}
+			tag = commit.Sha
+		}
+		if tag == "" {
+			return nil, fmt.Errorf("could not find commit SHA to tag the image")
+		}
+
+		err = updateFull(nil, client, []string{})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// create new app
+		name = resource.Name
+
+		regList, err := client.ListRegistries(context.Background(), config.Project)
+		if err != nil {
+			return nil, err
+		}
+		if len(*regList) > 0 {
+			registryURL = (*regList)[0].URL
+		}
+
+		err = createFull(nil, client, []string{d.source.Name})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return resource, nil
@@ -176,9 +219,35 @@ func (d *Driver) Output() (map[string]interface{}, error) {
 func getSource(genericSource map[string]interface{}) (*Source, error) {
 	source := &Source{}
 
-	err := mapstructure.Decode(genericSource, source)
-	if err != nil {
-		return nil, err
+	// first read from env vars
+	source.Name = os.Getenv("PORTER_SOURCE_NAME")
+	source.Repo = os.Getenv("PORTER_SOURCE_REPO")
+	source.Version = os.Getenv("PORTER_SOURCE_VERSION")
+
+	// next, check for values in the YAML file
+	if source.Name == "" {
+		if name, ok := genericSource["name"]; ok {
+			source.Name = name.(string)
+		}
+	}
+	if source.Repo == "" {
+		if repo, ok := genericSource["repo"]; ok {
+			source.Repo = repo.(string)
+		}
+	}
+	if source.Version == "" {
+		if version, ok := genericSource["version"]; ok {
+			source.Version = version.(string)
+		}
+	}
+
+	// lastly, just put in the defaults
+	if source.Name == "" || source.Repo == "" || source.Version == "" {
+		// default to these values when any one of the source values are empty
+		// this makes sense because it might save us from version mismatches and other mishaps
+		source.Name = "web"
+		source.Repo = "https://charts.getporter.dev"
+		source.Version = "v0.13.0"
 	}
 
 	return source, nil
@@ -187,9 +256,42 @@ func getSource(genericSource map[string]interface{}) (*Source, error) {
 func getTarget(genericTarget map[string]interface{}) (*Target, error) {
 	target := &Target{}
 
-	err := mapstructure.Decode(genericTarget, target)
+	// first read from env vars
+	project, err := strconv.Atoi(os.Getenv("PORTER_PROJECT"))
 	if err != nil {
 		return nil, err
+	}
+	target.Project = uint(project)
+	cluster, err := strconv.Atoi(os.Getenv("PORTER_CLUSTER"))
+	if err != nil {
+		return nil, err
+	}
+	target.Cluster = uint(cluster)
+	target.Namespace = os.Getenv("PORTER_NAMESPACE")
+
+	// next, check for values in the YAML file
+	if target.Project == 0 {
+		if project, ok := genericTarget["project"]; ok {
+			target.Project = project.(uint)
+		}
+	}
+	if target.Cluster == 0 {
+		if cluster, ok := genericTarget["cluster"]; ok {
+			target.Cluster = cluster.(uint)
+		}
+	}
+	if target.Namespace == "" {
+		if namespace, ok := genericTarget["namespace"]; ok {
+			target.Namespace = namespace.(string)
+		}
+	}
+
+	// lastly, just put in the defaults
+	if target.Project == 0 || target.Cluster == 0 || target.Namespace == "" {
+		// default to these values when any one of the target values are empty
+		target.Project = config.Project
+		target.Cluster = config.Cluster
+		target.Namespace = "default"
 	}
 
 	return target, nil

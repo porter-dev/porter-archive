@@ -133,7 +133,7 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	client := GetAPIClient(config)
 
-	// TODO: use source.repo, source.version, config.values
+	// TODO: use source.repo, source.version
 	config.SetProject(d.target.Project)
 	config.SetCluster(d.target.Cluster)
 
@@ -168,30 +168,13 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	source = "local"
 	valuesObj = d.config.Values
 
-	_, err = client.GetRelease(context.Background(), config.Project, config.Cluster, d.target.Namespace, resource.Name)
-	if err == nil {
-		// app exists
-		if resource.Name == "" {
-			return nil, fmt.Errorf("empty app name")
-		}
-		app = resource.Name
-		tag = os.Getenv("PORTER_TAG")
-		if tag == "" {
-			commit, err := git.LastCommit()
-			if err != nil {
-				return nil, err
-			}
-			tag = commit.Sha
-		}
-		if tag == "" {
-			return nil, fmt.Errorf("could not find commit SHA to tag the image")
-		}
+	if resource.Name == "" {
+		return nil, fmt.Errorf("empty app name")
+	}
+	resource.Name = fmt.Sprintf("preview-%s", resource.Name)
 
-		err = updateFull(nil, client, []string{})
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	_, err = client.GetRelease(context.Background(), config.Project, config.Cluster, d.target.Namespace, resource.Name)
+	if err != nil {
 		// create new app
 		name = resource.Name
 
@@ -207,6 +190,23 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	app = resource.Name
+	tag = os.Getenv("PORTER_TAG")
+	if tag == "" {
+		commit, err := git.LastCommit()
+		if err != nil {
+			return nil, err
+		}
+		tag = commit.Sha
+	}
+	if tag == "" {
+		return nil, fmt.Errorf("could not find commit SHA to tag the image")
+	}
+
+	err = updateFull(nil, client, []string{})
+	if err != nil {
+		return nil, err
 	}
 
 	return resource, nil
@@ -227,17 +227,29 @@ func getSource(genericSource map[string]interface{}) (*Source, error) {
 	// next, check for values in the YAML file
 	if source.Name == "" {
 		if name, ok := genericSource["name"]; ok {
-			source.Name = name.(string)
+			nameVal, ok := name.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid name provided")
+			}
+			source.Name = nameVal
 		}
 	}
 	if source.Repo == "" {
 		if repo, ok := genericSource["repo"]; ok {
-			source.Repo = repo.(string)
+			repoVal, ok := repo.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid repo provided")
+			}
+			source.Repo = repoVal
 		}
 	}
 	if source.Version == "" {
 		if version, ok := genericSource["version"]; ok {
-			source.Version = version.(string)
+			versionVal, ok := version.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid version provided")
+			}
+			source.Version = versionVal
 		}
 	}
 
@@ -276,25 +288,40 @@ func getTarget(genericTarget map[string]interface{}) (*Target, error) {
 	// next, check for values in the YAML file
 	if target.Project == 0 {
 		if project, ok := genericTarget["project"]; ok {
-			target.Project = project.(uint)
+			projectVal, ok := project.(uint)
+			if !ok {
+				return nil, fmt.Errorf("project value must be an integer")
+			}
+			target.Project = projectVal
 		}
 	}
 	if target.Cluster == 0 {
 		if cluster, ok := genericTarget["cluster"]; ok {
-			target.Cluster = cluster.(uint)
+			clusterVal, ok := cluster.(uint)
+			if !ok {
+				return nil, fmt.Errorf("cluster value must be an integer")
+			}
+			target.Cluster = clusterVal
 		}
 	}
 	if target.Namespace == "" {
 		if namespace, ok := genericTarget["namespace"]; ok {
-			target.Namespace = namespace.(string)
+			namespaceVal, ok := namespace.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid namespace provided")
+			}
+			target.Namespace = namespaceVal
 		}
 	}
 
 	// lastly, just put in the defaults
-	if target.Project == 0 || target.Cluster == 0 || target.Namespace == "" {
-		// default to these values when any one of the target values are empty
+	if target.Project == 0 {
 		target.Project = config.Project
+	}
+	if target.Cluster == 0 {
 		target.Cluster = config.Cluster
+	}
+	if target.Namespace == "" {
 		target.Namespace = "default"
 	}
 

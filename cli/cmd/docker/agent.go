@@ -243,6 +243,7 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 
 	return types.ImagePullOptions{
 		RegistryAuth: authConfigEncoded,
+		Platform:     "linux/amd64",
 	}, nil
 }
 

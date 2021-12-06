@@ -44,7 +44,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/porter-dev/switchboard v0.0.0-20211203120508-691813a27c1b
+	github.com/porter-dev/switchboard v0.0.0-20211206152649-b6792e4dc331
 	github.com/rs/zerolog v1.26.0
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/sendgrid/rest v2.6.3+incompatible // indirect

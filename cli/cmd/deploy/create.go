@@ -213,6 +213,7 @@ func (c *CreateAgent) CreateFromRegistry(
 // container image, and then deploys it onto Porter.
 func (c *CreateAgent) CreateFromDocker(
 	overrideValues map[string]interface{},
+	imageTag string,
 ) (string, error) {
 	opts := c.CreateOpts
 
@@ -256,7 +257,7 @@ func (c *CreateAgent) CreateFromDocker(
 
 	mergedValues["image"] = map[string]interface{}{
 		"repository": imageURL,
-		"tag":        "latest",
+		"tag":        imageTag,
 	}
 
 	// create docker agen
@@ -281,9 +282,9 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	if opts.Method == DeployBuildTypeDocker {
-		err = buildAgent.BuildDocker(agent, opts.LocalPath, opts.LocalPath, opts.LocalDockerfile, "latest", "")
+		err = buildAgent.BuildDocker(agent, opts.LocalPath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
 	} else {
-		err = buildAgent.BuildPack(agent, opts.LocalPath, "latest", nil)
+		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, nil)
 	}
 
 	if err != nil {
@@ -304,7 +305,7 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, "latest"))
+	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
 	if err != nil {
 		return "", err

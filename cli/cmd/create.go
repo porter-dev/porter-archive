@@ -76,7 +76,6 @@ var values string
 var source string
 var image string
 var registryURL string
-var valuesObj map[string]interface{}
 
 func init() {
 	rootCmd.AddCommand(createCmd)
@@ -160,11 +159,9 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	var err error
 
 	// read the values if necessary
-	if valuesObj == nil {
-		valuesObj, err = readValuesFile()
-		if err != nil {
-			return err
-		}
+	valuesObj, err := readValuesFile()
+	if err != nil {
+		return err
 	}
 
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", args[0], name)
@@ -201,7 +198,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	if source == "local" {
-		subdomain, err := createAgent.CreateFromDocker(valuesObj)
+		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default")
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {

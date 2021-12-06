@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/cli/cli/git"
+	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 	"github.com/porter-dev/switchboard/pkg/parser"
@@ -61,8 +64,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	}
 
 	worker := worker.NewWorker()
-	worker.RegisterDriver("", NewPorterDriver) // FIXME: workaround for when driver is not present
 	worker.RegisterDriver("porter.deploy", NewPorterDriver)
+	worker.SetDefaultDriver("porter.deploy")
 
 	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
@@ -132,13 +135,15 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	client := GetAPIClient(config)
+	d.output = make(map[string]interface{})
 
-	// TODO: use source.repo, source.version
-	config.SetProject(d.target.Project)
-	config.SetCluster(d.target.Cluster)
+	if resource.Name == "" {
+		return nil, fmt.Errorf("empty app name")
+	}
+	resource.Name = fmt.Sprintf("preview-%s", resource.Name)
 
-	namespace = d.target.Namespace
-	existingNamespaces, err := client.GetK8sNamespaces(context.Background(), config.Project, config.Cluster)
+	namespace := d.target.Namespace
+	existingNamespaces, err := client.GetK8sNamespaces(context.Background(), d.target.Project, d.target.Cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -151,48 +156,23 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	}
 	if !namespaceFound {
 		_, err := client.CreateNewK8sNamespace(
-			context.Background(), config.Project, config.Cluster, namespace)
+			context.Background(), d.target.Project, d.target.Cluster, namespace)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	method = d.config.Build.Method
+	method := d.config.Build.Method
 	if method == "" {
 		return nil, fmt.Errorf("method should either be \"docker\" or \"pack\"")
-	} else if method == "docker" {
-		dockerfile = d.config.Build.Dockerfile
 	}
 
-	localPath = d.config.Build.Context
-	source = "local"
-	valuesObj = d.config.Values
-
-	if resource.Name == "" {
-		return nil, fmt.Errorf("empty app name")
-	}
-	resource.Name = fmt.Sprintf("preview-%s", resource.Name)
-
-	_, err = client.GetRelease(context.Background(), config.Project, config.Cluster, d.target.Namespace, resource.Name)
+	fullPath, err := filepath.Abs(d.config.Build.Context)
 	if err != nil {
-		// create new app
-		name = resource.Name
-
-		regList, err := client.ListRegistries(context.Background(), config.Project)
-		if err != nil {
-			return nil, err
-		}
-		if len(*regList) > 0 {
-			registryURL = (*regList)[0].URL
-		}
-
-		err = createFull(nil, client, []string{d.source.Name})
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
-	app = resource.Name
-	tag = os.Getenv("PORTER_TAG")
+
+	tag := os.Getenv("PORTER_TAG")
 	if tag == "" {
 		commit, err := git.LastCommit()
 		if err != nil {
@@ -204,7 +184,85 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 		return nil, fmt.Errorf("could not find commit SHA to tag the image")
 	}
 
-	err = updateFull(nil, client, []string{})
+	_, err = client.GetRelease(context.Background(), d.target.Project,
+		d.target.Cluster, d.target.Namespace, resource.Name)
+	if err != nil {
+		// create new release
+		color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
+
+		regList, err := client.ListRegistries(context.Background(), d.target.Project)
+		if err != nil {
+			return nil, err
+		}
+		var registryURL string
+		if len(*regList) == 0 {
+			return nil, fmt.Errorf("no registry found")
+		} else {
+			registryURL = (*regList)[0].URL
+		}
+
+		createAgent := &deploy.CreateAgent{
+			Client: client,
+			CreateOpts: &deploy.CreateOpts{
+				SharedOpts: &deploy.SharedOpts{
+					ProjectID:       d.target.Project,
+					ClusterID:       d.target.Cluster,
+					Namespace:       namespace,
+					LocalPath:       fullPath,
+					LocalDockerfile: d.config.Build.Dockerfile,
+					Method:          deploy.DeployBuildType(method),
+				},
+				Kind:        d.source.Name,
+				ReleaseName: resource.Name,
+				RegistryURL: registryURL,
+			},
+		}
+
+		subdomain, err := createAgent.CreateFromDocker(d.config.Values, tag)
+
+		return resource, handleSubdomainCreate(subdomain, err)
+	}
+
+	// update an existing release
+	color.New(color.FgGreen).Println("Deploying app:", resource.Name)
+
+	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
+		SharedOpts: &deploy.SharedOpts{
+			ProjectID:       d.target.Project,
+			ClusterID:       d.target.Cluster,
+			Namespace:       namespace,
+			LocalPath:       fullPath,
+			LocalDockerfile: d.config.Build.Dockerfile,
+			OverrideTag:     tag,
+			Method:          deploy.DeployBuildType(method),
+		},
+		Local: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	buildEnv, err := updateAgent.GetBuildEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	err = updateAgent.SetBuildEnv(buildEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	err = updateAgent.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	err = updateAgent.Push()
+	if err != nil {
+		return nil, err
+	}
+
+	err = updateAgent.UpdateImageAndValues(d.config.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -234,6 +292,13 @@ func getSource(genericSource map[string]interface{}) (*Source, error) {
 			source.Name = nameVal
 		}
 	}
+	if source.Name == "" {
+		return nil, fmt.Errorf("source name required")
+	}
+	if _, ok := supportedKinds[source.Name]; !ok {
+		return nil, fmt.Errorf("%s is not a supported source name: specify web, job, or worker", source.Name)
+	}
+
 	if source.Repo == "" {
 		if repo, ok := genericSource["repo"]; ok {
 			repoVal, ok := repo.(string)
@@ -254,12 +319,11 @@ func getSource(genericSource map[string]interface{}) (*Source, error) {
 	}
 
 	// lastly, just put in the defaults
-	if source.Name == "" || source.Repo == "" || source.Version == "" {
-		// default to these values when any one of the source values are empty
-		// this makes sense because it might save us from version mismatches and other mishaps
-		source.Name = "web"
+	if source.Repo == "" {
 		source.Repo = "https://charts.getporter.dev"
-		source.Version = "v0.13.0"
+	}
+	if source.Version == "" {
+		source.Version = "latest"
 	}
 
 	return source, nil

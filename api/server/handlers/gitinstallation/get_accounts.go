@@ -109,7 +109,7 @@ resultOrErrorReader:
 		}
 	}
 
-	authUser, _, err := client.Users.Get(context.Background(), "")
+	authUser, _, err := client.Users.Get(r.Context(), "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

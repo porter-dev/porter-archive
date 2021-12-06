@@ -28,7 +28,34 @@ import (
 // with a porter.yaml file as an argument
 var applyCmd = &cobra.Command{
 	Use:   "apply",
-	Short: "Applies the provided porter.yaml to a project",
+	Short: "Applies a configuration to an application",
+	Long: fmt.Sprintf(`
+%s
+
+Applies a configuration to an application by either creating a new one or updating an existing
+one. For example:
+
+  %s
+
+This command will apply the configuration contained in porter.yaml to the requested project and
+cluster either provided inside the porter.yaml file or through environment variables. Note that
+environment variables will always take precendence over values specified in the porter.yaml file.
+
+By default, this command expects to be run from a local git repository.
+
+The following are the environment variables that can be used to set certain values while
+applying a configuration:
+  PORTER_CLUSTER              Cluster ID that contains the project
+  PORTER_PROJECT              Project ID that contains the application
+  PORTER_NAMESPACE            The Kubernetes namespace that the application belongs to
+  PORTER_SOURCE_NAME          Name of the source Helm chart
+  PORTER_SOURCE_REPO          The URL of the Helm charts registry
+  PORTER_SOURCE_VERSION       The version of the Helm chart to use
+  PORTER_TAG                  The Docker image tag to use (like the git commit hash)
+	`,
+		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter apply\":"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
+	),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, apply)
 

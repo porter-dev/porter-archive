@@ -35,6 +35,7 @@ type TestRepository struct {
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
+	allowlist                 repository.AllowlistRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -155,6 +156,10 @@ func (t *TestRepository) CredentialsExchangeToken() repository.CredentialsExchan
 
 func (t *TestRepository) BuildConfig() repository.BuildConfigRepository {
 	return t.buildConfig
+}
+
+func (t *TestRepository) Allowlist() repository.AllowlistRepository {
+	return t.allowlist
 }
 
 // NewRepository returns a Repository which persists users in memory

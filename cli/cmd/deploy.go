@@ -526,11 +526,9 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 	var err error
 
 	// read the values if necessary
-	if valuesObj == nil {
-		valuesObj, err = readValuesFile()
-		if err != nil {
-			return err
-		}
+	valuesObj, err := readValuesFile()
+	if err != nil {
+		return err
 	}
 
 	if err != nil {

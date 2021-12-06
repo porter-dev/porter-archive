@@ -39,6 +39,8 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 	defer close(orgsChan)
 	defer close(errChan)
 
+	page := 1
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,7 +48,7 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 		default:
 			orgs, pages, err := client.Organizations.List(context.Background(), "", &github.ListOptions{
 				PerPage: 100,
-				Page:    1,
+				Page:    page,
 			})
 
 			if err != nil {
@@ -60,6 +62,8 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 
 			if pages.NextPage == 0 {
 				return
+			} else {
+				page = pages.NextPage
 			}
 		}
 	}

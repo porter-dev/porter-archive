@@ -14,6 +14,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 	"github.com/porter-dev/switchboard/pkg/parser"
@@ -106,6 +107,7 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 	driver := &Driver{
 		lookupTable: opts.DriverLookupTable,
 		logger:      opts.Logger,
+		output:      make(map[string]interface{}),
 	}
 
 	source, err := getSource(resource.Source)
@@ -120,11 +122,26 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 	}
 	driver.target = target
 
-	config, err := getConfig(resource.Config)
+	resourceConfig, err := getConfig(resource.Config)
 	if err != nil {
 		return nil, err
 	}
-	driver.config = config
+	driver.config = resourceConfig
+
+	chart, err := GetAPIClient(config).GetTemplate(
+		context.Background(),
+		driver.source.Name,
+		driver.source.Version,
+		&types.GetTemplateRequest{
+			TemplateGetBaseRequest: types.TemplateGetBaseRequest{
+				RepoURL: driver.source.Repo,
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	driver.output[resource.Name] = utils.CoalesceValues(chart.Values, driver.config.Values)
 
 	return driver, nil
 }
@@ -135,7 +152,6 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	client := GetAPIClient(config)
-	d.output = make(map[string]interface{})
 
 	if resource.Name == "" {
 		return nil, fmt.Errorf("empty app name")

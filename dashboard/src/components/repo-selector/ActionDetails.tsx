@@ -308,9 +308,16 @@ export const BuildpackSelection: React.FC<{
 
         setStacks(defaultBuilder.builders);
         setSelectedStack(defaultStack);
-
-        setSelectedBuildpacks(detectedBuildpacks);
-        setAvailableBuildpacks(availableBuildpacks);
+        if (!Array.isArray(detectedBuildpacks)) {
+          setSelectedBuildpacks([]);
+        } else {
+          setSelectedBuildpacks(detectedBuildpacks);
+        }
+        if (!Array.isArray(availableBuildpacks)) {
+          setAvailableBuildpacks([]);
+        } else {
+          setAvailableBuildpacks(availableBuildpacks);
+        }
       })
       .catch((err) => {
         console.error(err);
@@ -355,8 +362,16 @@ export const BuildpackSelection: React.FC<{
     setStacks(builder.builders);
     setSelectedStack(defaultStack);
 
-    setSelectedBuildpacks(detectedBuildpacks);
-    setAvailableBuildpacks(availableBuildpacks);
+    if (!Array.isArray(detectedBuildpacks)) {
+      setSelectedBuildpacks([]);
+    } else {
+      setSelectedBuildpacks(detectedBuildpacks);
+    }
+    if (!Array.isArray(availableBuildpacks)) {
+      setAvailableBuildpacks([]);
+    } else {
+      setAvailableBuildpacks(availableBuildpacks);
+    }
   };
 
   const renderBuildpacksList = (

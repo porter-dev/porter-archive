@@ -95,7 +95,7 @@ resultOrErrorReader:
 				res.Accounts = append(res.Accounts, *result.Login)
 			} else {
 				// channel has been closed now
-				close(errChan)
+				// close(errChan)
 				break resultOrErrorReader
 			}
 		case err := <-errChan:

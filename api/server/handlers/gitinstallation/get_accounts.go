@@ -98,9 +98,14 @@ resultOrErrorReader:
 				// close(errChan)
 				break resultOrErrorReader
 			}
-		case err := <-errChan:
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+		case err, ok := <-errChan:
+			if ok {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			} else {
+				// nothing in error, must be a close event
+				break resultOrErrorReader
+			}
 		}
 	}
 

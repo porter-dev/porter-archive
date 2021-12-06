@@ -325,7 +325,7 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	req := config.RestClient.Post().
 		Resource("pods").
 		Name(podName).
-		Namespace("default").
+		Namespace(namespace).
 		SubResource("attach")
 
 	req.Param("stdin", "true")

@@ -10,9 +10,16 @@ import { setTimeout } from "timers";
 const EditCollaboratorModal = () => {
   const {
     setCurrentModal,
-    currentModalData: { user, isInvite, refetchCallerData },
+    currentModalData,
     currentProject: { id: project_id },
   } = useContext(Context);
+
+  const { user, isInvite, refetchCallerData } = {
+    user: currentModalData?.user,
+    isInvite: currentModalData?.isInvite,
+    refetchCallerData: currentModalData?.refetchCallerData,
+  };
+
   const [status, setStatus] = useState<undefined | string>();
   const [selectedRole, setSelectedRole] = useState("");
   const [roleList, setRoleList] = useState([]);

@@ -71,7 +71,8 @@ func (a *Agent) BuildLocal(opts *BuildOpts) error {
 		CacheFrom: []string{
 			fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
 		},
-		Remove: true,
+		Remove:   true,
+		Platform: "linux/amd64",
 	})
 
 	if err != nil {

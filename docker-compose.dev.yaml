@@ -45,13 +45,13 @@ services:
       - 6379:6379
     volumes:
       - database:/var/lib/postgresql/data
-  chartmuseum:
-    image: docker.io/bitnami/chartmuseum:0-debian-10
-    container_name: chartmuseum
-    ports:
-      - 5000:8080
-    volumes:
-      - chartmuseum:/bitnami/data
+  # chartmuseum:
+  #   image: docker.io/bitnami/chartmuseum:0-debian-10
+  #   container_name: chartmuseum
+  #   ports:
+  #     - 5000:8080
+  #   volumes:
+  #     - chartmuseum:/bitnami/data
   nginx:
     image: nginx:mainline-alpine
     container_name: nginx

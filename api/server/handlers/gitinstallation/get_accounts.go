@@ -51,7 +51,7 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 			})
 
 			if err != nil {
-				fmt.Println("error occured while fetching organisations. error:", ctx.Err().Error())
+				fmt.Println("error occured while fetching organisations. error:", err.Error())
 				errChan <- err
 				return
 			}

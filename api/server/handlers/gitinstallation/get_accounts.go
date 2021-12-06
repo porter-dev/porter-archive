@@ -2,7 +2,6 @@ package gitinstallation
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sort"
 	"time"
@@ -51,14 +50,12 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 			})
 
 			if err != nil {
-				fmt.Println("error occured while fetching organisations. error:", err.Error())
 				errChan <- err
 				return
 			}
 
 			for _, org := range orgs {
 				orgsChan <- org
-				// res.Accounts = append(res.Accounts, *org.Login)
 			}
 
 			if pages.NextPage == 0 {
@@ -95,7 +92,6 @@ resultOrErrorReader:
 				res.Accounts = append(res.Accounts, *result.Login)
 			} else {
 				// channel has been closed now
-				// close(errChan)
 				break resultOrErrorReader
 			}
 		case err, ok := <-errChan:

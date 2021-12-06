@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -31,6 +32,43 @@ func NewGetGithubAppAccountsHandler(
 	}
 }
 
+func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
+	client *github.Client,
+	orgsChan chan<- *github.Organization,
+	errChan chan<- error) {
+	defer close(orgsChan)
+	defer close(errChan)
+
+	page := 1
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			orgs, pages, err := client.Organizations.List(context.Background(), "", &github.ListOptions{
+				PerPage: 100,
+				Page:    page,
+			})
+
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			for _, org := range orgs {
+				orgsChan <- org
+			}
+
+			if pages.NextPage == 0 {
+				return
+			} else {
+				page = pages.NextPage
+			}
+		}
+	}
+}
+
 func (c *GetGithubAppAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tok, err := GetGithubAppOauthTokenFromRequest(c.Config(), r)
 
@@ -42,26 +80,36 @@ func (c *GetGithubAppAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	client := github.NewClient(c.Config().GithubAppConf.Client(oauth2.NoContext, tok))
 	res := &types.GetGithubAppAccountsResponse{}
 
+	resultChannel := make(chan *github.Organization, 10)
+	errChan := make(chan error)
+
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+
+	go c.getOrgList(ctx, client, resultChannel, errChan)
+
+resultOrErrorReader:
 	for {
-		orgs, pages, err := client.Organizations.List(context.Background(), "", &github.ListOptions{
-			PerPage: 100,
-			Page:    1,
-		})
-
-		if err != nil {
-			continue
-		}
-
-		for _, org := range orgs {
-			res.Accounts = append(res.Accounts, *org.Login)
-		}
-
-		if pages.NextPage == 0 {
-			break
+		select {
+		case result, ok := <-resultChannel:
+			if ok {
+				res.Accounts = append(res.Accounts, *result.Login)
+			} else {
+				// channel has been closed now
+				break resultOrErrorReader
+			}
+		case err, ok := <-errChan:
+			if ok {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			} else {
+				// nothing in error, must be a close event
+				break resultOrErrorReader
+			}
 		}
 	}
 
-	authUser, _, err := client.Users.Get(context.Background(), "")
+	authUser, _, err := client.Users.Get(r.Context(), "")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

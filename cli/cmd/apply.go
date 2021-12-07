@@ -155,21 +155,6 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 	}
 	driver.config = resourceConfig
 
-	chart, err := GetAPIClient(config).GetTemplate(
-		context.Background(),
-		driver.source.Name,
-		driver.source.Version,
-		&types.GetTemplateRequest{
-			TemplateGetBaseRequest: types.TemplateGetBaseRequest{
-				RepoURL: driver.source.Repo,
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	driver.output[resource.Name] = utils.CoalesceValues(chart.Values, driver.config.Values)
-
 	return driver, nil
 }
 
@@ -206,7 +191,7 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	}
 
 	method := d.config.Build.Method
-	if method == "" {
+	if method != "pack" && method != "docker" {
 		return nil, fmt.Errorf("method should either be \"docker\" or \"pack\"")
 	}
 
@@ -309,6 +294,21 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	chart, err := client.GetTemplate(
+		context.Background(),
+		d.source.Name,
+		d.source.Version,
+		&types.GetTemplateRequest{
+			TemplateGetBaseRequest: types.TemplateGetBaseRequest{
+				RepoURL: d.source.Repo,
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	d.output[resource.Name] = utils.CoalesceValues(chart.Values, d.config.Values)
 
 	return resource, nil
 }

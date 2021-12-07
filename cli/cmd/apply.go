@@ -122,12 +122,14 @@ type Config struct {
 }
 
 type Driver struct {
-	source      *Source
-	target      *Target
-	config      *Config
-	output      map[string]interface{}
-	lookupTable *map[string]drivers.Driver
-	logger      *zerolog.Logger
+	source              *Source
+	target              *Target
+	config              *Config
+	sourceDefaultValues map[string]interface{}
+	output              map[string]interface{}
+	lookupTable         *map[string]drivers.Driver
+	logger              *zerolog.Logger
+	shouldApply         bool
 }
 
 func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
@@ -135,21 +137,23 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		lookupTable: opts.DriverLookupTable,
 		logger:      opts.Logger,
 		output:      make(map[string]interface{}),
+		shouldApply: true,
 	}
 
-	source, err := getSource(resource.Source)
+	err := driver.getSource(resource.Source)
 	if err != nil {
 		return nil, err
 	}
-	driver.source = source
+	if driver.source.Repo == "https://chart-addons.getporter.dev" {
+		driver.shouldApply = false
+	}
 
-	target, err := getTarget(resource.Target)
+	err = driver.getTarget(resource.Target)
 	if err != nil {
 		return nil, err
 	}
-	driver.target = target
 
-	resourceConfig, err := getConfig(resource.Config)
+	resourceConfig, err := driver.getConfig(resource.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +163,7 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 }
 
 func (d *Driver) ShouldApply(resource *models.Resource) bool {
-	return true
+	return d.shouldApply
 }
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
@@ -295,20 +299,7 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 		return nil, err
 	}
 
-	chart, err := client.GetTemplate(
-		context.Background(),
-		d.source.Name,
-		d.source.Version,
-		&types.GetTemplateRequest{
-			TemplateGetBaseRequest: types.TemplateGetBaseRequest{
-				RepoURL: d.source.Repo,
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	d.output[resource.Name] = utils.CoalesceValues(chart.Values, d.config.Values)
+	d.output[resource.Name] = utils.CoalesceValues(d.sourceDefaultValues, d.config.Values)
 
 	return resource, nil
 }
@@ -317,125 +308,144 @@ func (d *Driver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func getSource(genericSource map[string]interface{}) (*Source, error) {
-	source := &Source{}
+func (d *Driver) getSource(genericSource map[string]interface{}) error {
+	d.source = &Source{}
 
 	// first read from env vars
-	source.Name = os.Getenv("PORTER_SOURCE_NAME")
-	source.Repo = os.Getenv("PORTER_SOURCE_REPO")
-	source.Version = os.Getenv("PORTER_SOURCE_VERSION")
+	d.source.Name = os.Getenv("PORTER_SOURCE_NAME")
+	d.source.Repo = os.Getenv("PORTER_SOURCE_REPO")
+	d.source.Version = os.Getenv("PORTER_SOURCE_VERSION")
 
 	// next, check for values in the YAML file
-	if source.Name == "" {
+	if d.source.Name == "" {
 		if name, ok := genericSource["name"]; ok {
 			nameVal, ok := name.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid name provided")
+				return fmt.Errorf("invalid name provided")
 			}
-			source.Name = nameVal
+			d.source.Name = nameVal
 		}
 	}
-	if source.Name == "" {
-		return nil, fmt.Errorf("source name required")
-	}
-	if _, ok := supportedKinds[source.Name]; !ok {
-		return nil, fmt.Errorf("%s is not a supported source name: specify web, job, or worker", source.Name)
+	if d.source.Name == "" {
+		return fmt.Errorf("source name required")
 	}
 
-	if source.Repo == "" {
+	if d.source.Repo == "" {
 		if repo, ok := genericSource["repo"]; ok {
 			repoVal, ok := repo.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid repo provided")
+				fmt.Errorf("invalid repo provided")
 			}
-			source.Repo = repoVal
+			d.source.Repo = repoVal
 		}
 	}
-	if source.Version == "" {
+	if d.source.Version == "" {
 		if version, ok := genericSource["version"]; ok {
 			versionVal, ok := version.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid version provided")
+				return fmt.Errorf("invalid version provided")
 			}
-			source.Version = versionVal
+			d.source.Version = versionVal
 		}
 	}
 
 	// lastly, just put in the defaults
-	if source.Repo == "" {
-		source.Repo = "https://charts.getporter.dev"
+	if d.source.Version == "" {
+		d.source.Version = "latest"
 	}
-	if source.Version == "" {
-		source.Version = "latest"
+	if d.source.Repo == "" {
+		d.source.Repo = "https://charts.getporter.dev"
+		values, err := existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
+		if err == nil {
+			// found in "https://charts.getporter.dev"
+			d.sourceDefaultValues = values
+			return nil
+		}
+
+		d.source.Repo = "https://chart-addons.getporter.dev"
+		values, err = existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
+		if err == nil {
+			// found in https://chart-addons.getporter.dev
+			d.sourceDefaultValues = values
+			return nil
+		}
+
+		return fmt.Errorf("source does not exist in any repo")
 	}
 
-	return source, nil
+	values, err := existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
+	if err == nil {
+		d.sourceDefaultValues = values
+		return nil
+	}
+
+	return fmt.Errorf("source '%s' does not exist in repo '%s'", d.source.Name, d.source.Repo)
 }
 
-func getTarget(genericTarget map[string]interface{}) (*Target, error) {
-	target := &Target{}
+func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
+	d.target = &Target{}
 
 	// first read from env vars
 	if projectEnv := os.Getenv("PORTER_PROJECT"); projectEnv != "" {
 		project, err := strconv.Atoi(projectEnv)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		target.Project = uint(project)
+		d.target.Project = uint(project)
 	}
 	if clusterEnv := os.Getenv("PORTER_CLUSTER"); clusterEnv != "" {
 		cluster, err := strconv.Atoi(clusterEnv)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		target.Cluster = uint(cluster)
+		d.target.Cluster = uint(cluster)
 	}
-	target.Namespace = os.Getenv("PORTER_NAMESPACE")
+	d.target.Namespace = os.Getenv("PORTER_NAMESPACE")
 
 	// next, check for values in the YAML file
-	if target.Project == 0 {
+	if d.target.Project == 0 {
 		if project, ok := genericTarget["project"]; ok {
 			projectVal, ok := project.(uint)
 			if !ok {
-				return nil, fmt.Errorf("project value must be an integer")
+				return fmt.Errorf("project value must be an integer")
 			}
-			target.Project = projectVal
+			d.target.Project = projectVal
 		}
 	}
-	if target.Cluster == 0 {
+	if d.target.Cluster == 0 {
 		if cluster, ok := genericTarget["cluster"]; ok {
 			clusterVal, ok := cluster.(uint)
 			if !ok {
-				return nil, fmt.Errorf("cluster value must be an integer")
+				return fmt.Errorf("cluster value must be an integer")
 			}
-			target.Cluster = clusterVal
+			d.target.Cluster = clusterVal
 		}
 	}
-	if target.Namespace == "" {
+	if d.target.Namespace == "" {
 		if namespace, ok := genericTarget["namespace"]; ok {
 			namespaceVal, ok := namespace.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid namespace provided")
+				return fmt.Errorf("invalid namespace provided")
 			}
-			target.Namespace = namespaceVal
+			d.target.Namespace = namespaceVal
 		}
 	}
 
 	// lastly, just put in the defaults
-	if target.Project == 0 {
-		target.Project = config.Project
+	if d.target.Project == 0 {
+		d.target.Project = config.Project
 	}
-	if target.Cluster == 0 {
-		target.Cluster = config.Cluster
+	if d.target.Cluster == 0 {
+		d.target.Cluster = config.Cluster
 	}
-	if target.Namespace == "" {
-		target.Namespace = "default"
+	if d.target.Namespace == "" {
+		d.target.Namespace = "default"
 	}
 
-	return target, nil
+	return nil
 }
 
-func getConfig(genericConfig map[string]interface{}) (*Config, error) {
+func (d *Driver) getConfig(genericConfig map[string]interface{}) (*Config, error) {
 	config := &Config{}
 
 	err := mapstructure.Decode(genericConfig, config)
@@ -444,4 +454,20 @@ func getConfig(genericConfig map[string]interface{}) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+func existsInRepo(name, version, url string) (map[string]interface{}, error) {
+	chart, err := GetAPIClient(config).GetTemplate(
+		context.Background(),
+		name, version,
+		&types.GetTemplateRequest{
+			TemplateGetBaseRequest: types.TemplateGetBaseRequest{
+				RepoURL: url,
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return chart.Values, nil
 }

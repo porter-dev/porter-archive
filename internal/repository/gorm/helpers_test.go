@@ -69,6 +69,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.KubeEvent{},
 		&models.KubeSubEvent{},
 		&models.Onboarding{},
+		&models.Allowlist{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

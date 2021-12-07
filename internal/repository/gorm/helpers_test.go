@@ -13,12 +13,15 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/gorm"
+
+	_gorm "gorm.io/gorm"
 )
 
 type tester struct {
 	repo           repository.Repository
 	key            *[32]byte
 	dbFileName     string
+	DB             *_gorm.DB
 	initUsers      []*models.User
 	initProjects   []*models.Project
 	initGRs        []*models.GitRepo
@@ -36,6 +39,7 @@ type tester struct {
 	initOAuths     []*ints.OAuthIntegration
 	initGCPs       []*ints.GCPIntegration
 	initAWSs       []*ints.AWSIntegration
+	initAllowlist  []*models.Allowlist
 }
 
 func setupTestEnv(tester *tester, t *testing.T) {
@@ -93,7 +97,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 	}
 
 	tester.key = &key
-
+	tester.DB = db
 	tester.repo = gorm.NewRepository(db, &key, nil)
 }
 
@@ -119,6 +123,18 @@ func initUser(tester *tester, t *testing.T) {
 	}
 
 	tester.initUsers = append(tester.initUsers, user)
+}
+
+func initAllowlist(tester *tester, t *testing.T) {
+	t.Helper()
+
+	allowedUser := &models.Allowlist{
+		UserEmail: "some@email.com",
+	}
+
+	tester.DB.Create(&allowedUser)
+
+	tester.initAllowlist = append(tester.initAllowlist, allowedUser)
 }
 
 func initMultiUser(tester *tester, t *testing.T) {

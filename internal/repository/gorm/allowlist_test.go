@@ -10,9 +10,6 @@ func TestUserEmailExistsOnAllowlist(t *testing.T) {
 	}
 
 	setupTestEnv(tester, t)
-	initUser(tester, t)
-	initProject(tester, t)
-	initOAuthIntegration(tester, t)
 	initAllowlist(tester, t)
 	defer cleanup(tester, t)
 
@@ -35,9 +32,7 @@ func TestUserDontExistsOnAllowList(t *testing.T) {
 	}
 
 	setupTestEnv(tester, t)
-	initUser(tester, t)
-	initProject(tester, t)
-	initOAuthIntegration(tester, t)
+	initAllowlist(tester, t)
 	defer cleanup(tester, t)
 
 	expected := false

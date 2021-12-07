@@ -334,7 +334,7 @@ func (d *Driver) getSource(genericSource map[string]interface{}) error {
 		if repo, ok := genericSource["repo"]; ok {
 			repoVal, ok := repo.(string)
 			if !ok {
-				fmt.Errorf("invalid repo provided")
+				return fmt.Errorf("invalid repo provided")
 			}
 			d.source.Repo = repoVal
 		}

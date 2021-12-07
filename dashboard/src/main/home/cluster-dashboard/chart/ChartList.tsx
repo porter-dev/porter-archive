@@ -24,6 +24,7 @@ type Props = {
   // TODO Convert to enum
   sortType: string;
   currentView: PorterUrl;
+  disableBottomPadding?: boolean;
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -35,6 +36,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   namespace,
   sortType,
   currentView,
+  disableBottomPadding,
 }) => {
   const {
     newWebsocket,
@@ -129,7 +131,7 @@ const ChartList: React.FunctionComponent<Props> = ({
                 return chart;
               });
             case "DELETE":
-              return currentCharts.filter((chart) => !isSameChart(chart));
+              return currentCharts?.filter((chart) => !isSameChart(chart));
             default:
               return currentCharts;
           }
@@ -300,10 +302,16 @@ const ChartList: React.FunctionComponent<Props> = ({
         }
       });
     }
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+    };
   }, [namespace, currentView]);
 
   const filteredCharts = useMemo(() => {
+    if (!Array.isArray(charts)) {
+      return [];
+    }
+
     const result = charts
       .filter((chart: ChartType) => {
         return (
@@ -386,7 +394,11 @@ const ChartList: React.FunctionComponent<Props> = ({
     });
   };
 
-  return <StyledChartList>{renderChartList()}</StyledChartList>;
+  return (
+    <StyledChartList disableBottomPadding={disableBottomPadding}>
+      {renderChartList()}
+    </StyledChartList>
+  );
 };
 
 export default ChartList;
@@ -417,5 +429,11 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 105px;
+  padding-bottom: ${(props: { disableBottomPadding: boolean }) => {
+    if (props.disableBottomPadding) {
+      return "unset";
+    }
+
+    return "105px";
+  }};
 `;

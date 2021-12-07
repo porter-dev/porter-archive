@@ -21,7 +21,7 @@ type tester struct {
 	repo           repository.Repository
 	key            *[32]byte
 	dbFileName     string
-	DB             *_gorm.DB
+	db             *_gorm.DB
 	initUsers      []*models.User
 	initProjects   []*models.Project
 	initGRs        []*models.GitRepo
@@ -97,7 +97,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 	}
 
 	tester.key = &key
-	tester.DB = db
+	tester.db = db
 	tester.repo = gorm.NewRepository(db, &key, nil)
 }
 
@@ -132,7 +132,7 @@ func initAllowlist(tester *tester, t *testing.T) {
 		UserEmail: "some@email.com",
 	}
 
-	tester.DB.Create(&allowedUser)
+	tester.db.Create(&allowedUser)
 
 	tester.initAllowlist = append(tester.initAllowlist, allowedUser)
 }

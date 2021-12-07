@@ -85,6 +85,8 @@ type ServerConf struct {
 
 	// Token for internal retool to authenticate to internal API endpoints
 	RetoolToken string `env:"RETOOL_TOKEN"`
+
+	ProvisionerTest bool `env:"PROVISIONER_TEST",default=false`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

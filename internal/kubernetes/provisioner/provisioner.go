@@ -40,6 +40,7 @@ type ProvisionOpts struct {
 	TFHTTPBackendURL    string
 	CredentialExchange  *ProvisionCredentialExchange
 	OperationKind       ProvisionerOperation
+	ProvisionerTest     bool
 
 	// resource-specific opts
 	ECR  *ecr.Conf
@@ -85,7 +86,7 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 		env = opts.DOKS.AttachDOKSEnv(env)
 	}
 
-	return &batchv1.Job{
+	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", string(opts.OperationKind), opts.Infra.GetUniqueName()),
 			Namespace: opts.ProvJobNamespace,
@@ -111,28 +112,34 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 								string(opts.Infra.Kind),
 							},
 							Env: env,
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "cloud-keys",
-									MountPath: "/root",
-								},
-							},
-						},
-					},
-					Volumes: []v1.Volume{
-						{
-							Name: "cloud-keys",
-							VolumeSource: v1.VolumeSource{
-								Secret: &v1.SecretVolumeSource{
-									SecretName: "cloud-creds",
-								},
-							},
 						},
 					},
 				},
 			},
 		},
-	}, nil
+	}
+
+	if opts.ProvisionerTest {
+		job.Spec.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+			{
+				Name:      "cloud-keys",
+				MountPath: "/root",
+			},
+		}
+
+		job.Spec.Template.Spec.Volumes = []v1.Volume{
+			{
+				Name: "cloud-keys",
+				VolumeSource: v1.VolumeSource{
+					Secret: &v1.SecretVolumeSource{
+						SecretName: "cloud-creds",
+					},
+				},
+			},
+		}
+	}
+
+	return job, nil
 }
 
 func GetTFEnv(opts *ProvisionOpts) []v1.EnvVar {

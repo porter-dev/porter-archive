@@ -221,7 +221,7 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 		if err != nil {
 			return nil, err
 		}
-		tag = commit.Sha
+		tag = commit.Sha[:7]
 	}
 	if tag == "" {
 		return nil, fmt.Errorf("could not find commit SHA to tag the image")

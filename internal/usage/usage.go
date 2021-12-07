@@ -101,6 +101,10 @@ func GetUsage(opts *GetUsageOpts) (
 		usageCache, err = opts.Repo.ProjectUsage().UpdateProjectUsageCache(usageCache)
 	}
 
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	return &types.ProjectUsage{
 		ResourceCPU:    usageCache.ResourceCPU,
 		ResourceMemory: usageCache.ResourceMemory,

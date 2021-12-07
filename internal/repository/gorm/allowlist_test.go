@@ -6,13 +6,14 @@ import (
 
 func TestUserEmailExistsOnAllowlist(t *testing.T) {
 	tester := &tester{
-		dbFileName: "./porter_create_gr.db",
+		dbFileName: "./porter_create_allowlist.db",
 	}
 
 	setupTestEnv(tester, t)
 	initUser(tester, t)
 	initProject(tester, t)
 	initOAuthIntegration(tester, t)
+	initAllowlist(tester, t)
 	defer cleanup(tester, t)
 
 	expected := true
@@ -30,7 +31,7 @@ func TestUserEmailExistsOnAllowlist(t *testing.T) {
 
 func TestUserDontExistsOnAllowList(t *testing.T) {
 	tester := &tester{
-		dbFileName: "./porter_create_gr.db",
+		dbFileName: "./porter_create_allowlist.db",
 	}
 
 	setupTestEnv(tester, t)

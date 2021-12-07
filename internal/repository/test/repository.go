@@ -196,5 +196,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		onboarding:                NewProjectOnboardingRepository(canQuery),
 		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
 		buildConfig:               NewBuildConfigRepository(canQuery),
+		allowlist:                 NewAllowlistRepository(canQuery),
 	}
 }

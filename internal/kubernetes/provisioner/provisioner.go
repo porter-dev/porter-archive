@@ -106,7 +106,7 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 						{
 							Name:            "provisioner",
 							Image:           "gcr.io/porter-dev-273614/provisioner:" + opts.ProvImageTag,
-							ImagePullPolicy: v1.PullIfNotPresent,
+							ImagePullPolicy: v1.PullAlways,
 							Args: []string{
 								string(opts.OperationKind),
 								string(opts.Infra.Kind),

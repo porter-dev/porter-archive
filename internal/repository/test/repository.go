@@ -15,6 +15,7 @@ type TestRepository struct {
 	gitActionConfig           repository.GitActionConfigRepository
 	invite                    repository.InviteRepository
 	release                   repository.ReleaseRepository
+	environment               repository.EnvironmentRepository
 	authCode                  repository.AuthCodeRepository
 	dnsRecord                 repository.DNSRecordRepository
 	pwResetToken              repository.PWResetTokenRepository
@@ -75,6 +76,10 @@ func (t *TestRepository) Invite() repository.InviteRepository {
 
 func (t *TestRepository) Release() repository.ReleaseRepository {
 	return t.release
+}
+
+func (t *TestRepository) Environment() repository.EnvironmentRepository {
+	return t.environment
 }
 
 func (t *TestRepository) AuthCode() repository.AuthCodeRepository {
@@ -171,6 +176,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		gitActionConfig:           NewGitActionConfigRepository(canQuery),
 		invite:                    NewInviteRepository(canQuery),
 		release:                   NewReleaseRepository(canQuery),
+		environment:               NewEnvironmentRepository(),
 		authCode:                  NewAuthCodeRepository(canQuery),
 		dnsRecord:                 NewDNSRecordRepository(canQuery),
 		pwResetToken:              NewPWResetTokenRepository(canQuery),

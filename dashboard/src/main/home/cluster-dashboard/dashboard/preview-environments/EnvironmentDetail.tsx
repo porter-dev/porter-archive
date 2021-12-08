@@ -6,9 +6,11 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch } from "react-router";
 import DynamicLink from "components/DynamicLink";
 import { capitalize, Environment } from "./EnvironmentList";
+import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import ChartList from "../../chart/ChartList";
+import github from "assets/github-white.png";
 
 const mockEnvironment = {
   id: 1,
@@ -42,7 +44,7 @@ const EnvironmentDetail = () => {
   }, [params]);
 
   if (!environment) {
-    return <>Loading . . .</>;
+    return <Loading />;
   }
 
   return (
@@ -51,49 +53,93 @@ const EnvironmentDetail = () => {
         <BackButton to={"/cluster-dashboard?selected_tab=preview_environments"}>
           <BackButtonImg src={backArrow} />
         </BackButton>
-        <Title icon={pr_icon} iconWidth="30px">
+        <Title icon={pr_icon} iconWidth="25px">
           {environment.url}
-          <DynamicLink to={environment.url} target="_blank">
-            <i className="material-icons">link</i>
-          </DynamicLink>
           <TagWrapper>
             Namespace <NamespaceTag>{environment.namespace}</NamespaceTag>
           </TagWrapper>
         </Title>
-        <br />
         <InfoWrapper>
-          <PrLinkWrapper>
-            Link to PR:
-            <PRLink to={environment.pr_link} target="_blank">
-              {environment.pr_link}
-            </PRLink>
-          </PrLinkWrapper>
+          <PRLink to={environment.pr_link} target="_blank">
+            <i className="material-icons">link</i>
+            {environment.pr_link}
+          </PRLink>
+        </InfoWrapper>
+        <Flex>
           <Status>
             <StatusDot status={environment.status} />
             {capitalize(environment.status)}
           </Status>
-        </InfoWrapper>
+          <Dot>•</Dot>
+          <GHALink to={environment.actions_link} target="_blank">
+            <img src={github} /> GitHub Action
+            <i className="material-icons">
+              open_in_new
+            </i>
+          </GHALink>
+        </Flex>
+        <LinkToActionsWrapper>
+      </LinkToActionsWrapper>
       </HeaderWrapper>
-      <br />
+      <LineBreak />
       <ChartListWrapper>
         <ChartList
           currentCluster={context.currentCluster}
           currentView="cluster-dashboard"
-          sortType="Newest"
+          sortType="Newest" 
           namespace={environment.namespace}
           disableBottomPadding
         />
       </ChartListWrapper>
-      <LinkToActionsWrapper>
-        <DynamicLink to={environment.actions_link}>
-          Link to Actions tab
-        </DynamicLink>
-      </LinkToActionsWrapper>
     </StyledExpandedChart>
   );
 };
 
 export default EnvironmentDetail;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+const GHALink = styled(DynamicLink)`
+  font-size: 13px;
+  font-weight: 400;
+  margin-left: 7px;
+  color: #aaaabb;
+  display: flex;
+  align-items: center;
+
+  :hover {
+    text-decoration: underline;
+    color: white;
+  }
+
+  > img {
+    height: 16px;
+    margin-right: 9px;
+    margin-left: 5px;
+
+    :text-decoration: none;
+    :hover {
+      text-decoration: underline;
+      color: white;
+    }
+  }
+
+  > i {
+    margin-left: 7px;
+    font-size: 17px;
+  }
+`;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin-bottom: 20px;
+`;
 
 const BackButton = styled(DynamicLink)`
   position: absolute;
@@ -127,29 +173,23 @@ const HeaderWrapper = styled.div`
 `;
 
 const Dot = styled.div`
-  margin-right: 9px;
+  margin-left: 9px;
+  font-size: 14px;
+  color: #ffffff33;
 `;
 
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 22px;
   width: auto;
   justify-content: space-between;
-`;
-
-const PrLinkWrapper = styled.div`
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  color: #aaaabb66;
 `;
 
 const TagWrapper = styled.div`
   height: 20px;
   font-size: 12px;
   display: flex;
-  margin-left: 15px;
+  margin-left: 20px;
   margin-bottom: -3px;
   align-items: center;
   font-weight: 400;
@@ -183,7 +223,6 @@ const Icon = styled.img`
 
 const StyledExpandedChart = styled.div`
   width: 100%;
-  overflow: hidden;
   z-index: 0;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
@@ -203,12 +242,14 @@ const StyledExpandedChart = styled.div`
 
 const Title = styled(TitleSection)`
   font-size: 16px;
+  margin-top: 4px;
 `;
 
 const Status = styled.span`
-  font-size: 14px;
+  font-size: 13px;
   display: flex;
   align-items: center;
+  margin-left: 1px;
   min-height: 17px;
   color: #a7a6bb;
 `;
@@ -226,23 +267,32 @@ const StatusDot = styled.div`
       : "#f5cb42"};
   border-radius: 20px;
   margin-left: 3px;
-  margin-right: 5px;
+  margin-right: 15px;
 `;
 
 const PRLink = styled(DynamicLink)`
-  margin-left: 5px;
+  margin-left: 0px;
+  display: flex;
+  margin-top: 1px;
+  align-items: center;
+  font-size: 13px;
+  > i {
+    font-size: 15px;
+    margin-right: 10px;
+  }
 `;
 
 const ChartListWrapper = styled.div`
-  width: 95%;
+  width: 100%;
   margin: auto;
   margin-top: 20px;
+  padding-bottom: 125px;
 `;
 
 const LinkToActionsWrapper = styled.div`
   width: 100%;
   margin-top: 15px;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   display: flex;
   align-items: center;
   justify-content: center;

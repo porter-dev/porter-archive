@@ -28,7 +28,7 @@ const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
-  { label: "PR preview", value: "preview_environments" },
+  { label: "PR Preview", value: "preview_environments" },
   { label: "Nodes", value: "nodes" },
   { label: "Events", value: "events" },
   { label: "Metrics", value: "metrics" },
@@ -153,7 +153,7 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 20px;
+  margin-top: 36px;
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;

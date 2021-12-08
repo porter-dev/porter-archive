@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/environment"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -79,6 +80,99 @@ func getGitInstallationRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id} ->
+	// environment.NewCreateEnvironmentHandler
+	createEnvironmentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/clusters/{cluster_id}/environment",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	createEnvironmentHandler := environment.NewCreateEnvironmentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createEnvironmentEndpoint,
+		Handler:  createEnvironmentHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment ->
+	// environment.NewCreateDeploymentHandler
+	createDeploymentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/clusters/{cluster_id}/deployment",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	createDeploymentHandler := environment.NewCreateDeploymentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createDeploymentEndpoint,
+		Handler:  createDeploymentHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment/finalize ->
+	// environment.NewFinalizeDeploymentHandler
+	finalizeDeploymentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/clusters/{cluster_id}/deployment/finalize",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	finalizeDeploymentHandler := environment.NewFinalizeDeploymentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: finalizeDeploymentEndpoint,
+		Handler:  finalizeDeploymentHandler,
 		Router:   r,
 	})
 

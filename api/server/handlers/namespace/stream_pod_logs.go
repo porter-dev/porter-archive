@@ -34,6 +34,12 @@ func NewStreamPodLogsHandler(
 }
 
 func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.GetPodLogsRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
 	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 	name, _ := requestutils.GetURLParamString(r, types.URLParamPodName)
@@ -47,7 +53,7 @@ func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = agent.GetPodLogs(namespace, name, safeRW)
+	err = agent.GetPodLogs(namespace, name, request.Previous, request.Container, safeRW)
 
 	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

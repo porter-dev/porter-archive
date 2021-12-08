@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
@@ -95,6 +96,20 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	worker.RegisterDriver("porter.deploy", NewPorterDriver)
 	worker.SetDefaultDriver("porter.deploy")
 
+	deplNamespace := os.Getenv("PORTER_NAMESPACE")
+
+	if deplNamespace == "" {
+		return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+	}
+
+	deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
+
+	if err != nil {
+		return err
+	}
+
+	worker.RegisterHook("deployment", deploymentHook)
+
 	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
 	})
@@ -167,6 +182,8 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
+	// TODO: call driver ConstructConfig
+
 	client := GetAPIClient(config)
 
 	if resource.Name == "" {
@@ -470,4 +487,107 @@ func existsInRepo(name, version, url string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return chart.Values, nil
+}
+
+type DeploymentHook struct {
+	client                                        *api.Client
+	resourceGroup                                 *switchboardTypes.ResourceGroup
+	gitInstallationID, projectID, clusterID, prID uint
+	namespace                                     string
+}
+
+func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
+	res := &DeploymentHook{
+		client:        client,
+		resourceGroup: resourceGroup,
+		namespace:     namespace,
+	}
+
+	if ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID"); ghIDStr != "" {
+		ghID, err := strconv.Atoi(ghIDStr)
+
+		if err != nil {
+			return nil, err
+		}
+
+		res.gitInstallationID = uint(ghID)
+	} else if ghIDStr == "" {
+		return nil, fmt.Errorf("Git installation ID must be defined, set by PORTER_GIT_INSTALLATION_ID")
+	}
+
+	if prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID"); prIDStr != "" {
+		prID, err := strconv.Atoi(prIDStr)
+
+		if err != nil {
+			return nil, err
+		}
+
+		res.prID = uint(prID)
+	} else if prIDStr == "" {
+		return nil, fmt.Errorf("Pull request ID must be defined, set by PORTER_PULL_REQUEST_ID")
+	}
+
+	res.projectID = config.Project
+
+	if res.projectID == 0 {
+		return nil, fmt.Errorf("project id must be set")
+	}
+
+	res.clusterID = config.Cluster
+
+	if res.clusterID == 0 {
+		return nil, fmt.Errorf("cluster id must be set")
+	}
+
+	return res, nil
+}
+
+func (t *DeploymentHook) PreApply() error {
+	// attempt to read the deployment -- if it doesn't exist, create it
+	_, err := t.client.GetDeployment(
+		context.Background(),
+		t.projectID, t.gitInstallationID, t.clusterID,
+		&types.GetDeploymentRequest{
+			Namespace: t.namespace,
+		},
+	)
+
+	// TODO: case this on the response status code rather than text
+	if err != nil && strings.Contains(err.Error(), "deployment not found") {
+		// in this case, create the deployment
+		_, err = t.client.CreateDeployment(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			&types.CreateDeploymentRequest{
+				Namespace:     t.namespace,
+				PullRequestID: t.prID,
+			},
+		)
+
+		return err
+	}
+
+	return err
+}
+
+func (t *DeploymentHook) DataQueries() map[string]interface{} {
+	// TODO: use the resource group to find all web applications that can have an exposed subdomain
+	return map[string]interface{}{
+		"first": "{ .test-deployment.spec.replicas }",
+	}
+}
+
+func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
+	// finalize the deployment
+	_, err := t.client.FinalizeDeployment(
+		context.Background(),
+		t.projectID, t.gitInstallationID, t.clusterID,
+		&types.FinalizeDeploymentRequest{
+			Namespace: t.namespace,
+			// TODO: populate the subdomain based on the query
+			Subdomain: "google.com",
+		},
+	)
+
+	return err
 }

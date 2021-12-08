@@ -50,6 +50,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		EnvironmentID: env.ID,
 		Namespace:     request.Namespace,
 		Status:        "creating",
+		PullRequestID: request.PullRequestID,
 	})
 
 	if err != nil {

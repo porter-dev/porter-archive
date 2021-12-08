@@ -56,7 +56,7 @@ func (repo *EnvironmentRepository) UpdateDeployment(deployment *models.Deploymen
 
 func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace string) (*models.Deployment, error) {
 	depl := &models.Deployment{}
-	if err := repo.db.Order("id desc").Where("environment_id = ? AND namespace = ?", environmentID).First(&depl).Error; err != nil {
+	if err := repo.db.Order("id desc").Where("environment_id = ? AND namespace = ?", environmentID, namespace).First(&depl).Error; err != nil {
 		return nil, err
 	}
 	return depl, nil

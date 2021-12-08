@@ -17,6 +17,7 @@ type GormRepository struct {
 	gitActionConfig           repository.GitActionConfigRepository
 	invite                    repository.InviteRepository
 	release                   repository.ReleaseRepository
+	environment               repository.EnvironmentRepository
 	authCode                  repository.AuthCodeRepository
 	dnsRecord                 repository.DNSRecordRepository
 	pwResetToken              repository.PWResetTokenRepository
@@ -77,6 +78,10 @@ func (t *GormRepository) Invite() repository.InviteRepository {
 
 func (t *GormRepository) Release() repository.ReleaseRepository {
 	return t.release
+}
+
+func (t *GormRepository) Environment() repository.EnvironmentRepository {
+	return t.environment
 }
 
 func (t *GormRepository) AuthCode() repository.AuthCodeRepository {
@@ -173,6 +178,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		gitActionConfig:           NewGitActionConfigRepository(db),
 		invite:                    NewInviteRepository(db),
 		release:                   NewReleaseRepository(db),
+		environment:               NewEnvironmentRepository(db),
 		authCode:                  NewAuthCodeRepository(db),
 		dnsRecord:                 NewDNSRecordRepository(db),
 		pwResetToken:              NewPWResetTokenRepository(db),

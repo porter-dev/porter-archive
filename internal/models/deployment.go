@@ -11,6 +11,8 @@ type Environment struct {
 	ProjectID         uint
 	ClusterID         uint
 	GitInstallationID uint
+	GitRepoOwner      string
+	GitRepoName       string
 
 	Name string
 }
@@ -21,6 +23,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		ProjectID:         e.ProjectID,
 		ClusterID:         e.ClusterID,
 		GitInstallationID: e.GitInstallationID,
+		GitRepoOwner:      e.GitRepoOwner,
+		GitRepoName:       e.GitRepoName,
 		Name:              e.Name,
 	}
 }
@@ -32,6 +36,7 @@ type Deployment struct {
 	Namespace     string
 	Status        string
 	Subdomain     string
+	PullRequestID uint
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
@@ -41,5 +46,6 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		Namespace:     d.Namespace,
 		Status:        d.Status,
 		Subdomain:     d.Subdomain,
+		PullRequestID: d.PullRequestID,
 	}
 }

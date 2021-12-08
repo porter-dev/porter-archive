@@ -1,10 +1,10 @@
 package environment
 
 import (
-	"context"
+	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -12,28 +12,29 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
+	"gorm.io/gorm"
 )
 
-type FinalizeDeploymentHandler struct {
+type GetDeploymentHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewFinalizeDeploymentHandler(
+func NewGetDeploymentHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *FinalizeDeploymentHandler {
-	return &FinalizeDeploymentHandler{
+) *GetDeploymentHandler {
+	return &GetDeploymentHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.FinalizeDeploymentRequest{}
+	request := &types.GetDeploymentRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -42,53 +43,26 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID))
 
-	if err != nil {
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("environment not found: is the environment enabled for this git installation?"),
+			http.StatusNotFound,
+		))
+		return
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	// read the deployment
 	depl, err := c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("deployment not found"),
+			http.StatusNotFound,
+		))
 		return
-	}
-
-	depl.Subdomain = request.Subdomain
-	depl.Status = "created"
-
-	// update the deployment
-	depl, err = c.Repo().Environment().UpdateDeployment(depl)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// write comment in PR
-	commentBody := "(TENTATIVE) Porter is deploying this pull request..."
-	prComment := github.IssueComment{
-		Body: &commentBody,
-		User: &github.User{},
-	}
-
-	_, _, err = client.Issues.CreateComment(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		int(depl.PullRequestID),
-		&prComment,
-	)
-
-	if err != nil {
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

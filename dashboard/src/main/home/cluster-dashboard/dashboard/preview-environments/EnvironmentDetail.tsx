@@ -73,20 +73,17 @@ const EnvironmentDetail = () => {
           <Dot>•</Dot>
           <GHALink to={environment.actions_link} target="_blank">
             <img src={github} /> GitHub Action
-            <i className="material-icons">
-              open_in_new
-            </i>
+            <i className="material-icons">open_in_new</i>
           </GHALink>
         </Flex>
-        <LinkToActionsWrapper>
-      </LinkToActionsWrapper>
+        <LinkToActionsWrapper></LinkToActionsWrapper>
       </HeaderWrapper>
       <LineBreak />
       <ChartListWrapper>
         <ChartList
           currentCluster={context.currentCluster}
           currentView="cluster-dashboard"
-          sortType="Newest" 
+          sortType="Newest"
           namespace={environment.namespace}
           disableBottomPadding
         />

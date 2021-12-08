@@ -129,7 +129,11 @@ const EnvironmentList = () => {
   }
 
   if (isLoading) {
-    return <Placeholder><Loading /></Placeholder>;
+    return (
+      <Placeholder>
+        <Loading />
+      </Placeholder>
+    );
   }
 
   if (hasError) {

@@ -207,6 +207,68 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/environment ->
+	// environment.NewDeleteEnvironmentHandler
+	deleteEnvironmentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/clusters/{cluster_id}/environment",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	deleteEnvironmentHandler := environment.NewDeleteEnvironmentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteEnvironmentEndpoint,
+		Handler:  deleteEnvironmentHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment ->
+	// environment.NewDeleteDeploymentHandler
+	deleteDeploymentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/clusters/{cluster_id}/deployment",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	deleteDeploymentHandler := environment.NewDeleteDeploymentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteDeploymentEndpoint,
+		Handler:  deleteDeploymentHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/repos ->
 	// gitinstallation.GithubListReposHandler
 	listReposEndpoint := factory.NewAPIEndpoint(

@@ -23,6 +23,10 @@ func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInst
 	panic("unimplemented")
 }
 
+func (repo *EnvironmentRepository) ListEnvironments(projectID, clusterID uint) ([]*models.Environment, error) {
+	panic("unimplemented")
+}
+
 func (repo *EnvironmentRepository) DeleteEnvironment(env *models.Environment) (*models.Environment, error) {
 	panic("unimplemented")
 }

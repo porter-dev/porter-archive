@@ -111,3 +111,8 @@ type RenameConfigMapResponse struct {
 type DeleteConfigMapRequest struct {
 	Name string `schema:"name,required"`
 }
+
+type GetPodLogsRequest struct {
+	Container string `schema:"container_name"`
+	Previous  bool   `schema:"previous"`
+}

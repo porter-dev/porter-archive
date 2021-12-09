@@ -72,6 +72,16 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 	return depl, nil
 }
 
+func (repo *EnvironmentRepository) ListDeployments(environmentID uint) ([]*models.Deployment, error) {
+	depls := make([]*models.Deployment, 0)
+
+	if err := repo.db.Order("id asc").Where("environment_id = ?", environmentID).Find(&depls).Error; err != nil {
+		return nil, err
+	}
+
+	return depls, nil
+}
+
 func (repo *EnvironmentRepository) DeleteDeployment(deployment *models.Deployment) (*models.Deployment, error) {
 	if err := repo.db.Delete(deployment).Error; err != nil {
 		return nil, err

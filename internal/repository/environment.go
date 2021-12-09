@@ -9,6 +9,7 @@ type EnvironmentRepository interface {
 	DeleteEnvironment(env *models.Environment) (*models.Environment, error)
 	CreateDeployment(deployment *models.Deployment) (*models.Deployment, error)
 	ReadDeployment(environmentID uint, namespace string) (*models.Deployment, error)
+	ListDeployments(environmentID uint) ([]*models.Deployment, error)
 	UpdateDeployment(deployment *models.Deployment) (*models.Deployment, error)
 	DeleteDeployment(deployment *models.Deployment) (*models.Deployment, error)
 }

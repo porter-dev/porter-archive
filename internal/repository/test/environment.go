@@ -43,6 +43,10 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 	panic("unimplemented")
 }
 
+func (repo *EnvironmentRepository) ListDeployments(environmentID uint) ([]*models.Deployment, error) {
+	panic("unimplemented")
+}
+
 func (repo *EnvironmentRepository) DeleteDeployment(deployment *models.Deployment) (*models.Deployment, error) {
 	panic("unimplemented")
 }

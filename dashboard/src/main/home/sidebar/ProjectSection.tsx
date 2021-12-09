@@ -74,16 +74,18 @@ class ProjectSection extends Component<PropsType, StateType> {
         <div>
           <Dropdown>
             {this.renderOptionList()}
-            <Option
-              selected={false}
-              lastItem={true}
-              onClick={() =>
-                pushFiltered(this.props, "/new-project", ["project_id"])
-              }
-            >
-              <ProjectIconAlt>+</ProjectIconAlt>
-              <ProjectLabel>Create a Project</ProjectLabel>
-            </Option>
+            {this.context.canCreateProject && (
+              <Option
+                selected={false}
+                lastItem={true}
+                onClick={() =>
+                  pushFiltered(this.props, "/new-project", ["project_id"])
+                }
+              >
+                <ProjectIconAlt>+</ProjectIconAlt>
+                <ProjectLabel>Create a Project</ProjectLabel>
+              </Option>
+            )}
           </Dropdown>
         </div>
       );

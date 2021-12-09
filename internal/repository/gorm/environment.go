@@ -32,6 +32,16 @@ func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInst
 	return env, nil
 }
 
+func (repo *EnvironmentRepository) ListEnvironments(projectID, clusterID uint) ([]*models.Environment, error) {
+	envs := make([]*models.Environment, 0)
+
+	if err := repo.db.Order("id asc").Where("project_id = ? AND cluster_id = ?", projectID, clusterID).Find(&envs).Error; err != nil {
+		return nil, err
+	}
+
+	return envs, nil
+}
+
 func (repo *EnvironmentRepository) DeleteEnvironment(env *models.Environment) (*models.Environment, error) {
 	if err := repo.db.Delete(&env).Error; err != nil {
 		return nil, err

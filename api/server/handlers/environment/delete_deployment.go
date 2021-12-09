@@ -2,7 +2,9 @@ package environment
 
 import (
 	"net/http"
+	"strings"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -14,6 +16,7 @@ import (
 
 type DeleteDeploymentHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 func NewDeleteDeploymentHandler(
@@ -23,6 +26,7 @@ func NewDeleteDeploymentHandler(
 ) *DeleteDeploymentHandler {
 	return &DeleteDeploymentHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -51,6 +55,24 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	// delete corresponding namespace
+	agent, err := c.GetAgent(r, cluster, "")
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// make sure we don't delete default or kube-system by checking for prefix, for now
+	if strings.Contains(depl.Namespace, "pr-") {
+		err = agent.DeleteNamespace(depl.Namespace)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// TODO: delete corresponding Github actions files using the client

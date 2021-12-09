@@ -1,9 +1,10 @@
 package environment
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -11,30 +12,29 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
+	"gorm.io/gorm"
 )
 
-type CreateDeploymentHandler struct {
+type ListDeploymentsHandler struct {
 	handlers.PorterHandlerReadWriter
-	authz.KubernetesAgentGetter
 }
 
-func NewCreateDeploymentHandler(
+func NewListDeploymentsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreateDeploymentHandler {
-	return &CreateDeploymentHandler{
+) *ListDeploymentsHandler {
+	return &ListDeploymentsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
-		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *ListDeploymentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.CreateDeploymentRequest{}
+	request := &types.GetDeploymentRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -43,38 +43,29 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID))
 
-	if err != nil {
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("environment not found: is the environment enabled for this git installation?"),
+			http.StatusNotFound,
+		))
+		return
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	// create the deployment
-	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
-		EnvironmentID: env.ID,
-		Namespace:     request.Namespace,
-		Status:        "creating",
-		PullRequestID: request.PullRequestID,
-	})
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// create the backing namespace
-	agent, err := c.GetAgent(r, cluster, "")
+	depls, err := c.Repo().Environment().ListDeployments(env.ID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	_, err = agent.CreateNamespace(depl.Namespace)
+	res := make([]*types.Deployment, 0)
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+	for _, depl := range depls {
+		res = append(res, depl.ToDeploymentType())
 	}
 
-	c.WriteResult(w, r, depl.ToDeploymentType())
+	c.WriteResult(w, r, res)
 }

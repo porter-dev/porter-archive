@@ -88,6 +88,9 @@ type ServerConf struct {
 
 	// Enable pprof profiling endpoints
 	PprofEnabled bool `env:"PPROF_ENABLED,default=false"`
+
+	// Disable filtering for project creation
+	DisableAllowlist bool `env:"DISABLE_ALLOWLIST,default=false"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

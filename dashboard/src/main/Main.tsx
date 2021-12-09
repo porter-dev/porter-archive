@@ -69,20 +69,6 @@ export default class Main extends Component<PropsType, StateType> {
         this.setState({ local: !res.data?.provisioner });
       })
       .catch((err) => console.log(err));
-
-    api
-      .getCanCreateProject("<token>", {}, {})
-      .then((res) => {
-        if (res.status === 403) {
-          this.context.setCanCreateProject(false);
-          return;
-        }
-        this.context.setCanCreateProject(true);
-      })
-      .catch((err) => {
-        this.context.setCanCreateProject(false);
-        console.error(err);
-      });
   }
 
   initialize = () => {

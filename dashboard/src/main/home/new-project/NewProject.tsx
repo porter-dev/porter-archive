@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import { useRouting } from "shared/routing";
 import api from "shared/api";
@@ -22,11 +22,19 @@ type ValidationError = {
 };
 
 export const NewProjectFC = () => {
-  const { user, setProjects, setCurrentProject } = useContext(Context);
+  const { user, setProjects, setCurrentProject, canCreateProject } = useContext(
+    Context
+  );
   const { pushFiltered } = useRouting();
   const [buttonStatus, setButtonStatus] = useState("");
   const [name, setName] = useState("");
   const { projects } = useContext(Context);
+
+  useEffect(() => {
+    if (!canCreateProject) {
+      pushFiltered("/", []);
+    }
+  }, [canCreateProject]);
 
   const isFirstProject = useMemo(() => {
     return !(projects?.length >= 1);

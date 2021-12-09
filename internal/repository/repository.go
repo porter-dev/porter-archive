@@ -31,4 +31,5 @@ type Repository interface {
 	Onboarding() ProjectOnboardingRepository
 	CredentialsExchangeToken() CredentialsExchangeTokenRepository
 	BuildConfig() BuildConfigRepository
+	Allowlist() AllowlistRepository
 }

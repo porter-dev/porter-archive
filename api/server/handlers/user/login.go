@@ -63,8 +63,15 @@ func (u *UserLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// save the user as authenticated in the session
-	if err := authn.SaveUserAuthenticated(w, r, u.Config(), storedUser); err != nil {
+	redirect, err := authn.SaveUserAuthenticated(w, r, u.Config(), storedUser)
+
+	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if redirect != "" {
+		http.Redirect(w, r, redirect, http.StatusFound)
 		return
 	}
 

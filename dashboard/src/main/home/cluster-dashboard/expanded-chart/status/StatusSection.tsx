@@ -65,7 +65,9 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
         setControllers([]);
         setIsLoading(false);
       });
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+    };
   }, [currentProject, currentCluster, setCurrentError, currentChart]);
 
   const renderLogs = () => {
@@ -133,31 +135,27 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
 
   return (
     <>
-      {
-        fullscreen ? (
-          <FullScreen>
-            <AbsoluteTitle>
-              <BackButton
-                onClick={setFullScreenLogs}
-              >
-                <i className="material-icons">navigate_before</i>
-              </BackButton>
-              Status ({currentChart.name})
-            </AbsoluteTitle>
-            <FullScreenButton top="70px" onClick={setFullScreenLogs}>
-              <i className="material-icons">close_fullscreen</i>
-            </FullScreenButton>
-            {renderStatusSection()}
-          </FullScreen>
-        ) : (
-          <StyledStatusSection>
-            <FullScreenButton onClick={setFullScreenLogs}>
-              <i className="material-icons">open_in_full</i>
-            </FullScreenButton>
-            {renderStatusSection()}
-          </StyledStatusSection>
-        )
-      }
+      {fullscreen ? (
+        <FullScreen>
+          <AbsoluteTitle>
+            <BackButton onClick={setFullScreenLogs}>
+              <i className="material-icons">navigate_before</i>
+            </BackButton>
+            Status ({currentChart.name})
+          </AbsoluteTitle>
+          <FullScreenButton top="70px" onClick={setFullScreenLogs}>
+            <i className="material-icons">close_fullscreen</i>
+          </FullScreenButton>
+          {renderStatusSection()}
+        </FullScreen>
+      ) : (
+        <StyledStatusSection>
+          <FullScreenButton onClick={setFullScreenLogs}>
+            <i className="material-icons">open_in_full</i>
+          </FullScreenButton>
+          {renderStatusSection()}
+        </StyledStatusSection>
+      )}
     </>
   );
 };
@@ -166,7 +164,7 @@ export default StatusSectionFC;
 
 const FullScreenButton = styled.div<{ top?: string }>`
   position: absolute;
-  top: ${props => props.top || "10px"};
+  top: ${(props) => props.top || "10px"};
   right: 10px;
   width: 24px;
   height: 24px;
@@ -217,7 +215,6 @@ const BackButtonImg = styled.img`
   width: 12px;
   opacity: 0.75;
 `;
-
 
 const AbsoluteTitle = styled.div`
   position: absolute;

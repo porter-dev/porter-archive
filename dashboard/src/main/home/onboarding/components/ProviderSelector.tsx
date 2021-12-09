@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
 import { SupportedProviders } from "../types";
@@ -13,6 +13,7 @@ export type ProviderSelectorProps = {
     icon: string;
     label: string;
   }[];
+  defaultOption?: string;
 };
 
 export const registryOptions = [
@@ -68,22 +69,33 @@ export const provisionerOptionsWithExternal = [
 const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selectProvider,
   options,
+  defaultOption,
 }) => {
-  const [provider, setProvider] = useState(() => {
-    if (options.find((o) => o.value === "skip")) {
-      return "skip";
+  const [provider, setProvider] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const activeProvider = useMemo(() => {
+    if (!isDirty || !provider) {
+      if (typeof defaultOption === "string") {
+        return defaultOption;
+      }
+      if (options.find((o) => o.value === "skip")) {
+        return "skip";
+      }
     }
-    return null;
-  });
+
+    return provider;
+  }, [provider, isDirty, defaultOption]);
 
   return (
     <>
       <Br />
       <Selector
-        activeValue={provider}
+        activeValue={activeProvider}
         options={options}
         placeholder="Select a cloud provider"
         setActiveValue={(provider) => {
+          setIsDirty(true);
           setProvider(provider);
           selectProvider(provider as SupportedProviders);
         }}

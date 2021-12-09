@@ -27,8 +27,15 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
   };
 
   useEffect(() => {
+    if (
+      !formState?.variables?.currentChart?.name ||
+      !formState?.variables?.namespace
+    ) {
+      return () => {};
+    }
+
     let { group, version, resource } = props.context.config;
-    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${formState.variables.namespace}/releases/${formState.variables.currentChart.name}/0/form_stream?`;
+    let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${formState?.variables?.namespace}/releases/${formState?.variables?.currentChart?.name}/0/form_stream?`;
     apiEndpoint += `resource=${resource}&group=${group}&version=${version}`;
 
     const wsConfig = {
@@ -81,7 +88,7 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
     return () => {
       closeAllWebsockets();
     };
-  }, []);
+  }, [formState?.variables?.currentChart, formState?.variables?.namespace]);
 
   return (
     <ResourceListWrapper>

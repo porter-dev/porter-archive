@@ -15,6 +15,9 @@ staging.sh
 *.key
 bin
 
+# Local docs directories
+/docs/.obsidian
+
 # Local .terraform directories
 **/.terraform/*
 

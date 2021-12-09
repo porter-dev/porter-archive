@@ -15,7 +15,7 @@ const UnexpectedErrorPage = ({ error, resetErrorBoundary }: any) => (
         </BackButton>
         <Splitter>|</Splitter>
         <Helper>
-          Sorry for the inconvinience! The Porter team has been notified
+          Sorry for the inconvenience! The Porter team has been notified.
         </Helper>
       </Flex>
     </StyledPageNotFound>

@@ -21,6 +21,7 @@ import (
 type BuildOpts struct {
 	ImageRepo         string
 	Tag               string
+	CurrentTag        string
 	BuildContext      string
 	DockerfilePath    string
 	IsDockerfileInCtx bool
@@ -67,7 +68,11 @@ func (a *Agent) BuildLocal(opts *BuildOpts) error {
 		Tags: []string{
 			fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
 		},
-		Remove: true,
+		CacheFrom: []string{
+			fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
+		},
+		Remove:   true,
+		Platform: "linux/amd64",
 	})
 
 	if err != nil {

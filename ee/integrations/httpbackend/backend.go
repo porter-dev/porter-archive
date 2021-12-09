@@ -46,6 +46,8 @@ func (c *Client) GetDesiredState(name string) (*DesiredTFState, error) {
 	return resp.Data, nil
 }
 
+var ErrNotFound = fmt.Errorf("Not found")
+
 func (c *Client) getRequest(path string, dst interface{}) error {
 	req, err := http.NewRequest(
 		"GET",
@@ -73,6 +75,10 @@ func (c *Client) getRequest(path string, dst interface{}) error {
 
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
+		}
+
+		if res.StatusCode == http.StatusNotFound {
+			return ErrNotFound
 		}
 
 		return fmt.Errorf("request failed with status code %d: %s\n", res.StatusCode, string(resBytes))

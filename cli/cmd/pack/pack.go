@@ -4,19 +4,21 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/buildpacks/pack"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 )
 
 type Agent struct{}
 
-func (a *Agent) Build(opts *docker.BuildOpts) error {
+func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) error {
 	//create a context object
 	context := context.Background()
 
 	//initialize a pack client
-	client, err := pack.NewClient()
+	client, err := pack.NewClient(pack.WithLogger(newPackLogger()))
 
 	if err != nil {
 		return err
@@ -35,6 +37,18 @@ func (a *Agent) Build(opts *docker.BuildOpts) error {
 		AppPath:         opts.BuildContext,
 		TrustBuilder:    true,
 		Env:             opts.Env,
+	}
+
+	if buildConfig != nil {
+		buildOpts.Builder = buildConfig.Builder
+		if len(buildConfig.Buildpacks) > 0 {
+			buildOpts.Buildpacks = buildConfig.Buildpacks
+		}
+		// FIXME: use all the config vars
+	}
+
+	if strings.HasPrefix(buildOpts.Builder, "heroku") {
+		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile")
 	}
 
 	return client.Build(context, buildOpts)

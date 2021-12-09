@@ -554,7 +554,7 @@ func (a *Agent) DeletePod(namespace string, name string) error {
 }
 
 // GetPodLogs streams real-time logs from a given pod.
-func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.WebsocketSafeReadWriter) error {
+func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool, selectedContainer string, rw *websocket.WebsocketSafeReadWriter) error {
 	// get the pod to read in the list of contains
 	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
 		context.Background(),
@@ -580,6 +580,10 @@ func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.Websocke
 
 	container := pod.Spec.Containers[0].Name
 
+	if len(selectedContainer) > 0 {
+		container = selectedContainer
+	}
+
 	tails := int64(400)
 
 	// follow logs
@@ -587,6 +591,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.Websocke
 		Follow:    true,
 		TailLines: &tails,
 		Container: container,
+		Previous:  showPreviousLogs,
 	}
 
 	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)

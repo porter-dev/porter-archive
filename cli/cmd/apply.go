@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -116,9 +118,11 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 }
 
 type Source struct {
-	Name    string
-	Repo    string
-	Version string
+	Name          string
+	Repo          string
+	Version       string
+	IsApplication bool
+	SourceValues  map[string]interface{}
 }
 
 type Target struct {
@@ -127,24 +131,22 @@ type Target struct {
 	Namespace string
 }
 
-type Config struct {
+type ApplicationConfig struct {
 	Build struct {
 		Method     string
 		Context    string
 		Dockerfile string
 	}
+
 	Values map[string]interface{}
 }
 
 type Driver struct {
-	source              *Source
-	target              *Target
-	config              *Config
-	sourceDefaultValues map[string]interface{}
-	output              map[string]interface{}
-	lookupTable         *map[string]drivers.Driver
-	logger              *zerolog.Logger
-	shouldApply         bool
+	source      *Source
+	target      *Target
+	output      map[string]interface{}
+	lookupTable *map[string]drivers.Driver
+	logger      *zerolog.Logger
 }
 
 func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
@@ -152,171 +154,229 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		lookupTable: opts.DriverLookupTable,
 		logger:      opts.Logger,
 		output:      make(map[string]interface{}),
-		shouldApply: true,
 	}
 
 	err := driver.getSource(resource.Source)
-	if err != nil {
-		return nil, err
-	}
-	if driver.source.Repo == "https://chart-addons.getporter.dev" {
-		driver.shouldApply = false
-	}
 
-	err = driver.getTarget(resource.Target)
 	if err != nil {
 		return nil, err
 	}
 
-	resourceConfig, err := driver.getConfig(resource.Config)
+	err = driver.getTarget(resource.Target)
+
 	if err != nil {
 		return nil, err
 	}
-	driver.config = resourceConfig
 
 	return driver, nil
 }
 
 func (d *Driver) ShouldApply(resource *models.Resource) bool {
-	return d.shouldApply
+	return true
 }
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
-	// TODO: call driver ConstructConfig
-
 	client := GetAPIClient(config)
+	name := resource.Name
 
-	if resource.Name == "" {
+	if name == "" {
 		return nil, fmt.Errorf("empty app name")
 	}
-	resource.Name = fmt.Sprintf("preview-%s", resource.Name)
 
-	namespace := d.target.Namespace
-	existingNamespaces, err := client.GetK8sNamespaces(context.Background(), d.target.Project, d.target.Cluster)
+	_, err := client.GetRelease(
+		context.Background(),
+		d.target.Project,
+		d.target.Cluster,
+		d.target.Namespace,
+		resource.Name,
+	)
+
+	shouldCreate := err != nil
+
 	if err != nil {
-		return nil, err
+		color.New(color.FgYellow).Printf("Could not read release %s/%s (%s): attempting creation\n", d.target.Namespace, resource.Name, err.Error())
 	}
-	namespaceFound := false
-	for _, ns := range existingNamespaces.Items {
-		if namespace == ns.Name {
-			namespaceFound = true
-			break
-		}
+
+	if d.source.IsApplication {
+		return d.applyApplication(resource, client, shouldCreate)
 	}
-	if !namespaceFound {
-		_, err := client.CreateNewK8sNamespace(
-			context.Background(), d.target.Project, d.target.Cluster, namespace)
+
+	return d.applyAddon(resource, client, shouldCreate)
+}
+
+// Simple apply for addons
+func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+	var err error
+	if shouldCreate {
+		err = client.DeployAddon(
+			context.Background(),
+			d.target.Project,
+			d.target.Cluster,
+			d.target.Namespace,
+			&types.CreateAddonRequest{
+				CreateReleaseBaseRequest: &types.CreateReleaseBaseRequest{
+					RepoURL:         d.source.Repo,
+					TemplateName:    d.source.Name,
+					TemplateVersion: d.source.Version,
+					Values:          resource.Config,
+					Name:            resource.Name,
+				},
+			},
+		)
+	} else {
+		bytes, err := json.Marshal(resource.Config)
+
 		if err != nil {
 			return nil, err
 		}
+
+		err = client.UpgradeRelease(
+			context.Background(),
+			d.target.Project,
+			d.target.Cluster,
+			d.target.Namespace,
+			resource.Name,
+			&types.UpgradeReleaseRequest{
+				Values: string(bytes),
+			},
+		)
 	}
 
-	method := d.config.Build.Method
+	if err != nil {
+		return nil, err
+	}
+
+	d.output = utils.CoalesceValues(d.source.SourceValues, resource.Config)
+
+	return resource, err
+}
+
+func (d *Driver) applyApplication(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+	appConfig, err := d.getApplicationConfig(resource)
+
+	if err != nil {
+		return nil, err
+	}
+
+	method := appConfig.Build.Method
+
 	if method != "pack" && method != "docker" {
 		return nil, fmt.Errorf("method should either be \"docker\" or \"pack\"")
 	}
 
-	fullPath, err := filepath.Abs(d.config.Build.Context)
+	fullPath, err := filepath.Abs(appConfig.Build.Context)
+
 	if err != nil {
 		return nil, err
 	}
 
 	tag := os.Getenv("PORTER_TAG")
+
 	if tag == "" {
 		commit, err := git.LastCommit()
+
 		if err != nil {
 			return nil, err
 		}
+
 		tag = commit.Sha[:7]
 	}
-	if tag == "" {
-		return nil, fmt.Errorf("could not find commit SHA to tag the image")
+
+	sharedOpts := &deploy.SharedOpts{
+		ProjectID:       d.target.Project,
+		ClusterID:       d.target.Cluster,
+		Namespace:       d.target.Namespace,
+		LocalPath:       fullPath,
+		LocalDockerfile: appConfig.Build.Dockerfile,
+		OverrideTag:     tag,
+		Method:          deploy.DeployBuildType(method),
 	}
 
-	_, err = client.GetRelease(context.Background(), d.target.Project,
-		d.target.Cluster, d.target.Namespace, resource.Name)
+	if shouldCreate {
+		return d.createApplication(resource, client, sharedOpts, appConfig)
+	}
+
+	return d.updateApplication(resource, client, sharedOpts, appConfig)
+}
+
+func (d *Driver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
+	// create new release
+	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
+
+	regList, err := client.ListRegistries(context.Background(), d.target.Project)
+
 	if err != nil {
-		// create new release
-		color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
-
-		regList, err := client.ListRegistries(context.Background(), d.target.Project)
-		if err != nil {
-			return nil, err
-		}
-		var registryURL string
-		if len(*regList) == 0 {
-			return nil, fmt.Errorf("no registry found")
-		} else {
-			registryURL = (*regList)[0].URL
-		}
-
-		createAgent := &deploy.CreateAgent{
-			Client: client,
-			CreateOpts: &deploy.CreateOpts{
-				SharedOpts: &deploy.SharedOpts{
-					ProjectID:       d.target.Project,
-					ClusterID:       d.target.Cluster,
-					Namespace:       namespace,
-					LocalPath:       fullPath,
-					LocalDockerfile: d.config.Build.Dockerfile,
-					Method:          deploy.DeployBuildType(method),
-				},
-				Kind:        d.source.Name,
-				ReleaseName: resource.Name,
-				RegistryURL: registryURL,
-			},
-		}
-
-		subdomain, err := createAgent.CreateFromDocker(d.config.Values, tag)
-
-		return resource, handleSubdomainCreate(subdomain, err)
+		return nil, err
 	}
 
-	// update an existing release
-	color.New(color.FgGreen).Println("Deploying app:", resource.Name)
+	var registryURL string
+
+	if len(*regList) == 0 {
+		return nil, fmt.Errorf("no registry found")
+	} else {
+		registryURL = (*regList)[0].URL
+	}
+
+	createAgent := &deploy.CreateAgent{
+		Client: client,
+		CreateOpts: &deploy.CreateOpts{
+			SharedOpts:  sharedOpts,
+			Kind:        d.source.Name,
+			ReleaseName: resource.Name,
+			RegistryURL: registryURL,
+		},
+	}
+
+	subdomain, err := createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag)
+
+	d.output = utils.CoalesceValues(d.source.SourceValues, appConf.Values)
+
+	return resource, handleSubdomainCreate(subdomain, err)
+}
+
+func (d *Driver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
+	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
 	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
-		SharedOpts: &deploy.SharedOpts{
-			ProjectID:       d.target.Project,
-			ClusterID:       d.target.Cluster,
-			Namespace:       namespace,
-			LocalPath:       fullPath,
-			LocalDockerfile: d.config.Build.Dockerfile,
-			OverrideTag:     tag,
-			Method:          deploy.DeployBuildType(method),
-		},
-		Local: true,
+		SharedOpts: sharedOpts,
+		Local:      true,
 	})
+
 	if err != nil {
 		return nil, err
 	}
 
 	buildEnv, err := updateAgent.GetBuildEnv()
+
 	if err != nil {
 		return nil, err
 	}
 
 	err = updateAgent.SetBuildEnv(buildEnv)
+
 	if err != nil {
 		return nil, err
 	}
 
 	err = updateAgent.Build()
+
 	if err != nil {
 		return nil, err
 	}
 
 	err = updateAgent.Push()
+
 	if err != nil {
 		return nil, err
 	}
 
-	err = updateAgent.UpdateImageAndValues(d.config.Values)
+	err = updateAgent.UpdateImageAndValues(appConf.Values)
+
 	if err != nil {
 		return nil, err
 	}
 
-	d.output[resource.Name] = utils.CoalesceValues(d.sourceDefaultValues, d.config.Values)
+	d.output = utils.CoalesceValues(d.source.SourceValues, appConf.Values)
 
 	return resource, nil
 }
@@ -343,6 +403,7 @@ func (d *Driver) getSource(genericSource map[string]interface{}) error {
 			d.source.Name = nameVal
 		}
 	}
+
 	if d.source.Name == "" {
 		return fmt.Errorf("source name required")
 	}
@@ -356,6 +417,7 @@ func (d *Driver) getSource(genericSource map[string]interface{}) error {
 			d.source.Repo = repoVal
 		}
 	}
+
 	if d.source.Version == "" {
 		if version, ok := genericSource["version"]; ok {
 			versionVal, ok := version.(string)
@@ -370,30 +432,32 @@ func (d *Driver) getSource(genericSource map[string]interface{}) error {
 	if d.source.Version == "" {
 		d.source.Version = "latest"
 	}
+
+	d.source.IsApplication = d.source.Repo == "https://charts.getporter.dev"
+
 	if d.source.Repo == "" {
 		d.source.Repo = "https://charts.getporter.dev"
+
 		values, err := existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
+
 		if err == nil {
 			// found in "https://charts.getporter.dev"
-			d.sourceDefaultValues = values
+			d.source.SourceValues = values
+			d.source.IsApplication = true
 			return nil
 		}
 
 		d.source.Repo = "https://chart-addons.getporter.dev"
+
 		values, err = existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
+
 		if err == nil {
 			// found in https://chart-addons.getporter.dev
-			d.sourceDefaultValues = values
+			d.source.SourceValues = values
 			return nil
 		}
 
 		return fmt.Errorf("source does not exist in any repo")
-	}
-
-	values, err := existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
-	if err == nil {
-		d.sourceDefaultValues = values
-		return nil
 	}
 
 	return fmt.Errorf("source '%s' does not exist in repo '%s'", d.source.Name, d.source.Repo)
@@ -410,6 +474,7 @@ func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
 		}
 		d.target.Project = uint(project)
 	}
+
 	if clusterEnv := os.Getenv("PORTER_CLUSTER"); clusterEnv != "" {
 		cluster, err := strconv.Atoi(clusterEnv)
 		if err != nil {
@@ -417,6 +482,7 @@ func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
 		}
 		d.target.Cluster = uint(cluster)
 	}
+
 	d.target.Namespace = os.Getenv("PORTER_NAMESPACE")
 
 	// next, check for values in the YAML file
@@ -429,6 +495,7 @@ func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
 			d.target.Project = projectVal
 		}
 	}
+
 	if d.target.Cluster == 0 {
 		if cluster, ok := genericTarget["cluster"]; ok {
 			clusterVal, ok := cluster.(uint)
@@ -438,6 +505,7 @@ func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
 			d.target.Cluster = clusterVal
 		}
 	}
+
 	if d.target.Namespace == "" {
 		if namespace, ok := genericTarget["namespace"]; ok {
 			namespaceVal, ok := namespace.(string)
@@ -462,10 +530,21 @@ func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
 	return nil
 }
 
-func (d *Driver) getConfig(genericConfig map[string]interface{}) (*Config, error) {
-	config := &Config{}
+func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationConfig, error) {
+	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
+		RawConf:      resource.Config,
+		LookupTable:  *d.lookupTable,
+		Dependencies: resource.Dependencies,
+	})
 
-	err := mapstructure.Decode(genericConfig, config)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &ApplicationConfig{}
+
+	err = mapstructure.Decode(populatedConf, config)
+
 	if err != nil {
 		return nil, err
 	}
@@ -571,21 +650,85 @@ func (t *DeploymentHook) PreApply() error {
 }
 
 func (t *DeploymentHook) DataQueries() map[string]interface{} {
-	// TODO: use the resource group to find all web applications that can have an exposed subdomain
-	return map[string]interface{}{
-		"first": "{ .test-deployment.spec.replicas }",
+	res := make(map[string]interface{})
+
+	// use the resource group to find all web applications that can have an exposed subdomain
+	// that we can query for
+	for _, resource := range t.resourceGroup.Resources {
+		isWeb := false
+
+		if sourceNameInter, exists := resource.Source["name"]; exists {
+			if sourceName, ok := sourceNameInter.(string); ok {
+				if sourceName == "web" {
+					isWeb = true
+				}
+			}
+		}
+
+		if isWeb {
+			valuesInter, exists := resource.Config["values"]
+
+			if !exists {
+				continue
+			}
+
+			values, ok := valuesInter.(map[string]interface{})
+
+			if !ok {
+				continue
+			}
+
+			ingressInter, exists := values["ingress"]
+
+			if !exists {
+				continue
+			}
+
+			ingress, ok := ingressInter.(map[string]interface{})
+
+			if !ok {
+				continue
+			}
+
+			enabledInter, exists := ingress["enabled"]
+
+			if !exists {
+				continue
+			}
+
+			enabled, ok := enabledInter.(bool)
+
+			if ok && enabled {
+				res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
+			}
+		}
 	}
+
+	return res
 }
 
 func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
+	subdomains := make([]string, 0)
+
+	for _, data := range populatedData {
+		domain, ok := data.(string)
+
+		if !ok {
+			continue
+		}
+
+		if _, err := url.Parse(domain); err == nil {
+			subdomains = append(subdomains, domain)
+		}
+	}
+
 	// finalize the deployment
 	_, err := t.client.FinalizeDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
 		&types.FinalizeDeploymentRequest{
 			Namespace: t.namespace,
-			// TODO: populate the subdomain based on the query
-			Subdomain: "google.com",
+			Subdomain: strings.Join(subdomains, ","),
 		},
 	)
 

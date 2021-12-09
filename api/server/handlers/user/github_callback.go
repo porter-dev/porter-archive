@@ -78,28 +78,28 @@ func (p *UserOAuthGithubCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	p.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
 
 	// save the user as authenticated in the session
-	if err := authn.SaveUserAuthenticated(w, r, p.Config(), user); err != nil {
+	redirect, err := authn.SaveUserAuthenticated(w, r, p.Config(), user)
+
+	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// non-fatal send email verification
 	if !user.EmailVerified {
-		startEmailVerification(p.Config(), w, r, user)
-	}
-
-	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
-		// attempt to parse the redirect uri, if it fails just redirect to dashboard
-		redirectURI, err := url.Parse(redirectStr)
+		err = startEmailVerification(p.Config(), w, r, user)
 
 		if err != nil {
-			http.Redirect(w, r, "/dashboard", 302)
+			p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 		}
-
-		http.Redirect(w, r, fmt.Sprintf("%s?%s", redirectURI.Path, redirectURI.RawQuery), 302)
-	} else {
-		http.Redirect(w, r, "/dashboard", 302)
 	}
+
+	if redirect != "" {
+		http.Redirect(w, r, redirect, http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, "/dashboard", 302)
 }
 
 func upsertUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User, error) {

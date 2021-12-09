@@ -24,6 +24,7 @@ type Release struct {
 	GitActionConfig    *GitActionConfig `json:"git_action_config"`
 	EventContainer     uint
 	NotificationConfig uint
+	BuildConfig        uint
 }
 
 func (r *Release) ToReleaseType() *types.PorterRelease {

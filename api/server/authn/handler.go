@@ -105,9 +105,9 @@ func (authn *AuthN) handleForbiddenForSession(
 	if authn.redirect {
 		// need state parameter to validate when redirected
 		if r.URL.RawQuery == "" {
-			session.Values["redirect"] = r.URL.Path
+			session.Values["redirect_uri"] = r.URL.Path
 		} else {
-			session.Values["redirect"] = r.URL.Path + "?" + r.URL.RawQuery
+			session.Values["redirect_uri"] = r.URL.Path + "?" + r.URL.RawQuery
 		}
 
 		session.Save(r, w)

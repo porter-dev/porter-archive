@@ -77,14 +77,20 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// save the user as authenticated in the session
-	if err := authn.SaveUserAuthenticated(w, r, u.Config(), user); err != nil {
+	redirect, err := authn.SaveUserAuthenticated(w, r, u.Config(), user)
+
+	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// non-fatal send email verification
 	if !user.EmailVerified {
-		startEmailVerification(u.Config(), w, r, user)
+		err = startEmailVerification(u.Config(), w, r, user)
+
+		if err != nil {
+			u.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		}
 	}
 
 	u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
@@ -93,6 +99,11 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
 		Email:               user.Email,
 	}))
+
+	if redirect != "" {
+		http.Redirect(w, r, redirect, http.StatusFound)
+		return
+	}
 
 	u.WriteResult(w, r, user.ToUserType())
 }

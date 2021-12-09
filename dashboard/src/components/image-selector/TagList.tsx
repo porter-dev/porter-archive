@@ -174,13 +174,13 @@ const TagName = styled.div<{ lastItem?: boolean; isSelected?: boolean }>`
   width: 100%;
   font-size: 13px;
   border-bottom: 1px solid
-    ${props => props.lastItem ? "#00000000" : "#606166"};
+    ${(props) => (props.lastItem ? "#00000000" : "#606166")};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
-  background: ${props => props.isSelected ? "#ffffff11" : ""};
+  background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
   :hover {
     background: #ffffff22;
 

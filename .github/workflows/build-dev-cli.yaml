@@ -1,0 +1,32 @@
+name: Deploy to dev
+on:
+  push:
+    branches:
+    # TODO: change before merge
+      - nafees/preview-apps-initial-cli
+jobs:
+  build-push-docker-cli:
+    name: Build a new porter-cli docker image
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR public
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Build
+        run: |
+          docker build . \
+            -t public.ecr.aws/o1j4x7p4/porter-cli:dev \
+            -f ./services/porter_cli_container/dev.Dockerfile
+      - name: Push
+        run: |
+          docker push public.ecr.aws/o1j4x7p4/porter-cli:dev

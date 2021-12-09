@@ -27,6 +27,11 @@ func NewCanCreateProjectHandler(
 }
 
 func (c *CanCreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if c.Config().ServerConf.DisableAllowlist {
+		c.WriteResult(w, r, "")
+		return
+	}
+
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	exists, err := c.Repo().Allowlist().UserEmailExists(user.Email)
@@ -43,5 +48,5 @@ func (c *CanCreateProject) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.WriteResult(w, r, user.ToUserType())
+	c.WriteResult(w, r, "")
 }

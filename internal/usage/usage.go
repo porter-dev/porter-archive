@@ -67,14 +67,14 @@ func GetUsage(opts *GetUsageOpts) (
 		}
 	}
 
-	oldUsageCache := usageCache
+	oldUsageCache := *usageCache
 
 	usageCache.Clusters = uint(len(clusters))
 	usageCache.Users = uint(len(countedRoles))
 
 	// if the usage cache is 1 hour old, was not found, usage is currently over limit, or the clusters/users
 	// counts have changed, re-query for the usage
-	if !isCacheFound || usageCache.Is1HrOld() || isUsageExceeded(usageCache, limit) || isUsageChanged(oldUsageCache, usageCache) {
+	if !isCacheFound || usageCache.Is1HrOld() || isUsageExceeded(usageCache, limit) || isUsageChanged(&oldUsageCache, usageCache) {
 		cpu, memory, err := getResourceUsage(opts, clusters)
 
 		if err != nil {
@@ -97,7 +97,7 @@ func GetUsage(opts *GetUsageOpts) (
 
 	if !isCacheFound {
 		usageCache, err = opts.Repo.ProjectUsage().CreateProjectUsageCache(usageCache)
-	} else if isUsageChanged(oldUsageCache, usageCache) {
+	} else if isUsageChanged(&oldUsageCache, usageCache) {
 		usageCache, err = opts.Repo.ProjectUsage().UpdateProjectUsageCache(usageCache)
 	}
 

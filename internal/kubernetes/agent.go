@@ -876,7 +876,7 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func parseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Release, bool, error) {
+func ParseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Release, bool, error) {
 	if secret.Type != "helm.sh/release.v1" {
 		return nil, true, nil
 	}
@@ -934,7 +934,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					return
 				}
 
-				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
 
 				if isNotHelmRelease && err == nil {
 					return
@@ -960,7 +960,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					return
 				}
 
-				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
 
 				if isNotHelmRelease && err == nil {
 					return
@@ -986,7 +986,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					return
 				}
 
-				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
 
 				if isNotHelmRelease && err == nil {
 					return

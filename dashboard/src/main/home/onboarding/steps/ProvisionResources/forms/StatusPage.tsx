@@ -54,6 +54,8 @@ export const StatusPage = ({
   project_id,
   setInfraStatus,
 }: Props) => {
+  const isMounted = useRef(false);
+
   const {
     newWebsocket,
     openWebsocket,
@@ -144,7 +146,10 @@ export const StatusPage = ({
     } catch (error) {}
   };
 
-  const getDesiredState = async (infra_id: number) => {
+  const getDesiredState = async (infra_id: number, counter: number = 0) => {
+    if (!isMounted.current) {
+      return;
+    }
     try {
       const desired = await api
         .getInfraDesired("<token>", {}, { project_id, infra_id })
@@ -158,9 +163,24 @@ export const StatusPage = ({
       connectToLiveUpdateModule(infra_id);
     } catch (error) {
       console.error(error);
-      setTimeout(() => {
-        getDesiredState(infra_id);
-      }, 500);
+      const MIN_TIMEOUT = 500;
+      const MAX_TIMEOUT = 2000;
+
+      let timeout = counter * 500;
+
+      if (timeout < MIN_TIMEOUT) {
+        timeout = MIN_TIMEOUT;
+      }
+
+      if (timeout > MAX_TIMEOUT) {
+        timeout = MAX_TIMEOUT;
+      }
+
+      if (isMounted.current) {
+        setTimeout(() => {
+          getDesiredState(infra_id, counter + 1);
+        }, timeout);
+      }
     }
   };
 
@@ -265,6 +285,13 @@ export const StatusPage = ({
     newWebsocket(websocketId, apiPath, wsConfig);
     openWebsocket(websocketId);
   };
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     getInfras();

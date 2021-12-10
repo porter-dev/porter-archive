@@ -115,23 +115,26 @@ const ChartList: React.FunctionComponent<Props> = ({
           getChartKey(chart.name, chart.namespace) ===
           getChartKey(newChart.name, newChart.namespace);
         setCharts((currentCharts) => {
+          const tmpCharts = Array.isArray(currentCharts)
+            ? [...currentCharts]
+            : [];
           switch (event.event_type) {
             case "ADD":
-              if (currentCharts.find(isSameChart)) {
-                return currentCharts;
+              if (tmpCharts.find(isSameChart)) {
+                return tmpCharts;
               }
-              return currentCharts.concat(newChart);
+              return tmpCharts.concat(newChart);
             case "UPDATE":
-              return currentCharts.map((chart) => {
+              return tmpCharts.map((chart) => {
                 if (isSameChart(chart) && newChart.version >= chart.version) {
                   return newChart;
                 }
                 return chart;
               });
             case "DELETE":
-              return currentCharts.filter((chart) => !isSameChart(chart));
+              return tmpCharts.filter((chart) => !isSameChart(chart));
             default:
-              return currentCharts;
+              return tmpCharts;
           }
         });
       },
@@ -300,10 +303,16 @@ const ChartList: React.FunctionComponent<Props> = ({
         }
       });
     }
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+    };
   }, [namespace, currentView]);
 
   const filteredCharts = useMemo(() => {
+    if (!Array.isArray(charts)) {
+      return [];
+    }
+
     const result = charts
       .filter((chart: ChartType) => {
         return (
@@ -360,7 +369,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
-    } else if (filteredCharts.length === 0) {
+    } else if (filteredCharts?.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No
@@ -370,7 +379,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       );
     }
 
-    return filteredCharts.map((chart: ChartType, i: number) => {
+    return filteredCharts?.map((chart: ChartType, i: number) => {
       return (
         <Chart
           key={getChartKey(chart.name, chart.namespace)}

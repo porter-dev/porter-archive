@@ -37,6 +37,7 @@ type Deployment struct {
 	Status        string
 	Subdomain     string
 	PullRequestID uint
+	GitHubDeploymentID int64
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
@@ -47,5 +48,6 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		Status:        d.Status,
 		Subdomain:     d.Subdomain,
 		PullRequestID: d.PullRequestID,
+		GitHubDeploymentID: d.GitHubDeploymentID,
 	}
 }

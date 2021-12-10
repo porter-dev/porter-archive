@@ -24,11 +24,14 @@ type Deployment struct {
 	Status        string `json:"status"`
 	Subdomain     string `json:"subdomain"`
 	PullRequestID uint   `json:"pull_request_id"`
+	GitHubDeploymentID int64 `json:"github_deployment_id"`
 }
 
 type CreateDeploymentRequest struct {
 	Namespace     string `json:"namespace" form:"required"`
 	PullRequestID uint   `json:"pull_request_id" form:"required"`
+	Branch string `json:"branch" form:"required"`
+	ActionID uint `json:"action_id" form:"required"`
 }
 
 type FinalizeDeploymentRequest struct {

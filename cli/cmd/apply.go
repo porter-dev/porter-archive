@@ -571,8 +571,8 @@ func existsInRepo(name, version, url string) (map[string]interface{}, error) {
 type DeploymentHook struct {
 	client                                        *api.Client
 	resourceGroup                                 *switchboardTypes.ResourceGroup
-	gitInstallationID, projectID, clusterID, prID uint
-	namespace                                     string
+	gitInstallationID, projectID, clusterID, prID, actionID uint
+	branch, namespace                                     string
 }
 
 func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
@@ -618,6 +618,24 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 		return nil, fmt.Errorf("cluster id must be set")
 	}
 
+	if branchName := os.Getenv("PORTER_BRANCH_NAME"); branchName != "" {
+		res.branch = branchName
+	} else if branchName == "" {
+		return nil, fmt.Errorf("Branch name must be defined, set by PORTER_BRANCH_NAME")
+	}
+
+	if actionIDStr := os.Getenv("PORTER_ACTION_ID"); actionIDStr != "" {
+		actionID, err := strconv.Atoi(actionIDStr)
+
+		if err != nil {
+			return nil, err
+		}
+
+		res.actionID = uint(actionID)
+	} else if actionIDStr == "" {
+		return nil, fmt.Errorf("Action Run ID must be defined, set by PORTER_ACTION_ID")
+	}
+
 	return res, nil
 }
 
@@ -640,6 +658,8 @@ func (t *DeploymentHook) PreApply() error {
 			&types.CreateDeploymentRequest{
 				Namespace:     t.namespace,
 				PullRequestID: t.prID,
+				Branch: t.branch,
+				ActionID: t.actionID,
 			},
 		)
 

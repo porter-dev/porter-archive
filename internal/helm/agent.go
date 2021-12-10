@@ -1,7 +1,10 @@
 package helm
 
 import (
+	"context"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/porter-dev/porter/internal/helm/loader"
@@ -9,6 +12,8 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/chartutil"
 
 	"github.com/porter-dev/porter/api/types"
@@ -28,11 +33,61 @@ func (a *Agent) ListReleases(
 	namespace string,
 	filter *types.ReleaseListFilter,
 ) ([]*release.Release, error) {
-	cmd := action.NewList(a.ActionConfig)
+	lsel := fmt.Sprintf("owner=helm,status in (%s)", strings.Join(filter.StatusFilter, ","))
 
-	filter.Apply(cmd)
+	// list secrets
+	secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(namespace).List(
+		context.Background(),
+		v1.ListOptions{
+			LabelSelector: lsel,
+		},
+	)
 
-	return cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	// before decoding to helm release, only keep the latest releases for each chart
+	latestMap := make(map[string]corev1.Secret)
+
+	for _, secret := range secretList.Items {
+		relName, relNameExists := secret.Labels["name"]
+
+		if !relNameExists {
+			continue
+		}
+
+		id := fmt.Sprintf("%s/%s", secret.Namespace, relName)
+
+		if currLatest, exists := latestMap[id]; exists {
+			// get version
+			currVersionStr, currVersionExists := currLatest.Labels["version"]
+			versionStr, versionExists := secret.Labels["version"]
+
+			if versionExists && currVersionExists {
+				currVersion, currErr := strconv.Atoi(currVersionStr)
+				version, err := strconv.Atoi(versionStr)
+				if currErr != nil && err != nil && currVersion < version {
+					latestMap[id] = secret
+				}
+			}
+		} else {
+			latestMap[id] = secret
+		}
+	}
+
+	chartList := []string{}
+	res := make([]*release.Release, 0)
+
+	for _, secret := range latestMap {
+		rel, isErr, err := kubernetes.ParseSecretToHelmRelease(secret, chartList)
+
+		if !isErr && err == nil {
+			res = append(res, rel)
+		}
+	}
+
+	return res, nil
 }
 
 // GetRelease returns the info of a release.

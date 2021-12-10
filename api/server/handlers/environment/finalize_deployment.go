@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"fmt"
 	"context"
 	"net/http"
 
@@ -73,8 +74,31 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Create new deployment status to indicate deployment is ready
+
+	state := "success"
+	env_url := depl.Subdomain
+
+	deploymentStatusRequest := github.DeploymentStatusRequest{
+		State: &state,
+		EnvironmentURL : &env_url,
+	}
+
+	_, _, err = client.Repositories.CreateDeploymentStatus(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		depl.GitHubDeploymentID,
+		&deploymentStatusRequest,
+	)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	// write comment in PR
-	commentBody := "(TENTATIVE) Porter is deploying this pull request..."
+	commentBody := fmt.Sprintf("Porter has deployed this pull request to the following URL:\n%s", depl.Subdomain)
 	prComment := github.IssueComment{
 		Body: &commentBody,
 		User: &github.User{},
@@ -86,31 +110,6 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		env.GitRepoName,
 		int(depl.PullRequestID),
 		&prComment,
-	)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// Create new deployment status to indicate deployment is ready
-
-	state := "succeeded"
-	log_url := "https://github.com/actions"
-	env_url := depl.Subdomain
-
-	deploymentStatusRequest := github.DeploymentStatusRequest{
-		State: &state,
-		LogURL: &log_url, // link to specific actions tab 
-		EnvironmentURL : &env_url,
-	}
-
-	_, _, err = client.Repositories.CreateDeploymentStatus(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		depID,
-		&deploymentStatusRequest,
 	)
 
 	if err != nil {

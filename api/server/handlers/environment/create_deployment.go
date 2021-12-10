@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"fmt"
 	"context"
 	"net/http"
 
@@ -50,12 +51,68 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// create deployment on GitHub API
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	branch := request.Branch
+	envName := "Preview"
+	automerge := false
+
+	deploymentRequest := github.DeploymentRequest{
+		Ref: &branch,
+		Environment: &envName,
+		AutoMerge: &automerge,
+	}
+
+	deployment, _, err := client.Repositories.CreateDeployment(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		&deploymentRequest,
+	)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+	
+	depID := deployment.GetID()
+
+	// Create Deployment Status to indicate it's in progress
+
+	state := "in_progress"
+	log_url := fmt.Sprintf("https://github.com/%s/%s/actions/%d", env.GitRepoOwner, env.GitRepoName, request.ActionID)
+
+	deploymentStatusRequest := github.DeploymentStatusRequest{
+		State: &state,
+		LogURL: &log_url, // link to actions tab 
+	}
+
+	_, _, err = client.Repositories.CreateDeploymentStatus(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		depID,
+		&deploymentStatusRequest,
+	)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 		EnvironmentID: env.ID,
 		Namespace:     request.Namespace,
 		Status:        "creating",
 		PullRequestID: request.PullRequestID,
+		GitHubDeploymentID: depID,
 	})
 
 	if err != nil {
@@ -72,59 +129,6 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	_, err = agent.CreateNamespace(depl.Namespace)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// create deployment on GitHub API
-	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	envName := "preview"
-
-	deploymentRequest := github.DeploymentRequest{
-		Ref: &envName,
-		Environment: &envName,
-	}
-
-	// create deployment in GitHub (This really should belong in create_deployment)
-	deployment, _, err := client.Repositories.CreateDeployment(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		&deploymentRequest,
-	)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	depID := deployment.GetID()
-
-	// Create Deployment Status to indicate it's in progress
-
-	state := "queued"
-	log_url := "https://github.com/actions"
-
-	deploymentStatusRequest := github.DeploymentStatusRequest{
-		State: &state,
-		LogURL: &log_url, // link to actions tab 
-	}
-
-	_, _, err = client.Repositories.CreateDeploymentStatus(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		depID,
-		&deploymentStatusRequest,
-	)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

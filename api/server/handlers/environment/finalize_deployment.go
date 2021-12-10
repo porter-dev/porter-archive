@@ -93,5 +93,30 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Create new deployment status to indicate deployment is ready
+
+	state := "succeeded"
+	log_url := "https://github.com/actions"
+	env_url := depl.Subdomain
+
+	deploymentStatusRequest := github.DeploymentStatusRequest{
+		State: &state,
+		LogURL: &log_url, // link to specific actions tab 
+		EnvironmentURL : &env_url,
+	}
+
+	_, _, err = client.Repositories.CreateDeploymentStatus(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		depID,
+		&deploymentStatusRequest,
+	)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	c.WriteResult(w, r, depl.ToDeploymentType())
 }

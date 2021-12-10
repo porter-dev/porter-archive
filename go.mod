@@ -8,7 +8,7 @@ require (
 	github.com/BurntSushi/toml v0.4.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/aws/aws-sdk-go v1.35.4
-	github.com/bradleyfalzon/ghinstallation v1.1.1
+	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3 // indirect
 	github.com/buildpacks/pack v0.19.0
 	github.com/cli/cli v1.11.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -24,10 +24,10 @@ require (
 	github.com/go-playground/validator/v10 v10.3.0
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/go-test/deep v1.0.7
-	github.com/google/go-github v17.0.0+incompatible
+	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/google/go-github/v29 v29.0.3 // indirect
-	github.com/google/go-github/v33 v33.0.0
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-github/v39 v39.2.0 // indirect
+	github.com/google/go-github/v41 v41.0.0
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
@@ -54,7 +54,7 @@ require (
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c

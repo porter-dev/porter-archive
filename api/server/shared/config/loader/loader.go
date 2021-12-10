@@ -163,7 +163,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			res.GithubAppConf = oauth.NewGithubAppClient(&oauth.Config{
 				ClientID:     sc.GithubAppClientID,
 				ClientSecret: sc.GithubAppClientSecret,
-				Scopes:       []string{"read:user"},
+				Scopes:       []string{"read:user", "repo"},
 				BaseURL:      sc.ServerURL,
 			}, sc.GithubAppName, sc.GithubAppWebhookSecret, sc.GithubAppSecretPath, AppID)
 		}

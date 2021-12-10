@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/github"
+	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"

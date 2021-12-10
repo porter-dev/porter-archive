@@ -21,7 +21,7 @@ const useLastSeenPodStatus = ({
       status?.phase === "Pending" &&
       status?.containerStatuses !== undefined
     ) {
-      return status.containerStatuses[0].state.waiting.reason;
+      return status.containerStatuses[0].state?.waiting?.reason || "Pending";
     } else if (status?.phase === "Pending") {
       return "Pending";
     }
@@ -36,7 +36,7 @@ const useLastSeenPodStatus = ({
       status?.containerStatuses?.forEach((s: any) => {
         if (s.state?.waiting) {
           collatedStatus =
-            s.state?.waiting.reason === "CrashLoopBackOff"
+            s.state?.waiting?.reason === "CrashLoopBackOff"
               ? "failed"
               : "waiting";
         } else if (s.state?.terminated) {

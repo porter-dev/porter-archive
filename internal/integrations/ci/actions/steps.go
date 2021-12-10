@@ -5,6 +5,7 @@ import (
 )
 
 const updateAppActionName = "porter-dev/porter-update-action"
+const createPreviewActionName = "porter-dev/porter-preview-action"
 
 func getCheckoutCodeStep() GithubActionYAMLStep {
 	return GithubActionYAMLStep{
@@ -35,5 +36,22 @@ func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, c
 			"namespace": appNamespace,
 		},
 		Timeout: 20,
+	}
+}
+
+func getCreatePreviewEnvStep(serverURL, porterTokenSecretName string, projectID, clusterID, gitInstallationID uint, repoName, actionVersion string) GithubActionYAMLStep {
+	return GithubActionYAMLStep{
+		Name: "Create Porter preview env",
+		Uses: fmt.Sprintf("%s@%s", createPreviewActionName, actionVersion),
+		With: map[string]string{
+			"cluster":         fmt.Sprintf("%d", clusterID),
+			"host":            serverURL,
+			"project":         fmt.Sprintf("%d", projectID),
+			"token":           fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
+			"namespace":       fmt.Sprintf("pr-${{ github.event.pull_request.number }}-%s", repoName),
+			"pr_id":           "${{ github.event.pull_request.number }}",
+			"installation_id": fmt.Sprintf("%d", gitInstallationID),
+		},
+		Timeout: 30,
 	}
 }

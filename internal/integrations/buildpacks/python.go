@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 )
 
 type pythonRuntime struct {

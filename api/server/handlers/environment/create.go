@@ -4,13 +4,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/github"
+	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
@@ -31,6 +33,7 @@ func NewCreateEnvironmentHandler(
 
 func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
@@ -55,13 +58,45 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// TODO: upon environment creation, write Github actions files to the repo
-	// client, err := getGithubClientFromEnvironment(c.Config(), env)
+	// write Github actions files to the repo
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
-	// if err != nil {
-	// 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 	return
-	// }
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// generate porter jwt token
+	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	_, err = actions.SetupEnv(&actions.EnvOpts{
+		Client:            client,
+		ServerURL:         c.Config().ServerConf.ServerURL,
+		PorterToken:       encoded,
+		GitRepoOwner:      request.GitRepoOwner,
+		GitRepoName:       request.GitRepoName,
+		ProjectID:         project.ID,
+		ClusterID:         cluster.ID,
+		GitInstallationID: uint(ga.InstallationID),
+		EnvironmentName:   request.Name,
+	})
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
 	c.WriteResult(w, r, env.ToEnvironmentType())
 }

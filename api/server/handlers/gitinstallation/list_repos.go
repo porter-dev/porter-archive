@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -41,12 +41,14 @@ func (c *GithubListReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		PerPage: 100,
 	}
 
-	allRepos, resp, err := client.Apps.ListRepos(context.Background(), opt)
+	repoList, resp, err := client.Apps.ListRepos(context.Background(), opt)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	allRepos := repoList.Repositories
 
 	// make workers to get pages concurrently
 	const WCOUNT = 5
@@ -74,7 +76,7 @@ func (c *GithubListReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			}
 
 			mu.Lock()
-			allRepos = append(allRepos, repos...)
+			allRepos = append(allRepos, repos.Repositories...)
 			mu.Unlock()
 
 			cp += WCOUNT

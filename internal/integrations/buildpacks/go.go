@@ -3,7 +3,7 @@ package buildpacks
 import (
 	"sync"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 )
 
 type goRuntime struct {

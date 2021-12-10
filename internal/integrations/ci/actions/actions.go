@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/bradleyfalzon/ghinstallation"
+	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"

@@ -24,7 +24,6 @@ require (
 	github.com/go-playground/validator/v10 v10.3.0
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/go-test/deep v1.0.7
-	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v29 v29.0.3 // indirect
 	github.com/google/go-github/v41 v41.0.0
 	github.com/gorilla/schema v1.2.0

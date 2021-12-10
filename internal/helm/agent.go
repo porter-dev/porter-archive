@@ -34,14 +34,12 @@ func (a *Agent) ListReleases(
 	filter *types.ReleaseListFilter,
 ) ([]*release.Release, error) {
 	lsel := fmt.Sprintf("owner=helm,status in (%s)", strings.Join(filter.StatusFilter, ","))
-	fsel := fmt.Sprintf("type=helm.sh/release.v1")
 
 	// list secrets
 	secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(namespace).List(
 		context.Background(),
 		v1.ListOptions{
 			LabelSelector: lsel,
-			FieldSelector: fsel,
 		},
 	)
 

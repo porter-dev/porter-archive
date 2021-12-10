@@ -147,6 +147,9 @@ export const StatusPage = ({
   };
 
   const getDesiredState = async (infra_id: number, counter: number = 0) => {
+    if (!isMounted.current) {
+      return;
+    }
     try {
       const desired = await api
         .getInfraDesired("<token>", {}, { project_id, infra_id })

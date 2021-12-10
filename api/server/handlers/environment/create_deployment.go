@@ -1,8 +1,10 @@
 package environment
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -70,6 +72,59 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	_, err = agent.CreateNamespace(depl.Namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// create deployment on GitHub API
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	envName := "preview"
+
+	deploymentRequest := github.DeploymentRequest{
+		Ref: &envName,
+		Environment: &envName,
+	}
+
+	// create deployment in GitHub (This really should belong in create_deployment)
+	deployment, _, err := client.Repositories.CreateDeployment(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		&deploymentRequest,
+	)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	depID := deployment.GetID()
+
+	// Create Deployment Status to indicate it's in progress
+
+	state := "queued"
+	log_url := "https://github.com/actions"
+
+	deploymentStatusRequest := github.DeploymentStatusRequest{
+		State: &state,
+		LogURL: &log_url, // link to actions tab 
+	}
+
+	_, _, err = client.Repositories.CreateDeploymentStatus(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		depID,
+		&deploymentStatusRequest,
+	)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

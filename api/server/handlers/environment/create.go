@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bradleyfalzon/ghinstallation"
+	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -15,8 +15,6 @@ import (
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
-	"github.com/porter-dev/porter/internal/oauth"
-	"golang.org/x/oauth2"
 )
 
 type CreateEnvironmentHandler struct {
@@ -61,7 +59,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	// write Github actions files to the repo
-	client, err := getGithubClientFromUserWithOAuth(c.Config(), user)
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -124,30 +122,4 @@ func getGithubClientFromEnvironment(config *config.Config, env *models.Environme
 	}
 
 	return github.NewClient(&http.Client{Transport: itr}), nil
-}
-
-func getGithubClientFromUserWithOAuth(config *config.Config, user *models.User) (*github.Client, error) {
-	oauthInt, err := config.Repo.GithubAppOAuthIntegration().ReadGithubAppOauthIntegration(user.GithubAppIntegrationID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	_, _, err = oauth.GetAccessToken(
-		oauthInt.SharedOAuthModel,
-		&config.GithubAppConf.Config,
-		oauth.MakeUpdateGithubAppOauthIntegrationFunction(oauthInt, config.Repo),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	client := github.NewClient(config.GithubAppConf.Client(oauth2.NoContext, &oauth2.Token{
-		AccessToken:  string(oauthInt.AccessToken),
-		RefreshToken: string(oauthInt.RefreshToken),
-		TokenType:    "Bearer",
-	}))
-
-	return client, nil
 }

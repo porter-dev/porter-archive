@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
@@ -45,13 +46,29 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// TODO: delete corresponding Github actions files using the client
-	// client, err := getGithubClientFromEnvironment(c.Config(), env)
+	// delete Github actions files from the repo
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
-	// if err != nil {
-	// 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 	return
-	// }
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	err = actions.DeleteEnv(&actions.EnvOpts{
+		Client:            client,
+		ServerURL:         c.Config().ServerConf.ServerURL,
+		GitRepoOwner:      env.GitRepoOwner,
+		GitRepoName:       env.GitRepoName,
+		ProjectID:         project.ID,
+		ClusterID:         cluster.ID,
+		GitInstallationID: uint(ga.InstallationID),
+		EnvironmentName:   env.Name,
+	})
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
 	// delete the environment
 	env, err = c.Repo().Environment().DeleteEnvironment(env)

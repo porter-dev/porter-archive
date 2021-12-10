@@ -26,8 +26,7 @@ require (
 	github.com/go-test/deep v1.0.7
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-github/v29 v29.0.3 // indirect
-	github.com/google/go-github/v33 v33.0.0
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-github/v41 v41.0.0
 	github.com/gorilla/schema v1.2.0
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.1
@@ -54,7 +53,7 @@ require (
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c

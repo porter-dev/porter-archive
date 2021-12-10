@@ -74,7 +74,6 @@ const ChartList: React.FunctionComponent<Props> = ({
             "pending-install",
             "pending-upgrade",
             "pending-rollback",
-            "superseded",
             "failed",
           ],
         },

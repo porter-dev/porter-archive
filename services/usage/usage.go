@@ -3,6 +3,7 @@
 package usage
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -102,7 +103,7 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	worker := func(project *models.Project) error {
+	worker := func(project *models.Project) {
 		defer wg.Done()
 
 		current, limit, cache, err := usage.GetUsage(&usage.GetUsageOpts{
@@ -113,14 +114,16 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 		})
 
 		if err != nil {
-			return err
+			fmt.Printf("Project %d: error getting usage: %v\n", project.ID, err)
+			return
 		}
 
 		// get the admin emails for the project
 		roles, err := u.repo.Project().ListProjectRoles(project.ID)
 
 		if err != nil {
-			return err
+			fmt.Printf("Project %d: error getting admin emails: %v\n", project.ID, err)
+			return
 		}
 
 		adminEmails := make([]string, 0)
@@ -161,7 +164,7 @@ func (u *UsageTracker) GetProjectUsage() (map[uint]*UsageTrackerResponse, error)
 		}
 		mu.Unlock()
 
-		return nil
+		return
 	}
 
 	// iterate (count / stepSize) + 1 times using Limit and Offset

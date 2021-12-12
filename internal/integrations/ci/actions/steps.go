@@ -51,6 +51,8 @@ func getCreatePreviewEnvStep(serverURL, porterTokenSecretName string, projectID,
 			"namespace":       fmt.Sprintf("pr-${{ github.event.pull_request.number }}-%s", repoName),
 			"pr_id":           "${{ github.event.pull_request.number }}",
 			"installation_id": fmt.Sprintf("%d", gitInstallationID),
+			"branch":          "${{ github.head_ref }}",
+			"action_id":       "${{ github.run_id }}",
 		},
 		Timeout: 30,
 	}

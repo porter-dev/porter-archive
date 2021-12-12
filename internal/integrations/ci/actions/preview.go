@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/google/go-github/v41/github"
@@ -21,31 +22,31 @@ type EnvOpts struct {
 
 func SetupEnv(opts *EnvOpts) ([]byte, error) {
 	// create Github environment if it does not exist
-	// _, resp, err := opts.Client.Repositories.GetEnvironment(
-	// 	context.Background(),
-	// 	opts.GitRepoOwner,
-	// 	opts.GitRepoName,
-	// 	opts.EnvironmentName,
-	// )
+	_, resp, err := opts.Client.Repositories.GetEnvironment(
+		context.Background(),
+		opts.GitRepoOwner,
+		opts.GitRepoName,
+		opts.EnvironmentName,
+	)
 
-	// if resp.StatusCode == http.StatusNotFound {
-	// 	_, _, err := opts.Client.Repositories.CreateUpdateEnvironment(
-	// 		context.Background(),
-	// 		opts.GitRepoOwner,
-	// 		opts.GitRepoName,
-	// 		opts.EnvironmentName,
-	// 		nil,
-	// 	)
+	if resp.StatusCode == http.StatusNotFound {
+		_, _, err := opts.Client.Repositories.CreateUpdateEnvironment(
+			context.Background(),
+			opts.GitRepoOwner,
+			opts.GitRepoName,
+			opts.EnvironmentName,
+			nil,
+		)
 
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// } else if err != nil {
-	// 	return nil, err
-	// }
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	}
 
 	// create porter token secret
-	err := createGithubSecret(
+	err = createGithubSecret(
 		opts.Client,
 		getPorterTokenSecretName(opts.ProjectID),
 		opts.PorterToken,

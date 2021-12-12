@@ -18,20 +18,20 @@ type CreateEnvironmentRequest struct {
 }
 
 type Deployment struct {
-	ID            uint   `json:"id"`
-	EnvironmentID uint   `json:"environment_id"`
-	Namespace     string `json:"namespace"`
-	Status        string `json:"status"`
-	Subdomain     string `json:"subdomain"`
-	PullRequestID uint   `json:"pull_request_id"`
-	GitHubDeploymentID int64 `json:"github_deployment_id"`
+	ID                 uint   `json:"id"`
+	EnvironmentID      uint   `json:"environment_id"`
+	Namespace          string `json:"namespace"`
+	Status             string `json:"status"`
+	Subdomain          string `json:"subdomain"`
+	PullRequestID      uint   `json:"pull_request_id"`
+	GitHubDeploymentID int64  `json:"github_deployment_id"`
 }
 
 type CreateDeploymentRequest struct {
 	Namespace     string `json:"namespace" form:"required"`
 	PullRequestID uint   `json:"pull_request_id" form:"required"`
-	Branch string `json:"branch" form:"required"`
-	ActionID uint `json:"action_id" form:"required"`
+	Branch        string `json:"branch" form:"required"`
+	ActionID      uint   `json:"action_id" form:"required"`
 }
 
 type FinalizeDeploymentRequest struct {

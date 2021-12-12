@@ -1,11 +1,11 @@
 package environment
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"net/http"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -64,9 +64,9 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	automerge := false
 
 	deploymentRequest := github.DeploymentRequest{
-		Ref: &branch,
+		Ref:         &branch,
 		Environment: &envName,
-		AutoMerge: &automerge,
+		AutoMerge:   &automerge,
 	}
 
 	deployment, _, err := client.Repositories.CreateDeployment(
@@ -80,7 +80,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-	
+
 	depID := deployment.GetID()
 
 	// Create Deployment Status to indicate it's in progress
@@ -89,8 +89,8 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	log_url := fmt.Sprintf("https://github.com/%s/%s/actions/%d", env.GitRepoOwner, env.GitRepoName, request.ActionID)
 
 	deploymentStatusRequest := github.DeploymentStatusRequest{
-		State: &state,
-		LogURL: &log_url, // link to actions tab 
+		State:  &state,
+		LogURL: &log_url, // link to actions tab
 	}
 
 	_, _, err = client.Repositories.CreateDeploymentStatus(
@@ -108,10 +108,10 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
-		EnvironmentID: env.ID,
-		Namespace:     request.Namespace,
-		Status:        "creating",
-		PullRequestID: request.PullRequestID,
+		EnvironmentID:      env.ID,
+		Namespace:          request.Namespace,
+		Status:             "creating",
+		PullRequestID:      request.PullRequestID,
 		GitHubDeploymentID: depID,
 	})
 

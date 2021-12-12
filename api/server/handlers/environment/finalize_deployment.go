@@ -1,8 +1,8 @@
 package environment
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v41/github"
@@ -80,8 +80,8 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	env_url := depl.Subdomain
 
 	deploymentStatusRequest := github.DeploymentStatusRequest{
-		State: &state,
-		EnvironmentURL : &env_url,
+		State:          &state,
+		EnvironmentURL: &env_url,
 	}
 
 	_, _, err = client.Repositories.CreateDeploymentStatus(

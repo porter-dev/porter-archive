@@ -569,10 +569,10 @@ func existsInRepo(name, version, url string) (map[string]interface{}, error) {
 }
 
 type DeploymentHook struct {
-	client                                        *api.Client
-	resourceGroup                                 *switchboardTypes.ResourceGroup
+	client                                                  *api.Client
+	resourceGroup                                           *switchboardTypes.ResourceGroup
 	gitInstallationID, projectID, clusterID, prID, actionID uint
-	branch, namespace                                     string
+	branch, namespace                                       string
 }
 
 func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
@@ -658,8 +658,8 @@ func (t *DeploymentHook) PreApply() error {
 			&types.CreateDeploymentRequest{
 				Namespace:     t.namespace,
 				PullRequestID: t.prID,
-				Branch: t.branch,
-				ActionID: t.actionID,
+				Branch:        t.branch,
+				ActionID:      t.actionID,
 			},
 		)
 

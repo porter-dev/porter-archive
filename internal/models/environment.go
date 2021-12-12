@@ -32,22 +32,22 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 type Deployment struct {
 	gorm.Model
 
-	EnvironmentID uint
-	Namespace     string
-	Status        string
-	Subdomain     string
-	PullRequestID uint
+	EnvironmentID      uint
+	Namespace          string
+	Status             string
+	Subdomain          string
+	PullRequestID      uint
 	GitHubDeploymentID int64
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
 	return &types.Deployment{
-		ID:            d.Model.ID,
-		EnvironmentID: d.EnvironmentID,
-		Namespace:     d.Namespace,
-		Status:        d.Status,
-		Subdomain:     d.Subdomain,
-		PullRequestID: d.PullRequestID,
+		ID:                 d.Model.ID,
+		EnvironmentID:      d.EnvironmentID,
+		Namespace:          d.Namespace,
+		Status:             d.Status,
+		Subdomain:          d.Subdomain,
+		PullRequestID:      d.PullRequestID,
 		GitHubDeploymentID: d.GitHubDeploymentID,
 	}
 }

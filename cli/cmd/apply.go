@@ -666,16 +666,43 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 }
 
 func (t *DeploymentHook) PreApply() error {
-	_, err := t.client.CreateDeployment(
+	// attempt to read the deployment -- if it doesn't exist, create it
+	_, err := t.client.GetDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
-		&types.CreateDeploymentRequest{
-			Namespace:     t.namespace,
-			PullRequestID: t.prID,
-			Branch:        t.branch,
-			ActionID:      t.actionID,
+		&types.GetDeploymentRequest{
+			Namespace: t.namespace,
 		},
 	)
+
+	// TODO: case this on the response status code rather than text
+	if err != nil && strings.Contains(err.Error(), "deployment not found") {
+		// in this case, create the deployment
+		_, err = t.client.CreateDeployment(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			&types.CreateDeploymentRequest{
+				Namespace:     t.namespace,
+				PullRequestID: t.prID,
+				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+					Branch:   t.branch,
+					ActionID: t.actionID,
+				},
+			},
+		)
+	} else if err == nil {
+		_, err = t.client.UpdateDeployment(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			&types.UpdateDeploymentRequest{
+				Namespace: t.namespace,
+				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+					Branch:   t.branch,
+					ActionID: t.actionID,
+				},
+			},
+		)
+	}
 
 	return err
 }

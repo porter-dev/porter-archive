@@ -20,7 +20,7 @@ type EnvOpts struct {
 	ProjectID, ClusterID, GitInstallationID uint
 }
 
-func SetupEnv(opts *EnvOpts) ([]byte, error) {
+func SetupEnv(opts *EnvOpts) error {
 	// create Github environment if it does not exist
 	_, resp, err := opts.Client.Repositories.GetEnvironment(
 		context.Background(),
@@ -39,10 +39,10 @@ func SetupEnv(opts *EnvOpts) ([]byte, error) {
 		)
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 	} else if err != nil {
-		return nil, err
+		return err
 	}
 
 	// create porter token secret
@@ -55,7 +55,7 @@ func SetupEnv(opts *EnvOpts) ([]byte, error) {
 	)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// get the repository to find the default branch
@@ -66,21 +66,21 @@ func SetupEnv(opts *EnvOpts) ([]byte, error) {
 	)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defaultBranch := repo.GetDefaultBranch()
 
-	workflowYAML, err := getPreviewActionYAML(opts)
+	applyWorkflowYAML, err := getPreviewApplyActionYAML(opts)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	_, err = commitGithubFile(
 		opts.Client,
 		fmt.Sprintf("porter_%s_env.yml", strings.ToLower(opts.EnvironmentName)),
-		workflowYAML,
+		applyWorkflowYAML,
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 		defaultBranch,
@@ -88,10 +88,30 @@ func SetupEnv(opts *EnvOpts) ([]byte, error) {
 	)
 
 	if err != nil {
-		return workflowYAML, err
+		return err
 	}
 
-	return workflowYAML, err
+	deleteWorkflowYAML, err := getPreviewApplyActionYAML(opts)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = commitGithubFile(
+		opts.Client,
+		fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
+		deleteWorkflowYAML,
+		opts.GitRepoOwner,
+		opts.GitRepoName,
+		defaultBranch,
+		false,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 func DeleteEnv(opts *EnvOpts) error {
@@ -118,7 +138,7 @@ func DeleteEnv(opts *EnvOpts) error {
 	)
 }
 
-func getPreviewActionYAML(opts *EnvOpts) ([]byte, error) {
+func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getCreatePreviewEnvStep(
@@ -138,6 +158,38 @@ func getPreviewActionYAML(opts *EnvOpts) ([]byte, error) {
 		Name: "Porter Preview Environment",
 		Jobs: map[string]GithubActionYAMLJob{
 			"porter-preview": {
+				RunsOn: "ubuntu-latest",
+				Steps:  gaSteps,
+			},
+		},
+	}
+
+	return yaml.Marshal(actionYAML)
+}
+
+func getPreviewDeleteActionYAML(opts *EnvOpts) ([]byte, error) {
+	gaSteps := []GithubActionYAMLStep{
+		getDeletePreviewEnvStep(
+			opts.ServerURL,
+			getPorterTokenSecretName(opts.ProjectID),
+			opts.ProjectID,
+			opts.ClusterID,
+			opts.GitInstallationID,
+			opts.GitRepoName,
+			// TODO: change to actual release version
+			"master",
+		),
+	}
+
+	actionYAML := GithubActionYAML{
+		On: map[string]interface{}{
+			"pull_request": map[string]interface{}{
+				"types": []string{"closed"},
+			},
+		},
+		Name: "Porter Preview Environment",
+		Jobs: map[string]GithubActionYAMLJob{
+			"porter-delete-preview": {
 				RunsOn: "ubuntu-latest",
 				Steps:  gaSteps,
 			},

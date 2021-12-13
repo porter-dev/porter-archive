@@ -81,7 +81,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err = actions.SetupEnv(&actions.EnvOpts{
+	err = actions.SetupEnv(&actions.EnvOpts{
 		Client:            client,
 		ServerURL:         c.Config().ServerConf.ServerURL,
 		PorterToken:       encoded,

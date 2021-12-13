@@ -3,34 +3,42 @@ package environment
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
 
-type DeleteEnvironmentHandler struct {
+type UpdateDeploymentHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
-func NewDeleteEnvironmentHandler(
+func NewUpdateDeploymentHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *DeleteEnvironmentHandler {
-	return &DeleteEnvironmentHandler{
+) *UpdateDeploymentHandler {
+	return &UpdateDeploymentHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
+	request := &types.UpdateDeploymentRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
 
 	// read the environment to get the environment id
 	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID))
@@ -40,7 +48,15 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// delete Github actions files from the repo
+	// read the deployment
+	depl, err := c.Repo().Environment().ReadDeployment(env.ID, request.Namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
@@ -48,29 +64,27 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = actions.DeleteEnv(&actions.EnvOpts{
-		Client:            client,
-		ServerURL:         c.Config().ServerConf.ServerURL,
-		GitRepoOwner:      env.GitRepoOwner,
-		GitRepoName:       env.GitRepoName,
-		ProjectID:         project.ID,
-		ClusterID:         cluster.ID,
-		GitInstallationID: uint(ga.InstallationID),
-		EnvironmentName:   env.Name,
-	})
+	ghDeployment, err := createDeployment(client, env, request.CreateGHDeploymentRequest)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	// delete the environment
-	env, err = c.Repo().Environment().DeleteEnvironment(env)
+	depl.GitHubDeploymentID = ghDeployment.GetID()
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	c.WriteResult(w, r, env.ToEnvironmentType())
+	// create the deployment
+	depl, err = c.Repo().Environment().UpdateDeployment(depl)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	c.WriteResult(w, r, depl.ToDeploymentType())
 }

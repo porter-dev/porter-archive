@@ -62,11 +62,13 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	branch := request.Branch
 	envName := "Preview"
 	automerge := false
+	requiredContexts := []string{}
 
 	deploymentRequest := github.DeploymentRequest{
-		Ref:         &branch,
-		Environment: &envName,
-		AutoMerge:   &automerge,
+		Ref:              &branch,
+		Environment:      &envName,
+		AutoMerge:        &automerge,
+		RequiredContexts: &requiredContexts,
 	}
 
 	deployment, _, err := client.Repositories.CreateDeployment(

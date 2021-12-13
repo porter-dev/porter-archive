@@ -81,7 +81,7 @@ func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 
 	return client.DeleteDeployment(
 		context.Background(),
-		projectID, clusterID, ghID,
+		projectID, ghID, clusterID,
 		&types.DeleteDeploymentRequest{
 			Namespace: deplNamespace,
 		},

@@ -246,7 +246,9 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 		return nil, err
 	}
 
-	d.output = utils.CoalesceValues(d.source.SourceValues, resource.Config)
+	if err = d.assignOutput(resource, client); err != nil {
+		return nil, err
+	}
 
 	return resource, err
 }
@@ -293,10 +295,20 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	}
 
 	if shouldCreate {
-		return d.createApplication(resource, client, sharedOpts, appConfig)
+		resource, err = d.createApplication(resource, client, sharedOpts, appConfig)
 	}
 
-	return d.updateApplication(resource, client, sharedOpts, appConfig)
+	resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err = d.assignOutput(resource, client); err != nil {
+		return nil, err
+	}
+
+	return resource, err
 }
 
 func (d *Driver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
@@ -328,8 +340,6 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 	}
 
 	subdomain, err := createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag)
-
-	d.output = utils.CoalesceValues(d.source.SourceValues, appConf.Values)
 
 	return resource, handleSubdomainCreate(subdomain, err)
 }
@@ -376,9 +386,25 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 		return nil, err
 	}
 
-	d.output = utils.CoalesceValues(d.source.SourceValues, appConf.Values)
-
 	return resource, nil
+}
+
+func (d *Driver) assignOutput(resource *models.Resource, client *api.Client) error {
+	release, err := client.GetRelease(
+		context.Background(),
+		d.target.Project,
+		d.target.Cluster,
+		d.target.Namespace,
+		resource.Name,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	d.output = utils.CoalesceValues(d.source.SourceValues, release.Config)
+
+	return nil
 }
 
 func (d *Driver) Output() (map[string]interface{}, error) {

@@ -35,7 +35,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.FinalizeDeploymentRequest{}
+	request := &types.DeleteDeploymentRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -83,8 +83,10 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// 	return
 	// }
 
-	// delete the deployment
-	depl, err = c.Repo().Environment().DeleteDeployment(depl)
+	depl.Status = "inactive"
+
+	// update the deployment to mark it inactive
+	depl, err = c.Repo().Environment().UpdateDeployment(depl)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -45,6 +45,25 @@ func (c *Client) GetDeployment(
 	return resp, err
 }
 
+func (c *Client) UpdateDeployment(
+	ctx context.Context,
+	projID, gitInstallationID, clusterID uint,
+	req *types.UpdateDeploymentRequest,
+) (*types.Deployment, error) {
+	resp := &types.Deployment{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/gitrepos/%d/clusters/%d/deployment/update",
+			projID, gitInstallationID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) FinalizeDeployment(
 	ctx context.Context,
 	projID, gitInstallationID, clusterID uint,
@@ -62,4 +81,19 @@ func (c *Client) FinalizeDeployment(
 	)
 
 	return resp, err
+}
+
+func (c *Client) DeleteDeployment(
+	ctx context.Context,
+	projID, gitInstallationID, clusterID uint,
+	req *types.DeleteDeploymentRequest,
+) error {
+	return c.deleteRequest(
+		fmt.Sprintf(
+			"/projects/%d/gitrepos/%d/clusters/%d/deployment",
+			projID, gitInstallationID, clusterID,
+		),
+		req,
+		nil,
+	)
 }

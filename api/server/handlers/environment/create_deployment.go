@@ -59,49 +59,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	branch := request.Branch
-	envName := "Preview"
-	automerge := false
-	requiredContexts := []string{}
-
-	deploymentRequest := github.DeploymentRequest{
-		Ref:              &branch,
-		Environment:      &envName,
-		AutoMerge:        &automerge,
-		RequiredContexts: &requiredContexts,
-	}
-
-	deployment, _, err := client.Repositories.CreateDeployment(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		&deploymentRequest,
-	)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	depID := deployment.GetID()
-
-	// Create Deployment Status to indicate it's in progress
-
-	state := "in_progress"
-	log_url := fmt.Sprintf("https://github.com/%s/%s/actions/%d", env.GitRepoOwner, env.GitRepoName, request.ActionID)
-
-	deploymentStatusRequest := github.DeploymentStatusRequest{
-		State:  &state,
-		LogURL: &log_url, // link to actions tab
-	}
-
-	_, _, err = client.Repositories.CreateDeploymentStatus(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		depID,
-		&deploymentStatusRequest,
-	)
+	ghDeployment, err := createDeployment(client, env, request.CreateGHDeploymentRequest)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -114,7 +72,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		Namespace:          request.Namespace,
 		Status:             "creating",
 		PullRequestID:      request.PullRequestID,
-		GitHubDeploymentID: depID,
+		GitHubDeploymentID: ghDeployment.GetID(),
 	})
 
 	if err != nil {
@@ -138,4 +96,55 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	c.WriteResult(w, r, depl.ToDeploymentType())
+}
+
+func createDeployment(client *github.Client, env *models.Environment, request *types.CreateGHDeploymentRequest) (*github.Deployment, error) {
+	branch := request.Branch
+	envName := "Preview"
+	automerge := false
+	requiredContexts := []string{}
+
+	deploymentRequest := github.DeploymentRequest{
+		Ref:              &branch,
+		Environment:      &envName,
+		AutoMerge:        &automerge,
+		RequiredContexts: &requiredContexts,
+	}
+
+	deployment, _, err := client.Repositories.CreateDeployment(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		&deploymentRequest,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	depID := deployment.GetID()
+
+	// Create Deployment Status to indicate it's in progress
+
+	state := "in_progress"
+	log_url := fmt.Sprintf("https://github.com/%s/%s/runs/%d", env.GitRepoOwner, env.GitRepoName, request.ActionID)
+
+	deploymentStatusRequest := github.DeploymentStatusRequest{
+		State:  &state,
+		LogURL: &log_url, // link to actions tab
+	}
+
+	_, _, err = client.Repositories.CreateDeploymentStatus(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		depID,
+		&deploymentStatusRequest,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return deployment, nil
 }

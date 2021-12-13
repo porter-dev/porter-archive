@@ -27,16 +27,31 @@ type Deployment struct {
 	GitHubDeploymentID int64  `json:"github_deployment_id"`
 }
 
+type CreateGHDeploymentRequest struct {
+	Branch   string `json:"branch" form:"required"`
+	ActionID uint   `json:"action_id" form:"required"`
+}
+
 type CreateDeploymentRequest struct {
+	*CreateGHDeploymentRequest
+
 	Namespace     string `json:"namespace" form:"required"`
 	PullRequestID uint   `json:"pull_request_id" form:"required"`
-	Branch        string `json:"branch" form:"required"`
-	ActionID      uint   `json:"action_id" form:"required"`
 }
 
 type FinalizeDeploymentRequest struct {
 	Namespace string `json:"namespace" form:"required"`
 	Subdomain string `json:"subdomain"`
+}
+
+type UpdateDeploymentRequest struct {
+	*CreateGHDeploymentRequest
+
+	Namespace string `json:"namespace" form:"required"`
+}
+
+type DeleteDeploymentRequest struct {
+	Namespace string `json:"namespace" form:"required"`
 }
 
 type GetDeploymentRequest struct {

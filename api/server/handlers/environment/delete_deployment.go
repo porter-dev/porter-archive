@@ -1,9 +1,11 @@
 package environment
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -75,13 +77,32 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	// TODO: delete corresponding Github actions files using the client
-	// client, err := getGithubClientFromEnvironment(c.Config(), env)
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
-	// if err != nil {
-	// 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 	return
-	// }
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// Create new deployment status to indicate deployment is ready
+	state := "inactive"
+
+	deploymentStatusRequest := github.DeploymentStatusRequest{
+		State: &state,
+	}
+
+	_, _, err = client.Repositories.CreateDeploymentStatus(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		depl.GitHubDeploymentID,
+		&deploymentStatusRequest,
+	)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
 	depl.Status = "inactive"
 

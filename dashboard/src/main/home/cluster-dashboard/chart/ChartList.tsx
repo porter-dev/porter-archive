@@ -242,7 +242,8 @@ const ChartList: React.FunctionComponent<Props> = ({
 
           if (
             !existingValue ||
-            newValue.resource_version > existingValue.resource_version
+            Number(newValue.resource_version) >
+              Number(existingValue.resource_version)
           ) {
             return {
               ...currentStatus,

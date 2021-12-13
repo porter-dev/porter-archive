@@ -733,7 +733,7 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 		}
 
 		if _, err := url.Parse("https://" + domain); err == nil {
-			subdomains = append(subdomains, domain)
+			subdomains = append(subdomains, "https://"+domain)
 		}
 	}
 

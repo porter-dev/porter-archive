@@ -1,8 +1,9 @@
-import React, { Component } from "react";
+import React, { Component, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import * as Anser from "anser";
 import api from "shared/api";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 
 const MAX_LOGS = 1000;
 
@@ -18,6 +19,7 @@ type StateType = {
   ws: any;
   scroll: boolean;
   currentTab: string;
+  getPreviousLogs: boolean;
 };
 
 export default class Logs extends Component<PropsType, StateType> {
@@ -29,10 +31,42 @@ export default class Logs extends Component<PropsType, StateType> {
     ws: null as any,
     scroll: true,
     currentTab: "Application",
+    getPreviousLogs: false,
   };
 
   ws = null as any;
   parentRef = React.createRef<HTMLDivElement>();
+
+  getPodStatus = (status: any) => {
+    if (
+      status?.phase === "Pending" &&
+      status?.containerStatuses !== undefined
+    ) {
+      return status.containerStatuses[0].state.waiting.reason;
+    } else if (status?.phase === "Pending") {
+      return "Pending";
+    }
+
+    if (status?.phase === "Failed") {
+      return "failed";
+    }
+
+    if (status?.phase === "Running") {
+      let collatedStatus = "running";
+
+      status?.containerStatuses?.forEach((s: any) => {
+        if (s.state?.waiting) {
+          collatedStatus =
+            s.state?.waiting.reason === "CrashLoopBackOff"
+              ? "failed"
+              : "waiting";
+        } else if (s.state?.terminated) {
+          collatedStatus = "failed";
+        }
+      });
+      return collatedStatus;
+    }
+  };
 
   scrollToBottom = (smooth: boolean) => {
     if (smooth) {
@@ -68,6 +102,27 @@ export default class Logs extends Component<PropsType, StateType> {
         </Message>
       );
     }
+
+    // if (
+    //   this.getPodStatus(selectedPod.status) === "failed" &&
+    //   this.state.logs.length === 0
+    // ) {
+    //   return (
+    //     <Message>
+    //       No logs to display from this pod.
+    //       <Highlight
+    //         onClick={() => {
+    //           this.setState({ getPreviousLogs: true }, () => {
+    //             this.refreshLogs();
+    //           });
+    //         }}
+    //       >
+    //         <i className="material-icons">autorenew</i>
+    //         Get logs from crashed pod
+    //       </Highlight>
+    //     </Message>
+    //   );
+    // }
 
     if (this.state.logs.length == 0) {
       return (
@@ -106,10 +161,16 @@ export default class Logs extends Component<PropsType, StateType> {
     let { selectedPod } = this.props;
     if (!selectedPod?.metadata?.name) return;
     let protocol = window.location.protocol == "https:" ? "wss" : "ws";
-
-    this.ws = new WebSocket(
-      `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs`
-    );
+    const currentTab = this.state.currentTab;
+    if (currentTab === "Application") {
+      this.ws = new WebSocket(
+        `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?previous=${this.state.getPreviousLogs}`
+      );
+    } else {
+      this.ws = new WebSocket(
+        `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?container_name=${currentTab}&previous=${this.state.getPreviousLogs}`
+      );
+    }
 
     this.ws.onopen = () => {};
 
@@ -148,7 +209,11 @@ export default class Logs extends Component<PropsType, StateType> {
 
   refreshLogs = () => {
     let { selectedPod } = this.props;
-    if (this.ws && this.state.currentTab == "Application") {
+    if (
+      this.ws &&
+      typeof this.state.currentTab === "string" &&
+      this.state.currentTab != "System"
+    ) {
       this.ws.close();
       this.ws = null;
       this.setState({ logs: [] });
@@ -166,13 +231,14 @@ export default class Logs extends Component<PropsType, StateType> {
 
       this.setState({ logs: [] });
 
-      if (this.state.currentTab == "Application") {
-        this.setupWebsocket();
-        this.scrollToBottom(false);
+      if (this.state.currentTab == "System") {
+        this.retrieveEvents(selectedPod);
         return;
       }
 
-      this.retrieveEvents(selectedPod);
+      this.setState({ getPreviousLogs: false });
+      this.setupWebsocket();
+      this.scrollToBottom(false);
     }
   };
 
@@ -211,6 +277,15 @@ export default class Logs extends Component<PropsType, StateType> {
   componentDidMount() {
     let { selectedPod } = this.props;
 
+    if (selectedPod?.spec?.containers?.length > 1) {
+      const firstContainer = selectedPod?.spec?.containers[0];
+      this.setState({ currentTab: firstContainer?.name }, () => {
+        this.setupWebsocket();
+        this.scrollToBottom(false);
+      });
+      return;
+    }
+
     if (this.state.currentTab == "Application") {
       this.setupWebsocket();
       this.scrollToBottom(false);
@@ -226,20 +301,48 @@ export default class Logs extends Component<PropsType, StateType> {
     }
   }
 
+  renderContainerTabs = () => {
+    const containers = this.props.selectedPod?.spec?.containers;
+
+    if (!Array.isArray(containers) || containers?.length <= 1) {
+      return (
+        <Tab
+          onClick={() => {
+            this.setState({ currentTab: "Application" });
+          }}
+          clicked={this.state.currentTab == "Application"}
+        >
+          Application
+        </Tab>
+      );
+    }
+
+    return (
+      <>
+        {containers.map((container: any) => {
+          return (
+            <Tab
+              key={container.name}
+              onClick={() => {
+                this.setState({ currentTab: container.name });
+              }}
+              clicked={this.state.currentTab == container.name}
+            >
+              {container.name}
+            </Tab>
+          );
+        })}
+      </>
+    );
+  };
+
   render() {
     if (this.props.rawText) {
       return (
         <LogStreamAlt>
           <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
           <LogTabs>
-            <Tab
-              onClick={() => {
-                this.setState({ currentTab: "Application" });
-              }}
-              clicked={this.state.currentTab == "Application"}
-            >
-              Application
-            </Tab>
+            {this.renderContainerTabs()}
             <Tab
               onClick={() => {
                 this.setState({ currentTab: "System" });
@@ -283,14 +386,7 @@ export default class Logs extends Component<PropsType, StateType> {
       <LogStream>
         <Wrapper ref={this.parentRef}>{this.renderLogs()}</Wrapper>
         <LogTabs>
-          <Tab
-            onClick={() => {
-              this.setState({ currentTab: "Application" });
-            }}
-            clicked={this.state.currentTab == "Application"}
-          >
-            Application
-          </Tab>
+          {this.renderContainerTabs()}
           <Tab
             onClick={() => {
               this.setState({ currentTab: "System" });

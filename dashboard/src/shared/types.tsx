@@ -305,6 +305,8 @@ export interface ContextProps {
   queryUsage: () => Promise<void>;
   hasFinishedOnboarding: boolean;
   setHasFinishedOnboarding: (onboardingStatus: boolean) => void;
+  canCreateProject: boolean;
+  setCanCreateProject: (canCreateProject: boolean) => void;
 }
 
 export enum JobStatusType {

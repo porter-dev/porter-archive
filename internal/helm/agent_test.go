@@ -108,88 +108,88 @@ type listReleaseTest struct {
 	expRes    []releaseStub
 }
 
-var listReleaseTests = []listReleaseTest{
-	{
-		name:      "simple test across namespaces, should sort by name",
-		namespace: "",
-		filter: &types.ReleaseListFilter{
-			Namespace:    "",
-			Limit:        20,
-			Skip:         0,
-			ByDate:       false,
-			StatusFilter: []string{"deployed"},
-		},
-		releases: []releaseStub{
-			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
-		},
-		expRes: []releaseStub{
-			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
-			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-		},
-	},
-	{
-		name:      "simple test only default namespace",
-		namespace: "default",
-		filter: &types.ReleaseListFilter{
-			Namespace:    "",
-			Limit:        20,
-			Skip:         0,
-			ByDate:       false,
-			StatusFilter: []string{"deployed"},
-		},
-		releases: []releaseStub{
-			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
-		},
-		expRes: []releaseStub{
-			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
-		},
-	},
-	{
-		name:      "simple test limit",
-		namespace: "",
-		filter: &types.ReleaseListFilter{
-			Namespace:    "",
-			Limit:        2,
-			Skip:         0,
-			ByDate:       false,
-			StatusFilter: []string{"deployed"},
-		},
-		releases: []releaseStub{
-			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
-			{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
-		},
-		expRes: []releaseStub{
-			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-			{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
-		},
-	},
-}
+// var listReleaseTests = []listReleaseTest{
+// 	{
+// 		name:      "simple test across namespaces, should sort by name",
+// 		namespace: "",
+// 		filter: &types.ReleaseListFilter{
+// 			Namespace:    "",
+// 			Limit:        20,
+// 			Skip:         0,
+// 			ByDate:       false,
+// 			StatusFilter: []string{"deployed"},
+// 		},
+// 		releases: []releaseStub{
+// 			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+// 			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+// 			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+// 		},
+// 		expRes: []releaseStub{
+// 			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+// 			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+// 			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+// 		},
+// 	},
+// 	{
+// 		name:      "simple test only default namespace",
+// 		namespace: "default",
+// 		filter: &types.ReleaseListFilter{
+// 			Namespace:    "",
+// 			Limit:        20,
+// 			Skip:         0,
+// 			ByDate:       false,
+// 			StatusFilter: []string{"deployed"},
+// 		},
+// 		releases: []releaseStub{
+// 			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+// 			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+// 			{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
+// 		},
+// 		expRes: []releaseStub{
+// 			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+// 			{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+// 		},
+// 	},
+// 	{
+// 		name:      "simple test limit",
+// 		namespace: "",
+// 		filter: &types.ReleaseListFilter{
+// 			Namespace:    "",
+// 			Limit:        2,
+// 			Skip:         0,
+// 			ByDate:       false,
+// 			StatusFilter: []string{"deployed"},
+// 		},
+// 		releases: []releaseStub{
+// 			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+// 			{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
+// 			{"wordpress", "default", 1, "1.0.2", release.StatusDeployed},
+// 		},
+// 		expRes: []releaseStub{
+// 			{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+// 			{"not-in-default-namespace", "other", 1, "1.0.1", release.StatusDeployed},
+// 		},
+// 	},
+// }
 
-func TestListReleases(t *testing.T) {
-	for _, tc := range listReleaseTests {
-		agent := newAgentFixture(t, tc.namespace)
-		makeReleases(t, agent, tc.releases)
+// func TestListReleases(t *testing.T) {
+// 	for _, tc := range listReleaseTests {
+// 		agent := newAgentFixture(t, tc.namespace)
+// 		makeReleases(t, agent, tc.releases)
 
-		// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
-		// namespace, so we have to reset the namespace of the storage driver
-		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
+// 		// calling agent.ActionConfig.Releases.Create in makeReleases will automatically set the
+// 		// namespace, so we have to reset the namespace of the storage driver
+// 		agent.ActionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
-		releases, err := agent.ListReleases(tc.namespace, tc.filter)
+// 		releases, err := agent.ListReleases(tc.namespace, tc.filter)
 
-		if err != nil {
-			t.Errorf("%v", err)
-		}
+// 		if err != nil {
+// 			t.Errorf("%v", err)
+// 		}
 
-		compareReleaseToStubs(t, releases, tc.expRes)
-	}
-}
+// 		compareReleaseToStubs(t, releases, tc.expRes)
+// 	}
+// }
 
 type getReleaseTest struct {
 	name       string

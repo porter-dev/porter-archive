@@ -13,7 +13,7 @@ const LastRunStatusSelector = (props: PropsType) => {
   const options = [
     {
       label: "All",
-      value: null,
+      value: "all",
     },
   ].concat(
     Object.entries(JobStatusType).map((status) => ({

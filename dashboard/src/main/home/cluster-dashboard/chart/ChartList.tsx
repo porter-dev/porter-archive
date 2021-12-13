@@ -19,7 +19,7 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type Props = {
   currentCluster: ClusterType;
-  lastRunStatus?: JobStatusType | null;
+  lastRunStatus?: JobStatusType | null | "all";
   namespace: string;
   // TODO Convert to enum
   sortType: string;
@@ -242,7 +242,8 @@ const ChartList: React.FunctionComponent<Props> = ({
 
           if (
             !existingValue ||
-            newValue.resource_version > existingValue.resource_version
+            Number(newValue.resource_version) >
+              Number(existingValue.resource_version)
           ) {
             return {
               ...currentStatus,
@@ -330,7 +331,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         if (currentView !== "jobs") {
           return true;
         }
-        if (lastRunStatus === null) {
+        if (lastRunStatus === null || lastRunStatus === "all") {
           return true;
         }
         const status: JobStatusWithTimeAndVersion = _.get(

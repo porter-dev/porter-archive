@@ -37,6 +37,7 @@ type GormRepository struct {
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
+	allowlist                 repository.AllowlistRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -159,6 +160,10 @@ func (t *GormRepository) BuildConfig() repository.BuildConfigRepository {
 	return t.buildConfig
 }
 
+func (t *GormRepository) Allowlist() repository.AllowlistRepository {
+	return t.allowlist
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -193,5 +198,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		onboarding:                NewProjectOnboardingRepository(db),
 		ceToken:                   NewCredentialsExchangeTokenRepository(db),
 		buildConfig:               NewBuildConfigRepository(db),
+		allowlist:                 NewAllowlistRepository(db),
 	}
 }

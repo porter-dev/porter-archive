@@ -746,6 +746,7 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 
 			if ok && enabled {
 				res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
+				fmt.Printf("registered data query for %s\n", resource.Name)
 			}
 		}
 	}
@@ -755,6 +756,8 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 
 func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	subdomains := make([]string, 0)
+
+	fmt.Printf("populated data is %v\n", populatedData)
 
 	for _, data := range populatedData {
 		domain, ok := data.(string)

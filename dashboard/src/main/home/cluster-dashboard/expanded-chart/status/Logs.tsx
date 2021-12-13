@@ -103,26 +103,26 @@ export default class Logs extends Component<PropsType, StateType> {
       );
     }
 
-    if (
-      this.getPodStatus(selectedPod.status) === "failed" &&
-      this.state.logs.length === 0
-    ) {
-      return (
-        <Message>
-          No logs to display from this pod.
-          <Highlight
-            onClick={() => {
-              this.setState({ getPreviousLogs: true }, () => {
-                this.refreshLogs();
-              });
-            }}
-          >
-            <i className="material-icons">autorenew</i>
-            Get logs from crashed pod
-          </Highlight>
-        </Message>
-      );
-    }
+    // if (
+    //   this.getPodStatus(selectedPod.status) === "failed" &&
+    //   this.state.logs.length === 0
+    // ) {
+    //   return (
+    //     <Message>
+    //       No logs to display from this pod.
+    //       <Highlight
+    //         onClick={() => {
+    //           this.setState({ getPreviousLogs: true }, () => {
+    //             this.refreshLogs();
+    //           });
+    //         }}
+    //       >
+    //         <i className="material-icons">autorenew</i>
+    //         Get logs from crashed pod
+    //       </Highlight>
+    //     </Message>
+    //   );
+    // }
 
     if (this.state.logs.length == 0) {
       return (

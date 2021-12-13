@@ -204,6 +204,11 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
+
+        if (event.event_type === "DELETE") {
+          return;
+        }
+
         let object = event.Object;
 
         if (_.get(object.metadata, ["annotations", "helm.sh/hook"])) {

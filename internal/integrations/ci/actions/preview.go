@@ -91,7 +91,7 @@ func SetupEnv(opts *EnvOpts) error {
 		return err
 	}
 
-	deleteWorkflowYAML, err := getPreviewApplyActionYAML(opts)
+	deleteWorkflowYAML, err := getPreviewDeleteActionYAML(opts)
 
 	if err != nil {
 		return err

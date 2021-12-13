@@ -666,31 +666,16 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 }
 
 func (t *DeploymentHook) PreApply() error {
-	// attempt to read the deployment -- if it doesn't exist, create it
-	_, err := t.client.GetDeployment(
+	_, err := t.client.CreateDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
-		&types.GetDeploymentRequest{
-			Namespace: t.namespace,
+		&types.CreateDeploymentRequest{
+			Namespace:     t.namespace,
+			PullRequestID: t.prID,
+			Branch:        t.branch,
+			ActionID:      t.actionID,
 		},
 	)
-
-	// TODO: case this on the response status code rather than text
-	if err != nil && strings.Contains(err.Error(), "deployment not found") {
-		// in this case, create the deployment
-		_, err = t.client.CreateDeployment(
-			context.Background(),
-			t.projectID, t.gitInstallationID, t.clusterID,
-			&types.CreateDeploymentRequest{
-				Namespace:     t.namespace,
-				PullRequestID: t.prID,
-				Branch:        t.branch,
-				ActionID:      t.actionID,
-			},
-		)
-
-		return err
-	}
 
 	return err
 }

@@ -136,6 +136,7 @@ type ApplicationConfig struct {
 		Method     string
 		Context    string
 		Dockerfile string
+		Image      string
 	}
 
 	Values map[string]interface{}
@@ -262,8 +263,8 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 
 	method := appConfig.Build.Method
 
-	if method != "pack" && method != "docker" {
-		return nil, fmt.Errorf("method should either be \"docker\" or \"pack\"")
+	if method != "pack" && method != "docker" && method != "registry" {
+		return nil, fmt.Errorf("method should either be \"docker\", \"pack\" or \"registry\"")
 	}
 
 	fullPath, err := filepath.Abs(appConfig.Build.Context)
@@ -296,6 +297,10 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 
 	if shouldCreate {
 		resource, err = d.createApplication(resource, client, sharedOpts, appConfig)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
@@ -339,7 +344,17 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 		},
 	}
 
-	subdomain, err := createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag)
+	var subdomain string
+
+	if appConf.Build.Method == "registry" {
+		subdomain, err = createAgent.CreateFromRegistry(appConf.Build.Image, appConf.Values)
+	} else {
+		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag)
+	}
+
+	if err != nil {
+		return nil, err
+	}
 
 	return resource, handleSubdomainCreate(subdomain, err)
 }
@@ -349,7 +364,7 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 
 	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
 		SharedOpts: sharedOpts,
-		Local:      true,
+		Local:      appConf.Build.Method != "registry",
 	})
 
 	if err != nil {

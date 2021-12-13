@@ -712,42 +712,8 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 		}
 
 		if isWeb {
-			valuesInter, exists := resource.Config["values"]
-
-			if !exists {
-				continue
-			}
-
-			values, ok := valuesInter.(map[string]interface{})
-
-			if !ok {
-				continue
-			}
-
-			ingressInter, exists := values["ingress"]
-
-			if !exists {
-				continue
-			}
-
-			ingress, ok := ingressInter.(map[string]interface{})
-
-			if !ok {
-				continue
-			}
-
-			enabledInter, exists := ingress["enabled"]
-
-			if !exists {
-				continue
-			}
-
-			enabled, ok := enabledInter.(bool)
-
-			if ok && enabled {
-				res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
-				fmt.Printf("registered data query for %s\n", resource.Name)
-			}
+			res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
+			fmt.Printf("registered data query for %s\n", resource.Name)
 		}
 	}
 
@@ -766,7 +732,7 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 			continue
 		}
 
-		if _, err := url.Parse(domain); err == nil {
+		if _, err := url.Parse("https://" + domain); err == nil {
 			subdomains = append(subdomains, domain)
 		}
 	}

@@ -6,7 +6,14 @@ import "time"
 type ServerConf struct {
 	Debug bool `env:"DEBUG,default=false"`
 
-	ServerURL            string        `env:"SERVER_URL,default=http://localhost:8080"`
+	ServerURL string `env:"SERVER_URL,default=http://localhost:8080"`
+
+	// The instance name is used to set a name for integrations linked only by a project ID,
+	// in order to differentiate between the same project ID on different instances. For example,
+	// when writing a Github secret with `PORTER_TOKEN_<PROJECT_ID>`, setting this value will change
+	// this to `PORTER_TOKEN_<INSTANCE_NAME>_<PROJECT_ID>`
+	InstanceName string `env:"INSTANCE_NAME"`
+
 	Port                 int           `env:"SERVER_PORT,default=8080"`
 	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
 	CookieName           string        `env:"COOKIE_NAME,default=porter"`

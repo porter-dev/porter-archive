@@ -106,72 +106,91 @@ func notifyPodCrashing(
 	// attempt to get a matching Porter release to get the notification configuration
 	var conf *models.NotificationConfig
 	var notifConfig *types.NotificationConfig
+	var notifyOpts *slack.NotifyOpts
+	var matchedRel *models.Release
 	var err error
-	matchedRel := getMatchedPorterRelease(config, cluster.ID, event.OwnerName, event.Namespace)
 
-	// for now, we only notify for Porter releases that have been deployed through Porter
-	if matchedRel == nil {
-		return nil
-	}
-
-	conf, err = config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
-
-	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		conf = &models.NotificationConfig{
-			Enabled: true,
-			Success: true,
-			Failure: true,
+	if isJob := strings.ToLower(event.OwnerType) == "job"; isJob {
+		notifyOpts = &slack.NotifyOpts{
+			ProjectID:   cluster.ProjectID,
+			ClusterID:   cluster.ID,
+			ClusterName: cluster.Name,
+			Name:        event.OwnerName,
+			Namespace:   event.Namespace,
+			Info:        fmt.Sprintf("%s:%s", event.Reason, event.Message),
+			URL: fmt.Sprintf(
+				"%s/jobs/%s?project_id=%d",
+				config.ServerConf.ServerURL,
+				url.PathEscape(cluster.Name),
+				cluster.ProjectID,
+			),
 		}
+	} else {
+		matchedRel := getMatchedPorterRelease(config, cluster.ID, event.OwnerName, event.Namespace)
 
-		conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
-
-		if err != nil {
-			return err
-		}
-
-		if err != nil {
-			return err
-		}
-
-		matchedRel.NotificationConfig = conf.ID
-		matchedRel, err = config.Repo.Release().UpdateRelease(matchedRel)
-
-		if err != nil {
-			return err
-		}
-
-		notifConfig = conf.ToNotificationConfigType()
-	} else if err != nil {
-		return err
-	} else if err == nil && conf != nil {
-		if !conf.ShouldNotify() {
+		// for now, we only notify for Porter releases that have been deployed through Porter
+		if matchedRel == nil {
 			return nil
 		}
 
-		notifConfig = conf.ToNotificationConfigType()
+		conf, err = config.Repo.NotificationConfig().ReadNotificationConfig(matchedRel.NotificationConfig)
+
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			conf = &models.NotificationConfig{
+				Enabled: true,
+				Success: true,
+				Failure: true,
+			}
+
+			conf, err = config.Repo.NotificationConfig().CreateNotificationConfig(conf)
+
+			if err != nil {
+				return err
+			}
+
+			if err != nil {
+				return err
+			}
+
+			matchedRel.NotificationConfig = conf.ID
+			matchedRel, err = config.Repo.Release().UpdateRelease(matchedRel)
+
+			if err != nil {
+				return err
+			}
+
+			notifConfig = conf.ToNotificationConfigType()
+		} else if err != nil {
+			return err
+		} else if err == nil && conf != nil {
+			if !conf.ShouldNotify() {
+				return nil
+			}
+
+			notifConfig = conf.ToNotificationConfigType()
+		}
+
+		notifyOpts = &slack.NotifyOpts{
+			ProjectID:   cluster.ProjectID,
+			ClusterID:   cluster.ID,
+			ClusterName: cluster.Name,
+			Name:        event.OwnerName,
+			Namespace:   event.Namespace,
+			Info:        fmt.Sprintf("%s:%s", event.Reason, event.Message),
+			URL: fmt.Sprintf(
+				"%s/applications/%s/%s/%s?project_id=%d",
+				config.ServerConf.ServerURL,
+				url.PathEscape(cluster.Name),
+				matchedRel.Namespace,
+				matchedRel.Name,
+				cluster.ProjectID,
+			),
+		}
 	}
 
 	slackInts, _ := config.Repo.SlackIntegration().ListSlackIntegrationsByProjectID(project.ID)
 
 	notifier := slack.NewSlackNotifier(notifConfig, slackInts...)
-
-	notifyOpts := &slack.NotifyOpts{
-		ProjectID:   cluster.ProjectID,
-		ClusterID:   cluster.ID,
-		ClusterName: cluster.Name,
-		Name:        event.OwnerName,
-		Namespace:   event.Namespace,
-		Info:        fmt.Sprintf("%s:%s", event.Reason, event.Message),
-		URL: fmt.Sprintf(
-			"%s/applications/%s/%s/%s?project_id=%d",
-			config.ServerConf.ServerURL,
-			url.PathEscape(cluster.Name),
-			matchedRel.Namespace,
-			matchedRel.Name,
-			cluster.ProjectID,
-		),
-	}
-
 	notifyOpts.Status = slack.StatusPodCrashed
 
 	err = notifier.Notify(notifyOpts)

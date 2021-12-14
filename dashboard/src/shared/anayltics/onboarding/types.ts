@@ -1,0 +1,3 @@
+type RedirectToGuideProps = {
+  step: string;
+};

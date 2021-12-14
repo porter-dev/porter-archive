@@ -1,26 +1,27 @@
-// Common tracks
+export enum COMMON_TRACKS {
+  REDIRECT_TO_GUIDE = "FE Redirect to guide",
+}
 
-export const REDIRECT_TO_GUIDE = "FE Redirect to guide";
+export enum PROJECT_CREATION_TRACKS {
+  NEW_PROJECT_EVENT = "FE Create project",
+}
 
-// New project tracks
-export const PROJECT_CREATION_NEW_PROJECT_EVENT = "FE Create project";
+export enum CONNECT_SOURCE_TRACKS {
+  CONNECT_GITHUB_BUTTON_CLICKED = "FE Connect Github",
+  USE_DOCKER_REGISTRY_CLICKED = "FE Use docker registry",
+  CONTINUE_AFTER_GITHUB_CONNECT = "FE Continue after Github connect",
+  INSTALL_ON_MORE_REPOSITORIES_CLICKED = "FE Install on more repositories",
+}
 
-// CONNECT SOURCE TRACKS
-export const CONNECT_SOURCE_CONNECT_GITHUB_BUTTON_CLICKED = "FE Connect Github";
-export const CONNECT_SOURCE_USE_DOCKER_REGISTRY_CLICKED =
-  "FE Use docker registry";
-export const CONNECT_SOURCE_CONTINUE_AFTER_GITHUB_CONNECT =
-  "FE Continue after Github connect";
-export const CONNECT_SOURCE_INSTALL_ON_MORE_REPOSITORIES_CLICKED =
-  "FE Install on more repositories";
+export enum CONNECT_REGISTRY_TRACKS {
+  SKIP_REGISTRY_CONNECTION = "FE Skip registry connection",
+  INTENT = "FE Connect registry intent",
+  ADD_CREDENTIALS = "FE Connect registry added credentials",
+  CONNECT_REGISTRY_CLICKED = "FE Connect registry clicked",
+}
 
-// CONNECT REGISTRY TRACKS
-
-export const CONNECT_REGISTRY_SKIP_REGISTRY_CONNECTION =
-  "FE Skip registry connection";
-export const CONNECT_REGISTRY_INTENT = "FE Connect registry intent";
-export const CONNECT_REGISTRY_ADD_CREDENTIALS =
-  "FE Connect registry added credentials";
-
-export const CONNECT_REGISTRY_CONNECT_REGISTRY_CLICKED =
-  "FE Connect registry clicked";
+export enum PROVISION_RESOURCES_TRACKS {
+  PROVISION_INTENT = "FE Provision resources intent",
+  ADD_CREDENTIALS = "FE Provision resources added credentials",
+  PROVISION_RESOURCES_CLICKED = "FE Provision resources clicked",
+}

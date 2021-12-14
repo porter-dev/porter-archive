@@ -119,7 +119,7 @@ func notifyPodCrashing(
 			Namespace:   event.Namespace,
 			Info:        fmt.Sprintf("%s:%s", event.Reason, event.Message),
 			URL: fmt.Sprintf(
-				"%s/jobs/%s?project_id=%d",
+				"%s/jobs?cluster=%s&project_id=%d",
 				config.ServerConf.ServerURL,
 				url.PathEscape(cluster.Name),
 				cluster.ProjectID,

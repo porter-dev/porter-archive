@@ -68,7 +68,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 					return err
 				}
 
-				buildOpts.Buildpacks = append(buildOpts.Buildpacks, bpCustomName)
+				buildOpts.Buildpacks = append(buildOpts.Buildpacks, filepath.Join(dstDir, bpCustomName))
 			} else {
 				buildOpts.Buildpacks = append(buildOpts.Buildpacks, bp)
 			}

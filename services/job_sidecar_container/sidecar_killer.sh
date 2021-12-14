@@ -5,7 +5,19 @@
 # 
 # Usage: ./sidecar_killer.sh [target_process]
 
-target=$1
-pattern="$(printf '[%s]%s' $(echo $target | cut -c 1) $(echo $target | cut -c 2-))"
-pid=$(ps x | grep -v './sidecar_killer.sh' | grep "$pattern" | awk '{ printf "%d ", $1 }'); 
-kill -TERM $pid
+sidecar_pid=$(pgrep $1)
+
+
+if [ -n "$sidecar_pid" ]; then
+    kill -TERM $sidecar_pid
+
+    # schedule hard kill after 30 seconds
+    (sleep 30; kill -9 -${sidecar_pid} 2>/dev/null || true) &
+    local killer=${!}
+
+    # wait for processes to finish
+    wait ${sidecar_pid} 2>/dev/null || true
+
+    # children exited gracefully - cancel timer
+    sleep 0.1 && kill -9 ${killer} 2>/dev/null && target_pid="" || true
+fi

@@ -1,7 +1,6 @@
 package gorm
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -92,8 +91,6 @@ func (repo *KubeEventRepository) CreateEvent(
 	if err := query.Model([]*models.KubeEvent{}).Count(&count).Error; err != nil {
 		return nil, err
 	}
-
-	fmt.Println("COUNT IS", event.Name, count)
 
 	// if the count is greater than 500, remove the lowest-order event to implement a
 	// basic fixed-length buffer
@@ -240,8 +237,6 @@ func (repo *KubeEventRepository) AppendSubEvent(event *models.KubeEvent, subEven
 	if err := query.Model([]*models.KubeSubEvent{}).Count(&count).Error; err != nil {
 		return err
 	}
-
-	fmt.Println("COUNT IS (subevents)", event.Name, count)
 
 	// if the count is greater than 20, remove the lowest-order events to implement a
 	// basic fixed-length buffer

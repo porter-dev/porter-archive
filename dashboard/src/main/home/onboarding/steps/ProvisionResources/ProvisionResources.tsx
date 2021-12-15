@@ -43,6 +43,7 @@ const ProvisionResources: React.FC<Props> = () => {
 
   const handleSelectProvider = (provider: string) => {
     if (provider !== "external") {
+      provisionResourcesTracks.trackProvisionIntent({ provider });
       OFState.actions.nextStep("continue", provider);
       return;
     }

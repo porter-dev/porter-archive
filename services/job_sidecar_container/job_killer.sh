@@ -40,8 +40,6 @@ graceful_shutdown() {
 
     echo "searching for process pattern: $pattern"
 
-    # local target_pid_arr=$(ps x | grep -v './job_killer.sh' | grep "$pattern" | awk '{ printf "%d ", $1 }' | sort)
-    # local target_pid=$target_pid_arr
     local target_pid=$(pgrep -f $pattern -l | grep -v 'job_killer.sh' | grep -v 'wait_for_job.sh' | grep -v 'grep' | awk '{ printf "%d ", $1 }' | sort)
     local list="$target_pid"
 

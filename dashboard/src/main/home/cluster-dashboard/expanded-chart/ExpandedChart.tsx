@@ -35,6 +35,7 @@ import TitleSection from "components/TitleSection";
 import { integrationList } from "shared/common";
 import DeploymentType from "./DeploymentType";
 import EventsTab from "./events/EventsTab";
+import BuildpackEditPage from "./BuildpackEditPage";
 
 type Props = {
   namespace: string;
@@ -348,6 +349,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let { setSidebar } = props;
     let chart = currentChart;
     console.log("CONTROLLERS", controllers);
+    console.log(currentTab);
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
@@ -391,6 +393,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
             />
           );
         }
+      case "buildpack":
+        return <BuildpackEditPage actionConfig={chart.git_action_config} />;
       case "settings":
         return (
           <SettingsSection
@@ -459,6 +463,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
         { label: "Helm Values", value: "values" }
       );
     }
+
+    rightTabOptions.push({ label: "Buildpack", value: "buildpack" });
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {

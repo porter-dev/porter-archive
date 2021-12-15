@@ -54,10 +54,6 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 				}
 
 				urlPaths := strings.Split(u.Path[1:], "/")
-				if len(urlPaths) != 2 {
-					return fmt.Errorf("invalid github repo URL: %s", bp)
-				}
-
 				dstDir := filepath.Join(homedir.HomeDir(), ".porter")
 				bpCustomName := regexp.MustCompile("/|-").ReplaceAllString(u.Path[1:], "_")
 

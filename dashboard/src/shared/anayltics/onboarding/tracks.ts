@@ -63,6 +63,16 @@ export const connectRegistryTracks = {
 };
 
 export const provisionResourcesTracks = {
+  trackConnectExternalClusterIntent() {
+    window.analytics?.track(
+      PROVISION_RESOURCES_TRACKS.CONNECT_EXTERNAL_CLUSTER_INTENT
+    );
+  },
+  trackExternalClusterConnected() {
+    window.analytics?.track(
+      PROVISION_RESOURCES_TRACKS.CONNECTED_EXTERNAL_CLUSTER
+    );
+  },
   trackProvisionIntent(props: TrackProvisionIntentProps) {
     window.analytics?.track(PROVISION_RESOURCES_TRACKS.PROVISION_INTENT, props);
   },

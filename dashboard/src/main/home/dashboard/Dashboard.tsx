@@ -40,6 +40,7 @@ class Dashboard extends Component<PropsType, StateType> {
     pressingCtrl: false,
     pressingK: false,
     showFormDebugger: false,
+    showButtons: false,
   };
 
   refreshInfras = () => {

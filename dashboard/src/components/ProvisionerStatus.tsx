@@ -8,6 +8,8 @@ import styled, { keyframes } from "styled-components";
 
 type Props = {
   modules: TFModule[];
+  onDelete?: (infraId: number) => void;
+  onRetry?: (infraId: number) => void;
 };
 
 export interface TFModule {
@@ -42,7 +44,7 @@ const nameMap: { [key: string]: string } = {
   gcr: "Google Container Registry (GCR)",
 };
 
-const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
+const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
   const renderStatus = (status: string) => {
     if (status === "successful") {
       return (
@@ -141,6 +143,20 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
         status = renderStatus("loading");
       }
 
+      let showActions = false;
+      let showDelete = false;
+      let showRetry = false;
+
+      if (typeof onDelete === "function") {
+        showActions = true;
+        showDelete = true;
+      }
+
+      if (typeof onRetry === "function") {
+        showActions = true;
+        showRetry = true;
+      }
+
       return (
         <InfraObject key={val.id}>
           <InfraHeader>
@@ -152,6 +168,20 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
               {nameMap[val.kind]}
             </Flex>
             <Timestamp>Started {readableDate(val.created_at)}</Timestamp>
+            {hasError && showActions && (
+              <ActionContainer>
+                {showRetry && (
+                  <ActionButton onClick={() => onRetry(val.id)}>
+                    <span className="material-icons">replay</span>
+                  </ActionButton>
+                )}
+                {showDelete && (
+                  <ActionButton onClick={() => onDelete(val.id)}>
+                    <span className="material-icons">delete</span>
+                  </ActionButton>
+                )}
+              </ActionContainer>
+            )}
           </InfraHeader>
           <LoadingBar>{loadingFill}</LoadingBar>
           <ErrorWrapper>{error}</ErrorWrapper>
@@ -280,4 +310,37 @@ const InfraHeader = styled.div`
   padding: 0 15px;
   display: flex;
   align-items: center;
+  min-height: 35px;
+`;
+
+const ActionButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #aaaabb;
+  border: 1px;
+  :hover {
+    background: #ffffff11;
+    border: 1px solid #ffffff44;
+  }
+
+  > span {
+    font-size: 20px;
+  }
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+  min-width: 65px;
+  justify-content: space-evenly;
 `;

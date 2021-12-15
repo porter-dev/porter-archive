@@ -266,6 +266,34 @@ export const StatusPage = ({
     openWebsocket(websocketId);
   };
 
+  const handleRetryInfra = async (infraId: number) => {
+    try {
+      await api.retryInfra(
+        "<token>",
+        {},
+        {
+          project_id: project_id,
+          infra_id: infraId,
+        }
+      );
+
+      getInfras();
+    } catch (error) {}
+  };
+
+  const handleDeleteInfra = async (infraId: number) => {
+    try {
+      await api.deleteInfra(
+        "<token>",
+        {},
+        {
+          project_id,
+          infra_id: infraId,
+        }
+      );
+    } catch (err) {}
+  };
+
   useEffect(() => {
     getInfras();
     return () => {
@@ -319,7 +347,13 @@ export const StatusPage = ({
     b.id < a.id ? -1 : b.id > a.id ? 1 : 0
   );
 
-  return <ProvisionerStatus modules={sortedModules} />;
+  return (
+    <ProvisionerStatus
+      modules={sortedModules}
+      onRetry={handleRetryInfra}
+      onDelete={handleDeleteInfra}
+    />
+  );
 };
 
 type TFModulesState = {

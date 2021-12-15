@@ -597,6 +597,26 @@ const getInfraCurrent = baseApi<
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/current`;
 });
 
+const retryInfra = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", ({ project_id, infra_id }) => {
+  return `/api/projects/${project_id}/infras/${infra_id}/retry`;
+});
+
+const deleteInfra = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("DELETE", ({ project_id, infra_id }) => {
+  return `/api/projects/${project_id}/infras/${infra_id}`;
+});
+
 const getIngress = baseApi<
   {},
   { namespace: string; cluster_id: number; name: string; id: number }
@@ -1264,6 +1284,8 @@ export default {
   getInfra,
   getInfraDesired,
   getInfraCurrent,
+  retryInfra,
+  deleteInfra,
   getIngress,
   getInvites,
   getJobs,

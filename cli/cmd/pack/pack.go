@@ -3,11 +3,14 @@ package pack
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/buildpacks/pack"
+	githubApi "github.com/google/go-github/github"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
@@ -17,9 +20,6 @@ import (
 type Agent struct{}
 
 func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) error {
-	//create a context object
-	context := context.Background()
-
 	//initialize a pack client
 	client, err := pack.NewClient(pack.WithLogger(newPackLogger()))
 
@@ -47,15 +47,55 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		for i := range buildConfig.Buildpacks {
 			bp := buildConfig.Buildpacks[i]
 			u, err := url.Parse(bp)
-			if err == nil {
+			if err == nil && u.Scheme != "" {
 				// could be a git repository containing the buildpack
+				if !strings.HasSuffix(u.Path, ".zip") && u.Host != "github.com" && u.Host != "www.github.com" {
+					return fmt.Errorf("please provide either a github.com URL or a ZIP file URL")
+				}
+
+				urlPaths := strings.Split(u.Path[1:], "/")
+				if len(urlPaths) != 2 {
+					return fmt.Errorf("invalid github repo URL: %s", bp)
+				}
+
 				dstDir := filepath.Join(homedir.HomeDir(), ".porter")
-				bpCustomName := strings.ReplaceAll(u.Path, "/", "-")
+				bpCustomName := regexp.MustCompile("/|-").ReplaceAllString(u.Path[1:], "_")
+
+				var zipFileName string
+				if strings.HasSuffix(bpCustomName, ".zip") {
+					zipFileName = bpCustomName
+				} else {
+					zipFileName = fmt.Sprintf("%s.zip", bpCustomName)
+				}
 				downloader := &github.ZIPDownloader{
 					ZipFolderDest:       dstDir,
 					AssetFolderDest:     dstDir,
-					ZipName:             fmt.Sprintf("%s.zip", bpCustomName),
+					ZipName:             zipFileName,
 					RemoveAfterDownload: true,
+				}
+
+				if zipFileName != bpCustomName {
+					// try to download the repo ZIP from github
+					githubClient := githubApi.NewClient(nil)
+					rel, _, err := githubClient.Repositories.GetLatestRelease(
+						context.Background(),
+						urlPaths[0],
+						urlPaths[1],
+					)
+					if err == nil {
+						bp = rel.GetZipballURL()
+					} else {
+						// default to the current default branch
+						repo, _, err := githubClient.Repositories.Get(
+							context.Background(),
+							urlPaths[0],
+							urlPaths[1],
+						)
+						if err != nil {
+							return fmt.Errorf("could not fetch git repo details")
+						}
+						bp = fmt.Sprintf("%s/archive/refs/heads/%s.zip", bp, repo.GetDefaultBranch())
+					}
 				}
 
 				err = downloader.DownloadToFile(bp)
@@ -68,7 +108,19 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 					return err
 				}
 
-				buildOpts.Buildpacks = append(buildOpts.Buildpacks, filepath.Join(dstDir, bpCustomName))
+				dstFiles, err := ioutil.ReadDir(dstDir)
+				if err != nil {
+					return err
+				}
+
+				var bpRealName string
+				for _, info := range dstFiles {
+					if info.Mode().IsDir() && strings.Contains(info.Name(), urlPaths[1]) {
+						bpRealName = filepath.Join(dstDir, info.Name())
+					}
+				}
+
+				buildOpts.Buildpacks = append(buildOpts.Buildpacks, bpRealName)
 			} else {
 				buildOpts.Buildpacks = append(buildOpts.Buildpacks, bp)
 			}
@@ -80,5 +132,5 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile")
 	}
 
-	return client.Build(context, buildOpts)
+	return client.Build(context.Background(), buildOpts)
 }

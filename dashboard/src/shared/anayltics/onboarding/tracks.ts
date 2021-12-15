@@ -1,3 +1,12 @@
+import type {
+  TrackConnectRegistryClickedProps,
+  TrackConnectRegistryIntentProps,
+  TrackProvisionAddCredentialsProps,
+  TrackProvisionIntentProps,
+  TrackProvisionResourcesClickedProps,
+  TrackRedirectToGuideProps,
+  TrackRegistryAddCredentialsProps,
+} from "./types";
 import {
   COMMON_TRACKS,
   CONNECT_REGISTRY_TRACKS,
@@ -10,7 +19,7 @@ export function trackCreateNewProject() {
   window.analytics?.track(PROJECT_CREATION_TRACKS.NEW_PROJECT_EVENT);
 }
 
-export function trackRedirectToGuide(props: RedirectToGuideProps) {
+export function trackRedirectToGuide(props: TrackRedirectToGuideProps) {
   window.analytics?.track(COMMON_TRACKS.REDIRECT_TO_GUIDE, props);
 }
 
@@ -39,27 +48,31 @@ export const connectRegistryTracks = {
   trackSkipRegistryConnection() {
     window.analytics?.track(CONNECT_REGISTRY_TRACKS.SKIP_REGISTRY_CONNECTION);
   },
-  trackConnectRegistryIntent() {
-    window.analytics?.track(CONNECT_REGISTRY_TRACKS.INTENT);
+  trackConnectRegistryIntent(props: TrackConnectRegistryIntentProps) {
+    window.analytics?.track(CONNECT_REGISTRY_TRACKS.INTENT, props);
   },
-  trackAddCredentials() {
-    window.analytics?.track(CONNECT_REGISTRY_TRACKS.ADD_CREDENTIALS);
+  trackRegistryAddCredentials(props: TrackRegistryAddCredentialsProps) {
+    window.analytics?.track(CONNECT_REGISTRY_TRACKS.ADD_CREDENTIALS, props);
   },
-  trackConnectRegistryClicked() {
-    window.analytics?.track(CONNECT_REGISTRY_TRACKS.CONNECT_REGISTRY_CLICKED);
+  trackConnectRegistryClicked(props: TrackConnectRegistryClickedProps) {
+    window.analytics?.track(
+      CONNECT_REGISTRY_TRACKS.CONNECT_REGISTRY_CLICKED,
+      props
+    );
   },
 };
 
 export const provisionResourcesTracks = {
-  trackProvisionIntent() {
-    window.analytics?.track(PROVISION_RESOURCES_TRACKS.PROVISION_INTENT);
+  trackProvisionIntent(props: TrackProvisionIntentProps) {
+    window.analytics?.track(PROVISION_RESOURCES_TRACKS.PROVISION_INTENT, props);
   },
-  trackAddCredentials() {
-    window.analytics?.track(PROVISION_RESOURCES_TRACKS.ADD_CREDENTIALS);
+  trackProvisionAddCredentials(props: TrackProvisionAddCredentialsProps) {
+    window.analytics?.track(PROVISION_RESOURCES_TRACKS.ADD_CREDENTIALS, props);
   },
-  trackProvisionResourcesClicked() {
+  trackProvisionResourcesClicked(props: TrackProvisionResourcesClickedProps) {
     window.analytics?.track(
-      PROVISION_RESOURCES_TRACKS.PROVISION_RESOURCES_CLICKED
+      PROVISION_RESOURCES_TRACKS.PROVISION_RESOURCES_CLICKED,
+      props
     );
   },
 };

@@ -73,6 +73,7 @@ export type GCPProvisionerConfig = {
     cluster_name: string;
     registry_infra_id: number;
     cluster_infra_id: number;
+    region: string;
   };
 };
 

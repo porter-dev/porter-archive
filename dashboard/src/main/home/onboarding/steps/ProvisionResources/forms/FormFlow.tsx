@@ -146,6 +146,15 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
         <GuideButton
           href={FormTitle[provider]?.doc}
           target="_blank"
+          onAuxClick={() => {
+            trackRedirectToGuide({
+              step: stepHandler.currentStepName,
+              guide_url: FormTitle[provider].doc,
+              provider,
+            });
+            // Will allow the anchor tag to redirect properly
+            return true;
+          }}
           onClick={() => {
             trackRedirectToGuide({
               step: stepHandler.currentStepName,

@@ -24,4 +24,6 @@ export enum PROVISION_RESOURCES_TRACKS {
   PROVISION_INTENT = "FE Provision resources intent",
   ADD_CREDENTIALS = "FE Provision resources added credentials",
   PROVISION_RESOURCES_CLICKED = "FE Provision resources clicked",
+  CONNECT_EXTERNAL_CLUSTER_INTENT = "FE Provision resources Connect external cluster intent",
+  CONNECTED_EXTERNAL_CLUSTER = "FE Provision resources Connected external cluster",
 }

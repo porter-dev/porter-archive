@@ -15,7 +15,6 @@ export type TrackRegistryAddCredentialsProps = {
 
 export type TrackConnectRegistryClickedProps = {
   provider: string;
-  registry_name: string;
 };
 
 export type TrackProvisionIntentProps = {
@@ -29,6 +28,8 @@ export type TrackProvisionAddCredentialsProps = {
 
 export type TrackProvisionResourcesClickedProps = {
   provider: string;
-  machine_type: string;
   cluster_name: string;
+  machine_type?: string;
+  subscription_tier?: string;
+  region?: string;
 };

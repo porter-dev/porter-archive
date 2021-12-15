@@ -7,13 +7,12 @@
 
 sidecar_pid=$(pgrep $1)
 
-
 if [ -n "$sidecar_pid" ]; then
     kill -TERM $sidecar_pid
 
     # schedule hard kill after 30 seconds
     (sleep 30; kill -9 -${sidecar_pid} 2>/dev/null || true) &
-    local killer=${!}
+    killer=${!}
 
     # wait for processes to finish
     wait ${sidecar_pid} 2>/dev/null || true

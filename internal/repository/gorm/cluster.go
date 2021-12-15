@@ -152,7 +152,7 @@ func (repo *ClusterRepository) CreateCluster(
 
 	cluster.TokenCacheID = cluster.TokenCache.ID
 
-	if err := ctxDB.Save(cluster).Error; err != nil {
+	if err := ctxDB.Debug().Save(cluster).Error; err != nil {
 		return nil, err
 	}
 

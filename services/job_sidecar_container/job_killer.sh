@@ -40,59 +40,72 @@ graceful_shutdown() {
 
     echo "searching for process pattern: $pattern"
 
-    local target_pid_arr=$(ps x | grep -v './job_killer.sh' | grep "$pattern" | awk '{ printf "%d ", $1 }' | sort)
-    local target_pid=$target_pid_arr
+    # local target_pid_arr=$(ps x | grep -v './job_killer.sh' | grep "$pattern" | awk '{ printf "%d ", $1 }' | sort)
+    # local target_pid=$target_pid_arr
+    local target_pid=$(pgrep -f $pattern -l | grep -v 'job_killer.sh' | grep -v 'wait_for_job.sh' | grep -v 'grep' | awk '{ printf "%d ", $1 }' | sort)
     local list="$target_pid"
 
-    # request graceful shutdown from target_pid
-    kill -0 ${target_pid} 2>/dev/null && kill -TERM ${target_pid}
-
-    if $kill_child_procs
-    then
-        for c in $(ps -o pid= --ppid $target_pid); do
-          # request graceful shutdown of all children, and append to process list
-          kill -0 $c 2>/dev/null && kill -TERM $c && list="$list $c" || true
-        done
-    fi
-
     if [ -n "$target_pid" ]; then
-        # schedule hard kill after timeout
-        (sleep ${timeout}; kill -9 -${target_pid} 2>/dev/null || true) &
-        local killer=${!}
+      # request graceful shutdown from target_pid
+      kill -0 ${target_pid} 2>/dev/null && kill -TERM ${target_pid}
 
-        # wait for processes to finish
-        for c in $list; do
-          echo "waiting for process $c"
-          tail --pid=$c -f /dev/null 
-        done
+      if $kill_child_procs
+      then
+          for c in $(ps -o pid= --ppid $target_pid); do
+            # request graceful shutdown of all children, and append to process list
+            kill -0 $c 2>/dev/null && kill -TERM $c && list="$list $c" || true
+          done
+      fi
 
-        wait ${list} 2>/dev/null || true
+      # schedule hard kill after timeout
+      (sleep ${timeout}; kill -9 -${target_pid} 2>/dev/null || true) &
+      local killer=${!}
 
-        # children exited gracefully - cancel timer
-        sleep 0.1 && kill -9 ${killer} 2>/dev/null && target_pid="" || true
+      # wait for processes to finish
+      for c in $list; do
+        echo "waiting for process $c"
+        tail --pid=$c -f /dev/null 
+      done
+
+      wait ${list} 2>/dev/null || true
+
+      # children exited gracefully - cancel timer
+      sleep 0.1 && kill -9 ${killer} 2>/dev/null && target_pid="" || true
     fi
 
-    [ -z "$target_pid" ] && echo "Exit Gracefully (0)" && exit 0 || echo "Dirty Exit (1)" && exit 1
+    # run the sidecar killer, this will terminate any additional sidecars if necessary
+    if [ -n "$sidecar" ]; then
+        echo "killing sidecar command: $sidecar"
+        ./sidecar_killer.sh $sidecar
+    fi
+
+    echo "Exit Gracefully (0)" && exit 0
 }
 
 trap 'graceful_shutdown $grace_period_seconds $target' SIGTERM SIGINT SIGHUP
 
+sleep 2
+
 echo "waiting for job to start..."
 
-sleep 10
+timeout 10s ./wait_for_job.sh $pattern
 
-target_pid_arr=$(ps x | grep -v './job_killer.sh' | grep "$pattern" | awk '{ printf "%d ", $1 }' | sort)
-target_pid=$target_pid_arr
+target_pid=$(pgrep -f $pattern -l | grep -v 'job_killer.sh' | grep -v 'wait_for_job.sh' | grep -v 'grep' | awk '{ printf "%d ", $1 }' | sort)
+target_pid_name=$(pgrep -f $pattern -l | grep -v 'job_killer.sh' | grep -v 'wait_for_job.sh' | grep -v 'grep')
 
 if [ -n "$target_pid" ]; then
+    echo "targeting pids $target_pid matched by $target_pid_name"
     tail --pid=$target_pid -f /dev/null &
     child=$!
 
     wait "$child"
-fi
 
-# run the sidecar killer, this will terminate any additional sidecars if necessary
-if [ -n "$sidecar" ]; then
+    graceful_shutdown $grace_period_seconds $target
+else 
+  echo "no process could be targeted within 10s, initiating shutdown"
+
+  if [ -n "$sidecar" ]; then
     echo "killing sidecar command: $sidecar"
     ./sidecar_killer.sh $sidecar
+  fi
 fi

@@ -108,31 +108,40 @@ func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[str
 	)
 }
 
-func (a *Agent) CreateVersionedConfigMap(name, namespace string, configMap map[string]string) (*v1.ConfigMap, error) {
-	// look for a latest configmap
-	_, latestVersion, err := a.GetLatestVersionedConfigMap(name, namespace)
-
-	if err != nil && !goerrors.Is(err, IsNotFoundError) {
-		return nil, err
-	} else if err != nil {
-		latestVersion = 1
-	} else {
-		latestVersion += 1
-	}
-
+func (a *Agent) CreateVersionedConfigMap(name, namespace string, version uint, configMap map[string]string) (*v1.ConfigMap, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).Create(
 		context.TODO(),
 		&v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s.v%d", name, latestVersion),
+				Name:      fmt.Sprintf("%s.v%d", name, version),
 				Namespace: namespace,
 				Labels: map[string]string{
 					"owner":    "porter",
 					"envgroup": name,
-					"version":  fmt.Sprintf("%d", latestVersion),
+					"version":  fmt.Sprintf("%d", version),
 				},
 			},
 			Data: configMap,
+		},
+		metav1.CreateOptions{},
+	)
+}
+
+func (a *Agent) CreateLinkedVersionedSecret(name, namespace, cmName string, version uint, data map[string][]byte) (*v1.Secret, error) {
+	return a.Clientset.CoreV1().Secrets(namespace).Create(
+		context.TODO(),
+		&v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s.v%d", name, version),
+				Namespace: namespace,
+				Labels: map[string]string{
+					"owner":     "porter",
+					"envgroup":  name,
+					"version":   fmt.Sprintf("%d", version),
+					"configmap": cmName,
+				},
+			},
+			Data: data,
 		},
 		metav1.CreateOptions{},
 	)

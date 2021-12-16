@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -73,19 +74,36 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 }
 
 func createEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.ConfigMap, error) {
-	// secretData := encodeSecrets(input.SecretVariables)
+	// look for a latest configmap
+	_, latestVersion, err := agent.GetLatestVersionedConfigMap(input.Name, input.Namespace)
 
-	// // create secret first
-	// if _, err := agent.CreateLinkedSecret(input.Name, input.Namespace, input.Name, secretData); err != nil {
-	// 	return nil, err
-	// }
+	if err != nil && !errors.Is(err, kubernetes.IsNotFoundError) {
+		return nil, err
+	} else if err != nil {
+		latestVersion = 1
+	} else {
+		latestVersion += 1
+	}
 
-	// // add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
-	// for key := range input.SecretVariables {
-	// 	input.Variables[key] = fmt.Sprintf("PORTERSECRET_%s", input.Name)
-	// }
+	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
+	for key := range input.SecretVariables {
+		input.Variables[key] = fmt.Sprintf("PORTERSECRET_%s", input.Name)
+	}
 
-	return agent.CreateVersionedConfigMap(input.Name, input.Namespace, input.Variables)
+	cm, err := agent.CreateVersionedConfigMap(input.Name, input.Namespace, latestVersion, input.Variables)
+
+	if err != nil {
+		return nil, err
+	}
+
+	secretData := encodeSecrets(input.SecretVariables)
+
+	// create secret first
+	if _, err := agent.CreateLinkedVersionedSecret(input.Name, input.Namespace, cm.ObjectMeta.Name, latestVersion, secretData); err != nil {
+		return nil, err
+	}
+
+	return cm, err
 }
 
 func toEnvGroup(configMap *v1.ConfigMap) (*types.EnvGroup, error) {

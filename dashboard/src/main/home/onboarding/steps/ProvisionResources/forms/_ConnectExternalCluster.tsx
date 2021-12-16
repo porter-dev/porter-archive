@@ -4,6 +4,7 @@ import TabSelector from "components/TabSelector";
 import api from "shared/api";
 import SaveButton from "components/SaveButton";
 import { integrationList } from "shared/common";
+import { provisionResourcesTracks } from "shared/anayltics";
 
 type Props = {
   nextStep: () => void;
@@ -173,7 +174,10 @@ const ConnectExternalCluster: React.FC<Props> = ({
       <NextStep
         text="Continue"
         disabled={!enableContinue}
-        onClick={() => nextStep()}
+        onClick={() => {
+          provisionResourcesTracks.trackExternalClusterConnected();
+          nextStep();
+        }}
         status={
           !enableContinue ? "No connected cluster detected" : "successful"
         }

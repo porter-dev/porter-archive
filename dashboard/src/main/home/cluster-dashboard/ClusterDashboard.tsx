@@ -49,7 +49,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     sortType: localStorage.getItem("SortType")
       ? localStorage.getItem("SortType")
       : "Newest",
-    lastRunStatus: null as null,
+    lastRunStatus: "all" as null,
     currentChart: null as ChartType | null,
     isMetricsInstalled: false,
   };

@@ -247,6 +247,7 @@ func createGitAction(
 
 	// create the commit in the git repo
 	gaRunner := &actions.GithubActions{
+		InstanceName:           config.ServerConf.InstanceName,
 		ServerURL:              config.ServerConf.ServerURL,
 		GithubOAuthIntegration: nil,
 		GithubAppID:            config.GithubAppConf.AppID,

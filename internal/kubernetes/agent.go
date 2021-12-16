@@ -108,7 +108,7 @@ func (a *Agent) CreateConfigMap(name string, namespace string, configMap map[str
 	)
 }
 
-func (a *Agent) CreateVersionedConfigMap(name, namespace string, version uint, configMap map[string]string) (*v1.ConfigMap, error) {
+func (a *Agent) CreateVersionedConfigMap(name, namespace string, version uint, configMap map[string]string, apps ...string) (*v1.ConfigMap, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).Create(
 		context.TODO(),
 		&v1.ConfigMap{
@@ -119,6 +119,9 @@ func (a *Agent) CreateVersionedConfigMap(name, namespace string, version uint, c
 					"owner":    "porter",
 					"envgroup": name,
 					"version":  fmt.Sprintf("%d", version),
+				},
+				Annotations: map[string]string{
+					PorterAppAnnotationName: strings.Join(apps, ","),
 				},
 			},
 			Data: configMap,

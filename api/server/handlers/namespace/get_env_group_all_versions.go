@@ -70,7 +70,11 @@ func (c *GetEnvGroupAllVersionsHandler) ServeHTTP(w http.ResponseWriter, r *http
 			continue
 		}
 
-		res = append(res, eg)
+		res = append(res, &types.EnvGroupMeta{
+			Name:      eg.Name,
+			Namespace: eg.Namespace,
+			Version:   eg.Version,
+		})
 	}
 
 	c.WriteResult(w, r, res)

@@ -92,6 +92,12 @@ type EnvGroup struct {
 	Variables map[string]string `json:"variables"`
 }
 
+type EnvGroupMeta struct {
+	Version   uint   `json:"version"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
 type GetEnvGroupRequest struct {
 	Name    string `schema:"name,required"`
 	Version uint   `schema:"version"`
@@ -101,7 +107,8 @@ type GetEnvGroupAllRequest struct {
 	Name string `schema:"name,required"`
 }
 
-type ListEnvGroupsResponse []*EnvGroup
+type ListEnvGroupsResponse []*EnvGroupMeta
+
 type CreateEnvGroupRequest struct {
 	Name            string            `json:"name,required"`
 	Variables       map[string]string `json:"variables,required"`

@@ -15,6 +15,7 @@ import backArrow from "assets/back_arrow.png";
 import { StatusPage } from "./forms/StatusPage";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
+import { provisionResourcesTracks } from "shared/anayltics";
 
 type Props = {};
 
@@ -42,9 +43,11 @@ const ProvisionResources: React.FC<Props> = () => {
 
   const handleSelectProvider = (provider: string) => {
     if (provider !== "external") {
+      provisionResourcesTracks.trackProvisionIntent({ provider });
       OFState.actions.nextStep("continue", provider);
       return;
     }
+    provisionResourcesTracks.trackConnectExternalClusterIntent();
     OFState.actions.nextStep("skip");
   };
 

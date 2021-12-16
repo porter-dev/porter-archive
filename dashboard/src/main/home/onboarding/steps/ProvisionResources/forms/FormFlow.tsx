@@ -26,6 +26,11 @@ import {
 } from "./_GCPProvisionerForm";
 import { OFState } from "main/home/onboarding/state";
 import { useSnapshot } from "valtio";
+import {
+  provisionResourcesTracks,
+  trackRedirectToGuide,
+} from "shared/anayltics";
+import { StepHandler } from "main/home/onboarding/state/StepHandler";
 
 const Forms = {
   aws: {
@@ -71,6 +76,7 @@ type Props = {
 
 const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
   const snap = useSnapshot(StateHandler);
+  const stepHandler = useSnapshot(StepHandler);
 
   const provider = snap.provision_resources?.provider as
     | SupportedProviders
@@ -90,8 +96,20 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
     data?: Partial<Exclude<ProvisionerConfig, SkipProvisionConfig>>
   ) => {
     if (currentStep === "credentials") {
+      provisionResourcesTracks.trackProvisionAddCredentials({
+        provider: provider,
+        step: stepHandler.currentStepName,
+      });
       handleContinue(data);
     } else if (currentStep === "settings") {
+      const settings: any = data?.settings;
+      provisionResourcesTracks.trackProvisionResourcesClicked({
+        provider: provider,
+        cluster_name: settings?.cluster_name,
+        machine_type: settings?.aws_machine_type,
+        region: settings?.region,
+        subscription_tier: settings?.tier,
+      });
       handleContinue(data);
     }
   };
@@ -125,7 +143,28 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
           {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
           {FormTitle[provider] && FormTitle[provider].label}
         </FormHeader>
-        <GuideButton href={FormTitle[provider]?.doc} target="_blank">
+        <GuideButton
+          href={FormTitle[provider]?.doc}
+          target="_blank"
+          onAuxClick={() => {
+            trackRedirectToGuide({
+              step: stepHandler.currentStepName,
+              guide_url: FormTitle[provider].doc,
+              provider,
+            });
+            // Will allow the anchor tag to redirect properly
+            return true;
+          }}
+          onClick={() => {
+            trackRedirectToGuide({
+              step: stepHandler.currentStepName,
+              guide_url: FormTitle[provider].doc,
+              provider,
+            });
+            // Will allow the anchor tag to redirect properly
+            return true;
+          }}
+        >
           <i className="material-icons-outlined">help</i>
           Guide
         </GuideButton>

@@ -67,7 +67,7 @@ func (a *Agent) ListReleases(
 			if versionExists && currVersionExists {
 				currVersion, currErr := strconv.Atoi(currVersionStr)
 				version, err := strconv.Atoi(versionStr)
-				if currErr != nil && err != nil && currVersion < version {
+				if currErr == nil && err == nil && currVersion < version {
 					latestMap[id] = secret
 				}
 			}

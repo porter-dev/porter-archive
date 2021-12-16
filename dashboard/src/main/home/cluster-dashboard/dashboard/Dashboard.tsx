@@ -12,13 +12,23 @@ import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
 import EventsTab from "./events/EventsTab";
+import EnvironmentList from "./preview-environments/EnvironmentList";
+import { useLocation } from "react-router";
+import { getQueryParam } from "shared/routing";
 
-type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "events";
+type TabEnum =
+  | "preview_environments"
+  | "nodes"
+  | "settings"
+  | "namespaces"
+  | "metrics"
+  | "events";
 
 const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
+  { label: "PR Preview", value: "preview_environments" },
   { label: "Nodes", value: "nodes" },
   { label: "Events", value: "events" },
   { label: "Metrics", value: "metrics" },
@@ -27,13 +37,16 @@ const tabOptions: {
 ];
 
 export const Dashboard: React.FunctionComponent = () => {
-  const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
+  const [currentTab, setCurrentTab] = useState<TabEnum>("preview_environments");
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
+  const location = useLocation();
 
   const context = useContext(Context);
   const renderTab = () => {
     switch (currentTab) {
+      case "preview_environments":
+        return <EnvironmentList />;
       case "events":
         return <EventsTab />;
       case "settings":
@@ -58,6 +71,13 @@ export const Dashboard: React.FunctionComponent = () => {
       })
     );
   }, [isAuthorized]);
+
+  useEffect(() => {
+    const selectedTab = getQueryParam({ location }, "selected_tab");
+    if (tabOptions.find((tab) => tab.value === selectedTab)) {
+      setCurrentTab(selectedTab as any);
+    }
+  }, [location]);
 
   return (
     <>
@@ -133,7 +153,7 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 20px;
+  margin-top: 36px;
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;

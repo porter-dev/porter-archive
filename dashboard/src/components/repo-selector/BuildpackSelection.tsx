@@ -297,6 +297,7 @@ export const BuildpackSelection: React.FC<{
         {!!availableBuildpacks?.length && (
           <>{renderBuildpacksList(availableBuildpacks, "add")}</>
         )}
+        <Helper>You may also add buildpacks by directly providing their GitHub links or links to ZIP files that contain the buildpack source code.</Helper>
         <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
       </>
     </BuildpackConfigurationContainer>
@@ -328,9 +329,9 @@ const AddCustomBuildpackForm: React.FC<{
       <ContentContainer>
         <EventInformation>
           <BuildpackInputContainer>
-            Custom buildpack URL:
+            GitHub or ZIP URL
             <BuildpackUrlInput
-              placeholder="https://my-custom-buildpack.com"
+              placeholder="https://github.com/custom/buildpack"
               type="input"
               value={buildpackUrl}
               isRequired

@@ -86,10 +86,11 @@ type CreateConfigMapRequest struct {
 }
 
 type EnvGroup struct {
-	Version   uint              `json:"version"`
-	Name      string            `json:"name"`
-	Namespace string            `json:"namespace"`
-	Variables map[string]string `json:"variables"`
+	Version      uint              `json:"version"`
+	Name         string            `json:"name"`
+	Namespace    string            `json:"namespace"`
+	Applications []string          `json:"applications"`
+	Variables    map[string]string `json:"variables"`
 }
 
 type EnvGroupMeta struct {
@@ -105,6 +106,11 @@ type GetEnvGroupRequest struct {
 
 type GetEnvGroupAllRequest struct {
 	Name string `schema:"name,required"`
+}
+
+type AddEnvGroupApplicationRequest struct {
+	Name            string `json:"name" form:"required"`
+	ApplicationName string `json:"app_name" form:"required"`
 }
 
 type ListEnvGroupsResponse []*EnvGroupMeta

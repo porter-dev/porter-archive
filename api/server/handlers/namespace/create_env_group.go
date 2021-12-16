@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -135,15 +136,15 @@ func toEnvGroup(configMap *v1.ConfigMap) (*types.EnvGroup, error) {
 	}
 
 	res.Version = uint(versionInt)
+
+	// get applications, if they exist
+	appStr, appAnnonExists := configMap.Annotations[kubernetes.PorterAppAnnotationName]
+
+	if appAnnonExists && appStr != "" {
+		res.Applications = strings.Split(appStr, ",")
+	} else {
+		res.Applications = []string{}
+	}
+
 	return res, nil
 }
-
-// func encodeSecrets(data map[string]string) map[string][]byte {
-// 	res := make(map[string][]byte)
-
-// 	for key, rawValue := range data {
-// 		res[key] = []byte(rawValue)
-// 	}
-
-// 	return res
-// }

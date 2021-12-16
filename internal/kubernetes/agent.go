@@ -127,6 +127,76 @@ func (a *Agent) CreateVersionedConfigMap(name, namespace string, version uint, c
 	)
 }
 
+const PorterAppAnnotationName = "porter.run/apps"
+
+func (a *Agent) AddApplicationToVersionedConfigMap(cm *v1.ConfigMap, appName string) (*v1.ConfigMap, error) {
+	annons := cm.Annotations
+
+	if annons == nil {
+		annons = make(map[string]string)
+	}
+
+	appAnnon, appAnnonExists := annons[PorterAppAnnotationName]
+
+	if !appAnnonExists || appAnnon == "" {
+		annons[PorterAppAnnotationName] = appName
+	} else {
+		appStrArr := strings.Split(appAnnon, ",")
+		foundApp := false
+
+		for _, appStr := range appStrArr {
+			if appStr == appName {
+				foundApp = true
+			}
+		}
+
+		if !foundApp {
+			annons[PorterAppAnnotationName] = fmt.Sprintf("%s,%s", appAnnon, appName)
+		}
+	}
+
+	cm.SetAnnotations(annons)
+
+	return a.Clientset.CoreV1().ConfigMaps(cm.Namespace).Update(
+		context.TODO(),
+		cm,
+		metav1.UpdateOptions{},
+	)
+}
+
+func (a *Agent) RemoveApplicationFromVersionedConfigMap(cm *v1.ConfigMap, appName string) (*v1.ConfigMap, error) {
+	annons := cm.Annotations
+
+	if annons == nil {
+		annons = make(map[string]string)
+	}
+
+	appAnn, appAnnExists := annons[PorterAppAnnotationName]
+
+	if !appAnnExists {
+		return nil, IsNotFoundError
+	}
+
+	appStrArr := strings.Split(appAnn, ",")
+	newStrArr := make([]string, 0)
+
+	for _, appStr := range appStrArr {
+		if appStr != appName {
+			newStrArr = append(newStrArr, appStr)
+		}
+	}
+
+	annons[PorterAppAnnotationName] = strings.Join(newStrArr, ",")
+
+	cm.SetAnnotations(annons)
+
+	return a.Clientset.CoreV1().ConfigMaps(cm.Namespace).Update(
+		context.TODO(),
+		cm,
+		metav1.UpdateOptions{},
+	)
+}
+
 func (a *Agent) CreateLinkedVersionedSecret(name, namespace, cmName string, version uint, data map[string][]byte) (*v1.Secret, error) {
 	return a.Clientset.CoreV1().Secrets(namespace).Create(
 		context.TODO(),
@@ -290,7 +360,6 @@ func (a *Agent) ListAllVersionedConfigMaps(namespace string) ([]v1.ConfigMap, er
 	latestMap := make(map[string]v1.ConfigMap)
 
 	for _, configmap := range listResp.Items {
-		fmt.Println("PROCESSING", configmap)
 		egName, egNameExists := configmap.Labels["envgroup"]
 
 		if !egNameExists {
@@ -304,16 +373,11 @@ func (a *Agent) ListAllVersionedConfigMaps(namespace string) ([]v1.ConfigMap, er
 			currVersionStr, currVersionExists := currLatest.Labels["version"]
 			versionStr, versionExists := configmap.Labels["version"]
 
-			fmt.Println("COMPARING", currVersionStr, versionStr)
-
 			if versionExists && currVersionExists {
 				currVersion, currErr := strconv.Atoi(currVersionStr)
 				version, err := strconv.Atoi(versionStr)
-				fmt.Println("RESOLVES TO", currErr != nil && err != nil && currVersion < version, currErr != nil, err != nil, currVersion < version)
 
 				if currErr == nil && err == nil && currVersion < version {
-					fmt.Println("SETTING TO", configmap)
-
 					latestMap[id] = configmap
 				}
 			}
@@ -409,7 +473,7 @@ func (a *Agent) GetLatestVersionedConfigMap(name, namespace string) (*v1.ConfigM
 			if versionExists && currVersionExists {
 				currVersion, currErr := strconv.Atoi(currVersionStr)
 				version, err := strconv.Atoi(versionStr)
-				if currErr != nil && err != nil && currVersion < version {
+				if currErr == nil && err == nil && currVersion < version {
 					latestV := configmap
 					res = &latestV
 					latestVersion = uint(version)

@@ -85,6 +85,25 @@ type CreateConfigMapRequest struct {
 	SecretVariables map[string]string `json:"secret_variables,required"`
 }
 
+type EnvGroup struct {
+	Version   uint              `json:"version"`
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
+	Variables map[string]string `json:"variables"`
+}
+
+type GetEnvGroupRequest struct {
+	Name    string `schema:"name,required"`
+	Version uint   `schema:"version"`
+}
+
+type ListEnvGroupsResponse []*EnvGroup
+type CreateEnvGroupRequest struct {
+	Name            string            `json:"name,required"`
+	Variables       map[string]string `json:"variables,required"`
+	SecretVariables map[string]string `json:"secret_variables,required"`
+}
+
 type CreateConfigMapResponse struct {
 	*v1.ConfigMap
 }

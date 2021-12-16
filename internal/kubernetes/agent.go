@@ -347,6 +347,26 @@ func (a *Agent) ListVersionedConfigMaps(name string, namespace string) ([]v1.Con
 	return listResp.Items, nil
 }
 
+func (a *Agent) DeleteVersionedConfigMap(name string, namespace string) error {
+	return a.Clientset.CoreV1().ConfigMaps(namespace).DeleteCollection(
+		context.Background(),
+		metav1.DeleteOptions{},
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("envgroup=%s", name),
+		},
+	)
+}
+
+func (a *Agent) DeleteVersionedSecret(name string, namespace string) error {
+	return a.Clientset.CoreV1().Secrets(namespace).DeleteCollection(
+		context.Background(),
+		metav1.DeleteOptions{},
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("envgroup=%s", name),
+		},
+	)
+}
+
 func (a *Agent) ListAllVersionedConfigMaps(namespace string) ([]v1.ConfigMap, error) {
 	listResp, err := a.Clientset.CoreV1().ConfigMaps(namespace).List(
 		context.Background(),

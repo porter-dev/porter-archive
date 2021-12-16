@@ -235,6 +235,36 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroup -> namespace.NewDeleteEnvGroupHandler
+	deleteEnvGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/envgroup",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	deleteEnvGroupHandler := namespace.NewDeleteEnvGroupHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: deleteEnvGroupEndpoint,
+		Handler:  deleteEnvGroupHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/configmap/list -> namespace.NewListConfigMapsHandler
 	listConfigMapsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -108,6 +108,10 @@ type GetEnvGroupAllRequest struct {
 	Name string `schema:"name,required"`
 }
 
+type DeleteEnvGroupRequest struct {
+	Name string `json:"name,required"`
+}
+
 type AddEnvGroupApplicationRequest struct {
 	Name            string `json:"name" form:"required"`
 	ApplicationName string `json:"app_name" form:"required"`

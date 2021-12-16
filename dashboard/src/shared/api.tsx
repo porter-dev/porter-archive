@@ -1,6 +1,6 @@
 import { baseApi } from "./baseApi";
 
-import { FullActionConfigType, StorageType } from "./types";
+import { BuildConfig, FullActionConfigType, StorageType } from "./types";
 
 /**
  * Generic api call format
@@ -1209,6 +1209,20 @@ const getCanCreateProject = baseApi<{}, {}>(
   () => "/api/can_create_project"
 );
 
+const updateBuildConfig = baseApi<
+  BuildConfig,
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1334,4 +1348,5 @@ export default {
   getLogBuckets,
   getLogBucketLogs,
   getCanCreateProject,
+  updateBuildConfig,
 };

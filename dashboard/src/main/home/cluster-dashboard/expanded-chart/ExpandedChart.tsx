@@ -394,7 +394,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
           );
         }
       case "buildpack":
-        return <BuildpackEditPage actionConfig={chart.git_action_config} />;
+        return (
+          <BuildpackEditPage
+            actionConfig={chart.git_action_config}
+            currentChart={chart}
+            refreshChart={() => getChartData(currentChart)}
+          />
+        );
       case "settings":
         return (
           <SettingsSection

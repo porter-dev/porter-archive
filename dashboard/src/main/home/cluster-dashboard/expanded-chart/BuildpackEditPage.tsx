@@ -1,24 +1,22 @@
-import styled, { keyframes } from "styled-components";
-
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import styled, { keyframes } from "styled-components";
+import _ from "lodash";
+import yaml from "js-yaml";
+
 import Loading from "components/Loading";
 import SelectRow from "components/form-components/SelectRow";
 import Helper from "components/form-components/Helper";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { FullActionConfigType } from "shared/types";
+import {
+  BuildConfig,
+  ChartTypeWithExtendedConfig,
+  FullActionConfigType,
+} from "shared/types";
+import SaveButton from "components/SaveButton";
 
-const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
-
-type BuildConfig = {
-  builder: string;
-  buildpacks: string[];
-  config: null | {
-    [key: string]: string;
-  };
-};
 
 type Buildpack = {
   name: string;
@@ -39,8 +37,12 @@ type DetectBuildpackResponse = DetectedBuildpack[];
 
 const BuildpackEditPage: React.FC<{
   actionConfig: FullActionConfigType;
-}> = ({ actionConfig }) => {
-  const { currentProject } = useContext(Context);
+  currentChart: ChartTypeWithExtendedConfig;
+  refreshChart: () => void;
+}> = ({ actionConfig, currentChart }) => {
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
   const [selectedBuilder, setSelectedBuilder] = useState<string>(null);
@@ -53,19 +55,15 @@ const BuildpackEditPage: React.FC<{
     []
   );
 
-  // useEffect(() => {
-  //   let buildConfig: BuildConfig = {} as BuildConfig;
-
-  //   buildConfig.builder = selectedStack;
-  //   buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
-  //     return buildpack.buildpack;
-  //   });
-  //   if (typeof onChange === "function") {
-  //     onChange(buildConfig);
-  //   }
-  // }, [selectedBuilder, selectedStack, selectedBuildpacks]);
+  const [buttonStatus, setButtonStatus] = useState<string>("");
 
   useEffect(() => {
+    const currentBuildConfig = currentChart?.build_config;
+
+    if (!currentBuildConfig) {
+      return;
+    }
+
     api
       .detectBuildpack<DetectBuildpackResponse>(
         "<token>",
@@ -84,16 +82,36 @@ const BuildpackEditPage: React.FC<{
       .then(({ data }) => {
         const builders = data;
 
-        const defaultBuilder = builders.find(
-          (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
+        const defaultBuilder = builders.find((builder) =>
+          builder.builders.find((stack) => stack === currentBuildConfig.builder)
         );
 
-        const detectedBuildpacks = defaultBuilder.detected;
-        const availableBuildpacks = defaultBuilder.others;
+        const availableBuildpacks = defaultBuilder.others?.filter(
+          (buildpack) => {
+            if (!currentBuildConfig.buildpacks.includes(buildpack.buildpack)) {
+              return true;
+            }
+            return false;
+          }
+        );
+
+        const userAddedBuildpacks = defaultBuilder.others?.filter(
+          (buildpack) => {
+            if (currentBuildConfig.buildpacks.includes(buildpack.buildpack)) {
+              return true;
+            }
+            return false;
+          }
+        );
+
+        const detectedBuildpacks = _.unionBy(
+          userAddedBuildpacks,
+          defaultBuilder.detected,
+          "buildpack"
+        );
+
         const defaultStack = defaultBuilder.builders.find((stack) => {
-          return (
-            stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
-          );
+          return stack === currentBuildConfig.builder;
         });
 
         setBuilders(builders);
@@ -115,7 +133,37 @@ const BuildpackEditPage: React.FC<{
       .catch((err) => {
         console.error(err);
       });
-  }, [currentProject, actionConfig]);
+  }, [currentProject, actionConfig, currentChart]);
+
+  const handleSubmit = async () => {
+    setButtonStatus("loading");
+
+    let buildConfig: BuildConfig = {} as BuildConfig;
+
+    buildConfig.builder = selectedStack;
+    buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
+      return buildpack.buildpack;
+    });
+
+    try {
+      await api.updateBuildConfig("<token>", buildConfig, {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+        namespace: currentChart.namespace,
+        release_name: currentChart.name,
+      });
+      setButtonStatus("successful");
+    } catch (err) {
+      let parsedErr = err?.response?.data?.error;
+
+      if (parsedErr) {
+        err = parsedErr;
+      }
+
+      setButtonStatus(parsedErr);
+      setCurrentError(parsedErr);
+    }
+  };
 
   const builderOptions = useMemo(() => {
     if (!Array.isArray(builders)) {
@@ -256,6 +304,7 @@ const BuildpackEditPage: React.FC<{
               options={builderOptions}
               setActiveValue={(option) => handleSelectBuilder(option)}
               label="Select a builder"
+              disableTooltip
             />
 
             <SelectRow
@@ -264,6 +313,7 @@ const BuildpackEditPage: React.FC<{
               options={stackOptions}
               setActiveValue={(option) => setSelectedStack(option)}
               label="Select your stack"
+              disableTooltip
             />
             <Helper>
               The following buildpacks were automatically detected. You can also
@@ -282,6 +332,17 @@ const BuildpackEditPage: React.FC<{
           </>
         </BuildpackConfigurationContainer>
       </StyledSettingsSection>
+      <SaveButtonWrapper>
+        <SaveButton
+          onClick={() => {
+            handleSubmit();
+          }}
+          status={buttonStatus}
+          text="Save build config"
+          makeFlush
+          clearPosition
+        />
+      </SaveButtonWrapper>
     </Wrapper>
   );
 };
@@ -295,6 +356,13 @@ const fadeIn = keyframes`
   to {
     opacity: 1;
   }
+`;
+
+const SaveButtonWrapper = styled.div`
+  width: 100%;
+  margin-top: 30px;
+  display: flex;
+  justify-content: flex-end;
 `;
 
 const BuildpackConfigurationContainer = styled.div`
@@ -543,5 +611,30 @@ const DeleteButton = styled.button`
 
   > span {
     font-size: 20px;
+  }
+`;
+
+const SubmitButton = styled.button`
+  height: 35px;
+  font-size: 13px;
+  margin-top: 20px;
+  margin-bottom: 30px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  color: white;
+  padding: 6px 20px 7px 20px;
+  text-align: left;
+  border: 0;
+  border-radius: 5px;
+  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
+  box-shadow: ${(props) =>
+    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
+  user-select: none;
+  :focus {
+    outline: 0;
+  }
+  :hover {
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
 `;

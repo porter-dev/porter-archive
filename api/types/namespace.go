@@ -97,6 +97,10 @@ type GetEnvGroupRequest struct {
 	Version uint   `schema:"version"`
 }
 
+type GetEnvGroupAllRequest struct {
+	Name string `schema:"name,required"`
+}
+
 type ListEnvGroupsResponse []*EnvGroup
 type CreateEnvGroupRequest struct {
 	Name            string            `json:"name,required"`

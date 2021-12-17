@@ -46,6 +46,9 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		buildOpts.Builder = buildConfig.Builder
 		for i := range buildConfig.Buildpacks {
 			bp := buildConfig.Buildpacks[i]
+			if bp == "" {
+				continue
+			}
 			u, err := url.Parse(bp)
 			if err == nil && u.Scheme != "" {
 				// could be a git repository containing the buildpack

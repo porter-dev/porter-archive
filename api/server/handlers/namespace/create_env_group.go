@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"sigs.k8s.io/yaml"
+
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
 
@@ -451,7 +453,25 @@ func getNewConfig(curr map[string]interface{}, syncedEnvSection *SyncedEnvSectio
 		envConf["synced"] = resArr
 	}
 
-	return curr, nil
+	// to remove all types that Helm may not be able to work with, we marshal to and from
+	// yaml for good measure. Otherwise we get silly error messages like:
+	// Upgrade failed: template: web/templates/deployment.yaml:138:40: executing \"web/templates/deployment.yaml\"
+	// at <$syncedEnv.keys>: can't evaluate field keys in type namespace.SyncedEnvSection
+	currYAML, err := yaml.Marshal(curr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]interface{})
+
+	err = yaml.Unmarshal([]byte(currYAML), &res)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {

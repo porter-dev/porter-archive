@@ -513,6 +513,68 @@ func (a *Agent) GetLatestVersionedConfigMap(name, namespace string) (*v1.ConfigM
 	return res, latestVersion, nil
 }
 
+func (a *Agent) GetLatestVersionedSecret(name, namespace string) (*v1.Secret, uint, error) {
+	listResp, err := a.Clientset.CoreV1().Secrets(namespace).List(
+		context.Background(),
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("envgroup=%s", name),
+		},
+	)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if listResp.Items == nil || len(listResp.Items) == 0 {
+		return nil, 0, IsNotFoundError
+	}
+
+	// iterate through the configmaps and get the greatest version
+	var res *v1.Secret
+	var latestVersion uint
+
+	for _, secret := range listResp.Items {
+		if res == nil {
+			versionStr, versionExists := secret.Labels["version"]
+
+			if !versionExists {
+				continue
+			}
+
+			version, err := strconv.Atoi(versionStr)
+
+			if err != nil {
+				continue
+			}
+
+			latestV := secret
+			res = &latestV
+			latestVersion = uint(version)
+		} else {
+			// get version
+			versionStr, versionExists := secret.Labels["version"]
+			currVersionStr, currVersionExists := res.Labels["version"]
+
+			if versionExists && currVersionExists {
+				currVersion, currErr := strconv.Atoi(currVersionStr)
+				version, err := strconv.Atoi(versionStr)
+				if currErr == nil && err == nil && currVersion < version {
+					latestV := secret
+					res = &latestV
+					latestVersion = uint(version)
+				}
+			}
+		}
+
+	}
+
+	if res == nil {
+		return nil, 0, IsNotFoundError
+	}
+
+	return res, latestVersion, nil
+}
+
 // GetSecret retrieves the secret given its name and namespace
 func (a *Agent) GetSecret(name string, namespace string) (*v1.Secret, error) {
 	return a.Clientset.CoreV1().Secrets(namespace).Get(

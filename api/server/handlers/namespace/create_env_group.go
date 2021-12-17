@@ -127,8 +127,24 @@ func createEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.Co
 		}
 	}
 
-	// TODO: get all secret env variables that might reference the previous secret env, and
-	// upgrade them
+	oldSecret, _, err := agent.GetLatestVersionedSecret(input.Name, input.Namespace)
+
+	if err != nil && !errors.Is(err, kubernetes.IsNotFoundError) {
+		return nil, err
+	} else if err == nil && oldSecret != nil {
+		// In this case, we find all old variables referencing a secret value, and add those
+		// values to the new secret variables. The frontend will only send **new** secret values.
+		for key1, val1 := range input.Variables {
+			if strings.Contains(val1, "PORTERSECRET") {
+				// get that value from the secret
+				for key2, val2 := range oldSecret.Data {
+					if key2 == key1 {
+						input.SecretVariables[key1] = string(val2)
+					}
+				}
+			}
+		}
+	}
 
 	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
 	for key := range input.SecretVariables {

@@ -118,15 +118,21 @@ func createEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.Co
 	}
 
 	apps := make([]string, 0)
-	oldEG, err := toEnvGroup(oldCM)
 
-	if err == nil {
-		apps = oldEG.Applications
+	if oldCM != nil {
+		oldEG, err := toEnvGroup(oldCM)
+
+		if err == nil {
+			apps = oldEG.Applications
+		}
 	}
+
+	// TODO: get all secret env variables that might reference the previous secret env, and
+	// upgrade them
 
 	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
 	for key := range input.SecretVariables {
-		input.Variables[key] = fmt.Sprintf("PORTERSECRET_%s", input.Name)
+		input.Variables[key] = fmt.Sprintf("PORTERSECRET_%s.v%d", input.Name, latestVersion)
 	}
 
 	cm, err := agent.CreateVersionedConfigMap(input.Name, input.Namespace, latestVersion, input.Variables, apps...)
@@ -147,7 +153,7 @@ func createEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.Co
 
 func toEnvGroup(configMap *v1.ConfigMap) (*types.EnvGroup, error) {
 	res := &types.EnvGroup{
-		Namespace: configMap.ObjectMeta.Namespace,
+		Namespace: configMap.Namespace,
 		Variables: configMap.Data,
 	}
 

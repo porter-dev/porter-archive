@@ -304,6 +304,11 @@ func rolloutApplications(
 				return
 			}
 
+			// if this is a job chart, update the config and set correct paused param to true
+			if release.Chart.Name() == "job" {
+				newConfig["paused"] = true
+			}
+
 			conf := &helm.UpgradeReleaseConfig{
 				Name:       releases[index].Name,
 				Cluster:    cluster,

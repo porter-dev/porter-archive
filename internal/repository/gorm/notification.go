@@ -62,14 +62,14 @@ func (repo JobNotificationConfigRepository) CreateNotificationConfig(am *models.
 		return nil, err
 	}
 
-	// if the count is greater than 500, remove the lowest-order events to implement a
+	// if the count is greater than 1000, remove the lowest-order events to implement a
 	// basic fixed-length buffer
-	if count >= 500 {
+	if count >= 1000 {
 		err := repo.db.Debug().Exec(`
 			  DELETE FROM job_notification_configs 
 			  WHERE project_id = ? AND cluster_id = ? AND 
 			  id NOT IN (
-				SELECT id FROM job_notification_configs j2 WHERE j2.project_id = ? AND j2.cluster_id = ? ORDER BY j2.updated_at desc, j2.id desc LIMIT 499
+				SELECT id FROM job_notification_configs j2 WHERE j2.project_id = ? AND j2.cluster_id = ? ORDER BY j2.updated_at desc, j2.id desc LIMIT 999
 			  )
 			`, am.ProjectID, am.ClusterID, am.ProjectID, am.ClusterID).Error
 

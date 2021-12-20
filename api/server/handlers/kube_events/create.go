@@ -138,7 +138,7 @@ func notifyPodCrashing(
 			Namespace:   event.Namespace,
 			Info:        fmt.Sprintf("%s", jobMsg),
 			URL: fmt.Sprintf(
-				"%s/jobs/%s/%s/%s&project_id=%d",
+				"%s/jobs/%s/%s/%s?project_id=%d",
 				config.ServerConf.ServerURL,
 				cluster.Name,
 				event.Namespace,

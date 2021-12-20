@@ -43,5 +43,5 @@ type CreateDOKSInfraRequest struct {
 }
 
 type DeleteInfraRequest struct {
-	Name string `json:"name" form:"required"`
+	Name string `json:"name"`
 }

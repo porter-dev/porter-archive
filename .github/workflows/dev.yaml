@@ -42,7 +42,8 @@ jobs:
           EOL
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t gcr.io/porter-dev-273614/porter:dev -f ./ee/docker/ee.Dockerfile.dev
+          docker pull gcr.io/porter-dev-273614/porter:dev
+          DOCKER_BUILDKIT=1 DOCKER_INLINE_CACHE=1 docker build . -t gcr.io/porter-dev-273614/porter:dev -f ./ee/docker/ee.Dockerfile.dev
       - name: Push
         run: |
           docker push gcr.io/porter-dev-273614/porter:dev

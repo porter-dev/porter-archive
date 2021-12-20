@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/rds"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gcr"
@@ -49,6 +50,9 @@ type ProvisionOpts struct {
 	GKE  *gke.Conf
 	DOCR *docr.Conf
 	DOKS *doks.Conf
+
+	// DB instance specific opts
+	RDS *rds.Conf
 }
 
 func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
@@ -84,6 +88,8 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 		env = opts.DOCR.AttachDOCREnv(env)
 	case types.InfraDOKS:
 		env = opts.DOKS.AttachDOKSEnv(env)
+	case types.InfraRDS:
+		env = opts.RDS.AttachRDSEnv(env)
 	}
 
 	job := &batchv1.Job{

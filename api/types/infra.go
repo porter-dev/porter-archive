@@ -26,6 +26,8 @@ const (
 	InfraGKE  InfraKind = "gke"
 	InfraDOCR InfraKind = "docr"
 	InfraDOKS InfraKind = "doks"
+
+	InfraRDS InfraKind = "rds"
 )
 
 type Infra struct {

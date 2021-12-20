@@ -9,3 +9,9 @@ type NotificationConfigRepository interface {
 	ReadNotificationConfig(id uint) (*models.NotificationConfig, error)
 	UpdateNotificationConfig(am *models.NotificationConfig) (*models.NotificationConfig, error)
 }
+
+type JobNotificationConfigRepository interface {
+	CreateNotificationConfig(am *models.JobNotificationConfig) (*models.JobNotificationConfig, error)
+	ReadNotificationConfig(projID, clusterID uint, name, namespace string) (*models.JobNotificationConfig, error)
+	UpdateNotificationConfig(am *models.JobNotificationConfig) (*models.JobNotificationConfig, error)
+}

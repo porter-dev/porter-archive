@@ -40,47 +40,6 @@ func (c *InfraRetryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ======================== cloud specific code starts from here ==========================
-
-	// gcpInt, err := c.Repo().GCPIntegration().ReadGCPIntegration(infra.ProjectID, infra.GCPIntegrationID)
-	// if err != nil {
-	// 	if err == gorm.ErrRecordNotFound {
-	// 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
-	// 	} else {
-	// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 	}
-
-	// 	return
-	// }
-
-	// opts, err := provision.GetSharedProvisionerOpts(c.Config(), infraModel)
-	// if err != nil {
-	// 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 	return
-	// }
-
-	// vaultToken := ""
-
-	// if c.Config().CredentialBackend != nil {
-	// 	vaultToken, err = c.Config().CredentialBackend.CreateGCPToken(gcpInt)
-
-	// 	if err != nil {
-	// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 		return
-	// 	}
-	// }
-
-	// clusterName := infra.LastApplied["gke_name"]
-
-	// opts.CredentialExchange.VaultToken = vaultToken
-	// opts.GKE = &gke.Conf{
-	// 	GCPProjectID: gcpInt.GCPProjectID,
-	// 	GCPRegion:    gcpInt.GCPRegion,
-	// 	ClusterName:  clusterName,
-	// }
-
-	// **************************** cloud specific code ends here ******************************
-
 	opts, err := c.getProvisioningOpts(infraModel)
 	if err != nil {
 		fmt.Println("error getting provisioning options. error:", err.Error())

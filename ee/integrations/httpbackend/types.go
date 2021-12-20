@@ -67,10 +67,23 @@ type DiagnosticDetail struct {
 }
 
 type TFState struct {
-	Version          int         `json:"version"`
-	TerraformVersion string      `json:"terraform_version"`
-	Serial           int         `json:"serial"`
-	Lineage          string      `json:"lineage"`
-	Outputs          interface{} `json:"outputs"`
-	Resources        interface{} `json:"resources"`
+	Version          int               `json:"version"`
+	TerraformVersion string            `json:"terraform_version"`
+	Serial           int               `json:"serial"`
+	Lineage          string            `json:"lineage"`
+	Outputs          interface{}       `json:"outputs"`
+	Resources        []TFStateResource `json:"resources"`
+}
+
+type TFStateResource struct {
+	Instances []Instance `json:"instances"`
+	Mode      string     `json:"mode"`
+	Name      string     `json:"name"`
+	Provider  string     `json:"provider"`
+	Type      string     `json:"type"`
+}
+
+type Instance struct {
+	Attributes   map[string]interface{} `json:"attributes"`
+	Dependencies []string               `json:"dependencies"`
 }

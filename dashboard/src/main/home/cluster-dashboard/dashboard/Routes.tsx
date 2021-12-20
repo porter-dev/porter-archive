@@ -12,7 +12,7 @@ export const Routes = () => {
         <Route path={`${url}/node-view/:nodeId`}>
           <ExpandedNodeView />
         </Route>
-        <Route path={`${url}/pr-env-detail/:repoId`}>
+        <Route path={`${url}/pr-env-detail/:namespace`}>
           <EnvironmentDetail />
         </Route>
         <Route path={`${url}/`}>

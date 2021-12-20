@@ -154,7 +154,7 @@ class ContextProvider extends Component<PropsType, StateType> {
         this.setState({ edition });
       }
     },
-    hasBillingEnabled: null,
+    hasBillingEnabled: false,
     setHasBillingEnabled: (isBillingEnabled: boolean) => {
       this.setState({ hasBillingEnabled: isBillingEnabled });
     },

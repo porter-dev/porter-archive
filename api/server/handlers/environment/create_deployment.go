@@ -66,13 +66,21 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	ghMetadata := types.GitHubMetadata{
+		DeploymentID: ghDeployment.GetID(),
+		RepoOwner: request.GitHubMetadata.RepoOwner,
+		RepoName: request.GitHubMetadata.RepoName,
+		PRName: request.GitHubMetadata.PRName,
+		CommitSHA: request.GitHubMetadata.CommitSHA,
+	}
+
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 		EnvironmentID:      env.ID,
 		Namespace:          request.Namespace,
 		Status:             "creating",
 		PullRequestID:      request.PullRequestID,
-		GitHubDeploymentID: ghDeployment.GetID(),
+		GitHubMetadata:		ghMetadata,
 	})
 
 	if err != nil {

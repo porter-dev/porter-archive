@@ -37,10 +37,19 @@ type Deployment struct {
 	Status             string
 	Subdomain          string
 	PullRequestID      uint
-	GitHubDeploymentID int64
+	GitHubMetadata	   types.GitHubMetadata
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
+
+	ghMetadata := &types.GitHubMetadata{
+		DeploymentID: d.GitHubMetadata.DeploymentID,
+		PRName:		  d.GitHubMetadata.PRName,
+		RepoName:	 d.GitHubMetadata.RepoName,
+		RepoOwner:	 d.GitHubMetadata.RepoOwner,
+		CommitSHA:	 d.GitHubMetadata.CommitSHA,
+	}
+
 	return &types.Deployment{
 		ID:                 d.Model.ID,
 		EnvironmentID:      d.EnvironmentID,
@@ -48,6 +57,6 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		Status:             d.Status,
 		Subdomain:          d.Subdomain,
 		PullRequestID:      d.PullRequestID,
-		GitHubDeploymentID: d.GitHubDeploymentID,
+		GitHubMetadata: 	ghMetadata,
 	}
 }

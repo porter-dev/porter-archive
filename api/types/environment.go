@@ -17,6 +17,14 @@ type CreateEnvironmentRequest struct {
 	GitRepoName  string `json:"git_repo_name" form:"required"`
 }
 
+type GitHubMetadata struct {
+	DeploymentID int64		`json:"gh_deployment_id"`
+	PRName		 string		`json:"gh_pr_name"`
+	RepoName	 string		`json:"gh_repo_name"`
+	RepoOwner	 string		`json:"gh_repo_owner"`
+	CommitSHA	 string		`json:"gh_commit_sha"`
+}
+
 type Deployment struct {
 	ID                 uint   `json:"id"`
 	EnvironmentID      uint   `json:"environment_id"`
@@ -24,7 +32,7 @@ type Deployment struct {
 	Status             string `json:"status"`
 	Subdomain          string `json:"subdomain"`
 	PullRequestID      uint   `json:"pull_request_id"`
-	GitHubDeploymentID int64  `json:"github_deployment_id"`
+	GitHubMetadata *GitHubMetadata  `json:"github_metadata"`
 }
 
 type CreateGHDeploymentRequest struct {
@@ -34,6 +42,7 @@ type CreateGHDeploymentRequest struct {
 
 type CreateDeploymentRequest struct {
 	*CreateGHDeploymentRequest
+	*GitHubMetadata
 
 	Namespace     string `json:"namespace" form:"required"`
 	PullRequestID uint   `json:"pull_request_id" form:"required"`
@@ -47,6 +56,7 @@ type FinalizeDeploymentRequest struct {
 type UpdateDeploymentRequest struct {
 	*CreateGHDeploymentRequest
 
+	CommitSHA string `json:"commit_sha" form:"required"`	
 	Namespace string `json:"namespace" form:"required"`
 }
 

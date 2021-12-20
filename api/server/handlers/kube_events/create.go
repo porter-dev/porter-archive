@@ -122,12 +122,44 @@ func notifyPodCrashing(
 
 	if isJob := strings.ToLower(event.OwnerType) == "job"; isJob {
 		// check that the job alert is valid and get proper message
-		jobOwner, jobMsg, shouldAlert, err := getJobAlert(agent, event.Name, event.Namespace)
+		jobOwner, jobMsg, jobName, shouldAlert, err := getJobAlert(agent, event.Name, event.Namespace)
 
 		if err != nil {
 			return err
 		} else if !shouldAlert {
 			return nil
+		}
+
+		// look for a matching job notification config
+		jobNC, err := config.Repo.JobNotificationConfig().ReadNotificationConfig(project.ID, cluster.ID, jobName, event.Namespace)
+
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			// if the job notification config does not exist, create it
+			jobNC = &models.JobNotificationConfig{
+				Name:             jobName,
+				Namespace:        event.Namespace,
+				ProjectID:        project.ID,
+				ClusterID:        cluster.ID,
+				LastNotifiedTime: time.Now(),
+			}
+
+			jobNC, err = config.Repo.JobNotificationConfig().CreateNotificationConfig(jobNC)
+
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
+			return err
+		} else if err == nil && jobNC != nil {
+			// If the job notification config does exist, check if the job notification config states that
+			// a notification should happen. If so, notify.
+			if !jobNC.ShouldNotify() {
+				return nil
+			}
 		}
 
 		notifyOpts = &slack.NotifyOpts{
@@ -255,6 +287,7 @@ func getMatchedPorterRelease(config *config.Config, clusterID uint, ownerName, n
 func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 	ownerName string,
 	msg string,
+	jobName string,
 	shouldAlert bool,
 	err error,
 ) {
@@ -264,9 +297,9 @@ func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 
 	// if the pod is not found, we should not alert for this pod
 	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
-		return "", "", false, nil
+		return "", "", "", false, nil
 	} else if err != nil {
-		return "", "", false, err
+		return "", "", "", false, err
 	}
 
 	ownerJobName := ""
@@ -281,7 +314,7 @@ func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 	}
 
 	if ownerJobName == "" {
-		return "", "", false, nil
+		return "", "", "", false, nil
 	}
 
 	// lookup the job in the cluster
@@ -292,7 +325,7 @@ func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 	})
 
 	if err != nil {
-		return "", "", false, nil
+		return "", "", "", false, nil
 	}
 
 	if jobReleaseLabel, exists := job.ObjectMeta.Labels["meta.helm.sh/release-name"]; exists {
@@ -301,7 +334,7 @@ func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 
 	// if we don't have an owner name, don't alert -- the link will be broken
 	if ownerName == "" {
-		return "", "", false, nil
+		return "", "", "", false, nil
 	}
 
 	// only alert for jobs that are newer than 24 hours
@@ -317,11 +350,11 @@ func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 						msg += fmt.Sprintf(" Error: %s", state.Terminated.Message)
 					}
 
-					return ownerName, msg, true, nil
+					return ownerName, msg, ownerJobName, true, nil
 				}
 			}
 		}
 	}
 
-	return "", "", false, nil
+	return "", "", "", false, nil
 }

@@ -45,3 +45,15 @@ type CreateDOKSInfraRequest struct {
 type DeleteInfraRequest struct {
 	Name string `json:"name" form:"required"`
 }
+
+type CreateRDSInfraRequest struct {
+	ProjectID    uint   `json:"project_id"`
+	ClusterID    uint   `json:"cluster_id"`
+	DBName       string `json:"db_name"`
+	PGVersion    string `json:"pg_version"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	InstanceType string `json:"instance_type"`
+	StorageClass string `json:"storage_class"`
+	Size         string `json:"size"`
+}

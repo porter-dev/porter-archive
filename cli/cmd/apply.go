@@ -613,7 +613,7 @@ type DeploymentHook struct {
 	client                                                  *api.Client
 	resourceGroup                                           *switchboardTypes.ResourceGroup
 	gitInstallationID, projectID, clusterID, prID, actionID uint
-	branch, namespace                                       string
+	branch, namespace, repoName, repoOwner, prName, commitSHA             string
 }
 
 func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
@@ -677,6 +677,32 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 		return nil, fmt.Errorf("Action Run ID must be defined, set by PORTER_ACTION_ID")
 	}
 
+	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
+		res.repoName = repoName
+	} else if repoName == "" {
+		return nil, fmt.Errorf("Repo name must be defined, set by PORTER_REPO_NAME")
+	}
+
+	if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
+		res.repoOwner = repoOwner
+	} else if repoOwner == "" {
+		return nil, fmt.Errorf("Repo owner must be defined, set by PORTER_REPO_OWNER")
+	}
+
+	if prName := os.Getenv("PORTER_PR_NAME"); prName != "" {
+		res.prName = prName
+	} else if prName == "" {
+		return nil, fmt.Errorf("PR Name must be supplied, set by PORTER_PR_NAME")
+	}
+
+	commit, err := git.LastCommit()
+
+	if err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+
+	res.commitSHA = commit.Sha[:7]
+
 	return res, nil
 }
 
@@ -703,6 +729,12 @@ func (t *DeploymentHook) PreApply() error {
 					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
+				GitHubMetadata: &types.GitHubMetadata{
+					PRName:		t.prName,
+					RepoName: t.repoName,
+					RepoOwner: t.repoOwner,
+					CommitSHA: t.commitSHA,
+				},
 			},
 		)
 	} else if err == nil {
@@ -715,6 +747,7 @@ func (t *DeploymentHook) PreApply() error {
 					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
+				CommitSHA: t.commitSHA,
 			},
 		)
 	}

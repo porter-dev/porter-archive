@@ -15,6 +15,7 @@ import { isAlphanumeric } from "shared/common";
 import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
+import { trackCreateNewProject } from "shared/anayltics";
 
 type ValidationError = {
   hasError: boolean;
@@ -94,6 +95,7 @@ export const NewProjectFC = () => {
       setProjects(projectList);
       setCurrentProject(project);
       setButtonStatus("successful");
+      trackCreateNewProject();
       pushFiltered("/onboarding", []);
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");

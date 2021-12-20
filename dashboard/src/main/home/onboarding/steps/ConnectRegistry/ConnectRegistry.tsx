@@ -15,8 +15,8 @@ import { OFState } from "../../state";
 import { useSnapshot } from "valtio";
 import api from "shared/api";
 import Loading from "components/Loading";
-import { integrationList } from "shared/common";
 import Registry from "./components/Registry";
+import { connectRegistryTracks } from "shared/anayltics";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);
@@ -78,11 +78,15 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
   };
 
   const handleSkip = () => {
+    connectRegistryTracks.trackSkipRegistryConnection();
     OFState.actions.nextStep("skip");
   };
 
   const handleSelectProvider = (provider: string) => {
-    provider !== "skip" && OFState.actions.nextStep("continue", provider);
+    if (provider !== "skip") {
+      connectRegistryTracks.trackConnectRegistryIntent({ provider });
+      OFState.actions.nextStep("continue", provider);
+    }
   };
 
   const handleContinueWithCurrent = () => {

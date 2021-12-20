@@ -140,7 +140,7 @@ func notifyPodCrashing(
 			URL: fmt.Sprintf(
 				"%s/jobs/%s/%s/%s&project_id=%d",
 				config.ServerConf.ServerURL,
-				url.PathEscape(cluster.Name),
+				cluster.Name,
 				event.Namespace,
 				jobOwner,
 				cluster.ProjectID,
@@ -314,7 +314,7 @@ func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 					msg := fmt.Sprintf("Job terminated with non-zero exit code: exit code %d.", state.Terminated.ExitCode)
 
 					if state.Terminated.Message != "" {
-						msg += fmt.Sprintf("Error: %s", state.Terminated.Message)
+						msg += fmt.Sprintf(" Error: %s", state.Terminated.Message)
 					}
 
 					return ownerName, msg, true, nil

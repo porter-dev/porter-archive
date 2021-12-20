@@ -28,7 +28,7 @@ const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
-  { label: "PR Preview", value: "preview_environments" },
+  { label: "Preview Environments", value: "preview_environments" },
   { label: "Nodes", value: "nodes" },
   { label: "Events", value: "events" },
   { label: "Metrics", value: "metrics" },

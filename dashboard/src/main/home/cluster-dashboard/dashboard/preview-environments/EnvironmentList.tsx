@@ -1,5 +1,7 @@
 import DynamicLink from "components/DynamicLink";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { Context } from "shared/Context";
+import api from "shared/api";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { getQueryParam } from "shared/routing";
 import styled from "styled-components";
@@ -18,48 +20,14 @@ export type Environment = {
   actions_link: string;
 };
 
-const mockData: Environment[] = [
-  {
-    id: 1,
-    url: "http://some-url",
-    pr_link: "https://githubsuper",
-    status: "deployed",
-    namespace: "stuff",
-    actions_link: "https://githubsuperactions.com",
-  },
-  {
-    id: 2,
-    url: "http://some-url",
-    pr_link: "https://githubsuper",
-    status: "deployed",
-    namespace: "stuff",
-    actions_link: "https://githubsuperactions.com",
-  },
-  {
-    id: 3,
-    url: "http://some-url",
-    pr_link: "https://githubsuper",
-    status: "deployed",
-    namespace: "stuff",
-    actions_link: "https://githubsuperactions.com",
-  },
-  {
-    id: 4,
-    url: "http://some-url",
-    pr_link: "https://githubsuper",
-    status: "deployed",
-    namespace: "stuff",
-    actions_link: "https://githubsuperactions.com",
-  },
-];
-
-const getMockData = () =>
-  new Promise<{ data: Environment[] }>((resolve) => {
-    setTimeout(() => {
-      resolve({ data: mockData });
-      // resolve({ data: [] });
-    }, 2000);
-  });
+export type PRDeployment = {
+  id: number,
+  subdomain: string,
+  status: string,
+  environment_id: number,
+  pull_request_id: number,
+  namespace: string,
+}
 
 export const capitalize = (s: string) => {
   return s.charAt(0).toUpperCase() + s.substring(1).toLowerCase();
@@ -68,8 +36,12 @@ export const capitalize = (s: string) => {
 const EnvironmentList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [environmentList, setEnvironmentList] = useState<Environment[]>([]);
+  const [environmentList, setEnvironmentList] = useState<PRDeployment[]>([]);
   const [showConnectRepoFlow, setShowConnectRepoFlow] = useState(false);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
+
 
   const { url: currentUrl } = useRouteMatch();
 
@@ -78,10 +50,16 @@ const EnvironmentList = () => {
 
   useEffect(() => {
     let isSubscribed = true;
-
     // TODO: Replace get mock data by endpoint
-    getMockData()
-      .then(({ data }) => {
+    api
+    .getPRDeploymentList(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    ).then(({ data }) => {
         if (!isSubscribed) {
           return;
         }
@@ -89,6 +67,8 @@ const EnvironmentList = () => {
         if (!Array.isArray(data)) {
           throw Error("Data is not an array");
         }
+
+        console.log('retrieved', data)
 
         setEnvironmentList(data);
       })
@@ -105,14 +85,13 @@ const EnvironmentList = () => {
         }
       });
 
-    return () => {
-      isSubscribed = false;
-    };
+      return () => {
+        isSubscribed = false;
+      };
   }, []);
 
   useEffect(() => {
     const action = getQueryParam({ location }, "action");
-    console.log("HERE", action, location);
     if (action === "connect-repo") {
       setShowConnectRepoFlow(true);
     } else {
@@ -167,11 +146,11 @@ const EnvironmentList = () => {
       <EventsGrid>
         {environmentList.map((env) => {
           return (
-            <EnvironmentCard>
+            <EnvironmentCard key={env.id}>
               <DataContainer>
                 <PRName>
                   <PRIcon src={pr_icon} alt="pull request icon" />
-                  {env.url}
+                  {env.subdomain}
                 </PRName>
                 <StatusContainer>
                   <Status>
@@ -182,13 +161,17 @@ const EnvironmentList = () => {
               </DataContainer>
               <Flex>
                 <RowButton
-                  to={`${currentUrl}/pr-env-detail/${env.id}`}
-                  key={env.pr_link}
+                  to={`${currentUrl}/pr-env-detail/${env.namespace}`}
+                  key={env.id}
                 >
                   <i className="material-icons-outlined">info</i>
                   Details
                 </RowButton>
-                <RowButton to={env.pr_link} target="_blank">
+                <RowButton 
+                  to={env.subdomain} 
+                  key={env.subdomain}
+                  target="_blank"
+                >
                   <i className="material-icons">open_in_new</i>
                   View Live
                 </RowButton>
@@ -359,7 +342,7 @@ const RowButton = styled(DynamicLink)`
   display: flex;
   align-items: center;
   background: #ffffff08;
-
+  cursor: pointer;
   :hover {
     background: #ffffff22;
   }
@@ -383,7 +366,7 @@ const StatusDot = styled.div`
   height: 8px;
   margin-right: 15px;
   background: ${(props: { status: string }) =>
-    props.status === "deployed"
+    props.status === "created"
       ? "#4797ff"
       : props.status === "failed"
       ? "#ed5f85"

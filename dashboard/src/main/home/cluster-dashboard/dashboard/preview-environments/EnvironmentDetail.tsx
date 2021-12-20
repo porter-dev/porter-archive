@@ -5,7 +5,7 @@ import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { capitalize, Environment } from "./EnvironmentList";
+import { capitalize, PRDeployment } from "./EnvironmentList";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -14,15 +14,15 @@ import github from "assets/github-white.png";
 
 const mockEnvironment = {
   id: 1,
-  url: "https://porter.run",
-  pr_link: "https://githubsuperpullrequest.com",
+  environment_id: 1,
+  namespace: "pr-30",
+  pull_request_id: 30,
+  subdomain: "https://porter.run",
   status: "deployed",
-  namespace: "default",
-  actions_link: "https://githubsuperactions.com",
 };
 
 const getMockData = () =>
-  new Promise<{ data: Environment }>((resolve) => {
+  new Promise<{ data: PRDeployment }>((resolve) => {
     setTimeout(() => {
       resolve({ data: mockEnvironment });
       // resolve({ data: [] });
@@ -30,17 +30,53 @@ const getMockData = () =>
   });
 
 const EnvironmentDetail = () => {
-  const { params } = useRouteMatch<{ repoId: string }>();
+  const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
-  const [environment, setEnvironment] = useState<Environment>(null);
+  const [environment, setEnvironment] = useState<PRDeployment>(null);
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
 
   useEffect(() => {
-    // TODO: FETCH REPO OR PR?
-    console.log(params.repoId);
+    let isSubscribed = true;
 
-    getMockData().then((res) => {
-      setEnvironment(res.data);
-    });
+    api
+    .getPRDeployment(
+      "<token>",
+      {
+        namespace: params.namespace
+      },
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    ).then(({ data }) => {
+        if (!isSubscribed) {
+          return;
+        }
+
+        console.log('retrieved', data)
+        setEnvironment(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (isSubscribed) {
+          setHasError(true);
+          setEnvironment(null);
+        }
+      })
+      .finally(() => {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      });
+
+      return () => {
+        isSubscribed = false;
+      };  
   }, [params]);
 
   if (!environment) {
@@ -54,16 +90,19 @@ const EnvironmentDetail = () => {
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">
-          {environment.url}
+          {environment.subdomain}
           <TagWrapper>
             Namespace <NamespaceTag>{environment.namespace}</NamespaceTag>
           </TagWrapper>
         </Title>
         <InfoWrapper>
-          <PRLink to={environment.pr_link} target="_blank">
+          {
+            environment.subdomain && <PRLink to={environment.subdomain} target="_blank">
             <i className="material-icons">link</i>
-            {environment.pr_link}
+            {environment.subdomain}
           </PRLink>
+
+          }
         </InfoWrapper>
         <Flex>
           <Status>
@@ -71,8 +110,8 @@ const EnvironmentDetail = () => {
             {capitalize(environment.status)}
           </Status>
           <Dot>•</Dot>
-          <GHALink to={environment.actions_link} target="_blank">
-            <img src={github} /> GitHub Action
+          <GHALink to={'https://github.com/actions'} target="_blank">
+            <img src={github} /> GitHub
             <i className="material-icons">open_in_new</i>
           </GHALink>
         </Flex>
@@ -255,7 +294,7 @@ const StatusDot = styled.div`
   width: 8px;
   height: 8px;
   background: ${(props: { status: string }) =>
-    props.status === "deployed"
+    props.status === "created"
       ? "#4797ff"
       : props.status === "failed"
       ? "#ed5f85"

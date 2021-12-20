@@ -31,6 +31,7 @@ func NewGithubAppOAuthCallbackHandler(
 }
 
 func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("CALLBACK HANDLER")
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	session, err := c.Config().Store.Get(r, c.Config().ServerConf.CookieName)
@@ -43,6 +44,7 @@ func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	token, err := c.Config().GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 
 	if err != nil || !token.Valid() {
+		fmt.Println("ERROR HERE", err)
 		if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
 			// attempt to parse the redirect uri, if it fails just redirect to dashboard
 			redirectURI, err := url.Parse(redirectStr)

@@ -9,9 +9,10 @@ import Loading from "components/Loading";
 
 // TODO: Billing is still not capable to show if a user can use or not PR environments, add that instead of "hasBillingEnabled"
 const ButtonEnablePREnvironments = () => {
-  const { hasBillingEnabled } = useContext(Context);
+  // const { hasBillingEnabled } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [hasGHAccountConnected, setHasGHAccountConnected] = useState(false);
+  let hasBillingEnabled = true;
 
   const getAccounts = async () => {
     setIsLoading(true);
@@ -20,6 +21,7 @@ const ButtonEnablePREnvironments = () => {
       if (res.status !== 200) {
         throw new Error("Not authorized");
       }
+
       return res.data;
     } catch (error) {
       console.log(error);
@@ -33,7 +35,7 @@ const ButtonEnablePREnvironments = () => {
     getAccounts().then((accountsData) => {
       if (isSubscribed) {
         if (!accountsData) {
-          setHasGHAccountConnected(true);
+          setHasGHAccountConnected(false);
         } else {
           setHasGHAccountConnected(true);
         }

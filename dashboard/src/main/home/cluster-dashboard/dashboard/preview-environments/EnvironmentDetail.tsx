@@ -11,23 +11,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
-
-const mockEnvironment = {
-  id: 1,
-  environment_id: 1,
-  namespace: "pr-30",
-  pull_request_id: 30,
-  subdomain: "https://porter.run",
-  status: "deployed",
-};
-
-const getMockData = () =>
-  new Promise<{ data: PRDeployment }>((resolve) => {
-    setTimeout(() => {
-      resolve({ data: mockEnvironment });
-      // resolve({ data: [] });
-    }, 2000);
-  });
+import { integrationList } from "shared/common";
 
 const EnvironmentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
@@ -35,6 +19,7 @@ const EnvironmentDetail = () => {
   const [environment, setEnvironment] = useState<PRDeployment>(null);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRepoTooltip, setShowRepoTooltip] = useState(false);
 
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
@@ -58,7 +43,6 @@ const EnvironmentDetail = () => {
           return;
         }
 
-        console.log('retrieved', data)
         setEnvironment(data);
       })
       .catch((err) => {
@@ -83,6 +67,8 @@ const EnvironmentDetail = () => {
     return <Loading />;
   }
 
+  let repository = `${environment.gh_repo_owner}/${environment.gh_repo_name}`
+
   return (
     <StyledExpandedChart>
       <HeaderWrapper>
@@ -90,7 +76,21 @@ const EnvironmentDetail = () => {
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">
-          {environment.subdomain}
+          {environment.gh_pr_name}
+          <DeploymentImageContainer>
+              <DeploymentTypeIcon src={integrationList.repo.icon} />
+              <RepositoryName
+                onMouseOver={() => {
+                  setShowRepoTooltip(true);
+                }}
+                onMouseOut={() => {
+                  setShowRepoTooltip(false);
+                }}
+              >
+                {repository}
+              </RepositoryName>
+              {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+            </DeploymentImageContainer>
           <TagWrapper>
             Namespace <NamespaceTag>{environment.namespace}</NamespaceTag>
           </TagWrapper>
@@ -110,7 +110,7 @@ const EnvironmentDetail = () => {
             {capitalize(environment.status)}
           </Status>
           <Dot>•</Dot>
-          <GHALink to={'https://github.com/actions'} target="_blank">
+          <GHALink to={`https://github.com/${repository}/pull/${environment.pull_request_id}`} target="_blank">
             <img src={github} /> GitHub
             <i className="material-icons">open_in_new</i>
           </GHALink>
@@ -332,4 +332,58 @@ const LinkToActionsWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+const DeploymentImageContainer = styled.div`
+  height: 20px;
+  font-size: 13px;
+  position: relative;
+  display: flex;
+  margin-left: 15px;
+  margin-bottom: -3px;
+  align-items: center;
+  font-weight: 400;
+  justify-content: center;
+  color: #ffffff66;
+  padding-left: 5px;
+`;
+
+const DeploymentTypeIcon = styled(Icon)`
+  width: 20px;
+  margin-right: 10px;
+`;
+
+const RepositoryName = styled.div`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 390px;
+  position: relative;
+  margin-right: 3px;
+`;
+
+const Tooltip = styled.div`
+  position: absolute;
+  left: -40px;
+  top: 28px;
+  min-height: 18px;
+  max-width: calc(700px);
+  padding: 5px 7px;
+  background: #272731;
+  z-index: 999;
+  color: white;
+  font-size: 12px;
+  font-family: "Work Sans", sans-serif;
+  outline: 1px solid #ffffff55;
+  opacity: 0;
+  animation: faded-in 0.2s 0.15s;
+  animation-fill-mode: forwards;
+  @keyframes faded-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;

@@ -88,7 +88,7 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		context.Background(),
 		env.GitRepoOwner,
 		env.GitRepoName,
-		depl.GitHubMetadata.DeploymentID,
+		depl.GHDeploymentID,
 		&deploymentStatusRequest,
 	)
 

@@ -95,7 +95,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		context.Background(),
 		env.GitRepoOwner,
 		env.GitRepoName,
-		depl.GitHubMetadata.DeploymentID,
+		depl.GHDeploymentID,
 		&deploymentStatusRequest,
 	)
 

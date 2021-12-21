@@ -84,13 +84,11 @@ const ConnectNewRepo: React.FC = () => {
         readOnly={false}
       />
 
-      <Heading>Disclaimer</Heading>
       <Helper>
-        You will need to add a porter.yaml file to let porter know how to create
-        the preview environment
+        You will need to add a porter.yaml file to create a preview environment.
       </Helper>
       <PorterYamlLink to={porterYamlDocsLink} target="_blank">
-        Know more about porter.yaml
+        Learn more about porter.yaml
       </PorterYamlLink>
       <ActionContainer>
         <SaveButton

@@ -32,6 +32,8 @@ export interface TFResourceError {
 export interface TFResource {
   addr: string;
   provisioned: boolean;
+  destroyed?: boolean;
+  destroying?: boolean;
   errored: TFResourceError;
 }
 

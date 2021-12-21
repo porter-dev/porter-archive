@@ -192,6 +192,54 @@ export const StatusPage = ({
     }
   };
 
+  const handleApplyStart = (data: any): TFResource => {
+    const message = data["@message"];
+    if (typeof message === "string" && message.includes("Destroying")) {
+      return {
+        addr: data?.hook?.resource?.addr,
+        provisioned: true,
+        destroying: true,
+        errored: {
+          errored_out: false,
+        },
+      };
+    }
+
+    return {
+      addr: data?.hook?.resource?.addr,
+      provisioned: false,
+      errored: {
+        errored_out: false,
+      },
+    };
+  };
+
+  const handleApplyComplete = (data: any): TFResource => {
+    const message = data["@message"];
+
+    if (
+      typeof message === "string" &&
+      message.includes("Destruction complete")
+    ) {
+      return {
+        addr: data?.hook?.resource?.addr,
+        provisioned: true,
+        destroyed: true,
+        errored: {
+          errored_out: false,
+        },
+      };
+    }
+
+    return {
+      addr: data?.hook?.resource?.addr,
+      provisioned: true,
+      errored: {
+        errored_out: false,
+      },
+    };
+  };
+
   const connectToLiveUpdateModule = (infra_id: number) => {
     const websocketId = `${infra_id}`;
     const apiPath = `/api/projects/${project_id}/infras/${infra_id}/logs`;
@@ -212,14 +260,16 @@ export const StatusPage = ({
           const streamValData = JSON.parse(streamVal?.Values?.data);
 
           switch (streamValData?.type) {
+            case "apply_start":
+              const module = handleApplyStart(streamValData);
+
+              addedResources.push(module);
+
+              break;
             case "apply_complete":
-              addedResources.push({
-                addr: streamValData?.hook?.resource?.addr,
-                provisioned: true,
-                errored: {
-                  errored_out: false,
-                },
-              });
+              const appliedModule = handleApplyComplete(streamValData);
+
+              addedResources.push(appliedModule);
 
               break;
             case "diagnostic":

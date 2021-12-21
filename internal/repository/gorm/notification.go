@@ -65,7 +65,7 @@ func (repo JobNotificationConfigRepository) CreateNotificationConfig(am *models.
 	// if the count is greater than 1000, remove the lowest-order events to implement a
 	// basic fixed-length buffer
 	if count >= 1000 {
-		err := repo.db.Debug().Exec(`
+		err := repo.db.Exec(`
 			  DELETE FROM job_notification_configs 
 			  WHERE project_id = ? AND cluster_id = ? AND 
 			  id NOT IN (
@@ -78,7 +78,7 @@ func (repo JobNotificationConfigRepository) CreateNotificationConfig(am *models.
 		}
 	}
 
-	if err := repo.db.Debug().Create(am).Error; err != nil {
+	if err := repo.db.Create(am).Error; err != nil {
 		return nil, err
 	}
 

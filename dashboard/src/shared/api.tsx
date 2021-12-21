@@ -127,6 +127,33 @@ const createEnvironment = baseApi<
   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/environment`;
 });
 
+const deleteEnvironment = baseApi<
+{
+  name: string;
+  git_repo_owner: string;
+  git_repo_name: string;
+},
+{
+  project_id: number;
+  cluster_id: number;
+  git_installation_id: number;
+}
+>("DELETE", (pathParams) => {
+  let { project_id, cluster_id, git_installation_id } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/environment`;
+});
+
+const listEnvironments = baseApi<
+{},
+{
+  project_id: number;
+  cluster_id: number;
+}
+>("GET", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments`;
+});
+
 const createGCPIntegration = baseApi<
   {
     gcp_key_data: string;
@@ -1259,6 +1286,8 @@ export default {
   createDOKS,
   createEmailVerification,
   createEnvironment,
+  deleteEnvironment,
+  listEnvironments,
   createGCPIntegration,
   createGCR,
   createGKE,

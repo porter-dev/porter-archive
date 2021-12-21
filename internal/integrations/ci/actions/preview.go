@@ -128,9 +128,35 @@ func DeleteEnv(opts *EnvOpts) error {
 
 	defaultBranch := repo.GetDefaultBranch()
 
-	return deleteGithubFile(
+	// delete GitHub Environment
+
+	_, err = opts.Client.Repositories.DeleteEnvironment(
+		context.Background(),
+		opts.GitRepoOwner,
+		opts.GitRepoName,
+		opts.EnvironmentName,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	err = deleteGithubFile(
 		opts.Client,
 		fmt.Sprintf("porter_%s_env.yml", strings.ToLower(opts.EnvironmentName)),
+		opts.GitRepoOwner,
+		opts.GitRepoName,
+		defaultBranch,
+		false,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return deleteGithubFile(
+		opts.Client,
+		fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 		defaultBranch,

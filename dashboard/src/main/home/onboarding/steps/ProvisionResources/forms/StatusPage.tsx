@@ -525,6 +525,14 @@ const useTFModules = () => {
 
     selectedModule.resources = updatedModuleResources;
 
+    if (
+      selectedModule.status === "destroying" ||
+      selectedModule.status === "destroyed"
+    ) {
+      setModule(infraId, selectedModule);
+      return;
+    }
+
     const isModuleCreated =
       selectedModule.resources.every((resource) => {
         return resource.provisioned;

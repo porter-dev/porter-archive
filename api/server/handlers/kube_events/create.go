@@ -169,6 +169,7 @@ func notifyPodCrashing(
 			Name:        jobOwner,
 			Namespace:   event.Namespace,
 			Info:        fmt.Sprintf("%s", jobMsg),
+			Timestamp:   &event.Timestamp,
 			URL: fmt.Sprintf(
 				"%s/jobs/%s/%s/%s?project_id=%d",
 				config.ServerConf.ServerURL,

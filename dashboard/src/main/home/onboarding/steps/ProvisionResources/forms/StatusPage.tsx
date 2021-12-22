@@ -193,8 +193,10 @@ export const StatusPage = ({
   };
 
   const handleApplyStart = (data: any): TFResource => {
-    const message = data["@message"];
-    if (typeof message === "string" && message.includes("Destroying")) {
+    console.log("HANDLE APPLY START", data);
+
+    const message = String(data["@message"]);
+    if (message?.includes("Destroying")) {
       return {
         addr: data?.hook?.resource?.addr,
         provisioned: true,
@@ -215,12 +217,10 @@ export const StatusPage = ({
   };
 
   const handleApplyComplete = (data: any): TFResource => {
-    const message = data["@message"];
+    console.log("HANDLE APPLY COMPLETE", data);
 
-    if (
-      typeof message === "string" &&
-      message.includes("Destruction complete")
-    ) {
+    const message = String(data["@message"]);
+    if (message?.includes("Destruction complete")) {
       return {
         addr: data?.hook?.resource?.addr,
         provisioned: true,

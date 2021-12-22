@@ -529,6 +529,8 @@ const useTFModules = () => {
         ...resource,
         provisioned: correspondedResource.provisioned,
         errored,
+        destroyed: correspondedResource?.destroyed,
+        destroying: correspondedResource?.destroying,
       };
     });
 

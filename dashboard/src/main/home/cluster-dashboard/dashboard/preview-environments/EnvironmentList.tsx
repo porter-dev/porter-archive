@@ -45,7 +45,7 @@ const EnvironmentList = () => {
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [showConnectRepoFlow, setShowConnectRepoFlow] = useState(false);
-  const { currentProject, currentCluster, setCurrentError } = useContext(
+  const { currentProject, currentCluster, setCurrentModal } = useContext(
     Context
   );
 
@@ -190,7 +190,7 @@ const EnvironmentList = () => {
               {d.gh_pr_name}
             </PRName>
 
-            <PRWrapper>
+            <Flex>
             <StatusContainer>
               <Status>
                 <StatusDot status={d.status} />
@@ -211,7 +211,7 @@ const EnvironmentList = () => {
               </RepositoryName>
               {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
             </DeploymentImageContainer>
-            </PRWrapper>
+            </Flex>
 
 
           </DataContainer>
@@ -246,12 +246,18 @@ const EnvironmentList = () => {
         >
           <i className="material-icons">add</i> Add Repository
         </Button>
-        <SortFilterWrapper>
-          {/* <SortSelector
-            setSortType={(sortType) => this.setState({ sortType })}
-            sortType={this.state.sortType}
-          /> */}
-        </SortFilterWrapper>
+        <SettingsButton onClick={() => {
+            setCurrentModal("PreviewEnvSettingsModal", {})
+        }}>
+          <i className="material-icons-outlined">settings</i>
+          Configure
+        </SettingsButton>
+        {/* <Settings >
+          <SettingsIcon src={settings} />
+          <SettingsText>
+            Configure
+          </SettingsText>
+        </Settings> */}
       </ControlRow>
       <EventsGrid>
         {renderDeploymentList()}
@@ -261,10 +267,27 @@ const EnvironmentList = () => {
 };
 
 export default EnvironmentList;
-const PRWrapper = styled.div`
+
+const SettingsButton = styled.div`
+  font-size: 12px;
+  padding: 8px 10px;
+  margin-left: 10px;
+  border-radius: 5px;
+  color: white;
   display: flex;
   align-items: center;
-`
+  background: #ffffff08;
+  cursor: pointer;
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: white;
+    font-size: 18px;
+    margin-right: 8px;
+  }
+`;
 
 const Placeholder = styled.div`
   width: 100%;
@@ -286,6 +309,7 @@ const Placeholder = styled.div`
     margin-right: 12px;
   }
 `;
+
 const Flex = styled.div`
   display: flex;
   align-items: center;

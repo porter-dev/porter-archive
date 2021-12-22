@@ -71,6 +71,10 @@ export const StatusPage = ({
 
   const { moduleStatuses } = useModuleChecker(tfModules);
 
+  useEffect(() => {
+    console.log(tfModules);
+  }, [tfModules]);
+
   const filterBySelectedInfras = (currentInfra: Infra) => {
     if (!Array.isArray(selectedFilters) || !selectedFilters?.length) {
       return true;

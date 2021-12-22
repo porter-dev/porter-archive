@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
@@ -119,6 +120,14 @@ func init() {
 		"the path to the dockerfile",
 	)
 
+	createCmd.PersistentFlags().StringArrayVarP(
+		&buildFlagsEnv,
+		"env",
+		"e",
+		[]string{},
+		"Build-time environment variable, in the form 'VAR=VALUE'. These are not available at image runtime.",
+	)
+
 	createCmd.PersistentFlags().StringVar(
 		&method,
 		"method",
@@ -179,6 +188,15 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		buildMethod = deploy.DeployBuildTypeDocker
 	}
 
+	// add additional env, if they exist
+	additionalEnv := make(map[string]string)
+
+	for _, buildEnv := range buildFlagsEnv {
+		if strSplArr := strings.SplitN(buildEnv, "=", 2); len(strSplArr) >= 2 {
+			additionalEnv[strSplArr[0]] = strSplArr[1]
+		}
+	}
+
 	createAgent := &deploy.CreateAgent{
 		Client: client,
 		CreateOpts: &deploy.CreateOpts{
@@ -189,6 +207,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 				LocalPath:       fullPath,
 				LocalDockerfile: dockerfile,
 				Method:          buildMethod,
+				AdditionalEnv:   additionalEnv,
 			},
 			Kind:        args[0],
 			ReleaseName: name,

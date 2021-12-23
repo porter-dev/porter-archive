@@ -26,6 +26,8 @@ const tabOptions = [
   { label: "Community Add-ons", value: "community" },
 ];
 
+const HIDDEN_CHARTS = ["porter-agent"];
+
 type PropsType = RouteComponentProps & {};
 
 type StateType = {
@@ -74,7 +76,9 @@ class Templates extends Component<PropsType, StateType> {
         };
       });
       sortedVersionData.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-
+      sortedVersionData = sortedVersionData.filter(
+        (template: any) => !HIDDEN_CHARTS.includes(template?.name)
+      );
       this.setState({ addonTemplates: sortedVersionData, error: false });
     } catch (error) {
       this.setState({ loading: false, error: true });

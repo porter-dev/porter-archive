@@ -49,6 +49,8 @@ type NotifyOpts struct {
 
 	URL string
 
+	Timestamp *time.Time
+
 	Version int
 }
 
@@ -150,6 +152,15 @@ func getSlackBlocks(opts *NotifyOpts) ([]*SlackBlock, []*SlackBlock) {
 		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+opts.Name+"`")),
 		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+opts.Namespace+"`")),
 	)
+
+	if opts.Timestamp != nil {
+		res = append(res, getMarkdownBlock(fmt.Sprintf(
+			"*Timestamp:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			opts.Timestamp.Unix(),
+			opts.Timestamp.Format("2006-01-02 15:04:05 UTC"),
+		)),
+		)
+	}
 
 	if opts.Status == StatusHelmDeployed || opts.Status == StatusHelmFailed {
 		res = append(res, getMarkdownBlock(fmt.Sprintf("*Version:* %d", opts.Version)))

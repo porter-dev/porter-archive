@@ -10,9 +10,10 @@ import { ChartType, ClusterType, StorageType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-import SaveButton from "components/SaveButton";
+import Logs from "./status/Logs";
 import TitleSection from "components/TitleSection";
 import TempJobList from "./jobs/TempJobList";
+import TabRegion from "components/TabRegion";
 import SettingsSection from "./SettingsSection";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -22,6 +23,8 @@ import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
 import { pushFiltered } from "../../../../shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
+import Banner from "components/Banner";
+import KeyValueArray from "components/form-components/KeyValueArray";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -48,6 +51,8 @@ type StateType = {
   formData: any;
   devOpsMode: boolean;
   upgradeVersion: string;
+  expandedJobRun: any;
+  pods: any;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -67,6 +72,30 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     formData: {} as any,
     upgradeVersion: "",
     devOpsMode: localStorage.getItem("devOpsMode") === "true",
+    
+    expandedJobRun: null as any,
+    pods: null as any,
+  };
+
+  getPods = (job: any, callback?: () => void) => {
+    let { currentCluster, currentProject, setCurrentError } = this.context;
+
+    api
+      .getJobPods(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          name: job.metadata?.name,
+          cluster_id: currentCluster.id,
+          namespace: job.metadata?.namespace,
+        }
+      )
+      .then((res) => {
+        this.setState({ pods: res.data });
+        callback();
+      })
+      .catch((err) => setCurrentError(JSON.stringify(err)));
   };
 
   // Retrieve full chart data (includes form and values)
@@ -421,7 +450,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   sortJobsAndSave = (jobs: any[]) => {
+
+    // Set job run from URL if needed
+    const urlParams = new URLSearchParams(location.search);
+    const urlJob = urlParams.get("job");
+
     jobs.sort((job1, job2) => {
+      if (job1.metadata.name === urlJob) {
+        this.setJobRun(job1);
+      }
+
       let date1: Date = new Date(job1.status?.startTime);
       let date2: Date = new Date(job2.status?.startTime);
 
@@ -440,6 +478,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       this.setState({ jobs });
     }
   };
+
+  setJobRun = (job: any) => {
+    this.getPods(job, () => {
+      this.setState({ expandedJobRun: job, currentTab: "logs" });
+    });
+  }
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
     switch (currentTab) {
@@ -471,6 +515,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               setJobs={(jobs: any) => this.setState({ jobs })}
               isAuthorized={this.props.isAuthorized}
               saveValuesStatus={this.state.saveValuesStatus}
+
+              expandJob={(job: any) => this.setJobRun(job)}
             />
           </TabWrapper>
         );
@@ -643,7 +689,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
+  renderExpandedChart() {
     let { closeChart } = this.props;
     let { currentChart } = this.state;
     let chart = currentChart;
@@ -696,17 +742,21 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               </LastDeployed>
             </InfoWrapper>
             {displayUpdateButton && (
-              <RevisionUpdateMessage
-                onClick={(e) => {
-                  e.stopPropagation();
-                  this.setState({
-                    upgradeVersion: currentChart.latest_version,
-                  });
-                }}
-              >
-                <i className="material-icons">notification_important</i>
-                Template Update Available
-              </RevisionUpdateMessage>
+              <>
+                <Br />
+                <Banner>
+                  A template update is available.
+                  <Link onClick={(e) => {
+                    e.stopPropagation();
+                    this.setState({
+                      upgradeVersion: currentChart.latest_version,
+                    });
+                  }}>
+                    View upgrade notes
+                  </Link>
+                </Banner>
+                <Br /><Br /><Br /><Br /><Br /><Br />
+              </>
             )}
           </HeaderWrapper>
 
@@ -763,11 +813,221 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       </>
     );
   }
+
+  renderStatus = (job: any, time: string) => {
+    if (job.status?.succeeded >= 1) {
+      return <Status color="#38a88a">Succeeded {time}</Status>;
+    }
+
+    if (job.status?.failed >= 1) {
+      return (
+        <Status color="#cc3d42">Failed {time}
+          {
+            job.status.conditions.length > 0 && `: ${job.status.conditions[0].reason}`
+          }
+        </Status>
+      );
+    }
+
+    return <Status color="#ffffff11">Running</Status>;
+  };
+
+  renderConfigSection = (job: any) => {
+    let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
+      " "
+    );
+    let envArray = job?.spec?.template?.spec?.containers[0]?.env;
+    let envObject = {} as any;
+    envArray &&
+      envArray.forEach((env: any, i: number) => {
+        const secretName = _.get(env, "valueFrom.secretKeyRef.name");
+        envObject[env.name] = secretName
+          ? `PORTERSECRET_${secretName}`
+          : env.value;
+      });
+
+    // Handle no config to show
+    if (!commandString && _.isEmpty(envObject)) {
+      return <Placeholder>No config was found.</Placeholder>;
+    }
+
+    let tag = job.spec.template.spec.containers[0].image.split(":")[1];
+    return (
+      <ConfigSection>
+        {commandString ? (
+          <>
+            Command: <Command>{commandString}</Command>
+          </>
+        ) : (
+          <DarkMatter size="-18px" />
+        )}
+        <Row>
+          Image Tag: <Command>{tag}</Command>
+        </Row>
+        {!_.isEmpty(envObject) && (
+          <>
+            <KeyValueArray
+              envLoader={true}
+              values={envObject}
+              label="Environment Variables:"
+              disabled={true}
+            />
+            <DarkMatter />
+          </>
+        )}
+      </ConfigSection>
+    );
+  };
+
+  renderExpandedJobRun() {
+    let { currentChart } = this.state;
+    let chart = currentChart;
+    let run = this.state.expandedJobRun;
+
+    return (
+      <StyledExpandedChart>
+        <HeaderWrapper>
+          <BackButton onClick={() => this.setState({ expandedJobRun: null })}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+          <TitleSection
+            icon={currentChart.chart.metadata.icon}
+            iconWidth="33px"
+          >
+            {chart.name} <Gray>at {this.readableDate(run.status.startTime)}</Gray>
+          </TitleSection>
+
+          <InfoWrapper>
+            <LastDeployed>
+              {this.renderStatus(run, run.status.completionTime ? this.readableDate(run.status.completionTime) : "")}
+              <TagWrapper>
+                Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
+              </TagWrapper>
+              <DeploymentType currentChart={currentChart} />
+            </LastDeployed>
+          </InfoWrapper>
+        </HeaderWrapper>
+        <BodyWrapper>
+          <TabRegion
+            currentTab={this.state.currentTab}
+            setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+            options={[
+              {
+                label: "Logs", value: "logs",
+              },
+              {
+                label: "Config", value: "config",
+              }
+            ]}
+            color={null}
+          >
+            {
+              this.state.currentTab === "logs" ? (
+                <JobLogsWrapper>
+                  <Logs
+                    selectedPod={this.state.pods[0]}
+                    podError={!this.state.pods[0] ? "Pod no longer exists." : ""}
+                    rawText={true}
+                  />
+                </JobLogsWrapper>
+              ) : (
+                <>{this.renderConfigSection(run)}</>
+              )
+            }
+          </TabRegion>
+        </BodyWrapper>
+      </StyledExpandedChart>
+    );
+  }
+
+  render() {
+    return (
+      <>
+        { 
+          !this.state.expandedJobRun ? (
+            <>{this.renderExpandedChart()}</>
+          ) : (
+            <>{this.renderExpandedJobRun()}</>
+          )
+        }
+      </>
+    );
+  }
 }
 
 ExpandedJobChart.contextType = Context;
 
 export default withRouter(withAuth(ExpandedJobChart));
+
+const Row = styled.div`
+  margin-top: 20px;
+`;
+
+const DarkMatter = styled.div<{ size?: string }>`
+  width: 100%;
+  margin-bottom: ${(props) => props.size || "-13px"};
+`;
+
+const Command = styled.span`
+  font-family: monospace;
+  color: #aaaabb;
+  margin-left: 7px;
+`;
+
+const ConfigSection = styled.div`
+  padding: 20px 30px 30px;
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
+  border-radius: 8px;
+  background: #ffffff08;
+`;
+
+const JobLogsWrapper = styled.div`
+  min-height: 450px;
+  height: 55vh;
+  width: 100%;
+  border-radius: 8px;
+  background-color: black;
+  overflow-y: auto;
+`;
+
+const Div = styled.div`
+  width: 100%;
+  height: 100%;
+  background: red;
+`;
+
+const Status = styled.div<{ color: string }>`
+  padding: 5px 10px;
+  background: ${(props) => props.color};
+  font-size: 13px;
+  border-radius: 3px;
+  height: 25px;
+  color: #ffffff;
+  margin-bottom: -3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Gray = styled.div`
+  color: #ffffff44;
+  margin-left: 15px;
+  font-weight: 400;
+  font-size: 18px;
+`;
+
+const Br = styled.div`
+  width: 100%;
+  height: 2px;
+`;
+
+const Link = styled.div`
+  cursor: pointer;
+  margin-left: 5px;
+  color: #8590ff;
+`;
 
 const RevisionUpdateMessage = styled.button`
   background: none;
@@ -899,7 +1159,7 @@ const LastDeployed = styled.div`
 `;
 
 const TagWrapper = styled.div`
-  height: 20px;
+  height: 25px;
   font-size: 12px;
   display: flex;
   margin-left: 20px;
@@ -915,7 +1175,7 @@ const TagWrapper = styled.div`
 `;
 
 const NamespaceTag = styled.div`
-  height: 20px;
+  height: 100%;
   margin-left: 6px;
   color: #aaaabb;
   background: #43454a;

@@ -10,6 +10,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 type PropsType = WithAuthProps & {
   jobs: any[];
   setJobs: (job: any) => void;
+  expandJob: any;
 };
 
 type StateType = {
@@ -38,6 +39,7 @@ class JobList extends Component<PropsType, StateType> {
             return (
               <JobResource
                 key={job?.metadata?.name}
+                expandJob={this.props.expandJob}
                 job={job}
                 handleDelete={() => {
                   this.setState({ deletionCandidate: job });

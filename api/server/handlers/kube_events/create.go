@@ -171,12 +171,13 @@ func notifyPodCrashing(
 			Info:        fmt.Sprintf("%s", jobMsg),
 			Timestamp:   &event.Timestamp,
 			URL: fmt.Sprintf(
-				"%s/jobs/%s/%s/%s?project_id=%d",
+				"%s/jobs/%s/%s/%s?project_id=%d&job=%s",
 				config.ServerConf.ServerURL,
 				cluster.Name,
 				event.Namespace,
 				jobOwner,
 				cluster.ProjectID,
+				jobName,
 			),
 		}
 	} else {

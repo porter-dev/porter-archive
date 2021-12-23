@@ -11,6 +11,7 @@ interface Props {
   setJobs: any;
   jobs: any;
   handleSaveValues: any;
+  expandJob: any;
 }
 
 /**
@@ -45,7 +46,7 @@ const TempJobList: React.FC<Props> = (props) => {
   return (
     <>
       {saveButton}
-      <JobList jobs={props.jobs} setJobs={props.setJobs} />
+      <JobList jobs={props.jobs} setJobs={props.setJobs} expandJob={props.expandJob} />
     </>
   );
 };

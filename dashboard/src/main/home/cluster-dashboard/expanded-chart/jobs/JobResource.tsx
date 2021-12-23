@@ -35,12 +35,9 @@ export default class JobResource extends Component<PropsType, StateType> {
       event.stopPropagation();
     }
 
-    this.props.expandJob(this.props.job);
-    /*
     this.getPods(() => {
       this.setState({ expanded: !this.state.expanded });
     });
-    */
   };
 
   stopJob = (event: MouseEvent) => {
@@ -301,8 +298,8 @@ export default class JobResource extends Component<PropsType, StateType> {
                     delete
                   </i>
                 )}
-                <i className="material-icons" onClick={this.expandJob}>
-                  {this.state.expanded ? "expand_less" : "expand_more"}
+                <i className="material-icons" onClick={() => this.props.expandJob(this.props.job)}>
+                  open_in_new
                 </i>
               </MaterialIconTray>
             </EndWrapper>

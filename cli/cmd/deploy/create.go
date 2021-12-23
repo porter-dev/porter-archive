@@ -272,6 +272,11 @@ func (c *CreateAgent) CreateFromDocker(
 		env = map[string]string{}
 	}
 
+	// add additional env based on options
+	for key, val := range opts.SharedOpts.AdditionalEnv {
+		env[key] = val
+	}
+
 	buildAgent := &BuildAgent{
 		SharedOpts:  opts.SharedOpts,
 		client:      c.Client,

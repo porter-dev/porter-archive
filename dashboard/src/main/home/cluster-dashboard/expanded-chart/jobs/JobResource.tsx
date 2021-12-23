@@ -14,6 +14,7 @@ type PropsType = {
   handleDelete: () => void;
   deleting: boolean;
   readOnly?: boolean;
+  expandJob: any;
 };
 
 type StateType = {
@@ -34,9 +35,12 @@ export default class JobResource extends Component<PropsType, StateType> {
       event.stopPropagation();
     }
 
+    this.props.expandJob(this.props.job);
+    /*
     this.getPods(() => {
       this.setState({ expanded: !this.state.expanded });
     });
+    */
   };
 
   stopJob = (event: MouseEvent) => {

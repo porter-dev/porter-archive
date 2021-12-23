@@ -29,6 +29,7 @@ type TestRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
+	jobNotificationConfig     repository.JobNotificationConfigRepository
 	buildEvent                repository.BuildEventRepository
 	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
@@ -134,6 +135,10 @@ func (t *TestRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
+func (t *TestRepository) JobNotificationConfig() repository.JobNotificationConfigRepository {
+	return t.jobNotificationConfig
+}
+
 func (t *TestRepository) BuildEvent() repository.BuildEventRepository {
 	return t.buildEvent
 }
@@ -190,6 +195,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
+		jobNotificationConfig:     NewJobNotificationConfigRepository(canQuery),
 		buildEvent:                NewBuildEventRepository(canQuery),
 		kubeEvent:                 NewKubeEventRepository(canQuery),
 		projectUsage:              NewProjectUsageRepository(canQuery),

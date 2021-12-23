@@ -27,6 +27,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.DNSRecord{},
 		&models.PWResetToken{},
 		&models.NotificationConfig{},
+		&models.JobNotificationConfig{},
 		&models.EventContainer{},
 		&models.SubEvent{},
 		&models.KubeEvent{},

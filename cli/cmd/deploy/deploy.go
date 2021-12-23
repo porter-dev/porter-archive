@@ -142,7 +142,18 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 // GetBuildEnv retrieves the build env from the release config and returns it
 func (d *DeployAgent) GetBuildEnv() (map[string]string, error) {
-	return GetEnvFromConfig(d.release.Config)
+	env, err := GetEnvFromConfig(d.release.Config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// add additional env based on options
+	for key, val := range d.opts.SharedOpts.AdditionalEnv {
+		env[key] = val
+	}
+
+	return env, nil
 }
 
 // SetBuildEnv sets the build env vars in the process so that other commands can

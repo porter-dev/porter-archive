@@ -25,6 +25,7 @@ type Repository interface {
 	GithubAppOAuthIntegration() GithubAppOAuthIntegrationRepository
 	SlackIntegration() SlackIntegrationRepository
 	NotificationConfig() NotificationConfigRepository
+	JobNotificationConfig() JobNotificationConfigRepository
 	BuildEvent() BuildEventRepository
 	KubeEvent() KubeEventRepository
 	ProjectUsage() ProjectUsageRepository

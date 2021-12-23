@@ -331,11 +331,12 @@ const getPRDeploymentList = baseApi<
   {
     cluster_id: number;
     project_id: number;
+    git_installation_id: number;
   }
 >("GET", (pathParams) => {
-  const { cluster_id, project_id } = pathParams;
+  const { cluster_id, project_id, git_installation_id } = pathParams;
 
-  return `/api/projects/${project_id}/gitrepos/21414420/clusters/${cluster_id}/deployments`;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/deployments`;
 });
 
 const getPRDeployment = baseApi<
@@ -345,10 +346,11 @@ const getPRDeployment = baseApi<
   {
     cluster_id: number;
     project_id: number;
+    git_installation_id: number;
   }
 >("GET", (pathParams) => {
-  const { cluster_id, project_id } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/21414420/clusters/${cluster_id}/deployment`;
+  const { cluster_id, project_id, git_installation_id } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/deployment`;
 });
 
 const getNotificationConfig = baseApi<

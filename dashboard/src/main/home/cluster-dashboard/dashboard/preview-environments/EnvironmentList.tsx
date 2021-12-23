@@ -10,6 +10,7 @@ import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments"
 import ConnectNewRepo from "./components/ConnectNewRepo";
 import Loading from "components/Loading";
 import pr_icon from "assets/pull_request_icon.svg";
+import _ from "lodash";
 
 export type PRDeployment = {
   id: number,
@@ -18,6 +19,7 @@ export type PRDeployment = {
   environment_id: number,
   pull_request_id: number,
   namespace: string,
+  git_installation_id?: number,
   gh_pr_name: string,
   gh_repo_owner: string,
   gh_repo_name: string,
@@ -73,7 +75,6 @@ const EnvironmentList = () => {
           if (!Array.isArray(data)) {
             throw Error("Data is not an array");
           }
-  
           setEnvironmentList(data);
         })
         .catch((err) => {
@@ -88,18 +89,20 @@ const EnvironmentList = () => {
         };  
     }, []);
 
-  useEffect(() => {
+  
+  const getDeployments = (git_installation_id: number) => {
     let isSubscribed = true;
-    // TODO: Replace get mock data by endpoint
-    api
+    return api
     .getPRDeploymentList(
       "<token>",
       {},
       {
         project_id: currentProject.id,
         cluster_id: currentCluster.id,
+        git_installation_id: git_installation_id,
       }
-    ).then(({ data }) => {
+    )
+    .then(({ data }) => {
         if (!isSubscribed) {
           return;
         }
@@ -108,25 +111,52 @@ const EnvironmentList = () => {
           throw Error("Data is not an array");
         }
 
-        setDeploymentList(data);
-      })
-      .catch((err) => {
-        console.error(err);
-        if (isSubscribed) {
-          setHasError(true);
-          setDeploymentList([]);
-        }
-      })
-      .finally(() => {
-        if (isSubscribed) {
-          setIsLoading(false);
-        }
-      });
+        data = data.forEach((d) => {
+          d.git_installation_id = git_installation_id;
+        })
 
-      return () => {
-        isSubscribed = false;
-      };
-  }, []);
+        return Promise.resolve(data);
+      })
+    .catch((err) => {
+      console.error(err);
+      if (isSubscribed) {
+        // setHasError(true);
+        setDeploymentList([]);
+      }
+      return Promise.resolve([]);
+    })  
+  }
+
+  useEffect(() => {
+    let isSubscribed = true;
+
+    let gitInstallations = environmentList.map((e) => {
+      return e.git_installation_id
+    })
+
+    let uniqueIds = _.uniq(gitInstallations);
+
+    let promises = uniqueIds.map((git_installation_id) => {
+      return getDeployments(git_installation_id)
+    });
+
+    Promise.all(promises).then((data) => {      
+      let result:PRDeployment[] = []
+      data.forEach((d) => {
+        result.concat(d)
+      });
+      setDeploymentList(result);
+    });
+
+
+    if (isSubscribed) {
+      setIsLoading(false);
+    }
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [environmentList]);
 
   useEffect(() => {
     const action = getQueryParam({ location }, "action");
@@ -168,8 +198,6 @@ const EnvironmentList = () => {
       </>
     );
   }
-
-
 
   let renderDeploymentList = () => {
     if (!deploymentList.length) {
@@ -217,7 +245,7 @@ const EnvironmentList = () => {
           </DataContainer>
           <Flex>
             <RowButton
-              to={`${currentUrl}/pr-env-detail/${d.namespace}`}
+              to={`${currentUrl}/pr-env-detail/${d.namespace}?git_installation_id=${d.git_installation_id}`}
               key={d.id}
             >
               <i className="material-icons-outlined">info</i>

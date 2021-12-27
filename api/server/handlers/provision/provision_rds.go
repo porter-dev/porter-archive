@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -105,7 +106,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var vpcName, region string
+	var vpc, region string
 	var opts *provisioner.ProvisionOpts
 	vaultToken := ""
 
@@ -134,7 +135,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 
-		vpcName, err = c.ExtractVPCFromGKETFState(current, "google_compute_network.vpc")
+		vpc, err = c.ExtractVPCFromGKETFState(current, "google_compute_network.vpc")
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				err,
@@ -168,7 +169,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 
-		vpcName, err = c.ExtractVPCFromEKSTFState(current, "aws_vpc.this")
+		vpc, err = c.ExtractVPCFromEKSTFState(current, "aws_vpc.this")
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				err,
@@ -203,15 +204,22 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	opts.CredentialExchange.VaultToken = vaultToken
 
 	opts.RDS = &rds.Conf{
-		AWSRegion:    region, // TODO: get integration
-		DBName:       request.DBName,
-		PGVersion:    request.PGVersion,
-		InstanceType: request.InstanceType,
-		StorageClass: request.StorageClass,
-		Username:     request.Username,
-		Password:     request.Password,
-		VPCName:      vpcName,
-		IssuerEmail:  user.Email,
+		AWSRegion:       region, // TODO: get integration
+		DBName:          request.DBName,
+		MachineType:     request.MachineType,
+		DBEngineVersion: request.DBEngineVersion,
+		DBFamily:        request.DBFamily,
+
+		// TODO: Implement mapping for db family - compatible engine versions
+		DBMajorEngineVersion: "<TODO>",
+
+		DBAllocatedStorage:    request.DBStorage,
+		DBMaxAllocatedStorage: request.DBMaxStorage,
+		DBStorageEncrypted:    strconv.FormatBool(request.DBEncryption),
+		Username:              request.Username,
+		Password:              request.Password,
+		VPCID:                 vpc,
+		IssuerEmail:           user.Email,
 	}
 
 	opts.OperationKind = provisioner.Apply

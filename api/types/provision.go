@@ -47,13 +47,27 @@ type DeleteInfraRequest struct {
 }
 
 type CreateRDSInfraRequest struct {
-	ProjectID    uint   `json:"project_id"`
-	ClusterID    uint   `json:"cluster_id"`
-	DBName       string `json:"db_name"`
-	PGVersion    string `json:"pg_version"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	InstanceType string `json:"instance_type"`
-	StorageClass string `json:"storage_class"`
-	Size         string `json:"size"`
+	ProjectID uint `json:"project_id"`
+	ClusterID uint `json:"cluster_id"`
+
+	// version of the postgres engine
+	DBEngineVersion string `json:"db_engine_version"`
+	// db type - postgress / mysql
+	DBFamily string `json:"db_family"`
+
+	// Deprecated, use DBEngineVersion instead
+	// PGVersion string `json:"pg_version"`
+
+	// db instance credentials specifications
+	DBName   string `json:"db_name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+
+	MachineType  string `json:"machine_type"`
+	DBStorage    string `json:"db_allocated_storage"`
+	DBMaxStorage string `json:"db_max_allocated_storage"`
+	DBEncryption bool   `json:"db_storage_encrypted"`
+
+	// Deprecated, use DBStorage and DBMaxStorage fields instead
+	// Size string `json:"size"`
 }

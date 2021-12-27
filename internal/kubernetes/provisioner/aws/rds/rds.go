@@ -1,18 +1,25 @@
 package rds
 
-import v1 "k8s.io/api/core/v1"
+import (
+	v1 "k8s.io/api/core/v1"
+)
 
 // Conf is the RDS config required for the provisioner
 type Conf struct {
-	AWSRegion    string
-	DBName       string
-	PGVersion    string
-	InstanceType string
-	StorageClass string
-	Username     string
-	Password     string
-	VPCName      string
-	IssuerEmail  string
+	AWSRegion             string
+	DBName                string
+	MachineType           string
+	DBEngineVersion       string
+	DBFamily              string
+	DBMajorEngineVersion  string
+	DBAllocatedStorage    string
+	DBMaxAllocatedStorage string
+	DBStorageEncrypted    string
+
+	Username    string
+	Password    string
+	VPCID       string
+	IssuerEmail string
 }
 
 // AttachRDSEnv adds the relevant RDS env for the provisioner
@@ -28,18 +35,38 @@ func (conf *Conf) AttachRDSEnv(env []v1.EnvVar) []v1.EnvVar {
 	})
 
 	env = append(env, v1.EnvVar{
-		Name:  "PG_VERSION",
-		Value: conf.PGVersion,
+		Name:  "MACHINE_TYPE",
+		Value: conf.MachineType,
 	})
 
 	env = append(env, v1.EnvVar{
-		Name:  "INSTANCE_TYPE",
-		Value: conf.InstanceType,
+		Name:  "DB_ENGINE_VERSION",
+		Value: conf.DBEngineVersion,
 	})
 
 	env = append(env, v1.EnvVar{
-		Name:  "STORAGE_CLASS",
-		Value: conf.StorageClass,
+		Name:  "DB_FAMILY",
+		Value: conf.DBFamily,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "DB_MAJOR_ENGINE_VERSION",
+		Value: conf.DBMajorEngineVersion,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "DB_ALLOCATED_STORAGE",
+		Value: conf.DBAllocatedStorage,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "DB_MAX_ALLOCATED_STORAGE",
+		Value: conf.DBMaxAllocatedStorage,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "DB_STORAGE_ENCRYPTED",
+		Value: conf.DBStorageEncrypted,
 	})
 
 	env = append(env, v1.EnvVar{
@@ -52,9 +79,10 @@ func (conf *Conf) AttachRDSEnv(env []v1.EnvVar) []v1.EnvVar {
 		Value: conf.Password,
 	})
 
+	// TODO: change to VPC_ID instead of vpc name
 	env = append(env, v1.EnvVar{
-		Name:  "VPC_NAME",
-		Value: conf.VPCName,
+		Name:  "VPC_ID",
+		Value: conf.VPCID,
 	})
 
 	env = append(env, v1.EnvVar{

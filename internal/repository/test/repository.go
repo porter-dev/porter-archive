@@ -29,12 +29,14 @@ type TestRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
+	jobNotificationConfig     repository.JobNotificationConfigRepository
 	buildEvent                repository.BuildEventRepository
 	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
+	allowlist                 repository.AllowlistRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -133,6 +135,10 @@ func (t *TestRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
+func (t *TestRepository) JobNotificationConfig() repository.JobNotificationConfigRepository {
+	return t.jobNotificationConfig
+}
+
 func (t *TestRepository) BuildEvent() repository.BuildEventRepository {
 	return t.buildEvent
 }
@@ -155,6 +161,10 @@ func (t *TestRepository) CredentialsExchangeToken() repository.CredentialsExchan
 
 func (t *TestRepository) BuildConfig() repository.BuildConfigRepository {
 	return t.buildConfig
+}
+
+func (t *TestRepository) Allowlist() repository.AllowlistRepository {
+	return t.allowlist
 }
 
 // NewRepository returns a Repository which persists users in memory
@@ -185,11 +195,13 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
+		jobNotificationConfig:     NewJobNotificationConfigRepository(canQuery),
 		buildEvent:                NewBuildEventRepository(canQuery),
 		kubeEvent:                 NewKubeEventRepository(canQuery),
 		projectUsage:              NewProjectUsageRepository(canQuery),
 		onboarding:                NewProjectOnboardingRepository(canQuery),
 		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
 		buildConfig:               NewBuildConfigRepository(canQuery),
+		allowlist:                 NewAllowlistRepository(canQuery),
 	}
 }

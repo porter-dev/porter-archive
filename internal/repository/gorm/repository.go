@@ -31,12 +31,14 @@ type GormRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
+	jobNotificationConfig     repository.JobNotificationConfigRepository
 	buildEvent                repository.BuildEventRepository
 	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
+	allowlist                 repository.AllowlistRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -135,6 +137,10 @@ func (t *GormRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
+func (t *GormRepository) JobNotificationConfig() repository.JobNotificationConfigRepository {
+	return t.jobNotificationConfig
+}
+
 func (t *GormRepository) BuildEvent() repository.BuildEventRepository {
 	return t.buildEvent
 }
@@ -157,6 +163,10 @@ func (t *GormRepository) CredentialsExchangeToken() repository.CredentialsExchan
 
 func (t *GormRepository) BuildConfig() repository.BuildConfigRepository {
 	return t.buildConfig
+}
+
+func (t *GormRepository) Allowlist() repository.AllowlistRepository {
+	return t.allowlist
 }
 
 // NewRepository returns a Repository which persists users in memory
@@ -187,11 +197,13 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
+		jobNotificationConfig:     NewJobNotificationConfigRepository(db),
 		buildEvent:                NewBuildEventRepository(db),
 		kubeEvent:                 NewKubeEventRepository(db, key),
 		projectUsage:              NewProjectUsageRepository(db),
 		onboarding:                NewProjectOnboardingRepository(db),
 		ceToken:                   NewCredentialsExchangeTokenRepository(db),
 		buildConfig:               NewBuildConfigRepository(db),
+		allowlist:                 NewAllowlistRepository(db),
 	}
 }

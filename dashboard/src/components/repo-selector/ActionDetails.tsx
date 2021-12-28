@@ -1,10 +1,4 @@
-import React, {
-  Component,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
 import { integrationList } from "shared/common";
@@ -13,10 +7,8 @@ import api from "shared/api";
 import Loading from "components/Loading";
 import { ActionConfigType } from "../../shared/types";
 import InputRow from "../form-components/InputRow";
-import Selector from "components/Selector";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import SelectRow from "components/form-components/SelectRow";
+import { BuildpackSelection } from "./BuildpackSelection";
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -34,32 +26,13 @@ type PropsType = {
   setBuildConfig: (x: any) => void;
 };
 
-type Buildpack = {
-  name: string;
-  buildpack: string;
-  config: {
-    [key: string]: string;
-  };
-};
-
-type DetectedBuildpack = {
-  name: string;
-  builders: string[];
-  detected: Buildpack[];
-  others: Buildpack[];
-};
-
-type DetectBuildpackResponse = DetectedBuildpack[];
-
 const ActionDetails: React.FC<PropsType> = (props) => {
   const {
     actionConfig,
     branch,
     dockerfilePath,
     folderPath,
-    procfilePath,
     selectedRegistry,
-    setActionConfig,
     setDockerfilePath,
     setFolderPath,
     setProcfilePath,
@@ -226,259 +199,6 @@ const ActionDetails: React.FC<PropsType> = (props) => {
 };
 
 export default ActionDetails;
-
-const DEFAULT_BUILDER_NAME = "heroku";
-const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
-const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
-
-type BuildConfig = {
-  builder: string;
-  buildpacks: string[];
-  config: null | {
-    [key: string]: string;
-  };
-};
-
-export const BuildpackSelection: React.FC<{
-  actionConfig: ActionConfigType;
-  folderPath: string;
-  branch: string;
-  hide: boolean;
-  onChange: (config: BuildConfig) => void;
-}> = ({ actionConfig, folderPath, branch, hide, onChange }) => {
-  const { currentProject } = useContext(Context);
-
-  const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
-  const [selectedBuilder, setSelectedBuilder] = useState<string>(null);
-
-  const [stacks, setStacks] = useState<string[]>(null);
-  const [selectedStack, setSelectedStack] = useState<string>(null);
-
-  const [selectedBuildpacks, setSelectedBuildpacks] = useState<Buildpack[]>(
-    null
-  );
-  const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
-    null
-  );
-
-  useEffect(() => {
-    let buildConfig: BuildConfig = {} as BuildConfig;
-
-    buildConfig.builder = selectedStack;
-    buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
-      return buildpack.buildpack;
-    });
-    if (typeof onChange === "function") {
-      onChange(buildConfig);
-    }
-  }, [selectedBuilder, selectedStack, selectedBuildpacks]);
-
-  useEffect(() => {
-    api
-      .detectBuildpack<DetectBuildpackResponse>(
-        "<token>",
-        {
-          dir: folderPath || ".",
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      )
-      // getMockData()
-      .then(({ data }) => {
-        const builders = data;
-
-        const defaultBuilder = builders.find(
-          (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
-        );
-
-        const detectedBuildpacks = defaultBuilder.detected;
-        const availableBuildpacks = defaultBuilder.others;
-        const defaultStack = defaultBuilder.builders.find((stack) => {
-          return (
-            stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK
-          );
-        });
-
-        setBuilders(builders);
-        setSelectedBuilder(defaultBuilder.name.toLowerCase());
-
-        setStacks(defaultBuilder.builders);
-        setSelectedStack(defaultStack);
-
-        setSelectedBuildpacks(detectedBuildpacks);
-        setAvailableBuildpacks(availableBuildpacks);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }, [currentProject, actionConfig]);
-
-  const builderOptions = useMemo(() => {
-    if (!Array.isArray(builders)) {
-      return;
-    }
-
-    return builders.map((builder) => ({
-      label: builder.name,
-      value: builder.name.toLowerCase(),
-    }));
-  }, [builders]);
-
-  const stackOptions = useMemo(() => {
-    if (!Array.isArray(stacks)) {
-      return;
-    }
-
-    return stacks.map((stack) => ({
-      label: stack,
-      value: stack.toLowerCase(),
-    }));
-  }, [stacks]);
-
-  const handleSelectBuilder = (builderName: string) => {
-    const builder = builders.find(
-      (b) => b.name.toLowerCase() === builderName.toLowerCase()
-    );
-    const detectedBuildpacks = builder.detected;
-    const availableBuildpacks = builder.others;
-    const defaultStack = builder.builders.find((stack) => {
-      return stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK;
-    });
-    setSelectedBuilder(builderName);
-    setBuilders(builders);
-    setSelectedBuilder(builderName.toLowerCase());
-
-    setStacks(builder.builders);
-    setSelectedStack(defaultStack);
-
-    setSelectedBuildpacks(detectedBuildpacks);
-    setAvailableBuildpacks(availableBuildpacks);
-  };
-
-  const renderBuildpacksList = (
-    buildpacks: Buildpack[],
-    action: "remove" | "add"
-  ) => {
-    return buildpacks?.map((buildpack) => {
-      const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
-
-      return (
-        <StyledCard>
-          <ContentContainer>
-            <Icon className={icon} />
-            <EventInformation>
-              <EventName>{buildpack?.name}</EventName>
-            </EventInformation>
-          </ContentContainer>
-          <ActionContainer>
-            {action === "add" && (
-              <DeleteButton
-                onClick={() => handleAddBuildpack(buildpack.buildpack)}
-              >
-                <span className="material-icons-outlined">add</span>
-              </DeleteButton>
-            )}
-            {action === "remove" && (
-              <DeleteButton
-                onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
-              >
-                <span className="material-icons">delete</span>
-              </DeleteButton>
-            )}
-          </ActionContainer>
-        </StyledCard>
-      );
-    });
-  };
-
-  const handleRemoveBuildpack = (buildpackToRemove: string) => {
-    setSelectedBuildpacks((selBuildpacks) => {
-      const tmpSelectedBuildpacks = [...selBuildpacks];
-
-      const indexBuildpackToRemove = tmpSelectedBuildpacks.findIndex(
-        (buildpack) => buildpack.buildpack === buildpackToRemove
-      );
-      const buildpack = tmpSelectedBuildpacks[indexBuildpackToRemove];
-
-      setAvailableBuildpacks((availableBuildpacks) => [
-        ...availableBuildpacks,
-        buildpack,
-      ]);
-
-      tmpSelectedBuildpacks.splice(indexBuildpackToRemove, 1);
-
-      return [...tmpSelectedBuildpacks];
-    });
-  };
-
-  const handleAddBuildpack = (buildpackToAdd: string) => {
-    setAvailableBuildpacks((avBuildpacks) => {
-      const tmpAvailableBuildpacks = [...avBuildpacks];
-      const indexBuildpackToAdd = tmpAvailableBuildpacks.findIndex(
-        (buildpack) => buildpack.buildpack === buildpackToAdd
-      );
-      const buildpack = tmpAvailableBuildpacks[indexBuildpackToAdd];
-
-      setSelectedBuildpacks((selectedBuildpacks) => [
-        ...selectedBuildpacks,
-        buildpack,
-      ]);
-
-      tmpAvailableBuildpacks.splice(indexBuildpackToAdd, 1);
-      return [...tmpAvailableBuildpacks];
-    });
-  };
-
-  if (hide) {
-    return null;
-  }
-
-  if (!stackOptions?.length || !builderOptions?.length) {
-    return <Loading />;
-  }
-
-  return (
-    <BuildpackConfigurationContainer>
-      <>
-        <SelectRow
-          value={selectedBuilder}
-          width="100%"
-          options={builderOptions}
-          setActiveValue={(option) => handleSelectBuilder(option)}
-          label="Select a builder"
-        />
-
-        <SelectRow
-          value={selectedStack}
-          width="100%"
-          options={stackOptions}
-          setActiveValue={(option) => setSelectedStack(option)}
-          label="Select your stack"
-        />
-        <Helper>
-          The following buildpacks were automatically detected. You can also
-          manually add/remove buildpacks.
-        </Helper>
-
-        {!!selectedBuildpacks?.length &&
-          renderBuildpacksList(selectedBuildpacks, "remove")}
-
-        {!!availableBuildpacks?.length && (
-          <>
-            <Helper>Available buildpacks:</Helper>
-            {renderBuildpacksList(availableBuildpacks, "add")}
-          </>
-        )}
-      </>
-    </BuildpackConfigurationContainer>
-  );
-};
 
 const fadeIn = keyframes`
   from {

@@ -313,7 +313,7 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			"https://www.googleapis.com/auth/cloud-platform",
 		)
 
-		if err != nil {
+		if tok == nil && err != nil {
 			return nil, err
 		}
 

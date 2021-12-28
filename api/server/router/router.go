@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
@@ -49,6 +50,10 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 	userRegisterer := NewUserScopedRegisterer(projRegisterer)
 	panicMW := middleware.NewPanicMiddleware(config)
+
+	if config.ServerConf.PprofEnabled {
+		r.Mount("/debug", chiMiddleware.Profiler())
+	}
 
 	r.Route("/api", func(r chi.Router) {
 		// set panic middleware for all API endpoints to catch panics
@@ -103,6 +108,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	fs := http.FileServer(http.Dir(staticFilePath))
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Frame-Options", "DENY")
+
 		if _, err := os.Stat(staticFilePath + r.RequestURI); os.IsNotExist(err) {
 			w.Header().Set("Cache-Control", "no-cache")
 

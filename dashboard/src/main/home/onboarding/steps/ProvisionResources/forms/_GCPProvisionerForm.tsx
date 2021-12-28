@@ -335,6 +335,7 @@ export const SettingsForm: React.FC<{
         cluster_name: clusterName,
         registry_infra_id: registryProvisionResponse?.id,
         cluster_infra_id: clusterProvisionResponse?.id,
+        region,
       },
     });
   };

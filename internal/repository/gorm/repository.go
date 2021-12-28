@@ -31,6 +31,7 @@ type GormRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
+	jobNotificationConfig     repository.JobNotificationConfigRepository
 	buildEvent                repository.BuildEventRepository
 	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
@@ -136,6 +137,10 @@ func (t *GormRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
+func (t *GormRepository) JobNotificationConfig() repository.JobNotificationConfigRepository {
+	return t.jobNotificationConfig
+}
+
 func (t *GormRepository) BuildEvent() repository.BuildEventRepository {
 	return t.buildEvent
 }
@@ -192,6 +197,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
+		jobNotificationConfig:     NewJobNotificationConfigRepository(db),
 		buildEvent:                NewBuildEventRepository(db),
 		kubeEvent:                 NewKubeEventRepository(db, key),
 		projectUsage:              NewProjectUsageRepository(db),

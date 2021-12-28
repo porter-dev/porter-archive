@@ -259,14 +259,14 @@ func (c *CreateAgent) CreateFromDocker(
 		"tag":        "latest",
 	}
 
-	// create docker agen
+	// create docker agent
 	agent, err := docker.NewAgentWithAuthGetter(c.Client, opts.ProjectID)
 
 	if err != nil {
 		return "", err
 	}
 
-	env, err := GetEnvFromConfig(mergedValues)
+	env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
 
 	if err != nil {
 		env = map[string]string{}

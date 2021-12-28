@@ -931,6 +931,17 @@ const upgradeChartValues = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
 });
 
+const listEnvGroups = baseApi<
+  {},
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroups/list`;
+});
+
 const listConfigMaps = baseApi<
   {},
   {
@@ -940,6 +951,23 @@ const listConfigMaps = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/list`;
+});
+
+const getEnvGroup = baseApi<
+  {},
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+    name: string;
+    version?: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${
+    pathParams.cluster_id
+  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
+    pathParams.version ? "&version=" + pathParams.version : ""
+  }`;
 });
 
 const getConfigMap = baseApi<
@@ -953,6 +981,21 @@ const getConfigMap = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap`;
+});
+
+const createEnvGroup = baseApi<
+  {
+    name: string;
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
+  },
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
 });
 
 const createConfigMap = baseApi<
@@ -998,6 +1041,19 @@ const renameConfigMap = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/rename`;
+});
+
+const deleteEnvGroup = baseApi<
+  {
+    name: string;
+  },
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup`;
 });
 
 const deleteConfigMap = baseApi<
@@ -1334,4 +1390,8 @@ export default {
   getLogBuckets,
   getLogBucketLogs,
   getCanCreateProject,
+  createEnvGroup,
+  listEnvGroups,
+  getEnvGroup,
+  deleteEnvGroup,
 };

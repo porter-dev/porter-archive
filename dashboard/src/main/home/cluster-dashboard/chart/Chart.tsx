@@ -17,12 +17,14 @@ type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
   jobStatus: JobStatusWithTimeType;
+  isJob: boolean;
 };
 
 const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
   jobStatus,
+  isJob
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
@@ -96,7 +98,7 @@ const Chart: React.FunctionComponent<Props> = ({
       onClick={() => {
         let urlParams = new URLSearchParams(location.search);
         let cluster = urlParams.get("cluster");
-        let route = `${match.url}/${cluster}/${chart.namespace}/${chart.name}`;
+        let route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${chart.namespace}/${chart.name}`;
         pushFiltered({ location, history }, route, ["project_id"]);
       }}
     >

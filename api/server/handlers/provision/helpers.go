@@ -65,5 +65,6 @@ func GetSharedProvisionerOpts(conf *config.Config, infra *models.Infra) (*provis
 			CredExchangeToken:    rawToken,
 			CredExchangeID:       ceToken.ID,
 		},
+		ProvisionerTest: conf.ServerConf.ProvisionerTest,
 	}, nil
 }

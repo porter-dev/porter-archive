@@ -73,10 +73,6 @@ export const StatusPage = ({
 
   const { moduleStatuses } = useModuleChecker(tfModules);
 
-  useEffect(() => {
-    console.log(tfModules);
-  }, [tfModules]);
-
   const filterBySelectedInfras = (currentInfra: Infra) => {
     if (!Array.isArray(selectedFilters) || !selectedFilters?.length) {
       return true;
@@ -217,8 +213,6 @@ export const StatusPage = ({
   };
 
   const handleApplyStart = (data: any): TFResource => {
-    console.log("HANDLE APPLY START", data);
-
     const message = String(data["@message"]);
     if (message?.includes("Destroying")) {
       return {
@@ -241,13 +235,11 @@ export const StatusPage = ({
   };
 
   const handleApplyComplete = (data: any): TFResource => {
-    console.log("HANDLE APPLY COMPLETE", data);
-
     const message = String(data["@message"]);
     if (message?.includes("Destruction complete")) {
       return {
         addr: data?.hook?.resource?.addr,
-        provisioned: false,
+        provisioned: true,
         destroyed: true,
         errored: {
           errored_out: false,
@@ -560,11 +552,6 @@ const useTFModules = () => {
         };
       }
 
-      console.log(
-        `MODULE: ${selectedModule.id}, RESOURCE: ${resource.addr}`,
-        resource
-      );
-
       return {
         ...resource,
         provisioned: correspondedResource.provisioned,
@@ -576,9 +563,10 @@ const useTFModules = () => {
 
     selectedModule.resources = updatedModuleResources;
 
-    const isModuleDestroyed = selectedModule.resources?.every(
-      (res) => res?.destroyed
-    );
+    // Check if all provisioned resources have been destroyed as well
+    const isModuleDestroyed = selectedModule.resources
+      ?.filter((res) => res?.provisioned)
+      ?.every((res) => res?.destroyed);
 
     const isModuleDestroying = selectedModule.resources?.find(
       (res) => res?.destroying

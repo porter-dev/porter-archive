@@ -174,12 +174,16 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
       let showDelete = false;
       let showRetry = false;
 
-      if (typeof onDelete === "function") {
+      if (
+        typeof onDelete === "function" &&
+        val.status !== "destroying" &&
+        val.status !== "destroyed"
+      ) {
         showActions = true;
         showDelete = true;
       }
 
-      if (typeof onRetry === "function") {
+      if (typeof onRetry === "function" && val.status === "error") {
         showActions = true;
         showRetry = true;
       }

@@ -564,9 +564,15 @@ const useTFModules = () => {
     selectedModule.resources = updatedModuleResources;
 
     // Check if all provisioned resources have been destroyed as well
-    const isModuleDestroyed = selectedModule.resources
-      ?.filter((res) => res?.provisioned)
-      ?.every((res) => res?.destroyed);
+    let isModuleDestroyed = false;
+
+    const provisionedResources = selectedModule.resources?.filter(
+      (res) => res?.provisioned
+    );
+
+    if (provisionedResources?.length) {
+      isModuleDestroyed = provisionedResources?.every((res) => res?.destroyed);
+    }
 
     const isModuleDestroying = selectedModule.resources?.find(
       (res) => res?.destroying

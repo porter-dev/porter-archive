@@ -603,7 +603,7 @@ const retryInfra = baseApi<
     project_id: number;
     infra_id: number;
   }
->("GET", ({ project_id, infra_id }) => {
+>("POST", ({ project_id, infra_id }) => {
   return `/api/projects/${project_id}/infras/${infra_id}/retry`;
 });
 

@@ -89,6 +89,7 @@ func (i *Infra) SafelyGetLastApplied() map[string]string {
 
 		resp["eks_name"] = lastApplied.EKSName
 		resp["machine_type"] = lastApplied.MachineType
+		resp["issuer_email"] = lastApplied.IssuerEmail
 
 		return resp
 	case types.InfraGCR:
@@ -101,6 +102,8 @@ func (i *Infra) SafelyGetLastApplied() map[string]string {
 		}
 
 		resp["gke_name"] = lastApplied.GKEName
+		resp["gcp_region"] = lastApplied.GCPRegion
+		resp["issuer_email"] = lastApplied.IssuerEmail
 
 		return resp
 	case types.InfraDOCR:
@@ -123,6 +126,7 @@ func (i *Infra) SafelyGetLastApplied() map[string]string {
 
 		resp["cluster_name"] = lastApplied.DOKSName
 		resp["do_region"] = lastApplied.DORegion
+		resp["issuer_email"] = lastApplied.IssuerEmail
 
 		return resp
 	}

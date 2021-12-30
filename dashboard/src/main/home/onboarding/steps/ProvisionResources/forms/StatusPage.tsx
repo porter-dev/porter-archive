@@ -600,9 +600,9 @@ const useTFModules = () => {
       isModuleDestroyed = provisionedResources?.every((res) => res?.destroyed);
     }
 
-    const isModuleDestroying = selectedModule.resources?.find(
-      (res) => res?.destroying
-    );
+    const isModuleDestroying =
+      selectedModule.resources?.find((res) => res?.destroying) ||
+      selectedModule.status === "destroying";
 
     const isModuleCreated =
       selectedModule.resources.every((resource) => {

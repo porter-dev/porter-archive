@@ -134,7 +134,7 @@ func (c *InfraRetryHandler) getProvisioningOpts(infraModel *models.Infra) (*prov
 		if infra.Kind == types.InfraGKE {
 			opts.GKE = &gke.Conf{
 				GCPProjectID: integration.GCPProjectID,
-				GCPRegion:    integration.GCPRegion,
+				GCPRegion:    infra.LastApplied["gcp_region"],
 				ClusterName:  infra.LastApplied["gke_name"],
 			}
 		} else {

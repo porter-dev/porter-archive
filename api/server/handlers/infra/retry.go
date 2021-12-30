@@ -136,6 +136,7 @@ func (c *InfraRetryHandler) getProvisioningOpts(infraModel *models.Infra) (*prov
 				GCPProjectID: integration.GCPProjectID,
 				GCPRegion:    infra.LastApplied["gcp_region"],
 				ClusterName:  infra.LastApplied["gke_name"],
+				IssuerEmail:  infra.LastApplied["issuer_email"],
 			}
 		} else {
 			opts.GCR = &gcr.Conf{

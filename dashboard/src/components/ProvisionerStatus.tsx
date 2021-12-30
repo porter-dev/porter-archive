@@ -153,18 +153,18 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
       let loadingFill;
       let status;
 
-      if (hasError || val.status == "destroyed") {
+      if (val.status === "destroyed") {
+        loadingFill = <LoadingFill status="destroyed" width={width + "%"} />;
+        status = renderStatus("destroyed");
+      } else if (isDestroying || val.status === "destroying") {
+        loadingFill = <LoadingFill status="destroying" width={width + "%"} />;
+        status = renderStatus("destroying");
+      } else if (hasError) {
         loadingFill = <LoadingFill status="error" width={width + "%"} />;
         status = renderStatus("error");
       } else if (width == 100) {
         loadingFill = <LoadingFill status="successful" width={width + "%"} />;
         status = renderStatus("successful");
-      } else if (isDestroying || val.status === "destroying") {
-        loadingFill = <LoadingFill status="destroying" width={width + "%"} />;
-        status = renderStatus("destroying");
-      } else if (val.status === "destroyed") {
-        loadingFill = <LoadingFill status="destroyed" width={width + "%"} />;
-        status = renderStatus("destroyed");
       } else {
         loadingFill = <LoadingFill status="loading" width={width + "%"} />;
         status = renderStatus("loading");

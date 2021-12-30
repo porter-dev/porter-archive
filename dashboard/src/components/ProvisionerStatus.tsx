@@ -271,18 +271,18 @@ const LoadingFill = styled.div<{ width: string; status: string }>`
   width: ${(props) => props.width};
   background: ${(props) => {
     if (props.status === "successful") {
-      return "rgb(56, 168, 138)";
+      return "rgb(56, 168, 138);";
     }
 
     if (props.status === "error") {
-      return "#fcba03";
+      return "#fcba03;";
     }
 
     if (props.status === "destroying") {
-      return "linear-gradient(to right, #ed5f85a4, #ed5f85)";
+      return "linear-gradient(to right, #ed5f85a4, #ed5f85);";
     }
 
-    return "linear-gradient(to right, #8ce1ff, #616FEE)";
+    return "linear-gradient(to right, #8ce1ff, #616FEE);";
   }}
 
   height: 100%;

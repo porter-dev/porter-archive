@@ -69,6 +69,7 @@ export const StatusPage = ({
     updateDesired,
     updateModuleResources,
     updateGlobalErrorsForModule,
+    updateModuleStatus,
   } = useTFModules();
 
   const { moduleStatuses } = useModuleChecker(tfModules);
@@ -341,7 +342,7 @@ export const StatusPage = ({
           infra_id: infraId,
         }
       );
-
+      updateModuleStatus(infraId, "creating");
       getInfras();
     } catch (error) {}
   };
@@ -356,6 +357,7 @@ export const StatusPage = ({
           infra_id: infraId,
         }
       );
+      updateModuleStatus(infraId, "destroying");
     } catch (err) {}
   };
 
@@ -394,6 +396,10 @@ export const StatusPage = ({
       (module) => module.status === "destroyed"
     );
 
+    const hasModuleDestroying = tfModules.find(
+      (module) => module.status === "destroying"
+    );
+
     if (hasModuleBeenDestroyed) {
       setInfraStatus({
         hasError: true,
@@ -417,7 +423,11 @@ export const StatusPage = ({
       return;
     }
 
-    if (!hasModuleInCreatingState && !hasModuleWithError) {
+    if (
+      !hasModuleInCreatingState &&
+      !hasModuleWithError &&
+      !hasModuleDestroying
+    ) {
       setInfraStatus({ hasError: false });
       return;
     }
@@ -503,6 +513,22 @@ const useTFModules = () => {
 
   const getModule = (infraId: number) => {
     return { ...modules.current[infraId] };
+  };
+
+  /**
+   * WARNING: This function should be used as little as possible, as it can cause UI missbehaviour
+   * Use it with caution
+   *
+   * Updates the terraform module status
+   * @param infraId Infra ID of the module to be updated
+   * @param newStatus New status that will be placed on the module
+   */
+  const updateModuleStatus = (infraId: number, newStatus: string) => {
+    const module = getModule(infraId);
+
+    module.status = newStatus;
+
+    setModule(infraId, module);
   };
 
   /**
@@ -643,6 +669,7 @@ const useTFModules = () => {
     updateDesired,
     updateModuleResources,
     updateGlobalErrorsForModule,
+    updateModuleStatus,
   };
 };
 

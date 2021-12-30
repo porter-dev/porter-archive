@@ -279,7 +279,7 @@ const LoadingFill = styled.div<{ width: string; status: string }>`
     }
 
     if (props.status === "destroying") {
-      return "linear-gradient(to right, #ed5f85a4, #ed5f85);";
+      return "linear-gradient(to right, #ff92b1, #e93f6c);";
     }
 
     return "linear-gradient(to right, #8ce1ff, #616FEE);";

@@ -95,7 +95,7 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
     return modules.map((val) => {
       const totalResources = val.resources?.length;
       const provisionedResources = val.resources?.filter((resource) => {
-        return resource.provisioned;
+        return resource.provisioned && !resource.destroyed;
       }).length;
 
       let errors: string[] = [];

@@ -50,20 +50,26 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
   const renderStatus = (status: string) => {
     if (status === "successful") {
       return (
-        <StatusIcon successful={true}>
+        <StatusIcon status={status}>
           <i className="material-icons">done</i>
         </StatusIcon>
       );
     } else if (status === "loading") {
       return (
-        <StatusIcon>
+        <StatusIcon status={status}>
           <LoadingGif src={loading} />
         </StatusIcon>
       );
     } else if (status === "error") {
       return (
-        <StatusIcon>
+        <StatusIcon status={status}>
           <i className="material-icons">error_outline</i>
+        </StatusIcon>
+      );
+    } else if (status === "destroying") {
+      return (
+        <StatusIcon status={status}>
+          <span className="material-icons-outlined">auto_delete</span>
         </StatusIcon>
       );
     }
@@ -131,6 +137,9 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
           return <ExpandedError key={index}>{error}</ExpandedError>;
         });
       }
+
+      const isDestroying = !!val.resources?.find((res) => res.destroying);
+
       let loadingFill;
       let status;
 
@@ -140,6 +149,9 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
       } else if (width == 100) {
         loadingFill = <LoadingFill status="successful" width={width + "%"} />;
         status = renderStatus("successful");
+      } else if (isDestroying || val.status === "destroying") {
+        loadingFill = <LoadingFill status="destroying" width={width + "%"} />;
+        status = renderStatus("destroying");
       } else {
         loadingFill = <LoadingFill status="loading" width={width + "%"} />;
         status = renderStatus("loading");
@@ -257,7 +269,9 @@ const LoadingFill = styled.div<{ width: string; status: string }>`
   animation-direction: alternate;
 `;
 
-const StatusIcon = styled.div<{ successful?: boolean }>`
+const StatusIcon = styled.div<{
+  status?: "loading" | "error" | "successful" | "destroying";
+}>`
   display: flex;
   align-items: center;
   font-family: "Work Sans", sans-serif;
@@ -271,7 +285,17 @@ const StatusIcon = styled.div<{ successful?: boolean }>`
     font-size: 18px;
     margin-right: 10px;
     float: left;
-    color: ${(props) => (props.successful ? "rgb(56, 168, 138)" : "#fcba03")};
+    color: ${({ status }) => {
+      if (status === "successful") {
+        return "rgb(56, 168, 138)";
+      }
+
+      if (status === "destroying") {
+        return "#ed5f85";
+      }
+
+      return "#fcba03";
+    }};
   }
 `;
 

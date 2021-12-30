@@ -247,7 +247,7 @@ export const StatusPage = ({
     if (message?.includes("Destruction complete")) {
       return {
         addr: data?.hook?.resource?.addr,
-        provisioned: true,
+        provisioned: false,
         destroyed: true,
         errored: {
           errored_out: false,
@@ -563,13 +563,13 @@ const useTFModules = () => {
 
     selectedModule.resources = updatedModuleResources;
 
-    if (
-      selectedModule.status === "destroying" ||
-      selectedModule.status === "destroyed"
-    ) {
-      setModule(infraId, selectedModule);
-      return;
-    }
+    const isModuleDestroyed = selectedModule.resources?.every(
+      (res) => res?.destroyed
+    );
+
+    const isModuleDestroying = selectedModule.resources?.find(
+      (res) => res?.destroying
+    );
 
     const isModuleCreated =
       selectedModule.resources.every((resource) => {
@@ -581,14 +581,31 @@ const useTFModules = () => {
         return resource.errored?.errored_out;
       }) || selectedModule.global_errors?.length;
 
-    if (isModuleCreated) {
-      selectedModule.status = "created";
-    } else if (isModuleOnError) {
-      selectedModule.status = "error";
-    } else {
-      selectedModule.status = selectedModule.status;
+    if (isModuleDestroyed) {
+      selectedModule.status = "destroyed";
+      setModule(infraId, selectedModule);
+      return;
     }
 
+    if (isModuleDestroying) {
+      selectedModule.status = "destroying";
+      setModule(infraId, selectedModule);
+      return;
+    }
+
+    if (isModuleCreated) {
+      selectedModule.status = "created";
+      setModule(infraId, selectedModule);
+      return;
+    }
+
+    if (isModuleOnError) {
+      selectedModule.status = "error";
+      setModule(infraId, selectedModule);
+      return;
+    }
+
+    selectedModule.status = selectedModule.status;
     setModule(infraId, selectedModule);
   };
 
@@ -601,6 +618,10 @@ const useTFModules = () => {
     globalErrors: TFResourceError[]
   ) => {
     const module = getModule(infraId);
+
+    if (module.status === "destroyed" || module.status === "destroying") {
+      return;
+    }
 
     module.global_errors = [...(module.global_errors || []), ...globalErrors];
     if (globalErrors.length) {

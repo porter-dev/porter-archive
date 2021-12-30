@@ -398,6 +398,19 @@ export const StatusPage = ({
       (module) => module.status === "timed_out"
     );
 
+    const hasModuleBeenDestroyed = tfModules.find(
+      (module) => module.status === "destroyed"
+    );
+
+    if (hasModuleBeenDestroyed) {
+      setInfraStatus({
+        hasError: true,
+        description:
+          "One or more modules have been destroyed, please try again.",
+      });
+      return;
+    }
+
     if (hasModuleWithTimerElapsed) {
       setInfraStatus({
         hasError: true,

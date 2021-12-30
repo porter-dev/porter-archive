@@ -69,7 +69,13 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
     } else if (status === "destroying") {
       return (
         <StatusIcon status={status}>
-          <span className="material-icons-outlined">auto_delete</span>
+          <i className="material-icons-outlined">auto_delete</i>
+        </StatusIcon>
+      );
+    } else if (status === "destroyed") {
+      return (
+        <StatusIcon status={status}>
+          <i className="material-icons-outlined">delete</i>
         </StatusIcon>
       );
     }
@@ -95,7 +101,7 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
       let errors: string[] = [];
 
       if (val.status == "destroyed") {
-        errors.push("Note: this infrastructure was automatically destroyed.");
+        errors.push("Note: this infrastructure was destroyed.");
       }
 
       let hasError =
@@ -112,6 +118,10 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
           errors.push(globalErr.error_context);
           hasError = true;
         }
+      }
+
+      if (val.status === "destroyed") {
+        hasError = true;
       }
 
       // remove duplicate errors
@@ -152,6 +162,9 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
       } else if (isDestroying || val.status === "destroying") {
         loadingFill = <LoadingFill status="destroying" width={width + "%"} />;
         status = renderStatus("destroying");
+      } else if (val.status === "destroyed") {
+        loadingFill = <LoadingFill status="destroyed" width={width + "%"} />;
+        status = renderStatus("destroyed");
       } else {
         loadingFill = <LoadingFill status="loading" width={width + "%"} />;
         status = renderStatus("loading");
@@ -256,12 +269,22 @@ const movingGradient = keyframes`
 
 const LoadingFill = styled.div<{ width: string; status: string }>`
   width: ${(props) => props.width};
-  background: ${(props) =>
-    props.status === "successful"
-      ? "rgb(56, 168, 138)"
-      : props.status === "error"
-      ? "#fcba03"
-      : "linear-gradient(to right, #8ce1ff, #616FEE)"};
+  background: ${(props) => {
+    if (props.status === "successful") {
+      return "rgb(56, 168, 138)";
+    }
+
+    if (props.status === "error") {
+      return "#fcba03";
+    }
+
+    if (props.status === "destroying") {
+      return "linear-gradient(to right, #ed5f85a4, #ed5f85)";
+    }
+
+    return "linear-gradient(to right, #8ce1ff, #616FEE)";
+  }}
+
   height: 100%;
   background-size: 250% 100%;
   animation: ${movingGradient} 2s infinite;
@@ -270,7 +293,7 @@ const LoadingFill = styled.div<{ width: string; status: string }>`
 `;
 
 const StatusIcon = styled.div<{
-  status?: "loading" | "error" | "successful" | "destroying";
+  status?: "loading" | "error" | "successful" | "destroying" | "destroyed";
 }>`
   display: flex;
   align-items: center;
@@ -290,7 +313,7 @@ const StatusIcon = styled.div<{
         return "rgb(56, 168, 138)";
       }
 
-      if (status === "destroying") {
+      if (status === "destroying" || status === "destroyed") {
         return "#ed5f85";
       }
 

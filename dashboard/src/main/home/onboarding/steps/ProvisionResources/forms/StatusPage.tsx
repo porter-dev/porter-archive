@@ -400,6 +400,11 @@ export const StatusPage = ({
       (module) => module.status === "destroying"
     );
 
+    if (hasModuleDestroying) {
+      setInfraStatus(null);
+      return;
+    }
+
     if (hasModuleBeenDestroyed) {
       setInfraStatus({
         hasError: true,

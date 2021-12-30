@@ -198,12 +198,18 @@ const ProvisionerStatus: React.FC<Props> = ({ modules, onDelete, onRetry }) => {
             {hasError && showActions && (
               <ActionContainer>
                 {showRetry && (
-                  <ActionButton onClick={() => onRetry(val.id)}>
+                  <ActionButton
+                    disabled={val?.status === "destroying"}
+                    onClick={() => onRetry(val.id)}
+                  >
                     <span className="material-icons">replay</span>
                   </ActionButton>
                 )}
                 {showDelete && (
-                  <ActionButton onClick={() => onDelete(val.id)}>
+                  <ActionButton
+                    disabled={val?.status === "destroying"}
+                    onClick={() => onDelete(val.id)}
+                  >
                     <span className="material-icons">delete</span>
                   </ActionButton>
                 )}

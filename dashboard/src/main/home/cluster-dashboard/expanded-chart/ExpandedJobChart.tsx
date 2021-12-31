@@ -458,6 +458,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     jobs.sort((job1, job2) => {
       if (job1.metadata.name === urlJob) {
         this.setJobRun(job1);
+      } else if (job2.metadata.name === urlJob) {
+        this.setJobRun(job2);
       }
 
       let date1: Date = new Date(job1.status?.startTime);
@@ -919,7 +921,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 label: "Config", value: "config",
               }
             ]}
-            color={null}
           >
             {
               this.state.currentTab === "logs" ? (

@@ -298,7 +298,10 @@ export default class JobResource extends Component<PropsType, StateType> {
                     delete
                   </i>
                 )}
-                <i className="material-icons" onClick={() => this.props.expandJob(this.props.job)}>
+                <i
+                  className="material-icons"
+                  onClick={() => this.props.expandJob(this.props.job)}
+                >
                   open_in_new
                 </i>
               </MaterialIconTray>

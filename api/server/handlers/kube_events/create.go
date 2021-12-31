@@ -346,6 +346,33 @@ func getJobAlert(agent *kubernetes.Agent, name, namespace string) (
 			if containerStatus.Name != "sidecar" && containerStatus.Name != "cloud-sql-proxy" {
 				state := containerStatus.State
 				if state.Terminated != nil && state.Terminated.ExitCode != 0 {
+					// before alerting, we check pod events to make sure the pod was not moved due to normal behavior such as scale down
+					events, err := agent.ListEvents(name, namespace)
+
+					if err == nil && len(events.Items) > 0 {
+						for _, event := range events.Items {
+							// if event is ScaleDown, don't alert
+							if event.Reason == "ScaleDown" && strings.Contains(event.Message, "deleting pod for node scale down") {
+								return ownerName, "", ownerJobName, false, nil
+							}
+						}
+					}
+
+					// next, if the exit code is 255, we check that the job doesn't have a different associated pod.
+					// exit code 255 can mean this pod was moved to a different node due to node eviction, scaledown,
+					// unhealthy node, etc
+					if state.Terminated.ExitCode == 255 {
+						jobPods, err := agent.GetJobPods(namespace, ownerJobName)
+
+						if err == nil && len(jobPods) > 0 {
+							for _, jobPod := range jobPods {
+								if jobPod.ObjectMeta.Name != name {
+									return ownerName, "", ownerJobName, false, nil
+								}
+							}
+						}
+					}
+
 					msg := fmt.Sprintf("Job terminated with non-zero exit code: exit code %d.", state.Terminated.ExitCode)
 
 					if state.Terminated.Message != "" {

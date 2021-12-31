@@ -454,6 +454,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     // Set job run from URL if needed
     const urlParams = new URLSearchParams(location.search);
     const urlJob = urlParams.get("job");
+    console.log("urljob:", urlJob);
 
     jobs.sort((job1, job2) => {
       if (job1.metadata.name === urlJob) {
@@ -482,6 +483,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   setJobRun = (job: any) => {
+    console.log("got to set job", job);
     this.getPods(job, () => {
       this.setState({ expandedJobRun: job, currentTab: "logs" });
     });

@@ -160,7 +160,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     pushFiltered(
       { location: this.props.location, history: this.props.history },
       this.props.match.url,
-      ["project_id"],
+      ["project_id", "job"],
       {
         chart_revision: this.state.currentChart.version,
       }
@@ -457,6 +457,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     jobs.sort((job1, job2) => {
       if (job1.metadata.name === urlJob) {
         this.setJobRun(job1);
+      } else if (job2.metadata.name === urlJob) {
+        this.setJobRun(job2);
       }
 
       let date1: Date = new Date(job1.status?.startTime);
@@ -932,7 +934,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 value: "config",
               },
             ]}
-            color={null}
           >
             {this.state.currentTab === "logs" ? (
               <JobLogsWrapper>

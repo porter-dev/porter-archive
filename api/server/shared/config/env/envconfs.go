@@ -88,7 +88,7 @@ type ServerConf struct {
 
 	// Enable pprof profiling endpoints
 	PprofEnabled    bool `env:"PPROF_ENABLED,default=false"`
-	ProvisionerTest bool `env:"PROVISIONER_TEST",default=false`
+	ProvisionerTest bool `env:"PROVISIONER_TEST,default=false"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

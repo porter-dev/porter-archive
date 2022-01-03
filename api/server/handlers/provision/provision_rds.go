@@ -46,6 +46,23 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// validate db version and family
+	if v, ok := types.DBVersionMapping[types.Engine(request.DBFamily)]; !ok {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			errors.New("DB family does not exist"), http.StatusBadRequest))
+
+		return
+	} else {
+		if !v.VersionExists(types.EngineVersion(request.DBEngineVersion)) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				errors.New("DB version not available for the given family"), http.StatusBadRequest))
+
+			return
+		}
+	}
+
+	dbVersion := types.EngineVersion(request.DBEngineVersion)
+
 	// given a cluster_id, fetch the cluster detail to get the infra_id
 	cluster, err := c.Repo().Cluster().ReadCluster(proj.ID, request.ClusterID)
 	if err != nil {
@@ -58,7 +75,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	clusterInfra, err := c.Repo().Infra().ReadInfra(1, 25) // proj.ID, cluster.InfraID)
+	clusterInfra, err := c.Repo().Infra().ReadInfra(proj.ID, cluster.InfraID)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("empty cluster infra, projectID: %d, infraID: %d", proj.ID, cluster.InfraID),
@@ -93,7 +110,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	client := httpbackend.NewClient(c.Config().ServerConf.ProvisionerBackendURL)
 
 	// get the unique infra name and query from the TF HTTP backend
-	current, err := client.GetCurrentState("gke-10-62-e4c0a5bcf33c") // clusterInfra.GetUniqueName()
+	currentState, err := client.GetCurrentState(clusterInfra.GetUniqueName())
 	if err != nil && errors.Is(err, httpbackend.ErrNotFound) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			err,
@@ -135,7 +152,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 
-		vpc, err = c.ExtractVPCFromGKETFState(current, "google_compute_network.vpc")
+		vpc, err = c.ExtractVPCFromGKETFState(currentState, "google_compute_network.vpc")
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				err,
@@ -169,7 +186,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 
-		vpc, err = c.ExtractVPCFromEKSTFState(current, "aws_vpc.this")
+		vpc, err = c.ExtractVPCFromEKSTFState(currentState, "aws_vpc.this")
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				err,
@@ -204,14 +221,13 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	opts.CredentialExchange.VaultToken = vaultToken
 
 	opts.RDS = &rds.Conf{
-		AWSRegion:       region, // TODO: get integration
+		AWSRegion:       region,
 		DBName:          request.DBName,
 		MachineType:     request.MachineType,
 		DBEngineVersion: request.DBEngineVersion,
 		DBFamily:        request.DBFamily,
 
-		// TODO: Implement mapping for db family - compatible engine versions
-		DBMajorEngineVersion: "<TODO>",
+		DBMajorEngineVersion: dbVersion.MajorVersion(),
 
 		DBAllocatedStorage:    request.DBStorage,
 		DBMaxAllocatedStorage: request.DBMaxStorage,
@@ -235,12 +251,12 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	c.WriteResult(w, r, infra.ToInfraType())
 
 	// response := map[string]interface{}{
-	// 	"request":  request,
-	// 	"project":  proj,
-	// 	"cluster":  cluster,
-	// 	"infra":    infra,
-	// 	"current":  current,
-	// 	"vpc_name": vpcName,
+	// 	"request": request,
+	// 	"project": proj,
+	// 	// "cluster":  cluster,
+	// 	"infra": infra.ToInfraType(),
+	// 	// "current":  current,
+	// 	"vpc_name": vpc,
 	// 	"opts":     opts,
 	// }
 

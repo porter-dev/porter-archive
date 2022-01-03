@@ -112,43 +112,55 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 });
 
 const createEnvironment = baseApi<
-{
-  name: string;
-  git_repo_owner: string;
-  git_repo_name: string;
-},
-{
-  project_id: number;
-  cluster_id: number;
-  git_installation_id: number;
-}
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
+  }
 >("POST", (pathParams) => {
-  let { project_id, cluster_id, git_installation_id } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/environment`;
+  let {
+    project_id,
+    cluster_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
 });
 
 const deleteEnvironment = baseApi<
-{
-  name: string;
-  git_repo_owner: string;
-  git_repo_name: string;
-},
-{
-  project_id: number;
-  cluster_id: number;
-  git_installation_id: number;
-}
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
+  }
 >("DELETE", (pathParams) => {
-  let { project_id, cluster_id, git_installation_id } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/environment`;
+  let {
+    project_id,
+    cluster_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
 });
 
 const listEnvironments = baseApi<
-{},
-{
-  project_id: number;
-  cluster_id: number;
-}
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
 >("GET", (pathParams) => {
   let { project_id, cluster_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments`;
@@ -331,26 +343,33 @@ const getPRDeploymentList = baseApi<
   {
     cluster_id: number;
     project_id: number;
-    git_installation_id: number;
   }
 >("GET", (pathParams) => {
-  const { cluster_id, project_id, git_installation_id } = pathParams;
+  const { cluster_id, project_id } = pathParams;
 
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/deployments`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments`;
 });
 
 const getPRDeployment = baseApi<
   {
-    namespace: string,
+    namespace: string;
   },
   {
     cluster_id: number;
     project_id: number;
     git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
   }
 >("GET", (pathParams) => {
-  const { cluster_id, project_id, git_installation_id } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/clusters/${cluster_id}/deployment`;
+  const {
+    cluster_id,
+    project_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
 });
 
 const getNotificationConfig = baseApi<

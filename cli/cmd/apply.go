@@ -610,10 +610,10 @@ func existsInRepo(name, version, url string) (map[string]interface{}, error) {
 }
 
 type DeploymentHook struct {
-	client                                                  *api.Client
-	resourceGroup                                           *switchboardTypes.ResourceGroup
-	gitInstallationID, projectID, clusterID, prID, actionID uint
-	branch, namespace, repoName, repoOwner, prName, commitSHA             string
+	client                                                    *api.Client
+	resourceGroup                                             *switchboardTypes.ResourceGroup
+	gitInstallationID, projectID, clusterID, prID, actionID   uint
+	branch, namespace, repoName, repoOwner, prName, commitSHA string
 }
 
 func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
@@ -711,6 +711,7 @@ func (t *DeploymentHook) PreApply() error {
 	_, err := t.client.GetDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
+		t.repoOwner, t.repoName,
 		&types.GetDeploymentRequest{
 			Namespace: t.namespace,
 		},
@@ -722,6 +723,7 @@ func (t *DeploymentHook) PreApply() error {
 		_, err = t.client.CreateDeployment(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
+			t.repoOwner, t.repoName,
 			&types.CreateDeploymentRequest{
 				Namespace:     t.namespace,
 				PullRequestID: t.prID,
@@ -730,8 +732,8 @@ func (t *DeploymentHook) PreApply() error {
 					ActionID: t.actionID,
 				},
 				GitHubMetadata: &types.GitHubMetadata{
-					PRName:		t.prName,
-					RepoName: t.repoName,
+					PRName:    t.prName,
+					RepoName:  t.repoName,
 					RepoOwner: t.repoOwner,
 					CommitSHA: t.commitSHA,
 				},
@@ -741,6 +743,7 @@ func (t *DeploymentHook) PreApply() error {
 		_, err = t.client.UpdateDeployment(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
+			t.repoOwner, t.repoName,
 			&types.UpdateDeploymentRequest{
 				Namespace: t.namespace,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
@@ -801,6 +804,7 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 	_, err := t.client.FinalizeDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
+		t.repoOwner, t.repoName,
 		&types.FinalizeDeploymentRequest{
 			Namespace: t.namespace,
 			Subdomain: strings.Join(subdomains, ","),

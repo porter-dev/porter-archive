@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -32,8 +33,14 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
+	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
+
+	if !ok {
+		return
+	}
+
 	// read the environment to get the environment id
-	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID))
+	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

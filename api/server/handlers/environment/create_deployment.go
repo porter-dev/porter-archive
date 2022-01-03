@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -37,6 +38,12 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
+	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
+
+	if !ok {
+		return
+	}
+
 	request := &types.CreateDeploymentRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -44,7 +51,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	// read the environment to get the environment id
-	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID))
+	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -68,15 +75,15 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
-		EnvironmentID:      env.ID,
-		Namespace:          request.Namespace,
-		Status:             "creating",
-		PullRequestID:      request.PullRequestID,
+		EnvironmentID:  env.ID,
+		Namespace:      request.Namespace,
+		Status:         "creating",
+		PullRequestID:  request.PullRequestID,
 		GHDeploymentID: ghDeployment.GetID(),
-		RepoOwner: request.GitHubMetadata.RepoOwner,
-		RepoName: request.GitHubMetadata.RepoName,
-		PRName: request.GitHubMetadata.PRName,
-		CommitSHA: request.GitHubMetadata.CommitSHA,
+		RepoOwner:      request.GitHubMetadata.RepoOwner,
+		RepoName:       request.GitHubMetadata.RepoName,
+		PRName:         request.GitHubMetadata.PRName,
+		CommitSHA:      request.GitHubMetadata.CommitSHA,
 	})
 
 	if err != nil {

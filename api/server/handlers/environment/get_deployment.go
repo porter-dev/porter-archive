@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -34,6 +35,12 @@ func (c *GetDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
+	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
+
+	if !ok {
+		return
+	}
+
 	request := &types.GetDeploymentRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -41,7 +48,7 @@ func (c *GetDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// read the environment to get the environment id
-	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID))
+	env, err := c.Repo().Environment().ReadEnvironment(project.ID, cluster.ID, uint(ga.InstallationID), owner, name)
 
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

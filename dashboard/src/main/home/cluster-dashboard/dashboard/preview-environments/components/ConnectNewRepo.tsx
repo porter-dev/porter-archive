@@ -31,38 +31,37 @@ const ConnectNewRepo: React.FC = () => {
     git_repo_id: 0,
   });
 
-  useEffect(() => {
-  }, [repo])
+  useEffect(() => {}, [repo]);
 
   const { url } = useRouteMatch();
 
   const addRepo = () => {
-    let [owner, repoName] = repo.split('/')
-    setStatus('loading')
+    let [owner, repoName] = repo.split("/");
+    setStatus("loading");
     api
-    .createEnvironment(
-      "<token>",
-      {
-        name: 'Preview',
-        git_repo_name: repoName,
-        git_repo_owner: owner,
-      },
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-        git_installation_id: actionConfig.git_repo_id,
-      }
-    )
-    .then(() => {
-      setStatus('successful');
-      window.location.href = `${url}?selected_tab=preview_environments`
-    })
-    .catch((err) => {
-      err = JSON.stringify(err);
-      setStatus('error')
-      setCurrentError(err)
-    })
-  }
+      .createEnvironment(
+        "<token>",
+        {
+          name: "Preview",
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          git_installation_id: actionConfig.git_repo_id,
+          git_repo_name: repoName,
+          git_repo_owner: owner,
+        }
+      )
+      .then(() => {
+        setStatus("successful");
+        window.location.href = `${url}?selected_tab=preview_environments`;
+      })
+      .catch((err) => {
+        err = JSON.stringify(err);
+        setStatus("error");
+        setCurrentError(err);
+      });
+  };
 
   return (
     <div>
@@ -78,8 +77,8 @@ const ConnectNewRepo: React.FC = () => {
       <RepoList
         actionConfig={actionConfig}
         setActionConfig={(a: ActionConfigType) => {
-          setActionConfig(a)
-          setRepo(a.git_repo)
+          setActionConfig(a);
+          setRepo(a.git_repo);
         }}
         readOnly={false}
       />

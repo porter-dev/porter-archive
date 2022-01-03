@@ -83,15 +83,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id} ->
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id} ->
 	// environment.NewCreateEnvironmentHandler
 	createEnvironmentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/environment",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/environment",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -114,15 +119,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment ->
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
 	// environment.NewCreateDeploymentHandler
 	createDeploymentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/deployment",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -145,15 +155,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment ->
+	// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
 	// environment.NewCreateDeploymentHandler
 	getDeploymentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/deployment",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -176,15 +191,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployments ->
+	// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployments ->
 	// environment.NewCreateDeploymentHandler
 	listDeploymentsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/deployments",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/deployments",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -207,15 +227,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment/finalize ->
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment/finalize ->
 	// environment.NewFinalizeDeploymentHandler
 	finalizeDeploymentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/deployment/finalize",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment/finalize",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -238,15 +263,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment/update ->
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment/update ->
 	// environment.NewFinalizeDeploymentHandler
 	updateDeploymentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/deployment/update",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment/update",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -269,15 +299,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/environment ->
+	// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/environment ->
 	// environment.NewDeleteEnvironmentHandler
 	deleteEnvironmentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
 			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/environment",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/environment",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -300,15 +335,20 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/clusters/{cluster_id}/deployment ->
+	// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
 	// environment.NewDeleteDeploymentHandler
 	deleteDeploymentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
 			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/clusters/{cluster_id}/deployment",
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
+					relPath,
+					types.URLParamGitRepoName,
+					types.URLParamGitBranch,
+				),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

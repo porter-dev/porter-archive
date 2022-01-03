@@ -24,9 +24,13 @@ func (repo *EnvironmentRepository) CreateEnvironment(env *models.Environment) (*
 	return env, nil
 }
 
-func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInstallationID uint) (*models.Environment, error) {
+func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInstallationID uint, gitRepoOwner, gitRepoName string) (*models.Environment, error) {
 	env := &models.Environment{}
-	if err := repo.db.Order("id desc").Where("project_id = ? AND cluster_id = ? AND git_installation_id = ?", projectID, clusterID, gitInstallationID).First(&env).Error; err != nil {
+	if err := repo.db.Order("id desc").Where(
+		"project_id = ? AND cluster_id = ? AND git_installation_id = ? AND git_repo_owner = ? AND git_repo_name = ?",
+		projectID, clusterID, gitInstallationID,
+		gitRepoOwner, gitRepoName,
+	).First(&env).Error; err != nil {
 		return nil, err
 	}
 	return env, nil
@@ -70,6 +74,16 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 		return nil, err
 	}
 	return depl, nil
+}
+
+func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint) ([]*models.Deployment, error) {
+	depls := make([]*models.Deployment, 0)
+
+	if err := repo.db.Order("id asc").Joins("join environments on project_id = ? AND cluster_id = ? AND environments.id = deployments.environment_id", projectID, clusterID).Find(&depls).Error; err != nil {
+		return nil, err
+	}
+
+	return depls, nil
 }
 
 func (repo *EnvironmentRepository) ListDeployments(environmentID uint) ([]*models.Deployment, error) {

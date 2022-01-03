@@ -79,9 +79,25 @@ func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 		return fmt.Errorf("Git installation ID must be defined, set by PORTER_GIT_INSTALLATION_ID")
 	}
 
+	var gitRepoName string
+	var gitRepoOwner string
+
+	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
+		gitRepoName = repoName
+	} else if repoName == "" {
+		return fmt.Errorf("Repo name must be defined, set by PORTER_REPO_NAME")
+	}
+
+	if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
+		gitRepoOwner = repoOwner
+	} else if repoOwner == "" {
+		return fmt.Errorf("Repo owner must be defined, set by PORTER_REPO_OWNER")
+	}
+
 	return client.DeleteDeployment(
 		context.Background(),
 		projectID, ghID, clusterID,
+		gitRepoOwner, gitRepoName,
 		&types.DeleteDeploymentRequest{
 			Namespace: deplNamespace,
 		},

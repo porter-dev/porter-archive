@@ -19,7 +19,7 @@ func (repo *EnvironmentRepository) CreateEnvironment(env *models.Environment) (*
 	panic("unimplemented")
 }
 
-func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInstallationID uint) (*models.Environment, error) {
+func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInstallationID uint, gitRepoOwner, gitRepoName string) (*models.Environment, error) {
 	panic("unimplemented")
 }
 
@@ -40,6 +40,10 @@ func (repo *EnvironmentRepository) UpdateDeployment(deployment *models.Deploymen
 }
 
 func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace string) (*models.Deployment, error) {
+	panic("unimplemented")
+}
+
+func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint) ([]*models.Deployment, error) {
 	panic("unimplemented")
 }
 

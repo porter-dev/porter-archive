@@ -11,13 +11,13 @@ import Helper from "components/form-components/Helper";
 import ConfirmOverlay from "../../../components/ConfirmOverlay";
 
 interface Environment {
-    id: Number,
-    project_id: number,
-    cluster_id: number,
-    git_installation_id: number,
-    name: string,
-    git_repo_owner: string,
-    git_repo_name: string,
+  id: Number;
+  project_id: number;
+  cluster_id: number;
+  git_installation_id: number;
+  name: string;
+  git_repo_owner: string;
+  git_repo_name: string;
 }
 
 const PreviewEnvSettingsModal = () => {
@@ -32,17 +32,21 @@ const PreviewEnvSettingsModal = () => {
 
   useEffect(() => {
     api
-      .listEnvironments("<token>", {}, {
+      .listEnvironments(
+        "<token>",
+        {},
+        {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-      })
+        }
+      )
       .then(({ data }) => {
-        console.log('github account', data)
+        console.log("github account", data);
 
         if (!Array.isArray(data)) {
-            throw Error("Data is not an array");
-          }
-  
+          throw Error("Data is not an array");
+        }
+
         setAccessData(data);
         setAccessLoading(false);
       })
@@ -54,31 +58,33 @@ const PreviewEnvSettingsModal = () => {
 
   const handleDelete = () => {
     api
-    .deleteEnvironment("<token>", {
-        name: "preview",
-        git_repo_owner: selectedEnvironment.git_repo_owner,
-        git_repo_name: selectedEnvironment.git_repo_name,
-    }, {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-        git_installation_id: selectedEnvironment.git_installation_id,
-    })
-    .then(() => {
+      .deleteEnvironment(
+        "<token>",
+        {
+          name: "preview",
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          git_installation_id: selectedEnvironment.git_installation_id,
+          git_repo_owner: selectedEnvironment.git_repo_owner,
+          git_repo_name: selectedEnvironment.git_repo_name,
+        }
+      )
+      .then(() => {
         setSelectedEnvironment(null);
-    })
-    .catch((err) => {
-        setCurrentError(JSON.stringify(err))
-    })
-  }
+      })
+      .catch((err) => {
+        setCurrentError(JSON.stringify(err));
+      });
+  };
 
   return (
     <>
-    <ConfirmOverlay
+      <ConfirmOverlay
         show={selectedEnvironment != null}
-        message={
-          `Are you sure you want to disable preview environments in 
-          ${selectedEnvironment?.git_repo_owner}/${selectedEnvironment?.git_repo_name}?`
-        }
+        message={`Are you sure you want to disable preview environments in 
+          ${selectedEnvironment?.git_repo_owner}/${selectedEnvironment?.git_repo_name}?`}
         onYes={handleDelete}
         onNo={() => setSelectedEnvironment(null)}
       />
@@ -94,9 +100,7 @@ const PreviewEnvSettingsModal = () => {
         <>
           {accessError && (
             <ListWrapper>
-              <Helper>
-                No connected repositories found.
-              </Helper>
+              <Helper>No connected repositories found.</Helper>
             </ListWrapper>
           )}
 
@@ -108,9 +112,7 @@ const PreviewEnvSettingsModal = () => {
               </User>
               {accessData.length == 0 ? (
                 <ListWrapper>
-                  <Helper>
-                    No connected repositories found.
-                  </Helper>
+                  <Helper>No connected repositories found.</Helper>
                 </ListWrapper>
               ) : (
                 <>
@@ -118,15 +120,19 @@ const PreviewEnvSettingsModal = () => {
                     {accessData.map((e, i) => {
                       return (
                         <React.Fragment key={i}>
-                            <Row isLastItem={false}>
-                                <Flex>
-                                    <i className="material-icons">bookmark</i>
-                                    {`${e.git_repo_owner}/${e.git_repo_name}`}
-                                </Flex>
-                            <DisableButton onClick={() => {setSelectedEnvironment(e)}}>
-                                <i className="material-icons">delete</i>
+                          <Row isLastItem={false}>
+                            <Flex>
+                              <i className="material-icons">bookmark</i>
+                              {`${e.git_repo_owner}/${e.git_repo_name}`}
+                            </Flex>
+                            <DisableButton
+                              onClick={() => {
+                                setSelectedEnvironment(e);
+                              }}
+                            >
+                              <i className="material-icons">delete</i>
                             </DisableButton>
-                            </Row>
+                          </Row>
                         </React.Fragment>
                       );
                     })}
@@ -145,30 +151,30 @@ const PreviewEnvSettingsModal = () => {
 export default PreviewEnvSettingsModal;
 
 const DisableButton = styled.div`
-    margin-right: 13px;
-    cursor: pointer;
-    
-    > i {
-        margin-top: 5px;
-        font-size: 18px;
-        :hover {
-            color: #ffffff44;   
-        }
+  margin-right: 13px;
+  cursor: pointer;
+
+  > i {
+    margin-top: 5px;
+    font-size: 18px;
+    :hover {
+      color: #ffffff44;
     }
-`
+  }
+`;
 
 const Flex = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-    > i {
-        font-size: 17px;
-        margin-left: 10px;
-        margin-right: 12px;
-        color: #ffffff44;
-    }
-`
+  > i {
+    font-size: 17px;
+    margin-left: 10px;
+    margin-right: 12px;
+    color: #ffffff44;
+  }
+`;
 
 const User = styled.div`
   margin-top: 14px;

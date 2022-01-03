@@ -7,6 +7,7 @@ import (
 	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -37,6 +38,12 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
+	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
+
+	if !ok {
+		return
+	}
+
 	// create the environment
 	request := &types.CreateEnvironmentRequest{}
 
@@ -49,8 +56,8 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		ClusterID:         cluster.ID,
 		GitInstallationID: uint(ga.InstallationID),
 		Name:              request.Name,
-		GitRepoOwner:      request.GitRepoOwner,
-		GitRepoName:       request.GitRepoName,
+		GitRepoOwner:      owner,
+		GitRepoName:       name,
 	})
 
 	if err != nil {
@@ -85,8 +92,8 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Client:            client,
 		ServerURL:         c.Config().ServerConf.ServerURL,
 		PorterToken:       encoded,
-		GitRepoOwner:      request.GitRepoOwner,
-		GitRepoName:       request.GitRepoName,
+		GitRepoOwner:      owner,
+		GitRepoName:       name,
 		ProjectID:         project.ID,
 		ClusterID:         cluster.ID,
 		GitInstallationID: uint(ga.InstallationID),

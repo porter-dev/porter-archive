@@ -32,35 +32,72 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 type Deployment struct {
 	gorm.Model
 
-	EnvironmentID      uint
-	Namespace          string
-	Status             string
-	Subdomain          string
-	PullRequestID      uint
-	GHDeploymentID	   int64
-	PRName			   string
-	RepoName     	   string
-	RepoOwner		   string
-	CommitSHA		   string
+	EnvironmentID  uint
+	Namespace      string
+	Status         string
+	Subdomain      string
+	PullRequestID  uint
+	GHDeploymentID int64
+	PRName         string
+	RepoName       string
+	RepoOwner      string
+	CommitSHA      string
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
 
 	ghMetadata := &types.GitHubMetadata{
 		DeploymentID: d.GHDeploymentID,
-		PRName:		  d.PRName,
-		RepoName:	 d.RepoName,
-		RepoOwner:	 d.RepoOwner,
-		CommitSHA:	 d.CommitSHA,
+		PRName:       d.PRName,
+		RepoName:     d.RepoName,
+		RepoOwner:    d.RepoOwner,
+		CommitSHA:    d.CommitSHA,
 	}
 
 	return &types.Deployment{
-		ID:                 d.Model.ID,
-		EnvironmentID:      d.EnvironmentID,
-		Namespace:          d.Namespace,
-		Status:             d.Status,
-		Subdomain:          d.Subdomain,
-		PullRequestID:      d.PullRequestID,
-		GitHubMetadata: 	ghMetadata,
+		ID:             d.Model.ID,
+		EnvironmentID:  d.EnvironmentID,
+		Namespace:      d.Namespace,
+		Status:         d.Status,
+		Subdomain:      d.Subdomain,
+		PullRequestID:  d.PullRequestID,
+		GitHubMetadata: ghMetadata,
+	}
+}
+
+type DeploymentWithEnvironment struct {
+	gorm.Model
+
+	Environment    *Environment
+	Namespace      string
+	Status         string
+	Subdomain      string
+	PullRequestID  uint
+	GHDeploymentID int64
+	PRName         string
+	RepoName       string
+	RepoOwner      string
+	CommitSHA      string
+}
+
+func (d *DeploymentWithEnvironment) ToDeploymentType() *types.Deployment {
+
+	ghMetadata := &types.GitHubMetadata{
+		DeploymentID: d.GHDeploymentID,
+		PRName:       d.PRName,
+		RepoName:     d.RepoName,
+		RepoOwner:    d.RepoOwner,
+		CommitSHA:    d.CommitSHA,
+	}
+
+	return &types.Deployment{
+		ID:                d.Model.ID,
+		EnvironmentID:     d.Environment.ID,
+		GitInstallationID: d.Environment.GitInstallationID,
+		Namespace:         d.Namespace,
+		Status:            d.Status,
+		Subdomain:         d.Subdomain,
+		PullRequestID:     d.PullRequestID,
+		GitHubMetadata:    ghMetadata,
 	}
 }

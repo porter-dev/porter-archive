@@ -5,7 +5,7 @@ import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { capitalize, PRDeployment } from "./EnvironmentList";
+import { capitalize, PRDeployment, Environment } from "./EnvironmentList";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -25,17 +25,16 @@ const EnvironmentDetail = () => {
     Context
   );
 
-  const useQuery = () => {
-    const { search } = useLocation();
+  const { search } = useLocation();
+  let searchParams = new URLSearchParams(search);
 
-    return React.useMemo(() => new URLSearchParams(search), [search]);
-  };
+  // const useQuery = () => {
+  //   return React.useMemo(() => , [search]);
+  // };
 
-  useEffect(() => {
-    let query = useQuery();
+  const getDeployment = (environment: Environment) => {
     let isSubscribed = true;
 
-    let git_installation_id = parseInt(query.get("git_installation_id"));
     api
       .getPRDeployment(
         "<token>",
@@ -45,9 +44,9 @@ const EnvironmentDetail = () => {
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          git_installation_id: git_installation_id,
-          git_repo_owner: environment.gh_repo_owner,
-          git_repo_name: environment.gh_repo_name,
+          git_installation_id: environment.git_installation_id,
+          git_repo_owner: environment.git_repo_owner,
+          git_repo_name: environment.git_repo_name,
         }
       )
       .then(({ data }) => {
@@ -67,6 +66,47 @@ const EnvironmentDetail = () => {
       .finally(() => {
         if (isSubscribed) {
           setIsLoading(false);
+        }
+      });
+  };
+
+  useEffect(() => {
+    let isSubscribed = true;
+
+    let environment_id = parseInt(searchParams.get("environment_id"));
+
+    // find the git installation id
+    api
+      .listEnvironments(
+        "<token>",
+        {
+          namespace: params.namespace,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then(({ data }) => {
+        if (!isSubscribed) {
+          return;
+        }
+
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+
+        data.forEach((d) => {
+          if (d.id == environment_id) {
+            getDeployment(d);
+          }
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        if (isSubscribed) {
+          setHasError(true);
+          setEnvironment(null);
         }
       });
 

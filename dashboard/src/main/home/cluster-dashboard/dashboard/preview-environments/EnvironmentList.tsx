@@ -89,9 +89,9 @@ const EnvironmentList = () => {
     };
   }, []);
 
-  const getDeployments = () => {
+  useEffect(() => {
     let isSubscribed = true;
-    return api
+    api
       .getPRDeploymentList(
         "<token>",
         {},
@@ -109,39 +109,26 @@ const EnvironmentList = () => {
           throw Error("Data is not an array");
         }
 
-        return Promise.resolve(data);
+        let result: PRDeployment[] = [];
+
+        data.forEach((d) => {
+          result.concat(d);
+        });
+
+        console.log("result", result);
+        setDeploymentList(result);
       })
       .catch((err) => {
         console.error(err);
         if (isSubscribed) {
-          // setHasError(true);
-          setDeploymentList([]);
+          setHasError(true);
         }
-        return Promise.resolve([]);
       });
-  };
-
-  useEffect(() => {
-    let isSubscribed = true;
-
-    let promises = [getDeployments()];
-
-    Promise.all(promises).then((data) => {
-      let result: PRDeployment[] = [];
-      data.forEach((d) => {
-        result.concat(d);
-      });
-      setDeploymentList(result);
-    });
-
-    if (isSubscribed) {
-      setIsLoading(false);
-    }
 
     return () => {
       isSubscribed = false;
     };
-  }, [environmentList]);
+  }, []);
 
   useEffect(() => {
     const action = getQueryParam({ location }, "action");

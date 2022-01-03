@@ -116,7 +116,10 @@ export const StatusPage = ({
     return Array.from(infraMap.values());
   };
 
-  const getInfras = async () => {
+  /**
+   * @param filters An array of infras ID to be updated
+   */
+  const getInfras = async (filters: number[] = []) => {
     try {
       const res = await api.getInfra<Infra[]>(
         "<token>",
@@ -128,13 +131,19 @@ export const StatusPage = ({
       const matchedInfras = res.data.filter(filterBySelectedInfras);
 
       // Get latest infras for each kind of infra on the array.
-      const latestMatchedInfras = getLatestInfras(matchedInfras);
+      let latestMatchedInfras = getLatestInfras(matchedInfras);
 
       // Check if all infras are created then enable continue button
       if (latestMatchedInfras.every((infra) => infra.status === "created")) {
         setInfraStatus({
           hasError: false,
         });
+      }
+
+      if (filters.length) {
+        latestMatchedInfras = latestMatchedInfras.filter((infra) =>
+          filters.includes(infra.id)
+        );
       }
 
       // Init tf modules based on matched infras
@@ -349,14 +358,17 @@ export const StatusPage = ({
 
   const handleRetryInfra = async (infraId: number) => {
     try {
-      await api.retryInfra(
-        "<token>",
-        {},
-        {
-          project_id: project_id,
-          infra_id: infraId,
-        }
-      );
+      await api
+        .retryInfra(
+          "<token>",
+          {},
+          {
+            project_id: project_id,
+            infra_id: infraId,
+          }
+        )
+        .then((res) => res.data);
+      closeWebsocket(`${infraId}`);
       updateModuleStatus(infraId, "creating");
       getInfras();
     } catch (error) {}
@@ -528,6 +540,9 @@ const useTFModules = () => {
       ...modules.current,
       [infraId]: module,
     };
+
+    console.log(modules.current);
+
     updateTFModules();
   };
 

@@ -19,7 +19,6 @@ export type PRDeployment = {
   environment_id: number;
   pull_request_id: number;
   namespace: string;
-  git_installation_id?: number;
   gh_pr_name: string;
   gh_repo_owner: string;
   gh_repo_name: string;
@@ -206,7 +205,7 @@ const EnvironmentList = () => {
           </DataContainer>
           <Flex>
             <RowButton
-              to={`${currentUrl}/pr-env-detail/${d.namespace}?git_installation_id=${d.git_installation_id}`}
+              to={`${currentUrl}/pr-env-detail/${d.namespace}?environment_id=${d.environment_id}`}
               key={d.id}
             >
               <i className="material-icons-outlined">info</i>

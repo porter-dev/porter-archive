@@ -94,8 +94,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/environment",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{
@@ -130,8 +130,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{
@@ -166,8 +166,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{
@@ -202,8 +202,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/deployments",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{
@@ -238,8 +238,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment/finalize",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{
@@ -274,8 +274,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment/update",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{
@@ -310,8 +310,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/environment",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{
@@ -346,8 +346,8 @@ func getGitInstallationRoutes(
 				RelativePath: fmt.Sprintf(
 					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
 					relPath,
+					types.URLParamGitRepoOwner,
 					types.URLParamGitRepoName,
-					types.URLParamGitBranch,
 				),
 			},
 			Scopes: []types.PermissionScope{

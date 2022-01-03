@@ -26,12 +26,13 @@ type GitHubMetadata struct {
 type Deployment struct {
 	*GitHubMetadata
 
-	ID            uint   `json:"id"`
-	EnvironmentID uint   `json:"environment_id"`
-	Namespace     string `json:"namespace"`
-	Status        string `json:"status"`
-	Subdomain     string `json:"subdomain"`
-	PullRequestID uint   `json:"pull_request_id"`
+	ID                uint   `json:"id"`
+	GitInstallationID uint   `json:"git_installation_id"`
+	EnvironmentID     uint   `json:"environment_id"`
+	Namespace         string `json:"namespace"`
+	Status            string `json:"status"`
+	Subdomain         string `json:"subdomain"`
+	PullRequestID     uint   `json:"pull_request_id"`
 }
 
 type CreateGHDeploymentRequest struct {

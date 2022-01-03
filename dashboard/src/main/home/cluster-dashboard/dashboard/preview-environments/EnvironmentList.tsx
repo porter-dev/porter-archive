@@ -109,14 +109,20 @@ const EnvironmentList = () => {
           throw Error("Data is not an array");
         }
 
-        let result: PRDeployment[] = [];
+        // console.log("DATA IS", data);
 
-        data.forEach((d) => {
-          result.concat(d);
-        });
+        // let result: PRDeployment[] = [];
 
-        console.log("result", result);
-        setDeploymentList(result);
+        // data.forEach((d) => {
+        //   console.log("CONCATTT", d);
+        //   result.concat(d);
+        // });
+
+        // console.log("result", result);
+
+        console.log("set deployment list", data);
+        setDeploymentList(data);
+        setIsLoading(false);
       })
       .catch((err) => {
         console.error(err);

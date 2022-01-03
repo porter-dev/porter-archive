@@ -65,6 +65,7 @@ export const StatusPage = ({
 
   const {
     tfModules,
+    getModule,
     initModule,
     updateDesired,
     updateModuleResources,
@@ -257,6 +258,16 @@ export const StatusPage = ({
     };
   };
 
+  const getTime = (date: string) => {
+    return new Date(date).getTime();
+  };
+
+  const isEventTimeGTEInfraLastUpdated = (infra_id: number, event: any) => {
+    const tfModule = getModule(infra_id);
+    const eventTimestamp = event["@timestamp"];
+    return getTime(eventTimestamp) >= getTime(tfModule.updated_at);
+  };
+
   const connectToLiveUpdateModule = (infra_id: number) => {
     const websocketId = `${infra_id}`;
     const apiPath = `/api/projects/${project_id}/infras/${infra_id}/logs`;
@@ -275,6 +286,10 @@ export const StatusPage = ({
 
         for (const streamVal of parsedData) {
           const streamValData = JSON.parse(streamVal?.Values?.data);
+
+          if (!isEventTimeGTEInfraLastUpdated) {
+            continue;
+          }
 
           switch (streamValData?.type) {
             case "apply_start":
@@ -670,6 +685,7 @@ const useTFModules = () => {
 
   return {
     tfModules,
+    getModule,
     initModule,
     updateDesired,
     updateModuleResources,

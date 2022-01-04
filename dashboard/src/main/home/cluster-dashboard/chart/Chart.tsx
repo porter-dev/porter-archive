@@ -24,7 +24,7 @@ const Chart: React.FunctionComponent<Props> = ({
   chart,
   controllers,
   jobStatus,
-  isJob
+  isJob,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
@@ -96,9 +96,10 @@ const Chart: React.FunctionComponent<Props> = ({
       onMouseLeave={() => setExpand(false)}
       expand={expand}
       onClick={() => {
-        let urlParams = new URLSearchParams(location.search);
-        let cluster = urlParams.get("cluster");
-        let route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${chart.namespace}/${chart.name}`;
+        const cluster = context.currentCluster?.name;
+        let route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${
+          chart.namespace
+        }/${chart.name}`;
         pushFiltered({ location, history }, route, ["project_id"]);
       }}
     >

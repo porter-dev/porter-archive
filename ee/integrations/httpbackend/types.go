@@ -89,6 +89,6 @@ type Instance struct {
 }
 
 type AWSVPCConfig struct {
-	SubNetIDs []string `json:"subnet_ids"`
-	VPCID     string   `json:"vpc_id"`
+	SubNetIDs []string `json:"subnet_ids" mapstructure:"subnet_ids"`
+	VPCID     string   `json:"vpc_id" mapstructure:"vpc_id"`
 }

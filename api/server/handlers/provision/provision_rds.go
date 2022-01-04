@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/mitchellh/mapstructure"
+
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -128,6 +130,16 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	var opts *provisioner.ProvisionOpts
 	vaultToken := ""
+
+	vpc, subnets, err = c.ExtractVPCFromEKSTFState(currentState, "aws_eks_cluster.cluster")
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			err,
+			http.StatusInternalServerError,
+		))
+
+		return
+	}
 
 	switch clusterInfra.Kind {
 	case types.InfraGKE:
@@ -263,8 +275,9 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	// 	"request": request,
 	// 	"project": proj,
 	// 	// "cluster":  cluster,
-	// 	"infra": infra.ToInfraType(),
+	// 	// "infra": infra.ToInfraType(),
 	// 	// "current":  current,
+	// 	"subnets":  subnets,
 	// 	"vpc_name": vpc,
 	// 	"opts":     opts,
 	// }
@@ -281,16 +294,30 @@ func (c *ProvisionRDSHandler) ExtractVPCFromEKSTFState(tfState *httpbackend.TFSt
 					return "", []string{}, errors.New("name not found for the requested resource name-type")
 				}
 
-				awsVPCConfig, ok := vpcConfig.([]httpbackend.AWSVPCConfig)
+				awsVPCConfigIface, ok := vpcConfig.([]interface{})
 				if !ok {
+					fmt.Printf("%#v\n", vpcConfig)
 					return "", []string{}, errors.New("cannot cast returned value to vpc config")
 				}
 
-				if len(awsVPCConfig) == 0 {
+				if len(awsVPCConfigIface) == 0 {
 					return "", []string{}, errors.New("empty vpc config")
 				}
 
-				return awsVPCConfig[0].VPCID, awsVPCConfig[0].SubNetIDs, nil
+				awsVPCConfigMap, ok := awsVPCConfigIface[0].(map[string]interface{})
+				if !ok {
+					return "", []string{}, errors.New("cannot cast returned value to vpc config map")
+				}
+
+				var awsVPCConfig httpbackend.AWSVPCConfig
+
+				err := mapstructure.Decode(awsVPCConfigMap, &awsVPCConfig)
+				if err != nil {
+					return "", []string{}, errors.New("cannot cast returned value to vpc config")
+				}
+
+				fmt.Println("successfully returning after extracting vpc", awsVPCConfig)
+				return awsVPCConfig.VPCID, awsVPCConfig.SubNetIDs, nil
 			}
 
 			return "", []string{}, errors.New("name not found for the requested resource name-type")

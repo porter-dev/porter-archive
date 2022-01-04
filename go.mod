@@ -39,6 +39,7 @@ require (
 	github.com/kris-nova/logger v0.0.0-20181127235838-fd0d87064b06
 	github.com/kris-nova/lolgopher v0.0.0-20180921204813-313b3abb0d9b // indirect
 	github.com/mattn/go-runewidth v0.0.12 // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/moby/moby v20.10.6+incompatible
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
 	github.com/onsi/gomega v1.16.0 // indirect

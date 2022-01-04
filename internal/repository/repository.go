@@ -7,6 +7,7 @@ type Repository interface {
 	Session() SessionRepository
 	GitRepo() GitRepoRepository
 	Cluster() ClusterRepository
+	Database() DatabaseRepository
 	HelmRepo() HelmRepoRepository
 	Registry() RegistryRepository
 	Infra() InfraRepository

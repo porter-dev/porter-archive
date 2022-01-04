@@ -1260,6 +1260,7 @@ const getKubeEvents = baseApi<
     resource_type: string;
     owner_type?: string;
     owner_name?: string;
+    namespace?: string;
   },
   { project_id: number; cluster_id: number }
 >("GET", ({ project_id, cluster_id }) => {

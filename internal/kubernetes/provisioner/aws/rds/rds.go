@@ -15,11 +15,15 @@ type Conf struct {
 	DBAllocatedStorage    string
 	DBMaxAllocatedStorage string
 	DBStorageEncrypted    string
+	Subnet1               string
+	Subnet2               string
+	Subnet3               string
 
-	Username    string
-	Password    string
-	VPCID       string
-	IssuerEmail string
+	Username           string
+	Password           string
+	VPCID              string
+	IssuerEmail        string
+	DeletionProtection string
 }
 
 // AttachRDSEnv adds the relevant RDS env for the provisioner
@@ -35,7 +39,7 @@ func (conf *Conf) AttachRDSEnv(env []v1.EnvVar) []v1.EnvVar {
 	})
 
 	env = append(env, v1.EnvVar{
-		Name:  "MACHINE_TYPE",
+		Name:  "DB_MACHINE_TYPE",
 		Value: conf.MachineType,
 	})
 
@@ -65,29 +69,49 @@ func (conf *Conf) AttachRDSEnv(env []v1.EnvVar) []v1.EnvVar {
 	})
 
 	env = append(env, v1.EnvVar{
+		Name:  "PORTER_CLUSTER_SUBNET_1",
+		Value: conf.Subnet1,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "PORTER_CLUSTER_SUBNET_2",
+		Value: conf.Subnet2,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "PORTER_CLUSTER_SUBNET_3",
+		Value: conf.Subnet3,
+	})
+
+	env = append(env, v1.EnvVar{
 		Name:  "DB_STORAGE_ENCRYPTED",
 		Value: conf.DBStorageEncrypted,
 	})
 
 	env = append(env, v1.EnvVar{
-		Name:  "USERNAME",
+		Name:  "DB_USER",
 		Value: conf.Username,
 	})
 
 	env = append(env, v1.EnvVar{
-		Name:  "PASSWORD",
+		Name:  "DB_PASSWD",
 		Value: conf.Password,
 	})
 
 	// TODO: change to VPC_ID instead of vpc name
 	env = append(env, v1.EnvVar{
-		Name:  "VPC_ID",
+		Name:  "PORTER_CLUSTER_VPC",
 		Value: conf.VPCID,
 	})
 
 	env = append(env, v1.EnvVar{
 		Name:  "ISSUER_EMAIL",
 		Value: conf.IssuerEmail,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "DB_DELETION_PROTECTION",
+		Value: conf.DeletionProtection,
 	})
 
 	return env

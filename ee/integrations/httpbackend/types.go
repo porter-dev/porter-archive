@@ -87,3 +87,8 @@ type Instance struct {
 	Attributes   map[string]interface{} `json:"attributes"`
 	Dependencies []string               `json:"dependencies"`
 }
+
+type AWSVPCConfig struct {
+	SubNetIDs []string `json:"subnet_ids"`
+	VPCID     string   `json:"vpc_id"`
+}

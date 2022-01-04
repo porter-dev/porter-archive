@@ -124,6 +124,8 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var vpc, region string
+	var subnets []string
+
 	var opts *provisioner.ProvisionOpts
 	vaultToken := ""
 
@@ -153,6 +155,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 
 		vpc, err = c.ExtractVPCFromGKETFState(currentState, "google_compute_network.vpc")
+		subnets = []string{}
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				err,
@@ -186,7 +189,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 
-		vpc, err = c.ExtractVPCFromEKSTFState(currentState, "aws_vpc.this")
+		vpc, subnets, err = c.ExtractVPCFromEKSTFState(currentState, "aws_eks_cluster.cluster")
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				err,
@@ -238,6 +241,12 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		IssuerEmail:           user.Email,
 	}
 
+	if len(subnets) == 3 {
+		opts.RDS.Subnet1 = subnets[0]
+		opts.RDS.Subnet2 = subnets[1]
+		opts.RDS.Subnet3 = subnets[2]
+	}
+
 	opts.OperationKind = provisioner.Apply
 
 	err = c.Config().ProvisionerAgent.Provision(opts)
@@ -263,14 +272,33 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	// c.WriteResult(w, r, response)
 }
 
-func (c *ProvisionRDSHandler) ExtractVPCFromEKSTFState(tfState *httpbackend.TFState, resourceIdentifier string) (string, error) {
+func (c *ProvisionRDSHandler) ExtractVPCFromEKSTFState(tfState *httpbackend.TFState, resourceIdentifier string) (string, []string, error) {
 	for _, resource := range tfState.Resources {
 		if resourceIdentifier == resource.Type+"."+resource.Name {
-			return c._extractVPCFromResourceInstance(resource, "id")
+			for _, instance := range resource.Instances {
+				vpcConfig, ok := instance.Attributes["vpc_config"]
+				if !ok {
+					return "", []string{}, errors.New("name not found for the requested resource name-type")
+				}
+
+				awsVPCConfig, ok := vpcConfig.([]httpbackend.AWSVPCConfig)
+				if !ok {
+					return "", []string{}, errors.New("cannot cast returned value to vpc config")
+				}
+
+				if len(awsVPCConfig) == 0 {
+					return "", []string{}, errors.New("empty vpc config")
+				}
+
+				return awsVPCConfig[0].VPCID, awsVPCConfig[0].SubNetIDs, nil
+			}
+
+			return "", []string{}, errors.New("name not found for the requested resource name-type")
+			// return c._extractVPCFromResourceInstance(resource, "id")
 		}
 	}
 
-	return "", errors.New("name not found for the requested resource name-type")
+	return "", []string{}, errors.New("name not found for the requested resource name-type")
 }
 
 func (c *ProvisionRDSHandler) ExtractVPCFromGKETFState(tfState *httpbackend.TFState, resourceIdentifier string) (string, error) {

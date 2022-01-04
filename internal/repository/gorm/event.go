@@ -213,6 +213,13 @@ func (repo *KubeEventRepository) ListEventsByProjectID(
 		)
 	}
 
+	if listOpts.Namespace != "" && listOpts.Namespace != "ALL" {
+		query = query.Where(
+			"LOWER(namespace) = LOWER(?)",
+			listOpts.Namespace,
+		)
+	}
+
 	// get the count before limit and offset
 	var count int64
 

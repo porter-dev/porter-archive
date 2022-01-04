@@ -174,6 +174,35 @@ func GlobalStreamListener(
 							InfraID:                 infra.ID,
 						},
 					))
+				} else if kind == string(types.InfraRDS) {
+					database := &models.Database{
+						ProjectID: projID,
+						InfraID:   infra.ID,
+					}
+
+					endpoint, ok := msg.Values["rds_connection_endpoint"].(string)
+					if !ok {
+						continue
+					}
+
+					instanceID, ok := msg.Values["rds_instance_id"].(string)
+					if !ok {
+						continue
+					}
+
+					instanceName, ok := msg.Values["rds_instance_name"].(string)
+					if !ok {
+						continue
+					}
+
+					database.InstanceEndpoint = endpoint
+					database.InstanceID = instanceID
+					database.InstanceName = instanceName
+
+					database, err := repo.Database().CreateDatabase(database)
+					if err != nil {
+						continue
+					}
 				} else if kind == string(types.InfraEKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.AWS,

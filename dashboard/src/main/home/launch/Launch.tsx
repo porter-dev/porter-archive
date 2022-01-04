@@ -329,7 +329,10 @@ class Templates extends Component<PropsType, StateType> {
         <TemplatesWrapper>
           <TitleSection>
             Launch
-            <a href="https://docs.porter.run/docs/addons" target="_blank">
+            <a
+              href="https://porter-docs-demo-22fd462fef4dcd45.onporter.run/deploying-applications/overview"
+              target="_blank"
+            >
               <i className="material-icons">help_outline</i>
             </a>
           </TitleSection>

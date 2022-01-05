@@ -46,7 +46,11 @@ const TempJobList: React.FC<Props> = (props) => {
   return (
     <>
       {saveButton}
-      <JobList jobs={props.jobs} setJobs={props.setJobs} expandJob={props.expandJob} />
+      <JobList
+        jobs={props.jobs}
+        setJobs={props.setJobs}
+        expandJob={props.expandJob}
+      />
     </>
   );
 };

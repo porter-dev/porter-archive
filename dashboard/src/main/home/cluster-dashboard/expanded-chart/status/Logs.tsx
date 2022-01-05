@@ -103,26 +103,26 @@ export default class Logs extends Component<PropsType, StateType> {
       );
     }
 
-    // if (
-    //   this.getPodStatus(selectedPod.status) === "failed" &&
-    //   this.state.logs.length === 0
-    // ) {
-    //   return (
-    //     <Message>
-    //       No logs to display from this pod.
-    //       <Highlight
-    //         onClick={() => {
-    //           this.setState({ getPreviousLogs: true }, () => {
-    //             this.refreshLogs();
-    //           });
-    //         }}
-    //       >
-    //         <i className="material-icons">autorenew</i>
-    //         Get logs from crashed pod
-    //       </Highlight>
-    //     </Message>
-    //   );
-    // }
+    if (
+      this.getPodStatus(selectedPod.status) === "failed" &&
+      this.state.logs.length === 0
+    ) {
+      return (
+        <Message>
+          No logs to display from this pod.
+          <Highlight
+            onClick={() => {
+              this.setState({ getPreviousLogs: true }, () => {
+                this.refreshLogs();
+              });
+            }}
+          >
+            <i className="material-icons">autorenew</i>
+            Get logs from crashed pod
+          </Highlight>
+        </Message>
+      );
+    }
 
     if (this.state.logs.length == 0) {
       return (
@@ -172,7 +172,7 @@ export default class Logs extends Component<PropsType, StateType> {
       );
     }
 
-    this.ws.onopen = () => {};
+    this.ws.onopen = () => { };
 
     this.ws.onmessage = (evt: MessageEvent) => {
       let ansiLog = Anser.ansiToJson(evt.data);
@@ -202,9 +202,9 @@ export default class Logs extends Component<PropsType, StateType> {
       );
     };
 
-    this.ws.onerror = (err: ErrorEvent) => {};
+    this.ws.onerror = (err: ErrorEvent) => { };
 
-    this.ws.onclose = () => {};
+    this.ws.onclose = () => { };
   };
 
   refreshLogs = () => {
@@ -365,7 +365,7 @@ export default class Logs extends Component<PropsType, StateType> {
               <input
                 type="checkbox"
                 checked={this.state.scroll}
-                onChange={() => {}}
+                onChange={() => { }}
               />
               Scroll to Bottom
             </Scroll>
@@ -409,7 +409,7 @@ export default class Logs extends Component<PropsType, StateType> {
             <input
               type="checkbox"
               checked={this.state.scroll}
-              onChange={() => {}}
+              onChange={() => { }}
             />
             Scroll to Bottom
           </Scroll>

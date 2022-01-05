@@ -72,7 +72,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     formData: {} as any,
     upgradeVersion: "",
     devOpsMode: localStorage.getItem("devOpsMode") === "true",
-    
+
     expandedJobRun: null as any,
     pods: null as any,
   };
@@ -160,7 +160,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     pushFiltered(
       { location: this.props.location, history: this.props.history },
       this.props.match.url,
-      ["project_id"],
+      ["project_id", "job"],
       {
         chart_revision: this.state.currentChart.version,
       }
@@ -450,7 +450,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   sortJobsAndSave = (jobs: any[]) => {
-
     // Set job run from URL if needed
     const urlParams = new URLSearchParams(location.search);
     const urlJob = urlParams.get("job");
@@ -458,6 +457,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     jobs.sort((job1, job2) => {
       if (job1.metadata.name === urlJob) {
         this.setJobRun(job1);
+      } else if (job2.metadata.name === urlJob) {
+        this.setJobRun(job2);
       }
 
       let date1: Date = new Date(job1.status?.startTime);
@@ -483,7 +484,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     this.getPods(job, () => {
       this.setState({ expandedJobRun: job, currentTab: "logs" });
     });
-  }
+  };
 
   renderTabContents = (currentTab: string, submitValues?: any) => {
     switch (currentTab) {
@@ -515,7 +516,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               setJobs={(jobs: any) => this.setState({ jobs })}
               isAuthorized={this.props.isAuthorized}
               saveValuesStatus={this.state.saveValuesStatus}
-
               expandJob={(job: any) => this.setJobRun(job)}
             />
           </TabWrapper>
@@ -746,16 +746,23 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 <Br />
                 <Banner>
                   A template update is available.
-                  <Link onClick={(e) => {
-                    e.stopPropagation();
-                    this.setState({
-                      upgradeVersion: currentChart.latest_version,
-                    });
-                  }}>
+                  <Link
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      this.setState({
+                        upgradeVersion: currentChart.latest_version,
+                      });
+                    }}
+                  >
                     View upgrade notes
                   </Link>
                 </Banner>
-                <Br /><Br /><Br /><Br /><Br /><Br />
+                <Br />
+                <Br />
+                <Br />
+                <Br />
+                <Br />
+                <Br />
               </>
             )}
           </HeaderWrapper>
@@ -821,10 +828,10 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     if (job.status?.failed >= 1) {
       return (
-        <Status color="#cc3d42">Failed {time}
-          {
-            job.status.conditions.length > 0 && `: ${job.status.conditions[0].reason}`
-          }
+        <Status color="#cc3d42">
+          Failed {time}
+          {job.status.conditions.length > 0 &&
+            `: ${job.status.conditions[0].reason}`}
         </Status>
       );
     }
@@ -894,12 +901,18 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             icon={currentChart.chart.metadata.icon}
             iconWidth="33px"
           >
-            {chart.name} <Gray>at {this.readableDate(run.status.startTime)}</Gray>
+            {chart.name}{" "}
+            <Gray>at {this.readableDate(run.status.startTime)}</Gray>
           </TitleSection>
 
           <InfoWrapper>
             <LastDeployed>
-              {this.renderStatus(run, run.status.completionTime ? this.readableDate(run.status.completionTime) : "")}
+              {this.renderStatus(
+                run,
+                run.status.completionTime
+                  ? this.readableDate(run.status.completionTime)
+                  : ""
+              )}
               <TagWrapper>
                 Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
               </TagWrapper>
@@ -913,27 +926,26 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             setCurrentTab={(x: string) => this.setState({ currentTab: x })}
             options={[
               {
-                label: "Logs", value: "logs",
+                label: "Logs",
+                value: "logs",
               },
               {
-                label: "Config", value: "config",
-              }
+                label: "Config",
+                value: "config",
+              },
             ]}
-            color={null}
           >
-            {
-              this.state.currentTab === "logs" ? (
-                <JobLogsWrapper>
-                  <Logs
-                    selectedPod={this.state.pods[0]}
-                    podError={!this.state.pods[0] ? "Pod no longer exists." : ""}
-                    rawText={true}
-                  />
-                </JobLogsWrapper>
-              ) : (
-                <>{this.renderConfigSection(run)}</>
-              )
-            }
+            {this.state.currentTab === "logs" ? (
+              <JobLogsWrapper>
+                <Logs
+                  selectedPod={this.state.pods[0]}
+                  podError={!this.state.pods[0] ? "Pod no longer exists." : ""}
+                  rawText={true}
+                />
+              </JobLogsWrapper>
+            ) : (
+              <>{this.renderConfigSection(run)}</>
+            )}
           </TabRegion>
         </BodyWrapper>
       </StyledExpandedChart>
@@ -943,13 +955,11 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   render() {
     return (
       <>
-        { 
-          !this.state.expandedJobRun ? (
-            <>{this.renderExpandedChart()}</>
-          ) : (
-            <>{this.renderExpandedJobRun()}</>
-          )
-        }
+        {!this.state.expandedJobRun ? (
+          <>{this.renderExpandedChart()}</>
+        ) : (
+          <>{this.renderExpandedJobRun()}</>
+        )}
       </>
     );
   }

@@ -26,7 +26,7 @@ type StateType = {
   envGroups: any[];
   loading: boolean;
   error: boolean;
-  selectedEnvGroup: EnvGroupData | null;
+  selectedEnvGroup: any;
   buttonStatus: string;
 };
 
@@ -35,7 +35,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     envGroups: [] as any[],
     loading: true,
     error: false,
-    selectedEnvGroup: null as EnvGroupData | null,
+    selectedEnvGroup: null as any,
     buttonStatus: "",
   };
 
@@ -46,7 +46,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 
   updateEnvGroups = () => {
     api
-      .listConfigMaps(
+      .listEnvGroups(
         "<token>",
         {},
         {
@@ -57,7 +57,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({
-          envGroups: res?.data?.items as any[],
+          envGroups: res?.data as any[],
           loading: false,
         });
       })
@@ -86,15 +86,52 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       );
     } else {
       return this.state.envGroups.map((envGroup: any, i: number) => {
+        console.log(envGroup)
         return (
           <EnvGroupRow
             key={i}
             isSelected={this.state.selectedEnvGroup === envGroup}
             lastItem={i === this.state.envGroups.length - 1}
-            onClick={() => this.setState({ selectedEnvGroup: envGroup })}
+            onClick={() => {
+              api
+                .getEnvGroup(
+                  "<token>",
+                  {},
+                  {
+                    name: envGroup.name,
+                    id: this.context.currentProject.id,
+                    namespace: this.props.namespace,
+                    cluster_id: this.context.currentCluster.id,
+                  }
+                )
+                .then((res) => {
+                  const variables = [];
+
+                  for (const key in res.data.variables) {
+                    variables.push({
+                      key: key,
+                      value: res.data.variables[key],
+                      hidden: res.data.variables[key].includes("PORTERSECRET"),
+                      locked: res.data.variables[key].includes("PORTERSECRET"),
+                      deleted: false,
+                    });
+                  }
+                  console.log()
+                  this.setState({
+                    selectedEnvGroup: {
+                      name: envGroup.name,
+                      variables,
+                      version: envGroup.version,
+                    },
+                  });
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }}
           >
             <img src={sliders} />
-            {envGroup.metadata.name}
+            {envGroup.name}
           </EnvGroupRow>
         );
       });
@@ -150,7 +187,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 
   render() {
     const clashingKeys = this.state.selectedEnvGroup
-      ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.data)
+      ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.variables)
       : [];
     return (
       <StyledLoadEnvGroupModal>

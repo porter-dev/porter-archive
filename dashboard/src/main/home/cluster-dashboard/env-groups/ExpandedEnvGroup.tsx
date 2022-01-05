@@ -275,6 +275,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
           <TabWrapper>
             {this.props.isAuthorized("env_group", "", ["get", "delete"]) && (
               <InnerWrapper full={true}>
+                {/*
                 <Heading>Name</Heading>
                 <Subtitle>
                   <Warning makeFlush={true} highlight={!isEnvGroupNameValid}>
@@ -300,6 +301,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
                 </Button>
 
                 <DarkMatter />
+                */}
 
                 <Heading>Manage Environment Group</Heading>
                 <Helper>

@@ -69,9 +69,16 @@ const StyledContent = styled.div`
   font-family: "Work Sans", sans-serif;
   font-size: 12px;
   font-weight: normal;
-  padding: 5px 6px;
-  line-height: 150%;
+  padding: 12px 14px;
+  line-height: 1.5em;
   user-select: text;
+  width: calc(100% + 14px);
+  height: calc(100% + 10px);
+  margin-left: -7px;
+  height: 100%;
+  background: #2E3135;
+  border: 1px solid #aaaabb;
+  border-radius: 5px;
 `;
 
 const HelperButton = styled.div`
@@ -92,10 +99,10 @@ const HelperButton = styled.div`
 
 const TooltipStyle = createGlobalStyle`
   .MuiTooltip-tooltip {
-    background-color: #2E3135 !important;
+    background-color: #00000000 !important;
     font-size: 12px !important;
+    padding: 0px;
     max-width: 300px !important;    
-    border: 1px solid #aaaabb; 
   }
 `;
 
@@ -107,7 +114,6 @@ const A = styled.a`
   cursor: pointer;
   width: 100%;
   text-align: right;
-  padding-right: 12px;
   user-select: none;
 `;
 

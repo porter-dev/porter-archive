@@ -7,6 +7,8 @@ import (
 // Conf is the RDS config required for the provisioner
 type Conf struct {
 	AWSRegion             string
+	AWSAccessKeyID        string
+	AWSSecretAccessKey    string
 	DBName                string
 	MachineType           string
 	DBEngineVersion       string
@@ -31,6 +33,16 @@ func (conf *Conf) AttachRDSEnv(env []v1.EnvVar) []v1.EnvVar {
 	env = append(env, v1.EnvVar{
 		Name:  "AWS_REGION",
 		Value: conf.AWSRegion,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "AWS_REGION",
+		Value: conf.AWSAccessKeyID,
+	})
+
+	env = append(env, v1.EnvVar{
+		Name:  "AWS_REGION",
+		Value: conf.AWSSecretAccessKey,
 	})
 
 	env = append(env, v1.EnvVar{

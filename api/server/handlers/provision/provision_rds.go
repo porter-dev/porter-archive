@@ -125,7 +125,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var vpc, region string
+	var vpc, region, awsAccessKey, awsSecretAccessKey string
 	var subnets []string
 
 	var opts *provisioner.ProvisionOpts
@@ -193,6 +193,8 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 
 		region = integration.AWSRegion
+		awsAccessKey = string(integration.AWSAccessKeyID)
+		awsSecretAccessKey = string(integration.AWSSecretAccessKey)
 
 		if c.Config().CredentialBackend != nil {
 			vaultToken, err = c.Config().CredentialBackend.CreateAWSToken(integration)
@@ -236,11 +238,13 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	opts.CredentialExchange.VaultToken = vaultToken
 
 	opts.RDS = &rds.Conf{
-		AWSRegion:       region,
-		DBName:          request.DBName,
-		MachineType:     request.MachineType,
-		DBEngineVersion: request.DBEngineVersion,
-		DBFamily:        request.DBFamily,
+		AWSRegion:          region,
+		AWSAccessKeyID:     awsAccessKey,
+		AWSSecretAccessKey: awsSecretAccessKey,
+		DBName:             request.DBName,
+		MachineType:        request.MachineType,
+		DBEngineVersion:    request.DBEngineVersion,
+		DBFamily:           request.DBFamily,
 
 		DBMajorEngineVersion: dbVersion.MajorVersion(),
 

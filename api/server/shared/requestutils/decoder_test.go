@@ -32,7 +32,7 @@ type decoderTestObj struct {
 const (
 	jsonFieldErrFmt  = "Invalid type for body param %s: expected %s, got %s"
 	jsonSyntaxErrFmt = "JSON syntax error at character %d"
-	jsonGenericErr   = "Could not parse JSON request: unexpected EOF"
+	jsonGenericErr   = "Could not parse JSON request"
 )
 
 func getSuccessfulJSONBody() io.ReadCloser {

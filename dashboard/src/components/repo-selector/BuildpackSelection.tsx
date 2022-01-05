@@ -297,7 +297,10 @@ export const BuildpackSelection: React.FC<{
         {!!availableBuildpacks?.length && (
           <>{renderBuildpacksList(availableBuildpacks, "add")}</>
         )}
-        <Helper>You may also add buildpacks by directly providing their GitHub links or links to ZIP files that contain the buildpack source code.</Helper>
+        <Helper>
+          You may also add buildpacks by directly providing their GitHub links
+          or links to ZIP files that contain the buildpack source code.
+        </Helper>
         <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
       </>
     </BuildpackConfigurationContainer>

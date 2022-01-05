@@ -17,6 +17,7 @@ import api from "shared/api";
 import Loading from "components/Loading";
 import Registry from "./components/Registry";
 import { connectRegistryTracks } from "shared/anayltics";
+import DocsHelper from "components/DocsHelper";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);
@@ -124,12 +125,12 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
       <TitleSection>Getting Started</TitleSection>
       <Subtitle>
         Step 2 of 3 - Connect an existing registry (Optional)
-        <a
-          href="https://docs.porter.run/docs/linking-up-application-source#connecting-an-existing-image-registry"
-          target="_blank"
-        >
-          <i className="material-icons">help_outline</i>
-        </a>
+        <DocsHelper
+          tooltipText="If you already have an existing image registry, you can connect your existing registry during project creation. If you don't have an image registry or don't know what that means, skip this step. Porter will handle the rest."
+          link={
+            "https://porter-docs-demo-22fd462fef4dcd45.onporter.run/getting-started/linking-application-source#connecting-an-existing-image-registry"
+          }
+        />
       </Subtitle>
       <Helper>
         {currentProvider

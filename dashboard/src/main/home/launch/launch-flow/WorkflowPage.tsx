@@ -90,7 +90,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
           recommend you <b>deploy from docker instead</b>, and checkout this
           guide:{" "}
           <a
-            href="https://porter-docs-demo-22fd462fef4dcd45.onporter.run/deploying-applications/deploying-from-github/customizing-github-workflow"
+            href="https://docs.porter.run/deploying-applications/deploying-from-github/customizing-github-workflow"
             target="_blank"
           >
             CI/CD with GitHub Actions

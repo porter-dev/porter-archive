@@ -3,6 +3,7 @@ package apierrors
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -68,10 +69,11 @@ func (e *ErrForbidden) GetStatusCode() int {
 type ErrPassThroughToClient struct {
 	err        error
 	statusCode int
+	errDetails []string
 }
 
-func NewErrPassThroughToClient(err error, statusCode int) RequestError {
-	return &ErrPassThroughToClient{err, statusCode}
+func NewErrPassThroughToClient(err error, statusCode int, details ...string) RequestError {
+	return &ErrPassThroughToClient{err, statusCode, details}
 }
 
 func (e *ErrPassThroughToClient) Error() string {
@@ -79,7 +81,7 @@ func (e *ErrPassThroughToClient) Error() string {
 }
 
 func (e *ErrPassThroughToClient) InternalError() string {
-	return e.err.Error()
+	return e.err.Error() + strings.Join(e.errDetails, ",")
 }
 
 func (e *ErrPassThroughToClient) ExternalError() string {

@@ -51,20 +51,17 @@ const FormTitle = {
   aws: {
     label: "Amazon Web Services (AWS)",
     icon: integrationList["aws"].icon,
-    doc:
-      "https://porter-docs-demo-22fd462fef4dcd45.onporter.run/getting-started/provisioning-on-aws",
+    doc: "https://docs.porter.run/getting-started/provisioning-on-aws",
   },
   gcp: {
     label: "Google Cloud Platform (GCP)",
     icon: integrationList["gcp"].icon,
-    doc:
-      "https://porter-docs-demo-22fd462fef4dcd45.onporter.run/getting-started/provisioning-on-gcp",
+    doc: "https://docs.porter.run/getting-started/provisioning-on-gcp",
   },
   do: {
     label: "DigitalOcean (DO)",
     icon: integrationList["do"].icon,
-    doc:
-      "https://porter-docs-demo-22fd462fef4dcd45.onporter.run/getting-started/provisioning-on-do",
+    doc: "https://docs.porter.run/getting-started/provisioning-on-do",
   },
   external: {
     label: "Connect an existing cluster",

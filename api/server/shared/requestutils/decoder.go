@@ -70,7 +70,7 @@ func requestErrorFromJSONErr(err error) apierrors.RequestError {
 	} else if errors.As(err, &typeErr) {
 		clientErr = fmt.Errorf("Invalid type for body param %s: expected %s, got %s", typeErr.Field, typeErr.Type.Kind().String(), typeErr.Value)
 	} else {
-		clientErr = fmt.Errorf("Could not parse JSON request")
+		clientErr = fmt.Errorf("Could not parse JSON request: %s", err.Error())
 	}
 
 	return apierrors.NewErrPassThroughToClient(clientErr, http.StatusBadRequest)

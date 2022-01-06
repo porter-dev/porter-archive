@@ -415,7 +415,7 @@ jobs:
           path: release/darwin
       - name: Create and commit porter.rb file
         run: |
-          sha=${openssl sha256 < ./release/darwin/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip}
+          sha=$(cat ./release/darwin/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip | openssl sha256)
 
           echo "class Porter < Formula
             homepage "https://porter.run"

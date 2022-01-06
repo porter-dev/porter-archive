@@ -74,7 +74,7 @@ type CreateRDSInfraRequest struct {
 	// Size string `json:"size"`
 }
 
-type Engine string
+type Family string
 
 type EngineVersion string
 
@@ -97,11 +97,15 @@ func (e EngineVersions) VersionExists(version EngineVersion) bool {
 }
 
 const (
-	EnginePG    Engine = "postgres"
-	EngineMysql Engine = "mysql"
+	FamilyPG9   Family = "postgres9"
+	FamilyPG10  Family = "postgres10"
+	FamilyPG11  Family = "postgres11"
+	FamilyPG12  Family = "postgres12"
+	FamilyPG13  Family = "postgres13"
+	FamilyMysql Family = "mysql"
 )
 
-var availablePGVersions EngineVersions = EngineVersions{
+var availablePG9Versions EngineVersions = EngineVersions{
 	"9.6.1",
 	"9.6.2",
 	"9.6.3",
@@ -125,6 +129,9 @@ var availablePGVersions EngineVersions = EngineVersions{
 	"9.6.21",
 	"9.6.22",
 	"9.6.23",
+}
+
+var availablePG10Versions EngineVersions = EngineVersions{
 	"10.1",
 	"10.2",
 	"10.3",
@@ -143,6 +150,9 @@ var availablePGVersions EngineVersions = EngineVersions{
 	"10.16",
 	"10.17",
 	"10.18",
+}
+
+var availablePG11Versions EngineVersions = EngineVersions{
 	"11.1",
 	"11.2",
 	"11.3",
@@ -156,6 +166,9 @@ var availablePGVersions EngineVersions = EngineVersions{
 	"11.11",
 	"11.12",
 	"11.13",
+}
+
+var availablePG12Versions EngineVersions = EngineVersions{
 	"12.2",
 	"12.3",
 	"12.4",
@@ -163,13 +176,20 @@ var availablePGVersions EngineVersions = EngineVersions{
 	"12.6",
 	"12.7",
 	"12.8",
+}
+
+var availablePG13Versions EngineVersions = EngineVersions{
 	"13.1",
 	"13.2",
 	"13.3",
 	"13.4",
 }
 
-var DBVersionMapping = map[Engine]EngineVersions{
-	EnginePG:    availablePGVersions,
-	EngineMysql: {},
+var DBVersionMapping = map[Family]EngineVersions{
+	FamilyPG9:   availablePG9Versions,
+	FamilyPG10:  availablePG10Versions,
+	FamilyPG11:  availablePG11Versions,
+	FamilyPG12:  availablePG12Versions,
+	FamilyPG13:  availablePG13Versions,
+	FamilyMysql: {},
 }

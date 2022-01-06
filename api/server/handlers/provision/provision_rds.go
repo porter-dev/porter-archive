@@ -49,7 +49,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// validate db version and family
-	if v, ok := types.DBVersionMapping[types.Engine(request.DBFamily)]; !ok {
+	if v, ok := types.DBVersionMapping[types.Family(request.DBFamily)]; !ok {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			errors.New("DB family does not exist"), http.StatusBadRequest))
 

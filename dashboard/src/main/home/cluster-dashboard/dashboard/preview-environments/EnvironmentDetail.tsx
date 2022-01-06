@@ -30,6 +30,7 @@ const EnvironmentDetail = () => {
 
   useEffect(() => {
     let isSubscribed = true;
+    let environment_id = parseInt(searchParams.get("environment_id"));
 
     api
       .getPRDeploymentByCluster(
@@ -40,6 +41,7 @@ const EnvironmentDetail = () => {
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
+          environment_id: environment_id,
         }
       )
       .then(({ data }) => {

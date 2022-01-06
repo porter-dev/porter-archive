@@ -357,11 +357,12 @@ const getPRDeploymentByCluster = baseApi<
   {
     cluster_id: number;
     project_id: number;
+    environment_id: number;
   }
 >("GET", (pathParams) => {
-  const { cluster_id, project_id } = pathParams;
+  const { cluster_id, project_id, environment_id } = pathParams;
 
-  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/${environment_id}/deployment`;
 });
 
 const getPRDeployment = baseApi<

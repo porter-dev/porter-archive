@@ -94,11 +94,17 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
           closeChart={() => {
-            // pushFiltered(this.props, "/applications", ["project_id"], {
-            //   cluster: this.context.currentCluster.name,
-            //   namespace: namespace,
-            // })
-            this.props.history.goBack();
+            let urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.get("closeChartRedirectUrl")) {
+              this.props.history.push(urlParams.get("closeChartRedirectUrl"));
+              return;
+            }
+
+            pushFiltered(this.props, "/applications", ["project_id"], {
+              cluster: this.context.currentCluster.name,
+              namespace: namespace,
+            });
           }}
           setSidebar={setSidebar}
         />

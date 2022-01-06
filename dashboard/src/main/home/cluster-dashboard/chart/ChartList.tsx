@@ -25,6 +25,7 @@ type Props = {
   sortType: string;
   currentView: PorterUrl;
   disableBottomPadding?: boolean;
+  closeChartRedirectUrl?: string;
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -37,6 +38,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   sortType,
   currentView,
   disableBottomPadding,
+  closeChartRedirectUrl,
 }) => {
   const {
     newWebsocket,
@@ -390,6 +392,7 @@ const ChartList: React.FunctionComponent<Props> = ({
             null
           )}
           isJob={currentView === "jobs"}
+          closeChartRedirectUrl={closeChartRedirectUrl}
         />
       );
     });

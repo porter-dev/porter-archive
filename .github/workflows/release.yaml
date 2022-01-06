@@ -2,9 +2,7 @@ on:
   push:
     tags:
       - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
-
 name: Create release w/ binaries and docker image
-
 jobs:
   docker-build-push:
     runs-on: ubuntu-latest
@@ -38,8 +36,8 @@ jobs:
       - name: Push
         run: |
           docker push porter1/porter:${{steps.tag_name.outputs.tag}}
-  build:
-    name: Build binaries
+  build-linux:
+    name: Build Linux binaries
     runs-on: ubuntu-latest
     steps:
       - name: Get tag name
@@ -54,7 +52,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.16
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
@@ -93,28 +91,71 @@ jobs:
           zip --junk-paths ./release/linux/porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./porter
           zip --junk-paths ./release/linux/portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./portersvr
           zip --junk-paths ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./docker-credential-porter
-      - name: Build and zip Darwin binaries
-        run: |
-          docker build . --file ./build/Dockerfile.osx -t osx
-          docker run \
-          --mount type=bind,source="$(pwd)"/release,target=/release \
-          osx:latest ${{steps.tag_name.outputs.tag}}
-      - name: Build and zip Windows binaries
-        run: |
-          docker build . --file ./build/Dockerfile.win -t win
-          docker run \
-          --mount type=bind,source="$(pwd)"/release,target=/release \
-          win:latest ${{steps.tag_name.outputs.tag}}
       - name: Upload binaries
         uses: actions/upload-artifact@v2
         with:
-          path: ./release
-          name: binaries
+          path: ./release/linux
+          name: linux-binaries
+          retention-days: 1
+  build-mac:
+    name: Build MacOS binaries
+    runs-on: macos-11
+    steps:
+      - name: Get tag name
+        id: tag_name
+        run: |
+          tag=${GITHUB_TAG/refs\/tags\//}
+          echo ::set-output name=tag::$tag
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      - name: Write Dashboard Environment Variables
+        run: |
+          cat >./dashboard/.env <<EOL
+          NODE_ENV=production
+          APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
+          ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
+          EOL
+      - name: Build and zip static folder
+        run: |
+          mkdir -p ./release/static
+          cd dashboard
+          npm i --production=false
+          npm run build
+          cd ..
+          zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
+        env:
+          NODE_ENV: production
+      - name: Build and Zip MacOS amd64 binaries
+        run: |
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./amd64/porter ./cli &
+          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./amd64/docker-credential-porter ./cmd/docker-credential-porter/ &
+          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./amd64/portersvr ./cmd/app/ &
+          wait
+
+          mkdir -p ./release/darwin
+          zip --junk-paths ./release/darwin/UNSIGNED_porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./amd64/porter
+          zip --junk-paths ./release/darwin/UNSIGNED_portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./amd64/portersvr
+          zip --junk-paths ./release/darwin/UNSIGNED_docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./amd64/docker-credential-porter
+        env:
+          GOOS: darwin
+          GOARCH: amd64
+          CGO_ENABLED: 1
+      - name: Upload binaries
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./release/darwin
+          name: mac-binaries
           retention-days: 1
   notarize:
     name: Notarize Darwin binaries
     runs-on: macos-11
-    needs: build
+    needs: build-mac
     steps:
       - name: Get tag name
         id: tag_name
@@ -126,13 +167,13 @@ jobs:
       - name: Download binaries
         uses: actions/download-artifact@v2
         with:
-          name: binaries
+          name: mac-binaries
           path: release/
       - name: Unzip Darwin binaries
         run: |
-          unzip ./release/darwin/UNSIGNED_porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          unzip ./release/darwin/UNSIGNED_portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          unzip ./release/darwin/UNSIGNED_docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
+          unzip ./release/UNSIGNED_porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
+          unzip ./release/UNSIGNED_portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
+          unzip ./release/UNSIGNED_docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
       - name: Import Code-Signing Certificates
         uses: Apple-Actions/import-codesign-certs@v1
         with:
@@ -157,7 +198,7 @@ jobs:
                   \"application_identity\": \"${{ secrets.AC_APPLICATION_IDENTITY }}\"
               },
               \"zip\": {
-                  \"output_path\": \"./release/darwin/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
+                  \"output_path\": \"./release/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
               }
           }
           " > ./porter.gon.json
@@ -174,7 +215,7 @@ jobs:
                   \"application_identity\": \"${{ secrets.AC_APPLICATION_IDENTITY }}\"
               },
               \"zip\": {
-                  \"output_path\": \"./release/darwin/portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
+                  \"output_path\": \"./release/portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
               }
           }
           " > ./portersvr.gon.json
@@ -191,7 +232,7 @@ jobs:
                   \"application_identity\": \"${{ secrets.AC_APPLICATION_IDENTITY }}\"
               },
               \"zip\": {
-                  \"output_path\": \"./release/darwin/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
+                  \"output_path\": \"./release/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
               }
           }
           " > ./docker-credential-porter.gon.json
@@ -208,12 +249,14 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: ./release
-          name: binaries
+          name: mac-binaries
           retention-days: 1
   release:
     name: Zip binaries, create release and upload assets
     runs-on: ubuntu-latest
-    needs: notarize
+    needs: 
+    - notarize
+    - build-linux
     steps:
       - name: Get tag name
         id: tag_name
@@ -225,8 +268,13 @@ jobs:
       - name: Download binaries
         uses: actions/download-artifact@v2
         with:
-          name: binaries
-          path: release/
+          name: linux-binaries
+          path: release/linux
+      - name: Download binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: mac-binaries
+          path: release/darwin
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -302,39 +350,6 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./release/darwin/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
           asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Windows CLI Release Asset
-        id: upload-windows-cli-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/windows/porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
-          asset_name: porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Windows Server Release Asset
-        id: upload-windows-server-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/windows/portersvr_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
-          asset_name: portersvr_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Windows Docker Credential Release Asset
-        id: upload-windows-docker-cred-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/windows/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
-          asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Windows_x86_64.zip
           asset_content_type: application/zip
       - name: Upload Static Release Asset
         id: upload-static-release-asset

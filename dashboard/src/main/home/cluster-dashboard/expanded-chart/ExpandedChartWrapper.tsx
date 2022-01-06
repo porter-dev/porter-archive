@@ -98,6 +98,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
 
             if (urlParams.get("closeChartRedirectUrl")) {
               this.props.history.push(urlParams.get("closeChartRedirectUrl"));
+              return;
             }
 
             pushFiltered(this.props, "/applications", ["project_id"], {

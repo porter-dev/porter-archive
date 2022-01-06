@@ -36,16 +36,6 @@ func (conf *Conf) AttachRDSEnv(env []v1.EnvVar) []v1.EnvVar {
 	})
 
 	env = append(env, v1.EnvVar{
-		Name:  "AWS_REGION",
-		Value: conf.AWSAccessKeyID,
-	})
-
-	env = append(env, v1.EnvVar{
-		Name:  "AWS_REGION",
-		Value: conf.AWSSecretAccessKey,
-	})
-
-	env = append(env, v1.EnvVar{
 		Name:  "DB_NAME",
 		Value: conf.DBName,
 	})

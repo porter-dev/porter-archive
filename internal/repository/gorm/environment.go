@@ -76,10 +76,24 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 	return depl, nil
 }
 
+func (repo *EnvironmentRepository) ReadDeploymentByCluster(projectID, clusterID uint, namespace string) (*models.Deployment, error) {
+	depl := &models.Deployment{}
+
+	if err := repo.db.
+		Order("deployments.id asc").
+		Joins("INNER JOIN environments ON environments.id = deployments.environment_id").
+		Where("environments.project_id = ? AND environments.cluster_id = ? AND environments.deleted_at IS NULL AND namespace = ?", projectID, clusterID, depl.Namespace).
+		Find(&depl).Error; err != nil {
+		return nil, err
+	}
+
+	return depl, nil
+}
+
 func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint) ([]*models.Deployment, error) {
 	depls := make([]*models.Deployment, 0)
 
-	if err := repo.db.Debug().
+	if err := repo.db.
 		Order("deployments.id asc").
 		Joins("INNER JOIN environments ON environments.id = deployments.environment_id").
 		Where("environments.project_id = ? AND environments.cluster_id = ? AND environments.deleted_at IS NULL", projectID, clusterID).

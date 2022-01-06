@@ -179,6 +179,7 @@ const EnvironmentDetail = () => {
           sortType="Newest"
           namespace={environment.namespace}
           disableBottomPadding
+          closeChartRedirectUrl={window.location.href}
         />
       </ChartListWrapper>
     </StyledExpandedChart>

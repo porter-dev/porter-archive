@@ -18,6 +18,7 @@ type Props = {
   controllers: Record<string, any>;
   jobStatus: JobStatusWithTimeType;
   isJob: boolean;
+  closeChartRedirectUrl?: string;
 };
 
 const Chart: React.FunctionComponent<Props> = ({
@@ -25,6 +26,7 @@ const Chart: React.FunctionComponent<Props> = ({
   controllers,
   jobStatus,
   isJob,
+  closeChartRedirectUrl,
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
@@ -100,7 +102,9 @@ const Chart: React.FunctionComponent<Props> = ({
         let route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${
           chart.namespace
         }/${chart.name}`;
-        pushFiltered({ location, history }, route, ["project_id"]);
+        pushFiltered({ location, history }, route, ["project_id"], {
+          closeChartRedirectUrl,
+        });
       }}
     >
       <Title>

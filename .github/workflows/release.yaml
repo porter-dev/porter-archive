@@ -396,3 +396,39 @@ jobs:
       - name: Push
         run: |
           docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+  update-homebrew-repo:
+    name: Update the Homebrew repo with the new CLI version
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Get tag name
+        id: tag_name
+        run: |
+          tag=${GITHUB_TAG/refs\/tags\//}
+          echo ::set-output name=tag::$tag
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Download binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: mac-binaries
+          path: release/darwin
+      - name: Create and commit porter.rb file
+        run: |
+          sha=${openssl sha256 < ./release/darwin/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip}
+
+          echo "class Porter < Formula
+            homepage "https://porter.run"
+            version "${{steps.tag_name.outputs.tag}}"
+          
+            on_macos do
+              url "https://github.com/porter-dev/porter/releases/download/${{steps.tag_name.outputs.tag}}/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip"
+              sha256 "$sha"
+          
+              def install
+                bin.install "porter"
+              end
+            end
+          end" > porter.rb
+
+          cat porter.rb

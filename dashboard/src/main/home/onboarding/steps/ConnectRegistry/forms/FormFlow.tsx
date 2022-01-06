@@ -54,19 +54,19 @@ const FormTitle = {
     label: "Amazon Elastic Container Registry (ECR)",
     icon: integrationList["ecr"].icon,
     doc:
-      "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#amazon-elastic-container-registry-ecr",
+      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#amazon-elastic-container-registry-ecr",
   },
   gcp: {
     label: "Google Container Registry (GCR)",
     icon: integrationList["gcr"].icon,
     doc:
-      "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#google-container-registry-gcr",
+      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#google-container-registry-gcr",
   },
   do: {
     label: "DigitalOcean Container Registry (DOCR)",
     icon: integrationList["do"].icon,
     doc:
-      "https://docs.porter.run/docs/linking-an-existing-docker-container-registry#digitalocean-container-registry",
+      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#digital-ocean-container-registry",
   },
 };
 

@@ -36,6 +36,19 @@ func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInst
 	return env, nil
 }
 
+func (repo *EnvironmentRepository) ReadEnvironmentByID(projectID, clusterID, envID uint) (*models.Environment, error) {
+	env := &models.Environment{}
+
+	if err := repo.db.Order("id desc").Where(
+		"project_id = ? AND cluster_id = ? AND id = ?",
+		projectID, clusterID, envID,
+	).First(&env).Error; err != nil {
+		return nil, err
+	}
+
+	return env, nil
+}
+
 func (repo *EnvironmentRepository) ListEnvironments(projectID, clusterID uint) ([]*models.Environment, error) {
 	envs := make([]*models.Environment, 0)
 

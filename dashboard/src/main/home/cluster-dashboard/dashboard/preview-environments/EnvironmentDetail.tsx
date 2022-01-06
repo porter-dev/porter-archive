@@ -16,7 +16,7 @@ import { integrationList } from "shared/common";
 const EnvironmentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
-  const [environment, setEnvironment] = useState<PRDeployment>(null);
+  const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
@@ -28,15 +28,11 @@ const EnvironmentDetail = () => {
   const { search } = useLocation();
   let searchParams = new URLSearchParams(search);
 
-  // const useQuery = () => {
-  //   return React.useMemo(() => , [search]);
-  // };
-
-  const getDeployment = (environment: Environment) => {
+  useEffect(() => {
     let isSubscribed = true;
 
     api
-      .getPRDeployment(
+      .getPRDeploymentByCluster(
         "<token>",
         {
           namespace: params.namespace,
@@ -44,9 +40,6 @@ const EnvironmentDetail = () => {
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          git_installation_id: environment.git_installation_id,
-          git_repo_owner: environment.git_repo_owner,
-          git_repo_name: environment.git_repo_name,
         }
       )
       .then(({ data }) => {
@@ -54,13 +47,13 @@ const EnvironmentDetail = () => {
           return;
         }
 
-        setEnvironment(data);
+        setPRDeployment(data);
       })
       .catch((err) => {
         console.error(err);
         if (isSubscribed) {
           setHasError(true);
-          setEnvironment(null);
+          setPRDeployment(null);
         }
       })
       .finally(() => {
@@ -68,58 +61,13 @@ const EnvironmentDetail = () => {
           setIsLoading(false);
         }
       });
-  };
-
-  useEffect(() => {
-    let isSubscribed = true;
-
-    let environment_id = parseInt(searchParams.get("environment_id"));
-
-    // find the git installation id
-    api
-      .listEnvironments(
-        "<token>",
-        {
-          namespace: params.namespace,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
-      .then(({ data }) => {
-        if (!isSubscribed) {
-          return;
-        }
-
-        if (!Array.isArray(data)) {
-          throw Error("Data is not an array");
-        }
-
-        data.forEach((d) => {
-          if (d.id == environment_id) {
-            getDeployment(d);
-          }
-        });
-      })
-      .catch((err) => {
-        console.error(err);
-        if (isSubscribed) {
-          setHasError(true);
-          setEnvironment(null);
-        }
-      });
-
-    return () => {
-      isSubscribed = false;
-    };
   }, [params]);
 
-  if (!environment) {
+  if (!prDeployment) {
     return <Loading />;
   }
 
-  let repository = `${environment.gh_repo_owner}/${environment.gh_repo_name}`;
+  let repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
 
   return (
     <StyledExpandedChart>
@@ -128,7 +76,7 @@ const EnvironmentDetail = () => {
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">
-          {environment.gh_pr_name}
+          {prDeployment.gh_pr_name}
           <DeploymentImageContainer>
             <DeploymentTypeIcon src={integrationList.repo.icon} />
             <RepositoryName
@@ -144,25 +92,25 @@ const EnvironmentDetail = () => {
             {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
           </DeploymentImageContainer>
           <TagWrapper>
-            Namespace <NamespaceTag>{environment.namespace}</NamespaceTag>
+            Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
           </TagWrapper>
         </Title>
         <InfoWrapper>
-          {environment.subdomain && (
-            <PRLink to={environment.subdomain} target="_blank">
+          {prDeployment.subdomain && (
+            <PRLink to={prDeployment.subdomain} target="_blank">
               <i className="material-icons">link</i>
-              {environment.subdomain}
+              {prDeployment.subdomain}
             </PRLink>
           )}
         </InfoWrapper>
         <Flex>
           <Status>
-            <StatusDot status={environment.status} />
-            {capitalize(environment.status)}
+            <StatusDot status={prDeployment.status} />
+            {capitalize(prDeployment.status)}
           </Status>
           <Dot>•</Dot>
           <GHALink
-            to={`https://github.com/${repository}/pull/${environment.pull_request_id}`}
+            to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
             target="_blank"
           >
             <img src={github} /> GitHub
@@ -177,7 +125,7 @@ const EnvironmentDetail = () => {
           currentCluster={context.currentCluster}
           currentView="cluster-dashboard"
           sortType="Newest"
-          namespace={environment.namespace}
+          namespace={params.namespace}
           disableBottomPadding
         />
       </ChartListWrapper>

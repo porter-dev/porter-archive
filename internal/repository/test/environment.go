@@ -43,6 +43,10 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 	panic("unimplemented")
 }
 
+func (repo *EnvironmentRepository) ReadDeploymentByCluster(projectID, clusterID uint, namespace string) (*models.Deployment, error) {
+	panic("unimplemented")
+}
+
 func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint) ([]*models.Deployment, error) {
 	panic("unimplemented")
 }

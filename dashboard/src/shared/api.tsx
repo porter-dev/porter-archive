@@ -350,6 +350,20 @@ const getPRDeploymentList = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments`;
 });
 
+const getPRDeploymentByCluster = baseApi<
+  {
+    namespace: string;
+  },
+  {
+    cluster_id: number;
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  const { cluster_id, project_id } = pathParams;
+
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment`;
+});
+
 const getPRDeployment = baseApi<
   {
     namespace: string;
@@ -1350,6 +1364,7 @@ export default {
   getClusterNode,
   getConfigMap,
   getPRDeploymentList,
+  getPRDeploymentByCluster,
   getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,

@@ -119,12 +119,12 @@ const ChartList: React.FunctionComponent<Props> = ({
         setCharts((currentCharts) => {
           switch (event.event_type) {
             case "ADD":
-              if (currentCharts.find(isSameChart)) {
+              if (currentCharts?.find(isSameChart)) {
                 return currentCharts;
               }
-              return currentCharts.concat(newChart);
+              return currentCharts?.concat(newChart);
             case "UPDATE":
-              return currentCharts.map((chart) => {
+              return currentCharts?.map((chart) => {
                 if (isSameChart(chart) && newChart.version >= chart.version) {
                   return newChart;
                 }

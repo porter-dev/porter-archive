@@ -97,6 +97,12 @@ jobs:
           path: ./release/linux
           name: linux-binaries
           retention-days: 1
+      - name: Upload static binaries
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./release/static
+          name: static-binaries
+          retention-days: 1
   build-mac:
     name: Build MacOS binaries
     runs-on: macos-11
@@ -121,16 +127,6 @@ jobs:
           APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
           ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
           EOL
-      - name: Build and zip static folder
-        run: |
-          mkdir -p ./release/static
-          cd dashboard
-          npm i --production=false
-          npm run build
-          cd ..
-          zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
-        env:
-          NODE_ENV: production
       - name: Build and Zip MacOS amd64 binaries
         run: |
           go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./amd64/porter ./cli &
@@ -270,6 +266,11 @@ jobs:
         with:
           name: linux-binaries
           path: release/linux
+      - name: Download binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: static-binaries
+          path: release/static
       - name: Download binaries
         uses: actions/download-artifact@v2
         with:

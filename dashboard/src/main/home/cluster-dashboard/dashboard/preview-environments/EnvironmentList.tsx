@@ -52,6 +52,16 @@ const EnvironmentList = () => {
   const location = useLocation();
   const history = useHistory();
 
+  const getPRDeploymentList = () =>
+    api.getPRDeploymentList(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    );
+
   useEffect(() => {
     let isSubscribed = true;
     api
@@ -83,19 +93,11 @@ const EnvironmentList = () => {
     return () => {
       isSubscribed = false;
     };
-  }, []);
+  }, [currentProject, currentCluster]);
 
   useEffect(() => {
     let isSubscribed = true;
-    api
-      .getPRDeploymentList(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
+    getPRDeploymentList()
       .then(({ data }) => {
         if (!isSubscribed) {
           return;
@@ -128,6 +130,22 @@ const EnvironmentList = () => {
       setShowConnectRepoFlow(false);
     }
   }, [location.search, history]);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    getPRDeploymentList()
+      .then(({ data }) => {
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+        setEnvironmentList(data);
+      })
+      .catch((err) => {
+        setHasError(true);
+        console.error(err);
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   if (showConnectRepoFlow) {
     return (
@@ -175,12 +193,17 @@ const EnvironmentList = () => {
   return (
     <Container>
       <ControlRow>
-        <Button
-          to={`${currentUrl}?selected_tab=preview_environments&action=connect-repo`}
-          onClick={() => console.log("launch repo")}
-        >
-          <i className="material-icons">add</i> Add Repository
-        </Button>
+        <div>
+          <Button
+            to={`${currentUrl}?selected_tab=preview_environments&action=connect-repo`}
+            onClick={() => console.log("launch repo")}
+          >
+            <i className="material-icons">add</i> Add Repository
+          </Button>
+          <Highlight color={"#7d7d81"} onClick={handleRefresh}>
+            <i className="material-icons">refresh</i>
+          </Highlight>
+        </div>
         <SettingsButton
           onClick={() => {
             setCurrentModal("PreviewEnvSettingsModal", {});
@@ -202,6 +225,20 @@ const EnvironmentList = () => {
 };
 
 export default EnvironmentList;
+
+const Highlight = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  color: ${(props: { color: string }) => props.color};
+  cursor: pointer;
+
+  > i {
+    font-size: 20px;
+    margin-right: 3px;
+  }
+`;
 
 const SettingsButton = styled.div`
   font-size: 12px;

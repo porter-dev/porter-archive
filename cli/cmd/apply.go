@@ -301,12 +301,12 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		if err != nil {
 			return nil, err
 		}
-	}
+	} else {
+		resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
 
-	resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
-
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {

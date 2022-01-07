@@ -259,7 +259,7 @@ func (d *DeployAgent) Build() error {
 		d.tag = currentTag
 	}
 
-	err = d.pullCurrentReleaseImage()
+	currTag, err := d.pullCurrentReleaseImage()
 
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
@@ -290,7 +290,7 @@ func (d *DeployAgent) Build() error {
 		)
 	}
 
-	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, d.release.BuildConfig)
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, currTag, d.release.BuildConfig)
 }
 
 // Push pushes a local image to the remote repository linked in the release
@@ -408,35 +408,35 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 	return repoStr, nil
 }
 
-func (d *DeployAgent) pullCurrentReleaseImage() error {
+func (d *DeployAgent) pullCurrentReleaseImage() (string, error) {
 	// pull the currently deployed image to use cache, if possible
 	imageConfig, err := getNestedMap(d.release.Config, "image")
 
 	if err != nil {
-		return fmt.Errorf("could not get image config from release: %s", err.Error())
+		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
 	}
 
 	tagInterface, ok := imageConfig["tag"]
 
 	if !ok {
-		return fmt.Errorf("tag field does not exist for image")
+		return "", fmt.Errorf("tag field does not exist for image")
 	}
 
 	tagStr, ok := tagInterface.(string)
 
 	if !ok {
-		return fmt.Errorf("could not cast image.tag field to string")
+		return "", fmt.Errorf("could not cast image.tag field to string")
 	}
 
 	// if image repo is a hello-porter image, skip
 	if d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter" ||
 		d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
-		return nil
+		return "", nil
 	}
 
 	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
-	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
+	return tagStr, d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 }
 
 func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {

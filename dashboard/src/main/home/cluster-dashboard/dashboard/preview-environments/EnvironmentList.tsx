@@ -52,6 +52,16 @@ const EnvironmentList = () => {
   const location = useLocation();
   const history = useHistory();
 
+  const getPRDeploymentList = () =>
+    api.getPRDeploymentList(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    );
+
   useEffect(() => {
     let isSubscribed = true;
     api
@@ -83,19 +93,11 @@ const EnvironmentList = () => {
     return () => {
       isSubscribed = false;
     };
-  }, []);
+  }, [currentProject, currentCluster]);
 
   useEffect(() => {
     let isSubscribed = true;
-    api
-      .getPRDeploymentList(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
+    getPRDeploymentList()
       .then(({ data }) => {
         if (!isSubscribed) {
           return;
@@ -128,6 +130,22 @@ const EnvironmentList = () => {
       setShowConnectRepoFlow(false);
     }
   }, [location.search, history]);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    getPRDeploymentList()
+      .then(({ data }) => {
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+        setEnvironmentList(data);
+      })
+      .catch((err) => {
+        setHasError(true);
+        console.error(err);
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   if (showConnectRepoFlow) {
     return (
@@ -181,14 +199,20 @@ const EnvironmentList = () => {
         >
           <i className="material-icons">add</i> Add Repository
         </Button>
-        <SettingsButton
-          onClick={() => {
-            setCurrentModal("PreviewEnvSettingsModal", {});
-          }}
-        >
-          <i className="material-icons-outlined">settings</i>
-          Configure
-        </SettingsButton>
+
+        <ActionsWrapper>
+          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+            <i className="material-icons">refresh</i>
+          </RefreshButton>
+          <SettingsButton
+            onClick={() => {
+              setCurrentModal("PreviewEnvSettingsModal", {});
+            }}
+          >
+            <i className="material-icons-outlined">settings</i>
+            Configure
+          </SettingsButton>
+        </ActionsWrapper>
         {/* <Settings >
           <SettingsIcon src={settings} />
           <SettingsText>
@@ -202,6 +226,29 @@ const EnvironmentList = () => {
 };
 
 export default EnvironmentList;
+
+const ActionsWrapper = styled.div`
+  display: flex;
+`;
+
+const RefreshButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${(props: { color: string }) => props.color};
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  margin-right: 10px;
+  > i {
+    font-size: 20px;
+  }
+  :hover {
+    background-color: rgb(97 98 102 / 44%);
+    color: white;
+  }
+`;
 
 const SettingsButton = styled.div`
   font-size: 12px;

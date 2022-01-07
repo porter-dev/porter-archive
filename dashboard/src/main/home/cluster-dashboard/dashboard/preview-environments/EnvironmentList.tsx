@@ -193,25 +193,26 @@ const EnvironmentList = () => {
   return (
     <Container>
       <ControlRow>
-        <div>
-          <Button
-            to={`${currentUrl}?selected_tab=preview_environments&action=connect-repo`}
-            onClick={() => console.log("launch repo")}
-          >
-            <i className="material-icons">add</i> Add Repository
-          </Button>
-          <Highlight color={"#7d7d81"} onClick={handleRefresh}>
-            <i className="material-icons">refresh</i>
-          </Highlight>
-        </div>
-        <SettingsButton
-          onClick={() => {
-            setCurrentModal("PreviewEnvSettingsModal", {});
-          }}
+        <Button
+          to={`${currentUrl}?selected_tab=preview_environments&action=connect-repo`}
+          onClick={() => console.log("launch repo")}
         >
-          <i className="material-icons-outlined">settings</i>
-          Configure
-        </SettingsButton>
+          <i className="material-icons">add</i> Add Repository
+        </Button>
+
+        <ActionsWrapper>
+          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+            <i className="material-icons">refresh</i>
+          </RefreshButton>
+          <SettingsButton
+            onClick={() => {
+              setCurrentModal("PreviewEnvSettingsModal", {});
+            }}
+          >
+            <i className="material-icons-outlined">settings</i>
+            Configure
+          </SettingsButton>
+        </ActionsWrapper>
         {/* <Settings >
           <SettingsIcon src={settings} />
           <SettingsText>
@@ -226,17 +227,26 @@ const EnvironmentList = () => {
 
 export default EnvironmentList;
 
-const Highlight = styled.button`
+const ActionsWrapper = styled.div`
+  display: flex;
+`;
+
+const RefreshButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 8px;
   color: ${(props: { color: string }) => props.color};
   cursor: pointer;
-
+  border: none;
+  background: none;
+  border-radius: 50%;
+  margin-right: 10px;
   > i {
     font-size: 20px;
-    margin-right: 3px;
+  }
+  :hover {
+    background-color: rgb(97 98 102 / 44%);
+    color: white;
   }
 `;
 

@@ -284,7 +284,7 @@ func (c *CreateAgent) CreateFromDocker(
 	if opts.Method == DeployBuildTypeDocker {
 		err = buildAgent.BuildDocker(agent, opts.LocalPath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
 	} else {
-		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, nil)
+		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", nil)
 	}
 
 	if err != nil {

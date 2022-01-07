@@ -5,13 +5,14 @@ import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { capitalize, PRDeployment, Environment } from "./EnvironmentList";
+import { PRDeployment, Environment } from "./EnvironmentList";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
+import { capitalize } from "./components/EnvironmentCard";
 
 const EnvironmentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();

@@ -327,7 +327,9 @@ func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 		return err
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv()
+	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: false,
+	})
 
 	if err != nil {
 		return err
@@ -411,7 +413,16 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		})
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv()
+	// read the values if necessary
+	valuesObj, err := readValuesFile()
+	if err != nil {
+		return err
+	}
+
+	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: true,
+		NewConfig:    valuesObj,
+	})
 
 	if err != nil {
 		if stream {

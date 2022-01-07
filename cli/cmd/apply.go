@@ -371,7 +371,10 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 		return nil, err
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv()
+	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: true,
+		NewConfig:    appConf.Values,
+	})
 
 	if err != nil {
 		return nil, err

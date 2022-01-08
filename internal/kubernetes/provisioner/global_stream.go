@@ -175,6 +175,8 @@ func GlobalStreamListener(
 						},
 					))
 				} else if kind == string(types.InfraRDS) {
+					fmt.Println("detected infra rds")
+
 					database := &models.Database{
 						ProjectID: projID,
 						InfraID:   infra.ID,
@@ -182,16 +184,19 @@ func GlobalStreamListener(
 
 					endpoint, ok := msg.Values["rds_connection_endpoint"].(string)
 					if !ok {
+						fmt.Println("error state 1")
 						continue
 					}
 
 					instanceID, ok := msg.Values["rds_instance_id"].(string)
 					if !ok {
+						fmt.Println("error state 2")
 						continue
 					}
 
 					instanceName, ok := msg.Values["rds_instance_name"].(string)
 					if !ok {
+						fmt.Println("error state 3")
 						continue
 					}
 

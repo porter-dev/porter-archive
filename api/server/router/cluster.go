@@ -302,6 +302,7 @@ func getClusterRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.ClusterScope,
 			},
 		},
 	)

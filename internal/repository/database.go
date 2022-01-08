@@ -6,6 +6,6 @@ import (
 
 type DatabaseRepository interface {
 	CreateDatabase(database *models.Database) (*models.Database, error)
-	ReadDatabase(projectID, databaseID uint) (*models.Database, error)
-	ListDatabases(projectID uint) ([]*models.Database, error)
+	ReadDatabase(projectID, clusterID, databaseID uint) (*models.Database, error)
+	ListDatabases(projectID, clusterID uint) ([]*models.Database, error)
 }

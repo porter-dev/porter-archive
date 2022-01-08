@@ -37,19 +37,19 @@ func (repo *DatabaseRepository) CreateDatabase(database *models.Database) (*mode
 	return database, nil
 }
 
-func (repo *DatabaseRepository) ReadDatabase(projectID uint, databaseID uint) (*models.Database, error) {
+func (repo *DatabaseRepository) ReadDatabase(projectID, clusterID, databaseID uint) (*models.Database, error) {
 	database := &models.Database{}
 
-	if err := repo.db.Where("project_id = ? AND id = ?", projectID, databaseID).First(database).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND cluster_id = ? AND id = ?", projectID, clusterID, databaseID).First(database).Error; err != nil {
 		return nil, err
 	}
 
 	return database, nil
 }
 
-func (repo *DatabaseRepository) ListDatabases(projectID uint) ([]*models.Database, error) {
+func (repo *DatabaseRepository) ListDatabases(projectID, clusterID uint) ([]*models.Database, error) {
 	databases := []*models.Database{}
-	if err := repo.db.Where("project_id = ?", projectID).Find(databases).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND cluster_id = ?", projectID, clusterID).Find(databases).Error; err != nil {
 		return nil, err
 	}
 

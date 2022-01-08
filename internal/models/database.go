@@ -16,9 +16,9 @@ type Database struct {
 	InfraID uint `json:"infra_id"`
 	Infra   Infra
 
-	InstanceID       string `json:"instance_id"`
-	InstanceEndpoint string `json:"instance_endpoint"`
-	InstanceName     string `json:"instance_name"`
+	InstanceID       string `json:"rds_instance_id"`
+	InstanceEndpoint string `json:"rds_connection_endpoint"`
+	InstanceName     string `json:"rds_instance_name"`
 }
 
 func (d *Database) ToDatabaseType() *types.Database {

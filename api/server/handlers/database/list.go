@@ -27,9 +27,10 @@ func NewDatabaseListHandler(
 func (p *DatabaseListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the project from context
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	// read all clusters for this project
-	dbs, err := p.Repo().Database().ListDatabases(proj.ID)
+	dbs, err := p.Repo().Database().ListDatabases(proj.ID, cluster.ID)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

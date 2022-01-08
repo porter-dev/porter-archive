@@ -16,10 +16,10 @@ func (repo *DatabaseRepository) CreateDatabase(database *models.Database) (*mode
 	panic("unimplemented")
 }
 
-func (repo *DatabaseRepository) ReadDatabase(projectID uint, databaseID uint) (*models.Database, error) {
+func (repo *DatabaseRepository) ReadDatabase(projectID, clusterID, databaseID uint) (*models.Database, error) {
 	panic("unimplemented")
 }
 
-func (repo *DatabaseRepository) ListDatabases(projectID uint) ([]*models.Database, error) {
+func (repo *DatabaseRepository) ListDatabases(projectID, clusterID uint) ([]*models.Database, error) {
 	panic("unimplemented")
 }

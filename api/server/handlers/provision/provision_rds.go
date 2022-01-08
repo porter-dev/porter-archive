@@ -41,10 +41,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.CreateRDSInfraRequest{
-		ProjectID: proj.ID,
-		ClusterID: cluster.ID,
-	}
+	request := &types.CreateRDSInfraRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -84,7 +81,12 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	lastApplied, err := json.Marshal(request)
+	lastAppliedData := &types.RDSInfraLastApplied{
+		CreateRDSInfraRequest: request,
+		ClusterID:             cluster.ID,
+	}
+
+	lastApplied, err := json.Marshal(lastAppliedData)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

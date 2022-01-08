@@ -49,9 +49,6 @@ type DeleteInfraRequest struct {
 }
 
 type CreateRDSInfraRequest struct {
-	ProjectID uint `json:"-" form:"required"`
-	ClusterID uint `json:"-" form:"required"`
-
 	// version of the postgres engine
 	DBEngineVersion string `json:"db_engine_version"`
 	// db type - postgress / mysql
@@ -69,9 +66,12 @@ type CreateRDSInfraRequest struct {
 	DBStorage    string `json:"db_allocated_storage"`
 	DBMaxStorage string `json:"db_max_allocated_storage"`
 	DBEncryption bool   `json:"db_storage_encrypted"`
+}
 
-	// Deprecated, use DBStorage and DBMaxStorage fields instead
-	// Size string `json:"size"`
+type RDSInfraLastApplied struct {
+	*CreateRDSInfraRequest
+
+	ClusterID uint `json:"cluster_id"`
 }
 
 type Family string

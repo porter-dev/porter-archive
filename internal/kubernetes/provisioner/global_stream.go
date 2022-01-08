@@ -176,7 +176,7 @@ func GlobalStreamListener(
 					))
 				} else if kind == string(types.InfraRDS) {
 					// parse the last applied field to get the cluster id
-					rdsRequest := &types.CreateRDSInfraRequest{}
+					rdsRequest := &types.RDSInfraLastApplied{}
 					err := json.Unmarshal(infra.LastApplied, rdsRequest)
 
 					if err != nil {

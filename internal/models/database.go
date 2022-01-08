@@ -11,6 +11,8 @@ type Database struct {
 	ProjectID uint `json:"project_id"`
 	Project   Project
 
+	ClusterID uint `json:"cluster_id"`
+
 	InfraID uint `json:"infra_id"`
 	Infra   Infra
 
@@ -23,6 +25,7 @@ func (d *Database) ToDatabaseType() *types.Database {
 	return &types.Database{
 		ID:               d.ID,
 		ProjectID:        d.ProjectID,
+		ClusterID:        d.ClusterID,
 		InfraID:          d.InfraID,
 		InstanceID:       d.InstanceID,
 		InstanceEndpoint: d.InstanceEndpoint,

@@ -5,11 +5,11 @@ import (
 )
 
 func TestAvailableVersion(t *testing.T) {
-	if _, ok := DBVersionMapping[Engine("mongo")]; ok {
+	if _, ok := DBVersionMapping[Family("mongo")]; ok {
 		t.Fatalf("mong engine availability should fail")
 	}
 
-	v, ok := DBVersionMapping[Engine(EnginePG)]
+	v, ok := DBVersionMapping[Family(FamilyPG10)]
 	if !ok {
 		t.Fatalf("postgres engine not available in engine mapping")
 	}

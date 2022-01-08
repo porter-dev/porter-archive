@@ -177,9 +177,19 @@ func GlobalStreamListener(
 				} else if kind == string(types.InfraRDS) {
 					fmt.Println("detected infra rds")
 
+					// parse the last applied field to get the cluster id
+					rdsRequest := &types.CreateRDSInfraRequest{}
+					err := json.Unmarshal(infra.LastApplied, rdsRequest)
+
+					if err != nil {
+						fmt.Println("error state 0", err)
+						continue
+					}
+
 					database := &models.Database{
 						ProjectID: projID,
 						InfraID:   infra.ID,
+						ClusterID: rdsRequest.ClusterID,
 					}
 
 					endpoint, ok := msg.Values["rds_connection_endpoint"].(string)
@@ -204,7 +214,8 @@ func GlobalStreamListener(
 					database.InstanceID = instanceID
 					database.InstanceName = instanceName
 
-					database, err := repo.Database().CreateDatabase(database)
+					database, err = repo.Database().CreateDatabase(database)
+
 					if err != nil {
 						continue
 					}

@@ -49,8 +49,8 @@ type DeleteInfraRequest struct {
 }
 
 type CreateRDSInfraRequest struct {
-	ProjectID uint `json:"project_id"`
-	ClusterID uint `json:"cluster_id"`
+	ProjectID uint `json:"-" form:"required"`
+	ClusterID uint `json:"-" form:"required"`
 
 	// version of the postgres engine
 	DBEngineVersion string `json:"db_engine_version"`

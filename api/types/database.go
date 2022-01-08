@@ -9,6 +9,8 @@ type Database struct {
 	// The infra id, if cluster was provisioned with Porter
 	InfraID uint `json:"infra_id"`
 
+	ClusterID uint `json:"cluster_id"`
+
 	InstanceID       string `json:"instance_id"`
 	InstanceEndpoint string `json:"instance_endpoint"`
 	InstanceName     string `json:"instance_name"`

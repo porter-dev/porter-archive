@@ -818,6 +818,8 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 }
 
 func (t *DeploymentHook) OnError(err error) {
+	fmt.Println("running error hook for deployment")
+
 	// if the deployment exists, throw an error for that deployment
 	_, getDeplErr := t.client.GetDeployment(
 		context.Background(),

@@ -27,6 +27,10 @@ type CreateOpts struct {
 	Kind        string
 	ReleaseName string
 	RegistryURL string
+
+	// Suffix for the name of the image in the repository. By default the suffix is the
+	// target namespace.
+	RepoSuffix string
 }
 
 // GithubOpts are the options for linking a Github source to the app
@@ -376,12 +380,23 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 		if c.CreateOpts.RegistryURL != "" {
 			if c.CreateOpts.RegistryURL == reg.URL {
 				regID = reg.ID
-				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+				if c.CreateOpts.RepoSuffix != "" {
+					imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, c.CreateOpts.RepoSuffix)
+				} else {
+					imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+				}
+
 				break
 			}
 		} else if reg.URL != "" {
 			regID = reg.ID
-			imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+
+			if c.CreateOpts.RepoSuffix != "" {
+				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, c.CreateOpts.RepoSuffix)
+			} else {
+				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+			}
+
 			break
 		}
 	}

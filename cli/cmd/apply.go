@@ -334,6 +334,15 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 		registryURL = (*regList)[0].URL
 	}
 
+	// attempt to get repo suffix from environment variables
+	var repoSuffix string
+
+	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
+		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
+			repoSuffix = fmt.Sprintf("%s-%s", repoOwner, repoName)
+		}
+	}
+
 	createAgent := &deploy.CreateAgent{
 		Client: client,
 		CreateOpts: &deploy.CreateOpts{
@@ -341,6 +350,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 			Kind:        d.source.Name,
 			ReleaseName: resource.Name,
 			RegistryURL: registryURL,
+			RepoSuffix:  repoSuffix,
 		},
 	}
 
@@ -818,8 +828,6 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 }
 
 func (t *DeploymentHook) OnError(err error) {
-	fmt.Println("running error hook for deployment")
-
 	// if the deployment exists, throw an error for that deployment
 	_, getDeplErr := t.client.GetDeployment(
 		context.Background(),

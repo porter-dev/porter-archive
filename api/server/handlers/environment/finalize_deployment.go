@@ -64,7 +64,7 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	depl.Subdomain = request.Subdomain
-	depl.Status = "created"
+	depl.Status = types.DeploymentStatusCreated
 
 	// update the deployment
 	depl, err = c.Repo().Environment().UpdateDeployment(depl)

@@ -5,6 +5,7 @@ import api from "shared/api";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { getQueryParam } from "shared/routing";
 import styled from "styled-components";
+import Selector from "components/Selector";
 
 import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
 import ConnectNewRepo from "./components/ConnectNewRepo";
@@ -41,6 +42,7 @@ const EnvironmentList = () => {
   const [hasError, setHasError] = useState(false);
   const [environmentList, setEnvironmentList] = useState<Environment[]>([]);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
+  const [statusSelectorVal, setStatusSelectorVal] = useState<string>("active");
 
   const [showConnectRepoFlow, setShowConnectRepoFlow] = useState(false);
   const { currentProject, currentCluster, setCurrentModal } = useContext(
@@ -52,15 +54,26 @@ const EnvironmentList = () => {
   const location = useLocation();
   const history = useHistory();
 
-  const getPRDeploymentList = () =>
-    api.getPRDeploymentList(
+  const getPRDeploymentList = () => {
+    let status: string[] = [];
+
+    if (statusSelectorVal == "active") {
+      status = ["creating", "created", "failed"];
+    } else if (statusSelectorVal == "inactive") {
+      status = ["inactive"];
+    }
+
+    return api.getPRDeploymentList(
       "<token>",
-      {},
+      {
+        status: status,
+      },
       {
         project_id: currentProject.id,
         cluster_id: currentCluster.id,
       }
     );
+  };
 
   useEffect(() => {
     let isSubscribed = true;
@@ -120,7 +133,7 @@ const EnvironmentList = () => {
     return () => {
       isSubscribed = false;
     };
-  }, [currentCluster, currentProject]);
+  }, [currentCluster, currentProject, statusSelectorVal]);
 
   useEffect(() => {
     const action = getQueryParam({ location }, "action");
@@ -204,6 +217,27 @@ const EnvironmentList = () => {
           <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
             <i className="material-icons">refresh</i>
           </RefreshButton>
+          <StyledStatusSelector>
+            <Selector
+              activeValue={statusSelectorVal}
+              setActiveValue={setStatusSelectorVal}
+              options={[
+                {
+                  value: "active",
+                  label: "Active",
+                },
+                {
+                  value: "inactive",
+                  label: "Inactive",
+                },
+              ]}
+              dropdownLabel="Status"
+              width="150px"
+              dropdownWidth="230px"
+              closeOverlay={true}
+            />
+          </StyledStatusSelector>
+
           <SettingsButton
             onClick={() => {
               setCurrentModal("PreviewEnvSettingsModal", {});
@@ -354,4 +388,21 @@ const EventsGrid = styled.div`
   display: grid;
   grid-row-gap: 20px;
   grid-template-columns: 1;
+`;
+
+const Label = styled.div`
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+
+  > i {
+    margin-right: 8px;
+    font-size: 18px;
+  }
+`;
+
+const StyledStatusSelector = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 13px;
 `;

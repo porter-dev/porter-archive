@@ -111,7 +111,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	depl.Status = "inactive"
+	depl.Status = types.DeploymentStatusInactive
 
 	// update the deployment to mark it inactive
 	depl, err = c.Repo().Environment().UpdateDeployment(depl)

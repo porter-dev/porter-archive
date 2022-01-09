@@ -77,7 +77,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
 		EnvironmentID:  env.ID,
 		Namespace:      request.Namespace,
-		Status:         "creating",
+		Status:         types.DeploymentStatusCreating,
 		PullRequestID:  request.PullRequestID,
 		GHDeploymentID: ghDeployment.GetID(),
 		RepoOwner:      request.GitHubMetadata.RepoOwner,

@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"strings"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -103,24 +105,51 @@ func (repo *EnvironmentRepository) ReadDeploymentByCluster(projectID, clusterID 
 	return depl, nil
 }
 
-func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint) ([]*models.Deployment, error) {
-	depls := make([]*models.Deployment, 0)
-
-	if err := repo.db.
+func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint, states ...string) ([]*models.Deployment, error) {
+	query := repo.db.
 		Order("deployments.id asc").
 		Joins("INNER JOIN environments ON environments.id = deployments.environment_id").
-		Where("environments.project_id = ? AND environments.cluster_id = ? AND environments.deleted_at IS NULL", projectID, clusterID).
-		Find(&depls).Error; err != nil {
+		Where("environments.project_id = ? AND environments.cluster_id = ? AND environments.deleted_at IS NULL", projectID, clusterID)
+
+	if len(states) > 0 {
+		queryArr := make([]string, len(states))
+		stateInterArr := make([]interface{}, len(states))
+
+		for i, state := range states {
+			queryArr[i] = "deployments.status = ?"
+			stateInterArr[i] = state
+		}
+
+		query = query.Where(strings.Join(queryArr, " OR "), stateInterArr...)
+	}
+
+	depls := make([]*models.Deployment, 0)
+
+	if err := query.Find(&depls).Error; err != nil {
 		return nil, err
 	}
 
 	return depls, nil
 }
 
-func (repo *EnvironmentRepository) ListDeployments(environmentID uint) ([]*models.Deployment, error) {
+func (repo *EnvironmentRepository) ListDeployments(environmentID uint, states ...string) ([]*models.Deployment, error) {
+	query := repo.db.Debug().Order("id asc").Where("environment_id = ?", environmentID)
+
+	if len(states) > 0 {
+		queryArr := make([]string, len(states))
+		stateInterArr := make([]interface{}, len(states))
+
+		for i, state := range states {
+			queryArr[i] = "deployments.status = ?"
+			stateInterArr[i] = state
+		}
+
+		query = query.Where(strings.Join(queryArr, " OR "), stateInterArr...)
+	}
+
 	depls := make([]*models.Deployment, 0)
 
-	if err := repo.db.Order("id asc").Where("environment_id = ?", environmentID).Find(&depls).Error; err != nil {
+	if err := query.Find(&depls).Error; err != nil {
 		return nil, err
 	}
 

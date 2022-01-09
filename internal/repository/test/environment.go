@@ -51,11 +51,11 @@ func (repo *EnvironmentRepository) ReadDeploymentByCluster(projectID, clusterID 
 	panic("unimplemented")
 }
 
-func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint) ([]*models.Deployment, error) {
+func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint, states ...string) ([]*models.Deployment, error) {
 	panic("unimplemented")
 }
 
-func (repo *EnvironmentRepository) ListDeployments(environmentID uint) ([]*models.Deployment, error) {
+func (repo *EnvironmentRepository) ListDeployments(environmentID uint, states ...string) ([]*models.Deployment, error) {
 	panic("unimplemented")
 }
 

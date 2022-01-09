@@ -11,8 +11,8 @@ type EnvironmentRepository interface {
 	CreateDeployment(deployment *models.Deployment) (*models.Deployment, error)
 	ReadDeployment(environmentID uint, namespace string) (*models.Deployment, error)
 	ReadDeploymentByCluster(projectID, clusterID uint, namespace string) (*models.Deployment, error)
-	ListDeploymentsByCluster(projectID, clusterID uint) ([]*models.Deployment, error)
-	ListDeployments(environmentID uint) ([]*models.Deployment, error)
+	ListDeploymentsByCluster(projectID, clusterID uint, states ...string) ([]*models.Deployment, error)
+	ListDeployments(environmentID uint, states ...string) ([]*models.Deployment, error)
 	UpdateDeployment(deployment *models.Deployment) (*models.Deployment, error)
 	DeleteDeployment(deployment *models.Deployment) (*models.Deployment, error)
 }

@@ -339,7 +339,9 @@ const updateNotificationConfig = baseApi<
 });
 
 const getPRDeploymentList = baseApi<
-  {},
+  {
+    status?: string[];
+  },
   {
     cluster_id: number;
     project_id: number;

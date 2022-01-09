@@ -34,7 +34,7 @@ type Deployment struct {
 
 	EnvironmentID  uint
 	Namespace      string
-	Status         string
+	Status         types.DeploymentStatus
 	Subdomain      string
 	PullRequestID  uint
 	GHDeploymentID int64
@@ -70,7 +70,7 @@ type DeploymentWithEnvironment struct {
 
 	Environment    *Environment
 	Namespace      string
-	Status         string
+	Status         types.DeploymentStatus
 	Subdomain      string
 	PullRequestID  uint
 	GHDeploymentID int64

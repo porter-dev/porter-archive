@@ -29,7 +29,13 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	depls, err := c.Repo().Environment().ListDeploymentsByCluster(project.ID, cluster.ID)
+	req := &types.ListDeploymentRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, req); !ok {
+		return
+	}
+
+	depls, err := c.Repo().Environment().ListDeploymentsByCluster(project.ID, cluster.ID, req.Status...)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -1172,6 +1172,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/porter-dev/switchboard v0.0.0-20211208133739-316acab6516d h1:IKyljDrQPhCOzfnmp5r9KeY67X7KQo70aH8NNEfSomY=
 github.com/porter-dev/switchboard v0.0.0-20211208133739-316acab6516d/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
+github.com/porter-dev/switchboard v0.0.0-20220109170702-ea2a4450e034 h1:qzxRAL/HPfadofm5CX3zG3aPXOH77W3KwiW/zctUF7c=
+github.com/porter-dev/switchboard v0.0.0-20220109170702-ea2a4450e034/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/pquerna/cachecontrol v0.0.0-20171018203845-0dec1b30a021/go.mod h1:prYjPmNq4d1NPVmpShWobRqXY3q7Vp+80DqgxxUrUIA=
 github.com/prometheus/client_golang v0.0.0-20180209125602-c332b6f63c06/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=

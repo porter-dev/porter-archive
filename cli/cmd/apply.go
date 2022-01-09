@@ -816,3 +816,31 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 
 	return err
 }
+
+func (t *DeploymentHook) OnError(err error) {
+	// if the deployment exists, throw an error for that deployment
+	_, getDeplErr := t.client.GetDeployment(
+		context.Background(),
+		t.projectID, t.gitInstallationID, t.clusterID,
+		t.repoOwner, t.repoName,
+		&types.GetDeploymentRequest{
+			Namespace: t.namespace,
+		},
+	)
+
+	if getDeplErr == nil {
+		_, err = t.client.UpdateDeploymentStatus(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			t.repoOwner, t.repoName,
+			&types.UpdateDeploymentStatusRequest{
+				Namespace: t.namespace,
+				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+					Branch:   t.branch,
+					ActionID: t.actionID,
+				},
+				Status: string(types.DeploymentStatusFailed),
+			},
+		)
+	}
+}

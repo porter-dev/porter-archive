@@ -67,6 +67,26 @@ func (c *Client) UpdateDeployment(
 	return resp, err
 }
 
+func (c *Client) UpdateDeploymentStatus(
+	ctx context.Context,
+	projID, gitInstallationID, clusterID uint,
+	gitRepoOwner, gitRepoName string,
+	req *types.UpdateDeploymentStatusRequest,
+) (*types.Deployment, error) {
+	resp := &types.Deployment{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment/update/status",
+			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) FinalizeDeployment(
 	ctx context.Context,
 	projID, gitInstallationID, clusterID uint,

@@ -299,6 +299,42 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment/update/status ->
+	// environment.NewUpdateDeploymentStatusHandler
+	updateDeploymentStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/deployment/update/status",
+					relPath,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateDeploymentStatusHandler := environment.NewUpdateDeploymentStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateDeploymentStatusEndpoint,
+		Handler:  updateDeploymentStatusHandler,
+		Router:   r,
+	})
+
 	// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/environment ->
 	// environment.NewDeleteEnvironmentHandler
 	deleteEnvironmentEndpoint := factory.NewAPIEndpoint(

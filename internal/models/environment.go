@@ -55,6 +55,8 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 	}
 
 	return &types.Deployment{
+		CreatedAt:      d.CreatedAt,
+		UpdatedAt:      d.UpdatedAt,
 		ID:             d.Model.ID,
 		EnvironmentID:  d.EnvironmentID,
 		Namespace:      d.Namespace,
@@ -91,6 +93,8 @@ func (d *DeploymentWithEnvironment) ToDeploymentType() *types.Deployment {
 	}
 
 	return &types.Deployment{
+		CreatedAt:         d.CreatedAt,
+		UpdatedAt:         d.UpdatedAt,
 		ID:                d.Model.ID,
 		EnvironmentID:     d.Environment.ID,
 		GitInstallationID: d.Environment.GitInstallationID,

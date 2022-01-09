@@ -107,7 +107,7 @@ func (repo *EnvironmentRepository) ReadDeploymentByCluster(projectID, clusterID 
 
 func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID uint, states ...string) ([]*models.Deployment, error) {
 	query := repo.db.
-		Order("deployments.id asc").
+		Order("deployments.updated_at desc").
 		Joins("INNER JOIN environments ON environments.id = deployments.environment_id").
 		Where("environments.project_id = ? AND environments.cluster_id = ? AND environments.deleted_at IS NULL", projectID, clusterID)
 
@@ -133,7 +133,7 @@ func (repo *EnvironmentRepository) ListDeploymentsByCluster(projectID, clusterID
 }
 
 func (repo *EnvironmentRepository) ListDeployments(environmentID uint, states ...string) ([]*models.Deployment, error) {
-	query := repo.db.Debug().Order("id asc").Where("environment_id = ?", environmentID)
+	query := repo.db.Debug().Order("deployments.updated_at desc").Where("environment_id = ?", environmentID)
 
 	if len(states) > 0 {
 		queryArr := make([]string, len(states))

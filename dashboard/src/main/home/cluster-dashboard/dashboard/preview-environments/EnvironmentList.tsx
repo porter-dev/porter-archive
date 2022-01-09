@@ -16,6 +16,8 @@ import EnvironmentCard from "./components/EnvironmentCard";
 
 export type PRDeployment = {
   id: number;
+  created_at: string;
+  updated_at: string;
   subdomain: string;
   status: string;
   environment_id: number;

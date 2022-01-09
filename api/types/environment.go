@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type Environment struct {
 	ID                uint   `json:"id"`
 	ProjectID         uint   `json:"project_id"`
@@ -36,6 +38,8 @@ type Deployment struct {
 	*GitHubMetadata
 
 	ID                uint             `json:"id"`
+	CreatedAt         time.Time        `json:"created_at"`
+	UpdatedAt         time.Time        `json:"updated_at"`
 	GitInstallationID uint             `json:"git_installation_id"`
 	EnvironmentID     uint             `json:"environment_id"`
 	Namespace         string           `json:"namespace"`

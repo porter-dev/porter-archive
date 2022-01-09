@@ -18,6 +18,16 @@ const EnvironmentCard: React.FC<{ deployment: PRDeployment }> = ({
 
   let repository = `${deployment.gh_repo_owner}/${deployment.gh_repo_name}`;
 
+  const readableDate = (s: string) => {
+    const ts = new Date(s);
+    const date = ts.toLocaleDateString();
+    const time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} on ${date}`;
+  };
+
   return (
     <EnvironmentCardWrapper key={deployment.id}>
       <DataContainer>
@@ -46,6 +56,11 @@ const EnvironmentCard: React.FC<{ deployment: PRDeployment }> = ({
               {repository}
             </RepositoryName>
             {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+            <InfoWrapper>
+              <LastDeployed>
+                Last updated {readableDate(deployment.updated_at)}
+              </LastDeployed>
+            </InfoWrapper>
           </DeploymentImageContainer>
         </Flex>
       </DataContainer>
@@ -229,4 +244,22 @@ const Tooltip = styled.div`
       opacity: 1;
     }
   }
+`;
+
+const InfoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 8px;
+`;
+
+const LastDeployed = styled.div`
+  font-size: 13px;
+  margin-left: 14px;
+  margin-top: -1px;
+  display: flex;
+  align-items: center;
+  color: #aaaabb66;
 `;

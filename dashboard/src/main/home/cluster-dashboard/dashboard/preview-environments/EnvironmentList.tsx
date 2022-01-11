@@ -79,6 +79,46 @@ const EnvironmentList = () => {
     );
   };
 
+  const checkGitRepoPermissions = async () => {
+    // Get all the connected repos ids
+    let gitRepos: number[] = null;
+    try {
+      gitRepos = await api
+        .getGitRepos("<token>", {}, { project_id: currentProject.id })
+        .then((res) => res.data);
+    } catch (error) {
+      console.error(error);
+    }
+
+    if (!gitRepos) {
+      return;
+    }
+
+    // Check if all repo has enough permissions
+    try {
+      const repoPermissionsRequests = gitRepos.map((id) =>
+        api
+          .getGitRepoPermission(
+            "<token>",
+            {},
+            { project_id: currentProject.id, git_repo_id: id }
+          )
+          .then((res) => res.data)
+      );
+
+      const permissions = await Promise.all(repoPermissionsRequests);
+      let hasPermission =
+        permissions.filter((val) => {
+          return val.preview_environments;
+        }).length >= 1;
+
+      setHasPermissions(hasPermission);
+      setHasPermissionsLoaded(true);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     let isSubscribed = true;
     api
@@ -114,44 +154,7 @@ const EnvironmentList = () => {
 
   useEffect(() => {
     setHasPermissionsLoaded(false);
-
-    api
-      .getGitRepos("<token>", {}, { project_id: currentProject.id })
-      .then(({ data }) => {
-        Promise.all(
-          data.map((id: number) => {
-            return new Promise((resolve, reject) => {
-              api
-                .getGitRepoPermission(
-                  "<token>",
-                  {},
-                  { project_id: currentProject.id, git_repo_id: id }
-                )
-                .then((res) => {
-                  resolve(res.data);
-                })
-                .catch((err) => {
-                  reject(err);
-                });
-            });
-          })
-        )
-          .then((permissions: any[]) => {
-            let hasPermission =
-              permissions.filter((val) => {
-                return val.preview_environments;
-              }).length >= 1;
-
-            setHasPermissions(hasPermission);
-            setHasPermissionsLoaded(true);
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    checkGitRepoPermissions();
   }, [currentProject, currentCluster]);
 
   useEffect(() => {

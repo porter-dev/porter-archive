@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -53,6 +53,7 @@ func (c *GithubGetTarballURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		owner,
 		name,
 		branch,
+		false,
 	)
 
 	if err != nil {
@@ -68,6 +69,7 @@ func (c *GithubGetTarballURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		&github.RepositoryContentGetOptions{
 			Ref: *branchResp.Commit.SHA,
 		},
+		false,
 	)
 
 	if err != nil {

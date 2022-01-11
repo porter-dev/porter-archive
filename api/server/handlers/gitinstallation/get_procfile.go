@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"

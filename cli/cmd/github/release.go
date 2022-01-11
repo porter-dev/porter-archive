@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 )
 
 // ZIPReleaseGetter retrieves a release from Github in ZIP format and downloads it

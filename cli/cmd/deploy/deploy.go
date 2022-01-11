@@ -155,7 +155,18 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		}
 	}
 
-	return GetEnvFromConfig(conf)
+	env, err := GetEnvFromConfig(conf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// add additional env based on options
+	for key, val := range d.opts.SharedOpts.AdditionalEnv {
+		env[key] = val
+	}
+
+	return env, nil
 }
 
 // SetBuildEnv sets the build env vars in the process so that other commands can

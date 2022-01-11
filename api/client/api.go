@@ -97,32 +97,59 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 	return nil
 }
 
-func (c *Client) postRequest(relPath string, data interface{}, response interface{}) error {
-	strData, err := json.Marshal(data)
+type postRequestOpts struct {
+	retryCount uint
+}
 
-	if err != nil {
-		return nil
+func (c *Client) postRequest(relPath string, data interface{}, response interface{}, opts ...postRequestOpts) error {
+	var retryCount uint = 1
+
+	if len(opts) > 0 {
+		for _, opt := range opts {
+			retryCount = opt.retryCount
+		}
 	}
 
-	req, err := http.NewRequest(
-		"POST",
-		fmt.Sprintf("%s%s", c.BaseURL, relPath),
-		strings.NewReader(string(strData)),
-	)
+	var httpErr *types.ExternalError
+	var err error
 
-	if err != nil {
-		return err
-	}
+	for i := 0; i < int(retryCount); i++ {
+		strData, err := json.Marshal(data)
 
-	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return fmt.Errorf("%v", httpErr.Error)
+		if err != nil {
+			return nil
 		}
 
-		return err
+		req, err := http.NewRequest(
+			"POST",
+			fmt.Sprintf("%s%s", c.BaseURL, relPath),
+			strings.NewReader(string(strData)),
+		)
+
+		if err != nil {
+			return err
+		}
+
+		httpErr, err = c.sendRequest(req, response, true)
+
+		if httpErr == nil && err == nil {
+			return nil
+		}
+
+		if i != int(retryCount)-1 {
+			if httpErr != nil {
+				fmt.Printf("Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+			} else {
+				fmt.Printf("Error: %v, retrying request...\n", err)
+			}
+		}
 	}
 
-	return nil
+	if httpErr != nil {
+		return fmt.Errorf("%v", httpErr.Error)
+	}
+
+	return err
 }
 
 func (c *Client) deleteRequest(relPath string, data interface{}, response interface{}) error {

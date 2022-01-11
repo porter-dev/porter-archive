@@ -1321,6 +1321,11 @@ const getLogBucketLogs = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/kube_events/${kube_event_id}/logs`
 );
 
+const getCanCreateProject = baseApi<{}, {}>(
+  "GET",
+  () => "/api/can_create_project"
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1452,4 +1457,5 @@ export default {
   getKubeEvent,
   getLogBuckets,
   getLogBucketLogs,
+  getCanCreateProject,
 };

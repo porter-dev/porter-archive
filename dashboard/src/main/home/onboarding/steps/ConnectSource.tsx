@@ -8,6 +8,8 @@ import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import { OFState } from "../state";
 import github from "assets/github.png";
+import { connectSourceTracks } from "shared/anayltics";
+import DocsHelper from "components/DocsHelper";
 
 interface GithubAppAccessData {
   username?: string;
@@ -60,6 +62,11 @@ const ConnectSource: React.FC<{
   }, []);
 
   const nextStep = (selectedSource: "docker" | "github") => {
+    if (selectedSource === "docker") {
+      connectSourceTracks.trackUseDockerRegistryClicked();
+    } else {
+      connectSourceTracks.trackContinueAfterGithubConnect();
+    }
     onSuccess(selectedSource);
   };
 
@@ -72,12 +79,12 @@ const ConnectSource: React.FC<{
       <TitleSection>Getting Started</TitleSection>
       <Subtitle>
         Step 1 of 3 - Connect to GitHub
-        <a
-          href="https://docs.porter.run/docs/linking-up-application-source"
-          target="_blank"
-        >
-          <i className="material-icons">help_outline</i>
-        </a>
+        <DocsHelper
+          tooltipText="Porter uses a GitHub App to authorize and gain access to your GitHub repositories. In order to be able to deploy applications through GitHub repositories, you must first authorize the Porter GitHub App to have access to them."
+          link={
+            "https://docs.porter.run/getting-started/linking-application-source#connecting-to-github"
+          }
+        />
       </Subtitle>
       <Helper>
         To deploy applications from your repo, you need to connect a Github
@@ -87,6 +94,11 @@ const ConnectSource: React.FC<{
         <>
           <ConnectToGithubButton
             href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+            onClick={() => {
+              connectSourceTracks.trackConnectGithubButtonClicked();
+              // Will allow the anchor tag to redirect properly
+              return true;
+            }}
           >
             <GitHubIcon src={github} /> Connect to GitHub
           </ConnectToGithubButton>
@@ -120,6 +132,11 @@ const ConnectSource: React.FC<{
             Don't see the right repos?{" "}
             <A
               href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
+              onClick={() => {
+                connectSourceTracks.trackInstallOnMoreRepositoriesClicked();
+                // Will allow the anchor tag to redirect properly
+                return true;
+              }}
             >
               Install Porter in more repositories
             </A>

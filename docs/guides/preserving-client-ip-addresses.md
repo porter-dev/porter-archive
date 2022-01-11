@@ -1,5 +1,9 @@
 # AWS
 
+> 🚧 Update: December 10 2021
+>
+> Please note that clusters provisioned on Amazon EKS after December 10 2021 will have support for proxying external IPs configured by default.
+
 > 🚧
 > 
 > Changing this configuration may result in a few minutes of downtime. It is recommended to set up client IP addresses before the application is live, or update it during a maintenance window. For more information, see [this Github issue](https://github.com/porter-dev/porter/issues/632#issuecomment-832939982).

@@ -182,10 +182,12 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifyOpts.Status = slack.StatusHelmDeployed
-	notifyOpts.Version = rel.Version
+	if rel.Chart != nil && rel.Chart.Metadata.Name != "job" {
+		notifyOpts.Status = slack.StatusHelmDeployed
+		notifyOpts.Version = rel.Version
 
-	notifier.Notify(notifyOpts)
+		notifier.Notify(notifyOpts)
+	}
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
 		ImageURI: fmt.Sprintf("%v", repository),

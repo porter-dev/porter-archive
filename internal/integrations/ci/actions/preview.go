@@ -21,7 +21,9 @@ type EnvOpts struct {
 }
 
 func SetupEnv(opts *EnvOpts) error {
-	// create Github environment if it does not exist
+	// make a best-effort to create a Github environment. this is a non-fatal operation,
+	// as the environments API is not enabled for private repositories that don't have
+	// github enterprise.
 	_, resp, err := opts.Client.Repositories.GetEnvironment(
 		context.Background(),
 		opts.GitRepoOwner,
@@ -29,20 +31,14 @@ func SetupEnv(opts *EnvOpts) error {
 		opts.EnvironmentName,
 	)
 
-	if resp.StatusCode == http.StatusNotFound {
-		_, _, err := opts.Client.Repositories.CreateUpdateEnvironment(
+	if resp != nil && resp.StatusCode == http.StatusNotFound {
+		opts.Client.Repositories.CreateUpdateEnvironment(
 			context.Background(),
 			opts.GitRepoOwner,
 			opts.GitRepoName,
 			opts.EnvironmentName,
 			nil,
 		)
-
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
 	}
 
 	// create porter token secret

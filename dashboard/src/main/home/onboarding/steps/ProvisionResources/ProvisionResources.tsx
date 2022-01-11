@@ -15,6 +15,8 @@ import backArrow from "assets/back_arrow.png";
 import { StatusPage } from "./forms/StatusPage";
 import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
+import { provisionResourcesTracks } from "shared/anayltics";
+import DocsHelper from "components/DocsHelper";
 
 type Props = {};
 
@@ -42,9 +44,11 @@ const ProvisionResources: React.FC<Props> = () => {
 
   const handleSelectProvider = (provider: string) => {
     if (provider !== "external") {
+      provisionResourcesTracks.trackProvisionIntent({ provider });
       OFState.actions.nextStep("continue", provider);
       return;
     }
+    provisionResourcesTracks.trackConnectExternalClusterIntent();
     OFState.actions.nextStep("skip");
   };
 
@@ -155,7 +159,15 @@ const ProvisionResources: React.FC<Props> = () => {
         </BackButton>
       )}
       <TitleSection>Getting Started</TitleSection>
-      <Subtitle>Step 3 of 3 - Provision resources</Subtitle>
+      <Subtitle>
+        Step 3 of 3 - Provision resources
+        <DocsHelper
+          tooltipText="Porter provisions and manages the underlying infrastructure in your own cloud. It is not necessary to know about the provisioned resources to use Porter."
+          link={
+            "https://docs.porter.run/getting-started/provisioning-infrastructure#faq"
+          }
+        />
+      </Subtitle>
       <Helper>
         Porter automatically creates a cluster and registry in your cloud to run
         applications.
@@ -177,6 +189,7 @@ const Subtitle = styled.div`
   font-size: 16px;
   font-weight: 500;
   margin-top: 16px;
+  display: flex;
 `;
 
 const NextStep = styled(SaveButton)`

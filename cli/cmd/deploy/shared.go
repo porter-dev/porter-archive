@@ -9,4 +9,5 @@ type SharedOpts struct {
 	LocalDockerfile string
 	OverrideTag     string
 	Method          DeployBuildType
+	AdditionalEnv   map[string]string
 }

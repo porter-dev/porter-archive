@@ -102,5 +102,8 @@ func (c *Client) UpgradeRelease(
 		),
 		req,
 		nil,
+		postRequestOpts{
+			retryCount: 3,
+		},
 	)
 }

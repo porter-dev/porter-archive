@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
@@ -204,8 +205,11 @@ var tag string
 var dockerfile string
 var method string
 var stream bool
+var buildFlagsEnv []string
 
 func init() {
+	buildFlagsEnv = []string{}
+
 	rootCmd.AddCommand(updateCmd)
 
 	updateCmd.PersistentFlags().StringVar(
@@ -260,6 +264,14 @@ func init() {
 		"dockerfile",
 		"",
 		"the path to the dockerfile",
+	)
+
+	updateCmd.PersistentFlags().StringArrayVarP(
+		&buildFlagsEnv,
+		"env",
+		"e",
+		[]string{},
+		"Build-time environment variable, in the form 'VAR=VALUE'. These are not available at image runtime.",
 	)
 
 	updateCmd.PersistentFlags().StringVar(
@@ -384,6 +396,15 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 		buildMethod = deploy.DeployBuildType(method)
 	}
 
+	// add additional env, if they exist
+	additionalEnv := make(map[string]string)
+
+	for _, buildEnv := range buildFlagsEnv {
+		if strSplArr := strings.SplitN(buildEnv, "=", 2); len(strSplArr) >= 2 {
+			additionalEnv[strSplArr[0]] = strSplArr[1]
+		}
+	}
+
 	// initialize the update agent
 	return deploy.NewDeployAgent(client, app, &deploy.DeployOpts{
 		SharedOpts: &deploy.SharedOpts{
@@ -394,6 +415,7 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 			LocalDockerfile: dockerfile,
 			OverrideTag:     tag,
 			Method:          buildMethod,
+			AdditionalEnv:   additionalEnv,
 		},
 		Local: source != "github",
 	})

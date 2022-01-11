@@ -137,6 +137,8 @@ type ApplicationConfig struct {
 		Context    string
 		Dockerfile string
 		Image      string
+		Builder    string
+		Buildpacks []string
 	}
 
 	Values map[string]interface{}
@@ -354,12 +356,21 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 		},
 	}
 
+	var buildConfig *types.BuildConfig
+
+	if appConf.Build.Builder != "" {
+		buildConfig = &types.BuildConfig{
+			Builder:    appConf.Build.Builder,
+			Buildpacks: appConf.Build.Buildpacks,
+		}
+	}
+
 	var subdomain string
 
 	if appConf.Build.Method == "registry" {
 		subdomain, err = createAgent.CreateFromRegistry(appConf.Build.Image, appConf.Values)
 	} else {
-		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag)
+		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig)
 	}
 
 	if err != nil {

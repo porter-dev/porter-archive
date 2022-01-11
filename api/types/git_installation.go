@@ -65,3 +65,7 @@ type GetGithubAppAccountsResponse struct {
 	Username string   `json:"username,omitempty"`
 	Accounts []string `json:"accounts,omitempty"`
 }
+
+type GitInstallationPermission struct {
+	PreviewEnvironments bool `json:"preview_environments"`
+}

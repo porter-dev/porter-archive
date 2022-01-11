@@ -1,6 +1,7 @@
 package gitinstallation
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -73,6 +74,65 @@ func GetGithubAppClientFromRequest(config *config.Config, r *http.Request) (*git
 	}
 
 	return github.NewClient(&http.Client{Transport: itr}), nil
+}
+
+type GithubAppPermissions struct {
+	Actions        string
+	Administration string
+	Contents       string
+	Deployments    string
+	Environments   string
+	Metadata       string
+	PullRequests   string
+	Secrets        string
+	Workflows      string
+}
+
+// GetGithubAppClientFromRequest gets the github app installation id from the request and authenticates
+// using it and a private key file
+func GetGithubAppPermissions(config *config.Config, r *http.Request) (*GithubAppPermissions, error) {
+	// get installation id from context
+	ga, _ := r.Context().Value(types.GitInstallationScope).(*integrations.GithubAppInstallation)
+
+	itr, err := ghinstallation.NewKeyFromFile(
+		http.DefaultTransport,
+		config.GithubAppConf.AppID,
+		ga.InstallationID,
+		config.GithubAppConf.SecretPath,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// need to request the token before permissions can be verified
+	_, err = itr.Token(context.Background())
+
+	if err != nil {
+		return nil, err
+	}
+
+	permissions, err := itr.Permissions()
+
+	return &GithubAppPermissions{
+		Actions:        permissionToString(permissions.Actions),
+		Administration: permissionToString(permissions.Administration),
+		Contents:       permissionToString(permissions.Contents),
+		Deployments:    permissionToString(permissions.Deployments),
+		Environments:   permissionToString(permissions.Environments),
+		Metadata:       permissionToString(permissions.Metadata),
+		PullRequests:   permissionToString(permissions.PullRequests),
+		Secrets:        permissionToString(permissions.Secrets),
+		Workflows:      permissionToString(permissions.Workflows),
+	}, err
+}
+
+func permissionToString(permission *string) string {
+	if permission == nil {
+		return ""
+	}
+
+	return *permission
 }
 
 // GetOwnerAndNameParams gets the owner and name ref for the Github repo

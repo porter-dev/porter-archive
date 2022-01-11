@@ -11,7 +11,7 @@ import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments"
 import ConnectNewRepo from "./components/ConnectNewRepo";
 import Loading from "components/Loading";
 
-import _ from "lodash";
+import _, { flatMapDepth } from "lodash";
 import EnvironmentCard from "./components/EnvironmentCard";
 
 export type PRDeployment = {
@@ -42,6 +42,8 @@ export type Environment = {
 const EnvironmentList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [hasPermissions, setHasPermissions] = useState(false);
+  const [hasPermissionsLoaded, setHasPermissionsLoaded] = useState(false);
   const [environmentList, setEnvironmentList] = useState<Environment[]>([]);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [statusSelectorVal, setStatusSelectorVal] = useState<string>("active");
@@ -111,6 +113,48 @@ const EnvironmentList = () => {
   }, [currentProject, currentCluster]);
 
   useEffect(() => {
+    setHasPermissionsLoaded(false);
+
+    api
+      .getGitRepos("<token>", {}, { project_id: currentProject.id })
+      .then(({ data }) => {
+        Promise.all(
+          data.map((id: number) => {
+            return new Promise((resolve, reject) => {
+              api
+                .getGitRepoPermission(
+                  "<token>",
+                  {},
+                  { project_id: currentProject.id, git_repo_id: id }
+                )
+                .then((res) => {
+                  resolve(res.data);
+                })
+                .catch((err) => {
+                  reject(err);
+                });
+            });
+          })
+        )
+          .then((permissions: any[]) => {
+            let hasPermission =
+              permissions.filter((val) => {
+                return val.preview_environments;
+              }).length >= 1;
+
+            setHasPermissions(hasPermission);
+            setHasPermissionsLoaded(true);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [currentProject, currentCluster]);
+
+  useEffect(() => {
     let isSubscribed = true;
     getPRDeploymentList()
       .then(({ data }) => {
@@ -170,7 +214,16 @@ const EnvironmentList = () => {
     );
   }
 
-  if (isLoading) {
+  if (hasPermissionsLoaded && !hasPermissions) {
+    return (
+      <Placeholder>
+        Github App permissions are not up to date. Please review any pending
+        requests to update Github App permissions.
+      </Placeholder>
+    );
+  }
+
+  if (isLoading || !hasPermissionsLoaded) {
     return (
       <Placeholder>
         <Loading />
@@ -184,9 +237,14 @@ const EnvironmentList = () => {
 
   if (!environmentList.length) {
     return (
-      <>
+      <Placeholder>
+        <Header>Preview environments are not enabled on this cluster</Header>
+        <Subheader>
+          In order to use preview environments, you must enable preview
+          environments on this cluster.
+        </Subheader>
         <ButtonEnablePREnvironments />
-      </>
+      </Placeholder>
     );
   }
 
@@ -249,12 +307,6 @@ const EnvironmentList = () => {
             Configure
           </SettingsButton>
         </ActionsWrapper>
-        {/* <Settings >
-          <SettingsIcon src={settings} />
-          <SettingsText>
-            Configure
-          </SettingsText>
-        </Settings> */}
       </ControlRow>
       <EventsGrid>{renderDeploymentList()}</EventsGrid>
     </Container>
@@ -308,23 +360,24 @@ const SettingsButton = styled.div`
 `;
 
 const Placeholder = styled.div`
+  padding: 30px;
+  margin-top: 35px;
+  padding-bottom: 40px;
+  font-size: 13px;
+  color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff11;
+  border-radius: 8px;
   width: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff44;
-  background: #26282f;
-  border-radius: 5px;
-  height: 370px;
-  display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff44;
-  font-size: 13px;
+  flex-direction: column;
 
   > i {
-    font-size: 16px;
-    margin-right: 12px;
+    font-size: 18px;
+    margin-right: 8px;
   }
 `;
 
@@ -407,4 +460,16 @@ const StyledStatusSelector = styled.div`
   display: flex;
   align-items: center;
   font-size: 13px;
+`;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+  width: 50%;
+`;
+
+const Subheader = styled.div`
+  width: 50%;
 `;

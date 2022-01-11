@@ -644,6 +644,16 @@ const getGitRepoList = baseApi<
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos`;
 });
 
+const getGitRepoPermission = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/permissions`;
+});
+
 const getGitRepos = baseApi<
   {},
   {
@@ -1371,6 +1381,7 @@ export default {
   getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,
+  getGitRepoPermission,
   getGitRepos,
   getImageRepos,
   getImageTags,

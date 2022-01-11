@@ -2,7 +2,7 @@
 
 # Base Go environment
 # -------------------
-FROM golang:1.15-alpine as base
+FROM golang:1.16-alpine as base
 WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git

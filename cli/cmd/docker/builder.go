@@ -62,10 +62,6 @@ func (a *Agent) BuildLocal(opts *BuildOpts) error {
 		buildArgs[key] = &valCopy
 	}
 
-	// attach BUILDKIT_INLINE_CACHE=1 by default, to take advantage of caching
-	inlineCacheVal := "1"
-	buildArgs["BUILDKIT_INLINE_CACHE"] = &inlineCacheVal
-
 	out, err := a.client.ImageBuild(context.Background(), tar, types.ImageBuildOptions{
 		Dockerfile: dockerfilePath,
 		BuildArgs:  buildArgs,

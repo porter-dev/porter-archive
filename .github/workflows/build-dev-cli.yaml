@@ -2,8 +2,7 @@ name: Deploy to dev
 on:
   push:
     branches:
-    # TODO: change before merge
-      - nafees/preview-apps-initial-cli
+      - dev
 jobs:
   build-push-docker-cli:
     name: Build a new porter-cli docker image

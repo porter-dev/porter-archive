@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -43,8 +43,10 @@ func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	// List all branches for a specified repo
-	allBranches, resp, err := client.Repositories.ListBranches(context.Background(), owner, name, &github.ListOptions{
-		PerPage: 100,
+	allBranches, resp, err := client.Repositories.ListBranches(context.Background(), owner, name, &github.BranchListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
 	})
 
 	if err != nil {
@@ -63,9 +65,11 @@ func (c *GithubListBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		defer wg.Done()
 
 		for cp < numPages {
-			opts := &github.ListOptions{
-				Page:    cp,
-				PerPage: 100,
+			opts := &github.BranchListOptions{
+				ListOptions: github.ListOptions{
+					Page:    cp,
+					PerPage: 100,
+				},
 			}
 
 			branches, _, err := client.Repositories.ListBranches(context.Background(), owner, name, opts)

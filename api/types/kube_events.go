@@ -61,6 +61,8 @@ type ListKubeEventRequest struct {
 	Limit int `schema:"limit"`
 	Skip  int `schema:"skip"`
 
+	Namespace string `schema:"namespace,omitempty"`
+
 	// can only be "timestamp" for now
 	SortBy string `schema:"sort_by"`
 

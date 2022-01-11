@@ -74,6 +74,19 @@ func (c *Client) DeployTemplate(
 	)
 }
 
+func (c *Client) DeployAddon(
+	ctx context.Context,
+	projID, clusterID uint,
+	namespace string,
+	req *types.CreateAddonRequest,
+) error {
+	return c.postRequest(
+		fmt.Sprintf("/projects/%d/clusters/%d/namespaces/%s/addons", projID, clusterID, namespace),
+		req,
+		nil,
+	)
+}
+
 // UpgradeRelease upgrades a specific release with new values or chart version
 func (c *Client) UpgradeRelease(
 	ctx context.Context,

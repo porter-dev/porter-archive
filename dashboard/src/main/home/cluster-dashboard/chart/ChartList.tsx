@@ -24,6 +24,8 @@ type Props = {
   // TODO Convert to enum
   sortType: string;
   currentView: PorterUrl;
+  disableBottomPadding?: boolean;
+  closeChartRedirectUrl?: string;
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -35,6 +37,8 @@ const ChartList: React.FunctionComponent<Props> = ({
   namespace,
   sortType,
   currentView,
+  disableBottomPadding,
+  closeChartRedirectUrl,
 }) => {
   const {
     newWebsocket,
@@ -395,12 +399,18 @@ const ChartList: React.FunctionComponent<Props> = ({
             getChartKey(chart.name, chart.namespace),
             null
           )}
+          isJob={currentView === "jobs"}
+          closeChartRedirectUrl={closeChartRedirectUrl}
         />
       );
     });
   };
 
-  return <StyledChartList>{renderChartList()}</StyledChartList>;
+  return (
+    <StyledChartList disableBottomPadding={disableBottomPadding}>
+      {renderChartList()}
+    </StyledChartList>
+  );
 };
 
 export default ChartList;
@@ -431,5 +441,11 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 105px;
+  padding-bottom: ${(props: { disableBottomPadding: boolean }) => {
+    if (props.disableBottomPadding) {
+      return "unset";
+    }
+
+    return "105px";
+  }};
 `;

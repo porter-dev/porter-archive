@@ -2,11 +2,13 @@ package authz
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -45,7 +47,10 @@ func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *ht
 
 	gitInstallation, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByInstallationID(gitInstallationID)
 
-	if err != nil {
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(err), true)
+		return
+	} else if err != nil {
 		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}

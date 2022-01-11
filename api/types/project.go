@@ -1,9 +1,10 @@
 package types
 
 type Project struct {
-	ID    uint    `json:"id"`
-	Name  string  `json:"name"`
-	Roles []*Role `json:"roles"`
+	ID                 uint    `json:"id"`
+	Name               string  `json:"name"`
+	Roles              []*Role `json:"roles"`
+	PreviewEnvsEnabled bool    `json:"preview_envs_enabled"`
 }
 
 type CreateProjectRequest struct {

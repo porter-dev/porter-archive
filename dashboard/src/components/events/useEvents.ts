@@ -9,6 +9,7 @@ type UseKubeEventsProps = {
   ownerName?: string;
   ownerType?: string;
   shouldWaitForOwner?: boolean;
+  ownerNamespace?: string;
 };
 
 export const useKubeEvents = ({
@@ -16,6 +17,7 @@ export const useKubeEvents = ({
   ownerName,
   ownerType,
   shouldWaitForOwner,
+  ownerNamespace,
 }: UseKubeEventsProps) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [hasPorterAgent, setHasPorterAgent] = useState(false);
@@ -98,6 +100,7 @@ export const useKubeEvents = ({
             resource_type: type,
             owner_name: ownerName,
             owner_type: ownerType,
+            namespace: ownerNamespace,
           },
           { project_id, cluster_id }
         )

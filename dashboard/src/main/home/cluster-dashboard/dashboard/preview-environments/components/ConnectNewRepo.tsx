@@ -2,26 +2,25 @@ import DynamicLink from "components/DynamicLink";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import RepoList from "components/repo-selector/RepoList";
-import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
 import { ActionConfigType } from "shared/types";
-import Selector from "components/Selector";
 import TitleSection from "components/TitleSection";
 import { useRouteMatch } from "react-router";
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { useRouting } from "shared/routing";
 
 const porterYamlDocsLink = "https://docs.porter.run";
 
 const ConnectNewRepo: React.FC = () => {
-  const context = useContext(Context);
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
   const [repo, setRepo] = useState(null);
   const [status, setStatus] = useState(null);
+  const { pushFiltered } = useRouting();
 
   // NOTE: git_repo_id is a misnomer as this actually refers to the github app's installation id.
   const [actionConfig, setActionConfig] = useState<ActionConfigType>({
@@ -54,7 +53,9 @@ const ConnectNewRepo: React.FC = () => {
       )
       .then(() => {
         setStatus("successful");
-        window.location.href = `${url}?selected_tab=preview_environments`;
+        pushFiltered(`${url}`, [], {
+          selected_tab: "preview_environments",
+        });
       })
       .catch((err) => {
         err = JSON.stringify(err);

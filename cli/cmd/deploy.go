@@ -476,7 +476,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	if err := updateAgent.Build(); err != nil {
+	if err := updateAgent.Build(nil); err != nil {
 		if stream {
 			updateAgent.StreamEvent(types.SubEvent{
 				EventID: "build",

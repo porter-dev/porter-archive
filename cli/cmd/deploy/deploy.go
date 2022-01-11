@@ -216,7 +216,7 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 
 // Build uses the deploy agent options to build a new container image from either
 // buildpack or docker.
-func (d *DeployAgent) Build() error {
+func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 	// if build is not local, fetch remote source
 	var basePath string
 	buildCtx := d.opts.LocalPath
@@ -301,7 +301,13 @@ func (d *DeployAgent) Build() error {
 		)
 	}
 
-	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, currTag, d.release.BuildConfig)
+	buildConfig := d.release.BuildConfig
+
+	if overrideBuildConfig != nil {
+		buildConfig = overrideBuildConfig
+	}
+
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, currTag, buildConfig)
 }
 
 // Push pushes a local image to the remote repository linked in the release

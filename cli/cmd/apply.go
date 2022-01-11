@@ -407,7 +407,16 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 		return nil, err
 	}
 
-	err = updateAgent.Build()
+	var buildConfig *types.BuildConfig
+
+	if appConf.Build.Builder != "" {
+		buildConfig = &types.BuildConfig{
+			Builder:    appConf.Build.Builder,
+			Buildpacks: appConf.Build.Buildpacks,
+		}
+	}
+
+	err = updateAgent.Build(buildConfig)
 
 	if err != nil {
 		return nil, err

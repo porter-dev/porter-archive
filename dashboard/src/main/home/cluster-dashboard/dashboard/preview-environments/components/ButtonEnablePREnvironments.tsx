@@ -86,7 +86,7 @@ const ButtonEnablePREnvironments = () => {
       <Container>
         <Button {...getButtonProps()}>
           <img src={pr_icon} alt="Pull request icon" />
-          Enable PR environments
+          Enable Preview Environments
         </Button>
       </Container>
     </>
@@ -98,18 +98,18 @@ export default ButtonEnablePREnvironments;
 const Button = styled(DynamicLink)`
   background-color: #616feecc;
   border: none;
-  border-radius: 15px;
+  border-radius: 6px;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
-  font-size: 16px;
+  padding: 8px 12px;
+  font-size: 14px;
   cursor: pointer;
   img {
     margin-right: 10px;
-    width: 30px;
-    height: 30px;
+    width: 20px;
+    height: 20px;
   }
   transition: background-color 150ms ease-out;
   :hover {
@@ -118,9 +118,7 @@ const Button = styled(DynamicLink)`
 `;
 
 const Container = styled.div`
-  width: 100%;
-  min-height: 400px;
+  width: 50%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  margin-top: 20px;
 `;

@@ -83,6 +83,35 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/permissions -> gitinstallation.NewGithubGetPermissionsHandler
+	getPermissionsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/permissions",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+			},
+		},
+	)
+
+	getPermissionsHandler := gitinstallation.NewGithubGetPermissionsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getPermissionsEndpoint,
+		Handler:  getPermissionsHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id} ->
 	// environment.NewCreateEnvironmentHandler
 	createEnvironmentEndpoint := factory.NewAPIEndpoint(

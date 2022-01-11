@@ -217,7 +217,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	if source == "local" {
-		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default")
+		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {

@@ -174,8 +174,7 @@ func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 			opts.ClusterID,
 			opts.GitInstallationID,
 			opts.GitRepoName,
-			// TODO: change to actual release version
-			"master",
+			"v0.1.0",
 		),
 	}
 
@@ -202,8 +201,7 @@ func getPreviewDeleteActionYAML(opts *EnvOpts) ([]byte, error) {
 			opts.ClusterID,
 			opts.GitInstallationID,
 			opts.GitRepoName,
-			// TODO: change to actual release version
-			"master",
+			"v0.1.0",
 		),
 	}
 

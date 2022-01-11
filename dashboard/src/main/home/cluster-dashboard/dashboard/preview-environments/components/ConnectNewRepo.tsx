@@ -3,6 +3,7 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import RepoList from "components/repo-selector/RepoList";
 import SaveButton from "components/SaveButton";
+import DocsHelper from "components/DocsHelper";
 import { ActionConfigType } from "shared/types";
 import TitleSection from "components/TitleSection";
 import { useRouteMatch } from "react-router";
@@ -12,7 +13,8 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 
-const porterYamlDocsLink = "https://docs.porter.run";
+const porterYamlDocsLink =
+  "https://docs.porter.run/preview-environments/porter-yaml-reference";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -83,13 +85,15 @@ const ConnectNewRepo: React.FC = () => {
         }}
         readOnly={false}
       />
+      <HelperContainer>
+        Note: you will need to add a <CodeBlock>porter.yaml</CodeBlock> file to
+        create a preview environment.
+        <DocsHelper
+          tooltipText="A Porter YAML file is a declarative set of resources that Porter uses to build and update your preview environment deployments."
+          link="https://docs.porter.run/preview-environments/porter-yaml-reference"
+        />
+      </HelperContainer>
 
-      <Helper>
-        You will need to add a porter.yaml file to create a preview environment.
-      </Helper>
-      <PorterYamlLink to={porterYamlDocsLink} target="_blank">
-        Learn more about porter.yaml
-      </PorterYamlLink>
       <ActionContainer>
         <SaveButton
           text="Add Repository"
@@ -145,12 +149,30 @@ const Title = styled(TitleSection)`
   font-size: 18px;
 `;
 
-const PorterYamlLink = styled(DynamicLink)`
-  font-size: 14px;
-`;
-
 const ActionContainer = styled.div`
   display: flex;
   justify-content: flex-end;
   margin-top: 50px;
+`;
+
+const CodeBlock = styled.span`
+  display: inline-block;
+  background-color: #1b1d26;
+  color: white;
+  border-radius: 8px;
+  font-family: monospace;
+  padding: 2px 3px;
+  user-select: text;
+  margin: 0 6px;
+`;
+
+const HelperContainer = styled.div`
+  margin-top: 24px;
+  width: 600px;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  color: #aaaabb;
+  line-height: 1.6em;
+  font-size: 13px;
 `;

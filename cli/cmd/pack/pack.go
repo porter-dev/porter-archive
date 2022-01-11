@@ -127,7 +127,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		// FIXME: use all the config vars
 	}
 
-	if strings.HasPrefix(buildOpts.Builder, "heroku") {
+	if len(buildOpts.Buildpacks) > 0 && strings.HasPrefix(buildOpts.Builder, "heroku") {
 		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile")
 	}
 

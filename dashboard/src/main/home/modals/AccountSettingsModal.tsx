@@ -30,7 +30,6 @@ const AccountSettingsModal = () => {
     api
       .getGithubAccounts("<token>", {}, {})
       .then(({ data }) => {
-        console.log('github account', data)
         setAccessData(data);
         setAccessLoading(false);
       })

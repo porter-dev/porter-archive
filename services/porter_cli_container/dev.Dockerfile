@@ -1,4 +1,3 @@
-
 # syntax=docker/dockerfile:1.1.7-experimental
 
 # Base Go environment

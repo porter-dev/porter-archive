@@ -5,6 +5,7 @@ import Modal from "./modals/Modal";
 import ClusterInstructionsModal from "./modals/ClusterInstructionsModal";
 import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModal";
 import IntegrationsModal from "./modals/IntegrationsModal";
+import PreviewEnvSettingsModal from "./modals/PreviewEnvSettingsModal";
 import UpdateClusterModal from "./modals/UpdateClusterModal";
 import NamespaceModal from "./modals/NamespaceModal";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
@@ -175,6 +176,17 @@ const ModalHandler: React.FC<{
           title="Account Settings"
         >
           <AccountSettingsModal />
+        </Modal>
+      )}
+
+      {modal === "PreviewEnvSettingsModal" && (
+        <Modal
+          onRequestClose={() => setCurrentModal(null, null)}
+          width="760px"
+          height="440px"
+          title="Preview Environment Settings"
+        >
+          <PreviewEnvSettingsModal />
         </Modal>
       )}
 

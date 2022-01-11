@@ -64,6 +64,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { setSidebar, location, match } = this.props;
     let { baseRoute, namespace } = match.params as any;
     let { loading, currentChart } = this.state;
+
     if (loading) {
       return (
         <LoadingWrapper>
@@ -92,12 +93,19 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           isMetricsInstalled={this.props.isMetricsInstalled}
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
-          closeChart={() =>
+          closeChart={() => {
+            let urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.get("closeChartRedirectUrl")) {
+              this.props.history.push(urlParams.get("closeChartRedirectUrl"));
+              return;
+            }
+
             pushFiltered(this.props, "/applications", ["project_id"], {
               cluster: this.context.currentCluster.name,
               namespace: namespace,
-            })
-          }
+            });
+          }}
           setSidebar={setSidebar}
         />
       );

@@ -59,6 +59,10 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if request.TemplateVersion == "latest" {
+		request.TemplateVersion = ""
+	}
+
 	chart, err := loader.LoadChartPublic(request.RepoURL, request.TemplateName, request.TemplateVersion)
 
 	if err != nil {

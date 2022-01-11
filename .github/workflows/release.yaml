@@ -1,10 +1,9 @@
 on:
-  push:
-    tags:
-      - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
-name: Create release w/ binaries and docker image
+  release:
+    types: [released]
+name: Update binaries 
 jobs:
-  docker-build-push:
+  push-docker-server-latest:
     runs-on: ubuntu-latest
     steps:
       - name: Get tag name
@@ -14,359 +13,19 @@ jobs:
           echo ::set-output name=tag::$tag
         env:
           GITHUB_TAG: ${{ github.ref }}
-      - name: Checkout
-        uses: actions/checkout@v2.3.4
       - name: Setup docker
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Write Dashboard Environment Variables
+      - name: Pull versioned server image and push to latest
         run: |
-          cat >./dashboard/.env <<EOL
-          NODE_ENV=production
-          APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
-          ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
-          EOL
-
-          cat ./dashboard/.env
-      - name: Build
-        run: |
-          DOCKER_BUILDKIT=1 docker build . -t porter1/porter:${{steps.tag_name.outputs.tag}} -f ./ee/docker/ee.Dockerfile --build-arg version=${{steps.tag_name.outputs.tag}}
-      - name: Push
-        run: |
-          docker push porter1/porter:${{steps.tag_name.outputs.tag}}
-  build-linux:
-    name: Build Linux binaries
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get tag name
-        id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
-        env:
-          GITHUB_TAG: ${{ github.ref }}
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-      - name: Write Dashboard Environment Variables
-        run: |
-          cat >./dashboard/.env <<EOL
-          NODE_ENV=production
-          APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
-          ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
-          EOL
-      - name: Build and zip static folder
-        run: |
-          mkdir -p ./release/static
-          cd dashboard
-          npm i --production=false
-          npm run build
-          cd ..
-          zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*
-        env:
-          NODE_ENV: production
-      - name: Build Linux binaries
-        run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter ./cmd/docker-credential-porter/ &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./portersvr ./cmd/app/ &
-          wait
-        env:
-          GOOS: linux
-          GOARCH: amd64
-          CGO_ENABLED: 1
-      # Note: we have to zip all binaries before uploading them as artifacts --
-      # without this step, the binaries will be uploaded but the file metadata will
-      # be listed as plaintext after downloading the artifact in a later step
-      #
-      # TODO: investigate
-      - name: Zip Linux binaries
-        run: |
-          mkdir -p ./release/linux
-          zip --junk-paths ./release/linux/porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./porter
-          zip --junk-paths ./release/linux/portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./portersvr
-          zip --junk-paths ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip ./docker-credential-porter
-      - name: Upload binaries
-        uses: actions/upload-artifact@v2
-        with:
-          path: ./release/linux
-          name: linux-binaries
-          retention-days: 1
-      - name: Upload static binaries
-        uses: actions/upload-artifact@v2
-        with:
-          path: ./release/static
-          name: static-binaries
-          retention-days: 1
-  build-mac:
-    name: Build MacOS binaries
-    runs-on: macos-11
-    steps:
-      - name: Get tag name
-        id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
-        env:
-          GITHUB_TAG: ${{ github.ref }}
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-      - name: Write Dashboard Environment Variables
-        run: |
-          cat >./dashboard/.env <<EOL
-          NODE_ENV=production
-          APPLICATION_CHART_REPO_URL=https://charts.getporter.dev
-          ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
-          EOL
-      - name: Build and Zip MacOS amd64 binaries
-        run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./amd64/porter ./cli &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./amd64/docker-credential-porter ./cmd/docker-credential-porter/ &
-          go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./amd64/portersvr ./cmd/app/ &
-          wait
-
-          mkdir -p ./release/darwin
-          zip --junk-paths ./release/darwin/UNSIGNED_porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./amd64/porter
-          zip --junk-paths ./release/darwin/UNSIGNED_portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./amd64/portersvr
-          zip --junk-paths ./release/darwin/UNSIGNED_docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip ./amd64/docker-credential-porter
-        env:
-          GOOS: darwin
-          GOARCH: amd64
-          CGO_ENABLED: 1
-      - name: Upload binaries
-        uses: actions/upload-artifact@v2
-        with:
-          path: ./release/darwin
-          name: mac-binaries
-          retention-days: 1
-  notarize:
-    name: Notarize Darwin binaries
-    runs-on: macos-11
-    needs: build-mac
-    steps:
-      - name: Get tag name
-        id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
-        env:
-          GITHUB_TAG: ${{ github.ref }}
-      - name: Download binaries
-        uses: actions/download-artifact@v2
-        with:
-          name: mac-binaries
-          path: release/
-      - name: Unzip Darwin binaries
-        run: |
-          unzip ./release/UNSIGNED_porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          unzip ./release/UNSIGNED_portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          unzip ./release/UNSIGNED_docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-      - name: Import Code-Signing Certificates
-        uses: Apple-Actions/import-codesign-certs@v1
-        with:
-          # The certificates in a PKCS12 file encoded as a base64 string
-          p12-file-base64: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}
-          # The password used to import the PKCS12 file.
-          p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
-      - name: Install gon via HomeBrew for code signing and app notarization
-        run: |
-          brew tap mitchellh/gon
-          brew install mitchellh/gon/gon
-      - name: Create a porter.gon.json file
-        run: |
-          echo "
-          {
-              \"source\": [\"./porter\"],
-              \"bundle_id\": \"cli.porter\",
-              \"apple_id\": {
-                  \"password\":  \"@env:AC_PASSWORD\"
-              },
-              \"sign\": {
-                  \"application_identity\": \"${{ secrets.AC_APPLICATION_IDENTITY }}\"
-              },
-              \"zip\": {
-                  \"output_path\": \"./release/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
-              }
-          }
-          " > ./porter.gon.json
-      - name: Create a portersvr.gon.json file
-        run: |
-          echo "
-          {
-              \"source\": [\"./portersvr\"],
-              \"bundle_id\": \"cli.portersvr\",
-              \"apple_id\": {
-                  \"password\":  \"@env:AC_PASSWORD\"
-              },
-              \"sign\": {
-                  \"application_identity\": \"${{ secrets.AC_APPLICATION_IDENTITY }}\"
-              },
-              \"zip\": {
-                  \"output_path\": \"./release/portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
-              }
-          }
-          " > ./portersvr.gon.json
-      - name: Create a docker-credential-porter.gon.json file
-        run: |
-          echo "
-          {
-              \"source\": [\"./docker-credential-porter\"],
-              \"bundle_id\": \"cli.docker-credential-porter\",
-              \"apple_id\": {
-                  \"password\":  \"@env:AC_PASSWORD\"
-              },
-              \"sign\": {
-                  \"application_identity\": \"${{ secrets.AC_APPLICATION_IDENTITY }}\"
-              },
-              \"zip\": {
-                  \"output_path\": \"./release/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip\"
-              }
-          }
-          " > ./docker-credential-porter.gon.json
-      - name: Sign the mac binaries with Gon
-        env:
-          AC_USERNAME: ${{ secrets.AC_USERNAME }}
-          AC_PASSWORD: ${{ secrets.AC_PASSWORD }}
-        run: |
-          gon ./porter.gon.json &
-          gon ./portersvr.gon.json &
-          gon ./docker-credential-porter.gon.json &
-          wait
-      - name: Upload binaries
-        uses: actions/upload-artifact@v2
-        with:
-          path: ./release
-          name: mac-binaries
-          retention-days: 1
-  release:
-    name: Zip binaries, create release and upload assets
-    runs-on: ubuntu-latest
-    needs: 
-    - notarize
-    - build-linux
-    steps:
-      - name: Get tag name
-        id: tag_name
-        run: |
-          tag=${GITHUB_TAG/refs\/tags\//}
-          echo ::set-output name=tag::$tag
-        env:
-          GITHUB_TAG: ${{ github.ref }}
-      - name: Download binaries
-        uses: actions/download-artifact@v2
-        with:
-          name: linux-binaries
-          path: release/linux
-      - name: Download binaries
-        uses: actions/download-artifact@v2
-        with:
-          name: static-binaries
-          path: release/static
-      - name: Download binaries
-        uses: actions/download-artifact@v2
-        with:
-          name: mac-binaries
-          path: release/darwin
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: true
-      - name: Upload Linux CLI Release Asset
-        id: upload-linux-cli-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/linux/porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
-          asset_name: porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Linux Server Release Asset
-        id: upload-linux-server-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/linux/portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
-          asset_name: portersvr_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Linux Docker Credential Release Asset
-        id: upload-linux-docker-cred-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/linux/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
-          asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Linux_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Darwin CLI Release Asset
-        id: upload-darwin-cli-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/darwin/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          asset_name: porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Darwin Server Release Asset
-        id: upload-darwin-server-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/darwin/portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          asset_name: portersvr_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Darwin Docker Credential Release Asset
-        id: upload-darwin-docker-cred-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/darwin/docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          asset_name: docker-credential-porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
-          asset_content_type: application/zip
-      - name: Upload Static Release Asset
-        id: upload-static-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: ${{ github.ref }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/static/static_${{steps.tag_name.outputs.tag}}.zip
-          asset_name: static_${{steps.tag_name.outputs.tag}}.zip
-          asset_content_type: application/zip
-  build-push-docker-cli:
+          docker pull porter1/porter:${{steps.tag_name.outputs.tag}}
+          docker tag porter1/porter:${{steps.tag_name.outputs.tag}} porter1/porter:latest
+          docker push porter1/porter:latest
+  push-docker-cli-latest:
     name: Build a new porter-cli docker image
     runs-on: ubuntu-latest
-    needs: release
     steps:
       - name: Get tag name
         id: tag_name
@@ -375,8 +34,6 @@ jobs:
           echo ::set-output name=tag::$tag
         env:
           GITHUB_TAG: ${{ github.ref }}
-      - name: Checkout
-        uses: actions/checkout@v2.3.4
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -387,12 +44,55 @@ jobs:
         id: login-ecr
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
-      - name: Build
+      - name: Pull versioned CLI image and push to latest
         run: |
-          docker build ./services/porter_cli_container \
-            -t public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} \
-            -f ./services/porter_cli_container/Dockerfile \
-            --build-arg VERSION=${{steps.tag_name.outputs.tag}}
-      - name: Push
+          docker pull public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          docker tag public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}} public.ecr.aws/o1j4x7p4/porter-cli:latest
+          docker push public.ecr.aws/o1j4x7p4/porter-cli:latest
+  update-homebrew-repo:
+    name: Update the Homebrew repo with the new CLI version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get tag name
+        id: tag_name
         run: |
-          docker push public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
+          tag=${GITHUB_TAG/refs\/tags\//}
+          echo ::set-output name=tag::$tag
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Create and commit porter.rb file
+        run: |
+          version=${{steps.tag_name.outputs.tag}}
+          name=porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip
+          curl -L https://github.com/porter-dev/porter/releases/download/${version}/porter_${version}_Darwin_x86_64.zip --output $name
+
+          sha=$(cat porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip | openssl sha256 | sed 's/(stdin)= //g')
+
+          cat >porter.rb <<EOL
+          class Porter < Formula
+            homepage "https://porter.run"
+            version "${{steps.tag_name.outputs.tag}}"
+          
+            on_macos do
+              url "https://github.com/porter-dev/porter/releases/download/${{steps.tag_name.outputs.tag}}/porter_${{steps.tag_name.outputs.tag}}_Darwin_x86_64.zip"
+              sha256 "$sha"
+          
+              def install
+                bin.install "porter"
+              end
+            end
+          end
+          EOL
+      - name: Add and commit porter.rb file
+        run: |
+          git clone https://abelanger5:${{ secrets.HOMEBREW_GITHUB_TOKEN }}@github.com/porter-dev/homebrew-porter
+
+          cd homebrew-porter
+          git config user.name "Update Bot"
+          git config user.email "support@porter.run"
+
+          mv ../porter.rb ./Formula/porter.rb
+
+          git add Formula
+          git commit -m "Update to version ${{steps.tag_name.outputs.tag}}"
+          git push origin main

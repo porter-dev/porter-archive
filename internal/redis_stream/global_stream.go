@@ -198,18 +198,21 @@ func GlobalStreamListener(
 					dataString, ok := msg.Values["data"].(string)
 
 					if ok {
+						fmt.Println("error state 1", err)
 						json.Unmarshal([]byte(dataString), database)
 					}
 
 					database, err = repo.Database().CreateDatabase(database)
 
 					if err != nil {
+						fmt.Println("error state 2", err)
 						continue
 					}
 
 					err = createRDSEnvGroup(repo, config, infra, database, rdsRequest)
 
 					if err != nil {
+						fmt.Println("error state 3", err)
 						continue
 					}
 				} else if kind == string(types.InfraEKS) {
@@ -469,9 +472,12 @@ func GlobalStreamListener(
 }
 
 func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra *models.Infra, database *models.Database, rdsConfig *types.RDSInfraLastApplied) error {
+	fmt.Println("creating rds env group")
+
 	cluster, err := repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
 
 	if err != nil {
+		fmt.Println("error eg state 0", err)
 		return err
 	}
 
@@ -484,6 +490,7 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 
 	if err != nil {
+		fmt.Println("error eg state 1", err)
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
 
@@ -499,6 +506,7 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 	})
 
 	if err != nil {
+		fmt.Println("error eg state 2", err)
 		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
 	}
 

@@ -85,6 +85,46 @@ type CreateConfigMapRequest struct {
 	SecretVariables map[string]string `json:"secret_variables,required"`
 }
 
+type EnvGroup struct {
+	Version      uint              `json:"version"`
+	Name         string            `json:"name"`
+	Namespace    string            `json:"namespace"`
+	Applications []string          `json:"applications"`
+	Variables    map[string]string `json:"variables"`
+}
+
+type EnvGroupMeta struct {
+	Version   uint   `json:"version"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type GetEnvGroupRequest struct {
+	Name    string `schema:"name,required"`
+	Version uint   `schema:"version"`
+}
+
+type GetEnvGroupAllRequest struct {
+	Name string `schema:"name,required"`
+}
+
+type DeleteEnvGroupRequest struct {
+	Name string `json:"name,required"`
+}
+
+type AddEnvGroupApplicationRequest struct {
+	Name            string `json:"name" form:"required"`
+	ApplicationName string `json:"app_name" form:"required"`
+}
+
+type ListEnvGroupsResponse []*EnvGroupMeta
+
+type CreateEnvGroupRequest struct {
+	Name            string            `json:"name,required"`
+	Variables       map[string]string `json:"variables,required"`
+	SecretVariables map[string]string `json:"secret_variables,required"`
+}
+
 type CreateConfigMapResponse struct {
 	*v1.ConfigMap
 }

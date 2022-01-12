@@ -208,6 +208,8 @@ func GlobalStreamListener(
 					database.ClusterID = rdsRequest.ClusterID
 					database.InfraID = infra.ID
 
+					fmt.Println(database.Model.ID, database, database.Model)
+
 					database, err = repo.Database().CreateDatabase(database)
 
 					if err != nil {

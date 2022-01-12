@@ -14,7 +14,9 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
@@ -288,7 +290,10 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 		return err
 	}
 
-	newPod, err := createPodFromExisting(config, existing, args)
+	newPod, err := createEphemeralPodFromExisting(config, existing, args)
+	if err != nil {
+		return err
+	}
 	podName := newPod.ObjectMeta.Name
 
 	// delete the ephemeral pod no matter what
@@ -298,6 +303,11 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	if err = waitForPod(config, newPod); err != nil {
 		color.New(color.FgRed).Println("failed")
 		return handlePodAttachError(err, config, namespace, podName, container)
+	}
+
+	err = checkForPodDeletionCronJob(config)
+	if err != nil {
+		return err
 	}
 
 	// refresh pod info for latest status
@@ -365,6 +375,194 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 	}
 
 	return err
+}
+
+func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
+	namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, namespace := range namespaces.Items {
+		cronJobs, err := config.Clientset.BatchV1().CronJobs(namespace.Name).List(
+			context.Background(), metav1.ListOptions{},
+		)
+		if err != nil {
+			return err
+		}
+
+		for _, cronJob := range cronJobs.Items {
+			if cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
+				return nil
+			}
+		}
+	}
+
+	// try and create the cron job and all of the other required resources as necessary,
+	// starting with the service account, then role and then a role binding
+
+	err = checkForServiceAccount(config)
+	if err != nil {
+		return err
+	}
+
+	err = checkForRole(config)
+	if err != nil {
+		return err
+	}
+
+	err = checkForRoleBinding(config)
+	if err != nil {
+		return err
+	}
+
+	// create the cronjob
+
+	cronJob := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "porter-ephemeral-pod-deletion-cronjob",
+		},
+		Spec: batchv1.CronJobSpec{
+			Schedule: "* 6 * * *",
+			JobTemplate: batchv1.JobTemplateSpec{
+				Spec: batchv1.JobSpec{
+					Template: v1.PodTemplateSpec{
+						Spec: v1.PodSpec{
+							ServiceAccountName: "porter-ephemeral-pod-deletion-service-account",
+							RestartPolicy:      v1.RestartPolicyNever,
+							Containers: []v1.Container{
+								{
+									Name:            "ephemeral-pods-manager",
+									Image:           "public.ecr.aws/o1j4x7p4/ephemeral-pods-manager:latest",
+									ImagePullPolicy: v1.PullAlways,
+									Args:            []string{"delete"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err = config.Clientset.BatchV1().CronJobs(namespace).Create(
+		context.Background(), cronJob, metav1.CreateOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkForServiceAccount(config *PorterRunSharedConfig) error {
+	serviceAccounts, err := config.Clientset.CoreV1().ServiceAccounts(namespace).List(
+		context.Background(), metav1.ListOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, serviceAccount := range serviceAccounts.Items {
+		if serviceAccount.Name == "porter-ephemeral-pod-deletion-service-account" {
+			return nil
+		}
+	}
+
+	serviceAccount := &v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "porter-ephemeral-pod-deletion-service-account",
+		},
+	}
+	_, err = config.Clientset.CoreV1().ServiceAccounts(namespace).Create(
+		context.Background(), serviceAccount, metav1.CreateOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkForRole(config *PorterRunSharedConfig) error {
+	roles, err := config.Clientset.RbacV1().ClusterRoles().List(
+		context.Background(), metav1.ListOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, role := range roles.Items {
+		if role.Name == "porter-ephemeral-pod-deletion-cluster-role" {
+			return nil
+		}
+	}
+
+	role := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "porter-ephemeral-pod-deletion-cluster-role",
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Resources: []string{"pods"},
+				Verbs:     []string{"list", "delete"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"namespaces"},
+				Verbs:     []string{"list"},
+			},
+		},
+	}
+	_, err = config.Clientset.RbacV1().ClusterRoles().Create(
+		context.Background(), role, metav1.CreateOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkForRoleBinding(config *PorterRunSharedConfig) error {
+	bindings, err := config.Clientset.RbacV1().ClusterRoleBindings().List(
+		context.Background(), metav1.ListOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, binding := range bindings.Items {
+		if binding.Name == "porter-ephemeral-pod-deletion-cluster-rolebinding" {
+			return nil
+		}
+	}
+
+	binding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "porter-ephemeral-pod-deletion-cluster-rolebinding",
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     "porter-ephemeral-pod-deletion-cluster-role",
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     "ServiceAccount",
+				Name:     "porter-ephemeral-pod-deletion-service-account",
+			},
+		},
+	}
+	_, err = config.Clientset.RbacV1().ClusterRoleBindings().Create(
+		context.Background(), binding, metav1.CreateOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func waitForPod(config *PorterRunSharedConfig, pod *v1.Pod) error {
@@ -519,7 +717,7 @@ func deletePod(config *PorterRunSharedConfig, name, namespace string) error {
 	return nil
 }
 
-func createPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args []string) (*v1.Pod, error) {
+func createEphemeralPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args []string) (*v1.Pod, error) {
 	newPod := existing.DeepCopy()
 
 	// only copy the pod spec, overwrite metadata
@@ -539,6 +737,10 @@ func createPodFromExisting(config *PorterRunSharedConfig, existing *v1.Pod, args
 	// change the command in the pod to the passed in pod command
 	cmdRoot := args[0]
 	cmdArgs := make([]string, 0)
+
+	// annotate with the ephemeral pod tag
+	newPod.Labels = make(map[string]string)
+	newPod.Labels["porter/ephemeral-pod"] = "true"
 
 	if len(args) > 1 {
 		cmdArgs = args[1:]

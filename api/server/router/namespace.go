@@ -70,6 +70,7 @@ func getNamespaceRoutes(
 				types.UserScope,
 				types.ProjectScope,
 				types.ClusterScope,
+				types.NamespaceScope,
 			},
 		},
 	)

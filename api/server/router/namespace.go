@@ -350,7 +350,7 @@ func getNamespaceRoutes(
 		},
 	)
 
-	getPreviousLogsHandler := namespace.NewListReleasesHandler(
+	getPreviousLogsHandler := namespace.NewGetPreviousLogsHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

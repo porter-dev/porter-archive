@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
+	"gorm.io/gorm"
 
 	redis "github.com/go-redis/redis/v8"
 
@@ -188,24 +189,29 @@ func GlobalStreamListener(
 						continue
 					}
 
-					database := &models.Database{
-						ProjectID: projID,
-						InfraID:   infra.ID,
-						ClusterID: rdsRequest.ClusterID,
-					}
+					database := &models.Database{}
 
 					// parse raw data into ECR type
 					dataString, ok := msg.Values["data"].(string)
 
 					if ok {
 						fmt.Println("error state 1", err)
-						json.Unmarshal([]byte(dataString), database)
+						err = json.Unmarshal([]byte(dataString), database)
+
+						if err != nil {
+							fmt.Println("error state 2", err)
+						}
 					}
+
+					database.Model = gorm.Model{}
+					database.ProjectID = projID
+					database.ClusterID = rdsRequest.ClusterID
+					database.InfraID = infra.ID
 
 					database, err = repo.Database().CreateDatabase(database)
 
 					if err != nil {
-						fmt.Println("error state 2", err)
+						fmt.Println("error state 3", err)
 						continue
 					}
 

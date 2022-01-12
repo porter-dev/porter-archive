@@ -1,4 +1,10 @@
-import React, { Component, useEffect, useRef, useState } from "react";
+import React, {
+  Component,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import * as Anser from "anser";
@@ -23,8 +29,6 @@ type StateType = {
 };
 
 export default class Logs extends Component<PropsType, StateType> {
-  private numLogs: React.RefObject<number>;
-
   state = {
     logs: [] as [number, Anser.AnserJsonEntry[]][],
     numLogs: 0,
@@ -164,15 +168,15 @@ export default class Logs extends Component<PropsType, StateType> {
     const currentTab = this.state.currentTab;
     if (currentTab === "Application") {
       this.ws = new WebSocket(
-        `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?previous=${this.state.getPreviousLogs}`
+        `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs`
       );
     } else {
       this.ws = new WebSocket(
-        `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?container_name=${currentTab}&previous=${this.state.getPreviousLogs}`
+        `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?container_name=${currentTab}`
       );
     }
 
-    this.ws.onopen = () => { };
+    this.ws.onopen = () => {};
 
     this.ws.onmessage = (evt: MessageEvent) => {
       let ansiLog = Anser.ansiToJson(evt.data);
@@ -202,9 +206,9 @@ export default class Logs extends Component<PropsType, StateType> {
       );
     };
 
-    this.ws.onerror = (err: ErrorEvent) => { };
+    this.ws.onerror = (err: ErrorEvent) => {};
 
-    this.ws.onclose = () => { };
+    this.ws.onclose = () => {};
   };
 
   refreshLogs = () => {
@@ -365,7 +369,7 @@ export default class Logs extends Component<PropsType, StateType> {
               <input
                 type="checkbox"
                 checked={this.state.scroll}
-                onChange={() => { }}
+                onChange={() => {}}
               />
               Scroll to Bottom
             </Scroll>
@@ -409,7 +413,7 @@ export default class Logs extends Component<PropsType, StateType> {
             <input
               type="checkbox"
               checked={this.state.scroll}
-              onChange={() => { }}
+              onChange={() => {}}
             />
             Scroll to Bottom
           </Scroll>
@@ -428,6 +432,141 @@ export default class Logs extends Component<PropsType, StateType> {
 }
 
 Logs.contextType = Context;
+
+type SelectedPodType = {
+  spec: {
+    [key: string]: any;
+    containers: {
+      [key: string]: any;
+      name: string;
+    }[];
+  };
+  metadata: {
+    name: string;
+    namespace: string;
+  };
+};
+
+const LogsFC: React.FC<{
+  selectedPod: SelectedPodType;
+  podError: string;
+  rawText?: boolean;
+}> = ({ selectedPod, podError, rawText }) => {
+  const { currentCluster, currentProject } = useContext(Context);
+  const [containers, setContainers] = useState<string[]>([]);
+  const [currentTab, setCurrentTab] = useState("");
+  const [logs, setLogs] = useState<{
+    [key: string]: [number, Anser.AnserJsonEntry[]][];
+  }>({});
+
+  const [prevLogs, setPrevLogs] = useState<{
+    [key: string]: [number, Anser.AnserJsonEntry[]][];
+  }>({});
+
+  const getPodStatus = (status: any) => {
+    if (
+      status?.phase === "Pending" &&
+      status?.containerStatuses !== undefined
+    ) {
+      return status.containerStatuses[0].state.waiting.reason;
+    } else if (status?.phase === "Pending") {
+      return "Pending";
+    }
+
+    if (status?.phase === "Failed") {
+      return "failed";
+    }
+
+    if (status?.phase === "Running") {
+      let collatedStatus = "running";
+
+      status?.containerStatuses?.forEach((s: any) => {
+        if (s.state?.waiting) {
+          collatedStatus =
+            s.state?.waiting.reason === "CrashLoopBackOff"
+              ? "failed"
+              : "waiting";
+        } else if (s.state?.terminated) {
+          collatedStatus = "failed";
+        }
+      });
+      return collatedStatus;
+    }
+  };
+
+  const getSystemLogs = async () => {
+    const events = await api
+      .getPodEvents(
+        "<token>",
+        {},
+        {
+          name: selectedPod?.metadata?.name,
+          namespace: selectedPod?.metadata?.namespace,
+          cluster_id: currentCluster?.id,
+          id: currentProject?.id,
+        }
+      )
+      .then((res) => res.data);
+
+    let processedLogs = [] as [number, Anser.AnserJsonEntry[]][];
+
+    events.items.forEach((evt: any) => {
+      let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
+      let ansiLog = Anser.ansiToJson(
+        `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
+      );
+      processedLogs.push([processedLogs.length, ansiLog]);
+    });
+
+    // SET LOGS FOR SYSTEM
+    setLogs((prevState) => ({
+      ...prevState,
+      system: processedLogs,
+    }));
+  };
+
+  const getContainerLogs = async (containerName: string) => {
+    try {
+      const logs = await api
+        .getPreviousLogsForContainer<{ previous_logs: string[] }>(
+          "<token>",
+          {
+            container_name: containerName,
+          },
+          {
+            pod_name: selectedPod?.metadata?.name,
+            namespace: selectedPod?.metadata?.namespace,
+            cluster_id: currentCluster?.id,
+            project_id: currentProject?.id,
+          }
+        )
+        .then((res) => res.data);
+      // Process logs
+      let processedLogs = [] as [number, Anser.AnserJsonEntry[]][];
+
+      logs.previous_logs.map((currentLog, i) => {
+        let ansiLog = Anser.ansiToJson(currentLog);
+      });
+      setPrevLogs((pl) => ({
+        ...pl,
+        [containerName]: processedLogs,
+      }));
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    const currentContainers = selectedPod?.spec?.containers?.map(
+      (container) => container?.name
+    );
+
+    setContainers(currentContainers);
+  }, [selectedPod]);
+
+  // Retrieve all previous logs for containers
+  useEffect(() => {}, [containers]);
+
+  return <div></div>;
+};
 
 const Highlight = styled.div`
   display: flex;

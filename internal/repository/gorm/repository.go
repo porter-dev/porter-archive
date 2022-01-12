@@ -17,6 +17,7 @@ type GormRepository struct {
 	gitActionConfig           repository.GitActionConfigRepository
 	invite                    repository.InviteRepository
 	release                   repository.ReleaseRepository
+	environment               repository.EnvironmentRepository
 	authCode                  repository.AuthCodeRepository
 	dnsRecord                 repository.DNSRecordRepository
 	pwResetToken              repository.PWResetTokenRepository
@@ -31,6 +32,7 @@ type GormRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
+	jobNotificationConfig     repository.JobNotificationConfigRepository
 	buildEvent                repository.BuildEventRepository
 	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
@@ -78,6 +80,10 @@ func (t *GormRepository) Invite() repository.InviteRepository {
 
 func (t *GormRepository) Release() repository.ReleaseRepository {
 	return t.release
+}
+
+func (t *GormRepository) Environment() repository.EnvironmentRepository {
+	return t.environment
 }
 
 func (t *GormRepository) AuthCode() repository.AuthCodeRepository {
@@ -136,6 +142,10 @@ func (t *GormRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
+func (t *GormRepository) JobNotificationConfig() repository.JobNotificationConfigRepository {
+	return t.jobNotificationConfig
+}
+
 func (t *GormRepository) BuildEvent() repository.BuildEventRepository {
 	return t.buildEvent
 }
@@ -178,6 +188,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		gitActionConfig:           NewGitActionConfigRepository(db),
 		invite:                    NewInviteRepository(db),
 		release:                   NewReleaseRepository(db),
+		environment:               NewEnvironmentRepository(db),
 		authCode:                  NewAuthCodeRepository(db),
 		dnsRecord:                 NewDNSRecordRepository(db),
 		pwResetToken:              NewPWResetTokenRepository(db),
@@ -192,6 +203,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
+		jobNotificationConfig:     NewJobNotificationConfigRepository(db),
 		buildEvent:                NewBuildEventRepository(db),
 		kubeEvent:                 NewKubeEventRepository(db, key),
 		projectUsage:              NewProjectUsageRepository(db),

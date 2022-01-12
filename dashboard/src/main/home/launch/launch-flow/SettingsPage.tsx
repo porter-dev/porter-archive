@@ -175,7 +175,7 @@ class SettingsPage extends Component<PropsType, StateType> {
           </Placeholder>
           <SaveButton
             text="Deploy"
-            onClick={onSubmit}
+            onClick={() => onSubmit({})}
             status={saveValuesStatus}
             makeFlush={true}
           />

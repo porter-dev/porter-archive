@@ -27,6 +27,10 @@ type CreateOpts struct {
 	Kind        string
 	ReleaseName string
 	RegistryURL string
+
+	// Suffix for the name of the image in the repository. By default the suffix is the
+	// target namespace.
+	RepoSuffix string
 }
 
 // GithubOpts are the options for linking a Github source to the app
@@ -213,6 +217,8 @@ func (c *CreateAgent) CreateFromRegistry(
 // container image, and then deploys it onto Porter.
 func (c *CreateAgent) CreateFromDocker(
 	overrideValues map[string]interface{},
+	imageTag string,
+	extraBuildConfig *types.BuildConfig,
 ) (string, error) {
 	opts := c.CreateOpts
 
@@ -256,7 +262,7 @@ func (c *CreateAgent) CreateFromDocker(
 
 	mergedValues["image"] = map[string]interface{}{
 		"repository": imageURL,
-		"tag":        "latest",
+		"tag":        imageTag,
 	}
 
 	// create docker agent
@@ -272,6 +278,11 @@ func (c *CreateAgent) CreateFromDocker(
 		env = map[string]string{}
 	}
 
+	// add additional env based on options
+	for key, val := range opts.SharedOpts.AdditionalEnv {
+		env[key] = val
+	}
+
 	buildAgent := &BuildAgent{
 		SharedOpts:  opts.SharedOpts,
 		client:      c.Client,
@@ -281,9 +292,9 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	if opts.Method == DeployBuildTypeDocker {
-		err = buildAgent.BuildDocker(agent, opts.LocalPath, opts.LocalPath, opts.LocalDockerfile, "latest", "")
+		err = buildAgent.BuildDocker(agent, opts.LocalPath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
 	} else {
-		err = buildAgent.BuildPack(agent, opts.LocalPath, "latest", nil)
+		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
 	}
 
 	if err != nil {
@@ -304,7 +315,7 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, "latest"))
+	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
 	if err != nil {
 		return "", err
@@ -375,12 +386,23 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 		if c.CreateOpts.RegistryURL != "" {
 			if c.CreateOpts.RegistryURL == reg.URL {
 				regID = reg.ID
-				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+				if c.CreateOpts.RepoSuffix != "" {
+					imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, c.CreateOpts.RepoSuffix)
+				} else {
+					imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+				}
+
 				break
 			}
 		} else if reg.URL != "" {
 			regID = reg.ID
-			imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+
+			if c.CreateOpts.RepoSuffix != "" {
+				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, c.CreateOpts.RepoSuffix)
+			} else {
+				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
+			}
+
 			break
 		}
 	}

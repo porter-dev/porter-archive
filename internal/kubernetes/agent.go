@@ -915,9 +915,11 @@ func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool,
 		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
-	// see if container is ready and able to open a stream. If not, wait for container
-	// to be ready.
-	err, _ = a.waitForPod(pod)
+	if !showPreviousLogs {
+		// see if container is ready and able to open a stream. If not, wait for container
+		// to be ready.
+		err, _ = a.waitForPod(pod)
+	}
 
 	if err != nil && goerrors.Is(err, IsNotFoundError) {
 		return IsNotFoundError

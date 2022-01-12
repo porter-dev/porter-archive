@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
@@ -22,30 +23,30 @@ var createCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Short: "Creates a new application with name given by the --app flag.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
-Creates a new application with name given by the --app flag and a "kind", which can be one of 
+Creates a new application with name given by the --app flag and a "kind", which can be one of
 web, worker, or job. For example:
 
   %s
 
-To modify the default configuration of the application, you can pass a values.yaml file in via the 
---values flag. 
+To modify the default configuration of the application, you can pass a values.yaml file in via the
+--values flag.
 
   %s
 
-To read more about the configuration options, go here: 
+To read more about the configuration options, go here:
 
 https://docs.getporter.dev/docs/deploying-from-the-cli#common-configuration-options
 
-This command will automatically build from a local path, and will create a new Docker image in your 
+This command will automatically build from a local path, and will create a new Docker image in your
 default Docker registry. The path can be configured via the --path flag. For example:
-  
+
   %s
 
-To connect the application to Github, so that the application rebuilds and redeploys on each push 
-to a Github branch, you can specify "--source github". If your local branch is set to track changes 
-from an upstream remote branch, Porter will try to use the connected remote and remote branch as the 
+To connect the application to Github, so that the application rebuilds and redeploys on each push
+to a Github branch, you can specify "--source github". If your local branch is set to track changes
+from an upstream remote branch, Porter will try to use the connected remote and remote branch as the
 Github repository to link to. Otherwise, Porter will use the remote given by origin. For example:
 
   %s
@@ -53,7 +54,7 @@ Github repository to link to. Otherwise, Porter will use the remote given by ori
 To deploy an application from a Docker registry, use "--source registry" and pass the image in via the
 --image flag. The image flag must be of the form repository:tag. For example:
 
-  %s 
+  %s
 `,
 		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter create\":"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app"),
@@ -119,6 +120,14 @@ func init() {
 		"the path to the dockerfile",
 	)
 
+	createCmd.PersistentFlags().StringArrayVarP(
+		&buildFlagsEnv,
+		"env",
+		"e",
+		[]string{},
+		"Build-time environment variable, in the form 'VAR=VALUE'. These are not available at image runtime.",
+	)
+
 	createCmd.PersistentFlags().StringVar(
 		&method,
 		"method",
@@ -156,9 +165,10 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		return fmt.Errorf("%s is not a supported type: specify web, job, or worker", args[0])
 	}
 
+	var err error
+
 	// read the values if necessary
 	valuesObj, err := readValuesFile()
-
 	if err != nil {
 		return err
 	}
@@ -179,6 +189,15 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		buildMethod = deploy.DeployBuildTypeDocker
 	}
 
+	// add additional env, if they exist
+	additionalEnv := make(map[string]string)
+
+	for _, buildEnv := range buildFlagsEnv {
+		if strSplArr := strings.SplitN(buildEnv, "=", 2); len(strSplArr) >= 2 {
+			additionalEnv[strSplArr[0]] = strSplArr[1]
+		}
+	}
+
 	createAgent := &deploy.CreateAgent{
 		Client: client,
 		CreateOpts: &deploy.CreateOpts{
@@ -189,6 +208,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 				LocalPath:       fullPath,
 				LocalDockerfile: dockerfile,
 				Method:          buildMethod,
+				AdditionalEnv:   additionalEnv,
 			},
 			Kind:        args[0],
 			ReleaseName: name,
@@ -197,7 +217,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	if source == "local" {
-		subdomain, err := createAgent.CreateFromDocker(valuesObj)
+		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {

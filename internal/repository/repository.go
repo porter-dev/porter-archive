@@ -4,6 +4,7 @@ type Repository interface {
 	User() UserRepository
 	Project() ProjectRepository
 	Release() ReleaseRepository
+	Environment() EnvironmentRepository
 	Session() SessionRepository
 	GitRepo() GitRepoRepository
 	Cluster() ClusterRepository
@@ -25,6 +26,7 @@ type Repository interface {
 	GithubAppOAuthIntegration() GithubAppOAuthIntegrationRepository
 	SlackIntegration() SlackIntegrationRepository
 	NotificationConfig() NotificationConfigRepository
+	JobNotificationConfig() JobNotificationConfigRepository
 	BuildEvent() BuildEventRepository
 	KubeEvent() KubeEventRepository
 	ProjectUsage() ProjectUsageRepository

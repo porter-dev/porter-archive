@@ -421,5 +421,30 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// GET /api/can_create_project -> user.CanCreateProject
+	canCreateProjectEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/can_create_project",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	canCreateProjectHandler := user.NewCanCreateProjectHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: canCreateProjectEndpoint,
+		Handler:  canCreateProjectHandler,
+		Router:   r,
+	})
+
 	return routes
 }

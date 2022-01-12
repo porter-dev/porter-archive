@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/bradleyfalzon/ghinstallation"
-	"github.com/google/go-github/v33/github"
+	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
@@ -21,7 +21,8 @@ import (
 )
 
 type GithubActions struct {
-	ServerURL string
+	ServerURL    string
+	InstanceName string
 
 	GithubOAuthIntegration *models.GitRepo
 	GitRepoName            string
@@ -78,7 +79,7 @@ func (g *GithubActions) Setup() ([]byte, error) {
 
 	if !g.DryRun {
 		// create porter token secret
-		if err := g.createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken); err != nil {
+		if err := createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken, g.GitRepoOwner, g.GitRepoName); err != nil {
 			return nil, err
 		}
 	}
@@ -90,7 +91,15 @@ func (g *GithubActions) Setup() ([]byte, error) {
 	}
 
 	if !g.DryRun && g.ShouldCreateWorkflow {
-		_, err = g.commitGithubFile(client, g.getPorterYMLFileName(), workflowYAML)
+		branch := g.GitBranch
+
+		if branch == "" {
+			branch = g.defaultBranch
+		}
+
+		isOAuth := g.GithubOAuthIntegration != nil
+
+		_, err = commitGithubFile(client, g.getPorterYMLFileName(), workflowYAML, g.GitRepoOwner, g.GitRepoName, branch, isOAuth)
 		if err != nil {
 			return workflowYAML, err
 		}
@@ -136,7 +145,15 @@ func (g *GithubActions) Cleanup() error {
 		}
 	}
 
-	return g.deleteGithubFile(client, g.getPorterYMLFileName())
+	branch := g.GitBranch
+
+	if branch == "" {
+		branch = g.defaultBranch
+	}
+
+	isOAuth := g.GithubOAuthIntegration != nil
+
+	return deleteGithubFile(client, g.getPorterYMLFileName(), g.GitRepoOwner, g.GitRepoName, branch, isOAuth)
 }
 
 type GithubActionYAMLStep struct {
@@ -163,7 +180,7 @@ type GithubActionYAMLJob struct {
 }
 
 type GithubActionYAML struct {
-	On GithubActionYAMLOnPush `yaml:"on,omitempty"`
+	On interface{} `yaml:"on,omitempty"`
 
 	Name string `yaml:"name,omitempty"`
 
@@ -245,13 +262,15 @@ func (g *GithubActions) getClient() (*github.Client, error) {
 	return github.NewClient(&http.Client{Transport: itr}), nil
 }
 
-func (g *GithubActions) createGithubSecret(
+func createGithubSecret(
 	client *github.Client,
 	secretName,
-	secretValue string,
+	secretValue,
+	gitRepoOwner,
+	gitRepoName string,
 ) error {
 	// get the public key for the repo
-	key, _, err := client.Actions.GetRepoPublicKey(context.TODO(), g.GitRepoOwner, g.GitRepoName)
+	key, _, err := client.Actions.GetRepoPublicKey(context.TODO(), gitRepoOwner, gitRepoName)
 
 	if err != nil {
 		return err
@@ -283,7 +302,7 @@ func (g *GithubActions) createGithubSecret(
 	}
 
 	// write the secret to the repo
-	_, err = client.Actions.CreateOrUpdateRepoSecret(context.TODO(), g.GitRepoOwner, g.GitRepoName, encryptedSecret)
+	_, err = client.Actions.CreateOrUpdateRepoSecret(context.TODO(), gitRepoOwner, gitRepoName, encryptedSecret)
 
 	return err
 }
@@ -323,7 +342,7 @@ func (g *GithubActions) createEnvSecret(client *github.Client) error {
 
 	secretName := g.getBuildEnvSecretName()
 
-	return g.createGithubSecret(client, secretName, strings.Join(lines, "\n"))
+	return createGithubSecret(client, secretName, strings.Join(lines, "\n"), g.GitRepoOwner, g.GitRepoName)
 }
 
 func (g *GithubActions) getWebhookSecretName() string {
@@ -339,34 +358,45 @@ func (g *GithubActions) getBuildEnvSecretName() string {
 }
 
 func (g *GithubActions) getPorterYMLFileName() string {
+	if g.InstanceName != "" {
+		return fmt.Sprintf("porter_%s_%s.yml", strings.Replace(
+			strings.ToLower(g.ReleaseName), "-", "_", -1),
+			strings.ToLower(g.InstanceName),
+		)
+	}
+
 	return fmt.Sprintf("porter_%s.yml", strings.Replace(
 		strings.ToLower(g.ReleaseName), "-", "_", -1),
 	)
 }
 
 func (g *GithubActions) getPorterTokenSecretName() string {
+	if g.InstanceName != "" {
+		return fmt.Sprintf("PORTER_TOKEN_%s_%d", strings.ToUpper(g.InstanceName), g.ProjectID)
+	}
+
 	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
 }
 
-func (g *GithubActions) commitGithubFile(
+func getPorterTokenSecretName(projectID uint) string {
+	return fmt.Sprintf("PORTER_TOKEN_%d", projectID)
+}
+
+func commitGithubFile(
 	client *github.Client,
 	filename string,
 	contents []byte,
+	gitRepoOwner, gitRepoName, branch string,
+	isOAuth bool,
 ) (string, error) {
 	filepath := ".github/workflows/" + filename
 	sha := ""
 
-	branch := g.GitBranch
-
-	if branch == "" {
-		branch = g.defaultBranch
-	}
-
 	// get contents of a file if it exists
 	fileData, _, _, _ := client.Repositories.GetContents(
 		context.TODO(),
-		g.GitRepoOwner,
-		g.GitRepoName,
+		gitRepoOwner,
+		gitRepoName,
 		filepath,
 		&github.RepositoryContentGetOptions{
 			Ref: branch,
@@ -384,7 +414,7 @@ func (g *GithubActions) commitGithubFile(
 		SHA:     &sha,
 	}
 
-	if g.GithubOAuthIntegration != nil {
+	if isOAuth {
 		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
@@ -393,8 +423,8 @@ func (g *GithubActions) commitGithubFile(
 
 	resp, _, err := client.Repositories.UpdateFile(
 		context.TODO(),
-		g.GitRepoOwner,
-		g.GitRepoName,
+		gitRepoOwner,
+		gitRepoName,
 		filepath,
 		opts,
 	)
@@ -406,21 +436,18 @@ func (g *GithubActions) commitGithubFile(
 	return *resp.Commit.SHA, nil
 }
 
-func (g *GithubActions) deleteGithubFile(
+func deleteGithubFile(
 	client *github.Client,
-	filename string,
+	filename, gitRepoOwner, gitRepoName, branch string,
+	isOAuth bool,
 ) error {
-	branch := g.GitBranch
-	if branch == "" {
-		branch = g.defaultBranch
-	}
-
 	filepath := ".github/workflows/" + filename
+
 	// get contents of a file if it exists
 	fileData, _, _, _ := client.Repositories.GetContents(
 		context.TODO(),
-		g.GitRepoOwner,
-		g.GitRepoName,
+		gitRepoOwner,
+		gitRepoName,
 		filepath,
 		&github.RepositoryContentGetOptions{
 			Ref: branch,
@@ -438,7 +465,7 @@ func (g *GithubActions) deleteGithubFile(
 		SHA:     &sha,
 	}
 
-	if g.GithubOAuthIntegration != nil {
+	if isOAuth {
 		opts.Committer = &github.CommitAuthor{
 			Name:  github.String("Porter Bot"),
 			Email: github.String("contact@getporter.dev"),
@@ -447,8 +474,8 @@ func (g *GithubActions) deleteGithubFile(
 
 	_, _, err := client.Repositories.DeleteFile(
 		context.TODO(),
-		g.GitRepoOwner,
-		g.GitRepoName,
+		gitRepoOwner,
+		gitRepoName,
 		filepath,
 		opts,
 	)

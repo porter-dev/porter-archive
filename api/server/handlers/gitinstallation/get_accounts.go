@@ -2,12 +2,11 @@ package gitinstallation
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sort"
 	"time"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -40,6 +39,8 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 	defer close(orgsChan)
 	defer close(errChan)
 
+	page := 1
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -47,22 +48,22 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 		default:
 			orgs, pages, err := client.Organizations.List(context.Background(), "", &github.ListOptions{
 				PerPage: 100,
-				Page:    1,
+				Page:    page,
 			})
 
 			if err != nil {
-				fmt.Println("error occured while fetching organisations. error:", err.Error())
 				errChan <- err
 				return
 			}
 
 			for _, org := range orgs {
 				orgsChan <- org
-				// res.Accounts = append(res.Accounts, *org.Login)
 			}
 
 			if pages.NextPage == 0 {
 				return
+			} else {
+				page = pages.NextPage
 			}
 		}
 	}
@@ -95,7 +96,6 @@ resultOrErrorReader:
 				res.Accounts = append(res.Accounts, *result.Login)
 			} else {
 				// channel has been closed now
-				// close(errChan)
 				break resultOrErrorReader
 			}
 		case err, ok := <-errChan:

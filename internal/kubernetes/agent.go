@@ -554,7 +554,7 @@ func (a *Agent) DeletePod(namespace string, name string) error {
 }
 
 // GetPodLogs streams real-time logs from a given pod.
-func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.WebsocketSafeReadWriter) error {
+func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool, selectedContainer string, rw *websocket.WebsocketSafeReadWriter) error {
 	// get the pod to read in the list of contains
 	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
 		context.Background(),
@@ -568,9 +568,11 @@ func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.Websocke
 		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
-	// see if container is ready and able to open a stream. If not, wait for container
-	// to be ready.
-	err, _ = a.waitForPod(pod)
+	if !showPreviousLogs {
+		// see if container is ready and able to open a stream. If not, wait for container
+		// to be ready.
+		err, _ = a.waitForPod(pod)
+	}
 
 	if err != nil && goerrors.Is(err, IsNotFoundError) {
 		return IsNotFoundError
@@ -580,6 +582,10 @@ func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.Websocke
 
 	container := pod.Spec.Containers[0].Name
 
+	if len(selectedContainer) > 0 {
+		container = selectedContainer
+	}
+
 	tails := int64(400)
 
 	// follow logs
@@ -587,6 +593,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, rw *websocket.Websocke
 		Follow:    true,
 		TailLines: &tails,
 		Container: container,
+		Previous:  showPreviousLogs,
 	}
 
 	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
@@ -871,7 +878,7 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func parseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Release, bool, error) {
+func ParseSecretToHelmRelease(secret v1.Secret, chartList []string) (*rspb.Release, bool, error) {
 	if secret.Type != "helm.sh/release.v1" {
 		return nil, true, nil
 	}
@@ -929,7 +936,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					return
 				}
 
-				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
 
 				if isNotHelmRelease && err == nil {
 					return
@@ -955,7 +962,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					return
 				}
 
-				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
 
 				if isNotHelmRelease && err == nil {
 					return
@@ -981,7 +988,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					return
 				}
 
-				helm_object, isNotHelmRelease, err := parseSecretToHelmRelease(*secretObj, chartList)
+				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
 
 				if isNotHelmRelease && err == nil {
 					return

@@ -19,11 +19,13 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type Props = {
   currentCluster: ClusterType;
-  lastRunStatus?: JobStatusType | null;
+  lastRunStatus?: JobStatusType | null | "all";
   namespace: string;
   // TODO Convert to enum
   sortType: string;
   currentView: PorterUrl;
+  disableBottomPadding?: boolean;
+  closeChartRedirectUrl?: string;
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -35,6 +37,8 @@ const ChartList: React.FunctionComponent<Props> = ({
   namespace,
   sortType,
   currentView,
+  disableBottomPadding,
+  closeChartRedirectUrl,
 }) => {
   const {
     newWebsocket,
@@ -74,7 +78,6 @@ const ChartList: React.FunctionComponent<Props> = ({
             "pending-install",
             "pending-upgrade",
             "pending-rollback",
-            "superseded",
             "failed",
           ],
         },
@@ -115,23 +118,26 @@ const ChartList: React.FunctionComponent<Props> = ({
           getChartKey(chart.name, chart.namespace) ===
           getChartKey(newChart.name, newChart.namespace);
         setCharts((currentCharts) => {
+          const tmpCharts = Array.isArray(currentCharts)
+            ? [...currentCharts]
+            : [];
           switch (event.event_type) {
             case "ADD":
-              if (currentCharts.find(isSameChart)) {
-                return currentCharts;
+              if (tmpCharts.find(isSameChart)) {
+                return tmpCharts;
               }
-              return currentCharts.concat(newChart);
+              return tmpCharts.concat(newChart);
             case "UPDATE":
-              return currentCharts.map((chart) => {
+              return tmpCharts.map((chart) => {
                 if (isSameChart(chart) && newChart.version >= chart.version) {
                   return newChart;
                 }
                 return chart;
               });
             case "DELETE":
-              return currentCharts.filter((chart) => !isSameChart(chart));
+              return tmpCharts.filter((chart) => !isSameChart(chart));
             default:
-              return currentCharts;
+              return tmpCharts;
           }
         });
       },
@@ -202,6 +208,11 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
       onmessage: (evt: MessageEvent) => {
         let event = JSON.parse(evt.data);
+
+        if (event.event_type === "DELETE") {
+          return;
+        }
+
         let object = event.Object;
 
         if (_.get(object.metadata, ["annotations", "helm.sh/hook"])) {
@@ -235,7 +246,8 @@ const ChartList: React.FunctionComponent<Props> = ({
 
           if (
             !existingValue ||
-            newValue.resource_version > existingValue.resource_version
+            Number(newValue.resource_version) >
+              Number(existingValue.resource_version)
           ) {
             return {
               ...currentStatus,
@@ -300,10 +312,16 @@ const ChartList: React.FunctionComponent<Props> = ({
         }
       });
     }
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+    };
   }, [namespace, currentView]);
 
   const filteredCharts = useMemo(() => {
+    if (!Array.isArray(charts)) {
+      return [];
+    }
+
     const result = charts
       .filter((chart: ChartType) => {
         return (
@@ -317,7 +335,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         if (currentView !== "jobs") {
           return true;
         }
-        if (lastRunStatus === null) {
+        if (lastRunStatus === null || lastRunStatus === "all") {
           return true;
         }
         const status: JobStatusWithTimeAndVersion = _.get(
@@ -360,7 +378,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           <i className="material-icons">error</i> Error connecting to cluster.
         </Placeholder>
       );
-    } else if (filteredCharts.length === 0) {
+    } else if (filteredCharts?.length === 0) {
       return (
         <Placeholder>
           <i className="material-icons">category</i> No
@@ -370,7 +388,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       );
     }
 
-    return filteredCharts.map((chart: ChartType, i: number) => {
+    return filteredCharts?.map((chart: ChartType, i: number) => {
       return (
         <Chart
           key={getChartKey(chart.name, chart.namespace)}
@@ -381,12 +399,18 @@ const ChartList: React.FunctionComponent<Props> = ({
             getChartKey(chart.name, chart.namespace),
             null
           )}
+          isJob={currentView === "jobs"}
+          closeChartRedirectUrl={closeChartRedirectUrl}
         />
       );
     });
   };
 
-  return <StyledChartList>{renderChartList()}</StyledChartList>;
+  return (
+    <StyledChartList disableBottomPadding={disableBottomPadding}>
+      {renderChartList()}
+    </StyledChartList>
+  );
 };
 
 export default ChartList;
@@ -417,5 +441,11 @@ const LoadingWrapper = styled.div`
 `;
 
 const StyledChartList = styled.div`
-  padding-bottom: 105px;
+  padding-bottom: ${(props: { disableBottomPadding: boolean }) => {
+    if (props.disableBottomPadding) {
+      return "unset";
+    }
+
+    return "105px";
+  }};
 `;

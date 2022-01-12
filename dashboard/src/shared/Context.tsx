@@ -60,6 +60,8 @@ export interface GlobalContextType {
   queryUsage: (retry?: number) => Promise<void>;
   hasFinishedOnboarding: boolean;
   setHasFinishedOnboarding: (onboardingStatus: boolean) => void;
+  canCreateProject: boolean;
+  setCanCreateProject: (canCreateProject: boolean) => void;
 }
 
 /**
@@ -154,7 +156,7 @@ class ContextProvider extends Component<PropsType, StateType> {
         this.setState({ edition });
       }
     },
-    hasBillingEnabled: null,
+    hasBillingEnabled: false,
     setHasBillingEnabled: (isBillingEnabled: boolean) => {
       this.setState({ hasBillingEnabled: isBillingEnabled });
     },
@@ -180,6 +182,10 @@ class ContextProvider extends Component<PropsType, StateType> {
     hasFinishedOnboarding: false,
     setHasFinishedOnboarding: (onboardingStatus) => {
       this.setState({ hasFinishedOnboarding: onboardingStatus });
+    },
+    canCreateProject: false,
+    setCanCreateProject: (canCreateProject: boolean) => {
+      this.setState({ canCreateProject });
     },
   };
 

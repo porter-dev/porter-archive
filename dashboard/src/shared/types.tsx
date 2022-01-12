@@ -217,6 +217,7 @@ export interface FileType {
 export interface ProjectType {
   id: number;
   name: string;
+  preview_envs_enabled: boolean;
   roles: {
     id: number;
     kind: string;
@@ -305,6 +306,8 @@ export interface ContextProps {
   queryUsage: () => Promise<void>;
   hasFinishedOnboarding: boolean;
   setHasFinishedOnboarding: (onboardingStatus: boolean) => void;
+  canCreateProject: boolean;
+  setCanCreateProject: (canCreateProject: boolean) => void;
 }
 
 export enum JobStatusType {

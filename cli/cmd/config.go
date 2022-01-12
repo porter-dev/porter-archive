@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -179,6 +180,9 @@ func (c *CLIConfig) SetDriver(driver string) error {
 }
 
 func (c *CLIConfig) SetHost(host string) error {
+	// a trailing / can lead to errors with the api server
+	host = strings.TrimRight(host, "/")
+
 	viper.Set("host", host)
 	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
 	err := viper.WriteConfig()

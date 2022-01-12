@@ -15,6 +15,7 @@ type TestRepository struct {
 	gitActionConfig           repository.GitActionConfigRepository
 	invite                    repository.InviteRepository
 	release                   repository.ReleaseRepository
+	environment               repository.EnvironmentRepository
 	authCode                  repository.AuthCodeRepository
 	dnsRecord                 repository.DNSRecordRepository
 	pwResetToken              repository.PWResetTokenRepository
@@ -29,6 +30,7 @@ type TestRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
+	jobNotificationConfig     repository.JobNotificationConfigRepository
 	buildEvent                repository.BuildEventRepository
 	kubeEvent                 repository.KubeEventRepository
 	projectUsage              repository.ProjectUsageRepository
@@ -36,6 +38,7 @@ type TestRepository struct {
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
 	database                  repository.DatabaseRepository
+	allowlist                 repository.AllowlistRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -76,6 +79,10 @@ func (t *TestRepository) Invite() repository.InviteRepository {
 
 func (t *TestRepository) Release() repository.ReleaseRepository {
 	return t.release
+}
+
+func (t *TestRepository) Environment() repository.EnvironmentRepository {
+	return t.environment
 }
 
 func (t *TestRepository) AuthCode() repository.AuthCodeRepository {
@@ -134,6 +141,10 @@ func (t *TestRepository) NotificationConfig() repository.NotificationConfigRepos
 	return t.notificationConfig
 }
 
+func (t *TestRepository) JobNotificationConfig() repository.JobNotificationConfigRepository {
+	return t.jobNotificationConfig
+}
+
 func (t *TestRepository) BuildEvent() repository.BuildEventRepository {
 	return t.buildEvent
 }
@@ -162,6 +173,10 @@ func (t *TestRepository) Database() repository.DatabaseRepository {
 	return t.database
 }
 
+func (t *TestRepository) Allowlist() repository.AllowlistRepository {
+	return t.allowlist
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -176,6 +191,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		gitActionConfig:           NewGitActionConfigRepository(canQuery),
 		invite:                    NewInviteRepository(canQuery),
 		release:                   NewReleaseRepository(canQuery),
+		environment:               NewEnvironmentRepository(),
 		authCode:                  NewAuthCodeRepository(canQuery),
 		dnsRecord:                 NewDNSRecordRepository(canQuery),
 		pwResetToken:              NewPWResetTokenRepository(canQuery),
@@ -190,6 +206,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
+		jobNotificationConfig:     NewJobNotificationConfigRepository(canQuery),
 		buildEvent:                NewBuildEventRepository(canQuery),
 		kubeEvent:                 NewKubeEventRepository(canQuery),
 		projectUsage:              NewProjectUsageRepository(canQuery),
@@ -197,5 +214,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
 		buildConfig:               NewBuildConfigRepository(canQuery),
 		database:                  NewDatabaseRepository(),
+		allowlist:                 NewAllowlistRepository(canQuery),
 	}
 }

@@ -37,8 +37,9 @@ type StateType = {
 
 type EnvGroup = {
   name: string;
-  timestamp: string;
+  // timestamp: string;
   variables: KeyValueType[];
+  version: number;
 };
 
 const tabOptions = [
@@ -54,8 +55,9 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     saveValuesStatus: null as string | null,
     envGroup: {
       name: null as string,
-      timestamp: null as string,
+      // timestamp: null as string,
       variables: [] as KeyValueType[],
+      number: 0,
     },
     tabOptions: [
       { value: "environment", label: "Environment Variables" },
@@ -65,31 +67,43 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
   };
 
   populateEnvGroup = (envGroup: any) => {
-    const {
-      metadata: { name, creationTimestamp: timestamp },
-      data,
-    } = envGroup;
-    // parse env group props into values type
-    const variables = [] as KeyValueType[];
+    api
+      .getEnvGroup(
+        "<token>",
+        {},
+        {
+          name: envGroup.name,
+          id: this.context.currentProject.id,
+          namespace: this.props.namespace,
+          cluster_id: this.props.currentCluster.id,
+        }
+      )
+      .then((res) => {
+        console.log("yolo");
+        const variables = [] as KeyValueType[];
 
-    for (const key in data) {
-      variables.push({
-        key: key,
-        value: data[key],
-        hidden: data[key].includes("PORTERSECRET"),
-        locked: data[key].includes("PORTERSECRET"),
-        deleted: false,
+        for (const key in res.data.variables) {
+          variables.push({
+            key: key,
+            value: res.data.variables[key],
+            hidden: res.data.variables[key].includes("PORTERSECRET"),
+            locked: res.data.variables[key].includes("PORTERSECRET"),
+            deleted: false,
+          });
+        }
+
+        this.setState({
+          envGroup: {
+            name: envGroup.name,
+            variables,
+            version: envGroup.version,
+          },
+          newEnvGroupName: envGroup.name,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
       });
-    }
-
-    this.setState({
-      envGroup: {
-        name,
-        timestamp,
-        variables,
-      },
-      newEnvGroupName: name,
-    });
   };
 
   componentDidMount() {
@@ -197,8 +211,14 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
       });
 
     this.setState({ saveValuesStatus: "loading" });
+
+    Object.keys(apiEnvVariables).forEach((key) => {
+      if (!apiEnvVariables[key]) {
+        delete apiEnvVariables[key];
+      }
+    });
     api
-      .updateConfigMap(
+      .createEnvGroup(
         "<token>",
         {
           name,
@@ -344,7 +364,7 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
     this.setState({ deleting: true });
     this.context.setCurrentOverlay(null);
     api
-      .deleteConfigMap(
+      .deleteEnvGroup(
         "<token>",
         {
           name,
@@ -385,11 +405,13 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
             </TitleSection>
           </HeaderWrapper>
 
+          {/*
           <InfoWrapper>
             <LastDeployed>
               Last updated {this.readableDate(timestamp)}
             </LastDeployed>
           </InfoWrapper>
+          */}
 
           {this.state.deleting ? (
             <>

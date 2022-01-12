@@ -6,8 +6,10 @@ import key from "assets/key.svg";
 import { Context } from "shared/Context";
 
 export type EnvGroupData = {
-  data: Record<string, string>;
-  metadata: any;
+  name: string;
+  namespace: string;
+  creationTimestamp?: string;
+  version: number;
 };
 
 type PropsType = {
@@ -38,10 +40,10 @@ export default class EnvGroup extends Component<PropsType, StateType> {
 
   render() {
     let { envGroup, setExpanded } = this.props;
-    let name = envGroup?.metadata?.name;
-    let timestamp = envGroup?.metadata?.creationTimestamp;
-    let namespace = envGroup?.metadata?.namespace;
-    let varCount = Object.values(envGroup?.data || {}).length;
+    let name = envGroup?.name;
+    let timestamp = envGroup?.creationTimestamp;
+    let namespace = envGroup?.namespace;
+    let version = envGroup?.version;
 
     return (
       <StyledEnvGroup
@@ -70,7 +72,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
           </TagWrapper>
         </BottomWrapper>
 
-        <Version>{varCount} variables</Version>
+        <Version>v{version}</Version>
       </StyledEnvGroup>
     );
   }

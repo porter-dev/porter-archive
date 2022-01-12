@@ -36,7 +36,7 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
 
   updateEnvGroups = () => {
     api
-      .listConfigMaps(
+      .listEnvGroups(
         "<token>",
         {},
         {
@@ -46,7 +46,7 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        let sortedGroups = res?.data?.items;
+        let sortedGroups = res?.data;
         switch (this.props.sortType) {
           case "Oldest":
             sortedGroups.sort((a: any, b: any) =>
@@ -57,9 +57,7 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
             );
             break;
           case "Alphabetical":
-            sortedGroups.sort((a: any, b: any) =>
-              a.metadata.name > b.metadata.name ? 1 : -1
-            );
+            sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
             break;
           default:
             sortedGroups.sort((a: any, b: any) =>

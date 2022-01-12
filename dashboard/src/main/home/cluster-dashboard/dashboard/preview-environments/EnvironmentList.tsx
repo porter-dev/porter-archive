@@ -150,7 +150,7 @@ const EnvironmentList = () => {
     return () => {
       isSubscribed = false;
     };
-  }, [currentProject, currentCluster]);
+  }, [currentProject, currentCluster, location.search]);
 
   useEffect(() => {
     setHasPermissionsLoaded(false);

@@ -9,6 +9,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -24,6 +25,7 @@ import (
 
 type ProvisionRDSHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 func NewProvisionRDSHandler(
@@ -39,6 +41,7 @@ func NewProvisionRDSHandler(
 func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	namespace := r.Context().Value(types.NamespaceScope).(string)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	request := &types.CreateRDSInfraRequest{}
@@ -84,6 +87,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	lastAppliedData := &types.RDSInfraLastApplied{
 		CreateRDSInfraRequest: request,
 		ClusterID:             cluster.ID,
+		Namespace:             namespace,
 	}
 
 	lastApplied, err := json.Marshal(lastAppliedData)
@@ -267,19 +271,6 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	c.WriteResult(w, r, infra.ToInfraType())
-
-	// response := map[string]interface{}{
-	// 	"request": request,
-	// 	"project": proj,
-	// 	// "cluster":  cluster,
-	// 	// "infra": infra.ToInfraType(),
-	// 	// "current":  current,
-	// 	"subnets":  subnets,
-	// 	"vpc_name": vpc,
-	// 	"opts":     opts,
-	// }
-
-	// c.WriteResult(w, r, response)
 }
 
 func (c *ProvisionRDSHandler) ExtractVPCFromEKSTFState(tfState *httpbackend.TFState, resourceIdentifier string) (string, []string, error) {

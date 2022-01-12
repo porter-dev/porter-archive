@@ -71,7 +71,8 @@ type CreateRDSInfraRequest struct {
 type RDSInfraLastApplied struct {
 	*CreateRDSInfraRequest
 
-	ClusterID uint `json:"cluster_id"`
+	ClusterID uint   `json:"cluster_id"`
+	Namespace string `json:"namespace"`
 }
 
 type Family string

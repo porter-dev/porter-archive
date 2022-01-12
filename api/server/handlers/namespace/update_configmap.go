@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -46,7 +47,7 @@ func (c *UpdateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	secretData := encodeSecrets(request.SecretVariables)
+	secretData := envgroup.EncodeSecrets(request.SecretVariables)
 
 	// create secret first
 	err = agent.UpdateLinkedSecret(request.Name, namespace, request.Name, secretData)

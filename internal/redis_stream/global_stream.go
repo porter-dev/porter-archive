@@ -1,4 +1,4 @@
-package provisioner
+package redis_stream
 
 import (
 	"context"
@@ -10,9 +10,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 
 	redis "github.com/go-redis/redis/v8"
 
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -84,6 +87,7 @@ type ResourceCRUDHandler interface {
 // updates models in the database as necessary
 func GlobalStreamListener(
 	client *redis.Client,
+	config *config.Config,
 	repo repository.Repository,
 	analyticsClient analytics.AnalyticsSegmentClient,
 	errorChan chan error,
@@ -198,6 +202,12 @@ func GlobalStreamListener(
 					}
 
 					database, err = repo.Database().CreateDatabase(database)
+
+					if err != nil {
+						continue
+					}
+
+					err = createRDSEnvGroup(repo, config, infra, database, rdsRequest)
 
 					if err != nil {
 						continue
@@ -456,4 +466,41 @@ func GlobalStreamListener(
 			}
 		}
 	}
+}
+
+func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra *models.Infra, database *models.Database, rdsConfig *types.RDSInfraLastApplied) error {
+	cluster, err := repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
+
+	if err != nil {
+		return err
+	}
+
+	ooc := &kubernetes.OutOfClusterConfig{
+		Repo:              config.Repo,
+		DigitalOceanOAuth: config.DOConf,
+		Cluster:           cluster,
+	}
+
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+
+	if err != nil {
+		return fmt.Errorf("failed to get agent: %s", err.Error())
+	}
+
+	_, err = envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
+		Name:      "rds-credentials",
+		Namespace: rdsConfig.Namespace,
+		Variables: map[string]string{},
+		SecretVariables: map[string]string{
+			"HOST":     database.InstanceEndpoint,
+			"PASSWORD": rdsConfig.Password,
+			"USERNAME": rdsConfig.Username,
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
+	}
+
+	return nil
 }

@@ -16,7 +16,7 @@ import { useRouting } from "shared/routing";
 const porterYamlDocsLink =
   "https://docs.porter.run/preview-environments/porter-yaml-reference";
 
-const ConnectNewRepo: React.FC = (props) => {
+const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );

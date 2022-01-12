@@ -650,7 +650,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 }
 
 // GetPodLogs streams real-time logs from a given pod.
-func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContainer string) (string, error) {
+func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContainer string) ([]string, error) {
 	// get the pod to read in the list of contains
 	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
 		context.Background(),
@@ -659,9 +659,9 @@ func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContai
 	)
 
 	if err != nil && errors.IsNotFound(err) {
-		return "", IsNotFoundError
+		return nil, IsNotFoundError
 	} else if err != nil {
-		return "", fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
+		return nil, fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
 	// see if container is ready and able to open a stream. If not, wait for container
@@ -669,9 +669,9 @@ func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContai
 	err, _ = a.waitForPod(pod)
 
 	if err != nil && goerrors.Is(err, IsNotFoundError) {
-		return "", IsNotFoundError
+		return nil, IsNotFoundError
 	} else if err != nil {
-		return "", fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
+		return nil, fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
 	container := pod.Spec.Containers[0].Name
@@ -696,26 +696,29 @@ func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContai
 
 	// in the case of bad request errors, such as if the pod is stuck in "ContainerCreating",
 	// we'd like to pass this through to the client.
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		return nil, IsNotFoundError
+	}
+
 	if err != nil && errors.IsBadRequest(err) {
-		return "", &BadRequestError{err.Error()}
+		return nil, &BadRequestError{err.Error()}
 	} else if err != nil {
-		return "", fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
+		return nil, fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
 	}
 
 	defer podLogs.Close()
 
 	r := bufio.NewReader(podLogs)
-	logs := ""
+	logs := make([]string, 0)
 
 	for {
 		line, err := r.ReadString('\n')
-		logs += line + "\n"
+		logs = append(logs, line+"\n")
 
 		if err == io.EOF {
 			break
 		} else if err != nil {
-
-			return "", err
+			return nil, err
 		}
 	}
 

@@ -121,5 +121,5 @@ type GetPreviousPodLogsRequest struct {
 }
 
 type GetPreviousPodLogsResponse struct {
-	PrevLogs string `json:"previous_logs"`
+	PrevLogs []string `json:"previous_logs"`
 }

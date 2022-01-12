@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -10,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -49,6 +51,10 @@ func (c *GetPreviousLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	logs, err := agent.GetPreviousPodLogs(namespace, name, request.Container)
 
+	if targetErr := kubernetes.IsNotFoundError; err != nil && errors.Is(err, targetErr) {
+		http.NotFound(w, r)
+		return
+	}
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

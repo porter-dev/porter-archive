@@ -1,4 +1,5 @@
 import CopyToClipboard from "components/CopyToClipboard";
+import SaveButton from "components/SaveButton";
 import Table from "components/Table";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
@@ -18,9 +19,12 @@ export type DatabaseObject = {
 };
 
 const DatabasesList = () => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentError,
+    setCurrentModal,
+  } = useContext(Context);
   const { url } = useRouteMatch();
   const [isLoading, setIsLoading] = useState(true);
   const [databases, setDatabases] = useState<DatabaseObject[]>([]);
@@ -77,12 +81,31 @@ const DatabasesList = () => {
           );
         },
       },
+      {
+        id: "connect_button",
+        Cell: ({ row }: any) => {
+          return (
+            <>
+              <ConnectButton
+                onClick={() =>
+                  setCurrentModal("ConnectToDatabaseInstructionsModal", {
+                    endpoint: row.original.instance_endpoint,
+                  })
+                }
+              >
+                Connect
+              </ConnectButton>
+            </>
+          );
+        },
+        width: 50,
+      },
     ],
     []
   );
 
   const data = useMemo<Array<DatabaseObject>>(() => {
-    return databases;
+    return mock_database_list;
   }, [databases]);
 
   return (
@@ -193,5 +216,29 @@ const Button = styled(Link)`
     align-items: center;
     margin-right: 5px;
     justify-content: center;
+  }
+`;
+
+const ConnectButton = styled.button<{}>`
+  height: 25px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 6px 20px 7px 20px;
+  text-align: left;
+  border: 0;
+  border-radius: 5px;
+  background: #5561c0;
+  box-shadow: 0 2px 5px 0 #00000030;
+  cursor: pointer;
+  user-select: none;
+  :focus {
+    outline: 0;
+  }
+  :hover {
+    filter: brightness(120%);
   }
 `;

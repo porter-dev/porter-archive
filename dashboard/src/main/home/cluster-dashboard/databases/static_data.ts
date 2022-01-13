@@ -70,8 +70,8 @@ export const LAST_POSTGRES_ENGINE_VERSION =
   postgres_engine_versions[postgres_engine_versions.length - 1].value;
 
 export const FORM_DEFAULT_VALUES = {
-  db_allocated_storage: 10,
-  db_max_allocated_storage: 20,
+  db_allocated_storage: "10",
+  db_max_allocated_storage: "20",
   db_storage_encrypted: false,
   db_family: "postgres",
 };

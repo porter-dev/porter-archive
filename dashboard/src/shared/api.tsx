@@ -1389,10 +1389,10 @@ const provisionDatabase = baseApi<
     machine_type: string;
     db_storage_encrypted: boolean;
     db_name: string;
-    db_max_allocated_storage: number;
+    db_max_allocated_storage: string;
     db_family: string;
     db_engine_version: string;
-    db_allocated_storage: number;
+    db_allocated_storage: string;
   },
   { project_id: number; cluster_id: number; namespace: string }
 >(

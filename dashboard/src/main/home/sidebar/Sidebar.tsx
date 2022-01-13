@@ -200,6 +200,17 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={sliders} />
             Env Groups
           </NavButton>
+          {currentCluster.service === "eks" || (
+            <NavButton
+              selected={currentView === "databases"}
+              onClick={() => {
+                pushFiltered(this.props, "/databases", [], {});
+              }}
+            >
+              <Icon className="material-icons-outlined">storage</Icon>
+              Databases
+            </NavButton>
+          )}
         </>
       );
     }
@@ -364,12 +375,13 @@ const Gutter = styled.div`
   overflow: visible;
 `;
 
-const Icon = styled.img`
-  height: 25px;
-  width: 25px;
-  opacity: 30%;
-  margin-left: 7px;
-  margin-right: 5px;
+const Icon = styled.span`
+  padding: 4px;
+  width: 23px;
+  padding-top: 4px;
+  border-radius: 3px;
+  margin-right: 10px;
+  font-size: 18px;
 `;
 
 const ProjectPlaceholder = styled.div`

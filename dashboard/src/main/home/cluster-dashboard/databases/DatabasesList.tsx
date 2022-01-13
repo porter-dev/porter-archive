@@ -105,7 +105,7 @@ const DatabasesList = () => {
   );
 
   const data = useMemo<Array<DatabaseObject>>(() => {
-    return mock_database_list;
+    return databases;
   }, [databases]);
 
   return (

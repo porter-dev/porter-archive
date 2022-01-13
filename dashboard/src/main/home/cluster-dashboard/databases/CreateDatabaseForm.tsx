@@ -15,7 +15,9 @@ import {
   DEFAULT_DATABASE_INSTANCE_TYPE,
   FORM_DEFAULT_VALUES,
   LAST_POSTGRES_ENGINE_VERSION,
-  postgres_engine_versions,
+  POSTGRES_DB_FAMILIES,
+  POSTGRES_ENGINE_VERSIONS,
+  DEFAULT_DB_FAMILY,
 } from "./static_data";
 
 type ValidationError = {
@@ -30,6 +32,7 @@ const CreateDatabaseForm = () => {
   );
   const [masterUser, setMasterUser] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
+  const [dbFamily, setDbFamily] = useState(DEFAULT_DB_FAMILY);
   const [engineVersion, setEngineVersion] = useState(
     LAST_POSTGRES_ENGINE_VERSION
   );
@@ -82,7 +85,7 @@ const CreateDatabaseForm = () => {
         "<token>",
         {
           ...FORM_DEFAULT_VALUES,
-
+          db_family: dbFamily,
           db_name: databaseName,
           username: masterUser,
           password: masterPassword,
@@ -197,8 +200,17 @@ const CreateDatabaseForm = () => {
           width="100%"
         />
         <SelectRow
+          label="DB Family"
+          options={POSTGRES_DB_FAMILIES}
+          setActiveValue={(value) => {
+            setDbFamily(value);
+          }}
+          value={dbFamily}
+          width="100%"
+        />
+        <SelectRow
           label="Engine version"
-          options={postgres_engine_versions}
+          options={POSTGRES_ENGINE_VERSIONS[dbFamily]}
           setActiveValue={(value) => {
             setEngineVersion(value);
           }}

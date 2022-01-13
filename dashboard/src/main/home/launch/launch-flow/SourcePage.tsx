@@ -278,7 +278,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <Helper>
           Learn more about
           <Highlight
-            href="https://docs.porter.run/docs/applications"
+            href="https://docs.porter.run/deploying-applications/overview"
             target="_blank"
           >
             deploying services to Porter

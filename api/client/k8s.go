@@ -28,6 +28,29 @@ func (c *Client) GetK8sNamespaces(
 	return resp, err
 }
 
+// CreateNewK8sNamespace creates a new namespace in a k8s cluster
+func (c *Client) CreateNewK8sNamespace(
+	ctx context.Context,
+	projectID uint,
+	clusterID uint,
+	name string,
+) (*types.CreateNamespaceResponse, error) {
+	resp := &types.CreateNamespaceResponse{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/namespaces/create",
+			projectID, clusterID,
+		),
+		&types.CreateNamespaceRequest{
+			Name: name,
+		},
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) GetKubeconfig(
 	ctx context.Context,
 	projectID uint,

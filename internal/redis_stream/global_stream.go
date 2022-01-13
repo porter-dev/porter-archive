@@ -217,6 +217,13 @@ func GlobalStreamListener(
 						continue
 					}
 
+					infra.DatabaseID = database.ID
+					infra, err = repo.Infra().UpdateInfra(infra)
+
+					if err != nil {
+						continue
+					}
+
 					err = createRDSEnvGroup(repo, config, infra, database, rdsRequest)
 
 					if err != nil {
@@ -460,6 +467,33 @@ func GlobalStreamListener(
 							InfraID:                infra.ID,
 						},
 					))
+				} else if infra.Kind == types.InfraRDS && infra.DatabaseID != 0 {
+					rdsRequest := &types.RDSInfraLastApplied{}
+					err := json.Unmarshal(infra.LastApplied, rdsRequest)
+
+					if err != nil {
+						fmt.Println("error state 0", err)
+						continue
+					}
+
+					database, err := repo.Database().ReadDatabase(infra.ProjectID, rdsRequest.ClusterID, infra.DatabaseID)
+
+					if err != nil {
+						continue
+					}
+
+					err = deleteRDSEnvGroup(repo, config, infra, database, rdsRequest)
+
+					if err != nil {
+						continue
+					}
+
+					// delete the database
+					err = repo.Database().DeleteDatabase(infra.ProjectID, rdsRequest.ClusterID, infra.DatabaseID)
+
+					if err != nil {
+						continue
+					}
 				}
 			}
 
@@ -515,6 +549,39 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 
 	if err != nil {
 		fmt.Println("error eg state 2", err)
+		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
+	}
+
+	return nil
+}
+
+func deleteRDSEnvGroup(repo repository.Repository, config *config.Config, infra *models.Infra, database *models.Database, rdsConfig *types.RDSInfraLastApplied) error {
+	fmt.Println("deleting rds env group")
+
+	cluster, err := repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
+
+	if err != nil {
+		fmt.Println("error deg state 0", err)
+		return err
+	}
+
+	ooc := &kubernetes.OutOfClusterConfig{
+		Repo:              config.Repo,
+		DigitalOceanOAuth: config.DOConf,
+		Cluster:           cluster,
+	}
+
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+
+	if err != nil {
+		fmt.Println("error deg state 1", err)
+		return fmt.Errorf("failed to get agent: %s", err.Error())
+	}
+
+	err = envgroup.DeleteEnvGroup(agent, "rds-credentials", rdsConfig.Namespace)
+
+	if err != nil {
+		fmt.Println("error deg state 2", err)
 		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
 	}
 

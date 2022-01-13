@@ -17,20 +17,16 @@ func NewDatabaseRepository(db *gorm.DB, key *[32]byte) repository.DatabaseReposi
 
 func (repo *DatabaseRepository) CreateDatabase(database *models.Database) (*models.Database, error) {
 	project := &models.Project{}
-	if err := repo.db.First(project, database.ProjectID).Error; err != nil {
+	if err := repo.db.Debug().First(project, database.ProjectID).Error; err != nil {
 		return nil, err
 	}
 
-	assoc := repo.db.Model(project).Association("Databases")
+	assoc := repo.db.Debug().Model(project).Association("Databases")
 	if assoc.Error != nil {
 		return nil, assoc.Error
 	}
 
 	if err := assoc.Append(database); err != nil {
-		return nil, err
-	}
-
-	if err := repo.db.Create(database).Error; err != nil {
 		return nil, err
 	}
 

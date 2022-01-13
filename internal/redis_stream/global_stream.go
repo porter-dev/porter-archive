@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
+	"gorm.io/gorm"
 
 	redis "github.com/go-redis/redis/v8"
 
@@ -188,28 +189,38 @@ func GlobalStreamListener(
 						continue
 					}
 
-					database := &models.Database{
-						ProjectID: projID,
-						InfraID:   infra.ID,
-						ClusterID: rdsRequest.ClusterID,
-					}
+					database := &models.Database{}
 
 					// parse raw data into ECR type
 					dataString, ok := msg.Values["data"].(string)
 
 					if ok {
-						json.Unmarshal([]byte(dataString), database)
+						fmt.Println("error state 1", err)
+						err = json.Unmarshal([]byte(dataString), database)
+
+						if err != nil {
+							fmt.Println("error state 2", err)
+						}
 					}
+
+					database.Model = gorm.Model{}
+					database.ProjectID = projID
+					database.ClusterID = rdsRequest.ClusterID
+					database.InfraID = infra.ID
+
+					fmt.Println(database.Model.ID, database, database.Model)
 
 					database, err = repo.Database().CreateDatabase(database)
 
 					if err != nil {
+						fmt.Println("error state 3", err)
 						continue
 					}
 
 					err = createRDSEnvGroup(repo, config, infra, database, rdsRequest)
 
 					if err != nil {
+						fmt.Println("error state 3", err)
 						continue
 					}
 				} else if kind == string(types.InfraEKS) {
@@ -469,9 +480,12 @@ func GlobalStreamListener(
 }
 
 func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra *models.Infra, database *models.Database, rdsConfig *types.RDSInfraLastApplied) error {
+	fmt.Println("creating rds env group")
+
 	cluster, err := repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
 
 	if err != nil {
+		fmt.Println("error eg state 0", err)
 		return err
 	}
 
@@ -484,6 +498,7 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
 
 	if err != nil {
+		fmt.Println("error eg state 1", err)
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
 
@@ -499,6 +514,7 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 	})
 
 	if err != nil {
+		fmt.Println("error eg state 2", err)
 		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
 	}
 

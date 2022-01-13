@@ -128,6 +128,18 @@ func (i *Infra) SafelyGetLastApplied() map[string]string {
 		resp["do_region"] = lastApplied.DORegion
 
 		return resp
+	case types.InfraRDS:
+		lastApplied := &types.RDSInfraLastApplied{}
+
+		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
+			return resp
+		}
+
+		resp["cluster_id"] = fmt.Sprintf("%d", lastApplied.ClusterID)
+		resp["aws_region"] = lastApplied.AWSRegion
+		resp["db_name"] = lastApplied.DBName
+
+		return resp
 	}
 
 	return resp

@@ -133,7 +133,7 @@ func DeleteEnv(opts *EnvOpts) error {
 		opts.EnvironmentName,
 	)
 
-	if resp != nil && resp.StatusCode == http.StatusNotFound {
+	if err == nil && resp != nil && resp.StatusCode == http.StatusOK {
 		_, err = opts.Client.Repositories.DeleteEnvironment(
 			context.Background(),
 			opts.GitRepoOwner,

@@ -140,6 +140,14 @@ const CreateDatabaseForm = () => {
     updateNamespaces();
   }, []);
 
+  useEffect(() => {
+    setEngineVersion(
+      POSTGRES_ENGINE_VERSIONS[dbFamily][
+        POSTGRES_ENGINE_VERSIONS[dbFamily].length - 1
+      ].value
+    );
+  }, [dbFamily]);
+
   return (
     <>
       <DashboardHeader

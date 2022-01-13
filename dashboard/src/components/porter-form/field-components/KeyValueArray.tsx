@@ -13,26 +13,29 @@ import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
 import _ from "lodash";
+import Helper from "components/form-components/Helper";
 
 interface Props extends KeyValueArrayField {
   id: string;
 }
 
 const KeyValueArray: React.FC<Props> = (props) => {
-  const { state, setState, variables } = useFormField<KeyValueArrayFieldState>(
-    props.id,
-    {
-      initState: {
-        values: hasSetValue(props)
-          ? (Object.entries(props.value[0])?.map(([k, v]) => {
-              return { key: k, value: v };
-            }) as any[])
-          : [],
-        showEnvModal: false,
-        showEditorModal: false,
-      },
-    }
-  );
+  const {
+    state,
+    setState,
+    variables,
+    setVars,
+  } = useFormField<KeyValueArrayFieldState>(props.id, {
+    initState: {
+      values: hasSetValue(props)
+        ? (Object.entries(props.value[0])?.map(([k, v]) => {
+            return { key: k, value: v };
+          }) as any[])
+        : [],
+      showEnvModal: false,
+      showEditorModal: false,
+    },
+  });
 
   if (state == undefined) return <></>;
 
@@ -165,6 +168,17 @@ const KeyValueArray: React.FC<Props> = (props) => {
                 };
               })
             }
+            setSyncedEnvGroups={(value) => {
+              setVars((prevVars) => {
+                return {
+                  ...prevVars,
+                  synced_env_groups: [
+                    ...(prevVars.synced_env_groups || []),
+                    value,
+                  ],
+                };
+              });
+            }}
             setValues={(values) => {
               setState((prev) => {
                 // Transform array to object similar on what we receive from setValues
@@ -347,6 +361,10 @@ const KeyValueArray: React.FC<Props> = (props) => {
             )}
           </InputWrapper>
         )}
+        <Helper>Synced env vars</Helper>
+        {variables.synced_env_groups?.map((envGroup: any) => {
+          return <div>{envGroup?.name}</div>;
+        })}
       </StyledInputArray>
       {renderEnvModal()}
       {renderEditorModal()}

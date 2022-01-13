@@ -13,6 +13,8 @@ import {
   EnvGroupData,
   formattedEnvironmentValue,
 } from "../cluster-dashboard/env-groups/EnvGroup";
+import Checkbox from "components/porter-form/field-components/Checkbox";
+import CheckboxRow from "components/form-components/CheckboxRow";
 
 type PropsType = {
   namespace: string;
@@ -20,6 +22,7 @@ type PropsType = {
   closeModal: () => void;
   existingValues: Record<string, string>;
   setValues: (values: Record<string, string>) => void;
+  setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
 };
 
 type StateType = {
@@ -28,6 +31,23 @@ type StateType = {
   error: boolean;
   selectedEnvGroup: EnvGroupData | null;
   buttonStatus: string;
+  shouldSync: boolean;
+};
+
+type PartialEnvGroup = {
+  name: string;
+  namespace: string;
+  version: number;
+};
+
+type PopulatedEnvGroup = {
+  name: string;
+  namespace: string;
+  version: 2;
+  variables: {
+    [key: string]: string;
+  };
+  applications: any[];
 };
 
 export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
@@ -35,35 +55,66 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     envGroups: [] as any[],
     loading: true,
     error: false,
-    selectedEnvGroup: null as EnvGroupData | null,
+    selectedEnvGroup: null as PopulatedEnvGroup | null,
     buttonStatus: "",
+    shouldSync: false,
   };
 
   onSubmit = () => {
-    this.props.setValues(this.state.selectedEnvGroup.data);
+    if (!this.state.shouldSync) {
+      this.props.setValues(this.state.selectedEnvGroup.variables);
+    } else {
+      this.props.setSyncedEnvGroups(this.state.selectedEnvGroup);
+    }
+
     this.props.closeModal();
   };
 
-  updateEnvGroups = () => {
-    api
-      .listEnvGroups(
-        "<token>",
-        {},
-        {
-          id: this.context.currentProject.id,
-          namespace: this.props.namespace,
-          cluster_id: this.props.clusterId || this.context.currentCluster.id,
-        }
-      )
-      .then((res) => {
-        this.setState({
-          envGroups: res?.data as any[],
-          loading: false,
-        });
-      })
-      .catch((err) => {
-        this.setState({ loading: false, error: true });
+  updateEnvGroups = async () => {
+    let envGroups: PartialEnvGroup[] = [];
+    try {
+      envGroups = await api
+        .listEnvGroups<PartialEnvGroup[]>(
+          "<token>",
+          {},
+          {
+            id: this.context.currentProject.id,
+            namespace: this.props.namespace,
+            cluster_id: this.props.clusterId || this.context.currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+      return;
+    }
+
+    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
+      api
+        .getEnvGroup<PopulatedEnvGroup>(
+          "<token>",
+          {},
+          {
+            id: this.context.currentProject.id,
+            cluster_id: this.context.currentCluster.id,
+            name: envGroup.name,
+            namespace: envGroup.namespace,
+            version: envGroup.version,
+          }
+        )
+        .then((res) => res.data)
+    );
+
+    try {
+      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+
+      this.setState({
+        envGroups: populatedEnvGroups,
+        loading: false,
       });
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+    }
   };
 
   componentDidMount() {
@@ -150,7 +201,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 
   render() {
     const clashingKeys = this.state.selectedEnvGroup
-      ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.data)
+      ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.variables)
       : [];
     return (
       <StyledLoadEnvGroupModal>
@@ -172,7 +223,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           {this.state.selectedEnvGroup && (
             <SidebarSection>
               <GroupEnvPreview>
-                {Object.entries(this.state.selectedEnvGroup.data)
+                {Object.entries(this.state.selectedEnvGroup.variables)
                   .map(
                     ([key, value]) =>
                       `${key}=${formattedEnvironmentValue(value)}`
@@ -187,6 +238,15 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               )}
             </SidebarSection>
           )}
+          <CheckboxRow
+            checked={this.state.shouldSync}
+            toggle={() =>
+              this.setState((prevState) => ({
+                shouldSync: !prevState.shouldSync,
+              }))
+            }
+            label="Enable env var synchronization"
+          />
         </GroupModalSections>
 
         <SaveButton

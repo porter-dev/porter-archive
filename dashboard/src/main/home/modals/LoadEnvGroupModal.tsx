@@ -46,7 +46,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 
   updateEnvGroups = () => {
     api
-      .listConfigMaps(
+      .listEnvGroups(
         "<token>",
         {},
         {
@@ -57,7 +57,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({
-          envGroups: res?.data?.items as any[],
+          envGroups: res?.data as any[],
           loading: false,
         });
       })
@@ -77,7 +77,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           <Loading />
         </LoadingWrapper>
       );
-    } else if (this.state.envGroups.length === 0) {
+    } else if (!this.state.envGroups?.length) {
       return (
         <Placeholder>
           No environment groups found in this namespace ({this.props.namespace}
@@ -94,7 +94,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
             onClick={() => this.setState({ selectedEnvGroup: envGroup })}
           >
             <img src={sliders} />
-            {envGroup.metadata.name}
+            {envGroup.name}
           </EnvGroupRow>
         );
       });
@@ -179,7 +179,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                   )
                   .join("\n")}
               </GroupEnvPreview>
-              {clashingKeys.length > 0 && (
+              {clashingKeys?.length > 0 && (
                 <>
                   <ClashingKeyRowDivider />
                   {this.renderEnvGroupPreview(clashingKeys)}

@@ -10,11 +10,11 @@ const DatabasesRoutes = () => {
   const { currentCluster } = useContext(Context);
   const { pushFiltered } = useRouting();
 
-  // useLayoutEffect(() => {
-  //   if (currentCluster.service !== "eks") {
-  //     pushFiltered("/cluster-dashboard", []);
-  //   }
-  // }, [currentCluster]);
+  useLayoutEffect(() => {
+    if (currentCluster.service !== "eks") {
+      pushFiltered("/cluster-dashboard", []);
+    }
+  }, [currentCluster]);
 
   return (
     <>

@@ -7,8 +7,6 @@ import (
 // Conf is the RDS config required for the provisioner
 type Conf struct {
 	AWSRegion             string
-	AWSAccessKeyID        string
-	AWSSecretAccessKey    string
 	DBName                string
 	MachineType           string
 	DBEngineVersion       string
@@ -24,7 +22,6 @@ type Conf struct {
 	Username           string
 	Password           string
 	VPCID              string
-	IssuerEmail        string
 	DeletionProtection string
 }
 
@@ -104,11 +101,6 @@ func (conf *Conf) AttachRDSEnv(env []v1.EnvVar) []v1.EnvVar {
 	env = append(env, v1.EnvVar{
 		Name:  "PORTER_CLUSTER_VPC",
 		Value: conf.VPCID,
-	})
-
-	env = append(env, v1.EnvVar{
-		Name:  "ISSUER_EMAIL",
-		Value: conf.IssuerEmail,
 	})
 
 	env = append(env, v1.EnvVar{

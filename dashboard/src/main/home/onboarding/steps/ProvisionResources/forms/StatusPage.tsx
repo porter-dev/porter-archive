@@ -366,7 +366,7 @@ export const StatusPage = ({
     );
   }
 
-  if (!isLoading) {
+  if (!isLoading && !sortedModules.length) {
     return (
       <Placeholder>
         <i className="material-icons">search</i>

@@ -1382,6 +1382,36 @@ const getCanCreateProject = baseApi<{}, {}>(
   () => "/api/can_create_project"
 );
 
+const provisionDatabase = baseApi<
+  {
+    cluster_id: number;
+
+    db_name: string;
+    username: string;
+    password: string;
+
+    db_engine_version: string;
+    db_family: string;
+    machine_type: string;
+    db_allocated_storage: number;
+    db_max_allocated_storage: number;
+    db_storage_encrypted: boolean;
+  },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/provision/rds`);
+
+const getDatabases = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/databases`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1518,4 +1548,6 @@ export default {
   listEnvGroups,
   getEnvGroup,
   deleteEnvGroup,
+  provisionDatabase,
+  getDatabases,
 };

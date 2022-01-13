@@ -406,7 +406,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 		return err
 	}
 
-	err = checkForRole(config)
+	err = checkForClusterRole(config)
 	if err != nil {
 		return err
 	}
@@ -433,7 +433,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 							Containers: []v1.Container{
 								{
 									Name:            "ephemeral-pods-manager",
-									Image:           "public.ecr.aws/o1j4x7p4/ephemeral-pods-manager:latest",
+									Image:           "porterhub/porter-ephemeral-pods-manager:latest",
 									ImagePullPolicy: v1.PullAlways,
 									Args:            []string{"delete"},
 								},
@@ -483,7 +483,7 @@ func checkForServiceAccount(config *PorterRunSharedConfig) error {
 	return nil
 }
 
-func checkForRole(config *PorterRunSharedConfig) error {
+func checkForClusterRole(config *PorterRunSharedConfig) error {
 	roles, err := config.Clientset.RbacV1().ClusterRoles().List(
 		context.Background(), metav1.ListOptions{},
 	)
@@ -549,9 +549,10 @@ func checkForRoleBinding(config *PorterRunSharedConfig) error {
 		},
 		Subjects: []rbacv1.Subject{
 			{
-				APIGroup: "rbac.authorization.k8s.io",
-				Kind:     "ServiceAccount",
-				Name:     "porter-ephemeral-pod-deletion-service-account",
+				APIGroup:  "",
+				Kind:      "ServiceAccount",
+				Name:      "porter-ephemeral-pod-deletion-service-account",
+				Namespace: "default",
 			},
 		},
 	}

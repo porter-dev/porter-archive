@@ -41,6 +41,9 @@ type Infra struct {
 	// this points to an OAuthIntegrationID
 	DOIntegrationID uint
 
+	// The database id for the infra, if this infra provisioned a database
+	DatabaseID uint
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------

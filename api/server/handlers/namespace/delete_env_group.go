@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -46,22 +46,10 @@ func (c *DeleteEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = deleteEnvGroup(agent, request.Name, namespace)
+	err = envgroup.DeleteEnvGroup(agent, request.Name, namespace)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-}
-
-func deleteEnvGroup(agent *kubernetes.Agent, name, namespace string) error {
-	if err := agent.DeleteVersionedSecret(name, namespace); err != nil {
-		return err
-	}
-
-	if err := agent.DeleteVersionedConfigMap(name, namespace); err != nil {
-		return err
-	}
-
-	return nil
 }

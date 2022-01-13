@@ -20,6 +20,10 @@ func (repo *DatabaseRepository) ReadDatabase(projectID, clusterID, databaseID ui
 	panic("unimplemented")
 }
 
+func (repo *DatabaseRepository) DeleteDatabase(projectID, clusterID, databaseID uint) error {
+	panic("unimplemented")
+}
+
 func (repo *DatabaseRepository) ListDatabases(projectID, clusterID uint) ([]*models.Database, error) {
 	panic("unimplemented")
 }

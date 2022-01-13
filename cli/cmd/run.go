@@ -48,6 +48,20 @@ var runCmd = &cobra.Command{
 	},
 }
 
+// cleanupCmd represents the "porter run cleanup" subcommand
+var cleanupCmd = &cobra.Command{
+	Use:   "cleanup",
+	Args:  cobra.NoArgs,
+	Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, cleanup)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 var existingPod bool
 
 func init() {
@@ -75,6 +89,8 @@ func init() {
 		false,
 		"whether to print verbose output",
 	)
+
+	runCmd.AddCommand(cleanupCmd)
 }
 
 func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
@@ -146,6 +162,94 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 	}
 
 	return executeRunEphemeral(config, namespace, selectedPod.Name, selectedContainerName, args[1:])
+}
+
+func cleanup(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+	config := &PorterRunSharedConfig{
+		Client: client,
+	}
+
+	err := config.setSharedConfig()
+	if err != nil {
+		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
+	}
+
+	proceed, err := utils.PromptSelect(
+		fmt.Sprintf("You have chosen the '%s' namespace for cleanup. Do you want to proceed?", namespace),
+		[]string{"Yes", "No", "All namespaces"},
+	)
+	if err != nil {
+		return err
+	}
+
+	if proceed == "No" {
+		return nil
+	}
+
+	var podNames []string
+
+	color.New(color.FgGreen).Println("Fetching ephemeral pods for cleanup")
+
+	if proceed == "All namespaces" {
+		namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, namespace := range namespaces.Items {
+			if pods, err := getEphemeralPods(namespace.Name, config.Clientset); err == nil {
+				podNames = append(podNames, pods...)
+			} else {
+				return err
+			}
+		}
+	} else {
+		if pods, err := getEphemeralPods(namespace, config.Clientset); err == nil {
+			podNames = append(podNames, pods...)
+		} else {
+			return err
+		}
+	}
+
+	if len(podNames) == 0 {
+		color.New(color.FgBlue).Println("No ephemeral pods to delete")
+		return nil
+	}
+
+	selectedPods, err := utils.PromptMultiselect("Select ephemeral pods to delete", podNames)
+	if err != nil {
+		return err
+	}
+
+	for _, podName := range selectedPods {
+		color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
+
+		err = config.Clientset.CoreV1().Pods(namespace).Delete(
+			context.Background(), podName, metav1.DeleteOptions{},
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func getEphemeralPods(namespace string, clientset *kubernetes.Clientset) ([]string, error) {
+	var podNames []string
+
+	pods, err := clientset.CoreV1().Pods(namespace).List(
+		context.Background(), metav1.ListOptions{LabelSelector: "porter/ephemeral-pod"},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pod := range pods.Items {
+		podNames = append(podNames, pod.Name)
+	}
+
+	return podNames, nil
 }
 
 type PorterRunSharedConfig struct {
@@ -423,7 +527,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 			Name: "porter-ephemeral-pod-deletion-cronjob",
 		},
 		Spec: batchv1.CronJobSpec{
-			Schedule: "* 6 * * *",
+			Schedule: "0 * * * *",
 			JobTemplate: batchv1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Template: v1.PodTemplateSpec{

@@ -73,6 +73,15 @@ type RDSInfraLastApplied struct {
 
 	ClusterID uint   `json:"cluster_id"`
 	Namespace string `json:"namespace"`
+
+	AWSRegion            string
+	DBMajorEngineVersion string
+	DBStorageEncrypted   string
+	DeletionProtection   string
+	VPCID                string
+	Subnet1              string
+	Subnet2              string
+	Subnet3              string
 }
 
 type Family string

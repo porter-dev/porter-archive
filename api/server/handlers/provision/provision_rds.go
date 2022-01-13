@@ -78,32 +78,6 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	suffix, err := repository.GenerateRandomBytes(6)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	lastAppliedData := &types.RDSInfraLastApplied{
-		CreateRDSInfraRequest: request,
-		ClusterID:             cluster.ID,
-		Namespace:             namespace,
-	}
-
-	lastApplied, err := json.Marshal(lastAppliedData)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	dbInfra := &models.Infra{
-		ProjectID:       proj.ID,
-		Status:          types.StatusCreating,
-		Suffix:          suffix,
-		CreatedByUserID: user.ID,
-		LastApplied:     lastApplied,
-	}
-
 	// get the tfstate from the HTTP backend using the infra ID
 
 	client := httpbackend.NewClient(c.Config().ServerConf.ProvisionerBackendURL)
@@ -122,7 +96,7 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var vpc, region, awsAccessKey, awsSecretAccessKey string
+	var vpc, region string
 	var subnets []string
 
 	var opts *provisioner.ProvisionOpts
@@ -138,41 +112,62 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	suffix, err := repository.GenerateRandomBytes(6)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	dbInfra := &models.Infra{
+		ProjectID:       proj.ID,
+		Status:          types.StatusCreating,
+		Suffix:          suffix,
+		CreatedByUserID: user.ID,
+	}
+
 	switch clusterInfra.Kind {
 	case types.InfraGKE:
-		dbInfra.Kind = types.InfraRDS // this will change to Google Cloud SQL once supported
-		dbInfra.GCPIntegrationID = clusterInfra.GCPIntegrationID
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			errors.New("not implemented"),
+			http.StatusNotImplemented,
+		))
 
-		integration, err := c.Repo().GCPIntegration().ReadGCPIntegration(clusterInfra.ProjectID, clusterInfra.GCPIntegrationID)
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
-			} else {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			}
+		return
 
-			return
-		}
+		// dbInfra.Kind = types.InfraRDS // this will change to Google Cloud SQL once supported
+		// dbInfra.GCPIntegrationID = clusterInfra.GCPIntegrationID
 
-		region = integration.GCPRegion
+		// integration, err := c.Repo().GCPIntegration().ReadGCPIntegration(clusterInfra.ProjectID, clusterInfra.GCPIntegrationID)
+		// if err != nil {
+		// 	if err == gorm.ErrRecordNotFound {
+		// 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		// 	} else {
+		// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		// 	}
 
-		if c.Config().CredentialBackend != nil {
-			vaultToken, err = c.Config().CredentialBackend.CreateGCPToken(integration)
-			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			}
-		}
+		// 	return
+		// }
 
-		vpc, err = c.ExtractVPCFromGKETFState(currentState, "google_compute_network.vpc")
-		subnets = []string{}
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				err,
-				http.StatusInternalServerError,
-			))
+		// region = integration.GCPRegion
 
-			return
-		}
+		// if c.Config().CredentialBackend != nil {
+		// 	vaultToken, err = c.Config().CredentialBackend.CreateGCPToken(integration)
+		// 	if err != nil {
+		// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		// 	}
+		// }
+
+		// vpc, err = c.ExtractVPCFromGKETFState(currentState, "google_compute_network.vpc")
+		// subnets = []string{}
+		// if err != nil {
+		// 	c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+		// 		err,
+		// 		http.StatusInternalServerError,
+		// 	))
+
+		// 	return
+		// }
 
 	case types.InfraEKS:
 		dbInfra.Kind = types.InfraRDS
@@ -190,8 +185,6 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 
 		region = integration.AWSRegion
-		awsAccessKey = string(integration.AWSAccessKeyID)
-		awsSecretAccessKey = string(integration.AWSSecretAccessKey)
 
 		if c.Config().CredentialBackend != nil {
 			vaultToken, err = c.Config().CredentialBackend.CreateAWSToken(integration)
@@ -219,6 +212,37 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if len(subnets) != 3 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			errors.New("Length of subnets is not 3: not a valid VPC"),
+			http.StatusNotImplemented,
+		))
+
+		return
+	}
+
+	lastAppliedData := &types.RDSInfraLastApplied{
+		CreateRDSInfraRequest: request,
+		ClusterID:             cluster.ID,
+		Namespace:             namespace,
+		AWSRegion:             region,
+		DBMajorEngineVersion:  dbVersion.MajorVersion(),
+		DBStorageEncrypted:    strconv.FormatBool(request.DBEncryption),
+		DeletionProtection:    strconv.FormatBool(true),
+		VPCID:                 vpc,
+		Subnet1:               subnets[0],
+		Subnet2:               subnets[1],
+		Subnet3:               subnets[2],
+	}
+
+	lastApplied, err := json.Marshal(lastAppliedData)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	dbInfra.LastApplied = lastApplied
+
 	// handle write to the database
 	infra, err := c.Repo().Infra().CreateInfra(dbInfra)
 	if err != nil {
@@ -235,29 +259,22 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	opts.CredentialExchange.VaultToken = vaultToken
 
 	opts.RDS = &rds.Conf{
-		AWSRegion:          region,
-		AWSAccessKeyID:     awsAccessKey,
-		AWSSecretAccessKey: awsSecretAccessKey,
-		DBName:             request.DBName,
-		MachineType:        request.MachineType,
-		DBEngineVersion:    request.DBEngineVersion,
-		DBFamily:           request.DBFamily,
-
-		DBMajorEngineVersion: dbVersion.MajorVersion(),
-
+		AWSRegion:             region,
+		DBName:                request.DBName,
+		MachineType:           request.MachineType,
+		DBEngineVersion:       request.DBEngineVersion,
+		DBFamily:              request.DBFamily,
+		DBMajorEngineVersion:  dbVersion.MajorVersion(),
 		DBAllocatedStorage:    request.DBStorage,
 		DBMaxAllocatedStorage: request.DBMaxStorage,
 		DBStorageEncrypted:    strconv.FormatBool(request.DBEncryption),
 		Username:              request.Username,
 		Password:              request.Password,
 		VPCID:                 vpc,
-		IssuerEmail:           user.Email,
-	}
-
-	if len(subnets) == 3 {
-		opts.RDS.Subnet1 = subnets[0]
-		opts.RDS.Subnet2 = subnets[1]
-		opts.RDS.Subnet3 = subnets[2]
+		DeletionProtection:    strconv.FormatBool(true),
+		Subnet1:               subnets[0],
+		Subnet2:               subnets[1],
+		Subnet3:               subnets[2],
 	}
 
 	opts.OperationKind = provisioner.Apply

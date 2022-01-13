@@ -124,17 +124,26 @@ func DeleteEnv(opts *EnvOpts) error {
 
 	defaultBranch := repo.GetDefaultBranch()
 
-	// delete GitHub Environment
+	// delete GitHub Environment: check that environment exists before deletion
 
-	_, err = opts.Client.Repositories.DeleteEnvironment(
+	_, resp, err := opts.Client.Repositories.GetEnvironment(
 		context.Background(),
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 		opts.EnvironmentName,
 	)
 
-	if err != nil {
-		return err
+	if err == nil && resp != nil && resp.StatusCode == http.StatusOK {
+		_, err = opts.Client.Repositories.DeleteEnvironment(
+			context.Background(),
+			opts.GitRepoOwner,
+			opts.GitRepoName,
+			opts.EnvironmentName,
+		)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	err = deleteGithubFile(

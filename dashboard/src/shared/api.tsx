@@ -1384,21 +1384,22 @@ const getCanCreateProject = baseApi<{}, {}>(
 
 const provisionDatabase = baseApi<
   {
-    cluster_id: number;
-
-    db_name: string;
     username: string;
     password: string;
-
-    db_engine_version: string;
-    db_family: string;
     machine_type: string;
-    db_allocated_storage: number;
-    db_max_allocated_storage: number;
     db_storage_encrypted: boolean;
+    db_name: string;
+    db_max_allocated_storage: number;
+    db_family: string;
+    db_engine_version: string;
+    db_allocated_storage: number;
   },
-  { project_id: number }
->("POST", ({ project_id }) => `/api/projects/${project_id}/provision/rds`);
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/provision/rds`
+);
 
 const getDatabases = baseApi<
   {},

@@ -2,9 +2,10 @@ import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "shared/api";
+import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
@@ -36,6 +37,9 @@ const CreateDatabaseForm = () => {
     DEFAULT_DATABASE_INSTANCE_TYPE
   );
   const [submitStatus, setSubmitStatus] = useState("");
+  const [availableNamespaces, setAvailableNamespaces] = useState([]);
+  const [selectedNamespace, setSelectedNamespace] = useState("default");
+  const [isAuthorized] = useAuth();
 
   const { pushFiltered } = useRouting();
 
@@ -78,14 +82,18 @@ const CreateDatabaseForm = () => {
         "<token>",
         {
           ...FORM_DEFAULT_VALUES,
-          cluster_id: currentCluster.id,
+
           db_name: databaseName,
           username: masterUser,
           password: masterPassword,
           db_engine_version: engineVersion,
           machine_type: instanceType,
         },
-        { project_id: currentProject.id }
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: selectedNamespace,
+        }
       );
       setSubmitStatus("successful");
       pushFiltered("/databases", []);
@@ -94,6 +102,40 @@ const CreateDatabaseForm = () => {
       setSubmitStatus("We couldn't process your request, please try again.");
     }
   };
+
+  const updateNamespaces = async () => {
+    try {
+      const res = await api.getNamespaces(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+      if (res.data) {
+        const availableNamespaces = res.data.items.filter((namespace: any) => {
+          return namespace.status.phase !== "Terminating";
+        });
+        const namespaceOptions: {
+          label: string;
+          value: string;
+        }[] = availableNamespaces.map((x: { metadata: { name: string } }) => {
+          return { label: x.metadata.name, value: x.metadata.name };
+        });
+
+        if (availableNamespaces.length > 0) {
+          setAvailableNamespaces(namespaceOptions);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    updateNamespaces();
+  }, []);
 
   return (
     <>
@@ -109,6 +151,21 @@ const CreateDatabaseForm = () => {
       </ControlRow>
 
       <FormWrapper>
+        <SelectRow
+          label="Namespace"
+          selectorProps={{
+            refreshOptions: () => {
+              updateNamespaces();
+            },
+            addButton: isAuthorized("namespace", "", ["get", "create"]),
+            dropdownWidth: "335px",
+            closeOverlay: true,
+          }}
+          value={selectedNamespace}
+          setActiveValue={setSelectedNamespace}
+          options={availableNamespaces}
+          width="100%"
+        />
         <InputRow
           type="string"
           label="Database name"

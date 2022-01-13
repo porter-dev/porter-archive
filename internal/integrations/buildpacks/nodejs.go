@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 )
 
 var (

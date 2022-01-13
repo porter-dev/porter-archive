@@ -4,6 +4,7 @@ type Repository interface {
 	User() UserRepository
 	Project() ProjectRepository
 	Release() ReleaseRepository
+	Environment() EnvironmentRepository
 	Session() SessionRepository
 	GitRepo() GitRepoRepository
 	Cluster() ClusterRepository

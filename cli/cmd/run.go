@@ -538,7 +538,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 							Containers: []v1.Container{
 								{
 									Name:            "ephemeral-pods-manager",
-									Image:           "porterhub/porter-ephemeral-pods-manager:latest",
+									Image:           "public.ecr.aws/o1j4x7p4/porter-ephemeral-pods-manager:latest",
 									ImagePullPolicy: v1.PullAlways,
 									Args:            []string{"delete"},
 								},

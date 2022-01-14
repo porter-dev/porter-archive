@@ -537,7 +537,7 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 	}
 
 	_, err = envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
-		Name:      "rds-credentials",
+		Name:      fmt.Sprintf("rds-credentials-%s", rdsConfig.DBName),
 		Namespace: rdsConfig.Namespace,
 		Variables: map[string]string{},
 		SecretVariables: map[string]string{
@@ -578,7 +578,7 @@ func deleteRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
 
-	err = envgroup.DeleteEnvGroup(agent, "rds-credentials", rdsConfig.Namespace)
+	err = envgroup.DeleteEnvGroup(agent, fmt.Sprintf("rds-credentials-%s", rdsConfig.DBName), rdsConfig.Namespace)
 
 	if err != nil {
 		fmt.Println("error deg state 2", err)

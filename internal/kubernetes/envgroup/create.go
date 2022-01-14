@@ -77,6 +77,7 @@ func CreateEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.Co
 
 func ToEnvGroup(configMap *v1.ConfigMap) (*types.EnvGroup, error) {
 	res := &types.EnvGroup{
+		CreatedAt: configMap.ObjectMeta.CreationTimestamp.Time,
 		Namespace: configMap.Namespace,
 		Variables: configMap.Data,
 	}

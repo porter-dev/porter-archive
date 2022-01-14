@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
@@ -86,6 +88,7 @@ type CreateConfigMapRequest struct {
 }
 
 type EnvGroup struct {
+	CreatedAt    time.Time         `json:"created_at"`
 	Version      uint              `json:"version"`
 	Name         string            `json:"name"`
 	Namespace    string            `json:"namespace"`
@@ -94,9 +97,10 @@ type EnvGroup struct {
 }
 
 type EnvGroupMeta struct {
-	Version   uint   `json:"version"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	CreatedAt time.Time `json:"created_at"`
+	Version   uint      `json:"version"`
+	Name      string    `json:"name"`
+	Namespace string    `json:"namespace"`
 }
 
 type GetEnvGroupRequest struct {

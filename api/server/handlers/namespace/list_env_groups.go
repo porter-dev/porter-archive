@@ -56,6 +56,7 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 
 		res = append(res, &types.EnvGroupMeta{
+			CreatedAt: eg.CreatedAt,
 			Name:      eg.Name,
 			Namespace: eg.Namespace,
 			Version:   eg.Version,

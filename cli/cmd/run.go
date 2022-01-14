@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -488,7 +489,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 	}
 
 	for _, namespace := range namespaces.Items {
-		cronJobs, err := config.Clientset.BatchV1().CronJobs(namespace.Name).List(
+		cronJobs, err := config.Clientset.BatchV1beta1().CronJobs(namespace.Name).List(
 			context.Background(), metav1.ListOptions{},
 		)
 		if err != nil {
@@ -522,13 +523,13 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 
 	// create the cronjob
 
-	cronJob := &batchv1.CronJob{
+	cronJob := &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "porter-ephemeral-pod-deletion-cronjob",
 		},
-		Spec: batchv1.CronJobSpec{
+		Spec: batchv1beta1.CronJobSpec{
 			Schedule: "0 * * * *",
-			JobTemplate: batchv1.JobTemplateSpec{
+			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					Template: v1.PodTemplateSpec{
 						Spec: v1.PodSpec{
@@ -548,7 +549,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 			},
 		},
 	}
-	_, err = config.Clientset.BatchV1().CronJobs(namespace).Create(
+	_, err = config.Clientset.BatchV1beta1().CronJobs(namespace).Create(
 		context.Background(), cronJob, metav1.CreateOptions{},
 	)
 	if err != nil {

@@ -67,7 +67,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <BlockList>
           {capabilities.github && (
             <Block onClick={() => setSourceType("repo")}>
-              <BlockIcon src="https://3.bp.blogspot.com/-xhNpNJJyQhk/XIe4GY78RQI/AAAAAAAAItc/ouueFUj2Hqo5dntmnKqEaBJR4KQ4Q2K3ACK4BGAYYCw/s1600/logo%2Bgit%2Bicon.png" />
+              <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
               <BlockTitle>Git Repository</BlockTitle>
               <BlockDescription>
                 Deploy using source from a Git repo.

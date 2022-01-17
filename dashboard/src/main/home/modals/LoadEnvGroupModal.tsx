@@ -13,8 +13,11 @@ import {
   EnvGroupData,
   formattedEnvironmentValue,
 } from "../cluster-dashboard/env-groups/EnvGroup";
-import Checkbox from "components/porter-form/field-components/Checkbox";
 import CheckboxRow from "components/form-components/CheckboxRow";
+import {
+  PartialEnvGroup,
+  PopulatedEnvGroup,
+} from "components/porter-form/types";
 
 type PropsType = {
   namespace: string;
@@ -22,6 +25,7 @@ type PropsType = {
   closeModal: () => void;
   existingValues: Record<string, string>;
   setValues: (values: Record<string, string>) => void;
+  syncedEnvGroups?: PopulatedEnvGroup[];
   setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
 };
 
@@ -32,22 +36,6 @@ type StateType = {
   selectedEnvGroup: EnvGroupData | null;
   buttonStatus: string;
   shouldSync: boolean;
-};
-
-type PartialEnvGroup = {
-  name: string;
-  namespace: string;
-  version: number;
-};
-
-type PopulatedEnvGroup = {
-  name: string;
-  namespace: string;
-  version: 2;
-  variables: {
-    [key: string]: string;
-  };
-  applications: any[];
 };
 
 export default class LoadEnvGroupModal extends Component<PropsType, StateType> {

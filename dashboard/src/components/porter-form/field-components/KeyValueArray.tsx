@@ -3,6 +3,7 @@ import {
   GetFinalVariablesFunction,
   KeyValueArrayField,
   KeyValueArrayFieldState,
+  PopulatedEnvGroup,
 } from "../types";
 import sliders from "../../../assets/sliders.svg";
 import upload from "../../../assets/upload.svg";
@@ -20,22 +21,21 @@ interface Props extends KeyValueArrayField {
 }
 
 const KeyValueArray: React.FC<Props> = (props) => {
-  const {
-    state,
-    setState,
-    variables,
-    setVars,
-  } = useFormField<KeyValueArrayFieldState>(props.id, {
-    initState: {
-      values: hasSetValue(props)
-        ? (Object.entries(props.value[0])?.map(([k, v]) => {
-            return { key: k, value: v };
-          }) as any[])
-        : [],
-      showEnvModal: false,
-      showEditorModal: false,
-    },
-  });
+  const { state, setState, variables } = useFormField<KeyValueArrayFieldState>(
+    props.id,
+    {
+      initState: {
+        values: hasSetValue(props)
+          ? (Object.entries(props.value[0])?.map(([k, v]) => {
+              return { key: k, value: v };
+            }) as any[])
+          : [],
+        showEnvModal: false,
+        showEditorModal: false,
+        synced_env_groups: [],
+      },
+    }
+  );
 
   if (state == undefined) return <></>;
 
@@ -159,6 +159,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
         >
           <LoadEnvGroupModal
             existingValues={getProcessedValues(state.values)}
+            syncedEnvGroups={state.synced_env_groups}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
             closeModal={() =>
@@ -169,13 +170,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
               })
             }
             setSyncedEnvGroups={(value) => {
-              setVars((prevVars) => {
+              setState((prev) => {
                 return {
-                  ...prevVars,
-                  synced_env_groups: [
-                    ...(prevVars.synced_env_groups || []),
-                    value,
-                  ],
+                  synced_env_groups: [...(prev.synced_env_groups || []), value],
                 };
               });
             }}
@@ -362,7 +359,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
           </InputWrapper>
         )}
         <Helper>Synced env vars</Helper>
-        {variables.synced_env_groups?.map((envGroup: any) => {
+        {state.synced_env_groups?.map((envGroup: any) => {
           return <div>{envGroup?.name}</div>;
         })}
       </StyledInputArray>
@@ -405,6 +402,15 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
       obj[entry.key] = fixNewlines(entry.value);
     }
   });
+
+  if (state.synced_env_groups?.length) {
+    obj.synced = state.synced_env_groups.map((envGroup) => ({
+      name: envGroup?.name,
+      version: envGroup?.version,
+      keys: envGroup?.variables,
+    }));
+  }
+
   return {
     [props.variable]: obj,
   };

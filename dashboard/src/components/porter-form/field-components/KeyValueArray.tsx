@@ -13,7 +13,7 @@ import Modal from "../../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
-import _ from "lodash";
+import _, { omit } from "lodash";
 import Helper from "components/form-components/Helper";
 
 interface Props extends KeyValueArrayField {
@@ -24,15 +24,21 @@ const KeyValueArray: React.FC<Props> = (props) => {
   const { state, setState, variables } = useFormField<KeyValueArrayFieldState>(
     props.id,
     {
-      initState: {
-        values: hasSetValue(props)
-          ? (Object.entries(props.value[0])?.map(([k, v]) => {
-              return { key: k, value: v };
-            }) as any[])
-          : [],
-        showEnvModal: false,
-        showEditorModal: false,
-        synced_env_groups: [],
+      initState: () => {
+        let values = props.value[0];
+        const normalValues = Object.entries(values?.normal || {});
+        const syncedEnvGroups = values?.synced || [];
+        values = omit(values, ["normal", "synced"]);
+        return {
+          values: hasSetValue(props)
+            ? ([...Object.entries(values), ...normalValues]?.map(([k, v]) => {
+                return { key: k, value: v };
+              }) as any[])
+            : [],
+          showEnvModal: false,
+          showEditorModal: false,
+          synced_env_groups: syncedEnvGroups,
+        };
       },
     }
   );
@@ -380,7 +386,9 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
     };
   }
 
-  let obj = {} as any;
+  let obj = {
+    normal: {},
+  } as any;
   const rg = /(?:^|[^\\])(\\n)/g;
   const fixNewlines = (s: string) => {
     while (rg.test(s)) {
@@ -397,9 +405,9 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   };
   state.values.forEach((entry: any, i: number) => {
     if (isNumber(entry.value)) {
-      obj[entry.key] = entry.value;
+      obj.normal[entry.key] = entry.value;
     } else {
-      obj[entry.key] = fixNewlines(entry.value);
+      obj.normal[entry.key] = fixNewlines(entry.value);
     }
   });
 

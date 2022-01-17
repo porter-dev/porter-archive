@@ -589,7 +589,7 @@ func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
-			LabelSelector: "porter=true",
+			LabelSelector: "porter",
 		},
 	)
 }
@@ -1389,7 +1389,6 @@ func (a *Agent) Provision(
 
 	// clearExistingJob with the same name
 	// this is required in case of a job retry
-	fmt.Println("calling clear existing jobs")
 	err = a.clearExistingJobs(job)
 	if err != nil {
 		return err
@@ -1414,7 +1413,6 @@ func (a *Agent) clearExistingJobs(j *batchv1.Job) error {
 	)
 
 	if err != nil {
-		fmt.Println("job not found, no further action needed")
 		// job not found, no further action needed
 		return nil
 	}
@@ -1431,7 +1429,6 @@ func (a *Agent) clearExistingJobs(j *batchv1.Job) error {
 	)
 
 	if err != nil {
-		fmt.Println("unable to watch on jobs. error:", err.Error())
 		// most probably the job has already been deleted
 		return nil
 	}
@@ -1448,28 +1445,22 @@ func (a *Agent) clearExistingJobs(j *batchv1.Job) error {
 		)
 
 		if err != nil {
-			fmt.Println("unable to delete job")
 			// unable to delete job
 			errChan <- err
 		}
 	}(deleteErrorChan)
 
-	fmt.Println("entering watch loop")
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("timedout in watch loop")
 			return fmt.Errorf("timedout waiting for existing job deletion")
 		case event := <-w.ResultChan():
 			switch event.Type {
 			case watch.Deleted:
 				// job has been successfully delete
 				// return without error
-				fmt.Println("job has been successfully delete")
 				return nil
 			}
-		case err := <-deleteErrorChan:
-			fmt.Println("error occured in deleting the job, error:", err.Error())
 		}
 	}
 }

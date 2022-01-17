@@ -13,6 +13,57 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+func ConvertV1ToV2EnvGroup(agent *kubernetes.Agent, name, namespace string) (*v1.ConfigMap, error) {
+	cm, err := agent.GetConfigMap(name, namespace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	secret, err := agent.GetSecret(name, namespace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	variables := make(map[string]string)
+	secretVariables := make(map[string]string)
+
+	for key, val := range cm.Data {
+		if strings.Contains(val, "PORTERSECRET") {
+			secretVariables[key] = val
+		} else {
+			variables[key] = val
+		}
+	}
+
+	for key, val := range secret.Data {
+		secretVariables[key] = string(val)
+	}
+
+	envGroup, err := CreateEnvGroup(agent, types.ConfigMapInput{
+		Name:            name,
+		Namespace:       namespace,
+		Variables:       variables,
+		SecretVariables: secretVariables,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// delete the old configmap and secret
+	if err := agent.DeleteLinkedSecret(name, namespace); err != nil {
+		return nil, err
+	}
+
+	if err := agent.DeleteConfigMap(name, namespace); err != nil {
+		return nil, err
+	}
+
+	return envGroup, nil
+}
+
 func CreateEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.ConfigMap, error) {
 	// look for a latest configmap
 	oldCM, latestVersion, err := agent.GetLatestVersionedConfigMap(input.Name, input.Namespace)
@@ -81,6 +132,18 @@ func ToEnvGroup(configMap *v1.ConfigMap) (*types.EnvGroup, error) {
 		Namespace: configMap.Namespace,
 		Variables: configMap.Data,
 	}
+
+	// if the label "porter"="true" exists, this is a V1 env group
+	porterLabel, porterLabelExists := configMap.Labels["porter"]
+
+	if porterLabelExists && porterLabel == "true" {
+		res.MetaVersion = 1
+		res.Name = configMap.ObjectMeta.Name
+		return res, nil
+	}
+
+	// set the meta version to 2 if porter label is not captured
+	res.MetaVersion = 2
 
 	// get the name
 	name, nameExists := configMap.Labels["envgroup"]

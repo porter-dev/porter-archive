@@ -14,7 +14,6 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
-	v1 "k8s.io/api/core/v1"
 )
 
 type GetEnvGroupHandler struct {
@@ -50,13 +49,7 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var configMap *v1.ConfigMap
-
-	if request.Version == 0 {
-		configMap, _, err = agent.GetLatestVersionedConfigMap(request.Name, namespace)
-	} else {
-		configMap, err = agent.GetVersionedConfigMap(request.Name, namespace, request.Version)
-	}
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, request.Version)
 
 	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -65,13 +58,6 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	} else if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	envGroup, err := envgroup.ToEnvGroup(configMap)
-
-	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

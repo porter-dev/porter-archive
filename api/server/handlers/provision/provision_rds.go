@@ -321,7 +321,6 @@ func (c *ProvisionRDSHandler) ExtractVPCFromEKSTFState(tfState *httpbackend.TFSt
 					return "", []string{}, errors.New("cannot cast returned value to vpc config")
 				}
 
-				fmt.Println("successfully returning after extracting vpc", awsVPCConfig)
 				return awsVPCConfig.VPCID, awsVPCConfig.SubNetIDs, nil
 			}
 

@@ -42,7 +42,6 @@ func (c *InfraRetryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	opts, err := c.getProvisioningOpts(infraModel)
 	if err != nil {
-		fmt.Println("error getting provisioning options. error:", err.Error())
 		c.HandleAPIError(w, r, err)
 		return
 	}
@@ -51,7 +50,6 @@ func (c *InfraRetryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	provisionerErr := c.Config().ProvisionerAgent.Provision(opts)
 	if provisionerErr != nil {
-		fmt.Println("updating status in error before response")
 		infraModel.Status = types.StatusError
 		c.Repo().Infra().UpdateInfra(infraModel)
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(provisionerErr))

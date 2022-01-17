@@ -88,6 +88,7 @@ type CreateConfigMapRequest struct {
 }
 
 type EnvGroup struct {
+	MetaVersion  uint              `json:"meta_version"`
 	CreatedAt    time.Time         `json:"created_at"`
 	Version      uint              `json:"version"`
 	Name         string            `json:"name"`
@@ -97,10 +98,11 @@ type EnvGroup struct {
 }
 
 type EnvGroupMeta struct {
-	CreatedAt time.Time `json:"created_at"`
-	Version   uint      `json:"version"`
-	Name      string    `json:"name"`
-	Namespace string    `json:"namespace"`
+	MetaVersion uint      `json:"meta_version"`
+	CreatedAt   time.Time `json:"created_at"`
+	Version     uint      `json:"version"`
+	Name        string    `json:"name"`
+	Namespace   string    `json:"namespace"`
 }
 
 type GetEnvGroupRequest struct {

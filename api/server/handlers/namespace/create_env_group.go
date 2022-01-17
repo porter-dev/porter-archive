@@ -55,6 +55,18 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, 0)
+
+	// if the environment group exists and has MetaVersion=1, throw an error
+	if envGroup != nil && envGroup.MetaVersion == 1 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("env group with that name already exists"),
+			http.StatusNotFound,
+		))
+
+		return
+	}
+
 	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
 
 	if err != nil {
@@ -74,7 +86,7 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	envGroup, err := envgroup.ToEnvGroup(configMap)
+	envGroup, err = envgroup.ToEnvGroup(configMap)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

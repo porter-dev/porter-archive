@@ -259,8 +259,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       }
     }
 
-    api
-      .deployTemplate(
+    try {
+      await api.deployTemplate(
         "<token>",
         {
           image_url: url,
@@ -277,25 +277,51 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           namespace: selectedNamespace,
           repo_url: process.env.APPLICATION_CHART_REPO_URL,
         }
-      )
-      .then((res: any) => {
-        // props.setCurrentView('cluster-dashboard');
-        setSaveValuesStatus("successful");
-        // redirect to dashboard with namespace
-        setTimeout(() => {
-          let dst =
-            props.currentTemplate.name === "job" ? "/jobs" : "/applications";
-          pushFiltered(props, dst, ["project_id"], {
-            cluster: currentCluster.name,
-          });
-        }, 1000);
-      })
-      .catch((err: any) => {
-        let parsedErr = err?.response?.data?.error;
-        err = parsedErr || err.message || JSON.stringify(err);
-        setSaveValuesStatus(`Could not deploy template: ${err}`);
-        setCurrentError(err);
+      );
+      // props.setCurrentView('cluster-dashboard');
+    } catch (err) {
+      let parsedErr = err?.response?.data?.error;
+      err = parsedErr || err.message || JSON.stringify(err);
+      setSaveValuesStatus(`Could not deploy template: ${err}`);
+      setCurrentError(err);
+      return;
+    }
+
+    // Save application into synced groups
+    const synced = values?.container?.env?.synced || [];
+
+    const addApplicationToEnvGroupPromises = synced.map((envGroup: any) => {
+      return api.addApplicationToEnvGroup(
+        "<token>",
+        {
+          name: envGroup?.name,
+          app_name: release_name,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: selectedNamespace,
+        }
+      );
+    });
+
+    try {
+      await Promise.all(addApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't sync the env group to the application, please go to your recently deployed application and try again through the environment tab."
+      );
+    }
+
+    setSaveValuesStatus("successful");
+    // redirect to dashboard with namespace
+    setTimeout(() => {
+      let dst =
+        props.currentTemplate.name === "job" ? "/jobs" : "/applications";
+      pushFiltered(props, dst, ["project_id"], {
+        cluster: currentCluster.name,
       });
+    }, 1000);
   };
 
   const renderCurrentPage = () => {

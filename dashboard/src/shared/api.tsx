@@ -1382,6 +1382,30 @@ const getCanCreateProject = baseApi<{}, {}>(
   () => "/api/can_create_project"
 );
 
+const addApplicationToEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/add_application`
+);
+
+const removeApplicationFromEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/remove_application`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1518,4 +1542,6 @@ export default {
   listEnvGroups,
   getEnvGroup,
   deleteEnvGroup,
+  addApplicationToEnvGroup,
+  removeApplicationFromEnvGroup,
 };

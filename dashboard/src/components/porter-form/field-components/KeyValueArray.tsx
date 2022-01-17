@@ -415,7 +415,7 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
     obj.synced = state.synced_env_groups.map((envGroup) => ({
       name: envGroup?.name,
       version: envGroup?.version,
-      keys: Object.entries(envGroup?.variables).map(([key, val]) => ({
+      keys: Object.entries(envGroup?.variables || {}).map(([key, val]) => ({
         name: key,
         secret: val.includes("PORTERSECRET"),
       })),

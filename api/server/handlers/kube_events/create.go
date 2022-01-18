@@ -108,6 +108,21 @@ func (c *CreateKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+func mapKubeEventToMessage(event *types.CreateKubeEventRequest) string {
+	if strings.HasSuffix(event.Reason, "RunContainerError") {
+		if strings.Contains(event.Message, "exec:") {
+			return fmt.Sprintf("Application launch error: %s\n",
+				strings.Split(strings.SplitAfter(event.Message, "exec: ")[1], ": unknown")[0])
+		}
+	} else if strings.HasSuffix(event.Reason, "ImagePullBackOff") {
+		return ""
+	} else if strings.HasSuffix(event.Reason, "CrashLoopBackOff") {
+		return ""
+	}
+
+	return event.Message
+}
+
 func notifyPodCrashing(
 	config *config.Config,
 	agent *kubernetes.Agent,

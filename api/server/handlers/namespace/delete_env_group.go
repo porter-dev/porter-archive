@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -61,7 +62,14 @@ func (c *DeleteEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 	} else if envGroup != nil && envGroup.MetaVersion == 2 {
-		if err = envgroup.DeleteEnvGroup(agent, request.Name, namespace); err != nil {
+		if len(envGroup.Applications) != 0 {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("env group must not have any connected applications"),
+				http.StatusNotFound,
+			))
+
+			return
+		} else if err = envgroup.DeleteEnvGroup(agent, request.Name, namespace); err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}

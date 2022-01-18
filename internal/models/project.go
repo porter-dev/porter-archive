@@ -36,6 +36,9 @@ type Project struct {
 	Clusters          []Cluster          `json:"clusters"`
 	ClusterCandidates []ClusterCandidate `json:"cluster_candidates"`
 
+	// linked databases
+	Databases []Database `json:"databases"`
+
 	// linked helm repos
 	HelmRepos []HelmRepo `json:"helm_repos"`
 

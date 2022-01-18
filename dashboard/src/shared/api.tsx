@@ -1406,6 +1406,37 @@ const removeApplicationFromEnvGroup = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/remove_application`
 );
 
+const provisionDatabase = baseApi<
+  {
+    username: string;
+    password: string;
+    machine_type: string;
+    db_storage_encrypted: boolean;
+    db_name: string;
+    db_max_allocated_storage: string;
+    db_family: string;
+    db_engine_version: string;
+    db_allocated_storage: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/provision/rds`
+);
+
+const getDatabases = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/databases`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1544,4 +1575,6 @@ export default {
   deleteEnvGroup,
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
+  provisionDatabase,
+  getDatabases,
 };

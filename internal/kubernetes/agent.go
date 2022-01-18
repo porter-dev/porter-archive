@@ -589,7 +589,7 @@ func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).List(
 		context.TODO(),
 		metav1.ListOptions{
-			LabelSelector: "porter=true",
+			LabelSelector: "porter",
 		},
 	)
 }
@@ -1383,7 +1383,13 @@ func (a *Agent) Provision(
 ) error {
 	// get the provisioner job template
 	job, err := provisioner.GetProvisionerJobTemplate(opts)
+	if err != nil {
+		return err
+	}
 
+	// clearExistingJob with the same name
+	// this is required in case of a job retry
+	err = a.clearExistingJobs(job)
 	if err != nil {
 		return err
 	}
@@ -1396,6 +1402,67 @@ func (a *Agent) Provision(
 	)
 
 	return err
+}
+
+func (a *Agent) clearExistingJobs(j *batchv1.Job) error {
+	// find if existingJob already exists
+	existingJob, err := a.Clientset.BatchV1().Jobs(j.Namespace).Get(
+		context.TODO(),
+		j.Name,
+		metav1.GetOptions{},
+	)
+
+	if err != nil {
+		// job not found, no further action needed
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	w, err := a.Clientset.BatchV1().Jobs(existingJob.Namespace).Watch(
+		context.TODO(),
+		metav1.ListOptions{
+			ResourceVersion: existingJob.ResourceVersion,
+			// ResourceVersionMatch: metav1.ResourceVersionMatchNotOlderThan,
+		},
+	)
+
+	if err != nil {
+		// most probably the job has already been deleted
+		return nil
+	}
+
+	deleteErrorChan := make(chan error)
+
+	go func(errChan chan<- error) {
+		// job exists, delete it and wait for its deletion
+		// delete job if it already exists
+		err = a.Clientset.BatchV1().Jobs(existingJob.Namespace).Delete(
+			context.TODO(),
+			j.Name,
+			metav1.DeleteOptions{},
+		)
+
+		if err != nil {
+			// unable to delete job
+			errChan <- err
+		}
+	}(deleteErrorChan)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timedout waiting for existing job deletion")
+		case event := <-w.ResultChan():
+			switch event.Type {
+			case watch.Deleted:
+				// job has been successfully delete
+				// return without error
+				return nil
+			}
+		}
+	}
 }
 
 // CreateImagePullSecrets will create the required image pull secrets and

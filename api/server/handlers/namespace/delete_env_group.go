@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -46,20 +47,33 @@ func (c *DeleteEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = deleteEnvGroup(agent, request.Name, namespace)
+	// get the env group: if it's MetaVersion=2, return an error
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, 0)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	if envGroup != nil && envGroup.MetaVersion == 1 {
+		if err := deleteV1ConfigMap(agent, request.Name, namespace); err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else if envGroup != nil && envGroup.MetaVersion == 2 {
+		if err = envgroup.DeleteEnvGroup(agent, request.Name, namespace); err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
 }
 
-func deleteEnvGroup(agent *kubernetes.Agent, name, namespace string) error {
-	if err := agent.DeleteVersionedSecret(name, namespace); err != nil {
+func deleteV1ConfigMap(agent *kubernetes.Agent, name, namespace string) error {
+	if err := agent.DeleteLinkedSecret(name, namespace); err != nil {
 		return err
 	}
 
-	if err := agent.DeleteVersionedConfigMap(name, namespace); err != nil {
+	if err := agent.DeleteConfigMap(name, namespace); err != nil {
 		return err
 	}
 

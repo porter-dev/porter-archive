@@ -50,10 +50,7 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
         switch (this.props.sortType) {
           case "Oldest":
             sortedGroups.sort((a: any, b: any) =>
-              Date.parse(a.metadata.creationTimestamp) >
-              Date.parse(b.metadata.creationTimestamp)
-                ? 1
-                : -1
+              Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
             );
             break;
           case "Alphabetical":
@@ -61,10 +58,7 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
             break;
           default:
             sortedGroups.sort((a: any, b: any) =>
-              Date.parse(a.metadata.creationTimestamp) >
-              Date.parse(b.metadata.creationTimestamp)
-                ? -1
-                : 1
+              Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
             );
         }
         this.setState({ envGroups: sortedGroups, loading: false });

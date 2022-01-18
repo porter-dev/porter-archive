@@ -8,7 +8,7 @@ import { Context } from "shared/Context";
 export type EnvGroupData = {
   name: string;
   namespace: string;
-  creationTimestamp?: string;
+  created_at?: string;
   version: number;
 };
 
@@ -41,7 +41,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
   render() {
     let { envGroup, setExpanded } = this.props;
     let name = envGroup?.name;
-    let timestamp = envGroup?.creationTimestamp;
+    let timestamp = envGroup?.created_at;
     let namespace = envGroup?.namespace;
     let version = envGroup?.version;
 

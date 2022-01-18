@@ -1114,6 +1114,23 @@ const createEnvGroup = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
 });
 
+const updateEnvGroup = baseApi<
+  {
+    name: string;
+    variables: { [key: string]: string };
+    secret_variables?: { [key: string]: string };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>(
+  "POST",
+  ({ cluster_id, project_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/create`
+);
+
 const createConfigMap = baseApi<
   {
     name: string;
@@ -1570,6 +1587,7 @@ export default {
   getLogBucketLogs,
   getCanCreateProject,
   createEnvGroup,
+  updateEnvGroup,
   listEnvGroups,
   getEnvGroup,
   deleteEnvGroup,

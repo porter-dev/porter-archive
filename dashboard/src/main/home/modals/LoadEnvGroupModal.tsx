@@ -124,19 +124,25 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
         </Placeholder>
       );
     } else {
-      return this.state.envGroups.map((envGroup: any, i: number) => {
-        return (
-          <EnvGroupRow
-            key={i}
-            isSelected={this.state.selectedEnvGroup === envGroup}
-            lastItem={i === this.state.envGroups.length - 1}
-            onClick={() => this.setState({ selectedEnvGroup: envGroup })}
-          >
-            <img src={sliders} />
-            {envGroup.name}
-          </EnvGroupRow>
-        );
-      });
+      return this.state.envGroups
+        .filter((envGroup) => {
+          return !this.props.syncedEnvGroups.find(
+            (syncedEnvGroup) => syncedEnvGroup.name === envGroup.name
+          );
+        })
+        .map((envGroup: any, i: number) => {
+          return (
+            <EnvGroupRow
+              key={i}
+              isSelected={this.state.selectedEnvGroup === envGroup}
+              lastItem={i === this.state.envGroups.length - 1}
+              onClick={() => this.setState({ selectedEnvGroup: envGroup })}
+            >
+              <img src={sliders} />
+              {envGroup.name}
+            </EnvGroupRow>
+          );
+        });
     }
   };
 

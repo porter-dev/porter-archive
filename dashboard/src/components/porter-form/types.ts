@@ -183,11 +183,12 @@ export type PartialEnvGroup = {
 export type PopulatedEnvGroup = {
   name: string;
   namespace: string;
-  version: 2;
+  version: number;
   variables: {
     [key: string]: string;
   };
   applications: any[];
+  meta_version: number;
 };
 export interface KeyValueArrayFieldState {
   values: {

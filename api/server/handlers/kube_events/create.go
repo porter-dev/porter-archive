@@ -90,7 +90,9 @@ func (c *CreateKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	if strings.ToLower(string(request.EventType)) == "critical" && strings.ToLower(request.ResourceType) == "pod" {
+	if strings.ToLower(string(request.EventType)) == "critical" &&
+		strings.ToLower(request.ResourceType) == "pod" &&
+		request.Message != "Unable to determine the root cause of the error" {
 		agent, err := c.GetAgent(r, cluster, request.Namespace)
 
 		if err != nil {

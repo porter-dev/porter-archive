@@ -1,9 +1,15 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"strings"
+	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
+	"github.com/google/go-github/v41/github"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
@@ -24,6 +30,26 @@ func Execute() {
 	Setup()
 
 	rootCmd.PersistentFlags().AddFlagSet(defaultFlagSet)
+
+	if Version != "dev" {
+		ghClient := github.NewClient(nil)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		release, _, err := ghClient.Repositories.GetLatestRelease(ctx, "porter-dev", "porter")
+		if err == nil {
+			release.GetURL()
+			// we do not care for an error here because we do not want to block the user here
+			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(Version, "v")))
+			if err == nil {
+				latestRelease, err := semver.NewVersion(strings.TrimPrefix(release.GetTagName(), "v"))
+				if err == nil {
+					if constraint.Check(latestRelease) {
+						color.New(color.FgYellow).Println("A new version of the porter CLI is available to download at https://github.com/porter-dev/porter/releases/latest")
+					}
+				}
+			}
+		}
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		color.New(color.FgRed).Println(err)

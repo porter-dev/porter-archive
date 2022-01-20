@@ -91,13 +91,13 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     };
   };
 
-  const handleSubmitAddon = (wildcard?: any) => {
+  const handleSubmitAddon = async (wildcard?: any) => {
     let { currentCluster, currentProject, setCurrentError } = context;
     setSaveValuesStatus("loading");
 
     const name = templateName || generateRandomName();
 
-    let values = {};
+    let values: any = {};
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
@@ -119,16 +119,6 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         }
       )
       .then((_) => {
-        // props.setCurrentView('cluster-dashboard');
-        setSaveValuesStatus("successful");
-        // redirect to dashboard
-        let dst =
-          props.currentTemplate.name === "job" ? "/jobs" : "/applications";
-        setTimeout(() => {
-          pushFiltered(props, dst, ["project_id"], {
-            cluster: currentCluster.name,
-          });
-        }, 500);
         window.analytics.track("Deployed Add-on", {
           name: props.currentTemplate.name,
           namespace: selectedNamespace,
@@ -149,7 +139,43 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           values: values,
           error: err,
         });
+        return;
       });
+
+    const synced = values?.container?.env?.synced || [];
+
+    const addApplicationToEnvGroupPromises = synced.map((envGroup: any) => {
+      return api.addApplicationToEnvGroup(
+        "<token>",
+        {
+          name: envGroup?.name,
+          app_name: name,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: selectedNamespace,
+        }
+      );
+    });
+
+    try {
+      await Promise.all(addApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't sync the env group to the application, please go to your recently deployed application and try again through the environment tab."
+      );
+    }
+
+    // props.setCurrentView('cluster-dashboard');
+    setSaveValuesStatus("successful");
+    // redirect to dashboard
+    let dst = props.currentTemplate.name === "job" ? "/jobs" : "/applications";
+    setTimeout(() => {
+      pushFiltered(props, dst, ["project_id"], {
+        cluster: currentCluster.name,
+      });
+    }, 500);
   };
 
   const handleSubmit = async (rawValues: any) => {

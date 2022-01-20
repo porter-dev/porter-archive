@@ -325,7 +325,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const oldSyncedEnvGroups =
       props.currentChart.config?.container?.env?.synced || [];
     const newSyncedEnvGroups = values?.container?.env?.synced || [];
-    debugger;
+
     const deletedEnvGroups = onlyInLeft<{
       keys: Array<any>;
       name: string;

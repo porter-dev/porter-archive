@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import loading from "assets/loading.gif";
@@ -28,6 +28,7 @@ import { PopulatedEnvGroup } from "components/porter-form/types";
 import { isAuthorized } from "shared/auth/authorization-helpers";
 import useAuth from "shared/auth/useAuth";
 import { fillWithDeletedVariables } from "components/porter-form/utils";
+import DynamicLink from "components/DynamicLink";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -89,11 +90,29 @@ export const ExpandedEnvGroupFC = ({
       return [{ value: "variables-editor", label: "Environment Variables" }];
     }
 
+    if (
+      !isAuthorized("env_group", "", ["get", "delete"]) &&
+      currentEnvGroup?.applications.length
+    ) {
+      return [
+        { value: "variables-editor", label: "Environment Variables" },
+        { value: "applications", label: "Linked applications" },
+      ];
+    }
+
+    if (currentEnvGroup?.applications.length) {
+      return [
+        { value: "variables-editor", label: "Environment Variables" },
+        { value: "applications", label: "Linked applications" },
+        { value: "settings", label: "Settings" },
+      ];
+    }
+
     return [
       { value: "variables-editor", label: "Environment Variables" },
       { value: "settings", label: "Settings" },
     ];
-  }, []);
+  }, [currentEnvGroup]);
 
   const populateEnvGroup = async () => {
     try {
@@ -256,47 +275,29 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const renderTabContents = () => {
-    const { name, variables } = currentEnvGroup;
+    const { variables } = currentEnvGroup;
 
     switch (currentTab) {
       case "variables-editor":
         return (
-          <TabWrapper>
-            <InnerWrapper>
-              <Heading>Environment Variables</Heading>
-              <Helper>
-                Set environment variables for your secrets and
-                environment-specific configuration.
-              </Helper>
-              <EnvGroupArray
-                values={variables}
-                setValues={(x: any) => {
-                  setCurrentEnvGroup((prev) => ({ ...prev, variables: x }));
-                }}
-                fileUpload={true}
-                secretOption={true}
-                disabled={
-                  !isAuthorized("env_group", "", [
-                    "get",
-                    "create",
-                    "delete",
-                    "update",
-                  ])
-                }
-              />
-            </InnerWrapper>
-            {isAuthorized("env_group", "", ["get", "update"]) && (
-              <SaveButton
-                text="Update"
-                onClick={() => handleUpdateValues()}
-                status={buttonStatus}
-                makeFlush={true}
-              />
-            )}
-          </TabWrapper>
+          <EnvGroupVariablesEditor
+            onChange={(x) =>
+              setCurrentEnvGroup((prev) => ({ ...prev, variables: x }))
+            }
+            handleUpdateValues={handleUpdateValues}
+            variables={variables}
+            buttonStatus={buttonStatus}
+          />
         );
+      case "applications":
+        return <ApplicationsList envGroup={currentEnvGroup} />;
       default:
-        return <EnvGroupSettings handleDeleteEnvGroup={handleDeleteEnvGroup} />;
+        return (
+          <EnvGroupSettings
+            envGroup={currentEnvGroup}
+            handleDeleteEnvGroup={handleDeleteEnvGroup}
+          />
+        );
     }
   };
 
@@ -350,15 +351,70 @@ export const ExpandedEnvGroupFC = ({
 
 export default ExpandedEnvGroupFC;
 
-const EnvGroupVariablesEditor = () => {};
+const EnvGroupVariablesEditor = ({
+  onChange,
+  handleUpdateValues,
+  variables,
+  buttonStatus,
+}: {
+  variables: KeyValueType[];
+  buttonStatus: any;
+  onChange: (newValues: any) => void;
+  handleUpdateValues: () => void;
+}) => {
+  const [isAuthorized] = useAuth();
+
+  return (
+    <TabWrapper>
+      <InnerWrapper>
+        <Heading>Environment Variables</Heading>
+        <Helper>
+          Set environment variables for your secrets and environment-specific
+          configuration.
+        </Helper>
+        <EnvGroupArray
+          values={variables}
+          setValues={(x: any) => {
+            onChange(x);
+          }}
+          fileUpload={true}
+          secretOption={true}
+          disabled={
+            !isAuthorized("env_group", "", [
+              "get",
+              "create",
+              "delete",
+              "update",
+            ])
+          }
+        />
+      </InnerWrapper>
+      {isAuthorized("env_group", "", ["get", "update"]) && (
+        <SaveButton
+          text="Update"
+          onClick={() => handleUpdateValues()}
+          status={buttonStatus}
+          makeFlush={true}
+        />
+      )}
+    </TabWrapper>
+  );
+};
 
 const EnvGroupSettings = ({
+  envGroup,
   handleDeleteEnvGroup,
 }: {
+  envGroup: EditableEnvGroup;
   handleDeleteEnvGroup: () => void;
 }) => {
   const { setCurrentOverlay } = useContext(Context);
   const [isAuthorized] = useAuth();
+
+  const canDelete = useMemo(() => {
+    return envGroup?.applications.length === 0;
+  }, [envGroup]);
+
   return (
     <TabWrapper>
       {isAuthorized("env_group", "", ["get", "delete"]) && (
@@ -394,6 +450,12 @@ const EnvGroupSettings = ({
             Permanently delete this set of environment variables. This action
             cannot be undone.
           </Helper>
+          {!canDelete && (
+            <Helper color="#f5cb42">
+              Looks like you still have applications syncedto this env group.
+              Please remove this env group from those applications to delete
+            </Helper>
+          )}
           <Button
             color="#b91133"
             onClick={() => {
@@ -403,12 +465,43 @@ const EnvGroupSettings = ({
                 onNo: () => setCurrentOverlay(null),
               });
             }}
+            disabled={!canDelete}
           >
-            Delete {name}
+            Delete {envGroup.name}
           </Button>
         </InnerWrapper>
       )}
     </TabWrapper>
+  );
+};
+
+const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
+  const { currentCluster } = useContext(Context);
+
+  return (
+    <>
+      {envGroup.applications.map((appName) => {
+        return (
+          <StyledCard>
+            <Flex>
+              <ContentContainer>
+                <EventInformation>
+                  <EventName>{appName}</EventName>
+                </EventInformation>
+              </ContentContainer>
+              <ActionContainer>
+                <ActionButton
+                  to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                  target="_blank"
+                >
+                  <span className="material-icons-outlined">open_in_new</span>
+                </ActionButton>
+              </ActionContainer>
+            </Flex>
+          </StyledCard>
+        );
+      })}
+    </>
   );
 };
 
@@ -592,11 +685,6 @@ const StyledExpandedChart = styled.div`
   }
 `;
 
-const DarkMatter = styled.div<{ antiHeight?: string }>`
-  width: 100%;
-  margin-top: ${(props) => props.antiHeight || "-15px"};
-`;
-
 const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
   color: ${(props) => (props.highlight ? "#f5cb42" : "")};
   margin-left: ${(props) => (props.makeFlush ? "" : "5px")};
@@ -610,4 +698,82 @@ const Subtitle = styled.div`
   line-height: 1.6em;
   display: flex;
   align-items: center;
+`;
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const StyledCard = styled.div`
+  border: 1px solid #ffffff00;
+  background: #ffffff08;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  padding: 14px;
+  overflow: hidden;
+  min-height: 60px;
+  font-size: 13px;
+  animation: ${fadeIn} 0.5s;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+`;
+
+const EventInformation = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+`;
+
+const EventName = styled.div`
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+`;
+
+const ActionButton = styled(DynamicLink)`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #aaaabb;
+  border: 1px solid #ffffff00;
+
+  :hover {
+    background: #ffffff11;
+    border: 1px solid #ffffff44;
+  }
+
+  > span {
+    font-size: 20px;
+  }
 `;

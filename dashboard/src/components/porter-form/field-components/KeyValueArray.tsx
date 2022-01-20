@@ -246,7 +246,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
   };
 
   const checkOverridedKey = (key: string) => {
-    const env_group = state.synced_env_groups.find((env) => env.variables[key]);
+    const env_group = state.synced_env_groups.find(
+      (env) => env?.variables && env?.variables[key]
+    );
 
     if (env_group) {
       return (
@@ -389,6 +391,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
             {state.synced_env_groups?.map((envGroup: any) => {
               return (
                 <ExpandableEnvGroup
+                  key={envGroup?.name}
                   envGroup={envGroup}
                   onDelete={() => {
                     setState((prev) => {
@@ -495,7 +498,7 @@ const ExpandableEnvGroup: React.FC<{
         </Flex>
         {isExpanded && (
           <>
-            {Object.entries(envGroup.variables)?.map(
+            {Object.entries(envGroup.variables || {})?.map(
               ([key, value], i: number) => {
                 // Preprocess non-string env values set via raw Helm values
                 if (typeof value === "object") {

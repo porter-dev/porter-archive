@@ -68,7 +68,12 @@ export interface ChartTypeWithExtendedConfig extends ChartType {
     };
     container: {
       command: string;
-      env: any;
+      env: {
+        normal: {
+          [key: string]: string;
+        };
+        synced: any;
+      };
       lifecycle: { postStart: string; preStop: string };
       port: number;
     };

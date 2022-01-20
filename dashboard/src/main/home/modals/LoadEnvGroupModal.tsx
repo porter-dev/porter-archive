@@ -18,6 +18,7 @@ import {
   PartialEnvGroup,
   PopulatedEnvGroup,
 } from "components/porter-form/types";
+import Helper from "components/form-components/Helper";
 
 type PropsType = {
   namespace: string;
@@ -240,7 +241,16 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               }))
             }
             label="Enable env var synchronization"
+            disabled={this.state.selectedEnvGroup?.meta_version === 1}
           />
+
+          {this.state.selectedEnvGroup?.meta_version === 1 && (
+            <Helper color="#f5cb42">
+              Looks like the env group you selected belongs to an old version
+              and is not available for syncing. You can fix this by updating the
+              env group from the env groups tab.
+            </Helper>
+          )}
         </GroupModalSections>
 
         <SaveButton
@@ -451,4 +461,8 @@ const StyledLoadEnvGroupModal = styled.div`
   overflow: hidden;
   border-radius: 6px;
   background: #202227;
+`;
+
+const Flex = styled.div`
+  display: flex;
 `;

@@ -92,7 +92,7 @@ export const ExpandedEnvGroupFC = ({
 
     if (
       !isAuthorized("env_group", "", ["get", "delete"]) &&
-      currentEnvGroup?.applications.length
+      currentEnvGroup?.applications?.length
     ) {
       return [
         { value: "variables-editor", label: "Environment Variables" },
@@ -100,7 +100,7 @@ export const ExpandedEnvGroupFC = ({
       ];
     }
 
-    if (currentEnvGroup?.applications.length) {
+    if (currentEnvGroup?.applications?.length) {
       return [
         { value: "variables-editor", label: "Environment Variables" },
         { value: "applications", label: "Linked applications" },

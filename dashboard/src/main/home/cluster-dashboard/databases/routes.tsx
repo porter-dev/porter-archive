@@ -11,7 +11,7 @@ const DatabasesRoutes = () => {
   const { pushFiltered } = useRouting();
 
   useLayoutEffect(() => {
-    if (currentCluster.service !== "eks") {
+    if (currentCluster.service !== "eks" && currentCluster.infra_id <= 0) {
       pushFiltered("/cluster-dashboard", []);
     }
   }, [currentCluster]);

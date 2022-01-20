@@ -200,7 +200,7 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={sliders} />
             Env Groups
           </NavButton>
-          {currentCluster.service === "eks" && (
+          {currentCluster.service === "eks" && currentCluster.infra_id > 0 && (
             <NavButton
               selected={currentView === "databases"}
               onClick={() => {

@@ -50,7 +50,10 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   onSubmit = () => {
-    if (!this.state.shouldSync) {
+    if (
+      !this.state.shouldSync ||
+      this.state.selectedEnvGroup.meta_version === 1
+    ) {
       this.props.setValues(this.state.selectedEnvGroup.variables);
     } else {
       this.props.setSyncedEnvGroups(this.state.selectedEnvGroup);

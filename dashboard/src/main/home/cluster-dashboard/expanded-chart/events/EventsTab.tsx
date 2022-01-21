@@ -56,6 +56,7 @@ const EventsTab: React.FC<{
     resourceType: resourceType.value as any,
     ownerName: selectedController?.metadata?.name,
     ownerType: selectedController?.kind,
+    ownerNamespace: selectedController?.metadata?.namespace,
     shouldWaitForOwner: true,
   });
 

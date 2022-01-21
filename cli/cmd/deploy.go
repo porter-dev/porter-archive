@@ -18,34 +18,34 @@ var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Builds and updates a specified application given by the --app flag.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
 Builds and updates a specified application given by the --app flag. For example:
 
   %s
 
-This command will automatically build from a local path. The path can be configured via the 
---path flag. You can also overwrite the tag using the --tag flag. For example, to build from the 
+This command will automatically build from a local path. The path can be configured via the
+--path flag. You can also overwrite the tag using the --tag flag. For example, to build from the
 local directory ~/path-to-dir with the tag "testing":
 
   %s
 
 If the application has a remote Git repository source configured, you can specify that the remote
-Git repository should be used to build the new image by specifying "--source github". Porter will use 
-the latest commit from the remote repo and branch to update an application, and will use the latest 
+Git repository should be used to build the new image by specifying "--source github". Porter will use
+the latest commit from the remote repo and branch to update an application, and will use the latest
 commit as the image tag.
 
   %s
 
-To add new configuration or update existing configuration, you can pass a values.yaml file in via the 
+To add new configuration or update existing configuration, you can pass a values.yaml file in via the
 --values flag. For example;
 
   %s
 
-If your application is set up to use a Dockerfile by default, you can use a buildpack via the flag 
-"--method pack". Conversely, if your application is set up to use a buildpack by default, you can 
-use a Dockerfile by passing the flag "--method docker". You can specify the relative path to a Dockerfile 
-in your remote Git repository. For example, if a Dockerfile is found at ./docker/prod.Dockerfile, you can 
+If your application is set up to use a Dockerfile by default, you can use a buildpack via the flag
+"--method pack". Conversely, if your application is set up to use a buildpack by default, you can
+use a Dockerfile by passing the flag "--method docker". You can specify the relative path to a Dockerfile
+in your remote Git repository. For example, if a Dockerfile is found at ./docker/prod.Dockerfile, you can
 specify it as follows:
 
   %s
@@ -70,14 +70,14 @@ var updateGetEnvCmd = &cobra.Command{
 	Use:   "get-env",
 	Short: "Gets environment variables for a deployment for a specified application given by the --app flag.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
-Gets environment variables for a deployment for a specified application given by the --app 
+Gets environment variables for a deployment for a specified application given by the --app
 flag. By default, env variables are printed via stdout for use in downstream commands:
 
   %s
 
-Output can also be written to a file via the --file flag, which should specify the 
+Output can also be written to a file via the --file flag, which should specify the
 destination path for a .env file. For example:
 
   %s
@@ -99,26 +99,26 @@ var updateBuildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Builds a new version of the application specified by the --app flag.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
-Builds a new version of the application specified by the --app flag. Depending on the 
-configured settings, this command may work automatically or will require a specified 
---method flag. 
+Builds a new version of the application specified by the --app flag. Depending on the
+configured settings, this command may work automatically or will require a specified
+--method flag.
 
-If you have configured the Dockerfile path and/or a build context for this application, 
-this command will by default use those settings, so you just need to specify the --app 
+If you have configured the Dockerfile path and/or a build context for this application,
+this command will by default use those settings, so you just need to specify the --app
 flag:
 
   %s
 
 If you have not linked the build-time requirements for this application, the command will
-use a local build. By default, the cloud-native buildpacks builder will automatically be run 
-from the current directory. If you would like to change the build method, you can do so by 
+use a local build. By default, the cloud-native buildpacks builder will automatically be run
+from the current directory. If you would like to change the build method, you can do so by
 using the --method flag, for example:
 
   %s
 
-When using "--method docker", you can specify the path to the Dockerfile using the 
+When using "--method docker", you can specify the path to the Dockerfile using the
 --dockerfile flag. This will also override the Dockerfile path that you may have linked
 for the application:
 
@@ -142,17 +142,17 @@ var updatePushCmd = &cobra.Command{
 	Use:   "push",
 	Short: "Pushes a new image for an application specified by the --app flag.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
 Pushes a new image for an application specified by the --app flag. This command uses
-the image repository saved in the application config by default. For example, if an 
-application "nginx" was created from the image repo "gcr.io/snowflake-123456/nginx", 
+the image repository saved in the application config by default. For example, if an
+application "nginx" was created from the image repo "gcr.io/snowflake-123456/nginx",
 the following command would push the image "gcr.io/snowflake-123456/nginx:new-tag":
 
   %s
 
 This command will not use your pre-saved authentication set up via "docker login," so if you
-are using an image registry that was created outside of Porter, make sure that you have 
+are using an image registry that was created outside of Porter, make sure that you have
 linked it via "porter connect".
 `,
 		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update push\":"),
@@ -171,10 +171,10 @@ var updateConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Updates the configuration for an application specified by the --app flag.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
 Updates the configuration for an application specified by the --app flag, using the configuration
-given by the --values flag. This will trigger a new deployment for the application with 
+given by the --values flag. This will trigger a new deployment for the application with
 new configuration set. Note that this will merge your existing configuration with configuration
 specified in the --values file. For example:
 
@@ -339,7 +339,9 @@ func updateGetEnv(_ *types.GetAuthenticatedUserResponse, client *api.Client, arg
 		return err
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv()
+	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: false,
+	})
 
 	if err != nil {
 		return err
@@ -433,7 +435,16 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		})
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv()
+	// read the values if necessary
+	valuesObj, err := readValuesFile()
+	if err != nil {
+		return err
+	}
+
+	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: true,
+		NewConfig:    valuesObj,
+	})
 
 	if err != nil {
 		if stream {
@@ -465,7 +476,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	if err := updateAgent.Build(); err != nil {
+	if err := updateAgent.Build(nil); err != nil {
 		if stream {
 			updateAgent.StreamEvent(types.SubEvent{
 				EventID: "build",
@@ -545,8 +556,13 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 		})
 	}
 
+	var err error
+
 	// read the values if necessary
 	valuesObj, err := readValuesFile()
+	if err != nil {
+		return err
+	}
 
 	if err != nil {
 		if stream {

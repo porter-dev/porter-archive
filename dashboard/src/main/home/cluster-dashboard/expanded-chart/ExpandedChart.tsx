@@ -122,89 +122,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setImageIsPlaceholer(imageIsPlaceholder);
     setNewestImage(newNewestImage);
 
-    const updatedChart = await populateSyncedEnvGroups(res.data);
+    const updatedChart = res.data;
 
     setCurrentChart(updatedChart);
 
     updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
-  };
-
-  // At the moment the way the synced env groups are being brought on the helm chart
-  // are not complete and miss important data as the variables and their values.
-  // This function populates all the synced env groups and then injects them inside the chart
-  // used by the PorterForm.
-  // I know its awful pls don't judge.
-  const populateSyncedEnvGroups = async (
-    chart: ChartType
-  ): Promise<ChartType> => {
-    const envGroups = props.currentChart?.config?.container?.env?.synced || [];
-    const promises = Promise.all(
-      envGroups.map(async (envGroup: any) => {
-        const res = await api.getEnvGroup(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            namespace: props.currentChart.namespace,
-            name: envGroup?.name,
-            version: envGroup.version,
-          }
-        );
-        return res.data;
-      })
-    );
-
-    try {
-      const envTabIndex = chart.form?.tabs?.findIndex(
-        (tab) => tab.name === "env"
-      );
-
-      if (envTabIndex < 0) {
-        return chart;
-      }
-
-      let envTab = chart.form.tabs[envTabIndex];
-
-      const envVarsSectionIndex = envTab.sections?.findIndex(
-        (tab) => tab.name === "env_vars"
-      );
-
-      if (envVarsSectionIndex < 0) {
-        return chart;
-      }
-
-      let envVarsSection = envTab.sections[envVarsSectionIndex];
-
-      const keyValueIndex = envVarsSection.contents.findIndex(
-        (content) => content.type === "env-key-value-array"
-      );
-
-      if (keyValueIndex < 0) {
-        return chart;
-      }
-
-      let keyValueContent = envVarsSection.contents[keyValueIndex];
-
-      const populatedEnvGroups = await promises;
-
-      keyValueContent.value = [
-        {
-          ...keyValueContent.value[0],
-          synced: populatedEnvGroups,
-        },
-      ];
-
-      const updatedChart = chart;
-
-      updatedChart.form.tabs[envTabIndex].sections[
-        envVarsSectionIndex
-      ].contents[keyValueIndex] = keyValueContent;
-
-      return updatedChart;
-    } catch (error) {
-      throw new Error("Couldn't retrieve synced env groups, try again later");
-    }
   };
 
   const getControllers = async (chart: ChartType) => {

@@ -99,7 +99,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderClusterContent = () => {
     let { currentView } = this.props;
-    let { currentCluster } = this.context;
+    let { currentCluster, currentProject } = this.context;
 
     if (currentCluster) {
       return (
@@ -200,17 +200,19 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={sliders} />
             Env Groups
           </NavButton>
-          {currentCluster.service === "eks" && currentCluster.infra_id > 0 && (
-            <NavButton
-              selected={currentView === "databases"}
-              onClick={() => {
-                pushFiltered(this.props, "/databases", [], {});
-              }}
-            >
-              <Icon className="material-icons-outlined">storage</Icon>
-              Databases
-            </NavButton>
-          )}
+          {currentCluster.service === "eks" &&
+            currentCluster.infra_id > 0 &&
+            currentProject.enable_rds_databases && (
+              <NavButton
+                selected={currentView === "databases"}
+                onClick={() => {
+                  pushFiltered(this.props, "/databases", [], {});
+                }}
+              >
+                <Icon className="material-icons-outlined">storage</Icon>
+                Databases
+              </NavButton>
+            )}
         </>
       );
     }

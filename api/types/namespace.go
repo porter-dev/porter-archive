@@ -110,6 +110,13 @@ type GetEnvGroupRequest struct {
 	Version uint   `schema:"version"`
 }
 
+type CloneEnvGroupRequest struct {
+	Namespace string `json:"namespace" form:"required"`
+	Name      string `json:"name" form:"required"`
+	CloneName string `json:"clone_name"`
+	Version   uint   `json:"version"`
+}
+
 type GetEnvGroupAllRequest struct {
 	Name string `schema:"name,required"`
 }

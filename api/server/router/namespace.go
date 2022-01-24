@@ -116,6 +116,36 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroups/clone -> namespace.NewCloneEnvGroupHandler
+	cloneEnvGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/envgroups/clone",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+		},
+	)
+
+	cloneEnvGroupHandler := namespace.NewCloneEnvGroupHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: cloneEnvGroupEndpoint,
+		Handler:  cloneEnvGroupHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroup -> namespace.NewGetEnvGroupHandler
 	getEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -96,14 +96,14 @@ export const ExpandedEnvGroupFC = ({
     ) {
       return [
         { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked applications" },
+        { value: "applications", label: "Linked Applications" },
       ];
     }
 
     if (currentEnvGroup?.applications?.length) {
       return [
         { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked applications" },
+        { value: "applications", label: "Linked Applications" },
         { value: "settings", label: "Settings" },
       ];
     }
@@ -710,15 +710,16 @@ const fadeIn = keyframes`
 `;
 
 const StyledCard = styled.div`
-  border: 1px solid #ffffff00;
-  background: #ffffff08;
-  margin-bottom: 5px;
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px 18px;
   overflow: hidden;
-  min-height: 60px;
   font-size: 13px;
   animation: ${fadeIn} 0.5s;
+
+  background: #2b2e36;
+  margin-bottom: 15px;
+  overflow: hidden;
+  border: 1px solid #ffffff0a;
 `;
 
 const Flex = styled.div`

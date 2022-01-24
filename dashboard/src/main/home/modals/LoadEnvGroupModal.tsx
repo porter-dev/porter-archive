@@ -236,17 +236,18 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               )}
             </SidebarSection>
           )}
-          <CheckboxRow
-            checked={this.state.shouldSync}
-            toggle={() =>
-              this.setState((prevState) => ({
-                shouldSync: !prevState.shouldSync,
-              }))
-            }
-            label="Enable env var synchronization"
-            disabled={this.state.selectedEnvGroup?.meta_version === 1}
-          />
-
+          <AbsoluteWrapper>
+            <CheckboxRow
+              checked={this.state.shouldSync}
+              toggle={() =>
+                this.setState((prevState) => ({
+                  shouldSync: !prevState.shouldSync,
+                }))
+              }
+              label="Sync environment group"
+              disabled={this.state.selectedEnvGroup?.meta_version === 1}
+            />
+          </AbsoluteWrapper>
           {this.state.selectedEnvGroup?.meta_version === 1 && (
             <Helper color="#f5cb42">
               Looks like the env group you selected belongs to an old version
@@ -268,6 +269,13 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 }
 
 LoadEnvGroupModal.contextType = Context;
+
+const AbsoluteWrapper = styled.div`
+  position: absolute;
+  z-index: 999;
+  bottom: 18px;
+  left: 25px;
+`;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`
   height: 100%;
@@ -461,8 +469,7 @@ const StyledLoadEnvGroupModal = styled.div`
   top: 0;
   height: 100%;
   padding: 25px 30px;
-  overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #202227;
 `;
 

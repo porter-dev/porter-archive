@@ -431,7 +431,8 @@ const KeyValueArray: React.FC<Props> = (props) => {
         )}
         {!!state.synced_env_groups?.length && (
           <>
-            <Heading>Synced env vars</Heading>
+            <Heading>Synced Environment Groups</Heading>
+            <Br />
             {state.synced_env_groups?.map((envGroup: any) => {
               return (
                 <ExpandableEnvGroup
@@ -529,7 +530,6 @@ const ExpandableEnvGroup: React.FC<{
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
-            <ActionButton></ActionButton>
             <ActionButton onClick={() => onDelete()}>
               <span className="material-icons">delete</span>
             </ActionButton>
@@ -542,6 +542,7 @@ const ExpandableEnvGroup: React.FC<{
         </Flex>
         {isExpanded && (
           <>
+            <Buffer />
             {Object.entries(envGroup.variables || {})?.map(
               ([key, value], i: number) => {
                 // Preprocess non-string env values set via raw Helm values
@@ -573,6 +574,7 @@ const ExpandableEnvGroup: React.FC<{
                 );
               }
             )}
+            <Br />
           </>
         )}
       </StyledCard>
@@ -580,6 +582,16 @@ const ExpandableEnvGroup: React.FC<{
   );
   return null;
 };
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+`;
+
+const Buffer = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const Spacer = styled.div`
   width: 10px;
@@ -731,26 +743,27 @@ const fadeIn = keyframes`
 `;
 
 const StyledCard = styled.div`
-  border: 1px solid #ffffff00;
-  background: #ffffff08;
+  border: 1px solid #ffffff44;
+  background: #ffffff11;
   margin-bottom: 5px;
   border-radius: 8px;
-  padding: 14px;
+  margin-top: 15px;
+  padding: 10px 14px;
   overflow: hidden;
-  min-height: 60px;
   font-size: 13px;
   animation: ${fadeIn} 0.5s;
 `;
 
 const Flex = styled.div`
   display: flex;
+  height: 25px;
   align-items: center;
   justify-content: space-between;
 `;
 
 const ContentContainer = styled.div`
   display: flex;
-  height: 100%;
+  height: 40px;
   width: 100%;
   align-items: center;
 `;
@@ -781,6 +794,9 @@ const ActionButton = styled.button`
   background: none;
   color: white;
   padding: 5px;
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
   display: flex;
   justify-content: center;
   align-items: center;

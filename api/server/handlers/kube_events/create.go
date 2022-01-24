@@ -115,9 +115,7 @@ func mapKubeEventToMessage(event *types.CreateKubeEventRequest) string {
 				strings.Split(strings.SplitAfter(event.Message, "exec: ")[1], ": unknown")[0])
 		}
 	} else if strings.HasSuffix(event.Reason, "ImagePullBackOff") {
-		return ""
-	} else if strings.HasSuffix(event.Reason, "CrashLoopBackOff") {
-		return ""
+		return "Deployment error: The application image could not be pulled from the registry"
 	}
 
 	return event.Message
@@ -248,7 +246,7 @@ func notifyPodCrashing(
 			ClusterName: cluster.Name,
 			Name:        event.OwnerName,
 			Namespace:   event.Namespace,
-			Info:        fmt.Sprintf("%s:%s", event.Reason, event.Message),
+			Info:        mapKubeEventToMessage(event),
 			URL: fmt.Sprintf(
 				"%s/applications/%s/%s/%s?project_id=%d",
 				config.ServerConf.ServerURL,

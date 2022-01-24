@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -38,6 +39,7 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// get all versioned config maps
 	configMaps, err := agent.ListAllVersionedConfigMaps(namespace)
 
 	if err != nil {
@@ -48,16 +50,42 @@ func (c *ListEnvGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	res := make(types.ListEnvGroupsResponse, 0)
 
 	for _, cm := range configMaps {
-		eg, err := toEnvGroup(&cm)
+		eg, err := envgroup.ToEnvGroup(&cm)
 
 		if err != nil {
 			continue
 		}
 
 		res = append(res, &types.EnvGroupMeta{
-			Name:      eg.Name,
-			Namespace: eg.Namespace,
-			Version:   eg.Version,
+			MetaVersion: eg.MetaVersion,
+			CreatedAt:   eg.CreatedAt,
+			Name:        eg.Name,
+			Namespace:   eg.Namespace,
+			Version:     eg.Version,
+		})
+	}
+
+	// get all meta-version 1 configmaps
+	configMapList, err := agent.ListConfigMaps(namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	for _, v1CM := range configMapList.Items {
+		eg, err := envgroup.ToEnvGroup(&v1CM)
+
+		if err != nil {
+			continue
+		}
+
+		res = append(res, &types.EnvGroupMeta{
+			MetaVersion: eg.MetaVersion,
+			CreatedAt:   eg.CreatedAt,
+			Name:        eg.Name,
+			Namespace:   eg.Namespace,
+			Version:     eg.Version,
 		})
 	}
 

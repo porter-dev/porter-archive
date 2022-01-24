@@ -111,6 +111,61 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
 
+const createEnvironment = baseApi<
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
+  }
+>("POST", (pathParams) => {
+  let {
+    project_id,
+    cluster_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
+});
+
+const deleteEnvironment = baseApi<
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
+  }
+>("DELETE", (pathParams) => {
+  let {
+    project_id,
+    cluster_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
+});
+
+const listEnvironments = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments`;
+});
+
 const createGCPIntegration = baseApi<
   {
     gcp_key_data: string;
@@ -281,6 +336,57 @@ const updateNotificationConfig = baseApi<
   let { project_id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
+});
+
+const getPRDeploymentList = baseApi<
+  {
+    status?: string[];
+  },
+  {
+    cluster_id: number;
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  const { cluster_id, project_id } = pathParams;
+
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments`;
+});
+
+const getPRDeploymentByCluster = baseApi<
+  {
+    namespace: string;
+  },
+  {
+    cluster_id: number;
+    project_id: number;
+    environment_id: number;
+  }
+>("GET", (pathParams) => {
+  const { cluster_id, project_id, environment_id } = pathParams;
+
+  return `/api/projects/${project_id}/clusters/${cluster_id}/${environment_id}/deployment`;
+});
+
+const getPRDeployment = baseApi<
+  {
+    namespace: string;
+  },
+  {
+    cluster_id: number;
+    project_id: number;
+    git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
+  }
+>("GET", (pathParams) => {
+  const {
+    cluster_id,
+    project_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
 });
 
 const getNotificationConfig = baseApi<
@@ -536,6 +642,16 @@ const getGitRepoList = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/repos`;
+});
+
+const getGitRepoPermission = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id}/permissions`;
 });
 
 const getGitRepos = baseApi<
@@ -998,6 +1114,23 @@ const createEnvGroup = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
 });
 
+const updateEnvGroup = baseApi<
+  {
+    name: string;
+    variables: { [key: string]: string };
+    secret_variables?: { [key: string]: string };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>(
+  "POST",
+  ({ cluster_id, project_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/create`
+);
+
 const createConfigMap = baseApi<
   {
     name: string;
@@ -1227,6 +1360,7 @@ const getKubeEvents = baseApi<
     resource_type: string;
     owner_type?: string;
     owner_name?: string;
+    namespace?: string;
   },
   { project_id: number; cluster_id: number }
 >("GET", ({ project_id, cluster_id }) => {
@@ -1265,6 +1399,61 @@ const getCanCreateProject = baseApi<{}, {}>(
   () => "/api/can_create_project"
 );
 
+const addApplicationToEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/add_application`
+);
+
+const removeApplicationFromEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/remove_application`
+);
+
+const provisionDatabase = baseApi<
+  {
+    username: string;
+    password: string;
+    machine_type: string;
+    db_storage_encrypted: boolean;
+    db_name: string;
+    db_max_allocated_storage: string;
+    db_family: string;
+    db_engine_version: string;
+    db_allocated_storage: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/provision/rds`
+);
+
+const getDatabases = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/databases`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1278,6 +1467,9 @@ export default {
   createDOCR,
   createDOKS,
   createEmailVerification,
+  createEnvironment,
+  deleteEnvironment,
+  listEnvironments,
   createGCPIntegration,
   createGCR,
   createGKE,
@@ -1317,8 +1509,12 @@ export default {
   getClusterNodes,
   getClusterNode,
   getConfigMap,
+  getPRDeploymentList,
+  getPRDeploymentByCluster,
+  getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,
+  getGitRepoPermission,
   getGitRepos,
   getImageRepos,
   getImageTags,
@@ -1391,7 +1587,12 @@ export default {
   getLogBucketLogs,
   getCanCreateProject,
   createEnvGroup,
+  updateEnvGroup,
   listEnvGroups,
   getEnvGroup,
   deleteEnvGroup,
+  addApplicationToEnvGroup,
+  removeApplicationFromEnvGroup,
+  provisionDatabase,
+  getDatabases,
 };

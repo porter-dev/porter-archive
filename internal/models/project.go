@@ -36,6 +36,9 @@ type Project struct {
 	Clusters          []Cluster          `json:"clusters"`
 	ClusterCandidates []ClusterCandidate `json:"cluster_candidates"`
 
+	// linked databases
+	Databases []Database `json:"databases"`
+
 	// linked helm repos
 	HelmRepos []HelmRepo `json:"helm_repos"`
 
@@ -52,6 +55,8 @@ type Project struct {
 	OAuthIntegrations []ints.OAuthIntegration `json:"oauth_integrations"`
 	AWSIntegrations   []ints.AWSIntegration   `json:"aws_integrations"`
 	GCPIntegrations   []ints.GCPIntegration   `json:"gcp_integrations"`
+
+	PreviewEnvsEnabled bool
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
@@ -63,8 +68,9 @@ func (p *Project) ToProjectType() *types.Project {
 	}
 
 	return &types.Project{
-		ID:    p.ID,
-		Name:  p.Name,
-		Roles: roles,
+		ID:                 p.ID,
+		Name:               p.Name,
+		Roles:              roles,
+		PreviewEnvsEnabled: p.PreviewEnvsEnabled,
 	}
 }

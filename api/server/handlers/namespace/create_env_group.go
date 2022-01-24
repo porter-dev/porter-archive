@@ -1,10 +1,8 @@
 package namespace
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -20,7 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
-	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -57,6 +55,18 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, 0)
+
+	// if the environment group exists and has MetaVersion=1, throw an error
+	if envGroup != nil && envGroup.MetaVersion == 1 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("env group with that name already exists"),
+			http.StatusNotFound,
+		))
+
+		return
+	}
+
 	helmAgent, err := c.GetHelmAgent(r, cluster, namespace)
 
 	if err != nil {
@@ -64,7 +74,7 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	configMap, err := createEnvGroup(agent, types.ConfigMapInput{
+	configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
 		Name:            request.Name,
 		Namespace:       namespace,
 		Variables:       request.Variables,
@@ -76,14 +86,14 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	envGroup, err := toEnvGroup(configMap)
+	envGroup, err = envgroup.ToEnvGroup(configMap)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	releases, err := getSyncedReleases(helmAgent, configMap)
+	releases, err := envgroup.GetSyncedReleases(helmAgent, configMap)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -105,150 +115,6 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	c.WriteResult(w, r, envGroup)
-}
-
-func createEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.ConfigMap, error) {
-	// look for a latest configmap
-	oldCM, latestVersion, err := agent.GetLatestVersionedConfigMap(input.Name, input.Namespace)
-
-	if err != nil && !errors.Is(err, kubernetes.IsNotFoundError) {
-		return nil, err
-	} else if err != nil {
-		latestVersion = 1
-	} else {
-		latestVersion += 1
-	}
-
-	apps := make([]string, 0)
-
-	if oldCM != nil {
-		oldEG, err := toEnvGroup(oldCM)
-
-		if err == nil {
-			apps = oldEG.Applications
-		}
-	}
-
-	oldSecret, _, err := agent.GetLatestVersionedSecret(input.Name, input.Namespace)
-
-	if err != nil && !errors.Is(err, kubernetes.IsNotFoundError) {
-		return nil, err
-	} else if err == nil && oldSecret != nil {
-		// In this case, we find all old variables referencing a secret value, and add those
-		// values to the new secret variables. The frontend will only send **new** secret values.
-		for key1, val1 := range input.Variables {
-			if strings.Contains(val1, "PORTERSECRET") {
-				// get that value from the secret
-				for key2, val2 := range oldSecret.Data {
-					if key2 == key1 {
-						input.SecretVariables[key1] = string(val2)
-					}
-				}
-			}
-		}
-	}
-
-	// add all secret env variables to configmap with value PORTERSECRET_${configmap_name}
-	for key := range input.SecretVariables {
-		input.Variables[key] = fmt.Sprintf("PORTERSECRET_%s.v%d", input.Name, latestVersion)
-	}
-
-	cm, err := agent.CreateVersionedConfigMap(input.Name, input.Namespace, latestVersion, input.Variables, apps...)
-
-	if err != nil {
-		return nil, err
-	}
-
-	secretData := encodeSecrets(input.SecretVariables)
-
-	// create secret first
-	if _, err := agent.CreateLinkedVersionedSecret(input.Name, input.Namespace, cm.ObjectMeta.Name, latestVersion, secretData); err != nil {
-		return nil, err
-	}
-
-	return cm, err
-}
-
-func toEnvGroup(configMap *v1.ConfigMap) (*types.EnvGroup, error) {
-	res := &types.EnvGroup{
-		Namespace: configMap.Namespace,
-		Variables: configMap.Data,
-	}
-
-	// get the name
-	name, nameExists := configMap.Labels["envgroup"]
-
-	if !nameExists {
-		return nil, fmt.Errorf("not a valid configmap: envgroup label does not exist")
-	}
-
-	res.Name = name
-
-	// get the version
-	versionLabelStr, versionLabelExists := configMap.Labels["version"]
-
-	if !versionLabelExists {
-		return nil, fmt.Errorf("not a valid configmap: version label does not exist")
-	}
-
-	versionInt, err := strconv.Atoi(versionLabelStr)
-
-	if err != nil {
-		return nil, fmt.Errorf("not a valid configmap, error converting version: %v", err)
-	}
-
-	res.Version = uint(versionInt)
-
-	// get applications, if they exist
-	appStr, appAnnonExists := configMap.Annotations[kubernetes.PorterAppAnnotationName]
-
-	if appAnnonExists && appStr != "" {
-		res.Applications = strings.Split(appStr, ",")
-	} else {
-		res.Applications = []string{}
-	}
-
-	return res, nil
-}
-
-func getSyncedReleases(helmAgent *helm.Agent, configMap *v1.ConfigMap) ([]*release.Release, error) {
-	res := make([]*release.Release, 0)
-
-	// get applications, if they exist
-	appStr, appAnnonExists := configMap.Annotations[kubernetes.PorterAppAnnotationName]
-
-	if !appAnnonExists || appStr == "" {
-		return res, nil
-	}
-
-	appStrArr := strings.Split(appStr, ",")
-
-	// list all latest helm releases and check them against app string
-	releases, err := helmAgent.ListReleases(configMap.Namespace, &types.ReleaseListFilter{
-		StatusFilter: []string{
-			"deployed",
-			"uninstalled",
-			"pending",
-			"pending-install",
-			"pending-upgrade",
-			"pending-rollback",
-			"failed",
-		},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, rel := range releases {
-		for _, appName := range appStrArr {
-			if rel.Name == appName {
-				res = append(res, rel)
-			}
-		}
-	}
-
-	return res, nil
 }
 
 func rolloutApplications(

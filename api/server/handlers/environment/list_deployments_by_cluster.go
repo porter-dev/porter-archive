@@ -1,9 +1,8 @@
-package namespace
+package environment
 
 import (
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -12,48 +11,41 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetConfigMapHandler struct {
+type ListDeploymentsByClusterHandler struct {
 	handlers.PorterHandlerReadWriter
-	authz.KubernetesAgentGetter
 }
 
-func NewGetConfigMapHandler(
+func NewListDeploymentsByClusterHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetConfigMapHandler {
-	return &GetConfigMapHandler{
+) *ListDeploymentsByClusterHandler {
+	return &ListDeploymentsByClusterHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
-		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.GetConfigMapRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
-
-	namespace := r.Context().Value(types.NamespaceScope).(string)
+func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	agent, err := c.GetAgent(r, cluster, "")
+	req := &types.ListDeploymentRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, req); !ok {
+		return
+	}
+
+	depls, err := c.Repo().Environment().ListDeploymentsByCluster(project.ID, cluster.ID, req.Status...)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	configMap, err := agent.GetConfigMap(request.Name, namespace)
+	res := make([]*types.Deployment, 0)
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	var res = types.GetConfigMapResponse{
-		ConfigMap: configMap,
+	for _, depl := range depls {
+		res = append(res, depl.ToDeploymentType())
 	}
 
 	c.WriteResult(w, r, res)

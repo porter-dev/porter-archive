@@ -140,9 +140,33 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 	return deployAgent, nil
 }
 
+type GetBuildEnvOpts struct {
+	UseNewConfig bool
+	NewConfig    map[string]interface{}
+}
+
 // GetBuildEnv retrieves the build env from the release config and returns it
-func (d *DeployAgent) GetBuildEnv() (map[string]string, error) {
-	return GetEnvForRelease(d.client, d.release.Config, d.opts.ProjectID, d.opts.ClusterID, d.opts.Namespace)
+func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, error) {
+	conf := d.release.Config
+
+	if opts.UseNewConfig {
+		if opts.NewConfig != nil {
+			conf = utils.CoalesceValues(d.release.Config, opts.NewConfig)
+		}
+	}
+
+	env, err := GetEnvForRelease(d.client, conf, d.opts.ProjectID, d.opts.ClusterID, d.opts.Namespace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// add additional env based on options
+	for key, val := range d.opts.SharedOpts.AdditionalEnv {
+		env[key] = val
+	}
+
+	return env, nil
 }
 
 // SetBuildEnv sets the build env vars in the process so that other commands can
@@ -192,7 +216,7 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 
 // Build uses the deploy agent options to build a new container image from either
 // buildpack or docker.
-func (d *DeployAgent) Build() error {
+func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 	// if build is not local, fetch remote source
 	var basePath string
 	buildCtx := d.opts.LocalPath
@@ -246,15 +270,7 @@ func (d *DeployAgent) Build() error {
 		d.tag = currentTag
 	}
 
-	err = d.pullCurrentReleaseImage()
-
-	buildAgent := &BuildAgent{
-		SharedOpts:  d.opts.SharedOpts,
-		client:      d.client,
-		imageRepo:   d.imageRepo,
-		env:         d.env,
-		imageExists: d.imageExists,
-	}
+	currTag, err := d.pullCurrentReleaseImage()
 
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
@@ -262,6 +278,16 @@ func (d *DeployAgent) Build() error {
 	} else if err != nil && err == docker.PullImageErrNotFound {
 		fmt.Println("could not find image, moving to build step")
 		d.imageExists = false
+	} else if err == nil {
+		d.imageExists = true
+	}
+
+	buildAgent := &BuildAgent{
+		SharedOpts:  d.opts.SharedOpts,
+		client:      d.client,
+		imageRepo:   d.imageRepo,
+		env:         d.env,
+		imageExists: d.imageExists,
 	}
 
 	if d.opts.Method == DeployBuildTypeDocker {
@@ -275,7 +301,13 @@ func (d *DeployAgent) Build() error {
 		)
 	}
 
-	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, d.release.BuildConfig)
+	buildConfig := d.release.BuildConfig
+
+	if overrideBuildConfig != nil {
+		buildConfig = overrideBuildConfig
+	}
+
+	return buildAgent.BuildPack(d.agent, buildCtx, d.tag, currTag, buildConfig)
 }
 
 // Push pushes a local image to the remote repository linked in the release
@@ -348,7 +380,7 @@ type SyncedEnvSectionKey struct {
 	Secret bool   `json:"secret" yaml:"secret"`
 }
 
-// GetEnvFromConfig gets the env vars for a standard Porter template config. These env
+// GetEnvForRelease gets the env vars for a standard Porter template config. These env
 // vars are found at `container.env.normal`.
 func GetEnvForRelease(client *client.Client, config map[string]interface{}, projID, clusterID uint, namespace string) (map[string]string, error) {
 	res := make(map[string]string)
@@ -521,35 +553,35 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 	return repoStr, nil
 }
 
-func (d *DeployAgent) pullCurrentReleaseImage() error {
+func (d *DeployAgent) pullCurrentReleaseImage() (string, error) {
 	// pull the currently deployed image to use cache, if possible
 	imageConfig, err := getNestedMap(d.release.Config, "image")
 
 	if err != nil {
-		return fmt.Errorf("could not get image config from release: %s", err.Error())
+		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
 	}
 
 	tagInterface, ok := imageConfig["tag"]
 
 	if !ok {
-		return fmt.Errorf("tag field does not exist for image")
+		return "", fmt.Errorf("tag field does not exist for image")
 	}
 
 	tagStr, ok := tagInterface.(string)
 
 	if !ok {
-		return fmt.Errorf("could not cast image.tag field to string")
+		return "", fmt.Errorf("could not cast image.tag field to string")
 	}
 
 	// if image repo is a hello-porter image, skip
 	if d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter" ||
 		d.imageRepo == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
-		return nil
+		return "", nil
 	}
 
 	fmt.Printf("attempting to pull image: %s\n", fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 
-	return d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
+	return tagStr, d.agent.PullImage(fmt.Sprintf("%s:%s", d.imageRepo, tagStr))
 }
 
 func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {

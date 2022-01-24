@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   GetFinalVariablesFunction,
   KeyValueArrayField,
   KeyValueArrayFieldState,
+  PopulatedEnvGroup,
 } from "../types";
 import sliders from "../../../assets/sliders.svg";
 import upload from "../../../assets/upload.svg";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import useFormField from "../hooks/useFormField";
 import Modal from "../../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
-import _ from "lodash";
+import _, { omit } from "lodash";
+import Helper from "components/form-components/Helper";
+import Heading from "components/form-components/Heading";
 
 interface Props extends KeyValueArrayField {
   id: string;
@@ -22,14 +25,21 @@ const KeyValueArray: React.FC<Props> = (props) => {
   const { state, setState, variables } = useFormField<KeyValueArrayFieldState>(
     props.id,
     {
-      initState: {
-        values: hasSetValue(props)
-          ? (Object.entries(props.value[0])?.map(([k, v]) => {
-              return { key: k, value: v };
-            }) as any[])
-          : [],
-        showEnvModal: false,
-        showEditorModal: false,
+      initState: () => {
+        let values = props.value[0];
+        const normalValues = Object.entries(values?.normal || {});
+        const syncedEnvGroups = values?.synced || [];
+        values = omit(values, ["normal", "synced"]);
+        return {
+          values: hasSetValue(props)
+            ? ([...Object.entries(values), ...normalValues]?.map(([k, v]) => {
+                return { key: k, value: v };
+              }) as any[])
+            : [],
+          showEnvModal: false,
+          showEditorModal: false,
+          synced_env_groups: syncedEnvGroups,
+        };
       },
     }
   );
@@ -156,6 +166,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
         >
           <LoadEnvGroupModal
             existingValues={getProcessedValues(state.values)}
+            syncedEnvGroups={state.synced_env_groups}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
             closeModal={() =>
@@ -165,6 +176,13 @@ const KeyValueArray: React.FC<Props> = (props) => {
                 };
               })
             }
+            setSyncedEnvGroups={(value) => {
+              setState((prev) => {
+                return {
+                  synced_env_groups: [...(prev.synced_env_groups || []), value],
+                };
+              });
+            }}
             setValues={(values) => {
               setState((prev) => {
                 // Transform array to object similar on what we receive from setValues
@@ -227,6 +245,22 @@ const KeyValueArray: React.FC<Props> = (props) => {
     }
   };
 
+  const checkOverridedKey = (key: string) => {
+    const env_group = state.synced_env_groups.find(
+      (env) => env?.variables && env?.variables[key]
+    );
+
+    if (env_group) {
+      return (
+        <Helper color="#f5cb42" style={{ marginLeft: "10px" }}>
+          This variable will be overrided by env group {env_group?.name}
+        </Helper>
+      );
+    }
+
+    return null;
+  };
+
   const renderInputList = () => {
     return (
       <>
@@ -263,6 +297,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
                 }}
                 disabled={props.isReadOnly || value.includes("PORTERSECRET")}
                 spellCheck={false}
+                borderColor={
+                  checkOverridedKey(entry.key) ? "#f5cb42" : undefined
+                }
               />
               <Spacer />
               <Input
@@ -291,6 +328,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
               />
               {renderDeleteButton(i)}
               {renderHiddenOption(value.includes("PORTERSECRET"), i)}
+              {checkOverridedKey(entry.key)}
             </InputWrapper>
           );
         })}
@@ -347,6 +385,30 @@ const KeyValueArray: React.FC<Props> = (props) => {
             )}
           </InputWrapper>
         )}
+        {!!state.synced_env_groups?.length && (
+          <>
+            <Heading>Synced env vars</Heading>
+            {state.synced_env_groups?.map((envGroup: any) => {
+              return (
+                <ExpandableEnvGroup
+                  key={envGroup?.name}
+                  envGroup={envGroup}
+                  onDelete={() => {
+                    setState((prev) => {
+                      const synced = prev.synced_env_groups?.filter(
+                        (env) => env.name !== envGroup.name
+                      );
+                      return {
+                        ...prev,
+                        synced_env_groups: synced,
+                      };
+                    });
+                  }}
+                />
+              );
+            })}
+          </>
+        )}
       </StyledInputArray>
       {renderEnvModal()}
       {renderEditorModal()}
@@ -365,7 +427,9 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
     };
   }
 
-  let obj = {} as any;
+  let obj = {
+    normal: {},
+  } as any;
   const rg = /(?:^|[^\\])(\\n)/g;
   const fixNewlines = (s: string) => {
     while (rg.test(s)) {
@@ -382,17 +446,96 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   };
   state.values.forEach((entry: any, i: number) => {
     if (isNumber(entry.value)) {
-      obj[entry.key] = entry.value;
+      obj.normal[entry.key] = entry.value;
     } else {
-      obj[entry.key] = fixNewlines(entry.value);
+      obj.normal[entry.key] = fixNewlines(entry.value);
     }
   });
+
+  if (state.synced_env_groups?.length) {
+    obj.synced = state.synced_env_groups.map((envGroup) => ({
+      name: envGroup?.name,
+      version: envGroup?.version,
+      keys: Object.entries(envGroup?.variables || {}).map(([key, val]) => ({
+        name: key,
+        secret: val.includes("PORTERSECRET"),
+      })),
+    }));
+  }
+
   return {
     [props.variable]: obj,
   };
 };
 
 export default KeyValueArray;
+
+const ExpandableEnvGroup: React.FC<{
+  envGroup: PopulatedEnvGroup;
+  onDelete: () => void;
+}> = ({ envGroup, onDelete }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  return (
+    <>
+      <StyledCard>
+        <Flex>
+          <ContentContainer>
+            <EventInformation>
+              <EventName>{envGroup.name}</EventName>
+            </EventInformation>
+          </ContentContainer>
+          <ActionContainer>
+            <ActionButton></ActionButton>
+            <ActionButton onClick={() => onDelete()}>
+              <span className="material-icons">delete</span>
+            </ActionButton>
+            <ActionButton onClick={() => setIsExpanded((prev) => !prev)}>
+              <i className="material-icons">
+                {isExpanded ? "arrow_drop_up" : "arrow_drop_down"}
+              </i>
+            </ActionButton>
+          </ActionContainer>
+        </Flex>
+        {isExpanded && (
+          <>
+            {Object.entries(envGroup.variables || {})?.map(
+              ([key, value], i: number) => {
+                // Preprocess non-string env values set via raw Helm values
+                if (typeof value === "object") {
+                  value = JSON.stringify(value);
+                } else {
+                  value = String(value);
+                }
+
+                return (
+                  <InputWrapper key={i}>
+                    <Input
+                      placeholder="ex: key"
+                      width="270px"
+                      value={key}
+                      disabled
+                    />
+                    <Spacer />
+                    <Input
+                      placeholder="ex: value"
+                      width="270px"
+                      value={value}
+                      disabled
+                      type={
+                        value.includes("PORTERSECRET") ? "password" : "text"
+                      }
+                    />
+                  </InputWrapper>
+                );
+              }
+            )}
+          </>
+        )}
+      </StyledCard>
+    </>
+  );
+  return null;
+};
 
 const Spacer = styled.div`
   width: 10px;
@@ -503,18 +646,23 @@ const InputWrapper = styled.div`
   margin-top: 5px;
 `;
 
-const Input = styled.input`
+type InputProps = {
+  disabled?: boolean;
+  width: string;
+  borderColor?: string;
+};
+
+const Input = styled.input<InputProps>`
   outline: none;
   border: none;
   margin-bottom: 5px;
   font-size: 13px;
   background: #ffffff11;
-  border: 1px solid #ffffff55;
+  border: 1px solid
+    ${(props) => (props.borderColor ? props.borderColor : "#ffffff55")};
   border-radius: 3px;
-  width: ${(props: { disabled?: boolean; width: string }) =>
-    props.width ? props.width : "270px"};
-  color: ${(props: { disabled?: boolean; width: string }) =>
-    props.disabled ? "#ffffff44" : "white"};
+  width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
   padding: 5px 10px;
   height: 35px;
 `;
@@ -527,4 +675,82 @@ const Label = styled.div`
 const StyledInputArray = styled.div`
   margin-bottom: 15px;
   margin-top: 22px;
+`;
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const StyledCard = styled.div`
+  border: 1px solid #ffffff00;
+  background: #ffffff08;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  padding: 14px;
+  overflow: hidden;
+  min-height: 60px;
+  font-size: 13px;
+  animation: ${fadeIn} 0.5s;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+`;
+
+const EventInformation = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+`;
+
+const EventName = styled.div`
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+`;
+
+const ActionButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #aaaabb;
+  border: 1px solid #ffffff00;
+
+  :hover {
+    background: #ffffff11;
+    border: 1px solid #ffffff44;
+  }
+
+  > span {
+    font-size: 20px;
+  }
 `;

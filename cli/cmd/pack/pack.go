@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/buildpacks/pack"
-	githubApi "github.com/google/go-github/github"
+	githubApi "github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
@@ -127,7 +127,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		// FIXME: use all the config vars
 	}
 
-	if strings.HasPrefix(buildOpts.Builder, "heroku") {
+	if len(buildOpts.Buildpacks) > 0 && strings.HasPrefix(buildOpts.Builder, "heroku") {
 		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile")
 	}
 

@@ -15,6 +15,7 @@ type TestRepository struct {
 	gitActionConfig           repository.GitActionConfigRepository
 	invite                    repository.InviteRepository
 	release                   repository.ReleaseRepository
+	environment               repository.EnvironmentRepository
 	authCode                  repository.AuthCodeRepository
 	dnsRecord                 repository.DNSRecordRepository
 	pwResetToken              repository.PWResetTokenRepository
@@ -36,6 +37,7 @@ type TestRepository struct {
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
+	database                  repository.DatabaseRepository
 	allowlist                 repository.AllowlistRepository
 }
 
@@ -77,6 +79,10 @@ func (t *TestRepository) Invite() repository.InviteRepository {
 
 func (t *TestRepository) Release() repository.ReleaseRepository {
 	return t.release
+}
+
+func (t *TestRepository) Environment() repository.EnvironmentRepository {
+	return t.environment
 }
 
 func (t *TestRepository) AuthCode() repository.AuthCodeRepository {
@@ -163,6 +169,10 @@ func (t *TestRepository) BuildConfig() repository.BuildConfigRepository {
 	return t.buildConfig
 }
 
+func (t *TestRepository) Database() repository.DatabaseRepository {
+	return t.database
+}
+
 func (t *TestRepository) Allowlist() repository.AllowlistRepository {
 	return t.allowlist
 }
@@ -181,6 +191,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		gitActionConfig:           NewGitActionConfigRepository(canQuery),
 		invite:                    NewInviteRepository(canQuery),
 		release:                   NewReleaseRepository(canQuery),
+		environment:               NewEnvironmentRepository(),
 		authCode:                  NewAuthCodeRepository(canQuery),
 		dnsRecord:                 NewDNSRecordRepository(canQuery),
 		pwResetToken:              NewPWResetTokenRepository(canQuery),
@@ -202,6 +213,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		onboarding:                NewProjectOnboardingRepository(canQuery),
 		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
 		buildConfig:               NewBuildConfigRepository(canQuery),
+		database:                  NewDatabaseRepository(),
 		allowlist:                 NewAllowlistRepository(canQuery),
 	}
 }

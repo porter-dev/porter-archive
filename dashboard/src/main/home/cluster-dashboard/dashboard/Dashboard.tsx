@@ -12,13 +12,23 @@ import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
 import EventsTab from "./events/EventsTab";
+import EnvironmentList from "./preview-environments/EnvironmentList";
+import { useLocation } from "react-router";
+import { getQueryParam } from "shared/routing";
 
-type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "events";
+type TabEnum =
+  | "preview_environments"
+  | "nodes"
+  | "settings"
+  | "namespaces"
+  | "metrics"
+  | "events";
 
 const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
+  { label: "Preview Environments", value: "preview_environments" },
   { label: "Nodes", value: "nodes" },
   { label: "Events", value: "events" },
   { label: "Metrics", value: "metrics" },
@@ -27,13 +37,22 @@ const tabOptions: {
 ];
 
 export const Dashboard: React.FunctionComponent = () => {
-  const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
+  const { currentProject } = useContext(Context);
+  const [currentTab, setCurrentTab] = useState<TabEnum>(() =>
+    currentProject.preview_envs_enabled ? "preview_environments" : "nodes"
+  );
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
+  const location = useLocation();
 
   const context = useContext(Context);
   const renderTab = () => {
     switch (currentTab) {
+      case "preview_environments":
+        if (currentProject.preview_envs_enabled) {
+          return <EnvironmentList />;
+        }
+        return <NodeList />;
       case "events":
         return <EventsTab />;
       case "settings":
@@ -51,6 +70,10 @@ export const Dashboard: React.FunctionComponent = () => {
   useEffect(() => {
     setCurrentTabOptions(
       tabOptions.filter((option) => {
+        if (option.value === "preview_environments") {
+          return currentProject.preview_envs_enabled;
+        }
+
         if (option.value === "settings") {
           return isAuthorized("cluster", "", ["get", "delete"]);
         }
@@ -58,6 +81,13 @@ export const Dashboard: React.FunctionComponent = () => {
       })
     );
   }, [isAuthorized]);
+
+  useEffect(() => {
+    const selectedTab = getQueryParam({ location }, "selected_tab");
+    if (tabOptions.find((tab) => tab.value === selectedTab)) {
+      setCurrentTab(selectedTab as any);
+    }
+  }, [location]);
 
   return (
     <>
@@ -133,7 +163,7 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 20px;
+  margin-top: 36px;
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;

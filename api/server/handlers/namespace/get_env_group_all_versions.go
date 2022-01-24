@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -64,7 +65,7 @@ func (c *GetEnvGroupAllVersionsHandler) ServeHTTP(w http.ResponseWriter, r *http
 	res := make(types.ListEnvGroupsResponse, 0)
 
 	for _, cm := range configMaps {
-		eg, err := toEnvGroup(&cm)
+		eg, err := envgroup.ToEnvGroup(&cm)
 
 		if err != nil {
 			continue

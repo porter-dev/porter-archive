@@ -128,7 +128,7 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
         <DocsHelper
           tooltipText="If you already have an existing image registry, you can connect your existing registry during project creation. If you don't have an image registry or don't know what that means, skip this step. Porter will handle the rest."
           link={
-            "https://porter-docs-demo-22fd462fef4dcd45.onporter.run/getting-started/linking-application-source#connecting-an-existing-image-registry"
+            "https://docs.porter.run/getting-started/linking-application-source#connecting-an-existing-image-registry"
           }
         />
       </Subtitle>

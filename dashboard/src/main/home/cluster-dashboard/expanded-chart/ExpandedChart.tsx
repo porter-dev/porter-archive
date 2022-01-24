@@ -11,12 +11,7 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
-import {
-  ChartType,
-  ClusterType,
-  ResourceType,
-  StorageType,
-} from "shared/types";
+import { ChartType, ClusterType, ResourceType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import StatusIndicator from "components/StatusIndicator";
@@ -32,9 +27,10 @@ import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
-import { integrationList } from "shared/common";
 import DeploymentType from "./DeploymentType";
 import EventsTab from "./events/EventsTab";
+import { PopulatedEnvGroup } from "components/porter-form/types";
+import { onlyInLeft } from "shared/array_utils";
 
 type Props = {
   namespace: string;
@@ -126,9 +122,89 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setImageIsPlaceholer(imageIsPlaceholder);
     setNewestImage(newNewestImage);
 
-    setCurrentChart(res.data);
+    const updatedChart = await populateSyncedEnvGroups(res.data);
 
-    updateComponents(res.data).finally(() => setIsLoadingChartData(false));
+    setCurrentChart(updatedChart);
+
+    updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
+  };
+
+  // At the moment the way the synced env groups are being brought on the helm chart
+  // are not complete and miss important data as the variables and their values.
+  // This function populates all the synced env groups and then injects them inside the chart
+  // used by the PorterForm.
+  // I know its awful pls don't judge.
+  const populateSyncedEnvGroups = async (
+    chart: ChartType
+  ): Promise<ChartType> => {
+    const envGroups = props.currentChart?.config?.container?.env?.synced || [];
+    const promises = Promise.all(
+      envGroups.map(async (envGroup: any) => {
+        const res = await api.getEnvGroup(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: props.currentChart.namespace,
+            name: envGroup?.name,
+            version: envGroup.version,
+          }
+        );
+        return res.data;
+      })
+    );
+
+    try {
+      const envTabIndex = chart.form?.tabs?.findIndex(
+        (tab) => tab.name === "env"
+      );
+
+      if (envTabIndex < 0) {
+        return chart;
+      }
+
+      let envTab = chart.form.tabs[envTabIndex];
+
+      const envVarsSectionIndex = envTab.sections?.findIndex(
+        (tab) => tab.name === "env_vars"
+      );
+
+      if (envVarsSectionIndex < 0) {
+        return chart;
+      }
+
+      let envVarsSection = envTab.sections[envVarsSectionIndex];
+
+      const keyValueIndex = envVarsSection.contents.findIndex(
+        (content) => content.type === "env-key-value-array"
+      );
+
+      if (keyValueIndex < 0) {
+        return chart;
+      }
+
+      let keyValueContent = envVarsSection.contents[keyValueIndex];
+
+      const populatedEnvGroups = await promises;
+
+      keyValueContent.value = [
+        {
+          ...keyValueContent.value[0],
+          synced: populatedEnvGroups,
+        },
+      ];
+
+      const updatedChart = chart;
+
+      updatedChart.form.tabs[envTabIndex].sections[
+        envVarsSectionIndex
+      ].contents[keyValueIndex] = keyValueContent;
+
+      return updatedChart;
+    } catch (error) {
+      throw new Error("Couldn't retrieve synced env groups, try again later");
+    }
   };
 
   const getControllers = async (chart: ChartType) => {
@@ -226,7 +302,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const onSubmit = async (rawValues: any) => {
     console.log("raw", rawValues);
     // Convert dotted keys to nested objects
-    let values = {};
+    let values: any = {};
 
     // Weave in preexisting values and convert to yaml
     if (props.currentChart.config) {
@@ -246,8 +322,81 @@ const ExpandedChart: React.FC<Props> = (props) => {
       ...values,
     });
 
+    const oldSyncedEnvGroups =
+      props.currentChart.config?.container?.env?.synced || [];
+    const newSyncedEnvGroups = values?.container?.env?.synced || [];
+
+    const deletedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      oldSyncedEnvGroups,
+      newSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      newSyncedEnvGroups,
+      oldSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addApplicationToEnvGroupPromises = addedEnvGroups.map(
+      (envGroup: any) => {
+        return api.addApplicationToEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: currentChart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: currentChart.namespace,
+          }
+        );
+      }
+    );
+
+    try {
+      await Promise.all(addApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't sync the env group to the application, please try again."
+      );
+    }
+
+    const removeApplicationToEnvGroupPromises = deletedEnvGroups.map(
+      (envGroup: any) => {
+        return api.removeApplicationFromEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: currentChart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: currentChart.namespace,
+          }
+        );
+      }
+    );
+    try {
+      await Promise.all(removeApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't remove the synced env group from the application, please try again."
+      );
+    }
+
     setSaveValueStatus("loading");
-    getChartData(currentChart);
+
     console.log("valuesYaml", valuesYaml);
     try {
       await api.upgradeChartValues(
@@ -262,6 +411,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
           cluster_id: currentCluster.id,
         }
       );
+
+      getChartData(currentChart);
 
       setSaveValueStatus("successful");
       setForceRefreshRevisions(true);
@@ -286,6 +437,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
         values: valuesYaml,
         error: err,
       });
+
+      return;
     }
   };
 

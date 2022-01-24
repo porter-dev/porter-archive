@@ -1,5 +1,11 @@
-import React, { Component } from "react";
-import styled from "styled-components";
+import React, {
+  Component,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import styled, { keyframes } from "styled-components";
 import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import loading from "assets/loading.gif";
@@ -17,6 +23,12 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import _, { remove, update } from "lodash";
+import { PopulatedEnvGroup } from "components/porter-form/types";
+import { isAuthorized } from "shared/auth/authorization-helpers";
+import useAuth from "shared/auth/useAuth";
+import { fillWithDeletedVariables } from "components/porter-form/utils";
+import DynamicLink from "components/DynamicLink";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -42,260 +54,372 @@ type EnvGroup = {
   version: number;
 };
 
-const tabOptions = [
-  { value: "environment", label: "Environment Variables" },
-  { value: "settings", label: "Settings" },
-];
+// export default withAuth(ExpandedEnvGroup);
 
-class ExpandedEnvGroup extends Component<PropsType, StateType> {
-  state = {
-    loading: true,
-    currentTab: "environment",
-    deleting: false,
-    saveValuesStatus: null as string | null,
-    envGroup: {
-      name: null as string,
-      // timestamp: null as string,
-      variables: [] as KeyValueType[],
-      number: 0,
-    },
-    tabOptions: [
-      { value: "environment", label: "Environment Variables" },
+type EditableEnvGroup = Omit<PopulatedEnvGroup, "variables"> & {
+  variables: KeyValueType[];
+};
+
+export const ExpandedEnvGroupFC = ({
+  envGroup,
+  namespace,
+  closeExpanded,
+}: PropsType) => {
+  const { currentProject, currentCluster, setCurrentOverlay } = useContext(
+    Context
+  );
+  const [isAuthorized] = useAuth();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentTab, setCurrentTab] = useState("variables-editor");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [buttonStatus, setButtonStatus] = useState("");
+
+  const [currentEnvGroup, setCurrentEnvGroup] = useState<EditableEnvGroup>(
+    null
+  );
+  const [originalEnvVars, setOriginalEnvVars] = useState<
+    {
+      key: string;
+      value: string;
+    }[]
+  >();
+
+  const tabOptions = useMemo(() => {
+    if (!isAuthorized("env_group", "", ["get", "delete"])) {
+      return [{ value: "variables-editor", label: "Environment Variables" }];
+    }
+
+    if (
+      !isAuthorized("env_group", "", ["get", "delete"]) &&
+      currentEnvGroup?.applications?.length
+    ) {
+      return [
+        { value: "variables-editor", label: "Environment Variables" },
+        { value: "applications", label: "Linked applications" },
+      ];
+    }
+
+    if (currentEnvGroup?.applications?.length) {
+      return [
+        { value: "variables-editor", label: "Environment Variables" },
+        { value: "applications", label: "Linked applications" },
+        { value: "settings", label: "Settings" },
+      ];
+    }
+
+    return [
+      { value: "variables-editor", label: "Environment Variables" },
       { value: "settings", label: "Settings" },
-    ],
-    newEnvGroupName: null as string,
-  };
+    ];
+  }, [currentEnvGroup]);
 
-  populateEnvGroup = (envGroup: any) => {
-    api
-      .getEnvGroup(
-        "<token>",
-        {},
-        {
-          name: envGroup.name,
-          id: this.context.currentProject.id,
-          namespace: this.props.namespace,
-          cluster_id: this.props.currentCluster.id,
-        }
-      )
-      .then((res) => {
-        console.log("yolo");
-        const variables = [] as KeyValueType[];
-
-        for (const key in res.data.variables) {
-          variables.push({
-            key: key,
-            value: res.data.variables[key],
-            hidden: res.data.variables[key].includes("PORTERSECRET"),
-            locked: res.data.variables[key].includes("PORTERSECRET"),
-            deleted: false,
-          });
-        }
-
-        this.setState({
-          envGroup: {
+  const populateEnvGroup = async () => {
+    try {
+      const populatedEnvGroup = await api
+        .getEnvGroup<PopulatedEnvGroup>(
+          "<token>",
+          {},
+          {
             name: envGroup.name,
-            variables,
-            version: envGroup.version,
-          },
-          newEnvGroupName: envGroup.name,
-        });
+            id: currentProject.id,
+            namespace: namespace,
+            cluster_id: currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
+      updateEnvGroup(populatedEnvGroup);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updateEnvGroup = (populatedEnvGroup: PopulatedEnvGroup) => {
+    const variables: KeyValueType[] = Object.entries(
+      populatedEnvGroup.variables || {}
+    ).map(([key, value]) => ({
+      key: key,
+      value: value,
+      hidden: value.includes("PORTERSECRET"),
+      locked: value.includes("PORTERSECRET"),
+      deleted: false,
+    }));
+
+    setOriginalEnvVars(
+      Object.entries(populatedEnvGroup.variables || {}).map(([key, value]) => ({
+        key,
+        value,
+      }))
+    );
+
+    setCurrentEnvGroup({
+      ...populatedEnvGroup,
+      variables,
+    });
+  };
+
+  const handleDeleteEnvGroup = () => {
+    const { name } = currentEnvGroup;
+
+    setIsDeleting(true);
+    setCurrentOverlay(null);
+    api
+      .deleteEnvGroup(
+        "<token>",
+        {
+          name,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace,
+        }
+      )
+      .then(() => {
+        closeExpanded();
+        setIsDeleting(true);
       })
-      .catch((err) => {
-        console.log(err);
+      .catch(() => {
+        setIsDeleting(true);
       });
   };
 
-  componentDidMount() {
-    this.populateEnvGroup(this.props.envGroup);
+  const handleUpdateValues = async () => {
+    const name = currentEnvGroup.name;
+    let variables = currentEnvGroup.variables;
 
-    // Filter the settings tab options as for now it only shows the delete button.
-    // In a future this should be removed and return to a constant if we want to show data
-    // inside the settings tab. (This is make to avoid confussion for the user)
-    this.setState((prevState) => {
-      return {
-        ...prevState,
-        tabOptions: prevState.tabOptions.filter((option) => {
-          if (option.value === "settings") {
-            return this.props.isAuthorized("env_group", "", ["get", "delete"]);
-          }
-          return true;
+    if (currentEnvGroup.meta_version === 2) {
+      const secretVariables = remove(variables, (envVar) => {
+        return !envVar.value.includes("PORTERSECRET") && envVar.hidden;
+      }).reduce(
+        (acc, variable) => ({
+          ...acc,
+          [variable.key]: variable.value,
         }),
-      };
-    });
-  }
+        {}
+      );
 
-  handleRename = () => {
-    const { namespace } = this.props;
-    const {
-      envGroup: { name },
-      newEnvGroupName: newName,
-    } = this.state;
+      const normalVariables = variables.reduce(
+        (acc, variable) => ({
+          ...acc,
+          [variable.key]: variable.value,
+        }),
+        {}
+      );
 
-    api
-      .renameConfigMap(
-        "<token>",
-        {
-          name,
-          new_name: newName,
-        },
-        {
-          id: this.context.currentProject.id,
-          cluster_id: this.props.currentCluster.id,
-          namespace,
-        }
-      )
-      .then((res) => {
-        this.populateEnvGroup(res.data);
-      });
+      try {
+        const updatedEnvGroup = await api
+          .updateEnvGroup<PopulatedEnvGroup>(
+            "<token>",
+            {
+              name,
+              variables: normalVariables,
+              secret_variables: secretVariables,
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace,
+            }
+          )
+          .then((res) => res.data);
+        updateEnvGroup(updatedEnvGroup);
+      } catch (error) {}
+    } else {
+      const configMapSecretVariables = fillWithDeletedVariables(
+        originalEnvVars.filter((variable) => {
+          return variable.value.includes("PORTERSECRET");
+        }),
+        variables.filter((variable) => {
+          return variable.value.includes("PORTERSECRET") || variable.hidden;
+        })
+      ).reduce(
+        (acc, variable) => ({
+          ...acc,
+          [variable.key]: variable.value,
+        }),
+        {}
+      );
+
+      const configMapVariables = fillWithDeletedVariables(
+        originalEnvVars,
+        variables.filter(
+          (variable) =>
+            !variable.hidden || !variable.value?.includes("PORTERSECRET")
+        )
+      ).reduce(
+        (acc, variable) => ({
+          ...acc,
+          [variable.key]: variable.value,
+        }),
+        {}
+      );
+      console.log({ configMapVariables, configMapSecretVariables });
+      const updatedEnvGroup = await api
+        .updateConfigMap(
+          "<token>",
+          {
+            name,
+            variables: configMapVariables,
+            secret_variables: configMapSecretVariables,
+          },
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace,
+          }
+        )
+        .then((res) => res.data);
+      updateEnvGroup(updatedEnvGroup);
+    }
   };
 
-  handleUpdateValues = () => {
-    const { namespace } = this.props;
-    const {
-      envGroup: { name, variables: envVariables },
-    } = this.state;
-
-    const apiEnvVariables: Record<string, string> = {};
-    const secretEnvVariables: Record<string, string> = {};
-
-    envVariables
-      .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
-        // remove any collisions that are marked as deleted and are duplicates, unless they are
-        // all delete collisions
-        const numDeleteCollisions = self.reduce((n, _envVar: KeyValueType) => {
-          return n + (_envVar.key === envVar.key && envVar.deleted ? 1 : 0);
-        }, 0);
-
-        const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
-          return n + (_envVar.key === envVar.key ? 1 : 0);
-        }, 0);
-
-        if (numCollisions == numDeleteCollisions) {
-          // if all collisions are delete collisions, just remove duplicates
-          return (
-            index ===
-            self.findIndex(
-              (_envVar: KeyValueType) => _envVar.key === envVar.key
-            )
-          );
-        } else if (numCollisions == 1) {
-          // if there's just one collision (self), keep the object
-          return true;
-        } else {
-          // if there are more collisions than delete collisions, remove all duplicates that
-          // are deletions
-          return (
-            index ===
-            self.findIndex(
-              (_envVar: KeyValueType) =>
-                _envVar.key === envVar.key && !_envVar.deleted
-            )
-          );
-        }
-      })
-      .forEach((envVar: KeyValueType) => {
-        if (envVar.hidden) {
-          if (envVar.deleted) {
-            secretEnvVariables[envVar.key] = null;
-          } else if (!envVar.value.includes("PORTERSECRET")) {
-            secretEnvVariables[envVar.key] = envVar.value;
-          }
-        } else {
-          if (envVar.deleted) {
-            apiEnvVariables[envVar.key] = null;
-          } else {
-            apiEnvVariables[envVar.key] = envVar.value;
-          }
-        }
-      });
-
-    this.setState({ saveValuesStatus: "loading" });
-
-    Object.keys(apiEnvVariables).forEach((key) => {
-      if (!apiEnvVariables[key]) {
-        delete apiEnvVariables[key];
-      }
-    });
-    api
-      .createEnvGroup(
-        "<token>",
-        {
-          name,
-          variables: apiEnvVariables,
-          secret_variables: secretEnvVariables,
-        },
-        {
-          id: this.context.currentProject.id,
-          cluster_id: this.props.currentCluster.id,
-          namespace,
-        }
-      )
-      .then((res) => {
-        this.setState({ saveValuesStatus: "successful" });
-      })
-      .catch((err) => {
-        this.setState({ saveValuesStatus: "error" });
-      });
-  };
-
-  renderTabContents = () => {
-    const { namespace } = this.props;
-    const {
-      envGroup: { name, variables },
-      newEnvGroupName: newName,
-      currentTab,
-    } = this.state;
-
-    const isEnvGroupNameValid = isAlphanumeric(newName) && newName !== "";
-    const isEnvGroupNameDifferent = newName !== name;
+  const renderTabContents = () => {
+    const { variables } = currentEnvGroup;
 
     switch (currentTab) {
-      case "environment":
+      case "variables-editor":
         return (
-          <TabWrapper>
-            <InnerWrapper>
-              <Heading>Environment Variables</Heading>
-              <Helper>
-                Set environment variables for your secrets and
-                environment-specific configuration.
-              </Helper>
-              <EnvGroupArray
-                namespace={namespace}
-                values={variables}
-                setValues={(x: any) =>
-                  this.setState((prevState) => ({
-                    envGroup: { ...prevState.envGroup, variables: x },
-                  }))
-                }
-                fileUpload={true}
-                secretOption={true}
-                disabled={
-                  !this.props.isAuthorized("env_group", "", [
-                    "get",
-                    "create",
-                    "delete",
-                    "update",
-                  ])
-                }
-              />
-            </InnerWrapper>
-            {this.props.isAuthorized("env_group", "", ["get", "update"]) && (
-              <SaveButton
-                text="Update"
-                onClick={() => this.handleUpdateValues()}
-                status={this.state.saveValuesStatus}
-                makeFlush={true}
-              />
-            )}
-          </TabWrapper>
+          <EnvGroupVariablesEditor
+            onChange={(x) =>
+              setCurrentEnvGroup((prev) => ({ ...prev, variables: x }))
+            }
+            handleUpdateValues={handleUpdateValues}
+            variables={variables}
+            buttonStatus={buttonStatus}
+          />
         );
+      case "applications":
+        return <ApplicationsList envGroup={currentEnvGroup} />;
       default:
         return (
-          <TabWrapper>
-            {this.props.isAuthorized("env_group", "", ["get", "delete"]) && (
-              <InnerWrapper full={true}>
-                <Heading>Name</Heading>
+          <EnvGroupSettings
+            envGroup={currentEnvGroup}
+            handleDeleteEnvGroup={handleDeleteEnvGroup}
+          />
+        );
+    }
+  };
+
+  useEffect(() => {
+    populateEnvGroup();
+  }, [envGroup]);
+
+  if (!currentEnvGroup) {
+    return null;
+  }
+
+  return (
+    <StyledExpandedChart>
+      <HeaderWrapper>
+        <BackButton onClick={closeExpanded}>
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+        <TitleSection icon={key} iconWidth="33px">
+          {envGroup.name}
+          <TagWrapper>
+            Namespace <NamespaceTag>{namespace}</NamespaceTag>
+          </TagWrapper>
+        </TitleSection>
+      </HeaderWrapper>
+
+      {isDeleting ? (
+        <>
+          <LineBreak />
+          <Placeholder>
+            <TextWrap>
+              <Header>
+                <Spinner src={loading} /> Deleting "{currentEnvGroup.name}"
+              </Header>
+              You will be automatically redirected after deletion is complete.
+            </TextWrap>
+          </Placeholder>
+        </>
+      ) : (
+        <TabRegion
+          currentTab={currentTab}
+          setCurrentTab={(x: string) => setCurrentTab(x)}
+          options={tabOptions}
+          color={null}
+        >
+          {renderTabContents()}
+        </TabRegion>
+      )}
+    </StyledExpandedChart>
+  );
+};
+
+export default ExpandedEnvGroupFC;
+
+const EnvGroupVariablesEditor = ({
+  onChange,
+  handleUpdateValues,
+  variables,
+  buttonStatus,
+}: {
+  variables: KeyValueType[];
+  buttonStatus: any;
+  onChange: (newValues: any) => void;
+  handleUpdateValues: () => void;
+}) => {
+  const [isAuthorized] = useAuth();
+
+  return (
+    <TabWrapper>
+      <InnerWrapper>
+        <Heading>Environment Variables</Heading>
+        <Helper>
+          Set environment variables for your secrets and environment-specific
+          configuration.
+        </Helper>
+        <EnvGroupArray
+          values={variables}
+          setValues={(x: any) => {
+            onChange(x);
+          }}
+          fileUpload={true}
+          secretOption={true}
+          disabled={
+            !isAuthorized("env_group", "", [
+              "get",
+              "create",
+              "delete",
+              "update",
+            ])
+          }
+        />
+      </InnerWrapper>
+      {isAuthorized("env_group", "", ["get", "update"]) && (
+        <SaveButton
+          text="Update"
+          onClick={() => handleUpdateValues()}
+          status={buttonStatus}
+          makeFlush={true}
+        />
+      )}
+    </TabWrapper>
+  );
+};
+
+const EnvGroupSettings = ({
+  envGroup,
+  handleDeleteEnvGroup,
+}: {
+  envGroup: EditableEnvGroup;
+  handleDeleteEnvGroup: () => void;
+}) => {
+  const { setCurrentOverlay } = useContext(Context);
+  const [isAuthorized] = useAuth();
+
+  const canDelete = useMemo(() => {
+    return envGroup?.applications.length === 0;
+  }, [envGroup]);
+
+  return (
+    <TabWrapper>
+      {isAuthorized("env_group", "", ["get", "delete"]) && (
+        <InnerWrapper full={true}>
+          {/* <Heading>Name</Heading>
                 <Subtitle>
                   <Warning makeFlush={true} highlight={!isEnvGroupNameValid}>
                     Lowercase letters, numbers, and "-" only.
@@ -319,133 +443,67 @@ class ExpandedEnvGroup extends Component<PropsType, StateType> {
                   Rename {name}
                 </Button>
 
-                <DarkMatter />
+                <DarkMatter /> */}
 
-                <Heading>Manage Environment Group</Heading>
-                <Helper>
-                  Permanently delete this set of environment variables. This
-                  action cannot be undone.
-                </Helper>
-                <Button
-                  color="#b91133"
-                  onClick={() => {
-                    this.context.setCurrentOverlay({
-                      message: `Are you sure you want to delete ${this.state.envGroup.name}?`,
-                      onYes: this.handleDeleteEnvGroup,
-                      onNo: () => this.context.setCurrentOverlay(null),
-                    });
-                  }}
-                >
-                  Delete {name}
-                </Button>
-              </InnerWrapper>
-            )}
-          </TabWrapper>
-        );
-    }
-  };
-
-  readableDate = (s: string) => {
-    const ts = new Date(s);
-    const date = ts.toLocaleDateString();
-    const time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
-  handleDeleteEnvGroup = () => {
-    const { namespace } = this.props;
-    const {
-      envGroup: { name },
-    } = this.state;
-
-    this.setState({ deleting: true });
-    this.context.setCurrentOverlay(null);
-    api
-      .deleteEnvGroup(
-        "<token>",
-        {
-          name,
-        },
-        {
-          id: this.context.currentProject.id,
-          cluster_id: this.props.currentCluster.id,
-          namespace,
-        }
-      )
-      .then((res) => {
-        this.props.closeExpanded();
-        this.setState({ deleting: false });
-      })
-      .catch((err) => {
-        this.setState({ deleting: false });
-      });
-  };
-
-  render() {
-    const { namespace, closeExpanded } = this.props;
-    const {
-      envGroup: { name, timestamp },
-    } = this.state;
-
-    return (
-      <>
-        <StyledExpandedChart>
-          <HeaderWrapper>
-            <BackButton onClick={closeExpanded}>
-              <BackButtonImg src={backArrow} />
-            </BackButton>
-            <TitleSection icon={key} iconWidth="33px">
-              {name}
-              <TagWrapper>
-                Namespace <NamespaceTag>{namespace}</NamespaceTag>
-              </TagWrapper>
-            </TitleSection>
-          </HeaderWrapper>
-
-          {/*
-          <InfoWrapper>
-            <LastDeployed>
-              Last updated {this.readableDate(timestamp)}
-            </LastDeployed>
-          </InfoWrapper>
-          */}
-
-          {this.state.deleting ? (
-            <>
-              <LineBreak />
-              <Placeholder>
-                <TextWrap>
-                  <Header>
-                    <Spinner src={loading} /> Deleting "
-                    {this.state.envGroup.name}"
-                  </Header>
-                  You will be automatically redirected after deletion is
-                  complete.
-                </TextWrap>
-              </Placeholder>
-            </>
-          ) : (
-            <TabRegion
-              currentTab={this.state.currentTab}
-              setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-              options={this.state.tabOptions}
-              color={null}
-            >
-              {this.renderTabContents()}
-            </TabRegion>
+          <Heading>Manage Environment Group</Heading>
+          <Helper>
+            Permanently delete this set of environment variables. This action
+            cannot be undone.
+          </Helper>
+          {!canDelete && (
+            <Helper color="#f5cb42">
+              Looks like you still have applications syncedto this env group.
+              Please remove this env group from those applications to delete
+            </Helper>
           )}
-        </StyledExpandedChart>
-      </>
-    );
-  }
-}
+          <Button
+            color="#b91133"
+            onClick={() => {
+              setCurrentOverlay({
+                message: `Are you sure you want to delete ${name}?`,
+                onYes: handleDeleteEnvGroup,
+                onNo: () => setCurrentOverlay(null),
+              });
+            }}
+            disabled={!canDelete}
+          >
+            Delete {envGroup.name}
+          </Button>
+        </InnerWrapper>
+      )}
+    </TabWrapper>
+  );
+};
 
-ExpandedEnvGroup.contextType = Context;
+const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
+  const { currentCluster } = useContext(Context);
 
-export default withAuth(ExpandedEnvGroup);
+  return (
+    <>
+      {envGroup.applications.map((appName) => {
+        return (
+          <StyledCard>
+            <Flex>
+              <ContentContainer>
+                <EventInformation>
+                  <EventName>{appName}</EventName>
+                </EventInformation>
+              </ContentContainer>
+              <ActionContainer>
+                <ActionButton
+                  to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                  target="_blank"
+                >
+                  <span className="material-icons-outlined">open_in_new</span>
+                </ActionButton>
+              </ActionContainer>
+            </Flex>
+          </StyledCard>
+        );
+      })}
+    </>
+  );
+};
 
 const Header = styled.div`
   font-weight: 500;
@@ -627,11 +685,6 @@ const StyledExpandedChart = styled.div`
   }
 `;
 
-const DarkMatter = styled.div<{ antiHeight?: string }>`
-  width: 100%;
-  margin-top: ${(props) => props.antiHeight || "-15px"};
-`;
-
 const Warning = styled.span<{ highlight: boolean; makeFlush?: boolean }>`
   color: ${(props) => (props.highlight ? "#f5cb42" : "")};
   margin-left: ${(props) => (props.makeFlush ? "" : "5px")};
@@ -645,4 +698,82 @@ const Subtitle = styled.div`
   line-height: 1.6em;
   display: flex;
   align-items: center;
+`;
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const StyledCard = styled.div`
+  border: 1px solid #ffffff00;
+  background: #ffffff08;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  padding: 14px;
+  overflow: hidden;
+  min-height: 60px;
+  font-size: 13px;
+  animation: ${fadeIn} 0.5s;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+`;
+
+const EventInformation = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+`;
+
+const EventName = styled.div`
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+`;
+
+const ActionButton = styled(DynamicLink)`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #aaaabb;
+  border: 1px solid #ffffff00;
+
+  :hover {
+    background: #ffffff11;
+    border: 1px solid #ffffff44;
+  }
+
+  > span {
+    font-size: 20px;
+  }
 `;

@@ -119,6 +119,7 @@ const ProvisionResources: React.FC<Props> = () => {
               project_id={project?.id}
               filter={getFilterOpts()}
               setInfraStatus={setInfraStatus}
+              enableNewestInfraFilter
             />
             <Br />
             <Helper>Note: Provisioning can take up to 15 minutes.</Helper>
@@ -164,7 +165,7 @@ const ProvisionResources: React.FC<Props> = () => {
         <DocsHelper
           tooltipText="Porter provisions and manages the underlying infrastructure in your own cloud. It is not necessary to know about the provisioned resources to use Porter."
           link={
-            "https://porter-docs-demo-22fd462fef4dcd45.onporter.run/getting-started/provisioning-infrastructure#faq"
+            "https://docs.porter.run/getting-started/provisioning-infrastructure#faq"
           }
         />
       </Subtitle>

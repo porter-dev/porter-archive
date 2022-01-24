@@ -11,12 +11,14 @@ type GormRepository struct {
 	session                   repository.SessionRepository
 	project                   repository.ProjectRepository
 	cluster                   repository.ClusterRepository
+	database                  repository.DatabaseRepository
 	helmRepo                  repository.HelmRepoRepository
 	registry                  repository.RegistryRepository
 	gitRepo                   repository.GitRepoRepository
 	gitActionConfig           repository.GitActionConfigRepository
 	invite                    repository.InviteRepository
 	release                   repository.ReleaseRepository
+	environment               repository.EnvironmentRepository
 	authCode                  repository.AuthCodeRepository
 	dnsRecord                 repository.DNSRecordRepository
 	pwResetToken              repository.PWResetTokenRepository
@@ -57,6 +59,10 @@ func (t *GormRepository) Cluster() repository.ClusterRepository {
 	return t.cluster
 }
 
+func (t *GormRepository) Database() repository.DatabaseRepository {
+	return t.database
+}
+
 func (t *GormRepository) HelmRepo() repository.HelmRepoRepository {
 	return t.helmRepo
 }
@@ -79,6 +85,10 @@ func (t *GormRepository) Invite() repository.InviteRepository {
 
 func (t *GormRepository) Release() repository.ReleaseRepository {
 	return t.release
+}
+
+func (t *GormRepository) Environment() repository.EnvironmentRepository {
+	return t.environment
 }
 
 func (t *GormRepository) AuthCode() repository.AuthCodeRepository {
@@ -177,12 +187,14 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		session:                   NewSessionRepository(db),
 		project:                   NewProjectRepository(db),
 		cluster:                   NewClusterRepository(db, key),
+		database:                  NewDatabaseRepository(db, key),
 		helmRepo:                  NewHelmRepoRepository(db, key),
 		registry:                  NewRegistryRepository(db, key),
 		gitRepo:                   NewGitRepoRepository(db, key),
 		gitActionConfig:           NewGitActionConfigRepository(db),
 		invite:                    NewInviteRepository(db),
 		release:                   NewReleaseRepository(db),
+		environment:               NewEnvironmentRepository(db),
 		authCode:                  NewAuthCodeRepository(db),
 		dnsRecord:                 NewDNSRecordRepository(db),
 		pwResetToken:              NewPWResetTokenRepository(db),

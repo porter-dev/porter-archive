@@ -51,6 +51,8 @@ type Cluster struct {
 
 	InfraID uint `json:"infra_id"`
 
+	NotificationsDisabled bool `json:"notifications_disabled"`
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------

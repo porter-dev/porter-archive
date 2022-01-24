@@ -292,7 +292,13 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	if opts.Method == DeployBuildTypeDocker {
-		err = buildAgent.BuildDocker(agent, opts.LocalPath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
+		basePath, err := filepath.Abs(".")
+
+		if err != nil {
+			return "", err
+		}
+
+		err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
 	} else {
 		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
 	}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   GetFinalVariablesFunction,
   KeyValueArrayField,
@@ -16,6 +16,9 @@ import { hasSetValue } from "../utils";
 import _, { omit } from "lodash";
 import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
+import Loading from "components/Loading";
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 interface Props extends KeyValueArrayField {
   id: string;
@@ -28,7 +31,6 @@ const KeyValueArray: React.FC<Props> = (props) => {
       initState: () => {
         let values = props.value[0];
         const normalValues = Object.entries(values?.normal || {});
-        const syncedEnvGroups = values?.synced || [];
         values = omit(values, ["normal", "synced"]);
         return {
           values: hasSetValue(props)
@@ -38,13 +40,55 @@ const KeyValueArray: React.FC<Props> = (props) => {
             : [],
           showEnvModal: false,
           showEditorModal: false,
-          synced_env_groups: syncedEnvGroups,
+          synced_env_groups: null,
         };
       },
     }
   );
 
+  const { currentProject } = useContext(Context);
+
+  useEffect(() => {
+    if (hasSetValue(props) && !Array.isArray(state?.synced_env_groups)) {
+      const values = props.value[0];
+      const envGroups = values?.synced || [];
+      const promises = Promise.all(
+        envGroups.map(async (envGroup: any) => {
+          const res = await api.getEnvGroup(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              cluster_id: variables.clusterId,
+              namespace: variables.namespace,
+              name: envGroup?.name,
+              version: envGroup.version,
+            }
+          );
+          return res.data;
+        })
+      );
+
+      promises.then((populatedEnvGroups) => {
+        setState(() => ({
+          synced_env_groups: Array.isArray(populatedEnvGroups)
+            ? populatedEnvGroups
+            : [],
+        }));
+      });
+    }
+  }, [
+    props.value[0],
+    variables?.clusterId,
+    variables?.namespace,
+    currentProject?.id,
+  ]);
+
   if (state == undefined) return <></>;
+
+  if (!Array.isArray(state.synced_env_groups)) {
+    return <Loading />;
+  }
 
   const parseEnv = (src: any, options: any) => {
     const debug = Boolean(options && options.debug);

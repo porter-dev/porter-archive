@@ -7,11 +7,15 @@ import DatabasesHome from "./DatabasesHome";
 
 const DatabasesRoutes = () => {
   const { url } = useRouteMatch();
-  const { currentCluster } = useContext(Context);
+  const { currentCluster, currentProject } = useContext(Context);
   const { pushFiltered } = useRouting();
 
   useLayoutEffect(() => {
-    if (currentCluster.service !== "eks") {
+    if (
+      currentCluster.service !== "eks" &&
+      currentCluster.infra_id <= 0 &&
+      !currentProject.enable_rds_databases
+    ) {
       pushFiltered("/cluster-dashboard", []);
     }
   }, [currentCluster]);

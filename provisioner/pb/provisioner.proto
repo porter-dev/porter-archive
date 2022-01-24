@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "github.com/porter-dev/porter/provisioner";
+
+// Provisioner represents the service for managing, updating, and deleting infrastructure.
+service Provisioner {
+     // Server-to-client streaming RPC that returns an update to the state.
+    rpc GetState(Infra) returns (stream StateUpdate) {}
+}
+
+message Infra {
+    int64 id = 1;
+    string suffix = 2;
+}
+
+message StateUpdate {
+    string resource_id = 1; 
+    string update = 2;
+}

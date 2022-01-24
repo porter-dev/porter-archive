@@ -56,7 +56,8 @@ type Project struct {
 	AWSIntegrations   []ints.AWSIntegration   `json:"aws_integrations"`
 	GCPIntegrations   []ints.GCPIntegration   `json:"gcp_integrations"`
 
-	PreviewEnvsEnabled bool
+	PreviewEnvsEnabled  bool
+	RDSDatabasesEnabled bool
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
@@ -68,9 +69,10 @@ func (p *Project) ToProjectType() *types.Project {
 	}
 
 	return &types.Project{
-		ID:                 p.ID,
-		Name:               p.Name,
-		Roles:              roles,
-		PreviewEnvsEnabled: p.PreviewEnvsEnabled,
+		ID:                  p.ID,
+		Name:                p.Name,
+		Roles:               roles,
+		PreviewEnvsEnabled:  p.PreviewEnvsEnabled,
+		RDSDatabasesEnabled: p.RDSDatabasesEnabled,
 	}
 }

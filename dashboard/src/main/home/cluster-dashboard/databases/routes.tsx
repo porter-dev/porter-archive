@@ -14,7 +14,7 @@ const DatabasesRoutes = () => {
     if (
       currentCluster.service !== "eks" &&
       currentCluster.infra_id <= 0 &&
-      currentProject.enable_rds_databases
+      !currentProject.enable_rds_databases
     ) {
       pushFiltered("/cluster-dashboard", []);
     }

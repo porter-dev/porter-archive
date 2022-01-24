@@ -1,16 +1,10 @@
-package handlers
+package grpc
 
-// import (
-// 	"encoding/json"
-// 	"io/ioutil"
-// 	"log"
-// 	"net/http"
-// 	"strings"
+import "github.com/porter-dev/porter/provisioner/pb"
 
-// 	"github.com/gin-gonic/gin"
-// 	"github.com/porter-dev/tf-http-backend/models"
-// 	"github.com/porter-dev/tf-http-backend/pkg/processor"
-// )
+type ProvisionerServer struct {
+	pb.UnimplementedProvisionerServer
+}
 
 // // StreamLogMsg is responsible for handling the POST of the
 // // log message from provisioner cli and pushing the content

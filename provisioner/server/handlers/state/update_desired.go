@@ -1,4 +1,28 @@
-package handlers
+package state
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/porter-dev/porter/provisioner/server/config"
+)
+
+type DesiredStateUpdateHandler struct {
+	Config *config.Config
+}
+
+func NewDesiredStateUpdateHandler(
+	config *config.Config,
+) *DesiredStateUpdateHandler {
+	return &DesiredStateUpdateHandler{
+		Config: config,
+	}
+}
+
+func (c *DesiredStateUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// TODO: read the state from the state storage interface
+	fmt.Println("POST desired state handler called")
+}
 
 // import (
 // 	"bytes"

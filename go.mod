@@ -8,7 +8,7 @@ require (
 	github.com/BurntSushi/toml v0.4.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/aws/aws-sdk-go v1.35.4
-	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3 // indirect
+	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
 	github.com/buildpacks/pack v0.19.0
 	github.com/cli/cli v1.11.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -25,7 +25,6 @@ require (
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/go-test/deep v1.0.7
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
-	github.com/google/go-github/v29 v29.0.3 // indirect
 	github.com/google/go-github/v39 v39.2.0 // indirect
 	github.com/google/go-github/v41 v41.0.0
 	github.com/gorilla/schema v1.2.0
@@ -58,6 +57,8 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
+	google.golang.org/grpc v1.38.0
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.0.2

@@ -1,14 +1,28 @@
-package handlers
+package state
 
-// import (
-// 	"bytes"
-// 	"encoding/json"
-// 	"log"
-// 	"net/http"
+import (
+	"fmt"
+	"net/http"
 
-// 	"github.com/gin-gonic/gin"
-// 	"github.com/porter-dev/tf-http-backend/models"
-// )
+	"github.com/porter-dev/porter/provisioner/server/config"
+)
+
+type RawStateGetHandler struct {
+	Config *config.Config
+}
+
+func NewRawStateGetHandler(
+	config *config.Config,
+) *RawStateGetHandler {
+	return &RawStateGetHandler{
+		Config: config,
+	}
+}
+
+func (c *RawStateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// TODO: read the state from the state storage interface
+	fmt.Println("GET raw state handler called")
+}
 
 // func GetState(c *gin.Context) {
 // 	orgID := c.Param("org")
@@ -62,39 +76,4 @@ package handlers
 // 	}
 
 // 	c.JSON(http.StatusOK, body)
-// }
-
-// func UpdateState(c *gin.Context) {
-// 	log.Println("updating/creating state")
-
-// 	var state models.TFState
-// 	err := c.BindJSON(&state)
-// 	if err != nil {
-// 		log.Fatalln("cannot read request body", err)
-// 	}
-
-// 	orgID := c.Param("org")
-
-// 	data, err := json.Marshal(state)
-// 	if err != nil {
-// 		log.Printf("cannot marshal json. error: %s\n", err.Error())
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"error": "cannot marshal JSON",
-// 		})
-
-// 		return
-// 	}
-
-// 	err = s3Client.PutObject(orgID, "default.tfstate", data)
-// 	if err != nil {
-// 		log.Printf("cannot create state file. error: %s\n", err.Error())
-// 		c.JSON(http.StatusInternalServerError, gin.H{
-// 			"error": "cannot create state file",
-// 		})
-
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusCreated, gin.H{})
-// 	return
 // }

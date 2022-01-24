@@ -1,4 +1,9 @@
-package handlers
+package config
+
+// TODO: declare config and read config from environment
+
+// config -- s3, provisioner driver, database URI, etc
+type Config struct{}
 
 // var s3Client *s3.Client
 // var redisClient *redis.Client

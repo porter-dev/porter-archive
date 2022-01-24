@@ -65,12 +65,14 @@ export const ExpandedEnvGroupFC = ({
   namespace,
   closeExpanded,
 }: PropsType) => {
-  const { currentProject, currentCluster, setCurrentOverlay } = useContext(
-    Context
-  );
+  const {
+    currentProject,
+    currentCluster,
+    setCurrentOverlay,
+    setCurrentError,
+  } = useContext(Context);
   const [isAuthorized] = useAuth();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState("variables-editor");
   const [isDeleting, setIsDeleting] = useState(false);
   const [buttonStatus, setButtonStatus] = useState("");
@@ -185,6 +187,7 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const handleUpdateValues = async () => {
+    setButtonStatus("loading");
     const name = currentEnvGroup.name;
     let variables = currentEnvGroup.variables;
 
@@ -223,8 +226,14 @@ export const ExpandedEnvGroupFC = ({
             }
           )
           .then((res) => res.data);
+        setButtonStatus("successful");
         updateEnvGroup(updatedEnvGroup);
-      } catch (error) {}
+        setTimeout(() => setButtonStatus(""), 1000);
+      } catch (error) {
+        setButtonStatus("Couldn't update successfully");
+        setCurrentError(error);
+        setTimeout(() => setButtonStatus(""), 1000);
+      }
     } else {
       const configMapSecretVariables = fillWithDeletedVariables(
         originalEnvVars.filter((variable) => {
@@ -254,23 +263,31 @@ export const ExpandedEnvGroupFC = ({
         }),
         {}
       );
-      console.log({ configMapVariables, configMapSecretVariables });
-      const updatedEnvGroup = await api
-        .updateConfigMap(
-          "<token>",
-          {
-            name,
-            variables: configMapVariables,
-            secret_variables: configMapSecretVariables,
-          },
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            namespace,
-          }
-        )
-        .then((res) => res.data);
-      updateEnvGroup(updatedEnvGroup);
+
+      try {
+        const updatedEnvGroup = await api
+          .updateConfigMap(
+            "<token>",
+            {
+              name,
+              variables: configMapVariables,
+              secret_variables: configMapSecretVariables,
+            },
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace,
+            }
+          )
+          .then((res) => res.data);
+        setButtonStatus("successful");
+        updateEnvGroup(updatedEnvGroup);
+        setTimeout(() => setButtonStatus(""), 1000);
+      } catch (error) {
+        setButtonStatus("Couldn't update successfully");
+        setCurrentError(error);
+        setTimeout(() => setButtonStatus(""), 1000);
+      }
     }
   };
 

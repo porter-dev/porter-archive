@@ -568,6 +568,10 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
+	// see if container is ready and able to open a stream. If not, wait for container
+	// to be ready.
+	err, _ = a.waitForPod(pod)
+
 	if err != nil && goerrors.Is(err, IsNotFoundError) {
 		return IsNotFoundError
 	} else if err != nil {
@@ -664,16 +668,6 @@ func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContai
 		return nil, fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
-	// see if container is ready and able to open a stream. If not, wait for container
-	// to be ready.
-	err, _ = a.waitForPod(pod)
-
-	if err != nil && goerrors.Is(err, IsNotFoundError) {
-		return nil, IsNotFoundError
-	} else if err != nil {
-		return nil, fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
-	}
-
 	container := pod.Spec.Containers[0].Name
 
 	if len(selectedContainer) > 0 {
@@ -709,11 +703,11 @@ func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContai
 	defer podLogs.Close()
 
 	r := bufio.NewReader(podLogs)
-	logs := make([]string, 0)
+	var logs []string
 
 	for {
 		line, err := r.ReadString('\n')
-		logs = append(logs, line+"\n")
+		logs = append(logs, line)
 
 		if err == io.EOF {
 			break

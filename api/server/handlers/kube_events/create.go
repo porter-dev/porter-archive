@@ -113,6 +113,11 @@ func notifyPodCrashing(
 	cluster *models.Cluster,
 	event *types.CreateKubeEventRequest,
 ) error {
+	// if cluster has notifications turned off, don't alert
+	if cluster.NotificationsDisabled {
+		return nil
+	}
+
 	// attempt to get a matching Porter release to get the notification configuration
 	var conf *models.NotificationConfig
 	var notifConfig *types.NotificationConfig

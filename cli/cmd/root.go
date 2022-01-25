@@ -51,7 +51,7 @@ func Execute() {
 						} else {
 							color.New(color.FgYellow).Add(color.Bold).Fprintln(os.Stderr, "/bin/bash -c \"$(curl -fsSL https://install.porter.run)\"")
 						}
-
+						color.New(color.FgYellow).Fprintln(os.Stderr, "View CLI installation and upgrade docs at https://docs.porter.run/cli/installation\n")
 					}
 				}
 			}

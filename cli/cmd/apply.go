@@ -132,6 +132,8 @@ type Target struct {
 }
 
 type ApplicationConfig struct {
+	WaitForJob bool
+
 	Build struct {
 		Method     string
 		Context    string
@@ -313,6 +315,19 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 
 	if err = d.assignOutput(resource, client); err != nil {
 		return nil, err
+	}
+
+	if d.source.Name == "job" && appConfig.WaitForJob {
+		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
+
+		name = resource.Name
+		namespace = d.target.Namespace
+
+		err = waitForJob(nil, client, []string{})
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return resource, err
@@ -621,6 +636,11 @@ func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationCo
 
 	if err != nil {
 		return nil, err
+	}
+
+	if _, ok := resource.Config["waitForJob"]; !ok && d.source.Name == "job" {
+		// default to true and wait for the job to finish
+		config.WaitForJob = true
 	}
 
 	return config, nil

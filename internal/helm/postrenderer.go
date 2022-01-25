@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
@@ -17,6 +18,54 @@ import (
 
 	"github.com/docker/distribution/reference"
 )
+
+type PorterPostrenderer struct {
+	DockerSecretsPostRenderer       *DockerSecretsPostRenderer
+	EnvironmentVariablePostrenderer *EnvironmentVariablePostrenderer
+}
+
+func NewPorterPostrenderer(
+	cluster *models.Cluster,
+	repo repository.Repository,
+	agent *kubernetes.Agent,
+	namespace string,
+	regs []*models.Registry,
+	doAuth *oauth2.Config,
+) (postrender.PostRenderer, error) {
+
+	dockerSecretsPostrenderer, err := NewDockerSecretsPostRenderer(cluster, repo, agent, namespace, regs, doAuth)
+
+	if err != nil {
+		return nil, err
+	}
+
+	envVarPostrenderer, err := NewEnvironmentVariablePostrenderer()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &PorterPostrenderer{
+		DockerSecretsPostRenderer:       dockerSecretsPostrenderer,
+		EnvironmentVariablePostrenderer: envVarPostrenderer,
+	}, nil
+}
+
+func (p *PorterPostrenderer) Run(
+	renderedManifests *bytes.Buffer,
+) (modifiedManifests *bytes.Buffer, err error) {
+	fmt.Println("RUNNING PORTER POSTRENDERER")
+
+	dockerModifiedManifests, err := p.DockerSecretsPostRenderer.Run(renderedManifests)
+
+	if err != nil {
+		return nil, err
+	}
+
+	envVarModifiedManifests, err := p.EnvironmentVariablePostrenderer.Run(dockerModifiedManifests)
+
+	return envVarModifiedManifests, err
+}
 
 // DockerSecretsPostRenderer is a Helm post-renderer that adds image pull secrets to
 // pod specs that would otherwise be unable to pull an image.
@@ -49,7 +98,7 @@ func NewDockerSecretsPostRenderer(
 	namespace string,
 	regs []*models.Registry,
 	doAuth *oauth2.Config,
-) (postrender.PostRenderer, error) {
+) (*DockerSecretsPostRenderer, error) {
 	// Registries is a map of registry URLs to registry ids
 	registries := make(map[string]*models.Registry)
 
@@ -200,7 +249,8 @@ func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes
 	// that a secret will be generated for, if it does not exist
 	linkedRegs := make(map[string]*models.Registry)
 
-	err := d.decodeRenderedManifests(renderedManifests)
+	var err error
+	d.resources, err = decodeRenderedManifests(renderedManifests)
 
 	if err != nil {
 		return linkedRegs, err
@@ -242,9 +292,11 @@ func (d *DockerSecretsPostRenderer) getRegistriesToLink(renderedManifests *bytes
 	return linkedRegs, nil
 }
 
-func (d *DockerSecretsPostRenderer) decodeRenderedManifests(
+func decodeRenderedManifests(
 	renderedManifests *bytes.Buffer,
-) error {
+) ([]resource, error) {
+	resArr := make([]resource, 0)
+
 	// use the yaml decoder to parse the multi-document yaml.
 	decoder := yaml.NewDecoder(renderedManifests)
 
@@ -256,13 +308,13 @@ func (d *DockerSecretsPostRenderer) decodeRenderedManifests(
 		}
 
 		if err != nil {
-			return err
+			return resArr, err
 		}
 
-		d.resources = append(d.resources, res)
+		resArr = append(resArr, res)
 	}
 
-	return nil
+	return resArr, nil
 }
 
 func (d *DockerSecretsPostRenderer) getPodSpecs(resources []resource) {
@@ -457,6 +509,253 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 	return isNative
 }
 
+// EnvironmentVariablePostrenderer removes duplicated environment variables, giving preference to synced
+// env vars
+type EnvironmentVariablePostrenderer struct {
+	podSpecs  []resource
+	resources []resource
+}
+
+func NewEnvironmentVariablePostrenderer() (*EnvironmentVariablePostrenderer, error) {
+	return &EnvironmentVariablePostrenderer{
+		podSpecs:  make([]resource, 0),
+		resources: make([]resource, 0),
+	}, nil
+}
+
+func (e *EnvironmentVariablePostrenderer) Run(
+	renderedManifests *bytes.Buffer,
+) (modifiedManifests *bytes.Buffer, err error) {
+	fmt.Println("RUNNING ENV VAR POSTRENDERER", len(e.resources))
+
+	e.resources, err = decodeRenderedManifests(renderedManifests)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Check to see if the resources loaded into the postrenderer contain a configmap
+	// with a manifest that needs env var cleanup as well. If this is the case, create and
+	// run another postrenderer for this specific manifest.
+	for i, res := range e.resources {
+		kindVal, hasKind := res["kind"]
+
+		if !hasKind {
+			continue
+		}
+
+		kind, ok := kindVal.(string)
+
+		if !ok {
+			continue
+		}
+
+		if kind == "ConfigMap" {
+			labelVal := getNestedResource(res, "metadata", "labels")
+
+			if labelVal == nil {
+				continue
+			}
+
+			porterLabelVal, exists := labelVal["getporter.dev/manifest"]
+
+			if !exists {
+				continue
+			}
+
+			if labelValStr, ok := porterLabelVal.(string); ok && labelValStr == "true" {
+				data := getNestedResource(res, "data")
+				manifestData, exists := data["manifest"]
+
+				if !exists {
+					continue
+				}
+
+				manifestDataStr, ok := manifestData.(string)
+
+				if !ok {
+					continue
+				}
+
+				dCopy := &EnvironmentVariablePostrenderer{
+					podSpecs:  make([]resource, 0),
+					resources: make([]resource, 0),
+				}
+
+				newData, err := dCopy.Run(bytes.NewBufferString(manifestDataStr))
+
+				if err != nil {
+					continue
+				}
+
+				data["manifest"] = string(newData.Bytes())
+
+				e.resources[i] = res
+			}
+		}
+	}
+
+	e.getPodSpecs(e.resources)
+	e.updatePodSpecs()
+
+	modifiedManifests = bytes.NewBuffer([]byte{})
+	encoder := yaml.NewEncoder(modifiedManifests)
+	defer encoder.Close()
+
+	for _, resource := range e.resources {
+		err = encoder.Encode(resource)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return modifiedManifests, nil
+}
+
+func (e *EnvironmentVariablePostrenderer) getPodSpecs(resources []resource) {
+	for _, res := range resources {
+		kindVal, hasKind := res["kind"]
+		if !hasKind {
+			continue
+		}
+
+		kind, ok := kindVal.(string)
+		if !ok {
+			continue
+		}
+
+		// manifests of list type will have an items field, items should
+		// be recursively parsed
+		if itemsVal, isList := res["items"]; isList {
+			if items, ok := itemsVal.([]interface{}); ok {
+				// convert items to resource
+				resArr := make([]resource, 0)
+				for _, item := range items {
+					if arrVal, ok := item.(resource); ok {
+						resArr = append(resArr, arrVal)
+					}
+				}
+
+				e.getPodSpecs(resArr)
+			}
+
+			continue
+		}
+
+		// otherwise, get the pod spec based on the type of resource
+		podSpec := getPodSpecFromResource(kind, res)
+
+		if podSpec == nil {
+			continue
+		}
+
+		e.podSpecs = append(e.podSpecs, podSpec)
+	}
+
+	return
+}
+
+func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
+	fmt.Println(e.podSpecs)
+
+	// for each pod spec, remove duplicate env variables
+	for _, podSpec := range e.podSpecs {
+		containersVal, hasContainers := podSpec["containers"]
+
+		if !hasContainers {
+			continue
+		}
+
+		containers, ok := containersVal.([]interface{})
+
+		if !ok {
+			continue
+		}
+
+		newContainers := make([]interface{}, 0)
+
+		for _, container := range containers {
+			envVars := make(map[string]interface{})
+
+			_container, ok := container.(resource)
+
+			if !ok {
+				continue
+			}
+
+			// read container env variables
+			envInter, ok := _container["env"]
+
+			if !ok {
+				continue
+			}
+
+			env, ok := envInter.([]interface{})
+
+			if !ok {
+				continue
+			}
+
+			for _, envVar := range env {
+				envVarMap, ok := envVar.(resource)
+
+				if !ok {
+					continue
+				}
+
+				envVarName, ok := envVarMap["name"]
+
+				if !ok {
+					continue
+				}
+
+				envVarNameStr, ok := envVarName.(string)
+
+				if !ok {
+					continue
+				}
+
+				// check if the env var already exists, if it does perform reconciliation
+				if currVal, exists := envVars[envVarNameStr]; exists {
+					currValMap, ok := currVal.(resource)
+
+					if !ok {
+						continue
+					}
+
+					// if the current value has a valueFrom field, this should override the existing env var
+					if _, currValFromFieldExists := currValMap["valueFrom"]; currValFromFieldExists {
+						continue
+					} else {
+						envVars[envVarNameStr] = envVarMap
+					}
+				} else {
+					envVars[envVarNameStr] = envVarMap
+				}
+			}
+
+			// flatten env var map to array
+			envVarArr := make([]interface{}, 0)
+
+			for envVarName, envVar := range envVars {
+				fmt.Println("surviving env var:", envVarName, envVar)
+				envVarArr = append(envVarArr, envVar)
+			}
+
+			_container["env"] = envVarArr
+			newContainers = append(newContainers, _container)
+			fmt.Println(_container)
+		}
+
+		podSpec["containers"] = newContainers
+		fmt.Println(newContainers)
+	}
+
+	return nil
+}
+
+// HELPERS
 func getPodSpecFromResource(kind string, res resource) resource {
 	switch kind {
 	case "Pod":

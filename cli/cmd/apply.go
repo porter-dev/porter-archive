@@ -320,14 +320,21 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	if d.source.Name == "job" && appConfig.WaitForJob {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
 
+		prevProject := config.Project
+		prevCluster := config.Cluster
 		name = resource.Name
 		namespace = d.target.Namespace
+		config.Project = d.target.Project
+		config.Cluster = d.target.Cluster
 
 		err = waitForJob(nil, client, []string{})
 
 		if err != nil {
 			return nil, err
 		}
+
+		config.Project = prevProject
+		config.Cluster = prevCluster
 	}
 
 	return resource, err

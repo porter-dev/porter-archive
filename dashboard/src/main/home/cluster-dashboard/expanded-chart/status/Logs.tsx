@@ -525,7 +525,7 @@ const LogsFC: React.FC<{
     }));
   };
 
-  const getContainerLogs = async (containerName: string) => {
+  const getContainerPreviousLogs = async (containerName: string) => {
     try {
       const logs = await api
         .getPreviousLogsForContainer<{ previous_logs: string[] }>(
@@ -542,11 +542,15 @@ const LogsFC: React.FC<{
         )
         .then((res) => res.data);
       // Process logs
-      let processedLogs = [] as [number, Anser.AnserJsonEntry[]][];
-
-      logs.previous_logs.map((currentLog, i) => {
+      const processedLogs: [
+        number,
+        Anser.AnserJsonEntry[]
+      ][] = logs.previous_logs.map((currentLog, i, arr) => {
+        const position = i + 1;
         let ansiLog = Anser.ansiToJson(currentLog);
+        return [position, ansiLog];
       });
+
       setPrevLogs((pl) => ({
         ...pl,
         [containerName]: processedLogs,

@@ -530,9 +530,9 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 		Namespace: rdsConfig.Namespace,
 		Variables: map[string]string{},
 		SecretVariables: map[string]string{
-			"HOST":     database.InstanceEndpoint,
-			"PASSWORD": rdsConfig.Password,
-			"USERNAME": rdsConfig.Username,
+			"PGHOST":     database.InstanceEndpoint,
+			"PGPASSWORD": rdsConfig.Password,
+			"PGUSERNAME": rdsConfig.Username,
 		},
 	})
 

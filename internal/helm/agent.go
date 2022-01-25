@@ -192,7 +192,7 @@ func (a *Agent) UpgradeReleaseByValues(
 	cmd.Namespace = rel.Namespace
 
 	if conf.Cluster != nil && a.K8sAgent != nil && conf.Registries != nil && len(conf.Registries) > 0 {
-		cmd.PostRenderer, err = NewDockerSecretsPostRenderer(
+		cmd.PostRenderer, err = NewPorterPostrenderer(
 			conf.Cluster,
 			conf.Repo,
 			a.K8sAgent,
@@ -266,7 +266,7 @@ func (a *Agent) InstallChart(
 
 	// only add the postrenderer if required fields exist
 	if conf.Cluster != nil && a.K8sAgent != nil && conf.Registries != nil && len(conf.Registries) > 0 {
-		cmd.PostRenderer, err = NewDockerSecretsPostRenderer(
+		cmd.PostRenderer, err = NewPorterPostrenderer(
 			conf.Cluster,
 			conf.Repo,
 			a.K8sAgent,

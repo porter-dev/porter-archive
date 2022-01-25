@@ -12,8 +12,8 @@ const DatabasesRoutes = () => {
 
   useLayoutEffect(() => {
     if (
-      currentCluster.service !== "eks" &&
-      currentCluster.infra_id <= 0 &&
+      currentCluster.service !== "eks" ||
+      currentCluster.infra_id <= 0 ||
       !currentProject.enable_rds_databases
     ) {
       pushFiltered("/cluster-dashboard", []);

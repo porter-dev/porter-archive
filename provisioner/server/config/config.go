@@ -1,33 +1,112 @@
 package config
 
-// TODO: declare config and read config from environment
+import (
+	"fmt"
+	"time"
 
-// config -- s3, provisioner driver, database URI, etc
-type Config struct{}
+	"github.com/joeshaw/envdecode"
+	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/ee/integrations/vault"
+	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/credentials"
+	"github.com/porter-dev/porter/internal/repository/gorm"
+	"github.com/porter-dev/porter/provisioner/integrations/storage"
+)
 
-// var s3Client *s3.Client
-// var redisClient *redis.Client
-// var eventProcessor *processor.EventProcessor
+type Config struct {
+	ProvisionerConf *ProvisionerConf
+	DBConf          *env.DBConf
 
-// func init() {
-// 	BUCKET := os.Getenv("BUCKET")
+	StorageManager storage.StorageManager
+	Repo           repository.Repository
 
-// 	// construct redis client, fallback to localhost
-// 	host := os.Getenv("REDIS_HOST")
+	// Logger for logging
+	Logger *logger.Logger
 
-// 	if host == "" {
-// 		host = "localhost"
-// 	}
+	// Alerter to send alerts to a third-party aggregator
+	Alerter alerter.Alerter
+}
 
-// 	redisClient = redis.NewClient(
-// 		host,
-// 		"6379",
-// 		os.Getenv("REDIS_USER"),
-// 		os.Getenv("REDIS_PASS"),
-// 		0,
-// 	)
+// ProvisionerConf is the env var configuration for the provisioner server
+type ProvisionerConf struct {
+	Debug bool `env:"DEBUG,default=false"`
+	Port  int  `env:"PROVISIONER_PORT,default=8082"`
 
-// 	s3Client = s3.NewS3Client(BUCKET)
+	TimeoutRead  time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
+	TimeoutWrite time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
+	TimeoutIdle  time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 
-// 	eventProcessor = processor.NewEventProcessor()
-// }
+	SentryDSN string `env:"SENTRY_DSN"`
+	SentryEnv string `env:"SENTRY_ENV,default=dev"`
+
+	// Configuration for the S3 storage backend
+	S3AWSAccessKeyID string `env:"S3_AWS_ACCESS_KEY_ID"`
+	S3AWSSecretKey   string `env:"S3_AWS_SECRET_KEY"`
+	S3BucketName     string `env:"S3_BUCKET_NAME"`
+	S3EncryptionKey  string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
+}
+
+type EnvConf struct {
+	*ProvisionerConf
+	*env.DBConf
+}
+
+type EnvDecoderConf struct {
+	ProvisionerConf ProvisionerConf
+	DBConf          env.DBConf
+}
+
+// FromEnv generates a configuration from environment variables
+func FromEnv() (*EnvConf, error) {
+	var envDecoderConf EnvDecoderConf = EnvDecoderConf{}
+
+	if err := envdecode.StrictDecode(&envDecoderConf); err != nil {
+		return nil, fmt.Errorf("Failed to decode server conf: %s", err)
+	}
+
+	return &EnvConf{
+		ProvisionerConf: &envDecoderConf.ProvisionerConf,
+		DBConf:          &envDecoderConf.DBConf,
+	}, nil
+}
+
+func GetConfig(envConf *EnvConf) (*Config, error) {
+	res := &Config{
+		ProvisionerConf: envConf.ProvisionerConf,
+		DBConf:          envConf.DBConf,
+		Logger:          logger.NewConsole(envConf.ProvisionerConf.Debug),
+	}
+
+	db, err := adapter.New(envConf.DBConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var key [32]byte
+
+	for i, b := range []byte(envConf.DBConf.EncryptionKey) {
+		key[i] = b
+	}
+
+	var credBackend credentials.CredentialStorage
+
+	if envConf.DBConf.VaultAPIKey != "" && envConf.DBConf.VaultServerURL != "" && envConf.DBConf.VaultPrefix != "" {
+		credBackend = vault.NewClient(
+			envConf.DBConf.VaultServerURL,
+			envConf.DBConf.VaultAPIKey,
+			envConf.DBConf.VaultPrefix,
+		)
+	}
+
+	res.Repo = gorm.NewRepository(db, &key, credBackend)
+
+	if envConf.ProvisionerConf.SentryDSN != "" {
+		res.Alerter, err = alerter.NewSentryAlerter(envConf.ProvisionerConf.SentryDSN, envConf.ProvisionerConf.SentryEnv)
+	}
+
+	return res, nil
+}

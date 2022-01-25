@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -116,7 +117,7 @@ func (repo *InfraRepository) EncryptInfraData(
 	key *[32]byte,
 ) error {
 	if len(infra.LastApplied) > 0 {
-		cipherData, err := repository.Encrypt(infra.LastApplied, key)
+		cipherData, err := encryption.Encrypt(infra.LastApplied, key)
 
 		if err != nil {
 			return err
@@ -135,7 +136,7 @@ func (repo *InfraRepository) DecryptInfraData(
 	key *[32]byte,
 ) error {
 	if len(infra.LastApplied) > 0 {
-		plaintext, err := repository.Decrypt(infra.LastApplied, key)
+		plaintext, err := encryption.Decrypt(infra.LastApplied, key)
 
 		if err != nil {
 			return err

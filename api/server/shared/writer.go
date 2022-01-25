@@ -32,6 +32,6 @@ func (j *DefaultResultWriter) WriteResult(w http.ResponseWriter, r *http.Request
 		// the server was sending bytes.
 		return
 	} else if err != nil {
-		apierrors.HandleAPIError(j.config, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(j.config.Logger, j.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 	}
 }

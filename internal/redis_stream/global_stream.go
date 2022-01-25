@@ -112,7 +112,7 @@ func GlobalStreamListener(
 		// parse messages from the global stream
 		for _, msg := range xstreams[0].Messages {
 			// parse the id to identify the infra
-			kind, projID, infraID, err := models.ParseUniqueName(fmt.Sprintf("%v", msg.Values["id"]))
+			kind, projID, infraID, _, err := models.ParseUniqueName(fmt.Sprintf("%v", msg.Values["id"]))
 
 			if fmt.Sprintf("%v", msg.Values["status"]) == "created" {
 				infra, err := repo.Infra().ReadInfra(projID, infraID)

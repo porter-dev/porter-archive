@@ -151,24 +151,24 @@ func (i *Infra) GetUniqueName() string {
 }
 
 // ParseUniqueName returns the (kind, projectID, infraID, suffix)
-func ParseUniqueName(workspaceID string) (string, uint, uint, error) {
+func ParseUniqueName(workspaceID string) (string, uint, uint, string, error) {
 	strArr := strings.Split(workspaceID, "-")
 
-	if len(strArr) < 3 {
-		return "", 0, 0, fmt.Errorf("workspace id improperly formatted")
+	if len(strArr) != 4 {
+		return "", 0, 0, "", fmt.Errorf("workspace id improperly formatted")
 	}
 
 	projID, err := strconv.ParseUint(strArr[1], 10, 64)
 
 	if err != nil {
-		return "", 0, 0, err
+		return "", 0, 0, "", err
 	}
 
 	infraID, err := strconv.ParseUint(strArr[2], 10, 64)
 
 	if err != nil {
-		return "", 0, 0, err
+		return "", 0, 0, "", err
 	}
 
-	return strArr[0], uint(projID), uint(infraID), nil
+	return strArr[0], uint(projID), uint(infraID), strArr[4], nil
 }

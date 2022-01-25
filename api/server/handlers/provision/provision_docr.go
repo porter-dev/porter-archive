@@ -10,10 +10,10 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
 
@@ -57,7 +57,7 @@ func (c *ProvisionDOCRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	suffix, err := repository.GenerateRandomBytes(6)
+	suffix, err := encryption.GenerateRandomBytes(6)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

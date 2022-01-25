@@ -18,3 +18,6 @@ build-cli:
 
 build-cli-dev:
 	go build -tags cli -o $(BINDIR)/porter ./cli
+
+start-provisioner-dev: install setup-env-files
+	bash ./scripts/dev-environment/StartProvisionerServer.sh

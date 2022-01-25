@@ -90,6 +90,7 @@ const DatabasesList = () => {
                 onClick={() =>
                   setCurrentModal("ConnectToDatabaseInstructionsModal", {
                     endpoint: row.original.instance_endpoint,
+                    name: row.original.instance_name,
                   })
                 }
               >

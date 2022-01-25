@@ -29,6 +29,7 @@ import { isAuthorized } from "shared/auth/authorization-helpers";
 import useAuth from "shared/auth/useAuth";
 import { fillWithDeletedVariables } from "components/porter-form/utils";
 import DynamicLink from "components/DynamicLink";
+import DocsHelper from "components/DocsHelper";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -497,6 +498,15 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
 
   return (
     <>
+      <HeadingWrapper>
+        <Heading isAtTop>Linked applications:</Heading>
+        <DocsHelper
+          link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+          tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+          placement="top-start"
+          disableMargin
+        />
+      </HeadingWrapper>
       {envGroup.applications.map((appName) => {
         return (
           <StyledCard>
@@ -521,6 +531,11 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
     </>
   );
 };
+
+const HeadingWrapper = styled.div`
+  display: flex;
+  margin-bottom: 15px;
+`;
 
 const Header = styled.div`
   font-weight: 500;

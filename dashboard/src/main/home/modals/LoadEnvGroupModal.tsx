@@ -248,13 +248,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               label="Sync environment group"
               disabled={this.state.selectedEnvGroup?.meta_version === 1}
             />
-            <div style={{ position: "relative" }}>
-              <DocsHelper
-                link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
-                tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
-                placement="top-start"
-              />
-            </div>
+            <DocsHelper
+              link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+              tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+              placement="top-start"
+            />
           </AbsoluteWrapper>
           {this.state.selectedEnvGroup?.meta_version === 1 && (
             <Helper color="#f5cb42">

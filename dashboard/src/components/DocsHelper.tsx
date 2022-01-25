@@ -7,9 +7,15 @@ type Props = {
   tooltipText: string;
   link: string;
   placement?: TooltipPlacement;
+  disableMargin?: boolean;
 };
 
-const DocsHelper: React.FC<Props> = ({ tooltipText, link, placement }) => {
+const DocsHelper: React.FC<Props> = ({
+  tooltipText,
+  link,
+  placement,
+  disableMargin,
+}) => {
   const [open, setOpen] = React.useState(false);
 
   const handleTooltipClose = () => {
@@ -25,7 +31,7 @@ const DocsHelper: React.FC<Props> = ({ tooltipText, link, placement }) => {
   };
 
   return (
-    <DocsHelperContainer>
+    <DocsHelperContainer disableMargin={disableMargin}>
       <ClickAwayListener
         onClickAway={() => {
           handleTooltipClose();
@@ -149,7 +155,12 @@ const A = styled.a`
   user-select: none;
 `;
 
-const DocsHelperContainer = styled.div`
-  margin-left: auto;
+const DocsHelperContainer = styled.div<{ disableMargin: boolean }>`
+  ${(props) => {
+    if (props.disableMargin) {
+      return "";
+    }
+    return `margin-left: auto;`;
+  }}
   position: relative;
 `;

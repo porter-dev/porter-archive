@@ -19,6 +19,7 @@ import {
   PopulatedEnvGroup,
 } from "components/porter-form/types";
 import Helper from "components/form-components/Helper";
+import DocsHelper from "components/DocsHelper";
 
 type PropsType = {
   namespace: string;
@@ -247,6 +248,13 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               label="Sync environment group"
               disabled={this.state.selectedEnvGroup?.meta_version === 1}
             />
+            <div style={{ position: "relative" }}>
+              <DocsHelper
+                link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+                tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+                placement="top-start"
+              />
+            </div>
           </AbsoluteWrapper>
           {this.state.selectedEnvGroup?.meta_version === 1 && (
             <Helper color="#f5cb42">
@@ -275,6 +283,8 @@ const AbsoluteWrapper = styled.div`
   z-index: 999;
   bottom: 18px;
   left: 25px;
+  display: flex;
+  align-items: center;
 `;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`

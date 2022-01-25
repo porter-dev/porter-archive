@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -44,7 +45,13 @@ func Execute() {
 				latestRelease, err := semver.NewVersion(strings.TrimPrefix(release.GetTagName(), "v"))
 				if err == nil {
 					if constraint.Check(latestRelease) {
-						color.New(color.FgYellow).Println("A new version of the porter CLI is available to download at https://github.com/porter-dev/porter/releases/latest")
+						color.New(color.FgYellow).Fprint(os.Stderr, "A new version of the porter CLI is available. Run the following to update: ")
+						if runtime.GOOS == "darwin" {
+							color.New(color.FgYellow).Add(color.Bold).Fprintln(os.Stderr, "brew install porter-dev/porter/porter")
+						} else {
+							color.New(color.FgYellow).Add(color.Bold).Fprintln(os.Stderr, "/bin/bash -c \"$(curl -fsSL https://install.porter.run)\"")
+						}
+
 					}
 				}
 			}

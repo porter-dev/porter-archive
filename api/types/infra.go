@@ -60,3 +60,17 @@ type Infra struct {
 	// eventually this config will be more complex.
 	LastApplied map[string]string `json:"last_applied"`
 }
+
+type CreateInfraRequest struct {
+	Kind   string                 `json:"kind" form:"required"`
+	Values map[string]interface{} `json:"values" form:"required"`
+}
+
+type Operation struct {
+	UID     string `json:"id"`
+	InfraID uint   `json:"infra_id"`
+	Type    string `json:"type"`
+	Status  string `json:"status"`
+	Errored bool   `json:"errored"`
+	Error   string `json:"error"`
+}

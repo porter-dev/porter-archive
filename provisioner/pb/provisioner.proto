@@ -27,7 +27,8 @@ message Infra {
 
 message StateUpdate {
     string resource_id = 1; 
-    string update = 2;
+    string status = 2;
+    string error = 3;
 }
 
 enum TerraformEvent {

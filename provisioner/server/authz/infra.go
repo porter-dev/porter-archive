@@ -33,44 +33,15 @@ type InfraScopedMiddleware struct {
 }
 
 func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// TODO: remove this
-	if p.config.ProvisionerConf.Debug {
-		ctx := NewInfraContext(r.Context(), &models.Infra{
-			Model: gorm.Model{
-				ID: 1,
-			},
-			Kind:      "test",
-			Suffix:    "123456",
-			ProjectID: 1,
-		})
-		r = r.Clone(ctx)
-		p.next.ServeHTTP(w, r)
-		return
-	}
-
-	workspaceID, reqErr := requestutils.GetURLParamString(r, types.URLParam("workspace_id"))
+	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	infraID, reqErr := requestutils.GetURLParamUint(r, types.URLParam("infra_id"))
 
 	if reqErr != nil {
 		apierrors.HandleAPIError(
 			p.config.Logger,
 			p.config.Alerter, w, r,
 			apierrors.NewErrForbidden(
-				fmt.Errorf("could not get workspace id: %s", reqErr.Error()),
-			),
-			true,
-		)
-
-		return
-	}
-
-	_, projID, infraID, _, err := models.ParseUniqueName(workspaceID)
-
-	if err != nil {
-		apierrors.HandleAPIError(
-			p.config.Logger,
-			p.config.Alerter, w, r,
-			apierrors.NewErrForbidden(
-				fmt.Errorf("could not parse workspace id: %v", err),
+				fmt.Errorf("could not get infra id: %s", reqErr.Error()),
 			),
 			true,
 		)
@@ -79,7 +50,7 @@ func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	// look for infra with that ID and project ID
-	infra, err := p.config.Repo.Infra().ReadInfra(projID, infraID)
+	infra, err := p.config.Repo.Infra().ReadInfra(proj.ID, infraID)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -87,7 +58,7 @@ func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 				p.config.Logger,
 				p.config.Alerter, w, r,
 				apierrors.NewErrForbidden(
-					fmt.Errorf("could not read infra id %d in project %d", infraID, projID),
+					fmt.Errorf("could not read infra id %d in project %d", infraID, proj.ID),
 				),
 				true,
 			)

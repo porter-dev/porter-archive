@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/server/config"
 	"github.com/porter-dev/porter/provisioner/server/router"
 	"golang.org/x/net/http2"
@@ -43,6 +45,21 @@ func main() {
 
 	if err != nil {
 		log.Fatal("Config loading failed: ", err)
+	}
+
+	if config.RedisConf.Enabled {
+		redis, err := adapter.NewRedisClient(config.RedisConf)
+
+		if err != nil {
+			config.Logger.Fatal().Err(err).Msg("redis connection failed")
+			return
+		}
+
+		redis_stream.InitGlobalStream(redis)
+
+		errorChan := make(chan error)
+
+		go redis_stream.GlobalStreamListener(redis, config, config.Repo, nil, errorChan)
 	}
 
 	appRouter := router.NewAPIRouter(config)

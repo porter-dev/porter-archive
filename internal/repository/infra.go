@@ -13,5 +13,6 @@ type InfraRepository interface {
 
 	// Operations
 	AddOperation(infra *models.Infra, operation *models.Operation) (*models.Operation, error)
+	ReadOperation(infraID uint, operationUID string) (*models.Operation, error)
 	GetLatestOperation(infra *models.Infra) (*models.Operation, error)
 }

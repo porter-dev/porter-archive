@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/porter-dev/porter/internal/encryption"
@@ -114,8 +115,8 @@ func (repo *InfraRepository) UpdateInfra(
 
 func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models.Operation) (*models.Operation, error) {
 	// don't accept operations within a 10-length unique ID
-	if len(operation.UID) != 10 {
-		return nil, fmt.Errorf("operation must have unique ID with length 10")
+	if len(operation.UID) != hex.EncodedLen(10) {
+		return nil, fmt.Errorf("operation must have unique ID with hex-decoded length 10, length is %d", len(operation.UID))
 	}
 
 	assoc := repo.db.Model(&infra).Association("Operations")
@@ -129,6 +130,16 @@ func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models
 	}
 
 	if err := repo.db.Save(operation).Error; err != nil {
+		return nil, err
+	}
+
+	return operation, nil
+}
+
+func (repo *InfraRepository) ReadOperation(infraID uint, operationUID string) (*models.Operation, error) {
+	operation := &models.Operation{}
+
+	if err := repo.db.Order("id desc").Where("infra_id = ? AND u_id = ?", infraID, operationUID).First(&operation).Error; err != nil {
 		return nil, err
 	}
 

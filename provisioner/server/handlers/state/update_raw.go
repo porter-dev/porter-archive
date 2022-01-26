@@ -8,6 +8,8 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/server/config"
+
+	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
 type RawStateUpdateHandler struct {
@@ -35,7 +37,7 @@ func (c *RawStateUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = c.Config.StorageManager.WriteFile(infra, DefaultTerraformStateFile, fileBytes)
+	err = c.Config.StorageManager.WriteFile(infra, ptypes.DefaultTerraformStateFile, fileBytes, true)
 
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)

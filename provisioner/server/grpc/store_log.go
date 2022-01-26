@@ -5,7 +5,10 @@ import (
 	"io"
 
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/pb"
+	"github.com/porter-dev/porter/provisioner/types"
+	"gorm.io/gorm"
 
 	"google.golang.org/grpc/metadata"
 )
@@ -46,6 +49,26 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 		}
 	}
 
+	// TODO: remove this
+	infra := &models.Infra{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		Kind:      "test",
+		Suffix:    "123456",
+		ProjectID: 1,
+	}
+
+	modelOperation := &models.Operation{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		UID:     "0123456789",
+		InfraID: 1,
+		Type:    "apply",
+		Status:  "creating",
+	}
+
 	for {
 		fmt.Println("LOOPING")
 
@@ -61,7 +84,48 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 			return err
 		}
 
+		// determine whether to update the state based on the log
+
 		fmt.Println(tfLog)
+
+		if tfLog.Type == pb.TerraformEvent_OPERATION_FINISHED {
+			// push to the global stream
+			err := redis_stream.PushToGlobalStream(s.config.RedisClient, infra, modelOperation, "created")
+
+			if err != nil {
+				fmt.Println("END 3", err)
+				return err
+			}
+		} else {
+			logType := types.ToProvisionerType(tfLog)
+
+			err := redis_stream.PushToLogStream(s.config.RedisClient, infra, modelOperation, logType)
+
+			if err != nil {
+				fmt.Println("END 2.5", err)
+				return err
+			}
+
+			stateUpdate := &types.TFResourceState{}
+
+			switch logType.Type {
+			case types.ApplyComplete:
+				stateUpdate.ID = logType.Hook.Resource.Addr
+				stateUpdate.Status = types.TFResourceCreated
+			case types.PlannedChange:
+				// TODO: case on planned delete
+				stateUpdate.ID = logType.Change.Resource.Addr
+				stateUpdate.Status = types.TFResourcePlannedCreate
+				// TODO: rest of the cases
+			}
+
+			err = redis_stream.PushToOperationStream(s.config.RedisClient, infra, modelOperation, stateUpdate)
+
+			if err != nil {
+				fmt.Println("END 4", err)
+				return err
+			}
+		}
 
 		// TODO: store in Redis
 	}

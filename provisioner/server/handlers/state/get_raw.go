@@ -9,9 +9,8 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/storage"
 	"github.com/porter-dev/porter/provisioner/server/config"
+	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
-
-const DefaultTerraformStateFile = "default.tfstate"
 
 type RawStateGetHandler struct {
 	Config *config.Config
@@ -29,7 +28,7 @@ func (c *RawStateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the infra from the attached scope
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
-	fileBytes, err := c.Config.StorageManager.ReadFile(infra, DefaultTerraformStateFile)
+	fileBytes, err := c.Config.StorageManager.ReadFile(infra, ptypes.DefaultTerraformStateFile, true)
 
 	if err != nil {
 		// if the file does not exist yet, just return an empty body with a 200-response code

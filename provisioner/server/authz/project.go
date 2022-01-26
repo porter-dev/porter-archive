@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/provisioner/server/config"
 	"gorm.io/gorm"
 )
 
@@ -32,10 +33,20 @@ type ProjectScopedMiddleware struct {
 }
 
 func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// get the project id from the URL param context
-	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
+	projID, reqErr := requestutils.GetURLParamUint(r, types.URLParam("project_id"))
 
-	projID := reqScopes[types.ProjectScope].Resource.UInt
+	if reqErr != nil {
+		apierrors.HandleAPIError(
+			p.config.Logger,
+			p.config.Alerter, w, r,
+			apierrors.NewErrForbidden(
+				fmt.Errorf("could not get project id: %s", reqErr.Error()),
+			),
+			true,
+		)
+
+		return
+	}
 
 	project, err := p.config.Repo.Project().ReadProject(projID)
 

@@ -10,33 +10,36 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/storage"
 	"github.com/porter-dev/porter/provisioner/server/config"
-
-	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
-type StateGetHandler struct {
+type LogsGetHandler struct {
 	Config *config.Config
 }
 
-func NewStateGetHandler(
+func NewLogsGetHandler(
 	config *config.Config,
-) *StateGetHandler {
-	return &StateGetHandler{
+) *LogsGetHandler {
+	return &LogsGetHandler{
 		Config: config,
 	}
 }
 
-func (c *StateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *LogsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the infra from the attached scope
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
+	operation, _ := r.Context().Value(types.OperationScope).(*models.Operation)
 
-	fileBytes, err := c.Config.StorageManager.ReadFile(infra, ptypes.DefaultCurrentStateFile, true)
+	fileBytes, err := c.Config.StorageManager.ReadFile(
+		infra,
+		fmt.Sprintf("%s-%d-%d-%s-%s-logs.txt", infra.Kind, infra.ProjectID, infra.ID, infra.Suffix, operation.UID),
+		false,
+	)
 
 	if err != nil {
 		// if the file does not exist yet, return a 404 status code
 		if errors.Is(err, storage.FileDoesNotExist) {
 			apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("current state file does not exist yet"),
+				fmt.Errorf("current logs file does not exist yet"),
 				http.StatusNotFound,
 			), true)
 

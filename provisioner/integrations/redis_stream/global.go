@@ -1,13 +1,16 @@
 package redis_stream
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/analytics"
+	"gorm.io/gorm"
 
 	redis "github.com/go-redis/redis/v8"
 
@@ -78,7 +81,7 @@ func InitGlobalStream(client *redis.Client) error {
 func PushToGlobalStream(
 	client *redis.Client,
 	infra *models.Infra,
-	operationUID string,
+	operation *models.Operation,
 	status string,
 ) error {
 	// pushes a new operation to the global stream
@@ -86,7 +89,7 @@ func PushToGlobalStream(
 		Stream: GlobalStreamName,
 		ID:     "*",
 		Values: map[string]interface{}{
-			"id":     fmt.Sprintf("%s-%d-%d-%s-%s", infra.Kind, infra.ProjectID, infra.ID, infra.Suffix, operationUID),
+			"id":     models.GetWorkspaceID(infra, operation),
 			"status": status,
 		},
 	}).Result()
@@ -128,12 +131,19 @@ func GlobalStreamListener(
 
 			workspaceID := fmt.Sprintf("%v", id)
 
+			// TODO: add this back
 			// parse the id to identify the infra
-			name, err := models.ParseUniqueNameWithOperationID(workspaceID)
+			// name, err := models.ParseUniqueNameWithOperationID(workspaceID)
 
-			if err != nil {
-				continue
-			}
+			// if err != nil {
+			// 	continue
+			// }
+
+			// infra, err := repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
+
+			// if err != nil {
+			// 	continue
+			// }
 
 			statusVal, exists := msg.Values["status"]
 
@@ -141,15 +151,18 @@ func GlobalStreamListener(
 				continue
 			}
 
-			infra, err := repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
-
-			if err != nil {
-				continue
-			}
-
 			switch fmt.Sprintf("%v", statusVal) {
 			case "created":
-				handleOperationCreated(config, client, infra, workspaceID)
+				// TODO: remove
+				handleOperationCreated(config, client, &models.Infra{
+					Model: gorm.Model{
+						ID: 1,
+					},
+					Kind:      "test",
+					Suffix:    "123456",
+					ProjectID: 1,
+				}, workspaceID)
+
 			case "error":
 			case "destroyed":
 			}
@@ -158,20 +171,41 @@ func GlobalStreamListener(
 }
 
 func handleOperationCreated(config *config.Config, client *redis.Client, infra *models.Infra, workspaceID string) error {
-	return pushNewStateToStorage(config, client, infra, workspaceID)
-	// cleanupStateStream
-	// pushLogsToStorage
-	// cleanupLogStream
+	err := pushNewStateToStorage(config, client, infra, workspaceID)
+
+	if err != nil {
+		return err
+	}
+
+	err = cleanupStateStream(config, client, workspaceID)
+
+	if err != nil {
+		return nil
+	}
+
+	err = pushLogsToStorage(config, client, infra, workspaceID)
+
+	if err != nil {
+		return err
+	}
+
+	err = cleanupLogStream(config, client, infra, workspaceID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *models.Infra, workspaceID string) error {
 	// read the current state from S3
 	currState := &types.TFState{}
 
-	currStateBytes, err := config.StorageManager.ReadFile(infra, "current_state.json")
+	currStateBytes, err := config.StorageManager.ReadFile(infra, "current_state.json", true)
 
 	if err != nil && errors.Is(err, storage.FileDoesNotExist) {
-
+		currState.Resources = make(map[string]*types.TFResourceState)
 	} else if err != nil {
 		return err
 	} else {
@@ -246,21 +280,106 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 		return err
 	}
 
-	return config.StorageManager.WriteFile(infra, "current_state.json", newStateBytes)
+	return config.StorageManager.WriteFile(infra, "current_state.json", newStateBytes, true)
 }
 
-func cleanupStateStream() {
+func cleanupStateStream(config *config.Config, client *redis.Client, workspaceID string) error {
+	streamName := fmt.Sprintf("%s-state", workspaceID)
 
+	count, err := client.Del(
+		context.Background(),
+		streamName,
+	).Result()
+
+	if err != nil {
+		return err
+	}
+
+	if count != 1 {
+		return fmt.Errorf("count of deleted stream keys was not 1")
+	}
+
+	return nil
 }
 
-func pushLogsToStorage() {
+func pushLogsToStorage(config *config.Config, client *redis.Client, infra *models.Infra, workspaceID string) error {
 	// read all logs from the corresponding stream
+	lastID := "0-0"
+	var processed int64 = 0
+	streamName := fmt.Sprintf("%s-logs", workspaceID)
+	bytesBuffer := &bytes.Buffer{}
+
+	// get the length of the stream being read
+	length, err := client.XLen(context.Background(), streamName).Result()
+
+	if err != nil {
+		return err
+	}
+
+	for processed != length {
+		xstream, err := client.XRead(
+			context.Background(),
+			&redis.XReadArgs{
+				Streams: []string{streamName, lastID},
+				Block:   0,
+				Count:   50,
+			},
+		).Result()
+
+		if err != nil {
+			return err
+		}
+
+		messages := xstream[0].Messages
+		lastID = messages[len(messages)-1].ID
+
+		// compute the new state
+		for _, msg := range messages {
+			processed++
+
+			logInter, ok := msg.Values["log"]
+
+			if !ok {
+				continue
+			}
+
+			logBytes, ok := logInter.(string)
+
+			if !ok {
+				continue
+			}
+
+			bytesBuffer.Write([]byte(logBytes))
+		}
+	}
 
 	// push the logs for that operation to S3
+	fileBytes, err := io.ReadAll(bytesBuffer)
+
+	if err != nil {
+		return err
+	}
+
+	return config.StorageManager.WriteFile(infra, fmt.Sprintf("%s-logs.txt", workspaceID), fileBytes, false)
 }
 
-func cleanupLogStream() {
+func cleanupLogStream(config *config.Config, client *redis.Client, infra *models.Infra, workspaceID string) error {
+	streamName := fmt.Sprintf("%s-logs", workspaceID)
 
+	count, err := client.Del(
+		context.Background(),
+		streamName,
+	).Result()
+
+	if err != nil {
+		return err
+	}
+
+	if count != 1 {
+		return fmt.Errorf("count of deleted stream keys was not 1")
+	}
+
+	return nil
 }
 
 // // GlobalStreamListener performs an XREADGROUP operation on a given stream and

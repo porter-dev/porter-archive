@@ -98,3 +98,7 @@ func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models
 func (repo *InfraRepository) GetLatestOperation(infra *models.Infra) (*models.Operation, error) {
 	panic("unimplemented")
 }
+
+func (repo *InfraRepository) ReadOperation(infraID uint, operationUID string) (*models.Operation, error) {
+	panic("unimplemented")
+}

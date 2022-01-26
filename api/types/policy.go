@@ -10,6 +10,7 @@ const (
 	InviteScope          PermissionScope = "invite"
 	HelmRepoScope        PermissionScope = "helm_repo"
 	InfraScope           PermissionScope = "infra"
+	OperationScope       PermissionScope = "operation"
 	GitInstallationScope PermissionScope = "git_installation"
 	NamespaceScope       PermissionScope = "namespace"
 	SettingsScope        PermissionScope = "settings"

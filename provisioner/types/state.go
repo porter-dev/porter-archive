@@ -2,6 +2,8 @@ package types
 
 import "time"
 
+const DefaultCurrentStateFile = "current_state.json"
+
 type TFResourceStatus string
 
 const (
@@ -27,3 +29,9 @@ type TFState struct {
 	Status      TFStateStatus               `json:"status"`
 	Resources   map[string]*TFResourceState `json:"resources"`
 }
+
+type GetLogsRequest struct {
+	OperationID string `schema:"operation_id"`
+}
+
+const OperationScope = "operation"

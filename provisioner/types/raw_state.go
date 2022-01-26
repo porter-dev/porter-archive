@@ -1,5 +1,7 @@
 package types
 
+const DefaultTerraformStateFile = "default.tfstate"
+
 type RawTFState struct {
 	Version          int         `json:"version"`
 	TerraformVersion string      `json:"terraform_version"`

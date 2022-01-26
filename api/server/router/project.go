@@ -5,6 +5,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
+	"github.com/porter-dev/porter/api/server/handlers/infra"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/provision"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
@@ -629,6 +630,34 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getDockerhubTokenEndpoint,
 		Handler:  getDockerhubTokenHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/infras -> infra.NewInfraCreateHandler
+	createInfraEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/infras",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createInfraHandler := infra.NewInfraCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createInfraEndpoint,
+		Handler:  createInfraHandler,
 		Router:   r,
 	})
 

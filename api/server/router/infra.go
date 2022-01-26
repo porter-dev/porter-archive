@@ -136,33 +136,33 @@ func getInfraRoutes(
 	})
 
 	// GET /api/projects/{project_id}/infras/{infra_id}/logs -> infra.NewInfraStreamLogsHandler
-	streamLogsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/logs",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.InfraScope,
-			},
-			IsWebsocket: true,
-		},
-	)
+	// streamLogsEndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbGet,
+	// 		Method: types.HTTPVerbGet,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/logs",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 			types.InfraScope,
+	// 		},
+	// 		IsWebsocket: true,
+	// 	},
+	// )
 
-	streamLogsHandler := infra.NewInfraStreamLogsHandler(
-		config,
-		factory.GetResultWriter(),
-	)
+	// streamLogsHandler := infra.NewInfraStreamLogsHandler(
+	// 	config,
+	// 	factory.GetResultWriter(),
+	// )
 
-	routes = append(routes, &Route{
-		Endpoint: streamLogsEndpoint,
-		Handler:  streamLogsHandler,
-		Router:   r,
-	})
+	// routes = append(routes, &Route{
+	// 	Endpoint: streamLogsEndpoint,
+	// 	Handler:  streamLogsHandler,
+	// 	Router:   r,
+	// })
 
 	// GET /api/projects/{project_id}/infras/{infra_id}/current -> infra.NewInfraGetHandler
 	getCurrentEndpoint := factory.NewAPIEndpoint(

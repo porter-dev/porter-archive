@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	redis "github.com/go-redis/redis/v8"
+
 	"github.com/joeshaw/envdecode"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
@@ -21,6 +25,7 @@ import (
 type Config struct {
 	ProvisionerConf *ProvisionerConf
 	DBConf          *env.DBConf
+	RedisConf       *env.RedisConf
 
 	StorageManager storage.StorageManager
 	Repo           repository.Repository
@@ -33,6 +38,10 @@ type Config struct {
 
 	// DOConf is the configuration for a DigitalOcean OAuth client
 	DOConf *oauth2.Config
+
+	RedisClient *redis.Client
+
+	ProvisionerAgent *kubernetes.Agent
 }
 
 // ProvisionerConf is the env var configuration for the provisioner server
@@ -53,16 +62,27 @@ type ProvisionerConf struct {
 	S3AWSRegion      string `env:"S3_AWS_REGION"`
 	S3BucketName     string `env:"S3_BUCKET_NAME"`
 	S3EncryptionKey  string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
+
+	// Options for the provisioner backend and created job
+	ProvisionerCluster         string `env:"PROVISIONER_CLUSTER"`
+	SelfKubeconfig             string `env:"SELF_KUBECONFIG"`
+	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
+	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
+	ProvisionerJobNamespace    string `env:"PROV_JOB_NAMESPACE,default=default"`
+	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
+	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://porter:8080"`
 }
 
 type EnvConf struct {
 	*ProvisionerConf
 	*env.DBConf
+	env.RedisConf
 }
 
 type EnvDecoderConf struct {
 	ProvisionerConf ProvisionerConf
 	DBConf          env.DBConf
+	RedisConf       env.RedisConf
 }
 
 // FromEnv generates a configuration from environment variables
@@ -76,6 +96,7 @@ func FromEnv() (*EnvConf, error) {
 	return &EnvConf{
 		ProvisionerConf: &envDecoderConf.ProvisionerConf,
 		DBConf:          &envDecoderConf.DBConf,
+		RedisConf:       envDecoderConf.RedisConf,
 	}, nil
 }
 
@@ -83,6 +104,7 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 	res := &Config{
 		ProvisionerConf: envConf.ProvisionerConf,
 		DBConf:          envConf.DBConf,
+		RedisConf:       &envConf.RedisConf,
 		Logger:          logger.NewConsole(envConf.ProvisionerConf.Debug),
 	}
 
@@ -122,8 +144,6 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 			s3Key[i] = b
 		}
 
-		fmt.Println(envConf.ProvisionerConf.S3AWSRegion, envConf.ProvisionerConf.S3AWSAccessKeyID, envConf.ProvisionerConf.S3AWSSecretKey, envConf.ProvisionerConf.S3BucketName)
-
 		res.StorageManager, err = s3.NewS3StorageClient(&s3.S3Options{
 			AWSRegion:      envConf.ProvisionerConf.S3AWSRegion,
 			AWSAccessKeyID: envConf.ProvisionerConf.S3AWSAccessKeyID,
@@ -139,5 +159,43 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 		return nil, fmt.Errorf("no storage backend is available")
 	}
 
+	if envConf.RedisConf.Enabled {
+		redis, err := adapter.NewRedisClient(&envConf.RedisConf)
+
+		if err != nil {
+			return nil, fmt.Errorf("redis connection failed: %v", err)
+		}
+
+		res.RedisClient = redis
+	} else {
+		return nil, fmt.Errorf("no redis client is available")
+	}
+
+	provAgent, err := getProvisionerAgent(envConf.ProvisionerConf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res.ProvisionerAgent = provAgent
+
 	return res, nil
+}
+
+func getProvisionerAgent(conf *ProvisionerConf) (*kubernetes.Agent, error) {
+	if conf.ProvisionerCluster == "kubeconfig" && conf.SelfKubeconfig != "" {
+		agent, err := local.GetSelfAgentFromFileConfig(conf.SelfKubeconfig)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
+		}
+
+		return agent, nil
+	} else if conf.ProvisionerCluster == "kubeconfig" {
+		return nil, fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+	}
+
+	agent, _ := kubernetes.GetAgentInClusterConfig()
+
+	return agent, nil
 }

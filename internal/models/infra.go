@@ -60,9 +60,21 @@ type Operation struct {
 
 	UID     string `gorm:"unique"`
 	InfraID uint
+	Type    string
 	Status  string
 	Errored bool
 	Error   string
+}
+
+func (o *Operation) ToOperationType() *types.Operation {
+	return &types.Operation{
+		UID:     o.UID,
+		InfraID: o.InfraID,
+		Type:    o.Type,
+		Status:  o.Status,
+		Errored: o.Errored,
+		Error:   o.Error,
+	}
 }
 
 func GetOperationID() (string, error) {
@@ -198,7 +210,7 @@ type UniqueNameWithOperation struct {
 	OperationUID string
 }
 
-func ParseUniqueNameWithOperationID(workspaceID string) (*UniqueNameWithOperation, error) {
+func ParseWorkspaceID(workspaceID string) (*UniqueNameWithOperation, error) {
 	strArr := strings.Split(workspaceID, "-")
 
 	if len(strArr) != 5 {
@@ -228,4 +240,8 @@ func ParseUniqueNameWithOperationID(workspaceID string) (*UniqueNameWithOperatio
 		Suffix:       strArr[3],
 		OperationUID: strArr[4],
 	}, nil
+}
+
+func GetWorkspaceID(infra *Infra, operation *Operation) string {
+	return fmt.Sprintf("%s-%d-%d-%s-%s", infra.Kind, infra.ProjectID, infra.ID, infra.Suffix, operation.UID)
 }

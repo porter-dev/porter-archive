@@ -2,54 +2,141 @@ package redis_stream
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	redis "github.com/go-redis/redis/v8"
-	"github.com/porter-dev/porter/api/server/shared/websocket"
+	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/provisioner/types"
 )
 
-// ResourceStream performs an XREAD operation on the given stream and outputs it to the given websocket conn.
-func ResourceStream(client *redis.Client, streamName string, rw *websocket.WebsocketSafeReadWriter) error {
-	errorchan := make(chan error)
+func PushToOperationStream(
+	client *redis.Client,
+	infra *models.Infra,
+	operation *models.Operation,
+	data *types.TFResourceState,
+) error {
+	// pushes a state update to the state stream
+	streamName := getStateStreamName(infra, operation)
 
-	go func() {
-		// listens for websocket closing handshake
-		for {
-			if _, _, err := rw.ReadMessage(); err != nil {
-				errorchan <- nil
-				return
-			}
-		}
-	}()
+	dataBytes, err := json.Marshal(data)
 
-	go func() {
-		lastID := "0-0"
+	if err != nil {
+		return err
+	}
 
-		for {
-			xstream, err := client.XRead(
-				context.Background(),
-				&redis.XReadArgs{
-					Streams: []string{streamName, lastID},
-					Block:   0,
-				},
-			).Result()
+	_, err = client.XAdd(context.TODO(), &redis.XAddArgs{
+		Stream: streamName,
+		ID:     "*",
+		Values: map[string]interface{}{
+			"id":   models.GetWorkspaceID(infra, operation),
+			"data": dataBytes,
+		},
+	}).Result()
 
-			if err != nil {
-				return
-			}
+	return err
+}
 
-			messages := xstream[0].Messages
-			lastID = messages[len(messages)-1].ID
+func PushToLogStream(
+	client *redis.Client,
+	infra *models.Infra,
+	operation *models.Operation,
+	data *types.TFLogLine,
+) error {
+	// pushes a state update to the state stream
+	streamName := getLogsStreamName(infra, operation)
 
-			rw.WriteJSONWithChannel(messages, errorchan)
-		}
-	}()
+	_, err := client.XAdd(context.TODO(), &redis.XAddArgs{
+		Stream: streamName,
+		ID:     "*",
+		Values: map[string]interface{}{
+			"log": fmt.Sprintf("[%s] [%s] %s\n", data.Level, data.Timestamp, data.Message),
+		},
+	}).Result()
+
+	return err
+}
+
+type StateUpdateWriter func(update *types.TFResourceState) error
+
+func StreamStateUpdate(
+	ctx context.Context,
+	client *redis.Client,
+	infra *models.Infra,
+	operation *models.Operation,
+	send StateUpdateWriter,
+) error {
+	lastID := "0-0"
+	streamName := getStateStreamName(infra, operation)
 
 	for {
-		select {
-		case err := <-errorchan:
-			close(errorchan)
-			client.Close()
+		xstream, err := client.XRead(
+			ctx,
+			&redis.XReadArgs{
+				Streams: []string{streamName, lastID},
+				Block:   0,
+			},
+		).Result()
+
+		if err != nil {
 			return err
 		}
+
+		messages := xstream[0].Messages
+		lastID = messages[len(messages)-1].ID
+
+		for _, msg := range messages {
+			stateData := &types.TFResourceState{}
+
+			dataInter, ok := msg.Values["data"]
+
+			if !ok {
+				continue
+			}
+
+			dataString, ok := dataInter.(string)
+
+			if !ok {
+				continue
+			}
+
+			err := json.Unmarshal([]byte(dataString), stateData)
+
+			if err != nil {
+				continue
+			}
+
+			err = send(stateData)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		}
 	}
+}
+
+func getStateStreamName(
+	infra *models.Infra,
+	operation *models.Operation,
+) string {
+	return fmt.Sprintf("%s-state", models.GetWorkspaceID(infra, operation))
+}
+
+func getLogsStreamName(
+	infra *models.Infra,
+	operation *models.Operation,
+) string {
+	return fmt.Sprintf("%s-logs", models.GetWorkspaceID(infra, operation))
+}
+
+func getLogsFileName(
+	infra *models.Infra,
+	operation *models.Operation,
+) string {
+	return fmt.Sprintf("%s-logs.txt", models.GetWorkspaceID(infra, operation))
 }

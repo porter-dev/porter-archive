@@ -47,9 +47,9 @@ func Execute() {
 					if constraint.Check(latestRelease) {
 						color.New(color.FgYellow).Fprint(os.Stderr, "A new version of the porter CLI is available. Run the following to update: ")
 						if runtime.GOOS == "darwin" {
-							color.New(color.FgYellow).Add(color.Bold).Fprintln(os.Stderr, "brew install porter-dev/porter/porter")
+							color.New(color.FgYellow, color.Bold).Fprintln(os.Stderr, "brew install porter-dev/porter/porter")
 						} else {
-							color.New(color.FgYellow).Add(color.Bold).Fprintln(os.Stderr, "/bin/bash -c \"$(curl -fsSL https://install.porter.run)\"")
+							color.New(color.FgYellow, color.Bold).Fprintln(os.Stderr, "/bin/bash -c \"$(curl -fsSL https://install.porter.run)\"")
 						}
 						color.New(color.FgYellow).Fprintln(os.Stderr, "View CLI installation and upgrade docs at https://docs.porter.run/cli/installation\n")
 					}

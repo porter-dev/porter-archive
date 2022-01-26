@@ -1,8 +1,7 @@
 import CopyToClipboard from "components/CopyToClipboard";
-import SaveButton from "components/SaveButton";
 import Table from "components/Table";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useRouteMatch } from "react-router";
 import { Link } from "react-router-dom";
 import { Column, Row } from "react-table";
 import api from "shared/api";
@@ -18,8 +17,10 @@ export type DatabaseObject = {
   infra_id: number;
   instance_id: string;
   instance_name: string;
+  instance_status: string;
   instance_endpoint: string;
-  status: string;
+  instance_db_family: string;
+  instance_db_version: string;
 };
 
 const DatabasesList = () => {
@@ -91,11 +92,28 @@ const DatabasesList = () => {
         accessor: "instance_id",
       },
       {
-        Header: "Instance name",
+        Header: "Name",
         accessor: "instance_name",
       },
       {
-        Header: "Instance endpoint",
+        Header: "DB Family",
+        accessor: "instance_db_family",
+      },
+      {
+        Header: "DB Version",
+        accessor: "instance_db_version",
+      },
+      {
+        Header: "Status",
+        accessor: "instance_status",
+        Cell: ({ row }) => {
+          return (
+            <Status status={row.values.status}>{row.values.status}</Status>
+          );
+        },
+      },
+      {
+        Header: "Endpoint",
         accessor: "instance_endpoint",
         Cell: ({ row }) => {
           return (
@@ -105,15 +123,6 @@ const DatabasesList = () => {
                 <i className="material-icons-outlined">content_copy</i>
               </CopyToClipboard>
             </>
-          );
-        },
-      },
-      {
-        Header: "Instance status",
-        accessor: "status",
-        Cell: ({ row }) => {
-          return (
-            <Status status={row.values.status}>{row.values.status}</Status>
           );
         },
       },
@@ -173,7 +182,7 @@ const DatabasesList = () => {
   }, [user]);
 
   const data = useMemo<Array<DatabaseObject>>(() => {
-    return mock_database_list;
+    return databases;
   }, [databases]);
 
   return (

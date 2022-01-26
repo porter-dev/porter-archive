@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
+	helmRel "helm.sh/helm/v3/pkg/release"
 )
 
 type UpdateBuildConfigHandler struct {
@@ -70,4 +71,42 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*helmRel.Release)
+	rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	gitAction := rel.GitActionConfig
+	if gitAction != nil && gitAction.ID != 0 {
+		user, _ := r.Context().Value(types.UserScope).(*models.User)
+
+		gaRunner, err := getGARunner(
+			c.Config(),
+			user.ID,
+			cluster.ProjectID,
+			cluster.ID,
+			rel.GitActionConfig,
+			helmRelease.Name,
+			helmRelease.Namespace,
+			rel,
+			helmRelease,
+		)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		err = gaRunner.RerunLastWorkflow()
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	c.WriteResult(w, r, "")
 }

@@ -1,11 +1,28 @@
 package grpc
 
-import "github.com/porter-dev/porter/provisioner/pb"
+import (
+	"fmt"
+	"io"
 
-func (s *ProvisionerServer) StoreLog(server pb.Provisioner_StoreLogServer) error {
-	// TODO: get log via server.recv, store it in Redis
+	"github.com/porter-dev/porter/provisioner/pb"
+)
 
-	return nil
+func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error {
+	for {
+		tfLog, err := stream.Recv()
+
+		if err == io.EOF {
+			return stream.SendAndClose(&pb.TerraformStateMeta{})
+		}
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(tfLog)
+
+		// TODO: store in Redis
+	}
 }
 
 // // StreamLogMsg is responsible for handling the POST of the

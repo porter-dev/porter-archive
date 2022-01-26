@@ -38,12 +38,6 @@ func NewInfraDeleteHandler(
 func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
-	request := &types.DeleteInfraRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
-
 	if infra.Kind == types.InfraDOKS || infra.Kind == types.InfraGKE || infra.Kind == types.InfraEKS {
 		c.Config().AnalyticsClient.Track(analytics.ClusterDestroyingStartTrack(
 			&analytics.ClusterDestroyingStartTrackOpts{

@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	"github.com/porter-dev/porter/provisioner/integrations/storage"
 	"github.com/porter-dev/porter/provisioner/integrations/storage/s3"
+	"golang.org/x/oauth2"
 )
 
 type Config struct {
@@ -29,6 +30,9 @@ type Config struct {
 
 	// Alerter to send alerts to a third-party aggregator
 	Alerter alerter.Alerter
+
+	// DOConf is the configuration for a DigitalOcean OAuth client
+	DOConf *oauth2.Config
 }
 
 // ProvisionerConf is the env var configuration for the provisioner server
@@ -117,6 +121,8 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 		for i, b := range []byte(envConf.ProvisionerConf.S3EncryptionKey) {
 			s3Key[i] = b
 		}
+
+		fmt.Println(envConf.ProvisionerConf.S3AWSRegion, envConf.ProvisionerConf.S3AWSAccessKeyID, envConf.ProvisionerConf.S3AWSSecretKey, envConf.ProvisionerConf.S3BucketName)
 
 		res.StorageManager, err = s3.NewS3StorageClient(&s3.S3Options{
 			AWSRegion:      envConf.ProvisionerConf.S3AWSRegion,

@@ -22,8 +22,8 @@ type TFResourceState struct {
 type TFStateStatus string
 
 type TFState struct {
-	LastUpdated time.Time     `json:"last_updated"`
-	OperationID string        `json:"operation_id"`
-	Status      TFStateStatus `json:"status"`
-	Resources   []*TFResourceState
+	LastUpdated time.Time                   `json:"last_updated"`
+	OperationID string                      `json:"operation_id"`
+	Status      TFStateStatus               `json:"status"`
+	Resources   map[string]*TFResourceState `json:"resources"`
 }

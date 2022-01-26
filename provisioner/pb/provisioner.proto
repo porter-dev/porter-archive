@@ -15,6 +15,10 @@ message TerraformStateMeta {
 
 }
 
+message Workspace {
+    string workspace = 1; 
+}
+
 message Infra {
     int64 project_id = 1;
     int64 id = 2;
@@ -34,7 +38,8 @@ enum TerraformEvent {
     APPLY_ERRORED = 4;
     APPLY_COMPLETE = 5;
     DIAGNOSTIC = 6;
-  }
+    OPERATION_FINISHED = 7;
+}
 
 message TerraformResource {
     string addr = 1;

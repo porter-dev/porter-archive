@@ -6,9 +6,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/porter-dev/porter/provisioner/server/config"
 	"github.com/porter-dev/porter/provisioner/server/router"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+
+	"github.com/porter-dev/porter/provisioner/pb"
+	"google.golang.org/grpc"
+
+	pgrpc "github.com/porter-dev/porter/provisioner/server/grpc"
 )
 
 // Version will be linked by an ldflag during build
@@ -58,9 +66,25 @@ func main() {
 
 	config.Logger.Info().Msgf("Starting server %v", address)
 
+	grpcServer := grpc.NewServer()
+	pb.RegisterProvisionerServer(grpcServer, pgrpc.NewProvisionerServer(config))
+
+	http2Server := &http2.Server{}
 	s := &http.Server{
-		Addr:         address,
-		Handler:      appRouter,
+		Addr: address,
+		Handler: h2c.NewHandler(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			if request.ProtoMajor != 2 {
+				appRouter.ServeHTTP(writer, request)
+				return
+			}
+
+			if strings.Contains(request.Header.Get("Content-Type"), "application/grpc") {
+				grpcServer.ServeHTTP(writer, request)
+				return
+			}
+
+			appRouter.ServeHTTP(writer, request)
+		}), http2Server),
 		ReadTimeout:  config.ProvisionerConf.TimeoutRead,
 		WriteTimeout: config.ProvisionerConf.TimeoutWrite,
 		IdleTimeout:  config.ProvisionerConf.TimeoutIdle,

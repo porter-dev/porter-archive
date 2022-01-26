@@ -4,18 +4,60 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/pb"
+
+	"google.golang.org/grpc/metadata"
 )
 
 func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error {
+	fmt.Println("HERE")
+
+	// read metadata to get infra object
+	streamContext, ok := metadata.FromIncomingContext(stream.Context())
+
+	if !ok {
+		fmt.Println("UA 1")
+		return fmt.Errorf("unauthorized")
+	}
+
+	workspaceID, exists := streamContext["workspace_id"]
+
+	if !exists || len(workspaceID) != 1 {
+		fmt.Println("UA 2")
+		return fmt.Errorf("unauthorized")
+	}
+
+	// TODO: remove this
+	if !s.config.ProvisionerConf.Debug {
+		// parse workspace id
+		_, projID, infraID, _, err := models.ParseUniqueName(workspaceID[0])
+
+		if err != nil {
+			fmt.Println("UA 3")
+			return err
+		}
+
+		_, err = s.config.Repo.Infra().ReadInfra(projID, infraID)
+
+		if err != nil {
+			fmt.Println("UA 4")
+			return err
+		}
+	}
+
 	for {
+		fmt.Println("LOOPING")
+
 		tfLog, err := stream.Recv()
 
 		if err == io.EOF {
+			fmt.Println("END 1")
 			return stream.SendAndClose(&pb.TerraformStateMeta{})
 		}
 
 		if err != nil {
+			fmt.Println("END 2", err)
 			return err
 		}
 
@@ -24,6 +66,90 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 		// TODO: store in Redis
 	}
 }
+
+// type HTTPStreamer struct {
+// 	client       *http.Client
+// 	desiredState models.DesiredTFState
+// 	statePosted  bool
+// 	serverURL    string
+// 	orgID        string
+// }
+
+// func (h *HTTPStreamer) Write(p []byte) (int, error) {
+// 	for _, line := range bytes.Split(p, []byte("\n")) {
+// 		var tfLog models.TFLogLine
+
+// 		if len(line) == 0 {
+// 			continue
+// 		}
+
+// 		err := json.Unmarshal(line, &tfLog)
+// 		if err != nil {
+// 			if bytes.Contains(line, []byte("[DEBUG]")) {
+// 				// skip this debug line as terraform currently outputs
+// 				// this in plaintext even with json flag
+// 				printLog(line, err, "skipping debug line")
+// 				continue
+// 			}
+
+// 			printLog(line, err, "during unmarshalling log line, not a debug line")
+// 			continue
+// 		}
+
+// 		// send to backend over grpc connection
+
+// 		if tfLog.Type == models.PlannedChange {
+// 			h.desiredState = append(h.desiredState, tfLog.Change.Resource)
+// 		} else if tfLog.Type == models.ChangeSummary && !h.statePosted {
+// 			// consolidated resource list complete
+// 			// should be good to POST on server
+
+// 			reqBody, err := json.Marshal(h.desiredState)
+// 			if err != nil {
+// 				printLog(line, err, "mashalling desired state")
+// 				continue
+// 			}
+
+// 			endpoint := fmt.Sprintf("%s/%s/state", h.serverURL, h.orgID)
+
+// 			fmt.Println("posting request to", endpoint)
+// 			_, err = h.client.Post(endpoint,
+// 				"application/json",
+// 				bytes.NewReader(reqBody))
+// 			if err != nil {
+// 				printLog(line, err, "desired state POST response error")
+// 				continue
+// 			}
+
+// 			h.statePosted = true
+// 		} else {
+// 			// this is to be directed to the http server for streaming
+
+// 			endpoint := fmt.Sprintf("%s/%s/stream", h.serverURL, h.orgID)
+
+// 			fmt.Println("posting request to", endpoint)
+// 			_, err := h.client.Post(endpoint,
+// 				"application/json",
+// 				bytes.NewReader(line))
+// 			if err != nil {
+// 				printLog(line, err, "streaming log response error")
+// 				continue
+// 			}
+// 		}
+// 	}
+
+// 	return len(p), nil
+// }
+
+// func NewHTTPStreamer(tfConf *config.TFConf) *HTTPStreamer {
+// 	return &HTTPStreamer{
+// 		client: &http.Client{
+// 			Timeout: 3 * time.Second,
+// 		},
+// 		serverURL: tfConf.BackendURL,
+// 		orgID:     tfConf.OrgID,
+// 	}
+// }
 
 // // StreamLogMsg is responsible for handling the POST of the
 // // log message from provisioner cli and pushing the content

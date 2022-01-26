@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/encryption"
 )
 
 // Infra represents the metadata for an infrastructure type provisioned on
@@ -31,6 +32,8 @@ type Infra struct {
 	// Status is the status of the infra
 	Status types.InfraStatus `json:"status"`
 
+	Operations []Operation
+
 	// The AWS integration that was used to create the infra
 	AWSIntegrationID uint
 
@@ -50,6 +53,20 @@ type Infra struct {
 
 	// The last-applied input variables to the provisioner
 	LastApplied []byte
+}
+
+type Operation struct {
+	gorm.Model
+
+	UID     string `gorm:"unique"`
+	InfraID uint
+	Status  string
+	Errored bool
+	Error   string
+}
+
+func GetOperationID() (string, error) {
+	return encryption.GenerateRandomBytes(10)
 }
 
 // ToInfraType generates an external Infra to be shared over REST
@@ -170,5 +187,45 @@ func ParseUniqueName(workspaceID string) (string, uint, uint, string, error) {
 		return "", 0, 0, "", err
 	}
 
-	return strArr[0], uint(projID), uint(infraID), strArr[4], nil
+	return strArr[0], uint(projID), uint(infraID), strArr[3], nil
+}
+
+type UniqueNameWithOperation struct {
+	Kind         string
+	ProjectID    uint
+	InfraID      uint
+	Suffix       string
+	OperationUID string
+}
+
+func ParseUniqueNameWithOperationID(workspaceID string) (*UniqueNameWithOperation, error) {
+	strArr := strings.Split(workspaceID, "-")
+
+	if len(strArr) != 5 {
+		return nil, fmt.Errorf("workspace id improperly formatted")
+	}
+
+	projID, err := strconv.ParseUint(strArr[1], 10, 64)
+
+	if err != nil {
+		return nil, err
+	}
+
+	infraID, err := strconv.ParseUint(strArr[2], 10, 64)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(strArr[4]) != 10 {
+		return nil, fmt.Errorf("operation uid is not length 10")
+	}
+
+	return &UniqueNameWithOperation{
+		Kind:         strArr[0],
+		ProjectID:    uint(projID),
+		InfraID:      uint(infraID),
+		Suffix:       strArr[3],
+		OperationUID: strArr[4],
+	}, nil
 }

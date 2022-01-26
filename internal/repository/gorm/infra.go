@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -108,6 +110,39 @@ func (repo *InfraRepository) UpdateInfra(
 	}
 
 	return ai, nil
+}
+
+func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models.Operation) (*models.Operation, error) {
+	// don't accept operations within a 10-length unique ID
+	if len(operation.UID) != 10 {
+		return nil, fmt.Errorf("operation must have unique ID with length 10")
+	}
+
+	assoc := repo.db.Model(&infra).Association("Operations")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Append(operation); err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Save(operation).Error; err != nil {
+		return nil, err
+	}
+
+	return operation, nil
+}
+
+func (repo *InfraRepository) GetLatestOperation(infra *models.Infra) (*models.Operation, error) {
+	operation := &models.Operation{}
+
+	if err := repo.db.Order("id desc").Where("infra_id = ?", infra.ID).First(&operation).Error; err != nil {
+		return nil, err
+	}
+
+	return operation, nil
 }
 
 // EncryptInfraData will encrypt the infra data before

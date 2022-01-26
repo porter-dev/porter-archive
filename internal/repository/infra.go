@@ -10,4 +10,8 @@ type InfraRepository interface {
 	ReadInfra(projectID, infraID uint) (*models.Infra, error)
 	ListInfrasByProjectID(projectID uint) ([]*models.Infra, error)
 	UpdateInfra(repo *models.Infra) (*models.Infra, error)
+
+	// Operations
+	AddOperation(infra *models.Infra, operation *models.Operation) (*models.Operation, error)
+	GetLatestOperation(infra *models.Infra) (*models.Operation, error)
 }

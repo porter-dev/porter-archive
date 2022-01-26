@@ -874,9 +874,7 @@ const getReleaseSteps = baseApi<
 });
 
 const destroyInfra = baseApi<
-  {
-    name: string;
-  },
+  {},
   {
     project_id: number;
     infra_id: number;

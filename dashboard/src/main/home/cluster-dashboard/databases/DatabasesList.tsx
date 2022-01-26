@@ -4,16 +4,18 @@ import Table from "components/Table";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { Link } from "react-router-dom";
-import { Column } from "react-table";
+import { Column, Row } from "react-table";
 import api from "shared/api";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
+import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import { mock_database_list } from "./mock_data";
 
 export type DatabaseObject = {
   cluster_id: number;
   project_id: number;
+  infra_id: number;
   instance_id: string;
   instance_name: string;
   instance_endpoint: string;
@@ -33,6 +35,7 @@ const DatabasesList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [databases, setDatabases] = useState<DatabaseObject[]>([]);
   const [isAuth] = useAuth();
+  const { pushQueryParams } = useRouting();
 
   useEffect(() => {
     let isSubscribed = true;
@@ -62,7 +65,24 @@ const DatabasesList = () => {
     };
   }, [currentCluster, currentProject]);
 
-  const handleDeleteDatabase = () => {};
+  const handleDeleteDatabase = async (project_id: number, infra_id: number) => {
+    try {
+      await api.destroyInfra(
+        "<token>",
+        {},
+        {
+          project_id,
+          infra_id,
+        }
+      );
+
+      setCurrentOverlay(null);
+      pushQueryParams({ current_tab: "provisioner-status" });
+    } catch (error) {
+      console.error(error);
+      setCurrentError("We couldn't delete the infra, please try again.");
+    }
+  };
 
   const columns = useMemo<Column<DatabaseObject>[]>(() => {
     let columns: Column<DatabaseObject>[] = [
@@ -122,14 +142,18 @@ const DatabasesList = () => {
     if (isAuth("cluster", "", ["get", "delete"])) {
       columns.push({
         id: "delete_button",
-        Cell: ({ row }: any) => {
+        Cell: ({ row }: { row: Row<DatabaseObject> }) => {
           return (
             <>
               <DeleteButton
                 onClick={() =>
                   setCurrentOverlay({
                     message: `Are you sure you want to delete ${row.original.instance_name}?`,
-                    onYes: handleDeleteDatabase,
+                    onYes: () =>
+                      handleDeleteDatabase(
+                        row.original.project_id,
+                        row.original.infra_id
+                      ),
                     onNo: () => setCurrentOverlay(null),
                   })
                 }
@@ -149,7 +173,7 @@ const DatabasesList = () => {
   }, [user]);
 
   const data = useMemo<Array<DatabaseObject>>(() => {
-    return databases;
+    return mock_database_list;
   }, [databases]);
 
   return (

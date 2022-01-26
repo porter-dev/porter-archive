@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	"github.com/porter-dev/porter/provisioner/integrations/storage"
+	"github.com/porter-dev/porter/provisioner/integrations/storage/s3"
 )
 
 type Config struct {
@@ -45,6 +46,7 @@ type ProvisionerConf struct {
 	// Configuration for the S3 storage backend
 	S3AWSAccessKeyID string `env:"S3_AWS_ACCESS_KEY_ID"`
 	S3AWSSecretKey   string `env:"S3_AWS_SECRET_KEY"`
+	S3AWSRegion      string `env:"S3_AWS_REGION"`
 	S3BucketName     string `env:"S3_BUCKET_NAME"`
 	S3EncryptionKey  string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
 }
@@ -106,6 +108,29 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 
 	if envConf.ProvisionerConf.SentryDSN != "" {
 		res.Alerter, err = alerter.NewSentryAlerter(envConf.ProvisionerConf.SentryDSN, envConf.ProvisionerConf.SentryEnv)
+	}
+
+	// load a storage backend; if correct env vars are not set, throw an error
+	if envConf.ProvisionerConf.S3AWSAccessKeyID != "" && envConf.ProvisionerConf.S3AWSSecretKey != "" && envConf.ProvisionerConf.S3EncryptionKey != "" {
+		var s3Key [32]byte
+
+		for i, b := range []byte(envConf.ProvisionerConf.S3EncryptionKey) {
+			s3Key[i] = b
+		}
+
+		res.StorageManager, err = s3.NewS3StorageClient(&s3.S3Options{
+			AWSRegion:      envConf.ProvisionerConf.S3AWSRegion,
+			AWSAccessKeyID: envConf.ProvisionerConf.S3AWSAccessKeyID,
+			AWSSecretKey:   envConf.ProvisionerConf.S3AWSSecretKey,
+			AWSBucketName:  envConf.ProvisionerConf.S3BucketName,
+			EncryptionKey:  &s3Key,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("no storage backend is available")
 	}
 
 	return res, nil

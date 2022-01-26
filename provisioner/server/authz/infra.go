@@ -33,6 +33,21 @@ type InfraScopedMiddleware struct {
 }
 
 func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// TODO: remove this
+	if p.config.ProvisionerConf.Debug {
+		ctx := NewInfraContext(r.Context(), &models.Infra{
+			Model: gorm.Model{
+				ID: 1,
+			},
+			Kind:      "test",
+			Suffix:    "123456",
+			ProjectID: 1,
+		})
+		r = r.Clone(ctx)
+		p.next.ServeHTTP(w, r)
+		return
+	}
+
 	workspaceID, reqErr := requestutils.GetURLParamString(r, types.URLParam("workspace_id"))
 
 	if reqErr != nil {

@@ -19,8 +19,6 @@ export type DatabaseObject = {
   instance_name: string;
   instance_status: string;
   instance_endpoint: string;
-  instance_db_family: string;
-  instance_db_version: string;
 };
 
 const DatabasesList = () => {
@@ -96,20 +94,11 @@ const DatabasesList = () => {
         accessor: "instance_name",
       },
       {
-        Header: "DB Family",
-        accessor: "instance_db_family",
-      },
-      {
-        Header: "DB Version",
-        accessor: "instance_db_version",
-      },
-      {
         Header: "Status",
         accessor: "instance_status",
-        Cell: ({ row }) => {
-          return (
-            <Status status={row.values.status}>{row.values.status}</Status>
-          );
+        Cell: ({ cell }) => {
+          const status: "accepted" | "expired" | "pending" = cell.value as any;
+          return <Status status={status}>{status}</Status>;
         },
       },
       {

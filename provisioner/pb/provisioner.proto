@@ -76,6 +76,7 @@ message DiagnosticDetail {
     string severity = 1;
     string summary = 2; 
     string address = 3;
+    string detail = 4;
 }
 
 message TerraformLog {

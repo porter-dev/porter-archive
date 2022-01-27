@@ -88,6 +88,7 @@ func (t *TFLogLine) ToPBType() *pb.TerraformLog {
 			Severity: t.Diagnostic.Severity,
 			Summary:  t.Diagnostic.Summary,
 			Address:  t.Diagnostic.Address,
+			Detail:   t.Diagnostic.Detail,
 		},
 	}
 }
@@ -153,6 +154,7 @@ func ToProvisionerType(pbTFLog *pb.TerraformLog) *TFLogLine {
 			Severity: pbTFLog.Diagnostic.Severity,
 			Summary:  pbTFLog.Diagnostic.Summary,
 			Address:  pbTFLog.Diagnostic.Address,
+			Detail:   pbTFLog.Diagnostic.Detail,
 		},
 	}
 }

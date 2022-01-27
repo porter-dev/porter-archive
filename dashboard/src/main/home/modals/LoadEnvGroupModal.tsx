@@ -163,7 +163,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       return "No env group selected";
     }
     if (hasClashingKeys) {
-      return "There are variables defined in this group that will override existing variables.";
+      return "";
     }
   }
 
@@ -238,29 +238,32 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
             </SidebarSection>
           )}
           <AbsoluteWrapper>
-            <CheckboxRow
-              checked={this.state.shouldSync}
-              toggle={() =>
-                this.setState((prevState) => ({
-                  shouldSync: !prevState.shouldSync,
-                }))
-              }
-              label="Sync environment group"
-              disabled={this.state.selectedEnvGroup?.meta_version === 1}
-            />
-            <DocsHelper
-              link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
-              tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
-              placement="top-start"
-            />
+            {
+              this.state.selectedEnvGroup?.meta_version === 1 ? (
+                <Helper color="#f5cb42">
+                  Upgrade this env group from the env groups tab to sync.
+                </Helper>
+              ) : (
+                <CheckboxRow
+                  checked={this.state.shouldSync}
+                  toggle={() =>
+                    this.setState((prevState) => ({
+                      shouldSync: !prevState.shouldSync,
+                    }))
+                  }
+                  label="Sync environment group"
+                  disabled={this.state.selectedEnvGroup?.meta_version === 1}
+                />
+              )
+            }
+            <IconWrapper>
+              <DocsHelper
+                link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+                tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+                placement="top-start"
+              />
+            </IconWrapper>
           </AbsoluteWrapper>
-          {this.state.selectedEnvGroup?.meta_version === 1 && (
-            <Helper color="#f5cb42">
-              Looks like the env group you selected belongs to an old version
-              and is not available for syncing. You can fix this by updating the
-              env group from the env groups tab.
-            </Helper>
-          )}
         </GroupModalSections>
 
         <SaveButton
@@ -275,6 +278,10 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 }
 
 LoadEnvGroupModal.contextType = Context;
+
+const IconWrapper = styled.div`
+  margin-bottom: -10px;
+`;
 
 const AbsoluteWrapper = styled.div`
   position: absolute;

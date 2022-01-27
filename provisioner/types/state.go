@@ -14,6 +14,7 @@ const (
 	TFResourceCreating      TFResourceStatus = "creating"
 	TFResourceUpdating      TFResourceStatus = "updating"
 	TFResourceDeleting      TFResourceStatus = "deleting"
+	TFResourceDeleted       TFResourceStatus = "deleted"
 	TFResourceErrored       TFResourceStatus = "errored"
 )
 

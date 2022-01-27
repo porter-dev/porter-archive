@@ -272,7 +272,12 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 				continue
 			}
 
-			currState.Resources[stateData.ID] = stateData
+			// if the state is deleted, remove it from the current state
+			if stateData.Status == types.TFResourceDeleting {
+				delete(currState.Resources, stateData.ID)
+			} else {
+				currState.Resources[stateData.ID] = stateData
+			}
 		}
 	}
 

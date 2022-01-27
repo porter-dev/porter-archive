@@ -57,7 +57,8 @@ message TerraformErrored {
 }
 
 message TerraformHook {
-    TerraformResource resource = 1;    
+    TerraformResource resource = 1;  
+    string action = 2;   
 }
 
 message TerraformChange {

@@ -64,6 +64,7 @@ func (t *TFLogLine) ToPBType() *pb.TerraformLog {
 					ErrorSummary: t.Hook.Resource.Errored.ErrorSummary,
 				},
 			},
+			Action: t.Hook.Action,
 		},
 		Change: &pb.TerraformChange{
 			Resource: &pb.TerraformResource{
@@ -130,6 +131,7 @@ func ToProvisionerType(pbTFLog *pb.TerraformLog) *TFLogLine {
 					ErrorSummary: pbTFLog.Hook.Resource.Errored.ErrorSummary,
 				},
 			},
+			Action: pbTFLog.Hook.Action,
 		},
 		Change: Change{
 			Resource: Resource{
@@ -161,6 +163,7 @@ func ToProvisionerType(pbTFLog *pb.TerraformLog) *TFLogLine {
 
 type Hook struct {
 	Resource Resource `json:"resource,omitempty"`
+	Action   string   `json:"action"`
 }
 
 type Change struct {

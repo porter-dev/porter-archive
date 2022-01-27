@@ -97,7 +97,7 @@ func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	err = c.Config.Provisioner.Provision(&provisioner.ProvisionOpts{
 		Infra:         infra,
 		Operation:     operation,
-		OperationKind: provisioner.Apply,
+		OperationKind: provisioner.Destroy,
 		Kind:          string(infra.Kind),
 		Values:        lastApplied,
 		CredentialExchange: &provisioner.ProvisionCredentialExchange{

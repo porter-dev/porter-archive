@@ -77,7 +77,12 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 			switch logType.Type {
 			case types.ApplyComplete:
 				stateUpdate.ID = logType.Hook.Resource.Addr
-				stateUpdate.Status = types.TFResourceCreated
+
+				if logType.Hook.Action == "create" {
+					stateUpdate.Status = types.TFResourceCreated
+				} else if logType.Hook.Action == "delete" {
+					stateUpdate.Status = types.TFResourceDeleted
+				}
 			case types.PlannedChange:
 				stateUpdate.ID = logType.Change.Resource.Addr
 

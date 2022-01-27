@@ -12,14 +12,20 @@ import (
 	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/kubernetes/local"
+	klocal "github.com/porter-dev/porter/internal/kubernetes/local"
+
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
+	"github.com/porter-dev/porter/provisioner/integrations/provisioner"
+	"github.com/porter-dev/porter/provisioner/integrations/provisioner/k8s"
+	"github.com/porter-dev/porter/provisioner/integrations/provisioner/local"
 	"github.com/porter-dev/porter/provisioner/integrations/storage"
 	"github.com/porter-dev/porter/provisioner/integrations/storage/s3"
 	"golang.org/x/oauth2"
+
+	_gorm "gorm.io/gorm"
 )
 
 type Config struct {
@@ -36,12 +42,14 @@ type Config struct {
 	// Alerter to send alerts to a third-party aggregator
 	Alerter alerter.Alerter
 
+	DB *_gorm.DB
+
 	// DOConf is the configuration for a DigitalOcean OAuth client
 	DOConf *oauth2.Config
 
 	RedisClient *redis.Client
 
-	ProvisionerAgent *kubernetes.Agent
+	Provisioner provisioner.Provisioner
 }
 
 // ProvisionerConf is the env var configuration for the provisioner server
@@ -63,14 +71,20 @@ type ProvisionerConf struct {
 	S3BucketName     string `env:"S3_BUCKET_NAME"`
 	S3EncryptionKey  string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
 
-	// Options for the provisioner backend and created job
+	// ProvisionerMethod defines the method to use for provisioner: options are "local" or "kubernetes"
+	ProvisionerMethod          string `env:"PROVISIONER_METHOD,default=local"`
+	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
+	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://porter:8080"`
+
+	// Options to configure for the "kubernetes" provisioner method
 	ProvisionerCluster         string `env:"PROVISIONER_CLUSTER"`
 	SelfKubeconfig             string `env:"SELF_KUBECONFIG"`
 	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
 	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
 	ProvisionerJobNamespace    string `env:"PROV_JOB_NAMESPACE,default=default"`
-	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
-	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://porter:8080"`
+
+	// Options to configure for the "local" provisioner method
+	LocalTerraformDirectory string `env:"LOCAL_TERRAFORM_DIRECTORY"`
 }
 
 type EnvConf struct {
@@ -113,6 +127,8 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	res.DB = db
 
 	var key [32]byte
 
@@ -171,20 +187,32 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 		return nil, fmt.Errorf("no redis client is available")
 	}
 
-	provAgent, err := getProvisionerAgent(envConf.ProvisionerConf)
+	if envConf.ProvisionerMethod == "local" {
+		res.Provisioner = local.NewLocalProvisioner(&local.LocalProvisionerConfig{
+			ProvisionerBackendURL:   envConf.ProvisionerBackendURL,
+			LocalTerraformDirectory: envConf.LocalTerraformDirectory,
+		})
+	} else if envConf.ProvisionerMethod == "kubernetes" {
+		provAgent, err := getProvisionerAgent(envConf.ProvisionerConf)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		res.Provisioner = k8s.NewKubernetesProvisioner(provAgent.Clientset, &k8s.KubernetesProvisionerConfig{
+			ProvisionerImageTag:        envConf.ProvisionerImageTag,
+			ProvisionerImagePullSecret: envConf.ProvisionerImagePullSecret,
+			ProvisionerJobNamespace:    envConf.ProvisionerJobNamespace,
+			ProvisionerBackendURL:      envConf.ProvisionerBackendURL,
+		})
 	}
-
-	res.ProvisionerAgent = provAgent
 
 	return res, nil
 }
 
 func getProvisionerAgent(conf *ProvisionerConf) (*kubernetes.Agent, error) {
 	if conf.ProvisionerCluster == "kubeconfig" && conf.SelfKubeconfig != "" {
-		agent, err := local.GetSelfAgentFromFileConfig(conf.SelfKubeconfig)
+		agent, err := klocal.GetSelfAgentFromFileConfig(conf.SelfKubeconfig)
 
 		if err != nil {
 			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)

@@ -108,32 +108,32 @@ func getInfraRoutes(
 	})
 
 	// POST /api/projects/{project_id}/infras/{infra_id}/retry -> infra.NewInfraRetryHandler
-	retryProvisionEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/retry",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.InfraScope,
-			},
-		},
-	)
+	// retryProvisionEndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbUpdate,
+	// 		Method: types.HTTPVerbPost,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/retry",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 			types.InfraScope,
+	// 		},
+	// 	},
+	// )
 
-	retryProvisionHandler := infra.NewInfraRetryHandler(
-		config,
-		factory.GetResultWriter(),
-	)
+	// retryProvisionHandler := infra.NewInfraRetryHandler(
+	// 	config,
+	// 	factory.GetResultWriter(),
+	// )
 
-	routes = append(routes, &Route{
-		Endpoint: retryProvisionEndpoint,
-		Handler:  retryProvisionHandler,
-		Router:   r,
-	})
+	// routes = append(routes, &Route{
+	// 	Endpoint: retryProvisionEndpoint,
+	// 	Handler:  retryProvisionHandler,
+	// 	Router:   r,
+	// })
 
 	// GET /api/projects/{project_id}/infras/{infra_id}/logs -> infra.NewInfraStreamLogsHandler
 	// streamLogsEndpoint := factory.NewAPIEndpoint(
@@ -220,14 +220,14 @@ func getInfraRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/infras/{infra_id} -> infra.NewInfraDeleteHandler
-	deleteEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/infras/{infra_id}/state -> infra.NewInfraGetStateHandler
+	getStateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbDelete,
-			Method: types.HTTPVerbDelete,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath,
+				RelativePath: relPath + "/state",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -237,17 +237,45 @@ func getInfraRoutes(
 		},
 	)
 
-	deleteHandler := infra.NewInfraDeleteHandler(
+	getStateHandler := infra.NewInfraGetStateHandler(
 		config,
-		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
-		Endpoint: deleteEndpoint,
-		Handler:  deleteHandler,
+		Endpoint: getStateEndpoint,
+		Handler:  getStateHandler,
 		Router:   r,
 	})
+
+	// DELETE /api/projects/{project_id}/infras/{infra_id} -> infra.NewInfraDeleteHandler
+	// deleteEndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbDelete,
+	// 		Method: types.HTTPVerbDelete,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath,
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 			types.InfraScope,
+	// 		},
+	// 	},
+	// )
+
+	// deleteHandler := infra.NewInfraDeleteHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
+
+	// routes = append(routes, &Route{
+	// 	Endpoint: deleteEndpoint,
+	// 	Handler:  deleteHandler,
+	// 	Router:   r,
+	// })
 
 	return routes, newPath
 }

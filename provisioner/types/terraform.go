@@ -195,4 +195,5 @@ type DiagnosticDetail struct {
 	Severity string `json:"severity"`
 	Summary  string `json:"summary"`
 	Address  string `json:"address"`
+	Detail   string `json:"detail"`
 }

@@ -64,6 +64,10 @@ type Infra struct {
 type CreateInfraRequest struct {
 	Kind   string                 `json:"kind" form:"required"`
 	Values map[string]interface{} `json:"values" form:"required"`
+
+	AWSIntegrationID uint `json:"aws_integration_id,omitempty"`
+	GCPIntegrationID uint `json:"gcp_integration_id,omitempty"`
+	DOIntegrationID  uint `json:"do_integration_id,omitempty"`
 }
 
 type Operation struct {

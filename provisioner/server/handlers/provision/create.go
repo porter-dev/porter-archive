@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -55,14 +56,21 @@ func (c *ProvisionCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	operation := &models.Operation{
-		UID:     operationUID,
-		InfraID: infra.ID,
-		Type:    "create",
-		Status:  "starting",
+	// parse values to JSON to store in the operation
+	valuesJSON, err := json.Marshal(req.Values)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
 	}
 
-	fmt.Println("OPERATION IS", operation)
+	operation := &models.Operation{
+		UID:         operationUID,
+		InfraID:     infra.ID,
+		Type:        "create",
+		Status:      "starting",
+		LastApplied: valuesJSON,
+	}
 
 	operation, err = c.Config.Repo.Infra().AddOperation(infra, operation)
 
@@ -79,9 +87,9 @@ func (c *ProvisionCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	// spawn a new provisioning process
-	err = provisioner.Provision(&provisioner.ProvisionOpts{
+	err = c.Config.Provisioner.Provision(&provisioner.ProvisionOpts{
 		Infra:         infra,
-		Config:        c.Config,
+		Operation:     operation,
 		OperationKind: provisioner.Apply,
 		Kind:          req.Kind,
 		Values:        req.Values,
@@ -94,7 +102,7 @@ func (c *ProvisionCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			CredExchangeToken: rawToken,
 			CredExchangeID:    ceToken.ID,
 		},
-	}, c.Config.ProvisionerAgent.Clientset)
+	})
 
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)

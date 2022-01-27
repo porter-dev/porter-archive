@@ -9,10 +9,12 @@ type TFResourceStatus string
 const (
 	TFResourcePlannedCreate TFResourceStatus = "planned_create"
 	TFResourcePlannedDelete TFResourceStatus = "planned_delete"
+	TFResourcePlannedUpdate TFResourceStatus = "planned_update"
 	TFResourceCreated       TFResourceStatus = "created"
 	TFResourceCreating      TFResourceStatus = "creating"
 	TFResourceUpdating      TFResourceStatus = "updating"
 	TFResourceDeleting      TFResourceStatus = "deleting"
+	TFResourceErrored       TFResourceStatus = "errored"
 )
 
 type TFResourceState struct {

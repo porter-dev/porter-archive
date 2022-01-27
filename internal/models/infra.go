@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -64,6 +65,13 @@ type Operation struct {
 	Status  string
 	Errored bool
 	Error   string
+
+	// ------------------------------------------------------------------
+	// All fields below this line are encrypted before storage
+	// ------------------------------------------------------------------
+
+	// The last-applied input variables to the provisioner
+	LastApplied []byte
 }
 
 func (o *Operation) ToOperationType() *types.Operation {
@@ -214,7 +222,7 @@ func ParseWorkspaceID(workspaceID string) (*UniqueNameWithOperation, error) {
 	strArr := strings.Split(workspaceID, "-")
 
 	if len(strArr) != 5 {
-		return nil, fmt.Errorf("workspace id improperly formatted")
+		return nil, fmt.Errorf("workspace id improperly formatted: %s", workspaceID)
 	}
 
 	projID, err := strconv.ParseUint(strArr[1], 10, 64)
@@ -229,8 +237,8 @@ func ParseWorkspaceID(workspaceID string) (*UniqueNameWithOperation, error) {
 		return nil, err
 	}
 
-	if len(strArr[4]) != 10 {
-		return nil, fmt.Errorf("operation uid is not length 10")
+	if len(strArr[4]) != hex.EncodedLen(10) {
+		return nil, fmt.Errorf("operation uid does not have hex length 10")
 	}
 
 	return &UniqueNameWithOperation{

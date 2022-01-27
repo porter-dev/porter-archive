@@ -119,6 +119,13 @@ func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models
 		return nil, fmt.Errorf("operation must have unique ID with hex-decoded length 10, length is %d", len(operation.UID))
 	}
 
+	// encrypt the operation data
+	err := repo.EncryptOperationData(operation, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
 	assoc := repo.db.Model(&infra).Association("Operations")
 
 	if assoc.Error != nil {
@@ -133,13 +140,23 @@ func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models
 		return nil, err
 	}
 
+	// decrypt the operation data before returning it
+	if err := repo.DecryptOperationData(operation, repo.key); err != nil {
+		return nil, err
+	}
+
 	return operation, nil
 }
 
 func (repo *InfraRepository) ReadOperation(infraID uint, operationUID string) (*models.Operation, error) {
 	operation := &models.Operation{}
 
-	if err := repo.db.Order("id desc").Where("infra_id = ? AND u_id = ?", infraID, operationUID).First(&operation).Error; err != nil {
+	if err := repo.db.Order("id desc").Where("infra_id = ? AND uid = ?", infraID, operationUID).First(&operation).Error; err != nil {
+		return nil, err
+	}
+
+	// decrypt the operation data before returning it
+	if err := repo.DecryptOperationData(operation, repo.key); err != nil {
 		return nil, err
 	}
 
@@ -150,6 +167,11 @@ func (repo *InfraRepository) GetLatestOperation(infra *models.Infra) (*models.Op
 	operation := &models.Operation{}
 
 	if err := repo.db.Order("id desc").Where("infra_id = ?", infra.ID).First(&operation).Error; err != nil {
+		return nil, err
+	}
+
+	// decrypt the operation data before returning it
+	if err := repo.DecryptOperationData(operation, repo.key); err != nil {
 		return nil, err
 	}
 
@@ -189,6 +211,44 @@ func (repo *InfraRepository) DecryptInfraData(
 		}
 
 		infra.LastApplied = plaintext
+	}
+
+	return nil
+}
+
+// EncryptOperationData will encrypt the operation data before
+// writing to the DB
+func (repo *InfraRepository) EncryptOperationData(
+	operation *models.Operation,
+	key *[32]byte,
+) error {
+	if len(operation.LastApplied) > 0 {
+		cipherData, err := encryption.Encrypt(operation.LastApplied, key)
+
+		if err != nil {
+			return err
+		}
+
+		operation.LastApplied = cipherData
+	}
+
+	return nil
+}
+
+// DecryptOperationData will decrypt the user's operation data before
+// returning it from the DB
+func (repo *InfraRepository) DecryptOperationData(
+	operation *models.Operation,
+	key *[32]byte,
+) error {
+	if len(operation.LastApplied) > 0 {
+		plaintext, err := encryption.Decrypt(operation.LastApplied, key)
+
+		if err != nil {
+			return err
+		}
+
+		operation.LastApplied = plaintext
 	}
 
 	return nil

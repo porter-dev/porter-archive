@@ -11,9 +11,12 @@ type Database struct {
 
 	ClusterID uint `json:"cluster_id"`
 
-	InstanceID       string `json:"instance_id"`
-	InstanceEndpoint string `json:"instance_endpoint"`
-	InstanceName     string `json:"instance_name"`
+	InstanceID        string `json:"instance_id"`
+	InstanceEndpoint  string `json:"instance_endpoint"`
+	InstanceName      string `json:"instance_name"`
+	InstanceStatus    string `json:"instance_status"`
+	InstanceDBFamily  string `json:"instance_db_family"`
+	InstanceDBVersion string `json:"instance_db_version"`
 }
 
 type ListDatabaseResponse []*Database

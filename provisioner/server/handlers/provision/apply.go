@@ -18,24 +18,24 @@ import (
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
-type ProvisionCreateHandler struct {
+type ProvisionApplyHandler struct {
 	Config *config.Config
 
 	decoderValidator shared.RequestDecoderValidator
 	resultWriter     shared.ResultWriter
 }
 
-func NewProvisionCreateHandler(
+func NewProvisionApplyHandler(
 	config *config.Config,
-) *ProvisionCreateHandler {
-	return &ProvisionCreateHandler{
+) *ProvisionApplyHandler {
+	return &ProvisionApplyHandler{
 		Config:           config,
 		decoderValidator: shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
 		resultWriter:     shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	}
 }
 
-func (c *ProvisionCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the project and infra from the attached scope
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
@@ -109,8 +109,15 @@ func (c *ProvisionCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	op, err := operation.ToOperationType()
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
 	// return the operation response type to the server
-	c.resultWriter.WriteResult(w, r, operation.ToOperationType())
+	c.resultWriter.WriteResult(w, r, op)
 }
 
 func createCredentialsExchangeToken(conf *config.Config, infra *models.Infra) (*models.CredentialsExchangeToken, string, error) {

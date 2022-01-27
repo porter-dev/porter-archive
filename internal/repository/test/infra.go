@@ -99,6 +99,16 @@ func (repo *InfraRepository) GetLatestOperation(infra *models.Infra) (*models.Op
 	panic("unimplemented")
 }
 
+func (repo *InfraRepository) ListOperations(infraID uint) ([]*models.Operation, error) {
+	panic("unimplemented")
+}
+
 func (repo *InfraRepository) ReadOperation(infraID uint, operationUID string) (*models.Operation, error) {
+	panic("unimplemented")
+}
+
+func (repo *InfraRepository) UpdateOperation(
+	operation *models.Operation,
+) (*models.Operation, error) {
 	panic("unimplemented")
 }

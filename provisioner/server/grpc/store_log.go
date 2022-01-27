@@ -3,6 +3,7 @@ package grpc
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
@@ -91,11 +92,17 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 				stateUpdate.ID = logType.Diagnostic.Address
 				stateUpdate.Status = types.TFResourceErrored
 
+				var errMsg string
+
 				if logType.Diagnostic.Detail != "" {
-					stateUpdate.Error = &logType.Diagnostic.Detail
+					errMsg = logType.Diagnostic.Detail
 				} else {
-					stateUpdate.Error = &logType.Diagnostic.Summary
+					errMsg = logType.Diagnostic.Summary
 				}
+
+				errMsg = strings.TrimSuffix(errMsg, "\n")
+
+				stateUpdate.Error = &errMsg
 			}
 
 			if stateUpdate.ID != "" && stateUpdate.Status != "" {

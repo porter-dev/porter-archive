@@ -148,6 +148,16 @@ func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models
 	return operation, nil
 }
 
+func (repo *InfraRepository) ListOperations(infraID uint) ([]*models.Operation, error) {
+	operations := make([]*models.Operation, 0)
+
+	if err := repo.db.Where("infra_id = ?", infraID).Order("id desc").Find(&operations).Error; err != nil {
+		return nil, err
+	}
+
+	return operations, nil
+}
+
 func (repo *InfraRepository) ReadOperation(infraID uint, operationUID string) (*models.Operation, error) {
 	operation := &models.Operation{}
 
@@ -172,6 +182,29 @@ func (repo *InfraRepository) GetLatestOperation(infra *models.Infra) (*models.Op
 
 	// decrypt the operation data before returning it
 	if err := repo.DecryptOperationData(operation, repo.key); err != nil {
+		return nil, err
+	}
+
+	return operation, nil
+}
+
+// UpdateInfra modifies an existing Infra in the database
+func (repo *InfraRepository) UpdateOperation(
+	operation *models.Operation,
+) (*models.Operation, error) {
+	err := repo.EncryptOperationData(operation, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Save(operation).Error; err != nil {
+		return nil, err
+	}
+
+	err = repo.DecryptOperationData(operation, repo.key)
+
+	if err != nil {
 		return nil, err
 	}
 

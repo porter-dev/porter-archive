@@ -25,6 +25,11 @@ type TFResourceState struct {
 
 type TFStateStatus string
 
+const (
+	TFStateStatusCreated = "created"
+	TFStateStatusErrored = "errored"
+)
+
 type TFState struct {
 	LastUpdated time.Time                   `json:"last_updated"`
 	OperationID string                      `json:"operation_id"`

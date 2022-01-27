@@ -61,20 +61,41 @@ type Infra struct {
 	LastApplied map[string]string `json:"last_applied"`
 }
 
-type CreateInfraRequest struct {
-	Kind   string                 `json:"kind" form:"required"`
-	Values map[string]interface{} `json:"values" form:"required"`
-
+type InfraCredentials struct {
 	AWSIntegrationID uint `json:"aws_integration_id,omitempty"`
 	GCPIntegrationID uint `json:"gcp_integration_id,omitempty"`
 	DOIntegrationID  uint `json:"do_integration_id,omitempty"`
 }
 
+type CreateInfraRequest struct {
+	*InfraCredentials
+
+	Kind   string                 `json:"kind" form:"required"`
+	Values map[string]interface{} `json:"values" form:"required"`
+}
+
+type RetryInfraRequest struct {
+	// Integration IDs are not required -- if they are passed in, they will override the
+	// existing integration IDs
+	*InfraCredentials
+
+	// Values are not required -- if they are not passed in, the values will be
+	// automatically populated from the previous operation
+	Values map[string]interface{} `json:"values"`
+}
+
+type OperationMeta struct {
+	LastUpdated time.Time `json:"last_updated"`
+	UID         string    `json:"id"`
+	InfraID     uint      `json:"infra_id"`
+	Type        string    `json:"type"`
+	Status      string    `json:"status"`
+	Errored     bool      `json:"errored"`
+	Error       string    `json:"error"`
+}
+
 type Operation struct {
-	UID     string `json:"id"`
-	InfraID uint   `json:"infra_id"`
-	Type    string `json:"type"`
-	Status  string `json:"status"`
-	Errored bool   `json:"errored"`
-	Error   string `json:"error"`
+	*OperationMeta
+
+	LastApplied map[string]interface{} `json:"last_applied"`
 }

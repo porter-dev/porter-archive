@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/internal/analytics"
 
@@ -147,6 +148,12 @@ func GlobalStreamListener(
 				continue
 			}
 
+			operation, err := repo.Infra().ReadOperation(name.InfraID, name.OperationUID)
+
+			if err != nil {
+				continue
+			}
+
 			statusVal, exists := msg.Values["status"]
 
 			if !exists {
@@ -155,7 +162,7 @@ func GlobalStreamListener(
 
 			switch fmt.Sprintf("%v", statusVal) {
 			case "created":
-				handleOperationCreated(config, client, infra, workspaceID)
+				handleOperationCreated(config, client, infra, operation, workspaceID)
 			case "error":
 			case "destroyed":
 			}
@@ -163,8 +170,8 @@ func GlobalStreamListener(
 	}
 }
 
-func handleOperationCreated(config *config.Config, client *redis.Client, infra *models.Infra, workspaceID string) error {
-	err := pushNewStateToStorage(config, client, infra, workspaceID)
+func handleOperationCreated(config *config.Config, client *redis.Client, infra *models.Infra, operation *models.Operation, workspaceID string) error {
+	err := pushNewStateToStorage(config, client, infra, operation, workspaceID)
 
 	if err != nil {
 		return err
@@ -191,7 +198,7 @@ func handleOperationCreated(config *config.Config, client *redis.Client, infra *
 	return nil
 }
 
-func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *models.Infra, workspaceID string) error {
+func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *models.Infra, operation *models.Operation, workspaceID string) error {
 	// read the current state from S3
 	currState := &types.TFState{}
 
@@ -208,6 +215,9 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 			return err
 		}
 	}
+
+	currState.OperationID = operation.UID
+	currState.LastUpdated = time.Now()
 
 	// read the corresponding stream and push all updates to create the new state
 	lastID := "0-0"
@@ -266,6 +276,9 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 		}
 	}
 
+	// determine the status of the operation based on the resources
+	currState.Status = getOperationStatus(currState.Resources)
+
 	// push the new state to S3
 	newStateBytes, err := json.Marshal(currState)
 
@@ -274,6 +287,20 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 	}
 
 	return config.StorageManager.WriteFile(infra, "current_state.json", newStateBytes, true)
+}
+
+func getOperationStatus(resources map[string]*types.TFResourceState) types.TFStateStatus {
+	created := true
+
+	for _, resource := range resources {
+		created = created && resource.Error == nil
+	}
+
+	if created {
+		return types.TFStateStatusCreated
+	}
+
+	return types.TFStateStatusErrored
 }
 
 func cleanupStateStream(config *config.Config, client *redis.Client, workspaceID string) error {

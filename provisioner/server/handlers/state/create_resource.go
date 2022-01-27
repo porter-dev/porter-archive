@@ -43,7 +43,15 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var err error
+	// update the operation to indicate completion
+	operation.Status = "completed"
+
+	operation, err := c.Config.Repo.Infra().UpdateOperation(operation)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
 
 	// switch on the kind of resource and write the corresponding objects to the database
 	switch req.Kind {

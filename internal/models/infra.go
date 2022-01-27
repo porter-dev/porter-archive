@@ -74,15 +74,32 @@ type Operation struct {
 	LastApplied []byte
 }
 
-func (o *Operation) ToOperationType() *types.Operation {
-	return &types.Operation{
-		UID:     o.UID,
-		InfraID: o.InfraID,
-		Type:    o.Type,
-		Status:  o.Status,
-		Errored: o.Errored,
-		Error:   o.Error,
+func (o *Operation) ToOperationMetaType() *types.OperationMeta {
+	return &types.OperationMeta{
+		LastUpdated: o.UpdatedAt,
+		UID:         o.UID,
+		InfraID:     o.InfraID,
+		Type:        o.Type,
+		Status:      o.Status,
+		Errored:     o.Errored,
+		Error:       o.Error,
 	}
+}
+
+func (o *Operation) ToOperationType() (*types.Operation, error) {
+	// unmarshal last applied
+	lastApplied := make(map[string]interface{})
+
+	err := json.Unmarshal(o.LastApplied, &lastApplied)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.Operation{
+		OperationMeta: o.ToOperationMetaType(),
+		LastApplied:   lastApplied,
+	}, nil
 }
 
 func GetOperationID() (string, error) {

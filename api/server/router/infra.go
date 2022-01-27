@@ -108,32 +108,61 @@ func getInfraRoutes(
 	})
 
 	// POST /api/projects/{project_id}/infras/{infra_id}/retry -> infra.NewInfraRetryHandler
-	// retryProvisionEndpoint := factory.NewAPIEndpoint(
-	// 	&types.APIRequestMetadata{
-	// 		Verb:   types.APIVerbUpdate,
-	// 		Method: types.HTTPVerbPost,
-	// 		Path: &types.Path{
-	// 			Parent:       basePath,
-	// 			RelativePath: relPath + "/retry",
-	// 		},
-	// 		Scopes: []types.PermissionScope{
-	// 			types.UserScope,
-	// 			types.ProjectScope,
-	// 			types.InfraScope,
-	// 		},
-	// 	},
-	// )
+	retryProvisionEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/retry",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
 
-	// retryProvisionHandler := infra.NewInfraRetryHandler(
-	// 	config,
-	// 	factory.GetResultWriter(),
-	// )
+	retryProvisionHandler := infra.NewInfraRetryHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
 
-	// routes = append(routes, &Route{
-	// 	Endpoint: retryProvisionEndpoint,
-	// 	Handler:  retryProvisionHandler,
-	// 	Router:   r,
-	// })
+	routes = append(routes, &Route{
+		Endpoint: retryProvisionEndpoint,
+		Handler:  retryProvisionHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/infras/{infra_id}/operations -> infra.NewInfraListOperationsHandler
+	listOperationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/operations",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	listOperationsHandler := infra.NewInfraListOperationsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listOperationsEndpoint,
+		Handler:  listOperationsHandler,
+		Router:   r,
+	})
 
 	// GET /api/projects/{project_id}/infras/{infra_id}/logs -> infra.NewInfraStreamLogsHandler
 	// streamLogsEndpoint := factory.NewAPIEndpoint(

@@ -35,6 +35,8 @@ const LogsFC: React.FC<{
   podError: string;
   rawText?: boolean;
 }> = ({ selectedPod, podError, rawText }) => {
+  const currentPodName = useRef<string>();
+
   const { currentCluster, currentProject } = useContext(Context);
   const [containers, setContainers] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState("");
@@ -52,7 +54,12 @@ const LogsFC: React.FC<{
 
   const wrapperRef = useRef<HTMLDivElement>();
 
-  const { newWebsocket, openWebsocket, closeAllWebsockets } = useWebsockets();
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    getWebsocket,
+  } = useWebsockets();
 
   const scrollToBottom = (smooth: boolean) => {
     if (!wrapperRef.current) {
@@ -136,7 +143,7 @@ const LogsFC: React.FC<{
     } catch (error) {}
   };
 
-  const setupWebsocket = (containerName: string) => {
+  const setupWebsocket = (containerName: string, websocketKey: string) => {
     if (!selectedPod?.metadata?.name) return;
 
     const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?container_name=${containerName}`;
@@ -170,12 +177,18 @@ const LogsFC: React.FC<{
       },
     };
 
-    newWebsocket(`${containerName}-websocket`, endpoint, config);
-    openWebsocket(`${containerName}-websocket`);
+    newWebsocket(websocketKey, endpoint, config);
+    openWebsocket(websocketKey);
   };
 
   useEffect(() => {
     console.log("Selected pod updated");
+    if (selectedPod?.metadata?.name === currentPodName.current) {
+      return () => {
+        closeAllWebsockets();
+      };
+    }
+    currentPodName.current = selectedPod?.metadata?.name;
     const currentContainers =
       selectedPod?.spec?.containers?.map((container) => container?.name) || [];
 
@@ -199,8 +212,13 @@ const LogsFC: React.FC<{
 
     getSystemLogs();
     containers.forEach((containerName) => {
+      const websocketKey = `${currentPodName.current}-${containerName}-websocket`;
+
       getContainerPreviousLogs(containerName);
-      setupWebsocket(containerName);
+
+      if (!getWebsocket(websocketKey)) {
+        setupWebsocket(containerName, websocketKey);
+      }
     });
   }, [containers]);
 

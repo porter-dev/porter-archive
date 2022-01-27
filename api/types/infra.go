@@ -74,6 +74,10 @@ type CreateInfraRequest struct {
 	Values map[string]interface{} `json:"values" form:"required"`
 }
 
+type DeleteInfraRequest struct {
+	*InfraCredentials
+}
+
 type RetryInfraRequest struct {
 	// Integration IDs are not required -- if they are passed in, they will override the
 	// existing integration IDs

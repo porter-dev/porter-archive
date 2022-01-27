@@ -9,16 +9,16 @@ import (
 )
 
 // Apply initiates a new apply operation for infra
-func (c *Client) Apply(
+func (c *Client) Delete(
 	ctx context.Context,
 	projID, infraID uint,
-	req *ptypes.ApplyBaseRequest,
+	req *ptypes.DeleteBaseRequest,
 ) (*types.Operation, error) {
 	resp := &types.Operation{}
 
-	err := c.postRequest(
+	err := c.deleteRequest(
 		fmt.Sprintf(
-			"/projects/%d/infras/%d/apply",
+			"/projects/%d/infras/%d",
 			projID,
 			infraID,
 		),

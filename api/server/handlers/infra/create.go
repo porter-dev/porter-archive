@@ -77,7 +77,7 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// call apply on the provisioner service
 	pClient := client.NewClient("http://localhost:8082/api/v1")
 
-	resp, err := pClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ProvisionBaseRequest{
+	resp, err := pClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
 		Kind:          req.Kind,
 		Values:        req.Values,
 		OperationKind: "create",

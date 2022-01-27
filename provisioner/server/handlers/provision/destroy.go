@@ -4,60 +4,57 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/random"
 	"github.com/porter-dev/porter/provisioner/integrations/provisioner"
 	"github.com/porter-dev/porter/provisioner/server/config"
-	"golang.org/x/crypto/bcrypt"
 
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
-type ProvisionApplyHandler struct {
+type ProvisionDestroyHandler struct {
 	Config *config.Config
 
 	decoderValidator shared.RequestDecoderValidator
 	resultWriter     shared.ResultWriter
 }
 
-func NewProvisionApplyHandler(
+func NewProvisionDestroyHandler(
 	config *config.Config,
-) *ProvisionApplyHandler {
-	return &ProvisionApplyHandler{
+) *ProvisionDestroyHandler {
+	return &ProvisionDestroyHandler{
 		Config:           config,
 		decoderValidator: shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
 		resultWriter:     shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	}
 }
 
-func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the project and infra from the attached scope
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
-	req := &ptypes.ApplyBaseRequest{}
+	fmt.Printf("destroying: %d, %d\n", project.ID, infra.ID)
+
+	req := &ptypes.DeleteBaseRequest{}
 
 	if ok := c.decoderValidator.DecodeAndValidate(w, r, req); !ok {
 		return
 	}
 
-	fmt.Printf("provisioning: %d, %d\n", project.ID, infra.ID)
-
-	// create a new operation and write it to the database
-	operationUID, err := models.GetOperationID()
+	// get the values from the previous operation to re-use
+	lastOp, err := c.Config.Repo.Infra().GetLatestOperation(infra)
 
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
 
-	// parse values to JSON to store in the operation
-	valuesJSON, err := json.Marshal(req.Values)
+	// create a new operation and write it to the database
+	operationUID, err := models.GetOperationID()
 
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
@@ -69,7 +66,7 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		InfraID:     infra.ID,
 		Type:        req.OperationKind,
 		Status:      "starting",
-		LastApplied: valuesJSON,
+		LastApplied: lastOp.LastApplied,
 	}
 
 	operation, err = c.Config.Repo.Infra().AddOperation(infra, operation)
@@ -86,13 +83,23 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// marshal the last applied values into a map[string]interface{}
+	lastApplied := make(map[string]interface{})
+
+	err = json.Unmarshal(lastOp.LastApplied, &lastApplied)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
 	// spawn a new provisioning process
 	err = c.Config.Provisioner.Provision(&provisioner.ProvisionOpts{
 		Infra:         infra,
 		Operation:     operation,
 		OperationKind: provisioner.Apply,
-		Kind:          req.Kind,
-		Values:        req.Values,
+		Kind:          string(infra.Kind),
+		Values:        lastApplied,
 		CredentialExchange: &provisioner.ProvisionCredentialExchange{
 			CredExchangeEndpoint: fmt.Sprintf(
 				"%s/api/v1/%s/credentials",
@@ -118,39 +125,4 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// return the operation response type to the server
 	c.resultWriter.WriteResult(w, r, op)
-}
-
-func createCredentialsExchangeToken(conf *config.Config, infra *models.Infra) (*models.CredentialsExchangeToken, string, error) {
-	// convert the form to a project model
-	expiry := time.Now().Add(6 * time.Hour)
-
-	rawToken, err := random.StringWithCharset(32, "")
-
-	if err != nil {
-		return nil, "", err
-	}
-
-	hashedToken, err := bcrypt.GenerateFromPassword([]byte(rawToken), 8)
-
-	if err != nil {
-		return nil, "", err
-	}
-
-	ceToken := &models.CredentialsExchangeToken{
-		ProjectID:       infra.ProjectID,
-		Expiry:          &expiry,
-		Token:           hashedToken,
-		DOCredentialID:  infra.DOIntegrationID,
-		AWSCredentialID: infra.AWSIntegrationID,
-		GCPCredentialID: infra.GCPIntegrationID,
-	}
-
-	// handle write to the database
-	ceToken, err = conf.Repo.CredentialsExchangeToken().CreateCredentialsExchangeToken(ceToken)
-
-	if err != nil {
-		return nil, "", err
-	}
-
-	return ceToken, rawToken, nil
 }

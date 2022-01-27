@@ -29,6 +29,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 			r.Method("POST", "/{workspace_id}/tfstate", state.NewRawStateUpdateHandler(config))
 
 			r.Method("POST", "/{workspace_id}/resource", state.NewCreateResourceHandler(config))
+			r.Method("DELETE", "/{workspace_id}/resource", state.NewDeleteResourceHandler(config))
 			r.Method("POST", "/{workspace_id}/error", state.NewReportErrorHandler(config))
 			r.Method("GET", "/{workspace_id}/logs", state.NewLogsGetHandler(config))
 		})
@@ -43,6 +44,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 			r.Method("GET", "/projects/{project_id}/infras/{infra_id}/state", state.NewStateGetHandler(config))
 			r.Method("POST", "/projects/{project_id}/infras/{infra_id}/apply", provision.NewProvisionApplyHandler(config))
+			r.Method("DELETE", "/projects/{project_id}/infras/{infra_id}", provision.NewProvisionDestroyHandler(config))
 		})
 	})
 

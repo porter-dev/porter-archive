@@ -93,7 +93,6 @@ func (k *KubernetesProvisioner) getProvisionerJobTemplate(opts *provisioner.Prov
 							ImagePullPolicy: v1.PullAlways,
 							Args: []string{
 								string(opts.OperationKind),
-								string(opts.Infra.Kind),
 							},
 							Env: env,
 						},

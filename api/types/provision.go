@@ -44,10 +44,6 @@ type CreateDOKSInfraRequest struct {
 	DOIntegrationID uint   `json:"do_integration_id" form:"required"`
 }
 
-type DeleteInfraRequest struct {
-	Name string `json:"name" form:"required"`
-}
-
 type CreateRDSInfraRequest struct {
 	// version of the postgres engine
 	DBEngineVersion string `json:"db_engine_version"`

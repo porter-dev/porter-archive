@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -10,31 +11,25 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-
 	"github.com/porter-dev/porter/provisioner/client"
-
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
-type InfraDeleteHandler struct {
+type InfraRetryCreateHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewInfraDeleteHandler(
-	config *config.Config,
-	decoderValidator shared.RequestDecoderValidator,
-	writer shared.ResultWriter,
-) *InfraDeleteHandler {
-	return &InfraDeleteHandler{
+func NewInfraRetryCreateHandler(config *config.Config, decoderValidator shared.RequestDecoderValidator, writer shared.ResultWriter) *InfraRetryCreateHandler {
+	return &InfraRetryCreateHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *InfraRetryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
-	req := &types.DeleteInfraRequest{}
+	req := &types.RetryInfraRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, req); !ok {
 		return
@@ -48,21 +43,32 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// mark the infra as destroying
-	infra.Status = types.StatusDestroying
+	// if the values are nil, get the last applied values and marshal them
+	if req.Values == nil || len(req.Values) == 0 {
+		lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
 
-	infra, err = c.Repo().Infra().UpdateInfra(infra)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		rawValues := lastOperation.LastApplied
+
+		err = json.Unmarshal(rawValues, &req.Values)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// call apply on the provisioner service
 	pClient := client.NewClient("http://localhost:8082/api/v1")
 
-	resp, err := pClient.Delete(context.Background(), proj.ID, infra.ID, &ptypes.DeleteBaseRequest{
-		OperationKind: "delete",
+	resp, err := pClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
+		Kind:          string(infra.Kind),
+		Values:        req.Values,
+		OperationKind: "retry_create",
 	})
 
 	if err != nil {

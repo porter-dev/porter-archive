@@ -90,7 +90,9 @@ func (c *CreateKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 
-	if strings.ToLower(string(request.EventType)) == "critical" && strings.ToLower(request.ResourceType) == "pod" {
+	if strings.ToLower(string(request.EventType)) == "critical" &&
+		strings.ToLower(request.ResourceType) == "pod" &&
+		request.Message != "Unable to determine the root cause of the error" {
 		agent, err := c.GetAgent(r, cluster, request.Namespace)
 
 		if err != nil {
@@ -104,6 +106,19 @@ func (c *CreateKubeEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 		}
 	}
+}
+
+func mapKubeEventToMessage(event *types.CreateKubeEventRequest) string {
+	if strings.HasSuffix(event.Reason, "RunContainerError") {
+		if strings.Contains(event.Message, "exec:") {
+			return fmt.Sprintf("Application launch error: %s\n",
+				strings.Split(strings.SplitAfter(event.Message, "exec: ")[1], ": unknown")[0])
+		}
+	} else if strings.HasSuffix(event.Reason, "ImagePullBackOff") {
+		return "Deployment error: The application image could not be pulled from the registry"
+	}
+
+	return event.Message
 }
 
 func notifyPodCrashing(
@@ -236,7 +251,7 @@ func notifyPodCrashing(
 			ClusterName: cluster.Name,
 			Name:        event.OwnerName,
 			Namespace:   event.Namespace,
-			Info:        fmt.Sprintf("%s:%s", event.Reason, event.Message),
+			Info:        mapKubeEventToMessage(event),
 			URL: fmt.Sprintf(
 				"%s/applications/%s/%s/%s?project_id=%d",
 				config.ServerConf.ServerURL,

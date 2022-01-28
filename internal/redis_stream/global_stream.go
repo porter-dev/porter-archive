@@ -527,12 +527,22 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
 
+	// split the instance endpoint on the port
+	port := "5432"
+	host := database.InstanceEndpoint
+
+	if strArr := strings.Split(database.InstanceEndpoint, ":"); len(strArr) == 2 {
+		host = strArr[0]
+		port = strArr[1]
+	}
+
 	_, err = envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
 		Name:      fmt.Sprintf("rds-credentials-%s", rdsConfig.DBName),
 		Namespace: rdsConfig.Namespace,
 		Variables: map[string]string{},
 		SecretVariables: map[string]string{
-			"PGHOST":     database.InstanceEndpoint,
+			"PGPORT":     port,
+			"PGHOST":     host,
 			"PGPASSWORD": rdsConfig.Password,
 			"PGUSERNAME": rdsConfig.Username,
 		},

@@ -150,6 +150,7 @@ const A = styled.a`
   color: #8590ff;
   text-decoration: underline;
   cursor: pointer;
+  margin-top: 10px;
   width: 100%;
   text-align: right;
   user-select: none;

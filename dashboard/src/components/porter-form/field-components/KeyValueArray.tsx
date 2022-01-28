@@ -296,9 +296,11 @@ const KeyValueArray: React.FC<Props> = (props) => {
 
     if (env_group) {
       return (
+        <Wrapper>
         <Helper color="#f5cb42" style={{ marginLeft: "10px" }}>
-          This variable will be overrided by env group {env_group?.name}
+          Overridden by the env group "{env_group?.name}"
         </Helper>
+        </Wrapper>
       );
     }
 
@@ -694,6 +696,14 @@ const HideButton = styled(DeleteButton)`
       color: #ffffff44;
     }
   }
+`;
+
+const Wrapper = styled.div`
+  margin-left: 5px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  margin-top: -7px;
 `;
 
 const InputWrapper = styled.div`

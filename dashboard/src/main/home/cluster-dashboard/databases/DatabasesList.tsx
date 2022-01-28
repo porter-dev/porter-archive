@@ -19,8 +19,6 @@ export type DatabaseObject = {
   instance_name: string;
   status: string;
   instance_endpoint: string;
-  instance_db_family: string;
-  instance_db_version: string;
 };
 
 const DatabasesList = () => {
@@ -96,20 +94,11 @@ const DatabasesList = () => {
         accessor: "instance_name",
       },
       {
-        Header: "DB Family",
-        accessor: "instance_db_family",
-      },
-      {
-        Header: "DB Version",
-        accessor: "instance_db_version",
-      },
-      {
         Header: "Status",
         accessor: "status",
-        Cell: ({ row }) => {
-          return (
-            <Status status={row.values.status}>{row.values.status}</Status>
-          );
+        Cell: ({ cell }) => {
+          const status: "running" | "destroying" = cell.value as any;
+          return <Status status={status}>{status}</Status>;
         },
       },
       {
@@ -202,13 +191,12 @@ const DatabasesList = () => {
 
 export default DatabasesList;
 
-const Status = styled.div<{ status: "accepted" | "expired" | "pending" }>`
+const Status = styled.div<{ status: "running" | "destroying" }>`
   padding: 5px 10px;
   margin-right: 12px;
   background: ${(props) => {
-    if (props.status === "accepted") return "#38a88a";
-    if (props.status === "expired") return "#cc3d42";
-    if (props.status === "pending") return "#ffffff11";
+    if (props.status === "running") return "#38a88a";
+    if (props.status === "destroying") return "#cc3d42";
   }};
   font-size: 13px;
   border-radius: 3px;

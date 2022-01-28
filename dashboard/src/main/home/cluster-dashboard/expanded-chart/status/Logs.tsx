@@ -2,6 +2,7 @@ import React, {
   Component,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -35,31 +36,20 @@ const LogsFC: React.FC<{
   podError: string;
   rawText?: boolean;
 }> = ({ selectedPod, podError, rawText }) => {
-  const currentPodName = useRef<string>();
-
-  const { currentCluster, currentProject } = useContext(Context);
-  const [containers, setContainers] = useState<string[]>([]);
-  const [currentTab, setCurrentTab] = useState("");
-  const [logs, setLogs] = useState<{
-    [key: string]: Anser.AnserJsonEntry[][];
-  }>({});
-
-  const [prevLogs, setPrevLogs] = useState<{
-    [key: string]: Anser.AnserJsonEntry[][];
-  }>({});
+  const {
+    logs,
+    previousLogs,
+    containers,
+    currentContainer,
+    setCurrentContainer,
+    refresh,
+  } = useLogs(selectedPod);
 
   const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
 
   const [isScrollToBottomEnabled, setIsScrollToBottomEnabled] = useState(true);
 
   const wrapperRef = useRef<HTMLDivElement>();
-
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    getWebsocket,
-  } = useWebsockets();
 
   const scrollToBottom = (smooth: boolean) => {
     if (!wrapperRef.current) {
@@ -81,14 +71,197 @@ const LogsFC: React.FC<{
     }
   };
 
+  useEffect(() => {
+    if (isScrollToBottomEnabled) {
+      scrollToBottom(true);
+    }
+  }, [isScrollToBottomEnabled, logs]);
+
+  const renderLogs = () => {
+    if (podError && podError != "") {
+      return <Message>{podError}</Message>;
+    }
+
+    if (!selectedPod?.metadata?.name) {
+      return <Message>Please select a pod to view its logs.</Message>;
+    }
+
+    if (selectedPod?.status.phase === "Succeeded" && !rawText) {
+      return (
+        <Message>
+          ⌛ This job has been completed. You can now delete this job.
+        </Message>
+      );
+    }
+
+    if (
+      showPreviousLogs &&
+      Array.isArray(previousLogs) &&
+      previousLogs.length
+    ) {
+      return previousLogs?.map((log, i) => {
+        return (
+          <Log key={i}>
+            {log.map((ansi, j) => {
+              if (ansi.clearLine) {
+                return null;
+              }
+
+              return (
+                <LogSpan key={i + "." + j} ansi={ansi}>
+                  {ansi.content.replace(/ /g, "\u00a0")}
+                </LogSpan>
+              );
+            })}
+          </Log>
+        );
+      });
+    }
+
+    if (!Array.isArray(logs) || logs?.length === 0) {
+      return (
+        <Message>
+          No logs to display from this pod.
+          <Highlight onClick={refresh}>
+            <i className="material-icons">autorenew</i>
+            Refresh
+          </Highlight>
+        </Message>
+      );
+    }
+
+    return logs?.map((log, i) => {
+      return (
+        <Log key={i}>
+          {log.map((ansi, j) => {
+            if (ansi.clearLine) {
+              return null;
+            }
+
+            return (
+              <LogSpan key={i + "." + j} ansi={ansi}>
+                {ansi.content.replace(/ /g, "\u00a0")}
+              </LogSpan>
+            );
+          })}
+        </Log>
+      );
+    });
+  };
+
+  const renderContent = () => (
+    <>
+      <Wrapper ref={wrapperRef}>{renderLogs()}</Wrapper>
+      <LogTabs>
+        {containers.map((containerName, _i, arr) => {
+          return (
+            <Tab
+              key={containerName}
+              onClick={() => {
+                setCurrentContainer(containerName);
+              }}
+              clicked={currentContainer === containerName}
+            >
+              {arr.length > 1 ? containerName : "Application"}
+            </Tab>
+          );
+        })}
+        <Tab
+          onClick={() => {
+            setCurrentContainer("system");
+          }}
+          clicked={currentContainer == "system"}
+        >
+          System
+        </Tab>
+      </LogTabs>
+      <Options>
+        <Scroll
+          onClick={() => {
+            setIsScrollToBottomEnabled(!isScrollToBottomEnabled);
+            if (isScrollToBottomEnabled) {
+              scrollToBottom(true);
+            }
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={isScrollToBottomEnabled}
+            onChange={() => {}}
+          />
+          Scroll to Bottom
+        </Scroll>
+        {Array.isArray(previousLogs) && previousLogs.length > 0 && (
+          <Scroll
+            onClick={() => {
+              setShowPreviousLogs(!showPreviousLogs);
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={showPreviousLogs}
+              onChange={() => {}}
+            />
+            Show previous Logs
+          </Scroll>
+        )}
+        <Refresh
+          onClick={() => {
+            // this.refreshLogs();
+            console.log("Refresh logs");
+            refresh();
+          }}
+        >
+          <i className="material-icons">autorenew</i>
+          Refresh
+        </Refresh>
+      </Options>
+    </>
+  );
+
+  if (!containers?.length) {
+    return null;
+  }
+
+  if (rawText) {
+    return <LogStreamAlt>{renderContent()}</LogStreamAlt>;
+  }
+
+  return <LogStream>{renderContent()}</LogStream>;
+};
+
+export default LogsFC;
+
+const useLogs = (currentPod: SelectedPodType) => {
+  const currentPodName = useRef<string>();
+
+  const { currentCluster, currentProject } = useContext(Context);
+  const [containers, setContainers] = useState<string[]>([]);
+  const [currentContainer, setCurrentContainer] = useState<string>("");
+  const [logs, setLogs] = useState<{
+    [key: string]: Anser.AnserJsonEntry[][];
+  }>({});
+
+  const [prevLogs, setPrevLogs] = useState<{
+    [key: string]: Anser.AnserJsonEntry[][];
+  }>({});
+
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    getWebsocket,
+    closeWebsocket,
+  } = useWebsockets();
+
   const getSystemLogs = async () => {
     const events = await api
       .getPodEvents(
         "<token>",
         {},
         {
-          name: selectedPod?.metadata?.name,
-          namespace: selectedPod?.metadata?.namespace,
+          name: currentPod?.metadata?.name,
+          namespace: currentPod?.metadata?.namespace,
           cluster_id: currentCluster?.id,
           id: currentProject?.id,
         }
@@ -121,8 +294,8 @@ const LogsFC: React.FC<{
             container_name: containerName,
           },
           {
-            pod_name: selectedPod?.metadata?.name,
-            namespace: selectedPod?.metadata?.namespace,
+            pod_name: currentPod?.metadata?.name,
+            namespace: currentPod?.metadata?.namespace,
             cluster_id: currentCluster?.id,
             project_id: currentProject?.id,
           }
@@ -144,13 +317,13 @@ const LogsFC: React.FC<{
   };
 
   const setupWebsocket = (containerName: string, websocketKey: string) => {
-    if (!selectedPod?.metadata?.name) return;
+    if (!currentPod?.metadata?.name) return;
 
-    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${selectedPod?.metadata?.namespace}/pod/${selectedPod?.metadata?.name}/logs?container_name=${containerName}`;
+    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${currentPod?.metadata?.namespace}/pod/${currentPod?.metadata?.name}/logs?container_name=${containerName}`;
 
     const config: NewWebsocketOptions = {
       onopen: () => {
-        console.log("Opened websocket for container:", containerName);
+        console.log("Opened websocket:", websocketKey);
       },
       onmessage: (evt: MessageEvent) => {
         let ansiLog = Anser.ansiToJson(evt.data);
@@ -173,7 +346,7 @@ const LogsFC: React.FC<{
         });
       },
       onclose: () => {
-        console.log("Websocket closed for container:", containerName);
+        console.log("Closed websocket:", websocketKey);
       },
     };
 
@@ -181,23 +354,42 @@ const LogsFC: React.FC<{
     openWebsocket(websocketKey);
   };
 
+  const refresh = () => {
+    const websocketKey = `${currentPodName.current}-${currentContainer}-websocket`;
+    closeWebsocket(websocketKey);
+
+    setPrevLogs((prev) => ({ ...prev, [currentContainer]: [] }));
+    setLogs((prev) => ({ ...prev, [currentContainer]: [] }));
+
+    if (!Array.isArray(containers)) {
+      return;
+    }
+
+    if (currentContainer === "system") {
+      getSystemLogs();
+    } else {
+      getContainerPreviousLogs(currentContainer);
+      setupWebsocket(currentContainer, websocketKey);
+    }
+  };
+
   useEffect(() => {
     console.log("Selected pod updated");
-    if (selectedPod?.metadata?.name === currentPodName.current) {
+    if (currentPod?.metadata?.name === currentPodName.current) {
       return () => {
         closeAllWebsockets();
       };
     }
-    currentPodName.current = selectedPod?.metadata?.name;
+    currentPodName.current = currentPod?.metadata?.name;
     const currentContainers =
-      selectedPod?.spec?.containers?.map((container) => container?.name) || [];
+      currentPod?.spec?.containers?.map((container) => container?.name) || [];
 
     setContainers(currentContainers);
-    setCurrentTab(currentContainers[0]);
+    setCurrentContainer(currentContainers[0]);
     return () => {
       closeAllWebsockets();
     };
-  }, [selectedPod]);
+  }, [currentPod]);
 
   // Retrieve all previous logs for containers
   useEffect(() => {
@@ -222,165 +414,23 @@ const LogsFC: React.FC<{
     });
   }, [containers]);
 
-  useEffect(() => {
-    if (isScrollToBottomEnabled) {
-      scrollToBottom(true);
-    }
-  }, [isScrollToBottomEnabled, logs]);
+  const currentLogs = useMemo(() => {
+    return logs[currentContainer] || [];
+  }, [currentContainer, logs]);
 
-  const renderLogs = () => {
-    if (podError && podError != "") {
-      return <Message>{podError}</Message>;
-    }
+  const currentPreviousLogs = useMemo(() => {
+    return prevLogs[currentContainer] || [];
+  }, [currentContainer, prevLogs]);
 
-    if (!selectedPod?.metadata?.name) {
-      return <Message>Please select a pod to view its logs.</Message>;
-    }
-
-    if (selectedPod?.status.phase === "Succeeded" && !rawText) {
-      return (
-        <Message>
-          ⌛ This job has been completed. You can now delete this job.
-        </Message>
-      );
-    }
-
-    if (
-      showPreviousLogs &&
-      Array.isArray(prevLogs[currentTab]) &&
-      prevLogs[currentTab].length
-    ) {
-      return prevLogs[currentTab]?.map((log, i) => {
-        return (
-          <Log key={i}>
-            {log.map((ansi, j) => {
-              if (ansi.clearLine) {
-                return null;
-              }
-
-              return (
-                <LogSpan key={i + "." + j} ansi={ansi}>
-                  {ansi.content.replace(/ /g, "\u00a0")}
-                </LogSpan>
-              );
-            })}
-          </Log>
-        );
-      });
-    }
-
-    if (!Array.isArray(logs[currentTab]) || logs[currentTab]?.length === 0) {
-      return (
-        <Message>
-          No logs to display from this pod.
-          {/* <Highlight onClick={this.refreshLogs}>
-            <i className="material-icons">autorenew</i>
-            Refresh
-          </Highlight> */}
-        </Message>
-      );
-    }
-
-    return logs[currentTab]?.map((log, i) => {
-      return (
-        <Log key={i}>
-          {log.map((ansi, j) => {
-            if (ansi.clearLine) {
-              return null;
-            }
-
-            return (
-              <LogSpan key={i + "." + j} ansi={ansi}>
-                {ansi.content.replace(/ /g, "\u00a0")}
-              </LogSpan>
-            );
-          })}
-        </Log>
-      );
-    });
+  return {
+    containers,
+    currentContainer,
+    setCurrentContainer,
+    logs: currentLogs,
+    previousLogs: currentPreviousLogs,
+    refresh,
   };
-
-  const renderContent = () => (
-    <>
-      <Wrapper ref={wrapperRef}>{renderLogs()}</Wrapper>
-      <LogTabs>
-        {containers.map((containerName, _i, arr) => {
-          return (
-            <Tab
-              key={containerName}
-              onClick={() => {
-                setCurrentTab(containerName);
-              }}
-              clicked={currentTab === containerName}
-            >
-              {arr.length > 1 ? containerName : "Application"}
-            </Tab>
-          );
-        })}
-        <Tab
-          onClick={() => {
-            setCurrentTab("system");
-          }}
-          clicked={currentTab == "system"}
-        >
-          System
-        </Tab>
-      </LogTabs>
-      <Options>
-        <Scroll
-          onClick={() => {
-            setIsScrollToBottomEnabled(!isScrollToBottomEnabled);
-            if (isScrollToBottomEnabled) {
-              scrollToBottom(true);
-            }
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={isScrollToBottomEnabled}
-            onChange={() => {}}
-          />
-          Scroll to Bottom
-        </Scroll>
-        {Array.isArray(prevLogs[currentTab]) && prevLogs[currentTab].length && (
-          <Scroll
-            onClick={() => {
-              setShowPreviousLogs(!showPreviousLogs);
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={showPreviousLogs}
-              onChange={() => {}}
-            />
-            Show previous Logs
-          </Scroll>
-        )}
-        <Refresh
-          onClick={() => {
-            // this.refreshLogs();
-            console.log("Refresh logs");
-          }}
-        >
-          <i className="material-icons">autorenew</i>
-          Refresh
-        </Refresh>
-      </Options>
-    </>
-  );
-
-  if (!containers?.length) {
-    return null;
-  }
-
-  if (rawText) {
-    return <LogStreamAlt>{renderContent()}</LogStreamAlt>;
-  }
-
-  return <LogStream>{renderContent()}</LogStream>;
 };
-
-export default LogsFC;
 
 const Highlight = styled.div`
   display: flex;

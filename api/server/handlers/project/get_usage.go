@@ -28,6 +28,15 @@ func NewProjectGetUsageHandler(
 func (p *ProjectGetUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
+	if !p.Config().ServerConf.UsageTrackingEnabled {
+		p.WriteResult(w, r, &types.GetProjectUsageResponse{
+			Limit:      types.EnterprisePlan,
+			IsExceeded: false,
+		})
+
+		return
+	}
+
 	res := &types.GetProjectUsageResponse{}
 
 	currUsage, limit, usageCache, err := usage.GetUsage(&usage.GetUsageOpts{

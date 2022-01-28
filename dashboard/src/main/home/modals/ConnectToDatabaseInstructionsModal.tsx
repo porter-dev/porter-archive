@@ -17,7 +17,8 @@ const ConnectToDatabaseInstructionsModal = () => {
       </p>
       <CodeBlock>
         <span>- PGHOST</span>
-        <span>- PGUSERNAME</span>
+        <span>- PGPORT</span>
+        <span>- PGUSER</span>
         <span>- PGPASSWORD</span>
       </CodeBlock>
       <Helper>Note: the database automatically listens on port 5432.</Helper>

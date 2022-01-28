@@ -544,7 +544,7 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 			"PGPORT":     port,
 			"PGHOST":     host,
 			"PGPASSWORD": rdsConfig.Password,
-			"PGUSERNAME": rdsConfig.Username,
+			"PGUSER":     rdsConfig.Username,
 		},
 	})
 

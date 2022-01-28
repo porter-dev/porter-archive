@@ -27,7 +27,6 @@ import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
-import { BuildpackSelection } from "components/repo-selector/ActionDetails";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -253,28 +252,31 @@ class Home extends Component<PropsType, StateType> {
 
     if (prevProps.currentProject?.id !== this.props.currentProject?.id) {
       this.checkOnboarding();
-      this.checkIfProjectHasBilling(this?.context?.currentProject?.id)
-        .then((isBillingEnabled) => {
-          if (isBillingEnabled) {
-            api
-              .getUsage(
-                "<token>",
-                {},
-                { project_id: this.context?.currentProject?.id }
-              )
-              .then((res) => {
-                const usage = res.data;
-                this.context.setUsage(usage);
-                if (usage.exceeded) {
-                  this.context.setCurrentModal("UsageWarningModal", {
-                    usage,
-                  });
-                }
-              })
-              .catch(console.log);
-          }
-        })
-        .catch(console.log);
+
+      if (!process.env.DISABLE_BILLING) {
+        this.checkIfProjectHasBilling(this?.context?.currentProject?.id)
+          .then((isBillingEnabled) => {
+            if (isBillingEnabled) {
+              api
+                .getUsage(
+                  "<token>",
+                  {},
+                  { project_id: this.context?.currentProject?.id }
+                )
+                .then((res) => {
+                  const usage = res.data;
+                  this.context.setUsage(usage);
+                  if (usage.exceeded) {
+                    this.context.setCurrentModal("UsageWarningModal", {
+                      usage,
+                    });
+                  }
+                })
+                .catch(console.log);
+            }
+          })
+          .catch(console.log);
+      }
     }
 
     if (

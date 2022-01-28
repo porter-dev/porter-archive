@@ -49,13 +49,18 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sourceLink, sourceVersion := getSourceLinkAndVersion(types.InfraKind(req.Kind))
+
 	// create the infra object
 	infra := &models.Infra{
 		Kind:            types.InfraKind(req.Kind),
+		APIVersion:      "v2",
 		ProjectID:       proj.ID,
 		Suffix:          suffix,
 		Status:          types.StatusCreating,
 		CreatedByUserID: user.ID,
+		SourceLink:      sourceLink,
+		SourceVersion:   sourceVersion,
 	}
 
 	// verify the credentials
@@ -133,4 +138,27 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 	}
 
 	return nil
+}
+
+// getSourceLinkAndVersion returns the source link and version for the infrastructure. For now,
+// this is hardcoded
+func getSourceLinkAndVersion(kind types.InfraKind) (string, string) {
+	switch kind {
+	case types.InfraECR:
+		return "porter/aws/ecr", "v0.1.0"
+	case types.InfraEKS:
+		return "porter/aws/eks", "v0.1.0"
+	case types.InfraRDS:
+		return "porter/aws/rds", "v0.1.0"
+	case types.InfraGCR:
+		return "porter/gcp/gcr", "v0.1.0"
+	case types.InfraGKE:
+		return "porter/gcp/gke", "v0.1.0"
+	case types.InfraDOCR:
+		return "porter/do/docr", "v0.1.0"
+	case types.InfraDOKS:
+		return "porter/do/doks", "v0.1.0"
+	}
+
+	return "porter/test", "v0.1.0"
 }

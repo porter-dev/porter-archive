@@ -251,7 +251,7 @@ class Sidebar extends Component<PropsType, StateType> {
             }
             selected={currentView === "infrastructure"}
           >
-            <Img src={category} />
+            <i className="material-icons">build_circle</i>
             Infrastructure
           </NavButton>
 
@@ -439,15 +439,10 @@ const NavButton = styled.div`
   }
 
   > i {
-    color: #ffffff;
-    padding: 4px 4px;
-    height: 20px;
-    width: 20px;
+    font-size: 20px;
+    padding-top: 4px;
     border-radius: 3px;
-    font-size: 18px;
-    position: absolute;
-    left: 19px;
-    top: 8px;
+    margin-right: 10px;
   }
 `;
 

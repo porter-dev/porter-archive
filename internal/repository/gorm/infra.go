@@ -76,10 +76,18 @@ func (repo *InfraRepository) ReadInfra(projectID, infraID uint) (*models.Infra, 
 // for a given project id
 func (repo *InfraRepository) ListInfrasByProjectID(
 	projectID uint,
+	apiVersion string,
 ) ([]*models.Infra, error) {
+
 	infras := []*models.Infra{}
 
-	if err := repo.db.Where("project_id = ?", projectID).Find(&infras).Error; err != nil {
+	query := repo.db.Where("project_id = ?", projectID).Order("updated_at desc")
+
+	if apiVersion != "" {
+		query = query.Where("api_version = ?", apiVersion)
+	}
+
+	if err := query.Find(&infras).Error; err != nil {
 		return nil, err
 	}
 

@@ -57,6 +57,7 @@ func (repo *InfraRepository) ReadInfra(
 // for a given project id
 func (repo *InfraRepository) ListInfrasByProjectID(
 	projectID uint,
+	apiVersion string,
 ) ([]*models.Infra, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")

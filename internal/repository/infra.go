@@ -8,7 +8,7 @@ import (
 type InfraRepository interface {
 	CreateInfra(repo *models.Infra) (*models.Infra, error)
 	ReadInfra(projectID, infraID uint) (*models.Infra, error)
-	ListInfrasByProjectID(projectID uint) ([]*models.Infra, error)
+	ListInfrasByProjectID(projectID uint, apiVersion string) ([]*models.Infra, error)
 	UpdateInfra(repo *models.Infra) (*models.Infra, error)
 
 	// Operations

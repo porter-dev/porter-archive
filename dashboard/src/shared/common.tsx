@@ -44,6 +44,11 @@ export const integrationList: any = {
     icon: "https://img.stackshare.io/service/7991/amazon-eks.png",
     label: "Amazon Elastic Kubernetes Service (EKS)",
   },
+  test: {
+    icon:
+      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    label: "Testing",
+  },
   kube: {
     icon:
       "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",

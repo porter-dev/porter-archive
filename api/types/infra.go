@@ -39,6 +39,10 @@ type Infra struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
+	APIVersion    string `json:"api_version,omitempty"`
+	SourceLink    string `json:"source_link,omitempty"`
+	SourceVersion string `json:"source_version,omitempty"`
+
 	// The type of infra that was provisioned
 	Kind InfraKind `json:"kind"`
 
@@ -76,6 +80,10 @@ type CreateInfraRequest struct {
 
 	Kind   string                 `json:"kind" form:"required"`
 	Values map[string]interface{} `json:"values" form:"required"`
+}
+
+type ListInfraRequest struct {
+	Version string `schema:"version" form:"oneof=v1 v2"`
 }
 
 type DeleteInfraRequest struct {

@@ -685,12 +685,24 @@ const getImageTags = baseApi<
 });
 
 const getInfra = baseApi<
-  {},
+  {
+    version?: string;
+  },
   {
     project_id: number;
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra`;
+});
+
+const getInfraByID = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}`;
 });
 
 const getInfraDesired = baseApi<
@@ -1519,6 +1531,7 @@ export default {
   getImageRepos,
   getImageTags,
   getInfra,
+  getInfraByID,
   getInfraDesired,
   getInfraCurrent,
   getIngress,

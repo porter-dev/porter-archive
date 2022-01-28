@@ -19,19 +19,28 @@ type Infra struct {
 	gorm.Model
 
 	// The type of infra that was provisioned
-	Kind types.InfraKind `json:"kind"`
+	Kind types.InfraKind
+
+	// The infrastructure API version
+	APIVersion string
+
+	// The source link (only set on apiVersion >= v2)
+	SourceLink string
+
+	// The source version (only set on apiVersion >= v2)
+	SourceVersion string
 
 	// A random 6-byte suffix to ensure workspace/stream ids are unique
 	Suffix string
 
 	// The project that this infra belongs to
-	ProjectID uint `json:"project_id"`
+	ProjectID uint
 
 	// The ID of the user that created this infra
 	CreatedByUserID uint
 
 	// Status is the status of the infra
-	Status types.InfraStatus `json:"status"`
+	Status types.InfraStatus
 
 	Operations []Operation
 
@@ -113,6 +122,9 @@ func (i *Infra) ToInfraType() *types.Infra {
 		CreatedAt:        i.CreatedAt,
 		UpdatedAt:        i.UpdatedAt,
 		ProjectID:        i.ProjectID,
+		APIVersion:       i.APIVersion,
+		SourceLink:       i.SourceLink,
+		SourceVersion:    i.SourceVersion,
 		Kind:             i.Kind,
 		Status:           i.Status,
 		AWSIntegrationID: i.AWSIntegrationID,

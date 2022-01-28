@@ -72,6 +72,7 @@ func getInfraRoutes(
 
 	listInfraHandler := infra.NewInfraListHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 

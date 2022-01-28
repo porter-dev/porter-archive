@@ -48,7 +48,7 @@ const ConnectExternalCluster: React.FC<Props> = ({
           }
         }
       });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -64,45 +64,26 @@ const ConnectExternalCluster: React.FC<Props> = ({
       case 0:
         return (
           <Placeholder>
-            1. To install the Porter CLI, first retrieve the latest binary:
+            1. To install the Porter CLI, run the following in your terminal:
             <Code>
-              &#123;
-              <br />
-              name=$(curl -s
-              https://api.github.com/repos/porter-dev/porter/releases/latest |
-              grep "browser_download_url.*/porter_.*_Darwin_x86_64\.zip" | cut
-              -d ":" -f 2,3 | tr -d \")
-              <br />
-              name=$(basename $name)
-              <br />
-              curl -L
-              https://github.com/porter-dev/porter/releases/latest/download/$name
-              --output $name
-              <br />
-              unzip -a $name
-              <br />
-              rm $name
-              <br />
-              &#125;
+              /bin/bash -c "$(curl -fsSL https://install.porter.run)"
             </Code>
-            2. Move the file into your bin:
+            Alternatively, on macOS you can use Homebrew:
             <Code>
-              chmod +x ./porter
-              <br />
-              sudo mv ./porter /usr/local/bin/porter
+              brew install porter-dev/porter/porter
             </Code>
           </Placeholder>
         );
       case 1:
         return (
           <Placeholder>
-            3. Log in to the Porter CLI:
+            2. Log in to the Porter CLI:
             <Code>
               porter config set-host {location.protocol + "//" + location.host}
               <br />
               porter auth login
             </Code>
-            4. Configure the Porter CLI and link your current context:
+            3. Configure the Porter CLI and link your current context:
             <Code>
               porter config set-project {project.id}
               <br />

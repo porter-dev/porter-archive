@@ -19,6 +19,7 @@ type Database struct {
 	InstanceID       string `json:"rds_instance_id"`
 	InstanceEndpoint string `json:"rds_connection_endpoint"`
 	InstanceName     string `json:"rds_instance_name"`
+	Status           string
 }
 
 func (d *Database) ToDatabaseType() *types.Database {
@@ -30,5 +31,6 @@ func (d *Database) ToDatabaseType() *types.Database {
 		InstanceID:       d.InstanceID,
 		InstanceEndpoint: d.InstanceEndpoint,
 		InstanceName:     d.InstanceName,
+		Status:           d.Status,
 	}
 }

@@ -20,6 +20,14 @@ func (repo *DatabaseRepository) ReadDatabase(projectID, clusterID, databaseID ui
 	panic("unimplemented")
 }
 
+func (repo *DatabaseRepository) ReadDatabaseByInfraID(projectID, infraID uint) (*models.Database, error) {
+	panic("unimplemented")
+}
+
+func (repo *DatabaseRepository) UpdateDatabase(database *models.Database) (*models.Database, error) {
+	panic("unimplemented")
+}
+
 func (repo *DatabaseRepository) DeleteDatabase(projectID, clusterID, databaseID uint) error {
 	panic("unimplemented")
 }

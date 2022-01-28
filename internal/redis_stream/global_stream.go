@@ -188,7 +188,9 @@ func GlobalStreamListener(
 						continue
 					}
 
-					database := &models.Database{}
+					database := &models.Database{
+						Status: "running",
+					}
 
 					// parse raw data into ECR type
 					dataString, ok := msg.Values["data"].(string)

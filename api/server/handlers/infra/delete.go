@@ -159,6 +159,21 @@ func destroyEKS(conf *config.Config, infra *models.Infra) error {
 }
 
 func destroyRDS(conf *config.Config, infra *models.Infra) error {
+	// find the database and mark as deleting
+	database, err := conf.Repo.Database().ReadDatabaseByInfraID(infra.ProjectID, infra.ID)
+
+	if err != nil {
+		return err
+	}
+
+	database.Status = "destroying"
+
+	database, err = conf.Repo.Database().UpdateDatabase(database)
+
+	if err != nil {
+		return err
+	}
+
 	lastAppliedRDS := &types.RDSInfraLastApplied{}
 
 	// parse infra last applied into EKS config

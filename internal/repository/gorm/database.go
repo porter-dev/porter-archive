@@ -43,6 +43,24 @@ func (repo *DatabaseRepository) ReadDatabase(projectID, clusterID, databaseID ui
 	return database, nil
 }
 
+func (repo *DatabaseRepository) ReadDatabaseByInfraID(projectID, infraID uint) (*models.Database, error) {
+	database := &models.Database{}
+
+	if err := repo.db.Where("project_id = ? AND infra_id = ?", projectID, infraID).First(&database).Error; err != nil {
+		return nil, err
+	}
+
+	return database, nil
+}
+
+func (repo *DatabaseRepository) UpdateDatabase(database *models.Database) (*models.Database, error) {
+	if err := repo.db.Save(database).Error; err != nil {
+		return nil, err
+	}
+
+	return database, nil
+}
+
 func (repo *DatabaseRepository) DeleteDatabase(projectID, clusterID, databaseID uint) error {
 	if err := repo.db.Where("project_id = ? AND cluster_id = ? AND id = ?", projectID, clusterID, databaseID).Delete(&models.Database{}).Error; err != nil {
 		return err

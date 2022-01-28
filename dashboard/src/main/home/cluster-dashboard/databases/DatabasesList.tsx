@@ -17,7 +17,7 @@ export type DatabaseObject = {
   infra_id: number;
   instance_id: string;
   instance_name: string;
-  instance_status: string;
+  status: string;
   instance_endpoint: string;
   instance_db_family: string;
   instance_db_version: string;
@@ -105,7 +105,7 @@ const DatabasesList = () => {
       },
       {
         Header: "Status",
-        accessor: "instance_status",
+        accessor: "status",
         Cell: ({ row }) => {
           return (
             <Status status={row.values.status}>{row.values.status}</Status>

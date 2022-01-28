@@ -172,7 +172,9 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		notifyOpts.Status = slack.StatusHelmFailed
 		notifyOpts.Info = err.Error()
 
-		notifier.Notify(notifyOpts)
+		if !cluster.NotificationsDisabled {
+			notifier.Notify(notifyOpts)
+		}
 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			err,
@@ -182,10 +184,14 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notifyOpts.Status = slack.StatusHelmDeployed
-	notifyOpts.Version = rel.Version
+	if rel.Chart != nil && rel.Chart.Metadata.Name != "job" {
+		notifyOpts.Status = slack.StatusHelmDeployed
+		notifyOpts.Version = rel.Version
 
-	notifier.Notify(notifyOpts)
+		if !cluster.NotificationsDisabled {
+			notifier.Notify(notifyOpts)
+		}
+	}
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationDeploymentWebhookTrack(&analytics.ApplicationDeploymentWebhookTrackOpts{
 		ImageURI: fmt.Sprintf("%v", repository),

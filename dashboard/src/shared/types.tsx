@@ -218,6 +218,7 @@ export interface FileType {
 export interface ProjectType {
   id: number;
   name: string;
+  preview_envs_enabled: boolean;
   roles: {
     id: number;
     kind: string;

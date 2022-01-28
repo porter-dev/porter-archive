@@ -79,3 +79,16 @@ func PromptSelect(prompt string, options []string) (string, error) {
 
 	return ans.Response, err
 }
+
+func PromptMultiselect(prompt string, options []string) ([]string, error) {
+	query := &survey.MultiSelect{
+		Message: prompt,
+		Options: options,
+	}
+
+	var ans []string
+
+	err := survey.AskOne(query, &ans)
+
+	return ans, err
+}

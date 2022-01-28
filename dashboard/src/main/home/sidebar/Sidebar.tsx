@@ -6,7 +6,6 @@ import rocket from "assets/rocket.png";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 import settings from "assets/settings.svg";
-import discordLogo from "assets/discord.svg";
 import sliders from "assets/sliders.svg";
 
 import { Context } from "shared/Context";

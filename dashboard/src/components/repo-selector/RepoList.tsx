@@ -30,6 +30,7 @@ const RepoList: React.FC<Props> = ({
 }) => {
   const [repos, setRepos] = useState<RepoType[]>([]);
   const [repoLoading, setRepoLoading] = useState(true);
+  const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoError, setRepoError] = useState(false);
   const [accessLoading, setAccessLoading] = useState(true);
   const [accessError, setAccessError] = useState(false);
@@ -122,11 +123,24 @@ const RepoList: React.FC<Props> = ({
       });
   }, []);
 
+
+  // clear out actionConfig and SelectedRepository if new search is performed
+  useEffect(() => {
+    setActionConfig({
+      git_repo: null,
+      image_repo_uri: null,
+      git_branch: null,
+      git_repo_id: 0,
+    });
+    setSelectedRepo(null)
+  }, [searchFilter])
+
   const setRepo = (x: RepoType) => {
     let updatedConfig = actionConfig;
     updatedConfig.git_repo = x.FullName;
     updatedConfig.git_repo_id = x.GHRepoID;
     setActionConfig(updatedConfig);
+    setSelectedRepo(x.FullName)
   };
 
   const renderRepoList = () => {
@@ -180,7 +194,7 @@ const RepoList: React.FC<Props> = ({
         return (
           <RepoName
             key={i}
-            isSelected={repo.FullName === actionConfig.git_repo}
+            isSelected={repo.FullName === selectedRepo}
             lastItem={i === repos.length - 1}
             onClick={() => setRepo(repo)}
             readOnly={readOnly}

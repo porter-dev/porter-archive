@@ -157,7 +157,9 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		notifyOpts.Status = slack.StatusHelmFailed
 		notifyOpts.Info = upgradeErr.Error()
 
-		notifier.Notify(notifyOpts)
+		if !cluster.NotificationsDisabled {
+			notifier.Notify(notifyOpts)
+		}
 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			upgradeErr,
@@ -167,10 +169,14 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	notifyOpts.Status = slack.StatusHelmDeployed
-	notifyOpts.Version = helmRelease.Version
+	if helmRelease.Chart != nil && helmRelease.Chart.Metadata.Name != "job" {
+		notifyOpts.Status = slack.StatusHelmDeployed
+		notifyOpts.Version = helmRelease.Version
 
-	notifier.Notify(notifyOpts)
+		if !cluster.NotificationsDisabled {
+			notifier.Notify(notifyOpts)
+		}
+	}
 
 	// update the github actions env if the release exists and is built from source
 	if cName := helmRelease.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {

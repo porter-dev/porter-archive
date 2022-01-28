@@ -40,6 +40,7 @@ jobs:
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
           SENTRY_ENV=production
+          DISABLE_BILLING=true
           EOL
       - name: Build
         run: |

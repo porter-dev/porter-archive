@@ -14,6 +14,8 @@ type ServerConf struct {
 	// this to `PORTER_TOKEN_<INSTANCE_NAME>_<PROJECT_ID>`
 	InstanceName string `env:"INSTANCE_NAME"`
 
+	UsageTrackingEnabled bool `env:"USAGE_TRACKING_ENABLED,default=false"`
+
 	Port                 int           `env:"SERVER_PORT,default=8080"`
 	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
 	CookieName           string        `env:"COOKIE_NAME,default=porter"`

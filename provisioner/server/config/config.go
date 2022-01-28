@@ -73,8 +73,8 @@ type ProvisionerConf struct {
 
 	// ProvisionerMethod defines the method to use for provisioner: options are "local" or "kubernetes"
 	ProvisionerMethod          string `env:"PROVISIONER_METHOD,default=local"`
-	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
-	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://porter:8080"`
+	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL,default=http://localhost:8082"`
+	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://localhost:8082"`
 
 	// Options to configure for the "kubernetes" provisioner method
 	ProvisionerCluster         string `env:"PROVISIONER_CLUSTER"`

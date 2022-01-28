@@ -17,8 +17,6 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		// set the content type for all API endpoints and log all request info
 		r.Use(middleware.ContentTypeJSON)
 
-		r.Method("GET", "/credentials", credentials.NewCredentialsGetHandler(config))
-
 		// create new group for raw state endpoints which use workspace authz middleware
 		workspaceAuth := authz.NewWorkspaceScopedFactory(config)
 
@@ -32,6 +30,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 			r.Method("DELETE", "/{workspace_id}/resource", state.NewDeleteResourceHandler(config))
 			r.Method("POST", "/{workspace_id}/error", state.NewReportErrorHandler(config))
 			r.Method("GET", "/{workspace_id}/logs", state.NewLogsGetHandler(config))
+			r.Method("GET", "/{workspace_id}/credentials", credentials.NewCredentialsGetHandler(config))
 		})
 
 		// use project and infra-scoped middleware

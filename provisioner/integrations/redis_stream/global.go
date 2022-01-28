@@ -273,7 +273,7 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 			}
 
 			// if the state is deleted, remove it from the current state
-			if stateData.Status == types.TFResourceDeleting {
+			if stateData.Status == types.TFResourceDeleted {
 				delete(currState.Resources, stateData.ID)
 			} else {
 				currState.Resources[stateData.ID] = stateData
@@ -282,7 +282,7 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 	}
 
 	// determine the status of the operation based on the resources
-	currState.Status = getOperationStatus(currState.Resources)
+	currState.Status = getOperationStatus(currState.Status, currState.Resources)
 
 	// push the new state to S3
 	newStateBytes, err := json.Marshal(currState)
@@ -294,18 +294,27 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 	return config.StorageManager.WriteFile(infra, "current_state.json", newStateBytes, true)
 }
 
-func getOperationStatus(resources map[string]*types.TFResourceState) types.TFStateStatus {
-	created := true
+func getOperationStatus(oldState types.TFStateStatus, resources map[string]*types.TFResourceState) types.TFStateStatus {
+	created := len(resources) >= 1
+	deleted := oldState != types.TFStateStatusDeleted
+	errored := false
 
 	for _, resource := range resources {
-		created = created && resource.Error == nil
+		created = created && resource.Status == types.TFResourceCreated && resource.Error == nil
+		deleted = deleted && resource.Status == types.TFResourceDeleted && resource.Error == nil
+		errored = errored || resource.Error != nil
 	}
 
 	if created {
 		return types.TFStateStatusCreated
+	} else if deleted {
+		return types.TFStateStatusDeleted
+	} else if errored {
+		return types.TFStateStatusErrored
 	}
 
-	return types.TFStateStatusErrored
+	// if unknown, return previous state status
+	return oldState
 }
 
 func cleanupStateStream(config *config.Config, client *redis.Client, workspaceID string) error {

@@ -3,7 +3,7 @@ package types
 type ApplyBaseRequest struct {
 	Kind          string                 `json:"kind"`
 	Values        map[string]interface{} `json:"values"`
-	OperationKind string                 `json:"operation_kind" form:"oneof=create retry_create"`
+	OperationKind string                 `json:"operation_kind" form:"oneof=create retry_create update"`
 }
 
 type DeleteBaseRequest struct {

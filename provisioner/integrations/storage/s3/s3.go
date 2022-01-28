@@ -3,6 +3,7 @@ package s3
 import (
 	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -96,21 +97,25 @@ func (s *S3StorageClient) ReadFile(infra *models.Infra, name string, shouldDecry
 		return nil, err
 	}
 
-	var encryptedData bytes.Buffer
+	if shouldDecrypt {
+		var encryptedData bytes.Buffer
 
-	_, err = encryptedData.ReadFrom(output.Body)
+		_, err = encryptedData.ReadFrom(output.Body)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		data, err := encryption.Decrypt(encryptedData.Bytes(), s.encryptionKey)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return data, nil
+	} else {
+		return io.ReadAll(output.Body)
 	}
-
-	data, err := encryption.Decrypt(encryptedData.Bytes(), s.encryptionKey)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }
 
 func (s *S3StorageClient) DeleteFile(infra *models.Infra, name string) error {

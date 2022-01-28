@@ -44,8 +44,10 @@ var ScopeHeirarchy = ScopeTree{
 		RegistryScope:        {},
 		HelmRepoScope:        {},
 		GitInstallationScope: {},
-		InfraScope:           {},
-		SettingsScope:        {},
+		InfraScope: {
+			OperationScope: {},
+		},
+		SettingsScope: {},
 	},
 }
 

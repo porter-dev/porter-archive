@@ -59,6 +59,10 @@ type Infra struct {
 	// this is a map[string]string since we marshal into env vars anyway, but
 	// eventually this config will be more complex.
 	LastApplied map[string]string `json:"last_applied"`
+
+	// LatestOperation is the last operation that was run against this infra, if
+	// one exists
+	LatestOperation *Operation `json:"latest_operation"`
 }
 
 type InfraCredentials struct {

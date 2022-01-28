@@ -244,6 +244,16 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
+          <NavButton
+            onClick={() =>
+              currentView !== "infrastructure" &&
+              pushFiltered(this.props, "/infrastructure", ["project_id"])
+            }
+            selected={currentView === "infrastructure"}
+          >
+            <Img src={category} />
+            Infrastructure
+          </NavButton>
 
           {this.props.isAuthorized("integrations", "", [
             "get",

@@ -77,6 +77,18 @@ func (repo *RegistryRepository) ReadRegistry(projectID, regID uint) (*models.Reg
 	return reg, nil
 }
 
+func (repo *RegistryRepository) ReadRegistryByInfraID(projectID, infraID uint) (*models.Registry, error) {
+	reg := &models.Registry{}
+
+	if err := repo.db.Preload("TokenCache").Where("project_id = ? AND infra_id = ?", projectID, infraID).First(&reg).Error; err != nil {
+		return nil, err
+	}
+
+	repo.DecryptRegistryData(reg, repo.key)
+
+	return reg, nil
+}
+
 // ListRegistriesByProjectID finds all registries
 // for a given project id
 func (repo *RegistryRepository) ListRegistriesByProjectID(

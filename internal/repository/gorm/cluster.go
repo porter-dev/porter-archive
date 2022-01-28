@@ -198,6 +198,38 @@ func (repo *ClusterRepository) ReadCluster(
 	return cluster, nil
 }
 
+// ReadCluster finds a cluster by id
+func (repo *ClusterRepository) ReadClusterByInfraID(
+	projectID, infraID uint,
+) (*models.Cluster, error) {
+	ctxDB := repo.db.WithContext(context.Background())
+
+	cluster := &models.Cluster{}
+
+	// preload Clusters association
+	if err := ctxDB.Where("project_id = ? AND infra_id = ?", projectID, infraID).First(&cluster).Error; err != nil {
+		return nil, err
+	}
+
+	cache := ints.ClusterTokenCache{}
+
+	if cluster.TokenCacheID != 0 {
+		if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	cluster.TokenCache = cache
+
+	err := repo.DecryptClusterData(cluster, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cluster, nil
+}
+
 // ListClustersByProjectID finds all clusters
 // for a given project id
 func (repo *ClusterRepository) ListClustersByProjectID(

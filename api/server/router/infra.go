@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -136,6 +138,35 @@ func getInfraRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/infras/{infra_id}/update -> infra.NewInfraUpdateHandler
+	updateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/update",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	updateHandler := infra.NewInfraUpdateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateEndpoint,
+		Handler:  updateHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/infras/{infra_id}/retry_delete -> infra.NewInfraRetryDeleteHandler
 	retryDeleteEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -190,6 +221,64 @@ func getInfraRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listOperationsEndpoint,
 		Handler:  listOperationsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/infras/{infra_id}/operations/{operation_id} -> infra.NewInfraGetOperationHandler
+	getOperationEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/operations/{%s}", relPath, types.URLParamOperationID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+				types.OperationScope,
+			},
+		},
+	)
+
+	getOperationHandler := infra.NewInfraGetOperationHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getOperationEndpoint,
+		Handler:  getOperationHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/infras/{infra_id}/operations/{operation_id}/logs -> infra.NewInfraGetOperationLogsHandler
+	getOperationLogsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/operations/{%s}/logs", relPath, types.URLParamOperationID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+				types.OperationScope,
+			},
+		},
+	)
+
+	getOperationLogsHandler := infra.NewInfraGetOperationLogsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getOperationLogsEndpoint,
+		Handler:  getOperationLogsHandler,
 		Router:   r,
 	})
 

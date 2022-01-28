@@ -28,6 +28,7 @@ type TFStateStatus string
 
 const (
 	TFStateStatusCreated = "created"
+	TFStateStatusDeleted = "deleted"
 	TFStateStatusErrored = "errored"
 )
 
@@ -38,8 +39,8 @@ type TFState struct {
 	Resources   map[string]*TFResourceState `json:"resources"`
 }
 
-type GetLogsRequest struct {
-	OperationID string `schema:"operation_id"`
+type GetLogsResponse struct {
+	Logs []string `json:"logs"`
 }
 
 const OperationScope = "operation"

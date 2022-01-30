@@ -466,11 +466,6 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 		}
 	}
 
-	// if the build method is registry and the image is set, use the image and compute the tag
-	if appConf.Build.Method == "registry" {
-
-	}
-
 	err = updateAgent.UpdateImageAndValues(appConf.Values)
 
 	if err != nil {

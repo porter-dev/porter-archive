@@ -692,12 +692,14 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 			envInter, ok := _container["env"]
 
 			if !ok {
+				newContainers = append(newContainers, _container)
 				continue
 			}
 
 			env, ok := envInter.([]interface{})
 
 			if !ok {
+				newContainers = append(newContainers, _container)
 				continue
 			}
 
@@ -705,21 +707,18 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 				envVarMap, ok := envVar.(resource)
 
 				if !ok {
-					newContainers = append(newContainers, _container)
 					continue
 				}
 
 				envVarName, ok := envVarMap["name"]
 
 				if !ok {
-					newContainers = append(newContainers, _container)
 					continue
 				}
 
 				envVarNameStr, ok := envVarName.(string)
 
 				if !ok {
-					newContainers = append(newContainers, _container)
 					continue
 				}
 
@@ -728,13 +727,11 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 					currValMap, ok := currVal.(resource)
 
 					if !ok {
-						newContainers = append(newContainers, _container)
 						continue
 					}
 
 					// if the current value has a valueFrom field, this should override the existing env var
 					if _, currValFromFieldExists := currValMap["valueFrom"]; currValFromFieldExists {
-						newContainers = append(newContainers, _container)
 						continue
 					} else {
 						envVars[envVarNameStr] = envVarMap

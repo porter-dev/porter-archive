@@ -18,7 +18,7 @@ import _, { flatMapDepth } from "lodash";
 import { integrationList } from "shared/common";
 import DocsHelper from "components/DocsHelper";
 
-type InfraKind =
+export type InfraKind =
   | "ecr"
   | "eks"
   | "rds"
@@ -27,6 +27,14 @@ type InfraKind =
   | "doks"
   | "docr"
   | "test";
+
+export type OperationStatus = "starting" | "completed" | "errored";
+export type OperationType =
+  | "create"
+  | "update"
+  | "delete"
+  | "retry_create"
+  | "retry_delete";
 
 export type Infrastructure = {
   id: number;
@@ -46,14 +54,15 @@ export type Infrastructure = {
 export type Operation = {
   id: string;
   infra_id: number;
-  type: string;
-  status: string;
+  type: OperationType;
+  status: OperationStatus;
   errored: boolean;
   error: string;
   last_applied: any;
+  last_updated: string;
 };
 
-type ProviderInfoMap = {
+export type ProviderInfoMap = {
   [key in InfraKind]: {
     provider: string;
     source: string;
@@ -62,7 +71,35 @@ type ProviderInfoMap = {
   };
 };
 
-const kindMap: ProviderInfoMap = {
+export type TFResourceStatus =
+  | "planned_create"
+  | "planned_delete"
+  | "planned_update"
+  | "created"
+  | "creating"
+  | "updating"
+  | "deleting"
+  | "deleted"
+  | "errored";
+
+export type TFResourceState = {
+  id: string;
+  status: TFResourceStatus;
+  error?: string;
+};
+
+export type TFStateStatus = "created" | "deleted" | "errored";
+
+export type TFState = {
+  last_updated: string;
+  operation_id: string;
+  status: TFResourceStatus;
+  resources: {
+    [key: string]: TFResourceState;
+  };
+};
+
+export const KindMap: ProviderInfoMap = {
   ecr: {
     provider: "aws",
     source: "porter/aws/ecr",
@@ -234,11 +271,11 @@ const InfrastructureList = () => {
 
           return (
             <ResourceLink
-              to={kindMap[original.kind].resource_link}
+              to={KindMap[original.kind].resource_link}
               target="_blank"
               onClick={(e) => e.stopPropagation()}
             >
-              {kindMap[original.kind].resource_name}
+              {KindMap[original.kind].resource_name}
               <i className="material-icons">open_in_new</i>
             </ResourceLink>
           );
@@ -313,10 +350,13 @@ const InfrastructureList = () => {
           columns={columns}
           data={infraList}
           isLoading={isLoading}
-          onRowClick={({ original: Infrastructure }) => {
-            pushFiltered({ history, location }, "/infrastructure/1", [
-              "project_id",
-            ]);
+          onRowClick={(row) => {
+            let original = row.original as Infrastructure;
+            pushFiltered(
+              { history, location },
+              `/infrastructure/${original.id}`,
+              ["project_id"]
+            );
           }}
         />
       </StyledTableWrapper>

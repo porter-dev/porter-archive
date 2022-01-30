@@ -695,6 +695,26 @@ const getInfra = baseApi<
   return `/api/projects/${pathParams.project_id}/infra`;
 });
 
+const listOperations = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/operations`;
+});
+
+const getInfraState = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/state`;
+});
+
 const getInfraByID = baseApi<
   {},
   {
@@ -1531,6 +1551,8 @@ export default {
   getImageRepos,
   getImageTags,
   getInfra,
+  listOperations,
+  getInfraState,
   getInfraByID,
   getInfraDesired,
   getInfraCurrent,

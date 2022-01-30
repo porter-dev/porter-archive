@@ -191,19 +191,17 @@ func (a *Agent) UpgradeReleaseByValues(
 	cmd := action.NewUpgrade(a.ActionConfig)
 	cmd.Namespace = rel.Namespace
 
-	if conf.Cluster != nil && a.K8sAgent != nil && conf.Registries != nil && len(conf.Registries) > 0 {
-		cmd.PostRenderer, err = NewPorterPostrenderer(
-			conf.Cluster,
-			conf.Repo,
-			a.K8sAgent,
-			rel.Namespace,
-			conf.Registries,
-			doAuth,
-		)
+	cmd.PostRenderer, err = NewPorterPostrenderer(
+		conf.Cluster,
+		conf.Repo,
+		a.K8sAgent,
+		rel.Namespace,
+		conf.Registries,
+		doAuth,
+	)
 
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	res, err := cmd.Run(conf.Name, ch, conf.Values)
@@ -264,20 +262,17 @@ func (a *Agent) InstallChart(
 
 	var err error
 
-	// only add the postrenderer if required fields exist
-	if conf.Cluster != nil && a.K8sAgent != nil && conf.Registries != nil && len(conf.Registries) > 0 {
-		cmd.PostRenderer, err = NewPorterPostrenderer(
-			conf.Cluster,
-			conf.Repo,
-			a.K8sAgent,
-			conf.Namespace,
-			conf.Registries,
-			doAuth,
-		)
+	cmd.PostRenderer, err = NewPorterPostrenderer(
+		conf.Cluster,
+		conf.Repo,
+		a.K8sAgent,
+		conf.Namespace,
+		conf.Registries,
+		doAuth,
+	)
 
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	if req := conf.Chart.Metadata.Dependencies; req != nil {

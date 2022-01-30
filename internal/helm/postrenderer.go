@@ -32,11 +32,15 @@ func NewPorterPostrenderer(
 	regs []*models.Registry,
 	doAuth *oauth2.Config,
 ) (postrender.PostRenderer, error) {
+	var dockerSecretsPostrenderer *DockerSecretsPostRenderer
+	var err error
 
-	dockerSecretsPostrenderer, err := NewDockerSecretsPostRenderer(cluster, repo, agent, namespace, regs, doAuth)
+	if cluster != nil && agent != nil && regs != nil && len(regs) > 0 {
+		dockerSecretsPostrenderer, err = NewDockerSecretsPostRenderer(cluster, repo, agent, namespace, regs, doAuth)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	envVarPostrenderer, err := NewEnvironmentVariablePostrenderer()
@@ -54,17 +58,17 @@ func NewPorterPostrenderer(
 func (p *PorterPostrenderer) Run(
 	renderedManifests *bytes.Buffer,
 ) (modifiedManifests *bytes.Buffer, err error) {
-	fmt.Println("RUNNING PORTER POSTRENDERER")
+	if p.DockerSecretsPostRenderer != nil {
+		renderedManifests, err = p.DockerSecretsPostRenderer.Run(renderedManifests)
 
-	dockerModifiedManifests, err := p.DockerSecretsPostRenderer.Run(renderedManifests)
-
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	envVarModifiedManifests, err := p.EnvironmentVariablePostrenderer.Run(dockerModifiedManifests)
+	renderedManifests, err = p.EnvironmentVariablePostrenderer.Run(renderedManifests)
 
-	return envVarModifiedManifests, err
+	return renderedManifests, err
 }
 
 // DockerSecretsPostRenderer is a Helm post-renderer that adds image pull secrets to
@@ -701,18 +705,21 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 				envVarMap, ok := envVar.(resource)
 
 				if !ok {
+					newContainers = append(newContainers, _container)
 					continue
 				}
 
 				envVarName, ok := envVarMap["name"]
 
 				if !ok {
+					newContainers = append(newContainers, _container)
 					continue
 				}
 
 				envVarNameStr, ok := envVarName.(string)
 
 				if !ok {
+					newContainers = append(newContainers, _container)
 					continue
 				}
 
@@ -721,11 +728,13 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 					currValMap, ok := currVal.(resource)
 
 					if !ok {
+						newContainers = append(newContainers, _container)
 						continue
 					}
 
 					// if the current value has a valueFrom field, this should override the existing env var
 					if _, currValFromFieldExists := currValMap["valueFrom"]; currValFromFieldExists {
+						newContainers = append(newContainers, _container)
 						continue
 					} else {
 						envVars[envVarNameStr] = envVarMap

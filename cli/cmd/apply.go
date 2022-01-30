@@ -289,6 +289,19 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		tag = commit.Sha[:7]
 	}
 
+	// if the method is registry and a tag is defined, we use the provided tag
+	if appConfig.Build.Method == "registry" {
+		imageSpl := strings.Split(appConfig.Build.Image, ":")
+
+		if len(imageSpl) == 2 {
+			tag = imageSpl[1]
+		}
+
+		if tag == "" {
+			tag = "latest"
+		}
+	}
+
 	sharedOpts := &deploy.SharedOpts{
 		ProjectID:       d.target.Project,
 		ClusterID:       d.target.Cluster,

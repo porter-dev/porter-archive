@@ -2,7 +2,6 @@ package namespace
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -11,40 +10,37 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
-	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type StreamPodLogsHandler struct {
+type GetPreviousLogsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewStreamPodLogsHandler(
+func NewGetPreviousLogsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *StreamPodLogsHandler {
-	return &StreamPodLogsHandler{
+) *GetPreviousLogsHandler {
+	return &GetPreviousLogsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.GetPodLogsRequest{}
+func (c *GetPreviousLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.GetPreviousPodLogsRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
-	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
-	name, _ := requestutils.GetURLParamString(r, types.URLParamPodName)
-
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	name, _ := requestutils.GetURLParamString(r, types.URLParamPodName)
 
 	agent, err := c.GetAgent(r, cluster, "")
 
@@ -53,24 +49,20 @@ func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = agent.GetPodLogs(namespace, name, request.Container, safeRW)
+	logs, err := agent.GetPreviousPodLogs(namespace, name, request.Container)
 
-	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("pod %s/%s was not found", namespace, name),
-			http.StatusNotFound,
-		))
-
+	if targetErr := kubernetes.IsNotFoundError; err != nil && errors.Is(err, targetErr) {
+		http.NotFound(w, r)
 		return
-	} else if brErr := (kubernetes.BadRequestError{}); errors.As(err, &targetErr) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			&brErr,
-			http.StatusBadRequest,
-		))
-
-		return
-	} else if err != nil {
+	}
+	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	var res types.GetPreviousPodLogsResponse = types.GetPreviousPodLogsResponse{
+		PrevLogs: logs,
+	}
+
+	c.WriteResult(w, r, res)
 }

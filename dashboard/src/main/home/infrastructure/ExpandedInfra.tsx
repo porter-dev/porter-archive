@@ -14,6 +14,7 @@ import { readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
 import Header from "components/expanded-object/Header";
 import { Infrastructure, KindMap } from "shared/types";
+import { useWebsockets } from "shared/hooks/useWebsockets";
 
 type Props = {
   infra_id: number;
@@ -26,6 +27,38 @@ const ExpandedInfra: React.FunctionComponent<Props> = ({ infra_id }) => {
   const [hasError, setHasError] = useState(false);
 
   const { currentProject, setCurrentError } = useContext(Context);
+
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeWebsocket,
+    closeAllWebsockets,
+  } = useWebsockets();
+
+  const setupOperationWebsocket = (websocketID: string) => {
+    let apiPath = `/api/projects/${currentProject.id}/infras/${infra.id}/operations/${infra.latest_operation.id}/state`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log(`connected to websocket:`, websocketID);
+      },
+      onmessage: (evt: MessageEvent) => {
+        console.log(evt);
+      },
+
+      onclose: () => {
+        console.log(`closing websocket:`, websocketID);
+      },
+
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(websocketID);
+      },
+    };
+
+    newWebsocket(websocketID, apiPath, wsConfig);
+    openWebsocket(websocketID);
+  };
 
   useEffect(() => {
     if (!currentProject) {
@@ -56,6 +89,20 @@ const ExpandedInfra: React.FunctionComponent<Props> = ({ infra_id }) => {
         setCurrentError(err.response?.data?.error);
       });
   }, [currentProject, infra_id]);
+
+  useEffect(() => {
+    if (!currentProject || !infra || !infra.latest_operation) {
+      return;
+    }
+
+    const websocketID = infra.latest_operation.id;
+
+    setupOperationWebsocket(websocketID);
+
+    return () => {
+      closeWebsocket(websocketID);
+    };
+  }, [currentProject, infra]);
 
   if (hasError) {
     return <Placeholder>Error loading infra</Placeholder>;

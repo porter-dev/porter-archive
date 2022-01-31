@@ -115,3 +115,13 @@ type Operation struct {
 
 	LastApplied map[string]interface{} `json:"last_applied"`
 }
+
+type InfraTemplate struct {
+	Icon               string                 `json:"icon"`
+	Description        string                 `json:"description"`
+	Name               string                 `json:"name"`
+	Version            string                 `json:"version"`
+	Kind               string                 `json:"kind"`
+	Form               map[string]interface{} `json:"form"`
+	RequiredCredential string                 `json:"required_credential"`
+}

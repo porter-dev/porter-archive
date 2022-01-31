@@ -695,6 +695,15 @@ const getInfra = baseApi<
   return `/api/projects/${pathParams.project_id}/infra`;
 });
 
+const listInfraTemplates = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/templates`;
+});
+
 const provisionInfra = baseApi<
   {
     kind: string;
@@ -1580,6 +1589,7 @@ export default {
   getGitRepos,
   getImageRepos,
   getImageTags,
+  listInfraTemplates,
   getInfra,
   provisionInfra,
   listOperations,

@@ -66,10 +66,13 @@ func StreamStateUpdate(
 	operation *models.Operation,
 	send StateUpdateWriter,
 ) error {
+	fmt.Println("CALLED STREAM STATE UPDATE")
 	lastID := "0-0"
 	streamName := getStateStreamName(infra, operation)
 
 	for {
+		fmt.Println("waiting for xread...")
+
 		xstream, err := client.XRead(
 			ctx,
 			&redis.XReadArgs{
@@ -86,6 +89,8 @@ func StreamStateUpdate(
 		lastID = messages[len(messages)-1].ID
 
 		for _, msg := range messages {
+			fmt.Println("READ MSG", msg)
+
 			stateData := &types.TFResourceState{}
 
 			dataInter, ok := msg.Values["data"]
@@ -109,6 +114,7 @@ func StreamStateUpdate(
 			err = send(stateData)
 
 			if err != nil {
+				fmt.Println("GOT ERROR STATE", err)
 				return err
 			}
 		}
@@ -116,6 +122,7 @@ func StreamStateUpdate(
 		select {
 		case <-ctx.Done():
 			return nil
+		default:
 		}
 	}
 }

@@ -660,6 +660,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/infras/templates -> infra.NewInfraGetHandler
+	getTemplatesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/infras/templates",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getTemplatesHandler := infra.NewInfraListTemplateHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getTemplatesEndpoint,
+		Handler:  getTemplatesHandler,
+		Router:   r,
+	})
+
 	// //  POST /api/projects/{project_id}/provision/ecr -> provision.NewProvisionECRHandler
 	// provisionECREndpoint := factory.NewAPIEndpoint(
 	// 	&types.APIRequestMetadata{

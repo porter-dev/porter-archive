@@ -6,6 +6,7 @@ import Loading from "components/Loading";
 import { Operation, OperationStatus, OperationType } from "shared/types";
 import { readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
+import AWSCredentialForm from "./AWSCredentialForm";
 
 type Props = {
   selectCredential: (aws_integration_id: number) => void;
@@ -25,6 +26,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
+  const [shouldCreateCred, setShouldCreateCred] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
     );
   }
 
-  const renderCredentials = () => {
+  const renderList = () => {
     return awsCredentials.map((cred) => {
       return (
         <PreviewRow key={cred.id} onClick={() => selectCredential(cred.id)}>
@@ -78,17 +80,31 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
     });
   };
 
-  return (
-    <AWSCredentialWrapper>
-      Select your credentials from the list below, or create a new credential:
-      {renderCredentials()}
-      <CreateNewRow>
-        <Flex>
-          <i className="material-icons">account_circle</i>Add New AWS Credential
-        </Flex>
-      </CreateNewRow>
-    </AWSCredentialWrapper>
-  );
+  const renderContents = () => {
+    if (shouldCreateCred) {
+      return (
+        <AWSCredentialForm
+          setCreatedCredential={selectCredential}
+          cancel={() => {}}
+        />
+      );
+    }
+
+    return (
+      <>
+        Select your credentials from the list below, or create a new credential:
+        {renderList()}
+        <CreateNewRow onClick={() => setShouldCreateCred(true)}>
+          <Flex>
+            <i className="material-icons">account_circle</i>Add New AWS
+            Credential
+          </Flex>
+        </CreateNewRow>
+      </>
+    );
+  };
+
+  return <AWSCredentialWrapper>{renderContents()}</AWSCredentialWrapper>;
 };
 
 export default AWSCredentialsList;

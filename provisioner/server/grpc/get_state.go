@@ -1,43 +1,64 @@
 package grpc
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/pb"
-	"gorm.io/gorm"
+	"google.golang.org/grpc/metadata"
 
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
-func (s *ProvisionerServer) GetState(infra *pb.Infra, server pb.Provisioner_GetStateUpdateServer) error {
-	// TODO: change this to read the workspace_id passed in through metadata -- remove infra *pb.Infra call
-	modelInfra := &models.Infra{
-		Model: gorm.Model{
-			ID: 1,
-		},
-		Kind:      "test",
-		Suffix:    "123456",
-		ProjectID: 1,
+func (s *ProvisionerServer) GetStateUpdate(infra *pb.Infra, server pb.Provisioner_GetStateUpdateServer) error {
+	// read metadata to get infra object
+	streamContext, ok := metadata.FromIncomingContext(server.Context())
+
+	if !ok {
+		return fmt.Errorf("unauthorized")
 	}
 
-	modelOperation := &models.Operation{
-		Model: gorm.Model{
-			ID: 1,
-		},
-		UID:     "0123456789",
-		InfraID: 1,
-		Type:    "apply",
-		Status:  "creating",
+	workspaceID, exists := streamContext["workspace_id"]
+
+	if !exists || len(workspaceID) != 1 {
+		return fmt.Errorf("unauthorized")
+	}
+
+	// parse workspace id
+	name, err := models.ParseWorkspaceID(workspaceID[0])
+
+	if err != nil {
+		return err
+	}
+
+	modelInfra, err := s.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
+
+	if err != nil {
+		return err
+	}
+
+	operation, err := s.config.Repo.Infra().ReadOperation(name.InfraID, name.OperationUID)
+
+	if err != nil {
+		return err
 	}
 
 	sendFnc := func(update *ptypes.TFResourceState) error {
-		return server.Send(&pb.StateUpdate{
+		res := &pb.StateUpdate{
 			ResourceId: update.ID,
 			Status:     string(update.Status),
-			Error:      *update.Error,
-		})
+		}
+
+		res.Error = ""
+
+		if update != nil && update.Error != nil {
+			res.Error = *update.Error
+		}
+
+		return server.Send(res)
 	}
 
 	// TODO: CASE ON THE OPERATION BEING COMPLETED AND THUS THE STREAM BEING DELETED
-	return redis_stream.StreamStateUpdate(server.Context(), s.config.RedisClient, modelInfra, modelOperation, sendFnc)
+	return redis_stream.StreamStateUpdate(server.Context(), s.config.RedisClient, modelInfra, operation, sendFnc)
 }

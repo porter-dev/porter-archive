@@ -1,4 +1,4 @@
-import React, { useContext, useState, Component } from "react";
+import React, { useContext, useState, Component, useEffect } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -31,6 +31,7 @@ type InfraTemplate = {
   icon?: string;
   description: string;
   name: string;
+  kind: string;
   version?: string;
   form: any;
   required_credential: CredentialOptions;
@@ -46,43 +47,44 @@ type Credentials = {
   [key in CredentialOptions]?: number;
 };
 
-const mockTemplates: InfraTemplate[] = [
-  {
-    description: "Test infrastructure 1",
-    name: "test1",
-    required_credential: "aws_integration_id",
-    form: {
-      name: "Test",
-      hasSource: true,
-      includeHiddenFields: true,
-      tabs: [
-        {
-          name: "main",
-          label: "Configuration",
-          sections: [
-            {
-              name: "section_one",
-              contents: [
-                { type: "heading", label: "String to echo" },
-                { type: "string-input", variable: "echo", value: ["hello"] },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  },
-];
-
 const ProvisionInfra: React.FunctionComponent<Props> = () => {
   const { currentProject, setCurrentError } = useContext(Context);
+  const [templates, setTemplates] = useState<InfraTemplate[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<InfraTemplate>(null);
   const [currentCredential, setCurrentCredential] = useState<Credentials>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const location = useLocation();
   const history = useHistory();
+
+  useEffect(() => {
+    if (currentProject) {
+      api
+        .listInfraTemplates(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+          }
+        )
+        .then(({ data }) => {
+          if (!Array.isArray(data)) {
+            throw Error("Data is not an array");
+          }
+
+          setTemplates(data);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setHasError(true);
+          setCurrentError(err.response?.data?.error);
+          setIsLoading(false);
+        });
+    }
+  }, [currentProject]);
 
   const onSubmit = (values: any) => {
     setIsLoading(true);
@@ -91,7 +93,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
       .provisionInfra(
         "<token>",
         {
-          kind: "test",
+          kind: currentTemplate.kind,
           values: values,
           aws_integration_id: currentCredential["aws_integration_id"],
           do_integration_id: currentCredential["do_integration_id"],
@@ -122,6 +124,10 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
       });
   };
 
+  if (hasError) {
+    return <Placeholder>Error</Placeholder>;
+  }
+
   if (isLoading) {
     return (
       <Placeholder>
@@ -143,7 +149,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
   };
 
   const renderTemplates = () => {
-    return mockTemplates.map((template) => {
+    return templates.map((template) => {
       let { name, icon, description } = template;
 
       return (
@@ -204,23 +210,6 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
 };
 
 export default ProvisionInfra;
-
-const initYaml = `name: Web
-hasSource: true
-includeHiddenFields: true
-tabs:
-- name: main
-  label: Configuration
-  sections:
-  - name: section_one
-    contents: 
-    - type: heading
-      label: String to echo
-    - type: string-input
-      variable: echo
-      value: 
-      - "hello"
-`;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);

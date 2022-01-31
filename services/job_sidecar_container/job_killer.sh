@@ -25,11 +25,17 @@ then
   grace_period_seconds=$2
   target=$3
   sidecar=$4
+  global_timeout=$5
 else
   grace_period_seconds=$1
   target=$2
   sidecar=$3
+  global_timeout=$4
 fi  
+
+if [ -n "$global_timeout" ]; then
+  global_timeout=3600
+fi
 
 pattern="$(printf '[%s]%s' $(echo $target | cut -c 1) $(echo $target | cut -c 2-))"
 
@@ -93,10 +99,17 @@ target_pid_name=$(pgrep -f $pattern -l | grep -v 'job_killer.sh' | grep -v 'wait
 
 if [ -n "$target_pid" ]; then
     echo "targeting pids $target_pid matched by $target_pid_name"
+    # schedule hard kill after global timeout
+    (sleep ${timeout}; graceful_shutdown $grace_period_seconds $target || true) &
+    local killer=${!}
+    
     tail --pid=$target_pid -f /dev/null &
     child=$!
 
     wait "$child"
+
+    # cancel hard kill timer
+    sleep 0.1 && kill -9 ${killer} 2>/dev/null || true
 
     graceful_shutdown $grace_period_seconds $target
 else 

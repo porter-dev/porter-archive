@@ -123,6 +123,15 @@ func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	infra.Status = types.InfraStatus("deleting")
+
+	infra, err = c.Config.Repo.Infra().UpdateInfra(infra)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
 	// return the operation response type to the server
 	c.resultWriter.WriteResult(w, r, op)
 }

@@ -171,7 +171,7 @@ const InfrastructureList = () => {
       <ControlRow>
         <Button
           onClick={() =>
-            pushFiltered({ history, location }, `/provision-infrastructure`, [
+            pushFiltered({ history, location }, `/infrastructure/provision`, [
               "project_id",
             ])
           }

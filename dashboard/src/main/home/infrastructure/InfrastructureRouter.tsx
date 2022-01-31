@@ -3,10 +3,17 @@ import { Route, Switch } from "react-router-dom";
 import { withRouter } from "react-router";
 import InfrastructureList from "./InfrastructureList";
 import ExpandedInfra from "./ExpandedInfra";
+import ProvisionInfra from "./components/ProvisionInfra";
 
 const InfrastructureRouter = () => {
   return (
     <Switch>
+      <Route
+        path="/infrastructure/provision"
+        render={({ match }) => {
+          return <ProvisionInfra />;
+        }}
+      />
       <Route
         path="/infrastructure/:infra"
         render={({ match }) => {

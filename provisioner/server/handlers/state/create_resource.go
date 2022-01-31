@@ -54,6 +54,16 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// update the infra to indicate completion
+	infra.Status = "created"
+
+	infra, err = c.Config.Repo.Infra().UpdateInfra(infra)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
 	// switch on the kind of resource and write the corresponding objects to the database
 	switch req.Kind {
 	case string(types.InfraECR):

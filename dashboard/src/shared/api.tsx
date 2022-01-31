@@ -695,6 +695,21 @@ const getInfra = baseApi<
   return `/api/projects/${pathParams.project_id}/infra`;
 });
 
+const provisionInfra = baseApi<
+  {
+    kind: string;
+    values: any;
+    aws_integration_id?: number;
+    gcp_integration_id?: number;
+    do_integration_id?: number;
+  },
+  {
+    project_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras`;
+});
+
 const listOperations = baseApi<
   {},
   {
@@ -1566,6 +1581,7 @@ export default {
   getImageRepos,
   getImageTags,
   getInfra,
+  provisionInfra,
   listOperations,
   getInfraState,
   getInfraByID,

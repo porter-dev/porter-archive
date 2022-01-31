@@ -109,6 +109,20 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// update the infrastructure as either "updating" or "creating"
+	if req.OperationKind == "create" || req.OperationKind == "retry_create" {
+		infra.Status = types.InfraStatus("creating")
+	} else if req.OperationKind == "update" {
+		infra.Status = types.InfraStatus("updating")
+	}
+
+	infra, err = c.Config.Repo.Infra().UpdateInfra(infra)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
 	op, err := operation.ToOperationType()
 
 	if err != nil {

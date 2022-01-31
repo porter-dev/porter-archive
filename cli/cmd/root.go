@@ -1,9 +1,16 @@
 package cmd
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"runtime"
+	"strings"
+	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
+	"github.com/google/go-github/v41/github"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
@@ -24,6 +31,32 @@ func Execute() {
 	Setup()
 
 	rootCmd.PersistentFlags().AddFlagSet(defaultFlagSet)
+
+	if Version != "dev" {
+		ghClient := github.NewClient(nil)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		release, _, err := ghClient.Repositories.GetLatestRelease(ctx, "porter-dev", "porter")
+		if err == nil {
+			release.GetURL()
+			// we do not care for an error here because we do not want to block the user here
+			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(Version, "v")))
+			if err == nil {
+				latestRelease, err := semver.NewVersion(strings.TrimPrefix(release.GetTagName(), "v"))
+				if err == nil {
+					if constraint.Check(latestRelease) {
+						color.New(color.FgYellow).Fprint(os.Stderr, "A new version of the porter CLI is available. Run the following to update: ")
+						if runtime.GOOS == "darwin" {
+							color.New(color.FgYellow, color.Bold).Fprintln(os.Stderr, "brew install porter-dev/porter/porter")
+						} else {
+							color.New(color.FgYellow, color.Bold).Fprintln(os.Stderr, "/bin/bash -c \"$(curl -fsSL https://install.porter.run)\"")
+						}
+						color.New(color.FgYellow).Fprintf(os.Stderr, "View CLI installation and upgrade docs at https://docs.porter.run/cli/installation\n\n")
+					}
+				}
+			}
+		}
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		color.New(color.FgRed).Println(err)

@@ -99,7 +99,7 @@ export const useWebsockets = () => {
   /**
    * Close specific websocket
    */
-  const closeWebsocket = (id: string, code?: number, reason?: string) => {
+  const closeWebsocket = (id: string, code: number =  4000, reason: string = "User closed the websocket connection") => {
     const ws = websocketMap.current[id];
 
     if (!ws) {
@@ -108,6 +108,7 @@ export const useWebsockets = () => {
     }
 
     ws.close(code, reason);
+    websocketMap.current[id] = null;
   };
 
   /**

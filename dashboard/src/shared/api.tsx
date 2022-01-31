@@ -1485,6 +1485,21 @@ const getDatabases = baseApi<
   ({ project_id, cluster_id }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/databases`
 );
+const getPreviousLogsForContainer = baseApi<
+  {
+    container_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    pod_name: string;
+  }
+>(
+  "GET",
+  ({ cluster_id, namespace, pod_name: name, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
+);
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -1630,4 +1645,5 @@ export default {
   removeApplicationFromEnvGroup,
   provisionDatabase,
   getDatabases,
+  getPreviousLogsForContainer,
 };

@@ -167,5 +167,12 @@ type DeleteConfigMapRequest struct {
 
 type GetPodLogsRequest struct {
 	Container string `schema:"container_name"`
-	Previous  bool   `schema:"previous"`
+}
+
+type GetPreviousPodLogsRequest struct {
+	Container string `schema:"container_name"`
+}
+
+type GetPreviousPodLogsResponse struct {
+	PrevLogs []string `json:"previous_logs"`
 }

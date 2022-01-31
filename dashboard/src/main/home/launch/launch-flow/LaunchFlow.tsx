@@ -196,7 +196,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       tag = props.clonedChart.config.image.tag;
     }
 
-    if (url.includes(":")) {
+    if (url?.includes(":")) {
       let splits = url.split(":");
       url = splits[0];
       tag = splits[1];

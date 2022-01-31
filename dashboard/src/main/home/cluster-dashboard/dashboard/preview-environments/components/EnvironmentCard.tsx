@@ -5,11 +5,7 @@ import pr_icon from "assets/pull_request_icon.svg";
 import { integrationList } from "shared/common";
 import { useRouteMatch } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { readableDate } from "shared/string_utils";
-
-export const capitalize = (s: string) => {
-  return s.charAt(0).toUpperCase() + s.substring(1).toLowerCase();
-};
+import { capitalize, readableDate } from "shared/string_utils";
 
 const EnvironmentCard: React.FC<{ deployment: PRDeployment }> = ({
   deployment,

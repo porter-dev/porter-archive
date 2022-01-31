@@ -78,6 +78,7 @@ func (t *TFLogLine) ToPBType() *pb.TerraformLog {
 					ErrorSummary: t.Change.Resource.Errored.ErrorSummary,
 				},
 			},
+			Action: t.Change.Action,
 		},
 		Changes: &pb.TerraformChanges{
 			Add:       int64(t.Changes.Add),

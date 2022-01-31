@@ -37,6 +37,36 @@ func PushToOperationStream(
 	return err
 }
 
+func SendOperationCompleted(
+	client *redis.Client,
+	infra *models.Infra,
+	operation *models.Operation,
+) error {
+	// pushes a state update to the state stream
+	streamName := getStateStreamName(infra, operation)
+
+	data := map[string]interface{}{
+		"completed": true,
+	}
+
+	dataBytes, err := json.Marshal(data)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = client.XAdd(context.TODO(), &redis.XAddArgs{
+		Stream: streamName,
+		ID:     "*",
+		Values: map[string]interface{}{
+			"id":   models.GetWorkspaceID(infra, operation),
+			"data": dataBytes,
+		},
+	}).Result()
+
+	return err
+}
+
 func PushToLogStream(
 	client *redis.Client,
 	infra *models.Infra,
@@ -66,7 +96,6 @@ func StreamStateUpdate(
 	operation *models.Operation,
 	send StateUpdateWriter,
 ) error {
-	fmt.Println("CALLED STREAM STATE UPDATE")
 	lastID := "0-0"
 	streamName := getStateStreamName(infra, operation)
 
@@ -89,8 +118,6 @@ func StreamStateUpdate(
 		lastID = messages[len(messages)-1].ID
 
 		for _, msg := range messages {
-			fmt.Println("READ MSG", msg)
-
 			stateData := &types.TFResourceState{}
 
 			dataInter, ok := msg.Values["data"]
@@ -114,7 +141,6 @@ func StreamStateUpdate(
 			err = send(stateData)
 
 			if err != nil {
-				fmt.Println("GOT ERROR STATE", err)
 				return err
 			}
 		}

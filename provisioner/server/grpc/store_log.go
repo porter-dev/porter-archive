@@ -117,6 +117,15 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 					return err
 				}
 			}
+		} else if tfLog.Type == pb.TerraformEvent_OPERATION_FINISHED {
+			// in this case, we push to the operation stream so listening processes are
+			// aware that the operation has completed
+			err = redis_stream.SendOperationCompleted(s.config.RedisClient, infra, operation)
+
+			if err != nil {
+				return err
+			}
+
 		}
 	}
 }

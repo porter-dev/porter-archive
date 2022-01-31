@@ -12,6 +12,7 @@ import api from "shared/api";
 import { useSnapshot } from "valtio";
 import Loading from "components/Loading";
 import Helper from "components/form-components/Helper";
+import { readableDate } from "shared/string_utils";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -35,16 +36,6 @@ const regionOptions = [
   { value: "me-south-1", label: "Middle East (Bahrain) me-south-1" },
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
-
-const readableDate = (s: string) => {
-  const ts = new Date(s);
-  const date = ts.toLocaleDateString();
-  const time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<AWSRegistryConfig>) => void;

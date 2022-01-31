@@ -8,6 +8,7 @@ import Logs from "../status/Logs";
 import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
 import KeyValueArray from "components/form-components/KeyValueArray";
+import { readableDate } from "shared/string_utils";
 
 type PropsType = {
   job: any;
@@ -89,16 +90,6 @@ export default class JobResource extends Component<PropsType, StateType> {
       .catch((err) => setCurrentError(JSON.stringify(err)));
   };
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
   getCompletedReason = () => {
     let completeCondition: any;
 
@@ -111,7 +102,7 @@ export default class JobResource extends Component<PropsType, StateType> {
 
     return (
       completeCondition.reason ||
-      `Completed at ${this.readableDate(completeCondition.lastTransitionTime)}`
+      `Completed at ${readableDate(completeCondition.lastTransitionTime)}`
     );
   };
 
@@ -126,7 +117,7 @@ export default class JobResource extends Component<PropsType, StateType> {
     });
 
     return failedCondition
-      ? `Failed at ${this.readableDate(failedCondition.lastTransitionTime)}`
+      ? `Failed at ${readableDate(failedCondition.lastTransitionTime)}`
       : "Failed";
   };
 
@@ -276,8 +267,7 @@ export default class JobResource extends Component<PropsType, StateType> {
               <Icon src={icon && icon} />
               <Description>
                 <Label>
-                  Started at{" "}
-                  {this.readableDate(this.props.job.status?.startTime)}
+                  Started at {readableDate(this.props.job.status?.startTime)}
                 </Label>
                 <Subtitle>{this.getSubtitle()}</Subtitle>
               </Description>

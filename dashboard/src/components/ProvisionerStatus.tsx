@@ -5,6 +5,7 @@ import { integrationList } from "shared/common";
 import loading from "assets/loading.gif";
 
 import styled, { keyframes } from "styled-components";
+import { readableDate } from "shared/string_utils";
 
 type Props = {
   modules: TFModule[];
@@ -64,16 +65,6 @@ const ProvisionerStatus: React.FC<Props> = ({ modules }) => {
         </StatusIcon>
       );
     }
-  };
-
-  const readableDate = (s: string) => {
-    const ts = new Date(s);
-    const date = ts.toLocaleDateString();
-    const time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
   };
 
   const renderModules = () => {

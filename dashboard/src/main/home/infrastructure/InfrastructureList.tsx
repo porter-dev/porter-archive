@@ -2,178 +2,27 @@ import DynamicLink from "components/DynamicLink";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
-import { getQueryParam, pushFiltered } from "shared/routing";
-import { Link } from "react-router-dom";
-import TitleSection from "components/TitleSection";
+import { useHistory, useLocation } from "react-router";
+import { pushFiltered } from "shared/routing";
 
 import { Column } from "react-table";
 import styled from "styled-components";
 import Table from "components/Table";
-import Selector from "components/Selector";
 
 import Loading from "components/Loading";
 
-import _, { flatMapDepth } from "lodash";
+import _ from "lodash";
 import { integrationList } from "shared/common";
-import DocsHelper from "components/DocsHelper";
-
-export type InfraKind =
-  | "ecr"
-  | "eks"
-  | "rds"
-  | "gke"
-  | "gcr"
-  | "doks"
-  | "docr"
-  | "test";
-
-export type OperationStatus = "starting" | "completed" | "errored";
-export type OperationType =
-  | "create"
-  | "update"
-  | "delete"
-  | "retry_create"
-  | "retry_delete";
-
-export type Infrastructure = {
-  id: number;
-  created_at: string;
-  updated_at: string;
-  project_id: number;
-  kind: InfraKind;
-  status: string;
-  aws_integration_id: number;
-  do_integration_id: number;
-  gcp_integration_id: number;
-  latest_operation: Operation;
-  source_link: string;
-  source_version: string;
-};
-
-export type Operation = {
-  id: string;
-  infra_id: number;
-  type: OperationType;
-  status: OperationStatus;
-  errored: boolean;
-  error: string;
-  last_applied: any;
-  last_updated: string;
-};
-
-export type ProviderInfoMap = {
-  [key in InfraKind]: {
-    provider: string;
-    source: string;
-    resource_name: string;
-    resource_link: string;
-  };
-};
-
-export type TFResourceStatus =
-  | "planned_create"
-  | "planned_delete"
-  | "planned_update"
-  | "created"
-  | "creating"
-  | "updating"
-  | "deleting"
-  | "deleted"
-  | "errored";
-
-export type TFResourceState = {
-  id: string;
-  status: TFResourceStatus;
-  error?: string;
-};
-
-export type TFStateStatus = "created" | "deleted" | "errored";
-
-export type TFState = {
-  last_updated: string;
-  operation_id: string;
-  status: TFResourceStatus;
-  resources: {
-    [key: string]: TFResourceState;
-  };
-};
-
-export const KindMap: ProviderInfoMap = {
-  ecr: {
-    provider: "aws",
-    source: "porter/aws/ecr",
-    resource_name: "Registry",
-    resource_link: "/integrations/registry",
-  },
-  eks: {
-    provider: "aws",
-    source: "porter/aws/eks",
-    resource_name: "Cluster",
-    resource_link: "/dashboard",
-  },
-  rds: {
-    provider: "aws",
-    source: "porter/aws/rds",
-    resource_name: "Database",
-    resource_link: "/databases",
-  },
-  gcr: {
-    provider: "gcp",
-    source: "porter/gcp/gcr",
-    resource_name: "Registry",
-    resource_link: "/integrations/registry",
-  },
-  gke: {
-    provider: "gcp",
-    source: "porter/gcp/gke",
-    resource_name: "Cluster",
-    resource_link: "/dashboard",
-  },
-  docr: {
-    provider: "aws",
-    source: "porter/do/docr",
-    resource_name: "Registry",
-    resource_link: "/integrations/registry",
-  },
-  doks: {
-    provider: "aws",
-    source: "porter/do/doks",
-    resource_name: "Cluster",
-    resource_link: "/dashboard",
-  },
-  test: {
-    provider: "aws",
-    source: "porter/test",
-    resource_name: "Test",
-    resource_link: "/dashboard",
-  },
-};
-
-const capitalize = (s: string) => {
-  return s.charAt(0).toUpperCase() + s.substring(1).toLowerCase();
-};
-
-const readableDate = (s: string) => {
-  const ts = new Date(s);
-  const date = ts.toLocaleDateString();
-  const time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
+import { Infrastructure, KindMap } from "shared/types";
+import { capitalize, readableDate } from "shared/string_utils";
+import Placeholder from "components/Placeholder";
+import Button from "components/Button";
 
 const InfrastructureList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [infraList, setInfraList] = useState<Infrastructure[]>([]);
-  const [selectedInfra, setSelectedInfra] = useState<Infrastructure>(null);
-  const { currentProject, currentCluster, setCurrentModal } = useContext(
-    Context
-  );
-
-  const { url: currentUrl } = useRouteMatch();
+  const { currentProject, setCurrentError } = useContext(Context);
 
   const location = useLocation();
   const history = useHistory();
@@ -207,10 +56,8 @@ const InfrastructureList = () => {
         .catch((err) => {
           console.error(err);
 
-          if (isSubscribed) {
-            setHasError(true);
-          }
-
+          setHasError(true);
+          setCurrentError(err.response?.data?.error);
           setIsLoading(false);
         });
 
@@ -219,15 +66,6 @@ const InfrastructureList = () => {
       };
     }
   }, [currentProject]);
-
-  const getResourceLink = (infra: Infrastructure) => {
-    return (
-      <ResourceLink to={`/cluster-dashboard`} target="_blank">
-        Cluster
-        <i className="material-icons">open_in_new</i>
-      </ResourceLink>
-    );
-  };
 
   const columns = useMemo<Array<Column<Infrastructure>>>(() => {
     if (infraList.length == 0) {
@@ -299,15 +137,6 @@ const InfrastructureList = () => {
     ];
   }, [infraList]);
 
-  const data = useMemo<Array<Infrastructure>>(() => {
-    return infraList;
-  }, [infraList]);
-
-  if (selectedInfra) {
-    console.log(selectedInfra);
-    return <div>Selected Infra</div>;
-  }
-
   if (isLoading) {
     return (
       <Placeholder>
@@ -340,7 +169,13 @@ const InfrastructureList = () => {
       </InfoSection>
       <LineBreak />
       <ControlRow>
-        <Button to={`/provision-infrastructure`}>
+        <Button
+          onClick={() =>
+            pushFiltered({ history, location }, `/provision-infrastructure`, [
+              "project_id",
+            ])
+          }
+        >
           <i className="material-icons">add</i>
           Create Infrastructure
         </Button>
@@ -376,28 +211,6 @@ const Kind = styled.div`
   margin-left: 8px;
 `;
 
-const Placeholder = styled.div`
-  padding: 30px;
-  margin-top: 35px;
-  padding-bottom: 40px;
-  font-size: 13px;
-  color: #ffffff44;
-  min-height: 400px;
-  height: 50vh;
-  background: #ffffff11;
-  border-radius: 8px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  > i {
-    font-size: 18px;
-    margin-right: 8px;
-  }
-`;
-
 const DatabasesListWrapper = styled.div`
   margin-top: 35px;
 `;
@@ -425,97 +238,6 @@ const ControlRow = styled.div`
   padding-left: 0px;
 `;
 
-const Url = styled.a`
-  max-width: 300px;
-  font-size: 13px;
-  user-select: text;
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  > i {
-    margin-left: 10px;
-    font-size: 15px;
-  }
-
-  > span {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  :hover {
-    cursor: pointer;
-  }
-`;
-
-const Button = styled(Link)`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
-  color: white;
-  height: 35px;
-  padding: 0px 8px;
-  padding-bottom: 1px;
-  margin-right: 10px;
-  font-weight: 500;
-  padding-right: 15px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  box-shadow: 0 5px 8px 0px #00000010;
-  cursor: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "not-allowed" : "pointer"};
-
-  background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "#aaaabbee" : "#616FEEcc"};
-  :hover {
-    background: ${(props: { disabled?: boolean }) =>
-      props.disabled ? "" : "#505edddd"};
-  }
-
-  > i {
-    color: white;
-    width: 18px;
-    height: 18px;
-    font-weight: 600;
-    font-size: 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    margin-right: 5px;
-    justify-content: center;
-  }
-`;
-
-const ConnectButton = styled.button<{}>`
-  height: 25px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: white;
-  display: flex;
-  align-items: center;
-  padding: 6px 20px 7px 20px;
-  text-align: left;
-  border: 0;
-  border-radius: 5px;
-  background: #5561c0;
-  box-shadow: 0 2px 5px 0 #00000030;
-  cursor: pointer;
-  user-select: none;
-  :focus {
-    outline: 0;
-  }
-  :hover {
-    filter: brightness(120%);
-  }
-`;
-
 const Icon = styled.img`
   height: 20px;
 `;
@@ -536,30 +258,11 @@ const DashboardIcon = styled.div`
   }
 `;
 
-const TopRow = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
 const Description = styled.div`
   color: #aaaabb;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
-`;
-
-const InfoLabel = styled.div`
-  width: 72px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  color: #7a838f;
-  font-size: 13px;
-  > i {
-    color: #8b949f;
-    font-size: 18px;
-    margin-right: 5px;
-  }
 `;
 
 const InfoSection = styled.div`

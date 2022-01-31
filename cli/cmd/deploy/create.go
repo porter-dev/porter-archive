@@ -272,59 +272,70 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	env, err := GetEnvFromConfig(mergedValues)
+	err = agent.CheckIfImageExists(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
 	if err != nil {
-		env = map[string]string{}
-	}
+		if !strings.Contains(err.Error(), "image not found") {
+			// some other error we need to report
+			return "", err
+		}
 
-	// add additional env based on options
-	for key, val := range opts.SharedOpts.AdditionalEnv {
-		env[key] = val
-	}
+		// image does not exist so we create one
 
-	buildAgent := &BuildAgent{
-		SharedOpts:  opts.SharedOpts,
-		client:      c.Client,
-		imageRepo:   imageURL,
-		env:         env,
-		imageExists: false,
-	}
+		env, err := GetEnvFromConfig(mergedValues)
 
-	if opts.Method == DeployBuildTypeDocker {
-		basePath, err := filepath.Abs(".")
+		if err != nil {
+			env = map[string]string{}
+		}
+
+		// add additional env based on options
+		for key, val := range opts.SharedOpts.AdditionalEnv {
+			env[key] = val
+		}
+
+		buildAgent := &BuildAgent{
+			SharedOpts:  opts.SharedOpts,
+			client:      c.Client,
+			imageRepo:   imageURL,
+			env:         env,
+			imageExists: false,
+		}
+
+		if opts.Method == DeployBuildTypeDocker {
+			basePath, err := filepath.Abs(".")
+
+			if err != nil {
+				return "", err
+			}
+
+			err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
+		} else {
+			err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
+		}
 
 		if err != nil {
 			return "", err
 		}
 
-		err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
-	} else {
-		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
-	}
+		// create repository
+		err = c.Client.CreateRepository(
+			context.Background(),
+			opts.ProjectID,
+			regID,
+			&types.CreateRegistryRepositoryRequest{
+				ImageRepoURI: imageURL,
+			},
+		)
 
-	if err != nil {
-		return "", err
-	}
+		if err != nil {
+			return "", err
+		}
 
-	// create repository
-	err = c.Client.CreateRepository(
-		context.Background(),
-		opts.ProjectID,
-		regID,
-		&types.CreateRegistryRepositoryRequest{
-			ImageRepoURI: imageURL,
-		},
-	)
+		err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
-	if err != nil {
-		return "", err
-	}
-
-	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
-
-	if err != nil {
-		return "", err
+		if err != nil {
+			return "", err
+		}
 	}
 
 	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)

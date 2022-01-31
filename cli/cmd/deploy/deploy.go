@@ -217,10 +217,28 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 // Build uses the deploy agent options to build a new container image from either
 // buildpack or docker.
 func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
+	err := d.agent.CheckIfImageExists(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
+
+	if err == nil {
+		d.imageExists = true
+	} else {
+		if !strings.Contains(err.Error(), "image not found") {
+			// some other error we need to report
+			return err
+		}
+
+		d.imageExists = false
+	}
+
+	// we do not want to re-build an image
+	// FIXME: what if overrideBuildConfig == nil but the image stays the same?
+	if overrideBuildConfig == nil && d.imageExists {
+		return nil
+	}
+
 	// if build is not local, fetch remote source
 	var basePath string
 	buildCtx := d.opts.LocalPath
-	var err error
 
 	if !d.opts.Local {
 		repoSplit := strings.Split(d.release.GitActionConfig.GitRepo, "/")
@@ -275,11 +293,6 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
 		return err
-	} else if err != nil && err == docker.PullImageErrNotFound {
-		fmt.Println("could not find image, moving to build step")
-		d.imageExists = false
-	} else if err == nil {
-		d.imageExists = true
 	}
 
 	buildAgent := &BuildAgent{

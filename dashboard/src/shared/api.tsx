@@ -1340,6 +1340,22 @@ const updateBuildConfig = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
 );
 
+const getPreviousLogsForContainer = baseApi<
+  {
+    container_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    pod_name: string;
+  }
+>(
+  "GET",
+  ({ cluster_id, namespace, pod_name: name, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1473,4 +1489,5 @@ export default {
   getLogBucketLogs,
   getCanCreateProject,
   updateBuildConfig,
+  getPreviousLogsForContainer,
 };

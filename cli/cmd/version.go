@@ -7,7 +7,7 @@ import (
 )
 
 // Version will be linked by an ldflag during build
-var Version string = "v0.8.0"
+var Version string = "dev"
 
 var versionCmd = &cobra.Command{
 	Use:     "version",

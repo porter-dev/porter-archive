@@ -27,6 +27,7 @@ type PropsType = {
   closeModal: () => void;
   existingValues: Record<string, string>;
   setValues: (values: Record<string, string>) => void;
+  enableSyncedEnvGroups?: boolean;
   syncedEnvGroups?: PopulatedEnvGroup[];
   setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
 };
@@ -238,31 +239,37 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
             </SidebarSection>
           )}
           <AbsoluteWrapper>
-            {
-              this.state.selectedEnvGroup?.meta_version === 1 ? (
-                <Helper color="#f5cb42">
-                  Upgrade this env group from the env groups tab to sync.
-                </Helper>
-              ) : (
-                <CheckboxRow
-                  checked={this.state.shouldSync}
-                  toggle={() =>
-                    this.setState((prevState) => ({
-                      shouldSync: !prevState.shouldSync,
-                    }))
-                  }
-                  label="Sync environment group"
-                  disabled={this.state.selectedEnvGroup?.meta_version === 1}
-                />
-              )
-            }
-            <IconWrapper>
-              <DocsHelper
-                link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
-                tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
-                placement="top-start"
-              />
-            </IconWrapper>
+            {this.props.enableSyncedEnvGroups ? (
+              <>
+                {this.state.selectedEnvGroup?.meta_version === 1 ? (
+                  <Helper color="#f5cb42">
+                    Upgrade this env group from the env groups tab to sync.
+                  </Helper>
+                ) : (
+                  <CheckboxRow
+                    checked={this.state.shouldSync}
+                    toggle={() =>
+                      this.setState((prevState) => ({
+                        shouldSync: !prevState.shouldSync,
+                      }))
+                    }
+                    label="Sync environment group"
+                    disabled={this.state.selectedEnvGroup?.meta_version === 1}
+                  />
+                )}
+                <IconWrapper>
+                  <DocsHelper
+                    link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+                    tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+                    placement="top-start"
+                  />
+                </IconWrapper>
+              </>
+            ) : (
+              <Helper color="#f5cb42">
+                Upgrade the job template to enable sync env groups
+              </Helper>
+            )}
           </AbsoluteWrapper>
         </GroupModalSections>
 

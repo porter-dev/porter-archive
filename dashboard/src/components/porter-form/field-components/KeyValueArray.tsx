@@ -40,7 +40,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
             : [],
           showEnvModal: false,
           showEditorModal: false,
-          synced_env_groups: null,
+          synced_env_groups: props.settings?.options?.enable_synced_env_groups
+            ? null
+            : [],
         };
       },
     }
@@ -48,9 +50,17 @@ const KeyValueArray: React.FC<Props> = (props) => {
 
   const { currentProject } = useContext(Context);
 
+  // If the variable includes normal it means that the form corresponds to an old job template version
+  // The "normal" keyword doesn't exist for applications as well as the enable_synced_env_groups setting.
+  // This is why we have to check if the form corresponds to a job or not.
+  const enableSyncedEnvGroups = props.variable.includes("normal")
+    ? !!props.settings?.options?.enable_synced_env_groups
+    : true;
+
   useEffect(() => {
     if (hasSetValue(props) && !Array.isArray(state?.synced_env_groups)) {
       const values = props.value[0];
+      console.log(values);
       const envGroups = values?.synced || [];
       const promises = Promise.all(
         envGroups.map(async (envGroup: any) => {
@@ -86,7 +96,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
 
   if (state == undefined) return <></>;
 
-  if (!Array.isArray(state.synced_env_groups)) {
+  if (!Array.isArray(state.synced_env_groups) && enableSyncedEnvGroups) {
     return <Loading />;
   }
 
@@ -205,11 +215,12 @@ const KeyValueArray: React.FC<Props> = (props) => {
               return { showEnvModal: false };
             })
           }
-          width="765px"
+          width="800px"
           height="542px"
         >
           <LoadEnvGroupModal
             existingValues={getProcessedValues(state.values)}
+            enableSyncedEnvGroups={enableSyncedEnvGroups}
             syncedEnvGroups={state.synced_env_groups}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
@@ -297,9 +308,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
     if (env_group) {
       return (
         <Wrapper>
-        <Helper color="#f5cb42" style={{ marginLeft: "10px" }}>
-          Overridden by the env group "{env_group?.name}"
-        </Helper>
+          <Helper color="#f5cb42" style={{ marginLeft: "10px" }}>
+            Overridden by the env group "{env_group?.name}"
+          </Helper>
         </Wrapper>
       );
     }
@@ -431,7 +442,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
             )}
           </InputWrapper>
         )}
-        {!!state.synced_env_groups?.length && (
+        {enableSyncedEnvGroups && !!state.synced_env_groups?.length && (
           <>
             <Heading>Synced Environment Groups</Heading>
             <Br />
@@ -510,8 +521,15 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
     }));
   }
 
+  const variableContent = props.variable.split(".");
+  let variable = props.variable;
+
+  if (variable.includes("normal")) {
+    variable = `${variableContent[0]}.${variableContent[1]}`;
+  }
+
   return {
-    [props.variable]: obj,
+    [variable]: obj,
   };
 };
 
@@ -582,7 +600,6 @@ const ExpandableEnvGroup: React.FC<{
       </StyledCard>
     </>
   );
-  return null;
 };
 
 const Br = styled.div`

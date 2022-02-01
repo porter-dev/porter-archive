@@ -83,6 +83,9 @@ export interface KeyValueArrayField extends GenericInputField {
   envLoader?: boolean;
   fileUpload?: boolean;
   settings?: {
+    options?: {
+      enable_synced_env_groups: boolean;
+    },
     type: "env" | "normal";
   };
 }

@@ -34,6 +34,7 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
+	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*helmRel.Release)
 
 	request := &types.UpdateBuildConfigRequest{}
 
@@ -72,7 +73,6 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*helmRel.Release)
 	rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 
 	if err != nil {

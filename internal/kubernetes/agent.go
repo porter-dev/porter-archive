@@ -622,25 +622,22 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 
 	go func() {
 		for {
-			select {
-			case <-errorchan:
-				defer close(errorchan)
+			bytes, err := r.ReadBytes('\n')
+
+			if err == io.EOF {
+				errorchan <- nil
 				return
-			default:
 			}
 
-			bytes, err := r.ReadBytes('\n')
 			if _, writeErr := rw.Write(bytes); writeErr != nil {
 				errorchan <- writeErr
 				return
 			}
-			if err != nil {
-				if err != io.EOF {
-					errorchan <- err
-					return
-				}
-				errorchan <- nil
+
+			select {
+			case <-errorchan:
 				return
+			default:
 			}
 		}
 	}()
@@ -648,6 +645,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 	for {
 		select {
 		case err = <-errorchan:
+			close(errorchan)
 			return err
 		}
 	}

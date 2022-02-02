@@ -108,5 +108,5 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	c.WriteResult(w, r, "")
+	c.WriteResult(w, r, buildConfig)
 }

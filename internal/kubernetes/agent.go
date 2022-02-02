@@ -622,25 +622,22 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 
 	go func() {
 		for {
-			select {
-			case <-errorchan:
-				defer close(errorchan)
+			bytes, err := r.ReadBytes('\n')
+
+			if err == io.EOF {
+				errorchan <- nil
 				return
-			default:
 			}
 
-			bytes, err := r.ReadBytes('\n')
 			if _, writeErr := rw.Write(bytes); writeErr != nil {
 				errorchan <- writeErr
 				return
 			}
-			if err != nil {
-				if err != io.EOF {
-					errorchan <- err
-					return
-				}
-				errorchan <- nil
+
+			select {
+			case <-errorchan:
 				return
+			default:
 			}
 		}
 	}()
@@ -648,6 +645,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 	for {
 		select {
 		case err = <-errorchan:
+			close(errorchan)
 			return err
 		}
 	}
@@ -1223,11 +1221,12 @@ func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
 		return err, false
 	}
 	defer w.Stop()
-	for {
+
+	expireTime := time.Now().Add(time.Second * 30)
+
+	for time.Now().Unix() <= expireTime.Unix() {
 		select {
-		case <-time.After(time.Second * 30):
-			return goerrors.New("timed out waiting for pod"), false
-		case <-time.Tick(time.Second):
+		case <-time.NewTicker(time.Second).C:
 			// poll every second in case we already missed the ready event while
 			// creating the listener.
 			pod, err = a.Clientset.CoreV1().
@@ -1253,6 +1252,8 @@ func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
 			}
 		}
 	}
+
+	return goerrors.New("timed out waiting for pod"), false
 }
 
 func isPodReady(pod *v1.Pod) bool {

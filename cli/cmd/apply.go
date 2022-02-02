@@ -289,6 +289,19 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		tag = commit.Sha[:7]
 	}
 
+	// if the method is registry and a tag is defined, we use the provided tag
+	if appConfig.Build.Method == "registry" {
+		imageSpl := strings.Split(appConfig.Build.Image, ":")
+
+		if len(imageSpl) == 2 {
+			tag = imageSpl[1]
+		}
+
+		if tag == "" {
+			tag = "latest"
+		}
+	}
+
 	sharedOpts := &deploy.SharedOpts{
 		ProjectID:       d.target.Project,
 		ClusterID:       d.target.Cluster,
@@ -414,40 +427,43 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 		return nil, err
 	}
 
-	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-		UseNewConfig: true,
-		NewConfig:    appConf.Values,
-	})
+	// if the build method is registry, we do not trigger a build
+	if appConf.Build.Method != "registry" {
+		buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+			UseNewConfig: true,
+			NewConfig:    appConf.Values,
+		})
 
-	if err != nil {
-		return nil, err
-	}
-
-	err = updateAgent.SetBuildEnv(buildEnv)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var buildConfig *types.BuildConfig
-
-	if appConf.Build.Builder != "" {
-		buildConfig = &types.BuildConfig{
-			Builder:    appConf.Build.Builder,
-			Buildpacks: appConf.Build.Buildpacks,
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	err = updateAgent.Build(buildConfig)
+		err = updateAgent.SetBuildEnv(buildEnv)
 
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 
-	err = updateAgent.Push()
+		var buildConfig *types.BuildConfig
 
-	if err != nil {
-		return nil, err
+		if appConf.Build.Builder != "" {
+			buildConfig = &types.BuildConfig{
+				Builder:    appConf.Build.Builder,
+				Buildpacks: appConf.Build.Buildpacks,
+			}
+		}
+
+		err = updateAgent.Build(buildConfig)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = updateAgent.Push()
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = updateAgent.UpdateImageAndValues(appConf.Values)

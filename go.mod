@@ -1,6 +1,6 @@
 module github.com/porter-dev/porter
 
-go 1.16
+go 1.17
 
 require (
 	cloud.google.com/go v0.99.0

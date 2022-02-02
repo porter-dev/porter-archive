@@ -219,6 +219,7 @@ func (c *CreateAgent) CreateFromDocker(
 	overrideValues map[string]interface{},
 	imageTag string,
 	extraBuildConfig *types.BuildConfig,
+	forceBuild bool,
 ) (string, error) {
 	opts := c.CreateOpts
 
@@ -265,23 +266,22 @@ func (c *CreateAgent) CreateFromDocker(
 		"tag":        imageTag,
 	}
 
-	// create docker agen
+	// create docker agent
 	agent, err := docker.NewAgentWithAuthGetter(c.Client, opts.ProjectID)
 
 	if err != nil {
 		return "", err
 	}
 
-	err = agent.CheckIfImageExists(fmt.Sprintf("%s:%s", imageURL, imageTag))
+	imageExists, err := agent.CheckIfImageExists(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
 	if err != nil {
-		if !strings.Contains(err.Error(), "image not found") {
-			// some other error we need to report
-			return "", err
-		}
+		return "", err
+	}
 
-		// image does not exist so we create one
-
+	if imageExists && imageTag != "default" && !forceBuild {
+		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, imageTag)
+	} else { // image does not exist or has tag default so we (re)build one
 		env, err := GetEnvFromConfig(mergedValues)
 
 		if err != nil {

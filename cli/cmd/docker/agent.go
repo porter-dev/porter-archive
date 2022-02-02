@@ -159,16 +159,23 @@ var PullImageErrNotFound = fmt.Errorf("Requested image not found")
 var PullImageErrUnauthorized = fmt.Errorf("Could not pull image: unauthorized")
 
 // CheckIfImageExists checks if the image exists in the registry
-func (a *Agent) CheckIfImageExists(image string) error {
+func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	_, err = a.client.DistributionInspect(context.Background(), image, encodedRegistryAuth)
 
-	return err
+	if err == nil {
+		return true, nil
+	} else if strings.Contains(err.Error(), "image not found") ||
+		strings.Contains(err.Error(), "does not exist in the registry") {
+		return false, nil
+	}
+
+	return false, err
 }
 
 // PullImage pulls an image specified by the image string

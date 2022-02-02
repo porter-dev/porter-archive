@@ -400,6 +400,7 @@ export type Operation = {
   error: string;
   last_applied: any;
   last_updated: string;
+  form: any;
 };
 
 export type ProviderInfoMap = {

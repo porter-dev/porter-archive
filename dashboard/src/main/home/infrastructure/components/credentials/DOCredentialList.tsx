@@ -6,32 +6,31 @@ import Loading from "components/Loading";
 import { Operation, OperationStatus, OperationType } from "shared/types";
 import { readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
-import AWSCredentialForm from "./AWSCredentialForm";
 
 type Props = {
-  selectCredential: (aws_integration_id: number) => void;
+  selectCredential: (do_integration_id: number) => void;
 };
 
-type AWSCredential = {
+type DOCredential = {
   created_at: string;
   id: number;
   user_id: number;
   project_id: number;
-  aws_arn: string;
+  target_email: string;
+  target_id: string;
 };
 
-const AWSCredentialsList: React.FunctionComponent<Props> = ({
+const DOCredentialsList: React.FunctionComponent<Props> = ({
   selectCredential,
 }) => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
-  const [shouldCreateCred, setShouldCreateCred] = useState(false);
+  const [doCredentials, setDOCredentials] = useState<DOCredential[]>(null);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     api
-      .getAWSIntegration(
+      .getOAuthIds(
         "<token>",
         {},
         {
@@ -43,7 +42,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           throw Error("Data is not an array");
         }
 
-        setAWSCredentials(data);
+        setDOCredentials(data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -67,12 +66,14 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   }
 
   const renderList = () => {
-    return awsCredentials.map((cred) => {
+    return doCredentials.map((cred) => {
       return (
         <PreviewRow key={cred.id} onClick={() => selectCredential(cred.id)}>
           <Flex>
             <i className="material-icons">account_circle</i>
-            {cred.aws_arn || "arn: n/a"}
+            {cred.target_email && cred.target_id
+              ? `${cred.target_email} (${cred.target_id})`
+              : "email: n/a"}
           </Flex>
           <Right>Connected at {readableDate(cred.created_at)}</Right>
         </PreviewRow>
@@ -81,15 +82,6 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   };
 
   const renderContents = () => {
-    if (shouldCreateCred) {
-      return (
-        <AWSCredentialForm
-          setCreatedCredential={selectCredential}
-          cancel={() => {}}
-        />
-      );
-    }
-
     return (
       <>
         <Description>
@@ -97,9 +89,11 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           credential:
         </Description>
         {renderList()}
-        <CreateNewRow onClick={() => setShouldCreateCred(true)}>
+        <CreateNewRow
+          href={`/api/projects/${currentProject?.id}/oauth/digitalocean`}
+        >
           <Flex>
-            <i className="material-icons">account_circle</i>Add New AWS
+            <i className="material-icons">account_circle</i>Add New DO
             Credential
           </Flex>
         </CreateNewRow>
@@ -107,12 +101,12 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
     );
   };
 
-  return <AWSCredentialWrapper>{renderContents()}</AWSCredentialWrapper>;
+  return <DOCredentialWrapper>{renderContents()}</DOCredentialWrapper>;
 };
 
-export default AWSCredentialsList;
+export default DOCredentialsList;
 
-const AWSCredentialWrapper = styled.div`
+const DOCredentialWrapper = styled.div`
   margin-top: 20px;
 `;
 
@@ -144,8 +138,23 @@ const Description = styled.div`
   font-weight: 400;
 `;
 
-const CreateNewRow = styled(PreviewRow)`
+const CreateNewRow = styled.a`
   background: none;
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #ffffff55;
+  background: #ffffff01;
+  border: 1px solid #aaaabb;
+  justify-content: space-between;
+  font-size: 13px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 16px 0;
+
+  :hover {
+    background: #ffffff10;
+  }
 `;
 
 const Flex = styled.div`

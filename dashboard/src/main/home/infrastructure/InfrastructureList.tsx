@@ -17,6 +17,7 @@ import { Infrastructure, KindMap } from "shared/types";
 import { capitalize, readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
 import Button from "components/Button";
+import SaveButton from "components/SaveButton";
 
 const InfrastructureList = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -169,16 +170,20 @@ const InfrastructureList = () => {
       </InfoSection>
       <LineBreak />
       <ControlRow>
-        <Button
-          onClick={() =>
-            pushFiltered({ history, location }, `/infrastructure/provision`, [
-              "project_id",
-            ])
-          }
-        >
-          <i className="material-icons">add</i>
-          Create Infrastructure
-        </Button>
+        <SaveButtonContainer>
+          <SaveButton
+            makeFlush={true}
+            clearPosition={true}
+            onClick={() =>
+              pushFiltered({ history, location }, `/infrastructure/provision`, [
+                "project_id",
+              ])
+            }
+          >
+            <i className="material-icons">add</i>
+            Create Infrastructure
+          </SaveButton>
+        </SaveButtonContainer>
       </ControlRow>
       <StyledTableWrapper>
         <Table
@@ -330,4 +335,9 @@ const ResourceLink = styled(DynamicLink)`
     margin-left: 7px;
     font-size: 17px;
   }
+`;
+
+const SaveButtonContainer = styled.div`
+  position: relative;
+  width: 100%;
 `;

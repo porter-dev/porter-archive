@@ -5,11 +5,8 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-
-	"sigs.k8s.io/yaml"
 )
 
 type InfraListTemplateHandler struct {
@@ -26,43 +23,70 @@ func NewInfraListTemplateHandler(
 }
 
 func (c *InfraListTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	testFormData := make(map[string]interface{})
+	res := make([]types.InfraTemplateMeta, 0)
 
-	err := yaml.Unmarshal([]byte(testForm), &testFormData)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	res := []types.InfraTemplate{
-		{
-			Icon:               "",
-			Description:        "Create an test resource.",
-			Name:               "Test",
-			Version:            "v0.1.0",
-			Kind:               "test",
-			Form:               testFormData,
-			RequiredCredential: "aws_integration_id",
-		},
+	for _, val := range templateMap {
+		res = append(res, *val)
 	}
 
 	c.WriteResult(w, r, res)
 }
 
-const testForm = `name: Test
-hasSource: false
-includeHiddenFields: true
-tabs:
-- name: main
-  label: Configuration
-  sections:
-  - name: section_one
-    contents: 
-    - type: heading
-      label: String to echo
-    - type: string-input
-      variable: echo
-      value: 
-      - "hello"
-`
+var templateMap = map[string]*types.InfraTemplateMeta{
+	"test": {
+		Icon:               "",
+		Description:        "Create a test resource.",
+		Name:               "Test",
+		Version:            "v0.1.0",
+		Kind:               "test",
+		RequiredCredential: "do_integration_id",
+	},
+	"ecr": {
+		Icon:               "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4",
+		Description:        "Create an Elastic Container Registry.",
+		Name:               "ECR",
+		Version:            "v0.1.0",
+		Kind:               "ecr",
+		RequiredCredential: "aws_integration_id",
+	},
+	"eks": {
+		Icon:               "https://img.stackshare.io/service/7991/amazon-eks.png",
+		Description:        "Create an Elastic Kubernetes Service cluster.",
+		Name:               "EKS",
+		Version:            "v0.1.0",
+		Kind:               "eks",
+		RequiredCredential: "aws_integration_id",
+	},
+	"gcr": {
+		Icon:               "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+		Description:        "Create a Google Container Registry.",
+		Name:               "GCR",
+		Version:            "v0.1.0",
+		Kind:               "gcr",
+		RequiredCredential: "gcp_integration_id",
+	},
+	"gke": {
+		Icon:               "https://sysdig.com/wp-content/uploads/2016/08/GKE_color.png",
+		Description:        "Create a Google Kubernetes Engine cluster.",
+		Name:               "GKE",
+		Version:            "v0.1.0",
+		Kind:               "gke",
+		RequiredCredential: "gcp_integration_id",
+	},
+	"docr": {
+		Icon:               "",
+		Description:        "Create a Digital Ocean Container Registry.",
+		Name:               "DOCR",
+		Version:            "v0.1.0",
+		Kind:               "docr",
+		RequiredCredential: "do_integration_id",
+	},
+	"doks": {
+		Icon:               "",
+		Description:        "Create a Digital Ocean Kubernetes Service cluster.",
+		Name:               "DOKS",
+		Version:            "v0.1.0",
+		Kind:               "doks",
+		RequiredCredential: "do_integration_id",
+	},
+}

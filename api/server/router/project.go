@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
@@ -684,6 +686,33 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getTemplatesEndpoint,
 		Handler:  getTemplatesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/infras/templates -> infra.NewInfraGetHandler
+	getTemplateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/infras/templates/{%s}/{%s}", relPath, types.URLParamTemplateName, types.URLParamTemplateVersion),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getTemplateHandler := infra.NewInfraGetTemplateHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getTemplateEndpoint,
+		Handler:  getTemplateHandler,
 		Router:   r,
 	})
 

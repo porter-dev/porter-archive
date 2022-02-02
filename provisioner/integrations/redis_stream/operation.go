@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	redis "github.com/go-redis/redis/v8"
 	"github.com/porter-dev/porter/internal/models"
@@ -19,7 +20,12 @@ func PushToOperationStream(
 	// pushes a state update to the state stream
 	streamName := getStateStreamName(infra, operation)
 
-	dataBytes, err := json.Marshal(data)
+	pushData := &types.TFResourceStateEntry{
+		TFResourceState: data,
+		PushedAt:        time.Now(),
+	}
+
+	dataBytes, err := json.Marshal(pushData)
 
 	if err != nil {
 		return err
@@ -46,7 +52,7 @@ func SendOperationCompleted(
 	streamName := getStateStreamName(infra, operation)
 
 	data := map[string]interface{}{
-		"completed": true,
+		"status": "OPERATION_COMPLETED",
 	}
 
 	dataBytes, err := json.Marshal(data)
@@ -80,11 +86,75 @@ func PushToLogStream(
 		Stream: streamName,
 		ID:     "*",
 		Values: map[string]interface{}{
-			"log": fmt.Sprintf("[%s] [%s] %s\n", data.Level, data.Timestamp, data.Message),
+			"log": getLogString(data),
 		},
 	}).Result()
 
 	return err
+}
+
+func getLogString(data *types.TFLogLine) string {
+	if data.Diagnostic.Detail != "" {
+		return fmt.Sprintf("[%s] [%s] %s: %s\n", data.Level, data.Timestamp, data.Message, data.Diagnostic.Detail)
+	}
+
+	return fmt.Sprintf("[%s] [%s] %s\n", data.Level, data.Timestamp, data.Message)
+}
+
+type LogWriter func(log string) error
+
+func StreamOperationLogs(
+	ctx context.Context,
+	client *redis.Client,
+	infra *models.Infra,
+	operation *models.Operation,
+	send LogWriter,
+) error {
+	lastID := "0-0"
+	streamName := getLogsStreamName(infra, operation)
+
+	for {
+		xstream, err := client.XRead(
+			ctx,
+			&redis.XReadArgs{
+				Streams: []string{streamName, lastID},
+				Block:   0,
+			},
+		).Result()
+
+		if err != nil {
+			return err
+		}
+
+		messages := xstream[0].Messages
+		lastID = messages[len(messages)-1].ID
+
+		for _, msg := range messages {
+			dataInter, ok := msg.Values["log"]
+
+			if !ok {
+				continue
+			}
+
+			dataString, ok := dataInter.(string)
+
+			if !ok {
+				continue
+			}
+
+			err = send(dataString)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+	}
 }
 
 type StateUpdateWriter func(update *types.TFResourceState) error
@@ -100,8 +170,6 @@ func StreamStateUpdate(
 	streamName := getStateStreamName(infra, operation)
 
 	for {
-		fmt.Println("waiting for xread...")
-
 		xstream, err := client.XRead(
 			ctx,
 			&redis.XReadArgs{

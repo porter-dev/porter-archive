@@ -38,6 +38,8 @@ func (c *ReportErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// update the operation with the error
 	operation.Status = "errored"
+	operation.Errored = true
+	operation.Error = req.Error
 
 	operation, err := c.Config.Repo.Infra().UpdateOperation(operation)
 

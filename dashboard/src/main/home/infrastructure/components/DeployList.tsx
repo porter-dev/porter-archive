@@ -3,18 +3,30 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
-import { Operation, OperationStatus, OperationType } from "shared/types";
+import {
+  Infrastructure,
+  Operation,
+  OperationStatus,
+  OperationType,
+} from "shared/types";
 import { readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
+import { useWebsockets } from "shared/hooks/useWebsockets";
+import ExpandedOperation from "./ExpandedOperation";
 
 type Props = {
-  infra_id: number;
+  infra: Infrastructure;
+  setLatestOperation: (operation: Operation) => void;
 };
 
-const DeployList: React.FunctionComponent<Props> = ({ infra_id }) => {
+const DeployList: React.FunctionComponent<Props> = ({
+  infra,
+  setLatestOperation,
+}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [operationList, setOperationList] = useState<Operation[]>([]);
+  const [selectedOperation, setSelectedOperation] = useState<Operation>(null);
   const { currentProject, setCurrentError } = useContext(Context);
 
   useEffect(() => {
@@ -24,7 +36,7 @@ const DeployList: React.FunctionComponent<Props> = ({ infra_id }) => {
         {},
         {
           project_id: currentProject.id,
-          infra_id: infra_id,
+          infra_id: infra.id,
         }
       )
       .then(({ data }) => {
@@ -41,7 +53,79 @@ const DeployList: React.FunctionComponent<Props> = ({ infra_id }) => {
         setCurrentError(err.response?.data?.error);
         setIsLoading(false);
       });
-  }, [currentProject]);
+  }, [currentProject, infra, infra?.latest_operation?.id]);
+
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeWebsocket,
+    closeAllWebsockets,
+  } = useWebsockets();
+
+  const parseOperationWebsocketEvent = (evt: MessageEvent) => {
+    let { status } = JSON.parse(evt.data);
+
+    // if the status is operation completed, mark that operation as completed
+    if (status == "OPERATION_COMPLETED") {
+      let newOpList = [...operationList];
+
+      // find the corresponding operation and update it
+      newOpList.forEach((op, i) => {
+        if (op.id == infra.latest_operation.id) {
+          newOpList[i].status = "completed";
+        }
+      });
+
+      setOperationList(newOpList);
+    }
+  };
+
+  const setupOperationWebsocket = (websocketID: string) => {
+    let apiPath = `/api/projects/${currentProject.id}/infras/${infra.id}/operations/${infra.latest_operation.id}/state`;
+
+    const wsConfig = {
+      onopen: () => {
+        console.log(`connected to websocket:`, websocketID);
+      },
+      onmessage: parseOperationWebsocketEvent,
+      onclose: () => {
+        console.log(`closing websocket:`, websocketID);
+      },
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(websocketID);
+      },
+    };
+
+    newWebsocket(websocketID, apiPath, wsConfig);
+    openWebsocket(websocketID);
+  };
+
+  useEffect(() => {
+    if (!currentProject || !infra || !infra.latest_operation) {
+      return;
+    }
+
+    // if the operation list is empty or does not match the latest infra operation, don't
+    // open a websocket
+    if (
+      operationList.length == 0 ||
+      infra.latest_operation.id !== operationList[0].id
+    ) {
+      return;
+    }
+
+    // if the latest_operation is in progress, open a websocket
+    if (operationList[0].status === "starting") {
+      const websocketID = operationList[0].id;
+
+      setupOperationWebsocket(websocketID);
+
+      return () => {
+        closeWebsocket(websocketID);
+      };
+    }
+  }, [currentProject, infra, operationList]);
 
   if (isLoading) {
     return (
@@ -59,64 +143,110 @@ const DeployList: React.FunctionComponent<Props> = ({ infra_id }) => {
     return <Placeholder>Error</Placeholder>;
   }
 
-  const getOperationDescription = (type: OperationType): string => {
+  const getOperationDescription = (
+    type: OperationType,
+    status: OperationStatus
+  ): string => {
     switch (type) {
+      case "retry_create":
       case "create":
-        return "This infrastructure was created";
+        if (status == "starting") {
+          return "Infrastructure creation in progress";
+        } else if (status == "completed") {
+          return "Infrastructure creation completed.";
+        } else if (status == "errored") {
+          return "This infrastructure encountered an error while creating.";
+        }
       case "update":
-        return "The infrastructure configuration was updated";
-      default:
-        return "The infrastructure configuration was updated";
+        if (status == "starting") {
+          return "Infrastructure update in progress";
+        } else if (status == "completed") {
+          return "Infrastructure update completed.";
+        } else if (status == "errored") {
+          return "This infrastructure encountered an error while updating.";
+        }
+      case "retry_delete":
+      case "delete":
+        if (status == "starting") {
+          return "Infrastructure deletion in progress";
+        } else if (status == "completed") {
+          return "Infrastructure deletion completed.";
+        } else if (status == "errored") {
+          return "This infrastructure encountered an error while deleting.";
+        }
     }
+  };
+
+  const backFromExpandedOperation = (operation?: Operation) => {
+    if (operation) {
+      setLatestOperation(operation);
+    }
+
+    setSelectedOperation(null);
+  };
+
+  const renderContents = () => {
+    if (selectedOperation) {
+      return (
+        <ExpandedOperation
+          operation_id={selectedOperation.id}
+          infra_id={selectedOperation.infra_id}
+          back={backFromExpandedOperation}
+        />
+      );
+    }
+
+    return operationList.map((operation, i) => {
+      return (
+        <React.Fragment key={i}>
+          <StyledCard
+            status={operation.status}
+            onClick={() => setSelectedOperation(operation)}
+          >
+            <ContentContainer>
+              <Icon
+                status={operation.status}
+                className="material-icons-outlined"
+              >
+                {operation.status === "errored"
+                  ? "report_problem"
+                  : operation.status === "completed"
+                  ? "check_circle"
+                  : "cached"}
+              </Icon>
+              <EventInformation>
+                <EventName>
+                  {getOperationDescription(operation.type, operation.status)}
+                </EventName>
+              </EventInformation>
+            </ContentContainer>
+            <ActionContainer>
+              <TimestampContainer>
+                <TimestampIcon className="material-icons-outlined">
+                  access_time
+                </TimestampIcon>
+                <span>{readableDate(operation.last_updated)}</span>
+              </TimestampContainer>
+            </ActionContainer>
+            <NextIconContainer>
+              <i className="material-icons next-icon">navigate_next</i>
+            </NextIconContainer>
+          </StyledCard>
+        </React.Fragment>
+      );
+    });
   };
 
   return (
     <DatabasesListWrapper>
-      <EventsGrid>
-        {operationList.map((operation, i) => {
-          return (
-            <React.Fragment key={i}>
-              <StyledCard status={operation.status}>
-                <ContentContainer>
-                  <Icon
-                    status={operation.status}
-                    className="material-icons-outlined"
-                  >
-                    {operation.status === "errored"
-                      ? "report_problem"
-                      : operation.status === "completed"
-                      ? "check_circle"
-                      : "cached"}
-                  </Icon>
-                  <EventInformation>
-                    <EventName>
-                      <Helper>{operation.type}:</Helper>
-                      {getOperationDescription(operation.type)}
-                    </EventName>
-                  </EventInformation>
-                </ContentContainer>
-                <ActionContainer>
-                  <TimestampContainer>
-                    <TimestampIcon className="material-icons-outlined">
-                      access_time
-                    </TimestampIcon>
-                    <span>{readableDate(operation.last_updated)}</span>
-                  </TimestampContainer>
-                </ActionContainer>
-              </StyledCard>
-            </React.Fragment>
-          );
-        })}
-      </EventsGrid>
+      <EventsGrid>{renderContents()}</EventsGrid>
     </DatabasesListWrapper>
   );
 };
 
 export default DeployList;
 
-const DatabasesListWrapper = styled.div`
-  margin-top: 35px;
-`;
+const DatabasesListWrapper = styled.div``;
 
 const EventsGrid = styled.div`
   display: grid;
@@ -131,11 +261,11 @@ const StyledCard = styled.div<{ status: string }>`
   border: 1px solid
     ${({ status }) => (status === "critical" ? "#ff385d" : "#ffffff44")};
   background: #ffffff08;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   border-radius: 10px;
   padding: 14px;
   overflow: hidden;
-  height: 80px;
+  height: 60px;
   font-size: 13px;
   cursor: pointer;
   :hover {
@@ -152,6 +282,20 @@ const StyledCard = styled.div<{ status: string }>`
       opacity: 1;
     }
   }
+
+  .next-icon {
+    display: none;
+    color: #ffffff55;
+  }
+
+  :hover .next-icon {
+    display: inline-block;
+  }
+`;
+
+const NextIconContainer = styled.div`
+  width: 30px;
+  padding-top: 2px;
 `;
 
 const ContentContainer = styled.div`

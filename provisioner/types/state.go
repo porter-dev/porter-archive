@@ -19,9 +19,17 @@ const (
 )
 
 type TFResourceState struct {
-	ID     string           `json:"id"`
-	Status TFResourceStatus `json:"status"`
-	Error  *string          `json:"error"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+	ID        string           `json:"id"`
+	Status    TFResourceStatus `json:"status"`
+	Error     *string          `json:"error"`
+}
+
+type TFResourceStateEntry struct {
+	*TFResourceState
+
+	PushedAt time.Time `json:"pushed_at"`
 }
 
 type TFStateStatus string

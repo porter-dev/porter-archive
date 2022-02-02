@@ -162,6 +162,7 @@ export interface PorterFormData {
   name: string;
   hasSource: boolean;
   includeHiddenFields: boolean;
+  isClusterScoped?: boolean;
   tabs: Tab[];
 }
 

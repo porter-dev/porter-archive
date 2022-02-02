@@ -20,6 +20,8 @@ const _ = grpc.SupportPackageIsVersion7
 type ProvisionerClient interface {
 	// Server-to-client streaming RPC that returns an update to the state.
 	GetStateUpdate(ctx context.Context, in *Infra, opts ...grpc.CallOption) (Provisioner_GetStateUpdateClient, error)
+	// Server-to-client streaming RPC that returns a new log.
+	GetLog(ctx context.Context, in *Infra, opts ...grpc.CallOption) (Provisioner_GetLogClient, error)
 	// Client-to-server streaming RPC that streams logs to the provisioner.
 	StoreLog(ctx context.Context, opts ...grpc.CallOption) (Provisioner_StoreLogClient, error)
 }
@@ -64,8 +66,40 @@ func (x *provisionerGetStateUpdateClient) Recv() (*StateUpdate, error) {
 	return m, nil
 }
 
+func (c *provisionerClient) GetLog(ctx context.Context, in *Infra, opts ...grpc.CallOption) (Provisioner_GetLogClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Provisioner_ServiceDesc.Streams[1], "/Provisioner/GetLog", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &provisionerGetLogClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Provisioner_GetLogClient interface {
+	Recv() (*LogString, error)
+	grpc.ClientStream
+}
+
+type provisionerGetLogClient struct {
+	grpc.ClientStream
+}
+
+func (x *provisionerGetLogClient) Recv() (*LogString, error) {
+	m := new(LogString)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *provisionerClient) StoreLog(ctx context.Context, opts ...grpc.CallOption) (Provisioner_StoreLogClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Provisioner_ServiceDesc.Streams[1], "/Provisioner/StoreLog", opts...)
+	stream, err := c.cc.NewStream(ctx, &Provisioner_ServiceDesc.Streams[2], "/Provisioner/StoreLog", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +138,8 @@ func (x *provisionerStoreLogClient) CloseAndRecv() (*TerraformStateMeta, error) 
 type ProvisionerServer interface {
 	// Server-to-client streaming RPC that returns an update to the state.
 	GetStateUpdate(*Infra, Provisioner_GetStateUpdateServer) error
+	// Server-to-client streaming RPC that returns a new log.
+	GetLog(*Infra, Provisioner_GetLogServer) error
 	// Client-to-server streaming RPC that streams logs to the provisioner.
 	StoreLog(Provisioner_StoreLogServer) error
 	mustEmbedUnimplementedProvisionerServer()
@@ -115,6 +151,9 @@ type UnimplementedProvisionerServer struct {
 
 func (UnimplementedProvisionerServer) GetStateUpdate(*Infra, Provisioner_GetStateUpdateServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetStateUpdate not implemented")
+}
+func (UnimplementedProvisionerServer) GetLog(*Infra, Provisioner_GetLogServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetLog not implemented")
 }
 func (UnimplementedProvisionerServer) StoreLog(Provisioner_StoreLogServer) error {
 	return status.Errorf(codes.Unimplemented, "method StoreLog not implemented")
@@ -150,6 +189,27 @@ type provisionerGetStateUpdateServer struct {
 }
 
 func (x *provisionerGetStateUpdateServer) Send(m *StateUpdate) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Provisioner_GetLog_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Infra)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ProvisionerServer).GetLog(m, &provisionerGetLogServer{stream})
+}
+
+type Provisioner_GetLogServer interface {
+	Send(*LogString) error
+	grpc.ServerStream
+}
+
+type provisionerGetLogServer struct {
+	grpc.ServerStream
+}
+
+func (x *provisionerGetLogServer) Send(m *LogString) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -190,6 +250,11 @@ var Provisioner_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GetStateUpdate",
 			Handler:       _Provisioner_GetStateUpdate_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetLog",
+			Handler:       _Provisioner_GetLog_Handler,
 			ServerStreams: true,
 		},
 		{

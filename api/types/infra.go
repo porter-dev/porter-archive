@@ -114,14 +114,20 @@ type Operation struct {
 	*OperationMeta
 
 	LastApplied map[string]interface{} `json:"last_applied"`
+	Form        *FormYAML              `json:"form"`
+}
+
+type InfraTemplateMeta struct {
+	Icon               string `json:"icon"`
+	Description        string `json:"description"`
+	Name               string `json:"name"`
+	Version            string `json:"version"`
+	Kind               string `json:"kind"`
+	RequiredCredential string `json:"required_credential"`
 }
 
 type InfraTemplate struct {
-	Icon               string                 `json:"icon"`
-	Description        string                 `json:"description"`
-	Name               string                 `json:"name"`
-	Version            string                 `json:"version"`
-	Kind               string                 `json:"kind"`
-	Form               map[string]interface{} `json:"form"`
-	RequiredCredential string                 `json:"required_credential"`
+	*InfraTemplateMeta
+
+	Form *FormYAML `json:"form"`
 }

@@ -146,6 +146,7 @@ func ToProvisionerType(pbTFLog *pb.TerraformLog) *TFLogLine {
 					ErrorSummary: pbTFLog.Change.Resource.Errored.ErrorSummary,
 				},
 			},
+			Action: pbTFLog.Change.Action,
 		},
 		Changes: Changes{
 			Add:       int(pbTFLog.Changes.Add),

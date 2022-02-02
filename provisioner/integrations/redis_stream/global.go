@@ -252,7 +252,7 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 		for _, msg := range messages {
 			processed++
 
-			stateData := &types.TFResourceState{}
+			stateData := &types.TFResourceStateEntry{}
 
 			dataInter, ok := msg.Values["data"]
 
@@ -272,11 +272,24 @@ func pushNewStateToStorage(config *config.Config, client *redis.Client, infra *m
 				continue
 			}
 
-			// if the state is deleted, remove it from the current state
-			if stateData.Status == types.TFResourceDeleted {
-				delete(currState.Resources, stateData.ID)
-			} else {
-				currState.Resources[stateData.ID] = stateData
+			// the state data requires at least a name and status to be valid
+			if stateData.ID != "" && stateData.Status != "" {
+				// if the state is deleted, remove it from the current state
+				if stateData.Status == types.TFResourceDeleted {
+					delete(currState.Resources, stateData.ID)
+				} else {
+					// if the state data already exists, update the updated_at and status fields
+					if _, exists := currState.Resources[stateData.ID]; exists {
+						// currState.Resources[stateData.ID].UpdatedAt = time.
+						currState.Resources[stateData.ID].UpdatedAt = stateData.PushedAt
+						currState.Resources[stateData.ID].Status = stateData.Status
+						currState.Resources[stateData.ID].Error = stateData.Error
+					} else {
+						currState.Resources[stateData.ID] = stateData.TFResourceState
+						currState.Resources[stateData.ID].CreatedAt = stateData.PushedAt
+						currState.Resources[stateData.ID].UpdatedAt = stateData.PushedAt
+					}
+				}
 			}
 		}
 	}

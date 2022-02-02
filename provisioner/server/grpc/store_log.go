@@ -50,6 +50,13 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 		tfLog, err := stream.Recv()
 
 		if err == io.EOF {
+			// push to the operation stream
+			err = redis_stream.SendOperationCompleted(s.config.RedisClient, infra, operation)
+
+			if err != nil {
+				return err
+			}
+
 			// push to the global stream
 			err := redis_stream.PushToGlobalStream(s.config.RedisClient, infra, operation, "created")
 
@@ -62,70 +69,60 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 			return err
 		}
 
-		// determine whether to update the state based on the log
-		if tfLog.Type != pb.TerraformEvent_OPERATION_FINISHED {
-			logType := types.ToProvisionerType(tfLog)
+		logType := types.ToProvisionerType(tfLog)
 
-			err := redis_stream.PushToLogStream(s.config.RedisClient, infra, operation, logType)
+		err = redis_stream.PushToLogStream(s.config.RedisClient, infra, operation, logType)
+
+		if err != nil {
+			return err
+		}
+
+		stateUpdate := &types.TFResourceState{}
+
+		switch logType.Type {
+		case types.ApplyComplete:
+			stateUpdate.ID = logType.Hook.Resource.Addr
+
+			if logType.Hook.Action == "create" {
+				stateUpdate.Status = types.TFResourceCreated
+			} else if logType.Hook.Action == "delete" {
+				stateUpdate.Status = types.TFResourceDeleted
+			}
+		case types.PlannedChange:
+			stateUpdate.ID = logType.Change.Resource.Addr
+
+			if logType.Change.Action == "create" {
+				stateUpdate.Status = types.TFResourcePlannedCreate
+			} else if logType.Change.Action == "delete" {
+				stateUpdate.Status = types.TFResourcePlannedDelete
+			} else if logType.Change.Action == "update" {
+				stateUpdate.Status = types.TFResourcePlannedUpdate
+			}
+		case types.Diagnostic:
+			stateUpdate.ID = logType.Diagnostic.Address
+			stateUpdate.Status = types.TFResourceErrored
+
+			var errMsg string
+
+			if logType.Diagnostic.Detail != "" {
+				errMsg = fmt.Sprintf("%s: %s", logType.Message, logType.Diagnostic.Detail)
+			} else if logType.Diagnostic.Summary != "" {
+				errMsg = fmt.Sprintf("%s: %s", logType.Message, logType.Diagnostic.Summary)
+			} else {
+				errMsg = fmt.Sprintf("%s", logType.Message)
+			}
+
+			errMsg = strings.TrimSuffix(errMsg, "\n")
+
+			stateUpdate.Error = &errMsg
+		}
+
+		if stateUpdate.ID != "" && stateUpdate.Status != "" {
+			err = redis_stream.PushToOperationStream(s.config.RedisClient, infra, operation, stateUpdate)
 
 			if err != nil {
 				return err
 			}
-
-			stateUpdate := &types.TFResourceState{}
-
-			switch logType.Type {
-			case types.ApplyComplete:
-				stateUpdate.ID = logType.Hook.Resource.Addr
-
-				if logType.Hook.Action == "create" {
-					stateUpdate.Status = types.TFResourceCreated
-				} else if logType.Hook.Action == "delete" {
-					stateUpdate.Status = types.TFResourceDeleted
-				}
-			case types.PlannedChange:
-				stateUpdate.ID = logType.Change.Resource.Addr
-
-				if logType.Change.Action == "create" {
-					stateUpdate.Status = types.TFResourcePlannedCreate
-				} else if logType.Change.Action == "delete" {
-					stateUpdate.Status = types.TFResourcePlannedDelete
-				} else if logType.Change.Action == "update" {
-					stateUpdate.Status = types.TFResourcePlannedUpdate
-				}
-			case types.Diagnostic:
-				stateUpdate.ID = logType.Diagnostic.Address
-				stateUpdate.Status = types.TFResourceErrored
-
-				var errMsg string
-
-				if logType.Diagnostic.Detail != "" {
-					errMsg = logType.Diagnostic.Detail
-				} else {
-					errMsg = logType.Diagnostic.Summary
-				}
-
-				errMsg = strings.TrimSuffix(errMsg, "\n")
-
-				stateUpdate.Error = &errMsg
-			}
-
-			if stateUpdate.ID != "" && stateUpdate.Status != "" {
-				err = redis_stream.PushToOperationStream(s.config.RedisClient, infra, operation, stateUpdate)
-
-				if err != nil {
-					return err
-				}
-			}
-		} else if tfLog.Type == pb.TerraformEvent_OPERATION_FINISHED {
-			// in this case, we push to the operation stream so listening processes are
-			// aware that the operation has completed
-			err = redis_stream.SendOperationCompleted(s.config.RedisClient, infra, operation)
-
-			if err != nil {
-				return err
-			}
-
 		}
 	}
 }

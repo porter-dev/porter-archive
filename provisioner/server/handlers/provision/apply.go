@@ -65,11 +65,12 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	operation := &models.Operation{
-		UID:         operationUID,
-		InfraID:     infra.ID,
-		Type:        req.OperationKind,
-		Status:      "starting",
-		LastApplied: valuesJSON,
+		UID:             operationUID,
+		InfraID:         infra.ID,
+		Type:            req.OperationKind,
+		Status:          "starting",
+		LastApplied:     valuesJSON,
+		TemplateVersion: "v0.1.0",
 	}
 
 	operation, err = c.Config.Repo.Infra().AddOperation(infra, operation)

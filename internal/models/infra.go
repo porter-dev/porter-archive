@@ -68,12 +68,13 @@ type Infra struct {
 type Operation struct {
 	gorm.Model
 
-	UID     string `gorm:"unique"`
-	InfraID uint
-	Type    string
-	Status  string
-	Errored bool
-	Error   string
+	UID             string `gorm:"unique"`
+	InfraID         uint
+	Type            string
+	Status          string
+	Errored         bool
+	Error           string
+	TemplateVersion string
 
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage

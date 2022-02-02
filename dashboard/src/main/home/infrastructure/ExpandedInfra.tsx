@@ -13,8 +13,10 @@ import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import { readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
 import Header from "components/expanded-object/Header";
-import { Infrastructure, KindMap } from "shared/types";
+import { Infrastructure, KindMap, Operation } from "shared/types";
 import { useWebsockets } from "shared/hooks/useWebsockets";
+import { InfraTemplate } from "./components/ProvisionInfra";
+import InfraSettings from "./components/InfraSettings";
 
 type Props = {
   infra_id: number;
@@ -24,41 +26,11 @@ type InfraTabOptions = "deploys" | "resources" | "settings";
 
 const ExpandedInfra: React.FunctionComponent<Props> = ({ infra_id }) => {
   const [infra, setInfra] = useState<Infrastructure>(null);
+  const [infraForm, setInfraForm] = useState<any>(null);
+  const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
   const [hasError, setHasError] = useState(false);
 
   const { currentProject, setCurrentError } = useContext(Context);
-
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeWebsocket,
-    closeAllWebsockets,
-  } = useWebsockets();
-
-  const setupOperationWebsocket = (websocketID: string) => {
-    let apiPath = `/api/projects/${currentProject.id}/infras/${infra.id}/operations/${infra.latest_operation.id}/state`;
-
-    const wsConfig = {
-      onopen: () => {
-        console.log(`connected to websocket:`, websocketID);
-      },
-      onmessage: (evt: MessageEvent) => {
-        console.log(evt);
-      },
-
-      onclose: () => {
-        console.log(`closing websocket:`, websocketID);
-      },
-
-      onerror: (err: ErrorEvent) => {
-        console.log(err);
-        closeWebsocket(websocketID);
-      },
-    };
-
-    newWebsocket(websocketID, apiPath, wsConfig);
-    openWebsocket(websocketID);
-  };
 
   useEffect(() => {
     if (!currentProject) {
@@ -91,39 +63,85 @@ const ExpandedInfra: React.FunctionComponent<Props> = ({ infra_id }) => {
   }, [currentProject, infra_id]);
 
   useEffect(() => {
-    if (!currentProject || !infra || !infra.latest_operation) {
+    if (!currentProject || !infra) {
       return;
     }
 
-    const websocketID = infra.latest_operation.id;
+    api
+      .getOperation(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          infra_id: infra_id,
+          operation_id: infra.latest_operation.id,
+        }
+      )
+      .then(({ data }) => {
+        setInfraForm(data.form);
+      })
+      .catch((err) => {
+        console.error(err);
+        setHasError(true);
+        setCurrentError(err.response?.data?.error);
+      });
+  }, [currentProject, infra, infra?.latest_operation?.id]);
 
-    setupOperationWebsocket(websocketID);
+  const update = (values: any, cb: () => void) => {
+    setSaveValueStatus("loading");
 
-    return () => {
-      closeWebsocket(websocketID);
-    };
-  }, [currentProject, infra]);
+    api
+      .updateInfra(
+        "<token>",
+        {
+          values: values,
+        },
+        {
+          project_id: currentProject.id,
+          infra_id: infra.id,
+        }
+      )
+      .then(({ data }) => {
+        // the resulting data is now the latest operation
+        let newInfra = infra;
+        newInfra.latest_operation = data;
+        setInfra(newInfra);
+        setSaveValueStatus("successful");
+        cb();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
+  const setLatestOperation = (operation: Operation) => {
+    console.log("SETTING LATEST OPERATION", operation);
+
+    let newInfra = infra;
+    newInfra.latest_operation = operation;
+    setInfra(newInfra);
+  };
 
   if (hasError) {
     return <Placeholder>Error loading infra</Placeholder>;
   }
 
-  if (!infra) {
+  if (!infra || !infraForm) {
     return <Loading />;
   }
 
   const renderTabContents = (newTab: InfraTabOptions) => {
     switch (newTab) {
       case "deploys":
-        return <DeployList infra_id={infra_id} />;
+        return (
+          <DeployList infra={infra} setLatestOperation={setLatestOperation} />
+        );
       case "resources":
         return <InfraResourceList infra_id={infra_id} />;
       case "settings":
-        return <div>Settings</div>;
+        return <InfraSettings infra_id={infra_id} onDelete={() => {}} />;
     }
   };
-
-  const formData = yaml.load(initYaml);
 
   return (
     <StyledExpandedInfra>
@@ -134,6 +152,7 @@ const ExpandedInfra: React.FunctionComponent<Props> = ({ infra_id }) => {
         icon={integrationList[infra.kind].icon}
         inline_title_items={[
           <ResourceLink
+            key="resource_link"
             to={KindMap[infra.kind].resource_link}
             target="_blank"
             onClick={(e) => e.stopPropagation()}
@@ -143,38 +162,47 @@ const ExpandedInfra: React.FunctionComponent<Props> = ({ infra_id }) => {
           </ResourceLink>,
         ]}
       />
-      <PorterFormWrapper
-        showStateDebugger={false}
-        formData={formData}
-        valuesToOverride={{}}
-        isReadOnly={false}
-        onSubmit={(vars) => {
-          console.log(vars);
-        }}
-        leftTabOptions={[
-          {
-            value: "deploys",
-            label: "Deploys",
-          },
-          {
-            value: "resources",
-            label: "Resources",
-          },
-        ]}
-        rightTabOptions={[
-          {
-            value: "settings",
-            label: "Settings",
-          },
-        ]}
-        renderTabContents={renderTabContents}
-        saveButtonText={"Test Submit"}
-      />
+      <PorterFormContainer>
+        <PorterFormWrapper
+          showStateDebugger={false}
+          formData={infraForm}
+          valuesToOverride={{}}
+          isReadOnly={false}
+          onSubmit={update}
+          leftTabOptions={[
+            {
+              value: "deploys",
+              label: "Deploys",
+            },
+            {
+              value: "resources",
+              label: "Resources",
+            },
+          ]}
+          rightTabOptions={[
+            {
+              value: "settings",
+              label: "Settings",
+            },
+          ]}
+          renderTabContents={renderTabContents}
+          isInModal={false}
+          hideBottomSpacer={false}
+          saveButtonText={"Update"}
+          saveValuesStatus={saveValuesStatus}
+          redirectTabAfterSave={"deploys"}
+        />
+      </PorterFormContainer>
     </StyledExpandedInfra>
   );
 };
 
 export default ExpandedInfra;
+
+const PorterFormContainer = styled.div`
+  position: relative;
+  min-width: 300px;
+`;
 
 const StyledExpandedInfra = styled.div`
   width: 100%;

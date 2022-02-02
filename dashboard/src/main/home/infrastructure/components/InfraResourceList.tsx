@@ -54,12 +54,10 @@ const InfraResourceList: React.FunctionComponent<Props> = ({ infra_id }) => {
     return <Placeholder>Error</Placeholder>;
   }
 
-  console.log(infraState);
-
   const renderContents = () => {
     return Object.keys(infraState.resources).map((key) => {
       return (
-        <RepoName lastItem={false} isSelected={false}>
+        <RepoName key={key} lastItem={false} isSelected={false}>
           {key}
         </RepoName>
       );
@@ -78,15 +76,13 @@ export default InfraResourceList;
 const InfraResourceListWrapper = styled.div`
   width: 100%;
   height: 100%;
-  padding: 24px;
 `;
 
 const ListContainer = styled.div`
-  margin-top: 10px;
   width: 100%;
   border-radius: 3px;
   border: 1px solid #ffffff44;
-  max-height: 275px;
+  max-height: 400px;
   background: #ffffff11;
   overflow-y: auto;
 `;

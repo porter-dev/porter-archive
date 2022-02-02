@@ -284,6 +284,36 @@ func getInfraRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/infras/{infra_id}/operations/{operation_id}/log_stream -> infra.NewInfraStreamLogHandler
+	streamLogEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/operations/{%s}/log_stream", relPath, types.URLParamOperationID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+				types.OperationScope,
+			},
+			IsWebsocket: true,
+		},
+	)
+
+	streamLogHandler := infra.NewInfraStreamLogHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: streamLogEndpoint,
+		Handler:  streamLogHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/infras/{infra_id}/operations/{operation_id}/logs -> infra.NewInfraGetOperationLogsHandler
 	getOperationLogsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

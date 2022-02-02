@@ -704,6 +704,19 @@ const listInfraTemplates = baseApi<
   return `/api/projects/${pathParams.project_id}/infras/templates`;
 });
 
+const getInfraTemplate = baseApi<
+  {},
+  {
+    project_id: number;
+    name: string;
+    version: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, name, version } = pathParams;
+
+  return `/api/projects/${project_id}/infras/templates/${name}/${version}`;
+});
+
 const provisionInfra = baseApi<
   {
     kind: string;
@@ -719,6 +732,56 @@ const provisionInfra = baseApi<
   return `/api/projects/${pathParams.project_id}/infras`;
 });
 
+const updateInfra = baseApi<
+  {
+    values?: any;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/update`;
+});
+
+const retryCreateInfra = baseApi<
+  {
+    values?: any;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/retry_create`;
+});
+
+const retryDeleteInfra = baseApi<
+  {
+    values?: any;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/retry_delete`;
+});
+
+const deleteInfra = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("DELETE", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}`;
+});
+
 const listOperations = baseApi<
   {},
   {
@@ -727,6 +790,30 @@ const listOperations = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/operations`;
+});
+
+const getOperation = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+    operation_id: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, infra_id, operation_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/operations/${operation_id}`;
+});
+
+const getOperationLogs = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+    operation_id: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, infra_id, operation_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/operations/${operation_id}/logs`;
 });
 
 const getInfraState = baseApi<
@@ -1590,9 +1677,16 @@ export default {
   getImageRepos,
   getImageTags,
   listInfraTemplates,
+  getInfraTemplate,
   getInfra,
   provisionInfra,
+  deleteInfra,
+  updateInfra,
   listOperations,
+  getOperation,
+  getOperationLogs,
+  retryCreateInfra,
+  retryDeleteInfra,
   getInfraState,
   getInfraByID,
   getInfraDesired,

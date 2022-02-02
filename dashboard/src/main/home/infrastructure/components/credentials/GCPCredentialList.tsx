@@ -6,32 +6,32 @@ import Loading from "components/Loading";
 import { Operation, OperationStatus, OperationType } from "shared/types";
 import { readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
-import AWSCredentialForm from "./AWSCredentialForm";
+import GCPCredentialForm from "./GCPCredentialForm";
 
 type Props = {
-  selectCredential: (aws_integration_id: number) => void;
+  selectCredential: (gcp_integration_id: number) => void;
 };
 
-type AWSCredential = {
+type GCPCredential = {
   created_at: string;
   id: number;
   user_id: number;
   project_id: number;
-  aws_arn: string;
+  gcp_sa_email: string;
 };
 
-const AWSCredentialsList: React.FunctionComponent<Props> = ({
+const GCPCredentialsList: React.FunctionComponent<Props> = ({
   selectCredential,
 }) => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
+  const [gcpCredentials, setGCPCredentials] = useState<GCPCredential[]>(null);
   const [shouldCreateCred, setShouldCreateCred] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     api
-      .getAWSIntegration(
+      .getGCPIntegration(
         "<token>",
         {},
         {
@@ -43,7 +43,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           throw Error("Data is not an array");
         }
 
-        setAWSCredentials(data);
+        setGCPCredentials(data);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -67,12 +67,12 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   }
 
   const renderList = () => {
-    return awsCredentials.map((cred) => {
+    return gcpCredentials.map((cred) => {
       return (
         <PreviewRow key={cred.id} onClick={() => selectCredential(cred.id)}>
           <Flex>
             <i className="material-icons">account_circle</i>
-            {cred.aws_arn || "arn: n/a"}
+            {cred.gcp_sa_email || "email: n/a"}
           </Flex>
           <Right>Connected at {readableDate(cred.created_at)}</Right>
         </PreviewRow>
@@ -83,7 +83,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   const renderContents = () => {
     if (shouldCreateCred) {
       return (
-        <AWSCredentialForm
+        <GCPCredentialForm
           setCreatedCredential={selectCredential}
           cancel={() => {}}
         />
@@ -99,7 +99,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
         {renderList()}
         <CreateNewRow onClick={() => setShouldCreateCred(true)}>
           <Flex>
-            <i className="material-icons">account_circle</i>Add New AWS
+            <i className="material-icons">account_circle</i>Add New GCP
             Credential
           </Flex>
         </CreateNewRow>
@@ -107,12 +107,12 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
     );
   };
 
-  return <AWSCredentialWrapper>{renderContents()}</AWSCredentialWrapper>;
+  return <GCPCredentialWrapper>{renderContents()}</GCPCredentialWrapper>;
 };
 
-export default AWSCredentialsList;
+export default GCPCredentialsList;
 
-const AWSCredentialWrapper = styled.div`
+const GCPCredentialWrapper = styled.div`
   margin-top: 20px;
 `;
 

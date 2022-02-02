@@ -4,8 +4,11 @@ option go_package = "github.com/porter-dev/porter/provisioner/pb";
 
 // Provisioner represents the service for managing, updating, and deleting infrastructure.
 service Provisioner {
-     // Server-to-client streaming RPC that returns an update to the state.
+    // Server-to-client streaming RPC that returns an update to the state.
     rpc GetStateUpdate(Infra) returns (stream StateUpdate) {}
+
+    // Server-to-client streaming RPC that returns a new log.
+    rpc GetLog(Infra) returns (stream LogString) {}
 
     // Client-to-server streaming RPC that streams logs to the provisioner.
     rpc StoreLog(stream TerraformLog) returns (TerraformStateMeta) {}
@@ -17,6 +20,10 @@ message TerraformStateMeta {
 
 message Workspace {
     string workspace = 1; 
+}
+
+message LogString {
+    string log = 1; 
 }
 
 message Infra {
@@ -39,7 +46,6 @@ enum TerraformEvent {
     APPLY_ERRORED = 4;
     APPLY_COMPLETE = 5;
     DIAGNOSTIC = 6;
-    OPERATION_FINISHED = 7;
 }
 
 message TerraformResource {

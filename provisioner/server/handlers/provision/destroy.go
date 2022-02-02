@@ -62,11 +62,12 @@ func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	operation := &models.Operation{
-		UID:         operationUID,
-		InfraID:     infra.ID,
-		Type:        req.OperationKind,
-		Status:      "starting",
-		LastApplied: lastOp.LastApplied,
+		UID:             operationUID,
+		InfraID:         infra.ID,
+		Type:            req.OperationKind,
+		Status:          "starting",
+		LastApplied:     lastOp.LastApplied,
+		TemplateVersion: "v0.1.0",
 	}
 
 	operation, err = c.Config.Repo.Infra().AddOperation(infra, operation)

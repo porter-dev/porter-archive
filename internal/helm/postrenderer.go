@@ -2,7 +2,6 @@ package helm
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/url"
 	"regexp"
@@ -530,8 +529,6 @@ func NewEnvironmentVariablePostrenderer() (*EnvironmentVariablePostrenderer, err
 func (e *EnvironmentVariablePostrenderer) Run(
 	renderedManifests *bytes.Buffer,
 ) (modifiedManifests *bytes.Buffer, err error) {
-	fmt.Println("RUNNING ENV VAR POSTRENDERER", len(e.resources))
-
 	e.resources, err = decodeRenderedManifests(renderedManifests)
 
 	if err != nil {
@@ -661,8 +658,6 @@ func (e *EnvironmentVariablePostrenderer) getPodSpecs(resources []resource) {
 }
 
 func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
-	fmt.Println(e.podSpecs)
-
 	// for each pod spec, remove duplicate env variables
 	for _, podSpec := range e.podSpecs {
 		containersVal, hasContainers := podSpec["containers"]
@@ -744,18 +739,15 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 			// flatten env var map to array
 			envVarArr := make([]interface{}, 0)
 
-			for envVarName, envVar := range envVars {
-				fmt.Println("surviving env var:", envVarName, envVar)
+			for _, envVar := range envVars {
 				envVarArr = append(envVarArr, envVar)
 			}
 
 			_container["env"] = envVarArr
 			newContainers = append(newContainers, _container)
-			fmt.Println(_container)
 		}
 
 		podSpec["containers"] = newContainers
-		fmt.Println(newContainers)
 	}
 
 	return nil

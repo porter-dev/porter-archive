@@ -626,6 +626,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 		for {
 			if _, _, err := rw.ReadMessage(); err != nil {
 				errorchan <- nil
+				podLogs.Close()
 				return
 			}
 		}

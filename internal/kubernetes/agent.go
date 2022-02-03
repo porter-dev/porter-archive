@@ -636,6 +636,7 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 
 			select {
 			case <-errorchan:
+				defer close(errorchan)
 				return
 			default:
 			}
@@ -645,7 +646,6 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 	for {
 		select {
 		case err = <-errorchan:
-			close(errorchan)
 			return err
 		}
 	}

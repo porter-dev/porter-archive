@@ -35,11 +35,25 @@ type DetectedBuildpack = {
 
 type DetectBuildpackResponse = DetectedBuildpack[];
 
+type UpdateBuildconfigResponse = {
+  CreatedAt: string;
+  DeletedAt: { Time: string; Valid: boolean };
+  Time: string;
+  Valid: boolean;
+  ID: number;
+  UpdatedAt: string;
+  builder: string;
+  buildpacks: string;
+  config: string;
+  name: string;
+};
+
 const BuildpackEditPage: React.FC<{
   actionConfig: FullActionConfigType;
   currentChart: ChartTypeWithExtendedConfig;
   refreshChart: () => void;
-}> = ({ actionConfig, currentChart }) => {
+  handleUpdateBuildConfig: (updatedBuildConfig: BuildConfig) => void;
+}> = ({ actionConfig, currentChart, handleUpdateBuildConfig }) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
@@ -146,11 +160,23 @@ const BuildpackEditPage: React.FC<{
     });
 
     try {
-      await api.updateBuildConfig("<token>", buildConfig, {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-        namespace: currentChart.namespace,
-        release_name: currentChart.name,
+      const updatedBuildConfig = await api.updateBuildConfig<UpdateBuildconfigResponse>(
+        "<token>",
+        buildConfig,
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: currentChart.namespace,
+          release_name: currentChart.name,
+        }
+      );
+
+      const builder = updatedBuildConfig.data.builder;
+      const buildpacks = updatedBuildConfig.data.buildpacks.split(",");
+      handleUpdateBuildConfig({
+        builder: builder,
+        buildpacks: buildpacks,
+        config: null,
       });
       setButtonStatus("successful");
     } catch (err) {

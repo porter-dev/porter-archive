@@ -12,6 +12,7 @@ import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
 import {
+  BuildConfig,
   ChartType,
   ClusterType,
   ResourceType,
@@ -399,6 +400,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             actionConfig={chart.git_action_config}
             currentChart={chart}
             refreshChart={() => getChartData(currentChart)}
+            handleUpdateBuildConfig={handleUpdateBuildConfig}
           />
         );
       case "settings":
@@ -608,6 +610,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
       console.log(error);
       setCurrentError("Couldn't uninstall chart, please try again");
     }
+  };
+
+  const handleUpdateBuildConfig = (updatedBuildConfig: BuildConfig) => {
+    const chart = { ...currentChart };
+
+    chart.build_config = updatedBuildConfig;
+
+    setCurrentChart(chart);
   };
 
   useEffect(() => {

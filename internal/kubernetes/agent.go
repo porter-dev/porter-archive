@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"time"
 
 	goerrors "errors"
@@ -610,8 +611,18 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 	r := bufio.NewReader(podLogs)
 	errorchan := make(chan error)
 
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		wg.Wait()
+		close(errorchan)
+	}()
+
 	go func() {
 		// listens for websocket closing handshake
+		defer wg.Done()
+
 		for {
 			if _, _, err := rw.ReadMessage(); err != nil {
 				errorchan <- nil
@@ -621,11 +632,13 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 	}()
 
 	go func() {
+		defer wg.Done()
+
 		for {
 			bytes, err := r.ReadBytes('\n')
 
-			if err == io.EOF {
-				errorchan <- nil
+			if err != nil {
+				errorchan <- err
 				return
 			}
 
@@ -633,22 +646,16 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 				errorchan <- writeErr
 				return
 			}
-
-			select {
-			case <-errorchan:
-				defer close(errorchan)
-				return
-			default:
-			}
 		}
 	}()
 
-	for {
-		select {
-		case err = <-errorchan:
+	for err = range errorchan {
+		if err != nil {
 			return err
 		}
 	}
+
+	return nil
 }
 
 // GetPodLogs streams real-time logs from a given pod.

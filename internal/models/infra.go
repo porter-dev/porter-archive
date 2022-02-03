@@ -41,6 +41,9 @@ type Infra struct {
 	// this points to an OAuthIntegrationID
 	DOIntegrationID uint
 
+	// The database id for the infra, if this infra provisioned a database
+	DatabaseID uint
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
@@ -123,6 +126,18 @@ func (i *Infra) SafelyGetLastApplied() map[string]string {
 
 		resp["cluster_name"] = lastApplied.DOKSName
 		resp["do_region"] = lastApplied.DORegion
+
+		return resp
+	case types.InfraRDS:
+		lastApplied := &types.RDSInfraLastApplied{}
+
+		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
+			return resp
+		}
+
+		resp["cluster_id"] = fmt.Sprintf("%d", lastApplied.ClusterID)
+		resp["aws_region"] = lastApplied.AWSRegion
+		resp["db_name"] = lastApplied.DBName
 
 		return resp
 	}

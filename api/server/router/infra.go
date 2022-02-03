@@ -107,6 +107,34 @@ func getInfraRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/infras/{infra_id}/retry -> infra.NewInfraRetryHandler
+	retryProvisionEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/retry",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	retryProvisionHandler := infra.NewInfraRetryHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: retryProvisionEndpoint,
+		Handler:  retryProvisionHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/infras/{infra_id}/logs -> infra.NewInfraStreamLogsHandler
 	streamLogsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

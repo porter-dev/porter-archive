@@ -3,7 +3,11 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import { RouteComponentProps, withRouter } from "react-router";
 
-import { ChartType, StorageType } from "shared/types";
+import {
+  ChartType,
+  ChartTypeWithExtendedConfig,
+  StorageType,
+} from "shared/types";
 import api from "shared/api";
 import { getQueryParam, pushFiltered } from "shared/routing";
 import ExpandedJobChart from "./ExpandedJobChart";
@@ -11,7 +15,10 @@ import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";
 import PageNotFound from "components/PageNotFound";
 
-type PropsType = RouteComponentProps & {
+type PropsType = RouteComponentProps<{
+  baseRoute: string;
+  namespace: string;
+}> & {
   setSidebar: (x: boolean) => void;
   isMetricsInstalled: boolean;
 };
@@ -34,7 +41,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
     let { currentProject, currentCluster } = this.context;
     if (currentProject && currentCluster) {
       api
-        .getChart(
+        .getChart<ChartTypeWithExtendedConfig>(
           "<token>",
           {},
           {
@@ -46,10 +53,26 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           }
         )
         .then((res) => {
+          const chart = res.data;
           this.setState({ currentChart: res.data, loading: false });
+          const isJob = res.data.form?.name?.toLowerCase() === "job";
+          let route = `${isJob ? "/jobs" : "/applications"}/${
+            currentCluster.name
+          }/${chart.namespace}/${chart.name}`;
+
+          if (isJob && this.props.match.params?.baseRoute === "applications") {
+            pushFiltered(this.props, route, ["project_id"]);
+            return;
+          }
+
+          if (!isJob && this.props.match.params?.baseRoute !== "applications") {
+            pushFiltered(this.props, route, ["project_id"]);
+            return;
+          }
         })
         .catch((err) => {
-          console.log("err", err.response.data);
+          console.log(err);
+          console.log("err", err?.response?.data);
           this.setState({ loading: false });
         });
     }

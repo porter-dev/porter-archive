@@ -70,6 +70,27 @@ func (c *Client) GetKubeconfig(
 	return resp, err
 }
 
+func (c *Client) GetEnvGroup(
+	ctx context.Context,
+	projectID, clusterID uint,
+	namespace string,
+	req *types.GetEnvGroupRequest,
+) (*types.EnvGroup, error) {
+	resp := &types.EnvGroup{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/namespaces/%s/envgroup",
+			projectID, clusterID,
+			namespace,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) GetRelease(
 	ctx context.Context,
 	projectID, clusterID uint,

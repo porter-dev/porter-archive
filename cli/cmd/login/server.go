@@ -67,7 +67,7 @@ func Login(
 	err = utils.OpenBrowser(loginURL)
 
 	if err != nil {
-		return "", fmt.Errorf("Could not open browser: %v", err)
+		fmt.Printf("Could not open browser. Please navigate to the link manually.")
 	}
 
 	for {

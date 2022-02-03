@@ -13,6 +13,13 @@ import {
   EnvGroupData,
   formattedEnvironmentValue,
 } from "../cluster-dashboard/env-groups/EnvGroup";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import {
+  PartialEnvGroup,
+  PopulatedEnvGroup,
+} from "components/porter-form/types";
+import Helper from "components/form-components/Helper";
+import DocsHelper from "components/DocsHelper";
 
 type PropsType = {
   namespace: string;
@@ -20,6 +27,9 @@ type PropsType = {
   closeModal: () => void;
   existingValues: Record<string, string>;
   setValues: (values: Record<string, string>) => void;
+  enableSyncedEnvGroups?: boolean;
+  syncedEnvGroups?: PopulatedEnvGroup[];
+  setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
 };
 
 type StateType = {
@@ -28,6 +38,7 @@ type StateType = {
   error: boolean;
   selectedEnvGroup: EnvGroupData | null;
   buttonStatus: string;
+  shouldSync: boolean;
 };
 
 export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
@@ -35,35 +46,69 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     envGroups: [] as any[],
     loading: true,
     error: false,
-    selectedEnvGroup: null as EnvGroupData | null,
+    selectedEnvGroup: null as PopulatedEnvGroup | null,
     buttonStatus: "",
+    shouldSync: false,
   };
 
   onSubmit = () => {
-    this.props.setValues(this.state.selectedEnvGroup.data);
+    if (
+      !this.state.shouldSync ||
+      this.state.selectedEnvGroup.meta_version === 1
+    ) {
+      this.props.setValues(this.state.selectedEnvGroup.variables);
+    } else {
+      this.props.setSyncedEnvGroups(this.state.selectedEnvGroup);
+    }
+
     this.props.closeModal();
   };
 
-  updateEnvGroups = () => {
-    api
-      .listConfigMaps(
-        "<token>",
-        {},
-        {
-          id: this.context.currentProject.id,
-          namespace: this.props.namespace,
-          cluster_id: this.props.clusterId || this.context.currentCluster.id,
-        }
-      )
-      .then((res) => {
-        this.setState({
-          envGroups: res?.data?.items as any[],
-          loading: false,
-        });
-      })
-      .catch((err) => {
-        this.setState({ loading: false, error: true });
+  updateEnvGroups = async () => {
+    let envGroups: PartialEnvGroup[] = [];
+    try {
+      envGroups = await api
+        .listEnvGroups<PartialEnvGroup[]>(
+          "<token>",
+          {},
+          {
+            id: this.context.currentProject.id,
+            namespace: this.props.namespace,
+            cluster_id: this.props.clusterId || this.context.currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+      return;
+    }
+
+    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
+      api
+        .getEnvGroup<PopulatedEnvGroup>(
+          "<token>",
+          {},
+          {
+            id: this.context.currentProject.id,
+            cluster_id: this.context.currentCluster.id,
+            name: envGroup.name,
+            namespace: envGroup.namespace,
+            version: envGroup.version,
+          }
+        )
+        .then((res) => res.data)
+    );
+
+    try {
+      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
+
+      this.setState({
+        envGroups: populatedEnvGroups,
+        loading: false,
       });
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+    }
   };
 
   componentDidMount() {
@@ -77,7 +122,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           <Loading />
         </LoadingWrapper>
       );
-    } else if (this.state.envGroups.length === 0) {
+    } else if (!this.state.envGroups?.length) {
       return (
         <Placeholder>
           No environment groups found in this namespace ({this.props.namespace}
@@ -85,19 +130,25 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
         </Placeholder>
       );
     } else {
-      return this.state.envGroups.map((envGroup: any, i: number) => {
-        return (
-          <EnvGroupRow
-            key={i}
-            isSelected={this.state.selectedEnvGroup === envGroup}
-            lastItem={i === this.state.envGroups.length - 1}
-            onClick={() => this.setState({ selectedEnvGroup: envGroup })}
-          >
-            <img src={sliders} />
-            {envGroup.metadata.name}
-          </EnvGroupRow>
-        );
-      });
+      return this.state.envGroups
+        .filter((envGroup) => {
+          return !this.props.syncedEnvGroups.find(
+            (syncedEnvGroup) => syncedEnvGroup.name === envGroup.name
+          );
+        })
+        .map((envGroup: any, i: number) => {
+          return (
+            <EnvGroupRow
+              key={i}
+              isSelected={this.state.selectedEnvGroup === envGroup}
+              lastItem={i === this.state.envGroups.length - 1}
+              onClick={() => this.setState({ selectedEnvGroup: envGroup })}
+            >
+              <img src={sliders} />
+              {envGroup.name}
+            </EnvGroupRow>
+          );
+        });
     }
   };
 
@@ -113,7 +164,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       return "No env group selected";
     }
     if (hasClashingKeys) {
-      return "There are variables defined in this group that will override existing variables.";
+      return "";
     }
   }
 
@@ -150,7 +201,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 
   render() {
     const clashingKeys = this.state.selectedEnvGroup
-      ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.data)
+      ? this.potentiallyOverriddenKeys(this.state.selectedEnvGroup.variables)
       : [];
     return (
       <StyledLoadEnvGroupModal>
@@ -172,14 +223,14 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           {this.state.selectedEnvGroup && (
             <SidebarSection>
               <GroupEnvPreview>
-                {Object.entries(this.state.selectedEnvGroup.data)
+                {Object.entries(this.state.selectedEnvGroup.variables)
                   .map(
                     ([key, value]) =>
                       `${key}=${formattedEnvironmentValue(value)}`
                   )
                   .join("\n")}
               </GroupEnvPreview>
-              {clashingKeys.length > 0 && (
+              {clashingKeys?.length > 0 && (
                 <>
                   <ClashingKeyRowDivider />
                   {this.renderEnvGroupPreview(clashingKeys)}
@@ -187,6 +238,39 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               )}
             </SidebarSection>
           )}
+          <AbsoluteWrapper>
+            {this.props.enableSyncedEnvGroups ? (
+              <>
+                {this.state.selectedEnvGroup?.meta_version === 1 ? (
+                  <Helper color="#f5cb42">
+                    Upgrade this env group from the env groups tab to sync.
+                  </Helper>
+                ) : (
+                  <CheckboxRow
+                    checked={this.state.shouldSync}
+                    toggle={() =>
+                      this.setState((prevState) => ({
+                        shouldSync: !prevState.shouldSync,
+                      }))
+                    }
+                    label="Sync environment group"
+                    disabled={this.state.selectedEnvGroup?.meta_version === 1}
+                  />
+                )}
+                <IconWrapper>
+                  <DocsHelper
+                    link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+                    tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+                    placement="top-start"
+                  />
+                </IconWrapper>
+              </>
+            ) : (
+              <Helper color="#f5cb42">
+                Upgrade the job template to enable sync env groups
+              </Helper>
+            )}
+          </AbsoluteWrapper>
         </GroupModalSections>
 
         <SaveButton
@@ -201,6 +285,19 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 }
 
 LoadEnvGroupModal.contextType = Context;
+
+const IconWrapper = styled.div`
+  margin-bottom: -10px;
+`;
+
+const AbsoluteWrapper = styled.div`
+  position: absolute;
+  z-index: 999;
+  bottom: 18px;
+  left: 25px;
+  display: flex;
+  align-items: center;
+`;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`
   height: 100%;
@@ -394,7 +491,10 @@ const StyledLoadEnvGroupModal = styled.div`
   top: 0;
   height: 100%;
   padding: 25px 30px;
-  overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #202227;
+`;
+
+const Flex = styled.div`
+  display: flex;
 `;

@@ -4,6 +4,7 @@ import styled from "styled-components";
 export interface selectOption {
   value: string;
   label: string;
+  component?: any;
 }
 
 type PropsType = {
@@ -18,6 +19,16 @@ type PropsType = {
 type StateType = {};
 
 export default class TabSelector extends Component<PropsType, StateType> {
+  getCurrentComponent() {
+    const currentOption = this.props.options.find(
+      (option) => option.value === this.props.currentTab
+    );
+    if (currentOption?.component) {
+      return currentOption.component;
+    }
+    return null;
+  }
+
   handleTabClick = (value: string) => {
     this.props.setCurrentTab(value);
   };
@@ -42,16 +53,19 @@ export default class TabSelector extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledTabSelector>
-        <TabWrapper>
-          <Line />
-          {this.renderTabList()}
-          <Tab lastItem={true} highlight={null}>
-            {this.props.noBuffer ? null : <Buffer />}
-          </Tab>
-        </TabWrapper>
-        {this.props.addendum}
-      </StyledTabSelector>
+      <>
+        <StyledTabSelector>
+          <TabWrapper>
+            <Line />
+            {this.renderTabList()}
+            <Tab lastItem={true} highlight={null}>
+              {this.props.noBuffer ? null : <Buffer />}
+            </Tab>
+          </TabWrapper>
+          {this.props.addendum}
+        </StyledTabSelector>
+        {this.getCurrentComponent()}
+      </>
     );
   }
 }

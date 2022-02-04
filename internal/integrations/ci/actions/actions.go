@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -376,6 +377,64 @@ func (g *GithubActions) getPorterTokenSecretName() string {
 	}
 
 	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
+}
+
+func (g *GithubActions) RerunLastWorkflow() error {
+	client, err := g.getClient()
+	if err != nil {
+		return err
+	}
+
+	filename := g.getPorterYMLFileName()
+	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
+		context.Background(), g.GitRepoOwner, g.GitRepoName, filename, &github.ListWorkflowRunsOptions{})
+	if err != nil {
+		return err
+	}
+
+	if workflowRuns.GetTotalCount() < 1 {
+		return errors.New("No Github actions workflow run detected. Please manually run the workflow.")
+	}
+
+	lastWorkflowRun := workflowRuns.WorkflowRuns[0]
+
+	_, err = client.Actions.RerunWorkflowByID(context.Background(),
+		g.GitRepoOwner, g.GitRepoName, lastWorkflowRun.GetID())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *GithubActions) GetWorkflow() (*github.WorkflowRun, error) {
+	client, err := g.getClient()
+	if err != nil {
+		return nil, err
+	}
+
+	filename := g.getPorterYMLFileName()
+	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
+		context.Background(), g.GitRepoOwner, g.GitRepoName, filename, &github.ListWorkflowRunsOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if workflowRuns.GetTotalCount() < 1 {
+		return nil, errors.New("No Github actions workflow run detected. Please manually run the workflow.")
+	}
+
+	lastWorkflowRun := workflowRuns.WorkflowRuns[0]
+
+	workflow, _, err := client.Actions.GetWorkflowRunByID(context.Background(),
+		g.GitRepoOwner, g.GitRepoName, lastWorkflowRun.GetID())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return workflow, nil
 }
 
 func getPorterTokenSecretName(projectID uint) string {

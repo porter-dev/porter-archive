@@ -14,6 +14,7 @@ type PropsType = {
   scrollBuffer?: boolean;
   doc?: string;
   selectorProps?: Partial<SelectorPropsType>;
+  disableTooltip?: boolean;
 };
 
 type StateType = {};
@@ -32,6 +33,7 @@ export default class SelectRow extends Component<PropsType, StateType> {
         </Wrapper>
         <SelectWrapper>
           <Selector
+            disableTooltip={this.props.disableTooltip}
             scrollBuffer={this.props.scrollBuffer}
             activeValue={this.props.value}
             setActiveValue={this.props.setActiveValue}

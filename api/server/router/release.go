@@ -307,6 +307,7 @@ func getReleaseRoutes(
 				types.ProjectScope,
 				types.ClusterScope,
 				types.NamespaceScope,
+				types.ReleaseScope,
 			},
 		},
 	)

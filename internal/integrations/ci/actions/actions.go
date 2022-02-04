@@ -407,6 +407,36 @@ func (g *GithubActions) RerunLastWorkflow() error {
 	return nil
 }
 
+func (g *GithubActions) GetWorkflow() (*github.WorkflowRun, error) {
+	client, err := g.getClient()
+	if err != nil {
+		return nil, err
+	}
+
+	filename := g.getPorterYMLFileName()
+	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
+		context.Background(), g.GitRepoOwner, g.GitRepoName, filename, &github.ListWorkflowRunsOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if workflowRuns.GetTotalCount() < 1 {
+		return nil, errors.New("No Github actions workflow run detected. Please manually run the workflow.")
+	}
+
+	lastWorkflowRun := workflowRuns.WorkflowRuns[0]
+
+	workflow, _, err := client.Actions.GetWorkflowRunByID(context.Background(),
+		g.GitRepoOwner, g.GitRepoName, lastWorkflowRun.GetID())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return workflow, nil
+}
+
 func getPorterTokenSecretName(projectID uint) string {
 	return fmt.Sprintf("PORTER_TOKEN_%d", projectID)
 }

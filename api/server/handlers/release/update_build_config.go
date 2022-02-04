@@ -2,6 +2,7 @@ package release
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -66,12 +67,6 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	buildConfig.ID = release.BuildConfig
-	_, err = c.Repo().BuildConfig().UpdateBuildConfig(buildConfig)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
 
 	rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 
@@ -81,6 +76,49 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	gitAction := rel.GitActionConfig
+
+	if gitAction != nil && gitAction.ID != 0 {
+		user, _ := r.Context().Value(types.UserScope).(*models.User)
+
+		gaRunner, err := getGARunner(
+			c.Config(),
+			user.ID,
+			cluster.ProjectID,
+			cluster.ID,
+			rel.GitActionConfig,
+			helmRelease.Name,
+			helmRelease.Namespace,
+			rel,
+			helmRelease,
+		)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		workflow, err := gaRunner.GetWorkflow()
+
+		if err != nil {
+
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		status := workflow.GetStatus()
+		if status == "in_progress" || status == "queued" {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errors.New("The workflow is still running;"+workflow.GetHTMLURL()), http.StatusBadRequest))
+			return
+		}
+	}
+
+	_, err = c.Repo().BuildConfig().UpdateBuildConfig(buildConfig)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	if gitAction != nil && gitAction.ID != 0 {
 		user, _ := r.Context().Value(types.UserScope).(*models.User)
 

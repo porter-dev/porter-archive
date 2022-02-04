@@ -14,6 +14,7 @@ import {
   FullActionConfigType,
 } from "shared/types";
 import SaveButton from "components/SaveButton";
+import DynamicLink from "components/DynamicLink";
 
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
@@ -68,6 +69,8 @@ const BuildpackEditPage: React.FC<{
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
     []
   );
+
+  const [runningWorkflowURL, setRunningWorkflowURL] = useState<string>(null);
 
   const [buttonStatus, setButtonStatus] = useState<string>("");
 
@@ -182,12 +185,22 @@ const BuildpackEditPage: React.FC<{
     } catch (err) {
       let parsedErr = err?.response?.data?.error;
 
+      if (parsedErr.split(";").length > 1) {
+        const error = parsedErr;
+        parsedErr = error.split(";")[0];
+        setRunningWorkflowURL(error.split(";")[1]);
+      }
+
       if (parsedErr) {
         err = parsedErr;
       }
 
       setButtonStatus(parsedErr);
       setCurrentError(parsedErr);
+      setTimeout(() => {
+        setButtonStatus("");
+        setCurrentError("");
+      }, 2000);
     }
   };
 
@@ -323,6 +336,28 @@ const BuildpackEditPage: React.FC<{
     <Wrapper>
       <StyledSettingsSection>
         <BuildpackConfigurationContainer>
+          {runningWorkflowURL && (
+            <AlertCard>
+              <AlertCardIcon className="material-icons">error</AlertCardIcon>
+              <AlertCardContent className="content">
+                <AlertCardTitle className="title">
+                  The workflow is still running
+                </AlertCardTitle>
+                Please wait until it finishes before changing the buildpack
+                configuration. To go to the workflow{" "}
+                <DynamicLink to={runningWorkflowURL} target="_blank">
+                  click here
+                </DynamicLink>
+              </AlertCardContent>
+              <AlertCardAction
+                onClick={() => {
+                  setRunningWorkflowURL("");
+                }}
+              >
+                <span className="material-icons">close</span>
+              </AlertCardAction>
+            </AlertCard>
+          )}
           <>
             <SelectRow
               value={selectedBuilder}
@@ -381,6 +416,55 @@ const fadeIn = keyframes`
   }
   to {
     opacity: 1;
+  }
+`;
+
+const AlertCard = styled.div`
+  transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  box-shadow: none;
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.43;
+  letter-spacing: 0.01071em;
+  border: 1px solid rgb(229, 115, 115);
+  display: flex;
+  padding: 6px 16px;
+  color: rgb(244, 199, 199);
+  margin-top: 20px;
+  position: relative;
+`;
+
+const AlertCardIcon = styled.span`
+  color: rgb(239, 83, 80);
+  margin-right: 12px;
+  padding: 7px 0px;
+  display: flex;
+  font-size: 22px;
+  opacity: 0.9;
+`;
+
+const AlertCardTitle = styled.div`
+  margin: -2px 0px 0.35em;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.00938em;
+  font-weight: 500;
+`;
+
+const AlertCardContent = styled.div`
+  padding: 8px 0px;
+`;
+
+const AlertCardAction = styled.button`
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  border: none;
+  background-color: unset;
+  color: white;
+  :hover {
+    cursor: pointer;
   }
 `;
 

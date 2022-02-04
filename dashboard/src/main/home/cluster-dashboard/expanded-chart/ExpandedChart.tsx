@@ -472,7 +472,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
       );
     }
 
-    rightTabOptions.push({ label: "Buildpack", value: "buildpack" });
+    if (
+      currentChart.git_action_config?.git_repo_id &&
+      currentChart.build_config?.builder
+    ) {
+      rightTabOptions.push({ label: "Buildpack", value: "buildpack" });
+    }
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {

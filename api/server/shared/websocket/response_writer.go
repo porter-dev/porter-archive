@@ -12,18 +12,20 @@ type WebsocketSafeReadWriter struct {
 	conn *websocket.Conn
 }
 
-func (w *WebsocketSafeReadWriter) WriteJSONWithChannel(v interface{}, errorChan chan<- error) {
+func (w *WebsocketSafeReadWriter) WriteJSONWithChannel(v interface{}) error {
 	err := w.conn.WriteJSON(v)
 
 	if err != nil {
 		if errOr(err, websocket.ErrCloseSent, syscall.EPIPE, syscall.ECONNRESET) {
 			// if close has been sent, or error is broken pipe error or connection reset, we want to
 			// send a message to the error channel to ensure closure but we ignore the error
-			errorChan <- nil
-		} else if err != nil {
-			errorChan <- err
+			return nil
 		}
+
+		return err
 	}
+
+	return nil
 }
 
 func (w *WebsocketSafeReadWriter) Write(data []byte) (int, error) {

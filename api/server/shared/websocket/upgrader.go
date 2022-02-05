@@ -27,7 +27,10 @@ func (u *Upgrader) Upgrade(
 
 	conn, err := u.WSUpgrader.Upgrade(w, r, responseHeader)
 
-	safeWriter := &WebsocketSafeReadWriter{conn}
+	safeWriter := &WebsocketSafeReadWriter{
+		conn: conn,
+	}
+
 	rw := &WebsocketResponseWriter{conn, safeWriter}
 
 	return conn, rw, safeWriter, err

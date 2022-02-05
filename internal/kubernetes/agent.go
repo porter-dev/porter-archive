@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"time"
 
 	goerrors "errors"
@@ -605,13 +606,21 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 		return fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
 	}
 
-	defer podLogs.Close()
-
 	r := bufio.NewReader(podLogs)
 	errorchan := make(chan error)
 
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		wg.Wait()
+		close(errorchan)
+	}()
+
 	go func() {
 		// listens for websocket closing handshake
+		defer wg.Done()
+
 		for {
 			if _, _, err := rw.ReadMessage(); err != nil {
 				errorchan <- nil
@@ -621,11 +630,13 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 	}()
 
 	go func() {
+		defer wg.Done()
+
 		for {
 			bytes, err := r.ReadBytes('\n')
 
-			if err == io.EOF {
-				errorchan <- nil
+			if err != nil {
+				errorchan <- err
 				return
 			}
 
@@ -633,22 +644,15 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 				errorchan <- writeErr
 				return
 			}
-
-			select {
-			case <-errorchan:
-				return
-			default:
-			}
 		}
 	}()
 
-	for {
-		select {
-		case err = <-errorchan:
-			close(errorchan)
-			return err
-		}
+	for err = range errorchan {
+		rw.Close()
+		podLogs.Close()
 	}
+
+	return err
 }
 
 // GetPodLogs streams real-time logs from a given pod.
@@ -836,7 +840,6 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
-		defer close(stopper)
 
 		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 			if strings.HasSuffix(err.Error(), ": Unauthorized") {
@@ -871,8 +874,20 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 			},
 		})
 
+		var wg sync.WaitGroup
+		var err error
+
+		wg.Add(1)
+
+		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
 		go func() {
 			// listens for websocket closing handshake
+			defer wg.Done()
+
 			for {
 				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
@@ -883,12 +898,12 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 
 		go informer.Run(stopper)
 
-		for {
-			select {
-			case err := <-errorchan:
-				return err
-			}
+		for err = range errorchan {
+			close(stopper)
+			rw.Close()
 		}
+
+		return err
 	}
 
 	return a.RunWebsocketTask(run)
@@ -980,7 +995,6 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
-		defer close(stopper)
 
 		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 			if strings.HasSuffix(err.Error(), ": Unauthorized") {
@@ -1069,8 +1083,20 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 			},
 		})
 
+		var wg sync.WaitGroup
+		var err error
+
+		wg.Add(1)
+
+		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
 		go func() {
 			// listens for websocket closing handshake
+			defer wg.Done()
+
 			for {
 				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
@@ -1081,12 +1107,12 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 
 		go informer.Run(stopper)
 
-		for {
-			select {
-			case err := <-errorchan:
-				return err
-			}
+		for err = range errorchan {
+			close(stopper)
+			rw.Close()
 		}
+
+		return err
 	}
 
 	return a.RunWebsocketTask(run)

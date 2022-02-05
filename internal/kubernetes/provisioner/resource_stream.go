@@ -12,6 +12,13 @@ func ResourceStream(client *redis.Client, streamName string, rw *websocket.Webso
 	errorchan := make(chan error)
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				// TODO: add method to alert on panic
+				return
+			}
+		}()
+
 		// listens for websocket closing handshake
 		for {
 			if _, _, err := rw.ReadMessage(); err != nil {
@@ -22,6 +29,13 @@ func ResourceStream(client *redis.Client, streamName string, rw *websocket.Webso
 	}()
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				// TODO: add method to alert on panic
+				return
+			}
+		}()
+
 		lastID := "0-0"
 
 		for {
@@ -40,7 +54,7 @@ func ResourceStream(client *redis.Client, streamName string, rw *websocket.Webso
 			messages := xstream[0].Messages
 			lastID = messages[len(messages)-1].ID
 
-			rw.WriteJSONWithChannel(messages)
+			rw.WriteJSON(messages)
 		}
 	}()
 

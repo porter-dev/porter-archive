@@ -1,115 +1,102 @@
 package s3
 
-import (
-	"bytes"
-	"fmt"
-	"io"
-	"log"
-	"os"
+// type Client struct {
+// 	client *s3.S3
+// 	bucket string
+// }
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/porter-dev/tf-http-backend/pkg/encryption"
-)
+// var LOCAL_RUN string
+// var ENCRYPT_KEY string
 
-type Client struct {
-	client *s3.S3
-	bucket string
-}
+// func init() {
+// 	LOCAL_RUN = os.Getenv("LOCAL_RUN")
 
-var LOCAL_RUN string
-var ENCRYPT_KEY string
+// 	ENCRYPT_KEY = os.Getenv("ENCRYPT_KEY")
 
-func init() {
-	LOCAL_RUN = os.Getenv("LOCAL_RUN")
+// 	if ENCRYPT_KEY == "" {
+// 		if LOCAL_RUN == "true" {
+// 			ENCRYPT_KEY = "the-key-has-to-be-32-bytes-long!"
+// 		} else {
+// 			panic("no encryption key set for storage")
+// 		}
+// 	}
+// }
 
-	ENCRYPT_KEY = os.Getenv("ENCRYPT_KEY")
+// func NewS3Client(bucket string) *Client {
+// 	var sess *session.Session
+// 	var err error
 
-	if ENCRYPT_KEY == "" {
-		if LOCAL_RUN == "true" {
-			ENCRYPT_KEY = "the-key-has-to-be-32-bytes-long!"
-		} else {
-			panic("no encryption key set for storage")
-		}
-	}
-}
+// 	if LOCAL_RUN == "true" {
+// 		sess, err = session.NewSession(&aws.Config{
+// 			Region:   aws.String("us-east-1"),
+// 			Endpoint: aws.String("localhost.localstack.cloud:4566"),
+// 		})
+// 	} else {
+// 		sess, err = session.NewSession()
+// 		if err != nil {
+// 			log.Fatal("cannot create aws session", err.Error())
+// 		}
+// 	}
 
-func NewS3Client(bucket string) *Client {
-	var sess *session.Session
-	var err error
+// 	return &Client{
+// 		client: s3.New(sess),
+// 		bucket: bucket,
+// 	}
+// }
 
-	if LOCAL_RUN == "true" {
-		sess, err = session.NewSession(&aws.Config{
-			Region:   aws.String("us-east-1"),
-			Endpoint: aws.String("localhost.localstack.cloud:4566"),
-		})
-	} else {
-		sess, err = session.NewSession()
-		if err != nil {
-			log.Fatal("cannot create aws session", err.Error())
-		}
-	}
+// func (s *Client) GetObject(org, filename string) (io.ReadCloser, error) {
+// 	log.Println(org, filename)
+// 	output, err := s.client.GetObject(&s3.GetObjectInput{
+// 		Bucket: &s.bucket,
+// 		Key:    aws.String(fmt.Sprintf("%s/%s", org, filename)),
+// 	})
 
-	return &Client{
-		client: s3.New(sess),
-		bucket: bucket,
-	}
-}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-func (s *Client) GetObject(org, filename string) (io.ReadCloser, error) {
-	log.Println(org, filename)
-	output, err := s.client.GetObject(&s3.GetObjectInput{
-		Bucket: &s.bucket,
-		Key:    aws.String(fmt.Sprintf("%s/%s", org, filename)),
-	})
+// 	var encryptedData bytes.Buffer
+// 	_, err = encryptedData.ReadFrom(output.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	if err != nil {
-		return nil, err
-	}
+// 	data, err := encryption.Decrypt(encryptedData.Bytes(), []byte(ENCRYPT_KEY))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var encryptedData bytes.Buffer
-	_, err = encryptedData.ReadFrom(output.Body)
-	if err != nil {
-		return nil, err
-	}
+// 	return io.NopCloser(bytes.NewReader(data)), nil
+// }
 
-	data, err := encryption.Decrypt(encryptedData.Bytes(), []byte(ENCRYPT_KEY))
-	if err != nil {
-		return nil, err
-	}
+// func (s *Client) PutObject(org, filename string, body []byte) error {
+// 	encryptedBody, err := encryption.Encrypt(body, []byte(ENCRYPT_KEY))
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return io.NopCloser(bytes.NewReader(data)), nil
-}
+// 	_, err = s.client.PutObject(&s3.PutObjectInput{
+// 		Body:   aws.ReadSeekCloser(bytes.NewReader(encryptedBody)),
+// 		Bucket: &s.bucket,
+// 		Key:    aws.String(fmt.Sprintf("%s/%s", org, filename)),
+// 	})
 
-func (s *Client) PutObject(org, filename string, body []byte) error {
-	encryptedBody, err := encryption.Encrypt(body, []byte(ENCRYPT_KEY))
-	if err != nil {
-		return err
-	}
+// 	if err != nil {
+// 		return err
+// 	}
 
-	_, err = s.client.PutObject(&s3.PutObjectInput{
-		Body:   aws.ReadSeekCloser(bytes.NewReader(encryptedBody)),
-		Bucket: &s.bucket,
-		Key:    aws.String(fmt.Sprintf("%s/%s", org, filename)),
-	})
+// 	return nil
+// }
 
-	if err != nil {
-		return err
-	}
+// func (s *Client) DeleteObject(org, filename string) error {
+// 	_, err := s.client.DeleteObject(&s3.DeleteObjectInput{
+// 		Bucket: &s.bucket,
+// 		Key:    aws.String(fmt.Sprintf("%s/%s", org, filename)),
+// 	})
 
-	return nil
-}
+// 	if err != nil {
+// 		return err
+// 	}
 
-func (s *Client) DeleteObject(org, filename string) error {
-	_, err := s.client.DeleteObject(&s3.DeleteObjectInput{
-		Bucket: &s.bucket,
-		Key:    aws.String(fmt.Sprintf("%s/%s", org, filename)),
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+// 	return nil
+// }

@@ -880,7 +880,7 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 						Object:    newObj,
 						Kind:      strings.ToLower(kind),
 					}
-					err := rw.WriteJSONWithChannel(msg)
+					err := rw.WriteJSON(msg)
 
 					if err != nil {
 						errorchan <- err
@@ -893,7 +893,7 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 						Kind:      strings.ToLower(kind),
 					}
 
-					err := rw.WriteJSONWithChannel(msg)
+					err := rw.WriteJSON(msg)
 
 					if err != nil {
 						errorchan <- err
@@ -906,7 +906,7 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 						Kind:      strings.ToLower(kind),
 					}
 
-					err := rw.WriteJSONWithChannel(msg)
+					err := rw.WriteJSON(msg)
 
 					if err != nil {
 						errorchan <- err
@@ -1049,12 +1049,6 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 				}
 			})
 
-			informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-				if strings.HasSuffix(err.Error(), ": Unauthorized") {
-					errorchan <- &AuthError{}
-				}
-			})
-
 			informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 				UpdateFunc: func(oldObj, newObj interface{}) {
 					secretObj, ok := newObj.(*v1.Secret)
@@ -1080,7 +1074,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 						Object:    helm_object,
 					}
 
-					rw.WriteJSONWithChannel(msg)
+					rw.WriteJSON(msg)
 				},
 				AddFunc: func(obj interface{}) {
 					secretObj, ok := obj.(*v1.Secret)
@@ -1106,7 +1100,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 						Object:    helm_object,
 					}
 
-					rw.WriteJSONWithChannel(msg)
+					rw.WriteJSON(msg)
 				},
 				DeleteFunc: func(obj interface{}) {
 					secretObj, ok := obj.(*v1.Secret)
@@ -1132,7 +1126,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 						Object:    helm_object,
 					}
 
-					rw.WriteJSONWithChannel(msg)
+					rw.WriteJSON(msg)
 				},
 			})
 

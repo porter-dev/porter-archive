@@ -63,8 +63,6 @@ func (c *AddEnvGroupAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// TODO: verify that application exists
-
 	cm, err = agent.AddApplicationToVersionedConfigMap(cm, request.ApplicationName)
 
 	if err != nil {

@@ -129,46 +129,11 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	switch clusterInfra.Kind {
 	case types.InfraGKE:
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			errors.New("not implemented"),
-			http.StatusNotImplemented,
+			errors.New("unsupported cluster kind"),
+			http.StatusBadRequest,
 		))
 
 		return
-
-		// dbInfra.Kind = types.InfraRDS // this will change to Google Cloud SQL once supported
-		// dbInfra.GCPIntegrationID = clusterInfra.GCPIntegrationID
-
-		// integration, err := c.Repo().GCPIntegration().ReadGCPIntegration(clusterInfra.ProjectID, clusterInfra.GCPIntegrationID)
-		// if err != nil {
-		// 	if err == gorm.ErrRecordNotFound {
-		// 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
-		// 	} else {
-		// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		// 	}
-
-		// 	return
-		// }
-
-		// region = integration.GCPRegion
-
-		// if c.Config().CredentialBackend != nil {
-		// 	vaultToken, err = c.Config().CredentialBackend.CreateGCPToken(integration)
-		// 	if err != nil {
-		// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		// 	}
-		// }
-
-		// vpc, err = c.ExtractVPCFromGKETFState(currentState, "google_compute_network.vpc")
-		// subnets = []string{}
-		// if err != nil {
-		// 	c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-		// 		err,
-		// 		http.StatusInternalServerError,
-		// 	))
-
-		// 	return
-		// }
-
 	case types.InfraEKS:
 		dbInfra.Kind = types.InfraRDS
 		dbInfra.AWSIntegrationID = clusterInfra.AWSIntegrationID
@@ -205,8 +170,8 @@ func (c *ProvisionRDSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	case types.InfraDOKS:
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			errors.New("not implemented"),
-			http.StatusNotImplemented,
+			errors.New("unsupported cluster kind"),
+			http.StatusBadRequest,
 		))
 
 		return

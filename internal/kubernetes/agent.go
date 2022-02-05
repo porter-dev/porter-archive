@@ -854,7 +854,7 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 					Object:    newObj,
 					Kind:      strings.ToLower(kind),
 				}
-				rw.WriteJSONWithChannel(msg, errorchan)
+				rw.WriteJSONWithChannel(msg)
 			},
 			AddFunc: func(obj interface{}) {
 				msg := Message{
@@ -862,7 +862,7 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 					Object:    obj,
 					Kind:      strings.ToLower(kind),
 				}
-				rw.WriteJSONWithChannel(msg, errorchan)
+				rw.WriteJSONWithChannel(msg)
 			},
 			DeleteFunc: func(obj interface{}) {
 				msg := Message{
@@ -870,7 +870,7 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 					Object:    obj,
 					Kind:      strings.ToLower(kind),
 				}
-				rw.WriteJSONWithChannel(msg, errorchan)
+				rw.WriteJSONWithChannel(msg)
 			},
 		})
 
@@ -1027,7 +1027,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					Object:    helm_object,
 				}
 
-				rw.WriteJSONWithChannel(msg, errorchan)
+				rw.WriteJSONWithChannel(msg)
 			},
 			AddFunc: func(obj interface{}) {
 				secretObj, ok := obj.(*v1.Secret)
@@ -1053,7 +1053,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					Object:    helm_object,
 				}
 
-				rw.WriteJSONWithChannel(msg, errorchan)
+				rw.WriteJSONWithChannel(msg)
 			},
 			DeleteFunc: func(obj interface{}) {
 				secretObj, ok := obj.(*v1.Secret)
@@ -1079,7 +1079,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 					Object:    helm_object,
 				}
 
-				rw.WriteJSONWithChannel(msg, errorchan)
+				rw.WriteJSONWithChannel(msg)
 			},
 		})
 

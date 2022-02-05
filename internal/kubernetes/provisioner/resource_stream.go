@@ -40,7 +40,7 @@ func ResourceStream(client *redis.Client, streamName string, rw *websocket.Webso
 			messages := xstream[0].Messages
 			lastID = messages[len(messages)-1].ID
 
-			rw.WriteJSONWithChannel(messages, errorchan)
+			rw.WriteJSONWithChannel(messages)
 		}
 	}()
 

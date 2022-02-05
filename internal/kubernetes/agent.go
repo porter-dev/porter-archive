@@ -841,43 +841,10 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
 
-		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-			if strings.HasSuffix(err.Error(), ": Unauthorized") {
-				errorchan <- &AuthError{}
-			}
-		})
-
-		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				msg := Message{
-					EventType: "UPDATE",
-					Object:    newObj,
-					Kind:      strings.ToLower(kind),
-				}
-				rw.WriteJSONWithChannel(msg)
-			},
-			AddFunc: func(obj interface{}) {
-				msg := Message{
-					EventType: "ADD",
-					Object:    obj,
-					Kind:      strings.ToLower(kind),
-				}
-				rw.WriteJSONWithChannel(msg)
-			},
-			DeleteFunc: func(obj interface{}) {
-				msg := Message{
-					EventType: "DELETE",
-					Object:    obj,
-					Kind:      strings.ToLower(kind),
-				}
-				rw.WriteJSONWithChannel(msg)
-			},
-		})
-
 		var wg sync.WaitGroup
 		var err error
 
-		wg.Add(1)
+		wg.Add(2)
 
 		go func() {
 			wg.Wait()
@@ -896,7 +863,59 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 			}
 		}()
 
-		go informer.Run(stopper)
+		go func() {
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+				if strings.HasSuffix(err.Error(), ": Unauthorized") {
+					errorchan <- &AuthError{}
+				}
+			})
+
+			informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+				UpdateFunc: func(oldObj, newObj interface{}) {
+					msg := Message{
+						EventType: "UPDATE",
+						Object:    newObj,
+						Kind:      strings.ToLower(kind),
+					}
+					err := rw.WriteJSONWithChannel(msg)
+
+					if err != nil {
+						errorchan <- err
+					}
+				},
+				AddFunc: func(obj interface{}) {
+					msg := Message{
+						EventType: "ADD",
+						Object:    obj,
+						Kind:      strings.ToLower(kind),
+					}
+
+					err := rw.WriteJSONWithChannel(msg)
+
+					if err != nil {
+						errorchan <- err
+					}
+				},
+				DeleteFunc: func(obj interface{}) {
+					msg := Message{
+						EventType: "DELETE",
+						Object:    obj,
+						Kind:      strings.ToLower(kind),
+					}
+
+					err := rw.WriteJSONWithChannel(msg)
+
+					if err != nil {
+						errorchan <- err
+					}
+				},
+			})
+
+			informer.Run(stopper)
+		}()
 
 		for err = range errorchan {
 			close(stopper)
@@ -996,97 +1015,10 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
 
-		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-			if strings.HasSuffix(err.Error(), ": Unauthorized") {
-				errorchan <- &AuthError{}
-			}
-		})
-
-		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				secretObj, ok := newObj.(*v1.Secret)
-
-				if !ok {
-					errorchan <- fmt.Errorf("could not cast to secret")
-					return
-				}
-
-				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
-
-				if isNotHelmRelease && err == nil {
-					return
-				}
-
-				if err != nil {
-					errorchan <- err
-					return
-				}
-
-				msg := Message{
-					EventType: "UPDATE",
-					Object:    helm_object,
-				}
-
-				rw.WriteJSONWithChannel(msg)
-			},
-			AddFunc: func(obj interface{}) {
-				secretObj, ok := obj.(*v1.Secret)
-
-				if !ok {
-					errorchan <- fmt.Errorf("could not cast to secret")
-					return
-				}
-
-				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
-
-				if isNotHelmRelease && err == nil {
-					return
-				}
-
-				if err != nil {
-					errorchan <- err
-					return
-				}
-
-				msg := Message{
-					EventType: "ADD",
-					Object:    helm_object,
-				}
-
-				rw.WriteJSONWithChannel(msg)
-			},
-			DeleteFunc: func(obj interface{}) {
-				secretObj, ok := obj.(*v1.Secret)
-
-				if !ok {
-					errorchan <- fmt.Errorf("could not cast to secret")
-					return
-				}
-
-				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
-
-				if isNotHelmRelease && err == nil {
-					return
-				}
-
-				if err != nil {
-					errorchan <- err
-					return
-				}
-
-				msg := Message{
-					EventType: "DELETE",
-					Object:    helm_object,
-				}
-
-				rw.WriteJSONWithChannel(msg)
-			},
-		})
-
 		var wg sync.WaitGroup
 		var err error
 
-		wg.Add(1)
+		wg.Add(2)
 
 		go func() {
 			wg.Wait()
@@ -1106,6 +1038,106 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 		}()
 
 		go informer.Run(stopper)
+
+		go func() {
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+				if strings.HasSuffix(err.Error(), ": Unauthorized") {
+					errorchan <- &AuthError{}
+				}
+			})
+
+			informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+				if strings.HasSuffix(err.Error(), ": Unauthorized") {
+					errorchan <- &AuthError{}
+				}
+			})
+
+			informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+				UpdateFunc: func(oldObj, newObj interface{}) {
+					secretObj, ok := newObj.(*v1.Secret)
+
+					if !ok {
+						errorchan <- fmt.Errorf("could not cast to secret")
+						return
+					}
+
+					helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
+
+					if isNotHelmRelease && err == nil {
+						return
+					}
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+
+					msg := Message{
+						EventType: "UPDATE",
+						Object:    helm_object,
+					}
+
+					rw.WriteJSONWithChannel(msg)
+				},
+				AddFunc: func(obj interface{}) {
+					secretObj, ok := obj.(*v1.Secret)
+
+					if !ok {
+						errorchan <- fmt.Errorf("could not cast to secret")
+						return
+					}
+
+					helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
+
+					if isNotHelmRelease && err == nil {
+						return
+					}
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+
+					msg := Message{
+						EventType: "ADD",
+						Object:    helm_object,
+					}
+
+					rw.WriteJSONWithChannel(msg)
+				},
+				DeleteFunc: func(obj interface{}) {
+					secretObj, ok := obj.(*v1.Secret)
+
+					if !ok {
+						errorchan <- fmt.Errorf("could not cast to secret")
+						return
+					}
+
+					helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
+
+					if isNotHelmRelease && err == nil {
+						return
+					}
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+
+					msg := Message{
+						EventType: "DELETE",
+						Object:    helm_object,
+					}
+
+					rw.WriteJSONWithChannel(msg)
+				},
+			})
+
+			informer.Run(stopper)
+		}()
 
 		for err = range errorchan {
 			close(stopper)

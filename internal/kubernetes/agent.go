@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"time"
 
 	goerrors "errors"
@@ -554,7 +555,7 @@ func (a *Agent) DeletePod(namespace string, name string) error {
 }
 
 // GetPodLogs streams real-time logs from a given pod.
-func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool, selectedContainer string, rw *websocket.WebsocketSafeReadWriter) error {
+func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer string, rw *websocket.WebsocketSafeReadWriter) error {
 	// get the pod to read in the list of contains
 	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
 		context.Background(),
@@ -568,11 +569,9 @@ func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool,
 		return fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
 	}
 
-	if !showPreviousLogs {
-		// see if container is ready and able to open a stream. If not, wait for container
-		// to be ready.
-		err, _ = a.waitForPod(pod)
-	}
+	// see if container is ready and able to open a stream. If not, wait for container
+	// to be ready.
+	err, _ = a.waitForPod(pod)
 
 	if err != nil && goerrors.Is(err, IsNotFoundError) {
 		return IsNotFoundError
@@ -593,7 +592,6 @@ func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool,
 		Follow:    true,
 		TailLines: &tails,
 		Container: container,
-		Previous:  showPreviousLogs,
 	}
 
 	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
@@ -608,13 +606,21 @@ func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool,
 		return fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
 	}
 
-	defer podLogs.Close()
-
 	r := bufio.NewReader(podLogs)
 	errorchan := make(chan error)
 
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		wg.Wait()
+		close(errorchan)
+	}()
+
 	go func() {
 		// listens for websocket closing handshake
+		defer wg.Done()
+
 		for {
 			if _, _, err := rw.ReadMessage(); err != nil {
 				errorchan <- nil
@@ -624,36 +630,95 @@ func (a *Agent) GetPodLogs(namespace string, name string, showPreviousLogs bool,
 	}()
 
 	go func() {
+		defer wg.Done()
+
 		for {
-			select {
-			case <-errorchan:
-				defer close(errorchan)
+			bytes, err := r.ReadBytes('\n')
+
+			if err != nil {
+				errorchan <- err
 				return
-			default:
 			}
 
-			bytes, err := r.ReadBytes('\n')
 			if _, writeErr := rw.Write(bytes); writeErr != nil {
 				errorchan <- writeErr
-				return
-			}
-			if err != nil {
-				if err != io.EOF {
-					errorchan <- err
-					return
-				}
-				errorchan <- nil
 				return
 			}
 		}
 	}()
 
+	for err = range errorchan {
+		rw.Close()
+		podLogs.Close()
+	}
+
+	return err
+}
+
+// GetPodLogs streams real-time logs from a given pod.
+func (a *Agent) GetPreviousPodLogs(namespace string, name string, selectedContainer string) ([]string, error) {
+	// get the pod to read in the list of contains
+	pod, err := a.Clientset.CoreV1().Pods(namespace).Get(
+		context.Background(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
+		return nil, fmt.Errorf("Cannot get logs from pod %s: %s", name, err.Error())
+	}
+
+	container := pod.Spec.Containers[0].Name
+
+	if len(selectedContainer) > 0 {
+		container = selectedContainer
+	}
+
+	tails := int64(400)
+
+	// follow logs
+	podLogOpts := v1.PodLogOptions{
+		Follow:    true,
+		TailLines: &tails,
+		Container: container,
+		Previous:  true,
+	}
+
+	req := a.Clientset.CoreV1().Pods(namespace).GetLogs(name, &podLogOpts)
+
+	podLogs, err := req.Stream(context.TODO())
+
+	// in the case of bad request errors, such as if the pod is stuck in "ContainerCreating",
+	// we'd like to pass this through to the client.
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		return nil, IsNotFoundError
+	}
+
+	if err != nil && errors.IsBadRequest(err) {
+		return nil, &BadRequestError{err.Error()}
+	} else if err != nil {
+		return nil, fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
+	}
+
+	defer podLogs.Close()
+
+	r := bufio.NewReader(podLogs)
+	var logs []string
+
 	for {
-		select {
-		case err = <-errorchan:
-			return err
+		line, err := r.ReadString('\n')
+		logs = append(logs, line)
+
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
 		}
 	}
+
+	return logs, nil
 }
 
 // StopJobWithJobSidecar sends a termination signal to a job running with a sidecar
@@ -775,7 +840,6 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
-		defer close(stopper)
 
 		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 			if strings.HasSuffix(err.Error(), ": Unauthorized") {
@@ -810,8 +874,20 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 			},
 		})
 
+		var wg sync.WaitGroup
+		var err error
+
+		wg.Add(1)
+
+		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
 		go func() {
 			// listens for websocket closing handshake
+			defer wg.Done()
+
 			for {
 				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
@@ -822,12 +898,12 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 
 		go informer.Run(stopper)
 
-		for {
-			select {
-			case err := <-errorchan:
-				return err
-			}
+		for err = range errorchan {
+			close(stopper)
+			rw.Close()
 		}
+
+		return err
 	}
 
 	return a.RunWebsocketTask(run)
@@ -919,7 +995,6 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
-		defer close(stopper)
 
 		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 			if strings.HasSuffix(err.Error(), ": Unauthorized") {
@@ -1008,8 +1083,20 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 			},
 		})
 
+		var wg sync.WaitGroup
+		var err error
+
+		wg.Add(1)
+
+		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
 		go func() {
 			// listens for websocket closing handshake
+			defer wg.Done()
+
 			for {
 				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
@@ -1020,12 +1107,12 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 
 		go informer.Run(stopper)
 
-		for {
-			select {
-			case err := <-errorchan:
-				return err
-			}
+		for err = range errorchan {
+			close(stopper)
+			rw.Close()
 		}
+
+		return err
 	}
 
 	return a.RunWebsocketTask(run)
@@ -1160,11 +1247,12 @@ func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
 		return err, false
 	}
 	defer w.Stop()
-	for {
+
+	expireTime := time.Now().Add(time.Second * 30)
+
+	for time.Now().Unix() <= expireTime.Unix() {
 		select {
-		case <-time.After(time.Second * 30):
-			return goerrors.New("timed out waiting for pod"), false
-		case <-time.Tick(time.Second):
+		case <-time.NewTicker(time.Second).C:
 			// poll every second in case we already missed the ready event while
 			// creating the listener.
 			pod, err = a.Clientset.CoreV1().
@@ -1190,6 +1278,8 @@ func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
 			}
 		}
 	}
+
+	return goerrors.New("timed out waiting for pod"), false
 }
 
 func isPodReady(pod *v1.Pod) bool {

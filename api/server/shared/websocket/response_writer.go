@@ -3,6 +3,7 @@ package websocket
 import (
 	"errors"
 	"net/http"
+	"sync"
 	"syscall"
 
 	"github.com/gorilla/websocket"
@@ -10,9 +11,12 @@ import (
 
 type WebsocketSafeReadWriter struct {
 	conn *websocket.Conn
+	mu   sync.Mutex
 }
 
-func (w *WebsocketSafeReadWriter) WriteJSONWithChannel(v interface{}) error {
+func (w *WebsocketSafeReadWriter) WriteJSON(v interface{}) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	err := w.conn.WriteJSON(v)
 
 	if err != nil {
@@ -29,6 +33,8 @@ func (w *WebsocketSafeReadWriter) WriteJSONWithChannel(v interface{}) error {
 }
 
 func (w *WebsocketSafeReadWriter) Write(data []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	err := w.conn.WriteMessage(websocket.TextMessage, data)
 
 	if err != nil {

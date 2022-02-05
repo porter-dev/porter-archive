@@ -46,6 +46,10 @@ func (w *WebsocketSafeReadWriter) ReadMessage() (messageType int, p []byte, err 
 	return w.conn.ReadMessage()
 }
 
+func (w *WebsocketSafeReadWriter) Close() error {
+	return w.conn.Close()
+}
+
 type WebsocketResponseWriter struct {
 	conn       *websocket.Conn
 	safeWriter *WebsocketSafeReadWriter

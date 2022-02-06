@@ -11,6 +11,7 @@ import {
 } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
 import api from "shared/api";
+import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 
@@ -40,16 +41,6 @@ const regionOptions = [
   { value: "us-west3", label: "us-west3" },
   { value: "us-west4", label: "us-west4" },
 ];
-
-const readableDate = (s: string) => {
-  const ts = new Date(s);
-  const date = ts.toLocaleDateString();
-  const time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;
@@ -344,10 +335,12 @@ export const SettingsForm: React.FC<{
     console.log("Provisioning GCR");
 
     try {
-      const res = await api.createGCR(
+      const res = await api.provisionInfra(
         "<token>",
         {
+          kind: "gcr",
           gcp_integration_id: id,
+          values: {},
         },
         { project_id: project.id }
       );
@@ -361,13 +354,16 @@ export const SettingsForm: React.FC<{
     console.log("Provisioning GKE");
 
     try {
-      const res = await api.createGKE(
+      const res = await api.provisionInfra(
         "<token>",
         {
-          gcp_region: region,
-          gke_name: clusterName,
+          kind: "gke",
           gcp_integration_id: id,
-          issuer_email: snap.StateHandler.user_email,
+          values: {
+            gcp_region: region,
+            cluster_name: clusterName,
+            issuer_email: snap.StateHandler.user_email,
+          },
         },
         { project_id: project.id }
       );

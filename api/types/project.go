@@ -1,10 +1,11 @@
 package types
 
 type Project struct {
-	ID                 uint    `json:"id"`
-	Name               string  `json:"name"`
-	Roles              []*Role `json:"roles"`
-	PreviewEnvsEnabled bool    `json:"preview_envs_enabled"`
+	ID                  uint    `json:"id"`
+	Name                string  `json:"name"`
+	Roles               []*Role `json:"roles"`
+	PreviewEnvsEnabled  bool    `json:"preview_envs_enabled"`
+	RDSDatabasesEnabled bool    `json:"enable_rds_databases"`
 }
 
 type CreateProjectRequest struct {

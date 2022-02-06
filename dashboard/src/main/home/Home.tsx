@@ -27,6 +27,7 @@ import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
+import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -435,6 +436,16 @@ class Home extends Component<PropsType, StateType> {
               }}
             />
             <Route
+              path="/infrastructure"
+              render={() => {
+                return (
+                  <DashboardWrapper>
+                    <InfrastructureRouter />
+                  </DashboardWrapper>
+                );
+              }}
+            />
+            <Route
               path="/dashboard"
               render={() => {
                 return (
@@ -455,6 +466,7 @@ class Home extends Component<PropsType, StateType> {
                 "/applications",
                 "/jobs",
                 "/env-groups",
+                "/databases",
               ]}
               render={() => {
                 let { currentCluster } = this.context;

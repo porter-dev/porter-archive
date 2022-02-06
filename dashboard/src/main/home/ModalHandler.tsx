@@ -17,6 +17,7 @@ import UsageWarningModal from "./modals/UsageWarningModal";
 import api from "shared/api";
 import { AxiosError } from "axios";
 import SkipOnboardingModal from "./modals/SkipProvisioningModal";
+import ConnectToDatabaseInstructionsModal from "./modals/ConnectToDatabaseInstructionsModal";
 
 const ModalHandler: React.FC<{
   setRefreshClusters: (x: boolean) => void;
@@ -209,6 +210,16 @@ const ModalHandler: React.FC<{
           title="Would you like to skip project setup?"
         >
           <SkipOnboardingModal />
+        </Modal>
+      )}
+      {modal === "ConnectToDatabaseInstructionsModal" && (
+        <Modal
+          onRequestClose={() => setCurrentModal(null, null)}
+          width="600px"
+          height="240px"
+          title="How to connect my database"
+        >
+          <ConnectToDatabaseInstructionsModal />
         </Modal>
       )}
     </>

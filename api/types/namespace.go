@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
 	v1 "k8s.io/api/core/v1"
@@ -80,6 +82,57 @@ type ConfigMapInput struct {
 }
 
 type CreateConfigMapRequest struct {
+	Name            string            `json:"name,required"`
+	Variables       map[string]string `json:"variables,required"`
+	SecretVariables map[string]string `json:"secret_variables,required"`
+}
+
+type EnvGroup struct {
+	MetaVersion  uint              `json:"meta_version"`
+	CreatedAt    time.Time         `json:"created_at"`
+	Version      uint              `json:"version"`
+	Name         string            `json:"name"`
+	Namespace    string            `json:"namespace"`
+	Applications []string          `json:"applications"`
+	Variables    map[string]string `json:"variables"`
+}
+
+type EnvGroupMeta struct {
+	MetaVersion uint      `json:"meta_version"`
+	CreatedAt   time.Time `json:"created_at"`
+	Version     uint      `json:"version"`
+	Name        string    `json:"name"`
+	Namespace   string    `json:"namespace"`
+}
+
+type GetEnvGroupRequest struct {
+	Name    string `schema:"name,required"`
+	Version uint   `schema:"version"`
+}
+
+type CloneEnvGroupRequest struct {
+	Namespace string `json:"namespace" form:"required"`
+	Name      string `json:"name" form:"required"`
+	CloneName string `json:"clone_name"`
+	Version   uint   `json:"version"`
+}
+
+type GetEnvGroupAllRequest struct {
+	Name string `schema:"name,required"`
+}
+
+type DeleteEnvGroupRequest struct {
+	Name string `json:"name,required"`
+}
+
+type AddEnvGroupApplicationRequest struct {
+	Name            string `json:"name" form:"required"`
+	ApplicationName string `json:"app_name" form:"required"`
+}
+
+type ListEnvGroupsResponse []*EnvGroupMeta
+
+type CreateEnvGroupRequest struct {
 	Name            string            `json:"name,required"`
 	Variables       map[string]string `json:"variables,required"`
 	SecretVariables map[string]string `json:"secret_variables,required"`

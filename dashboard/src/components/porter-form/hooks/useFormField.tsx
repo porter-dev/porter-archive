@@ -21,7 +21,7 @@ interface FormFieldData<T> {
 }
 
 interface Options<T> {
-  initState?: T;
+  initState?: T | (() => T);
   initValidation?: Partial<PorterFormFieldValidationState>;
   initVars?: PorterFormVariableList;
 }
@@ -33,6 +33,19 @@ const useFormField = <T extends PorterFormFieldFieldState>(
   const { dispatchAction, formState } = useContext(PorterFormContext);
 
   useEffect(() => {
+    if (typeof initState === "function") {
+      dispatchAction({
+        type: "init-field",
+        id: fieldId,
+        initValue: initState() || {},
+        initValidation: initValidation || {
+          validated: false,
+        },
+        initVars: initVars || {},
+      });
+      return;
+    }
+
     dispatchAction({
       type: "init-field",
       id: fieldId,

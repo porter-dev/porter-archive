@@ -63,6 +63,7 @@ func TestListInfrasByProjectID(t *testing.T) {
 
 	infras, err := tester.repo.Infra().ListInfrasByProjectID(
 		tester.initProjects[0].Model.ID,
+		"",
 	)
 
 	if err != nil {

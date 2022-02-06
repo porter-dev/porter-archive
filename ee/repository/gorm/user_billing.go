@@ -5,7 +5,7 @@ package gorm
 import (
 	"github.com/porter-dev/porter/ee/models"
 	"github.com/porter-dev/porter/ee/repository"
-	cerepository "github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/encryption"
 	"gorm.io/gorm"
 )
 
@@ -84,7 +84,7 @@ func (repo *UserBillingRepository) EncryptUserBillingData(
 	key *[32]byte,
 ) error {
 	if tok := userBilling.Token; len(tok) > 0 {
-		cipherData, err := cerepository.Encrypt(tok, key)
+		cipherData, err := encryption.Encrypt(tok, key)
 
 		if err != nil {
 			return err
@@ -103,7 +103,7 @@ func (repo *UserBillingRepository) DecryptUserBillingData(
 	key *[32]byte,
 ) error {
 	if tok := userBilling.Token; len(tok) > 0 {
-		plaintext, err := cerepository.Decrypt(tok, key)
+		plaintext, err := encryption.Decrypt(tok, key)
 
 		if err != nil {
 			return err

@@ -6,11 +6,13 @@ export type PorterUrl =
   | "integrations"
   | "new-project"
   | "cluster-dashboard"
+  | "infrastructure"
   | "project-settings"
   | "applications"
   | "env-groups"
   | "jobs"
-  | "onboarding";
+  | "onboarding"
+  | "databases";
 
 export const PorterUrls = [
   "dashboard",
@@ -19,10 +21,12 @@ export const PorterUrls = [
   "new-project",
   "cluster-dashboard",
   "project-settings",
+  "infrastructure",
   "applications",
   "env-groups",
   "jobs",
   "onboarding",
+  "databases",
 ];
 
 // TODO: consolidate with pushFiltered

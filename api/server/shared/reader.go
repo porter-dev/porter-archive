@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
+	"github.com/porter-dev/porter/internal/logger"
 )
 
 type RequestDecoderValidator interface {
@@ -15,18 +16,20 @@ type RequestDecoderValidator interface {
 }
 
 type DefaultRequestDecoderValidator struct {
-	config    *config.Config
+	logger    *logger.Logger
+	alerter   alerter.Alerter
 	validator requestutils.Validator
 	decoder   requestutils.Decoder
 }
 
 func NewDefaultRequestDecoderValidator(
-	conf *config.Config,
+	logger *logger.Logger,
+	alerter alerter.Alerter,
 ) RequestDecoderValidator {
 	validator := requestutils.NewDefaultValidator()
 	decoder := requestutils.NewDefaultDecoder()
 
-	return &DefaultRequestDecoderValidator{conf, validator, decoder}
+	return &DefaultRequestDecoderValidator{logger, alerter, validator, decoder}
 }
 
 func (j *DefaultRequestDecoderValidator) DecodeAndValidate(
@@ -38,13 +41,13 @@ func (j *DefaultRequestDecoderValidator) DecodeAndValidate(
 
 	// decode the request parameters (body and query)
 	if requestErr = j.decoder.Decode(v, r); requestErr != nil {
-		apierrors.HandleAPIError(j.config, w, r, requestErr, true)
+		apierrors.HandleAPIError(j.logger, j.alerter, w, r, requestErr, true)
 		return false
 	}
 
 	// validate the request object
 	if requestErr = j.validator.Validate(v); requestErr != nil {
-		apierrors.HandleAPIError(j.config, w, r, requestErr, true)
+		apierrors.HandleAPIError(j.logger, j.alerter, w, r, requestErr, true)
 		return false
 	}
 

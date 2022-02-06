@@ -3,6 +3,7 @@ package websocket
 import (
 	"errors"
 	"net/http"
+	"sync"
 	"syscall"
 
 	"github.com/gorilla/websocket"
@@ -10,23 +11,30 @@ import (
 
 type WebsocketSafeReadWriter struct {
 	conn *websocket.Conn
+	mu   sync.Mutex
 }
 
-func (w *WebsocketSafeReadWriter) WriteJSONWithChannel(v interface{}, errorChan chan<- error) {
+func (w *WebsocketSafeReadWriter) WriteJSON(v interface{}) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	err := w.conn.WriteJSON(v)
 
 	if err != nil {
 		if errOr(err, websocket.ErrCloseSent, syscall.EPIPE, syscall.ECONNRESET) {
 			// if close has been sent, or error is broken pipe error or connection reset, we want to
 			// send a message to the error channel to ensure closure but we ignore the error
-			errorChan <- nil
-		} else if err != nil {
-			errorChan <- err
+			return nil
 		}
+
+		return err
 	}
+
+	return nil
 }
 
 func (w *WebsocketSafeReadWriter) Write(data []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	err := w.conn.WriteMessage(websocket.TextMessage, data)
 
 	if err != nil {
@@ -44,6 +52,10 @@ func (w *WebsocketSafeReadWriter) Write(data []byte) (int, error) {
 
 func (w *WebsocketSafeReadWriter) ReadMessage() (messageType int, p []byte, err error) {
 	return w.conn.ReadMessage()
+}
+
+func (w *WebsocketSafeReadWriter) Close() error {
+	return w.conn.Close()
 }
 
 type WebsocketResponseWriter struct {

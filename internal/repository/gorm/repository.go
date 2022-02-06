@@ -11,6 +11,7 @@ type GormRepository struct {
 	session                   repository.SessionRepository
 	project                   repository.ProjectRepository
 	cluster                   repository.ClusterRepository
+	database                  repository.DatabaseRepository
 	helmRepo                  repository.HelmRepoRepository
 	registry                  repository.RegistryRepository
 	gitRepo                   repository.GitRepoRepository
@@ -56,6 +57,10 @@ func (t *GormRepository) Project() repository.ProjectRepository {
 
 func (t *GormRepository) Cluster() repository.ClusterRepository {
 	return t.cluster
+}
+
+func (t *GormRepository) Database() repository.DatabaseRepository {
+	return t.database
 }
 
 func (t *GormRepository) HelmRepo() repository.HelmRepoRepository {
@@ -182,6 +187,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		session:                   NewSessionRepository(db),
 		project:                   NewProjectRepository(db),
 		cluster:                   NewClusterRepository(db, key),
+		database:                  NewDatabaseRepository(db, key),
 		helmRepo:                  NewHelmRepoRepository(db, key),
 		registry:                  NewRegistryRepository(db, key),
 		gitRepo:                   NewGitRepoRepository(db, key),

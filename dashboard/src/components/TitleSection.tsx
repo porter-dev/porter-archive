@@ -7,6 +7,7 @@ interface Props {
   iconWidth?: string;
   capitalize?: boolean;
   className?: string;
+  materialIconClass?: string;
   handleNavBack?: () => void;
 }
 
@@ -17,6 +18,7 @@ const TitleSection: React.FC<Props> = ({
   capitalize,
   handleNavBack,
   className,
+  materialIconClass,
 }) => {
   return (
     <StyledTitleSection className={className}>
@@ -27,7 +29,16 @@ const TitleSection: React.FC<Props> = ({
           </i>
         </BackButton>
       )}
-      {icon && <Icon width={iconWidth} src={icon} />}
+
+      {icon &&
+        (materialIconClass?.length ? (
+          <MaterialIcon width={iconWidth} className={materialIconClass}>
+            {icon}
+          </MaterialIcon>
+        ) : (
+          <Icon width={iconWidth} src={icon} />
+        ))}
+
       <StyledTitle capitalize={capitalize}>{children}</StyledTitle>
     </StyledTitleSection>
   );
@@ -57,6 +68,11 @@ const StyledTitleSection = styled.div`
 `;
 
 const Icon = styled.img<{ width: string }>`
+  width: ${(props) => props.width || "28px"};
+  margin-right: 16px;
+`;
+
+const MaterialIcon = styled.span<{ width: string }>`
   width: ${(props) => props.width || "28px"};
   margin-right: 16px;
 `;

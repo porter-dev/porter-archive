@@ -1,6 +1,8 @@
 package namespace
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -9,34 +11,31 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type RenameConfigMapHandler struct {
+type RemoveEnvGroupAppHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewRenameConfigMapHandler(
+func NewRemoveEnvGroupAppHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *RenameConfigMapHandler {
-	return &RenameConfigMapHandler{
+) *RemoveEnvGroupAppHandler {
+	return &RemoveEnvGroupAppHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *RenameConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.RenameConfigMapRequest{}
+func (c *RemoveEnvGroupAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.AddEnvGroupApplicationRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
-
-	if request.NewName == request.Name {
-		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -50,43 +49,38 @@ func (c *RenameConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	configMap, err := agent.GetConfigMap(request.Name, namespace)
+	// read the attached configmap
+	cm, _, err := agent.GetLatestVersionedConfigMap(request.Name, namespace)
+
+	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("env group not found"),
+			http.StatusNotFound,
+		))
+		return
+	} else if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	cm, err = agent.RemoveApplicationFromVersionedConfigMap(cm, request.ApplicationName)
+
+	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("env group not found"),
+			http.StatusNotFound,
+		))
+		return
+	} else if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	res, err := envgroup.ToEnvGroup(cm)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
-	}
-
-	secret, err := agent.GetSecret(configMap.Name, configMap.Namespace)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	var decodedSecretData = make(map[string]string)
-	for k, v := range secret.Data {
-		decodedSecretData[k] = string(v)
-	}
-
-	newConfigMap, err := createConfigMap(agent, types.ConfigMapInput{
-		Name:            request.NewName,
-		Namespace:       namespace,
-		Variables:       configMap.Data,
-		SecretVariables: decodedSecretData,
-	})
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	if err := deleteConfigMap(agent, configMap.Name, configMap.Namespace); err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	res := types.RenameConfigMapResponse{
-		ConfigMap: newConfigMap,
 	}
 
 	c.WriteResult(w, r, res)

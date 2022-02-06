@@ -6,6 +6,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/rds"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gcr"
@@ -40,6 +41,7 @@ type ProvisionOpts struct {
 	TFHTTPBackendURL    string
 	CredentialExchange  *ProvisionCredentialExchange
 	OperationKind       ProvisionerOperation
+	ProvisionerTest     bool
 
 	// resource-specific opts
 	ECR  *ecr.Conf
@@ -48,6 +50,9 @@ type ProvisionOpts struct {
 	GKE  *gke.Conf
 	DOCR *docr.Conf
 	DOKS *doks.Conf
+
+	// DB instance specific opts
+	RDS *rds.Conf
 }
 
 func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
@@ -83,9 +88,11 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 		env = opts.DOCR.AttachDOCREnv(env)
 	case types.InfraDOKS:
 		env = opts.DOKS.AttachDOKSEnv(env)
+	case types.InfraRDS:
+		env = opts.RDS.AttachRDSEnv(env)
 	}
 
-	return &batchv1.Job{
+	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s", string(opts.OperationKind), opts.Infra.GetUniqueName()),
 			Namespace: opts.ProvJobNamespace,
@@ -116,7 +123,29 @@ func GetProvisionerJobTemplate(opts *ProvisionOpts) (*batchv1.Job, error) {
 				},
 			},
 		},
-	}, nil
+	}
+
+	if opts.ProvisionerTest {
+		job.Spec.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{
+			{
+				Name:      "cloud-keys",
+				MountPath: "/root",
+			},
+		}
+
+		job.Spec.Template.Spec.Volumes = []v1.Volume{
+			{
+				Name: "cloud-keys",
+				VolumeSource: v1.VolumeSource{
+					Secret: &v1.SecretVolumeSource{
+						SecretName: "cloud-creds",
+					},
+				},
+			},
+		}
+	}
+
+	return job, nil
 }
 
 func GetTFEnv(opts *ProvisionOpts) []v1.EnvVar {

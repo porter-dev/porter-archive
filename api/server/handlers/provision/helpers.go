@@ -60,6 +60,7 @@ func GetSharedProvisionerOpts(conf *config.Config, infra *models.Infra) (*provis
 		ProvJobNamespace:    conf.ServerConf.ProvisionerJobNamespace,
 		ProvImagePullSecret: conf.ServerConf.ProvisionerImagePullSecret,
 		TFHTTPBackendURL:    conf.ServerConf.ProvisionerBackendURL,
+		ProvisionerTest:     conf.ServerConf.ProvisionerTest,
 		CredentialExchange: &provisioner.ProvisionCredentialExchange{
 			CredExchangeEndpoint: fmt.Sprintf("%s/api/internal/credentials", conf.ServerConf.ProvisionerCredExchangeURL),
 			CredExchangeToken:    rawToken,

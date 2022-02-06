@@ -40,6 +40,7 @@ const nameMap: { [key: string]: string } = {
   docr: "DigitalOcean Container Registry (DOCR)",
   gke: "Google Kubernetes Engine (GKE)",
   gcr: "Google Container Registry (GCR)",
+  rds: "Amazon Relational Database (RDS)",
 };
 
 const ProvisionerStatus: React.FC<Props> = ({ modules }) => {

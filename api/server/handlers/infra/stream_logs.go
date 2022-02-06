@@ -10,8 +10,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/redis_stream"
 )
 
 type InfraStreamLogsHandler struct {
@@ -38,7 +38,7 @@ func (c *InfraStreamLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = provisioner.ResourceStream(client, infra.GetUniqueName(), safeRW)
+	err = redis_stream.ResourceStream(client, infra.GetUniqueName(), safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

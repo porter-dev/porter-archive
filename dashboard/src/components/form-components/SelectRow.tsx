@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import Selector from "../Selector";
+import Selector, { SelectorPropsType } from "../Selector";
 
 type PropsType = {
   label: string;
@@ -13,6 +13,7 @@ type PropsType = {
   dropdownMaxHeight?: string;
   scrollBuffer?: boolean;
   doc?: string;
+  selectorProps?: Partial<SelectorPropsType>;
 };
 
 type StateType = {};
@@ -39,6 +40,7 @@ export default class SelectRow extends Component<PropsType, StateType> {
             width={this.props.width || "270px"}
             dropdownWidth={this.props.width}
             dropdownMaxHeight={this.props.dropdownMaxHeight}
+            {...(this.props.selectorProps || {})}
           />
         </SelectWrapper>
       </StyledSelectRow>

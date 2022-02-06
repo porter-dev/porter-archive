@@ -22,6 +22,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Cluster{},
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
+		&models.Database{},
 		&models.Infra{},
 		&models.GitActionConfig{},
 		&models.Invite{},

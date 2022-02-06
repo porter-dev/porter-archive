@@ -23,8 +23,8 @@ type APIObjectEndpointFactory struct {
 }
 
 func NewAPIObjectEndpointFactory(conf *config.Config) APIEndpointFactory {
-	decoderValidator := NewDefaultRequestDecoderValidator(conf)
-	resultWriter := NewDefaultResultWriter(conf)
+	decoderValidator := NewDefaultRequestDecoderValidator(conf.Logger, conf.Alerter)
+	resultWriter := NewDefaultResultWriter(conf.Logger, conf.Alerter)
 
 	return &APIObjectEndpointFactory{
 		DecoderValidator: decoderValidator,

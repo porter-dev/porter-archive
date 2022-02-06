@@ -43,11 +43,11 @@ func (p *InfraScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(
 				fmt.Errorf("infra with id %d not found in project %d", infraID, proj.ID),
 			), true)
 		} else {
-			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
+			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		}
 
 		return

@@ -9,6 +9,7 @@ import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import Loading from "components/Loading";
+import { readableDate } from "shared/string_utils";
 
 const tierOptions = [
   { value: "basic", label: "Basic" },
@@ -27,16 +28,6 @@ const regionOptions = [
   { value: "sgp1", label: "Singapore 1" },
   { value: "tor1", label: "Toronto 1" },
 ];
-
-const readableDate = (s: string) => {
-  const ts = new Date(s);
-  const date = ts.toLocaleDateString();
-  const time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
 
 /**
  * This will redirect to DO, and we should pass the redirection URI to be /onboarding/provision?provider=do
@@ -205,12 +196,15 @@ export const SettingsForm: React.FC<{
     console.log("Provisioning DOCR...");
     try {
       return await api
-        .createDOCR(
+        .provisionInfra(
           "<token>",
           {
+            kind: "docr",
             do_integration_id: integrationId,
-            docr_name: project.name,
-            docr_subscription_tier: tier,
+            values: {
+              docr_name: project.name,
+              docr_subscription_tier: tier,
+            },
           },
           {
             project_id: project.id,
@@ -230,13 +224,16 @@ export const SettingsForm: React.FC<{
     console.log("Provisioning DOKS...");
     try {
       return await api
-        .createDOKS(
+        .provisionInfra(
           "<token>",
           {
+            kind: "doks",
             do_integration_id: integrationId,
-            doks_name: clusterName,
-            do_region: region,
-            issuer_email: snap.StateHandler.user_email,
+            values: {
+              cluster_name: clusterName,
+              do_region: region,
+              issuer_email: snap.StateHandler.user_email,
+            },
           },
           {
             project_id: project.id,

@@ -9,18 +9,9 @@ import { StateHandler } from "main/home/onboarding/state/StateHandler";
 import { GCPRegistryConfig } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
 import api from "shared/api";
+import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-
-const readableDate = (s: string) => {
-  const ts = new Date(s);
-  const date = ts.toLocaleDateString();
-  const time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;

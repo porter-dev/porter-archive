@@ -68,7 +68,12 @@ export interface ChartTypeWithExtendedConfig extends ChartType {
     };
     container: {
       command: string;
-      env: any;
+      env: {
+        normal: {
+          [key: string]: string;
+        };
+        synced: any;
+      };
       lifecycle: { postStart: string; preStop: string };
       port: number;
     };
@@ -218,6 +223,7 @@ export interface ProjectType {
   id: number;
   name: string;
   preview_envs_enabled: boolean;
+  enable_rds_databases: boolean;
   roles: {
     id: number;
     kind: string;
@@ -349,4 +355,177 @@ export type KubeEvent = {
   resource_type: string;
   timestamp: string;
   sub_events: any[];
+};
+
+export type InfraKind =
+  | "ecr"
+  | "eks"
+  | "rds"
+  | "gke"
+  | "gcr"
+  | "doks"
+  | "docr"
+  | "test";
+
+export type OperationStatus = "starting" | "completed" | "errored";
+
+export type OperationType =
+  | "create"
+  | "update"
+  | "delete"
+  | "retry_create"
+  | "retry_delete";
+
+export type Infrastructure = {
+  id: number;
+  api_version: string;
+  created_at: string;
+  updated_at: string;
+  project_id: number;
+  kind: InfraKind;
+  status: string;
+  aws_integration_id: number;
+  do_integration_id: number;
+  gcp_integration_id: number;
+  latest_operation: Operation;
+  source_link: string;
+  source_version: string;
+};
+
+export type Operation = {
+  id: string;
+  infra_id: number;
+  type: OperationType;
+  status: OperationStatus;
+  errored: boolean;
+  error: string;
+  last_applied: any;
+  last_updated: string;
+  form: any;
+};
+
+export type ProviderInfoMap = {
+  [key in InfraKind]: {
+    provider: string;
+    source: string;
+    resource_name: string;
+    resource_link: string;
+    provider_name: string;
+  };
+};
+
+export type TFResourceStatus =
+  | "planned_create"
+  | "planned_delete"
+  | "planned_update"
+  | "created"
+  | "creating"
+  | "updating"
+  | "deleting"
+  | "deleted"
+  | "errored";
+
+export type TFResourceState = {
+  id: string;
+  status: TFResourceStatus;
+  error?: string;
+};
+
+export type TFStateStatus = "created" | "deleted" | "errored";
+
+export type TFState = {
+  last_updated: string;
+  operation_id: string;
+  status: TFResourceStatus;
+  resources: {
+    [key: string]: TFResourceState;
+  };
+};
+
+export const KindMap: ProviderInfoMap = {
+  ecr: {
+    provider: "aws",
+    source: "porter/aws/ecr",
+    resource_name: "Registry",
+    resource_link: "/integrations/registry",
+    provider_name: "Elastic Container Registry (ECR)",
+  },
+  eks: {
+    provider: "aws",
+    source: "porter/aws/eks",
+    resource_name: "Cluster",
+    resource_link: "/dashboard",
+    provider_name: "Elastic Kubernetes Service (EKS)",
+  },
+  rds: {
+    provider: "aws",
+    source: "porter/aws/rds",
+    resource_name: "Database",
+    resource_link: "/databases",
+    provider_name: "Relational Database Service (RDS)",
+  },
+  gcr: {
+    provider: "gcp",
+    source: "porter/gcp/gcr",
+    resource_name: "Registry",
+    resource_link: "/integrations/registry",
+    provider_name: "Google Container Registry (GCR)",
+  },
+  gke: {
+    provider: "gcp",
+    source: "porter/gcp/gke",
+    resource_name: "Cluster",
+    resource_link: "/dashboard",
+    provider_name: "Google Kubernetes Engine (GKE)",
+  },
+  docr: {
+    provider: "aws",
+    source: "porter/do/docr",
+    resource_name: "Registry",
+    resource_link: "/integrations/registry",
+    provider_name: "Digital Ocean Container Registry (DOCR)",
+  },
+  doks: {
+    provider: "aws",
+    source: "porter/do/doks",
+    resource_name: "Cluster",
+    resource_link: "/dashboard",
+    provider_name: "Digital Ocean Kubernetes Service (DOKS)",
+  },
+  test: {
+    provider: "aws",
+    source: "porter/test",
+    resource_name: "Test",
+    resource_link: "/dashboard",
+    provider_name: "Testing",
+  },
+};
+
+export type InfraTemplateMeta = {
+  icon?: string;
+  description: string;
+  name: string;
+  kind: string;
+  version?: string;
+  required_credential: InfraCredentialOptions;
+};
+
+export type InfraTemplate = {
+  icon?: string;
+  description: string;
+  name: string;
+  kind: string;
+  version?: string;
+  form: any;
+  required_credential: InfraCredentialOptions;
+};
+
+export type InfraCredentialOptions =
+  | "aws_integration_id"
+  | "gcp_integration_id"
+  | "do_integration_id"
+  | "";
+
+export type InfraCredentials = {
+  [key in InfraCredentialOptions]?: number;
 };

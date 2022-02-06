@@ -80,33 +80,6 @@ const overwriteAWSIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
-const createDOCR = baseApi<
-  {
-    do_integration_id: number;
-    docr_name: string;
-    docr_subscription_tier: string;
-  },
-  {
-    project_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/provision/docr`;
-});
-
-const createDOKS = baseApi<
-  {
-    do_integration_id: number;
-    doks_name: string;
-    do_region: string;
-    issuer_email: string;
-  },
-  {
-    project_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/provision/doks`;
-});
-
 const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
@@ -176,31 +149,6 @@ const createGCPIntegration = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/integrations/gcp`;
-});
-
-const createGCR = baseApi<
-  {
-    gcp_integration_id: number;
-  },
-  {
-    project_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/provision/gcr`;
-});
-
-const createGKE = baseApi<
-  {
-    gcp_region: string;
-    gcp_integration_id: number;
-    gke_name: string;
-    issuer_email: string;
-  },
-  {
-    project_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/provision/gke`;
 });
 
 const createInvite = baseApi<
@@ -685,12 +633,155 @@ const getImageTags = baseApi<
 });
 
 const getInfra = baseApi<
-  {},
+  {
+    version?: string;
+  },
   {
     project_id: number;
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infra`;
+});
+
+const listInfraTemplates = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/templates`;
+});
+
+const getInfraTemplate = baseApi<
+  {},
+  {
+    project_id: number;
+    name: string;
+    version: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, name, version } = pathParams;
+
+  return `/api/projects/${project_id}/infras/templates/${name}/${version}`;
+});
+
+const provisionInfra = baseApi<
+  {
+    kind: string;
+    values: any;
+    aws_integration_id?: number;
+    gcp_integration_id?: number;
+    do_integration_id?: number;
+  },
+  {
+    project_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras`;
+});
+
+const updateInfra = baseApi<
+  {
+    values?: any;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/update`;
+});
+
+const retryCreateInfra = baseApi<
+  {
+    values?: any;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/retry_create`;
+});
+
+const retryDeleteInfra = baseApi<
+  {
+    values?: any;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/retry_delete`;
+});
+
+const deleteInfra = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("DELETE", (pathParams) => {
+  let { project_id, infra_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}`;
+});
+
+const listOperations = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/operations`;
+});
+
+const getOperation = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+    operation_id: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, infra_id, operation_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/operations/${operation_id}`;
+});
+
+const getOperationLogs = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+    operation_id: string;
+  }
+>("GET", (pathParams) => {
+  let { project_id, infra_id, operation_id } = pathParams;
+  return `/api/projects/${project_id}/infras/${infra_id}/operations/${operation_id}/logs`;
+});
+
+const getInfraState = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/state`;
+});
+
+const getInfraByID = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}`;
 });
 
 const getInfraDesired = baseApi<
@@ -966,28 +1057,6 @@ const logInUser = baseApi<{
 
 const logOutUser = baseApi("POST", "/api/logout");
 
-const provisionECR = baseApi<
-  {
-    ecr_name: string;
-    aws_integration_id: number;
-  },
-  { id: number }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.id}/provision/ecr`;
-});
-
-const provisionEKS = baseApi<
-  {
-    eks_name: string;
-    aws_integration_id: number;
-    machine_type: string;
-    issuer_email: string;
-  },
-  { id: number }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.id}/provision/eks`;
-});
-
 const registerUser = baseApi<{
   email: string;
   password: string;
@@ -1047,6 +1116,17 @@ const upgradeChartValues = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
 });
 
+const listEnvGroups = baseApi<
+  {},
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroups/list`;
+});
+
 const listConfigMaps = baseApi<
   {},
   {
@@ -1056,6 +1136,23 @@ const listConfigMaps = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/list`;
+});
+
+const getEnvGroup = baseApi<
+  {},
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+    name: string;
+    version?: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${
+    pathParams.cluster_id
+  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
+    pathParams.version ? "&version=" + pathParams.version : ""
+  }`;
 });
 
 const getConfigMap = baseApi<
@@ -1070,6 +1167,38 @@ const getConfigMap = baseApi<
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap`;
 });
+
+const createEnvGroup = baseApi<
+  {
+    name: string;
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
+  },
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
+});
+
+const updateEnvGroup = baseApi<
+  {
+    name: string;
+    variables: { [key: string]: string };
+    secret_variables?: { [key: string]: string };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>(
+  "POST",
+  ({ cluster_id, project_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/create`
+);
 
 const createConfigMap = baseApi<
   {
@@ -1114,6 +1243,19 @@ const renameConfigMap = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/rename`;
+});
+
+const deleteEnvGroup = baseApi<
+  {
+    name: string;
+  },
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup`;
 });
 
 const deleteConfigMap = baseApi<
@@ -1326,6 +1468,60 @@ const getCanCreateProject = baseApi<{}, {}>(
   () => "/api/can_create_project"
 );
 
+const addApplicationToEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/add_application`
+);
+
+const removeApplicationFromEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/remove_application`
+);
+
+const provisionDatabase = baseApi<
+  {
+    username: string;
+    password: string;
+    machine_type: string;
+    db_storage_encrypted: boolean;
+    db_name: string;
+    db_max_allocated_storage: string;
+    db_family: string;
+    db_engine_version: string;
+    db_allocated_storage: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/provision/rds`
+);
+
+const getDatabases = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/databases`
+);
 const getPreviousLogsForContainer = baseApi<
   {
     container_name: string;
@@ -1352,15 +1548,11 @@ export default {
   getGCPIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
-  createDOCR,
-  createDOKS,
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,
   listEnvironments,
   createGCPIntegration,
-  createGCR,
-  createGKE,
   createInvite,
   createNamespace,
   createPasswordReset,
@@ -1406,7 +1598,19 @@ export default {
   getGitRepos,
   getImageRepos,
   getImageTags,
+  listInfraTemplates,
+  getInfraTemplate,
   getInfra,
+  provisionInfra,
+  deleteInfra,
+  updateInfra,
+  listOperations,
+  getOperation,
+  getOperationLogs,
+  retryCreateInfra,
+  retryDeleteInfra,
+  getInfraState,
+  getInfraByID,
   getInfraDesired,
   getInfraCurrent,
   getIngress,
@@ -1442,8 +1646,6 @@ export default {
   listConfigMaps,
   logInUser,
   logOutUser,
-  provisionECR,
-  provisionEKS,
   registerUser,
   rollbackChart,
   uninstallTemplate,
@@ -1474,5 +1676,14 @@ export default {
   getLogBuckets,
   getLogBucketLogs,
   getCanCreateProject,
+  createEnvGroup,
+  updateEnvGroup,
+  listEnvGroups,
+  getEnvGroup,
+  deleteEnvGroup,
+  addApplicationToEnvGroup,
+  removeApplicationFromEnvGroup,
+  provisionDatabase,
+  getDatabases,
   getPreviousLogsForContainer,
 };

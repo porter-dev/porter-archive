@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+option go_package = "github.com/porter-dev/porter/provisioner/pb";
+
+// Provisioner represents the service for managing, updating, and deleting infrastructure.
+service Provisioner {
+    // Server-to-client streaming RPC that returns an update to the state.
+    rpc GetStateUpdate(Infra) returns (stream StateUpdate) {}
+
+    // Server-to-client streaming RPC that returns a new log.
+    rpc GetLog(Infra) returns (stream LogString) {}
+
+    // Client-to-server streaming RPC that streams logs to the provisioner.
+    rpc StoreLog(stream TerraformLog) returns (TerraformStateMeta) {}
+}
+
+message TerraformStateMeta {
+
+}
+
+message Workspace {
+    string workspace = 1; 
+}
+
+message LogString {
+    string log = 1; 
+}
+
+message Infra {
+    int64 project_id = 1;
+    int64 id = 2;
+    string suffix = 3;
+}
+
+message StateUpdate {
+    string resource_id = 1; 
+    string status = 2;
+    string error = 3;
+}
+
+enum TerraformEvent {
+    PLANNED_CHANGE = 0;
+    CHANGE_SUMMARY = 1;
+    APPLY_START = 2;
+    APPLY_PROGRESS = 3;
+    APPLY_ERRORED = 4;
+    APPLY_COMPLETE = 5;
+    DIAGNOSTIC = 6;
+}
+
+message TerraformResource {
+    string addr = 1;
+    string resource = 2;
+    string resource_type = 3; 
+    string resource_name = 4;
+    string provider = 5;
+    TerraformErrored errored = 6; 
+}
+
+message TerraformErrored {
+    bool errored_out = 1;
+    string error_summary = 2;
+}
+
+message TerraformHook {
+    TerraformResource resource = 1;  
+    string action = 2;   
+}
+
+message TerraformChange {
+    TerraformResource resource = 1;
+    string action = 2; 
+}
+
+message TerraformChanges {
+    int64 add = 1;
+    int64 change = 2;
+    int64 remove = 3;
+    string operation = 4;
+}
+
+message DiagnosticDetail {
+    string severity = 1;
+    string summary = 2; 
+    string address = 3;
+    string detail = 4;
+}
+
+message TerraformLog {
+    string level = 1;
+    string message = 2;
+    string timestamp = 3; 
+    TerraformEvent type = 4;
+    TerraformHook hook = 5;
+    TerraformChange change = 6;
+    TerraformChanges changes = 7; 
+    DiagnosticDetail diagnostic = 8;
+}

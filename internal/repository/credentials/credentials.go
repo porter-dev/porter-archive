@@ -31,6 +31,9 @@ type AWSCredential struct {
 
 	// An optional session token, if the user is assuming a role
 	AWSSessionToken []byte `json:"aws_session_token"`
+
+	// An optional region associated with this AWS credential
+	AWSRegion []byte `json:"aws_region"`
 }
 
 type CredentialStorage interface {

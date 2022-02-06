@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
@@ -76,6 +77,18 @@ func (repo *RegistryRepository) ReadRegistry(projectID, regID uint) (*models.Reg
 	return reg, nil
 }
 
+func (repo *RegistryRepository) ReadRegistryByInfraID(projectID, infraID uint) (*models.Registry, error) {
+	reg := &models.Registry{}
+
+	if err := repo.db.Preload("TokenCache").Where("project_id = ? AND infra_id = ?", projectID, infraID).First(&reg).Error; err != nil {
+		return nil, err
+	}
+
+	repo.DecryptRegistryData(reg, repo.key)
+
+	return reg, nil
+}
+
 // ListRegistriesByProjectID finds all registries
 // for a given project id
 func (repo *RegistryRepository) ListRegistriesByProjectID(
@@ -110,7 +123,7 @@ func (repo *RegistryRepository) UpdateRegistryTokenCache(
 	tokenCache *ints.RegTokenCache,
 ) (*models.Registry, error) {
 	if tok := tokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, repo.key)
+		cipherData, err := encryption.Encrypt(tok, repo.key)
 
 		if err != nil {
 			return nil, err
@@ -164,7 +177,7 @@ func (repo *RegistryRepository) EncryptRegistryData(
 	key *[32]byte,
 ) error {
 	if tok := registry.TokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, key)
+		cipherData, err := encryption.Encrypt(tok, key)
 
 		if err != nil {
 			return err
@@ -183,7 +196,7 @@ func (repo *RegistryRepository) DecryptRegistryData(
 	key *[32]byte,
 ) error {
 	if tok := registry.TokenCache.Token; len(tok) > 0 {
-		plaintext, err := repository.Decrypt(tok, key)
+		plaintext, err := encryption.Decrypt(tok, key)
 
 		if err != nil {
 			return err

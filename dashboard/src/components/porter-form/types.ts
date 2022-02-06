@@ -162,6 +162,7 @@ export interface PorterFormData {
   name: string;
   hasSource: boolean;
   includeHiddenFields: boolean;
+  isClusterScoped?: boolean;
   tabs: Tab[];
 }
 
@@ -173,6 +174,23 @@ export interface PorterFormValidationInfo {
 // internal field state interfaces
 export interface StringInputFieldState {}
 export interface CheckboxFieldState {}
+
+export type PartialEnvGroup = {
+  name: string;
+  namespace: string;
+  version: number;
+};
+
+export type PopulatedEnvGroup = {
+  name: string;
+  namespace: string;
+  version: number;
+  variables: {
+    [key: string]: string;
+  };
+  applications: any[];
+  meta_version: number;
+};
 export interface KeyValueArrayFieldState {
   values: {
     key: string;
@@ -180,6 +198,7 @@ export interface KeyValueArrayFieldState {
   }[];
   showEnvModal: boolean;
   showEditorModal: boolean;
+  synced_env_groups: PopulatedEnvGroup[];
 }
 export interface ArrayInputFieldState {}
 export interface SelectFieldState {}

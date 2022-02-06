@@ -4,10 +4,13 @@ import styled from "styled-components";
 import key from "assets/key.svg";
 
 import { Context } from "shared/Context";
+import { readableDate } from "shared/string_utils";
 
 export type EnvGroupData = {
-  data: Record<string, string>;
-  metadata: any;
+  name: string;
+  namespace: string;
+  created_at?: string;
+  version: number;
 };
 
 type PropsType = {
@@ -26,22 +29,12 @@ export default class EnvGroup extends Component<PropsType, StateType> {
     update: [] as any[],
   };
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
   render() {
     let { envGroup, setExpanded } = this.props;
-    let name = envGroup?.metadata?.name;
-    let timestamp = envGroup?.metadata?.creationTimestamp;
-    let namespace = envGroup?.metadata?.namespace;
-    let varCount = Object.values(envGroup?.data || {}).length;
+    let name = envGroup?.name;
+    let timestamp = envGroup?.created_at;
+    let namespace = envGroup?.namespace;
+    let version = envGroup?.version;
 
     return (
       <StyledEnvGroup
@@ -59,9 +52,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
 
         <BottomWrapper>
           <InfoWrapper>
-            <LastDeployed>
-              Last updated {this.readableDate(timestamp)}
-            </LastDeployed>
+            <LastDeployed>Last updated {readableDate(timestamp)}</LastDeployed>
           </InfoWrapper>
 
           <TagWrapper>
@@ -70,7 +61,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
           </TagWrapper>
         </BottomWrapper>
 
-        <Version>{varCount} variables</Version>
+        <Version>v{version}</Version>
       </StyledEnvGroup>
     );
   }

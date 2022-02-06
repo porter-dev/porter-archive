@@ -5,6 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -26,5 +27,21 @@ func NewInfraGetHandler(
 func (c *InfraGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
-	c.WriteResult(w, r, infra.ToInfraType())
+	res := infra.ToInfraType()
+
+	// look for the latest operation and attach it, if it exists
+	operation, err := c.Repo().Infra().GetLatestOperation(infra)
+
+	if err == nil && operation != nil {
+		op, err := operation.ToOperationType()
+
+		if err != nil {
+			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+			return
+		} else {
+			res.LatestOperation = op
+		}
+	}
+
+	c.WriteResult(w, r, res)
 }

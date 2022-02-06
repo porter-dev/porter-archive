@@ -1,12 +1,14 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
+	"github.com/porter-dev/porter/api/server/handlers/infra"
 	"github.com/porter-dev/porter/api/server/handlers/project"
-	"github.com/porter-dev/porter/api/server/handlers/provision"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -632,14 +634,14 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	//  POST /api/projects/{project_id}/provision/ecr -> provision.NewProvisionECRHandler
-	provisionECREndpoint := factory.NewAPIEndpoint(
+	// POST /api/projects/{project_id}/infras -> infra.NewInfraCreateHandler
+	createInfraEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/provision/ecr",
+				RelativePath: relPath + "/infras",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -648,56 +650,26 @@ func getProjectRoutes(
 		},
 	)
 
-	provisionECRHandler := provision.NewProvisionECRHandler(
+	createInfraHandler := infra.NewInfraCreateHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
-		Endpoint: provisionECREndpoint,
-		Handler:  provisionECRHandler,
+		Endpoint: createInfraEndpoint,
+		Handler:  createInfraHandler,
 		Router:   r,
 	})
 
-	//  POST /api/projects/{project_id}/provision/eks -> provision.NewProvisionEKSHandler
-	provisionEKSEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/infras/templates -> infra.NewInfraGetHandler
+	getTemplatesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/provision/eks",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-			CheckUsage:  true,
-			UsageMetric: types.Clusters,
-		},
-	)
-
-	provisionEKSHandler := provision.NewProvisionEKSHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &Route{
-		Endpoint: provisionEKSEndpoint,
-		Handler:  provisionEKSHandler,
-		Router:   r,
-	})
-
-	//  POST /api/projects/{project_id}/provision/docr -> provision.NewProvisionDOCRHandler
-	provisionDOCREndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/provision/docr",
+				RelativePath: relPath + "/infras/templates",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -706,56 +678,25 @@ func getProjectRoutes(
 		},
 	)
 
-	provisionDOCRHandler := provision.NewProvisionDOCRHandler(
+	getTemplatesHandler := infra.NewInfraListTemplateHandler(
 		config,
-		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
-		Endpoint: provisionDOCREndpoint,
-		Handler:  provisionDOCRHandler,
+		Endpoint: getTemplatesEndpoint,
+		Handler:  getTemplatesHandler,
 		Router:   r,
 	})
 
-	//  POST /api/projects/{project_id}/provision/doks -> provision.NewProvisionDOKSHandler
-	provisionDOKSEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/infras/templates -> infra.NewInfraGetHandler
+	getTemplateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/provision/doks",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-			CheckUsage:  true,
-			UsageMetric: types.Clusters,
-		},
-	)
-
-	provisionDOKSHandler := provision.NewProvisionDOKSHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &Route{
-		Endpoint: provisionDOKSEndpoint,
-		Handler:  provisionDOKSHandler,
-		Router:   r,
-	})
-
-	//  POST /api/projects/{project_id}/provision/gcr -> provision.NewProvisionGCRHandler
-	provisionGCREndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/provision/gcr",
+				RelativePath: fmt.Sprintf("%s/infras/templates/{%s}/{%s}", relPath, types.URLParamTemplateName, types.URLParamTemplateVersion),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -764,47 +705,190 @@ func getProjectRoutes(
 		},
 	)
 
-	provisionGCRHandler := provision.NewProvisionGCRHandler(
+	getTemplateHandler := infra.NewInfraGetTemplateHandler(
 		config,
-		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
-		Endpoint: provisionGCREndpoint,
-		Handler:  provisionGCRHandler,
+		Endpoint: getTemplateEndpoint,
+		Handler:  getTemplateHandler,
 		Router:   r,
 	})
 
-	//  POST /api/projects/{project_id}/provision/gke -> provision.NewProvisionGKEHandler
-	provisionGKEEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/provision/gke",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-			CheckUsage:  true,
-			UsageMetric: types.Clusters,
-		},
-	)
+	// //  POST /api/projects/{project_id}/provision/ecr -> provision.NewProvisionECRHandler
+	// provisionECREndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbCreate,
+	// 		Method: types.HTTPVerbPost,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/provision/ecr",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 		},
+	// 	},
+	// )
 
-	provisionGKEHandler := provision.NewProvisionGKEHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
+	// provisionECRHandler := provision.NewProvisionECRHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
 
-	routes = append(routes, &Route{
-		Endpoint: provisionGKEEndpoint,
-		Handler:  provisionGKEHandler,
-		Router:   r,
-	})
+	// routes = append(routes, &Route{
+	// 	Endpoint: provisionECREndpoint,
+	// 	Handler:  provisionECRHandler,
+	// 	Router:   r,
+	// })
+
+	// //  POST /api/projects/{project_id}/provision/eks -> provision.NewProvisionEKSHandler
+	// provisionEKSEndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbCreate,
+	// 		Method: types.HTTPVerbPost,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/provision/eks",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 		},
+	// 		CheckUsage:  true,
+	// 		UsageMetric: types.Clusters,
+	// 	},
+	// )
+
+	// provisionEKSHandler := provision.NewProvisionEKSHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
+
+	// routes = append(routes, &Route{
+	// 	Endpoint: provisionEKSEndpoint,
+	// 	Handler:  provisionEKSHandler,
+	// 	Router:   r,
+	// })
+
+	// //  POST /api/projects/{project_id}/provision/docr -> provision.NewProvisionDOCRHandler
+	// provisionDOCREndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbCreate,
+	// 		Method: types.HTTPVerbPost,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/provision/docr",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 		},
+	// 	},
+	// )
+
+	// provisionDOCRHandler := provision.NewProvisionDOCRHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
+
+	// routes = append(routes, &Route{
+	// 	Endpoint: provisionDOCREndpoint,
+	// 	Handler:  provisionDOCRHandler,
+	// 	Router:   r,
+	// })
+
+	// //  POST /api/projects/{project_id}/provision/doks -> provision.NewProvisionDOKSHandler
+	// provisionDOKSEndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbCreate,
+	// 		Method: types.HTTPVerbPost,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/provision/doks",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 		},
+	// 		CheckUsage:  true,
+	// 		UsageMetric: types.Clusters,
+	// 	},
+	// )
+
+	// provisionDOKSHandler := provision.NewProvisionDOKSHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
+
+	// routes = append(routes, &Route{
+	// 	Endpoint: provisionDOKSEndpoint,
+	// 	Handler:  provisionDOKSHandler,
+	// 	Router:   r,
+	// })
+
+	// //  POST /api/projects/{project_id}/provision/gcr -> provision.NewProvisionGCRHandler
+	// provisionGCREndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbCreate,
+	// 		Method: types.HTTPVerbPost,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/provision/gcr",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 		},
+	// 	},
+	// )
+
+	// provisionGCRHandler := provision.NewProvisionGCRHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
+
+	// routes = append(routes, &Route{
+	// 	Endpoint: provisionGCREndpoint,
+	// 	Handler:  provisionGCRHandler,
+	// 	Router:   r,
+	// })
+
+	// //  POST /api/projects/{project_id}/provision/gke -> provision.NewProvisionGKEHandler
+	// provisionGKEEndpoint := factory.NewAPIEndpoint(
+	// 	&types.APIRequestMetadata{
+	// 		Verb:   types.APIVerbCreate,
+	// 		Method: types.HTTPVerbPost,
+	// 		Path: &types.Path{
+	// 			Parent:       basePath,
+	// 			RelativePath: relPath + "/provision/gke",
+	// 		},
+	// 		Scopes: []types.PermissionScope{
+	// 			types.UserScope,
+	// 			types.ProjectScope,
+	// 		},
+	// 		CheckUsage:  true,
+	// 		UsageMetric: types.Clusters,
+	// 	},
+	// )
+
+	// provisionGKEHandler := provision.NewProvisionGKEHandler(
+	// 	config,
+	// 	factory.GetDecoderValidator(),
+	// 	factory.GetResultWriter(),
+	// )
+
+	// routes = append(routes, &Route{
+	// 	Endpoint: provisionGKEEndpoint,
+	// 	Handler:  provisionGKEHandler,
+	// 	Router:   r,
+	// })
 
 	return routes, newPath
 }

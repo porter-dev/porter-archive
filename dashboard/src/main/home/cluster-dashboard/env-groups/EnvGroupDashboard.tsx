@@ -42,16 +42,6 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
       : "Newest",
   };
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
   renderBody = () => {
     if (this.state.createEnvMode) {
       return (
@@ -112,9 +102,9 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
     if (this.state.expandedEnvGroup) {
       return (
         <ExpandedEnvGroup
+          isAuthorized={this.props.isAuthorized}
           namespace={
-            this.state.expandedEnvGroup?.metadata?.namespace ||
-            this.state.namespace
+            this.state.expandedEnvGroup?.namespace || this.state.namespace
           }
           currentCluster={this.props.currentCluster}
           envGroup={this.state.expandedEnvGroup}

@@ -47,8 +47,6 @@ RUN npm install -g npm@8.1
 
 RUN npm i --legacy-peer-deps
 
-ENV NODE_ENV=production
-
 RUN npm run build
 
 # Deployment environment

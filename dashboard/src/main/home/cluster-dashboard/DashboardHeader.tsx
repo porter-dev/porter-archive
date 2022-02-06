@@ -8,7 +8,9 @@ import TitleSection from "components/TitleSection";
 type PropsType = {
   image: any;
   title: string;
-  description: string;
+  description?: string;
+  materialIconClass?: string;
+  disableLineBreak?: boolean;
 };
 
 type StateType = {};
@@ -17,22 +19,28 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
   render() {
     return (
       <>
-        <TitleSection capitalize={true} icon={this.props.image}>
+        <TitleSection
+          capitalize={true}
+          icon={this.props.image}
+          materialIconClass={this.props.materialIconClass}
+        >
           {this.props.title}
         </TitleSection>
 
         <Br />
 
-        <InfoSection>
-          <TopRow>
-            <InfoLabel>
-              <i className="material-icons">info</i> Info
-            </InfoLabel>
-          </TopRow>
-          <Description>{this.props.description}</Description>
-        </InfoSection>
+        {this.props.description && (
+          <InfoSection>
+            <TopRow>
+              <InfoLabel>
+                <i className="material-icons">info</i> Info
+              </InfoLabel>
+            </TopRow>
+            <Description>{this.props.description}</Description>
+          </InfoSection>
+        )}
 
-        <LineBreak />
+        {!this.props.disableLineBreak && <LineBreak />}
       </>
     );
   }

@@ -1,10 +1,10 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Modal from "main/home/modals/Modal";
 import EnvEditorModal from "main/home/modals/EnvEditorModal";
 
-import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
+import { parseStringToEnvObject } from "./utils";
 
 export type KeyValueType = {
   key: string;
@@ -18,193 +18,41 @@ type PropsType = {
   label?: string;
   values: KeyValueType[];
   setValues: (x: KeyValueType[]) => void;
-  width?: string;
   disabled?: boolean;
-  namespace?: string;
-  clusterId?: number;
-  envLoader?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
 };
 
 type StateType = {
-  showEnvModal: boolean;
   showEditorModal: boolean;
 };
 
-export default class EnvGroupArray extends Component<PropsType, StateType> {
-  state = {
-    showEnvModal: false,
-    showEditorModal: false,
-  };
+const EnvGroupArray = ({
+  label,
+  values,
+  setValues,
+  disabled,
+  fileUpload,
+  secretOption,
+}: PropsType) => {
+  const [showEditorModal, setShowEditorModal] = useState(false);
 
-  componentDidMount() {
-    if (!this.props.values) {
-      let _values = [] as KeyValueType[];
-      this.props.setValues(_values);
+  useEffect(() => {
+    if (!values) {
+      setValues([]);
     }
-  }
+  }, [values]);
 
-  renderDeleteButton = (i: number) => {
-    if (!this.props.disabled) {
-      return (
-        <DeleteButton
-          onClick={() => {
-            let _values = this.props.values;
-            _values[i].deleted = true;
-            this.props.setValues(_values);
-          }}
-        >
-          <i className="material-icons">cancel</i>
-        </DeleteButton>
-      );
-    }
-  };
-
-  renderHiddenOption = (hidden: boolean, locked: boolean, i: number) => {
-    if (this.props.secretOption) {
-      let icon = <i className="material-icons">lock_open</i>;
-
-      if (hidden) {
-        icon = <i className="material-icons">lock</i>;
-      }
-
-      return (
-        <HideButton
-          onClick={() => {
-            if (!locked) {
-              let _values = this.props.values;
-              _values[i].hidden = !_values[i].hidden;
-              this.props.setValues(_values);
-            }
-          }}
-          disabled={locked}
-        >
-          {icon}
-        </HideButton>
-      );
-    }
-  };
-
-  renderInputList = () => {
-    return (
-      <>
-        {this.props.values.map((entry: KeyValueType, i: number) => {
-          if (!entry.deleted) {
-            return (
-              <InputWrapper key={i}>
-                <Input
-                  placeholder="ex: key"
-                  width="270px"
-                  value={entry.key}
-                  onChange={(e: any) => {
-                    let _values = this.props.values;
-                    _values[i].key = e.target.value;
-                    this.props.setValues(_values);
-                  }}
-                  disabled={this.props.disabled || entry.locked}
-                  spellCheck={false}
-                />
-                <Spacer />
-                <Input
-                  placeholder="ex: value"
-                  width="270px"
-                  value={entry.value}
-                  onChange={(e: any) => {
-                    let _values = this.props.values;
-                    _values[i].value = e.target.value;
-                    this.props.setValues(_values);
-                  }}
-                  disabled={this.props.disabled || entry.locked}
-                  type={entry.hidden ? "password" : "text"}
-                  spellCheck={false}
-                />
-                {this.renderHiddenOption(entry.hidden, entry.locked, i)}
-                {this.renderDeleteButton(i)}
-              </InputWrapper>
-            );
-          }
-        })}
-      </>
-    );
-  };
-
-  renderEditorModal = () => {
-    if (this.state.showEditorModal) {
-      return (
-        <Modal
-          onRequestClose={() => this.setState({ showEditorModal: false })}
-          width="60%"
-          height="80%"
-        >
-          <EnvEditorModal
-            closeModal={() => this.setState({ showEditorModal: false })}
-            setEnvVariables={(envFile: string) => this.readFile(envFile)}
-          />
-        </Modal>
-      );
-    }
-  };
-
-  // Parses src into an Object
-  parseEnv = (src: any, options: any) => {
-    const debug = Boolean(options && options.debug);
-    const obj = {} as Record<string, string>;
-    const NEWLINE = "\n";
-    const RE_INI_KEY_VAL = /^\s*([\w.-]+)\s*=\s*(.*)?\s*$/;
-    const RE_NEWLINES = /\\n/g;
-    const NEWLINES_MATCH = /\n|\r|\r\n/;
-
-    // convert Buffers before splitting into lines and processing
-    src
-      .toString()
-      .split(NEWLINES_MATCH)
-      .forEach(function (line: any, idx: any) {
-        // matching "KEY' and 'VAL' in 'KEY=VAL'
-        const keyValueArr = line.match(RE_INI_KEY_VAL);
-        // matched?
-        if (keyValueArr != null) {
-          const key = keyValueArr[1];
-          // default undefined or missing values to empty string
-          let val = keyValueArr[2] || "";
-          const end = val.length - 1;
-          const isDoubleQuoted = val[0] === '"' && val[end] === '"';
-          const isSingleQuoted = val[0] === "'" && val[end] === "'";
-
-          // if single or double quoted, remove quotes
-          if (isSingleQuoted || isDoubleQuoted) {
-            val = val.substring(1, end);
-
-            // if double quoted, expand newlines
-            if (isDoubleQuoted) {
-              val = val.replace(RE_NEWLINES, NEWLINE);
-            }
-          } else {
-            // remove surrounding whitespace
-            val = val.trim();
-          }
-
-          obj[key] = val;
-        } else if (debug) {
-          console.log(
-            `did not match key and value when parsing line ${idx + 1}: ${line}`
-          );
-        }
-      });
-
-    return obj;
-  };
-
-  readFile = (env: string) => {
-    const envObj = this.parseEnv(env, null);
-    const _values = this.props.values;
+  const readFile = (env: string) => {
+    const envObj = parseStringToEnvObject(env, null);
+    const _values = values;
 
     for (const key in envObj) {
       let push = true;
 
-      for (let i = 0; i < this.props.values.length; i++) {
-        const existingKey = this.props.values[i]["key"];
-        const isExistingKeyDeleted = this.props.values[i]["deleted"];
+      for (let i = 0; i < values.length; i++) {
+        const existingKey = values[i]["key"];
+        const isExistingKeyDeleted = values[i]["deleted"];
         if (key === existingKey && !isExistingKeyDeleted) {
           _values[i]["value"] = envObj[key];
           push = false;
@@ -222,65 +70,132 @@ export default class EnvGroupArray extends Component<PropsType, StateType> {
       }
     }
 
-    this.props.setValues(_values);
+    setValues(_values);
   };
 
-  render() {
-    if (this.props.values) {
-      return (
-        <>
-          <StyledInputArray>
-            <Label>{this.props.label}</Label>
-            {this.props.values.length === 0 ? <></> : this.renderInputList()}
-            {this.props.disabled ? (
-              <></>
-            ) : (
-              <InputWrapper>
-                <AddRowButton
-                  onClick={() => {
-                    let _values = this.props.values;
-                    _values.push({
-                      key: "",
-                      value: "",
-                      hidden: false,
-                      locked: false,
-                      deleted: false,
-                    });
-                    this.props.setValues(_values);
-                  }}
-                >
-                  <i className="material-icons">add</i> Add Row
-                </AddRowButton>
-                <Spacer />
-                {this.props.namespace && this.props.envLoader && (
-                  <LoadButton
-                    onClick={() =>
-                      this.setState({ showEnvModal: !this.state.showEnvModal })
-                    }
-                  >
-                    <img src={sliders} /> Load from Env Group
-                  </LoadButton>
-                )}
-                {this.props.fileUpload && (
-                  <UploadButton
-                    onClick={() => {
-                      this.setState({ showEditorModal: true });
-                    }}
-                  >
-                    <img src={upload} /> Copy from File
-                  </UploadButton>
-                )}
-              </InputWrapper>
-            )}
-          </StyledInputArray>
-          {this.renderEditorModal()}
-        </>
-      );
-    }
-
+  if (!values) {
     return null;
   }
-}
+
+  return (
+    <>
+      <StyledInputArray>
+        <Label>{label}</Label>
+        {!!values?.length &&
+          values.map((entry: KeyValueType, i: number) => {
+            if (!entry.deleted) {
+              return (
+                <InputWrapper key={i}>
+                  <Input
+                    placeholder="ex: key"
+                    width="270px"
+                    value={entry.key}
+                    onChange={(e: any) => {
+                      let _values = values;
+                      _values[i].key = e.target.value;
+                      setValues(_values);
+                    }}
+                    disabled={disabled || entry.locked}
+                    spellCheck={false}
+                  />
+                  <Spacer />
+                  <Input
+                    placeholder="ex: value"
+                    width="270px"
+                    value={entry.value}
+                    onChange={(e: any) => {
+                      let _values = values;
+                      _values[i].value = e.target.value;
+                      setValues(_values);
+                    }}
+                    disabled={disabled || entry.locked}
+                    type={entry.hidden ? "password" : "text"}
+                    spellCheck={false}
+                  />
+
+                  {secretOption && (
+                    <HideButton
+                      onClick={() => {
+                        if (!entry.locked) {
+                          let _values = values;
+                          _values[i].hidden = !_values[i].hidden;
+                          setValues(_values);
+                        }
+                      }}
+                      disabled={entry.locked}
+                    >
+                      {entry.hidden ? (
+                        <i className="material-icons">lock</i>
+                      ) : (
+                        <i className="material-icons">lock_open</i>
+                      )}
+                    </HideButton>
+                  )}
+
+                  {!disabled && (
+                    <DeleteButton
+                      onClick={() => {
+                        let _values = values;
+                        _values = _values.filter(
+                          (val) => val.key !== entry.key
+                        );
+                        setValues(_values);
+                      }}
+                    >
+                      <i className="material-icons">cancel</i>
+                    </DeleteButton>
+                  )}
+                </InputWrapper>
+              );
+            }
+          })}
+        {!disabled && (
+          <InputWrapper>
+            <AddRowButton
+              onClick={() => {
+                let _values = values;
+                _values.push({
+                  key: "",
+                  value: "",
+                  hidden: false,
+                  locked: false,
+                  deleted: false,
+                });
+                setValues(_values);
+              }}
+            >
+              <i className="material-icons">add</i> Add Row
+            </AddRowButton>
+            <Spacer />
+            {fileUpload && (
+              <UploadButton
+                onClick={() => {
+                  setShowEditorModal(true);
+                }}
+              >
+                <img src={upload} /> Copy from File
+              </UploadButton>
+            )}
+          </InputWrapper>
+        )}
+      </StyledInputArray>
+      {showEditorModal && (
+        <Modal
+          onRequestClose={() => setShowEditorModal(false)}
+          width="60%"
+          height="80%"
+        >
+          <EnvEditorModal
+            closeModal={() => setShowEditorModal(false)}
+            setEnvVariables={(envFile: string) => readFile(envFile)}
+          />
+        </Modal>
+      )}
+    </>
+  );
+};
+
+export default EnvGroupArray;
 
 const Spacer = styled.div`
   width: 10px;

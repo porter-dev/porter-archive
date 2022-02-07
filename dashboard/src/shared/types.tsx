@@ -180,7 +180,12 @@ export interface ShowIfNot {
   not: ShowIf;
 }
 
-export type ShowIf = string | ShowIfAnd | ShowIfOr | ShowIfNot;
+export interface ShowIfIs {
+  variable: string;
+  is: string;
+}
+
+export type ShowIf = string | ShowIfIs | ShowIfAnd | ShowIfOr | ShowIfNot;
 
 export interface Section {
   name?: string;

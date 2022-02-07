@@ -2,9 +2,11 @@ package infra
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -12,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/provisioner/client"
 
@@ -42,6 +45,25 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var cluster *models.Cluster
+	var err error
+
+	if req.ClusterID != 0 {
+		cluster, err = c.Repo().Cluster().ReadCluster(proj.ID, req.ClusterID)
+
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.HandleAPIError(w, r, apierrors.NewErrForbidden(
+					fmt.Errorf("cluster with id %d not found in project %d", req.ClusterID, proj.ID),
+				))
+			} else {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			}
+
+			return
+		}
+	}
+
 	suffix, err := encryption.GenerateRandomBytes(6)
 
 	if err != nil {
@@ -61,6 +83,7 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		CreatedByUserID: user.ID,
 		SourceLink:      sourceLink,
 		SourceVersion:   sourceVersion,
+		ParentClusterID: req.ClusterID,
 	}
 
 	// verify the credentials
@@ -82,9 +105,27 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// call apply on the provisioner service
 	pClient := client.NewClient("http://localhost:8082/api/v1")
 
+	vals := req.Values
+
+	// if this is cluster-scoped and the kind is RDS, run the postrenderer
+	if req.ClusterID != 0 && req.Kind == "rds" {
+		var ok bool
+
+		pr := &InfraRDSPostrenderer{
+			config: c.Config(),
+		}
+
+		if vals, ok = pr.Run(w, r, &Opts{
+			Cluster: cluster,
+			Values:  req.Values,
+		}); !ok {
+			return
+		}
+	}
+
 	resp, err := pClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
 		Kind:          req.Kind,
-		Values:        req.Values,
+		Values:        vals,
 		OperationKind: "create",
 	})
 
@@ -161,4 +202,107 @@ func getSourceLinkAndVersion(kind types.InfraKind) (string, string) {
 	}
 
 	return "porter/test", "v0.1.0"
+}
+
+type InfraRDSPostrenderer struct {
+	config *config.Config
+}
+
+type Opts struct {
+	Cluster *models.Cluster
+	Values  map[string]interface{}
+}
+
+func (i *InfraRDSPostrenderer) Run(w http.ResponseWriter, r *http.Request, opts *Opts) (map[string]interface{}, bool) {
+	if opts.Cluster != nil {
+		proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+		values := opts.Values
+
+		// find the corresponding infra id
+		clusterInfra, err := i.config.Repo.Infra().ReadInfra(proj.ID, opts.Cluster.InfraID)
+
+		if err != nil {
+			apierrors.HandleAPIError(i.config.Logger, i.config.Alerter, w, r, apierrors.NewErrForbidden(fmt.Errorf("could not get cluster infra: %v", err)), true)
+			return nil, false
+		}
+
+		clusterInfraOperation, err := i.config.Repo.Infra().GetLatestOperation(clusterInfra)
+
+		pClient := client.NewClient("http://localhost:8082/api/v1")
+
+		// get the raw state for the cluster
+		rawState, err := pClient.GetRawState(context.Background(), models.GetWorkspaceID(clusterInfra, clusterInfraOperation))
+
+		if err != nil {
+			apierrors.HandleAPIError(i.config.Logger, i.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+			return nil, false
+		}
+
+		vpcID, subnetIDs, err := getVPCFromEKSTFState(rawState)
+
+		if err != nil {
+			return values, false
+		}
+
+		// if the length of the subnets is not 3, return an error
+		if len(subnetIDs) < 3 {
+			apierrors.HandleAPIError(i.config.Logger, i.config.Alerter, w, r, apierrors.NewErrInternal(fmt.Errorf("invalid number of subnet IDs in VPC configuration")), true)
+			return nil, false
+		}
+
+		values["porter_cluster_vpc"] = vpcID
+		values["porter_cluster_subnet_1"] = subnetIDs[0]
+		values["porter_cluster_subnet_2"] = subnetIDs[1]
+		values["porter_cluster_subnet_3"] = subnetIDs[2]
+
+		return values, true
+	}
+
+	return opts.Values, true
+}
+
+type AWSVPCConfig struct {
+	SubNetIDs []string `json:"subnet_ids" mapstructure:"subnet_ids"`
+	VPCID     string   `json:"vpc_id" mapstructure:"vpc_id"`
+}
+
+func getVPCFromEKSTFState(tfState *ptypes.ParseableRawTFState) (string, []string, error) {
+	for _, resource := range tfState.Resources {
+		if "aws_eks_cluster.cluster" == resource.Type+"."+resource.Name {
+			for _, instance := range resource.Instances {
+				vpcConfig, ok := instance.Attributes["vpc_config"]
+				if !ok {
+					return "", []string{}, errors.New("name not found for the requested resource name-type")
+				}
+
+				awsVPCConfigIface, ok := vpcConfig.([]interface{})
+				if !ok {
+					fmt.Printf("%#v\n", vpcConfig)
+					return "", []string{}, errors.New("cannot cast returned value to vpc config")
+				}
+
+				if len(awsVPCConfigIface) == 0 {
+					return "", []string{}, errors.New("empty vpc config")
+				}
+
+				awsVPCConfigMap, ok := awsVPCConfigIface[0].(map[string]interface{})
+				if !ok {
+					return "", []string{}, errors.New("cannot cast returned value to vpc config map")
+				}
+
+				var awsVPCConfig AWSVPCConfig
+
+				err := mapstructure.Decode(awsVPCConfigMap, &awsVPCConfig)
+				if err != nil {
+					return "", []string{}, errors.New("cannot cast returned value to vpc config")
+				}
+
+				return awsVPCConfig.VPCID, awsVPCConfig.SubNetIDs, nil
+			}
+
+			return "", []string{}, errors.New("name not found for the requested resource name-type")
+		}
+	}
+
+	return "", []string{}, errors.New("name not found for the requested resource name-type")
 }

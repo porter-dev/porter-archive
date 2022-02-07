@@ -18,8 +18,11 @@ import {
   InfraTemplateMeta,
   InfraTemplate,
   InfraCredentials,
+  ClusterType,
 } from "shared/types";
 import Description from "components/Description";
+import Select from "components/porter-form/field-components/Select";
+import ClusterList from "./credentials/ClusterList";
 
 type Props = {};
 
@@ -27,6 +30,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [templates, setTemplates] = useState<InfraTemplateMeta[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<InfraTemplate>(null);
+  const [selectedClusterID, setSelectedClusterID] = useState<number>(null);
   const [currentCredential, setCurrentCredential] = useState<InfraCredentials>(
     null
   );
@@ -79,6 +83,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
           aws_integration_id: currentCredential["aws_integration_id"],
           do_integration_id: currentCredential["do_integration_id"],
           gcp_integration_id: currentCredential["gcp_integration_id"],
+          cluster_id: selectedClusterID || null,
         },
         {
           project_id: currentProject.id,
@@ -163,6 +168,8 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
   };
 
   const renderStepContents = () => {
+    const numSteps = 2 + currentTemplate?.form?.isClusterScoped;
+
     //   // if credentials need to be set and the list doesn't contain the necessary creds,
     //   // render a credentials form
     if (
@@ -172,7 +179,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
       if (currentTemplate.required_credential == "aws_integration_id") {
         return (
           <ActionContainer>
-            <Heading>Step 1 of 2 - Link AWS Credentials</Heading>
+            <Heading>Step 1 of {numSteps} - Link AWS Credentials</Heading>
             <AWSCredentialsList
               selectCredential={(i) =>
                 setCurrentCredential({
@@ -185,7 +192,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
       } else if (currentTemplate.required_credential == "gcp_integration_id") {
         return (
           <ActionContainer>
-            <Heading>Step 1 of 2 - Link GCP Credentials</Heading>
+            <Heading>Step 1 of {numSteps} - Link GCP Credentials</Heading>
             <GCPCredentialsList
               selectCredential={(i) =>
                 setCurrentCredential({
@@ -198,7 +205,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
       } else if (currentTemplate.required_credential == "do_integration_id") {
         return (
           <ActionContainer>
-            <Heading>Step 1 of 2 - Link DO Credentials</Heading>
+            <Heading>Step 1 of {numSteps} - Link DO Credentials</Heading>
             <DOCredentialsList
               selectCredential={(i) =>
                 setCurrentCredential({
@@ -211,9 +218,24 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
       }
     }
 
+    if (currentTemplate?.form?.isClusterScoped && !selectedClusterID) {
+      return (
+        <ActionContainer>
+          <Heading>Step 2 of {numSteps} - Select a Cluster</Heading>
+          <ClusterList
+            selectCluster={(cluster_id) => {
+              setSelectedClusterID(cluster_id);
+            }}
+          />
+        </ActionContainer>
+      );
+    }
+
     return (
       <ActionContainer>
-        <Heading>Step 2 of 2 - Configure Settings</Heading>
+        <Heading>
+          Step {numSteps} of {numSteps} - Configure Settings
+        </Heading>
         <FormContainer>
           <PorterFormWrapper
             showStateDebugger={false}

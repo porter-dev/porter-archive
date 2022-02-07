@@ -7,13 +7,20 @@ import {
   PorterFormValidationInfo,
   PorterFormVariableList,
 } from "./types";
-import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
+import {
+  ShowIf,
+  ShowIfAnd,
+  ShowIfIs,
+  ShowIfNot,
+  ShowIfOr,
+} from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
 import { getFinalVariablesForKeyValueArray } from "./field-components/KeyValueArray";
 import { Context } from "../../shared/Context";
 import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
 import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
 import { getFinalVariablesForSelect } from "./field-components/Select";
+import api from "shared/api";
 
 interface Props {
   rawFormData: PorterFormData;
@@ -200,6 +207,11 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     if (typeof vals == "string") {
       return !!variables[vals];
     }
+    if ((vals as ShowIfIs).is) {
+      vals = vals as ShowIfIs;
+      return vals.is == variables[vals.variable];
+    }
+
     if ((vals as ShowIfOr).or) {
       vals = vals as ShowIfOr;
       for (let i = 0; i < vals.or?.length; i++) {

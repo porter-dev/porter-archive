@@ -3,7 +3,6 @@ package infra
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -85,7 +84,6 @@ func (c *InfraStreamStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		for {
 			if _, _, err := safeRW.ReadMessage(); err != nil {
 				errorchan <- nil
-				fmt.Println("STATE STREAMER closing websocket goroutine")
 				return
 			}
 		}
@@ -104,8 +102,6 @@ func (c *InfraStreamStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 				} else {
 					errorchan <- err
 				}
-
-				fmt.Println("STATE STREAMER closing grpc goroutine")
 
 				return
 			}

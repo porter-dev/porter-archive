@@ -117,5 +117,7 @@ func deleteDatabase(config *config.Config, infra *models.Infra, operation *model
 		return nil, err
 	}
 
+	// TODO: add delete env group here
+
 	return database, nil
 }

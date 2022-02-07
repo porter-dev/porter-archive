@@ -39,6 +39,10 @@ type Infra struct {
 	// The ID of the user that created this infra
 	CreatedByUserID uint
 
+	// If this infra was created under a cluster scope (for example, for RDS), the parent cluster
+	// ID
+	ParentClusterID uint
+
 	// Status is the status of the infra
 	Status types.InfraStatus
 
@@ -131,85 +135,7 @@ func (i *Infra) ToInfraType() *types.Infra {
 		AWSIntegrationID: i.AWSIntegrationID,
 		DOIntegrationID:  i.DOIntegrationID,
 		GCPIntegrationID: i.GCPIntegrationID,
-		LastApplied:      i.SafelyGetLastApplied(),
 	}
-}
-
-// SafeGetLastApplied gets non-sensitive values for the last applied configuration
-func (i *Infra) SafelyGetLastApplied() map[string]string {
-	resp := make(map[string]string)
-
-	switch i.Kind {
-	case types.InfraECR:
-		lastApplied := &types.CreateECRInfraRequest{}
-
-		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
-			return resp
-		}
-
-		resp["ecr_name"] = lastApplied.ECRName
-
-		return resp
-	case types.InfraEKS:
-		lastApplied := &types.CreateEKSInfraRequest{}
-
-		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
-			return resp
-		}
-
-		resp["eks_name"] = lastApplied.EKSName
-		resp["machine_type"] = lastApplied.MachineType
-
-		return resp
-	case types.InfraGCR:
-		return resp
-	case types.InfraGKE:
-		lastApplied := &types.CreateGKEInfraRequest{}
-
-		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
-			return resp
-		}
-
-		resp["gke_name"] = lastApplied.GKEName
-
-		return resp
-	case types.InfraDOCR:
-		lastApplied := &types.CreateDOCRInfraRequest{}
-
-		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
-			return resp
-		}
-
-		resp["docr_name"] = lastApplied.DOCRName
-		resp["docr_subscription_tier"] = lastApplied.DOCRSubscriptionTier
-
-		return resp
-	case types.InfraDOKS:
-		lastApplied := &types.CreateDOKSInfraRequest{}
-
-		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
-			return resp
-		}
-
-		resp["cluster_name"] = lastApplied.DOKSName
-		resp["do_region"] = lastApplied.DORegion
-
-		return resp
-	case types.InfraRDS:
-		lastApplied := &types.RDSInfraLastApplied{}
-
-		if err := json.Unmarshal(i.LastApplied, lastApplied); err != nil {
-			return resp
-		}
-
-		resp["cluster_id"] = fmt.Sprintf("%d", lastApplied.ClusterID)
-		resp["aws_region"] = lastApplied.AWSRegion
-		resp["db_name"] = lastApplied.DBName
-
-		return resp
-	}
-
-	return resp
 }
 
 // GetID returns the unique id for this infra

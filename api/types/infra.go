@@ -78,8 +78,9 @@ type InfraCredentials struct {
 type CreateInfraRequest struct {
 	*InfraCredentials
 
-	Kind   string                 `json:"kind" form:"required"`
-	Values map[string]interface{} `json:"values" form:"required"`
+	ClusterID uint                   `json:"cluster_id"`
+	Kind      string                 `json:"kind" form:"required"`
+	Values    map[string]interface{} `json:"values" form:"required"`
 }
 
 type ListInfraRequest struct {

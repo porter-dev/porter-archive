@@ -3,6 +3,7 @@ package infra
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -13,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/client"
 	ptypes "github.com/porter-dev/porter/provisioner/types"
+	"gorm.io/gorm"
 )
 
 type InfraRetryCreateHandler struct {
@@ -35,8 +37,27 @@ func (c *InfraRetryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	var cluster *models.Cluster
+	var err error
+
+	if infra.ParentClusterID != 0 {
+		cluster, err = c.Repo().Cluster().ReadCluster(proj.ID, infra.ParentClusterID)
+
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.HandleAPIError(w, r, apierrors.NewErrForbidden(
+					fmt.Errorf("cluster with id %d not found in project %d", infra.ParentClusterID, proj.ID),
+				))
+			} else {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			}
+
+			return
+		}
+	}
+
 	// verify the credentials
-	err := checkInfraCredentials(c.Config(), proj, infra, req.InfraCredentials)
+	err = checkInfraCredentials(c.Config(), proj, infra, req.InfraCredentials)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
@@ -62,12 +83,30 @@ func (c *InfraRetryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
+	vals := req.Values
+
+	// if this is cluster-scoped and the kind is RDS, run the postrenderer
+	if infra.ParentClusterID != 0 && infra.Kind == "rds" {
+		var ok bool
+
+		pr := &InfraRDSPostrenderer{
+			config: c.Config(),
+		}
+
+		if vals, ok = pr.Run(w, r, &Opts{
+			Cluster: cluster,
+			Values:  vals,
+		}); !ok {
+			return
+		}
+	}
+
 	// call apply on the provisioner service
 	pClient := client.NewClient("http://localhost:8082/api/v1")
 
 	resp, err := pClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
 		Kind:          string(infra.Kind),
-		Values:        req.Values,
+		Values:        vals,
 		OperationKind: "retry_create",
 	})
 

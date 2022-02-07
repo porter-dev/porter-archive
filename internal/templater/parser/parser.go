@@ -104,8 +104,6 @@ func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType, contex
 	// if the client config defaults are Helm-related, this is a cluster-scoped resource
 	if def.HelmAgent != nil || def.HelmChart != nil || def.HelmRelease != nil {
 		form.IsClusterScoped = true
-	} else {
-		form.IsClusterScoped = false
 	}
 
 	return form, nil

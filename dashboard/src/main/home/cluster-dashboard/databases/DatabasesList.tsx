@@ -1,20 +1,23 @@
 import CopyToClipboard from "components/CopyToClipboard";
-import SaveButton from "components/SaveButton";
 import Table from "components/Table";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useRouteMatch } from "react-router";
 import { Link } from "react-router-dom";
-import { Column } from "react-table";
+import { Column, Row } from "react-table";
 import api from "shared/api";
+import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
+import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import { mock_database_list } from "./mock_data";
 
 export type DatabaseObject = {
   cluster_id: number;
   project_id: number;
+  infra_id: number;
   instance_id: string;
   instance_name: string;
+  status: string;
   instance_endpoint: string;
 };
 
@@ -24,10 +27,14 @@ const DatabasesList = () => {
     currentProject,
     setCurrentError,
     setCurrentModal,
+    setCurrentOverlay,
+    user,
   } = useContext(Context);
   const { url } = useRouteMatch();
   const [isLoading, setIsLoading] = useState(true);
   const [databases, setDatabases] = useState<DatabaseObject[]>([]);
+  const [isAuth] = useAuth();
+  const { pushQueryParams } = useRouting();
 
   useEffect(() => {
     let isSubscribed = true;
@@ -57,18 +64,45 @@ const DatabasesList = () => {
     };
   }, [currentCluster, currentProject]);
 
-  const columns = useMemo<Column<DatabaseObject>[]>(
-    () => [
+  const handleDeleteDatabase = async (project_id: number, infra_id: number) => {
+    try {
+      await api.destroyInfra(
+        "<token>",
+        {},
+        {
+          project_id,
+          infra_id,
+        }
+      );
+
+      setCurrentOverlay(null);
+      pushQueryParams({ current_tab: "provisioner-status" });
+    } catch (error) {
+      console.error(error);
+      setCurrentError("We couldn't delete the infra, please try again.");
+    }
+  };
+
+  const columns = useMemo<Column<DatabaseObject>[]>(() => {
+    let columns: Column<DatabaseObject>[] = [
       {
         Header: "Instance id",
         accessor: "instance_id",
       },
       {
-        Header: "Instance name",
+        Header: "Name",
         accessor: "instance_name",
       },
       {
-        Header: "Instance endpoint",
+        Header: "Status",
+        accessor: "status",
+        Cell: ({ cell }) => {
+          const status: "running" | "destroying" = cell.value as any;
+          return <Status status={status}>{status}</Status>;
+        },
+      },
+      {
+        Header: "Endpoint",
         accessor: "instance_endpoint",
         Cell: ({ row }) => {
           return (
@@ -90,6 +124,7 @@ const DatabasesList = () => {
                 onClick={() =>
                   setCurrentModal("ConnectToDatabaseInstructionsModal", {
                     endpoint: row.original.instance_endpoint,
+                    name: row.original.instance_name,
                   })
                 }
               >
@@ -100,9 +135,40 @@ const DatabasesList = () => {
         },
         width: 50,
       },
-    ],
-    []
-  );
+    ];
+
+    if (isAuth("cluster", "", ["get", "delete"])) {
+      columns.push({
+        id: "delete_button",
+        Cell: ({ row }: { row: Row<DatabaseObject> }) => {
+          return (
+            <>
+              <DeleteButton
+                onClick={() =>
+                  setCurrentOverlay({
+                    message: `Are you sure you want to delete ${row.original.instance_name}?`,
+                    onYes: () =>
+                      handleDeleteDatabase(
+                        row.original.project_id,
+                        row.original.infra_id
+                      ),
+                    onNo: () => setCurrentOverlay(null),
+                  })
+                }
+              >
+                <i className="material-icons">delete</i>
+              </DeleteButton>
+            </>
+          );
+        },
+        width: 50,
+      });
+    } else {
+      columns = columns.filter((col) => col.id !== "delete_button");
+    }
+
+    return columns;
+  }, [user]);
 
   const data = useMemo<Array<DatabaseObject>>(() => {
     return databases;
@@ -111,7 +177,11 @@ const DatabasesList = () => {
   return (
     <DatabasesListWrapper>
       <ControlRow>
-        <Button to={`${url}/provision-database`}>
+        <Button
+          to={`/infrastructure/provision/RDS?origin=${encodeURIComponent(
+            "/databases"
+          )}`}
+        >
           <i className="material-icons">add</i>
           Create database
         </Button>
@@ -124,6 +194,47 @@ const DatabasesList = () => {
 };
 
 export default DatabasesList;
+
+const Status = styled.div<{ status: "running" | "destroying" }>`
+  padding: 5px 10px;
+  margin-right: 12px;
+  background: ${(props) => {
+    if (props.status === "running") return "#38a88a";
+    if (props.status === "destroying") return "#cc3d42";
+  }};
+  font-size: 13px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 25px;
+  max-width: 80px;
+  text-transform: capitalize;
+  font-weight: 400;
+  user-select: none;
+`;
+
+const DeleteButton = styled.div`
+  display: flex;
+  visibility: ${(props: { invis?: boolean }) =>
+    props.invis ? "hidden" : "visible"};
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  float: right;
+  height: 30px;
+  :hover {
+    background: #ffffff11;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #ffffff44;
+    border-radius: 20px;
+  }
+`;
 
 const DatabasesListWrapper = styled.div`
   margin-top: 35px;

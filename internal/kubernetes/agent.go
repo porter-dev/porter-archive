@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	goerrors "errors"
@@ -951,13 +952,29 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 		return fmt.Errorf("Cannot open log stream for pod %s: %s", name, err.Error())
 	}
 
-	defer podLogs.Close()
-
 	r := bufio.NewReader(podLogs)
 	errorchan := make(chan error)
 
+	var wg sync.WaitGroup
+	var once sync.Once
+	wg.Add(2)
+
 	go func() {
+		wg.Wait()
+		close(errorchan)
+	}()
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				// TODO: add method to alert on panic
+				return
+			}
+		}()
+
 		// listens for websocket closing handshake
+		defer wg.Done()
+
 		for {
 			if _, _, err := rw.ReadMessage(); err != nil {
 				errorchan <- nil
@@ -967,36 +984,39 @@ func (a *Agent) GetPodLogs(namespace string, name string, selectedContainer stri
 	}()
 
 	go func() {
-		for {
-			select {
-			case <-errorchan:
-				defer close(errorchan)
+		defer func() {
+			if r := recover(); r != nil {
+				// TODO: add method to alert on panic
 				return
-			default:
+			}
+		}()
+
+		defer wg.Done()
+
+		for {
+			bytes, err := r.ReadBytes('\n')
+
+			if err != nil {
+				errorchan <- err
+				return
 			}
 
-			bytes, err := r.ReadBytes('\n')
 			if _, writeErr := rw.Write(bytes); writeErr != nil {
 				errorchan <- writeErr
-				return
-			}
-			if err != nil {
-				if err != io.EOF {
-					errorchan <- err
-					return
-				}
-				errorchan <- nil
 				return
 			}
 		}
 	}()
 
-	for {
-		select {
-		case err = <-errorchan:
-			return err
-		}
+	for err = range errorchan {
+		// only call these methods a single time
+		once.Do(func() {
+			rw.Close()
+			podLogs.Close()
+		})
 	}
+
+	return err
 }
 
 // GetPodLogs streams real-time logs from a given pod.
@@ -1184,43 +1204,29 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
-		defer close(stopper)
 
-		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-			if strings.HasSuffix(err.Error(), ": Unauthorized") {
-				errorchan <- &AuthError{}
-			}
-		})
+		var wg sync.WaitGroup
+		var once sync.Once
+		var err error
 
-		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				msg := Message{
-					EventType: "UPDATE",
-					Object:    newObj,
-					Kind:      strings.ToLower(kind),
-				}
-				rw.WriteJSONWithChannel(msg, errorchan)
-			},
-			AddFunc: func(obj interface{}) {
-				msg := Message{
-					EventType: "ADD",
-					Object:    obj,
-					Kind:      strings.ToLower(kind),
-				}
-				rw.WriteJSONWithChannel(msg, errorchan)
-			},
-			DeleteFunc: func(obj interface{}) {
-				msg := Message{
-					EventType: "DELETE",
-					Object:    obj,
-					Kind:      strings.ToLower(kind),
-				}
-				rw.WriteJSONWithChannel(msg, errorchan)
-			},
-		})
+		wg.Add(2)
 
 		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
 			// listens for websocket closing handshake
+			defer wg.Done()
+
 			for {
 				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
@@ -1229,14 +1235,75 @@ func (a *Agent) StreamControllerStatus(kind string, selectors string, rw *websoc
 			}
 		}()
 
-		go informer.Run(stopper)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
 
-		for {
-			select {
-			case err := <-errorchan:
-				return err
-			}
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+				if strings.HasSuffix(err.Error(), ": Unauthorized") {
+					errorchan <- &AuthError{}
+				}
+			})
+
+			informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+				UpdateFunc: func(oldObj, newObj interface{}) {
+					msg := Message{
+						EventType: "UPDATE",
+						Object:    newObj,
+						Kind:      strings.ToLower(kind),
+					}
+					err := rw.WriteJSON(msg)
+
+					if err != nil {
+						errorchan <- err
+					}
+				},
+				AddFunc: func(obj interface{}) {
+					msg := Message{
+						EventType: "ADD",
+						Object:    obj,
+						Kind:      strings.ToLower(kind),
+					}
+
+					err := rw.WriteJSON(msg)
+
+					if err != nil {
+						errorchan <- err
+					}
+				},
+				DeleteFunc: func(obj interface{}) {
+					msg := Message{
+						EventType: "DELETE",
+						Object:    obj,
+						Kind:      strings.ToLower(kind),
+					}
+
+					err := rw.WriteJSON(msg)
+
+					if err != nil {
+						errorchan <- err
+					}
+				},
+			})
+
+			informer.Run(stopper)
+		}()
+
+		for err = range errorchan {
+			once.Do(func() {
+				close(stopper)
+				rw.Close()
+			})
 		}
+
+		return err
 	}
 
 	return a.RunWebsocketTask(run)
@@ -1328,97 +1395,29 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 
 		stopper := make(chan struct{})
 		errorchan := make(chan error)
-		defer close(stopper)
 
-		informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-			if strings.HasSuffix(err.Error(), ": Unauthorized") {
-				errorchan <- &AuthError{}
-			}
-		})
+		var wg sync.WaitGroup
+		var once sync.Once
+		var err error
 
-		informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				secretObj, ok := newObj.(*v1.Secret)
-
-				if !ok {
-					errorchan <- fmt.Errorf("could not cast to secret")
-					return
-				}
-
-				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
-
-				if isNotHelmRelease && err == nil {
-					return
-				}
-
-				if err != nil {
-					errorchan <- err
-					return
-				}
-
-				msg := Message{
-					EventType: "UPDATE",
-					Object:    helm_object,
-				}
-
-				rw.WriteJSONWithChannel(msg, errorchan)
-			},
-			AddFunc: func(obj interface{}) {
-				secretObj, ok := obj.(*v1.Secret)
-
-				if !ok {
-					errorchan <- fmt.Errorf("could not cast to secret")
-					return
-				}
-
-				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
-
-				if isNotHelmRelease && err == nil {
-					return
-				}
-
-				if err != nil {
-					errorchan <- err
-					return
-				}
-
-				msg := Message{
-					EventType: "ADD",
-					Object:    helm_object,
-				}
-
-				rw.WriteJSONWithChannel(msg, errorchan)
-			},
-			DeleteFunc: func(obj interface{}) {
-				secretObj, ok := obj.(*v1.Secret)
-
-				if !ok {
-					errorchan <- fmt.Errorf("could not cast to secret")
-					return
-				}
-
-				helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
-
-				if isNotHelmRelease && err == nil {
-					return
-				}
-
-				if err != nil {
-					errorchan <- err
-					return
-				}
-
-				msg := Message{
-					EventType: "DELETE",
-					Object:    helm_object,
-				}
-
-				rw.WriteJSONWithChannel(msg, errorchan)
-			},
-		})
+		wg.Add(2)
 
 		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
 			// listens for websocket closing handshake
+			defer wg.Done()
+
 			for {
 				if _, _, err := rw.ReadMessage(); err != nil {
 					errorchan <- nil
@@ -1427,14 +1426,115 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 			}
 		}()
 
-		go informer.Run(stopper)
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
 
-		for {
-			select {
-			case err := <-errorchan:
-				return err
-			}
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+				if strings.HasSuffix(err.Error(), ": Unauthorized") {
+					errorchan <- &AuthError{}
+				}
+			})
+
+			informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+				UpdateFunc: func(oldObj, newObj interface{}) {
+					secretObj, ok := newObj.(*v1.Secret)
+
+					if !ok {
+						errorchan <- fmt.Errorf("could not cast to secret")
+						return
+					}
+
+					helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
+
+					if isNotHelmRelease && err == nil {
+						return
+					}
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+
+					msg := Message{
+						EventType: "UPDATE",
+						Object:    helm_object,
+					}
+
+					rw.WriteJSON(msg)
+				},
+				AddFunc: func(obj interface{}) {
+					secretObj, ok := obj.(*v1.Secret)
+
+					if !ok {
+						errorchan <- fmt.Errorf("could not cast to secret")
+						return
+					}
+
+					helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
+
+					if isNotHelmRelease && err == nil {
+						return
+					}
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+
+					msg := Message{
+						EventType: "ADD",
+						Object:    helm_object,
+					}
+
+					rw.WriteJSON(msg)
+				},
+				DeleteFunc: func(obj interface{}) {
+					secretObj, ok := obj.(*v1.Secret)
+
+					if !ok {
+						errorchan <- fmt.Errorf("could not cast to secret")
+						return
+					}
+
+					helm_object, isNotHelmRelease, err := ParseSecretToHelmRelease(*secretObj, chartList)
+
+					if isNotHelmRelease && err == nil {
+						return
+					}
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+
+					msg := Message{
+						EventType: "DELETE",
+						Object:    helm_object,
+					}
+
+					rw.WriteJSON(msg)
+				},
+			})
+
+			informer.Run(stopper)
+		}()
+
+		for err = range errorchan {
+			once.Do(func() {
+				close(stopper)
+				rw.Close()
+			})
 		}
+
+		return err
 	}
 
 	return a.RunWebsocketTask(run)
@@ -1549,11 +1649,12 @@ func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
 		return err, false
 	}
 	defer w.Stop()
-	for {
+
+	expireTime := time.Now().Add(time.Second * 30)
+
+	for time.Now().Unix() <= expireTime.Unix() {
 		select {
-		case <-time.After(time.Second * 30):
-			return goerrors.New("timed out waiting for pod"), false
-		case <-time.Tick(time.Second):
+		case <-time.NewTicker(time.Second).C:
 			// poll every second in case we already missed the ready event while
 			// creating the listener.
 			pod, err = a.Clientset.CoreV1().
@@ -1579,6 +1680,8 @@ func (a *Agent) waitForPod(pod *v1.Pod) (error, bool) {
 			}
 		}
 	}
+
+	return goerrors.New("timed out waiting for pod"), false
 }
 
 func isPodReady(pod *v1.Pod) bool {

@@ -100,7 +100,9 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// trigger rollout of new applications
+	c.WriteResult(w, r, envGroup)
+
+	// trigger rollout of new applications after writing the result
 	errors := rolloutApplications(c.Config(), cluster, helmAgent, envGroup, configMap, releases)
 
 	if len(errors) > 0 {
@@ -110,11 +112,9 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			errStrArr = append(errStrArr, err.Error())
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf(strings.Join(errStrArr, ","))))
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(fmt.Errorf(strings.Join(errStrArr, ","))))
 		return
 	}
-
-	c.WriteResult(w, r, envGroup)
 }
 
 func rolloutApplications(

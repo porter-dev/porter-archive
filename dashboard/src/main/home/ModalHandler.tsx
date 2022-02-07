@@ -216,8 +216,8 @@ const ModalHandler: React.FC<{
         <Modal
           onRequestClose={() => setCurrentModal(null, null)}
           width="600px"
-          height="240px"
-          title="How to connect my database"
+          height="350px"
+          title="Connecting to the Database"
         >
           <ConnectToDatabaseInstructionsModal />
         </Modal>

@@ -31,6 +31,14 @@ else
   sidecar=$3
 fi  
 
+global_timeout=$TIMEOUT
+
+if [ -z "$global_timeout" ]; then
+  global_timeout=3600
+fi
+
+echo "set global timeout value of $global_timeout"
+
 pattern="$(printf '[%s]%s' $(echo $target | cut -c 1) $(echo $target | cut -c 2-))"
 
 graceful_shutdown() {
@@ -93,12 +101,21 @@ target_pid_name=$(pgrep -f $pattern -l | grep -v 'job_killer.sh' | grep -v 'wait
 
 if [ -n "$target_pid" ]; then
     echo "targeting pids $target_pid matched by $target_pid_name"
+    # schedule hard kill after global timeout
+    is_global_shutdown=""
+    (sleep ${global_timeout}; echo "triggering global shutdown" && is_global_shutdown="true" && graceful_shutdown $grace_period_seconds $target || true) &
+    global_killer=${!}
+    
     tail --pid=$target_pid -f /dev/null &
     child=$!
 
     wait "$child"
 
-    graceful_shutdown $grace_period_seconds $target
+    if [ -z "$is_global_shutdown" ]; then
+      # cancel hard kill timer
+      sleep 0.1 && kill -9 ${global_killer} 2>/dev/null || true
+      graceful_shutdown $grace_period_seconds $target
+    fi
 else 
   echo "no process could be targeted within 10s, initiating shutdown"
 

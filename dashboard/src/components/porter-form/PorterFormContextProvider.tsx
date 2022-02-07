@@ -308,6 +308,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
                       envLoader: true,
                       fileUpload: true,
                       settings: {
+                        ...(field.settings || {}),
                         type: "env",
                       },
                     };

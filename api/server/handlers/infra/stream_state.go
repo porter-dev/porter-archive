@@ -106,7 +106,11 @@ func (c *InfraStreamStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 				return
 			}
 
-			safeRW.WriteJSONWithChannel(stateUpdate, errorchan)
+			err = safeRW.WriteJSON(stateUpdate)
+
+			if err != nil {
+				errorchan <- err
+			}
 		}
 	}()
 

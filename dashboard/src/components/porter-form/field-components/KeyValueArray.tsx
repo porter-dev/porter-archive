@@ -40,7 +40,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
             : [],
           showEnvModal: false,
           showEditorModal: false,
-          synced_env_groups: null,
+          synced_env_groups: props.settings?.options?.enable_synced_env_groups
+            ? null
+            : [],
         };
       },
     }
@@ -48,9 +50,17 @@ const KeyValueArray: React.FC<Props> = (props) => {
 
   const { currentProject } = useContext(Context);
 
+  // If the variable includes normal it means that the form corresponds to an old job template version
+  // The "normal" keyword doesn't exist for applications as well as the enable_synced_env_groups setting.
+  // This is why we have to check if the form corresponds to a job or not.
+  const enableSyncedEnvGroups = props.variable.includes("normal")
+    ? !!props.settings?.options?.enable_synced_env_groups
+    : true;
+
   useEffect(() => {
     if (hasSetValue(props) && !Array.isArray(state?.synced_env_groups)) {
       const values = props.value[0];
+      console.log(values);
       const envGroups = values?.synced || [];
       const promises = Promise.all(
         envGroups.map(async (envGroup: any) => {
@@ -86,7 +96,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
 
   if (state == undefined) return <></>;
 
-  if (!Array.isArray(state.synced_env_groups)) {
+  if (!Array.isArray(state.synced_env_groups) && enableSyncedEnvGroups) {
     return <Loading />;
   }
 
@@ -205,11 +215,12 @@ const KeyValueArray: React.FC<Props> = (props) => {
               return { showEnvModal: false };
             })
           }
-          width="765px"
+          width="800px"
           height="542px"
         >
           <LoadEnvGroupModal
             existingValues={getProcessedValues(state.values)}
+            enableSyncedEnvGroups={enableSyncedEnvGroups}
             syncedEnvGroups={state.synced_env_groups}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
@@ -296,9 +307,11 @@ const KeyValueArray: React.FC<Props> = (props) => {
 
     if (env_group) {
       return (
-        <Helper color="#f5cb42" style={{ marginLeft: "10px" }}>
-          This variable will be overrided by env group {env_group?.name}
-        </Helper>
+        <Wrapper>
+          <Helper color="#f5cb42" style={{ marginLeft: "10px" }}>
+            Overridden by the env group "{env_group?.name}"
+          </Helper>
+        </Wrapper>
       );
     }
 
@@ -429,9 +442,10 @@ const KeyValueArray: React.FC<Props> = (props) => {
             )}
           </InputWrapper>
         )}
-        {!!state.synced_env_groups?.length && (
+        {enableSyncedEnvGroups && !!state.synced_env_groups?.length && (
           <>
-            <Heading>Synced env vars</Heading>
+            <Heading>Synced Environment Groups</Heading>
+            <Br />
             {state.synced_env_groups?.map((envGroup: any) => {
               return (
                 <ExpandableEnvGroup
@@ -507,8 +521,15 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
     }));
   }
 
+  const variableContent = props.variable.split(".");
+  let variable = props.variable;
+
+  if (variable.includes("normal")) {
+    variable = `${variableContent[0]}.${variableContent[1]}`;
+  }
+
   return {
-    [props.variable]: obj,
+    [variable]: obj,
   };
 };
 
@@ -529,7 +550,6 @@ const ExpandableEnvGroup: React.FC<{
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
-            <ActionButton></ActionButton>
             <ActionButton onClick={() => onDelete()}>
               <span className="material-icons">delete</span>
             </ActionButton>
@@ -542,6 +562,7 @@ const ExpandableEnvGroup: React.FC<{
         </Flex>
         {isExpanded && (
           <>
+            <Buffer />
             {Object.entries(envGroup.variables || {})?.map(
               ([key, value], i: number) => {
                 // Preprocess non-string env values set via raw Helm values
@@ -573,13 +594,23 @@ const ExpandableEnvGroup: React.FC<{
                 );
               }
             )}
+            <Br />
           </>
         )}
       </StyledCard>
     </>
   );
-  return null;
 };
+
+const Br = styled.div`
+  width: 100%;
+  height: 1px;
+`;
+
+const Buffer = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const Spacer = styled.div`
   width: 10px;
@@ -684,6 +715,14 @@ const HideButton = styled(DeleteButton)`
   }
 `;
 
+const Wrapper = styled.div`
+  margin-left: 5px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  margin-top: -7px;
+`;
+
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -731,26 +770,27 @@ const fadeIn = keyframes`
 `;
 
 const StyledCard = styled.div`
-  border: 1px solid #ffffff00;
-  background: #ffffff08;
+  border: 1px solid #ffffff44;
+  background: #ffffff11;
   margin-bottom: 5px;
   border-radius: 8px;
-  padding: 14px;
+  margin-top: 15px;
+  padding: 10px 14px;
   overflow: hidden;
-  min-height: 60px;
   font-size: 13px;
   animation: ${fadeIn} 0.5s;
 `;
 
 const Flex = styled.div`
   display: flex;
+  height: 25px;
   align-items: center;
   justify-content: space-between;
 `;
 
 const ContentContainer = styled.div`
   display: flex;
-  height: 100%;
+  height: 40px;
   width: 100%;
   align-items: center;
 `;
@@ -781,6 +821,9 @@ const ActionButton = styled.button`
   background: none;
   color: white;
   padding: 5px;
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
   display: flex;
   justify-content: center;
   align-items: center;

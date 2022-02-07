@@ -17,6 +17,7 @@ type Database struct {
 	InstanceStatus    string `json:"instance_status"`
 	InstanceDBFamily  string `json:"instance_db_family"`
 	InstanceDBVersion string `json:"instance_db_version"`
+	Status            string `json:"status"`
 }
 
 type ListDatabaseResponse []*Database

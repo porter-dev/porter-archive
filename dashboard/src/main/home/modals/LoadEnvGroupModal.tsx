@@ -19,6 +19,7 @@ import {
   PopulatedEnvGroup,
 } from "components/porter-form/types";
 import Helper from "components/form-components/Helper";
+import DocsHelper from "components/DocsHelper";
 
 type PropsType = {
   namespace: string;
@@ -26,6 +27,7 @@ type PropsType = {
   closeModal: () => void;
   existingValues: Record<string, string>;
   setValues: (values: Record<string, string>) => void;
+  enableSyncedEnvGroups?: boolean;
   syncedEnvGroups?: PopulatedEnvGroup[];
   setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
 };
@@ -34,7 +36,7 @@ type StateType = {
   envGroups: any[];
   loading: boolean;
   error: boolean;
-  selectedEnvGroup: EnvGroupData | null;
+  selectedEnvGroup: PopulatedEnvGroup | null;
   buttonStatus: string;
   shouldSync: boolean;
 };
@@ -162,7 +164,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       return "No env group selected";
     }
     if (hasClashingKeys) {
-      return "There are variables defined in this group that will override existing variables.";
+      return "";
     }
   }
 
@@ -236,24 +238,39 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               )}
             </SidebarSection>
           )}
-          <CheckboxRow
-            checked={this.state.shouldSync}
-            toggle={() =>
-              this.setState((prevState) => ({
-                shouldSync: !prevState.shouldSync,
-              }))
-            }
-            label="Enable env var synchronization"
-            disabled={this.state.selectedEnvGroup?.meta_version === 1}
-          />
-
-          {this.state.selectedEnvGroup?.meta_version === 1 && (
-            <Helper color="#f5cb42">
-              Looks like the env group you selected belongs to an old version
-              and is not available for syncing. You can fix this by updating the
-              env group from the env groups tab.
-            </Helper>
-          )}
+          <AbsoluteWrapper>
+            {this.props.enableSyncedEnvGroups ? (
+              <>
+                {this.state.selectedEnvGroup?.meta_version === 1 ? (
+                  <Helper color="#f5cb42">
+                    Upgrade this env group from the env groups tab to sync.
+                  </Helper>
+                ) : (
+                  <CheckboxRow
+                    checked={this.state.shouldSync}
+                    toggle={() =>
+                      this.setState((prevState) => ({
+                        shouldSync: !prevState.shouldSync,
+                      }))
+                    }
+                    label="Sync environment group"
+                    disabled={this.state.selectedEnvGroup?.meta_version === 1}
+                  />
+                )}
+                <IconWrapper>
+                  <DocsHelper
+                    link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+                    tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+                    placement="top-start"
+                  />
+                </IconWrapper>
+              </>
+            ) : (
+              <Helper color="#f5cb42">
+                Upgrade the job template to enable sync env groups
+              </Helper>
+            )}
+          </AbsoluteWrapper>
         </GroupModalSections>
 
         <SaveButton
@@ -268,6 +285,19 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
 }
 
 LoadEnvGroupModal.contextType = Context;
+
+const IconWrapper = styled.div`
+  margin-bottom: -10px;
+`;
+
+const AbsoluteWrapper = styled.div`
+  position: absolute;
+  z-index: 999;
+  bottom: 18px;
+  left: 25px;
+  display: flex;
+  align-items: center;
+`;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`
   height: 100%;
@@ -461,8 +491,7 @@ const StyledLoadEnvGroupModal = styled.div`
   top: 0;
   height: 100%;
   padding: 25px 30px;
-  overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #202227;
 `;
 

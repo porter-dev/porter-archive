@@ -29,6 +29,7 @@ import { isAuthorized } from "shared/auth/authorization-helpers";
 import useAuth from "shared/auth/useAuth";
 import { fillWithDeletedVariables } from "components/porter-form/utils";
 import DynamicLink from "components/DynamicLink";
+import DocsHelper from "components/DocsHelper";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -65,12 +66,14 @@ export const ExpandedEnvGroupFC = ({
   namespace,
   closeExpanded,
 }: PropsType) => {
-  const { currentProject, currentCluster, setCurrentOverlay } = useContext(
-    Context
-  );
+  const {
+    currentProject,
+    currentCluster,
+    setCurrentOverlay,
+    setCurrentError,
+  } = useContext(Context);
   const [isAuthorized] = useAuth();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState("variables-editor");
   const [isDeleting, setIsDeleting] = useState(false);
   const [buttonStatus, setButtonStatus] = useState("");
@@ -96,14 +99,14 @@ export const ExpandedEnvGroupFC = ({
     ) {
       return [
         { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked applications" },
+        { value: "applications", label: "Linked Applications" },
       ];
     }
 
     if (currentEnvGroup?.applications?.length) {
       return [
         { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked applications" },
+        { value: "applications", label: "Linked Applications" },
         { value: "settings", label: "Settings" },
       ];
     }
@@ -185,6 +188,7 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const handleUpdateValues = async () => {
+    setButtonStatus("loading");
     const name = currentEnvGroup.name;
     let variables = currentEnvGroup.variables;
 
@@ -223,8 +227,14 @@ export const ExpandedEnvGroupFC = ({
             }
           )
           .then((res) => res.data);
+        setButtonStatus("successful");
         updateEnvGroup(updatedEnvGroup);
-      } catch (error) {}
+        setTimeout(() => setButtonStatus(""), 1000);
+      } catch (error) {
+        setButtonStatus("Couldn't update successfully");
+        setCurrentError(error);
+        setTimeout(() => setButtonStatus(""), 1000);
+      }
     } else {
       const configMapSecretVariables = fillWithDeletedVariables(
         originalEnvVars.filter((variable) => {
@@ -254,23 +264,31 @@ export const ExpandedEnvGroupFC = ({
         }),
         {}
       );
-      console.log({ configMapVariables, configMapSecretVariables });
-      const updatedEnvGroup = await api
-        .updateConfigMap(
-          "<token>",
-          {
-            name,
-            variables: configMapVariables,
-            secret_variables: configMapSecretVariables,
-          },
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            namespace,
-          }
-        )
-        .then((res) => res.data);
-      updateEnvGroup(updatedEnvGroup);
+
+      try {
+        const updatedEnvGroup = await api
+          .updateConfigMap(
+            "<token>",
+            {
+              name,
+              variables: configMapVariables,
+              secret_variables: configMapSecretVariables,
+            },
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace,
+            }
+          )
+          .then((res) => res.data);
+        setButtonStatus("successful");
+        updateEnvGroup(updatedEnvGroup);
+        setTimeout(() => setButtonStatus(""), 1000);
+      } catch (error) {
+        setButtonStatus("Couldn't update successfully");
+        setCurrentError(error);
+        setTimeout(() => setButtonStatus(""), 1000);
+      }
     }
   };
 
@@ -480,6 +498,15 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
 
   return (
     <>
+      <HeadingWrapper>
+        <Heading isAtTop>Linked applications:</Heading>
+        <DocsHelper
+          link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+          tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+          placement="top-start"
+          disableMargin
+        />
+      </HeadingWrapper>
       {envGroup.applications.map((appName) => {
         return (
           <StyledCard>
@@ -504,6 +531,11 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
     </>
   );
 };
+
+const HeadingWrapper = styled.div`
+  display: flex;
+  margin-bottom: 15px;
+`;
 
 const Header = styled.div`
   font-weight: 500;
@@ -710,15 +742,16 @@ const fadeIn = keyframes`
 `;
 
 const StyledCard = styled.div`
-  border: 1px solid #ffffff00;
-  background: #ffffff08;
-  margin-bottom: 5px;
   border-radius: 8px;
-  padding: 14px;
+  padding: 10px 18px;
   overflow: hidden;
-  min-height: 60px;
   font-size: 13px;
   animation: ${fadeIn} 0.5s;
+
+  background: #2b2e36;
+  margin-bottom: 15px;
+  overflow: hidden;
+  border: 1px solid #ffffff0a;
 `;
 
 const Flex = styled.div`

@@ -9,6 +9,9 @@ import ProvisionInfra from "./components/ProvisionInfra";
 const InfrastructureRouter = () => {
   return (
     <Switch>
+      <Route path="/infrastructure/provision/:name">
+        <ProvisionInfra />
+      </Route>
       <Route path="/infrastructure/provision">
         <ProvisionInfra />
       </Route>

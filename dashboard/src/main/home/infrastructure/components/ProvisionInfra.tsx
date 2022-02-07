@@ -13,7 +13,7 @@ import AWSCredentialsList from "./credentials/AWSCredentialList";
 import Heading from "components/form-components/Heading";
 import GCPCredentialsList from "./credentials/GCPCredentialList";
 import DOCredentialsList from "./credentials/DOCredentialList";
-import { useRouting } from "shared/routing";
+import { getQueryParam, useRouting } from "shared/routing";
 import {
   InfraTemplateMeta,
   InfraTemplate,
@@ -23,10 +23,24 @@ import {
 import Description from "components/Description";
 import Select from "components/porter-form/field-components/Select";
 import ClusterList from "./credentials/ClusterList";
+import { useLocation, useParams } from "react-router";
+import qs from "qs";
 
 type Props = {};
 
+type ProvisionParams = {
+  name: string;
+};
+
+type ProvisionQueryParams = {
+  version?: string;
+};
+
 const ProvisionInfra: React.FunctionComponent<Props> = () => {
+  const { name } = useParams<ProvisionParams>();
+  const location = useLocation<ProvisionQueryParams>();
+  const version = getQueryParam({ location }, "version");
+  const origin = getQueryParam({ location }, "origin");
   const { currentProject, setCurrentError } = useContext(Context);
   const [templates, setTemplates] = useState<InfraTemplateMeta[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<InfraTemplate>(null);
@@ -41,7 +55,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
   const { pushFiltered } = useRouting();
 
   useEffect(() => {
-    if (currentProject) {
+    if (currentProject && !name) {
       api
         .listInfraTemplates(
           "<token>",
@@ -69,7 +83,38 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
           setIsLoading(false);
         });
     }
-  }, [currentProject]);
+  }, [currentProject, name]);
+
+  useEffect(() => {
+    if (currentProject && name) {
+      let templateVersion = version || "latest";
+
+      setIsLoading(true);
+
+      api
+        .getInfraTemplate(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            version: templateVersion,
+            name: name,
+          }
+        )
+        .then(({ data }) => {
+          setCurrentTemplate(data);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setHasError(true);
+          setCurrentError(err.response?.data?.error);
+          setIsLoading(false);
+        });
+    } else if (!name) {
+      setCurrentTemplate(null);
+    }
+  }, [currentProject, name, version]);
 
   const onSubmit = (values: any) => {
     setIsLoading(true);
@@ -92,7 +137,9 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
       .then(({ data }) => {
         setIsLoading(false);
 
-        if (data?.infra_id) {
+        if (origin) {
+          pushFiltered(origin, ["project_id"]);
+        } else if (data?.infra_id) {
           pushFiltered(`/infrastructure/${data?.infra_id}`, ["project_id"]);
         } else {
           pushFiltered(`/infrastructure`, ["project_id"]);
@@ -128,37 +175,23 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
     );
   };
 
-  const selectTemplate = (templateMeta: InfraTemplateMeta) => {
-    setIsLoading(true);
-
-    api
-      .getInfraTemplate(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          version: templateMeta.version,
-          name: templateMeta.name,
-        }
-      )
-      .then(({ data }) => {
-        setCurrentTemplate(data);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setHasError(true);
-        setCurrentError(err.response?.data?.error);
-        setIsLoading(false);
-      });
-  };
-
   const renderTemplates = () => {
     return templates.map((template) => {
       let { name, icon, description } = template;
 
       return (
-        <TemplateBlock key={name} onClick={() => selectTemplate(template)}>
+        <TemplateBlock
+          key={name}
+          onClick={() =>
+            pushFiltered(
+              `/infrastructure/provision/${template.name}`,
+              ["project_id"],
+              {
+                version: template.version,
+              }
+            )
+          }
+        >
           {renderIcon(icon)}
           <TemplateTitle>{name}</TemplateTitle>
           <TemplateDescription>{description}</TemplateDescription>
@@ -252,15 +285,50 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
     );
   };
 
+  const renderTitleSection = () => {
+    if (currentTemplate) {
+      return (
+        <>
+          <TitleSection>{`Provision ${currentTemplate.name}`}</TitleSection>
+          <InfoSection>
+            <Description>
+              {`Input the required configuration settings.`}
+            </Description>
+          </InfoSection>
+          <LineBreak />
+        </>
+      );
+    }
+
+    return (
+      <>
+        <TitleSection>Provision Infrastructure</TitleSection>
+        <InfoSection>
+          <Description>
+            Select the infrastructure template you would like to use for
+            provisioning.
+          </Description>
+        </InfoSection>
+        <LineBreak />
+      </>
+    );
+  };
+
   const renderContents = () => {
     if (currentTemplate) {
       let { name, icon, description } = currentTemplate;
       return (
         <ExpandedContainer>
           <BackArrowContainer>
-            <BackArrow onClick={() => setCurrentTemplate(null)}>
+            <BackArrow
+              onClick={() =>
+                pushFiltered(origin || `/infrastructure/provision`, [
+                  "project_id",
+                ])
+              }
+            >
               <i className="material-icons next-icon">navigate_before</i>
-              All Templates
+              {origin ? "Back" : "All Templates"}
             </BackArrow>
           </BackArrowContainer>
           <StepContainer>
@@ -280,14 +348,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
 
   return (
     <TemplatesWrapper>
-      <TitleSection>Provision Infrastructure</TitleSection>
-      <InfoSection>
-        <Description>
-          Select the infrastructure template you would like to use for
-          provisioning.
-        </Description>
-      </InfoSection>
-      <LineBreak />
+      {renderTitleSection()}
       {renderContents()}
     </TemplatesWrapper>
   );

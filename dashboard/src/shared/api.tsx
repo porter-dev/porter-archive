@@ -672,12 +672,13 @@ const provisionInfra = baseApi<
     aws_integration_id?: number;
     gcp_integration_id?: number;
     do_integration_id?: number;
+    cluster_id?: number;
   },
   {
     project_id: number;
   }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/infras`;
+>("POST", ({ project_id }) => {
+  return `/api/projects/${project_id}/infras`;
 });
 
 const updateInfra = baseApi<
@@ -772,6 +773,16 @@ const getInfraState = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/state`;
+});
+
+const getInfraRawState = baseApi<
+  {},
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/raw_state`;
 });
 
 const getInfraByID = baseApi<
@@ -1610,6 +1621,7 @@ export default {
   retryCreateInfra,
   retryDeleteInfra,
   getInfraState,
+  getInfraRawState,
   getInfraByID,
   getInfraDesired,
   getInfraCurrent,

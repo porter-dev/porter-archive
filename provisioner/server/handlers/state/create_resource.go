@@ -129,24 +129,16 @@ func createECRRegistry(config *config.Config, infra *models.Infra, operation *mo
 }
 
 func createRDSDatabase(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Database, error) {
-	// parse the last applied field to get the cluster id
-	rdsRequest := &types.RDSInfraLastApplied{}
-	err := json.Unmarshal(operation.LastApplied, rdsRequest)
-
-	if err != nil {
-		return nil, err
-	}
-
 	database := &models.Database{
 		ProjectID:        infra.ProjectID,
-		ClusterID:        rdsRequest.ClusterID,
+		ClusterID:        infra.ParentClusterID,
 		InfraID:          infra.ID,
 		InstanceID:       output["rds_instance_id"].(string),
 		InstanceEndpoint: output["rds_connection_endpoint"].(string),
 		InstanceName:     output["rds_instance_name"].(string),
 	}
 
-	database, err = config.Repo.Database().CreateDatabase(database)
+	database, err := config.Repo.Database().CreateDatabase(database)
 
 	if err != nil {
 		return nil, err
@@ -158,8 +150,15 @@ func createRDSDatabase(config *config.Config, infra *models.Infra, operation *mo
 	if err != nil {
 		return nil, err
 	}
+	lastApplied := make(map[string]interface{})
 
-	err = createRDSEnvGroup(config, infra, database, rdsRequest)
+	err = json.Unmarshal(operation.LastApplied, &lastApplied)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = createRDSEnvGroup(config, infra, database, lastApplied)
 
 	if err != nil {
 		return nil, err
@@ -282,8 +281,8 @@ func createGKECluster(config *config.Config, infra *models.Infra, operation *mod
 	return config.Repo.Cluster().CreateCluster(cluster)
 }
 
-func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *models.Database, rdsConfig *types.RDSInfraLastApplied) error {
-	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
+func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *models.Database, lastApplied map[string]interface{}) error {
+	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 
 	if err != nil {
 		return err
@@ -311,14 +310,14 @@ func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *mod
 	}
 
 	_, err = envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
-		Name:      fmt.Sprintf("rds-credentials-%s", rdsConfig.DBName),
-		Namespace: rdsConfig.Namespace,
+		Name:      fmt.Sprintf("rds-credentials-%s", lastApplied["db_name"].(string)),
+		Namespace: "default",
 		Variables: map[string]string{},
 		SecretVariables: map[string]string{
 			"PGPORT":     port,
 			"PGHOST":     host,
-			"PGPASSWORD": rdsConfig.Password,
-			"PGUSER":     rdsConfig.Username,
+			"PGPASSWORD": lastApplied["db_passwd"].(string),
+			"PGUSER":     lastApplied["db_user"].(string),
 		},
 	})
 
@@ -329,8 +328,8 @@ func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *mod
 	return nil
 }
 
-func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, rdsConfig *types.RDSInfraLastApplied) error {
-	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
+func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
+	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
 
 	if err != nil {
 		return err
@@ -348,7 +347,7 @@ func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, rdsConfig *ty
 		return fmt.Errorf("failed to get agent: %s", err.Error())
 	}
 
-	err = envgroup.DeleteEnvGroup(agent, fmt.Sprintf("rds-credentials-%s", rdsConfig.DBName), rdsConfig.Namespace)
+	err = envgroup.DeleteEnvGroup(agent, fmt.Sprintf("rds-credentials-%s", lastApplied["db_name"].(string)), "default")
 
 	if err != nil {
 		return fmt.Errorf("failed to create RDS env group: %s", err.Error())

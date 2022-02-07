@@ -52,7 +52,7 @@ type FormYAML struct {
 	Icon                string     `yaml:"icon" json:"icon"`
 	HasSource           string     `yaml:"hasSource" json:"hasSource"`
 	IncludeHiddenFields string     `yaml:"includeHiddenFields,omitempty" json:"includeHiddenFields,omitempty"`
-	IsClusterScoped     bool       `yaml:"isClusterscoped" json:"isClusterScoped"`
+	IsClusterScoped     bool       `yaml:"isClusterScoped" json:"isClusterScoped"`
 	Description         string     `yaml:"description" json:"description"`
 	Tags                []string   `yaml:"tags" json:"tags"`
 	Tabs                []*FormTab `yaml:"tabs" json:"tabs,omitempty"`

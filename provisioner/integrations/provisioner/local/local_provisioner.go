@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/porter-dev/porter/internal/models"
@@ -29,22 +30,26 @@ func (l *LocalProvisioner) Provision(opts *provisioner.ProvisionOpts) error {
 	fmt.Println("running local provisioner with workspace id: ", models.GetWorkspaceID(opts.Infra, opts.Operation))
 
 	// TODO: allow cancellation -- this is just to simulate behavior
-	go func() error {
+	go func() {
 		cmdProv := exec.Command("porter-provisioner", string(opts.OperationKind))
-		// cmdProv.Stdout = os.Stdout
-		// cmdProv.Stderr = os.Stderr
+		cmdProv.Stdout = os.Stdout
+		cmdProv.Stderr = os.Stderr
 		env, err := l.getEnv(opts)
+		env = append(env, "PATH=/usr/local/bin:/usr/bin:/bin")
 
 		if err != nil {
-			return err
+			fmt.Println(err)
 		}
 
 		cmdProv.Env = env
 
-		return cmdProv.Run()
+		err = cmdProv.Run()
+
+		fmt.Println(err)
 	}()
 
 	return nil
+
 }
 
 func (l *LocalProvisioner) getEnv(opts *provisioner.ProvisionOpts) ([]string, error) {

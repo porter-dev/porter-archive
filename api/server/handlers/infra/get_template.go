@@ -65,6 +65,8 @@ func getFormBytesFromKind(kind string) []byte {
 	switch strings.ToLower(kind) {
 	case "ecr":
 		formBytes = []byte(ecrForm)
+	case "rds":
+		formBytes = []byte(rdsForm)
 	case "eks":
 		formBytes = []byte(eksForm)
 	case "gcr":

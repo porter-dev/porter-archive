@@ -127,7 +127,6 @@ func (authn *AuthNPorterToken) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if err == nil {
 		// attach ce token to context
-		// add the user to the context
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, "ce_token", ceToken)
 		r = r.Clone(ctx)

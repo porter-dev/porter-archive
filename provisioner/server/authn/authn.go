@@ -110,7 +110,7 @@ func NewAuthNPorterTokenFactory(
 // NewAuthenticated creates a new instance of `AuthN` that implements the http.Handler
 // interface.
 func (f *AuthNPorterTokenFactory) NewAuthenticated(next http.Handler) http.Handler {
-	return &AuthNStatic{next, f.config}
+	return &AuthNPorterToken{next, f.config}
 }
 
 // AuthNPorterToken implements the authentication middleware

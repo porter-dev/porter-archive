@@ -50,6 +50,10 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 				r.Use(staticTokenAuth.NewAuthenticated)
 				r.Use(workspaceAuth.Middleware)
 
+				// Note that this handler is also used in the above group. The /tfstate/raw endpoint is meant to
+				// be used from the API server, while the /tfstate endpoint is meant to be called as a Terraform
+				// HTTP backend.
+				r.Method("GET", "/{workspace_id}/tfstate/raw", state.NewRawStateGetHandler(config))
 				r.Method("GET", "/{workspace_id}/logs", state.NewLogsGetHandler(config))
 			})
 		})

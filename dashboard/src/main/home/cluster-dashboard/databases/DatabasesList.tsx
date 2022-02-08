@@ -79,7 +79,7 @@ const DatabasesList = () => {
       await api.updateDatabaseStatus(
         "<token>",
         {
-          status: "deleting",
+          status: "destroying",
         },
         {
           project_id,

@@ -136,6 +136,7 @@ func createRDSDatabase(config *config.Config, infra *models.Infra, operation *mo
 		InstanceID:       output["rds_instance_id"].(string),
 		InstanceEndpoint: output["rds_connection_endpoint"].(string),
 		InstanceName:     output["rds_instance_name"].(string),
+		Status:           "Running",
 	}
 
 	database, err := config.Repo.Database().CreateDatabase(database)

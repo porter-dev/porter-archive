@@ -92,14 +92,6 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// handle write to the database
-	infra, err = c.Repo().Infra().CreateInfra(infra)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	// call apply on the provisioner service
 	vals := req.Values
 
@@ -117,6 +109,14 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}); !ok {
 			return
 		}
+	}
+
+	// handle write to the database
+	infra, err = c.Repo().Infra().CreateInfra(infra)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	resp, err := c.Config().ProvisionerClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{

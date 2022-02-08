@@ -23,5 +23,5 @@ type Database struct {
 type ListDatabaseResponse []*Database
 
 type UpdateDatabaseStatusRequest struct {
-	Status string `json:"status" form:"required,oneof=deleting creating"`
+	Status string `json:"status" form:"required,oneof=destroying updating"`
 }

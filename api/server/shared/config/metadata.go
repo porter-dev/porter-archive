@@ -1,6 +1,8 @@
 package config
 
-import "github.com/porter-dev/porter/api/server/shared/config/env"
+import (
+	"github.com/porter-dev/porter/api/server/shared/config/env"
+)
 
 type Metadata struct {
 	Provisioning       bool   `json:"provisioner"`

@@ -51,33 +51,13 @@ const ProvisionerStatus: React.FC<Props> = ({
   setInfraStatus,
 }) => {
   const renderV1Infra = (infra: Infrastructure) => {
-    let errors: string[] = [];
-
-    if (infra.status == "destroyed" || infra.status == "deleted") {
-      errors.push("This infrastructure was destroyed.");
-    }
-
-    let error = null;
-
-    if (errors.length > 0) {
-      error = errors.map((error, index) => {
-        return <ExpandedError key={index}>{error}</ExpandedError>;
-      });
-    }
-
     return (
-      <StyledInfraObject key={infra.id}>
-        <InfraHeader is_clickable={!auto_expanded}>
-          <Flex>
-            {integrationList[infra.kind] && (
-              <Icon src={integrationList[infra.kind].icon} />
-            )}
-            {KindMap[infra.kind]?.provider_name}
-          </Flex>
-          <Timestamp>Started {readableDate(infra.created_at)}</Timestamp>
-        </InfraHeader>
-        <ErrorWrapper>{error}</ErrorWrapper>
-      </StyledInfraObject>
+      <V1InfraObject
+        key={infra.id}
+        infra={infra}
+        is_expanded={auto_expanded}
+        is_collapsible={!auto_expanded}
+      />
     );
   };
 
@@ -89,7 +69,7 @@ const ProvisionerStatus: React.FC<Props> = ({
 
   const renderV2Infra = (infra: Infrastructure) => {
     return (
-      <InfraObject
+      <V2InfraObject
         key={infra.id}
         project_id={project_id}
         infra={infra}
@@ -102,11 +82,11 @@ const ProvisionerStatus: React.FC<Props> = ({
 
   const renderInfras = () => {
     return infras.map((infra) => {
-      if (infra.api_version == "" || infra.api_version == "v1") {
-        return renderV1Infra(infra);
+      if (infra.api_version == "v2") {
+        return renderV2Infra(infra);
       }
 
-      return renderV2Infra(infra);
+      return renderV1Infra(infra);
     });
   };
 
@@ -115,7 +95,99 @@ const ProvisionerStatus: React.FC<Props> = ({
 
 export default ProvisionerStatus;
 
-type InfraObjectProps = {
+type V1InfraObjectProps = {
+  infra: Infrastructure;
+  is_expanded: boolean;
+  is_collapsible: boolean;
+};
+
+const V1InfraObject: React.FC<V1InfraObjectProps> = ({
+  infra,
+  is_expanded,
+  is_collapsible,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(is_expanded);
+
+  const renderTimestampSection = () => {
+    let timestampLabel = "Started at";
+
+    switch (infra.status) {
+      case "created":
+        timestampLabel = "Created at";
+        break;
+      case "deleted":
+        timestampLabel = "Deleted at";
+        break;
+      case "errored":
+        timestampLabel = "Errored at";
+        break;
+    }
+
+    return (
+      <Timestamp>
+        {timestampLabel} {readableDate(infra.updated_at)}
+      </Timestamp>
+    );
+  };
+
+  const renderExpandedContents = () => {
+    if (isExpanded) {
+      let errors: string[] = [];
+
+      if (infra.status == "destroyed" || infra.status == "deleted") {
+        errors.push("This infrastructure was destroyed.");
+      }
+
+      let error = null;
+
+      if (errors.length > 0) {
+        error = errors.map((error, index) => {
+          return <ExpandedError key={index}>{error}</ExpandedError>;
+        });
+      }
+
+      return (
+        <Placeholder>
+          <Description>Infrastructure status: {infra.status}</Description>
+          <ErrorWrapper>{error}</ErrorWrapper>
+        </Placeholder>
+      );
+    }
+  };
+
+  return (
+    <StyledInfraObject key={infra.id}>
+      <InfraHeader
+        is_clickable={is_collapsible}
+        onClick={() => {
+          if (is_collapsible) {
+            setIsExpanded((val) => {
+              return !val;
+            });
+          }
+        }}
+      >
+        <Flex>
+          {integrationList[infra.kind] && (
+            <Icon src={integrationList[infra.kind].icon} />
+          )}
+          {KindMap[infra.kind]?.provider_name}
+        </Flex>
+        <Flex>
+          {renderTimestampSection()}
+          <ExpandIconContainer hidden={!is_collapsible}>
+            <i className="material-icons expand-icon">
+              {isExpanded ? "expand_less" : "expand_more"}
+            </i>
+          </ExpandIconContainer>
+        </Flex>
+      </InfraHeader>
+      {renderExpandedContents()}
+    </StyledInfraObject>
+  );
+};
+
+type V2InfraObjectProps = {
   infra: Infrastructure;
   project_id: number;
   is_expanded: boolean;
@@ -123,7 +195,7 @@ type InfraObjectProps = {
   updateInfraStatus: (infra: Infrastructure) => void;
 };
 
-const InfraObject: React.FC<InfraObjectProps> = ({
+const V2InfraObject: React.FC<V2InfraObjectProps> = ({
   infra,
   project_id,
   is_expanded,

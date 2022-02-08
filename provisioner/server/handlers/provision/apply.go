@@ -37,7 +37,6 @@ func NewProvisionApplyHandler(
 
 func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the project and infra from the attached scope
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
 	req := &ptypes.ApplyBaseRequest{}
@@ -45,8 +44,6 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if ok := c.decoderValidator.DecodeAndValidate(w, r, req); !ok {
 		return
 	}
-
-	fmt.Printf("provisioning: %d, %d\n", project.ID, infra.ID)
 
 	// create a new operation and write it to the database
 	operationUID, err := models.GetOperationID()

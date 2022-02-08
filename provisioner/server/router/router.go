@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/router/middleware"
+	"github.com/porter-dev/porter/provisioner/server/authn"
 	"github.com/porter-dev/porter/provisioner/server/authz"
 	"github.com/porter-dev/porter/provisioner/server/config"
 	"github.com/porter-dev/porter/provisioner/server/handlers/credentials"
@@ -18,26 +19,40 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		r.Use(middleware.ContentTypeJSON)
 
 		// create new group for raw state endpoints which use workspace authz middleware
+		staticTokenAuth := authn.NewAuthNStaticFactory(config)
+		porterTokenAuth := authn.NewAuthNPorterTokenFactory(config)
 		workspaceAuth := authz.NewWorkspaceScopedFactory(config)
 
 		r.Group(func(r chi.Router) {
-			r.Use(workspaceAuth.Middleware)
+			// This group is meant to be called via a provisioner pod
+			r.Group(func(r chi.Router) {
+				r.Use(porterTokenAuth.NewAuthenticated)
+				r.Use(workspaceAuth.Middleware)
 
-			r.Method("GET", "/{workspace_id}/tfstate", state.NewRawStateGetHandler(config))
-			r.Method("POST", "/{workspace_id}/tfstate", state.NewRawStateUpdateHandler(config))
+				r.Method("GET", "/{workspace_id}/tfstate", state.NewRawStateGetHandler(config))
+				r.Method("POST", "/{workspace_id}/tfstate", state.NewRawStateUpdateHandler(config))
+				r.Method("POST", "/{workspace_id}/resource", state.NewCreateResourceHandler(config))
+				r.Method("DELETE", "/{workspace_id}/resource", state.NewDeleteResourceHandler(config))
+				r.Method("POST", "/{workspace_id}/error", state.NewReportErrorHandler(config))
+				r.Method("GET", "/{workspace_id}/credentials", credentials.NewCredentialsGetHandler(config))
+			})
 
-			r.Method("POST", "/{workspace_id}/resource", state.NewCreateResourceHandler(config))
-			r.Method("DELETE", "/{workspace_id}/resource", state.NewDeleteResourceHandler(config))
-			r.Method("POST", "/{workspace_id}/error", state.NewReportErrorHandler(config))
-			r.Method("GET", "/{workspace_id}/logs", state.NewLogsGetHandler(config))
-			r.Method("GET", "/{workspace_id}/credentials", credentials.NewCredentialsGetHandler(config))
+			// This group is meant to be called via the API server
+			r.Group(func(r chi.Router) {
+				r.Use(staticTokenAuth.NewAuthenticated)
+				r.Use(workspaceAuth.Middleware)
+
+				r.Method("GET", "/{workspace_id}/logs", state.NewLogsGetHandler(config))
+			})
 		})
 
 		// use project and infra-scoped middleware
 		projectAuth := authz.NewProjectScopedFactory(config)
 		infraAuth := authz.NewInfraScopedFactory(config)
 
+		// This group is meant to be called via the API server
 		r.Group(func(r chi.Router) {
+			r.Use(staticTokenAuth.NewAuthenticated)
 			r.Use(projectAuth.Middleware)
 			r.Use(infraAuth.Middleware)
 

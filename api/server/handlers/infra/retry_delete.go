@@ -10,7 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/provisioner/client"
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
@@ -43,9 +42,7 @@ func (c *InfraRetryDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	// call apply on the provisioner service
-	pClient := client.NewClient("http://localhost:8082/api/v1")
-
-	resp, err := pClient.Delete(context.Background(), proj.ID, infra.ID, &ptypes.DeleteBaseRequest{
+	resp, err := c.Config().ProvisionerClient.Delete(context.Background(), proj.ID, infra.ID, &ptypes.DeleteBaseRequest{
 		OperationKind: "retry_delete",
 	})
 

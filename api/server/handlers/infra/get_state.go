@@ -10,8 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-
-	"github.com/porter-dev/porter/provisioner/client"
 )
 
 type InfraGetStateHandler struct {
@@ -32,9 +30,7 @@ func (c *InfraGetStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 
 	// call apply on the provisioner service
-	pClient := client.NewClient("http://localhost:8082/api/v1")
-
-	resp, err := pClient.GetState(context.Background(), proj.ID, infra.ID)
+	resp, err := c.Config().ProvisionerClient.GetState(context.Background(), proj.ID, infra.ID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

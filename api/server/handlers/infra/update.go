@@ -12,7 +12,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/provisioner/client"
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 	"gorm.io/gorm"
 )
@@ -102,9 +101,7 @@ func (c *InfraUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call apply on the provisioner service
-	pClient := client.NewClient("http://localhost:8082/api/v1")
-
-	resp, err := pClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
+	resp, err := c.Config().ProvisionerClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
 		Kind:          string(infra.Kind),
 		Values:        vals,
 		OperationKind: "update",

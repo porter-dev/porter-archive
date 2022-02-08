@@ -81,8 +81,13 @@ const InfrastructureList = () => {
 
           return (
             <KindContainer>
-              <Icon src={integrationList[original.kind].icon} />
-              <Kind>{integrationList[original.kind].label}</Kind>
+              <Icon
+                src={
+                  integrationList[original.kind]?.icon ||
+                  integrationList["dockerhub"].icon
+                }
+              />
+              <Kind>{integrationList[original.kind]?.label}</Kind>
             </KindContainer>
           );
         },

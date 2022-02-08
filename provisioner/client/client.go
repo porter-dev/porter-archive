@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,23 +11,63 @@ import (
 
 	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/provisioner/pb"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type Client struct {
 	BaseURL    string
+	Token      string
+	TokenID    uint
 	HTTPClient *http.Client
+	GRPCClient pb.ProvisionerClient
 }
 
-// TODO: add token-based mechanism to client and server
-func NewClient(baseURL string) *Client {
+func NewClient(baseURL, token string, tokenID uint) (*Client, error) {
+	parsedURL, err := url.Parse(baseURL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", parsedURL.Host, parsedURL.Port()), grpc.WithInsecure())
+
+	if err != nil {
+		return nil, err
+	}
+
+	gClient := pb.NewProvisionerClient(conn)
+
 	client := &Client{
 		BaseURL: baseURL,
+		Token:   token,
+		TokenID: tokenID,
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
+		GRPCClient: gClient,
 	}
 
-	return client
+	return client, nil
+}
+
+func (c *Client) NewGRPCContext(workspaceID string) (context.Context, context.CancelFunc) {
+	headers := map[string]string{
+		"workspace_id": workspaceID,
+		"token":        c.Token,
+	}
+
+	if c.TokenID != 0 {
+		headers["token_id"] = fmt.Sprintf("%d", c.TokenID)
+	}
+
+	header := metadata.New(headers)
+
+	ctx := metadata.NewOutgoingContext(context.Background(), header)
+
+	return context.WithCancel(ctx)
 }
 
 func (c *Client) getRequest(relPath string, data interface{}, response interface{}) error {
@@ -153,9 +194,9 @@ func (c *Client) sendRequest(req *http.Request, v interface{}) (*types.ExternalE
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
-	// if c.Token != "" {
-	// 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
-	// }
+	if c.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
+	}
 
 	res, err := c.HTTPClient.Do(req)
 

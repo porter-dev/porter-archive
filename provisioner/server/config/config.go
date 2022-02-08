@@ -78,6 +78,8 @@ type ProvisionerConf struct {
 	TimeoutWrite time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
 	TimeoutIdle  time.Duration `env:"SERVER_TIMEOUT_IDLE,default=15s"`
 
+	StaticAuthToken string `env:"STATIC_AUTH_TOKEN"`
+
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`
 

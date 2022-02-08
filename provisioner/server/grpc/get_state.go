@@ -3,33 +3,17 @@ package grpc
 import (
 	"fmt"
 
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/pb"
-	"google.golang.org/grpc/metadata"
 
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
 func (s *ProvisionerServer) GetStateUpdate(infra *pb.Infra, server pb.Provisioner_GetStateUpdateServer) error {
-	// read metadata to get infra object
-	streamContext, ok := metadata.FromIncomingContext(server.Context())
+	name, ok := verifyStaticTokenContext(s.config, server.Context())
 
 	if !ok {
 		return fmt.Errorf("unauthorized")
-	}
-
-	workspaceID, exists := streamContext["workspace_id"]
-
-	if !exists || len(workspaceID) != 1 {
-		return fmt.Errorf("unauthorized")
-	}
-
-	// parse workspace id
-	name, err := models.ParseWorkspaceID(workspaceID[0])
-
-	if err != nil {
-		return err
 	}
 
 	modelInfra, err := s.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)

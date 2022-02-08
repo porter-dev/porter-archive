@@ -5,33 +5,16 @@ import (
 	"io"
 	"strings"
 
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/pb"
 	"github.com/porter-dev/porter/provisioner/types"
-
-	"google.golang.org/grpc/metadata"
 )
 
 func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error {
-	// read metadata to get infra object
-	streamContext, ok := metadata.FromIncomingContext(stream.Context())
+	name, ok := verifyPorterTokenContext(s.config, stream.Context())
 
 	if !ok {
 		return fmt.Errorf("unauthorized")
-	}
-
-	workspaceID, exists := streamContext["workspace_id"]
-
-	if !exists || len(workspaceID) != 1 {
-		return fmt.Errorf("unauthorized")
-	}
-
-	// parse workspace id
-	name, err := models.ParseWorkspaceID(workspaceID[0])
-
-	if err != nil {
-		return err
 	}
 
 	infra, err := s.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)

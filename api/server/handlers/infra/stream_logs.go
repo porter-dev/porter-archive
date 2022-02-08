@@ -16,8 +16,6 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/pb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 type InfraStreamLogHandler struct {
@@ -39,26 +37,11 @@ func (c *InfraStreamLogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	operation, _ := r.Context().Value(types.OperationScope).(*models.Operation)
 	workspaceID := models.GetWorkspaceID(infra, operation)
 
-	conn, err := grpc.Dial("localhost:8082", grpc.WithInsecure())
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	client := pb.NewProvisionerClient(conn)
-
-	header := metadata.New(map[string]string{
-		"workspace_id": workspaceID,
-	})
-
-	ctx := metadata.NewOutgoingContext(context.Background(), header)
-
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := c.Config().ProvisionerClient.NewGRPCContext(workspaceID)
 
 	defer cancel()
 
-	stream, err := client.GetLog(ctx, &pb.Infra{
+	stream, err := c.Config().ProvisionerClient.GRPCClient.GetLog(ctx, &pb.Infra{
 		ProjectId: int64(infra.ProjectID),
 		Id:        int64(infra.ID),
 		Suffix:    infra.Suffix,

@@ -201,7 +201,10 @@ func (c *Client) sendRequest(req *http.Request, v interface{}) (*types.ExternalE
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
 
-	if c.Token != "" {
+	if c.Token != "" && c.TokenID != 0 {
+		req.Header.Set("X-Porter-Token", c.Token)
+		req.Header.Set("X-Porter-Token-ID", fmt.Sprintf("%d", c.TokenID))
+	} else if c.Token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 	}
 

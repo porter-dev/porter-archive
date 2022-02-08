@@ -64,6 +64,22 @@ func (p *WorkspaceScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// if a CE token is attached, make sure it matches the project ID
+	if ceToken, ok := r.Context().Value("ce_token").(*models.CredentialsExchangeToken); ok {
+		if ceToken.ProjectID != name.ProjectID {
+			apierrors.HandleAPIError(
+				p.config.Logger,
+				p.config.Alerter, w, r,
+				apierrors.NewErrForbidden(
+					fmt.Errorf("credential exchange token project ID does not match requested project ID"),
+				),
+				true,
+			)
+
+			return
+		}
+	}
+
 	// look for infra with that ID and project ID
 	infra, err := p.config.Repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
 

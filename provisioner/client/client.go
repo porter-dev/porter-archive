@@ -34,7 +34,7 @@ func NewClient(baseURL, token string, tokenID uint) (*Client, error) {
 		return nil, err
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", parsedURL.Host, parsedURL.Port()), grpc.WithInsecure())
+	conn, err := grpc.Dial(parsedURL.Host, grpc.WithInsecure())
 
 	if err != nil {
 		return nil, err

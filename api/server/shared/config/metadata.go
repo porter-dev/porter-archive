@@ -16,8 +16,7 @@ type Metadata struct {
 
 func MetadataFromConf(sc *env.ServerConf, version string) *Metadata {
 	return &Metadata{
-		// note: provisioning is set in the metadata after the loader is called
-		Provisioning:       false,
+		Provisioning:       sc.ProvisionerServerURL != "",
 		Github:             hasGithubAppVars(sc),
 		GithubLogin:        sc.GithubClientID != "" && sc.GithubClientSecret != "" && sc.GithubLoginEnabled,
 		BasicLogin:         sc.BasicLoginEnabled,

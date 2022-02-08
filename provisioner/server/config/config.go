@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	klocal "github.com/porter-dev/porter/internal/kubernetes/local"
+	"github.com/porter-dev/porter/internal/oauth"
 
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
@@ -72,7 +73,7 @@ type Config struct {
 // ProvisionerConf is the env var configuration for the provisioner server
 type ProvisionerConf struct {
 	Debug bool `env:"DEBUG,default=false"`
-	Port  int  `env:"PROVISIONER_PORT,default=8082"`
+	Port  int  `env:"PROV_PORT,default=8082"`
 
 	TimeoutRead  time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
 	TimeoutWrite time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`
@@ -89,6 +90,11 @@ type ProvisionerConf struct {
 	S3AWSRegion      string `env:"S3_AWS_REGION"`
 	S3BucketName     string `env:"S3_BUCKET_NAME"`
 	S3EncryptionKey  string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
+
+	// Configuration for the digitalocean client
+	DOClientID        string `env:"DO_CLIENT_ID"`
+	DOClientSecret    string `env:"DO_CLIENT_SECRET"`
+	DOClientServerURL string `env:"DO_CLIENT_SERVER_URL"`
 
 	// ProvisionerMethod defines the method to use for provisioner: options are "local" or "kubernetes"
 	ProvisionerMethod          string `env:"PROVISIONER_METHOD,default=local"`
@@ -203,6 +209,15 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 			ProvisionerImagePullSecret: envConf.ProvisionerImagePullSecret,
 			ProvisionerJobNamespace:    envConf.ProvisionerJobNamespace,
 			ProvisionerBackendURL:      envConf.ProvisionerBackendURL,
+		})
+	}
+
+	if envConf.ProvisionerConf.DOClientID != "" && envConf.ProvisionerConf.DOClientSecret != "" && envConf.ProvisionerConf.DOClientServerURL != "" {
+		res.DOConf = oauth.NewDigitalOceanClient(&oauth.Config{
+			ClientID:     envConf.ProvisionerConf.DOClientID,
+			ClientSecret: envConf.ProvisionerConf.DOClientSecret,
+			Scopes:       []string{"read", "write"},
+			BaseURL:      envConf.ProvisionerConf.DOClientServerURL,
 		})
 	}
 

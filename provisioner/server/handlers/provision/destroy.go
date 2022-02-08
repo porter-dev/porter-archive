@@ -34,10 +34,7 @@ func NewProvisionDestroyHandler(
 
 func (c *ProvisionDestroyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// read the project and infra from the attached scope
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
-
-	fmt.Printf("destroying: %d, %d\n", project.ID, infra.ID)
 
 	req := &ptypes.DeleteBaseRequest{}
 

@@ -26,9 +26,6 @@ func NewLocalProvisioner(pc *LocalProvisionerConfig) *LocalProvisioner {
 }
 
 func (l *LocalProvisioner) Provision(opts *provisioner.ProvisionOpts) error {
-	// TODO: check that porter-provisioner command exists on the host
-	fmt.Println("running local provisioner with workspace id: ", models.GetWorkspaceID(opts.Infra, opts.Operation))
-
 	// TODO: allow cancellation -- this is just to simulate behavior
 	go func() {
 		cmdProv := exec.Command("porter-provisioner", string(opts.OperationKind))

@@ -1,7 +1,6 @@
 package state
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared"
@@ -29,8 +28,6 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// read the infra from the attached scope
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
 	operation, _ := r.Context().Value(types.OperationScope).(*models.Operation)
-
-	fmt.Println("destroying", infra.ID, operation.UID)
 
 	// update the operation to indicate completion
 	operation.Status = "completed"

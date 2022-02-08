@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -41,6 +42,10 @@ func (c *InfraGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else {
 			res.LatestOperation = op
 		}
+	} else {
+		// if the operation does not exist, throw an error as this infra is in an invalid state
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("latest operation not found")))
+		return
 	}
 
 	c.WriteResult(w, r, res)

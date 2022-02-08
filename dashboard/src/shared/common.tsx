@@ -68,6 +68,16 @@ export const integrationList: any = {
       "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4",
     label: "Elastic Container Registry (ECR)",
   },
+  doks: {
+    icon:
+      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    label: "Digital Ocean Kubernetes Service (DOKS)",
+  },
+  docr: {
+    icon:
+      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    label: "Digital Ocean Container Registry (DOCR)",
+  },
   aws: {
     icon: aws,
     label: "AWS",

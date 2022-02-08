@@ -16,7 +16,7 @@ func (c *Client) GetRawState(
 
 	err := c.getRequest(
 		fmt.Sprintf(
-			"/%s/tfstate",
+			"/%s/tfstate/raw",
 			workspaceID,
 		),
 		nil,

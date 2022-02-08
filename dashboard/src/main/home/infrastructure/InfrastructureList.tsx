@@ -158,6 +158,24 @@ const InfrastructureList = () => {
     return <Placeholder>Error</Placeholder>;
   }
 
+  const renderTable = () => {
+    if (infraList.length == 0) {
+      return <Placeholder>No infrastructure found.</Placeholder>;
+    }
+
+    return (
+      <Table
+        columns={columns}
+        data={infraList}
+        isLoading={isLoading}
+        onRowClick={(row) => {
+          let original = row.original as Infrastructure;
+          pushFiltered(`/infrastructure/${original.id}`, ["project_id"]);
+        }}
+      />
+    );
+  };
+
   return (
     <DatabasesListWrapper>
       <StyledTitleSection>
@@ -187,17 +205,7 @@ const InfrastructureList = () => {
           </SaveButton>
         </SaveButtonContainer>
       </ControlRow>
-      <StyledTableWrapper>
-        <Table
-          columns={columns}
-          data={infraList}
-          isLoading={isLoading}
-          onRowClick={(row) => {
-            let original = row.original as Infrastructure;
-            pushFiltered(`/infrastructure/${original.id}`, ["project_id"]);
-          }}
-        />
-      </StyledTableWrapper>
+      <StyledTableWrapper>{renderTable()}</StyledTableWrapper>
     </DatabasesListWrapper>
   );
 };

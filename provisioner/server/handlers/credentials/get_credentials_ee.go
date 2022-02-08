@@ -5,7 +5,6 @@ package credentials
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -34,34 +33,12 @@ func NewCredentialsGetHandler(
 }
 
 func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ceToken, _ := r.Context().Value("ce_token").(*models.CredentialsExchangeToken)
+
 	// read the request to get the token id and hashed token
 	req := &types.CredentialsExchangeRequest{}
 
-	// populate the request from the headers
-	req.CredExchangeToken = r.Header.Get("X-Porter-Token")
-	tokID, err := strconv.ParseUint(r.Header.Get("X-Porter-Token-ID"), 10, 64)
-
-	if err != nil {
-		apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
-		return
-	}
-
-	req.CredExchangeID = uint(tokID)
 	req.VaultToken = r.Header.Get("X-Vault-Token")
-
-	// read the access token in the header, check against DB
-	ceToken, err := c.config.Repo.CredentialsExchangeToken().ReadCredentialsExchangeToken(req.CredExchangeID)
-
-	if err != nil {
-		apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
-		return
-	}
-
-	// TODO: verify hashed token!!
-	if valid, err := verifyToken(req.CredExchangeToken, ceToken); !valid {
-		apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
-		return
-	}
 
 	resp := &types.CredentialsExchangeResponse{}
 	repo := c.config.Repo

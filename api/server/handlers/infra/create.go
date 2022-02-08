@@ -16,8 +16,6 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
 
-	"github.com/porter-dev/porter/provisioner/client"
-
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
 
@@ -103,8 +101,6 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// call apply on the provisioner service
-	pClient := client.NewClient("http://localhost:8082/api/v1")
-
 	vals := req.Values
 
 	// if this is cluster-scoped and the kind is RDS, run the postrenderer
@@ -123,7 +119,7 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp, err := pClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
+	resp, err := c.Config().ProvisionerClient.Apply(context.Background(), proj.ID, infra.ID, &ptypes.ApplyBaseRequest{
 		Kind:          req.Kind,
 		Values:        vals,
 		OperationKind: "create",
@@ -228,10 +224,8 @@ func (i *InfraRDSPostrenderer) Run(w http.ResponseWriter, r *http.Request, opts 
 
 		clusterInfraOperation, err := i.config.Repo.Infra().GetLatestOperation(clusterInfra)
 
-		pClient := client.NewClient("http://localhost:8082/api/v1")
-
 		// get the raw state for the cluster
-		rawState, err := pClient.GetRawState(context.Background(), models.GetWorkspaceID(clusterInfra, clusterInfraOperation))
+		rawState, err := i.config.ProvisionerClient.GetRawState(context.Background(), models.GetWorkspaceID(clusterInfra, clusterInfraOperation))
 
 		if err != nil {
 			apierrors.HandleAPIError(i.config.Logger, i.config.Alerter, w, r, apierrors.NewErrInternal(err), true)

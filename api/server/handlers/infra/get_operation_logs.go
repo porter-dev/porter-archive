@@ -10,7 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/provisioner/client"
 )
 
 type InfraGetOperationLogsHandler struct {
@@ -33,9 +32,7 @@ func (c *InfraGetOperationLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	workspaceID := models.GetWorkspaceID(infra, operation)
 
 	// call apply on the provisioner service
-	pClient := client.NewClient("http://localhost:8082/api/v1")
-
-	resp, err := pClient.GetLogs(context.Background(), workspaceID)
+	resp, err := c.Config().ProvisionerClient.GetLogs(context.Background(), workspaceID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -75,6 +75,18 @@ const DatabasesList = () => {
         }
       );
 
+      // call an endpoint for updating the database status
+      await api.updateDatabaseStatus(
+        "<token>",
+        {
+          status: "deleting",
+        },
+        {
+          project_id,
+          infra_id,
+        }
+      );
+
       setCurrentOverlay(null);
       pushQueryParams({ current_tab: "provisioner-status" });
     } catch (error) {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/database"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -482,6 +483,34 @@ func getInfraRoutes(
 	routes = append(routes, &Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/infras/{infra_id}/database -> database.NewDatabaseUpdateStatusHandler
+	updateDBStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/database",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.InfraScope,
+			},
+		},
+	)
+
+	updateDBStatusHandler := database.NewDatabaseUpdateStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateDBStatusEndpoint,
+		Handler:  updateDBStatusHandler,
 		Router:   r,
 	})
 

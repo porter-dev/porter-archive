@@ -20,6 +20,9 @@ const NodeList: React.FC = () => {
       {
         Header: "Node Name",
         accessor: "name",
+        Cell: ({ row }) => {
+          return <NodeName>{row.values.name}</NodeName>;
+        },
       },
       {
         Header: "Machine Type",
@@ -184,4 +187,8 @@ const StatusButton = styled.div`
     background: ${(props: { success: boolean }) =>
       props.success ? "#405eddbb" : "#e83162"};
   }
+`;
+
+const NodeName = styled.div`
+  min-width: 250px;
 `;

@@ -19,6 +19,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		r.Use(middleware.ContentTypeJSON)
 
 		// create new group for raw state endpoints which use workspace authz middleware
+		basicAuth := authn.NewAuthNBasicFactory(config)
 		staticTokenAuth := authn.NewAuthNStaticFactory(config)
 		porterTokenAuth := authn.NewAuthNPorterTokenFactory(config)
 		workspaceAuth := authz.NewWorkspaceScopedFactory(config)
@@ -29,12 +30,19 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 				r.Use(porterTokenAuth.NewAuthenticated)
 				r.Use(workspaceAuth.Middleware)
 
-				r.Method("GET", "/{workspace_id}/tfstate", state.NewRawStateGetHandler(config))
-				r.Method("POST", "/{workspace_id}/tfstate", state.NewRawStateUpdateHandler(config))
 				r.Method("POST", "/{workspace_id}/resource", state.NewCreateResourceHandler(config))
 				r.Method("DELETE", "/{workspace_id}/resource", state.NewDeleteResourceHandler(config))
 				r.Method("POST", "/{workspace_id}/error", state.NewReportErrorHandler(config))
 				r.Method("GET", "/{workspace_id}/credentials", credentials.NewCredentialsGetHandler(config))
+			})
+
+			// This group is meant to be called from Terraform via basic auth
+			r.Group(func(r chi.Router) {
+				r.Use(basicAuth.NewAuthenticated)
+				r.Use(workspaceAuth.Middleware)
+
+				r.Method("GET", "/{workspace_id}/tfstate", state.NewRawStateGetHandler(config))
+				r.Method("POST", "/{workspace_id}/tfstate", state.NewRawStateUpdateHandler(config))
 			})
 
 			// This group is meant to be called via the API server

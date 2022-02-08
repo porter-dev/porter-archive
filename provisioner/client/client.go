@@ -23,6 +23,8 @@ type Client struct {
 	TokenID    uint
 	HTTPClient *http.Client
 	GRPCClient pb.ProvisionerClient
+
+	conn *grpc.ClientConn
 }
 
 func NewClient(baseURL, token string, tokenID uint) (*Client, error) {
@@ -48,6 +50,7 @@ func NewClient(baseURL, token string, tokenID uint) (*Client, error) {
 			Timeout: time.Minute,
 		},
 		GRPCClient: gClient,
+		conn:       conn,
 	}
 
 	return client, nil
@@ -68,6 +71,10 @@ func (c *Client) NewGRPCContext(workspaceID string) (context.Context, context.Ca
 	ctx := metadata.NewOutgoingContext(context.Background(), header)
 
 	return context.WithCancel(ctx)
+}
+
+func (c *Client) CloseConnection() error {
+	return c.conn.Close()
 }
 
 func (c *Client) getRequest(relPath string, data interface{}, response interface{}) error {

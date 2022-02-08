@@ -61,6 +61,8 @@ type Infra struct {
 	// The database id for the infra, if this infra provisioned a database
 	DatabaseID uint
 
+	Database Database
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------

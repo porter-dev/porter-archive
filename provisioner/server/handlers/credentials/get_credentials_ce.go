@@ -3,22 +3,30 @@
 package credentials
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/provisioner/server/config"
+
+	"github.com/porter-dev/porter/api/types"
 )
 
 type GetCredentialsHandler struct {
-	handlers.PorterHandlerReader
-	handlers.Unavailable
+	config *config.Config
 }
 
-func NewGetCredentialsHandler(
+func NewCredentialsGetHandler(
 	config *config.Config,
-	decoderValidator shared.RequestDecoderValidator,
-	writer shared.ResultWriter,
 ) http.Handler {
-	return handlers.NewUnavailable(config, "get_credential")
+	return &GetCredentialsHandler{config}
+}
+
+func (u *GetCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	apierrors.HandleAPIError(u.config.Logger, u.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(
+		fmt.Errorf("get_credentials not available in community edition"),
+		http.StatusBadRequest,
+	), true, apierrors.ErrorOpts{
+		Code: types.ErrCodeUnavailable,
+	})
 }

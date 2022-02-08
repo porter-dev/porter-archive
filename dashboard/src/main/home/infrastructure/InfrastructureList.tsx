@@ -202,7 +202,7 @@ export default InfrastructureList;
 const KindContainer = styled.div`
   display: flex;
   align-items: center;
-  min-width: 200px;
+  min-width: 250px;
 `;
 
 const Kind = styled.div`

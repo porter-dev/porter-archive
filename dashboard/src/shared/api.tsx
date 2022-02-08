@@ -985,6 +985,18 @@ const destroyInfra = baseApi<
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}`;
 });
 
+const updateDatabaseStatus = baseApi<
+  {
+    status: string;
+  },
+  {
+    project_id: number;
+    infra_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/database`;
+});
+
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
 
 const getRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
@@ -1583,6 +1595,7 @@ export default {
   deployTemplate,
   deployAddon,
   destroyInfra,
+  updateDatabaseStatus,
   detectBuildpack,
   getBranchContents,
   getBranches,

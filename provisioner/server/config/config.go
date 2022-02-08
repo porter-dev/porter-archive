@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	redis "github.com/go-redis/redis/v8"
@@ -9,7 +10,6 @@ import (
 	"github.com/joeshaw/envdecode"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
-	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	klocal "github.com/porter-dev/porter/internal/kubernetes/local"
@@ -27,6 +27,23 @@ import (
 
 	_gorm "gorm.io/gorm"
 )
+
+var InstanceCredentialBackend credentials.CredentialStorage
+var InstanceEnvConf *EnvConf
+
+func sharedInit() {
+	var envDecoderConf EnvDecoderConf = EnvDecoderConf{}
+
+	if err := envdecode.StrictDecode(&envDecoderConf); err != nil {
+		log.Fatalf("Failed to decode server conf: %s", err)
+	}
+
+	InstanceEnvConf = &EnvConf{
+		ProvisionerConf: &envDecoderConf.ProvisionerConf,
+		DBConf:          &envDecoderConf.DBConf,
+		RedisConf:       envDecoderConf.RedisConf,
+	}
+}
 
 type Config struct {
 	ProvisionerConf *ProvisionerConf
@@ -101,17 +118,7 @@ type EnvDecoderConf struct {
 
 // FromEnv generates a configuration from environment variables
 func FromEnv() (*EnvConf, error) {
-	var envDecoderConf EnvDecoderConf = EnvDecoderConf{}
-
-	if err := envdecode.StrictDecode(&envDecoderConf); err != nil {
-		return nil, fmt.Errorf("Failed to decode server conf: %s", err)
-	}
-
-	return &EnvConf{
-		ProvisionerConf: &envDecoderConf.ProvisionerConf,
-		DBConf:          &envDecoderConf.DBConf,
-		RedisConf:       envDecoderConf.RedisConf,
-	}, nil
+	return InstanceEnvConf, nil
 }
 
 func GetConfig(envConf *EnvConf) (*Config, error) {
@@ -136,17 +143,7 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 		key[i] = b
 	}
 
-	var credBackend credentials.CredentialStorage
-
-	if envConf.DBConf.VaultAPIKey != "" && envConf.DBConf.VaultServerURL != "" && envConf.DBConf.VaultPrefix != "" {
-		credBackend = vault.NewClient(
-			envConf.DBConf.VaultServerURL,
-			envConf.DBConf.VaultAPIKey,
-			envConf.DBConf.VaultPrefix,
-		)
-	}
-
-	res.Repo = gorm.NewRepository(db, &key, credBackend)
+	res.Repo = gorm.NewRepository(db, &key, InstanceCredentialBackend)
 
 	if envConf.ProvisionerConf.SentryDSN != "" {
 		res.Alerter, err = alerter.NewSentryAlerter(envConf.ProvisionerConf.SentryDSN, envConf.ProvisionerConf.SentryEnv)

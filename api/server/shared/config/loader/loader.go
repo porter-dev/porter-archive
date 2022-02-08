@@ -72,7 +72,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
 	res.DB = InstanceDB
 
-	err = gorm.AutoMigrate(InstanceDB)
+	err = gorm.AutoMigrate(InstanceDB, sc.Debug)
 
 	if err != nil {
 		return nil, err

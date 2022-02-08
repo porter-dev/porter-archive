@@ -7,8 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(
+func AutoMigrate(db *gorm.DB, debug bool) error {
+	instanceDB := db
+
+	if debug {
+		instanceDB = instanceDB.Debug()
+	}
+
+	return instanceDB.AutoMigrate(
 		&models.Project{},
 		&models.Role{},
 		&models.User{},

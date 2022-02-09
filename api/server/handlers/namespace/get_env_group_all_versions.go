@@ -1,6 +1,8 @@
 package namespace
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -9,27 +11,29 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetConfigMapHandler struct {
+type GetEnvGroupAllVersionsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetConfigMapHandler(
+func NewGetEnvGroupAllVersionsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetConfigMapHandler {
-	return &GetConfigMapHandler{
+) *GetEnvGroupAllVersionsHandler {
+	return &GetEnvGroupAllVersionsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.GetConfigMapRequest{}
+func (c *GetEnvGroupAllVersionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.GetEnvGroupAllRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -45,15 +49,33 @@ func (c *GetConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	configMap, err := agent.GetConfigMap(request.Name, namespace)
+	configMaps, err := agent.ListVersionedConfigMaps(request.Name, namespace)
 
-	if err != nil {
+	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("env group not found"),
+			http.StatusNotFound,
+		))
+		return
+	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	var res = types.GetConfigMapResponse{
-		ConfigMap: configMap,
+	res := make(types.ListEnvGroupsResponse, 0)
+
+	for _, cm := range configMaps {
+		eg, err := envgroup.ToEnvGroup(&cm)
+
+		if err != nil {
+			continue
+		}
+
+		res = append(res, &types.EnvGroupMeta{
+			Name:      eg.Name,
+			Namespace: eg.Namespace,
+			Version:   eg.Version,
+		})
 	}
 
 	c.WriteResult(w, r, res)

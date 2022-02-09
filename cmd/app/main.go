@@ -10,7 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
 	"github.com/porter-dev/porter/internal/adapter"
-	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
+	"github.com/porter-dev/porter/internal/redis_stream"
 )
 
 // Version will be linked by an ldflag during build
@@ -43,11 +43,11 @@ func main() {
 			return
 		}
 
-		provisioner.InitGlobalStream(redis)
+		redis_stream.InitGlobalStream(redis)
 
 		errorChan := make(chan error)
 
-		go provisioner.GlobalStreamListener(redis, config.Repo, config.AnalyticsClient, errorChan)
+		go redis_stream.GlobalStreamListener(redis, config, config.Repo, config.AnalyticsClient, errorChan)
 	}
 
 	appRouter := router.NewAPIRouter(config)

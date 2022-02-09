@@ -77,6 +77,7 @@ var values string
 var source string
 var image string
 var registryURL string
+var forceBuild bool
 
 func init() {
 	rootCmd.AddCommand(createCmd)
@@ -155,6 +156,13 @@ func init() {
 		"",
 		"the registry URL to use (must exist in \"porter registries list\")",
 	)
+
+	createCmd.PersistentFlags().BoolVar(
+		&forceBuild,
+		"force-build",
+		false,
+		"set this to force build an image",
+	)
 }
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
@@ -217,7 +225,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	if source == "local" {
-		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
+		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil, forceBuild)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {

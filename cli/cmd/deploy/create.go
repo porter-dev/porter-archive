@@ -282,7 +282,7 @@ func (c *CreateAgent) CreateFromDocker(
 	if imageExists && imageTag != "default" && !forceBuild {
 		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, imageTag)
 	} else { // image does not exist or has tag default so we (re)build one
-		env, err := GetEnvFromConfig(mergedValues)
+		env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
 
 		if err != nil {
 			env = map[string]string{}
@@ -484,6 +484,13 @@ func (c *CreateAgent) getMergedValues(overrideValues map[string]interface{}) (st
 
 	// get the values of the template
 	values, err := c.GetLatestTemplateDefaultValues(c.CreateOpts.Kind, latestVersion)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	err = coalesceEnvGroups(c.Client, c.CreateOpts.ProjectID, c.CreateOpts.ClusterID,
+		c.CreateOpts.Namespace, c.CreateOpts.EnvGroups, values)
 
 	if err != nil {
 		return "", nil, err

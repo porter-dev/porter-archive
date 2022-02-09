@@ -1,4 +1,4 @@
-package provisioner
+package redis_stream
 
 import (
 	"context"
@@ -10,9 +10,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
+	"gorm.io/gorm"
 
 	redis "github.com/go-redis/redis/v8"
 
+	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -84,6 +88,7 @@ type ResourceCRUDHandler interface {
 // updates models in the database as necessary
 func GlobalStreamListener(
 	client *redis.Client,
+	config *config.Config,
 	repo repository.Repository,
 	analyticsClient analytics.AnalyticsSegmentClient,
 	errorChan chan error,
@@ -174,6 +179,52 @@ func GlobalStreamListener(
 							InfraID:                 infra.ID,
 						},
 					))
+				} else if kind == string(types.InfraRDS) {
+					// parse the last applied field to get the cluster id
+					rdsRequest := &types.RDSInfraLastApplied{}
+					err := json.Unmarshal(infra.LastApplied, rdsRequest)
+
+					if err != nil {
+						continue
+					}
+
+					database := &models.Database{
+						Status: "running",
+					}
+
+					// parse raw data into ECR type
+					dataString, ok := msg.Values["data"].(string)
+
+					if ok {
+						err = json.Unmarshal([]byte(dataString), database)
+
+						if err != nil {
+						}
+					}
+
+					database.Model = gorm.Model{}
+					database.ProjectID = projID
+					database.ClusterID = rdsRequest.ClusterID
+					database.InfraID = infra.ID
+
+					database, err = repo.Database().CreateDatabase(database)
+
+					if err != nil {
+						continue
+					}
+
+					infra.DatabaseID = database.ID
+					infra, err = repo.Infra().UpdateInfra(infra)
+
+					if err != nil {
+						continue
+					}
+
+					err = createRDSEnvGroup(repo, config, infra, database, rdsRequest)
+
+					if err != nil {
+						continue
+					}
 				} else if kind == string(types.InfraEKS) {
 					cluster := &models.Cluster{
 						AuthMechanism:    models.AWS,
@@ -411,6 +462,32 @@ func GlobalStreamListener(
 							InfraID:                infra.ID,
 						},
 					))
+				} else if infra.Kind == types.InfraRDS && infra.DatabaseID != 0 {
+					rdsRequest := &types.RDSInfraLastApplied{}
+					err := json.Unmarshal(infra.LastApplied, rdsRequest)
+
+					if err != nil {
+						continue
+					}
+
+					database, err := repo.Database().ReadDatabase(infra.ProjectID, rdsRequest.ClusterID, infra.DatabaseID)
+
+					if err != nil {
+						continue
+					}
+
+					err = deleteRDSEnvGroup(repo, config, infra, database, rdsRequest)
+
+					if err != nil {
+						continue
+					}
+
+					// delete the database
+					err = repo.Database().DeleteDatabase(infra.ProjectID, rdsRequest.ClusterID, infra.DatabaseID)
+
+					if err != nil {
+						continue
+					}
 				}
 			}
 
@@ -428,4 +505,80 @@ func GlobalStreamListener(
 			}
 		}
 	}
+}
+
+func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra *models.Infra, database *models.Database, rdsConfig *types.RDSInfraLastApplied) error {
+
+	cluster, err := repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
+
+	if err != nil {
+		return err
+	}
+
+	ooc := &kubernetes.OutOfClusterConfig{
+		Repo:              config.Repo,
+		DigitalOceanOAuth: config.DOConf,
+		Cluster:           cluster,
+	}
+
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+
+	if err != nil {
+		return fmt.Errorf("failed to get agent: %s", err.Error())
+	}
+
+	// split the instance endpoint on the port
+	port := "5432"
+	host := database.InstanceEndpoint
+
+	if strArr := strings.Split(database.InstanceEndpoint, ":"); len(strArr) == 2 {
+		host = strArr[0]
+		port = strArr[1]
+	}
+
+	_, err = envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
+		Name:      fmt.Sprintf("rds-credentials-%s", rdsConfig.DBName),
+		Namespace: rdsConfig.Namespace,
+		Variables: map[string]string{},
+		SecretVariables: map[string]string{
+			"PGPORT":     port,
+			"PGHOST":     host,
+			"PGPASSWORD": rdsConfig.Password,
+			"PGUSER":     rdsConfig.Username,
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
+	}
+
+	return nil
+}
+
+func deleteRDSEnvGroup(repo repository.Repository, config *config.Config, infra *models.Infra, database *models.Database, rdsConfig *types.RDSInfraLastApplied) error {
+	cluster, err := repo.Cluster().ReadCluster(infra.ProjectID, rdsConfig.ClusterID)
+
+	if err != nil {
+		return err
+	}
+
+	ooc := &kubernetes.OutOfClusterConfig{
+		Repo:              config.Repo,
+		DigitalOceanOAuth: config.DOConf,
+		Cluster:           cluster,
+	}
+
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+
+	if err != nil {
+		return fmt.Errorf("failed to get agent: %s", err.Error())
+	}
+
+	err = envgroup.DeleteEnvGroup(agent, fmt.Sprintf("rds-credentials-%s", rdsConfig.DBName), rdsConfig.Namespace)
+
+	if err != nil {
+		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
+	}
+
+	return nil
 }

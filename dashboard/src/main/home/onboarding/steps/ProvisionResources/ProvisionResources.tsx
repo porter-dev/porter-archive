@@ -119,7 +119,8 @@ const ProvisionResources: React.FC<Props> = () => {
               project_id={project?.id}
               filter={getFilterOpts()}
               setInfraStatus={setInfraStatus}
-              enableNewestInfraFilter
+              filterLatest
+              auto_expanded
             />
             <Br />
             <Helper>Note: Provisioning can take up to 15 minutes.</Helper>

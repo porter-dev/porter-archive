@@ -6,7 +6,9 @@ import (
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/templater"
+	"github.com/porter-dev/porter/internal/templater/infra"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
@@ -26,6 +28,8 @@ type ClientConfigDefault struct {
 	HelmAgent   *helm.Agent
 	HelmRelease *release.Release
 	HelmChart   *chart.Chart
+
+	InfraOperation *models.Operation
 }
 
 // ContextConfig can read/write from a specified context (data source)
@@ -42,7 +46,7 @@ type ContextConfig struct {
 func GetFormFromRelease(def *ClientConfigDefault, rel *release.Release) (*types.FormYAML, error) {
 	for _, file := range rel.Chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
-			return FormYAMLFromBytes(def, file.Data, "")
+			return FormYAMLFromBytes(def, file.Data, "", "")
 		}
 	}
 
@@ -55,8 +59,8 @@ func GetFormFromRelease(def *ClientConfigDefault, rel *release.Release) (*types.
 // stateType refers to the types of state that should be read. The two state types
 // are "live" and "declared" -- if stateType is "", this will read both live and
 // declared states.
-func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType string) (*types.FormYAML, error) {
-	form, err := unqueriedFormYAMLFromBytes(bytes)
+func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType, contextType string) (*types.FormYAML, error) {
+	form, err := unqueriedFormYAMLFromBytes(bytes, contextType)
 
 	if err != nil {
 		return nil, err
@@ -89,8 +93,17 @@ func FormYAMLFromBytes(def *ClientConfigDefault, bytes []byte, stateType string)
 				if val, ok := data[key]; ok {
 					content.Value = val
 				}
+
+				if content.Value == nil && content.Settings.Default != nil {
+					content.Value = []interface{}{content.Settings.Default}
+				}
 			}
 		}
+	}
+
+	// if the client config defaults are Helm-related, this is a cluster-scoped resource
+	if def.HelmAgent != nil || def.HelmChart != nil || def.HelmRelease != nil {
+		form.IsClusterScoped = true
 	}
 
 	return form, nil
@@ -104,7 +117,7 @@ func FormStreamer(
 	on templater.OnDataStream,
 	stopCh <-chan struct{},
 ) error {
-	form, err := unqueriedFormYAMLFromBytes(bytes)
+	form, err := unqueriedFormYAMLFromBytes(bytes, targetContext.Type)
 
 	if err != nil {
 		return err
@@ -150,7 +163,7 @@ func isSubset(map1, map2 map[string]string) bool {
 }
 
 // unqueriedFormYAMLFromBytes returns a FormYAML without values queries populated
-func unqueriedFormYAMLFromBytes(bytes []byte) (*types.FormYAML, error) {
+func unqueriedFormYAMLFromBytes(bytes []byte, contextType string) (*types.FormYAML, error) {
 	// parse bytes into object
 	form := &types.FormYAML{}
 
@@ -161,8 +174,12 @@ func unqueriedFormYAMLFromBytes(bytes []byte) (*types.FormYAML, error) {
 	}
 
 	// populate all context fields, with default set to helm/values with no config
-	parent := &types.FormContext{
-		Type: "helm/values",
+	parent := &types.FormContext{}
+
+	if contextType == "" {
+		parent.Type = "helm/values"
+	} else {
+		parent.Type = contextType
 	}
 
 	for _, tab := range form.Tabs {
@@ -212,6 +229,7 @@ func formToLookupTable(def *ClientConfigDefault, form *types.FormYAML, stateType
 					query, err := utils.NewQuery(
 						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
 						fmt.Sprintf("%v", content.Value),
+						content.Settings.Default,
 					)
 
 					if err != nil {
@@ -227,6 +245,7 @@ func formToLookupTable(def *ClientConfigDefault, form *types.FormYAML, stateType
 					query, err := utils.NewQuery(
 						fmt.Sprintf("tabs[%d].sections[%d].contents[%d]", i, j, k),
 						fmt.Sprintf(".%v", content.Variable),
+						content.Settings.Default,
 					)
 
 					if err != nil {
@@ -294,6 +313,12 @@ func formContextToContextConfig(def *ClientConfigDefault, context *types.FormCon
 		}
 
 		res.TemplateReader = td.NewDynamicTemplateReader(def.DynamicClient, obj)
+	} else if context.Type == "infra" && def.InfraOperation != nil {
+		res.FromType = "declared"
+
+		res.TemplateReader = &infra.OperationReader{
+			Operation: def.InfraOperation,
+		}
 	} else {
 		return nil
 	}

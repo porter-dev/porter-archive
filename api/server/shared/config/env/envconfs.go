@@ -65,12 +65,9 @@ type ServerConf struct {
 	DOClientID     string `env:"DO_CLIENT_ID"`
 	DOClientSecret string `env:"DO_CLIENT_SECRET"`
 
-	// Options for the provisioner jobs
-	ProvisionerImageTag        string `env:"PROV_IMAGE_TAG,default=latest"`
-	ProvisionerImagePullSecret string `env:"PROV_IMAGE_PULL_SECRET"`
-	ProvisionerJobNamespace    string `env:"PROV_JOB_NAMESPACE,default=default"`
-	ProvisionerBackendURL      string `env:"PROV_BACKEND_URL"`
-	ProvisionerCredExchangeURL string `env:"PROV_CRED_EXCHANGE_URL,default=http://porter:8080"`
+	// Options for the provisioner service
+	ProvisionerServerURL string `env:"PROVISIONER_SERVER_URL"`
+	ProvisionerToken     string `env:"PROVISIONER_TOKEN"`
 
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
@@ -85,10 +82,6 @@ type ServerConf struct {
 
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`
-
-	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
-	IngressCluster     string `env:"INGRESS_CLUSTER"`
-	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
 
 	WelcomeFormWebhook string `env:"WELCOME_FORM_WEBHOOK"`
 

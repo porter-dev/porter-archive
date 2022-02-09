@@ -4,6 +4,7 @@ import styled from "styled-components";
 import key from "assets/key.svg";
 
 import { Context } from "shared/Context";
+import { readableDate } from "shared/string_utils";
 
 export type EnvGroupData = {
   name: string;
@@ -26,16 +27,6 @@ export default class EnvGroup extends Component<PropsType, StateType> {
   state = {
     expand: false,
     update: [] as any[],
-  };
-
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
   };
 
   render() {
@@ -61,9 +52,7 @@ export default class EnvGroup extends Component<PropsType, StateType> {
 
         <BottomWrapper>
           <InfoWrapper>
-            <LastDeployed>
-              Last updated {this.readableDate(timestamp)}
-            </LastDeployed>
+            <LastDeployed>Last updated {readableDate(timestamp)}</LastDeployed>
           </InfoWrapper>
 
           <TagWrapper>

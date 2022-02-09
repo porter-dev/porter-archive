@@ -183,6 +183,10 @@ func registerRoutes(config *config.Config, routes []*Route) {
 	// after authorization. Each subsequent http.Handler can lookup the infra in context.
 	infraFactory := authz.NewInfraScopedFactory(config)
 
+	// Create a new "operation-scoped" factory which will create a new operation-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the operation in context.
+	operationFactory := authz.NewOperationScopedFactory(config)
+
 	// Create a new "release-scoped" factory which will create a new release-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the release in context.
 	releaseFactory := authz.NewReleaseScopedFactory(config)
@@ -227,6 +231,8 @@ func registerRoutes(config *config.Config, routes []*Route) {
 				atomicGroup.Use(gitInstallationFactory.Middleware)
 			case types.InfraScope:
 				atomicGroup.Use(infraFactory.Middleware)
+			case types.OperationScope:
+				atomicGroup.Use(operationFactory.Middleware)
 			case types.ReleaseScope:
 				atomicGroup.Use(releaseFactory.Middleware)
 			}

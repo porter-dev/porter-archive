@@ -27,6 +27,7 @@ import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
+import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -432,6 +433,16 @@ class Home extends Component<PropsType, StateType> {
               path="/onboarding"
               render={() => {
                 return <Onboarding />;
+              }}
+            />
+            <Route
+              path="/infrastructure"
+              render={() => {
+                return (
+                  <DashboardWrapper>
+                    <InfrastructureRouter />
+                  </DashboardWrapper>
+                );
               }}
             />
             <Route

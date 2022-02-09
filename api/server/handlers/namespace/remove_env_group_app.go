@@ -63,8 +63,6 @@ func (c *RemoveEnvGroupAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// TODO: verify that application exists
-
 	cm, err = agent.RemoveApplicationFromVersionedConfigMap(cm, request.ApplicationName)
 
 	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {

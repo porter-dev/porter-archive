@@ -7,7 +7,8 @@ import (
 	"syscall"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
+	"github.com/porter-dev/porter/internal/logger"
 )
 
 type ResultWriter interface {
@@ -17,11 +18,15 @@ type ResultWriter interface {
 // default generalizes response codes for common operations
 // (http.StatusOK, http.StatusCreated, etc)
 type DefaultResultWriter struct {
-	config *config.Config
+	logger  *logger.Logger
+	alerter alerter.Alerter
 }
 
-func NewDefaultResultWriter(conf *config.Config) ResultWriter {
-	return &DefaultResultWriter{conf}
+func NewDefaultResultWriter(
+	logger *logger.Logger,
+	alerter alerter.Alerter,
+) ResultWriter {
+	return &DefaultResultWriter{logger, alerter}
 }
 
 func (j *DefaultResultWriter) WriteResult(w http.ResponseWriter, r *http.Request, v interface{}) {
@@ -32,6 +37,6 @@ func (j *DefaultResultWriter) WriteResult(w http.ResponseWriter, r *http.Request
 		// the server was sending bytes.
 		return
 	} else if err != nil {
-		apierrors.HandleAPIError(j.config, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(j.logger, j.alerter, w, r, apierrors.NewErrInternal(err), true)
 	}
 }

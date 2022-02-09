@@ -12,6 +12,7 @@ import api from "shared/api";
 import { useSnapshot } from "valtio";
 import Loading from "components/Loading";
 import Helper from "components/form-components/Helper";
+import { readableDate } from "shared/string_utils";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -35,16 +36,6 @@ const regionOptions = [
   { value: "me-south-1", label: "Middle East (Bahrain) me-south-1" },
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
-
-const readableDate = (s: string) => {
-  const ts = new Date(s);
-  const date = ts.toLocaleDateString();
-  const time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<AWSRegistryConfig>) => void;
@@ -318,13 +309,16 @@ export const SettingsForm: React.FC<{
 
     try {
       return await api
-        .provisionECR(
+        .provisionInfra(
           "<token>",
           {
+            kind: "ecr",
+            values: {
+              ecr_name: `${project.name}-registry`,
+            },
             aws_integration_id: awsIntegrationId,
-            ecr_name: `${project.name}-registry`,
           },
-          { id: project.id }
+          { project_id: project.id }
         )
         .then((res) => res?.data);
     } catch (error) {
@@ -335,15 +329,18 @@ export const SettingsForm: React.FC<{
   const provisionEKS = async (awsIntegrationId: number) => {
     try {
       return await api
-        .provisionEKS(
+        .provisionInfra(
           "<token>",
           {
+            kind: "eks",
+            values: {
+              cluster_name: clusterName,
+              machine_type: machineType,
+              issuer_email: snap.StateHandler.user_email,
+            },
             aws_integration_id: awsIntegrationId,
-            eks_name: clusterName,
-            machine_type: machineType,
-            issuer_email: snap.StateHandler.user_email,
           },
-          { id: project.id }
+          { project_id: project.id }
         )
         .then((res) => res?.data);
     } catch (error) {

@@ -219,6 +219,7 @@ func (c *CreateAgent) CreateFromDocker(
 	overrideValues map[string]interface{},
 	imageTag string,
 	extraBuildConfig *types.BuildConfig,
+	forceBuild bool,
 ) (string, error) {
 	opts := c.CreateOpts
 
@@ -265,66 +266,76 @@ func (c *CreateAgent) CreateFromDocker(
 		"tag":        imageTag,
 	}
 
-	// create docker agen
+	// create docker agent
 	agent, err := docker.NewAgentWithAuthGetter(c.Client, opts.ProjectID)
 
 	if err != nil {
 		return "", err
 	}
 
-	env, err := GetEnvFromConfig(mergedValues)
+	imageExists, err := agent.CheckIfImageExists(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
 	if err != nil {
-		env = map[string]string{}
+		return "", err
 	}
 
-	// add additional env based on options
-	for key, val := range opts.SharedOpts.AdditionalEnv {
-		env[key] = val
-	}
+	if imageExists && imageTag != "default" && !forceBuild {
+		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, imageTag)
+	} else { // image does not exist or has tag default so we (re)build one
+		env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
 
-	buildAgent := &BuildAgent{
-		SharedOpts:  opts.SharedOpts,
-		client:      c.Client,
-		imageRepo:   imageURL,
-		env:         env,
-		imageExists: false,
-	}
+		if err != nil {
+			env = map[string]string{}
+		}
 
-	if opts.Method == DeployBuildTypeDocker {
-		basePath, err := filepath.Abs(".")
+		// add additional env based on options
+		for key, val := range opts.SharedOpts.AdditionalEnv {
+			env[key] = val
+		}
+
+		buildAgent := &BuildAgent{
+			SharedOpts:  opts.SharedOpts,
+			client:      c.Client,
+			imageRepo:   imageURL,
+			env:         env,
+			imageExists: false,
+		}
+
+		if opts.Method == DeployBuildTypeDocker {
+			basePath, err := filepath.Abs(".")
+
+			if err != nil {
+				return "", err
+			}
+
+			err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
+		} else {
+			err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
+		}
 
 		if err != nil {
 			return "", err
 		}
 
-		err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
-	} else {
-		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
-	}
+		// create repository
+		err = c.Client.CreateRepository(
+			context.Background(),
+			opts.ProjectID,
+			regID,
+			&types.CreateRegistryRepositoryRequest{
+				ImageRepoURI: imageURL,
+			},
+		)
 
-	if err != nil {
-		return "", err
-	}
+		if err != nil {
+			return "", err
+		}
 
-	// create repository
-	err = c.Client.CreateRepository(
-		context.Background(),
-		opts.ProjectID,
-		regID,
-		&types.CreateRegistryRepositoryRequest{
-			ImageRepoURI: imageURL,
-		},
-	)
+		err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
-	if err != nil {
-		return "", err
-	}
-
-	err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
-
-	if err != nil {
-		return "", err
+		if err != nil {
+			return "", err
+		}
 	}
 
 	subdomain, err := c.CreateSubdomainIfRequired(mergedValues)
@@ -473,6 +484,13 @@ func (c *CreateAgent) getMergedValues(overrideValues map[string]interface{}) (st
 
 	// get the values of the template
 	values, err := c.GetLatestTemplateDefaultValues(c.CreateOpts.Kind, latestVersion)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	err = coalesceEnvGroups(c.Client, c.CreateOpts.ProjectID, c.CreateOpts.ClusterID,
+		c.CreateOpts.Namespace, c.CreateOpts.EnvGroups, values)
 
 	if err != nil {
 		return "", nil, err

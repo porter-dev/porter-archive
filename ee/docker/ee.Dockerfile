@@ -2,7 +2,7 @@
 
 # Base Go environment
 # -------------------
-FROM golang:1.16-alpine as base
+FROM golang:1.17-alpine as base
 WORKDIR /porter
 
 RUN apk update && apk add --no-cache gcc musl-dev git
@@ -46,8 +46,6 @@ COPY ./dashboard ./
 RUN npm install -g npm@8.1
 
 RUN npm i --legacy-peer-deps
-
-ENV NODE_ENV=production
 
 RUN npm run build
 

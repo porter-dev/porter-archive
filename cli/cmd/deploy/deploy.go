@@ -137,7 +137,10 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 	deployAgent.tag = opts.OverrideTag
 
-	return deployAgent, nil
+	err = coalesceEnvGroups(deployAgent.client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
+		deployAgent.opts.Namespace, deployAgent.opts.EnvGroups, deployAgent.release.Config)
+
+	return deployAgent, err
 }
 
 type GetBuildEnvOpts struct {
@@ -155,7 +158,7 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		}
 	}
 
-	env, err := GetEnvFromConfig(conf)
+	env, err := GetEnvForRelease(d.client, conf, d.opts.ProjectID, d.opts.ClusterID, d.opts.Namespace)
 
 	if err != nil {
 		return nil, err
@@ -216,11 +219,33 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 
 // Build uses the deploy agent options to build a new container image from either
 // buildpack or docker.
-func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
+func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild bool) error {
+	// retrieve current image to use for cache
+	currImageSection := d.release.Config["image"].(map[string]interface{})
+	currentTag := currImageSection["tag"].(string)
+
+	if d.tag == "" {
+		d.tag = currentTag
+	}
+
+	imageExists, err := d.agent.CheckIfImageExists(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
+
+	if err != nil {
+		return err
+	}
+
+	d.imageExists = imageExists
+
+	// we do not want to re-build an image
+	// FIXME: what if overrideBuildConfig == nil but the image stays the same?
+	if overrideBuildConfig == nil && d.imageExists && d.tag != "latest" && !forceBuild {
+		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", d.imageRepo, d.tag)
+		return nil
+	}
+
 	// if build is not local, fetch remote source
 	var basePath string
 	buildCtx := d.opts.LocalPath
-	var err error
 
 	if !d.opts.Local {
 		repoSplit := strings.Split(d.release.GitActionConfig.GitRepo, "/")
@@ -262,24 +287,11 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 		}
 	}
 
-	// retrieve current image to use for cache
-	currImageSection := d.release.Config["image"].(map[string]interface{})
-	currentTag := currImageSection["tag"].(string)
-
-	if d.tag == "" {
-		d.tag = currentTag
-	}
-
 	currTag, err := d.pullCurrentReleaseImage()
 
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
 		return err
-	} else if err != nil && err == docker.PullImageErrNotFound {
-		fmt.Println("could not find image, moving to build step")
-		d.imageExists = false
-	} else if err == nil {
-		d.imageExists = true
 	}
 
 	buildAgent := &BuildAgent{
@@ -369,17 +381,29 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 	)
 }
 
-// GetEnvFromConfig gets the env vars for a standard Porter template config. These env
+type SyncedEnvSection struct {
+	Name    string                `json:"name" yaml:"name"`
+	Version uint                  `json:"version" yaml:"version"`
+	Keys    []SyncedEnvSectionKey `json:"keys" yaml:"keys"`
+}
+
+type SyncedEnvSectionKey struct {
+	Name   string `json:"name" yaml:"name"`
+	Secret bool   `json:"secret" yaml:"secret"`
+}
+
+// GetEnvForRelease gets the env vars for a standard Porter template config. These env
 // vars are found at `container.env.normal`.
-func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) {
+func GetEnvForRelease(client *client.Client, config map[string]interface{}, projID, clusterID uint, namespace string) (map[string]string, error) {
+	res := make(map[string]string)
+
+	// first, get the env vars from "container.env.normal"
 	envConfig, err := getNestedMap(config, "container", "env", "normal")
 
 	// if the field is not found, set envConfig to an empty map; this release has no env set
 	if err != nil {
 		envConfig = make(map[string]interface{})
 	}
-
-	mapEnvConfig := make(map[string]string)
 
 	for key, val := range envConfig {
 		valStr, ok := val.(string)
@@ -391,11 +415,127 @@ func GetEnvFromConfig(config map[string]interface{}) (map[string]string, error) 
 		// if the value contains PORTERSECRET, this is a "dummy" env that gets injected during
 		// run-time, so we ignore it
 		if !strings.Contains(valStr, "PORTERSECRET") {
-			mapEnvConfig[key] = valStr
+			res[key] = valStr
 		}
 	}
 
-	return mapEnvConfig, nil
+	// next, get the env vars specified by "container.env.synced"
+	// look for container.env.synced
+	envConf, err := getNestedMap(config, "container", "env")
+
+	// if error, just return the env detected from above
+	if err != nil {
+		return res, nil
+	}
+
+	syncedEnvInter, syncedEnvExists := envConf["synced"]
+
+	if !syncedEnvExists {
+		return res, nil
+	} else {
+		syncedArr := make([]*SyncedEnvSection, 0)
+		syncedArrInter, ok := syncedEnvInter.([]interface{})
+
+		if !ok {
+			return nil, fmt.Errorf("could not convert to synced env section: not an array")
+		}
+
+		for _, syncedArrInterObj := range syncedArrInter {
+			syncedArrObj := &SyncedEnvSection{}
+			syncedArrInterObjMap, ok := syncedArrInterObj.(map[string]interface{})
+
+			if !ok {
+				continue
+			}
+
+			if nameField, nameFieldExists := syncedArrInterObjMap["name"]; nameFieldExists {
+				syncedArrObj.Name, ok = nameField.(string)
+
+				if !ok {
+					continue
+				}
+			}
+
+			if versionField, versionFieldExists := syncedArrInterObjMap["version"]; versionFieldExists {
+				versionFloat, ok := versionField.(float64)
+
+				if !ok {
+					continue
+				}
+
+				syncedArrObj.Version = uint(versionFloat)
+			}
+
+			if keyField, keyFieldExists := syncedArrInterObjMap["keys"]; keyFieldExists {
+				keyFieldInterArr, ok := keyField.([]interface{})
+
+				if !ok {
+					continue
+				}
+
+				keyFieldMapArr := make([]map[string]interface{}, 0)
+
+				for _, keyFieldInter := range keyFieldInterArr {
+					mapConv, ok := keyFieldInter.(map[string]interface{})
+
+					if !ok {
+						continue
+					}
+
+					keyFieldMapArr = append(keyFieldMapArr, mapConv)
+				}
+
+				keyFieldRes := make([]SyncedEnvSectionKey, 0)
+
+				for _, keyFieldMap := range keyFieldMapArr {
+					toAdd := SyncedEnvSectionKey{}
+
+					if nameField, nameFieldExists := keyFieldMap["name"]; nameFieldExists {
+						toAdd.Name, ok = nameField.(string)
+
+						if !ok {
+							continue
+						}
+					}
+
+					if secretField, secretFieldExists := keyFieldMap["secret"]; secretFieldExists {
+						toAdd.Secret, ok = secretField.(bool)
+
+						if !ok {
+							continue
+						}
+					}
+
+					keyFieldRes = append(keyFieldRes, toAdd)
+				}
+
+				syncedArrObj.Keys = keyFieldRes
+			}
+
+			syncedArr = append(syncedArr, syncedArrObj)
+		}
+
+		for _, syncedEG := range syncedArr {
+			// for each synced environment group, get the environment group from the client
+			eg, err := client.GetEnvGroup(context.Background(), projID, clusterID, namespace,
+				&types.GetEnvGroupRequest{
+					Name: syncedEG.Name,
+				},
+			)
+
+			if err != nil {
+				continue
+			}
+
+			for key, val := range eg.Variables {
+				if !strings.Contains(val, "PORTERSECRET") {
+					res[key] = val
+				}
+			}
+		}
+	}
+
+	return res, nil
 }
 
 func (d *DeployAgent) getReleaseImage() (string, error) {

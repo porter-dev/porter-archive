@@ -164,14 +164,22 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={sliders} />
             Env Groups
           </NavButton>
+          {currentCluster.service === "eks" &&
+            currentCluster.infra_id > 0 &&
+            currentProject.enable_rds_databases && (
+              <NavButton to={"/databases"}>
+                <Icon className="material-icons-outlined">storage</Icon>
+                Databases
+              </NavButton>
+            )}
         </>
       );
     }
   };
 
   renderProjectContents = () => {
-    let { currentView, history, location } = this.props;
-    let { currentProject, setCurrentModal } = this.context;
+    let { currentView } = this.props;
+    let { currentProject } = this.context;
     if (currentProject) {
       return (
         <>
@@ -266,6 +274,15 @@ class Sidebar extends Component<PropsType, StateType> {
 Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
+
+const Icon = styled.span`
+  padding: 4px;
+  width: 23px;
+  padding-top: 4px;
+  border-radius: 3px;
+  margin-right: 10px;
+  font-size: 18px;
+`;
 
 const ProjectPlaceholder = styled.div`
   background: #ffffff11;

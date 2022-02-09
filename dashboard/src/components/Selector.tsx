@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 
-type PropsType = {
+export type SelectorPropsType = {
   activeValue: string;
   refreshOptions?: () => void;
   options: { value: string; label: string; icon?: any }[];
@@ -21,7 +21,7 @@ type PropsType = {
 
 type StateType = {};
 
-export default class Selector extends Component<PropsType, StateType> {
+export default class Selector extends Component<SelectorPropsType, StateType> {
   state = {
     expanded: false,
     showTooltip: false,

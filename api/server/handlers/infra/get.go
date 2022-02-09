@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type InfraGetHandler struct {
@@ -33,20 +35,24 @@ func (c *InfraGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// look for the latest operation and attach it, if it exists
 	operation, err := c.Repo().Infra().GetLatestOperation(infra)
 
-	if err == nil && operation != nil {
-		op, err := operation.ToOperationType()
-
-		if err != nil {
-			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("latest operation not found")))
 			return
-		} else {
-			res.LatestOperation = op
 		}
-	} else {
-		// if the operation does not exist, throw an error as this infra is in an invalid state
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("latest operation not found")))
+
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	op, err := operation.ToOperationType()
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	res.LatestOperation = op
 
 	c.WriteResult(w, r, res)
 }

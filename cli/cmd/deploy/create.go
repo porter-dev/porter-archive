@@ -478,6 +478,13 @@ func (c *CreateAgent) getMergedValues(overrideValues map[string]interface{}) (st
 		return "", nil, err
 	}
 
+	err = coalesceEnvGroups(c.Client, c.CreateOpts.ProjectID, c.CreateOpts.ClusterID,
+		c.CreateOpts.Namespace, c.CreateOpts.EnvGroups, values)
+
+	if err != nil {
+		return "", nil, err
+	}
+
 	// merge existing values with overriding values
 	mergedValues := utils.CoalesceValues(values, overrideValues)
 

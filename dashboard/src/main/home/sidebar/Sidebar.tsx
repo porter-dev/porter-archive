@@ -167,12 +167,7 @@ class Sidebar extends Component<PropsType, StateType> {
           {currentCluster.service === "eks" &&
             currentCluster.infra_id > 0 &&
             currentProject.enable_rds_databases && (
-              <NavButton
-                selected={currentView === "databases"}
-                onClick={() => {
-                  pushFiltered(this.props, "/databases", [], {});
-                }}
-              >
+              <NavButton to={"/databases"}>
                 <Icon className="material-icons-outlined">storage</Icon>
                 Databases
               </NavButton>
@@ -183,8 +178,8 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderProjectContents = () => {
-    let { currentView, history, location } = this.props;
-    let { currentProject, setCurrentModal } = this.context;
+    let { currentView } = this.props;
+    let { currentProject } = this.context;
     if (currentProject) {
       return (
         <>
@@ -197,13 +192,7 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          <NavButton
-            onClick={() =>
-              currentView !== "infrastructure" &&
-              pushFiltered(this.props, "/infrastructure", ["project_id"])
-            }
-            selected={currentView === "infrastructure"}
-          >
+          <NavButton to={"/infrastructure"}>
             <i className="material-icons">build_circle</i>
             Infrastructure
           </NavButton>
@@ -289,6 +278,15 @@ class Sidebar extends Component<PropsType, StateType> {
 Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
+
+const Icon = styled.span`
+  padding: 4px;
+  width: 23px;
+  padding-top: 4px;
+  border-radius: 3px;
+  margin-right: 10px;
+  font-size: 18px;
+`;
 
 const ProjectPlaceholder = styled.div`
   background: #ffffff11;

@@ -219,11 +219,33 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 
 // Build uses the deploy agent options to build a new container image from either
 // buildpack or docker.
-func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
+func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild bool) error {
+	// retrieve current image to use for cache
+	currImageSection := d.release.Config["image"].(map[string]interface{})
+	currentTag := currImageSection["tag"].(string)
+
+	if d.tag == "" {
+		d.tag = currentTag
+	}
+
+	imageExists, err := d.agent.CheckIfImageExists(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
+
+	if err != nil {
+		return err
+	}
+
+	d.imageExists = imageExists
+
+	// we do not want to re-build an image
+	// FIXME: what if overrideBuildConfig == nil but the image stays the same?
+	if overrideBuildConfig == nil && d.imageExists && d.tag != "latest" && !forceBuild {
+		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", d.imageRepo, d.tag)
+		return nil
+	}
+
 	// if build is not local, fetch remote source
 	var basePath string
 	buildCtx := d.opts.LocalPath
-	var err error
 
 	if !d.opts.Local {
 		repoSplit := strings.Split(d.release.GitActionConfig.GitRepo, "/")
@@ -265,24 +287,11 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 		}
 	}
 
-	// retrieve current image to use for cache
-	currImageSection := d.release.Config["image"].(map[string]interface{})
-	currentTag := currImageSection["tag"].(string)
-
-	if d.tag == "" {
-		d.tag = currentTag
-	}
-
 	currTag, err := d.pullCurrentReleaseImage()
 
 	// if image is not found, don't return an error
 	if err != nil && err != docker.PullImageErrNotFound {
 		return err
-	} else if err != nil && err == docker.PullImageErrNotFound {
-		fmt.Println("could not find image, moving to build step")
-		d.imageExists = false
-	} else if err == nil {
-		d.imageExists = true
 	}
 
 	buildAgent := &BuildAgent{

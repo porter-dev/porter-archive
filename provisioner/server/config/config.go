@@ -89,7 +89,7 @@ type ProvisionerConf struct {
 	S3AWSSecretKey   string `env:"S3_AWS_SECRET_KEY"`
 	S3AWSRegion      string `env:"S3_AWS_REGION"`
 	S3BucketName     string `env:"S3_BUCKET_NAME"`
-	S3EncryptionKey  string `env:"ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
+	S3EncryptionKey  string `env:"S3_ENCRYPTION_KEY,default=__random_strong_encryption_key__"`
 
 	// Configuration for the digitalocean client
 	DOClientID        string `env:"DO_CLIENT_ID"`

@@ -130,6 +130,29 @@ const V1InfraObject: React.FC<V1InfraObjectProps> = ({
     );
   };
 
+  const renderErrorSection = () => {
+    let errors: string[] = [];
+
+    if (infra.status == "destroyed" || infra.status == "deleted") {
+      errors.push("This infrastructure was destroyed.");
+    }
+
+    if (errors.length > 0) {
+      return (
+        <>
+          <Description>
+            Encountered the following errors while provisioning:
+          </Description>
+          <ErrorWrapper>
+            {errors.map((error, index) => {
+              return <ExpandedError key={index}>{error}</ExpandedError>;
+            })}
+          </ErrorWrapper>
+        </>
+      );
+    }
+  };
+
   const renderExpandedContents = () => {
     if (isExpanded) {
       let errors: string[] = [];
@@ -147,10 +170,13 @@ const V1InfraObject: React.FC<V1InfraObjectProps> = ({
       }
 
       return (
-        <Placeholder>
-          <Description>Infrastructure status: {infra.status}</Description>
-          <ErrorWrapper>{error}</ErrorWrapper>
-        </Placeholder>
+        <StyledV1Card>
+          <Description>
+            Infrastructure is {infra.status}, last updated at{" "}
+            {readableDate(infra.updated_at)}
+          </Description>
+          {renderErrorSection()}
+        </StyledV1Card>
       );
     }
   };
@@ -668,6 +694,10 @@ const StyledCard = styled.div`
   padding: 12px 20px;
   max-height: 300px;
   overflow-y: auto;
+`;
+
+const StyledV1Card = styled(StyledCard)`
+  padding: 0 20px 12px 20px;
 `;
 
 const Flex = styled.div`

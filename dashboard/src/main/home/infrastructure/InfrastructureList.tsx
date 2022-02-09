@@ -150,10 +150,6 @@ const InfrastructureList = () => {
     );
   }
 
-  if (infraList.length == 0) {
-    return <Placeholder>No infra available</Placeholder>;
-  }
-
   if (hasError) {
     return <Placeholder>Error</Placeholder>;
   }

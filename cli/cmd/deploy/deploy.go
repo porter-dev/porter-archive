@@ -137,7 +137,10 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 	deployAgent.tag = opts.OverrideTag
 
-	return deployAgent, nil
+	err = coalesceEnvGroups(deployAgent.client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
+		deployAgent.opts.Namespace, deployAgent.opts.EnvGroups, deployAgent.release.Config)
+
+	return deployAgent, err
 }
 
 type GetBuildEnvOpts struct {

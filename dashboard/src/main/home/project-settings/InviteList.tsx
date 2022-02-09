@@ -100,10 +100,12 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       collaborators
         // Parse role id to number
         .map((c) => ({ ...c, id: Number(c.id) }))
-        // Sort them so the owner will be first allways
-        .sort((curr, prev) => curr.id - prev.id)
-        // Remove the owner from list
-        .slice(1)
+        // COMMENTED OUT AS IT WAS REMOVING ACTUAL USERS AND NOT OWNERS.
+        //
+        // // Sort them so the owner will be first allways
+        // .sort((curr, prev) => curr.id - prev.id)
+        // // Remove the owner from list
+        // .slice(1)
         // Parse the remainings to InviteType
         .map((c) => ({
           email: c.email,

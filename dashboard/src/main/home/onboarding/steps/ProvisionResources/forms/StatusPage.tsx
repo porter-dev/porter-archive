@@ -1,18 +1,22 @@
 import Loading from "components/Loading";
 import ProvisionerStatus from "components/ProvisionerStatus";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import api from "shared/api";
-import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import { Infrastructure } from "shared/types";
 import styled from "styled-components";
 
 type Props = {
-  setInfraStatus: (status: { hasError: boolean; description?: string }) => void;
+  setInfraStatus: (status: {
+    hasError: boolean;
+    description?: string;
+    errored_infras: number[];
+  }) => void;
   project_id: number;
   filter: string[];
   auto_expanded?: boolean;
   notFoundText?: string;
   filterLatest?: boolean;
+  retry_count?: number;
 };
 
 export const StatusPage = ({
@@ -22,6 +26,7 @@ export const StatusPage = ({
   notFoundText = "We couldn't find any infra being provisioned.",
   filterLatest,
   auto_expanded,
+  retry_count,
 }: Props) => {
   const isMounted = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +73,63 @@ export const StatusPage = ({
     return Array.from(infraMap.values());
   };
 
+  const updateSingleInfraStatus = (infra: Infrastructure) => {
+    // update the single infra
+    setInfras((infras) => {
+      if (!infras) {
+        return [infra];
+      }
+
+      let newInfras = infras;
+
+      newInfras = newInfras.map((newInfra) => {
+        if (newInfra.id == infra.id) {
+          return infra;
+        }
+
+        return newInfra;
+      });
+
+      // determine if all infras are in a final state, and if so report to parent
+      let inProgressInfras = newInfras.filter((newInfra) => {
+        if (newInfra.latest_operation) {
+          return (
+            newInfra.latest_operation.status != "completed" &&
+            newInfra.latest_operation.status != "errored"
+          );
+        }
+
+        return (
+          newInfra.status == "creating" ||
+          newInfra.status == "deleting" ||
+          newInfra.status == "destroying"
+        );
+      });
+
+      let erroredInfras = newInfras.filter((newInfra) => {
+        if (newInfra.latest_operation) {
+          return newInfra.latest_operation.status == "errored";
+        }
+
+        return newInfra.status == "errored";
+      });
+
+      if (inProgressInfras.length == 0) {
+        setInfraStatus({
+          hasError: erroredInfras.length != 0,
+          errored_infras: erroredInfras.map((infra) => {
+            return infra.id;
+          }),
+        });
+      }
+
+      return [...newInfras];
+    });
+
+    // determine if all tracked infras are in a finalized state, and then report the
+    // infra status to the parent
+  };
+
   useEffect(() => {
     api
       .getInfra<Infrastructure[]>("<token>", {}, { project_id: project_id })
@@ -87,7 +149,7 @@ export const StatusPage = ({
       .catch((err) => {
         console.error(err);
       });
-  }, [project_id]);
+  }, [project_id, retry_count]);
 
   if (isLoading) {
     return (
@@ -106,7 +168,7 @@ export const StatusPage = ({
       infras={infras}
       project_id={project_id}
       auto_expanded={auto_expanded}
-      setInfraStatus={setInfraStatus}
+      setInfraStatus={updateSingleInfraStatus}
     />
   );
 };

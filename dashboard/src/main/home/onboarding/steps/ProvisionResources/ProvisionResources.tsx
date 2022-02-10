@@ -17,6 +17,10 @@ import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
 import { provisionResourcesTracks } from "shared/anayltics";
 import DocsHelper from "components/DocsHelper";
+import Description from "components/Description";
+import api from "shared/api";
+import Placeholder from "components/Placeholder";
+import Loading from "components/Loading";
 
 type Props = {};
 
@@ -25,8 +29,11 @@ const ProvisionResources: React.FC<Props> = () => {
   const { step } = useParams<{ step: any }>();
   const [infraStatus, setInfraStatus] = useState<{
     hasError: boolean;
+    errored_infras: number[];
     description?: string;
   }>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const shouldProvisionRegistry = !!snap.StateHandler.connected_registry?.skip;
   const provider = snap.StateHandler.provision_resources?.provider;
@@ -50,6 +57,30 @@ const ProvisionResources: React.FC<Props> = () => {
     }
     provisionResourcesTracks.trackConnectExternalClusterIntent();
     OFState.actions.nextStep("skip");
+  };
+
+  const retryFailedInfras = () => {
+    setIsLoading(true);
+
+    // call API endpoint to retry all failed infras
+    const promises = Promise.all(
+      infraStatus?.errored_infras.map(async (erroredInfraID) => {
+        const res = await api.retryCreateInfra(
+          "<token>",
+          {},
+          {
+            project_id: project.id,
+            infra_id: erroredInfraID,
+          }
+        );
+        return res.data;
+      })
+    );
+
+    promises.then(() => {
+      setInfraStatus(null);
+      setIsLoading(false);
+    });
   };
 
   const renderSaveButton = () => {
@@ -76,19 +107,25 @@ const ProvisionResources: React.FC<Props> = () => {
       return (
         <>
           <Br height="15px" />
-          <SaveButton
-            text="Resolve Errors"
-            status={
-              infraStatus?.description ||
-              "Encountered errors while provisioning."
-            }
-            disabled={false}
-            onClick={() => handleGoBack(infraStatus.description)}
-            makeFlush={true}
-            clearPosition={true}
-            statusPosition="right"
-            saveText=""
-          />
+          <ErrorStateContainer>
+            <StyledBack>
+              <StyledDescription
+                margin="0"
+                onClick={() => handleGoBack(infraStatus.description)}
+              >
+                {"< Back to Settings"}
+              </StyledDescription>
+            </StyledBack>
+            <SaveButton
+              text="Retry"
+              disabled={false}
+              onClick={retryFailedInfras}
+              makeFlush={true}
+              clearPosition={true}
+              statusPosition="right"
+              saveText=""
+            />
+          </ErrorStateContainer>
         </>
       );
     }
@@ -113,6 +150,14 @@ const ProvisionResources: React.FC<Props> = () => {
       case "settings":
         return <FormFlowWrapper currentStep={step} />;
       case "status":
+        if (isLoading) {
+          return (
+            <Placeholder>
+              <Loading />
+            </Placeholder>
+          );
+        }
+
         return (
           <>
             <StatusPage
@@ -194,10 +239,6 @@ const Subtitle = styled.div`
   display: flex;
 `;
 
-const NextStep = styled(SaveButton)`
-  margin-top: 24px;
-`;
-
 const BackButton = styled.div`
   margin-bottom: 24px;
   display: flex;
@@ -221,4 +262,19 @@ const BackButton = styled.div`
 const BackButtonImg = styled.img`
   width: 16px;
   opacity: 0.75;
+`;
+
+const ErrorStateContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const StyledBack = styled.div`
+  margin-left: 14px;
+`;
+
+const StyledDescription = styled(Description)`
+  text-align: right;
+  cursor: pointer;
 `;

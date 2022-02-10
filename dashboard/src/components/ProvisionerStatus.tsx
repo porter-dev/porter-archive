@@ -1,11 +1,7 @@
-import { Steps } from "main/home/onboarding/types";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { integrationList } from "shared/common";
-
-import loading from "assets/loading.gif";
-
 import styled, { keyframes } from "styled-components";
-import { capitalize, readableDate } from "shared/string_utils";
+import { readableDate } from "shared/string_utils";
 import {
   Infrastructure,
   KindMap,
@@ -18,19 +14,14 @@ import {
 import api from "shared/api";
 import Placeholder from "./Placeholder";
 import Loading from "./Loading";
-import ExpandedOperation from "main/home/infrastructure/components/ExpandedOperation";
 import { Context } from "shared/Context";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import Description from "./Description";
-import Heading from "./form-components/Heading";
-import PorterFormWrapper from "./porter-form/PorterFormWrapper";
-import SaveButton from "./SaveButton";
-import { ProgressPlugin } from "webpack";
 
 type Props = {
   infras: Infrastructure[];
   project_id: number;
-  setInfraStatus: (status: { hasError: boolean; description?: string }) => void;
+  setInfraStatus: (infra: Infrastructure) => void;
   auto_expanded?: boolean;
 };
 
@@ -62,9 +53,9 @@ const ProvisionerStatus: React.FC<Props> = ({
   };
 
   const updateInfraStatus = (infra: Infrastructure) => {
-    setInfraStatus({
-      hasError: infra.status === "errored",
-    });
+    // in order for this to propagate to parent, we check that all tracked infras (including
+    // the reported infra) are in a final state
+    setInfraStatus(infra);
   };
 
   const renderV2Infra = (infra: Infrastructure) => {
@@ -116,6 +107,7 @@ const V1InfraObject: React.FC<V1InfraObjectProps> = ({
         timestampLabel = "Created at";
         break;
       case "deleted":
+      case "destroyed":
         timestampLabel = "Deleted at";
         break;
       case "errored":
@@ -236,6 +228,7 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
   );
   const [fullInfra, setFullInfra] = useState<Infrastructure>(null);
   const [infraState, setInfraState] = useState<TFState>(null);
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -269,7 +262,7 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
       });
   };
 
-  const refreshInfra = () => {
+  const refreshInfra = (completed?: boolean, errored?: boolean) => {
     setIsLoading(true);
 
     api
@@ -282,8 +275,18 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
         }
       )
       .then(({ data }) => {
-        setFullInfra(data);
-        updateInfraStatus(data);
+        let infra = data as Infrastructure;
+
+        if (completed && infra.latest_operation) {
+          if (errored) {
+            infra.latest_operation.status = "errored";
+          } else {
+            infra.latest_operation.status = "completed";
+          }
+        }
+
+        setFullInfra(infra);
+        updateInfraStatus(infra);
 
         // re-query for the infra state
         refreshInfraState();
@@ -372,7 +375,7 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
 
 type OperationDetailsProps = {
   infra: Infrastructure;
-  refreshInfra: () => void;
+  refreshInfra: (completed?: boolean, errored?: boolean) => void;
 };
 
 const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
@@ -391,6 +394,9 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
   const [createdResources, setCreatedResources] = useState<TFResourceState[]>(
     []
   );
+  const [deletedResources, setDeletedResources] = useState<TFResourceState[]>(
+    []
+  );
   const [plannedResources, setPlannedResources] = useState<TFResourceState[]>(
     []
   );
@@ -402,7 +408,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
 
     if (status == "OPERATION_COMPLETED") {
       // if the operation is completed, call the completed handler
-      refreshInfra();
+      refreshInfra(true, erroredResources.length > 0);
     } else if (status && resource_id) {
       // if the status and resource_id are defined, add this to the infra state
       setInfraState((curr) => {
@@ -413,9 +419,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
           resources: { ...curr.resources },
         };
 
-        if (currCopy.resources[resource_id] && status == "deleted") {
-          delete currCopy.resources[resource_id];
-        } else if (currCopy.resources[resource_id]) {
+        if (currCopy.resources[resource_id]) {
           currCopy.resources[resource_id].status = status;
           currCopy.resources[resource_id].error = error;
         } else {
@@ -482,13 +486,16 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
       })
       .catch((err) => {
         console.error(err);
-        setInfraState({
-          last_updated: "",
-          operation_id: infra.latest_operation.id,
-          status: "creating",
-          resources: {},
-        });
-        setInfraStateInitialized(true);
+
+        if (!infraStateInitialized) {
+          setInfraState({
+            last_updated: "",
+            operation_id: infra.latest_operation.id,
+            status: "creating",
+            resources: {},
+          });
+          setInfraStateInitialized(true);
+        }
       });
   }, [currentProject, infra]);
 
@@ -544,10 +551,25 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
           .filter((val) => val)
       );
 
+      setDeletedResources(
+        Object.keys(infraState.resources)
+          .map((key) => {
+            if (infraState.resources[key].status == "deleted") {
+              return infraState.resources[key];
+            }
+
+            return null;
+          })
+          .filter((val) => val)
+      );
+
       setPlannedResources(
         Object.keys(infraState.resources)
           .map((key) => {
-            if (infraState.resources[key].status == "planned_create") {
+            if (
+              infraState.resources[key].status == "planned_create" ||
+              infraState.resources[key].status == "planned_delete"
+            ) {
               return infraState.resources[key];
             }
 
@@ -625,20 +647,40 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
     plannedResourceCount: number
   ) => {
     let width = (100.0 * completedResourceCount) / plannedResourceCount;
-
     let operationKind = "Created";
+    let count = `${completedResourceCount} / ${plannedResourceCount}`;
 
-    switch (infra.latest_operation.type) {
-      case "retry_create":
-      case "create":
-        operationKind = "Created";
-        break;
-      case "update":
-        operationKind = "Updated";
-        break;
-      case "retry_delete":
-      case "delete":
-        operationKind = "Deleted";
+    if (
+      infra.latest_operation.status == "completed" &&
+      (infra.latest_operation.type == "delete" ||
+        infra.latest_operation.type == "retry_delete")
+    ) {
+      width = 100.0;
+      count = "";
+    } else if (
+      infra.latest_operation.status != "completed" &&
+      plannedResourceCount == 0
+    ) {
+      // in the case when the planned resource count is 0, the state is still being computed, so
+      // render 0 width and "Planning..." message
+      width = 0;
+      operationKind = "Planning...";
+      count = "";
+    }
+
+    if (operationKind != "Planning...") {
+      switch (infra.latest_operation.type) {
+        case "retry_create":
+        case "create":
+          operationKind = "Created";
+          break;
+        case "update":
+          operationKind = "Updated";
+          break;
+        case "retry_delete":
+        case "delete":
+          operationKind = "Deleted";
+      }
     }
 
     return (
@@ -646,13 +688,16 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
         <LoadingBar>
           <LoadingFill status="loading" width={width + "%"} />
         </LoadingBar>
-        <ResourceNumber>{`${completedResourceCount} / ${plannedResourceCount} ${operationKind}`}</ResourceNumber>
+        <ResourceNumber>{`${count} ${operationKind}`}</ResourceNumber>
       </StatusContainer>
     );
   };
 
   const renderErrorSection = () => {
-    if (erroredResources.length > 0) {
+    if (
+      erroredResources.length > 0 &&
+      infra?.latest_operation?.status == "errored"
+    ) {
       return (
         <>
           <Description>
@@ -673,7 +718,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
   return (
     <StyledCard>
       {renderLoadingBar(
-        createdResources.length,
+        createdResources.length + deletedResources.length,
         createdResources.length +
           erroredResources.length +
           plannedResources.length
@@ -738,13 +783,6 @@ const StatusContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-`;
-
-const StatusText = styled.div`
-  font-size: 13px;
-  margin-left: 15px;
-  color: #aaaabb;
-  font-weight: 400;
 `;
 
 const ResourceNumber = styled.div`

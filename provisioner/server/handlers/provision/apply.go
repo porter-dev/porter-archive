@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/random"
 	"github.com/porter-dev/porter/provisioner/integrations/provisioner"
+	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/server/config"
 	"golang.org/x/crypto/bcrypt"
 
@@ -78,6 +79,16 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	ceToken, rawToken, err := createCredentialsExchangeToken(c.Config, infra)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
+	// push a first message to the operation stream
+	err = redis_stream.PushToOperationStream(c.Config.RedisClient, infra, operation, &ptypes.TFResourceState{
+		Status: "OPERATION_STARTED",
+	})
 
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)

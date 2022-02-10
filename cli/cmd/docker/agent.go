@@ -158,6 +158,26 @@ var PullImageErrNotFound = fmt.Errorf("Requested image not found")
 
 var PullImageErrUnauthorized = fmt.Errorf("Could not pull image: unauthorized")
 
+// CheckIfImageExists checks if the image exists in the registry
+func (a *Agent) CheckIfImageExists(image string) (bool, error) {
+	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
+
+	if err != nil {
+		return false, err
+	}
+
+	_, err = a.client.DistributionInspect(context.Background(), image, encodedRegistryAuth)
+
+	if err == nil {
+		return true, nil
+	} else if strings.Contains(err.Error(), "image not found") ||
+		strings.Contains(err.Error(), "does not exist in the registry") {
+		return false, nil
+	}
+
+	return false, err
+}
+
 // PullImage pulls an image specified by the image string
 func (a *Agent) PullImage(image string) error {
 	opts, err := a.getPullOptions(image)
@@ -219,17 +239,30 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 		return types.ImagePullOptions{}, nil
 	}
 
-	// get using server url
-	serverURL, err := GetServerURLFromTag(image)
+	authConfigEncoded, err := a.getEncodedRegistryAuth(image)
 
 	if err != nil {
 		return types.ImagePullOptions{}, err
 	}
 
+	return types.ImagePullOptions{
+		RegistryAuth: authConfigEncoded,
+		Platform:     "linux/amd64",
+	}, nil
+}
+
+func (a *Agent) getEncodedRegistryAuth(image string) (string, error) {
+	// get using server url
+	serverURL, err := GetServerURLFromTag(image)
+
+	if err != nil {
+		return "", err
+	}
+
 	user, secret, err := a.authGetter.GetCredentials(serverURL)
 
 	if err != nil {
-		return types.ImagePullOptions{}, err
+		return "", err
 	}
 
 	var authConfig = types.AuthConfig{
@@ -239,12 +272,8 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 	}
 
 	authConfigBytes, _ := json.Marshal(authConfig)
-	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
 
-	return types.ImagePullOptions{
-		RegistryAuth: authConfigEncoded,
-		Platform:     "linux/amd64",
-	}, nil
+	return base64.URLEncoding.EncodeToString(authConfigBytes), nil
 }
 
 func (a *Agent) getPushOptions(image string) (types.ImagePushOptions, error) {

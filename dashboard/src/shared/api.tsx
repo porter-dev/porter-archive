@@ -1,6 +1,6 @@
 import { baseApi } from "./baseApi";
 
-import { FullActionConfigType, StorageType } from "./types";
+import { BuildConfig, FullActionConfigType, StorageType } from "./types";
 
 /**
  * Generic api call format

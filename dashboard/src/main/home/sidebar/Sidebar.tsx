@@ -15,6 +15,7 @@ import ProjectSectionContainer from "./ProjectSectionContainer";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { NavLink } from "react-router-dom";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -98,103 +99,66 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderClusterContent = () => {
-    let { currentView } = this.props;
     let { currentCluster, currentProject } = this.context;
 
     if (currentCluster) {
       return (
         <>
           <NavButton
-            selected={currentView === "applications"}
-            onClick={() => {
+            to={(location) => {
               let params = this.props.match.params as any;
               let pathNamespace = params.namespace;
+              let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
-              // If namespace is currently only in path (ex: ExpandedChart) set to param
               if (pathNamespace) {
-                pushFiltered(
-                  this.props,
-                  "/applications",
-                  ["project_id", "cluster", "namespace"],
-                  {
-                    cluster: currentCluster.name,
-                    namespace: pathNamespace,
-                  }
-                );
-              } else {
-                pushFiltered(
-                  this.props,
-                  "/applications",
-                  ["project_id", "cluster", "namespace"],
-                  {
-                    cluster: currentCluster.name,
-                  }
-                );
+                search.concat(`&namespace=${pathNamespace}`);
               }
+
+              return {
+                ...location,
+                pathname: "/applications",
+                search,
+              };
             }}
           >
             <Img src={monoweb} />
             Applications
           </NavButton>
           <NavButton
-            selected={currentView === "jobs"}
-            onClick={() => {
+            to={() => {
               let params = this.props.match.params as any;
               let pathNamespace = params.namespace;
+              let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
-              // If namespace is currently only in path (ex: ExpandedChart) set to param
               if (pathNamespace) {
-                pushFiltered(
-                  this.props,
-                  "/jobs",
-                  ["project_id", "cluster", "namespace"],
-                  {
-                    cluster: currentCluster.name,
-                    namespace: pathNamespace,
-                  }
-                );
-              } else {
-                pushFiltered(
-                  this.props,
-                  "/jobs",
-                  ["project_id", "cluster", "namespace"],
-                  {
-                    cluster: currentCluster.name,
-                  }
-                );
+                search.concat(`&namespace=${pathNamespace}`);
               }
+
+              return {
+                ...location,
+                pathname: "/jobs",
+                search,
+              };
             }}
           >
             <Img src={monojob} />
             Jobs
           </NavButton>
           <NavButton
-            selected={currentView === "env-groups"}
-            onClick={() => {
+            to={() => {
               let params = this.props.match.params as any;
               let pathNamespace = params.namespace;
+              let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
-              // If namespace is currently only in path (ex: ExpandedChart) set to param
               if (pathNamespace) {
-                pushFiltered(
-                  this.props,
-                  "/env-groups",
-                  ["project_id", "cluster", "namespace"],
-                  {
-                    cluster: currentCluster.name,
-                    namespace: pathNamespace,
-                  }
-                );
-              } else {
-                pushFiltered(
-                  this.props,
-                  "/env-groups",
-                  ["project_id", "cluster", "namespace"],
-                  {
-                    cluster: currentCluster.name,
-                  }
-                );
+                search.concat(`&namespace=${pathNamespace}`);
               }
+
+              return {
+                ...location,
+                pathname: "/env-groups",
+                search,
+              };
             }}
           >
             <Img src={sliders} />
@@ -203,12 +167,7 @@ class Sidebar extends Component<PropsType, StateType> {
           {currentCluster.service === "eks" &&
             currentCluster.infra_id > 0 &&
             currentProject.enable_rds_databases && (
-              <NavButton
-                selected={currentView === "databases"}
-                onClick={() => {
-                  pushFiltered(this.props, "/databases", [], {});
-                }}
-              >
+              <NavButton to={"/databases"}>
                 <Icon className="material-icons-outlined">storage</Icon>
                 Databases
               </NavButton>
@@ -219,38 +178,21 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderProjectContents = () => {
-    let { currentView, history, location } = this.props;
-    let { currentProject, setCurrentModal } = this.context;
+    let { currentView } = this.props;
+    let { currentProject } = this.context;
     if (currentProject) {
       return (
         <>
           <SidebarLabel>Home</SidebarLabel>
-          <NavButton
-            onClick={() =>
-              currentView !== "provisioner" &&
-              pushFiltered(this.props, "/dashboard", ["project_id"])
-            }
-            selected={
-              currentView === "dashboard" || currentView === "provisioner"
-            }
-          >
+          <NavButton to="/dashboard">
             <Img src={category} />
             Dashboard
           </NavButton>
-          <NavButton
-            onClick={() => pushFiltered(this.props, "/launch", ["project_id"])}
-            selected={currentView === "launch"}
-          >
+          <NavButton to="/launch">
             <Img src={rocket} />
             Launch
           </NavButton>
-          <NavButton
-            onClick={() =>
-              currentView !== "infrastructure" &&
-              pushFiltered(this.props, "/infrastructure", ["project_id"])
-            }
-            selected={currentView === "infrastructure"}
-          >
+          <NavButton to={"/infrastructure"}>
             <i className="material-icons">build_circle</i>
             Infrastructure
           </NavButton>
@@ -261,12 +203,7 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-            <NavButton
-              selected={currentView === "integrations"}
-              onClick={() =>
-                pushFiltered(this.props, "/integrations", ["project_id"])
-              }
-            >
+            <NavButton to="/integrations">
               <Img src={integrations} />
               Integrations
             </NavButton>
@@ -276,12 +213,7 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-            <NavButton
-              onClick={() =>
-                pushFiltered(this.props, "/project-settings", ["project_id"])
-              }
-              selected={this.props.currentView === "project-settings"}
-            >
+            <NavButton to="/project-settings">
               <Img enlarge={true} src={settings} />
               Settings
             </NavButton>
@@ -337,12 +269,6 @@ class Sidebar extends Component<PropsType, StateType> {
           <br />
 
           {this.renderProjectContents()}
-          {/*
-          <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
-            <Icon src={discordLogo} />
-            Join Our Discord
-          </DiscordButton>
-          */}
         </StyledSidebar>
       </>
     );
@@ -352,40 +278,6 @@ class Sidebar extends Component<PropsType, StateType> {
 Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
-
-const BranchPad = styled.div`
-  width: 20px;
-  height: 42px;
-  margin-left: 2px;
-  margin-right: 8px;
-`;
-
-const Rail = styled.div`
-  width: 2px;
-  background: ${(props: { lastTab?: boolean }) =>
-    props.lastTab ? "" : "#52545D"};
-  height: 50%;
-`;
-
-const Circle = styled.div`
-  min-width: 10px;
-  min-height: 2px;
-  margin-bottom: -2px;
-  margin-left: 8px;
-  background: #52545d;
-`;
-
-const Gutter = styled.div`
-  position: absolute;
-  top: 0px;
-  left: 22px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-`;
 
 const Icon = styled.span`
   padding: 4px;
@@ -415,7 +307,7 @@ const ProjectPlaceholder = styled.div`
   }
 `;
 
-const NavButton = styled.div`
+const NavButton = styled(NavLink)`
   display: flex;
   align-items: center;
   position: relative;
@@ -428,14 +320,19 @@ const NavButton = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  background: ${(props: { disabled?: boolean; selected?: boolean }) =>
-    props.selected ? "#ffffff11" : ""};
-  cursor: ${(props: { disabled?: boolean; selected?: boolean }) =>
+  cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
+  &.active {
+    background: #ffffff11;
+
+    :hover {
+      background: #ffffff11;
+    }
+  }
+
   :hover {
-    background: ${(props: { disabled?: boolean; selected?: boolean }) =>
-      props.selected ? "" : "#ffffff08"};
+    background: #ffffff08;
   }
 
   > i {
@@ -453,56 +350,6 @@ const Img = styled.img<{ enlarge?: boolean }>`
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 10px;
-`;
-
-const BottomSection = styled.div`
-  position: absolute;
-  width: 100%;
-  bottom: 10px;
-`;
-
-const DiscordButton = styled.a`
-  position: absolute;
-  text-decoration: none;
-  bottom: 17px;
-  display: flex;
-  align-items: center;
-  width: calc(100% - 30px);
-  left: 15px;
-  border: 2px solid #ffffff44;
-  border-radius: 3px;
-  color: #ffffff44;
-  height: 40px;
-  font-family: Work Sans, sans-serif;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  :hover {
-    > img {
-      opacity: 60%;
-    }
-    color: #ffffff88;
-    border-color: #ffffff88;
-  }
-`;
-
-const LogOutButton = styled(NavButton)`
-  width: calc(100% - 55px);
-  border-top-right-radius: 3px;
-  border-bottom-right-radius: 3px;
-  margin-left: -1px;
-  color: #ffffffaa;
-
-  > i {
-    background: none;
-    display: flex;
-    font-size: 12px;
-    top: 11px;
-    align-items: center;
-    justify-content: center;
-    color: #ffffffaa;
-    border: 1px solid #ffffffaa;
-  }
 `;
 
 const SidebarBg = styled.div`
@@ -523,48 +370,6 @@ const SidebarLabel = styled.div`
   font-size: 14px;
   z-index: 1;
   font-weight: 500;
-`;
-
-const UserSection = styled.div`
-  width: 100%;
-  height: 40px;
-  margin: 6px 0px 17px;
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-`;
-
-const RingWrapper = styled.div`
-  width: 28px;
-  border-radius: 30px;
-  :focus {
-    outline: 0;
-  }
-  height: 28px;
-  padding: 3px;
-  border: 2px solid #ffffff44;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0px 10px 0px 18px;
-`;
-
-const UserIcon = styled.img`
-  width: 20px;
-  height: 20px;
-  background: blue;
-  border-radius: 50px;
-  box-shadow: 0 2px 4px 0px #00000044;
-`;
-
-const UserName = styled.div`
-  max-width: 120px;
-  color: #e5e5e5;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 14px;
 `;
 
 const PullTab = styled.div`

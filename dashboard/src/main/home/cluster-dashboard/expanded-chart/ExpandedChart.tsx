@@ -11,7 +11,12 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
-import { ChartType, ClusterType, ResourceType } from "shared/types";
+import {
+  BuildConfig,
+  ChartType,
+  ClusterType,
+  ResourceType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import StatusIndicator from "components/StatusIndicator";
@@ -29,8 +34,8 @@ import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
 import EventsTab from "./events/EventsTab";
-import { PopulatedEnvGroup } from "components/porter-form/types";
 import { onlyInLeft } from "shared/array_utils";
+import BuildpackEditPage from "./BuildpackEditPage";
 
 type Props = {
   namespace: string;
@@ -423,6 +428,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let { setSidebar } = props;
     let chart = currentChart;
     console.log("CONTROLLERS", controllers);
+    console.log(currentTab);
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
@@ -466,6 +472,15 @@ const ExpandedChart: React.FC<Props> = (props) => {
             />
           );
         }
+      case "buildpack":
+        return (
+          <BuildpackEditPage
+            actionConfig={chart.git_action_config}
+            currentChart={chart}
+            refreshChart={() => getChartData(currentChart)}
+            handleUpdateBuildConfig={handleUpdateBuildConfig}
+          />
+        );
       case "settings":
         return (
           <SettingsSection
@@ -533,6 +548,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
         { label: "Manifests", value: "list" },
         { label: "Helm Values", value: "values" }
       );
+    }
+
+    if (
+      currentChart.git_action_config?.git_repo_id &&
+      currentChart.build_config?.builder
+    ) {
+      rightTabOptions.push({ label: "Buildpack", value: "buildpack" });
     }
 
     // Settings tab is always last
@@ -697,6 +719,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
       console.log(error);
       setCurrentError("Couldn't uninstall chart, please try again");
     }
+  };
+
+  const handleUpdateBuildConfig = (updatedBuildConfig: BuildConfig) => {
+    const chart = { ...currentChart };
+
+    chart.build_config = updatedBuildConfig;
+
+    setCurrentChart(chart);
   };
 
   useEffect(() => {

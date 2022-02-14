@@ -178,7 +178,7 @@ type ApplicationConfig struct {
 		Buildpacks []string
 	}
 
-	EnvGroups []string
+	EnvGroups []types.EnvGroupMeta
 
 	Values map[string]interface{}
 }

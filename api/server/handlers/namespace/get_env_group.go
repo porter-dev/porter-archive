@@ -1,9 +1,9 @@
 package namespace
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -11,7 +11,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -51,13 +50,14 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, request.Version)
 
-	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("env group not found"),
-			http.StatusNotFound,
-		))
-		return
-	} else if err != nil {
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("env group not found"),
+				http.StatusNotFound),
+			)
+			return
+		}
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

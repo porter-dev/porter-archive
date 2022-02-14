@@ -104,17 +104,51 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 		return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
 	}
 
-	deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
+	if hasDeploymentHookEnvVars() {
+		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+
+		worker.RegisterHook("deployment", deploymentHook)
 	}
-
-	worker.RegisterHook("deployment", deploymentHook)
 
 	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
 	})
+}
+
+func hasDeploymentHookEnvVars() bool {
+	if ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID"); ghIDStr == "" {
+		return false
+	}
+
+	if prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID"); prIDStr == "" {
+		return false
+	}
+
+	if branchName := os.Getenv("PORTER_BRANCH_NAME"); branchName == "" {
+		return false
+	}
+
+	if actionIDStr := os.Getenv("PORTER_ACTION_ID"); actionIDStr == "" {
+		return false
+	}
+
+	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName == "" {
+		return false
+	}
+
+	if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner == "" {
+		return false
+	}
+
+	if prName := os.Getenv("PORTER_PR_NAME"); prName == "" {
+		return false
+	}
+
+	return true
 }
 
 type Source struct {
@@ -135,6 +169,7 @@ type ApplicationConfig struct {
 	WaitForJob bool
 
 	Build struct {
+		ForceBuild bool
 		Method     string
 		Context    string
 		Dockerfile string
@@ -142,6 +177,8 @@ type ApplicationConfig struct {
 		Builder    string
 		Buildpacks []string
 	}
+
+	EnvGroups []types.EnvGroupMeta
 
 	Values map[string]interface{}
 }
@@ -310,6 +347,7 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		LocalDockerfile: appConfig.Build.Dockerfile,
 		OverrideTag:     tag,
 		Method:          deploy.DeployBuildType(method),
+		EnvGroups:       appConfig.EnvGroups,
 	}
 
 	if shouldCreate {
@@ -405,7 +443,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 	if appConf.Build.Method == "registry" {
 		subdomain, err = createAgent.CreateFromRegistry(appConf.Build.Image, appConf.Values)
 	} else {
-		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig)
+		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig, appConf.Build.ForceBuild)
 	}
 
 	if err != nil {
@@ -453,7 +491,7 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		err = updateAgent.Build(buildConfig)
+		err = updateAgent.Build(buildConfig, appConf.Build.ForceBuild)
 
 		if err != nil {
 			return nil, err
@@ -699,29 +737,23 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 		namespace:     namespace,
 	}
 
-	if ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID"); ghIDStr != "" {
-		ghID, err := strconv.Atoi(ghIDStr)
+	ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID")
+	ghID, err := strconv.Atoi(ghIDStr)
 
-		if err != nil {
-			return nil, err
-		}
-
-		res.gitInstallationID = uint(ghID)
-	} else if ghIDStr == "" {
-		return nil, fmt.Errorf("Git installation ID must be defined, set by PORTER_GIT_INSTALLATION_ID")
+	if err != nil {
+		return nil, err
 	}
 
-	if prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID"); prIDStr != "" {
-		prID, err := strconv.Atoi(prIDStr)
+	res.gitInstallationID = uint(ghID)
 
-		if err != nil {
-			return nil, err
-		}
+	prIDStr := os.Getenv("PORTER_PULL_REQUEST_ID")
+	prID, err := strconv.Atoi(prIDStr)
 
-		res.prID = uint(prID)
-	} else if prIDStr == "" {
-		return nil, fmt.Errorf("Pull request ID must be defined, set by PORTER_PULL_REQUEST_ID")
+	if err != nil {
+		return nil, err
 	}
+
+	res.prID = uint(prID)
 
 	res.projectID = config.Project
 
@@ -735,41 +767,26 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 		return nil, fmt.Errorf("cluster id must be set")
 	}
 
-	if branchName := os.Getenv("PORTER_BRANCH_NAME"); branchName != "" {
-		res.branch = branchName
-	} else if branchName == "" {
-		return nil, fmt.Errorf("Branch name must be defined, set by PORTER_BRANCH_NAME")
+	branchName := os.Getenv("PORTER_BRANCH_NAME")
+	res.branch = branchName
+
+	actionIDStr := os.Getenv("PORTER_ACTION_ID")
+	actionID, err := strconv.Atoi(actionIDStr)
+
+	if err != nil {
+		return nil, err
 	}
 
-	if actionIDStr := os.Getenv("PORTER_ACTION_ID"); actionIDStr != "" {
-		actionID, err := strconv.Atoi(actionIDStr)
+	res.actionID = uint(actionID)
 
-		if err != nil {
-			return nil, err
-		}
+	repoName := os.Getenv("PORTER_REPO_NAME")
+	res.repoName = repoName
 
-		res.actionID = uint(actionID)
-	} else if actionIDStr == "" {
-		return nil, fmt.Errorf("Action Run ID must be defined, set by PORTER_ACTION_ID")
-	}
+	repoOwner := os.Getenv("PORTER_REPO_OWNER")
+	res.repoOwner = repoOwner
 
-	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
-		res.repoName = repoName
-	} else if repoName == "" {
-		return nil, fmt.Errorf("Repo name must be defined, set by PORTER_REPO_NAME")
-	}
-
-	if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-		res.repoOwner = repoOwner
-	} else if repoOwner == "" {
-		return nil, fmt.Errorf("Repo owner must be defined, set by PORTER_REPO_OWNER")
-	}
-
-	if prName := os.Getenv("PORTER_PR_NAME"); prName != "" {
-		res.prName = prName
-	} else if prName == "" {
-		return nil, fmt.Errorf("PR Name must be supplied, set by PORTER_PR_NAME")
-	}
+	prName := os.Getenv("PORTER_PR_NAME")
+	res.prName = prName
 
 	commit, err := git.LastCommit()
 

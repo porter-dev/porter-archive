@@ -88,6 +88,68 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 		return err
 	}
 
+	for _, res := range resGroup.Resources {
+		config := &ApplicationConfig{}
+
+		err = mapstructure.Decode(res.Config, &config)
+		if err != nil {
+			continue
+		}
+
+		if config != nil && len(config.EnvGroups) > 0 {
+			target := &Target{}
+
+			err = getTarget(res.Target, target)
+
+			if err != nil {
+				return err
+			}
+
+			for _, group := range config.EnvGroups {
+				if group.Name == "" {
+					return fmt.Errorf("env group name cannot be empty")
+				}
+
+				_, err := client.GetEnvGroup(
+					context.Background(),
+					target.Project,
+					target.Cluster,
+					target.Namespace,
+					&types.GetEnvGroupRequest{
+						Name:    group.Name,
+						Version: group.Version,
+					},
+				)
+
+				if err != nil && err.Error() == "env group not found" {
+					if group.Namespace == "" {
+						return fmt.Errorf("env group namespace cannot be empty")
+					}
+
+					color.New(color.FgBlue, color.Bold).
+						Printf("Env group '%s' does not exist in the target namespace '%s'\n", group.Name, target.Namespace)
+					color.New(color.FgBlue, color.Bold).
+						Printf("Cloning env group '%s' from namespace '%s' to target namespace '%s'\n",
+							group.Name, group.Namespace, target.Namespace)
+
+					_, err = client.CloneEnvGroup(
+						context.Background(), target.Project, target.Cluster, group.Namespace,
+						&types.CloneEnvGroupRequest{
+							Name:      group.Name,
+							Namespace: target.Namespace,
+						},
+					)
+
+					if err != nil {
+						return err
+					}
+				} else if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	basePath, err := os.Getwd()
 
 	if err != nil {
@@ -198,17 +260,23 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		output:      make(map[string]interface{}),
 	}
 
-	err := driver.getSource(resource.Source)
+	source := &Source{}
 
+	err := getSource(resource.Source, source)
 	if err != nil {
 		return nil, err
 	}
 
-	err = driver.getTarget(resource.Target)
+	driver.source = source
 
+	target := &Target{}
+
+	err = getTarget(resource.Target, target)
 	if err != nil {
 		return nil, err
 	}
+
+	driver.target = target
 
 	return driver, nil
 }
@@ -535,94 +603,90 @@ func (d *Driver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *Driver) getSource(genericSource map[string]interface{}) error {
-	d.source = &Source{}
-
+func getSource(input map[string]interface{}, output *Source) error {
 	// first read from env vars
-	d.source.Name = os.Getenv("PORTER_SOURCE_NAME")
-	d.source.Repo = os.Getenv("PORTER_SOURCE_REPO")
-	d.source.Version = os.Getenv("PORTER_SOURCE_VERSION")
+	output.Name = os.Getenv("PORTER_SOURCE_NAME")
+	output.Repo = os.Getenv("PORTER_SOURCE_REPO")
+	output.Version = os.Getenv("PORTER_SOURCE_VERSION")
 
 	// next, check for values in the YAML file
-	if d.source.Name == "" {
-		if name, ok := genericSource["name"]; ok {
+	if output.Name == "" {
+		if name, ok := input["name"]; ok {
 			nameVal, ok := name.(string)
 			if !ok {
 				return fmt.Errorf("invalid name provided")
 			}
-			d.source.Name = nameVal
+			output.Name = nameVal
 		}
 	}
 
-	if d.source.Name == "" {
+	if output.Name == "" {
 		return fmt.Errorf("source name required")
 	}
 
-	if d.source.Repo == "" {
-		if repo, ok := genericSource["repo"]; ok {
+	if output.Repo == "" {
+		if repo, ok := input["repo"]; ok {
 			repoVal, ok := repo.(string)
 			if !ok {
 				return fmt.Errorf("invalid repo provided")
 			}
-			d.source.Repo = repoVal
+			output.Repo = repoVal
 		}
 	}
 
-	if d.source.Version == "" {
-		if version, ok := genericSource["version"]; ok {
+	if output.Version == "" {
+		if version, ok := input["version"]; ok {
 			versionVal, ok := version.(string)
 			if !ok {
 				return fmt.Errorf("invalid version provided")
 			}
-			d.source.Version = versionVal
+			output.Version = versionVal
 		}
 	}
 
 	// lastly, just put in the defaults
-	if d.source.Version == "" {
-		d.source.Version = "latest"
+	if output.Version == "" {
+		output.Version = "latest"
 	}
 
-	d.source.IsApplication = d.source.Repo == "https://charts.getporter.dev"
+	output.IsApplication = output.Repo == "https://charts.getporter.dev"
 
-	if d.source.Repo == "" {
-		d.source.Repo = "https://charts.getporter.dev"
+	if output.Repo == "" {
+		output.Repo = "https://charts.getporter.dev"
 
-		values, err := existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
+		values, err := existsInRepo(output.Name, output.Version, output.Repo)
 
 		if err == nil {
 			// found in "https://charts.getporter.dev"
-			d.source.SourceValues = values
-			d.source.IsApplication = true
+			output.SourceValues = values
+			output.IsApplication = true
 			return nil
 		}
 
-		d.source.Repo = "https://chart-addons.getporter.dev"
+		output.Repo = "https://chart-addons.getporter.dev"
 
-		values, err = existsInRepo(d.source.Name, d.source.Version, d.source.Repo)
+		values, err = existsInRepo(output.Name, output.Version, output.Repo)
 
 		if err == nil {
 			// found in https://chart-addons.getporter.dev
-			d.source.SourceValues = values
+			output.SourceValues = values
 			return nil
 		}
 
 		return fmt.Errorf("source does not exist in any repo")
 	}
 
-	return fmt.Errorf("source '%s' does not exist in repo '%s'", d.source.Name, d.source.Repo)
+	return fmt.Errorf("source '%s' does not exist in repo '%s'", output.Name, output.Repo)
 }
 
-func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
-	d.target = &Target{}
-
+func getTarget(input map[string]interface{}, output *Target) error {
 	// first read from env vars
 	if projectEnv := os.Getenv("PORTER_PROJECT"); projectEnv != "" {
 		project, err := strconv.Atoi(projectEnv)
 		if err != nil {
 			return err
 		}
-		d.target.Project = uint(project)
+		output.Project = uint(project)
 	}
 
 	if clusterEnv := os.Getenv("PORTER_CLUSTER"); clusterEnv != "" {
@@ -630,51 +694,51 @@ func (d *Driver) getTarget(genericTarget map[string]interface{}) error {
 		if err != nil {
 			return err
 		}
-		d.target.Cluster = uint(cluster)
+		output.Cluster = uint(cluster)
 	}
 
-	d.target.Namespace = os.Getenv("PORTER_NAMESPACE")
+	output.Namespace = os.Getenv("PORTER_NAMESPACE")
 
 	// next, check for values in the YAML file
-	if d.target.Project == 0 {
-		if project, ok := genericTarget["project"]; ok {
+	if output.Project == 0 {
+		if project, ok := input["project"]; ok {
 			projectVal, ok := project.(uint)
 			if !ok {
 				return fmt.Errorf("project value must be an integer")
 			}
-			d.target.Project = projectVal
+			output.Project = projectVal
 		}
 	}
 
-	if d.target.Cluster == 0 {
-		if cluster, ok := genericTarget["cluster"]; ok {
+	if output.Cluster == 0 {
+		if cluster, ok := input["cluster"]; ok {
 			clusterVal, ok := cluster.(uint)
 			if !ok {
 				return fmt.Errorf("cluster value must be an integer")
 			}
-			d.target.Cluster = clusterVal
+			output.Cluster = clusterVal
 		}
 	}
 
-	if d.target.Namespace == "" {
-		if namespace, ok := genericTarget["namespace"]; ok {
+	if output.Namespace == "" {
+		if namespace, ok := input["namespace"]; ok {
 			namespaceVal, ok := namespace.(string)
 			if !ok {
 				return fmt.Errorf("invalid namespace provided")
 			}
-			d.target.Namespace = namespaceVal
+			output.Namespace = namespaceVal
 		}
 	}
 
 	// lastly, just put in the defaults
-	if d.target.Project == 0 {
-		d.target.Project = config.Project
+	if output.Project == 0 {
+		output.Project = config.Project
 	}
-	if d.target.Cluster == 0 {
-		d.target.Cluster = config.Cluster
+	if output.Cluster == 0 {
+		output.Cluster = config.Cluster
 	}
-	if d.target.Namespace == "" {
-		d.target.Namespace = "default"
+	if output.Namespace == "" {
+		output.Namespace = "default"
 	}
 
 	return nil

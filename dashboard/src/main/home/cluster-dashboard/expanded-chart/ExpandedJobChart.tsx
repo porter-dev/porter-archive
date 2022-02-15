@@ -6,7 +6,7 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loading from "assets/loading.gif";
 
-import { ChartType, ClusterType, StorageType } from "shared/types";
+import { ChartType, ClusterType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
@@ -23,8 +23,8 @@ import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
 import { pushFiltered } from "../../../../shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
-import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
+import RevisionSection from "./RevisionSection";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -53,6 +53,7 @@ type StateType = {
   upgradeVersion: string;
   expandedJobRun: any;
   pods: any;
+  forceRefreshRevisions: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -75,6 +76,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     expandedJobRun: null as any,
     pods: null as any,
+    forceRefreshRevisions: false,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -486,6 +488,50 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     });
   };
 
+  // getChartStatus = () => {
+  //   const { currentChart } = this.state;
+
+  //   const getAvailability = (kind: string, c: any) => {
+  //     switch (kind?.toLowerCase()) {
+  //       case "deployment":
+  //       case "replicaset":
+  //         return c.status.availableReplicas == c.status.replicas;
+  //       case "statefulset":
+  //         return c.status.readyReplicas == c.status.replicas;
+  //       case "daemonset":
+  //         return c.status.numberAvailable == c.status.desiredNumberScheduled;
+  //     }
+  //   };
+
+  //   const chartStatus = currentChart.info.status;
+
+  //   if (chartStatus === "deployed") {
+  //     for (var uid in controllers) {
+  //       let value = controllers[uid];
+  //       let available = getAvailability(value.metadata.kind, value);
+  //       let progressing = true;
+
+  //       controllers[uid]?.status?.conditions?.forEach((condition: any) => {
+  //         if (
+  //           condition.type == "Progressing" &&
+  //           condition.status == "False" &&
+  //           condition.reason == "ProgressDeadlineExceeded"
+  //         ) {
+  //           progressing = false;
+  //         }
+  //       });
+
+  //       if (!available && progressing) {
+  //         return "loading";
+  //       } else if (!available && !progressing) {
+  //         return "failed";
+  //       }
+  //     }
+  //     return "deployed";
+  //   }
+  //   return chartStatus;
+  // };
+
   renderTabContents = (currentTab: string, submitValues?: any) => {
     switch (currentTab) {
       case "jobs":
@@ -517,6 +563,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               isAuthorized={this.props.isAuthorized}
               saveValuesStatus={this.state.saveValuesStatus}
               expandJob={(job: any) => this.setJobRun(job)}
+              isDeployedFromGithub={
+                !!this.state.currentChart?.git_action_config?.git_repo
+              }
+              repositoryUrl={
+                this.state.currentChart?.git_action_config?.git_repo
+              }
+              currentChartVersion={Number(this.state.currentChart.version)}
+              latestChartVersion={Number(
+                this.state.currentChart.latest_version
+              )}
             />
           </TabWrapper>
         );
@@ -693,9 +749,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { closeChart } = this.props;
     let { currentChart } = this.state;
     let chart = currentChart;
-    const displayUpdateButton =
-      chart.latest_version &&
-      chart.latest_version !== chart.chart.metadata.version;
     return (
       <>
         {this.state.upgradeVersion && (
@@ -741,30 +794,26 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 {" " + this.readableDate(chart.info.last_deployed)}
               </LastDeployed>
             </InfoWrapper>
-            {displayUpdateButton && (
-              <>
-                <Br />
-                <Banner>
-                  A template update is available.
-                  <Link
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      this.setState({
-                        upgradeVersion: currentChart.latest_version,
-                      });
-                    }}
-                  >
-                    View upgrade notes
-                  </Link>
-                </Banner>
-                <Br />
-                <Br />
-                <Br />
-                <Br />
-                <Br />
-                <Br />
-              </>
-            )}
+            <RevisionSection
+              chart={this.state.currentChart}
+              refreshChart={() => this.getChartData(this.state.currentChart, 0)}
+              setRevision={() => {}}
+              forceRefreshRevisions={false}
+              refreshRevisionsOff={() => {}}
+              status={""}
+              shouldUpdate={
+                this.state.currentChart.latest_version &&
+                this.state.currentChart.latest_version !==
+                  this.state.currentChart.chart.metadata.version
+              }
+              latestVersion={this.state.currentChart.latest_version}
+              upgradeVersion={() => {
+                this.handleUpgradeVersion(this.state.upgradeVersion, () => {
+                  this.setState({ loading: false });
+                });
+                this.setState({ upgradeVersion: "", loading: true });
+              }}
+            />
           </HeaderWrapper>
 
           {this.state.deleting ? (

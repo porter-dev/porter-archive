@@ -96,7 +96,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 			continue
 		}
 
-		if len(config.EnvGroups) > 0 {
+		if config != nil && len(config.EnvGroups) > 0 {
 			target := &Target{}
 
 			err = getTarget(res.Target, target)

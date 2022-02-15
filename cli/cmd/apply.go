@@ -88,68 +88,6 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 		return err
 	}
 
-	for _, res := range resGroup.Resources {
-		config := &ApplicationConfig{}
-
-		err = mapstructure.Decode(res.Config, &config)
-		if err != nil {
-			continue
-		}
-
-		if config != nil && len(config.EnvGroups) > 0 {
-			target := &Target{}
-
-			err = getTarget(res.Target, target)
-
-			if err != nil {
-				return err
-			}
-
-			for _, group := range config.EnvGroups {
-				if group.Name == "" {
-					return fmt.Errorf("env group name cannot be empty")
-				}
-
-				_, err := client.GetEnvGroup(
-					context.Background(),
-					target.Project,
-					target.Cluster,
-					target.Namespace,
-					&types.GetEnvGroupRequest{
-						Name:    group.Name,
-						Version: group.Version,
-					},
-				)
-
-				if err != nil && err.Error() == "env group not found" {
-					if group.Namespace == "" {
-						return fmt.Errorf("env group namespace cannot be empty")
-					}
-
-					color.New(color.FgBlue, color.Bold).
-						Printf("Env group '%s' does not exist in the target namespace '%s'\n", group.Name, target.Namespace)
-					color.New(color.FgBlue, color.Bold).
-						Printf("Cloning env group '%s' from namespace '%s' to target namespace '%s'\n",
-							group.Name, group.Namespace, target.Namespace)
-
-					_, err = client.CloneEnvGroup(
-						context.Background(), target.Project, target.Cluster, group.Namespace,
-						&types.CloneEnvGroupRequest{
-							Name:      group.Name,
-							Namespace: target.Namespace,
-						},
-					)
-
-					if err != nil {
-						return err
-					}
-				} else if err != nil {
-					return err
-				}
-			}
-		}
-	}
-
 	basePath, err := os.Getwd()
 
 	if err != nil {
@@ -160,13 +98,13 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	worker.RegisterDriver("porter.deploy", NewPorterDriver)
 	worker.SetDefaultDriver("porter.deploy")
 
-	deplNamespace := os.Getenv("PORTER_NAMESPACE")
-
-	if deplNamespace == "" {
-		return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
-	}
-
 	if hasDeploymentHookEnvVars() {
+		deplNamespace := os.Getenv("PORTER_NAMESPACE")
+
+		if deplNamespace == "" {
+			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
+		}
+
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 
 		if err != nil {
@@ -175,6 +113,9 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 
 		worker.RegisterHook("deployment", deploymentHook)
 	}
+
+	cloneEnvGroupHook := NewCloneEnvGroupHook(client, resGroup)
+	worker.RegisterHook("cloneenvgroup", cloneEnvGroupHook)
 
 	return worker.Apply(resGroup, &switchboardTypes.ApplyOpts{
 		BasePath: basePath,
@@ -995,3 +936,91 @@ func (t *DeploymentHook) OnError(err error) {
 		)
 	}
 }
+
+type CloneEnvGroupHook struct {
+	client   *api.Client
+	resGroup *switchboardTypes.ResourceGroup
+}
+
+func NewCloneEnvGroupHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup) *CloneEnvGroupHook {
+	return &CloneEnvGroupHook{
+		client:   client,
+		resGroup: resourceGroup,
+	}
+}
+
+func (t *CloneEnvGroupHook) PreApply() error {
+	for _, res := range t.resGroup.Resources {
+		config := &ApplicationConfig{}
+
+		err := mapstructure.Decode(res.Config, &config)
+		if err != nil {
+			continue
+		}
+
+		if config != nil && len(config.EnvGroups) > 0 {
+			target := &Target{}
+
+			err = getTarget(res.Target, target)
+
+			if err != nil {
+				return err
+			}
+
+			for _, group := range config.EnvGroups {
+				if group.Name == "" {
+					return fmt.Errorf("env group name cannot be empty")
+				}
+
+				_, err := t.client.GetEnvGroup(
+					context.Background(),
+					target.Project,
+					target.Cluster,
+					target.Namespace,
+					&types.GetEnvGroupRequest{
+						Name:    group.Name,
+						Version: group.Version,
+					},
+				)
+
+				if err != nil && err.Error() == "env group not found" {
+					if group.Namespace == "" {
+						return fmt.Errorf("env group namespace cannot be empty")
+					}
+
+					color.New(color.FgBlue, color.Bold).
+						Printf("Env group '%s' does not exist in the target namespace '%s'\n", group.Name, target.Namespace)
+					color.New(color.FgBlue, color.Bold).
+						Printf("Cloning env group '%s' from namespace '%s' to target namespace '%s'\n",
+							group.Name, group.Namespace, target.Namespace)
+
+					_, err = t.client.CloneEnvGroup(
+						context.Background(), target.Project, target.Cluster, group.Namespace,
+						&types.CloneEnvGroupRequest{
+							Name:      group.Name,
+							Namespace: target.Namespace,
+						},
+					)
+
+					if err != nil {
+						return err
+					}
+				} else if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (t *CloneEnvGroupHook) DataQueries() map[string]interface{} {
+	return nil
+}
+
+func (t *CloneEnvGroupHook) PostApply(populatedData map[string]interface{}) error {
+	return nil
+}
+
+func (t *CloneEnvGroupHook) OnError(err error) {}

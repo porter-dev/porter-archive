@@ -12,6 +12,10 @@ interface Props {
   jobs: any;
   handleSaveValues: any;
   expandJob: any;
+  currentChartVersion: number;
+  latestChartVersion: number;
+  isDeployedFromGithub: boolean;
+  repositoryUrl?: string;
 }
 
 /**
@@ -50,6 +54,10 @@ const TempJobList: React.FC<Props> = (props) => {
         jobs={props.jobs}
         setJobs={props.setJobs}
         expandJob={props.expandJob}
+        isDeployedFromGithub={props.isDeployedFromGithub}
+        repositoryUrl={props.repositoryUrl}
+        currentChartVersion={props.currentChartVersion}
+        latestChartVersion={props.latestChartVersion}
       />
     </>
   );

@@ -11,6 +11,10 @@ type PropsType = WithAuthProps & {
   jobs: any[];
   setJobs: (job: any) => void;
   expandJob: any;
+  currentChartVersion: number;
+  latestChartVersion: number;
+  isDeployedFromGithub: boolean;
+  repositoryUrl?: string;
 };
 
 type StateType = {
@@ -62,6 +66,10 @@ class JobList extends Component<PropsType, StateType> {
                     "delete",
                   ])
                 }
+                isDeployedFromGithub={this.props.isDeployedFromGithub}
+                repositoryUrl={this.props.repositoryUrl}
+                currentChartVersion={this.props.currentChartVersion}
+                latestChartVersion={this.props.latestChartVersion}
               />
             );
           })}

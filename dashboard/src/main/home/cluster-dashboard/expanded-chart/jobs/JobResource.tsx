@@ -8,6 +8,7 @@ import Logs from "../status/Logs";
 import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
 import KeyValueArray from "components/form-components/KeyValueArray";
+import DynamicLink from "components/DynamicLink";
 
 type PropsType = {
   job: any;
@@ -15,6 +16,10 @@ type PropsType = {
   deleting: boolean;
   readOnly?: boolean;
   expandJob: any;
+  currentChartVersion: number;
+  latestChartVersion: number;
+  isDeployedFromGithub: boolean;
+  repositoryUrl?: string;
 };
 
 type StateType = {
@@ -261,6 +266,40 @@ export default class JobResource extends Component<PropsType, StateType> {
     }
   };
 
+  getImageTag = () => {
+    const container = this.props.job?.spec?.template?.spec?.containers[0];
+    const tag = container?.image?.split(":")[1];
+
+    if (!tag) {
+      return "unknown";
+    }
+
+    if (this.props.isDeployedFromGithub && tag !== "latest") {
+      return (
+        <DynamicLink
+          to={`https://github.com/${this.props.repositoryUrl}/commit/${tag}`}
+          onClick={(e) => e.preventDefault()}
+          target="_blank"
+        ></DynamicLink>
+      );
+    }
+
+    return tag;
+  };
+
+  getRevisionNumber = () => {
+    const revision = this.props.job?.metadata?.labels["helm.sh/revision"];
+    let status: RevisionContainerProps["status"] = "current";
+    if (this.props.currentChartVersion > revision) {
+      status = "outdated";
+    }
+    return (
+      <RevisionContainer status={status}>
+        Revision No - {revision || "unknown"}
+      </RevisionContainer>
+    );
+  };
+
   render() {
     let icon =
       "https://user-images.githubusercontent.com/65516095/111258413-4e2c3800-85f3-11eb-8a6a-88e03460f8fe.png";
@@ -278,12 +317,23 @@ export default class JobResource extends Component<PropsType, StateType> {
                 <Label>
                   Started at{" "}
                   {this.readableDate(this.props.job.status?.startTime)}
+                  <Dot>•</Dot>
+                  <span>
+                    {this.props.isDeployedFromGithub
+                      ? "Commit: "
+                      : "Image tag:"}{" "}
+                    {this.getImageTag()}
+                  </span>
                 </Label>
                 <Subtitle>{this.getSubtitle()}</Subtitle>
               </Description>
             </Flex>
             <EndWrapper>
-              <CommandString>{commandString}</CommandString>
+              <Flex>
+                {this.getRevisionNumber()}
+                <CommandString>{commandString}</CommandString>
+              </Flex>
+
               {this.renderStatus()}
               <MaterialIconTray disabled={false}>
                 {this.renderStopButton()}
@@ -315,6 +365,26 @@ export default class JobResource extends Component<PropsType, StateType> {
 }
 
 JobResource.contextType = Context;
+
+type RevisionContainerProps = {
+  status: "outdated" | "current";
+};
+
+const RevisionContainer = styled.span<RevisionContainerProps>`
+  margin-right: 15px;
+  ${({ status }) => {
+    if (status === "outdated") {
+      return "color: rgb(245, 203, 66);";
+    }
+    return "";
+  }}
+`;
+
+const Dot = styled.div`
+  margin-right: 9px;
+  margin-left: 9px;
+  color: #ffffff88;
+`;
 
 const Row = styled.div`
   margin-top: 20px;
@@ -464,6 +534,10 @@ const Label = styled.div`
   color: #ffffff;
   font-size: 13px;
   font-weight: 500;
+  display: flex;
+  > span {
+    color: #ffffff88;
+  }
 `;
 
 const Subtitle = styled.div`

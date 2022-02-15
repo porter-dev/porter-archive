@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 )
@@ -45,29 +44,7 @@ func coalesceEnvGroups(
 			},
 		)
 
-		if err != nil && err.Error() == "env group not found" {
-			if group.Namespace == "" {
-				return fmt.Errorf("env group namespace cannot be empty")
-			}
-
-			color.New(color.FgBlue, color.Bold).
-				Printf("Env group '%s' does not exist in the target namespace '%s'\n", group.Name, namespace)
-			color.New(color.FgBlue, color.Bold).
-				Printf("Cloning env group '%s' from namespace '%s' to target namespace '%s'\n",
-					group.Name, group.Namespace, namespace)
-
-			envGroup, err = client.CloneEnvGroup(
-				context.Background(), projectID, clusterID, group.Namespace,
-				&types.CloneEnvGroupRequest{
-					Name:      group.Name,
-					Namespace: namespace,
-				},
-			)
-
-			if err != nil {
-				return err
-			}
-		} else if err != nil {
+		if err != nil {
 			return err
 		}
 

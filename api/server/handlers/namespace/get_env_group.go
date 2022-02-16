@@ -1,7 +1,9 @@
 package namespace
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,27 +11,28 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type DeleteConfigMapHandler struct {
-	handlers.PorterHandlerReader
+type GetEnvGroupHandler struct {
+	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewDeleteConfigMapHandler(
+func NewGetEnvGroupHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
-) *DeleteConfigMapHandler {
-	return &DeleteConfigMapHandler{
-		PorterHandlerReader:   handlers.NewDefaultPorterHandler(config, decoderValidator, nil),
-		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
+	writer shared.ResultWriter,
+) *GetEnvGroupHandler {
+	return &GetEnvGroupHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *DeleteConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.DeleteConfigMapRequest{}
+func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.GetEnvGroupRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -45,22 +48,19 @@ func (c *DeleteConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := deleteConfigMap(agent, request.Name, namespace); err != nil {
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, request.Version)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("env group not found"),
+				http.StatusNotFound),
+			)
+			return
+		}
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-}
-
-func deleteConfigMap(agent *kubernetes.Agent, name, namespace string) error {
-	if err := agent.DeleteLinkedSecret(name, namespace); err != nil {
-		return err
-	}
-
-	if err := agent.DeleteConfigMap(name, namespace); err != nil {
-		return err
-	}
-
-	return nil
+	c.WriteResult(w, r, envGroup)
 }

@@ -474,11 +474,9 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const getBranchContents = baseApi<
@@ -494,11 +492,9 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -514,11 +510,9 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getBranches = baseApi<
@@ -874,9 +868,7 @@ const getReleaseSteps = baseApi<
 });
 
 const destroyInfra = baseApi<
-  {
-    name: string;
-  },
+  {},
   {
     project_id: number;
     infra_id: number;
@@ -1047,6 +1039,17 @@ const upgradeChartValues = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
 });
 
+const listEnvGroups = baseApi<
+  {},
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/list`;
+});
+
 const listConfigMaps = baseApi<
   {},
   {
@@ -1056,6 +1059,21 @@ const listConfigMaps = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/list`;
+});
+
+const getEnvGroup = baseApi<
+  {},
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+    name: string;
+    version?: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
+    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
+    }`;
 });
 
 const getConfigMap = baseApi<
@@ -1070,6 +1088,38 @@ const getConfigMap = baseApi<
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap`;
 });
+
+const createEnvGroup = baseApi<
+  {
+    name: string;
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
+  },
+  {
+    id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
+});
+
+const updateEnvGroup = baseApi<
+  {
+    name: string;
+    variables: { [key: string]: string };
+    secret_variables?: { [key: string]: string };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>(
+  "POST",
+  ({ cluster_id, project_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/create`
+);
 
 const createConfigMap = baseApi<
   {
@@ -1114,6 +1164,19 @@ const renameConfigMap = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/rename`;
+});
+
+const deleteEnvGroup = baseApi<
+  {
+    name: string;
+  },
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("DELETE", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup`;
 });
 
 const deleteConfigMap = baseApi<
@@ -1342,6 +1405,61 @@ const getPreviousLogsForContainer = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
 );
 
+const addApplicationToEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/add_application`
+);
+
+const removeApplicationFromEnvGroup = baseApi<
+  {
+    name: string; // Env Group name
+    app_name: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ cluster_id, namespace, project_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/envgroup/remove_application`
+);
+
+const provisionDatabase = baseApi<
+  {
+    username: string;
+    password: string;
+    machine_type: string;
+    db_storage_encrypted: boolean;
+    db_name: string;
+    db_max_allocated_storage: string;
+    db_family: string;
+    db_engine_version: string;
+    db_allocated_storage: string;
+  },
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/provision/rds`
+);
+
+const getDatabases = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/databases`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1475,4 +1593,13 @@ export default {
   getLogBucketLogs,
   getCanCreateProject,
   getPreviousLogsForContainer,
+  createEnvGroup,
+  updateEnvGroup,
+  listEnvGroups,
+  getEnvGroup,
+  deleteEnvGroup,
+  addApplicationToEnvGroup,
+  removeApplicationFromEnvGroup,
+  provisionDatabase,
+  getDatabases,
 };

@@ -86,7 +86,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       });
 
     api
-      .createConfigMap(
+      .createEnvGroup(
         "<token>",
         {
           name: this.state.envGroupName,
@@ -101,6 +101,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ submitStatus: "successful" });
+        console.log(res);
         this.props.goBack();
       })
       .catch((err) => {

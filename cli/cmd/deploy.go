@@ -297,6 +297,13 @@ func init() {
 		"file destination for .env files",
 	)
 
+	updateCmd.PersistentFlags().BoolVar(
+		&forceBuild,
+		"force-build",
+		false,
+		"set this to force build an image",
+	)
+
 	updateCmd.AddCommand(updateBuildCmd)
 	updateCmd.AddCommand(updatePushCmd)
 	updateCmd.AddCommand(updateConfigCmd)
@@ -476,7 +483,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	if err := updateAgent.Build(nil); err != nil {
+	if err := updateAgent.Build(nil, forceBuild); err != nil {
 		if stream {
 			updateAgent.StreamEvent(types.SubEvent{
 				EventID: "build",

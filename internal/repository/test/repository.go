@@ -37,6 +37,7 @@ type TestRepository struct {
 	onboarding                repository.ProjectOnboardingRepository
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
+	database                  repository.DatabaseRepository
 	allowlist                 repository.AllowlistRepository
 }
 
@@ -168,6 +169,10 @@ func (t *TestRepository) BuildConfig() repository.BuildConfigRepository {
 	return t.buildConfig
 }
 
+func (t *TestRepository) Database() repository.DatabaseRepository {
+	return t.database
+}
+
 func (t *TestRepository) Allowlist() repository.AllowlistRepository {
 	return t.allowlist
 }
@@ -208,6 +213,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		onboarding:                NewProjectOnboardingRepository(canQuery),
 		ceToken:                   NewCredentialsExchangeTokenRepository(canQuery),
 		buildConfig:               NewBuildConfigRepository(canQuery),
+		database:                  NewDatabaseRepository(),
 		allowlist:                 NewAllowlistRepository(canQuery),
 	}
 }

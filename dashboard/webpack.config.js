@@ -28,7 +28,11 @@ module.exports = () => {
    * @type {webpack.Configuration}
    */
   const config = {
-    entry: ["./src/index.tsx"],
+    entry: [
+      "core-js/modules/es.promise",
+      "core-js/modules/es.array.iterator",
+      "./src/index.tsx",
+    ],
     target: "web",
     mode: isDevelopment ? "development" : "production",
     devtool: "source-map",

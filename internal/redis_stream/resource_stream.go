@@ -1,4 +1,4 @@
-package provisioner
+package redis_stream
 
 import (
 	"context"

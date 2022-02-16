@@ -9,27 +9,28 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetConfigMapHandler struct {
+type CloneEnvGroupHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetConfigMapHandler(
+func NewCloneEnvGroupHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetConfigMapHandler {
-	return &GetConfigMapHandler{
+) *CloneEnvGroupHandler {
+	return &CloneEnvGroupHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.GetConfigMapRequest{}
+func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.CloneEnvGroupRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -45,16 +46,34 @@ func (c *GetConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	configMap, err := agent.GetConfigMap(request.Name, namespace)
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, request.Version)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	var res = types.GetConfigMapResponse{
-		ConfigMap: configMap,
+	if request.CloneName == "" {
+		request.CloneName = request.Name
 	}
 
-	c.WriteResult(w, r, res)
+	configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
+		Name:      request.CloneName,
+		Namespace: request.Namespace,
+		Variables: envGroup.Variables,
+	})
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	envGroup, err = envgroup.ToEnvGroup(configMap)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	c.WriteResult(w, r, envGroup)
 }

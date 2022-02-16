@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/ecr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/eks"
+	"github.com/porter-dev/porter/internal/kubernetes/provisioner/aws/rds"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/docr"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/do/doks"
 	"github.com/porter-dev/porter/internal/kubernetes/provisioner/gcp/gke"
@@ -36,12 +37,6 @@ func NewInfraDeleteHandler(
 
 func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	infra, _ := r.Context().Value(types.InfraScope).(*models.Infra)
-
-	request := &types.DeleteInfraRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
 
 	if infra.Kind == types.InfraDOKS || infra.Kind == types.InfraGKE || infra.Kind == types.InfraEKS {
 		c.Config().AnalyticsClient.Track(analytics.ClusterDestroyingStartTrack(
@@ -72,6 +67,8 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err = destroyDOKS(c.Config(), infra)
 	case types.InfraGKE:
 		err = destroyGKE(c.Config(), infra)
+	case types.InfraRDS:
+		err = destroyRDS(c.Config(), infra)
 	}
 
 	if err != nil {
@@ -154,6 +151,75 @@ func destroyEKS(conf *config.Config, infra *models.Infra) error {
 		MachineType: lastAppliedEKS.MachineType,
 		IssuerEmail: lastAppliedEKS.IssuerEmail,
 	}
+	opts.OperationKind = provisioner.Destroy
+
+	err = conf.ProvisionerAgent.Provision(opts)
+
+	return err
+}
+
+func destroyRDS(conf *config.Config, infra *models.Infra) error {
+	// find the database and mark as deleting
+	database, err := conf.Repo.Database().ReadDatabaseByInfraID(infra.ProjectID, infra.ID)
+
+	if err != nil {
+		return err
+	}
+
+	database.Status = "destroying"
+
+	database, err = conf.Repo.Database().UpdateDatabase(database)
+
+	if err != nil {
+		return err
+	}
+
+	lastAppliedRDS := &types.RDSInfraLastApplied{}
+
+	// parse infra last applied into EKS config
+	if err := json.Unmarshal(infra.LastApplied, lastAppliedRDS); err != nil {
+		return err
+	}
+
+	awsInt, err := conf.Repo.AWSIntegration().ReadAWSIntegration(infra.ProjectID, infra.AWSIntegrationID)
+
+	if err != nil {
+		return err
+	}
+
+	opts, err := provision.GetSharedProvisionerOpts(conf, infra)
+
+	vaultToken := ""
+
+	if conf.CredentialBackend != nil {
+		vaultToken, err = conf.CredentialBackend.CreateAWSToken(awsInt)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	opts.CredentialExchange.VaultToken = vaultToken
+
+	opts.RDS = &rds.Conf{
+		AWSRegion:             awsInt.AWSRegion,
+		DBName:                lastAppliedRDS.DBName,
+		MachineType:           lastAppliedRDS.MachineType,
+		DBEngineVersion:       lastAppliedRDS.DBEngineVersion,
+		DBFamily:              lastAppliedRDS.DBFamily,
+		DBMajorEngineVersion:  lastAppliedRDS.DBMajorEngineVersion,
+		DBAllocatedStorage:    lastAppliedRDS.DBStorage,
+		DBMaxAllocatedStorage: lastAppliedRDS.DBMaxStorage,
+		DBStorageEncrypted:    lastAppliedRDS.DBStorageEncrypted,
+		Username:              lastAppliedRDS.Username,
+		Password:              lastAppliedRDS.Password,
+		VPCID:                 lastAppliedRDS.VPCID,
+		Subnet1:               lastAppliedRDS.Subnet1,
+		Subnet2:               lastAppliedRDS.Subnet2,
+		Subnet3:               lastAppliedRDS.Subnet3,
+		DeletionProtection:    lastAppliedRDS.DeletionProtection,
+	}
+
 	opts.OperationKind = provisioner.Destroy
 
 	err = conf.ProvisionerAgent.Provision(opts)

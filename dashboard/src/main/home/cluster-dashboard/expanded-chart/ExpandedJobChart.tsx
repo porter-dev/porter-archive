@@ -1,4 +1,10 @@
-import React, { Component } from "react";
+import React, {
+  Component,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 
@@ -6,7 +12,11 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loading from "assets/loading.gif";
 
-import { ChartType, ClusterType } from "shared/types";
+import {
+  ChartType,
+  ChartTypeWithExtendedConfig,
+  ClusterType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
@@ -22,10 +32,11 @@ import DeploymentType from "./DeploymentType";
 import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
 import { pushFiltered } from "../../../../shared/routing";
-import { RouteComponentProps, withRouter } from "react-router";
+import { RouteComponentProps, useRouteMatch, withRouter } from "react-router";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import RevisionSection from "./RevisionSection";
 import { onlyInLeft } from "shared/array_utils";
+import Loading from "components/Loading";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -1092,6 +1103,118 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 ExpandedJobChart.contextType = Context;
 
 export default withRouter(withAuth(ExpandedJobChart));
+
+const ExpandedJobChartFC = () => {
+  const { chart, loading: isLoadingChart } = useChart();
+
+  if (isLoadingChart) {
+    return <Loading />;
+  }
+
+  useEffect(() => {}, []);
+};
+
+const useChart = () => {
+  const { currentProject, currentCluster } = useContext(Context);
+  const [chart, setChart] = useState<ChartTypeWithExtendedConfig>(null);
+  const { params } = useRouteMatch<{
+    namespace: string;
+    chartName: string;
+  }>();
+
+  const loading = useMemo(() => {
+    return chart === null;
+  }, [chart]);
+
+  useEffect(() => {
+    const { namespace, chartName } = params;
+
+    api
+      .getChart<ChartTypeWithExtendedConfig>(
+        "token",
+        {},
+        {
+          id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+          namespace,
+          name: chartName,
+          revision: 0,
+        }
+      )
+      .then((res) => {
+        if (res?.data) {
+          setChart(res.data);
+        }
+      });
+  }, [params]);
+
+  return {
+    chart,
+    loading,
+  };
+};
+
+const PORTER_IMAGE_TEMPLATES = [
+  "porterdev/hello-porter-job",
+  "porterdev/hello-porter-job:latest",
+  "public.ecr.aws/o1j4x7p4/hello-porter-job",
+  "public.ecr.aws/o1j4x7p4/hello-porter-job:latest",
+];
+
+const useJobs = (chart: ChartType) => {
+  const { currentProject, currentCluster } = useContext(Context);
+  const [jobs, setJobs] = useState(null);
+  const [hasPorterImageTemplate, setHasPorterImageTemplate] = useState(true);
+
+  useEffect(() => {
+    let isSubscribed = true;
+    api
+      .getJobs(
+        "<token>",
+        {},
+        {
+          id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+          namespace: chart.namespace,
+          release_name: chart.name,
+        }
+      )
+      .then((res) => {});
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [chart]);
+
+  const sortJobsAndSave = (jobs: any[]) => {
+    // Set job run from URL if needed
+    const urlParams = new URLSearchParams(location.search);
+    const urlJob = urlParams.get("job");
+
+    const getTime = (job: any) => {
+      return new Date(job?.status?.startTime).getTime();
+    };
+
+    jobs.sort((job1, job2) => {
+      // if (job1.metadata.name === urlJob) {
+      //   this.setJobRun(job1);
+      // } else if (job2.metadata.name === urlJob) {
+      //   this.setJobRun(job2);
+      // }
+
+      return getTime(job2) - getTime(job1);
+    });
+
+    let latestImageDetected =
+      jobs[0]?.spec?.template?.spec?.containers[0]?.image;
+    if (!PORTER_IMAGE_TEMPLATES.includes(latestImageDetected)) {
+      // this.setState({ jobs, newestImage, imageIsPlaceholder: false });
+      setHasPorterImageTemplate(false);
+    }
+
+    setJobs(jobs);
+  };
+};
 
 const Row = styled.div`
   margin-top: 20px;

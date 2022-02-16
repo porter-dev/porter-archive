@@ -28,7 +28,10 @@ const ConnectToJobInstructionsModal: React.FC<{
       After you have the Porter CLI installed and running. You can run the next
       line of code. Please remember to change the command to something that your
       container can run.
-      <Code>porter run {job?.metadata?.name} -- [COMMAND]</Code>
+      <Code>
+        porter run {job?.metadata?.labels["meta.helm.sh/release-name"]} --
+        [COMMAND]
+      </Code>
     </Modal>
   );
 };

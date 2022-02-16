@@ -2,8 +2,7 @@ package deploy
 
 import (
 	"context"
-	"strconv"
-	"strings"
+	"fmt"
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -19,43 +18,19 @@ type SharedOpts struct {
 	OverrideTag     string
 	Method          DeployBuildType
 	AdditionalEnv   map[string]string
-	EnvGroups       []string
-}
-
-func getEnvGroupNameVersion(group string) (string, uint, error) {
-	if !strings.Contains(group, "@") {
-		return group, 0, nil
-	}
-
-	envGroupSpl := strings.Split(group, "@")
-	envGroupName := envGroupSpl[0]
-	envGroupVersion := uint64(0)
-
-	envGroupVersion, err := strconv.ParseUint(envGroupSpl[1], 10, 32)
-
-	if err != nil {
-		return "", 0, err
-	}
-
-	return envGroupName, uint(envGroupVersion), nil
+	EnvGroups       []types.EnvGroupMeta
 }
 
 func coalesceEnvGroups(
 	client *api.Client,
 	projectID, clusterID uint,
 	namespace string,
-	envGroups []string,
+	envGroups []types.EnvGroupMeta,
 	config map[string]interface{},
 ) error {
 	for _, group := range envGroups {
-		if group == "" {
-			continue
-		}
-
-		envGroupName, envGroupVersion, err := getEnvGroupNameVersion(group)
-
-		if err != nil {
-			return err
+		if group.Name == "" {
+			return fmt.Errorf("env group name cannot be empty")
 		}
 
 		envGroup, err := client.GetEnvGroup(
@@ -64,8 +39,8 @@ func coalesceEnvGroups(
 			clusterID,
 			namespace,
 			&types.GetEnvGroupRequest{
-				Name:    envGroupName,
-				Version: envGroupVersion,
+				Name:    group.Name,
+				Version: group.Version,
 			},
 		)
 

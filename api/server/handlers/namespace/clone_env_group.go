@@ -46,7 +46,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, request.Namespace, request.Version)
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, request.Version)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -59,7 +59,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
 		Name:      request.CloneName,
-		Namespace: namespace,
+		Namespace: request.Namespace,
 		Variables: envGroup.Variables,
 	})
 

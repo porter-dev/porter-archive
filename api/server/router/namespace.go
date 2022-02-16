@@ -87,14 +87,14 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroups/list -> namespace.NewListEnvGroupsHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroup/list -> namespace.NewListEnvGroupsHandler
 	listEnvGroupsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/envgroups/list",
+				RelativePath: relPath + "/envgroup/list",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -116,14 +116,14 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroups/clone -> namespace.NewCloneEnvGroupHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroup/clone -> namespace.NewCloneEnvGroupHandler
 	cloneEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/envgroups/clone",
+				RelativePath: relPath + "/envgroup/clone",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

@@ -37,6 +37,7 @@ import KeyValueArray from "components/form-components/KeyValueArray";
 import RevisionSection from "./RevisionSection";
 import { onlyInLeft } from "shared/array_utils";
 import Loading from "components/Loading";
+import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -1106,12 +1107,15 @@ export default withRouter(withAuth(ExpandedJobChart));
 
 const ExpandedJobChartFC = () => {
   const { chart, loading: isLoadingChart } = useChart();
+  const { jobs, hasPorterImageTemplate } = useJobs(chart);
 
   if (isLoadingChart) {
     return <Loading />;
   }
 
   useEffect(() => {}, []);
+
+  return null;
 };
 
 const useChart = () => {
@@ -1165,26 +1169,12 @@ const useJobs = (chart: ChartType) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [jobs, setJobs] = useState(null);
   const [hasPorterImageTemplate, setHasPorterImageTemplate] = useState(true);
-
-  useEffect(() => {
-    let isSubscribed = true;
-    api
-      .getJobs(
-        "<token>",
-        {},
-        {
-          id: currentProject?.id,
-          cluster_id: currentCluster?.id,
-          namespace: chart.namespace,
-          release_name: chart.name,
-        }
-      )
-      .then((res) => {});
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [chart]);
+  const {
+    newWebsocket,
+    openWebsocket,
+    closeAllWebsockets,
+    closeWebsocket,
+  } = useWebsockets();
 
   const sortJobsAndSave = (jobs: any[]) => {
     // Set job run from URL if needed
@@ -1213,6 +1203,172 @@ const useJobs = (chart: ChartType) => {
     }
 
     setJobs(jobs);
+  };
+
+  const mergeNewJob = (newJob: any) => {
+    let newJobs = jobs;
+    let exists = false;
+    jobs.forEach((job: any, i: number, self: any[]) => {
+      if (
+        job.metadata?.name == newJob.metadata?.name &&
+        job.metadata?.namespace == newJob.metadata?.namespace
+      ) {
+        self[i] = newJob;
+        exists = true;
+      }
+    });
+
+    if (!exists) {
+      jobs.push(newJob);
+    }
+
+    sortJobsAndSave(newJobs);
+  };
+
+  const removeJob = (deletedJob: any) => {
+    let newJobs = jobs.filter((job: any) => {
+      return deletedJob.metadata?.name !== job.metadata?.name;
+    });
+
+    sortJobsAndSave(newJobs);
+  };
+
+  const setupCronJobWebsocket = () => {
+    const releaseName = chart.name;
+    const releaseNamespace = chart.namespace;
+    if (!releaseName || !releaseNamespace) {
+      return;
+    }
+
+    const websocketId = `cronjob-websocket-${releaseName}`;
+
+    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/cronjob/status`;
+
+    const config: NewWebsocketOptions = {
+      onopen: console.log,
+      onmessage: (evt: MessageEvent) => {
+        const event = JSON.parse(evt.data);
+        const object = event.Object;
+        object.metadata.kind = event.Kind;
+
+        setHasPorterImageTemplate((prevValue) => {
+          // if imageIsPlaceholder is true update the newestImage and imageIsPlaceholder fields
+
+          if (event.event_type !== "ADD" && event.event_type !== "UPDATE") {
+            return prevValue;
+          }
+
+          if (!hasPorterImageTemplate) {
+            return prevValue;
+          }
+
+          // filter job belonging to chart
+          const relNameAnnotation =
+            event.Object?.metadata?.annotations["meta.helm.sh/release-name"];
+          const relNamespaceAnnotation =
+            event.Object?.metadata?.annotations[
+              "meta.helm.sh/release-namespace"
+            ];
+
+          if (
+            releaseName !== relNameAnnotation ||
+            releaseNamespace !== relNamespaceAnnotation
+          ) {
+            return prevValue;
+          }
+
+          const newestImage =
+            event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
+              ?.image;
+
+          if (PORTER_IMAGE_TEMPLATES.includes(newestImage)) {
+            return false;
+          }
+
+          return true;
+        });
+      },
+      onclose: console.log,
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(websocketId);
+      },
+    };
+
+    newWebsocket(websocketId, endpoint, config);
+    openWebsocket(websocketId);
+  };
+
+  const setupJobWebsocket = () => {
+    const chartVersion = `${chart?.chart?.metadata?.name}-${chart?.chart?.metadata?.version}`;
+
+    const websocketId = `job-websocket-${chart.name}`;
+
+    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/job/status`;
+
+    const config: NewWebsocketOptions = {
+      onopen: console.log,
+      onmessage: (evt: MessageEvent) => {
+        const event = JSON.parse(evt.data);
+
+        const chartLabel = event.Object?.metadata?.labels["helm.sh/chart"];
+        const releaseLabel =
+          event.Object?.metadata?.labels["meta.helm.sh/release-name"];
+
+        if (chartLabel !== chartVersion || releaseLabel !== chart.name) {
+          return;
+        }
+
+        // if event type is add or update, merge with existing jobs
+        if (event.event_type === "ADD" || event.event_type === "UPDATE") {
+          mergeNewJob(event.Object);
+          return;
+        }
+
+        if (event.event_type === "DELETE") {
+          // filter job belonging to chart
+          removeJob(event.Object);
+        }
+      },
+      onclose: console.log,
+      onerror: (err: ErrorEvent) => {
+        console.log(err);
+        closeWebsocket(websocketId);
+      },
+    };
+    newWebsocket(websocketId, endpoint, config);
+    openWebsocket(websocketId);
+  };
+
+  useEffect(() => {
+    let isSubscribed = true;
+    api
+      .getJobs(
+        "<token>",
+        {},
+        {
+          id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+          namespace: chart.namespace,
+          release_name: chart.name,
+        }
+      )
+      .then((res) => {
+        if (isSubscribed) {
+          sortJobsAndSave(res.data);
+          setupJobWebsocket();
+          setupCronJobWebsocket();
+        }
+      });
+    return () => {
+      isSubscribed = false;
+      closeAllWebsockets();
+    };
+  }, [chart]);
+
+  return {
+    jobs,
+    hasPorterImageTemplate,
   };
 };
 

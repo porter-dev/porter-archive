@@ -1342,6 +1342,14 @@ const useJobs = (chart: ChartType) => {
 
   useEffect(() => {
     let isSubscribed = true;
+
+    if (!chart) {
+      return () => {
+        isSubscribed = false;
+        closeAllWebsockets();
+      };
+    }
+
     api
       .getJobs(
         "<token>",

@@ -1,3 +1,4 @@
+import Loading from "components/Loading";
 import ProvisionerStatus, {
   TFModule,
   TFResource,
@@ -6,11 +7,14 @@ import ProvisionerStatus, {
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import styled from "styled-components";
 
 type Props = {
   setInfraStatus: (status: { hasError: boolean; description?: string }) => void;
   project_id: number;
   filter: string[];
+  notFoundText?: string;
+  enableNewestInfraFilter?: boolean;
 };
 
 type Infra = {
@@ -53,8 +57,11 @@ export const StatusPage = ({
   filter: selectedFilters,
   project_id,
   setInfraStatus,
+  notFoundText = "We couldn't find any infra being provisioned.",
+  enableNewestInfraFilter,
 }: Props) => {
   const isMounted = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     newWebsocket,
@@ -121,22 +128,25 @@ export const StatusPage = ({
         {},
         { project_id: project_id }
       );
+      let infras: Infra[] = [];
       // Filter infras based on what we care only, usually on the onboarding we'll want only the ones
       // currently being provisioned
-      const matchedInfras = res.data.filter(filterBySelectedInfras);
+      infras = res.data.filter(filterBySelectedInfras);
 
-      // Get latest infras for each kind of infra on the array.
-      const latestMatchedInfras = getLatestInfras(matchedInfras);
+      if (enableNewestInfraFilter) {
+        // Get latest infras for each kind of infra on the array.
+        infras = getLatestInfras(infras);
+      }
 
       // Check if all infras are created then enable continue button
-      if (latestMatchedInfras.every((infra) => infra.status === "created")) {
+      if (infras.every((infra) => infra.status === "created")) {
         setInfraStatus({
           hasError: false,
         });
       }
 
       // Init tf modules based on matched infras
-      latestMatchedInfras.forEach((infra) => {
+      infras.forEach((infra) => {
         // Init the module for the hook
         initModule(infra);
 
@@ -294,7 +304,9 @@ export const StatusPage = ({
   }, []);
 
   useEffect(() => {
-    getInfras();
+    getInfras().then(() => {
+      setIsLoading(false);
+    });
     return () => {
       closeAllWebsockets();
     };
@@ -345,6 +357,23 @@ export const StatusPage = ({
   const sortedModules = tfModules.sort((a, b) =>
     b.id < a.id ? -1 : b.id > a.id ? 1 : 0
   );
+
+  if (isLoading) {
+    return (
+      <Placeholder>
+        <Loading />
+      </Placeholder>
+    );
+  }
+
+  if (!isLoading && !sortedModules.length) {
+    return (
+      <Placeholder>
+        <i className="material-icons">search</i>
+        {notFoundText}
+      </Placeholder>
+    );
+  }
 
   return <ProvisionerStatus modules={sortedModules} />;
 };
@@ -666,3 +695,24 @@ const useModuleChecker = (modules: TFModule[]) => {
     moduleStatuses: moduleStatusesArray,
   };
 };
+
+const Placeholder = styled.div`
+  padding: 30px;
+  margin-top: 35px;
+  padding-bottom: 40px;
+  font-size: 13px;
+  color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff11;
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  > i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
+`;

@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -46,7 +47,20 @@ func (c *UpdateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	secretData := encodeSecrets(request.SecretVariables)
+	// get the env group: if it's MetaVersion=2, return an error
+	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, 0)
+
+	// if the environment group exists and has MetaVersion=2, throw an error
+	if envGroup != nil && envGroup.MetaVersion == 2 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("unsupported operation for versioned env groups"),
+			http.StatusNotFound,
+		))
+
+		return
+	}
+
+	secretData := envgroup.EncodeSecrets(request.SecretVariables)
 
 	// create secret first
 	err = agent.UpdateLinkedSecret(request.Name, namespace, request.Name, secretData)
@@ -68,8 +82,23 @@ func (c *UpdateConfigMapHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	configMap, err := agent.UpdateConfigMap(request.Name, namespace, request.Variables)
 
-	res := types.UpdateConfigMapResponse{
-		ConfigMap: configMap,
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	configMap, err = envgroup.ConvertV1ToV2EnvGroup(agent, request.Name, namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	res, err := envgroup.ToEnvGroup(configMap)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	c.WriteResult(w, r, res)

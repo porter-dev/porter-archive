@@ -25,6 +25,7 @@ import { pushFiltered } from "../../../../shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
+import { onlyInLeft } from "shared/array_utils";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -322,14 +323,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     return ws;
   };
 
-  handleSaveValues = (config?: any, runJob?: boolean) => {
+  handleSaveValues = async (config?: any, runJob?: boolean) => {
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
     let conf: string;
+    let values = {} as any;
 
     if (!config) {
-      let values = {};
+      values = {};
       let imageUrl = this.state.newestImage;
       let tag = null;
 
@@ -352,7 +354,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       });
     } else {
       // Convert dotted keys to nested objects
-      let values = {};
+      values = {};
 
       for (let key in config) {
         _.set(values, key, config[key]);
@@ -387,6 +389,79 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           ...values,
         },
         { forceQuotes: true }
+      );
+    }
+
+    const oldSyncedEnvGroups =
+      this.props.currentChart.config?.container?.env?.synced || [];
+    const newSyncedEnvGroups = values?.container?.env?.synced || [];
+
+    const deletedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      oldSyncedEnvGroups,
+      newSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      newSyncedEnvGroups,
+      oldSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addApplicationToEnvGroupPromises = addedEnvGroups.map(
+      (envGroup: any) => {
+        return api.addApplicationToEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: this.state.currentChart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: this.state.currentChart.namespace,
+          }
+        );
+      }
+    );
+
+    try {
+      await Promise.all(addApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't sync the env group to the application, please try again."
+      );
+    }
+
+    const removeApplicationToEnvGroupPromises = deletedEnvGroups.map(
+      (envGroup: any) => {
+        return api.removeApplicationFromEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: this.state.currentChart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: this.state.currentChart.namespace,
+          }
+        );
+      }
+    );
+    try {
+      await Promise.all(removeApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't remove the synced env group from the application, please try again."
       );
     }
 

@@ -113,8 +113,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
       return (
         <ExpandedEnvGroup
           namespace={
-            this.state.expandedEnvGroup?.metadata?.namespace ||
-            this.state.namespace
+            this.state.expandedEnvGroup?.namespace || this.state.namespace
           }
           currentCluster={this.props.currentCluster}
           envGroup={this.state.expandedEnvGroup}

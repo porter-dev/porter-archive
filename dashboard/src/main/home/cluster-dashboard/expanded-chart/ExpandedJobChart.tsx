@@ -31,13 +31,14 @@ import ValuesYaml from "./ValuesYaml";
 import DeploymentType from "./DeploymentType";
 import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
-import { pushFiltered } from "../../../../shared/routing";
+import { pushFiltered, useRouting } from "../../../../shared/routing";
 import { RouteComponentProps, useRouteMatch, withRouter } from "react-router";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import RevisionSection from "./RevisionSection";
 import { onlyInLeft } from "shared/array_utils";
 import Loading from "components/Loading";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import JobList from "./jobs/JobList";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -619,7 +620,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   //   return chartStatus;
   // };
 
-  renderTabContents = (currentTab: string, submitValues?: any) => {
+  renderTabContents = (currentTab: string) => {
     switch (currentTab) {
       case "jobs":
         if (this.state.imageIsPlaceholder) {
@@ -1105,26 +1106,253 @@ ExpandedJobChart.contextType = Context;
 
 export default withRouter(withAuth(ExpandedJobChart));
 
-const ExpandedJobChartFC = () => {
-  const { chart, loading: isLoadingChart } = useChart();
+const ExpandedJobChartFC: React.FC<PropsType> = ({
+  currentChart: oldChart,
+  closeChart,
+  isAuthorized,
+  currentCluster,
+}) => {
+  const { setCurrentOverlay } = useContext(Context);
+  const {
+    chart,
+    loading: isLoadingChart,
+    refreshChart,
+    deleteChart,
+    updateChart,
+    upgradeChart,
+  } = useChart(oldChart);
   const { jobs, hasPorterImageTemplate } = useJobs(chart);
+  const [devOpsMode, setDevOpsMode] = useState(
+    () => localStorage.getItem("devOpsMode") === "true"
+  );
 
   if (isLoadingChart) {
     return <Loading />;
   }
 
-  useEffect(() => {}, []);
+  const formData = chart.form;
 
-  return null;
+  const readableDate = (s: string) => {
+    let ts = new Date(s);
+    let date = ts.toLocaleDateString();
+    let time = ts.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${time} on ${date}`;
+  };
+
+  let rightTabOptions = [] as any[];
+
+  if (devOpsMode) {
+    rightTabOptions.push({ label: "Helm Values", value: "values" });
+  }
+
+  if (isAuthorized("job", "", ["get", "delete"])) {
+    rightTabOptions.push({ label: "Settings", value: "settings" });
+  }
+
+  const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
+
+  const renderTabContents = (currentTab: string) => {
+    switch (currentTab) {
+      case "jobs":
+        if (hasPorterImageTemplate) {
+          return (
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loading} /> This job is currently being deployed
+                </Header>
+                Navigate to the
+                <A
+                  href={`https://github.com/${this.props.currentChart?.git_action_config?.git_repo}/actions`}
+                  target={"_blank"}
+                >
+                  Actions tab
+                </A>{" "}
+                of your GitHub repo to view live build logs.
+              </TextWrap>
+            </Placeholder>
+          );
+        }
+        return (
+          <TabWrapper>
+            {/* <TempJobList
+              handleSaveValues={this.handleSaveValues}
+              jobs={this.state.jobs}
+              setJobs={(jobs: any) => this.setState({ jobs })}
+              isAuthorized={this.props.isAuthorized}
+              saveValuesStatus={this.state.saveValuesStatus}
+              expandJob={(job: any) => this.setJobRun(job)}
+              isDeployedFromGithub={
+                !!this.state.currentChart?.git_action_config?.git_repo
+              }
+              repositoryUrl={
+                this.state.currentChart?.git_action_config?.git_repo
+              }
+              currentChartVersion={Number(this.state.currentChart.version)}
+              latestChartVersion={Number(
+                this.state.currentChart.latest_version
+              )}
+            /> */}
+            <JobList 
+              jobs={jobs}
+|             isAuthorized={isAuthorized}
+              saveValuesStatus={saveValuesStatus}
+              expandJob={(job: any) => this.setJobRun(job)}
+              isDeployedFromGithub={
+                !!this.state.currentChart?.git_action_config?.git_repo
+              }
+              repositoryUrl={
+                this.state.currentChart?.git_action_config?.git_repo
+              }
+              currentChartVersion={Number(this.state.currentChart.version)}
+              latestChartVersion={Number(
+                this.state.currentChart.latest_version
+              )}
+            />
+          </TabWrapper>
+        );
+      case "values":
+        return (
+          <ValuesYaml
+            currentChart={chart}
+            refreshChart={() => refreshChart()}
+            disabled={!isAuthorized("job", "", ["get", "update"])}
+          />
+        );
+      case "settings":
+        return (
+          isAuthorized("job", "", ["get", "delete"]) && (
+            <SettingsSection
+              currentChart={chart}
+              refreshChart={() => refreshChart()}
+              setShowDeleteOverlay={(showOverlay: boolean) => {
+                if (showOverlay) {
+                  setCurrentOverlay({
+                    message: `Are you sure you want to delete ${chart.name}?`,
+                    onYes: deleteChart,
+                    onNo: () => setCurrentOverlay(null),
+                  });
+                } else {
+                  setCurrentOverlay(null);
+                }
+              }}
+              saveButtonText="Save Config"
+            />
+          )
+        );
+      default:
+    }
+  };
+
+  return (
+    <>
+      <StyledExpandedChart>
+        <HeaderWrapper>
+          <BackButton onClick={closeChart}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+          <TitleSection icon={chart.chart.metadata.icon} iconWidth="33px">
+            {chart.name}
+            <DeploymentType currentChart={chart} />
+            <TagWrapper>
+              Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
+            </TagWrapper>
+          </TitleSection>
+
+          <InfoWrapper>
+            <LastDeployed>
+              Run {jobs?.length} times <Dot>•</Dot>Last template update at
+              {" " + readableDate(chart.info.last_deployed)}
+            </LastDeployed>
+          </InfoWrapper>
+          <RevisionSection
+            chart={chart}
+            refreshChart={() => refreshChart()}
+            setRevision={() => {}}
+            forceRefreshRevisions={false}
+            refreshRevisionsOff={() => {}}
+            status={""}
+            shouldUpdate={
+              chart.latest_version &&
+              chart.latest_version !== chart.chart.metadata.version
+            }
+            latestVersion={chart.latest_version}
+            upgradeVersion={() => {
+              // this.handleUpgradeVersion(this.state.upgradeVersion, () => {
+              //   this.setState({ loading: false });
+              // });
+              // this.setState({ upgradeVersion: "", loading: true });
+            }}
+          />
+        </HeaderWrapper>
+
+        {isChartDeleting ? (
+          <>
+            <LineBreak />
+            <Placeholder>
+              <TextWrap>
+                <Header>
+                  <Spinner src={loading} /> Deleting "{chart.name}"
+                </Header>
+                You will be automatically redirected after deletion is complete.
+              </TextWrap>
+            </Placeholder>
+          </>
+        ) : (
+          <BodyWrapper>
+            {(leftTabOptions?.length > 0 ||
+              formData.tabs?.length > 0 ||
+              rightTabOptions?.length > 0) && (
+              <PorterFormWrapper
+                formData={formData}
+                valuesToOverride={{
+                  namespace: chart.namespace,
+                  clusterId: currentCluster?.id,
+                }}
+                renderTabContents={renderTabContents}
+                isReadOnly={
+                  hasPorterImageTemplate ||
+                  !isAuthorized("job", "", ["get", "update"])
+                }
+                onSubmit={(formValues) => updateChart(formValues, false)}
+                leftTabOptions={leftTabOptions}
+                rightTabOptions={rightTabOptions}
+                saveValuesStatus={"saveValuesStatus"}
+                saveButtonText="Save Config"
+                includeHiddenFields
+                addendum={
+                  <TabButton
+                    onClick={() =>
+                      setDevOpsMode((prev) => {
+                        localStorage.setItem("devOpsMode", prev.toString());
+                        return !prev;
+                      })
+                    }
+                    devOpsMode={devOpsMode}
+                  >
+                    <i className="material-icons">offline_bolt</i> DevOps Mode
+                  </TabButton>
+                }
+              />
+            )}
+          </BodyWrapper>
+        )}
+      </StyledExpandedChart>
+    </>
+  );
 };
 
-const useChart = () => {
+const useChart = (oldChart: ChartType) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [chart, setChart] = useState<ChartTypeWithExtendedConfig>(null);
-  const { params } = useRouteMatch<{
+  const { params, url: matchUrl } = useRouteMatch<{
     namespace: string;
     chartName: string;
   }>();
+  const { pushFiltered } = useRouting();
 
   const loading = useMemo(() => {
     return chart === null;
@@ -1150,11 +1378,100 @@ const useChart = () => {
           setChart(res.data);
         }
       });
-  }, [params]);
+  }, [params, currentCluster, currentProject]);
+
+  /**
+   * Upgrade chart version
+   */
+  const upgradeChart = async () => {};
+
+  /**
+   * Delete/Uninstall chart
+   */
+  const deleteChart = async () => {
+    try {
+      await api.uninstallTemplate(
+        "<token>",
+        {},
+        {
+          namespace: chart.namespace,
+          name: chart.name,
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      return;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Couldn't uninstall the chart");
+    }
+  };
+
+  /**
+   * Update chart values
+   */
+  const updateChart = async (values: string) => {
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          values,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {
+        refreshChart();
+      })
+      .catch((err) => {
+        let parsedErr = err?.response?.data?.error;
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+        throw new Error(parsedErr);
+      });
+  };
+
+  /**
+   * Refresh the chart data
+   */
+  const refreshChart = async () => {
+    try {
+      const newChart = await api
+        .getChart(
+          "<token>",
+          {},
+          {
+            name: chart.name,
+            revision: 0,
+            namespace: chart.namespace,
+            cluster_id: currentCluster.id,
+            id: currentProject.id,
+          }
+        )
+        .then((res) => res.data);
+
+      pushFiltered(matchUrl, ["project_id", "job"], {
+        chart_revision: newChart.version,
+      });
+
+      setChart(newChart);
+    } catch (error) {}
+  };
 
   return {
     chart,
     loading,
+    upgradeChart,
+    deleteChart,
+    updateChart,
+    refreshChart,
   };
 };
 

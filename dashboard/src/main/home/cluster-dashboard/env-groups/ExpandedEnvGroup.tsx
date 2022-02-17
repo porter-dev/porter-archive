@@ -430,7 +430,12 @@ const EnvGroupSettings = ({
   const [isAuthorized] = useAuth();
 
   const canDelete = useMemo(() => {
-    return envGroup?.applications.length === 0;
+    // add a case for when applications is null - in this case this is a deprecated env group version
+    if (!envGroup?.applications) {
+      return true;
+    }
+
+    return envGroup?.applications?.length === 0;
   }, [envGroup]);
 
   return (

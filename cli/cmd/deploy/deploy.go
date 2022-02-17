@@ -228,7 +228,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 		d.tag = currentTag
 	}
 
-	imageExists, err := d.agent.CheckIfImageExists(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
+	imageExists, err := d.agent.CheckIfImageExists(d.imageRepo, d.tag)
 
 	if err != nil {
 		return err

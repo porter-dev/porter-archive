@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/digitalocean/godo"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -159,17 +160,21 @@ var PullImageErrNotFound = fmt.Errorf("Requested image not found")
 
 var PullImageErrUnauthorized = fmt.Errorf("Could not pull image: unauthorized")
 
-func getRegistryRepositoryPair(image, prefix string) []string {
-	if !strings.HasSuffix(prefix, "/") {
-		prefix = prefix + "/"
+func getRegistryRepositoryPair(imageRepo string) ([]string, error) {
+	named, err := reference.ParseNamed(imageRepo)
+
+	if err != nil {
+		return nil, err
 	}
 
-	return strings.Split(strings.TrimPrefix(strings.Split(image, ":")[0], prefix), "/")
+	path := reference.Path(named)
+
+	return strings.SplitN(path, "/", 2), nil
 }
 
 // CheckIfImageExists checks if the image exists in the registry
-func (a *Agent) CheckIfImageExists(image string) (bool, error) {
-	registryToken, err := a.getContainerRegistryToken(image)
+func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) (bool, error) {
+	registryToken, err := a.getContainerRegistryToken(imageRepo)
 
 	if err != nil {
 		return false, err
@@ -178,15 +183,21 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	if strings.Contains(image, "gcr.io") {
-		gcrRegRepo := getRegistryRepositoryPair(image, "gcr.io")
+	if strings.Contains(imageRepo, "gcr.io") {
+		gcrRegRepo, err := getRegistryRepositoryPair(imageRepo)
 
-		if len(gcrRegRepo) != 2 {
-			return false, errors.New("invalid GCR image URL")
+		if err != nil {
+			return false, err
+		}
+
+		named, err := reference.ParseNamed(imageRepo)
+
+		if err != nil {
+			return false, err
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
-			"https://gcr.io/v2/%s/%s/tags/list", gcrRegRepo[0], gcrRegRepo[1],
+			"https://%s/v2/%s/%s/tags/list", reference.Domain(named), gcrRegRepo[0], gcrRegRepo[1],
 		), nil)
 
 		if err != nil {
@@ -214,59 +225,33 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 			return false, err
 		}
 
-		reqTag := strings.Split(image, ":")[1]
-
 		for _, tag := range tags.Tags {
-			if tag == reqTag {
+			if tag == imageTag {
 				return true, nil
 			}
 		}
 
 		return false, nil
-	} else if strings.Contains(image, "registry.digitalocean.com") {
-		doRegRepo := getRegistryRepositoryPair(image, "registry.digitalocean.com")
-
-		if len(doRegRepo) != 2 {
-			return false, errors.New("invalid DOCR image URL")
-		}
-
-		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
-			"https://api.digitalocean.com/v2/registry/%s/repositories/%s/digests", doRegRepo[0], doRegRepo[1],
-		), nil)
+	} else if strings.Contains(imageRepo, "registry.digitalocean.com") {
+		doRegRepo, err := getRegistryRepositoryPair(imageRepo)
 
 		if err != nil {
 			return false, err
 		}
 
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", registryToken))
+		doClient := godo.NewFromToken(registryToken)
 
-		resp, err := http.DefaultClient.Do(req)
-
-		if err != nil {
-			return false, err
-		}
-
-		defer resp.Body.Close()
-
-		// refer https://github.com/digitalocean/godo/blob/main/registry.go#L106
-		var digest struct {
-			Manifests []struct {
-				Tags []string `json:"tags,omitempty"`
-			} `json:"manifests,omitempty"`
-		}
-
-		err = json.NewDecoder(resp.Body).Decode(&digest)
+		manifests, _, err := doClient.Registry.ListRepositoryManifests(
+			ctx, doRegRepo[0], doRegRepo[1], &godo.ListOptions{},
+		)
 
 		if err != nil {
 			return false, err
 		}
 
-		reqTag := strings.Split(image, ":")[1]
-
-		for _, manifest := range digest.Manifests {
+		for _, manifest := range manifests {
 			for _, tag := range manifest.Tags {
-				if tag == reqTag {
+				if tag == imageTag {
 					return true, nil
 				}
 			}
@@ -275,6 +260,7 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		return false, nil
 	}
 
+	image := imageRepo + ":" + imageTag
 	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
 
 	if err != nil {

@@ -273,7 +273,7 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	imageExists, err := agent.CheckIfImageExists(fmt.Sprintf("%s:%s", imageURL, imageTag))
+	imageExists, err := agent.CheckIfImageExists(imageURL, imageTag)
 
 	if err != nil {
 		return "", err

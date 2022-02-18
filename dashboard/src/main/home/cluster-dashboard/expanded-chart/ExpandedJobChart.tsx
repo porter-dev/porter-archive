@@ -26,6 +26,8 @@ import { RouteComponentProps, withRouter } from "react-router";
 import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import { onlyInLeft } from "shared/array_utils";
+import MetricsSection from "./metrics/MetricsSection";
+import JobMetricsSection from "./metrics/JobMetricsSection";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -965,6 +967,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentChart } = this.state;
     let chart = currentChart;
     let run = this.state.expandedJobRun;
+    const runName = run?.metadata?.name;
 
     return (
       <StyledExpandedChart>
@@ -1005,12 +1008,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 value: "logs",
               },
               {
+                label: "Metrics",
+                value: "metrics",
+              },
+              {
                 label: "Config",
                 value: "config",
               },
             ]}
           >
-            {this.state.currentTab === "logs" ? (
+            {this.state.currentTab === "logs" && (
               <JobLogsWrapper>
                 <Logs
                   selectedPod={this.state.pods[0]}
@@ -1018,8 +1025,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                   rawText={true}
                 />
               </JobLogsWrapper>
-            ) : (
+            )}
+            {this.state.currentTab === "config" && (
               <>{this.renderConfigSection(run)}</>
+            )}
+            {this.state.currentTab === "metrics" && (
+              <JobMetricsSection
+                jobChart={this.state.currentChart}
+                jobRun={run}
+              />
             )}
           </TabRegion>
         </BodyWrapper>

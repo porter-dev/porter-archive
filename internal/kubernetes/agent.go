@@ -689,6 +689,19 @@ func (a *Agent) ListJobsByLabel(namespace string, labels ...Label) ([]batchv1.Jo
 	return resp.Items, nil
 }
 
+func (a *Agent) ListAllJobs(namespace string) ([]batchv1.Job, error) {
+	resp, err := a.Clientset.BatchV1().Jobs(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Items, nil
+}
+
 // DeleteJob deletes the job in the given name and namespace.
 func (a *Agent) DeleteJob(name, namespace string) error {
 	return a.Clientset.BatchV1().Jobs(namespace).Delete(

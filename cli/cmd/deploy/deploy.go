@@ -324,11 +324,11 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 
 // Push pushes a local image to the remote repository linked in the release
 func (d *DeployAgent) Push(forcePush bool) error {
-	if forcePush || d.tag == "latest" {
-		return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
+	if !forcePush && d.tag != "latest" {
+		return nil
 	}
 
-	return nil
+	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 
 // UpdateImageAndValues updates the current image for a release, along with new

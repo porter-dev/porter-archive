@@ -103,10 +103,7 @@ func (s sortByNewest) Swap(i, j int) {
 }
 
 func (s sortByNewest) Less(i, j int) bool {
-	if s[i].Status.CompletionTime != nil && s[j].Status.CompletionTime != nil {
-		return s[i].Status.CompletionTime.Unix() > s[j].Status.CompletionTime.Unix()
-	}
-	return s[i].Status.StartTime.Unix() > s[j].Status.StartTime.Unix()
+	return s[i].CreationTimestamp.Unix() > s[j].CreationTimestamp.Unix()
 }
 
 type sortByOldest []v1.Job
@@ -120,10 +117,7 @@ func (s sortByOldest) Swap(i, j int) {
 }
 
 func (s sortByOldest) Less(i, j int) bool {
-	if s[i].Status.CompletionTime != nil && s[j].Status.CompletionTime != nil {
-		return s[i].Status.CompletionTime.Unix() < s[j].Status.CompletionTime.Unix()
-	}
-	return s[i].Status.StartTime.Unix() < s[j].Status.StartTime.Unix()
+	return s[i].CreationTimestamp.Unix() < s[j].CreationTimestamp.Unix()
 }
 
 type sortByAlphabetical []v1.Job

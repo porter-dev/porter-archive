@@ -279,9 +279,9 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	if imageExists && imageTag != "default" && !forceBuild {
+	if imageExists && imageTag != "latest" && !forceBuild {
 		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, imageTag)
-	} else { // image does not exist or has tag default so we (re)build one
+	} else { // image does not exist or has tag "latest" so we (re)build one
 		env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
 
 		if err != nil {

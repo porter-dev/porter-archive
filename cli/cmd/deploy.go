@@ -293,14 +293,14 @@ func init() {
 		&forceBuild,
 		"force-build",
 		false,
-		"set this to force build an image (only works on images that are not tagged with \"latest\")",
+		"set this to force build an image (images tagged with \"latest\" have this set by default)",
 	)
 
 	updateCmd.PersistentFlags().BoolVar(
 		&forcePush,
 		"force-push",
 		false,
-		"set this to force push an image (only works on images that are not tagged with \"latest\")",
+		"set this to force push an image (images tagged with \"latest\" have this set by default)",
 	)
 
 	updateCmd.AddCommand(updateGetEnvCmd)

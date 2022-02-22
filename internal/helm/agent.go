@@ -255,8 +255,8 @@ func (a *Agent) UpgradeReleaseByValues(
 
 					return res, nil
 				} else {
-					// return the error with a more detailed message, something like this:
-					return nil, fmt.Errorf("another operation (install/upgrade/rollback) is in progress. If this error persists, please wait 60 seconds to force an upgrade")
+					// ask the user to wait for about a minute before retrying for the above fix to kick in
+					return nil, fmt.Errorf("another operation (install/upgrade/rollback) is in progress. If this error persists, please wait for 60 seconds to force an upgrade")
 				}
 			}
 		}

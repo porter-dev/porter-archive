@@ -474,9 +474,11 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const getBranchContents = baseApi<
@@ -492,9 +494,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -510,9 +514,11 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getBranches = baseApi<
@@ -745,6 +751,19 @@ const getJobPods = baseApi<
   let { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
+
+// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/job_runs?status={failed|completed|running|all}&sort={newest|oldest|alphabetical}
+const getJobRunsForAllCharts = baseApi<
+  {
+    status: "failed" | "completed" | "running" | "all";
+    sort: "newest" | "oldest" | "alphabetical";
+  },
+  { namespace: string; cluster_id: number; project_id: number }
+>(
+  "GET",
+  ({ cluster_id, project_id, namespace }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/job_runs`
+);
 
 const getPodByName = baseApi<
   {},
@@ -1071,9 +1090,11 @@ const getEnvGroup = baseApi<
     version?: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
-    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
-    }`;
+  return `/api/projects/${pathParams.id}/clusters/${
+    pathParams.cluster_id
+  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
+    pathParams.version ? "&version=" + pathParams.version : ""
+  }`;
 });
 
 const getConfigMap = baseApi<
@@ -1532,6 +1553,7 @@ export default {
   getJobs,
   getJobStatus,
   getJobPods,
+  getJobRunsForAllCharts,
   getPodByName,
   getMatchingPods,
   getMetrics,

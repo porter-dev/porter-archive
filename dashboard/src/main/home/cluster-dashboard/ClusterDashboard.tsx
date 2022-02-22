@@ -251,7 +251,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           </SortFilterWrapper>
         </ControlRow>
         {this.state.showRuns ? (
-          <JobRunTable />
+          <JobRunTable
+            lastRunStatus={this.state.lastRunStatus}
+            namespace={this.state.namespace}
+            sortType={this.state.sortType as any}
+          />
         ) : (
           <ChartList
             currentView={currentView}

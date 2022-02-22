@@ -788,6 +788,13 @@ func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.Web
 					continueVal = jobs.Continue
 				}
 			}
+
+			// at this point, we can return the status finished
+			err := rw.WriteJSON(map[string]interface{}{
+				"streamStatus": "finished",
+			})
+
+			errorchan <- err
 		}()
 
 		for err = range errorchan {

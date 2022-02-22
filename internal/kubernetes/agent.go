@@ -779,6 +779,14 @@ func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.Web
 						return
 					}
 				}
+
+				if jobs.Continue == "" {
+					// we have reached the end of the list of jobs
+					break
+				} else {
+					// start pagination
+					continueVal = jobs.Continue
+				}
 			}
 		}()
 

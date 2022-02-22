@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/porter-dev/porter/internal/helm/loader"
@@ -12,6 +13,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/chartutil"
@@ -221,27 +223,42 @@ func (a *Agent) UpgradeReleaseByValues(
 				return nil, fmt.Errorf("Upgrade failed: %w", err)
 			}
 
-			for _, secret := range secretList.Items {
-				secret.Labels["status"] = "failed"
+			if len(secretList.Items) > 0 {
+				mostRecentSecret := secretList.Items[0]
 
-				_, err = a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace).Update(
-					context.Background(), &secret, v1.UpdateOptions{},
-				)
+				for i := 1; i < len(secretList.Items); i += 1 {
+					oldVersion, _ := strconv.Atoi(mostRecentSecret.Labels["version"])
+					newVersion, _ := strconv.Atoi(secretList.Items[i].Labels["version"])
 
-				if err != nil {
-					return nil, fmt.Errorf("Upgrade failed: %w", err)
+					if oldVersion < newVersion {
+						mostRecentSecret = secretList.Items[i]
+					}
 				}
-			}
 
-			// retry upgrade
-			res, err = cmd.Run(conf.Name, ch, conf.Values)
+				if time.Since(mostRecentSecret.CreationTimestamp.Time) >= time.Minute {
+					helmSecrets := driver.NewSecrets(a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace))
 
-			if err != nil {
-				return nil, fmt.Errorf("Upgrade failed: %w", err)
+					rel.Info.Status = release.StatusFailed
+
+					err = helmSecrets.Update(mostRecentSecret.GetName(), rel)
+
+					if err != nil {
+						return nil, fmt.Errorf("Upgrade failed: %w", err)
+					}
+
+					// retry upgrade
+					res, err = cmd.Run(conf.Name, ch, conf.Values)
+
+					if err != nil {
+						return nil, fmt.Errorf("Upgrade failed: %w", err)
+					}
+
+					return res, nil
+				}
 			}
 		}
 
-		return nil, fmt.Errorf("Upgrade failed: %v", err)
+		return nil, fmt.Errorf("Upgrade failed: %w", err)
 	}
 
 	return res, nil

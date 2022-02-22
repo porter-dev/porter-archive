@@ -173,6 +173,7 @@ type ApplicationConfig struct {
 
 	Build struct {
 		ForceBuild bool
+		ForcePush  bool
 		Method     string
 		Context    string
 		Dockerfile string
@@ -506,7 +507,7 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			return nil, err
 		}
 
-		err = updateAgent.Push()
+		err = updateAgent.Push(appConf.Build.ForcePush)
 
 		if err != nil {
 			return nil, err

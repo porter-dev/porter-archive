@@ -207,6 +207,40 @@ func (a *Agent) UpgradeReleaseByValues(
 	res, err := cmd.Run(conf.Name, ch, conf.Values)
 
 	if err != nil {
+		// refer: https://github.com/helm/helm/blob/release-3.8/pkg/action/action.go#L62
+		// issue tracker: https://github.com/helm/helm/issues/4558
+		if err.Error() == "another operation (install/upgrade/rollback) is in progress" {
+			secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace).List(
+				context.Background(),
+				v1.ListOptions{
+					LabelSelector: fmt.Sprintf("owner=helm,status in (pending-install, pending-upgrade, pending-rollback),name=%s", rel.Name),
+				},
+			)
+
+			if err != nil {
+				return nil, fmt.Errorf("Upgrade failed: %w", err)
+			}
+
+			for _, secret := range secretList.Items {
+				secret.Labels["status"] = "failed"
+
+				_, err = a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace).Update(
+					context.Background(), &secret, v1.UpdateOptions{},
+				)
+
+				if err != nil {
+					return nil, fmt.Errorf("Upgrade failed: %w", err)
+				}
+			}
+
+			// retry upgrade
+			res, err = cmd.Run(conf.Name, ch, conf.Values)
+
+			if err != nil {
+				return nil, fmt.Errorf("Upgrade failed: %w", err)
+			}
+		}
+
 		return nil, fmt.Errorf("Upgrade failed: %v", err)
 	}
 

@@ -2,43 +2,96 @@ import Loading from "components/Loading";
 import Table from "components/Table";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { CellProps, Column } from "react-table";
+import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
 
-const JobRunTable = () => {
+type Props = {
+  lastRunStatus: "failed" | "completed" | "active" | "all";
+  namespace: string;
+  sortType: "newest" | "oldest" | "alphabetical";
+};
+
+const dateFormatter = (date: string) => {
+  const newDate = new Date(date);
+  return new Intl.DateTimeFormat([], {
+    // @ts-ignore
+    timeStyle: "long",
+    dateStyle: "short",
+  }).format(newDate);
+};
+
+const JobRunTable: React.FC<Props> = ({
+  lastRunStatus,
+  namespace,
+  sortType,
+}) => {
   const { currentCluster, currentProject } = useContext(Context);
-  const [jobRuns, setJobRuns] = useState(null);
+  const [jobRuns, setJobRuns] = useState<JobRun[]>(null);
 
   useEffect(() => {
     // api call
     let isSubscribed = true;
 
-    getMockData().then((res) => {
-      if (isSubscribed) {
+    let status: "failed" | "completed" | "running" | "all" =
+      lastRunStatus === "active" ? "running" : lastRunStatus;
+
+    if (Array.isArray(jobRuns)) {
+      setJobRuns(null);
+    }
+
+    api
+      .getJobRunsForAllCharts(
+        "<token>",
+        {
+          sort: sortType,
+          status: status,
+        },
+        {
+          namespace,
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
+      .then((res) => {
+        if (!isSubscribed) {
+          return;
+        }
+        if (res.data === null) {
+          setJobRuns([]);
+          return;
+        }
+
         setJobRuns(res.data);
-      }
-    });
+      });
 
     return () => {
       isSubscribed = false;
     };
-  }, [currentCluster, currentProject]);
+  }, [currentCluster, currentProject.id, namespace, sortType, lastRunStatus]);
 
   const columns = useMemo<Column<JobRun>[]>(
     () => [
       {
         Header: "Owner name",
-        accessor: (originalRow) =>
-          originalRow?.metadata?.ownerReferences[0]?.name || "N/A",
+        accessor: (originalRow) => {
+          const owners = originalRow.metadata.ownerReferences;
+
+          if (Array.isArray(owners)) {
+            return owners[0]?.name || "N/A";
+          }
+          return "N/A";
+        },
       },
       {
         Header: "Started At",
-        accessor: (originalRow) => originalRow.status.startTime,
+        accessor: (originalRow) => dateFormatter(originalRow.status.startTime),
       },
       {
         Header: "Finished At",
         accessor: (originalRow) =>
-          originalRow.status?.completionTime || "Still running...",
+          dateFormatter(originalRow.status?.completionTime) ||
+          "Still running...",
       },
       {
         Header: "Status",
@@ -71,7 +124,11 @@ const JobRunTable = () => {
         Cell: ({ row }: CellProps<JobRun>) => {
           const container = row.original.spec?.template?.spec?.containers[0];
 
-          return container?.command || "N/A";
+          return (
+            <CommandString>
+              {container?.command?.join(" ") || "N/A"}
+            </CommandString>
+          );
         },
       },
     ],
@@ -107,6 +164,18 @@ const Status = styled.div<{ color: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  width: min-content;
+  height: 25px;
+`;
+
+const CommandString = styled.div`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+  color: #ffffff55;
+  margin-right: 27px;
+  font-family: monospace;
 `;
 
 const getMockData = () =>

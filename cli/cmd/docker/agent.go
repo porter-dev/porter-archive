@@ -168,11 +168,11 @@ func getRegistryRepositoryPair(image, prefix string) []string {
 }
 
 // CheckIfImageExists checks if the image exists in the registry
-func (a *Agent) CheckIfImageExists(image string) (bool, error) {
+func (a *Agent) CheckIfImageExists(image string) bool {
 	registryToken, err := a.getContainerRegistryToken(image)
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -182,7 +182,7 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		gcrRegRepo := getRegistryRepositoryPair(image, "gcr.io")
 
 		if len(gcrRegRepo) != 2 {
-			return false, errors.New("invalid GCR image URL")
+			return false
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
@@ -190,7 +190,7 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		), nil)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		req.Header.Add("Content-Type", "application/json")
@@ -199,7 +199,7 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		resp, err := http.DefaultClient.Do(req)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		defer resp.Body.Close()
@@ -211,23 +211,23 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		err = json.NewDecoder(resp.Body).Decode(&tags)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		reqTag := strings.Split(image, ":")[1]
 
 		for _, tag := range tags.Tags {
 			if tag == reqTag {
-				return true, nil
+				return true
 			}
 		}
 
-		return false, nil
+		return false
 	} else if strings.Contains(image, "registry.digitalocean.com") {
 		doRegRepo := getRegistryRepositoryPair(image, "registry.digitalocean.com")
 
 		if len(doRegRepo) != 2 {
-			return false, errors.New("invalid DOCR image URL")
+			return false
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
@@ -235,7 +235,7 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		), nil)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		req.Header.Add("Content-Type", "application/json")
@@ -244,7 +244,7 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		resp, err := http.DefaultClient.Do(req)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		defer resp.Body.Close()
@@ -259,7 +259,7 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		err = json.NewDecoder(resp.Body).Decode(&digest)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		reqTag := strings.Split(image, ":")[1]
@@ -267,30 +267,30 @@ func (a *Agent) CheckIfImageExists(image string) (bool, error) {
 		for _, manifest := range digest.Manifests {
 			for _, tag := range manifest.Tags {
 				if tag == reqTag {
-					return true, nil
+					return true
 				}
 			}
 		}
 
-		return false, nil
+		return false
 	}
 
 	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	_, err = a.client.DistributionInspect(context.Background(), image, encodedRegistryAuth)
 
 	if err == nil {
-		return true, nil
+		return true
 	} else if strings.Contains(err.Error(), "image not found") ||
 		strings.Contains(err.Error(), "does not exist in the registry") {
-		return false, nil
+		return false
 	}
 
-	return false, err
+	return false
 }
 
 // PullImage pulls an image specified by the image string

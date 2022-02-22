@@ -140,13 +140,7 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 	err = coalesceEnvGroups(deployAgent.client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
 		deployAgent.opts.Namespace, deployAgent.opts.EnvGroups, deployAgent.release.Config)
 
-	imageExists, err := deployAgent.agent.CheckIfImageExists(fmt.Sprintf("%s:%s", deployAgent.imageRepo, deployAgent.tag))
-
-	if err != nil {
-		return nil, err
-	}
-
-	deployAgent.imageExists = imageExists
+	deployAgent.imageExists = deployAgent.agent.CheckIfImageExists(fmt.Sprintf("%s:%s", deployAgent.imageRepo, deployAgent.tag))
 
 	return deployAgent, err
 }

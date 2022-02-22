@@ -450,6 +450,40 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/jobs/stream -> namespace.NewStreamJobRunsHandler
+	streamJobRunsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/jobs/stream",
+					relPath,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+			IsWebsocket: true,
+		},
+	)
+
+	streamJobRunsHandler := namespace.NewStreamJobRunsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: streamJobRunsEndpoint,
+		Handler:  streamJobRunsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/pod/{name}/previous_logs
 	getPreviousLogsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

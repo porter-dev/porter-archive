@@ -197,7 +197,8 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       let end = Math.round(
         new Date(jobRun?.status?.completionTime).getTime() / 1000
       );
-      if (jobRun?.status?.completionTime) {
+
+      if (!jobRun?.status?.completionTime) {
         end = Math.round(new Date().getTime() / 1000);
       }
 
@@ -333,6 +334,15 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
     );
   };
 
+  const hasJobRunnedForMoreThan5m = () => {
+    const firstDate = new Date(jobRun.status.startTime);
+    const secondDate = jobRun?.status?.completionTime
+      ? new Date(jobRun?.status?.completionTime)
+      : new Date();
+    const _5M_IN_MILISECONDS = 60000;
+    return secondDate.getTime() - firstDate.getTime() > _5M_IN_MILISECONDS;
+  };
+
   return (
     <StyledMetricsSection>
       <MetricsHeader>
@@ -371,13 +381,25 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       </MetricsHeader>
       {isLoading > 0 && <Loading />}
       {data.length === 0 && isLoading === 0 && (
-        <Message>
-          No data available yet.
-          <Highlight color={"#8590ff"} onClick={getMetrics}>
-            <i className="material-icons">autorenew</i>
-            Refresh
-          </Highlight>
-        </Message>
+        <>
+          {selectedMetric === "cpu" && hasJobRunnedForMoreThan5m() ? (
+            <Message>
+              No data available yet.
+              <Highlight color={"#8590ff"} onClick={getMetrics}>
+                <i className="material-icons">autorenew</i>
+                Refresh
+              </Highlight>
+            </Message>
+          ) : (
+            <Message>
+              No data for this job run.
+              <Highlight color={"#8590ff"}>
+                This run went for less than 5 minutes, so we couldn't retrieve
+                any metrics.
+              </Highlight>
+            </Message>
+          )}
+        </>
       )}
       {data.length > 0 && isLoading === 0 && (
         <>

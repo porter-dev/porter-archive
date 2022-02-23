@@ -354,30 +354,11 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
             <i className="material-icons">arrow_drop_down</i>
             {renderDropdown()}
           </MetricSelector>
-          <Relative>
-            <IconWrapper onClick={() => setShowMetricsSettings(true)}>
-              <SettingsIcon src={settings} />
-            </IconWrapper>
-            {renderMetricsSettings()}
-          </Relative>
 
           <Highlight color={"#7d7d81"} onClick={getMetrics}>
             <i className="material-icons">autorenew</i>
           </Highlight>
         </Flex>
-        <RangeWrapper>
-          <TabSelector
-            noBuffer={true}
-            options={[
-              { value: "1H", label: "1H" },
-              { value: "6H", label: "6H" },
-              { value: "1D", label: "1D" },
-              { value: "1M", label: "1M" },
-            ]}
-            currentTab={selectedRange}
-            setCurrentTab={(x: string) => setSelectedRange(x)}
-          />
-        </RangeWrapper>
       </MetricsHeader>
       {isLoading > 0 && <Loading />}
       {data.length === 0 && isLoading === 0 && (
@@ -393,7 +374,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
           ) : (
             <Message>
               No data for this job run.
-              <Highlight color={"#8590ff"}>
+              <Highlight color={"#8590ff"} disableHover>
                 This run went for less than 5 minutes, so we couldn't retrieve
                 any metrics.
               </Highlight>
@@ -440,8 +421,8 @@ const Highlight = styled.div`
   align-items: center;
   justify-content: center;
   margin-left: 8px;
-  color: ${(props: { color: string }) => props.color};
-  cursor: pointer;
+  color: ${(props: { color: string; disableHover?: boolean }) => props.color};
+  cursor: ${(props) => (props.disableHover ? "unset" : "pointer")};
 
   > i {
     font-size: 20px;

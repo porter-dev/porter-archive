@@ -6,8 +6,8 @@ import styled from "styled-components";
 const ConnectToJobInstructionsModal: React.FC<{
   show: boolean;
   onClose: () => void;
-  chart: ChartType;
-}> = ({ show, chart, onClose }) => {
+  chartName: string;
+}> = ({ show, chartName, onClose }) => {
   if (!show) {
     return null;
   }
@@ -29,7 +29,7 @@ const ConnectToJobInstructionsModal: React.FC<{
       <br />
       Run the following line of code, and make sure to change the command to
       something your container can run:
-      <Code>porter run {chart?.name || "[APP-NAME]"} -- [COMMAND]</Code>
+      <Code>porter run {chartName || "[APP-NAME]"} -- [COMMAND]</Code>
       Note that this will create a copy of the most recent job run for this
       template.
     </Modal>

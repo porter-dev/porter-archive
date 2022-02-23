@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/provisioner"
@@ -72,7 +73,7 @@ func (k *KubernetesProvisioner) getProvisionerJobTemplate(opts *provisioner.Prov
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", string(opts.OperationKind), opts.Infra.GetUniqueName()),
+			Name:      fmt.Sprintf("%s-%s-%d", string(opts.OperationKind), opts.Infra.GetUniqueName(), time.Now().Unix()),
 			Namespace: k.pc.ProvisionerJobNamespace,
 			Labels:    labels,
 		},

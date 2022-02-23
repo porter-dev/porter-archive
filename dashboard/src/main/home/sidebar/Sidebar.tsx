@@ -192,11 +192,12 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          <NavButton to={"/infrastructure"}>
-            <i className="material-icons">build_circle</i>
-            Infrastructure
-          </NavButton>
-
+          {currentProject && currentProject.managed_infra_enabled && (
+            <NavButton to="/infrastructure">
+              <i className="material-icons">build_circle</i>
+              Infrastructure
+            </NavButton>
+          )}
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",

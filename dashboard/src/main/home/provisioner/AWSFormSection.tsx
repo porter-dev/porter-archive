@@ -301,9 +301,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
       hosting: "aws",
     });
 
-    window.open(
-      "https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
-    );
+    window.open("https://docs.porter.run/getting-started/provisioning-on-aws");
   };
 
   return (

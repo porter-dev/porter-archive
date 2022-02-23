@@ -230,6 +230,7 @@ export interface ProjectType {
   name: string;
   preview_envs_enabled: boolean;
   enable_rds_databases: boolean;
+  managed_infra_enabled: boolean;
   roles: {
     id: number;
     kind: string;

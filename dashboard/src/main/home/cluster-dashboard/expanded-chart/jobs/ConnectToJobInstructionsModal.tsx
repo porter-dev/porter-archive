@@ -16,22 +16,24 @@ const ConnectToJobInstructionsModal: React.FC<{
       onRequestClose={() => onClose()}
       width="700px"
       height="300px"
-      title="How to connect to a job"
+      title="Shell Access Instructions"
     >
-      To connect to this pod you will have to use the Porter CLI, if you don't
-      have it please follow{" "}
+      To get shell access to this job run, make sure you have the Porter CLI
+      installed (installation instructions&nbsp;
       <a href={"https://docs.porter.run/cli/installation"} target="_blank">
-        this instructions
+        here
       </a>
+      ).
       <br />
       <br />
-      After you have the Porter CLI installed and running. You can run the next
-      line of code. Please remember to change the command to something that your
-      container can run.
+      Run the following line of code, and make sure to change the command to
+      something your container can run:
       <Code>
         porter run {job?.metadata?.labels["meta.helm.sh/release-name"]} --
         [COMMAND]
       </Code>
+      Note that this will create a copy of the most recent job run for this
+      template.
     </Modal>
   );
 };

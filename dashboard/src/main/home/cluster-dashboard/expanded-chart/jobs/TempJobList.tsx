@@ -73,18 +73,19 @@ const TempJobList: React.FC<Props> = (props) => {
 export default TempJobList;
 
 const ButtonWrapper = styled.div`
+  display: flex;
   margin: 5px 0 35px;
 `;
 
 const CLIModalIcon = styled(CommandLineIcon)`
-  width: 25px;
-  padding: 5px;
+  width: 35px;
+  height: 35px;
+  padding: 8px;
   margin: 0 5px;
   border: 1px solid #ffffff55;
   border-radius: 100px;
   background: #ffffff11;
   color: white;
-  margin-bottom: -3px;
   :hover {
     cursor: pointer;
     background: #ffffff22;

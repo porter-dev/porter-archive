@@ -373,10 +373,9 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
             </Message>
           ) : (
             <Message>
-              No data for this job run.
               <Highlight color={"#8590ff"} disableHover>
-                This run went for less than 5 minutes, so we couldn't retrieve
-                any metrics.
+                CPU data is not available for jobs that ran for less than 5
+                minutes.
               </Highlight>
             </Message>
           )}

@@ -206,6 +206,7 @@ var dockerfile string
 var method string
 var stream bool
 var buildFlagsEnv []string
+var forcePush bool
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -286,6 +287,20 @@ func init() {
 		"stream",
 		false,
 		"stream update logs to porter dashboard",
+	)
+
+	updateCmd.PersistentFlags().BoolVar(
+		&forceBuild,
+		"force-build",
+		false,
+		"set this to force build an image (images tagged with \"latest\" have this set by default)",
+	)
+
+	updateCmd.PersistentFlags().BoolVar(
+		&forcePush,
+		"force-push",
+		false,
+		"set this to force push an image (images tagged with \"latest\" have this set by default)",
 	)
 
 	updateCmd.AddCommand(updateGetEnvCmd)
@@ -476,7 +491,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	if err := updateAgent.Build(nil); err != nil {
+	if err := updateAgent.Build(nil, forceBuild); err != nil {
 		if stream {
 			updateAgent.StreamEvent(types.SubEvent{
 				EventID: "build",
@@ -516,7 +531,7 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 		})
 	}
 
-	if err := updateAgent.Push(); err != nil {
+	if err := updateAgent.Push(forcePush); err != nil {
 		if stream {
 			updateAgent.StreamEvent(types.SubEvent{
 				EventID: "push",

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -158,6 +159,140 @@ var PullImageErrNotFound = fmt.Errorf("Requested image not found")
 
 var PullImageErrUnauthorized = fmt.Errorf("Could not pull image: unauthorized")
 
+func getRegistryRepositoryPair(image, prefix string) []string {
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = prefix + "/"
+	}
+
+	return strings.Split(strings.TrimPrefix(strings.Split(image, ":")[0], prefix), "/")
+}
+
+// CheckIfImageExists checks if the image exists in the registry
+func (a *Agent) CheckIfImageExists(image string) bool {
+	registryToken, err := a.getContainerRegistryToken(image)
+
+	if err != nil {
+		return false
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	if strings.Contains(image, "gcr.io") {
+		gcrRegRepo := getRegistryRepositoryPair(image, "gcr.io")
+
+		if len(gcrRegRepo) != 2 {
+			return false
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
+			"https://gcr.io/v2/%s/%s/tags/list", gcrRegRepo[0], gcrRegRepo[1],
+		), nil)
+
+		if err != nil {
+			return false
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", registryToken))
+
+		resp, err := http.DefaultClient.Do(req)
+
+		if err != nil {
+			return false
+		}
+
+		defer resp.Body.Close()
+
+		var tags struct {
+			Tags []string `json:"tags,omitempty"`
+		}
+
+		err = json.NewDecoder(resp.Body).Decode(&tags)
+
+		if err != nil {
+			return false
+		}
+
+		reqTag := strings.Split(image, ":")[1]
+
+		for _, tag := range tags.Tags {
+			if tag == reqTag {
+				return true
+			}
+		}
+
+		return false
+	} else if strings.Contains(image, "registry.digitalocean.com") {
+		doRegRepo := getRegistryRepositoryPair(image, "registry.digitalocean.com")
+
+		if len(doRegRepo) != 2 {
+			return false
+		}
+
+		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
+			"https://api.digitalocean.com/v2/registry/%s/repositories/%s/digests", doRegRepo[0], doRegRepo[1],
+		), nil)
+
+		if err != nil {
+			return false
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", registryToken))
+
+		resp, err := http.DefaultClient.Do(req)
+
+		if err != nil {
+			return false
+		}
+
+		defer resp.Body.Close()
+
+		// refer https://github.com/digitalocean/godo/blob/main/registry.go#L106
+		var digest struct {
+			Manifests []struct {
+				Tags []string `json:"tags,omitempty"`
+			} `json:"manifests,omitempty"`
+		}
+
+		err = json.NewDecoder(resp.Body).Decode(&digest)
+
+		if err != nil {
+			return false
+		}
+
+		reqTag := strings.Split(image, ":")[1]
+
+		for _, manifest := range digest.Manifests {
+			for _, tag := range manifest.Tags {
+				if tag == reqTag {
+					return true
+				}
+			}
+		}
+
+		return false
+	}
+
+	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
+
+	if err != nil {
+		return false
+	}
+
+	_, err = a.client.DistributionInspect(context.Background(), image, encodedRegistryAuth)
+
+	if err == nil {
+		return true
+	} else if strings.Contains(err.Error(), "image not found") ||
+		strings.Contains(err.Error(), "does not exist in the registry") {
+		return false
+	}
+
+	return false
+}
+
 // PullImage pulls an image specified by the image string
 func (a *Agent) PullImage(image string) error {
 	opts, err := a.getPullOptions(image)
@@ -219,17 +354,46 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 		return types.ImagePullOptions{}, nil
 	}
 
-	// get using server url
-	serverURL, err := GetServerURLFromTag(image)
+	authConfigEncoded, err := a.getEncodedRegistryAuth(image)
 
 	if err != nil {
 		return types.ImagePullOptions{}, err
 	}
 
+	return types.ImagePullOptions{
+		RegistryAuth: authConfigEncoded,
+		Platform:     "linux/amd64",
+	}, nil
+}
+
+func (a *Agent) getContainerRegistryToken(image string) (string, error) {
+	serverURL, err := GetServerURLFromTag(image)
+
+	if err != nil {
+		return "", err
+	}
+
+	_, secret, err := a.authGetter.GetCredentials(serverURL)
+
+	if err != nil {
+		return "", err
+	}
+
+	return secret, nil
+}
+
+func (a *Agent) getEncodedRegistryAuth(image string) (string, error) {
+	// get using server url
+	serverURL, err := GetServerURLFromTag(image)
+
+	if err != nil {
+		return "", err
+	}
+
 	user, secret, err := a.authGetter.GetCredentials(serverURL)
 
 	if err != nil {
-		return types.ImagePullOptions{}, err
+		return "", err
 	}
 
 	var authConfig = types.AuthConfig{
@@ -239,12 +403,8 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 	}
 
 	authConfigBytes, _ := json.Marshal(authConfig)
-	authConfigEncoded := base64.URLEncoding.EncodeToString(authConfigBytes)
 
-	return types.ImagePullOptions{
-		RegistryAuth: authConfigEncoded,
-		Platform:     "linux/amd64",
-	}, nil
+	return base64.URLEncoding.EncodeToString(authConfigBytes), nil
 }
 
 func (a *Agent) getPushOptions(image string) (types.ImagePushOptions, error) {

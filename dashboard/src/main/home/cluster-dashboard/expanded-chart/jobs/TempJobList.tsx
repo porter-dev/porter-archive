@@ -40,12 +40,15 @@ const TempJobList: React.FC<Props> = (props) => {
       >
         <i className="material-icons">play_arrow</i> Run Job
       </SaveButton>
-      <CLIModalIcon
+      <CLIModalIconWrapper
         onClick={(e) => {
           e.preventDefault();
           setShowConnectionModal(true);
         }}
-      />
+      >
+        <CLIModalIcon />
+        Shell Access
+      </CLIModalIconWrapper>
     </ButtonWrapper>
   );
 
@@ -75,17 +78,25 @@ export default TempJobList;
 const ButtonWrapper = styled.div`
   display: flex;
   margin: 5px 0 35px;
+  justify-content: space-between;
 `;
 
-const CLIModalIcon = styled(CommandLineIcon)`
-  width: 35px;
+const CLIModalIconWrapper = styled.div`
   height: 35px;
-  padding: 8px;
-  margin: 0 5px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px 6px 10px;
+  text-align: left;
   border: 1px solid #ffffff55;
-  border-radius: 100px;
+  border-radius: 8px;
   background: #ffffff11;
-  color: white;
+  color: #ffffffdd;
+  cursor: pointer;
+
   :hover {
     cursor: pointer;
     background: #ffffff22;
@@ -93,6 +104,16 @@ const CLIModalIcon = styled(CommandLineIcon)`
       fill: #ffffff77;
     }
   }
+
+  > path {
+    fill: #ffffff99;
+  }
+`;
+
+const CLIModalIcon = styled(CommandLineIcon)`
+  width: 32px;
+  height: 32px;
+  padding: 8px;
 
   > path {
     fill: #ffffff99;

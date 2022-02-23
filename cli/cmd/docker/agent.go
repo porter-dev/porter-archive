@@ -173,11 +173,11 @@ func getRegistryRepositoryPair(imageRepo string) ([]string, error) {
 }
 
 // CheckIfImageExists checks if the image exists in the registry
-func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) (bool, error) {
+func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 	registryToken, err := a.getContainerRegistryToken(imageRepo)
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -187,13 +187,13 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) (bool, error) {
 		gcrRegRepo, err := getRegistryRepositoryPair(imageRepo)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		named, err := reference.ParseNamed(imageRepo)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(
@@ -201,7 +201,7 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) (bool, error) {
 		), nil)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		req.Header.Add("Content-Type", "application/json")
@@ -210,7 +210,7 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) (bool, error) {
 		resp, err := http.DefaultClient.Do(req)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		defer resp.Body.Close()
@@ -222,21 +222,21 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) (bool, error) {
 		err = json.NewDecoder(resp.Body).Decode(&tags)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		for _, tag := range tags.Tags {
 			if tag == imageTag {
-				return true, nil
+				return true
 			}
 		}
 
-		return false, nil
+		return false
 	} else if strings.Contains(imageRepo, "registry.digitalocean.com") {
 		doRegRepo, err := getRegistryRepositoryPair(imageRepo)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		doClient := godo.NewFromToken(registryToken)
@@ -246,37 +246,37 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) (bool, error) {
 		)
 
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		for _, manifest := range manifests {
 			for _, tag := range manifest.Tags {
 				if tag == imageTag {
-					return true, nil
+					return true
 				}
 			}
 		}
 
-		return false, nil
+		return false
 	}
 
 	image := imageRepo + ":" + imageTag
 	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	_, err = a.client.DistributionInspect(context.Background(), image, encodedRegistryAuth)
 
 	if err == nil {
-		return true, nil
+		return true
 	} else if strings.Contains(err.Error(), "image not found") ||
 		strings.Contains(err.Error(), "does not exist in the registry") {
-		return false, nil
+		return false
 	}
 
-	return false, err
+	return false
 }
 
 // PullImage pulls an image specified by the image string

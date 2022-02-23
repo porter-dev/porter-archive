@@ -284,7 +284,7 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
       hosting: "gcp",
     });
 
-    window.open("https://docs.getporter.dev/docs/getting-started-on-gcp");
+    window.open("https://docs.porter.run/getting-started/provisioning-on-gcp");
   };
 
   return (

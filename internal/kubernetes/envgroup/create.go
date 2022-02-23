@@ -52,11 +52,8 @@ func ConvertV1ToV2EnvGroup(agent *kubernetes.Agent, name, namespace string) (*v1
 		return nil, err
 	}
 
-	// delete the old configmap and secret
-	if err := agent.DeleteLinkedSecret(name, namespace); err != nil {
-		return nil, err
-	}
-
+	// delete the old configmap
+	// note: we keep the old secret to ensure existing secret references are kept intact
 	if err := agent.DeleteConfigMap(name, namespace); err != nil {
 		return nil, err
 	}

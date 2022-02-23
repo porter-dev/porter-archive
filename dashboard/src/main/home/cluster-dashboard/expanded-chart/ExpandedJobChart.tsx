@@ -54,6 +54,7 @@ type StateType = {
   upgradeVersion: string;
   expandedJobRun: any;
   pods: any;
+  showConnectionModal: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -76,6 +77,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     expandedJobRun: null as any,
     pods: null as any,
+    showConnectionModal: false,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -592,6 +594,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               isAuthorized={this.props.isAuthorized}
               saveValuesStatus={this.state.saveValuesStatus}
               expandJob={(job: any) => this.setJobRun(job)}
+              chartName={this.state.currentChart?.name}
             />
           </TabWrapper>
         );

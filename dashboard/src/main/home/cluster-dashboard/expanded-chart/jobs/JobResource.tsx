@@ -280,12 +280,6 @@ export default class JobResource extends Component<PropsType, StateType> {
               <CommandString>{commandString}</CommandString>
               {this.renderStatus()}
               <MaterialIconTray disabled={false}>
-                <CLIModalIcon
-                  onClick={(e) => {
-                    e.preventDefault();
-                    this.setState({ showConnectionModal: true });
-                  }}
-                />
                 {this.renderStopButton()}
                 {!this.props.readOnly && (
                   <i
@@ -309,11 +303,6 @@ export default class JobResource extends Component<PropsType, StateType> {
           </MainRow>
           {this.renderLogsSection()}
         </StyledJob>
-        <ConnectToJobInstructionsModal
-          show={this.state.showConnectionModal}
-          onClose={() => this.setState({ showConnectionModal: false })}
-          job={this.props.job}
-        />
       </>
     );
   }
@@ -393,19 +382,6 @@ const Status = styled.div<{ color: string }>`
 const Icon = styled.img`
   width: 30px;
   margin-right: 18px;
-`;
-
-const CLIModalIcon = styled(CommandLineIcon)`
-  border-radius: 20px;
-  width: 26px;
-  padding: 5px;
-  margin: 0 5px;
-  :hover {
-    background: #ffffff11;
-  }
-  > path {
-    fill: #ffffff44;
-  }
 `;
 
 const Flex = styled.div`

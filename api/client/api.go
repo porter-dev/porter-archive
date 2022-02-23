@@ -24,6 +24,8 @@ type Client struct {
 	Cookie         *http.Cookie
 	CookieFilePath string
 	Token          string
+
+	cfToken string
 }
 
 // NewClient constructs a new client based on a set of options
@@ -45,6 +47,11 @@ func NewClient(baseURL string, cookieFileName string) *Client {
 		client.Cookie = cookie
 	}
 
+	// look for a cloudflare access token specifically for Porter
+	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {
+		client.cfToken = cfToken
+	}
+
 	return client
 }
 
@@ -55,6 +62,11 @@ func NewClientWithToken(baseURL, token string) *Client {
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
+	}
+
+	// look for a cloudflare access token specifically for Porter
+	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {
+		client.cfToken = cfToken
 	}
 
 	return client
@@ -189,6 +201,10 @@ func (c *Client) sendRequest(req *http.Request, v interface{}, useCookie bool) (
 	} else if cookie, _ := c.getCookie(); useCookie && cookie != nil {
 		c.Cookie = cookie
 		req.AddCookie(c.Cookie)
+	}
+
+	if c.cfToken != "" {
+		req.Header.Set("cf-access-token", c.cfToken)
 	}
 
 	res, err := c.HTTPClient.Do(req)

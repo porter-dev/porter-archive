@@ -958,8 +958,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentChart } = this.state;
     let chart = currentChart;
     let run = this.state.expandedJobRun;
-    const runName = run?.metadata?.name;
-
     return (
       <StyledExpandedChart>
         <HeaderWrapper>

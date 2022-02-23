@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/provisioner/server/authz"
 	"github.com/porter-dev/porter/provisioner/server/config"
 	"github.com/porter-dev/porter/provisioner/server/handlers/credentials"
+	"github.com/porter-dev/porter/provisioner/server/handlers/healthcheck"
 	"github.com/porter-dev/porter/provisioner/server/handlers/provision"
 	"github.com/porter-dev/porter/provisioner/server/handlers/state"
 )
@@ -23,6 +24,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		staticTokenAuth := authn.NewAuthNStaticFactory(config)
 		porterTokenAuth := authn.NewAuthNPorterTokenFactory(config)
 		workspaceAuth := authz.NewWorkspaceScopedFactory(config)
+
+		r.Method("GET", "/readyz", healthcheck.NewReadyzHandler(config))
+		r.Method("GET", "/livez", healthcheck.NewLivezHandler(config))
 
 		r.Group(func(r chi.Router) {
 			// This group is meant to be called via a provisioner pod

@@ -26,6 +26,8 @@ import { RouteComponentProps, withRouter } from "react-router";
 import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import { onlyInLeft } from "shared/array_utils";
+import CommandLineIcon from "assets/command-line-icon";
+import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -54,6 +56,7 @@ type StateType = {
   upgradeVersion: string;
   expandedJobRun: any;
   pods: any;
+  showConnectionModal: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -76,6 +79,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     expandedJobRun: null as any,
     pods: null as any,
+    showConnectionModal: false,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -807,6 +811,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               <TagWrapper>
                 Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
               </TagWrapper>
+              <CLIModalIcon
+                onClick={(e) => {
+                  e.preventDefault();
+                  this.setState({ showConnectionModal: true });
+                }}
+              />
             </TitleSection>
 
             <InfoWrapper>
@@ -978,6 +988,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           >
             {chart.name}{" "}
             <Gray>at {this.readableDate(run.status.startTime)}</Gray>
+            <CLIModalIcon
+              onClick={(e) => {
+                e.preventDefault();
+                this.setState({ showConnectionModal: true });
+              }}
+            />
           </TitleSection>
 
           <InfoWrapper>
@@ -1035,6 +1051,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         ) : (
           <>{this.renderExpandedJobRun()}</>
         )}
+
+        <ConnectToJobInstructionsModal
+          show={this.state.showConnectionModal}
+          onClose={() => this.setState({ showConnectionModal: false })}
+          chart={this.state.currentChart}
+        />
       </>
     );
   }
@@ -1351,4 +1373,26 @@ const A = styled.a`
   text-decoration: underline;
   margin-left: 5px;
   cursor: pointer;
+`;
+
+const CLIModalIcon = styled(CommandLineIcon)`
+  width: 25px;
+  padding: 5px;
+  margin: 0 5px;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+  color: white;
+  margin-bottom: -3px;
+  :hover {
+    cursor: pointer;
+    background: #ffffff22;
+    > path {
+      fill: #ffffff77;
+    }
+  }
+
+  > path {
+    fill: #ffffff99;
+  }
 `;

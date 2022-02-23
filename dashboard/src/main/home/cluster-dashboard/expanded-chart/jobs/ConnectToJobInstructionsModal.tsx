@@ -1,12 +1,13 @@
 import Modal from "main/home/modals/Modal";
 import React from "react";
+import { ChartType } from "shared/types";
 import styled from "styled-components";
 
 const ConnectToJobInstructionsModal: React.FC<{
   show: boolean;
   onClose: () => void;
-  job: any;
-}> = ({ show, job, onClose }) => {
+  chart: ChartType;
+}> = ({ show, chart, onClose }) => {
   if (!show) {
     return null;
   }
@@ -28,10 +29,7 @@ const ConnectToJobInstructionsModal: React.FC<{
       <br />
       Run the following line of code, and make sure to change the command to
       something your container can run:
-      <Code>
-        porter run {job?.metadata?.labels["meta.helm.sh/release-name"]} --
-        [COMMAND]
-      </Code>
+      <Code>porter run {chart?.name || "[APP-NAME]"} -- [COMMAND]</Code>
       Note that this will create a copy of the most recent job run for this
       template.
     </Modal>

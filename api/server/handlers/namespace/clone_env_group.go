@@ -2,6 +2,7 @@ package namespace
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -46,21 +47,37 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	envGroup, err := envgroup.GetEnvGroup(agent, request.Name, namespace, request.Version)
+	cm, _, err := agent.GetLatestVersionedConfigMap(request.Name, namespace)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
+	secret, _, err := agent.GetLatestVersionedSecret(request.Name, namespace)
+
 	if request.CloneName == "" {
 		request.CloneName = request.Name
 	}
 
+	vars := make(map[string]string)
+	secretVars := make(map[string]string)
+
+	for key, val := range cm.Data {
+		if !strings.Contains(val, "PORTERSECRET") {
+			vars[key] = val
+		}
+	}
+
+	for key, val := range secret.Data {
+		vars[key] = string(val)
+	}
+
 	configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
-		Name:      request.CloneName,
-		Namespace: request.Namespace,
-		Variables: envGroup.Variables,
+		Name:            request.CloneName,
+		Namespace:       request.Namespace,
+		Variables:       vars,
+		SecretVariables: secretVars,
 	})
 
 	if err != nil {
@@ -68,7 +85,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	envGroup, err = envgroup.ToEnvGroup(configMap)
+	envGroup, err := envgroup.ToEnvGroup(configMap)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -1,9 +1,10 @@
 import Loading from "components/Loading";
 import Table from "components/Table";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CellProps, Column } from "react-table";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import styled from "styled-components";
 
 type Props = {
@@ -13,6 +14,9 @@ type Props = {
 };
 
 const dateFormatter = (date: string) => {
+  if (!date) {
+    return "N/A";
+  }
   const newDate = new Date(date);
   return new Intl.DateTimeFormat([], {
     // @ts-ignore
@@ -28,47 +32,50 @@ const JobRunTable: React.FC<Props> = ({
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [jobRuns, setJobRuns] = useState<JobRun[]>(null);
+  const [error, setError] = useState();
+  const tmpJobRuns = useRef([]);
+  const { openWebsocket, newWebsocket, closeAllWebsockets } = useWebsockets();
 
   useEffect(() => {
-    // api call
-    let isSubscribed = true;
+    closeAllWebsockets();
+    tmpJobRuns.current = [];
+    setJobRuns(null);
+    const websocketId = "job-runs-for-all-charts-ws";
+    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/jobs/stream`;
 
-    let status: "failed" | "completed" | "running" | "all" =
-      lastRunStatus === "active" ? "running" : lastRunStatus;
-
-    if (Array.isArray(jobRuns)) {
-      setJobRuns(null);
-    }
-
-    api
-      .getJobRunsForAllCharts(
-        "<token>",
-        {
-          sort: sortType,
-          status: status,
-        },
-        {
-          namespace,
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        if (!isSubscribed) {
+    const config: NewWebsocketOptions = {
+      onopen: console.log,
+      onmessage: (message) => {
+        const data = JSON.parse(message.data);
+        if (data.streamStatus === "finished") {
+          setJobRuns(tmpJobRuns.current);
           return;
         }
-        if (res.data === null) {
+
+        if (data.streamStatus === "errored") {
+          setError(data.error);
+          tmpJobRuns.current = [];
           setJobRuns([]);
           return;
         }
 
-        setJobRuns(res.data);
-      });
+        tmpJobRuns.current = [...tmpJobRuns.current, data];
+      },
+      onclose: () => {
+        closeAllWebsockets();
+      },
+      onerror: (error) => {
+        console.log(error);
+        closeAllWebsockets();
+      },
+    };
+    newWebsocket(websocketId, endpoint, config);
+    openWebsocket(websocketId);
 
     return () => {
-      isSubscribed = false;
+      closeAllWebsockets();
     };
-  }, [currentCluster, currentProject.id, namespace, sortType, lastRunStatus]);
+  }, [currentCluster, currentProject, namespace, sortType, lastRunStatus]);
 
   const columns = useMemo<Column<JobRun>[]>(
     () => [
@@ -141,6 +148,10 @@ const JobRunTable: React.FC<Props> = ({
     }
     return [...jobRuns];
   }, [jobRuns]);
+
+  if (error) {
+    return <>{error}</>;
+  }
 
   if (jobRuns === null) {
     return <Loading />;

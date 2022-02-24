@@ -70,7 +70,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	for key, val := range secret.Data {
-		vars[key] = string(val)
+		secretVars[key] = string(val)
 	}
 
 	configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{

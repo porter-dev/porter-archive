@@ -213,8 +213,8 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           <Selector
             activeValue={this.state.showRuns ? "job_runs" : "chart_list"}
             options={[
-              { label: "Runs", value: "job_runs" },
               { label: "Jobs", value: "chart_list" },
+              { label: "Runs", value: "job_runs" },
             ]}
             setActiveValue={(value) => {
               if (value === "job_runs") {

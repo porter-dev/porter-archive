@@ -273,7 +273,7 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	imageExists := agent.CheckIfImageExists(fmt.Sprintf("%s:%s", imageURL, imageTag))
+	imageExists := agent.CheckIfImageExists(imageURL, imageTag)
 
 	if imageExists && imageTag != "latest" && !forceBuild {
 		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, imageTag)

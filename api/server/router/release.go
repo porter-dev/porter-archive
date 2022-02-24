@@ -682,12 +682,44 @@ func getReleaseRoutes(
 
 	getJobsHandler := release.NewGetJobsHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &Route{
 		Endpoint: getJobsEndpoint,
 		Handler:  getJobsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/latest_job_run ->
+	// release.NewGetLatestJobRunHandler
+	getLatestJobRunEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/latest_job_run",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	getLatestJobRunHandler := release.NewGetLatestJobRunHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getLatestJobRunEndpoint,
+		Handler:  getLatestJobRunHandler,
 		Router:   r,
 	})
 

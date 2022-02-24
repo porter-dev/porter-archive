@@ -688,6 +688,127 @@ func (a *Agent) ListJobsByLabel(namespace string, labels ...Label) ([]batchv1.Jo
 	return resp.Items, nil
 }
 
+func (a *Agent) ListAllJobs(namespace string) ([]batchv1.Job, error) {
+	resp, err := a.Clientset.BatchV1().Jobs(namespace).List(
+		context.TODO(),
+		metav1.ListOptions{},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Items, nil
+}
+
+// StreamJobs streams a list of jobs to the websocket writer, closing the connection once all jobs have been sent
+func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.WebsocketSafeReadWriter) error {
+	run := func() error {
+		errorchan := make(chan error)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var wg sync.WaitGroup
+		var once sync.Once
+		var err error
+
+		wg.Add(2)
+
+		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			for {
+				if _, _, err := rw.ReadMessage(); err != nil {
+					errorchan <- nil
+					return
+				}
+			}
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			continueVal := ""
+
+			for {
+				if ctx.Err() != nil {
+					errorchan <- nil
+					return
+				}
+
+				jobs, err := a.Clientset.BatchV1().Jobs(namespace).List(
+					ctx,
+					metav1.ListOptions{
+						Limit:    100,
+						Continue: continueVal,
+					},
+				)
+
+				if err != nil {
+					errorchan <- err
+					return
+				}
+
+				for _, job := range jobs.Items {
+					err := rw.WriteJSON(job)
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+				}
+
+				if jobs.Continue == "" {
+					// we have reached the end of the list of jobs
+					break
+				} else {
+					// start pagination
+					continueVal = jobs.Continue
+				}
+			}
+
+			// at this point, we can return the status finished
+			err := rw.WriteJSON(map[string]interface{}{
+				"streamStatus": "finished",
+			})
+
+			errorchan <- err
+		}()
+
+		for err = range errorchan {
+			once.Do(func() {
+				rw.Close()
+				cancel()
+			})
+		}
+
+		return err
+	}
+
+	return a.RunWebsocketTask(run)
+}
+
 // DeleteJob deletes the job in the given name and namespace.
 func (a *Agent) DeleteJob(name, namespace string) error {
 	return a.Clientset.BatchV1().Jobs(namespace).Delete(

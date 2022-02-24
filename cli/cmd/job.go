@@ -196,7 +196,6 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 		// otherwise, return no error
 		time.Sleep(10 * time.Second)
-		continue
 	}
 
 	return fmt.Errorf("timed out waiting for job")

@@ -166,8 +166,8 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		return pausedErr
 	}
 
-	// if no job exists with the given revision, wait up to 5 minutes
-	timeWait := time.Now().Add(5 * time.Minute)
+	// if no job exists with the given revision, wait up to 30 minutes
+	timeWait := time.Now().Add(30 * time.Minute)
 
 	for time.Now().Before(timeWait) {
 		// get the jobs for that job chart
@@ -196,7 +196,6 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 		// otherwise, return no error
 		time.Sleep(10 * time.Second)
-		continue
 	}
 
 	return fmt.Errorf("timed out waiting for job")

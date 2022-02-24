@@ -485,52 +485,80 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
     };
   }
 
-  let obj = {
-    normal: {},
-  } as any;
-  const rg = /(?:^|[^\\])(\\n)/g;
-  const fixNewlines = (s: string) => {
-    while (rg.test(s)) {
-      s = s.replace(rg, (str) => {
-        if (str.length == 2) return "\n";
-        if (str[0] != "\\") return str[0] + "\n";
-        return "\\n";
-      });
+  if (props.variable.includes("env")) {
+    let obj = {
+      normal: {},
+    } as any;
+    const rg = /(?:^|[^\\])(\\n)/g;
+    const fixNewlines = (s: string) => {
+      while (rg.test(s)) {
+        s = s.replace(rg, (str) => {
+          if (str.length == 2) return "\n";
+          if (str[0] != "\\") return str[0] + "\n";
+          return "\\n";
+        });
+      }
+      return s;
+    };
+    const isNumber = (s: string) => {
+      return !isNaN(!s ? NaN : Number(String(s).trim()));
+    };
+    state.values.forEach((entry: any, i: number) => {
+      if (isNumber(entry.value)) {
+        obj.normal[entry.key] = entry.value;
+      } else {
+        obj.normal[entry.key] = fixNewlines(entry.value);
+      }
+    });
+
+    if (state.synced_env_groups?.length) {
+      obj.synced = state.synced_env_groups.map((envGroup) => ({
+        name: envGroup?.name,
+        version: envGroup?.version,
+        keys: Object.entries(envGroup?.variables || {}).map(([key, val]) => ({
+          name: key,
+          secret: val.includes("PORTERSECRET"),
+        })),
+      }));
     }
-    return s;
-  };
-  const isNumber = (s: string) => {
-    return !isNaN(!s ? NaN : Number(String(s).trim()));
-  };
-  state.values.forEach((entry: any, i: number) => {
-    if (isNumber(entry.value)) {
-      obj.normal[entry.key] = entry.value;
-    } else {
-      obj.normal[entry.key] = fixNewlines(entry.value);
+
+    const variableContent = props.variable.split(".");
+    let variable = props.variable;
+
+    if (variable.includes("normal")) {
+      variable = `${variableContent[0]}.${variableContent[1]}`;
     }
-  });
 
-  if (state.synced_env_groups?.length) {
-    obj.synced = state.synced_env_groups.map((envGroup) => ({
-      name: envGroup?.name,
-      version: envGroup?.version,
-      keys: Object.entries(envGroup?.variables || {}).map(([key, val]) => ({
-        name: key,
-        secret: val.includes("PORTERSECRET"),
-      })),
-    }));
+    return {
+      [variable]: obj,
+    };
+  } else {
+    let obj = {} as any;
+    const rg = /(?:^|[^\\])(\\n)/g;
+    const fixNewlines = (s: string) => {
+      while (rg.test(s)) {
+        s = s.replace(rg, (str) => {
+          if (str.length == 2) return "\n";
+          if (str[0] != "\\") return str[0] + "\n";
+          return "\\n";
+        });
+      }
+      return s;
+    };
+    const isNumber = (s: string) => {
+      return !isNaN(!s ? NaN : Number(String(s).trim()));
+    };
+    state.values.forEach((entry: any, i: number) => {
+      if (isNumber(entry.value)) {
+        obj[entry.key] = entry.value;
+      } else {
+        obj[entry.key] = fixNewlines(entry.value);
+      }
+    });
+    return {
+      [props.variable]: obj,
+    };
   }
-
-  const variableContent = props.variable.split(".");
-  let variable = props.variable;
-
-  if (variable.includes("normal")) {
-    variable = `${variableContent[0]}.${variableContent[1]}`;
-  }
-
-  return {
-    [variable]: obj,
-  };
 };
 
 export default KeyValueArray;

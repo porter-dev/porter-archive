@@ -87,6 +87,10 @@ const JobRunTable: React.FC<Props> = ({
           if (Array.isArray(owners)) {
             return owners[0]?.name || "N/A";
           }
+          if (originalRow?.metadata?.labels["meta.helm.sh/release-name"]) {
+            return originalRow.metadata.labels["meta.helm.sh/release-name"];
+          }
+
           return "N/A";
         },
       },
@@ -129,6 +133,10 @@ const JobRunTable: React.FC<Props> = ({
       {
         Header: "Commit/Image tag",
         id: "commit_or_image_tag",
+        accessor: (originalRow) => {
+          const container = originalRow.spec?.template?.spec?.containers[0];
+          return container?.image?.split(":")[1] || "N/A";
+        },
         Cell: ({ row }: CellProps<JobRun>) => {
           const container = row.original.spec?.template?.spec?.containers[0];
 
@@ -139,6 +147,10 @@ const JobRunTable: React.FC<Props> = ({
       {
         Header: "Command",
         id: "command",
+        accessor: (originalRow) => {
+          const container = originalRow.spec?.template?.spec?.containers[0];
+          return container?.command?.join(" ") || "N/A";
+        },
         Cell: ({ row }: CellProps<JobRun>) => {
           const container = row.original.spec?.template?.spec?.containers[0];
 

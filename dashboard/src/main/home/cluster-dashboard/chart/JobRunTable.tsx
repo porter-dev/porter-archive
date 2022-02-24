@@ -1,10 +1,12 @@
+import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import Table from "components/Table";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { CellProps, Column } from "react-table";
+import { CellProps, Column, Row } from "react-table";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import { useRouting } from "shared/routing";
 import styled from "styled-components";
 
 type Props = {
@@ -35,6 +37,7 @@ const JobRunTable: React.FC<Props> = ({
   const [error, setError] = useState();
   const tmpJobRuns = useRef([]);
   const { openWebsocket, newWebsocket, closeAllWebsockets } = useWebsockets();
+  const { pushFiltered } = useRouting();
 
   useEffect(() => {
     closeAllWebsockets();
@@ -161,6 +164,31 @@ const JobRunTable: React.FC<Props> = ({
           );
         },
       },
+      {
+        id: "expand",
+        Cell: ({ row }: CellProps<JobRun>) => {
+          /**
+           * project_id: currentProject.id,
+          chart_revision: 0,
+          job: row.original?.metadata?.name,
+           */
+          const urlParams = new URLSearchParams();
+          urlParams.append("project_id", String(currentProject.id));
+          urlParams.append("chart_revision", String(0));
+          urlParams.append("job", row.original.metadata.name);
+
+          return (
+            <RedirectButton
+              to={{
+                pathname: `/jobs/${currentCluster.name}/${row.original?.metadata?.namespace}/${row.original?.metadata?.labels["meta.helm.sh/release-name"]}`,
+                search: urlParams.toString(),
+              }}
+            >
+              <i className="material-icons">open_in_new</i>
+            </RedirectButton>
+          );
+        },
+      },
     ],
     []
   );
@@ -242,6 +270,23 @@ const CommandString = styled.div`
   color: #ffffff55;
   margin-right: 27px;
   font-family: monospace;
+`;
+
+const RedirectButton = styled(DynamicLink)`
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  > i {
+    border-radius: 20px;
+    font-size: 18px;
+    padding: 5px;
+    margin: 0 5px;
+    color: #ffffff44;
+    :hover {
+      background: #ffffff11;
+    }
+  }
 `;
 
 type JobRun = {

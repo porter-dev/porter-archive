@@ -8,7 +8,7 @@ import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import styled from "styled-components";
 
 type Props = {
-  lastRunStatus: "failed" | "succeded" | "active" | "all";
+  lastRunStatus: "failed" | "succeeded" | "active" | "all";
   namespace: string;
   sortType: "Newest" | "Oldest" | "Alphabetical";
 };
@@ -96,9 +96,20 @@ const JobRunTable: React.FC<Props> = ({
       },
       {
         Header: "Finished At",
-        accessor: (originalRow) =>
-          dateFormatter(originalRow.status?.completionTime) ||
-          "Still running...",
+        accessor: (originalRow) => {
+          if (originalRow.status?.completionTime) {
+            return dateFormatter(originalRow.status?.completionTime);
+          } else if (
+            Array.isArray(originalRow.status?.conditions) &&
+            originalRow.status?.conditions[0]?.lastTransitionTime
+          ) {
+            return dateFormatter(
+              originalRow.status?.conditions[0]?.lastTransitionTime
+            );
+          } else {
+            return "Still running...";
+          }
+        },
       },
       {
         Header: "Status",
@@ -152,11 +163,11 @@ const JobRunTable: React.FC<Props> = ({
       case "active":
         tmp = filter.filterByActive();
         break;
-      case "succeded":
-        tmp = filter.filterBySucceded();
-        break;
       case "failed":
         tmp = filter.filterByFailed();
+        break;
+      case "succeeded":
+        tmp = filter.filterBySucceded();
         break;
       default:
         tmp = filter.dontFilter();
@@ -343,7 +354,12 @@ class JobRunsFilter {
   }
 
   filterBySucceded() {
-    return this.jobRuns.filter((jobRun) => jobRun?.status?.succeeded);
+    return this.jobRuns.filter(
+      (jobRun) =>
+        jobRun?.status?.succeeded &&
+        !jobRun?.status?.active &&
+        !jobRun?.status?.failed
+    );
   }
 
   dontFilter() {

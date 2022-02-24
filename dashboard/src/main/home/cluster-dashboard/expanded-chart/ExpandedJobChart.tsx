@@ -26,6 +26,8 @@ import { RouteComponentProps, withRouter } from "react-router";
 import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import { onlyInLeft } from "shared/array_utils";
+import MetricsSection from "./metrics/MetricsSection";
+import JobMetricsSection from "./metrics/JobMetricsSection";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -54,6 +56,7 @@ type StateType = {
   upgradeVersion: string;
   expandedJobRun: any;
   pods: any;
+  showConnectionModal: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -76,6 +79,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     expandedJobRun: null as any,
     pods: null as any,
+    showConnectionModal: false,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -592,6 +596,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               isAuthorized={this.props.isAuthorized}
               saveValuesStatus={this.state.saveValuesStatus}
               expandJob={(job: any) => this.setJobRun(job)}
+              chartName={this.state.currentChart?.name}
             />
           </TabWrapper>
         );
@@ -965,7 +970,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentChart } = this.state;
     let chart = currentChart;
     let run = this.state.expandedJobRun;
-
     return (
       <StyledExpandedChart>
         <HeaderWrapper>
@@ -1005,12 +1009,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 value: "logs",
               },
               {
+                label: "Metrics",
+                value: "metrics",
+              },
+              {
                 label: "Config",
                 value: "config",
               },
             ]}
           >
-            {this.state.currentTab === "logs" ? (
+            {this.state.currentTab === "logs" && (
               <JobLogsWrapper>
                 <Logs
                   selectedPod={this.state.pods[0]}
@@ -1018,8 +1026,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                   rawText={true}
                 />
               </JobLogsWrapper>
-            ) : (
+            )}
+            {this.state.currentTab === "config" && (
               <>{this.renderConfigSection(run)}</>
+            )}
+            {this.state.currentTab === "metrics" && (
+              <JobMetricsSection
+                jobChart={this.state.currentChart}
+                jobRun={run}
+              />
             )}
           </TabRegion>
         </BodyWrapper>

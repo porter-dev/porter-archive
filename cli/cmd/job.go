@@ -180,7 +180,7 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		job := getJobMatchingRevision(uint(jobRelease.Release.Version), jobs)
 
 		if job == nil {
-			time.Sleep(5 * time.Minute)
+			time.Sleep(10 * time.Second)
 			continue
 		}
 

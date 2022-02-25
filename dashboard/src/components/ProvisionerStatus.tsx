@@ -23,6 +23,7 @@ type Props = {
   project_id: number;
   setInfraStatus: (infra: Infrastructure) => void;
   auto_expanded?: boolean;
+  set_max_width?: boolean;
 };
 
 const nameMap: { [key: string]: string } = {
@@ -39,6 +40,7 @@ const ProvisionerStatus: React.FC<Props> = ({
   infras,
   project_id,
   auto_expanded,
+  set_max_width,
   setInfraStatus,
 }) => {
   const renderV1Infra = (infra: Infrastructure) => {
@@ -48,6 +50,7 @@ const ProvisionerStatus: React.FC<Props> = ({
         infra={infra}
         is_expanded={auto_expanded}
         is_collapsible={!auto_expanded}
+        set_max_width={set_max_width}
       />
     );
   };
@@ -66,6 +69,7 @@ const ProvisionerStatus: React.FC<Props> = ({
         infra={infra}
         is_expanded={auto_expanded}
         is_collapsible={!auto_expanded}
+        set_max_width={set_max_width}
         updateInfraStatus={updateInfraStatus}
       />
     );
@@ -90,12 +94,14 @@ type V1InfraObjectProps = {
   infra: Infrastructure;
   is_expanded: boolean;
   is_collapsible: boolean;
+  set_max_width?: boolean;
 };
 
 const V1InfraObject: React.FC<V1InfraObjectProps> = ({
   infra,
   is_expanded,
   is_collapsible,
+  set_max_width,
 }) => {
   const [isExpanded, setIsExpanded] = useState(is_expanded);
 
@@ -124,11 +130,9 @@ const V1InfraObject: React.FC<V1InfraObjectProps> = ({
 
   const renderErrorSection = () => {
     let errors: string[] = [];
-
     if (infra.status == "destroyed" || infra.status == "deleted") {
       errors.push("This infrastructure was destroyed.");
     }
-
     if (errors.length > 0) {
       return (
         <>
@@ -174,7 +178,7 @@ const V1InfraObject: React.FC<V1InfraObjectProps> = ({
   };
 
   return (
-    <StyledInfraObject key={infra.id}>
+    <StyledInfraObject key={infra.id} set_max_width={set_max_width}>
       <InfraHeader
         is_clickable={is_collapsible}
         onClick={() => {
@@ -210,6 +214,7 @@ type V2InfraObjectProps = {
   project_id: number;
   is_expanded: boolean;
   is_collapsible: boolean;
+  set_max_width?: boolean;
   updateInfraStatus: (infra: Infrastructure) => void;
 };
 
@@ -218,6 +223,7 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
   project_id,
   is_expanded,
   is_collapsible,
+  set_max_width,
   updateInfraStatus,
 }) => {
   const [isExpanded, setIsExpanded] = useState(is_expanded);
@@ -341,7 +347,7 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
   };
 
   return (
-    <StyledInfraObject key={infra.id}>
+    <StyledInfraObject key={infra.id} set_max_width={set_max_width}>
       <InfraHeader
         is_clickable={is_collapsible}
         onClick={() => {
@@ -694,10 +700,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
   };
 
   const renderErrorSection = () => {
-    if (
-      erroredResources.length > 0 &&
-      infra?.latest_operation?.status == "errored"
-    ) {
+    if (erroredResources.length > 0 && infra?.latest_operation?.errored) {
       return (
         <>
           <Description>
@@ -807,12 +810,13 @@ const StyledProvisionerStatus = styled.div`
   margin-top: 25px;
 `;
 
-const StyledInfraObject = styled.div`
+const StyledInfraObject = styled.div<{ set_max_width?: boolean }>`
   background: #ffffff1a;
   border: 1px solid #aaaabb;
   border-radius: 5px;
   margin-bottom: 10px;
   position: relative;
+  width: ${(props) => (props.set_max_width ? "580px" : "100%")};
 `;
 
 const InfraHeader = styled.div<{ is_clickable: boolean }>`

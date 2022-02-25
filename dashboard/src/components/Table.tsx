@@ -89,14 +89,19 @@ const Table: React.FC<TableProps> = ({
               selected={false}
             >
               {/* TODO: This is actually broken, not sure why but we need the width to be properly setted, this is a temporary solution */}
-              {row.cells.map((cell) => (
-                <StyledTd
-                  {...cell.getCellProps()}
-                  width={cell.column.totalWidth}
-                >
-                  {cell.render("Cell")}
-                </StyledTd>
-              ))}
+              {row.cells.map((cell) => {
+                console.log(cell.getCellProps());
+                return (
+                  <StyledTd
+                    {...cell.getCellProps()}
+                    style={{
+                      width: cell.column.totalWidth,
+                    }}
+                  >
+                    {cell.render("Cell")}
+                  </StyledTd>
+                );
+              })}
             </StyledTr>
           );
         })}

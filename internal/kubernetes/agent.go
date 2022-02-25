@@ -761,8 +761,9 @@ func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.Web
 				jobs, err := a.Clientset.BatchV1().Jobs(namespace).List(
 					ctx,
 					metav1.ListOptions{
-						Limit:    100,
-						Continue: continueVal,
+						Limit:         100,
+						Continue:      continueVal,
+						LabelSelector: "meta.helm.sh/release-name",
 					},
 				)
 

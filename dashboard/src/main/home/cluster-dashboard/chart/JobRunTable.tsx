@@ -19,13 +19,85 @@ const dateFormatter = (date: string) => {
   if (!date) {
     return "N/A";
   }
-  const newDate = new Date(date);
-  return new Intl.DateTimeFormat([], {
-    // @ts-ignore
-    timeStyle: "long",
-    dateStyle: "short",
-  }).format(newDate);
+
+  // @ts-ignore
+  const rtf = new Intl.RelativeTimeFormat("en", {
+    localeMatcher: "best fit", // other values: "lookup"
+    numeric: "auto", // other values: "auto"
+    style: "long", // other values: "short" or "narrow"
+  });
+
+  const time = timeFrom(date);
+  if (!time) {
+    return "N/A";
+  }
+
+  return rtf.format(-time.time, time.unitOfTime);
 };
+
+const runnedFor = (start: string | number, end?: string | number) => {
+  const duration = timeFrom(start, end);
+  return `Runned for ${duration.time} ${duration.unitOfTime}`;
+};
+
+function timeFrom(time: string | number, secondTime?: string | number) {
+  // Get timestamps
+  let unixTime = new Date(time).getTime();
+  if (!unixTime) return;
+
+  let now = new Date().getTime();
+
+  if (secondTime) {
+    now = new Date(secondTime).getTime();
+  }
+
+  // Calculate difference
+  let difference = unixTime / 1000 - now / 1000;
+
+  // Setup return object
+  let tfn: any = {};
+
+  // Check if time is in the past, present, or future
+  tfn.when = "now";
+  if (difference > 0) {
+    tfn.when = "future";
+  } else if (difference < -1) {
+    tfn.when = "past";
+  }
+
+  // Convert difference to absolute
+  difference = Math.abs(difference);
+
+  // Calculate time unit
+  if (difference / (60 * 60 * 24 * 365) > 1) {
+    // Years
+    tfn.unitOfTime = "years";
+    tfn.time = Math.floor(difference / (60 * 60 * 24 * 365));
+  } else if (difference / (60 * 60 * 24 * 45) > 1) {
+    // Months
+    tfn.unitOfTime = "months";
+    tfn.time = Math.floor(difference / (60 * 60 * 24 * 45));
+  } else if (difference / (60 * 60 * 24) > 1) {
+    // Days
+    tfn.unitOfTime = "days";
+    tfn.time = Math.floor(difference / (60 * 60 * 24));
+  } else if (difference / (60 * 60) > 1) {
+    // Hours
+    tfn.unitOfTime = "hours";
+    tfn.time = Math.floor(difference / (60 * 60));
+  } else if (difference / 60 > 1) {
+    // Minutes
+    tfn.unitOfTime = "minutes";
+    tfn.time = Math.floor(difference / 60);
+  } else {
+    // Seconds
+    tfn.unitOfTime = "seconds";
+    tfn.time = Math.floor(difference);
+  }
+
+  // Return time from now data
+  return tfn;
+}
 
 const JobRunTable: React.FC<Props> = ({
   lastRunStatus,
@@ -96,26 +168,45 @@ const JobRunTable: React.FC<Props> = ({
 
           return "N/A";
         },
+        width: "max-content",
       },
       {
-        Header: "Started At",
+        Header: "Run at",
         accessor: (originalRow) => dateFormatter(originalRow.status.startTime),
       },
       {
-        Header: "Finished At",
+        Header: "Run for",
         accessor: (originalRow) => {
           if (originalRow.status?.completionTime) {
-            return dateFormatter(originalRow.status?.completionTime);
+            return originalRow.status?.completionTime;
           } else if (
             Array.isArray(originalRow.status?.conditions) &&
             originalRow.status?.conditions[0]?.lastTransitionTime
           ) {
-            return dateFormatter(
-              originalRow.status?.conditions[0]?.lastTransitionTime
+            return originalRow.status?.conditions[0]?.lastTransitionTime;
+          } else {
+            return "Still running...";
+          }
+        },
+        Cell: ({ row }: CellProps<JobRun>) => {
+          if (row.original.status?.completionTime) {
+            return runnedFor(row.original.status?.completionTime);
+          } else if (
+            Array.isArray(row.original.status?.conditions) &&
+            row.original.status?.conditions[0]?.lastTransitionTime
+          ) {
+            return runnedFor(
+              row.original.status?.conditions[0]?.lastTransitionTime
             );
           } else {
             return "Still running...";
           }
+        },
+        getCellProps: () => {
+          return { whats: "this" };
+        },
+        styles: {
+          padding: "10px",
         },
       },
       {
@@ -188,6 +279,7 @@ const JobRunTable: React.FC<Props> = ({
             </RedirectButton>
           );
         },
+        maxWidth: 40,
       },
     ],
     []
@@ -251,7 +343,7 @@ export default JobRunTable;
 
 const Status = styled.div<{ color: string }>`
   padding: 5px 10px;
-  margin-right: 12px;
+  margin: auto;
   background: ${(props) => props.color};
   font-size: 13px;
   border-radius: 3px;
@@ -260,6 +352,7 @@ const Status = styled.div<{ color: string }>`
   justify-content: center;
   width: min-content;
   height: 25px;
+  min-width: 90px;
 `;
 
 const CommandString = styled.div`
@@ -276,7 +369,7 @@ const RedirectButton = styled(DynamicLink)`
   user-select: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   > i {
     border-radius: 20px;
     font-size: 18px;

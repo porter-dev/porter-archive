@@ -336,7 +336,14 @@ const JobRunTable: React.FC<Props> = ({
     return <>No job runs found</>;
   }
 
-  return <Table columns={columns} data={data} isLoading={jobRuns === null} />;
+  return (
+    <Table
+      columns={columns}
+      data={data}
+      isLoading={jobRuns === null}
+      enablePagination
+    />
+  );
 };
 
 export default JobRunTable;

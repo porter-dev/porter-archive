@@ -138,55 +138,9 @@ const Table: React.FC<TableProps> = ({
 
   return (
     <TableWrapper>
-      <Flex>
-        {!disableGlobalFilter && (
-          <GlobalFilter setGlobalFilter={setGlobalFilter} />
-        )}
-        {enablePagination && (
-          <FlexEnd style={{ marginBottom: "15px" }}>
-            <PageCountWrapper>
-              Page size:
-              <Selector
-                activeValue={String(pageSize)}
-                options={[
-                  {
-                    label: "10",
-                    value: "10",
-                  },
-                  {
-                    label: "20",
-                    value: "20",
-                  },
-                  {
-                    label: "50",
-                    value: "50",
-                  },
-                  {
-                    label: "100",
-                    value: "100",
-                  },
-                ]}
-                setActiveValue={(val) => setPageSize(Number(val))}
-                width="70px"
-              ></Selector>
-            </PageCountWrapper>
-            <PaginationActionsWrapper>
-              <PaginationAction
-                disabled={!canPreviousPage}
-                onClick={previousPage}
-              >
-                {"<"}
-              </PaginationAction>
-              <PageCounter>
-                {pageIndex + 1} of {pageCount}
-              </PageCounter>
-              <PaginationAction disabled={!canNextPage} onClick={nextPage}>
-                {">"}
-              </PaginationAction>
-            </PaginationActionsWrapper>
-          </FlexEnd>
-        )}
-      </Flex>
+      {!disableGlobalFilter && (
+        <GlobalFilter setGlobalFilter={setGlobalFilter} />
+      )}
       <StyledTable {...getTableProps()}>
         <StyledTHead>
           {headerGroups.map((headerGroup) => (
@@ -263,10 +217,6 @@ const FlexEnd = styled.div`
   justify-content: flex-end;
   align-items: center;
   width: 100%;
-`;
-
-const Flex = styled.div`
-  display: flex;
 `;
 
 const PaginationActionsWrapper = styled.div``;

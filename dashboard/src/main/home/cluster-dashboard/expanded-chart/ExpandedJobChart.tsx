@@ -104,12 +104,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
   };
 
   // Retrieve full chart data (includes form and values)
-  getChartData = (chart: ChartType, revision: number) => {
+  getChartData = async (chart: ChartType, revision: number) => {
     let { currentProject } = this.context;
     let { currentCluster, currentChart } = this.props;
 
     this.setState({ loading: true });
-    api
+    return api
       .getChart(
         "<token>",
         {},
@@ -675,10 +675,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart, currentChart.version);
-    this.getJobs(currentChart);
-    this.setupJobWebsocket(currentChart);
-    this.setupCronJobWebsocket(currentChart);
+    this.getChartData(currentChart, currentChart.version).then(() => {
+      this.getJobs(currentChart).then(() => {
+        this.setupJobWebsocket(currentChart);
+        this.setupCronJobWebsocket(currentChart);
+      });
+    });
   }
 
   componentDidUpdate(

@@ -190,12 +190,16 @@ const JobRunTable: React.FC<Props> = ({
         },
         Cell: ({ row }: CellProps<JobRun>) => {
           if (row.original.status?.completionTime) {
-            return runnedFor(row.original.status?.completionTime);
+            return runnedFor(
+              row.original.status?.startTime,
+              row.original.status?.completionTime
+            );
           } else if (
             Array.isArray(row.original.status?.conditions) &&
             row.original.status?.conditions[0]?.lastTransitionTime
           ) {
             return runnedFor(
+              row.original.status?.startTime,
               row.original.status?.conditions[0]?.lastTransitionTime
             );
           } else {

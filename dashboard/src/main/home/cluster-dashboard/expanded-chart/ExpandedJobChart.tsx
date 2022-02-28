@@ -1168,6 +1168,73 @@ export const ExpandedJobChartFC: React.FC<{
 
   const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
 
+  const processValuesToUpdateChart = (config?: any) => {
+    let conf: string;
+    let values = {} as any;
+
+    if (!config) {
+      values = {};
+      let imageUrl = this.state.newestImage;
+      let tag = null;
+
+      if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1].toString();
+        } else if (!tag) {
+          tag = "latest";
+        }
+
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", tag);
+      }
+
+      conf = yaml.dump({
+        ...this.state.currentChart.config,
+        ...values,
+      });
+    } else {
+      // Convert dotted keys to nested objects
+      values = {};
+
+      for (let key in config) {
+        _.set(values, key, config[key]);
+      }
+
+      let imageUrl = this.state.newestImage;
+      let tag = null as string;
+
+      if (imageUrl) {
+        if (imageUrl.includes(":")) {
+          let splits = imageUrl.split(":");
+          imageUrl = splits[0];
+          tag = splits[1].toString();
+        } else if (!tag) {
+          tag = "latest";
+        }
+
+        _.set(values, "image.repository", imageUrl);
+        _.set(values, "image.tag", `${tag}`);
+      }
+
+      if (runJob) {
+        _.set(values, "paused", false);
+      } else {
+        _.set(values, "paused", true);
+      }
+
+      // Weave in preexisting values and convert to yaml
+      conf = yaml.dump(
+        {
+          ...(this.state.currentChart.config as Object),
+          ...values,
+        },
+        { forceQuotes: true }
+      );
+    }
+  };
+
   const renderTabContents = (currentTab: string) => {
     if (currentTab === "jobs" && hasPorterImageTemplate) {
       return (
@@ -1271,6 +1338,7 @@ export const ExpandedJobChartFC: React.FC<{
           jobs={jobs}
           closeChart={closeChart}
           refreshChart={refreshChart}
+          upgradeChart={upgradeChart}
         />
         <LineBreak />
         <Placeholder>
@@ -1293,6 +1361,7 @@ export const ExpandedJobChartFC: React.FC<{
           jobs={jobs}
           closeChart={closeChart}
           refreshChart={refreshChart}
+          upgradeChart={upgradeChart}
         />
         <BodyWrapper>
           {(leftTabOptions?.length > 0 ||
@@ -1341,7 +1410,12 @@ const ExpandedJobHeader: React.FC<{
   jobs: any[];
   closeChart: () => void;
   refreshChart: () => void;
-}> = ({ chart, closeChart, jobs, refreshChart }) => {
+  upgradeChart: () => void;
+}> = ({ chart, closeChart, jobs, refreshChart, upgradeChart }) => {
+  const { currentProject, setCurrentError, currentCluster } = useContext(
+    Context
+  );
+
   return (
     <HeaderWrapper>
       <BackButton onClick={closeChart}>
@@ -1374,10 +1448,7 @@ const ExpandedJobHeader: React.FC<{
         }
         latestVersion={chart.latest_version}
         upgradeVersion={() => {
-          // this.handleUpgradeVersion(this.state.upgradeVersion, () => {
-          //   this.setState({ loading: false });
-          // });
-          // this.setState({ upgradeVersion: "", loading: true });
+          upgradeChart();
         }}
       />
     </HeaderWrapper>
@@ -1385,7 +1456,9 @@ const ExpandedJobHeader: React.FC<{
 };
 
 const useChart = (oldChart: ChartType, closeChart: () => void) => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [chart, setChart] = useState<ChartTypeWithExtendedConfig>(null);
   const { params, url: matchUrl } = useRouteMatch<{
     namespace: string;
@@ -1424,7 +1497,46 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
   /**
    * Upgrade chart version
    */
-  const upgradeChart = async () => {};
+  const upgradeChart = async () => {
+    // convert current values to yaml
+    let valuesYaml = yaml.dump({
+      ...(chart.config as Object),
+    });
+
+    try {
+      await api.upgradeChartValues(
+        "<token>",
+        {
+          values: valuesYaml,
+          version: chart.latest_version,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      window.analytics.track("Chart Upgraded", {
+        chart: chart.name,
+        values: valuesYaml,
+      });
+    } catch (err) {
+      let parsedErr = err?.response?.data?.error;
+
+      if (parsedErr) {
+        err = parsedErr;
+      }
+      setCurrentError(parsedErr);
+
+      window.analytics.track("Failed to Upgrade Chart", {
+        chart: chart.name,
+        values: valuesYaml,
+        error: err,
+      });
+    }
+  };
 
   /**
    * Delete/Uninstall chart

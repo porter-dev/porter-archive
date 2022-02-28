@@ -41,6 +41,7 @@ import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import JobList from "./jobs/JobList";
 import SaveButton from "components/SaveButton";
 import useAuth from "shared/auth/useAuth";
+import JobMetricsSection from "./metrics/JobMetricsSection";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -70,6 +71,7 @@ type StateType = {
   expandedJobRun: any;
   pods: any;
   forceRefreshRevisions: boolean;
+  showConnectionModal: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -93,6 +95,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     expandedJobRun: null as any,
     pods: null as any,
     forceRefreshRevisions: false,
+    showConnectionModal: false,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -663,6 +666,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               latestChartVersion={Number(
                 this.state.currentChart.latest_version
               )}
+              chartName={this.state.currentChart?.name}
             />
           </TabWrapper>
         );
@@ -1029,7 +1033,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentChart } = this.state;
     let chart = currentChart;
     let run = this.state.expandedJobRun;
-
     return (
       <StyledExpandedChart>
         <HeaderWrapper>
@@ -1069,12 +1072,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 value: "logs",
               },
               {
+                label: "Metrics",
+                value: "metrics",
+              },
+              {
                 label: "Config",
                 value: "config",
               },
             ]}
           >
-            {this.state.currentTab === "logs" ? (
+            {this.state.currentTab === "logs" && (
               <JobLogsWrapper>
                 <Logs
                   selectedPod={this.state.pods[0]}
@@ -1082,8 +1089,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                   rawText={true}
                 />
               </JobLogsWrapper>
-            ) : (
+            )}
+            {this.state.currentTab === "config" && (
               <>{this.renderConfigSection(run)}</>
+            )}
+            {this.state.currentTab === "metrics" && (
+              <JobMetricsSection
+                jobChart={this.state.currentChart}
+                jobRun={run}
+              />
             )}
           </TabRegion>
         </BodyWrapper>

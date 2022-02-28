@@ -236,34 +236,105 @@ export const ExpandedEnvGroupFC = ({
         setTimeout(() => setButtonStatus(""), 1000);
       }
     } else {
-      const configMapSecretVariables = fillWithDeletedVariables(
-        originalEnvVars.filter((variable) => {
-          return variable.value.includes("PORTERSECRET");
-        }),
-        variables.filter((variable) => {
-          return variable.value.includes("PORTERSECRET") || variable.hidden;
-        })
-      ).reduce(
-        (acc, variable) => ({
-          ...acc,
-          [variable.key]: variable.value,
-        }),
-        {}
+      // SEPARATE THE TWO KINDS OF VARIABLES
+      let secret = variables.filter(
+        (variable) =>
+          variable.hidden && !variable.value.includes("PORTERSECRET")
       );
 
-      const configMapVariables = fillWithDeletedVariables(
-        originalEnvVars,
-        variables.filter(
-          (variable) =>
-            !variable.hidden || !variable.value?.includes("PORTERSECRET")
-        )
-      ).reduce(
-        (acc, variable) => ({
-          ...acc,
-          [variable.key]: variable.value,
-        }),
-        {}
+      let normal = variables.filter(
+        (variable) =>
+          !variable.hidden && !variable.value.includes("PORTERSECRET")
       );
+
+      // Filter variables that weren't updated
+      normal = normal.reduce((acc, variable) => {
+        const originalVar = originalEnvVars.find(
+          (orgVar) => orgVar.key === variable.key
+        );
+
+        // Remove variables that weren't updated
+        if (variable.value === originalVar?.value) {
+          return acc;
+        }
+
+        // add the variable that's going to be updated
+        return [...acc, variable];
+      }, []);
+
+      secret = secret.reduce((acc, variable) => {
+        const originalVar = originalEnvVars.find(
+          (orgVar) => orgVar.key === variable.key
+        );
+
+        // Remove variables that weren't updated
+        if (variable.value === originalVar?.value) {
+          return acc;
+        }
+
+        // add the variable that's going to be updated
+        return [...acc, variable];
+      }, []);
+
+      // Check through the original env vars to see if there's a missing variable, if it is, then means it was removed
+      const removedNormal = originalEnvVars.reduce((acc, orgVar) => {
+        if (orgVar.value.includes("PORTERSECRET")) {
+          return acc;
+        }
+
+        const variableFound = variables.find(
+          (variable) => orgVar.key === variable.key
+        );
+        if (variableFound) {
+          return acc;
+        }
+        return [
+          ...acc,
+          {
+            key: orgVar.key,
+            value: null,
+          },
+        ];
+      }, []);
+
+      const removedSecret = originalEnvVars.reduce((acc, orgVar) => {
+        if (!orgVar.value.includes("PORTERSECRET")) {
+          return acc;
+        }
+
+        const variableFound = variables.find(
+          (variable) => orgVar.key === variable.key
+        );
+        if (variableFound) {
+          return acc;
+        }
+        return [
+          ...acc,
+          {
+            key: orgVar.key,
+            value: null,
+          },
+        ];
+      }, []);
+
+      normal = [...normal, ...removedNormal];
+      secret = [...secret, ...removedSecret];
+
+      const normalObject = normal.reduce((acc, val) => {
+        return {
+          ...acc,
+          [val.key]: val.value,
+        };
+      }, {});
+
+      const secretObject = secret.reduce((acc, val) => {
+        return {
+          ...acc,
+          [val.key]: val.value,
+        };
+      }, {});
+
+      console.log({ normalObject, secretObject });
 
       try {
         const updatedEnvGroup = await api
@@ -271,8 +342,8 @@ export const ExpandedEnvGroupFC = ({
             "<token>",
             {
               name,
-              variables: configMapVariables,
-              secret_variables: configMapSecretVariables,
+              variables: normalObject,
+              secret_variables: secretObject,
             },
             {
               id: currentProject.id,
@@ -430,7 +501,12 @@ const EnvGroupSettings = ({
   const [isAuthorized] = useAuth();
 
   const canDelete = useMemo(() => {
-    return envGroup?.applications.length === 0;
+    // add a case for when applications is null - in this case this is a deprecated env group version
+    if (!envGroup?.applications) {
+      return true;
+    }
+
+    return envGroup?.applications?.length === 0;
   }, [envGroup]);
 
   return (

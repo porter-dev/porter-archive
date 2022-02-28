@@ -202,9 +202,6 @@ const JobRunTable: React.FC<Props> = ({
             return "Still running...";
           }
         },
-        getCellProps: () => {
-          return { whats: "this" };
-        },
         styles: {
           padding: "10px",
         },

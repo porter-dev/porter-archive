@@ -1,7 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
-import { Column, Row, useGlobalFilter, useTable } from "react-table";
+import {
+  Column,
+  Row,
+  useGlobalFilter,
+  usePagination,
+  useTable,
+} from "react-table";
 import Loading from "components/Loading";
+import Selector from "./Selector";
 
 const GlobalFilter: React.FunctionComponent<any> = ({ setGlobalFilter }) => {
   const [value, setValue] = React.useState("");
@@ -31,6 +38,7 @@ export type TableProps = {
   isLoading: boolean;
   disableGlobalFilter?: boolean;
   disableHover?: boolean;
+  enablePagination?: boolean;
 };
 
 const Table: React.FC<TableProps> = ({
@@ -40,22 +48,41 @@ const Table: React.FC<TableProps> = ({
   isLoading,
   disableGlobalFilter = false,
   disableHover,
+  enablePagination,
 }) => {
   const {
     getTableProps,
     getTableBodyProps,
-    rows,
+    page,
     setGlobalFilter,
     prepareRow,
     headerGroups,
     visibleColumns,
+
+    // Pagination options
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize },
   } = useTable(
     {
       columns: columnsData,
       data,
     },
-    useGlobalFilter
+    useGlobalFilter,
+    usePagination
   );
+
+  useEffect(() => {
+    if (!enablePagination) {
+      setPageSize(data.length);
+    }
+  }, [data, enablePagination]);
 
   const renderRows = () => {
     if (isLoading) {
@@ -68,7 +95,7 @@ const Table: React.FC<TableProps> = ({
       );
     }
 
-    if (!rows.length) {
+    if (!page.length) {
       return (
         <StyledTr disableHover={true} selected={false}>
           <StyledTd colSpan={visibleColumns.length}>No data available</StyledTd>
@@ -77,7 +104,7 @@ const Table: React.FC<TableProps> = ({
     }
     return (
       <>
-        {rows.map((row) => {
+        {page.map((row) => {
           prepareRow(row);
 
           return (
@@ -111,9 +138,55 @@ const Table: React.FC<TableProps> = ({
 
   return (
     <TableWrapper>
-      {!disableGlobalFilter && (
-        <GlobalFilter setGlobalFilter={setGlobalFilter} />
-      )}
+      <Flex>
+        {!disableGlobalFilter && (
+          <GlobalFilter setGlobalFilter={setGlobalFilter} />
+        )}
+        {enablePagination && (
+          <FlexEnd style={{ marginBottom: "15px" }}>
+            <PageCountWrapper>
+              Page size:
+              <Selector
+                activeValue={String(pageSize)}
+                options={[
+                  {
+                    label: "10",
+                    value: "10",
+                  },
+                  {
+                    label: "20",
+                    value: "20",
+                  },
+                  {
+                    label: "50",
+                    value: "50",
+                  },
+                  {
+                    label: "100",
+                    value: "100",
+                  },
+                ]}
+                setActiveValue={(val) => setPageSize(Number(val))}
+                width="70px"
+              ></Selector>
+            </PageCountWrapper>
+            <PaginationActionsWrapper>
+              <PaginationAction
+                disabled={!canPreviousPage}
+                onClick={previousPage}
+              >
+                {"<"}
+              </PaginationAction>
+              <PageCounter>
+                {pageIndex + 1} of {pageCount}
+              </PageCounter>
+              <PaginationAction disabled={!canNextPage} onClick={nextPage}>
+                {">"}
+              </PaginationAction>
+            </PaginationActionsWrapper>
+          </FlexEnd>
+        )}
+      </Flex>
       <StyledTable {...getTableProps()}>
         <StyledTHead>
           {headerGroups.map((headerGroup) => (
@@ -131,6 +204,50 @@ const Table: React.FC<TableProps> = ({
         </StyledTHead>
         <tbody {...getTableBodyProps()}>{renderRows()}</tbody>
       </StyledTable>
+      {enablePagination && (
+        <FlexEnd style={{ marginTop: "15px" }}>
+          <PageCountWrapper>
+            Page size:
+            <Selector
+              activeValue={String(pageSize)}
+              options={[
+                {
+                  label: "10",
+                  value: "10",
+                },
+                {
+                  label: "20",
+                  value: "20",
+                },
+                {
+                  label: "50",
+                  value: "50",
+                },
+                {
+                  label: "100",
+                  value: "100",
+                },
+              ]}
+              setActiveValue={(val) => setPageSize(Number(val))}
+              width="70px"
+            ></Selector>
+          </PageCountWrapper>
+          <PaginationActionsWrapper>
+            <PaginationAction
+              disabled={!canPreviousPage}
+              onClick={previousPage}
+            >
+              {"<"}
+            </PaginationAction>
+            <PageCounter>
+              {pageIndex + 1} of {pageCount}
+            </PageCounter>
+            <PaginationAction disabled={!canNextPage} onClick={nextPage}>
+              {">"}
+            </PaginationAction>
+          </PaginationActionsWrapper>
+        </FlexEnd>
+      )}
     </TableWrapper>
   );
 };
@@ -139,6 +256,51 @@ export default Table;
 
 const TableWrapper = styled.div`
   padding-bottom: 20px;
+`;
+
+const FlexEnd = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+`;
+
+const Flex = styled.div`
+  display: flex;
+`;
+
+const PaginationActionsWrapper = styled.div``;
+
+const PageCountWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 160px;
+  margin-right: 10px;
+`;
+
+const PaginationAction = styled.button`
+  border: none;
+  background: unset;
+  color: white;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  :hover {
+    background: #ffffff40;
+  }
+
+  :disabled {
+    color: #ffffff88;
+    cursor: unset;
+    :hover {
+      background: unset;
+    }
+  }
+`;
+
+const PageCounter = styled.span`
+  margin: 0 5px;
 `;
 
 type StyledTrProps = {
@@ -174,6 +336,7 @@ export const StyledTHead = styled.thead`
   width: 100%;
   border-top: 1px solid #aaaabb22;
   border-bottom: 1px solid #aaaabb22;
+  position: sticky;
 `;
 
 export const StyledTh = styled.th`

@@ -264,7 +264,7 @@ func init() {
 		&dockerfile,
 		"dockerfile",
 		"",
-		"the path to the dockerfile",
+		"path to the Dockerfile (automatically sets \"method\" to \"docker\")",
 	)
 
 	updateCmd.PersistentFlags().StringArrayVarP(

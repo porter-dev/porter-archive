@@ -224,7 +224,9 @@ func (c *CreateAgent) CreateFromDocker(
 	opts := c.CreateOpts
 
 	// detect the build config
-	if opts.Method != "" {
+	if opts.LocalDockerfile != "" {
+		opts.Method = DeployBuildTypeDocker
+	} else if opts.Method != "" {
 		if opts.Method == DeployBuildTypeDocker {
 			if opts.LocalDockerfile == "" {
 				hasDockerfile := c.HasDefaultDockerfile(opts.LocalPath)

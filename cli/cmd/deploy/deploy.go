@@ -85,7 +85,9 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 	deployAgent.agent = agent
 
 	// if build method is not set, determine based on release config
-	if opts.Method == "" {
+	if opts.LocalDockerfile != "" {
+		deployAgent.opts.Method = DeployBuildTypeDocker
+	} else if opts.Method == "" {
 		if release.GitActionConfig != nil {
 			// if the git action config exists, and dockerfile path is not empty, build type
 			// is docker

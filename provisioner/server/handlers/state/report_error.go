@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/server/config"
 	ptypes "github.com/porter-dev/porter/provisioner/types"
 )
@@ -53,6 +54,14 @@ func (c *ReportErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	operation.Error = req.Error
 
 	operation, err = c.Config.Repo.Infra().UpdateOperation(operation)
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
+	// push to the operation stream
+	err = redis_stream.SendOperationCompleted(c.Config.RedisClient, infra, operation)
 
 	if err != nil {
 		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)

@@ -17,6 +17,9 @@ type Props = {
   notFoundText?: string;
   filterLatest?: boolean;
   retry_count?: number;
+  sortBy?: string; // if empty, sorts by last updated. options are "last_updated" or "id"
+  set_max_width?: boolean;
+  can_delete?: boolean;
 };
 
 export const StatusPage = ({
@@ -27,6 +30,9 @@ export const StatusPage = ({
   filterLatest,
   auto_expanded,
   retry_count,
+  sortBy,
+  set_max_width,
+  can_delete,
 }: Props) => {
   const isMounted = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -136,6 +142,12 @@ export const StatusPage = ({
       .then(({ data }) => {
         const matchedInfras = data.filter(filterBySelectedInfras);
 
+        if (sortBy == "id") {
+          matchedInfras.sort((a, b) => {
+            return b.id < a.id ? -1 : b.id > a.id ? 1 : 0;
+          });
+        }
+
         if (filterLatest) {
           // Get latest infras for each kind of infra on the array.
           const latestMatchedInfras = getLatestInfras(matchedInfras);
@@ -169,6 +181,8 @@ export const StatusPage = ({
       project_id={project_id}
       auto_expanded={auto_expanded}
       setInfraStatus={updateSingleInfraStatus}
+      set_max_width={set_max_width}
+      can_delete={can_delete}
     />
   );
 };

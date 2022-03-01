@@ -166,6 +166,9 @@ const ProvisionResources: React.FC<Props> = () => {
               setInfraStatus={setInfraStatus}
               filterLatest
               auto_expanded
+              sortBy="id"
+              set_max_width={true}
+              can_delete={true}
             />
             <Br />
             <Helper>Note: Provisioning can take up to 15 minutes.</Helper>

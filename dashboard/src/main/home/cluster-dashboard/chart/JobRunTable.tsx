@@ -161,18 +161,22 @@ const JobRunTable: React.FC<Props> = ({
   const columns = useMemo<Column<JobRun>[]>(
     () => [
       {
-        Header: "Owner name",
+        Header: "Namespace / Name",
         accessor: (originalRow) => {
           const owners = originalRow.metadata.ownerReferences;
-
+          let name = "N/A";
           if (Array.isArray(owners)) {
-            return owners[0]?.name || "N/A";
+            name = owners[0]?.name;
           }
           if (originalRow?.metadata?.labels["meta.helm.sh/release-name"]) {
-            return originalRow.metadata.labels["meta.helm.sh/release-name"];
+            name = originalRow.metadata.labels["meta.helm.sh/release-name"];
           }
 
-          return "N/A";
+          if (name !== "N/A") {
+            return originalRow.metadata?.namespace + "/" + name;
+          }
+
+          return name;
         },
         width: "max-content",
       },
@@ -357,7 +361,6 @@ export default JobRunTable;
 
 const Status = styled.div<{ color: string }>`
   padding: 5px 10px;
-  margin: auto;
   background: ${(props) => props.color};
   font-size: 13px;
   border-radius: 3px;

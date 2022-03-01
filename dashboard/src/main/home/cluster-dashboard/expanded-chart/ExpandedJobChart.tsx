@@ -57,6 +57,7 @@ type StateType = {
   expandedJobRun: any;
   pods: any;
   showConnectionModal: boolean;
+  loadingJobs: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -80,6 +81,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     expandedJobRun: null as any,
     pods: null as any,
     showConnectionModal: false,
+    loadingJobs: true,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -507,11 +509,11 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     }));
   };
 
-  getJobs = (chart: ChartType) => {
+  getJobs = async (chart: ChartType) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
-
-    return api
-      .getJobs(
+    this.setState({ loadingJobs: true });
+    try {
+      const res = await api.getJobs(
         "<token>",
         {},
         {
@@ -520,12 +522,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           namespace: chart.namespace,
           release_name: chart.name,
         }
-      )
-      .then((res) => {
-        // sort jobs by started timestamp
-        this.sortJobsAndSave(res.data);
-      })
-      .catch((err) => setCurrentError(err));
+      );
+      // sort jobs by started timestamp
+      this.sortJobsAndSave(res.data);
+      this.setState({ loadingJobs: false });
+    } catch (err) {
+      return setCurrentError(err);
+    }
   };
 
   sortJobsAndSave = (jobs: any[]) => {
@@ -597,6 +600,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               saveValuesStatus={this.state.saveValuesStatus}
               expandJob={(job: any) => this.setJobRun(job)}
               chartName={this.state.currentChart?.name}
+              isLoading={this.state.loadingJobs}
             />
           </TabWrapper>
         );

@@ -23,6 +23,7 @@ type Props = {
   project_id: number;
   setInfraStatus: (infra: Infrastructure) => void;
   auto_expanded?: boolean;
+  can_delete?: boolean;
   set_max_width?: boolean;
 };
 
@@ -41,6 +42,7 @@ const ProvisionerStatus: React.FC<Props> = ({
   project_id,
   auto_expanded,
   set_max_width,
+  can_delete,
   setInfraStatus,
 }) => {
   const renderV1Infra = (infra: Infrastructure) => {
@@ -70,6 +72,7 @@ const ProvisionerStatus: React.FC<Props> = ({
         is_expanded={auto_expanded}
         is_collapsible={!auto_expanded}
         set_max_width={set_max_width}
+        can_delete={can_delete}
         updateInfraStatus={updateInfraStatus}
       />
     );
@@ -215,6 +218,7 @@ type V2InfraObjectProps = {
   is_expanded: boolean;
   is_collapsible: boolean;
   set_max_width?: boolean;
+  can_delete?: boolean;
   updateInfraStatus: (infra: Infrastructure) => void;
 };
 
@@ -224,6 +228,7 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
   is_expanded,
   is_collapsible,
   set_max_width,
+  can_delete,
   updateInfraStatus,
 }) => {
   const [isExpanded, setIsExpanded] = useState(is_expanded);
@@ -305,7 +310,13 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
   };
 
   const renderExpandedContentsCreated = () => {
-    return <OperationDetails infra={fullInfra} refreshInfra={refreshInfra} />;
+    return (
+      <OperationDetails
+        infra={fullInfra}
+        can_delete={can_delete}
+        refreshInfra={refreshInfra}
+      />
+    );
   };
 
   const renderExpandedContents = () => {
@@ -381,11 +392,13 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
 
 type OperationDetailsProps = {
   infra: Infrastructure;
+  can_delete?: boolean;
   refreshInfra: (completed?: boolean, errored?: boolean) => void;
 };
 
 const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
   infra,
+  can_delete,
   refreshInfra,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -648,6 +661,34 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
     }
   };
 
+  const deleteInfra = () => {
+    api
+      .deleteInfra(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          infra_id: infra.id,
+        }
+      )
+      .then(({ data }) => {
+        refreshInfra();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
+  const getOperationAction = (status: OperationStatus) => {
+    if (can_delete && status == "errored") {
+      return (
+        <Button color="#b91133" onClick={deleteInfra}>
+          Delete Infra
+        </Button>
+      );
+    }
+  };
+
   const renderLoadingBar = (
     completedResourceCount: number,
     plannedResourceCount: number
@@ -734,6 +775,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
         )}
       </Description>
       {renderErrorSection()}
+      {getOperationAction(operation.status)}
     </StyledCard>
   );
 };
@@ -871,4 +913,47 @@ const ExpandIconContainer = styled.div<{ hidden: boolean }>`
   margin-left: 10px;
   padding-top: 2px;
   display: ${(props) => (props.hidden ? "none" : "inline")};
+`;
+
+const DeleteAction = styled.span`
+  height: 35px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  text-align: left;
+  border: 1px solid #ffffff55;
+  border-radius: 8px;
+  background: #ffffff11;
+  color: #ffffffdd;
+  cursor: pointer;
+  margin-top: 20px;
+  max-width: 120px;
+`;
+
+const Button = styled.button`
+  height: 35px;
+  font-size: 13px;
+  margin: 10px 0;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  color: white;
+  padding: 6px 20px 7px 20px;
+  text-align: left;
+  border: 0;
+  border-radius: 5px;
+  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
+  box-shadow: ${(props) =>
+    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
+  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
+  user-select: none;
+  :focus {
+    outline: 0;
+  }
+  :hover {
+    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
 `;

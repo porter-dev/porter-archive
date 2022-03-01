@@ -357,6 +357,16 @@ func (a *Agent) RollbackRelease(
 	return cmd.Run(name)
 }
 
+// GetValues fetches values for a release
+func (a *Agent) GetValues(
+	name string,
+	allValues bool,
+) (map[string]interface{}, error) {
+	cmd := action.NewGetValues(a.ActionConfig)
+	cmd.AllValues = allValues
+	return cmd.Run(name)
+}
+
 // ------------------------ Helm agent helper functions ------------------------ //
 
 // checkIfInstallable validates if a chart can be installed

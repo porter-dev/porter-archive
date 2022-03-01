@@ -42,6 +42,7 @@ import JobList from "./jobs/JobList";
 import SaveButton from "components/SaveButton";
 import useAuth from "shared/auth/useAuth";
 import JobMetricsSection from "./metrics/JobMetricsSection";
+import Chart from "../chart/Chart";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -1148,13 +1149,12 @@ export const ExpandedJobChartFC: React.FC<{
     deleteChart,
     updateChart,
     upgradeChart,
+    loadChartWithSpecificRevision,
   } = useChart(oldChart, closeChart);
   const { jobs, hasPorterImageTemplate } = useJobs(chart);
   const [devOpsMode, setDevOpsMode] = useState(
     () => localStorage.getItem("devOpsMode") === "true"
   );
-
-  const formData = chart.form;
 
   let rightTabOptions = [] as any[];
 
@@ -1168,66 +1168,69 @@ export const ExpandedJobChartFC: React.FC<{
 
   const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
 
-  const processValuesToUpdateChart = (config?: any) => {
+  const processValuesToUpdateChart = (
+    currentChart?: ChartType,
+    aditionalConfig?: any
+  ) => {
     let conf: string;
     let values = {} as any;
 
-    if (!config) {
+    if (!aditionalConfig) {
       values = {};
-      let imageUrl = this.state.newestImage;
-      let tag = null;
+      // let imageUrl = this.state.newestImage;
+      // let tag = null;
 
-      if (imageUrl) {
-        if (imageUrl.includes(":")) {
-          let splits = imageUrl.split(":");
-          imageUrl = splits[0];
-          tag = splits[1].toString();
-        } else if (!tag) {
-          tag = "latest";
-        }
+      // if (imageUrl) {
+      //   if (imageUrl.includes(":")) {
+      //     let splits = imageUrl.split(":");
+      //     imageUrl = splits[0];
+      //     tag = splits[1].toString();
+      //   } else if (!tag) {
+      //     tag = "latest";
+      //   }
 
-        _.set(values, "image.repository", imageUrl);
-        _.set(values, "image.tag", tag);
-      }
+      //   _.set(values, "image.repository", imageUrl);
+      //   _.set(values, "image.tag", tag);
+      // }
 
       conf = yaml.dump({
-        ...this.state.currentChart.config,
+        ...currentChart.config,
         ...values,
       });
     } else {
       // Convert dotted keys to nested objects
       values = {};
 
-      for (let key in config) {
-        _.set(values, key, config[key]);
+      for (let key in aditionalConfig) {
+        _.set(values, key, aditionalConfig[key]);
       }
 
-      let imageUrl = this.state.newestImage;
-      let tag = null as string;
+      // let imageUrl = this.state.newestImage;
+      // let tag = null as string;
 
-      if (imageUrl) {
-        if (imageUrl.includes(":")) {
-          let splits = imageUrl.split(":");
-          imageUrl = splits[0];
-          tag = splits[1].toString();
-        } else if (!tag) {
-          tag = "latest";
-        }
+      // if (imageUrl) {
+      //   if (imageUrl.includes(":")) {
+      //     let splits = imageUrl.split(":");
+      //     imageUrl = splits[0];
+      //     tag = splits[1].toString();
+      //   } else if (!tag) {
+      //     tag = "latest";
+      //   }
 
-        _.set(values, "image.repository", imageUrl);
-        _.set(values, "image.tag", `${tag}`);
-      }
+      //   _.set(values, "image.repository", imageUrl);
+      //   _.set(values, "image.tag", `${tag}`);
+      // }
 
-      if (runJob) {
-        _.set(values, "paused", false);
-      } else {
-        _.set(values, "paused", true);
-      }
+      // if (runJob) {
+      //   _.set(values, "paused", false);
+      // } else {
+      //   _.set(values, "paused", true);
+      // }
 
       // Weave in preexisting values and convert to yaml
       conf = yaml.dump(
         {
-          ...(this.state.currentChart.config as Object),
+          ...(currentChart.config as Object),
           ...values,
         },
         { forceQuotes: true }
@@ -1339,6 +1342,7 @@ export const ExpandedJobChartFC: React.FC<{
           closeChart={closeChart}
           refreshChart={refreshChart}
           upgradeChart={upgradeChart}
+          loadChartWithSpecificRevision={loadChartWithSpecificRevision}
         />
         <LineBreak />
         <Placeholder>
@@ -1353,6 +1357,8 @@ export const ExpandedJobChartFC: React.FC<{
     );
   }
 
+  const formData = chart.form;
+
   return (
     <>
       <StyledExpandedChart>
@@ -1362,6 +1368,7 @@ export const ExpandedJobChartFC: React.FC<{
           closeChart={closeChart}
           refreshChart={refreshChart}
           upgradeChart={upgradeChart}
+          loadChartWithSpecificRevision={loadChartWithSpecificRevision}
         />
         <BodyWrapper>
           {(leftTabOptions?.length > 0 ||
@@ -1411,7 +1418,15 @@ const ExpandedJobHeader: React.FC<{
   closeChart: () => void;
   refreshChart: () => void;
   upgradeChart: () => void;
-}> = ({ chart, closeChart, jobs, refreshChart, upgradeChart }) => {
+  loadChartWithSpecificRevision: (revision: number) => void;
+}> = ({
+  chart,
+  closeChart,
+  jobs,
+  refreshChart,
+  upgradeChart,
+  loadChartWithSpecificRevision,
+}) => {
   const { currentProject, setCurrentError, currentCluster } = useContext(
     Context
   );
@@ -1438,7 +1453,9 @@ const ExpandedJobHeader: React.FC<{
       <RevisionSection
         chart={chart}
         refreshChart={() => refreshChart()}
-        setRevision={() => {}}
+        setRevision={(chart) => {
+          loadChartWithSpecificRevision(chart?.version);
+        }}
         forceRefreshRevisions={false}
         refreshRevisionsOff={() => {}}
         status={""}
@@ -1463,15 +1480,20 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
   const { params, url: matchUrl } = useRouteMatch<{
     namespace: string;
     chartName: string;
+    chart_revision: string;
   }>();
+
   const [status, setStatus] = useState<"ready" | "loading" | "deleting">(
     "loading"
   );
-  const { pushFiltered } = useRouting();
+  const { pushFiltered, getQueryParam } = useRouting();
 
   useEffect(() => {
     const { namespace, chartName } = params;
     setStatus("loading");
+
+    const revision = getQueryParam("chart_revision");
+
     api
       .getChart<ChartTypeWithExtendedConfig>(
         "token",
@@ -1481,7 +1503,7 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
           cluster_id: currentCluster?.id,
           namespace,
           name: chartName,
-          revision: 0,
+          revision: Number(revision) ? Number(revision) : 0,
         }
       )
       .then((res) => {
@@ -1565,7 +1587,81 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
   /**
    * Update chart values
    */
-  const updateChart = async (values: string) => {
+  const updateChart = async (processValues: (chart: ChartType) => string) => {
+    const values = processValues(chart);
+
+    const oldSyncedEnvGroups = oldChart.config?.container?.env?.synced || [];
+    const newSyncedEnvGroups = chart.config?.container?.env?.synced || [];
+
+    const deletedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      oldSyncedEnvGroups,
+      newSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      newSyncedEnvGroups,
+      oldSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addApplicationToEnvGroupPromises = addedEnvGroups.map(
+      (envGroup: any) => {
+        return api.addApplicationToEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: chart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: chart.namespace,
+          }
+        );
+      }
+    );
+
+    try {
+      await Promise.all(addApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't sync the env group to the application, please try again."
+      );
+    }
+
+    const removeApplicationToEnvGroupPromises = deletedEnvGroups.map(
+      (envGroup: any) => {
+        return api.removeApplicationFromEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: chart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: chart.namespace,
+          }
+        );
+      }
+    );
+    try {
+      await Promise.all(removeApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't remove the synced env group from the application, please try again."
+      );
+    }
+
     api
       .upgradeChartValues(
         "<token>",
@@ -1619,6 +1715,30 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
     } catch (error) {}
   };
 
+  const loadChartWithSpecificRevision = async (revision: number) => {
+    try {
+      const newChart = await api
+        .getChart(
+          "<token>",
+          {},
+          {
+            name: chart.name,
+            revision: revision,
+            namespace: chart.namespace,
+            cluster_id: currentCluster.id,
+            id: currentProject.id,
+          }
+        )
+        .then((res) => res.data);
+
+      pushFiltered(matchUrl, ["project_id", "job"], {
+        chart_revision: newChart.version,
+      });
+
+      setChart(newChart);
+    } catch (error) {}
+  };
+
   return {
     chart,
     status,
@@ -1626,6 +1746,7 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
     deleteChart,
     updateChart,
     refreshChart,
+    loadChartWithSpecificRevision,
   };
 };
 

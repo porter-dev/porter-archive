@@ -19,6 +19,7 @@ type Props = {
   retry_count?: number;
   sortBy?: string; // if empty, sorts by last updated. options are "last_updated" or "id"
   set_max_width?: boolean;
+  can_delete?: boolean;
 };
 
 export const StatusPage = ({
@@ -31,6 +32,7 @@ export const StatusPage = ({
   retry_count,
   sortBy,
   set_max_width,
+  can_delete,
 }: Props) => {
   const isMounted = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,6 +182,7 @@ export const StatusPage = ({
       auto_expanded={auto_expanded}
       setInfraStatus={updateSingleInfraStatus}
       set_max_width={set_max_width}
+      can_delete={can_delete}
     />
   );
 };

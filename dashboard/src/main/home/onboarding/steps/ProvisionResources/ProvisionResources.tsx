@@ -168,6 +168,7 @@ const ProvisionResources: React.FC<Props> = () => {
               auto_expanded
               sortBy="id"
               set_max_width={true}
+              can_delete={true}
             />
             <Br />
             <Helper>Note: Provisioning can take up to 15 minutes.</Helper>

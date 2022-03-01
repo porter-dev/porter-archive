@@ -31,6 +31,7 @@ import Loading from "components/Loading";
 import JobRunTable from "./chart/JobRunTable";
 import SwitchBase from "@material-ui/core/internal/SwitchBase";
 import Selector from "components/Selector";
+import TabSelector from "components/TabSelector";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -200,7 +201,21 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
     return (
       <>
-        <ControlRow>
+        <TabSelector
+          currentTab={this.state.showRuns ? "job_runs" : "chart_list"}
+          options={[
+            { label: "Jobs", value: "chart_list" },
+            { label: "Runs", value: "job_runs" },
+          ]}
+          setCurrentTab={(value) => {
+            if (value === "job_runs") {
+              this.setState({ showRuns: true });
+            } else {
+              this.setState({ showRuns: false });
+            }
+          }}
+        />
+        <ControlRow style={{ marginTop: "35px" }}>
           {isAuthorizedToAdd && (
             <Button
               onClick={() =>
@@ -210,21 +225,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">add</i> Launch Template
             </Button>
           )}
-          <Selector
-            activeValue={this.state.showRuns ? "job_runs" : "chart_list"}
-            options={[
-              { label: "Jobs", value: "chart_list" },
-              { label: "Runs", value: "job_runs" },
-            ]}
-            setActiveValue={(value) => {
-              if (value === "job_runs") {
-                this.setState({ showRuns: true });
-              } else {
-                this.setState({ showRuns: false });
-              }
-            }}
-            width="100px"
-          ></Selector>
           <SortFilterWrapper>
             {currentView === "jobs" && (
               <LastRunStatusSelector
@@ -250,13 +250,14 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             />
           </SortFilterWrapper>
         </ControlRow>
-        {this.state.showRuns ? (
+        <HidableElement show={this.state.showRuns}>
           <JobRunTable
             lastRunStatus={this.state.lastRunStatus}
             namespace={this.state.namespace}
             sortType={this.state.sortType as any}
           />
-        ) : (
+        </HidableElement>
+        <HidableElement show={!this.state.showRuns}>
           <ChartList
             currentView={currentView}
             currentCluster={currentCluster}
@@ -264,7 +265,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             namespace={this.state.namespace}
             sortType={this.state.sortType}
           />
-        )}
+        </HidableElement>
       </>
     );
   };
@@ -304,12 +305,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           resource=""
           verb={["get", "list"]}
         >
-          {/* {this.renderContents()} */}
           <DashboardHeader
-            image={currentView === "jobs" ? monojob : monoweb}
+            image={monojob}
             title={currentView}
             description={this.getDescription(currentView)}
+            disableLineBreak
           />
+
           {this.renderBodyForJobs()}
         </GuardedRoute>
         <GuardedRoute
@@ -320,10 +322,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         >
           {/* {this.renderContents()} */}
           <DashboardHeader
-            image={currentView === "jobs" ? monojob : monoweb}
+            image={monoweb}
             title={currentView}
             description={this.getDescription(currentView)}
           />
+
           {this.renderBodyForApps()}
         </GuardedRoute>
         <GuardedRoute
@@ -349,6 +352,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 ClusterDashboard.contextType = Context;
 
 export default withRouter(withAuth(ClusterDashboard));
+
+const HidableElement = styled.div<{ show: boolean }>`
+  display: ${(props) => (props.show ? "unset" : "none")};
+`;
 
 const Br = styled.div`
   width: 100%;

@@ -37,7 +37,13 @@ const dateFormatter = (date: string) => {
 
 const runnedFor = (start: string | number, end?: string | number) => {
   const duration = timeFrom(start, end);
-  return `Runned for ${duration.time} ${duration.unitOfTime}`;
+
+  const unit =
+    duration.time === 1
+      ? duration.unitOfTime.substring(0, duration.unitOfTime.length - 1)
+      : duration.unitOfTime;
+
+  return `${duration.time} ${unit}`;
 };
 
 function timeFrom(time: string | number, secondTime?: string | number) {

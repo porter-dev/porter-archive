@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import styled from "styled-components";
@@ -1593,8 +1594,12 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
   /**
    * Update chart values
    */
-  const updateChart = async (processValues: (chart: ChartType) => string) => {
-    const values = processValues(chart);
+  const updateChart = async (
+    processValues:
+      | ((chart: ChartType) => string)
+      | ((chart: ChartType, oldChart?: ChartType) => string)
+  ) => {
+    const values = processValues(chart, oldChart);
 
     const oldSyncedEnvGroups = oldChart.config?.container?.env?.synced || [];
     const newSyncedEnvGroups = chart.config?.container?.env?.synced || [];
@@ -1766,6 +1771,7 @@ const PORTER_IMAGE_TEMPLATES = [
 const useJobs = (chart: ChartType) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [jobs, setJobs] = useState([]);
+  const jobsRef = useRef([]);
   const [hasPorterImageTemplate, setHasPorterImageTemplate] = useState(true);
   const {
     newWebsocket,
@@ -1774,7 +1780,7 @@ const useJobs = (chart: ChartType) => {
     closeWebsocket,
   } = useWebsockets();
 
-  const sortJobsAndSave = (jobs: any[]) => {
+  const sortJobsAndSave = (newJobs: any[]) => {
     // Set job run from URL if needed
     const urlParams = new URLSearchParams(location.search);
     const urlJob = urlParams.get("job");
@@ -1783,7 +1789,7 @@ const useJobs = (chart: ChartType) => {
       return new Date(job?.status?.startTime).getTime();
     };
 
-    jobs.sort((job1, job2) => {
+    newJobs.sort((job1, job2) => {
       // if (job1.metadata.name === urlJob) {
       //   this.setJobRun(job1);
       // } else if (job2.metadata.name === urlJob) {
@@ -1794,19 +1800,20 @@ const useJobs = (chart: ChartType) => {
     });
 
     let latestImageDetected =
-      jobs[0]?.spec?.template?.spec?.containers[0]?.image;
+      newJobs[0]?.spec?.template?.spec?.containers[0]?.image;
     if (!PORTER_IMAGE_TEMPLATES.includes(latestImageDetected)) {
       // this.setState({ jobs, newestImage, imageIsPlaceholder: false });
       setHasPorterImageTemplate(false);
     }
-
-    setJobs(jobs);
+    jobsRef.current = newJobs;
+    setJobs(newJobs);
   };
 
   const mergeNewJob = (newJob: any) => {
-    let newJobs = jobs;
+    let newJobs = [...jobsRef.current];
+
     let exists = false;
-    jobs.forEach((job: any, i: number, self: any[]) => {
+    newJobs.forEach((job: any, i: number, self: any[]) => {
       if (
         job.metadata?.name == newJob.metadata?.name &&
         job.metadata?.namespace == newJob.metadata?.namespace
@@ -1817,18 +1824,18 @@ const useJobs = (chart: ChartType) => {
     });
 
     if (!exists) {
-      jobs.push(newJob);
+      newJobs.push(newJob);
     }
 
     sortJobsAndSave(newJobs);
   };
 
   const removeJob = (deletedJob: any) => {
-    let newJobs = jobs.filter((job: any) => {
+    let newJobs = jobsRef.current.filter((job: any) => {
       return deletedJob.metadata?.name !== job.metadata?.name;
     });
 
-    sortJobsAndSave(newJobs);
+    sortJobsAndSave([...newJobs]);
   };
 
   const setupCronJobWebsocket = () => {

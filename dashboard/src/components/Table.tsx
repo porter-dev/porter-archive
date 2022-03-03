@@ -75,7 +75,6 @@ const Table: React.FC<TableProps> = ({
     {
       columns: columnsData,
       data,
-      initialState: { pageSize: MIN_PAGE_SIZE },
     },
     useGlobalFilter,
     usePagination

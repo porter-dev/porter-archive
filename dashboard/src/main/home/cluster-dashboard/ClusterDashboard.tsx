@@ -28,6 +28,10 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import LastRunStatusSelector from "./LastRunStatusSelector";
 import loadable from "@loadable/component";
 import Loading from "components/Loading";
+import JobRunTable from "./chart/JobRunTable";
+import SwitchBase from "@material-ui/core/internal/SwitchBase";
+import Selector from "components/Selector";
+import TabSelector from "components/TabSelector";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -47,6 +51,7 @@ type StateType = {
   lastRunStatus: JobStatusType | null;
   currentChart: ChartType | null;
   isMetricsInstalled: boolean;
+  showRuns: boolean;
 };
 
 // TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
@@ -59,6 +64,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     lastRunStatus: "all" as null,
     currentChart: null as ChartType | null,
     isMetricsInstalled: false,
+    showRuns: false,
   };
 
   componentDidMount() {
@@ -130,7 +136,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
   };
 
-  renderBody = () => {
+  renderBodyForApps = () => {
     let { currentCluster, currentView } = this.props;
     const isAuthorizedToAdd = this.props.isAuthorized(
       "namespace",
@@ -186,25 +192,104 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
   };
 
-  renderContents = () => {
-    let { currentCluster, setSidebar, currentView } = this.props;
-    if (currentView === "env-groups") {
-      return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
-    }
-
+  renderBodyForJobs = () => {
+    let { currentCluster, currentView } = this.props;
+    const isAuthorizedToAdd = this.props.isAuthorized(
+      "namespace",
+      [],
+      ["get", "create"]
+    );
     return (
       <>
-        <DashboardHeader
-          image={currentView === "jobs" ? monojob : monoweb}
-          title={currentView}
-          description={this.getDescription(currentView)}
+        <TabSelector
+          currentTab={this.state.showRuns ? "job_runs" : "chart_list"}
+          options={[
+            { label: "Jobs", value: "chart_list" },
+            { label: "Runs", value: "job_runs" },
+          ]}
+          setCurrentTab={(value) => {
+            if (value === "job_runs") {
+              this.setState({ showRuns: true });
+            } else {
+              this.setState({ showRuns: false });
+            }
+          }}
         />
-        {this.renderBody()}
+        <ControlRow style={{ marginTop: "35px" }}>
+          {isAuthorizedToAdd && (
+            <Button
+              onClick={() =>
+                pushFiltered(this.props, "/launch", ["project_id"])
+              }
+            >
+              <i className="material-icons">add</i> Launch Template
+            </Button>
+          )}
+          <SortFilterWrapper>
+            {currentView === "jobs" && (
+              <LastRunStatusSelector
+                lastRunStatus={this.state.lastRunStatus}
+                setLastRunStatus={(lastRunStatus: JobStatusType) => {
+                  this.setState({ lastRunStatus });
+                }}
+              />
+            )}
+            <NamespaceSelector
+              setNamespace={(namespace) =>
+                this.setState({ namespace }, () => {
+                  pushQueryParams(this.props, {
+                    namespace: this.state.namespace || "ALL",
+                  });
+                })
+              }
+              namespace={this.state.namespace}
+            />
+            <SortSelector
+              setSortType={(sortType) => this.setState({ sortType })}
+              sortType={this.state.sortType}
+            />
+          </SortFilterWrapper>
+        </ControlRow>
+        <HidableElement show={this.state.showRuns}>
+          <JobRunTable
+            lastRunStatus={this.state.lastRunStatus}
+            namespace={this.state.namespace}
+            sortType={this.state.sortType as any}
+          />
+        </HidableElement>
+        <HidableElement show={!this.state.showRuns}>
+          <ChartList
+            currentView={currentView}
+            currentCluster={currentCluster}
+            lastRunStatus={this.state.lastRunStatus}
+            namespace={this.state.namespace}
+            sortType={this.state.sortType}
+          />
+        </HidableElement>
       </>
     );
   };
 
+  // renderContents = () => {
+  //   let { currentCluster, setSidebar, currentView } = this.props;
+  //   if (currentView === "env-groups") {
+  //     return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
+  //   }
+
+  //   return (
+  //     <>
+  //       <DashboardHeader
+  //         image={currentView === "jobs" ? monojob : monoweb}
+  //         title={currentView}
+  //         description={this.getDescription(currentView)}
+  //       />
+  //       {this.renderBody()}
+  //     </>
+  //   );
+  // };
+
   render() {
+    let { currentView } = this.props;
     let { setSidebar } = this.props;
     return (
       <Switch>
@@ -220,7 +305,14 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           resource=""
           verb={["get", "list"]}
         >
-          {this.renderContents()}
+          <DashboardHeader
+            image={monojob}
+            title={currentView}
+            description={this.getDescription(currentView)}
+            disableLineBreak
+          />
+
+          {this.renderBodyForJobs()}
         </GuardedRoute>
         <GuardedRoute
           path={"/applications"}
@@ -228,7 +320,14 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           resource=""
           verb={["get", "list"]}
         >
-          {this.renderContents()}
+          {/* {this.renderContents()} */}
+          <DashboardHeader
+            image={monoweb}
+            title={currentView}
+            description={this.getDescription(currentView)}
+          />
+
+          {this.renderBodyForApps()}
         </GuardedRoute>
         <GuardedRoute
           path={"/env-groups"}
@@ -236,7 +335,8 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           resource=""
           verb={["get", "list"]}
         >
-          {this.renderContents()}
+          {/* {this.renderContents()} */}
+          <EnvGroupDashboard currentCluster={this.props.currentCluster} />
         </GuardedRoute>
         <Route path={"/databases"}>
           <LazyDatabasesRoutes />
@@ -252,6 +352,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 ClusterDashboard.contextType = Context;
 
 export default withRouter(withAuth(ClusterDashboard));
+
+const HidableElement = styled.div<{ show: boolean }>`
+  display: ${(props) => (props.show ? "unset" : "none")};
+`;
 
 const Br = styled.div`
   width: 100%;

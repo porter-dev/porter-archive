@@ -41,6 +41,8 @@ export type TableProps = {
   enablePagination?: boolean;
 };
 
+const MIN_PAGE_SIZE = 1;
+
 const Table: React.FC<TableProps> = ({
   columns: columnsData,
   data,
@@ -80,7 +82,7 @@ const Table: React.FC<TableProps> = ({
 
   useEffect(() => {
     if (!enablePagination) {
-      setPageSize(data.length);
+      setPageSize(data.length || MIN_PAGE_SIZE);
     }
   }, [data, enablePagination]);
 

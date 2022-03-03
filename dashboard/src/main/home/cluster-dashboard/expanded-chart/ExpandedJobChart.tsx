@@ -44,6 +44,7 @@ import SaveButton from "components/SaveButton";
 import useAuth from "shared/auth/useAuth";
 import JobMetricsSection from "./metrics/JobMetricsSection";
 import Chart from "../chart/Chart";
+import { PorterFormContext } from "components/porter-form/PorterFormContextProvider";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -1604,7 +1605,7 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
       | ((chart: ChartType, oldChart?: ChartType) => string)
   ) => {
     const values = processValues(chart, oldChart);
-    // return;
+
     const oldSyncedEnvGroups = oldChart.config?.container?.env?.synced || [];
     const newSyncedEnvGroups = chart.config?.container?.env?.synced || [];
 
@@ -1773,7 +1774,9 @@ const PORTER_IMAGE_TEMPLATES = [
 ];
 
 const useJobs = (chart: ChartType) => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [jobs, setJobs] = useState([]);
   const jobsRef = useRef([]);
   const [hasPorterImageTemplate, setHasPorterImageTemplate] = useState(true);
@@ -1982,6 +1985,57 @@ const useJobs = (chart: ChartType) => {
       closeAllWebsockets();
     };
   }, [chart]);
+
+  const runJob = () => {
+    const config = chart.config;
+    const values = {};
+
+    for (let key in config) {
+      _.set(values, key, config[key]);
+    }
+
+    if (runJob) {
+      _.set(values, "paused", false);
+    }
+
+    const yamlValues = yaml.dump(
+      {
+        ...values,
+      },
+      { forceQuotes: true }
+    );
+
+    api
+      .upgradeChartValues(
+        "<token>",
+        {
+          values: yamlValues,
+        },
+        {
+          id: currentProject.id,
+          name: chart.name,
+          namespace: chart.namespace,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {
+        // this.setState({ saveValuesStatus: "successful" });
+        // this.refreshChart(0);
+      })
+      .catch((err) => {
+        let parsedErr = err?.response?.data?.error;
+
+        if (parsedErr) {
+          err = parsedErr;
+        }
+
+        // this.setState({
+        //   saveValuesStatus: parsedErr,
+        // });
+
+        setCurrentError(parsedErr);
+      });
+  };
 
   return {
     jobs,

@@ -1175,14 +1175,14 @@ export const ExpandedJobChartFC: React.FC<{
 
   const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
 
-  const processValuesToUpdateChart = (
-    currentChart?: ChartType,
-    aditionalConfig?: any
+  const processValuesToUpdateChart = (newConfig?: any) => (
+    currentChart: ChartType
   ) => {
+    // return "";
     let conf: string;
     let values = {} as any;
 
-    if (!aditionalConfig) {
+    if (!newConfig) {
       values = {};
       // let imageUrl = this.state.newestImage;
       // let tag = null;
@@ -1208,8 +1208,8 @@ export const ExpandedJobChartFC: React.FC<{
       // Convert dotted keys to nested objects
       values = {};
 
-      for (let key in aditionalConfig) {
-        _.set(values, key, aditionalConfig[key]);
+      for (let key in newConfig) {
+        _.set(values, key, newConfig[key]);
       }
 
       // let imageUrl = this.state.newestImage;
@@ -1243,6 +1243,8 @@ export const ExpandedJobChartFC: React.FC<{
         { forceQuotes: true }
       );
     }
+
+    return conf;
   };
 
   const renderTabContents = (currentTab: string) => {
@@ -1392,7 +1394,9 @@ export const ExpandedJobChartFC: React.FC<{
                 hasPorterImageTemplate ||
                 !isAuthorized("job", "", ["get", "update"])
               }
-              onSubmit={(formValues) => updateChart(formValues)}
+              onSubmit={(formValues) =>
+                updateChart(processValuesToUpdateChart(formValues))
+              }
               leftTabOptions={leftTabOptions}
               rightTabOptions={rightTabOptions}
               saveValuesStatus={"saveValuesStatus"}
@@ -1600,7 +1604,7 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
       | ((chart: ChartType, oldChart?: ChartType) => string)
   ) => {
     const values = processValues(chart, oldChart);
-
+    // return;
     const oldSyncedEnvGroups = oldChart.config?.container?.env?.synced || [];
     const newSyncedEnvGroups = chart.config?.container?.env?.synced || [];
 

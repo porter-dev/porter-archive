@@ -6,6 +6,7 @@ import JobList from "./JobList";
 import SaveButton from "components/SaveButton";
 import CommandLineIcon from "assets/command-line-icon";
 import ConnectToJobInstructionsModal from "./ConnectToJobInstructionsModal";
+import Loading from "components/Loading";
 
 interface Props {
   isAuthorized: any;
@@ -19,6 +20,7 @@ interface Props {
   isDeployedFromGithub: boolean;
   repositoryUrl?: string;
   chartName: string;
+  isLoading: boolean;
 }
 
 /**
@@ -58,6 +60,10 @@ const TempJobList: React.FC<Props> = (props) => {
 
   if (!props.isAuthorized("job", "", ["get", "update", "create"])) {
     saveButton = null;
+  }
+
+  if (props.isLoading) {
+    return <Loading height="500px"></Loading>;
   }
 
   return (

@@ -410,9 +410,6 @@ jobs:
           GITHUB_TAG: ${{ github.ref }}
       - name: Push new branch with updated CLI
         run: |
-          git config user.name "Update Bot"
-          git config user.email "support@porter.run"
-
           cd $GITHUB_WORKSPACE
 
           git clone https://abelanger5:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/porter-update-action
@@ -428,6 +425,11 @@ jobs:
 
           ENTRYPOINT ["/action/entrypoint.sh"]
           EOL
+
+          git config user.name "Update Bot"
+          git config user.email "support@porter.run"
+
+          git add .
 
           git commit -m "Update to CLI version ${{steps.tag_name.outputs.tag}}"
 
@@ -446,9 +448,6 @@ jobs:
           GITHUB_TAG: ${{ github.ref }}
       - name: Push new branch with updated CLI
         run: |
-          git config user.name "Update Bot"
-          git config user.email "support@porter.run"
-
           cd $GITHUB_WORKSPACE
 
           git clone https://abelanger5:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/porter-cli-action
@@ -464,6 +463,11 @@ jobs:
 
           ENTRYPOINT ["/action/entrypoint.sh"]
           EOL
+
+          git config user.name "Update Bot"
+          git config user.email "support@porter.run"
+
+          git add .
 
           git commit -m "Update to CLI version ${{steps.tag_name.outputs.tag}}"
 
@@ -482,9 +486,6 @@ jobs:
           GITHUB_TAG: ${{ github.ref }}
       - name: Update new-release-tests
         run: |
-          git config user.name "Update Bot"
-          git config user.email "support@porter.run"
-
           cd $GITHUB_WORKSPACE
 
           git clone https://abelanger5:${{ secrets.PORTER_DEV_GITHUB_TOKEN }}@github.com/porter-dev/new-release-tests
@@ -496,6 +497,13 @@ jobs:
 
           sed -i '' 's/uses: porter-dev\/porter-update-action.*/uses: porter-dev\/porter-update-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
           sed -i '' 's/uses: porter-dev\/porter-cli-action.*/uses: porter-dev\/porter-cli-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
+
+          cd ../..
+
+          git config user.name "Update Bot"
+          git config user.email "support@porter.run"
+
+          git add .
 
           git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}"
 

@@ -73,6 +73,7 @@ type StateType = {
   pods: any;
   forceRefreshRevisions: boolean;
   showConnectionModal: boolean;
+  loadingJobs: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -97,6 +98,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     pods: null as any,
     forceRefreshRevisions: false,
     showConnectionModal: false,
+    loadingJobs: true,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -126,7 +128,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentCluster, currentChart } = this.props;
 
     this.setState({ loading: true });
-    api
+    return api
       .getChart(
         "<token>",
         {},
@@ -526,9 +528,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
   getJobs = async (chart: ChartType) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
-
-    api
-      .getJobs(
+    this.setState({ loadingJobs: true });
+    try {
+      const res = await api.getJobs(
         "<token>",
         {},
         {
@@ -537,12 +539,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           namespace: chart.namespace,
           release_name: chart.name,
         }
-      )
-      .then((res) => {
-        // sort jobs by started timestamp
-        this.sortJobsAndSave(res.data);
-      })
-      .catch((err) => setCurrentError(err));
+      );
+      // sort jobs by started timestamp
+      this.sortJobsAndSave(res.data);
+      this.setState({ loadingJobs: false });
+    } catch (err) {
+      return setCurrentError(err);
+    }
   };
 
   sortJobsAndSave = (jobs: any[]) => {
@@ -668,6 +671,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 this.state.currentChart.latest_version
               )}
               chartName={this.state.currentChart?.name}
+              isLoading={this.state.loadingJobs}
             />
           </TabWrapper>
         );
@@ -746,10 +750,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart, currentChart.version);
-    this.getJobs(currentChart);
-    this.setupJobWebsocket(currentChart);
-    this.setupCronJobWebsocket(currentChart);
+    this.getChartData(currentChart, currentChart.version).then(() => {
+      this.getJobs(currentChart).then(() => {
+        this.setupJobWebsocket(currentChart);
+        this.setupCronJobWebsocket(currentChart);
+      });
+    });
   }
 
   componentDidUpdate(

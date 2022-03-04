@@ -521,4 +521,3 @@ jobs:
         run: gh workflow run porter_test_docker_production.yml --repo porter-dev/new-release-tests
         env:
           GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
-

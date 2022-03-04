@@ -8,6 +8,6 @@ import (
 type APITokenRepository interface {
 	CreateAPIToken(token *models.APIToken) (*models.APIToken, error)
 	ListAPITokensByProjectID(projectID uint) ([]*models.APIToken, error)
-	ReadAPIToken(uid string) (*models.APIToken, error)
+	ReadAPIToken(projectID uint, uid string) (*models.APIToken, error)
 	UpdateAPIToken(token *models.APIToken) (*models.APIToken, error)
 }

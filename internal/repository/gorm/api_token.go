@@ -34,10 +34,10 @@ func (repo *APITokenRepository) ListAPITokensByProjectID(projectID uint) ([]*mod
 	return tokens, nil
 }
 
-func (repo *APITokenRepository) ReadAPIToken(uid string) (*models.APIToken, error) {
+func (repo *APITokenRepository) ReadAPIToken(projectID uint, uid string) (*models.APIToken, error) {
 	token := &models.APIToken{}
 
-	if err := repo.db.Where("id = ?", uid).First(&token).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND unique_id = ?", projectID, uid).First(&token).Error; err != nil {
 		return nil, err
 	}
 

@@ -5,50 +5,80 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
 
+type PolicyLoaderOpts struct {
+	ProjectID, UserID uint
+	Token             *models.APIToken
+}
+
 type PolicyDocumentLoader interface {
-	LoadPolicyDocuments(userID, projectID uint) ([]*types.PolicyDocument, apierrors.RequestError)
+	LoadPolicyDocuments(opts *PolicyLoaderOpts) ([]*types.PolicyDocument, apierrors.RequestError)
 }
 
-// BasicPolicyDocumentLoader loads policy documents simply depending on the
-type BasicPolicyDocumentLoader struct {
-	projRepo repository.ProjectRepository
+// RepoPolicyDocumentLoader loads policy documents by reading from the repository database
+type RepoPolicyDocumentLoader struct {
+	projRepo   repository.ProjectRepository
+	policyRepo repository.PolicyRepository
 }
 
-func NewBasicPolicyDocumentLoader(projRepo repository.ProjectRepository) *BasicPolicyDocumentLoader {
-	return &BasicPolicyDocumentLoader{projRepo}
+func NewBasicPolicyDocumentLoader(projRepo repository.ProjectRepository, policyRepo repository.PolicyRepository) *RepoPolicyDocumentLoader {
+	return &RepoPolicyDocumentLoader{projRepo, policyRepo}
 }
 
-func (b *BasicPolicyDocumentLoader) LoadPolicyDocuments(
-	userID, projectID uint,
+func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
+	opts *PolicyLoaderOpts,
 ) ([]*types.PolicyDocument, apierrors.RequestError) {
-	// read role and case on role "kind"
-	role, err := b.projRepo.ReadProjectRole(projectID, userID)
+	if opts.Token != nil {
+		// load the policy from the repo
+		policy, err := b.policyRepo.ReadPolicy(opts.Token.ProjectID, opts.Token.PolicyUID)
 
-	if err != nil && err == gorm.ErrRecordNotFound {
-		return nil, apierrors.NewErrForbidden(
-			fmt.Errorf("user %d does not have a role in project %d", userID, projectID),
-		)
-	} else if err != nil {
-		return nil, apierrors.NewErrInternal(err)
+		if err != nil {
+			return nil, apierrors.NewErrInternal(err)
+		}
+
+		apiPolicy, err := policy.ToAPIPolicyType()
+
+		if err != nil {
+			return nil, apierrors.NewErrInternal(err)
+		}
+
+		return apiPolicy.Policy, nil
+	} else if opts.ProjectID != 0 && opts.UserID != 0 {
+		userID := opts.UserID
+		projectID := opts.ProjectID
+		// read role and case on role "kind"
+		role, err := b.projRepo.ReadProjectRole(projectID, userID)
+
+		if err != nil && err == gorm.ErrRecordNotFound {
+			return nil, apierrors.NewErrForbidden(
+				fmt.Errorf("user %d does not have a role in project %d", userID, projectID),
+			)
+		} else if err != nil {
+			return nil, apierrors.NewErrInternal(err)
+		}
+
+		// load role based on role kind
+		switch role.Kind {
+		case types.RoleAdmin:
+			return AdminPolicy, nil
+		case types.RoleDeveloper:
+			return DeveloperPolicy, nil
+		case types.RoleViewer:
+			return ViewerPolicy, nil
+		default:
+			return nil, apierrors.NewErrForbidden(
+				fmt.Errorf("%s role not supported for user %d, project %d", string(role.Kind), userID, projectID),
+			)
+		}
 	}
 
-	// load role based on role kind
-	switch role.Kind {
-	case types.RoleAdmin:
-		return AdminPolicy, nil
-	case types.RoleDeveloper:
-		return DeveloperPolicy, nil
-	case types.RoleViewer:
-		return ViewerPolicy, nil
-	default:
-		return nil, apierrors.NewErrForbidden(
-			fmt.Errorf("%s role not supported for user %d, project %d", string(role.Kind), userID, projectID),
-		)
-	}
+	return nil, apierrors.NewErrForbidden(
+		fmt.Errorf("policy loader called with invalid arguments"),
+	)
 }
 
 var AdminPolicy = []*types.PolicyDocument{

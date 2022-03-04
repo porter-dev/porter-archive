@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type PermissionScope string
 
 const (
@@ -84,4 +86,22 @@ var ViewerPolicy = []*PolicyDocument{
 			},
 		},
 	},
+}
+
+type CreatePolicy struct {
+	Name   string            `json:"name" form:"required"`
+	Policy []*PolicyDocument `json:"policy" form:"required"`
+}
+
+type APIPolicyMeta struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ProjectID uint      `json:"project_id"`
+	UID       string    `json:"uid"`
+	Name      string    `json:"name"`
+}
+
+type APIPolicy struct {
+	*APIPolicyMeta
+	Policy []*PolicyDocument `json:"policy"`
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthNFactory generates a middleware handler `AuthN`
@@ -62,7 +64,7 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		authn.sendForbiddenError(err, w, r)
 		return
 	} else if err == nil && tok != nil {
-		authn.nextWithToken(w, r, tok)
+		authn.verifyTokenWithNext(w, r, tok)
 		return
 	}
 
@@ -120,13 +122,36 @@ func (authn *AuthN) handleForbiddenForSession(
 	return
 }
 
-// nextWithToken calls the next handler with either the service account or user corresponding
-// to the token set in context.
-func (authn *AuthN) nextWithToken(w http.ResponseWriter, r *http.Request, tok *token.Token) {
-	// TODO: add section to get service account for server-side token
+func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, tok *token.Token) {
+	// if the token has a stored token id and secret we check that the token is valid in the database
+	if tok.Secret != "" && tok.TokenID != "" {
+		apiToken, err := authn.config.Repo.APIToken().ReadAPIToken(tok.ProjectID, tok.TokenID)
 
-	// for now, we just use nextWithUser using the `iby` field for the token
-	authn.nextWithUserID(w, r, tok.IBy)
+		if err != nil {
+			authn.sendForbiddenError(fmt.Errorf("token with id %s not valid", tok.TokenID), w, r)
+			return
+		}
+
+		// compare the secret against the hashed version
+		if err := bcrypt.CompareHashAndPassword([]byte(apiToken.SecretKey), []byte(tok.Secret)); err != nil {
+			authn.sendForbiddenError(fmt.Errorf("incorrect secret key for token %s", tok.TokenID), w, r)
+			return
+		}
+
+		authn.nextWithAPIToken(w, r, apiToken)
+	} else {
+		// otherwise we just use nextWithUser using the `iby` field for the token
+		authn.nextWithUserID(w, r, tok.IBy)
+	}
+}
+
+// nextWithAPIToken sets the token in context
+func (authn *AuthN) nextWithAPIToken(w http.ResponseWriter, r *http.Request, tok *models.APIToken) {
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, "api_token", tok)
+
+	r = r.Clone(ctx)
+	authn.next.ServeHTTP(w, r)
 }
 
 // nextWithUserID calls the next handler with the user set in the context with key

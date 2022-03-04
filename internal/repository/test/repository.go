@@ -39,6 +39,8 @@ type TestRepository struct {
 	buildConfig               repository.BuildConfigRepository
 	database                  repository.DatabaseRepository
 	allowlist                 repository.AllowlistRepository
+	apiToken                  repository.APITokenRepository
+	policy                    repository.PolicyRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -177,6 +179,14 @@ func (t *TestRepository) Allowlist() repository.AllowlistRepository {
 	return t.allowlist
 }
 
+func (t *TestRepository) APIToken() repository.APITokenRepository {
+	return t.apiToken
+}
+
+func (t *TestRepository) Policy() repository.PolicyRepository {
+	return t.policy
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -215,5 +225,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		buildConfig:               NewBuildConfigRepository(canQuery),
 		database:                  NewDatabaseRepository(),
 		allowlist:                 NewAllowlistRepository(canQuery),
+		apiToken:                  NewAPITokenRepository(canQuery),
+		policy:                    NewPolicyRepository(canQuery),
 	}
 }

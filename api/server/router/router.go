@@ -192,7 +192,7 @@ func registerRoutes(config *config.Config, routes []*Route) {
 	releaseFactory := authz.NewReleaseScopedFactory(config)
 
 	// Policy doc loader loads the policy documents for a specific project.
-	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
+	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project(), config.Repo.Policy())
 
 	// set up logging middleware to log information about the request
 	loggerMw := middleware.NewRequestLoggerMiddleware(config.Logger)

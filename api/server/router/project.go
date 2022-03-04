@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
+	"github.com/porter-dev/porter/api/server/handlers/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -889,6 +891,64 @@ func getProjectRoutes(
 	// 	Handler:  provisionGKEHandler,
 	// 	Router:   r,
 	// })
+
+	//  POST /api/projects/{project_id}/policy -> policy.NewPolicyCreateHandler
+	policyCreateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/policy",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyCreateHandler := policy.NewPolicyCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: policyCreateEndpoint,
+		Handler:  policyCreateHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/api_token -> api_token.NewAPITokenCreateHandler
+	apiTokenCreateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/api_token",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenCreateHandler := api_token.NewAPITokenCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: apiTokenCreateEndpoint,
+		Handler:  apiTokenCreateHandler,
+		Router:   r,
+	})
 
 	return routes, newPath
 }

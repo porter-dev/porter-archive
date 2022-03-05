@@ -598,6 +598,7 @@ const LogSpan = styled.span`
 const CLIModalIconWrapper = styled.div`
   max-width: 200px;
   height: 35px;
+  margin: 10px;
   font-size: 13px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;

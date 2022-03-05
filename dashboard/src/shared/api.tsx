@@ -1323,6 +1323,20 @@ const stopJob = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/stop`;
 });
 
+const listAPITokens = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/api_token`
+);
+
+const createAPIToken = baseApi<
+  {
+    name: string;
+    policy_uid: string;
+    expires_at?: string;
+  },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/api_token`);
+
 const getAvailableRoles = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/roles`
@@ -1671,6 +1685,8 @@ export default {
   deleteJob,
   stopJob,
   updateInvite,
+  listAPITokens,
+  createAPIToken,
   getAvailableRoles,
   getCollaborators,
   updateCollaborator,

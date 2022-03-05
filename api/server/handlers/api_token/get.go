@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -55,26 +56,10 @@ func (p *APITokenGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// look up the policy and make sure it exists
-	policy, err := p.Repo().Policy().ReadPolicy(proj.ID, token.PolicyUID)
+	apiPolicy, reqErr := policy.GetAPIPolicyFromUID(p.Repo().Policy(), proj.ID, token.PolicyUID)
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("policy no longer found in project"),
-				http.StatusBadRequest,
-			))
-			return
-		}
-
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	apiPolicy, err := policy.ToAPIPolicyType()
-
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	if reqErr != nil {
+		p.HandleAPIError(w, r, reqErr)
 		return
 	}
 

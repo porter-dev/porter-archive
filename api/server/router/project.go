@@ -921,14 +921,14 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	//  GET /api/projects/{project_id}/policy -> policy.NewPolicyListHandler
+	//  GET /api/projects/{project_id}/policies -> policy.NewPolicyListHandler
 	policyListEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/policy",
+				RelativePath: relPath + "/policies",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

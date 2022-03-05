@@ -1438,51 +1438,45 @@ const ExpandedJobHeader: React.FC<{
   refreshChart,
   upgradeChart,
   loadChartWithSpecificRevision,
-}) => {
-  const { currentProject, setCurrentError, currentCluster } = useContext(
-    Context
-  );
+}) => (
+  <HeaderWrapper>
+    <BackButton onClick={closeChart}>
+      <BackButtonImg src={backArrow} />
+    </BackButton>
+    <TitleSection icon={chart.chart.metadata.icon} iconWidth="33px">
+      {chart.name}
+      <DeploymentType currentChart={chart} />
+      <TagWrapper>
+        Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
+      </TagWrapper>
+    </TitleSection>
 
-  return (
-    <HeaderWrapper>
-      <BackButton onClick={closeChart}>
-        <BackButtonImg src={backArrow} />
-      </BackButton>
-      <TitleSection icon={chart.chart.metadata.icon} iconWidth="33px">
-        {chart.name}
-        <DeploymentType currentChart={chart} />
-        <TagWrapper>
-          Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
-        </TagWrapper>
-      </TitleSection>
-
-      <InfoWrapper>
-        <LastDeployed>
-          Run {jobs?.length} times <Dot>•</Dot>Last template update at
-          {" " + readableDate(chart.info.last_deployed)}
-        </LastDeployed>
-      </InfoWrapper>
-      <RevisionSection
-        chart={chart}
-        refreshChart={() => refreshChart()}
-        setRevision={(chart) => {
-          loadChartWithSpecificRevision(chart?.version);
-        }}
-        forceRefreshRevisions={false}
-        refreshRevisionsOff={() => {}}
-        status={""}
-        shouldUpdate={
-          chart.latest_version &&
-          chart.latest_version !== chart.chart.metadata.version
-        }
-        latestVersion={chart.latest_version}
-        upgradeVersion={() => {
-          upgradeChart();
-        }}
-      />
-    </HeaderWrapper>
-  );
-};
+    <InfoWrapper>
+      <LastDeployed>
+        Run {jobs?.length} times <Dot>•</Dot>Last template update at
+        {" " + readableDate(chart.info.last_deployed)}
+      </LastDeployed>
+    </InfoWrapper>
+    <RevisionSection
+      chart={chart}
+      refreshChart={() => refreshChart()}
+      setRevision={(chart) => {
+        loadChartWithSpecificRevision(chart?.version);
+      }}
+      forceRefreshRevisions={false}
+      refreshRevisionsOff={() => {}}
+      status={""}
+      shouldUpdate={
+        chart.latest_version &&
+        chart.latest_version !== chart.chart.metadata.version
+      }
+      latestVersion={chart.latest_version}
+      upgradeVersion={() => {
+        upgradeChart();
+      }}
+    />
+  </HeaderWrapper>
+);
 
 const useChart = (oldChart: ChartType, closeChart: () => void) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -1818,21 +1812,33 @@ const useJobs = (chart: ChartType) => {
 
   const mergeNewJob = (newJob: any) => {
     let newJobs = [...jobsRef.current];
-
-    let exists = false;
-    newJobs.forEach((job: any, i: number, self: any[]) => {
-      if (
-        job.metadata?.name == newJob.metadata?.name &&
-        job.metadata?.namespace == newJob.metadata?.namespace
-      ) {
-        self[i] = newJob;
-        exists = true;
-      }
+    const existingJobIndex = newJobs.findIndex((currentJob) => {
+      return (
+        currentJob.metadata?.name === newJob.metadata?.name &&
+        currentJob.metadata?.namespace === newJob.metadata?.namespace
+      );
     });
 
-    if (!exists) {
+    if (existingJobIndex > -1) {
+      newJobs.splice(existingJobIndex, 1, newJob);
+    } else {
       newJobs.push(newJob);
     }
+
+    // let exists = false;
+    // newJobs.forEach((job: any, i: number, self: any[]) => {
+    //   if (
+    //     job.metadata?.name == newJob.metadata?.name &&
+    //     job.metadata?.namespace == newJob.metadata?.namespace
+    //   ) {
+    //     self[i] = newJob;
+    //     exists = true;
+    //   }
+    // });
+
+    // if (!exists) {
+    //   newJobs.push(newJob);
+    // }
 
     sortJobsAndSave(newJobs);
   };

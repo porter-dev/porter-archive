@@ -31,7 +31,7 @@ export default class Help extends Component<PropsType, StateType> {
               onClick={() => {
                 window
                   .open(
-                    "https://porter-docs-demo-22fd462fef4dcd45.onporter.run",
+                    "https://docs.porter.run",
                     "_blank"
                   )
                   .focus();

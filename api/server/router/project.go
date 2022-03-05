@@ -921,6 +921,64 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	//  GET /api/projects/{project_id}/policy -> policy.NewPolicyListHandler
+	policyListEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/policy",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyListHandler := policy.NewPolicyListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: policyListEndpoint,
+		Handler:  policyListHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/policy/{policy_id} -> policy.NewPolicyGetHandler
+	policyGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/policy/{%s}", relPath, types.URLParamPolicyID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyGetHandler := policy.NewPolicyGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: policyGetEndpoint,
+		Handler:  policyGetHandler,
+		Router:   r,
+	})
+
 	//  POST /api/projects/{project_id}/api_token -> api_token.NewAPITokenCreateHandler
 	apiTokenCreateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -947,6 +1005,64 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: apiTokenCreateEndpoint,
 		Handler:  apiTokenCreateHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/api_token -> api_token.NewAPITokenListHandler
+	apiTokenListEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenListHandler := api_token.NewAPITokenListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: apiTokenListEndpoint,
+		Handler:  apiTokenListHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/api_token/{api_token_id} -> api_token.NewAPITokenGetHandler
+	apiTokenGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token/{%s}", relPath, types.URLParamTokenID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenGetHandler := api_token.NewAPITokenGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: apiTokenGetEndpoint,
+		Handler:  apiTokenGetHandler,
 		Router:   r,
 	})
 

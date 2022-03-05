@@ -1,7 +1,9 @@
 package policy
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
@@ -33,17 +35,11 @@ func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
 	opts *PolicyLoaderOpts,
 ) ([]*types.PolicyDocument, apierrors.RequestError) {
 	if opts.Token != nil {
-		// load the policy from the repo
-		policy, err := b.policyRepo.ReadPolicy(opts.Token.ProjectID, opts.Token.PolicyUID)
+		// load the policy
+		apiPolicy, reqErr := GetAPIPolicyFromUID(b.policyRepo, opts.Token.ProjectID, opts.Token.PolicyUID)
 
-		if err != nil {
-			return nil, apierrors.NewErrInternal(err)
-		}
-
-		apiPolicy, err := policy.ToAPIPolicyType()
-
-		if err != nil {
-			return nil, apierrors.NewErrInternal(err)
+		if reqErr != nil {
+			return nil, reqErr
 		}
 
 		return apiPolicy.Policy, nil
@@ -112,4 +108,55 @@ var ViewerPolicy = []*types.PolicyDocument{
 			},
 		},
 	},
+}
+
+func GetAPIPolicyFromUID(policyRepo repository.PolicyRepository, projectID uint, uid string) (*types.APIPolicy, apierrors.RequestError) {
+	switch uid {
+	case "admin":
+		return &types.APIPolicy{
+			APIPolicyMeta: &types.APIPolicyMeta{
+				Name: "admin",
+				UID:  "admin",
+			},
+			Policy: AdminPolicy,
+		}, nil
+	case "developer":
+		return &types.APIPolicy{
+			APIPolicyMeta: &types.APIPolicyMeta{
+				Name: "developer",
+				UID:  "developer",
+			},
+			Policy: DeveloperPolicy,
+		}, nil
+	case "viewer":
+		return &types.APIPolicy{
+			APIPolicyMeta: &types.APIPolicyMeta{
+				Name: "viewer",
+				UID:  "viewer",
+			},
+			Policy: ViewerPolicy,
+		}, nil
+	default:
+		// look up the policy and make sure it exists
+		policyModel, err := policyRepo.ReadPolicy(projectID, uid)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("policy not found in project"),
+					http.StatusBadRequest,
+				)
+			}
+
+			return nil, apierrors.NewErrInternal(err)
+		}
+
+		apiPolicy, err := policyModel.ToAPIPolicyType()
+
+		if err != nil {
+			return nil, apierrors.NewErrInternal(err)
+		}
+
+		return apiPolicy, nil
+	}
 }

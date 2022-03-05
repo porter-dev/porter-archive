@@ -132,7 +132,13 @@ func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		// compare the secret against the hashed version
+		// first ensure that the token hasn't been revoked, and the token has not expired
+		if apiToken.Revoked || apiToken.IsExpired() {
+			authn.sendForbiddenError(fmt.Errorf("token with id %s not valid", tok.TokenID), w, r)
+			return
+		}
+
+		// next, compare the secret against the hashed version
 		if err := bcrypt.CompareHashAndPassword([]byte(apiToken.SecretKey), []byte(tok.Secret)); err != nil {
 			authn.sendForbiddenError(fmt.Errorf("incorrect secret key for token %s", tok.TokenID), w, r)
 			return

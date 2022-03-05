@@ -1,10 +1,10 @@
 package api_token
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -14,7 +14,6 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type APITokenCreateHandler struct {
@@ -41,19 +40,15 @@ func (p *APITokenCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// look up the policy and make sure it exists
-	policy, err := p.Repo().Policy().ReadPolicy(proj.ID, req.PolicyUID)
+	// if the expiry time is not set, set the expiry to 1 year
+	if req.ExpiresAt.IsZero() {
+		req.ExpiresAt = time.Now().Add(time.Hour * 24 * 365)
+	}
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("policy not found in project"),
-				http.StatusBadRequest,
-			))
-			return
-		}
+	apiPolicy, reqErr := policy.GetAPIPolicyFromUID(p.Repo().Policy(), proj.ID, req.PolicyUID)
 
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	if reqErr != nil {
+		p.HandleAPIError(w, r, reqErr)
 		return
 	}
 
@@ -85,20 +80,13 @@ func (p *APITokenCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		CreatedByUserID: user.ID,
 		Expiry:          &req.ExpiresAt,
 		Revoked:         false,
-		PolicyUID:       policy.UniqueID,
-		PolicyName:      policy.Name,
+		PolicyUID:       apiPolicy.UID,
+		PolicyName:      apiPolicy.Name,
 		Name:            req.Name,
 		SecretKey:       hashedToken,
 	}
 
 	apiToken, err = p.Repo().APIToken().CreateAPIToken(apiToken)
-
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	apiPolicy, err := policy.ToAPIPolicyType()
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

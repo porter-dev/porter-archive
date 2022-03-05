@@ -176,3 +176,12 @@ type GetPreviousPodLogsRequest struct {
 type GetPreviousPodLogsResponse struct {
 	PrevLogs []string `json:"previous_logs"`
 }
+
+type GetJobsRequest struct {
+	Revision uint `schema:"revision"`
+}
+
+type GetJobRunsRequest struct {
+	Status string `schema:"status"`
+	Sort   string `schema:"sort"`
+}

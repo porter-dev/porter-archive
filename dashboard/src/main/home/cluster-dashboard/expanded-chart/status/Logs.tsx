@@ -12,7 +12,7 @@ import * as Anser from "anser";
 import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 
-const MAX_LOGS = 1000;
+const MAX_LOGS = 250;
 
 type SelectedPodType = {
   spec: {

@@ -31,6 +31,7 @@ func (p *APIToken) IsExpired() bool {
 
 func (p *APIToken) ToAPITokenMetaType() *types.APITokenMeta {
 	return &types.APITokenMeta{
+		ID:         p.UniqueID,
 		CreatedAt:  p.CreatedAt,
 		ExpiresAt:  *p.Expiry,
 		PolicyName: p.PolicyName,

@@ -17,6 +17,11 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
   const [status, setStatus] = useState<"ready" | "loading" | "deleting">(
     "loading"
   );
+
+  const [saveStatus, setSaveStatus] = useState<
+    "loading" | "successful" | string
+  >("");
+
   const { pushFiltered, getQueryParam, pushQueryParams } = useRouting();
 
   useEffect(() => {
@@ -123,6 +128,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
       | ((chart: ChartType) => string)
       | ((chart: ChartType, oldChart?: ChartType) => string)
   ) => {
+    setSaveStatus("loading");
     const values = processValues(chart, oldChart);
 
     const oldSyncedEnvGroups = oldChart.config?.container?.env?.synced || [];
@@ -211,7 +217,8 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
         }
       );
 
-      await refreshChart();
+      setSaveStatus("successful");
+      setTimeout(() => setSaveStatus(""), 500);
     } catch (err) {
       let parsedErr = err?.response?.data?.error;
 
@@ -219,6 +226,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
         parsedErr = err;
       }
       setCurrentError(parsedErr);
+      setSaveStatus("Couldn't process the request.");
       // throw new Error(parsedErr);
     }
   };
@@ -277,6 +285,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
   return {
     chart,
     status,
+    saveStatus,
     upgradeChart,
     deleteChart,
     updateChart,

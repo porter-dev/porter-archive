@@ -5,6 +5,7 @@ import { Context } from "shared/Context";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
 import yaml from "js-yaml";
+import { usePrevious } from "shared/hooks/usePrevious";
 
 const PORTER_IMAGE_TEMPLATES = [
   "porterdev/hello-porter-job",
@@ -25,6 +26,8 @@ export const useJobs = (chart: ChartType) => {
   const [triggerRunStatus, setTriggerRunStatus] = useState<
     "loading" | "successful" | string
   >("");
+
+  const previousChart = usePrevious(chart, null);
 
   const {
     newWebsocket,
@@ -203,6 +206,17 @@ export const useJobs = (chart: ChartType) => {
         closeAllWebsockets();
       };
     }
+
+    if (
+      previousChart?.name === chart?.name &&
+      previousChart?.namespace === chart?.namespace
+    ) {
+      return () => {
+        isSubscribed = false;
+        closeAllWebsockets();
+      };
+    }
+
     setStatus("loading");
     const newestImage = chart?.config?.image?.repository;
 

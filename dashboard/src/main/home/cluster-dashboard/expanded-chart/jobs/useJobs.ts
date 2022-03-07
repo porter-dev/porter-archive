@@ -279,6 +279,7 @@ export const useJobs = (chart: ChartType) => {
         //   saveValuesStatus: parsedErr,
         // });
         setTriggerRunStatus("Couldn't trigger a new run for this job.");
+        setTimeout(() => setTriggerRunStatus(""), 500);
         setCurrentError(parsedErr);
       });
   };

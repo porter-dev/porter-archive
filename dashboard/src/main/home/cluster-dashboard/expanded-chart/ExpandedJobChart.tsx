@@ -23,6 +23,8 @@ import ExpandedJobRun from "./jobs/ExpandedJobRun";
 import { useJobs } from "./jobs/useJobs";
 import { useChart } from "shared/hooks/useChart";
 import Modal from "main/home/modals/Modal";
+import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal";
+import CommandLineIcon from "assets/command-line-icon";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -67,6 +69,7 @@ export const ExpandedJobChartFC: React.FC<{
   const [devOpsMode, setDevOpsMode] = useState(
     () => localStorage.getItem("devOpsMode") === "true"
   );
+  const [showConnectionModal, setShowConnectionModal] = useState(false);
 
   let rightTabOptions = [] as any[];
 
@@ -148,6 +151,15 @@ export const ExpandedJobChartFC: React.FC<{
             >
               <i className="material-icons">play_arrow</i> Run Job
             </SaveButton>
+            <CLIModalIconWrapper
+              onClick={(e) => {
+                e.preventDefault();
+                setShowConnectionModal(true);
+              }}
+            >
+              <CLIModalIcon />
+              Shell Access
+            </CLIModalIconWrapper>
           </ButtonWrapper>
 
           {jobsStatus === "loading" ? (
@@ -248,6 +260,11 @@ export const ExpandedJobChartFC: React.FC<{
 
   return (
     <>
+      <ConnectToJobInstructionsModal
+        show={showConnectionModal}
+        onClose={() => setShowConnectionModal(false)}
+        chartName={chart?.name}
+      />
       <StyledExpandedChart>
         <ExpandedJobHeader
           chart={chart}
@@ -354,6 +371,45 @@ const ExpandedJobHeader: React.FC<{
   </HeaderWrapper>
 );
 
+const CLIModalIconWrapper = styled.div`
+  height: 35px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px 6px 10px;
+  text-align: left;
+  border: 1px solid #ffffff55;
+  border-radius: 8px;
+  background: #ffffff11;
+  color: #ffffffdd;
+  cursor: pointer;
+
+  :hover {
+    cursor: pointer;
+    background: #ffffff22;
+    > path {
+      fill: #ffffff77;
+    }
+  }
+
+  > path {
+    fill: #ffffff99;
+  }
+`;
+
+const CLIModalIcon = styled(CommandLineIcon)`
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+
+  > path {
+    fill: #ffffff99;
+  }
+`;
+
 const LineBreak = styled.div`
   width: calc(100% - 0px);
   height: 2px;
@@ -362,9 +418,10 @@ const LineBreak = styled.div`
 `;
 
 const ButtonWrapper = styled.div`
+  display: flex;
   margin: 5px 0 35px;
+  justify-content: space-between;
 `;
-
 const BackButton = styled.div`
   position: absolute;
   top: 0px;

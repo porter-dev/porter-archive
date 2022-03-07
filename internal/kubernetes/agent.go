@@ -688,19 +688,6 @@ func (a *Agent) ListJobsByLabel(namespace string, labels ...Label) ([]batchv1.Jo
 	return resp.Items, nil
 }
 
-func (a *Agent) ListAllJobs(namespace string) ([]batchv1.Job, error) {
-	resp, err := a.Clientset.BatchV1().Jobs(namespace).List(
-		context.TODO(),
-		metav1.ListOptions{},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Items, nil
-}
-
 // StreamJobs streams a list of jobs to the websocket writer, closing the connection once all jobs have been sent
 func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.WebsocketSafeReadWriter) error {
 	run := func() error {

@@ -6,6 +6,7 @@ import JobList from "./JobList";
 import SaveButton from "components/SaveButton";
 import CommandLineIcon from "assets/command-line-icon";
 import ConnectToJobInstructionsModal from "./ConnectToJobInstructionsModal";
+import Loading from "components/Loading";
 
 interface Props {
   isAuthorized: any;
@@ -14,7 +15,12 @@ interface Props {
   jobs: any;
   handleSaveValues: any;
   expandJob: any;
+  currentChartVersion: number;
+  latestChartVersion: number;
+  isDeployedFromGithub: boolean;
+  repositoryUrl?: string;
   chartName: string;
+  isLoading: boolean;
 }
 
 /**
@@ -56,6 +62,10 @@ const TempJobList: React.FC<Props> = (props) => {
     saveButton = null;
   }
 
+  if (props.isLoading) {
+    return <Loading height="500px"></Loading>;
+  }
+
   return (
     <>
       {saveButton}
@@ -63,6 +73,10 @@ const TempJobList: React.FC<Props> = (props) => {
         jobs={props.jobs}
         setJobs={props.setJobs}
         expandJob={props.expandJob}
+        isDeployedFromGithub={props.isDeployedFromGithub}
+        repositoryUrl={props.repositoryUrl}
+        currentChartVersion={props.currentChartVersion}
+        latestChartVersion={props.latestChartVersion}
       />
       <ConnectToJobInstructionsModal
         show={showConnectionModal}

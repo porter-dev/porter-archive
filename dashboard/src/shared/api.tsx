@@ -854,19 +854,6 @@ const getJobPods = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
 
-// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/job_runs?status={failed|completed|running|all}&sort={newest|oldest|alphabetical}
-const getJobRunsForAllCharts = baseApi<
-  {
-    status: "failed" | "completed" | "running" | "all";
-    sort: "newest" | "oldest" | "alphabetical";
-  },
-  { namespace: string; cluster_id: number; project_id: number }
->(
-  "GET",
-  ({ cluster_id, project_id, namespace }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/job_runs`
-);
-
 const getPodByName = baseApi<
   {},
   {
@@ -1654,7 +1641,6 @@ export default {
   getJobs,
   getJobStatus,
   getJobPods,
-  getJobRunsForAllCharts,
   getPodByName,
   getMatchingPods,
   getMetrics,

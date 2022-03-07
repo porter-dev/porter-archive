@@ -274,7 +274,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
         )
         .then((res) => res.data);
 
-      pushFiltered(matchUrl, ["project_id", "job"], {
+      pushQueryParams({
         chart_revision: newChart.version,
       });
 

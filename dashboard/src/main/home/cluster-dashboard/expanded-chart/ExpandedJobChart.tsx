@@ -10,7 +10,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 
 import backArrow from "assets/back_arrow.png";
-import _ from "lodash";
+import _, { merge } from "lodash";
 import loading from "assets/loading.gif";
 
 import {
@@ -1184,26 +1184,8 @@ export const ExpandedJobChartFC: React.FC<{
     let values = {} as any;
 
     if (!newConfig) {
-      values = {};
-      // let imageUrl = this.state.newestImage;
-      // let tag = null;
-
-      // if (imageUrl) {
-      //   if (imageUrl.includes(":")) {
-      //     let splits = imageUrl.split(":");
-      //     imageUrl = splits[0];
-      //     tag = splits[1].toString();
-      //   } else if (!tag) {
-      //     tag = "latest";
-      //   }
-
-      //   _.set(values, "image.repository", imageUrl);
-      //   _.set(values, "image.tag", tag);
-      // }
-
       conf = yaml.dump({
         ...currentChart.config,
-        ...values,
       });
     } else {
       // Convert dotted keys to nested objects
@@ -1213,33 +1195,10 @@ export const ExpandedJobChartFC: React.FC<{
         _.set(values, key, newConfig[key]);
       }
 
-      // let imageUrl = this.state.newestImage;
-      // let tag = null as string;
-
-      // if (imageUrl) {
-      //   if (imageUrl.includes(":")) {
-      //     let splits = imageUrl.split(":");
-      //     imageUrl = splits[0];
-      //     tag = splits[1].toString();
-      //   } else if (!tag) {
-      //     tag = "latest";
-      //   }
-
-      //   _.set(values, "image.repository", imageUrl);
-      //   _.set(values, "image.tag", `${tag}`);
-      // }
-
-      // if (runJob) {
-      //   _.set(values, "paused", false);
-      // } else {
-      //   _.set(values, "paused", true);
-      // }
-
       // Weave in preexisting values and convert to yaml
       conf = yaml.dump(
         {
-          ...(currentChart.config as Object),
-          ...values,
+          ...merge(currentChart.config, values),
         },
         { forceQuotes: true }
       );
@@ -1367,7 +1326,7 @@ export const ExpandedJobChartFC: React.FC<{
     );
   }
 
-  const formData = chart.form;
+  const formData = { ...chart.form };
 
   return (
     <>
@@ -1492,7 +1451,7 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
   const [status, setStatus] = useState<"ready" | "loading" | "deleting">(
     "loading"
   );
-  const { pushFiltered, getQueryParam } = useRouting();
+  const { pushFiltered, getQueryParam, pushQueryParams } = useRouting();
 
   useEffect(() => {
     const { namespace, chartName } = params;
@@ -1717,8 +1676,8 @@ const useChart = (oldChart: ChartType, closeChart: () => void) => {
         )
         .then((res) => res.data);
 
-      pushFiltered(matchUrl, ["project_id", "job"], {
-        chart_revision: newChart.version,
+      pushQueryParams({
+        chart_version: newChart.version,
       });
 
       setChart(newChart);
@@ -1774,6 +1733,7 @@ const useJobs = (chart: ChartType) => {
   const [jobs, setJobs] = useState([]);
   const jobsRef = useRef([]);
   const [hasPorterImageTemplate, setHasPorterImageTemplate] = useState(true);
+
   const {
     newWebsocket,
     openWebsocket,
@@ -1824,22 +1784,6 @@ const useJobs = (chart: ChartType) => {
     } else {
       newJobs.push(newJob);
     }
-
-    // let exists = false;
-    // newJobs.forEach((job: any, i: number, self: any[]) => {
-    //   if (
-    //     job.metadata?.name == newJob.metadata?.name &&
-    //     job.metadata?.namespace == newJob.metadata?.namespace
-    //   ) {
-    //     self[i] = newJob;
-    //     exists = true;
-    //   }
-    // });
-
-    // if (!exists) {
-    //   newJobs.push(newJob);
-    // }
-
     sortJobsAndSave(newJobs);
   };
 
@@ -1899,7 +1843,7 @@ const useJobs = (chart: ChartType) => {
             event.Object?.spec?.jobTemplate?.spec?.template?.spec?.containers[0]
               ?.image;
 
-          if (PORTER_IMAGE_TEMPLATES.includes(newestImage)) {
+          if (!PORTER_IMAGE_TEMPLATES.includes(newestImage)) {
             return false;
           }
 
@@ -1967,6 +1911,10 @@ const useJobs = (chart: ChartType) => {
         closeAllWebsockets();
       };
     }
+
+    const newestImage = chart?.config?.image?.repository;
+
+    setHasPorterImageTemplate(PORTER_IMAGE_TEMPLATES.includes(newestImage));
 
     api
       .getJobs(

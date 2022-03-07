@@ -10,7 +10,7 @@ import styled from "styled-components";
 import yaml from "js-yaml";
 
 import backArrow from "assets/back_arrow.png";
-import _, { merge } from "lodash";
+import { get, isEmpty, merge, set } from "lodash";
 import loading from "assets/loading.gif";
 
 import {
@@ -369,8 +369,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           tag = "latest";
         }
 
-        _.set(values, "image.repository", imageUrl);
-        _.set(values, "image.tag", tag);
+        set(values, "image.repository", imageUrl);
+        set(values, "image.tag", tag);
       }
 
       conf = yaml.dump({
@@ -382,7 +382,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       values = {};
 
       for (let key in config) {
-        _.set(values, key, config[key]);
+        set(values, key, config[key]);
       }
 
       let imageUrl = this.state.newestImage;
@@ -397,14 +397,14 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           tag = "latest";
         }
 
-        _.set(values, "image.repository", imageUrl);
-        _.set(values, "image.tag", `${tag}`);
+        set(values, "image.repository", imageUrl);
+        set(values, "image.tag", `${tag}`);
       }
 
       if (runJob) {
-        _.set(values, "paused", false);
+        set(values, "paused", false);
       } else {
-        _.set(values, "paused", true);
+        set(values, "paused", true);
       }
 
       // Weave in preexisting values and convert to yaml
@@ -803,7 +803,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       ...values,
     });
 
-    _.set(values, "paused", true);
+    set(values, "paused", true);
 
     const { currentChart } = this.state;
     this.setState({ saveValuesStatus: "loading" });
@@ -999,14 +999,14 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let envObject = {} as any;
     envArray &&
       envArray.forEach((env: any, i: number) => {
-        const secretName = _.get(env, "valueFrom.secretKeyRef.name");
+        const secretName = get(env, "valueFrom.secretKeyRef.name");
         envObject[env.name] = secretName
           ? `PORTERSECRET_${secretName}`
           : env.value;
       });
 
     // Handle no config to show
-    if (!commandString && _.isEmpty(envObject)) {
+    if (!commandString && isEmpty(envObject)) {
       return <Placeholder>No config was found.</Placeholder>;
     }
 
@@ -1023,7 +1023,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
         <Row>
           Image Tag: <Command>{tag}</Command>
         </Row>
-        {!_.isEmpty(envObject) && (
+        {!isEmpty(envObject) && (
           <>
             <KeyValueArray
               envLoader={true}
@@ -1159,7 +1159,7 @@ export const ExpandedJobChartFC: React.FC<{
     upgradeChart,
     loadChartWithSpecificRevision,
   } = useChart(oldChart, closeChart);
-  const { jobs, hasPorterImageTemplate } = useJobs(chart);
+  const { jobs, hasPorterImageTemplate, runJob } = useJobs(chart);
   const [devOpsMode, setDevOpsMode] = useState(
     () => localStorage.getItem("devOpsMode") === "true"
   );
@@ -1192,7 +1192,7 @@ export const ExpandedJobChartFC: React.FC<{
       values = {};
 
       for (let key in newConfig) {
-        _.set(values, key, newConfig[key]);
+        set(values, key, newConfig[key]);
       }
 
       // Weave in preexisting values and convert to yaml
@@ -1234,7 +1234,7 @@ export const ExpandedJobChartFC: React.FC<{
           <ButtonWrapper>
             <SaveButton
               onClick={() => {
-                // handleSaveValues(getSubmitValues(), true);
+                runJob();
               }}
               status={"saveValuesStatus"}
               makeFlush={true}
@@ -1945,12 +1945,10 @@ const useJobs = (chart: ChartType) => {
     const values = {};
 
     for (let key in config) {
-      _.set(values, key, config[key]);
+      set(values, key, config[key]);
     }
 
-    if (runJob) {
-      _.set(values, "paused", false);
-    }
+    set(values, "paused", false);
 
     const yamlValues = yaml.dump(
       {
@@ -1994,6 +1992,7 @@ const useJobs = (chart: ChartType) => {
   return {
     jobs,
     hasPorterImageTemplate,
+    runJob,
   };
 };
 

@@ -1066,5 +1066,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	//  POST /api/projects/{project_id}/api_token/{api_token_id}/revoke -> api_token.NewAPITokenRevokeHandler
+	apiTokenRevokeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token/{%s}/revoke", relPath, types.URLParamTokenID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenRevokeHandler := api_token.NewAPITokenRevokeHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: apiTokenRevokeEndpoint,
+		Handler:  apiTokenRevokeHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

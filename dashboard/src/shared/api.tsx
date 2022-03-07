@@ -1,3 +1,4 @@
+import { PolicyDocType } from "./auth/types";
 import { baseApi } from "./baseApi";
 
 import { FullActionConfigType, StorageType } from "./types";
@@ -422,9 +423,11 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const getBranchContents = baseApi<
@@ -440,9 +443,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -458,9 +463,11 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getBranches = baseApi<
@@ -1163,9 +1170,11 @@ const getEnvGroup = baseApi<
     version?: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
-    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
-    }`;
+  return `/api/projects/${pathParams.id}/clusters/${
+    pathParams.cluster_id
+  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
+    pathParams.version ? "&version=" + pathParams.version : ""
+  }`;
 });
 
 const getConfigMap = baseApi<
@@ -1328,6 +1337,17 @@ const listAPITokens = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/api_token`
 );
 
+const getAPIToken = baseApi<{}, { project_id: number; token: string }>(
+  "GET",
+  ({ project_id, token }) => `/api/projects/${project_id}/api_token/${token}`
+);
+
+const revokeAPIToken = baseApi<{}, { project_id: number; token: string }>(
+  "POST",
+  ({ project_id, token }) =>
+    `/api/projects/${project_id}/api_token/${token}/revoke`
+);
+
 const createAPIToken = baseApi<
   {
     name: string;
@@ -1336,6 +1356,14 @@ const createAPIToken = baseApi<
   },
   { project_id: number }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/api_token`);
+
+const createPolicy = baseApi<
+  {
+    name: string;
+    policy: PolicyDocType[];
+  },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/policy`);
 
 const getAvailableRoles = baseApi<{}, { project_id: number }>(
   "GET",
@@ -1686,7 +1714,10 @@ export default {
   stopJob,
   updateInvite,
   listAPITokens,
+  getAPIToken,
+  revokeAPIToken,
   createAPIToken,
+  createPolicy,
   getAvailableRoles,
   getCollaborators,
   updateCollaborator,

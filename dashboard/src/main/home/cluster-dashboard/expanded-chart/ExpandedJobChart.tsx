@@ -46,6 +46,7 @@ export const ExpandedJobChartFC: React.FC<{
   const {
     chart,
     status,
+    saveStatus,
     refreshChart,
     deleteChart,
     updateChart,
@@ -269,7 +270,7 @@ export const ExpandedJobChartFC: React.FC<{
               }
               leftTabOptions={leftTabOptions}
               rightTabOptions={rightTabOptions}
-              saveValuesStatus={"saveValuesStatus"}
+              saveValuesStatus={saveStatus}
               saveButtonText="Save Config"
               includeHiddenFields
               addendum={
@@ -334,7 +335,6 @@ const ExpandedJobHeader: React.FC<{
       }}
       forceRefreshRevisions={false}
       refreshRevisionsOff={() => {}}
-      status={""}
       shouldUpdate={
         chart.latest_version &&
         chart.latest_version !== chart.chart.metadata.version

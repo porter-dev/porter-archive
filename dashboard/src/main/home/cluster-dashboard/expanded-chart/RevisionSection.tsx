@@ -18,7 +18,6 @@ type PropsType = WithAuthProps & {
   setRevision: (x: ChartType, isCurrent?: boolean) => void;
   forceRefreshRevisions: boolean;
   refreshRevisionsOff: () => void;
-  status: string;
   shouldUpdate: boolean;
   upgradeVersion: (version: string, cb: () => void) => void;
   latestVersion: string;
@@ -200,23 +199,6 @@ class RevisionSection extends Component<PropsType, StateType> {
     } else {
       this.props.setRevision(revision);
     }
-  };
-
-  renderStatus = (revision: ChartType) => {
-    if (
-      this.props.chart.version === revision.version &&
-      this.props.status == "loading"
-    ) {
-      return (
-        <div>
-          {this.props.status}
-          <LoadingGif src={loading} revision={true} />
-        </div>
-      );
-    } else if (this.props.chart.version === revision.version) {
-      return this.props.status;
-    }
-    return revision.info.status;
   };
 
   renderRevisionList = () => {

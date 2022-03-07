@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+import ReactDOM from "react-dom";
 
 type PropsType = {
   onRequestClose?: () => void;
@@ -9,6 +10,8 @@ type PropsType = {
 };
 
 type StateType = {};
+
+const modalRoot = document.getElementById("modal-root");
 
 export default class Modal extends Component<PropsType, StateType> {
   wrapperRef: any = React.createRef();
@@ -38,18 +41,48 @@ export default class Modal extends Component<PropsType, StateType> {
   render() {
     let { width, height } = this.props;
     return (
-      <Overlay>
-        <StyledModal ref={this.wrapperRef} width={width} height={height}>
-          {this.props.onRequestClose && (
-            <CloseButton onClick={this.props.onRequestClose}>
-              <i className="material-icons">close</i>
-            </CloseButton>
-          )}
-          {this.props.title && <ModalTitle>{this.props.title}</ModalTitle>}
-          {this.props.children}
-        </StyledModal>
-      </Overlay>
+      <PortalModal>
+        <Overlay>
+          <StyledModal ref={this.wrapperRef} width={width} height={height}>
+            {this.props.onRequestClose && (
+              <CloseButton onClick={this.props.onRequestClose}>
+                <i className="material-icons">close</i>
+              </CloseButton>
+            )}
+            {this.props.title && <ModalTitle>{this.props.title}</ModalTitle>}
+            {this.props.children}
+          </StyledModal>
+        </Overlay>
+      </PortalModal>
     );
+  }
+}
+
+export class PortalModal extends Component {
+  el: Element;
+  constructor(props: any) {
+    super(props);
+    this.el = document.createElement("div");
+  }
+
+  componentDidMount() {
+    // The portal element is inserted in the DOM tree after
+    // the Modal's children are mounted, meaning that children
+    // will be mounted on a detached DOM node. If a child
+    // component requires to be attached to the DOM tree
+    // immediately when mounted, for example to measure a
+    // DOM node, or uses 'autoFocus' in a descendant, add
+    // state to Modal and only render the children when Modal
+    // is inserted in the DOM tree.
+    modalRoot.appendChild(this.el);
+  }
+
+  componentWillUnmount() {
+    modalRoot.removeChild(this.el);
+  }
+
+  render() {
+    return ReactDOM.createPortal(this.props.children, this.el);
   }
 }
 

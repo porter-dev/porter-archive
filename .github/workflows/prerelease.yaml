@@ -416,7 +416,7 @@ jobs:
 
           cd porter-update-action
 
-          git checkout -b "${{steps.tag_name.outputs.tag}}"
+          git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
           FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
@@ -433,7 +433,7 @@ jobs:
 
           git commit -m "Update to CLI version ${{steps.tag_name.outputs.tag}}"
 
-          git push --set-upstream origin ${{steps.tag_name.outputs.tag}}
+          git push --set-upstream origin ${{steps.tag_name.outputs.tag}} -f
   update-porter-cli-action:
     name: Update porter-cli-action
     runs-on: ubuntu-latest
@@ -454,7 +454,7 @@ jobs:
 
           cd porter-cli-action
 
-          git checkout -b "${{steps.tag_name.outputs.tag}}"
+          git checkout -B "${{steps.tag_name.outputs.tag}}"
 
           cat >Dockerfile <<EOL
           FROM public.ecr.aws/o1j4x7p4/porter-cli:${{steps.tag_name.outputs.tag}}
@@ -471,8 +471,8 @@ jobs:
 
           git commit -m "Update to CLI version ${{steps.tag_name.outputs.tag}}"
 
-          git push --set-upstream origin ${{steps.tag_name.outputs.tag}}
-  invoke-new-release-tests-workflows:
+          git push --set-upstream origin ${{steps.tag_name.outputs.tag}} -f
+  update-new-release-tests:
     name: Update new-release-tests
     runs-on: ubuntu-latest
     needs: [update-porter-update-action, update-porter-cli-action]
@@ -492,11 +492,11 @@ jobs:
 
           cd new-release-tests/.github/workflows
 
-          sed -i '' 's/uses: porter-dev\/porter-update-action.*/uses: porter-dev\/porter-update-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_pack_production.yml
-          sed -i '' 's/uses: porter-dev\/porter-cli-action.*/uses: porter-dev\/porter-cli-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_pack_production.yml
+          sed -i 's/uses: porter-dev\/porter-update-action.*/uses: porter-dev\/porter-update-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_pack_production.yml
+          sed -i 's/uses: porter-dev\/porter-cli-action.*/uses: porter-dev\/porter-cli-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_pack_production.yml
 
-          sed -i '' 's/uses: porter-dev\/porter-update-action.*/uses: porter-dev\/porter-update-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
-          sed -i '' 's/uses: porter-dev\/porter-cli-action.*/uses: porter-dev\/porter-cli-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
+          sed -i 's/uses: porter-dev\/porter-update-action.*/uses: porter-dev\/porter-update-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
+          sed -i 's/uses: porter-dev\/porter-cli-action.*/uses: porter-dev\/porter-cli-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
 
           cd ../..
 
@@ -507,4 +507,17 @@ jobs:
 
           git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}"
 
-          git push
+          git push -f
+  run-new-release-tests-workflows:
+    name: Run new-release-tests Porter workflows
+    runs-on: ubuntu-latest
+    needs: update-new-release-tests
+    steps:
+      - name: Run porter_test_pack_production.yml workflow
+        run: gh workflow run porter_test_pack_production.yml --repo porter-dev/new-release-tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+      - name: Run porter_test_docker_production.yml workflow
+        run: gh workflow run porter_test_docker_production.yml --repo porter-dev/new-release-tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}

@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { InviteType } from "shared/types";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import backArrow from "assets/back_arrow.png";
 
 import Loading from "components/Loading";
 import InputRow from "components/form-components/InputRow";
@@ -16,9 +17,12 @@ import RadioSelector from "components/RadioSelector";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
 import { APIToken } from "../APITokensSection";
+import CustomPolicyForm from "./CustomPolicyForm";
+import { PolicyDocType, Verbs } from "shared/auth/types";
 
 type Props = {
   onCreate: () => void;
+  back: () => void;
 };
 
 const getDateValue = (option: string): string => {
@@ -73,7 +77,15 @@ export const getDateOptions = (): { value: string; label: string }[] => {
   ];
 };
 
-const CreateAPITokenForm: React.FunctionComponent<Props> = ({ onCreate }) => {
+export type ScopeOption = {
+  value: string;
+  label: string;
+};
+
+const CreateAPITokenForm: React.FunctionComponent<Props> = ({
+  onCreate,
+  back,
+}) => {
   const { currentProject } = useContext(Context);
   const [apiTokenName, setAPITokenName] = useState("");
   const dateOptions = getDateOptions();
@@ -81,20 +93,131 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({ onCreate }) => {
   const [policy, setPolicy] = useState("developer");
   const [createdToken, setCreatedToken] = useState<APIToken>(null);
   const [copied, setCopied] = useState(false);
+  const [shouldCreatePolicy, setShouldCreatePolicy] = useState(false);
+  const [selectedClusterFields, setSelectedClusterFields] = useState<
+    ScopeOption[]
+  >([]);
+  const [selectedRegistryFields, setSelectedRegistryFields] = useState<
+    ScopeOption[]
+  >([]);
+  const [selectedInfraFields, setSelectedInfraFields] = useState<ScopeOption[]>(
+    []
+  );
+  const [selectedSettingsFields, setSelectedSettingsFields] = useState<
+    ScopeOption[]
+  >([]);
+  const [policyName, setPolicyName] = useState("");
+  const [policyID, setPolicyID] = useState("");
 
   const createToken = () => {
+    createPolicy((policyUID) => {
+      console.log("policy uid is", policyUID);
+
+      api
+        .createAPIToken(
+          "<token>",
+          {
+            name: apiTokenName,
+            expires_at: getDateValue(expiration),
+            policy_uid: policyUID || policy,
+          },
+          { project_id: currentProject.id }
+        )
+        .then(({ data }) => {
+          setCreatedToken(data);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    });
+  };
+
+  const getVerbsForScope = (
+    scopeVal: string,
+    allSelected: string[]
+  ): Verbs[] => {
+    if (scopeVal.includes("read")) {
+      return allSelected.includes(scopeVal) ? ["get", "list"] : [];
+    } else if (scopeVal.includes("write")) {
+      return allSelected.includes(scopeVal)
+        ? ["create", "update", "delete"]
+        : [];
+    } else {
+      return [];
+    }
+  };
+
+  const createPolicy = (cb?: (id: string) => void) => {
+    let allSelectedFields = selectedClusterFields.concat(
+      ...selectedRegistryFields,
+      ...selectedInfraFields,
+      ...selectedSettingsFields
+    );
+
+    let allSelectedValues = allSelectedFields.map((field) => field.value);
+
+    // construct the policy
+    let policy: PolicyDocType = {
+      scope: "project",
+      verbs: [],
+      children: {
+        cluster: {
+          scope: "cluster",
+          verbs: [],
+          children: {
+            namespace: {
+              scope: "namespace",
+              verbs: getVerbsForScope(
+                "namespace-read",
+                allSelectedValues
+              ).concat(getVerbsForScope("namespace-write", allSelectedValues)),
+              children: {
+                release: {
+                  scope: "release",
+                  verbs: getVerbsForScope(
+                    "release-read",
+                    allSelectedValues
+                  ).concat(
+                    getVerbsForScope("release-write", allSelectedValues)
+                  ),
+                },
+              },
+            },
+          },
+        },
+        registry: {
+          scope: "registry",
+          verbs: getVerbsForScope("registry-read", allSelectedValues).concat(
+            getVerbsForScope("registry-write", allSelectedValues)
+          ),
+        },
+        infra: {
+          scope: "infra",
+          verbs: getVerbsForScope("infra-read", allSelectedValues).concat(
+            getVerbsForScope("infra-write", allSelectedValues)
+          ),
+        },
+        settings: {
+          scope: "settings",
+          verbs: getVerbsForScope("settings-read", allSelectedValues).concat(
+            getVerbsForScope("settings-write", allSelectedValues)
+          ),
+        },
+      },
+    };
+
     api
-      .createAPIToken(
+      .createPolicy(
         "<token>",
         {
-          name: apiTokenName,
-          expires_at: getDateValue(expiration),
-          policy_uid: policy,
+          name: policyName,
+          policy: [policy],
         },
         { project_id: currentProject.id }
       )
       .then(({ data }) => {
-        setCreatedToken(data);
+        console.log("data response is", data);
+        cb && cb(data?.uid);
       })
       .catch((err) => {
         console.error(err);
@@ -104,7 +227,12 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({ onCreate }) => {
   if (createdToken != null) {
     return (
       <CreateTokenWrapper>
-        <Heading isAtTop={true}>API token created successfully!</Heading>
+        <ControlRow>
+          <Heading isAtTop={true}>API token created successfully!</Heading>
+          <BackButton>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+        </ControlRow>
         <Helper>
           Please copy this token and store it in a secure location. This token
           will only be shown once:
@@ -121,14 +249,43 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({ onCreate }) => {
             </i>
           </CopyToClipboard>
         </TokenDisplayBlock>
-        <SaveButton text="Continue" onClick={onCreate} />
+        <SaveButton
+          text="Continue"
+          onClick={onCreate}
+          makeFlush={true}
+          clearPosition={true}
+        />
       </CreateTokenWrapper>
     );
   }
 
+  const renderPolicyContents = () => {
+    if (policy === "custom") {
+      return (
+        <CustomPolicyForm
+          selectedClusterFields={selectedClusterFields}
+          setSelectedClusterFields={setSelectedClusterFields}
+          selectedRegistryFields={selectedRegistryFields}
+          setSelectedRegistryFields={setSelectedRegistryFields}
+          selectedInfraFields={selectedInfraFields}
+          setSelectedInfraFields={setSelectedInfraFields}
+          selectedSettingsFields={selectedSettingsFields}
+          setSelectedSettingsFields={setSelectedSettingsFields}
+          policyName={policyName}
+          setPolicyName={setPolicyName}
+        />
+      );
+    }
+  };
+
   return (
     <CreateTokenWrapper>
-      <Heading isAtTop={true}>Create API Token</Heading>
+      <ControlRow>
+        <Heading isAtTop={true}>Create API Token</Heading>
+        <BackButton onClick={back}>
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+      </ControlRow>
       <InputRow
         value={apiTokenName}
         type="text"
@@ -161,9 +318,19 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({ onCreate }) => {
             label: "Viewer",
             value: "viewer",
           },
+          {
+            label: "Custom Role",
+            value: "custom",
+          },
         ]}
       />
-      <SaveButton text="Create Token" onClick={createToken} />
+      {renderPolicyContents()}
+      <SaveButton
+        text="Create Token"
+        onClick={createToken}
+        makeFlush={true}
+        clearPosition={true}
+      />
     </CreateTokenWrapper>
   );
 };
@@ -232,14 +399,9 @@ const ButtonWrapper = styled.div`
 `;
 
 const CreateTokenWrapper = styled.div`
-  width: 40%;
-  min-width: 500px;
+  width: 60%;
+  min-width: 600px;
   position: relative;
-  height: 400px;
-  background: #26282f;
-  box-shadow: 0 4px 15px 0px #00000044;
-  padding: 20px 24px 10px 24px;
-  margin: 0 auto;
 `;
 
 const CopyButton = styled.div`
@@ -366,6 +528,7 @@ const TokenDisplayBlock = styled.div`
   justify-content: space-between;
   width: 100%;
   background-color: #1b1d26;
+  margin-bottom: 20px;
 `;
 
 const CopyTokenButton = styled.div`
@@ -390,4 +553,37 @@ const CodeBlock = styled.div`
   padding: 10px;
   white-space: nowrap;
   border-right: 10px solid #1b1d26;
+`;
+
+const ControlRow = styled.div`
+  width: 100%;
+  display: flex;
+  margin-left: auto;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+`;
+
+const BackButton = styled.div`
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
 `;

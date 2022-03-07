@@ -15,6 +15,7 @@ import Table from "components/Table";
 import RadioSelector from "components/RadioSelector";
 import CreateAPITokenForm from "./api-tokens/CreateAPITokenForm";
 import TokenList from "./api-tokens/TokenList";
+import SaveButton from "components/SaveButton";
 
 type Props = {};
 
@@ -38,6 +39,7 @@ const APITokensSection: React.FunctionComponent<Props> = ({}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [apiTokens, setAPITokens] = useState<Array<APITokenMeta>>([]);
   const [shouldCreate, setShouldCreate] = useState(false);
+  const [expanded, setExpanded] = useState("");
 
   useEffect(() => {
     api
@@ -60,7 +62,12 @@ const APITokensSection: React.FunctionComponent<Props> = ({}) => {
   }
 
   if (shouldCreate) {
-    return <CreateAPITokenForm onCreate={() => setShouldCreate(false)} />;
+    return (
+      <CreateAPITokenForm
+        onCreate={() => setShouldCreate(false)}
+        back={() => setShouldCreate(false)}
+      />
+    );
   }
 
   const getTokenList = () => {
@@ -69,17 +76,36 @@ const APITokensSection: React.FunctionComponent<Props> = ({}) => {
     });
   };
 
+  const revokeToken = (id: string) => {
+    setAPITokens((toks) => toks.filter((tok) => tok.id !== id));
+  };
+
   return (
-    <>
+    <APITokensSectionWrapper>
       <Heading isAtTop={true}>API Tokens</Heading>
       <Helper>
         This displays all active API tokens, which are tokens that have not
         expired and have not been revoked.
       </Helper>
       <TokenListWrapper>
-        <TokenList tokens={apiTokens} />
+        <TokenList
+          tokens={apiTokens}
+          setExpanded={setExpanded}
+          expanded={expanded}
+          revokeToken={revokeToken}
+        />
       </TokenListWrapper>
-    </>
+      <SaveButtonContainer>
+        <SaveButton
+          makeFlush={true}
+          clearPosition={true}
+          onClick={() => setShouldCreate(true)}
+        >
+          <i className="material-icons">add</i>
+          Create API Token
+        </SaveButton>
+      </SaveButtonContainer>
+    </APITokensSectionWrapper>
   );
 };
 
@@ -270,6 +296,27 @@ const Status = styled.div<{ status: "accepted" | "expired" | "pending" }>`
 `;
 
 const TokenListWrapper = styled.div`
+  width: 100%;
+  max-height: 500px;
+  overflow-y: auto;
+`;
+
+const APITokensSectionWrapper = styled.div`
   width: 60%;
-  min-width: 400px;
+  min-width: 600px;
+`;
+
+const ControlRow = styled.div`
+  width: 100%;
+  display: flex;
+  margin-left: auto;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+  padding-left: 0px;
+`;
+
+const SaveButtonContainer = styled.div`
+  position: relative;
+  margin-top: 20px;
 `;

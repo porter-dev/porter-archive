@@ -27,7 +27,7 @@ func (repo *APITokenRepository) CreateAPIToken(a *models.APIToken) (*models.APIT
 func (repo *APITokenRepository) ListAPITokensByProjectID(projectID uint) ([]*models.APIToken, error) {
 	tokens := []*models.APIToken{}
 
-	if err := repo.db.Where("project_id = ?", projectID).Find(&tokens).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND revoked IS NOT ?", projectID, true).Find(&tokens).Error; err != nil {
 		return nil, err
 	}
 

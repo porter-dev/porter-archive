@@ -9,8 +9,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
 )
 
 type PolicyCreateHandler struct {
@@ -37,7 +37,7 @@ func (p *PolicyCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	uid, err := repository.GenerateRandomBytes(16)
+	uid, err := encryption.GenerateRandomBytes(16)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

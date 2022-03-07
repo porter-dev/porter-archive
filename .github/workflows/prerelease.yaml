@@ -505,7 +505,7 @@ jobs:
 
           git add .
 
-          git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}"
+          git diff --quiet --exit-code || git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}"
 
           git push -f
   run-new-release-tests-workflows:

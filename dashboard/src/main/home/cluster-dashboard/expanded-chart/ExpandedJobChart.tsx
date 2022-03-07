@@ -57,6 +57,8 @@ export const ExpandedJobChartFC: React.FC<{
   const {
     jobs,
     hasPorterImageTemplate,
+    status: jobsStatus,
+    triggerRunStatus,
     runJob,
     selectedJob,
     setSelectedJob,
@@ -138,7 +140,7 @@ export const ExpandedJobChartFC: React.FC<{
               onClick={() => {
                 runJob();
               }}
-              status={"saveValuesStatus"}
+              status={triggerRunStatus}
               makeFlush={true}
               clearPosition={true}
               rounded={true}
@@ -147,17 +149,22 @@ export const ExpandedJobChartFC: React.FC<{
               <i className="material-icons">play_arrow</i> Run Job
             </SaveButton>
           </ButtonWrapper>
-          <JobList
-            jobs={jobs}
-            setJobs={() => {}}
-            expandJob={(job: any) => {
-              setSelectedJob(job);
-            }}
-            isDeployedFromGithub={!!chart?.git_action_config?.git_repo}
-            repositoryUrl={chart?.git_action_config?.git_repo}
-            currentChartVersion={Number(chart.version)}
-            latestChartVersion={Number(chart.latest_version)}
-          />
+
+          {jobsStatus === "loading" ? (
+            <Loading></Loading>
+          ) : (
+            <JobList
+              jobs={jobs}
+              setJobs={() => {}}
+              expandJob={(job: any) => {
+                setSelectedJob(job);
+              }}
+              isDeployedFromGithub={!!chart?.git_action_config?.git_repo}
+              repositoryUrl={chart?.git_action_config?.git_repo}
+              currentChartVersion={Number(chart.version)}
+              latestChartVersion={Number(chart.latest_version)}
+            />
+          )}
         </TabWrapper>
       );
     }

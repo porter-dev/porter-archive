@@ -21,6 +21,10 @@ export const useJobs = (chart: ChartType) => {
   const jobsRef = useRef([]);
   const [hasPorterImageTemplate, setHasPorterImageTemplate] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [status, setStatus] = useState<"loading" | "ready">("loading");
+  const [triggerRunStatus, setTriggerRunStatus] = useState<
+    "loading" | "successful" | string
+  >("");
 
   const {
     newWebsocket,
@@ -199,7 +203,7 @@ export const useJobs = (chart: ChartType) => {
         closeAllWebsockets();
       };
     }
-
+    setStatus("loading");
     const newestImage = chart?.config?.image?.repository;
 
     setHasPorterImageTemplate(PORTER_IMAGE_TEMPLATES.includes(newestImage));
@@ -218,6 +222,7 @@ export const useJobs = (chart: ChartType) => {
       .then((res) => {
         if (isSubscribed) {
           sortJobsAndSave(res.data);
+          setStatus("ready");
           setupJobWebsocket();
           setupCronJobWebsocket();
         }
@@ -229,6 +234,7 @@ export const useJobs = (chart: ChartType) => {
   }, [chart]);
 
   const runJob = () => {
+    setTriggerRunStatus("loading");
     const config = chart.config;
     const values = {};
 
@@ -259,8 +265,8 @@ export const useJobs = (chart: ChartType) => {
         }
       )
       .then((res) => {
-        // this.setState({ saveValuesStatus: "successful" });
-        // this.refreshChart(0);
+        setTriggerRunStatus("successful");
+        setTimeout(() => setTriggerRunStatus(""), 500);
       })
       .catch((err) => {
         let parsedErr = err?.response?.data?.error;
@@ -272,7 +278,7 @@ export const useJobs = (chart: ChartType) => {
         // this.setState({
         //   saveValuesStatus: parsedErr,
         // });
-
+        setTriggerRunStatus("Couldn't trigger a new run for this job.");
         setCurrentError(parsedErr);
       });
   };
@@ -280,6 +286,8 @@ export const useJobs = (chart: ChartType) => {
   return {
     jobs,
     hasPorterImageTemplate,
+    status,
+    triggerRunStatus,
     runJob,
     selectedJob,
     setSelectedJob,

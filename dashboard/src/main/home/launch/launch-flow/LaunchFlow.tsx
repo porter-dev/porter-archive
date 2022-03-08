@@ -115,7 +115,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           id: currentProject.id,
           cluster_id: currentCluster.id,
           namespace: selectedNamespace,
-          repo_url: process.env.ADDON_CHART_REPO_URL,
+          repo_url:
+            props.currentTemplate?.repo_url || process.env.ADDON_CHART_REPO_URL,
         }
       )
       .then((_) => {

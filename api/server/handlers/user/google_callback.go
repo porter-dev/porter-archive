@@ -143,6 +143,12 @@ func upsertGoogleUserFromToken(config *config.Config, tok *oauth2.Token) (*model
 				return nil, err
 			}
 
+			err = addUserToDefaultProject(config, user)
+
+			if err != nil {
+				return nil, err
+			}
+
 			config.AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
 				UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
 				Email:               user.Email,

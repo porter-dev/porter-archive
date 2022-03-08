@@ -47,7 +47,7 @@ func (t *TemplateListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	porterCharts := loader.RepoIndexToPorterChartList(repoIndex)
+	porterCharts := loader.RepoIndexToPorterChartList(repoIndex, repoURL)
 
 	t.WriteResult(w, r, porterCharts)
 }

@@ -83,6 +83,8 @@ type ServerConf struct {
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`
 
+	InitInCluster bool `env:"INIT_IN_CLUSTER"`
+
 	WelcomeFormWebhook string `env:"WELCOME_FORM_WEBHOOK"`
 
 	// Token for internal retool to authenticate to internal API endpoints

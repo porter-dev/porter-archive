@@ -1045,6 +1045,32 @@ const getTemplates = baseApi<
   {}
 >("GET", "/api/templates");
 
+const getHelmRepos = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/helmrepos`;
+});
+
+const getChartsFromHelmRepo = baseApi<
+  {},
+  {
+    project_id: number;
+    helm_repo_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/helmrepos/${pathParams.helm_repo_id}/charts`;
+});
+
+const getChartInfoFromHelmRepo = baseApi<
+  {},
+  { project_id: number; helm_repo_id: number; name: string; version: string }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/helmrepos/${pathParams.helm_repo_id}/charts/${pathParams.name}/${pathParams.version}`;
+});
+
 const getMetadata = baseApi<{}, {}>("GET", () => {
   return `/api/metadata`;
 });
@@ -1664,6 +1690,9 @@ export default {
   getTemplateInfo,
   getTemplateUpgradeNotes,
   getTemplates,
+  getHelmRepos,
+  getChartsFromHelmRepo,
+  getChartInfoFromHelmRepo,
   linkGithubProject,
   getGithubAccounts,
   listConfigMaps,

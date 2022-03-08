@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -85,14 +86,14 @@ func initData(conf *config.Config) error {
 	// if the config specifies in-cluster connections are permitted, create a new project with a
 	// cluster that uses the in-cluster config. this will be the default project for this instance.
 	if conf.ServerConf.InitInCluster {
-		l := conf.Logger.Debug()
-		l.Msg("in-cluster config variable set: checking for default project and cluster")
+		l := conf.Logger
+		l.Debug().Msg("in-cluster config variable set: checking for default project and cluster")
 
 		// look for a project with id 1 with name of defaultProjectName
 		_, err := conf.Repo.Project().ReadProject(1)
 
-		if err == gorm.ErrRecordNotFound {
-			l.Msg("default project not found: attempting creation")
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			l.Debug().Msg("default project not found: attempting creation")
 
 			_, err = conf.Repo.Project().CreateProject(&models.Project{
 				Name: defaultProjectName,
@@ -102,26 +103,27 @@ func initData(conf *config.Config) error {
 				return err
 			}
 
-			l.Msg("successfully created default project")
+			l.Debug().Msg("successfully created default project")
 		} else if err != nil {
 			return err
 		}
 
 		_, err = conf.Repo.Cluster().ReadCluster(1, 1)
 
-		if err == gorm.ErrRecordNotFound {
-			l.Msg("default cluster not found: attempting creation")
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			l.Debug().Msg("default cluster not found: attempting creation")
 
 			_, err = conf.Repo.Cluster().CreateCluster(&models.Cluster{
 				Name:          defaultClusterName,
 				AuthMechanism: models.InCluster,
+				ProjectID:     1,
 			})
 
 			if err != nil {
 				return err
 			}
 
-			l.Msg("successfully created default cluster")
+			l.Debug().Msg("successfully created default cluster")
 		} else if err != nil {
 			return err
 		}

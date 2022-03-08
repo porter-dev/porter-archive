@@ -20,11 +20,18 @@ import { hardcodedNames } from "shared/hardcodedNameDict";
 import semver from "semver";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, getQueryParams } from "shared/routing";
+import TemplateList from "./TemplateList";
+import { capitalize } from "lodash";
 
-const tabOptions = [
+const initialTabOptions = [
   { label: "New Application", value: "porter" },
   { label: "Community Add-ons", value: "community" },
 ];
+
+type TabOption = {
+  label: string;
+  value: string;
+};
 
 const HIDDEN_CHARTS = ["porter-agent"];
 
@@ -40,8 +47,8 @@ type StateType = {
   error: boolean;
   isOnLaunchFlow: boolean;
   clonedChart: ChartTypeWithExtendedConfig;
+  tabOptions: TabOption[];
 };
-
 class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
@@ -53,6 +60,7 @@ class Templates extends Component<PropsType, StateType> {
     error: false,
     isOnLaunchFlow: false,
     clonedChart: null as ChartTypeWithExtendedConfig,
+    tabOptions: initialTabOptions,
   };
 
   async componentDidMount() {
@@ -163,6 +171,29 @@ class Templates extends Component<PropsType, StateType> {
     } catch (error) {
       this.setState({ loading: false, error: true });
     }
+
+    try {
+      const res = await api.getHelmRepos(
+        "<token>",
+        {},
+        {
+          project_id: this.context.currentProject.id,
+        }
+      );
+
+      let tabOptions = this.state.tabOptions.concat(
+        ...res.data.map((val: any) => {
+          return {
+            value: `${val.id}`,
+            label: capitalize(val.name),
+          };
+        })
+      );
+
+      this.setState({ tabOptions });
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+    }
   }
 
   isTryingToClone = () => {
@@ -222,48 +253,37 @@ class Templates extends Component<PropsType, StateType> {
     );
   };
 
-  renderTemplateList = (templates: any) => {
-    let { loading, error } = this.state;
-
-    if (loading) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (error) {
-      return (
-        <Placeholder>
-          <i className="material-icons">error</i> Error retrieving templates.
-        </Placeholder>
-      );
-    } else if (templates.length === 0) {
-      return (
-        <Placeholder>
-          <i className="material-icons">category</i> No templates found.
-        </Placeholder>
-      );
+  renderTemplateList = (templates?: any, helm_repo_id?: number) => {
+    if (!helm_repo_id && templates) {
+      if (this.state.loading) {
+        return (
+          <LoadingWrapper>
+            <Loading />
+          </LoadingWrapper>
+        );
+      } else if (this.state.error) {
+        return (
+          <Placeholder>
+            <i className="material-icons">error</i> Error retrieving templates.
+          </Placeholder>
+        );
+      } else if (templates.length === 0) {
+        return (
+          <Placeholder>
+            <i className="material-icons">category</i> No templates found.
+          </Placeholder>
+        );
+      }
     }
 
     return (
-      <TemplateList>
-        {templates.map((template: PorterTemplate, i: number) => {
-          let { name, icon, description } = template;
-          if (hardcodedNames[name]) {
-            name = hardcodedNames[name];
-          }
-          return (
-            <TemplateBlock
-              key={name}
-              onClick={() => this.setState({ currentTemplate: template })}
-            >
-              {this.renderIcon(icon)}
-              <TemplateTitle>{name}</TemplateTitle>
-              <TemplateDescription>{description}</TemplateDescription>
-            </TemplateBlock>
-          );
-        })}
-      </TemplateList>
+      <TemplateList
+        helm_repo_id={helm_repo_id}
+        templates={templates}
+        setCurrentTemplate={(template) =>
+          this.setState({ currentTemplate: template })
+        }
+      />
     );
   };
 
@@ -278,13 +298,16 @@ class Templates extends Component<PropsType, StateType> {
           setCurrentTemplate={(currentTemplate: PorterTemplate) => {
             this.setState({ currentTemplate });
           }}
+          helm_repo_id={parseInt(this.state.currentTab)}
         />
       );
     }
     if (this.state.currentTab === "porter") {
       return this.renderTemplateList(this.state.applicationTemplates);
-    } else {
+    } else if (this.state.currentTab == "community") {
       return this.renderTemplateList(this.state.addonTemplates);
+    } else {
+      return this.renderTemplateList(null, parseInt(this.state.currentTab));
     }
   };
 
@@ -293,7 +316,7 @@ class Templates extends Component<PropsType, StateType> {
       return (
         <>
           <TabSelector
-            options={tabOptions}
+            options={this.state.tabOptions}
             currentTab={this.state.currentTab}
             setCurrentTab={(value: string) =>
               this.setState({
@@ -487,16 +510,6 @@ const TemplateBlock = styled.div`
       opacity: 1;
     }
   }
-`;
-
-const TemplateList = styled.div`
-  overflow: visible;
-  margin-top: 35px;
-  padding-bottom: 150px;
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 `;
 
 const TemplatesWrapper = styled.div`

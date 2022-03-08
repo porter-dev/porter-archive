@@ -57,7 +57,7 @@ func (t *ChartListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	charts := loader.RepoIndexToPorterChartList(repoIndex)
+	charts := loader.RepoIndexToPorterChartList(repoIndex, helmRepo.RepoURL)
 
 	t.WriteResult(w, r, charts)
 }

@@ -109,5 +109,34 @@ func getHelmRepoRoutes(
 		Router:   r,
 	})
 
+	//  GET /api/projects/{project_id}/helmrepos/{helm_repo_id}/charts/{name}/{version} -> helmrepo.NewChartGetHandler
+	chartGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/charts/{name}/{version}",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.HelmRepoScope,
+			},
+		},
+	)
+
+	chartGetHandler := helmrepo.NewChartGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: chartGetEndpoint,
+		Handler:  chartGetHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

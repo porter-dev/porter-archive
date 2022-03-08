@@ -17,7 +17,7 @@ import (
 )
 
 // RepoIndexToPorterChartList converts an index file to a list of porter charts
-func RepoIndexToPorterChartList(index *repo.IndexFile) types.ListTemplatesResponse {
+func RepoIndexToPorterChartList(index *repo.IndexFile, repoURL string) types.ListTemplatesResponse {
 	// sort the entries before parsing
 	index.SortEntries()
 
@@ -36,6 +36,7 @@ func RepoIndexToPorterChartList(index *repo.IndexFile) types.ListTemplatesRespon
 			Description: indexChart.Description,
 			Icon:        indexChart.Icon,
 			Versions:    versions,
+			RepoURL:     repoURL,
 		}
 
 		porterCharts = append(porterCharts, porterChart)

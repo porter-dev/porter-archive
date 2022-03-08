@@ -514,10 +514,18 @@ jobs:
     needs: update-new-release-tests
     steps:
       - name: Run porter_test_pack_production.yml workflow
-        run: gh workflow run porter_test_pack_production.yml --repo porter-dev/new-release-tests
-        env:
-          GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+        uses: convictional/trigger-workflow-and-wait@v1.5.0
+        with:
+          owner: porter-dev
+          repo: new-release-tests
+          github_user: abelanger5
+          github_token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+          workflow_file_name: porter_test_pack_production.yml
       - name: Run porter_test_docker_production.yml workflow
-        run: gh workflow run porter_test_docker_production.yml --repo porter-dev/new-release-tests
-        env:
-          GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+        uses: convictional/trigger-workflow-and-wait@v1.5.0
+        with:
+          owner: porter-dev
+          repo: new-release-tests
+          github_user: abelanger5
+          github_token: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+          workflow_file_name: porter_test_docker_production.yml

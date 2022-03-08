@@ -152,6 +152,7 @@ export interface PorterTemplate {
   currentVersion: string;
   description: string;
   icon: string;
+  repo_url?: string;
 }
 
 // FormYAML represents a chart's values.yaml form abstraction

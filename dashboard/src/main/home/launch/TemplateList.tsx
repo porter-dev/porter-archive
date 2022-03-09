@@ -112,24 +112,22 @@ const TemplateList: React.FC<Props> = ({
 
   return (
     <TemplateListWrapper>
-      {(templates || templateList)?.map(
-        (template: PorterTemplate, i: number) => {
-          let { name, icon, description } = template;
-          if (hardcodedNames[name]) {
-            name = hardcodedNames[name];
-          }
-          return (
-            <TemplateBlock
-              key={name}
-              onClick={() => setCurrentTemplate(template)}
-            >
-              {renderIcon(icon)}
-              <TemplateTitle>{name}</TemplateTitle>
-              <TemplateDescription>{description}</TemplateDescription>
-            </TemplateBlock>
-          );
+      {(templates || templateList)?.map((template: PorterTemplate) => {
+        let { name, icon, description } = template;
+        if (hardcodedNames[name]) {
+          name = hardcodedNames[name];
         }
-      )}
+        return (
+          <TemplateBlock
+            key={name}
+            onClick={() => setCurrentTemplate(template)}
+          >
+            {renderIcon(icon)}
+            <TemplateTitle>{name}</TemplateTitle>
+            <TemplateDescription>{description}</TemplateDescription>
+          </TemplateBlock>
+        );
+      })}
     </TemplateListWrapper>
   );
 };
@@ -149,47 +147,6 @@ const Placeholder = styled.div`
     font-size: 18px;
     margin-right: 12px;
   }
-`;
-
-const Banner = styled.div`
-  height: 40px;
-  width: 100%;
-  margin: 30px 0 38px;
-  font-size: 13px;
-  display: flex;
-  border-radius: 5px;
-  padding-left: 15px;
-  align-items: center;
-  background: #ffffff11;
-  > i {
-    margin-right: 10px;
-    font-size: 18px;
-  }
-`;
-
-const Highlight = styled.div`
-  color: #8590ff;
-  cursor: pointer;
-  margin-left: 5px;
-  margin-right: 10px;
-`;
-
-const StyledStatusPlaceholder = styled.div`
-  width: 100%;
-  height: calc(100vh - 365px);
-  margin-top: 20px;
-  display: flex;
-  color: #aaaabb;
-  border-radius: 5px;
-  padding-bottom: 20px;
-  text-align: center;
-  font-size: 13px;
-  background: #ffffff09;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  user-select: text;
 `;
 
 const LoadingWrapper = styled.div`
@@ -275,10 +232,4 @@ const TemplateListWrapper = styled.div`
   grid-column-gap: 25px;
   grid-row-gap: 25px;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-`;
-
-const TemplatesWrapper = styled.div`
-  width: calc(85%);
-  overflow: visible;
-  min-width: 300px;
 `;

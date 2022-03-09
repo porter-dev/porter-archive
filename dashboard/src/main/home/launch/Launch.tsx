@@ -3,11 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import {
-  ChartTypeWithExtendedConfig,
-  PorterTemplate,
-  StorageType,
-} from "shared/types";
+import { ChartTypeWithExtendedConfig, PorterTemplate } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
@@ -16,7 +12,6 @@ import LaunchFlow from "./launch-flow/LaunchFlow";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
 import TitleSection from "components/TitleSection";
 
-import { hardcodedNames } from "shared/hardcodedNameDict";
 import semver from "semver";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, getQueryParams } from "shared/routing";
@@ -412,31 +407,6 @@ const Banner = styled.div`
   }
 `;
 
-const Highlight = styled.div`
-  color: #8590ff;
-  cursor: pointer;
-  margin-left: 5px;
-  margin-right: 10px;
-`;
-
-const StyledStatusPlaceholder = styled.div`
-  width: 100%;
-  height: calc(100vh - 365px);
-  margin-top: 20px;
-  display: flex;
-  color: #aaaabb;
-  border-radius: 5px;
-  padding-bottom: 20px;
-  text-align: center;
-  font-size: 13px;
-  background: #ffffff09;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  user-select: text;
-`;
-
 const LoadingWrapper = styled.div`
   padding-top: 300px;
 `;
@@ -452,63 +422,6 @@ const Polymer = styled.div`
     font-size: 34px;
     margin-top: 38px;
     margin-bottom: 20px;
-  }
-`;
-
-const TemplateDescription = styled.div`
-  margin-bottom: 26px;
-  color: #ffffff66;
-  text-align: center;
-  font-weight: default;
-  padding: 0px 25px;
-  height: 2.4em;
-  font-size: 12px;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-`;
-
-const TemplateTitle = styled.div`
-  margin-bottom: 12px;
-  width: 80%;
-  text-align: center;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TemplateBlock = styled.div`
-  border: 1px solid #ffffff00;
-  align-items: center;
-  user-select: none;
-  border-radius: 8px;
-  display: flex;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 3px 0px 5px;
-  flex-direction: column;
-  align-item: center;
-  justify-content: space-between;
-  height: 200px;
-  cursor: pointer;
-  color: #ffffff;
-  position: relative;
-  background: #26282f;
-  box-shadow: 0 4px 15px 0px #00000044;
-  :hover {
-    background: #ffffff11;
-  }
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
   }
 `;
 

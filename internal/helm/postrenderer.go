@@ -12,7 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/docker/distribution/reference"
@@ -237,10 +237,14 @@ func (d *DockerSecretsPostRenderer) Run(
 	defer encoder.Close()
 
 	for _, resource := range d.resources {
-		err = encoder.Encode(resource)
+		// if the resource is empty, we skip encoding it to prevent errors. Helm/k8s expects empty resources to take the form "{}",
+		// while this library writes an empty string, causing problems during installation.
+		if len(resource) != 0 {
+			err = encoder.Encode(resource)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

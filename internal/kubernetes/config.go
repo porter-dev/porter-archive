@@ -34,7 +34,14 @@ import (
 
 // GetDynamicClientOutOfClusterConfig creates a new dynamic client using the OutOfClusterConfig
 func GetDynamicClientOutOfClusterConfig(conf *OutOfClusterConfig) (dynamic.Interface, error) {
-	restConf, err := conf.ToRESTConfig()
+	var restConf *rest.Config
+	var err error
+
+	if conf.AllowInClusterConnections && conf.Cluster.AuthMechanism == models.InCluster {
+		restConf, err = rest.InClusterConfig()
+	} else {
+		restConf, err = conf.ToRESTConfig()
+	}
 
 	if err != nil {
 		return nil, err
@@ -51,6 +58,10 @@ func GetDynamicClientOutOfClusterConfig(conf *OutOfClusterConfig) (dynamic.Inter
 
 // GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
 func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
+	if conf.AllowInClusterConnections && conf.Cluster.AuthMechanism == models.InCluster {
+		return GetAgentInClusterConfig()
+	}
+
 	restConf, err := conf.ToRESTConfig()
 
 	if err != nil {
@@ -99,9 +110,10 @@ func GetAgentTesting(objects ...runtime.Object) *Agent {
 // OutOfClusterConfig is the set of parameters required for an out-of-cluster connection.
 // This implements RESTClientGetter
 type OutOfClusterConfig struct {
-	Cluster          *models.Cluster
-	Repo             repository.Repository
-	DefaultNamespace string // optional
+	Cluster                   *models.Cluster
+	Repo                      repository.Repository
+	DefaultNamespace          string // optional
+	AllowInClusterConnections bool
 
 	// Only required if using DigitalOcean OAuth as an auth mechanism
 	DigitalOceanOAuth *oauth2.Config

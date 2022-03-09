@@ -25,57 +25,58 @@ const TemplateList: React.FC<Props> = ({
   const { currentProject, setCurrentError } = useContext(Context);
 
   useEffect(() => {
-    if (currentProject && helm_repo_id) {
-      let isSubscribed = true;
-
-      api
-        .getChartsFromHelmRepo(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-            helm_repo_id: helm_repo_id,
-          }
-        )
-        .then(({ data }) => {
-          if (!isSubscribed) {
-            return;
-          }
-
-          if (!Array.isArray(data)) {
-            throw Error("Data is not an array");
-          }
-
-          let sortedVersionData = data.map((template: any) => {
-            let versions = template.versions.reverse();
-
-            versions = template.versions.sort(semver.rcompare);
-
-            return {
-              ...template,
-              versions,
-              currentVersion: versions[0],
-            };
-          });
-          sortedVersionData.sort((a: any, b: any) =>
-            a.name > b.name ? 1 : -1
-          );
-
-          setTemplateList(sortedVersionData);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-
-          setHasError(true);
-          setCurrentError(err.response?.data?.error);
-          setIsLoading(false);
-        });
-
+    let isSubscribed = true;
+    if (!currentProject || !helm_repo_id) {
       return () => {
         isSubscribed = false;
       };
     }
+
+    api
+      .getChartsFromHelmRepo(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          helm_repo_id: helm_repo_id,
+        }
+      )
+      .then(({ data }) => {
+        if (!isSubscribed) {
+          return;
+        }
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+
+        let sortedVersionData = data.map((template: any) => {
+          let versions = template.versions.reverse();
+
+          versions = template.versions.sort(semver.rcompare);
+
+          return {
+            ...template,
+            versions,
+            currentVersion: versions[0],
+          };
+        }).sort((a: any, b: any) =>
+          a.name > b.name ? 1 : -1
+        );
+
+        setTemplateList(sortedVersionData);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+
+        setHasError(true);
+        setCurrentError(err.response?.data?.error);
+        setIsLoading(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [currentProject, helm_repo_id]);
 
   if (isLoading || (!templates && !templateList)) {

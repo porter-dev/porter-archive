@@ -41,25 +41,15 @@ const LogsFC: React.FC<{
   podError: string;
   rawText?: boolean;
 }> = ({ selectedPod, podError, rawText }) => {
-  const {
-    logs,
-    previousLogs,
-    containers,
-    currentContainer,
-    setCurrentContainer,
-    refresh,
-  } = useLogs(selectedPod);
-
-  const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
-
   const [isScrollToBottomEnabled, setIsScrollToBottomEnabled] = useState(true);
 
   const [showConnectionModal, setShowConnectionModal] = useState(false);
 
+  const shouldScroll = useRef<boolean>(true);
   const wrapperRef = useRef<HTMLDivElement>();
 
   const scrollToBottom = (smooth: boolean) => {
-    if (!wrapperRef.current) {
+    if (!wrapperRef.current || !shouldScroll.current) {
       return;
     }
 
@@ -78,11 +68,20 @@ const LogsFC: React.FC<{
     }
   };
 
+  const {
+    logs,
+    previousLogs,
+    containers,
+    currentContainer,
+    setCurrentContainer,
+    refresh,
+  } = useLogs(selectedPod, scrollToBottom);
+
+  const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
+
   useEffect(() => {
-    if (isScrollToBottomEnabled) {
-      scrollToBottom(true);
-    }
-  }, [isScrollToBottomEnabled, logs]);
+    shouldScroll.current = isScrollToBottomEnabled;
+  }, [isScrollToBottomEnabled]);
 
   const renderLogs = () => {
     if (podError && podError != "") {
@@ -158,7 +157,7 @@ const LogsFC: React.FC<{
 
   const renderContent = () => (
     <>
-      <ConnectToLogsInstructionModal
+      {/* <ConnectToLogsInstructionModal
         show={showConnectionModal}
         onClose={() => setShowConnectionModal(false)}
         chartName={selectedPod?.metadata?.labels["app.kubernetes.io/instance"]}
@@ -171,8 +170,8 @@ const LogsFC: React.FC<{
         }}
       >
         <CLIModalIcon />
-        Shell logs livestream
-      </CLIModalIconWrapper>
+        CLI Logs Instructions
+      </CLIModalIconWrapper> */}
       <Wrapper ref={wrapperRef}>{renderLogs()}</Wrapper>
       <LogTabs>
         {containers.map((containerName, _i, arr) => {
@@ -254,7 +253,10 @@ const LogsFC: React.FC<{
 
 export default LogsFC;
 
-const useLogs = (currentPod: SelectedPodType) => {
+const useLogs = (
+  currentPod: SelectedPodType,
+  scroll?: (smooth: boolean) => void
+) => {
   const currentPodName = useRef<string>();
 
   const { currentCluster, currentProject } = useContext(Context);
@@ -360,7 +362,9 @@ const useLogs = (currentPod: SelectedPodType) => {
           if (containerLogs.length > MAX_LOGS) {
             containerLogs.shift();
           }
-
+          if (typeof scroll === "function") {
+            scroll(true);
+          }
           return {
             ...logs,
             [containerName]: containerLogs,

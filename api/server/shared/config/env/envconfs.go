@@ -89,7 +89,7 @@ type ServerConf struct {
 	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
 	IngressCluster     string `env:"INGRESS_CLUSTER"`
 	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
-	InitInCluster      bool   `env:"INIT_IN_CLUSTER"`
+	InitInCluster      bool   `env:"INIT_IN_CLUSTER,default=false"`
 
 	WelcomeFormWebhook string `env:"WELCOME_FORM_WEBHOOK"`
 

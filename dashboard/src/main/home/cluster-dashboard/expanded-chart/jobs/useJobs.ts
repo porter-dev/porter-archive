@@ -119,6 +119,10 @@ export const useJobs = (chart: ChartType) => {
             return prevValue;
           }
 
+          if (!event.Object?.metadata?.annotations) {
+            return prevValue;
+          }
+
           // filter job belonging to chart
           const relNameAnnotation =
             event.Object?.metadata?.annotations["meta.helm.sh/release-name"];

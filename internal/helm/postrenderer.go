@@ -318,7 +318,9 @@ func decodeRenderedManifests(
 			return resArr, err
 		}
 
-		resArr = append(resArr, res)
+		if len(res) != 0 {
+			resArr = append(resArr, res)
+		}
 	}
 
 	return resArr, nil

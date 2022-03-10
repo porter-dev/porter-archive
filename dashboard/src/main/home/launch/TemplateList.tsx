@@ -25,57 +25,58 @@ const TemplateList: React.FC<Props> = ({
   const { currentProject, setCurrentError } = useContext(Context);
 
   useEffect(() => {
-    if (currentProject && helm_repo_id) {
-      let isSubscribed = true;
-
-      api
-        .getChartsFromHelmRepo(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-            helm_repo_id: helm_repo_id,
-          }
-        )
-        .then(({ data }) => {
-          if (!isSubscribed) {
-            return;
-          }
-
-          if (!Array.isArray(data)) {
-            throw Error("Data is not an array");
-          }
-
-          let sortedVersionData = data.map((template: any) => {
-            let versions = template.versions.reverse();
-
-            versions = template.versions.sort(semver.rcompare);
-
-            return {
-              ...template,
-              versions,
-              currentVersion: versions[0],
-            };
-          });
-          sortedVersionData.sort((a: any, b: any) =>
-            a.name > b.name ? 1 : -1
-          );
-
-          setTemplateList(sortedVersionData);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-
-          setHasError(true);
-          setCurrentError(err.response?.data?.error);
-          setIsLoading(false);
-        });
-
+    let isSubscribed = true;
+    if (!currentProject || !helm_repo_id) {
       return () => {
         isSubscribed = false;
       };
     }
+
+    api
+      .getChartsFromHelmRepo(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          helm_repo_id: helm_repo_id,
+        }
+      )
+      .then(({ data }) => {
+        if (!isSubscribed) {
+          return;
+        }
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+
+        let sortedVersionData = data.map((template: any) => {
+          let versions = template.versions.reverse();
+
+          versions = template.versions.sort(semver.rcompare);
+
+          return {
+            ...template,
+            versions,
+            currentVersion: versions[0],
+          };
+        }).sort((a: any, b: any) =>
+          a.name > b.name ? 1 : -1
+        );
+
+        setTemplateList(sortedVersionData);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+
+        setHasError(true);
+        setCurrentError(err.response?.data?.error);
+        setIsLoading(false);
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [currentProject, helm_repo_id]);
 
   if (isLoading || (!templates && !templateList)) {
@@ -112,24 +113,22 @@ const TemplateList: React.FC<Props> = ({
 
   return (
     <TemplateListWrapper>
-      {(templates || templateList)?.map(
-        (template: PorterTemplate, i: number) => {
-          let { name, icon, description } = template;
-          if (hardcodedNames[name]) {
-            name = hardcodedNames[name];
-          }
-          return (
-            <TemplateBlock
-              key={name}
-              onClick={() => setCurrentTemplate(template)}
-            >
-              {renderIcon(icon)}
-              <TemplateTitle>{name}</TemplateTitle>
-              <TemplateDescription>{description}</TemplateDescription>
-            </TemplateBlock>
-          );
+      {(templates || templateList)?.map((template: PorterTemplate) => {
+        let { name, icon, description } = template;
+        if (hardcodedNames[name]) {
+          name = hardcodedNames[name];
         }
-      )}
+        return (
+          <TemplateBlock
+            key={name}
+            onClick={() => setCurrentTemplate(template)}
+          >
+            {renderIcon(icon)}
+            <TemplateTitle>{name}</TemplateTitle>
+            <TemplateDescription>{description}</TemplateDescription>
+          </TemplateBlock>
+        );
+      })}
     </TemplateListWrapper>
   );
 };
@@ -149,47 +148,6 @@ const Placeholder = styled.div`
     font-size: 18px;
     margin-right: 12px;
   }
-`;
-
-const Banner = styled.div`
-  height: 40px;
-  width: 100%;
-  margin: 30px 0 38px;
-  font-size: 13px;
-  display: flex;
-  border-radius: 5px;
-  padding-left: 15px;
-  align-items: center;
-  background: #ffffff11;
-  > i {
-    margin-right: 10px;
-    font-size: 18px;
-  }
-`;
-
-const Highlight = styled.div`
-  color: #8590ff;
-  cursor: pointer;
-  margin-left: 5px;
-  margin-right: 10px;
-`;
-
-const StyledStatusPlaceholder = styled.div`
-  width: 100%;
-  height: calc(100vh - 365px);
-  margin-top: 20px;
-  display: flex;
-  color: #aaaabb;
-  border-radius: 5px;
-  padding-bottom: 20px;
-  text-align: center;
-  font-size: 13px;
-  background: #ffffff09;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  user-select: text;
 `;
 
 const LoadingWrapper = styled.div`
@@ -275,10 +233,4 @@ const TemplateListWrapper = styled.div`
   grid-column-gap: 25px;
   grid-row-gap: 25px;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-`;
-
-const TemplatesWrapper = styled.div`
-  width: calc(85%);
-  overflow: visible;
-  min-width: 300px;
 `;

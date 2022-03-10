@@ -599,7 +599,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
     }
   }, [infraState]);
 
-  if (isLoading || !infraState) {
+  if (isLoading || !infraState || !operation) {
     return (
       <Placeholder>
         <Loading />

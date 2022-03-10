@@ -516,9 +516,10 @@ func createRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 	}
 
 	ooc := &kubernetes.OutOfClusterConfig{
-		Repo:              config.Repo,
-		DigitalOceanOAuth: config.DOConf,
-		Cluster:           cluster,
+		Repo:                      config.Repo,
+		DigitalOceanOAuth:         config.DOConf,
+		Cluster:                   cluster,
+		AllowInClusterConnections: config.ServerConf.InitInCluster,
 	}
 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
@@ -563,9 +564,10 @@ func deleteRDSEnvGroup(repo repository.Repository, config *config.Config, infra 
 	}
 
 	ooc := &kubernetes.OutOfClusterConfig{
-		Repo:              config.Repo,
-		DigitalOceanOAuth: config.DOConf,
-		Cluster:           cluster,
+		Repo:                      config.Repo,
+		DigitalOceanOAuth:         config.DOConf,
+		Cluster:                   cluster,
+		AllowInClusterConnections: config.ServerConf.InitInCluster,
 	}
 
 	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)

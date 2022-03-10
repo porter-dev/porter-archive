@@ -3,11 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import {
-  ChartTypeWithExtendedConfig,
-  PorterTemplate,
-  StorageType,
-} from "shared/types";
+import { ChartTypeWithExtendedConfig, PorterTemplate } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
@@ -16,15 +12,21 @@ import LaunchFlow from "./launch-flow/LaunchFlow";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
 import TitleSection from "components/TitleSection";
 
-import { hardcodedNames } from "shared/hardcodedNameDict";
 import semver from "semver";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, getQueryParams } from "shared/routing";
+import TemplateList from "./TemplateList";
+import { capitalize } from "lodash";
 
-const tabOptions = [
+const initialTabOptions = [
   { label: "New Application", value: "porter" },
   { label: "Community Add-ons", value: "community" },
 ];
+
+type TabOption = {
+  label: string;
+  value: string;
+};
 
 const HIDDEN_CHARTS = ["porter-agent"];
 
@@ -40,8 +42,8 @@ type StateType = {
   error: boolean;
   isOnLaunchFlow: boolean;
   clonedChart: ChartTypeWithExtendedConfig;
+  tabOptions: TabOption[];
 };
-
 class Templates extends Component<PropsType, StateType> {
   state = {
     currentTemplate: null as PorterTemplate | null,
@@ -53,6 +55,7 @@ class Templates extends Component<PropsType, StateType> {
     error: false,
     isOnLaunchFlow: false,
     clonedChart: null as ChartTypeWithExtendedConfig,
+    tabOptions: initialTabOptions,
   };
 
   async componentDidMount() {
@@ -163,6 +166,29 @@ class Templates extends Component<PropsType, StateType> {
     } catch (error) {
       this.setState({ loading: false, error: true });
     }
+
+    try {
+      const res = await api.getHelmRepos(
+        "<token>",
+        {},
+        {
+          project_id: this.context.currentProject.id,
+        }
+      );
+
+      let tabOptions = this.state.tabOptions.concat(
+        ...res.data.map((val: any) => {
+          return {
+            value: `${val.id}`,
+            label: capitalize(val.name),
+          };
+        })
+      );
+
+      this.setState({ tabOptions });
+    } catch (error) {
+      this.setState({ loading: false, error: true });
+    }
   }
 
   isTryingToClone = () => {
@@ -222,48 +248,37 @@ class Templates extends Component<PropsType, StateType> {
     );
   };
 
-  renderTemplateList = (templates: any) => {
-    let { loading, error } = this.state;
-
-    if (loading) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (error) {
-      return (
-        <Placeholder>
-          <i className="material-icons">error</i> Error retrieving templates.
-        </Placeholder>
-      );
-    } else if (templates.length === 0) {
-      return (
-        <Placeholder>
-          <i className="material-icons">category</i> No templates found.
-        </Placeholder>
-      );
+  renderTemplateList = (templates?: any, helm_repo_id?: number) => {
+    if (!helm_repo_id && templates) {
+      if (this.state.loading) {
+        return (
+          <LoadingWrapper>
+            <Loading />
+          </LoadingWrapper>
+        );
+      } else if (this.state.error) {
+        return (
+          <Placeholder>
+            <i className="material-icons">error</i> Error retrieving templates.
+          </Placeholder>
+        );
+      } else if (templates.length === 0) {
+        return (
+          <Placeholder>
+            <i className="material-icons">category</i> No templates found.
+          </Placeholder>
+        );
+      }
     }
 
     return (
-      <TemplateList>
-        {templates.map((template: PorterTemplate, i: number) => {
-          let { name, icon, description } = template;
-          if (hardcodedNames[name]) {
-            name = hardcodedNames[name];
-          }
-          return (
-            <TemplateBlock
-              key={name}
-              onClick={() => this.setState({ currentTemplate: template })}
-            >
-              {this.renderIcon(icon)}
-              <TemplateTitle>{name}</TemplateTitle>
-              <TemplateDescription>{description}</TemplateDescription>
-            </TemplateBlock>
-          );
-        })}
-      </TemplateList>
+      <TemplateList
+        helm_repo_id={helm_repo_id}
+        templates={templates}
+        setCurrentTemplate={(template) =>
+          this.setState({ currentTemplate: template })
+        }
+      />
     );
   };
 
@@ -278,13 +293,16 @@ class Templates extends Component<PropsType, StateType> {
           setCurrentTemplate={(currentTemplate: PorterTemplate) => {
             this.setState({ currentTemplate });
           }}
+          helm_repo_id={parseInt(this.state.currentTab)}
         />
       );
     }
     if (this.state.currentTab === "porter") {
       return this.renderTemplateList(this.state.applicationTemplates);
-    } else {
+    } else if (this.state.currentTab == "community") {
       return this.renderTemplateList(this.state.addonTemplates);
+    } else {
+      return this.renderTemplateList(null, parseInt(this.state.currentTab));
     }
   };
 
@@ -293,7 +311,7 @@ class Templates extends Component<PropsType, StateType> {
       return (
         <>
           <TabSelector
-            options={tabOptions}
+            options={this.state.tabOptions}
             currentTab={this.state.currentTab}
             setCurrentTab={(value: string) =>
               this.setState({
@@ -389,31 +407,6 @@ const Banner = styled.div`
   }
 `;
 
-const Highlight = styled.div`
-  color: #8590ff;
-  cursor: pointer;
-  margin-left: 5px;
-  margin-right: 10px;
-`;
-
-const StyledStatusPlaceholder = styled.div`
-  width: 100%;
-  height: calc(100vh - 365px);
-  margin-top: 20px;
-  display: flex;
-  color: #aaaabb;
-  border-radius: 5px;
-  padding-bottom: 20px;
-  text-align: center;
-  font-size: 13px;
-  background: #ffffff09;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Work Sans", sans-serif;
-  user-select: text;
-`;
-
 const LoadingWrapper = styled.div`
   padding-top: 300px;
 `;
@@ -430,73 +423,6 @@ const Polymer = styled.div`
     margin-top: 38px;
     margin-bottom: 20px;
   }
-`;
-
-const TemplateDescription = styled.div`
-  margin-bottom: 26px;
-  color: #ffffff66;
-  text-align: center;
-  font-weight: default;
-  padding: 0px 25px;
-  height: 2.4em;
-  font-size: 12px;
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-`;
-
-const TemplateTitle = styled.div`
-  margin-bottom: 12px;
-  width: 80%;
-  text-align: center;
-  font-size: 14px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const TemplateBlock = styled.div`
-  border: 1px solid #ffffff00;
-  align-items: center;
-  user-select: none;
-  border-radius: 8px;
-  display: flex;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 3px 0px 5px;
-  flex-direction: column;
-  align-item: center;
-  justify-content: space-between;
-  height: 200px;
-  cursor: pointer;
-  color: #ffffff;
-  position: relative;
-  background: #26282f;
-  box-shadow: 0 4px 15px 0px #00000044;
-  :hover {
-    background: #ffffff11;
-  }
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const TemplateList = styled.div`
-  overflow: visible;
-  margin-top: 35px;
-  padding-bottom: 150px;
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 `;
 
 const TemplatesWrapper = styled.div`

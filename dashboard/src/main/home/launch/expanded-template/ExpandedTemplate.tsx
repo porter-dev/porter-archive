@@ -6,6 +6,7 @@ import api from "shared/api";
 
 import TemplateInfo from "./TemplateInfo";
 import Loading from "components/Loading";
+import { Context } from "shared/Context";
 
 type PropsType = {
   currentTemplate: PorterTemplate;
@@ -14,6 +15,8 @@ type PropsType = {
   skipDescription?: boolean;
   showLaunchFlow: () => void;
   setForm: (x: any) => void;
+  helm_repo_id?: number;
+  repo_url?: string;
 };
 
 type StateType = {
@@ -43,29 +46,57 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
 
   fetchTemplateInfo = () => {
     this.setState({ loading: true });
-    let params =
-      this.props.currentTab == "porter"
-        ? { repo_url: process.env.APPLICATION_CHART_REPO_URL }
-        : { repo_url: process.env.ADDON_CHART_REPO_URL };
 
-    api
-      .getTemplateInfo("<token>", params, {
-        name: this.props.currentTemplate.name.toLowerCase().trim(),
-        version: this.props.currentTemplate.currentVersion,
-      })
-      .then((res) => {
-        let { form, values, markdown, metadata } = res.data;
-        let keywords = metadata.keywords;
-        this.props.setForm(form);
-        this.setState({
-          values,
-          markdown,
-          keywords,
-          loading: false,
-          error: false,
-        });
-      })
-      .catch((err) => this.setState({ loading: false, error: true }));
+    if (this.props.helm_repo_id) {
+      api
+        .getChartInfoFromHelmRepo(
+          "<token>",
+          {},
+          {
+            project_id: this.context.currentProject.id,
+            helm_repo_id: this.props.helm_repo_id,
+            name: this.props.currentTemplate.name.toLowerCase().trim(),
+            version: this.props.currentTemplate.currentVersion,
+          }
+        )
+        .then((res) => {
+          let { form, values, markdown, metadata } = res.data;
+          let keywords = metadata.keywords;
+          this.props.setForm(form);
+          this.setState({
+            values,
+            markdown,
+            keywords,
+            loading: false,
+            error: false,
+          });
+        })
+        .catch((err) => this.setState({ loading: false, error: true }));
+    } else {
+      let params =
+        this.props.currentTab == "porter"
+          ? { repo_url: process.env.APPLICATION_CHART_REPO_URL }
+          : { repo_url: process.env.ADDON_CHART_REPO_URL };
+
+      api
+        .getTemplateInfo("<token>", params, {
+          name: this.props.currentTemplate.name.toLowerCase().trim(),
+          version: this.props.currentTemplate.currentVersion,
+        })
+        .then((res) => {
+          let { form, values, markdown, metadata } = res.data;
+          let keywords = metadata.keywords;
+          this.props.setForm(form);
+          this.setState({
+            values,
+            markdown,
+            keywords,
+            loading: false,
+            error: false,
+          });
+        })
+        .catch((err) => this.setState({ loading: false, error: true }));
+    }
   };
 
   componentDidUpdate = (prevProps: PropsType) => {
@@ -115,6 +146,8 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
     );
   }
 }
+
+ExpandedTemplate.contextType = Context;
 
 const FadeWrapper = styled.div`
   animation: fadeIn 0.2s;

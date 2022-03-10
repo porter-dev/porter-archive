@@ -317,8 +317,8 @@ const ExpandedJobHeader: React.FC<{
   chart: ChartType;
   jobs: any[];
   closeChart: () => void;
-  refreshChart: () => void;
-  upgradeChart: () => void;
+  refreshChart: () => Promise<void>;
+  upgradeChart: () => Promise<void>;
   loadChartWithSpecificRevision: (revision: number) => void;
 }> = ({
   chart,
@@ -359,8 +359,12 @@ const ExpandedJobHeader: React.FC<{
         chart.latest_version !== chart.chart.metadata.version
       }
       latestVersion={chart.latest_version}
-      upgradeVersion={() => {
-        upgradeChart();
+      upgradeVersion={(_version, cb) => {
+        upgradeChart().then(() => {
+          if (typeof cb === "function") {
+            cb();
+          }
+        });
       }}
     />
   </HeaderWrapper>

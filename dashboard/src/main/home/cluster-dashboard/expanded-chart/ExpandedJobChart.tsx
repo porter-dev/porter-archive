@@ -88,20 +88,14 @@ export const ExpandedJobChartFC: React.FC<{
   ) => {
     // return "";
     let conf: string;
-    let values = {} as any;
-
-    set(values, "paused", true);
+    let values = currentChart.config;
 
     if (!newConfig) {
       set(values, "paused", true);
 
-      conf = yaml.dump({
-        ...merge(currentChart.config, values),
-      });
+      conf = yaml.dump(values, { forceQuotes: true });
     } else {
       // Convert dotted keys to nested objects
-      values = {};
-
       for (let key in newConfig) {
         set(values, key, newConfig[key]);
       }
@@ -109,12 +103,7 @@ export const ExpandedJobChartFC: React.FC<{
       set(values, "paused", true);
 
       // Weave in preexisting values and convert to yaml
-      conf = yaml.dump(
-        {
-          ...merge(currentChart.config, values),
-        },
-        { forceQuotes: true }
-      );
+      conf = yaml.dump(values, { forceQuotes: true });
     }
 
     return conf;

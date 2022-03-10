@@ -336,7 +336,7 @@ class Home extends Component<PropsType, StateType> {
 
         return api.destroyInfra(
           "<token>",
-          { name: cluster.name },
+          {},
           { project_id: currentProject.id, infra_id: cluster.infra_id }
         );
       });

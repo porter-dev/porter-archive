@@ -114,7 +114,7 @@ export const StatusPage = ({
 
       let erroredInfras = newInfras.filter((newInfra) => {
         if (newInfra.latest_operation) {
-          return newInfra.latest_operation.status == "errored";
+          return newInfra.latest_operation.errored;
         }
 
         return newInfra.status == "errored";

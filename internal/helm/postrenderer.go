@@ -12,7 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/postrender"
 
 	"github.com/docker/distribution/reference"

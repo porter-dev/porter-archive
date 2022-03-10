@@ -23,6 +23,7 @@ type PorterTemplateSimple struct {
 	Versions    []string `json:"versions"`
 	Description string   `json:"description"`
 	Icon        string   `json:"icon"`
+	RepoURL     string   `json:"repo_url,omitempty"`
 }
 
 // ListTemplatesResponse is how a chart gets displayed when listed
@@ -38,6 +39,7 @@ type GetTemplateResponse struct {
 	Metadata *chart.Metadata        `json:"metadata"`
 	Values   map[string]interface{} `json:"values"`
 	Form     *FormYAML              `json:"form"`
+	RepoURL  string                 `json:"repo_url,omitempty"`
 }
 
 type GetTemplateUpgradeNotesRequest struct {

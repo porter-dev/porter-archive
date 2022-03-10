@@ -76,6 +76,13 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = addUserToDefaultProject(u.Config(), user)
+
+	if err != nil {
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	// save the user as authenticated in the session
 	redirect, err := authn.SaveUserAuthenticated(w, r, u.Config(), user)
 
@@ -112,4 +119,35 @@ func doesUserExist(userRepo repository.UserRepository, user *models.User) bool {
 	user, err := userRepo.ReadUserByEmail(user.Email)
 
 	return user != nil && err == nil
+}
+
+// addUserToDefaultProject adds the created user to any default projects if required by
+// config variables.
+func addUserToDefaultProject(config *config.Config, user *models.User) error {
+	if config.ServerConf.InitInCluster {
+		// if this is the first user, add the user to the default project
+		if user.ID == 1 {
+			// read the default project
+			project, err := config.Repo.Project().ReadProject(1)
+
+			if err != nil {
+				return err
+			}
+
+			// create a new Role with the user as the admin
+			_, err = config.Repo.Project().CreateProjectRole(project, &models.Role{
+				Role: types.Role{
+					UserID:    user.ID,
+					ProjectID: project.ID,
+					Kind:      types.RoleAdmin,
+				},
+			})
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

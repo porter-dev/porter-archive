@@ -68,6 +68,18 @@ var connectRegistryCmd = &cobra.Command{
 	},
 }
 
+var connectHelmRepoCmd = &cobra.Command{
+	Use:   "helm",
+	Short: "Adds a custom Helm registry to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectHelmRepo)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 var connectGCRCmd = &cobra.Command{
 	Use:   "gcr",
 	Short: "Adds a GCR instance to a project",
@@ -116,6 +128,7 @@ func init() {
 	connectCmd.AddCommand(connectDockerhubCmd)
 	connectCmd.AddCommand(connectGCRCmd)
 	connectCmd.AddCommand(connectDOCRCmd)
+	connectCmd.AddCommand(connectHelmRepoCmd)
 }
 
 func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
@@ -203,4 +216,17 @@ func runConnectRegistry(_ *types.GetAuthenticatedUserResponse, client *api.Clien
 	}
 
 	return config.SetRegistry(regID)
+}
+
+func runConnectHelmRepo(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+	hrID, err := connect.HelmRepo(
+		client,
+		config.Project,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return config.SetHelmRepo(hrID)
 }

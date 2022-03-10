@@ -22,15 +22,22 @@ type GetJobsHandler struct {
 
 func NewGetJobsHandler(
 	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *GetJobsHandler {
 	return &GetJobsHandler{
-		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 func (c *GetJobsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	request := &types.GetJobsRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
 	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	agent, err := c.GetAgent(r, cluster, "")
@@ -40,7 +47,16 @@ func (c *GetJobsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jobs, err := agent.ListJobsByLabel(helmRelease.Namespace, getJobLabels(helmRelease)...)
+	labels := getJobLabels(helmRelease)
+
+	if request.Revision != 0 {
+		labels = append(labels, kubernetes.Label{
+			Key: "helm.sh/revision",
+			Val: fmt.Sprintf("%d", request.Revision),
+		})
+	}
+
+	jobs, err := agent.ListJobsByLabel(helmRelease.Namespace, labels...)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -207,7 +207,6 @@ export const useJobs = (chart: ChartType) => {
     if (!chart) {
       return () => {
         isSubscribed = false;
-        closeAllWebsockets();
       };
     }
 
@@ -217,7 +216,6 @@ export const useJobs = (chart: ChartType) => {
     ) {
       return () => {
         isSubscribed = false;
-        closeAllWebsockets();
       };
     }
 
@@ -247,9 +245,14 @@ export const useJobs = (chart: ChartType) => {
       });
     return () => {
       isSubscribed = false;
-      closeAllWebsockets();
     };
   }, [chart]);
+
+  useEffect(() => {
+    return () => {
+      closeAllWebsockets();
+    };
+  }, []);
 
   const runJob = () => {
     setTriggerRunStatus("loading");

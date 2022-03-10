@@ -62,7 +62,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         api
           .destroyInfra(
             "<token>",
-            { name: currentCluster.name },
+            {},
             {
               project_id: currentProject.id,
               infra_id: currentCluster.infra_id,

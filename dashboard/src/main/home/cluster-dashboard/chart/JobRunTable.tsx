@@ -112,29 +112,31 @@ const JobRunTable: React.FC<Props> = ({
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const [jobRuns, setJobRuns] = useState<JobRun[]>(null);
-  const [error, setError] = useState();
+  const [hasError, setHasError] = useState(false);
   const tmpJobRuns = useRef([]);
   const { openWebsocket, newWebsocket, closeAllWebsockets } = useWebsockets();
-  const { pushFiltered } = useRouting();
 
-  useEffect(() => {
+  const getJobRuns = () => {
     closeAllWebsockets();
     tmpJobRuns.current = [];
     setJobRuns(null);
-    const websocketId = "job-runs-for-all-charts-ws";
+    setHasError(false);
+    const websocketId = `job-runs-for-all-charts-ws`;
     const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/jobs/stream`;
 
     const config: NewWebsocketOptions = {
       onopen: console.log,
       onmessage: (message) => {
         const data = JSON.parse(message.data);
+
         if (data.streamStatus === "finished") {
+          setHasError(false);
           setJobRuns(tmpJobRuns.current);
           return;
         }
 
         if (data.streamStatus === "errored") {
-          setError(data.error);
+          setHasError(true);
           tmpJobRuns.current = [];
           setJobRuns([]);
           return;
@@ -142,21 +144,33 @@ const JobRunTable: React.FC<Props> = ({
 
         tmpJobRuns.current = [...tmpJobRuns.current, data];
       },
-      onclose: () => {
+      onclose: (event) => {
+        console.log(event);
         closeAllWebsockets();
       },
       onerror: (error) => {
+        setHasError(true);
         console.log(error);
         closeAllWebsockets();
       },
     };
     newWebsocket(websocketId, endpoint, config);
     openWebsocket(websocketId);
+  };
 
+  useEffect(() => {
+    if (!namespace) {
+      return;
+    }
+
+    getJobRuns();
+  }, [currentCluster, currentProject, namespace]);
+
+  useEffect(() => {
     return () => {
       closeAllWebsockets();
     };
-  }, [currentCluster, currentProject, namespace]);
+  }, []);
 
   const columns = useMemo<Column<JobRun>[]>(
     () => [
@@ -335,8 +349,13 @@ const JobRunTable: React.FC<Props> = ({
     return tmp;
   }, [jobRuns, lastRunStatus, sortType]);
 
-  if (error) {
-    return <>{error}</>;
+  if (hasError) {
+    return (
+      <ErrorWrapper>
+        Couldn't retrieve jobs, please try again.{" "}
+        <RetryButton onClick={() => getJobRuns()}>Retry</RetryButton>
+      </ErrorWrapper>
+    );
   }
 
   if (jobRuns === null) {
@@ -358,6 +377,27 @@ const JobRunTable: React.FC<Props> = ({
 };
 
 export default JobRunTable;
+
+const RetryButton = styled.button`
+  margin-left: 10px;
+  border: none;
+  background: #5460c6;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 25px;
+  min-height: 35px;
+  min-width: 65px;
+  cursor: pointer;
+`;
+
+const ErrorWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  width: 100%;
+  color: #ffffff88;
+`;
 
 const Status = styled.div<{ color: string }>`
   padding: 5px 10px;

@@ -6,6 +6,7 @@ import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
 import yaml from "js-yaml";
 import { usePrevious } from "shared/hooks/usePrevious";
+import { useRouting } from "shared/routing";
 
 const PORTER_IMAGE_TEMPLATES = [
   "porterdev/hello-porter-job",
@@ -28,6 +29,8 @@ export const useJobs = (chart: ChartType) => {
   >("");
 
   const previousChart = usePrevious(chart, null);
+
+  const { pushQueryParams, getQueryParam } = useRouting();
 
   const {
     newWebsocket,
@@ -201,6 +204,18 @@ export const useJobs = (chart: ChartType) => {
     openWebsocket(websocketId);
   };
 
+  const loadJobFromurl = () => {
+    const jobName = getQueryParam("job");
+
+    const job: any = jobs.find((tmpJob) => tmpJob.metadata.name === jobName);
+
+    if (!job) {
+      return;
+    }
+
+    setSelectedJob(job);
+  };
+
   useEffect(() => {
     let isSubscribed = true;
 
@@ -247,6 +262,14 @@ export const useJobs = (chart: ChartType) => {
       isSubscribed = false;
     };
   }, [chart]);
+
+  useEffect(() => {
+    if (!jobs.length) {
+      return;
+    }
+
+    loadJobFromurl();
+  }, [jobs]);
 
   useEffect(() => {
     return () => {
@@ -305,6 +328,11 @@ export const useJobs = (chart: ChartType) => {
       });
   };
 
+  const handleSetSelectedJob = (job: any) => {
+    setSelectedJob(job);
+    pushQueryParams({ job: job?.metadata?.name });
+  };
+
   return {
     jobs,
     hasPorterImageTemplate,
@@ -312,6 +340,6 @@ export const useJobs = (chart: ChartType) => {
     triggerRunStatus,
     runJob,
     selectedJob,
-    setSelectedJob,
+    setSelectedJob: handleSetSelectedJob,
   };
 };

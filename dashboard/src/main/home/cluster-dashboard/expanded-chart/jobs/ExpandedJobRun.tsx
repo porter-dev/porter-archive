@@ -13,6 +13,7 @@ import { ChartType } from "shared/types";
 import DeploymentType from "../DeploymentType";
 import JobMetricsSection from "../metrics/JobMetricsSection";
 import Logs from "../status/Logs";
+import { useRouting } from "shared/routing";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -59,6 +60,7 @@ const ExpandedJobRun = ({
   >("logs");
   const [pods, setPods] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { pushQueryParams } = useRouting();
 
   let chart = currentChart;
   let run = jobRun;
@@ -89,6 +91,12 @@ const ExpandedJobRun = ({
       isSubscribed = false;
     };
   }, [jobRun]);
+
+  useEffect(() => {
+    return () => {
+      pushQueryParams({}, ["job"]);
+    };
+  }, []);
 
   const renderConfigSection = (job: any) => {
     let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(

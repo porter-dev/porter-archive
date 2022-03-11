@@ -114,11 +114,13 @@ const JobRunTable: React.FC<Props> = ({
   const [jobRuns, setJobRuns] = useState<JobRun[]>(null);
   const [hasError, setHasError] = useState(false);
   const tmpJobRuns = useRef([]);
+  const lastStreamStatus = useRef("");
   const { openWebsocket, newWebsocket, closeAllWebsockets } = useWebsockets();
 
   const getJobRuns = () => {
     closeAllWebsockets();
     tmpJobRuns.current = [];
+    lastStreamStatus.current = "";
     setJobRuns(null);
     setHasError(false);
     const websocketId = `job-runs-for-all-charts-ws`;
@@ -132,6 +134,7 @@ const JobRunTable: React.FC<Props> = ({
         if (data.streamStatus === "finished") {
           setHasError(false);
           setJobRuns(tmpJobRuns.current);
+          lastStreamStatus.current = data.streamStatus;
           return;
         }
 
@@ -349,7 +352,7 @@ const JobRunTable: React.FC<Props> = ({
     return tmp;
   }, [jobRuns, lastRunStatus, sortType]);
 
-  if (hasError) {
+  if (hasError && lastStreamStatus.current !== "finished") {
     return (
       <ErrorWrapper>
         Couldn't retrieve jobs, please try again.{" "}

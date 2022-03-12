@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -43,6 +44,23 @@ func (c *InfraDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		return
+	}
+
+	lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// if the last operation is in a "starting" state, block apply
+	if lastOperation.Status == "starting" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("Operation currently in progress. Please try again when latest operation has completed."),
+			http.StatusBadRequest,
+		))
+
 		return
 	}
 

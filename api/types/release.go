@@ -51,6 +51,8 @@ type CreateReleaseRequest struct {
 
 type CreateAddonRequest struct {
 	*CreateReleaseBaseRequest
+
+	HelmRepoID uint `json:"helm_repo_id"`
 }
 
 type RollbackReleaseRequest struct {

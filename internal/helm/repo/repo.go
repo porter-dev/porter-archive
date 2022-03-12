@@ -59,7 +59,7 @@ func (hr *HelmRepo) listChartsBasic(
 		return nil, err
 	}
 
-	return loader.RepoIndexToPorterChartList(repoIndex), nil
+	return loader.RepoIndexToPorterChartList(repoIndex, hr.RepoURL), nil
 }
 
 func (hr *HelmRepo) getChartBasic(

@@ -237,10 +237,14 @@ func (d *DockerSecretsPostRenderer) Run(
 	defer encoder.Close()
 
 	for _, resource := range d.resources {
-		err = encoder.Encode(resource)
+		// if the resource is empty, we skip encoding it to prevent errors. Helm/k8s expects empty resources to take the form "{}",
+		// while this library writes an empty string, causing problems during installation.
+		if len(resource) != 0 {
+			err = encoder.Encode(resource)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -314,7 +318,9 @@ func decodeRenderedManifests(
 			return resArr, err
 		}
 
-		resArr = append(resArr, res)
+		if len(res) != 0 {
+			resArr = append(resArr, res)
+		}
 	}
 
 	return resArr, nil

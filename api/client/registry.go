@@ -27,6 +27,26 @@ func (c *Client) CreateRegistry(
 	return resp, err
 }
 
+// CreateRegistry creates a new registry integration
+func (c *Client) CreateHelmRepo(
+	ctx context.Context,
+	projectID uint,
+	req *types.CreateHelmRepoRequest,
+) (*types.HelmRepo, error) {
+	resp := &types.HelmRepo{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/helmrepos",
+			projectID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // ListRegistries returns a list of registries for a project
 func (c *Client) ListRegistries(
 	ctx context.Context,

@@ -13,6 +13,7 @@ import { useSnapshot } from "valtio";
 import Loading from "components/Loading";
 import Helper from "components/form-components/Helper";
 import { readableDate } from "shared/string_utils";
+import { Infrastructure } from "shared/types";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -270,6 +271,61 @@ export const SettingsForm: React.FC<{
   const [clusterName, setClusterName] = useState(`${project.name}-cluster`);
   const [machineType, setMachineType] = useState("t2.medium");
   const [buttonStatus, setButtonStatus] = useState("");
+  const [currEKSInfra, setCurrEKSInfra] = useState<Infrastructure>();
+  const [currECRInfra, setCurrECRInfra] = useState<Infrastructure>();
+
+  useEffect(() => {
+    if (!project) {
+      return;
+    }
+
+    api
+      .getInfra<Infrastructure[]>("<token>", {}, { project_id: project.id })
+      .then(({ data }) => {
+        let sortFunc = (a: Infrastructure, b: Infrastructure) => {
+          return b.id < a.id ? -1 : b.id > a.id ? 1 : 0;
+        };
+
+        const matchedEKSInfras = data
+          .filter((infra) => infra.kind == "eks")
+          .sort(sortFunc);
+        const matchedECRInfras = data
+          .filter((infra) => infra.kind == "ecr")
+          .sort(sortFunc);
+
+        if (matchedEKSInfras.length > 0) {
+          // get the infra with latest operation details from the API
+          api
+            .getInfraByID(
+              "<token>",
+              {},
+              { project_id: project.id, infra_id: matchedEKSInfras[0].id }
+            )
+            .then(({ data }) => {
+              setCurrEKSInfra(data);
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        }
+
+        if (matchedECRInfras.length > 0) {
+          api
+            .getInfraByID(
+              "<token>",
+              {},
+              { project_id: project.id, infra_id: matchedECRInfras[0].id }
+            )
+            .then(({ data }) => {
+              setCurrECRInfra(data);
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        }
+      })
+      .catch((err) => {});
+  }, [project]);
 
   const validate = () => {
     if (!clusterName) {
@@ -292,7 +348,7 @@ export const SettingsForm: React.FC<{
     infras: { kind: string; status: string }[]
   ) => {
     return !!infras.find(
-      (i) => ["docr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
+      (i) => ["ecr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
     );
   };
 
@@ -300,39 +356,66 @@ export const SettingsForm: React.FC<{
     infras: { kind: string; status: string }[]
   ) => {
     return !!infras.find(
-      (i) => ["doks", "gks", "eks"].includes(i.kind) && i.status === "created"
+      (i) => ["eks", "gks", "eks"].includes(i.kind) && i.status === "created"
     );
   };
 
   const provisionECR = async (awsIntegrationId: number) => {
     console.log("Started provision ECR");
 
-    try {
-      return await api
-        .provisionInfra(
+    // See if there's an infra for EKS that is in an errored state and the last operation
+    // was an attempt at creation. If so, re-use that infra.
+    if (
+      currECRInfra?.latest_operation?.type == "create" ||
+      currECRInfra?.latest_operation?.type == "retry_create"
+    ) {
+      try {
+        const res = await api.retryCreateInfra(
           "<token>",
           {
-            kind: "ecr",
             values: {
               ecr_name: `${project.name}-registry`,
             },
             aws_integration_id: awsIntegrationId,
           },
-          { project_id: project.id }
-        )
-        .then((res) => res?.data);
-    } catch (error) {
-      catchError(error);
+          { project_id: project.id, infra_id: currECRInfra.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
+    } else {
+      try {
+        return await api
+          .provisionInfra(
+            "<token>",
+            {
+              kind: "ecr",
+              values: {
+                ecr_name: `${project.name}-registry`,
+              },
+              aws_integration_id: awsIntegrationId,
+            },
+            { project_id: project.id }
+          )
+          .then((res) => res?.data);
+      } catch (error) {
+        catchError(error);
+      }
     }
   };
 
   const provisionEKS = async (awsIntegrationId: number) => {
-    try {
-      return await api
-        .provisionInfra(
+    // See if there's an infra for EKS that is in an errored state and the last operation
+    // was an attempt at creation. If so, re-use that infra.
+    if (
+      currEKSInfra?.latest_operation?.type == "create" ||
+      currEKSInfra?.latest_operation?.type == "retry_create"
+    ) {
+      try {
+        const res = await api.retryCreateInfra(
           "<token>",
           {
-            kind: "eks",
             values: {
               cluster_name: clusterName,
               machine_type: machineType,
@@ -340,11 +423,32 @@ export const SettingsForm: React.FC<{
             },
             aws_integration_id: awsIntegrationId,
           },
-          { project_id: project.id }
-        )
-        .then((res) => res?.data);
-    } catch (error) {
-      catchError(error);
+          { project_id: project.id, infra_id: currEKSInfra.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
+    } else {
+      try {
+        return await api
+          .provisionInfra(
+            "<token>",
+            {
+              kind: "eks",
+              values: {
+                cluster_name: clusterName,
+                machine_type: machineType,
+                issuer_email: snap.StateHandler.user_email,
+              },
+              aws_integration_id: awsIntegrationId,
+            },
+            { project_id: project.id }
+          )
+          .then((res) => res?.data);
+      } catch (error) {
+        catchError(error);
+      }
     }
   };
 

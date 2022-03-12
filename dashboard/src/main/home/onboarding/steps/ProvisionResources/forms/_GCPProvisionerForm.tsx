@@ -12,6 +12,7 @@ import {
 import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import { readableDate } from "shared/string_utils";
+import { Infrastructure } from "shared/types";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 
@@ -254,7 +255,62 @@ export const SettingsForm: React.FC<{
   const [region, setRegion] = useState("us-east1");
   const [clusterName, setClusterName] = useState(`${project.name}-cluster`);
   const [buttonStatus, setButtonStatus] = useState("");
+  const [currGKEInfra, setCurrGKEInfra] = useState<Infrastructure>();
+  const [currGCRInfra, setCurrGCRInfra] = useState<Infrastructure>();
   const snap = useSnapshot(OFState);
+
+  useEffect(() => {
+    if (!project) {
+      return;
+    }
+
+    api
+      .getInfra<Infrastructure[]>("<token>", {}, { project_id: project.id })
+      .then(({ data }) => {
+        let sortFunc = (a: Infrastructure, b: Infrastructure) => {
+          return b.id < a.id ? -1 : b.id > a.id ? 1 : 0;
+        };
+
+        const matchedGKEInfras = data
+          .filter((infra) => infra.kind == "gke")
+          .sort(sortFunc);
+        const matchedGCRInfras = data
+          .filter((infra) => infra.kind == "gcr")
+          .sort(sortFunc);
+
+        if (matchedGKEInfras.length > 0) {
+          // get the infra with latest operation details from the API
+          api
+            .getInfraByID(
+              "<token>",
+              {},
+              { project_id: project.id, infra_id: matchedGKEInfras[0].id }
+            )
+            .then(({ data }) => {
+              setCurrGKEInfra(data);
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        }
+
+        if (matchedGCRInfras.length > 0) {
+          api
+            .getInfraByID(
+              "<token>",
+              {},
+              { project_id: project.id, infra_id: matchedGCRInfras[0].id }
+            )
+            .then(({ data }) => {
+              setCurrGCRInfra(data);
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        }
+      })
+      .catch((err) => {});
+  }, [project]);
 
   const validate = () => {
     if (!clusterName) {
@@ -334,42 +390,88 @@ export const SettingsForm: React.FC<{
   const provisionGCR = async (id: number) => {
     console.log("Provisioning GCR");
 
-    try {
-      const res = await api.provisionInfra(
-        "<token>",
-        {
-          kind: "gcr",
-          gcp_integration_id: id,
-          values: {},
-        },
-        { project_id: project.id }
-      );
-      return res?.data;
-    } catch (error) {
-      return catchError(error);
+    // See if there's an infra for GKE that is in an errored state and the last operation
+    // was an attempt at creation. If so, re-use that infra.
+    if (
+      currGCRInfra?.latest_operation?.type == "create" ||
+      currGCRInfra?.latest_operation?.type == "retry_create"
+    ) {
+      try {
+        const res = await api.retryCreateInfra(
+          "<token>",
+          {
+            gcp_integration_id: id,
+            values: {},
+          },
+          { project_id: project.id, infra_id: currGCRInfra.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
+    } else {
+      try {
+        const res = await api.provisionInfra(
+          "<token>",
+          {
+            kind: "gcr",
+            gcp_integration_id: id,
+            values: {},
+          },
+          { project_id: project.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
     }
   };
 
   const provisionGKE = async (id: number) => {
     console.log("Provisioning GKE");
 
-    try {
-      const res = await api.provisionInfra(
-        "<token>",
-        {
-          kind: "gke",
-          gcp_integration_id: id,
-          values: {
-            gcp_region: region,
-            cluster_name: clusterName,
-            issuer_email: snap.StateHandler.user_email,
+    // See if there's an infra for GKE that is in an errored state and the last operation
+    // was an attempt at creation. If so, re-use that infra.
+    if (
+      currGKEInfra?.latest_operation?.type == "create" ||
+      currGKEInfra?.latest_operation?.type == "retry_create"
+    ) {
+      try {
+        const res = await api.retryCreateInfra(
+          "<token>",
+          {
+            gcp_integration_id: id,
+            values: {
+              gcp_region: region,
+              cluster_name: clusterName,
+              issuer_email: snap.StateHandler.user_email,
+            },
           },
-        },
-        { project_id: project.id }
-      );
-      return res?.data;
-    } catch (error) {
-      return catchError(error);
+          { project_id: project.id, infra_id: currGKEInfra.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
+    } else {
+      try {
+        const res = await api.provisionInfra(
+          "<token>",
+          {
+            kind: "gke",
+            gcp_integration_id: id,
+            values: {
+              gcp_region: region,
+              cluster_name: clusterName,
+              issuer_email: snap.StateHandler.user_email,
+            },
+          },
+          { project_id: project.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
     }
   };
 

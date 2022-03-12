@@ -21,8 +21,11 @@ import Description from "components/Description";
 import api from "shared/api";
 import Placeholder from "components/Placeholder";
 import Loading from "components/Loading";
+import MultiSaveButton from "components/MultiSaveButton";
 
 type Props = {};
+
+type SaveButtonOptions = "retry" | "delete_all" | "back";
 
 const ProvisionResources: React.FC<Props> = () => {
   const snap = useSnapshot(OFState);
@@ -32,6 +35,10 @@ const ProvisionResources: React.FC<Props> = () => {
     errored_infras: number[];
     description?: string;
   }>(null);
+  const [
+    failedSaveButtonOption,
+    setFailedSaveButtonOption,
+  ] = useState<SaveButtonOptions>("retry");
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -83,6 +90,93 @@ const ProvisionResources: React.FC<Props> = () => {
     });
   };
 
+  const deleteAllInfras = () => {
+    // since this is onboarding, we start deletion for all infras even if they're errored, and send
+    // the user back to the settings page.
+    api
+      .getInfra(
+        "<token>",
+        {},
+        {
+          project_id: project.id,
+        }
+      )
+      .then(({ data }) => {
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+
+        // call API endpoint to retry all failed infras
+        const promises = Promise.all(
+          data?.map(async (erroredInfraID) => {
+            const res = await api.destroyInfra(
+              "<token>",
+              {},
+              {
+                project_id: project.id,
+                infra_id: erroredInfraID,
+              }
+            );
+            return res.data;
+          })
+        );
+
+        promises.then(() => {
+          // TODO: send the user back to the settings page
+          handleGoBack(
+            "Infrastructure successfully deleted: please configure settings and try again."
+          );
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        setIsLoading(false);
+      });
+  };
+
+  const getFailedSaveButton = () => {
+    switch (failedSaveButtonOption) {
+      case "retry":
+        return (
+          <SaveButton
+            text="Retry"
+            disabled={false}
+            onClick={retryFailedInfras}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText=""
+          />
+        );
+      case "delete_all":
+        return (
+          <SaveButton
+            text="Delete All Infrastructure"
+            disabled={false}
+            onClick={deleteAllInfras}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText=""
+          />
+        );
+      case "back":
+        return (
+          <SaveButton
+            text="Configure Settings"
+            disabled={false}
+            onClick={() => {
+              handleGoBack("");
+            }}
+            makeFlush={true}
+            clearPosition={true}
+            statusPosition="right"
+            saveText=""
+          />
+        );
+    }
+  };
+
   const renderSaveButton = () => {
     if (typeof infraStatus?.hasError !== "boolean") {
       return;
@@ -108,18 +202,30 @@ const ProvisionResources: React.FC<Props> = () => {
         <>
           <Br height="15px" />
           <ErrorStateContainer>
-            <StyledBack>
-              <StyledDescription
-                margin="0"
-                onClick={() => handleGoBack(infraStatus.description)}
-              >
-                {"< Back to Settings"}
-              </StyledDescription>
-            </StyledBack>
-            <SaveButton
-              text="Retry"
+            <MultiSaveButton
+              options={[
+                {
+                  text: "Retry Failed Resources",
+                  description:
+                    "Retry all failed resources. This continues provisioning from the last resource which errored out.",
+                  onClick: retryFailedInfras,
+                },
+                {
+                  text: "Re-Configure Settings",
+                  description:
+                    "Re-configure settings for the infrastructure. This continues provisioning from the last resource which errored out with different settings.",
+                  onClick: () => {
+                    handleGoBack("");
+                  },
+                },
+                {
+                  text: "Delete All Resources",
+                  description:
+                    "Delete all resources. This begins the delete process for all resources so that you can start from scratch.",
+                  onClick: deleteAllInfras,
+                },
+              ]}
               disabled={false}
-              onClick={retryFailedInfras}
               makeFlush={true}
               clearPosition={true}
               statusPosition="right"
@@ -129,6 +235,14 @@ const ProvisionResources: React.FC<Props> = () => {
         </>
       );
     }
+  };
+
+  const getDescription = () => {
+    if (infraStatus && infraStatus.hasError) {
+      return "Error while creating infrastructure. Please select an option below to continue.";
+    }
+
+    return "Note: Provisioning can take up to 15 minutes.";
   };
 
   const getFilterOpts = (): string[] => {
@@ -168,10 +282,10 @@ const ProvisionResources: React.FC<Props> = () => {
               auto_expanded
               sortBy="id"
               set_max_width={true}
-              can_delete={true}
+              can_delete={false}
             />
             <Br />
-            <Helper>Note: Provisioning can take up to 15 minutes.</Helper>
+            <Helper>{getDescription()}</Helper>
             {renderSaveButton()}
           </>
         );

@@ -143,7 +143,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
 
     let scopedVars = {};
 
-    if (data.isClusterScoped) {
+    if (data?.isClusterScoped) {
       scopedVars = {
         "currentCluster.service.is_gcp":
           context.currentCluster?.service == "gke",

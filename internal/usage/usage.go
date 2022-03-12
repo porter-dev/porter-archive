@@ -136,9 +136,10 @@ func getResourceUsage(opts *GetUsageOpts, clusters []*models.Cluster) (uint, uin
 
 	for _, cluster := range clusters {
 		ooc := &kubernetes.OutOfClusterConfig{
-			Cluster:           cluster,
-			Repo:              opts.Repo,
-			DigitalOceanOAuth: opts.DOConf,
+			Cluster:                   cluster,
+			Repo:                      opts.Repo,
+			DigitalOceanOAuth:         opts.DOConf,
+			AllowInClusterConnections: false,
 		}
 
 		agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)

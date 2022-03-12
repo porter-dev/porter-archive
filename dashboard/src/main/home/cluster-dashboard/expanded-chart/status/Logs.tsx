@@ -11,8 +11,10 @@ import { Context } from "shared/Context";
 import * as Anser from "anser";
 import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import CommandLineIcon from "assets/command-line-icon";
+import ConnectToLogsInstructionModal from "./ConnectToLogsInstructionModal";
 
-const MAX_LOGS = 1000;
+const MAX_LOGS = 250;
 
 type SelectedPodType = {
   spec: {
@@ -25,6 +27,9 @@ type SelectedPodType = {
   metadata: {
     name: string;
     namespace: string;
+    labels: {
+      [key: string]: string;
+    };
   };
   status: {
     phase: string;
@@ -36,23 +41,15 @@ const LogsFC: React.FC<{
   podError: string;
   rawText?: boolean;
 }> = ({ selectedPod, podError, rawText }) => {
-  const {
-    logs,
-    previousLogs,
-    containers,
-    currentContainer,
-    setCurrentContainer,
-    refresh,
-  } = useLogs(selectedPod);
-
-  const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
-
   const [isScrollToBottomEnabled, setIsScrollToBottomEnabled] = useState(true);
 
+  const [showConnectionModal, setShowConnectionModal] = useState(false);
+
+  const shouldScroll = useRef<boolean>(true);
   const wrapperRef = useRef<HTMLDivElement>();
 
   const scrollToBottom = (smooth: boolean) => {
-    if (!wrapperRef.current) {
+    if (!wrapperRef.current || !shouldScroll.current) {
       return;
     }
 
@@ -71,11 +68,20 @@ const LogsFC: React.FC<{
     }
   };
 
+  const {
+    logs,
+    previousLogs,
+    containers,
+    currentContainer,
+    setCurrentContainer,
+    refresh,
+  } = useLogs(selectedPod, scrollToBottom);
+
+  const [showPreviousLogs, setShowPreviousLogs] = useState<boolean>(false);
+
   useEffect(() => {
-    if (isScrollToBottomEnabled) {
-      scrollToBottom(true);
-    }
-  }, [isScrollToBottomEnabled, logs]);
+    shouldScroll.current = isScrollToBottomEnabled;
+  }, [isScrollToBottomEnabled]);
 
   const renderLogs = () => {
     if (podError && podError != "") {
@@ -151,6 +157,21 @@ const LogsFC: React.FC<{
 
   const renderContent = () => (
     <>
+      {/* <ConnectToLogsInstructionModal
+        show={showConnectionModal}
+        onClose={() => setShowConnectionModal(false)}
+        chartName={selectedPod?.metadata?.labels["app.kubernetes.io/instance"]}
+        namespace={selectedPod?.metadata?.namespace}
+      />
+      <CLIModalIconWrapper
+        onClick={(e) => {
+          e.preventDefault();
+          setShowConnectionModal(true);
+        }}
+      >
+        <CLIModalIcon />
+        CLI Logs Instructions
+      </CLIModalIconWrapper> */}
       <Wrapper ref={wrapperRef}>{renderLogs()}</Wrapper>
       <LogTabs>
         {containers.map((containerName, _i, arr) => {
@@ -232,7 +253,10 @@ const LogsFC: React.FC<{
 
 export default LogsFC;
 
-const useLogs = (currentPod: SelectedPodType) => {
+const useLogs = (
+  currentPod: SelectedPodType,
+  scroll?: (smooth: boolean) => void
+) => {
   const currentPodName = useRef<string>();
 
   const { currentCluster, currentProject } = useContext(Context);
@@ -338,7 +362,9 @@ const useLogs = (currentPod: SelectedPodType) => {
           if (containerLogs.length > MAX_LOGS) {
             containerLogs.shift();
           }
-
+          if (typeof scroll === "function") {
+            scroll(true);
+          }
           return {
             ...logs,
             [containerName]: containerLogs,
@@ -571,4 +597,44 @@ const LogSpan = styled.span`
     props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
     props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`;
+
+const CLIModalIconWrapper = styled.div`
+  max-width: 200px;
+  height: 35px;
+  margin: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px 6px 10px;
+  text-align: left;
+  border: 1px solid #ffffff55;
+  border-radius: 8px;
+  background: #ffffff11;
+  color: #ffffffdd;
+  cursor: pointer;
+  :hover {
+    cursor: pointer;
+    background: #ffffff22;
+    > path {
+      fill: #ffffff77;
+    }
+  }
+
+  > path {
+    fill: #ffffff99;
+  }
+`;
+
+const CLIModalIcon = styled(CommandLineIcon)`
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+
+  > path {
+    fill: #ffffff99;
+  }
 `;

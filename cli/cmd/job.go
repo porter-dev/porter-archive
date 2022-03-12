@@ -22,17 +22,17 @@ var batchImageUpdateCmd = &cobra.Command{
 	Use:   "update-images",
 	Short: "Updates the image tag of all jobs in a namespace which use a specific image.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
 Updates the image tag of all jobs in a namespace which use a specific image. Note that for all
 jobs with version <= v0.4.0, this will trigger a new run of a manual job. However, for versions
->= v0.5.0, this will not create a new run of the job. 
+>= v0.5.0, this will not create a new run of the job.
 
 Example commands:
 
   %s
 
-This command is namespace-scoped and uses the default namespace. To specify a different namespace, 
+This command is namespace-scoped and uses the default namespace. To specify a different namespace,
 use the --namespace flag:
 
   %s
@@ -54,16 +54,16 @@ var waitCmd = &cobra.Command{
 	Use:   "wait",
 	Short: "Waits for a job to complete.",
 	Long: fmt.Sprintf(`
-%s 
+%s
 
 Waits for a job with a given name and namespace to complete a run. If the job completes successfully,
-this command exits with exit code 0. Otherwise, this command exits with exit code 1. 
+this command exits with exit code 0. Otherwise, this command exits with exit code 1.
 
 Example commands:
 
   %s
 
-This command is namespace-scoped and uses the default namespace. To specify a different namespace, 
+This command is namespace-scoped and uses the default namespace. To specify a different namespace,
 use the --namespace flag:
 
   %s
@@ -166,10 +166,10 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		return pausedErr
 	}
 
-	// if no job exists with the given revision, wait up to 5 minutes
-	timeWait := time.Now().Add(5 * time.Minute)
+	// if no job exists with the given revision, wait up to 30 minutes
+	timeWait := time.Now().Add(30 * time.Minute)
 
-	for timeNow := time.Now(); timeNow.Before(timeWait); {
+	for time.Now().Before(timeWait) {
 		// get the jobs for that job chart
 		jobs, err := client.GetJobs(context.Background(), config.Project, config.Cluster, namespace, name)
 
@@ -196,7 +196,6 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 		// otherwise, return no error
 		time.Sleep(10 * time.Second)
-		continue
 	}
 
 	return fmt.Errorf("timed out waiting for job")

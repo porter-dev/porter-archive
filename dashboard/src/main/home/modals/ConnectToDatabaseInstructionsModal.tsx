@@ -11,7 +11,7 @@ const ConnectToDatabaseInstructionsModal = () => {
       In order to get connection credentials for your RDS Postgres database,
       select <b>Load from Env Group</b> when launching or updating your
       application. Then, select the rds-credentials-{currentModalData?.name}{" "}
-      database.
+      env group.
       <p>
         This will set the following environment variables in your application:
       </p>

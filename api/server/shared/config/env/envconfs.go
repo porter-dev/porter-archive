@@ -83,10 +83,7 @@ type ServerConf struct {
 	SentryDSN string `env:"SENTRY_DSN"`
 	SentryEnv string `env:"SENTRY_ENV,default=dev"`
 
-	ProvisionerCluster string `env:"PROVISIONER_CLUSTER"`
-	IngressCluster     string `env:"INGRESS_CLUSTER"`
-	SelfKubeconfig     string `env:"SELF_KUBECONFIG"`
-	InitInCluster      bool   `env:"INIT_IN_CLUSTER,default=false"`
+	InitInCluster bool `env:"INIT_IN_CLUSTER,default=false"`
 
 	WelcomeFormWebhook string `env:"WELCOME_FORM_WEBHOOK"`
 

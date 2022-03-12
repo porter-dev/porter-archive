@@ -70,6 +70,7 @@ export const ExpandedJobChartFC: React.FC<{
     () => localStorage.getItem("devOpsMode") === "true"
   );
   const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [disableForm, setDisableForm] = useState(false);
 
   let rightTabOptions = [] as any[];
 
@@ -227,6 +228,7 @@ export const ExpandedJobChartFC: React.FC<{
           refreshChart={refreshChart}
           upgradeChart={upgradeChart}
           loadChartWithSpecificRevision={loadChartWithSpecificRevision}
+          setDisableForm={setDisableForm}
         />
         <LineBreak />
         <Placeholder>
@@ -268,6 +270,7 @@ export const ExpandedJobChartFC: React.FC<{
           refreshChart={refreshChart}
           upgradeChart={upgradeChart}
           loadChartWithSpecificRevision={loadChartWithSpecificRevision}
+          setDisableForm={setDisableForm}
         />
         <BodyWrapper>
           {(leftTabOptions?.length > 0 ||
@@ -282,7 +285,8 @@ export const ExpandedJobChartFC: React.FC<{
               renderTabContents={renderTabContents}
               isReadOnly={
                 hasPorterImageTemplate ||
-                !isAuthorized("job", "", ["get", "update"])
+                !isAuthorized("job", "", ["get", "update"]) ||
+                disableForm
               }
               onSubmit={(formValues) =>
                 updateChart(processValuesToUpdateChart(formValues))
@@ -317,9 +321,10 @@ const ExpandedJobHeader: React.FC<{
   chart: ChartType;
   jobs: any[];
   closeChart: () => void;
-  refreshChart: () => void;
-  upgradeChart: () => void;
+  refreshChart: () => Promise<void>;
+  upgradeChart: () => Promise<void>;
   loadChartWithSpecificRevision: (revision: number) => void;
+  setDisableForm: (disable: boolean) => void;
 }> = ({
   chart,
   closeChart,
@@ -327,6 +332,7 @@ const ExpandedJobHeader: React.FC<{
   refreshChart,
   upgradeChart,
   loadChartWithSpecificRevision,
+  setDisableForm,
 }) => (
   <HeaderWrapper>
     <BackButton onClick={closeChart}>
@@ -349,8 +355,9 @@ const ExpandedJobHeader: React.FC<{
     <RevisionSection
       chart={chart}
       refreshChart={() => refreshChart()}
-      setRevision={(chart) => {
+      setRevision={(chart, isCurrent) => {
         loadChartWithSpecificRevision(chart?.version);
+        setDisableForm(!isCurrent);
       }}
       forceRefreshRevisions={false}
       refreshRevisionsOff={() => {}}
@@ -359,8 +366,12 @@ const ExpandedJobHeader: React.FC<{
         chart.latest_version !== chart.chart.metadata.version
       }
       latestVersion={chart.latest_version}
-      upgradeVersion={() => {
-        upgradeChart();
+      upgradeVersion={(_version, cb) => {
+        upgradeChart().then(() => {
+          if (typeof cb === "function") {
+            cb();
+          }
+        });
       }}
     />
   </HeaderWrapper>

@@ -162,7 +162,13 @@ func GlobalStreamListener(
 
 			switch fmt.Sprintf("%v", statusVal) {
 			case "created":
-				handleOperationCreated(config, client, infra, operation, workspaceID)
+				err := handleOperationCreated(config, client, infra, operation, workspaceID)
+
+				if err != nil {
+					config.Alerter.SendAlert(context.Background(), err, map[string]interface{}{
+						"workspace_id": workspaceID,
+					})
+				}
 			case "error":
 			case "destroyed":
 			}

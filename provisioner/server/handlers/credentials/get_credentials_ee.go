@@ -82,7 +82,8 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 
 		resp.GCP = &credentials.GCPCredential{
-			GCPKeyData: gcpInt.GCPKeyData,
+			GCPKeyData:   gcpInt.GCPKeyData,
+			GCPProjectID: []byte(gcpInt.GCPProjectID),
 		}
 	} else if ceToken.AWSCredentialID != 0 {
 		awsInt, err := repo.AWSIntegration().ReadAWSIntegration(ceToken.ProjectID, ceToken.AWSCredentialID)

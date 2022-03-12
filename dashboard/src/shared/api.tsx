@@ -696,6 +696,9 @@ const updateInfra = baseApi<
 
 const retryCreateInfra = baseApi<
   {
+    aws_integration_id?: number;
+    gcp_integration_id?: number;
+    do_integration_id?: number;
     values?: any;
   },
   {

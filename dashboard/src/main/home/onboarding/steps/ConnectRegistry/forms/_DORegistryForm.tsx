@@ -131,7 +131,9 @@ export const SettingsForm: React.FC<{
   nextFormStep: (data: Partial<DORegistryConfig>) => void;
   project: any;
 }> = ({ nextFormStep, project }) => {
-  const [registryUrl, setRegistryUrl] = useState("basic");
+  const [registryUrl, setRegistryUrl] = useState(
+    "registry.digitalocean.com/porter-test"
+  );
   const [registryName, setRegistryName] = useState("");
   const [buttonStatus] = useState("");
   const snap = useSnapshot(OFState);

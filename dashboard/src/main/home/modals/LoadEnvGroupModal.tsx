@@ -36,7 +36,7 @@ type StateType = {
   envGroups: any[];
   loading: boolean;
   error: boolean;
-  selectedEnvGroup: EnvGroupData | null;
+  selectedEnvGroup: PopulatedEnvGroup | null;
   buttonStatus: string;
   shouldSync: boolean;
 };

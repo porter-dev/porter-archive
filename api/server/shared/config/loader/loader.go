@@ -18,13 +18,12 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
-	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
+	"github.com/porter-dev/porter/provisioner/client"
 
 	lr "github.com/porter-dev/porter/internal/logger"
 
@@ -73,7 +72,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.Metadata = config.MetadataFromConf(envConf.ServerConf, e.version)
 	res.DB = InstanceDB
 
-	err = gorm.AutoMigrate(InstanceDB)
+	err = gorm.AutoMigrate(InstanceDB, sc.Debug)
 
 	if err != nil {
 		return nil, err
@@ -203,17 +202,13 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	res.URLCache = urlcache.Init(sc.DefaultApplicationHelmRepoURL, sc.DefaultAddonHelmRepoURL)
 
-	provAgent, err := getProvisionerAgent(sc)
+	provClient, err := getProvisionerServiceClient(sc)
 
 	if err != nil {
 		return nil, err
 	}
 
-	res.ProvisionerAgent = provAgent
-
-	if res.ProvisionerAgent != nil && res.RedisConf.Enabled {
-		res.Metadata.Provisioning = true
-	}
+	res.ProvisionerClient = provClient
 
 	res.AnalyticsClient = analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, res.Logger)
 
@@ -224,20 +219,18 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	return res, nil
 }
 
-func getProvisionerAgent(sc *env.ServerConf) (*kubernetes.Agent, error) {
-	if sc.ProvisionerCluster == "kubeconfig" && sc.SelfKubeconfig != "" {
-		agent, err := local.GetSelfAgentFromFileConfig(sc.SelfKubeconfig)
+func getProvisionerServiceClient(sc *env.ServerConf) (*client.Client, error) {
+	if sc.ProvisionerServerURL != "" && sc.ProvisionerToken != "" {
+		baseURL := fmt.Sprintf("%s/api/v1", sc.ProvisionerServerURL)
+
+		pClient, err := client.NewClient(baseURL, sc.ProvisionerToken, 0)
 
 		if err != nil {
-			return nil, fmt.Errorf("could not get in-cluster agent: %v", err)
+			return nil, err
 		}
 
-		return agent, nil
-	} else if sc.ProvisionerCluster == "kubeconfig" {
-		return nil, fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
+		return pClient, nil
 	}
 
-	agent, _ := kubernetes.GetAgentInClusterConfig()
-
-	return agent, nil
+	return nil, fmt.Errorf("required env vars not set for provisioner")
 }

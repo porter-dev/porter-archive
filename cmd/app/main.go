@@ -11,9 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/router"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/config/loader"
-	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/redis_stream"
 	"gorm.io/gorm"
 )
 
@@ -43,21 +41,6 @@ func main() {
 
 	if err != nil {
 		log.Fatal("Data initialization failed: ", err)
-	}
-
-	if config.RedisConf.Enabled {
-		redis, err := adapter.NewRedisClient(config.RedisConf)
-
-		if err != nil {
-			config.Logger.Fatal().Err(err).Msg("redis connection failed")
-			return
-		}
-
-		redis_stream.InitGlobalStream(redis)
-
-		errorChan := make(chan error)
-
-		go redis_stream.GlobalStreamListener(redis, config, config.Repo, config.AnalyticsClient, errorChan)
 	}
 
 	appRouter := router.NewAPIRouter(config)

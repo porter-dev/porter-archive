@@ -14,7 +14,6 @@ type Database struct {
 	ClusterID uint `json:"cluster_id"`
 
 	InfraID uint `json:"infra_id"`
-	Infra   Infra
 
 	InstanceID       string `json:"rds_instance_id"`
 	InstanceEndpoint string `json:"rds_connection_endpoint"`

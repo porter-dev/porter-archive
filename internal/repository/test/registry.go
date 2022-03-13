@@ -53,6 +53,12 @@ func (repo *RegistryRepository) ReadRegistry(
 	return repo.registries[index], nil
 }
 
+func (repo *RegistryRepository) ReadRegistryByInfraID(
+	projectID, infraID uint,
+) (*models.Registry, error) {
+	panic("unimplemented")
+}
+
 // ListRegistriesByProjectID finds all registries
 // for a given project id
 func (repo *RegistryRepository) ListRegistriesByProjectID(

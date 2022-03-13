@@ -6,9 +6,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -67,7 +67,7 @@ type CreateDNSRecordConfig struct {
 // NewDNSRecordForEndpoint generates a random subdomain and returns a DNSRecord
 // model
 func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
-	suffix, _ := repository.GenerateRandomBytes(8)
+	suffix, _ := encryption.GenerateRandomBytes(8)
 
 	subdomain := fmt.Sprintf("%s-%s", c.ReleaseName, suffix)
 

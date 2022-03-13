@@ -3,6 +3,7 @@ package gorm
 import (
 	"context"
 
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -197,6 +198,38 @@ func (repo *ClusterRepository) ReadCluster(
 	return cluster, nil
 }
 
+// ReadCluster finds a cluster by id
+func (repo *ClusterRepository) ReadClusterByInfraID(
+	projectID, infraID uint,
+) (*models.Cluster, error) {
+	ctxDB := repo.db.WithContext(context.Background())
+
+	cluster := &models.Cluster{}
+
+	// preload Clusters association
+	if err := ctxDB.Where("project_id = ? AND infra_id = ?", projectID, infraID).First(&cluster).Error; err != nil {
+		return nil, err
+	}
+
+	cache := ints.ClusterTokenCache{}
+
+	if cluster.TokenCacheID != 0 {
+		if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	cluster.TokenCache = cache
+
+	err := repo.DecryptClusterData(cluster, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cluster, nil
+}
+
 // ListClustersByProjectID finds all clusters
 // for a given project id
 func (repo *ClusterRepository) ListClustersByProjectID(
@@ -249,7 +282,7 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 	ctxDB := repo.db.WithContext(context.Background())
 
 	if tok := tokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, repo.key)
+		cipherData, err := encryption.Encrypt(tok, repo.key)
 
 		if err != nil {
 			return nil, err
@@ -315,7 +348,7 @@ func (repo *ClusterRepository) EncryptClusterData(
 	key *[32]byte,
 ) error {
 	if len(cluster.CertificateAuthorityData) > 0 {
-		cipherData, err := repository.Encrypt(cluster.CertificateAuthorityData, key)
+		cipherData, err := encryption.Encrypt(cluster.CertificateAuthorityData, key)
 
 		if err != nil {
 			return err
@@ -325,7 +358,7 @@ func (repo *ClusterRepository) EncryptClusterData(
 	}
 
 	if tok := cluster.TokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, key)
+		cipherData, err := encryption.Encrypt(tok, key)
 
 		if err != nil {
 			return err
@@ -344,7 +377,7 @@ func (repo *ClusterRepository) EncryptClusterCandidateData(
 	key *[32]byte,
 ) error {
 	if len(cc.AWSClusterIDGuess) > 0 {
-		cipherData, err := repository.Encrypt(cc.AWSClusterIDGuess, key)
+		cipherData, err := encryption.Encrypt(cc.AWSClusterIDGuess, key)
 
 		if err != nil {
 			return err
@@ -354,7 +387,7 @@ func (repo *ClusterRepository) EncryptClusterCandidateData(
 	}
 
 	if len(cc.Kubeconfig) > 0 {
-		cipherData, err := repository.Encrypt(cc.Kubeconfig, key)
+		cipherData, err := encryption.Encrypt(cc.Kubeconfig, key)
 
 		if err != nil {
 			return err
@@ -373,7 +406,7 @@ func (repo *ClusterRepository) DecryptClusterData(
 	key *[32]byte,
 ) error {
 	if len(cluster.CertificateAuthorityData) > 0 {
-		plaintext, err := repository.Decrypt(cluster.CertificateAuthorityData, key)
+		plaintext, err := encryption.Decrypt(cluster.CertificateAuthorityData, key)
 
 		if err != nil {
 			return err
@@ -383,7 +416,7 @@ func (repo *ClusterRepository) DecryptClusterData(
 	}
 
 	if tok := cluster.TokenCache.Token; len(tok) > 0 {
-		plaintext, err := repository.Decrypt(tok, key)
+		plaintext, err := encryption.Decrypt(tok, key)
 
 		// in the case that the token cache is down, set empty token
 		if err != nil {
@@ -403,7 +436,7 @@ func (repo *ClusterRepository) DecryptClusterCandidateData(
 	key *[32]byte,
 ) error {
 	if len(cc.AWSClusterIDGuess) > 0 {
-		plaintext, err := repository.Decrypt(cc.AWSClusterIDGuess, key)
+		plaintext, err := encryption.Decrypt(cc.AWSClusterIDGuess, key)
 
 		if err != nil {
 			return err
@@ -413,7 +446,7 @@ func (repo *ClusterRepository) DecryptClusterCandidateData(
 	}
 
 	if len(cc.Kubeconfig) > 0 {
-		plaintext, err := repository.Decrypt(cc.Kubeconfig, key)
+		plaintext, err := encryption.Decrypt(cc.Kubeconfig, key)
 
 		if err != nil {
 			return err

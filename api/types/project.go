@@ -6,6 +6,7 @@ type Project struct {
 	Roles               []*Role `json:"roles"`
 	PreviewEnvsEnabled  bool    `json:"preview_envs_enabled"`
 	RDSDatabasesEnabled bool    `json:"enable_rds_databases"`
+	ManagedInfraEnabled bool    `json:"managed_infra_enabled"`
 }
 
 type CreateProjectRequest struct {

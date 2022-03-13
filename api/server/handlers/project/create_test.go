@@ -26,8 +26,8 @@ func TestCreateProjectSuccessful(t *testing.T) {
 
 	handler := project.NewProjectCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -66,7 +66,7 @@ func TestFailingDecoderValidator(t *testing.T) {
 	handler := project.NewProjectCreateHandler(
 		config,
 		apitest.NewFailingDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -90,8 +90,8 @@ func TestFailingCreateMethod(t *testing.T) {
 
 	handler := project.NewProjectCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -115,8 +115,8 @@ func TestFailingCreateRoleMethod(t *testing.T) {
 
 	handler := project.NewProjectCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -140,8 +140,8 @@ func TestFailingReadMethod(t *testing.T) {
 
 	handler := project.NewProjectCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

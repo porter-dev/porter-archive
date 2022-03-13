@@ -173,6 +173,6 @@ const StyledOnboarding = styled.div`
   align-items: center;
   margin-top: -6%;
   padding-bottom: 5%;
-  min-width: 300px;
+  min-width: 350px;
   position: relative;
 `;

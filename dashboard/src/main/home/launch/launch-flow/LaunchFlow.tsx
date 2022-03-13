@@ -6,11 +6,10 @@ import { RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { getQueryParam, getQueryParams, pushFiltered } from "shared/routing";
+import { pushFiltered } from "shared/routing";
 
 import { hardcodedNames } from "shared/hardcodedNameDict";
 import SourcePage from "./SourcePage";
-import WorkflowPage from "./WorkflowPage";
 import SettingsPage from "./SettingsPage";
 import TitleSection from "components/TitleSection";
 
@@ -19,7 +18,6 @@ import {
   ChartTypeWithExtendedConfig,
   FullActionConfigType,
   PorterTemplate,
-  StorageType,
 } from "shared/types";
 
 type PropsType = RouteComponentProps & {
@@ -115,7 +113,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           id: currentProject.id,
           cluster_id: currentCluster.id,
           namespace: selectedNamespace,
-          repo_url: process.env.ADDON_CHART_REPO_URL,
+          repo_url:
+            props.currentTemplate?.repo_url || process.env.ADDON_CHART_REPO_URL,
         }
       )
       .then((_) => {

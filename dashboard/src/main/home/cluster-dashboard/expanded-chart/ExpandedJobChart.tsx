@@ -27,6 +27,8 @@ import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import { onlyInLeft } from "shared/array_utils";
 import { readableDate } from "shared/string_utils";
+import MetricsSection from "./metrics/MetricsSection";
+import JobMetricsSection from "./metrics/JobMetricsSection";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -55,6 +57,8 @@ type StateType = {
   upgradeVersion: string;
   expandedJobRun: any;
   pods: any;
+  showConnectionModal: boolean;
+  loadingJobs: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -77,6 +81,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     expandedJobRun: null as any,
     pods: null as any,
+    showConnectionModal: false,
+    loadingJobs: true,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -106,7 +112,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentCluster, currentChart } = this.props;
 
     this.setState({ loading: true });
-    api
+    return api
       .getChart(
         "<token>",
         {},
@@ -506,9 +512,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
   getJobs = async (chart: ChartType) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
-
-    api
-      .getJobs(
+    this.setState({ loadingJobs: true });
+    try {
+      const res = await api.getJobs(
         "<token>",
         {},
         {
@@ -517,12 +523,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           namespace: chart.namespace,
           release_name: chart.name,
         }
-      )
-      .then((res) => {
-        // sort jobs by started timestamp
-        this.sortJobsAndSave(res.data);
-      })
-      .catch((err) => setCurrentError(err));
+      );
+      // sort jobs by started timestamp
+      this.sortJobsAndSave(res.data);
+      this.setState({ loadingJobs: false });
+    } catch (err) {
+      return setCurrentError(err);
+    }
   };
 
   sortJobsAndSave = (jobs: any[]) => {
@@ -593,6 +600,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               isAuthorized={this.props.isAuthorized}
               saveValuesStatus={this.state.saveValuesStatus}
               expandJob={(job: any) => this.setJobRun(job)}
+              chartName={this.state.currentChart?.name}
+              isLoading={this.state.loadingJobs}
             />
           </TabWrapper>
         );
@@ -661,10 +670,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart, currentChart.version);
-    this.getJobs(currentChart);
-    this.setupJobWebsocket(currentChart);
-    this.setupCronJobWebsocket(currentChart);
+    this.getChartData(currentChart, currentChart.version).then(() => {
+      this.getJobs(currentChart).then(() => {
+        this.setupJobWebsocket(currentChart);
+        this.setupCronJobWebsocket(currentChart);
+      });
+    });
   }
 
   componentDidUpdate(
@@ -956,7 +967,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentChart } = this.state;
     let chart = currentChart;
     let run = this.state.expandedJobRun;
-
     return (
       <StyledExpandedChart>
         <HeaderWrapper>
@@ -995,12 +1005,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 value: "logs",
               },
               {
+                label: "Metrics",
+                value: "metrics",
+              },
+              {
                 label: "Config",
                 value: "config",
               },
             ]}
           >
-            {this.state.currentTab === "logs" ? (
+            {this.state.currentTab === "logs" && (
               <JobLogsWrapper>
                 <Logs
                   selectedPod={this.state.pods[0]}
@@ -1008,8 +1022,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                   rawText={true}
                 />
               </JobLogsWrapper>
-            ) : (
+            )}
+            {this.state.currentTab === "config" && (
               <>{this.renderConfigSection(run)}</>
+            )}
+            {this.state.currentTab === "metrics" && (
+              <JobMetricsSection
+                jobChart={this.state.currentChart}
+                jobRun={run}
+              />
             )}
           </TabRegion>
         </BodyWrapper>

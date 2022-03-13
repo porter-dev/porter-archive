@@ -63,15 +63,25 @@ func (c *InfraUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// if the last operation is in a "starting" state, block apply
+	if lastOperation.Status == "starting" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("Operation currently in progress. Please try again when latest operation has completed."),
+			http.StatusBadRequest,
+		))
+
+		return
+	}
+
 	// if the values are nil, get the last applied values and marshal them
 	if req.Values == nil || len(req.Values) == 0 {
-		lastOperation, err := c.Repo().Infra().GetLatestOperation(infra)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
 		rawValues := lastOperation.LastApplied
 
 		err = json.Unmarshal(rawValues, &req.Values)

@@ -7,17 +7,24 @@ import {
   PorterFormValidationInfo,
   PorterFormVariableList,
 } from "./types";
-import { ShowIf, ShowIfAnd, ShowIfNot, ShowIfOr } from "../../shared/types";
+import {
+  ShowIf,
+  ShowIfAnd,
+  ShowIfIs,
+  ShowIfNot,
+  ShowIfOr,
+} from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
 import { getFinalVariablesForKeyValueArray } from "./field-components/KeyValueArray";
 import { Context } from "../../shared/Context";
 import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
 import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
 import { getFinalVariablesForSelect } from "./field-components/Select";
+import api from "shared/api";
 
 interface Props {
   rawFormData: PorterFormData;
-  onSubmit: (vars: PorterFormVariableList) => void;
+  onSubmit: (vars: PorterFormVariableList, cb?: () => void) => void;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
   includeHiddenFields?: boolean;
@@ -28,7 +35,7 @@ interface Props {
 interface ContextProps {
   formData: PorterFormData;
   formState: PorterFormState;
-  onSubmit: () => void;
+  onSubmit: (cb?: () => void) => void;
   dispatchAction: (event: PorterFormAction) => void;
   validationInfo: PorterFormValidationInfo;
   getSubmitValues: () => PorterFormVariableList;
@@ -133,16 +140,23 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
-    return {
-      ...ret,
-      ...{
+
+    let scopedVars = {};
+
+    if (data?.isClusterScoped) {
+      scopedVars = {
         "currentCluster.service.is_gcp":
           context.currentCluster?.service == "gke",
         "currentCluster.service.is_aws":
           context.currentCluster?.service == "eks",
         "currentCluster.service.is_do":
           context.currentCluster?.service == "doks",
-      },
+      };
+    }
+
+    return {
+      ...ret,
+      ...scopedVars,
     };
   };
 
@@ -193,6 +207,11 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     if (typeof vals == "string") {
       return !!variables[vals];
     }
+    if ((vals as ShowIfIs).is) {
+      vals = vals as ShowIfIs;
+      return vals.is == variables[vals.variable];
+    }
+
     if ((vals as ShowIfOr).or) {
       vals = vals as ShowIfOr;
       for (let i = 0; i < vals.or?.length; i++) {
@@ -439,8 +458,8 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     return Object.assign.apply({}, varList);
   };
 
-  const onSubmitWrapper = () => {
-    props.onSubmit(getSubmitValues());
+  const onSubmitWrapper = (cb?: () => void) => {
+    props.onSubmit(getSubmitValues(), cb);
   };
 
   if (props.doDebug) {

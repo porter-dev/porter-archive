@@ -28,8 +28,8 @@ func TestLoginUserSuccessful(t *testing.T) {
 
 	handler := user.NewUserLoginHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -61,8 +61,8 @@ func TestLoginUserIncorrectPassword(t *testing.T) {
 
 	handler := user.NewUserLoginHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -88,8 +88,8 @@ func TestLoginUserBadEmail(t *testing.T) {
 
 	handler := user.NewUserLoginHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -115,8 +115,8 @@ func TestLoginUserEmptyPassword(t *testing.T) {
 
 	handler := user.NewUserLoginHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -142,8 +142,8 @@ func TestLoginUserNotExist(t *testing.T) {
 
 	handler := user.NewUserLoginHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -167,8 +167,8 @@ func TestLoginUserFailingReadUserByEmailMethod(t *testing.T) {
 
 	handler := user.NewUserLoginHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

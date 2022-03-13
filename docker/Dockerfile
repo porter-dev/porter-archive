@@ -5,12 +5,17 @@
 FROM golang:1.17-alpine as base
 WORKDIR /porter
 
-RUN apk update && apk add --no-cache gcc musl-dev git
+RUN apk update && apk add --no-cache gcc musl-dev git protoc
 
 COPY go.mod go.sum ./
 COPY /cmd ./cmd
 COPY /internal ./internal
 COPY /api ./api
+COPY /scripts ./scripts
+COPY /provisioner ./provisioner
+
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
 
 RUN --mount=type=cache,target=$GOPATH/pkg/mod \
     go mod download
@@ -20,6 +25,10 @@ RUN --mount=type=cache,target=$GOPATH/pkg/mod \
 FROM base AS build-go
 
 ARG version=production
+
+
+# build proto files
+RUN sh ./scripts/build/proto.sh
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=$GOPATH/pkg/mod \

@@ -43,6 +43,8 @@ interface Props {
   setCurrentTab: (nt: string) => void;
   isLaunch?: boolean;
   hideSpacer?: boolean;
+  // The tab to redirect to after saving the form
+  redirectTabAfterSave?: string;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -178,6 +180,14 @@ const PorterForm: React.FC<Props> = (props) => {
     return props.saveValuesStatus;
   };
 
+  const submit = () => {
+    onSubmit(() => {
+      if (props.redirectTabAfterSave != "") {
+        setCurrentTab(props.redirectTabAfterSave);
+      }
+    });
+  };
+
   return (
     <>
       <TabRegion
@@ -194,7 +204,7 @@ const PorterForm: React.FC<Props> = (props) => {
       {showSaveButton() && (
         <SaveButton
           text={props.saveButtonText || "Deploy"}
-          onClick={onSubmit}
+          onClick={submit}
           makeFlush={!props.isInModal}
           status={
             validationInfo.validated ? renderSaveStatus() : validationInfo.error

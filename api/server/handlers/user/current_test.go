@@ -18,7 +18,7 @@ func TestGetCurrentUserSuccessful(t *testing.T) {
 
 	handler := user.NewUserGetCurrentHandler(
 		config,
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

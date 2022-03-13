@@ -58,11 +58,11 @@ func (d *DefaultPorterHandler) Repo() repository.Repository {
 }
 
 func (d *DefaultPorterHandler) HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError) {
-	apierrors.HandleAPIError(d.Config(), w, r, err, true)
+	apierrors.HandleAPIError(d.Config().Logger, d.Config().Alerter, w, r, err, true)
 }
 
 func (d *DefaultPorterHandler) HandleAPIErrorNoWrite(w http.ResponseWriter, r *http.Request, err apierrors.RequestError) {
-	apierrors.HandleAPIError(d.Config(), w, r, err, false)
+	apierrors.HandleAPIError(d.Config().Logger, d.Config().Alerter, w, r, err, false)
 }
 
 func (d *DefaultPorterHandler) WriteResult(w http.ResponseWriter, r *http.Request, v interface{}) {
@@ -123,7 +123,7 @@ func NewUnavailable(config *config.Config, handlerID string) *Unavailable {
 }
 
 func (u *Unavailable) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	apierrors.HandleAPIError(u.config, w, r, apierrors.NewErrPassThroughToClient(
+	apierrors.HandleAPIError(u.config.Logger, u.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(
 		fmt.Errorf("%s not available in community edition", u.handlerID),
 		http.StatusBadRequest,
 	), true, apierrors.ErrorOpts{

@@ -12,8 +12,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
 )
 
 type CLILoginHandler struct {
@@ -64,7 +64,7 @@ func (c *CLILoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate 64 characters long authorization code
-	code, err := repository.GenerateRandomBytes(32)
+	code, err := encryption.GenerateRandomBytes(32)
 
 	if err != nil {
 		err = fmt.Errorf("CLI random code generation failed: %s", err.Error())

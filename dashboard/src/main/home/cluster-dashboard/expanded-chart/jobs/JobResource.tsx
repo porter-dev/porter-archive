@@ -9,6 +9,8 @@ import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import { readableDate } from "shared/string_utils";
+import CommandLineIcon from "assets/command-line-icon";
+import ConnectToJobInstructionsModal from "./ConnectToJobInstructionsModal";
 
 type PropsType = {
   job: any;
@@ -22,6 +24,7 @@ type StateType = {
   expanded: boolean;
   configIsExpanded: boolean;
   pods: any[];
+  showConnectionModal: boolean;
 };
 
 export default class JobResource extends Component<PropsType, StateType> {
@@ -29,6 +32,7 @@ export default class JobResource extends Component<PropsType, StateType> {
     expanded: false,
     configIsExpanded: false,
     pods: [] as any[],
+    showConnectionModal: false,
   };
 
   expandJob = (event: MouseEvent) => {

@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -98,6 +99,11 @@ func ExchangeToken(host, code string) (string, error) {
 	// create a request with the authorization code
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
+
+	// look for a cloudflare access token specifically for Porter
+	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {
+		req.Header.Set("cf-access-token", cfToken)
+	}
 
 	client := &http.Client{
 		Timeout: time.Minute,

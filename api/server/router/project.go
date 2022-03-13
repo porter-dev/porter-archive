@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
+	"github.com/porter-dev/porter/api/server/handlers/helmrepo"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
 	"github.com/porter-dev/porter/api/server/handlers/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
@@ -1092,6 +1093,61 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: apiTokenRevokeEndpoint,
 		Handler:  apiTokenRevokeHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/helmrepos -> helmrepo.NewHelmRepoCreateHandler
+	hrCreateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/helmrepos",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	hrCreateHandler := helmrepo.NewHelmRepoCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: hrCreateEndpoint,
+		Handler:  hrCreateHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/helmrepos -> helmrepo.NewHelmRepoListHandler
+	hrListEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/helmrepos",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	hrListHandler := helmrepo.NewHelmRepoListHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: hrListEndpoint,
+		Handler:  hrListHandler,
 		Router:   r,
 	})
 

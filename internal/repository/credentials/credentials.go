@@ -16,6 +16,9 @@ type OAuthCredential struct {
 type GCPCredential struct {
 	// KeyData for a service account for GCP connectors
 	GCPKeyData []byte `json:"gcp_key_data"`
+
+	// GCPProjectID is the GCP project id
+	GCPProjectID []byte `json:"gcp_project_id"`
 }
 
 type AWSCredential struct {

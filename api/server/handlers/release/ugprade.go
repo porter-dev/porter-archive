@@ -14,7 +14,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
-	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/release"
@@ -94,11 +93,17 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			}
 		}
 
-		chart, err := loader.LoadChartPublic(
-			chartRepoURL,
-			helmRelease.Chart.Metadata.Name,
-			request.ChartVersion,
-		)
+		chart, err := LoadChart(c.Config(), &LoadAddonChartOpts{
+			ProjectID:       cluster.ProjectID,
+			RepoURL:         chartRepoURL,
+			TemplateName:    helmRelease.Chart.Metadata.Name,
+			TemplateVersion: request.ChartVersion,
+		})
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(

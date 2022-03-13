@@ -48,15 +48,15 @@ func (p *GitInstallationScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *ht
 	gitInstallation, err := p.config.Repo.GithubAppInstallation().ReadGithubAppInstallationByInstallationID(gitInstallationID)
 
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
 		return
 	} else if err != nil {
-		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
 
 	if err := p.doesUserHaveGitInstallationAccess(user.GithubAppIntegrationID, gitInstallationID); err != nil {
-		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
 

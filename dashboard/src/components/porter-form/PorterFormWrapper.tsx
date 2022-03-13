@@ -21,6 +21,7 @@ type PropsType = {
   isLaunch?: boolean;
   includeHiddenFields?: boolean;
   hideBottomSpacer?: boolean;
+  redirectTabAfterSave?: string;
 };
 
 const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
@@ -40,6 +41,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
   isLaunch,
   includeHiddenFields,
   hideBottomSpacer,
+  redirectTabAfterSave,
 }) => {
   const hashCode = (s: string) => {
     return s?.split("").reduce(function (a, b) {
@@ -93,6 +95,7 @@ const PorterFormWrapper: React.FunctionComponent<PropsType> = ({
           setCurrentTab={setCurrentTab}
           isLaunch={isLaunch}
           hideSpacer={hideBottomSpacer}
+          redirectTabAfterSave={redirectTabAfterSave}
         />
       </PorterFormContextProvider>
     </React.Fragment>

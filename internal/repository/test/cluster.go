@@ -124,6 +124,12 @@ func (repo *ClusterRepository) ReadCluster(
 	return repo.clusters[index], nil
 }
 
+func (repo *ClusterRepository) ReadClusterByInfraID(
+	projectID, infraID uint,
+) (*models.Cluster, error) {
+	panic("unimplemented")
+}
+
 // ListClustersByProjectID finds all service accounts
 // for a given project id
 func (repo *ClusterRepository) ListClustersByProjectID(

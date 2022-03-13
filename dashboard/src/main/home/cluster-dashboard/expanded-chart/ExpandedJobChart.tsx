@@ -26,6 +26,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import { onlyInLeft } from "shared/array_utils";
+import { readableDate } from "shared/string_utils";
 import MetricsSection from "./metrics/MetricsSection";
 import JobMetricsSection from "./metrics/JobMetricsSection";
 
@@ -662,16 +663,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     });
   }
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
   componentDidMount() {
     let { currentChart } = this.state;
 
@@ -824,7 +815,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               <LastDeployed>
                 Run {this.state.jobs.length} times <Dot>•</Dot>Last template
                 update at
-                {" " + this.readableDate(chart.info.last_deployed)}
+                {" " + readableDate(chart.info.last_deployed)}
               </LastDeployed>
             </InfoWrapper>
             {displayUpdateButton && (
@@ -986,8 +977,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             icon={currentChart.chart.metadata.icon}
             iconWidth="33px"
           >
-            {chart.name}{" "}
-            <Gray>at {this.readableDate(run.status.startTime)}</Gray>
+            {chart.name} <Gray>at {readableDate(run.status.startTime)}</Gray>
           </TitleSection>
 
           <InfoWrapper>
@@ -995,7 +985,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               {this.renderStatus(
                 run,
                 run.status.completionTime
-                  ? this.readableDate(run.status.completionTime)
+                  ? readableDate(run.status.completionTime)
                   : ""
               )}
               <TagWrapper>

@@ -16,6 +16,9 @@ type OAuthCredential struct {
 type GCPCredential struct {
 	// KeyData for a service account for GCP connectors
 	GCPKeyData []byte `json:"gcp_key_data"`
+
+	// GCPProjectID is the GCP project id
+	GCPProjectID []byte `json:"gcp_project_id"`
 }
 
 type AWSCredential struct {
@@ -31,6 +34,9 @@ type AWSCredential struct {
 
 	// An optional session token, if the user is assuming a role
 	AWSSessionToken []byte `json:"aws_session_token"`
+
+	// An optional region associated with this AWS credential
+	AWSRegion []byte `json:"aws_region"`
 }
 
 type CredentialStorage interface {

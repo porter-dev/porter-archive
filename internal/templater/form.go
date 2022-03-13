@@ -12,6 +12,7 @@ type OnDataStream func(val map[string]interface{}) error
 type TemplateReaderQuery struct {
 	Key         string
 	QueryString string
+	Default     interface{}
 
 	Template *gojq.Query
 }

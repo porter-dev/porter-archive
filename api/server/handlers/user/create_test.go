@@ -27,8 +27,8 @@ func TestCreateUserSuccessful(t *testing.T) {
 
 	handler := user.NewUserCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -59,8 +59,8 @@ func TestCreateUserBadEmail(t *testing.T) {
 
 	handler := user.NewUserCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -84,8 +84,8 @@ func TestCreateUserMissingField(t *testing.T) {
 
 	handler := user.NewUserCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -113,8 +113,8 @@ func TestCreateUserSameEmail(t *testing.T) {
 
 	handler := user.NewUserCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -139,8 +139,8 @@ func TestFailingCreateUserMethod(t *testing.T) {
 
 	handler := user.NewUserCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -163,8 +163,8 @@ func TestFailingCreateSessionMethod(t *testing.T) {
 
 	handler := user.NewUserCreateHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

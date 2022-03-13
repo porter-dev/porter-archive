@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useLayoutEffect } from "react";
 import { Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import CreateDatabaseForm from "./CreateDatabaseForm";
 import DatabasesHome from "./DatabasesHome";
 
 const DatabasesRoutes = () => {
@@ -23,9 +22,6 @@ const DatabasesRoutes = () => {
   return (
     <>
       <Switch>
-        <Route path={`${url}/provision-database`}>
-          <CreateDatabaseForm />
-        </Route>
         <Route path={`${url}/`}>
           <DatabasesHome />
         </Route>

@@ -66,7 +66,7 @@ func (t *TemplateGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, file := range chart.Files {
 		if strings.Contains(file.Name, "form.yaml") {
-			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data, "declared")
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, file.Data, "declared", "")
 
 			if err != nil {
 				break

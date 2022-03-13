@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
@@ -94,7 +95,7 @@ func (repo *KubeIntegrationRepository) EncryptKubeIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(ki.ClientCertificateData) > 0 {
-		cipherData, err := repository.Encrypt(ki.ClientCertificateData, key)
+		cipherData, err := encryption.Encrypt(ki.ClientCertificateData, key)
 
 		if err != nil {
 			return err
@@ -104,7 +105,7 @@ func (repo *KubeIntegrationRepository) EncryptKubeIntegrationData(
 	}
 
 	if len(ki.ClientKeyData) > 0 {
-		cipherData, err := repository.Encrypt(ki.ClientKeyData, key)
+		cipherData, err := encryption.Encrypt(ki.ClientKeyData, key)
 
 		if err != nil {
 			return err
@@ -114,7 +115,7 @@ func (repo *KubeIntegrationRepository) EncryptKubeIntegrationData(
 	}
 
 	if len(ki.Token) > 0 {
-		cipherData, err := repository.Encrypt(ki.Token, key)
+		cipherData, err := encryption.Encrypt(ki.Token, key)
 
 		if err != nil {
 			return err
@@ -124,7 +125,7 @@ func (repo *KubeIntegrationRepository) EncryptKubeIntegrationData(
 	}
 
 	if len(ki.Username) > 0 {
-		cipherData, err := repository.Encrypt(ki.Username, key)
+		cipherData, err := encryption.Encrypt(ki.Username, key)
 
 		if err != nil {
 			return err
@@ -134,7 +135,7 @@ func (repo *KubeIntegrationRepository) EncryptKubeIntegrationData(
 	}
 
 	if len(ki.Password) > 0 {
-		cipherData, err := repository.Encrypt(ki.Password, key)
+		cipherData, err := encryption.Encrypt(ki.Password, key)
 
 		if err != nil {
 			return err
@@ -144,7 +145,7 @@ func (repo *KubeIntegrationRepository) EncryptKubeIntegrationData(
 	}
 
 	if len(ki.Kubeconfig) > 0 {
-		cipherData, err := repository.Encrypt(ki.Kubeconfig, key)
+		cipherData, err := encryption.Encrypt(ki.Kubeconfig, key)
 
 		if err != nil {
 			return err
@@ -163,7 +164,7 @@ func (repo *KubeIntegrationRepository) DecryptKubeIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(ki.ClientCertificateData) > 0 {
-		plaintext, err := repository.Decrypt(ki.ClientCertificateData, key)
+		plaintext, err := encryption.Decrypt(ki.ClientCertificateData, key)
 
 		if err != nil {
 			return err
@@ -173,7 +174,7 @@ func (repo *KubeIntegrationRepository) DecryptKubeIntegrationData(
 	}
 
 	if len(ki.ClientKeyData) > 0 {
-		plaintext, err := repository.Decrypt(ki.ClientKeyData, key)
+		plaintext, err := encryption.Decrypt(ki.ClientKeyData, key)
 
 		if err != nil {
 			return err
@@ -183,7 +184,7 @@ func (repo *KubeIntegrationRepository) DecryptKubeIntegrationData(
 	}
 
 	if len(ki.Token) > 0 {
-		plaintext, err := repository.Decrypt(ki.Token, key)
+		plaintext, err := encryption.Decrypt(ki.Token, key)
 
 		if err != nil {
 			return err
@@ -193,7 +194,7 @@ func (repo *KubeIntegrationRepository) DecryptKubeIntegrationData(
 	}
 
 	if len(ki.Username) > 0 {
-		plaintext, err := repository.Decrypt(ki.Username, key)
+		plaintext, err := encryption.Decrypt(ki.Username, key)
 
 		if err != nil {
 			return err
@@ -203,7 +204,7 @@ func (repo *KubeIntegrationRepository) DecryptKubeIntegrationData(
 	}
 
 	if len(ki.Password) > 0 {
-		plaintext, err := repository.Decrypt(ki.Password, key)
+		plaintext, err := encryption.Decrypt(ki.Password, key)
 
 		if err != nil {
 			return err
@@ -213,7 +214,7 @@ func (repo *KubeIntegrationRepository) DecryptKubeIntegrationData(
 	}
 
 	if len(ki.Kubeconfig) > 0 {
-		plaintext, err := repository.Decrypt(ki.Kubeconfig, key)
+		plaintext, err := encryption.Decrypt(ki.Kubeconfig, key)
 
 		if err != nil {
 			return err
@@ -310,7 +311,7 @@ func (repo *BasicIntegrationRepository) EncryptBasicIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(basic.Username) > 0 {
-		cipherData, err := repository.Encrypt(basic.Username, key)
+		cipherData, err := encryption.Encrypt(basic.Username, key)
 
 		if err != nil {
 			return err
@@ -320,7 +321,7 @@ func (repo *BasicIntegrationRepository) EncryptBasicIntegrationData(
 	}
 
 	if len(basic.Password) > 0 {
-		cipherData, err := repository.Encrypt(basic.Password, key)
+		cipherData, err := encryption.Encrypt(basic.Password, key)
 
 		if err != nil {
 			return err
@@ -339,7 +340,7 @@ func (repo *BasicIntegrationRepository) DecryptBasicIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(basic.Username) > 0 {
-		plaintext, err := repository.Decrypt(basic.Username, key)
+		plaintext, err := encryption.Decrypt(basic.Username, key)
 
 		if err != nil {
 			return err
@@ -349,7 +350,7 @@ func (repo *BasicIntegrationRepository) DecryptBasicIntegrationData(
 	}
 
 	if len(basic.Password) > 0 {
-		plaintext, err := repository.Decrypt(basic.Password, key)
+		plaintext, err := encryption.Decrypt(basic.Password, key)
 
 		if err != nil {
 			return err
@@ -446,7 +447,7 @@ func (repo *OIDCIntegrationRepository) EncryptOIDCIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(oidc.IssuerURL) > 0 {
-		cipherData, err := repository.Encrypt(oidc.IssuerURL, key)
+		cipherData, err := encryption.Encrypt(oidc.IssuerURL, key)
 
 		if err != nil {
 			return err
@@ -456,7 +457,7 @@ func (repo *OIDCIntegrationRepository) EncryptOIDCIntegrationData(
 	}
 
 	if len(oidc.ClientID) > 0 {
-		cipherData, err := repository.Encrypt(oidc.ClientID, key)
+		cipherData, err := encryption.Encrypt(oidc.ClientID, key)
 
 		if err != nil {
 			return err
@@ -466,7 +467,7 @@ func (repo *OIDCIntegrationRepository) EncryptOIDCIntegrationData(
 	}
 
 	if len(oidc.ClientSecret) > 0 {
-		cipherData, err := repository.Encrypt(oidc.ClientSecret, key)
+		cipherData, err := encryption.Encrypt(oidc.ClientSecret, key)
 
 		if err != nil {
 			return err
@@ -476,7 +477,7 @@ func (repo *OIDCIntegrationRepository) EncryptOIDCIntegrationData(
 	}
 
 	if len(oidc.CertificateAuthorityData) > 0 {
-		cipherData, err := repository.Encrypt(oidc.CertificateAuthorityData, key)
+		cipherData, err := encryption.Encrypt(oidc.CertificateAuthorityData, key)
 
 		if err != nil {
 			return err
@@ -486,7 +487,7 @@ func (repo *OIDCIntegrationRepository) EncryptOIDCIntegrationData(
 	}
 
 	if len(oidc.IDToken) > 0 {
-		cipherData, err := repository.Encrypt(oidc.IDToken, key)
+		cipherData, err := encryption.Encrypt(oidc.IDToken, key)
 
 		if err != nil {
 			return err
@@ -496,7 +497,7 @@ func (repo *OIDCIntegrationRepository) EncryptOIDCIntegrationData(
 	}
 
 	if len(oidc.RefreshToken) > 0 {
-		cipherData, err := repository.Encrypt(oidc.RefreshToken, key)
+		cipherData, err := encryption.Encrypt(oidc.RefreshToken, key)
 
 		if err != nil {
 			return err
@@ -515,7 +516,7 @@ func (repo *OIDCIntegrationRepository) DecryptOIDCIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(oidc.IssuerURL) > 0 {
-		plaintext, err := repository.Decrypt(oidc.IssuerURL, key)
+		plaintext, err := encryption.Decrypt(oidc.IssuerURL, key)
 
 		if err != nil {
 			return err
@@ -525,7 +526,7 @@ func (repo *OIDCIntegrationRepository) DecryptOIDCIntegrationData(
 	}
 
 	if len(oidc.ClientID) > 0 {
-		plaintext, err := repository.Decrypt(oidc.ClientID, key)
+		plaintext, err := encryption.Decrypt(oidc.ClientID, key)
 
 		if err != nil {
 			return err
@@ -535,7 +536,7 @@ func (repo *OIDCIntegrationRepository) DecryptOIDCIntegrationData(
 	}
 
 	if len(oidc.ClientSecret) > 0 {
-		plaintext, err := repository.Decrypt(oidc.ClientSecret, key)
+		plaintext, err := encryption.Decrypt(oidc.ClientSecret, key)
 
 		if err != nil {
 			return err
@@ -545,7 +546,7 @@ func (repo *OIDCIntegrationRepository) DecryptOIDCIntegrationData(
 	}
 
 	if len(oidc.CertificateAuthorityData) > 0 {
-		plaintext, err := repository.Decrypt(oidc.CertificateAuthorityData, key)
+		plaintext, err := encryption.Decrypt(oidc.CertificateAuthorityData, key)
 
 		if err != nil {
 			return err
@@ -555,7 +556,7 @@ func (repo *OIDCIntegrationRepository) DecryptOIDCIntegrationData(
 	}
 
 	if len(oidc.IDToken) > 0 {
-		plaintext, err := repository.Decrypt(oidc.IDToken, key)
+		plaintext, err := encryption.Decrypt(oidc.IDToken, key)
 
 		if err != nil {
 			return err
@@ -565,7 +566,7 @@ func (repo *OIDCIntegrationRepository) DecryptOIDCIntegrationData(
 	}
 
 	if len(oidc.RefreshToken) > 0 {
-		plaintext, err := repository.Decrypt(oidc.RefreshToken, key)
+		plaintext, err := encryption.Decrypt(oidc.RefreshToken, key)
 
 		if err != nil {
 			return err
@@ -741,7 +742,7 @@ func (repo *OAuthIntegrationRepository) EncryptOAuthIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(oauth.ClientID) > 0 {
-		cipherData, err := repository.Encrypt(oauth.ClientID, key)
+		cipherData, err := encryption.Encrypt(oauth.ClientID, key)
 
 		if err != nil {
 			return err
@@ -751,7 +752,7 @@ func (repo *OAuthIntegrationRepository) EncryptOAuthIntegrationData(
 	}
 
 	if len(oauth.AccessToken) > 0 {
-		cipherData, err := repository.Encrypt(oauth.AccessToken, key)
+		cipherData, err := encryption.Encrypt(oauth.AccessToken, key)
 
 		if err != nil {
 			return err
@@ -761,7 +762,7 @@ func (repo *OAuthIntegrationRepository) EncryptOAuthIntegrationData(
 	}
 
 	if len(oauth.RefreshToken) > 0 {
-		cipherData, err := repository.Encrypt(oauth.RefreshToken, key)
+		cipherData, err := encryption.Encrypt(oauth.RefreshToken, key)
 
 		if err != nil {
 			return err
@@ -780,7 +781,7 @@ func (repo *OAuthIntegrationRepository) DecryptOAuthIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(oauth.ClientID) > 0 {
-		plaintext, err := repository.Decrypt(oauth.ClientID, key)
+		plaintext, err := encryption.Decrypt(oauth.ClientID, key)
 
 		if err != nil {
 			return err
@@ -790,7 +791,7 @@ func (repo *OAuthIntegrationRepository) DecryptOAuthIntegrationData(
 	}
 
 	if len(oauth.AccessToken) > 0 {
-		plaintext, err := repository.Decrypt(oauth.AccessToken, key)
+		plaintext, err := encryption.Decrypt(oauth.AccessToken, key)
 
 		if err != nil {
 			return err
@@ -800,7 +801,7 @@ func (repo *OAuthIntegrationRepository) DecryptOAuthIntegrationData(
 	}
 
 	if len(oauth.RefreshToken) > 0 {
-		plaintext, err := repository.Decrypt(oauth.RefreshToken, key)
+		plaintext, err := encryption.Decrypt(oauth.RefreshToken, key)
 
 		if err != nil {
 			return err
@@ -926,7 +927,7 @@ func (repo *GCPIntegrationRepository) EncryptGCPIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(gcp.GCPKeyData) > 0 {
-		cipherData, err := repository.Encrypt(gcp.GCPKeyData, key)
+		cipherData, err := encryption.Encrypt(gcp.GCPKeyData, key)
 
 		if err != nil {
 			return err
@@ -945,7 +946,7 @@ func (repo *GCPIntegrationRepository) DecryptGCPIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(gcp.GCPKeyData) > 0 {
-		plaintext, err := repository.Decrypt(gcp.GCPKeyData, key)
+		plaintext, err := encryption.Decrypt(gcp.GCPKeyData, key)
 
 		if err != nil {
 			return err
@@ -1120,7 +1121,7 @@ func (repo *AWSIntegrationRepository) EncryptAWSIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(aws.AWSClusterID) > 0 {
-		cipherData, err := repository.Encrypt(aws.AWSClusterID, key)
+		cipherData, err := encryption.Encrypt(aws.AWSClusterID, key)
 
 		if err != nil {
 			return err
@@ -1130,7 +1131,7 @@ func (repo *AWSIntegrationRepository) EncryptAWSIntegrationData(
 	}
 
 	if len(aws.AWSAccessKeyID) > 0 {
-		cipherData, err := repository.Encrypt(aws.AWSAccessKeyID, key)
+		cipherData, err := encryption.Encrypt(aws.AWSAccessKeyID, key)
 
 		if err != nil {
 			return err
@@ -1140,7 +1141,7 @@ func (repo *AWSIntegrationRepository) EncryptAWSIntegrationData(
 	}
 
 	if len(aws.AWSSecretAccessKey) > 0 {
-		cipherData, err := repository.Encrypt(aws.AWSSecretAccessKey, key)
+		cipherData, err := encryption.Encrypt(aws.AWSSecretAccessKey, key)
 
 		if err != nil {
 			return err
@@ -1150,7 +1151,7 @@ func (repo *AWSIntegrationRepository) EncryptAWSIntegrationData(
 	}
 
 	if len(aws.AWSSessionToken) > 0 {
-		cipherData, err := repository.Encrypt(aws.AWSSessionToken, key)
+		cipherData, err := encryption.Encrypt(aws.AWSSessionToken, key)
 
 		if err != nil {
 			return err
@@ -1169,7 +1170,7 @@ func (repo *AWSIntegrationRepository) DecryptAWSIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(aws.AWSClusterID) > 0 {
-		plaintext, err := repository.Decrypt(aws.AWSClusterID, key)
+		plaintext, err := encryption.Decrypt(aws.AWSClusterID, key)
 
 		if err != nil {
 			return err
@@ -1179,7 +1180,7 @@ func (repo *AWSIntegrationRepository) DecryptAWSIntegrationData(
 	}
 
 	if len(aws.AWSAccessKeyID) > 0 {
-		plaintext, err := repository.Decrypt(aws.AWSAccessKeyID, key)
+		plaintext, err := encryption.Decrypt(aws.AWSAccessKeyID, key)
 
 		if err != nil {
 			return err
@@ -1189,7 +1190,7 @@ func (repo *AWSIntegrationRepository) DecryptAWSIntegrationData(
 	}
 
 	if len(aws.AWSSecretAccessKey) > 0 {
-		plaintext, err := repository.Decrypt(aws.AWSSecretAccessKey, key)
+		plaintext, err := encryption.Decrypt(aws.AWSSecretAccessKey, key)
 
 		if err != nil {
 			return err
@@ -1199,7 +1200,7 @@ func (repo *AWSIntegrationRepository) DecryptAWSIntegrationData(
 	}
 
 	if len(aws.AWSSessionToken) > 0 {
-		plaintext, err := repository.Decrypt(aws.AWSSessionToken, key)
+		plaintext, err := encryption.Decrypt(aws.AWSSessionToken, key)
 
 		if err != nil {
 			return err

@@ -14,13 +14,13 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
-	"github.com/porter-dev/porter/internal/repository"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/release"
 )
@@ -164,7 +164,7 @@ func createReleaseFromHelmRelease(
 	projectID, clusterID uint,
 	helmRelease *release.Release,
 ) (*models.Release, error) {
-	token, err := repository.GenerateRandomBytes(16)
+	token, err := encryption.GenerateRandomBytes(16)
 
 	if err != nil {
 		return nil, err

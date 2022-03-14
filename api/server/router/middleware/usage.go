@@ -36,7 +36,8 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 
 		if err != nil {
 			apierrors.HandleAPIError(
-				b.config,
+				b.config.Logger,
+				b.config.Alerter,
 				w, r,
 				apierrors.NewErrInternal(err),
 				true,
@@ -54,7 +55,8 @@ func (b *UsageMiddleware) Middleware(next http.Handler) http.Handler {
 			limit, curr := getMetricUsage(limit, currentUsage, b.metric)
 
 			apierrors.HandleAPIError(
-				b.config,
+				b.config.Logger,
+				b.config.Alerter,
 				w, r,
 				apierrors.NewErrPassThroughToClient(
 					fmt.Errorf(UsageErrFmt, b.metric, limit, curr),

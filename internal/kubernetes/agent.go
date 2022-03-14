@@ -18,7 +18,6 @@ import (
 	goerrors "errors"
 
 	"github.com/porter-dev/porter/api/server/shared/websocket"
-	"github.com/porter-dev/porter/internal/kubernetes/provisioner"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/registry"
 	"github.com/porter-dev/porter/internal/repository"
@@ -687,6 +686,115 @@ func (a *Agent) ListJobsByLabel(namespace string, labels ...Label) ([]batchv1.Jo
 	}
 
 	return resp.Items, nil
+}
+
+// StreamJobs streams a list of jobs to the websocket writer, closing the connection once all jobs have been sent
+func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.WebsocketSafeReadWriter) error {
+	run := func() error {
+		errorchan := make(chan error)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var wg sync.WaitGroup
+		var once sync.Once
+		var err error
+
+		wg.Add(2)
+
+		go func() {
+			wg.Wait()
+			close(errorchan)
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			for {
+				if _, _, err := rw.ReadMessage(); err != nil {
+					errorchan <- nil
+					return
+				}
+			}
+		}()
+
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// TODO: add method to alert on panic
+					return
+				}
+			}()
+
+			// listens for websocket closing handshake
+			defer wg.Done()
+
+			continueVal := ""
+
+			for {
+				if ctx.Err() != nil {
+					errorchan <- nil
+					return
+				}
+
+				jobs, err := a.Clientset.BatchV1().Jobs(namespace).List(
+					ctx,
+					metav1.ListOptions{
+						Limit:         100,
+						Continue:      continueVal,
+						LabelSelector: "meta.helm.sh/release-name",
+					},
+				)
+
+				if err != nil {
+					errorchan <- err
+					return
+				}
+
+				for _, job := range jobs.Items {
+					err := rw.WriteJSON(job)
+
+					if err != nil {
+						errorchan <- err
+						return
+					}
+				}
+
+				if jobs.Continue == "" {
+					// we have reached the end of the list of jobs
+					break
+				} else {
+					// start pagination
+					continueVal = jobs.Continue
+				}
+			}
+
+			// at this point, we can return the status finished
+			err := rw.WriteJSON(map[string]interface{}{
+				"streamStatus": "finished",
+			})
+
+			errorchan <- err
+		}()
+
+		for err = range errorchan {
+			once.Do(func() {
+				rw.Close()
+				cancel()
+			})
+		}
+
+		return err
+	}
+
+	return a.RunWebsocketTask(run)
 }
 
 // DeleteJob deletes the job in the given name and namespace.
@@ -1539,93 +1647,6 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 	}
 
 	return a.RunWebsocketTask(run)
-}
-
-func (a *Agent) Provision(
-	opts *provisioner.ProvisionOpts,
-) error {
-	// get the provisioner job template
-	job, err := provisioner.GetProvisionerJobTemplate(opts)
-	if err != nil {
-		return err
-	}
-
-	// clearExistingJob with the same name
-	// this is required in case of a job retry
-	err = a.clearExistingJobs(job)
-	if err != nil {
-		return err
-	}
-
-	// apply the provisioner job template
-	_, err = a.Clientset.BatchV1().Jobs(opts.ProvJobNamespace).Create(
-		context.TODO(),
-		job,
-		metav1.CreateOptions{},
-	)
-
-	return err
-}
-
-func (a *Agent) clearExistingJobs(j *batchv1.Job) error {
-	// find if existingJob already exists
-	existingJob, err := a.Clientset.BatchV1().Jobs(j.Namespace).Get(
-		context.TODO(),
-		j.Name,
-		metav1.GetOptions{},
-	)
-
-	if err != nil {
-		// job not found, no further action needed
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	w, err := a.Clientset.BatchV1().Jobs(existingJob.Namespace).Watch(
-		context.TODO(),
-		metav1.ListOptions{
-			ResourceVersion: existingJob.ResourceVersion,
-			// ResourceVersionMatch: metav1.ResourceVersionMatchNotOlderThan,
-		},
-	)
-
-	if err != nil {
-		// most probably the job has already been deleted
-		return nil
-	}
-
-	deleteErrorChan := make(chan error)
-
-	go func(errChan chan<- error) {
-		// job exists, delete it and wait for its deletion
-		// delete job if it already exists
-		err = a.Clientset.BatchV1().Jobs(existingJob.Namespace).Delete(
-			context.TODO(),
-			j.Name,
-			metav1.DeleteOptions{},
-		)
-
-		if err != nil {
-			// unable to delete job
-			errChan <- err
-		}
-	}(deleteErrorChan)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("timedout waiting for existing job deletion")
-		case event := <-w.ResultChan():
-			switch event.Type {
-			case watch.Deleted:
-				// job has been successfully delete
-				// return without error
-				return nil
-			}
-		}
-	}
 }
 
 // CreateImagePullSecrets will create the required image pull secrets and

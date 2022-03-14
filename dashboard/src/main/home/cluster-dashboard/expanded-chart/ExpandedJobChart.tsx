@@ -25,6 +25,10 @@ import { pushFiltered } from "../../../../shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 import Banner from "components/Banner";
 import KeyValueArray from "components/form-components/KeyValueArray";
+import { onlyInLeft } from "shared/array_utils";
+import { readableDate } from "shared/string_utils";
+import MetricsSection from "./metrics/MetricsSection";
+import JobMetricsSection from "./metrics/JobMetricsSection";
 
 type PropsType = WithAuthProps &
   RouteComponentProps & {
@@ -53,6 +57,8 @@ type StateType = {
   upgradeVersion: string;
   expandedJobRun: any;
   pods: any;
+  showConnectionModal: boolean;
+  loadingJobs: boolean;
 };
 
 class ExpandedJobChart extends Component<PropsType, StateType> {
@@ -75,6 +81,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
     expandedJobRun: null as any,
     pods: null as any,
+    showConnectionModal: false,
+    loadingJobs: true,
   };
 
   getPods = (job: any, callback?: () => void) => {
@@ -104,7 +112,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentCluster, currentChart } = this.props;
 
     this.setState({ loading: true });
-    api
+    return api
       .getChart(
         "<token>",
         {},
@@ -322,14 +330,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     return ws;
   };
 
-  handleSaveValues = (config?: any, runJob?: boolean) => {
+  handleSaveValues = async (config?: any, runJob?: boolean) => {
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
     let conf: string;
+    let values = {} as any;
 
     if (!config) {
-      let values = {};
+      values = {};
       let imageUrl = this.state.newestImage;
       let tag = null;
 
@@ -352,7 +361,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       });
     } else {
       // Convert dotted keys to nested objects
-      let values = {};
+      values = {};
 
       for (let key in config) {
         _.set(values, key, config[key]);
@@ -387,6 +396,79 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           ...values,
         },
         { forceQuotes: true }
+      );
+    }
+
+    const oldSyncedEnvGroups =
+      this.props.currentChart.config?.container?.env?.synced || [];
+    const newSyncedEnvGroups = values?.container?.env?.synced || [];
+
+    const deletedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      oldSyncedEnvGroups,
+      newSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addedEnvGroups = onlyInLeft<{
+      keys: Array<any>;
+      name: string;
+      version: number;
+    }>(
+      newSyncedEnvGroups,
+      oldSyncedEnvGroups,
+      (oldVal, newVal) => oldVal.name === newVal.name
+    );
+
+    const addApplicationToEnvGroupPromises = addedEnvGroups.map(
+      (envGroup: any) => {
+        return api.addApplicationToEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: this.state.currentChart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: this.state.currentChart.namespace,
+          }
+        );
+      }
+    );
+
+    try {
+      await Promise.all(addApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't sync the env group to the application, please try again."
+      );
+    }
+
+    const removeApplicationToEnvGroupPromises = deletedEnvGroups.map(
+      (envGroup: any) => {
+        return api.removeApplicationFromEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: this.state.currentChart.name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: this.state.currentChart.namespace,
+          }
+        );
+      }
+    );
+    try {
+      await Promise.all(removeApplicationToEnvGroupPromises);
+    } catch (error) {
+      setCurrentError(
+        "We coudln't remove the synced env group from the application, please try again."
       );
     }
 
@@ -430,9 +512,9 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
 
   getJobs = async (chart: ChartType) => {
     let { currentCluster, currentProject, setCurrentError } = this.context;
-
-    api
-      .getJobs(
+    this.setState({ loadingJobs: true });
+    try {
+      const res = await api.getJobs(
         "<token>",
         {},
         {
@@ -441,12 +523,13 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
           namespace: chart.namespace,
           release_name: chart.name,
         }
-      )
-      .then((res) => {
-        // sort jobs by started timestamp
-        this.sortJobsAndSave(res.data);
-      })
-      .catch((err) => setCurrentError(err));
+      );
+      // sort jobs by started timestamp
+      this.sortJobsAndSave(res.data);
+      this.setState({ loadingJobs: false });
+    } catch (err) {
+      return setCurrentError(err);
+    }
   };
 
   sortJobsAndSave = (jobs: any[]) => {
@@ -517,6 +600,8 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               isAuthorized={this.props.isAuthorized}
               saveValuesStatus={this.state.saveValuesStatus}
               expandJob={(job: any) => this.setJobRun(job)}
+              chartName={this.state.currentChart?.name}
+              isLoading={this.state.loadingJobs}
             />
           </TabWrapper>
         );
@@ -578,16 +663,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     });
   }
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
   componentDidMount() {
     let { currentChart } = this.state;
 
@@ -595,10 +670,12 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
       chart: currentChart.name,
     });
 
-    this.getChartData(currentChart, currentChart.version);
-    this.getJobs(currentChart);
-    this.setupJobWebsocket(currentChart);
-    this.setupCronJobWebsocket(currentChart);
+    this.getChartData(currentChart, currentChart.version).then(() => {
+      this.getJobs(currentChart).then(() => {
+        this.setupJobWebsocket(currentChart);
+        this.setupCronJobWebsocket(currentChart);
+      });
+    });
   }
 
   componentDidUpdate(
@@ -738,7 +815,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               <LastDeployed>
                 Run {this.state.jobs.length} times <Dot>•</Dot>Last template
                 update at
-                {" " + this.readableDate(chart.info.last_deployed)}
+                {" " + readableDate(chart.info.last_deployed)}
               </LastDeployed>
             </InfoWrapper>
             {displayUpdateButton && (
@@ -890,7 +967,6 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
     let { currentChart } = this.state;
     let chart = currentChart;
     let run = this.state.expandedJobRun;
-
     return (
       <StyledExpandedChart>
         <HeaderWrapper>
@@ -901,8 +977,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
             icon={currentChart.chart.metadata.icon}
             iconWidth="33px"
           >
-            {chart.name}{" "}
-            <Gray>at {this.readableDate(run.status.startTime)}</Gray>
+            {chart.name} <Gray>at {readableDate(run.status.startTime)}</Gray>
           </TitleSection>
 
           <InfoWrapper>
@@ -910,7 +985,7 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
               {this.renderStatus(
                 run,
                 run.status.completionTime
-                  ? this.readableDate(run.status.completionTime)
+                  ? readableDate(run.status.completionTime)
                   : ""
               )}
               <TagWrapper>
@@ -930,12 +1005,16 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                 value: "logs",
               },
               {
+                label: "Metrics",
+                value: "metrics",
+              },
+              {
                 label: "Config",
                 value: "config",
               },
             ]}
           >
-            {this.state.currentTab === "logs" ? (
+            {this.state.currentTab === "logs" && (
               <JobLogsWrapper>
                 <Logs
                   selectedPod={this.state.pods[0]}
@@ -943,8 +1022,15 @@ class ExpandedJobChart extends Component<PropsType, StateType> {
                   rawText={true}
                 />
               </JobLogsWrapper>
-            ) : (
+            )}
+            {this.state.currentTab === "config" && (
               <>{this.renderConfigSection(run)}</>
+            )}
+            {this.state.currentTab === "metrics" && (
+              <JobMetricsSection
+                jobChart={this.state.currentChart}
+                jobRun={run}
+              />
             )}
           </TabRegion>
         </BodyWrapper>

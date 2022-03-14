@@ -25,10 +25,10 @@ func (wm *WebsocketMiddleware) Middleware(next http.Handler) http.Handler {
 
 		if err != nil {
 			if errors.Is(err, websocket.UpgraderCheckOriginErr) {
-				apierrors.HandleAPIError(wm.config, w, r, apierrors.NewErrForbidden(err), true)
+				apierrors.HandleAPIError(wm.config.Logger, wm.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
 				return
 			} else {
-				apierrors.HandleAPIError(wm.config, w, r, apierrors.NewErrInternal(err), false)
+				apierrors.HandleAPIError(wm.config.Logger, wm.config.Alerter, w, r, apierrors.NewErrInternal(err), false)
 				return
 			}
 		}

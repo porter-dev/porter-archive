@@ -123,7 +123,7 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if res.Form == nil {
 		// for now just case by name
 		if res.Release.Chart.Name() == "cert-manager" {
-			formYAML, err := parser.FormYAMLFromBytes(parserDef, []byte(certManagerForm), "")
+			formYAML, err := parser.FormYAMLFromBytes(parserDef, []byte(certManagerForm), "", "")
 
 			if err == nil {
 				res.Form = formYAML

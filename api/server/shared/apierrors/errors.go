@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/logger"
 )
@@ -97,7 +97,8 @@ type ErrorOpts struct {
 }
 
 func HandleAPIError(
-	config *config.Config,
+	l *logger.Logger,
+	alerter alerter.Alerter,
 	w http.ResponseWriter,
 	r *http.Request,
 	err RequestError,
@@ -107,7 +108,7 @@ func HandleAPIError(
 	extErrorStr := err.ExternalError()
 
 	// log the internal error
-	event := config.Logger.Warn().
+	event := l.Warn().
 		Str("internal_error", err.InternalError()).
 		Str("external_error", extErrorStr)
 
@@ -117,11 +118,11 @@ func HandleAPIError(
 	event.Send()
 
 	// if the status code is internal server error, use alerter
-	if err.GetStatusCode() == http.StatusInternalServerError && config.Alerter != nil {
+	if err.GetStatusCode() == http.StatusInternalServerError && alerter != nil {
 		data["method"] = r.Method
 		data["url"] = r.URL.String()
 
-		config.Alerter.SendAlert(r.Context(), err, data)
+		alerter.SendAlert(r.Context(), err, data)
 	}
 
 	if writeErr {
@@ -140,7 +141,7 @@ func HandleAPIError(
 		writerErr := json.NewEncoder(w).Encode(resp)
 
 		if writerErr != nil {
-			event := config.Logger.Error().
+			event := l.Error().
 				Err(writerErr)
 
 			logger.AddLoggingContextScopes(r.Context(), event)

@@ -9,6 +9,7 @@ import (
 type RegistryRepository interface {
 	CreateRegistry(reg *models.Registry) (*models.Registry, error)
 	ReadRegistry(projectID, regID uint) (*models.Registry, error)
+	ReadRegistryByInfraID(projectID, infraID uint) (*models.Registry, error)
 	ListRegistriesByProjectID(projectID uint) ([]*models.Registry, error)
 	UpdateRegistry(reg *models.Registry) (*models.Registry, error)
 	UpdateRegistryTokenCache(tokenCache *ints.RegTokenCache) (*models.Registry, error)

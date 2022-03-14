@@ -12,6 +12,7 @@ import { Context } from "shared/Context";
 import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
 import api from "shared/api";
+import { readableDate } from "shared/string_utils";
 
 type Props = {
   chart: ChartType;
@@ -70,16 +71,6 @@ const Chart: React.FunctionComponent<Props> = ({
   useEffect(() => {
     getControllerForChart(chart);
   }, [chart]);
-
-  const readableDate = (s: string) => {
-    const ts = new Date(s);
-    const date = ts.toLocaleDateString();
-    const time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
 
   const filteredControllers = useMemo(() => {
     let tmpControllers: any = {};

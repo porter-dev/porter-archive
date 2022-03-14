@@ -75,6 +75,18 @@ const DatabasesList = () => {
         }
       );
 
+      // call an endpoint for updating the database status
+      await api.updateDatabaseStatus(
+        "<token>",
+        {
+          status: "destroying",
+        },
+        {
+          project_id,
+          infra_id,
+        }
+      );
+
       setCurrentOverlay(null);
       pushQueryParams({ current_tab: "provisioner-status" });
     } catch (error) {
@@ -177,7 +189,11 @@ const DatabasesList = () => {
   return (
     <DatabasesListWrapper>
       <ControlRow>
-        <Button to={`${url}/provision-database`}>
+        <Button
+          to={`/infrastructure/provision/RDS?origin=${encodeURIComponent(
+            "/databases"
+          )}`}
+        >
           <i className="material-icons">add</i>
           Create database
         </Button>

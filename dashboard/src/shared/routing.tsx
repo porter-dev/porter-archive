@@ -6,6 +6,7 @@ export type PorterUrl =
   | "integrations"
   | "new-project"
   | "cluster-dashboard"
+  | "infrastructure"
   | "project-settings"
   | "applications"
   | "env-groups"
@@ -20,6 +21,7 @@ export const PorterUrls = [
   "new-project",
   "cluster-dashboard",
   "project-settings",
+  "infrastructure",
   "applications",
   "env-groups",
   "jobs",

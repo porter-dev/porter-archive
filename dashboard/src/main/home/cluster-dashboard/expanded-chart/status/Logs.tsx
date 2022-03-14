@@ -402,9 +402,7 @@ const useLogs = (
   useEffect(() => {
     console.log("Selected pod updated");
     if (currentPod?.metadata?.name === currentPodName.current) {
-      return () => {
-        closeAllWebsockets();
-      };
+      return () => {};
     }
     currentPodName.current = currentPod?.metadata?.name;
     const currentContainers =
@@ -412,21 +410,18 @@ const useLogs = (
 
     setContainers(currentContainers);
     setCurrentContainer(currentContainers[0]);
-    return () => {
-      closeAllWebsockets();
-    };
   }, [currentPod]);
 
   // Retrieve all previous logs for containers
   useEffect(() => {
+    if (!Array.isArray(containers)) {
+      return;
+    }
+
     closeAllWebsockets();
 
     setPrevLogs({});
     setLogs({});
-
-    if (!Array.isArray(containers)) {
-      return;
-    }
 
     getSystemLogs();
     containers.forEach((containerName) => {
@@ -438,7 +433,17 @@ const useLogs = (
         setupWebsocket(containerName, websocketKey);
       }
     });
+
+    return () => {
+      closeAllWebsockets();
+    };
   }, [containers]);
+
+  useEffect(() => {
+    return () => {
+      closeAllWebsockets();
+    };
+  }, []);
 
   const currentLogs = useMemo(() => {
     return logs[currentContainer] || [];

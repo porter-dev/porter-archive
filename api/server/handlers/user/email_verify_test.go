@@ -89,7 +89,7 @@ func TestEmailVerifyFinalizeSuccessful(t *testing.T) {
 
 	handler := user.NewVerifyEmailFinalizeHandler(
 		config,
-		shared.NewDefaultRequestDecoderValidator(config),
+		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

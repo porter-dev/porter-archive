@@ -31,7 +31,7 @@ func main() {
 		return
 	}
 
-	err = gorm.AutoMigrate(db)
+	err = gorm.AutoMigrate(db, envConf.ServerConf.Debug)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("gorm auto-migration failed")

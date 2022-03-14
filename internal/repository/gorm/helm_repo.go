@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
@@ -110,7 +111,7 @@ func (repo *HelmRepoRepository) UpdateHelmRepoTokenCache(
 	tokenCache *ints.HelmRepoTokenCache,
 ) (*models.HelmRepo, error) {
 	if tok := tokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, repo.key)
+		cipherData, err := encryption.Encrypt(tok, repo.key)
 
 		if err != nil {
 			return nil, err
@@ -164,7 +165,7 @@ func (repo *HelmRepoRepository) EncryptHelmRepoData(
 	key *[32]byte,
 ) error {
 	if tok := hr.TokenCache.Token; len(tok) > 0 {
-		cipherData, err := repository.Encrypt(tok, key)
+		cipherData, err := encryption.Encrypt(tok, key)
 
 		if err != nil {
 			return err
@@ -183,7 +184,7 @@ func (repo *HelmRepoRepository) DecryptHelmRepoData(
 	key *[32]byte,
 ) error {
 	if tok := hr.TokenCache.Token; len(tok) > 0 {
-		plaintext, err := repository.Decrypt(tok, key)
+		plaintext, err := encryption.Decrypt(tok, key)
 
 		if err != nil {
 			return err

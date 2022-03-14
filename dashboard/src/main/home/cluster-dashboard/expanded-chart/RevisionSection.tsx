@@ -11,6 +11,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
+import { readableDate } from "shared/string_utils";
 
 type PropsType = WithAuthProps & {
   chart: ChartType;
@@ -150,16 +151,6 @@ class RevisionSection extends Component<PropsType, StateType> {
     }
   }
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
   handleRollback = () => {
     let { setCurrentError, currentCluster, currentProject } = this.context;
 
@@ -218,7 +209,7 @@ class RevisionSection extends Component<PropsType, StateType> {
           selected={this.props.chart.version === revision.version}
         >
           <Td>{revision.version}</Td>
-          <Td>{this.readableDate(revision.info.last_deployed)}</Td>
+          <Td>{readableDate(revision.info.last_deployed)}</Td>
           <Td>
             {!imageTag ? (
               "N/A"

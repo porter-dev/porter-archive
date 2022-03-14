@@ -7,7 +7,7 @@ import (
 
 // NewQuery constructs a templater.TemplateReaderQuery by parsing the jsonpath
 // query string
-func NewQuery(key, query string) (*templater.TemplateReaderQuery, error) {
+func NewQuery(key, query string, defaultVal interface{}) (*templater.TemplateReaderQuery, error) {
 	jquery, err := gojq.Parse(query)
 
 	if err != nil {
@@ -17,6 +17,7 @@ func NewQuery(key, query string) (*templater.TemplateReaderQuery, error) {
 	return &templater.TemplateReaderQuery{
 		Key:         key,
 		QueryString: query,
+		Default:     defaultVal,
 		Template:    jquery,
 	}, nil
 }
@@ -46,10 +47,17 @@ func QueryValues(
 				return nil, err
 			}
 
-			queryRes = append(queryRes, v)
+			if v != nil {
+				queryRes = append(queryRes, v)
+			}
 		}
 
-		res[query.Key] = queryRes
+		// if the length of the query result is 0, set to the default value
+		if len(queryRes) == 0 {
+			res[query.Key] = []interface{}{query.Default}
+		} else {
+			res[query.Key] = queryRes
+		}
 	}
 
 	return res, nil

@@ -140,6 +140,8 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 	err = coalesceEnvGroups(deployAgent.client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
 		deployAgent.opts.Namespace, deployAgent.opts.EnvGroups, deployAgent.release.Config)
 
+	deployAgent.imageExists = deployAgent.agent.CheckIfImageExists(deployAgent.imageRepo, deployAgent.tag)
+
 	return deployAgent, err
 }
 
@@ -228,14 +230,6 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 		d.tag = currentTag
 	}
 
-	imageExists, err := d.agent.CheckIfImageExists(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
-
-	if err != nil {
-		return err
-	}
-
-	d.imageExists = imageExists
-
 	// we do not want to re-build an image
 	// FIXME: what if overrideBuildConfig == nil but the image stays the same?
 	if overrideBuildConfig == nil && d.imageExists && d.tag != "latest" && !forceBuild {
@@ -245,6 +239,8 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 
 	// if build is not local, fetch remote source
 	var basePath string
+	var err error
+
 	buildCtx := d.opts.LocalPath
 
 	if !d.opts.Local {
@@ -323,7 +319,12 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 }
 
 // Push pushes a local image to the remote repository linked in the release
-func (d *DeployAgent) Push() error {
+func (d *DeployAgent) Push(forcePush bool) error {
+	if d.imageExists && !forcePush && d.tag != "latest" {
+		fmt.Printf("%s:%s has been pushed already, so skipping push\n", d.imageRepo, d.tag)
+		return nil
+	}
+
 	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 

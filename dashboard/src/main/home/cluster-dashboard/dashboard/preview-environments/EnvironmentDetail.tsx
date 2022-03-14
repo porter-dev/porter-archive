@@ -12,7 +12,7 @@ import api from "shared/api";
 import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
-import { capitalize } from "./components/EnvironmentCard";
+import { capitalize } from "shared/string_utils";
 
 const EnvironmentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();

@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
 
@@ -77,7 +77,7 @@ func TestCreateKubeEvent(t *testing.T) {
 }
 
 func TestReadKubeEventsByGroup(t *testing.T) {
-	suffix, _ := repository.GenerateRandomBytes(4)
+	suffix, _ := encryption.GenerateRandomBytes(4)
 
 	tester := &tester{
 		dbFileName: fmt.Sprintf("./porter_read_event_%s.db", suffix),
@@ -113,7 +113,7 @@ func TestReadKubeEventsByGroup(t *testing.T) {
 }
 
 func TestListKubeEventsByProjectIDWithLimit(t *testing.T) {
-	suffix, _ := repository.GenerateRandomBytes(4)
+	suffix, _ := encryption.GenerateRandomBytes(4)
 
 	tester := &tester{
 		dbFileName: fmt.Sprintf("./porter_list_events_%s.db", suffix),
@@ -132,7 +132,7 @@ func TestListKubeEventsByProjectIDWithLimit(t *testing.T) {
 }
 
 func TestListKubeEventsByProjectIDWithSkip(t *testing.T) {
-	suffix, _ := repository.GenerateRandomBytes(4)
+	suffix, _ := encryption.GenerateRandomBytes(4)
 
 	tester := &tester{
 		dbFileName: fmt.Sprintf("./porter_list_events_%s.db", suffix),
@@ -151,7 +151,7 @@ func TestListKubeEventsByProjectIDWithSkip(t *testing.T) {
 }
 
 func TestDeleteKubeEvents(t *testing.T) {
-	suffix, _ := repository.GenerateRandomBytes(4)
+	suffix, _ := encryption.GenerateRandomBytes(4)
 
 	tester := &tester{
 		dbFileName: fmt.Sprintf("./porter_delete_events_%s.db", suffix),

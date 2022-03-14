@@ -37,7 +37,7 @@ func TestListProjectsSuccessful(t *testing.T) {
 
 	handler := project.NewProjectListHandler(
 		config,
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -65,7 +65,7 @@ func TestFailingListMethod(t *testing.T) {
 
 	handler := project.NewProjectListHandler(
 		config,
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

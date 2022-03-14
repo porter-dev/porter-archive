@@ -154,9 +154,11 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
     let { currentProject } = context;
 
     return api
-      .createGCR(
+      .provisionInfra(
         "<token>",
         {
+          kind: "gcr",
+          values: {},
           gcp_integration_id: id,
         },
         { project_id: currentProject.id }
@@ -168,13 +170,16 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
     let { currentProject } = context;
 
     api
-      .createGKE(
+      .provisionInfra(
         "<token>",
         {
-          gcp_region: gcpRegion,
-          gke_name: clusterName,
+          kind: "gke",
           gcp_integration_id: id,
-          issuer_email: context.user.email,
+          values: {
+            gcp_region: gcpRegion,
+            cluster_name: clusterName,
+            issuer_email: context.user.email,
+          },
         },
         { project_id: currentProject.id }
       )
@@ -279,7 +284,7 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
       hosting: "gcp",
     });
 
-    window.open("https://docs.getporter.dev/docs/getting-started-on-gcp");
+    window.open("https://docs.porter.run/getting-started/provisioning-on-gcp");
   };
 
   return (

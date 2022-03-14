@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
+	"helm.sh/helm/v3/pkg/chart"
 )
 
 type CreateAddonHandler struct {
@@ -35,6 +36,7 @@ func NewCreateAddonHandler(
 
 func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 	operationID := oauth.CreateRandomState()
@@ -63,7 +65,12 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		request.TemplateVersion = ""
 	}
 
-	chart, err := loader.LoadChartPublic(request.RepoURL, request.TemplateName, request.TemplateVersion)
+	chart, err := LoadChart(c.Config(), &LoadAddonChartOpts{
+		ProjectID:       proj.ID,
+		RepoURL:         request.RepoURL,
+		TemplateName:    request.TemplateName,
+		TemplateVersion: request.TemplateVersion,
+	})
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -111,4 +118,46 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			FlowID: operationID,
 		},
 	))
+}
+
+type LoadAddonChartOpts struct {
+	ProjectID                              uint
+	RepoURL, TemplateName, TemplateVersion string
+}
+
+func LoadChart(config *config.Config, opts *LoadAddonChartOpts) (*chart.Chart, error) {
+	// if the chart repo url is one of the specified application/addon charts, just load public
+	if opts.RepoURL == config.ServerConf.DefaultAddonHelmRepoURL || opts.RepoURL == config.ServerConf.DefaultApplicationHelmRepoURL {
+		return loader.LoadChartPublic(opts.RepoURL, opts.TemplateName, opts.TemplateVersion)
+	} else {
+		// load the helm repos in the project
+		hrs, err := config.Repo.HelmRepo().ListHelmReposByProjectID(opts.ProjectID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, hr := range hrs {
+			if hr.RepoURL == opts.RepoURL {
+				if hr.BasicAuthIntegrationID != 0 {
+					// read the basic integration id
+					basic, err := config.Repo.BasicIntegration().ReadBasicIntegration(opts.ProjectID, hr.BasicAuthIntegrationID)
+
+					if err != nil {
+
+						return nil, err
+					}
+
+					return loader.LoadChart(&loader.BasicAuthClient{
+						Username: string(basic.Username),
+						Password: string(basic.Password),
+					}, hr.RepoURL, opts.TemplateName, opts.TemplateVersion)
+				} else {
+					return loader.LoadChartPublic(hr.RepoURL, opts.TemplateName, opts.TemplateVersion)
+				}
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("chart repo not found")
 }

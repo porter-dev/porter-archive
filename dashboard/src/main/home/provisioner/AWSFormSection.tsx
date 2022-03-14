@@ -185,35 +185,41 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
     }
   };
 
-  const provisionECR = async (awsIntegrationId: string) => {
+  const provisionECR = async (awsIntegrationId: number) => {
     console.log("Started provision ECR");
     const { currentProject } = context;
     try {
-      await api.provisionECR(
+      await api.provisionInfra(
         "<token>",
         {
+          kind: "ecr",
           aws_integration_id: awsIntegrationId,
-          ecr_name: `${currentProject.name}-registry`,
+          values: {
+            ecr_name: `${currentProject.name}-registry`,
+          },
         },
-        { id: currentProject.id }
+        { project_id: currentProject.id }
       );
     } catch (error) {
       catchError(error);
     }
   };
 
-  const provisionEKS = async (awsIntegrationId: string) => {
+  const provisionEKS = async (awsIntegrationId: number) => {
     const { currentProject } = context;
     try {
-      await api.provisionEKS(
+      await api.provisionInfra(
         "<token>",
         {
+          kind: "eks",
           aws_integration_id: awsIntegrationId,
-          eks_name: clusterName,
-          machine_type: awsMachineType,
-          issuer_email: context.user.email,
+          values: {
+            cluster_name: clusterName,
+            machine_type: awsMachineType,
+            issuer_email: context.user.email,
+          },
         },
-        { id: currentProject.id }
+        { project_id: currentProject.id }
       );
     } catch (error) {
       catchError(error);
@@ -295,9 +301,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
       hosting: "aws",
     });
 
-    window.open(
-      "https://docs.getporter.dev/docs/getting-started-with-porter-on-aws"
-    );
+    window.open("https://docs.porter.run/getting-started/provisioning-on-aws");
   };
 
   return (

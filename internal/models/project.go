@@ -58,6 +58,7 @@ type Project struct {
 
 	PreviewEnvsEnabled  bool
 	RDSDatabasesEnabled bool
+	ManagedInfraEnabled bool
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
@@ -74,5 +75,6 @@ func (p *Project) ToProjectType() *types.Project {
 		Roles:               roles,
 		PreviewEnvsEnabled:  p.PreviewEnvsEnabled,
 		RDSDatabasesEnabled: p.RDSDatabasesEnabled,
+		ManagedInfraEnabled: p.ManagedInfraEnabled,
 	}
 }

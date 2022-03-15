@@ -2,9 +2,11 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -748,6 +750,11 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 			for _, envVar := range envVars {
 				envVarArr = append(envVarArr, envVar)
 			}
+
+			// Sort the slices according to a stable ordering. This is hacky and inefficient.
+			sort.SliceStable(envVarArr, func(i, j int) bool {
+				return fmt.Sprintf("%v", envVarArr[i]) > fmt.Sprintf("%v", envVarArr[j])
+			})
 
 			_container["env"] = envVarArr
 			newContainers = append(newContainers, _container)

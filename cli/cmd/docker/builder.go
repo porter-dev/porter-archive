@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -61,6 +62,8 @@ func (a *Agent) BuildLocal(opts *BuildOpts) error {
 		valCopy := val
 		buildArgs[key] = &valCopy
 	}
+
+	loadBuildSecrets(buildArgs)
 
 	// attach BUILDKIT_INLINE_CACHE=1 by default, to take advantage of caching
 	inlineCacheVal := "1"
@@ -134,4 +137,27 @@ func AddDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCl
 		},
 	})
 	return buildCtx, randomName, nil
+}
+
+// loadBuildSecrets load the build secrets from environment variables prefixed with PORTERSECRET_
+func loadBuildSecrets(buildArgs map[string]*string) {
+	// Scan in build secrets from prefixed environment variables
+	for _, pair := range os.Environ() {
+		if !strings.HasPrefix(pair, "PORTERSECRET_") {
+			continue
+		}
+
+		var key, val string
+		pair = pair[len("PORTERSECRET_"):]
+		equalsIndex := strings.Index(pair, "=")
+		
+		if equalsIndex < 1 {
+			// Warn: poorly formatted secret
+			fmt.Printf("warn: porrly formatted secret %s", pair)
+		}
+
+		key = pair[:equalsIndex]
+		val = pair[equalsIndex + 1:]
+		buildArgs[key] = &val
+	}
 }

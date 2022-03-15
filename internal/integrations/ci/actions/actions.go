@@ -36,6 +36,7 @@ type GithubActions struct {
 
 	PorterToken      string
 	BuildEnv         map[string]string
+	BuildSecrets     map[string]string
 	ProjectID        uint
 	ClusterID        uint
 	ReleaseName      string
@@ -56,6 +57,8 @@ type GithubActions struct {
 var (
 	deleteWebhookAndEnvSecretsConstraint, _ = semver.NewConstraint(" < 0.1.0")
 )
+
+const GithubSecretPrefix = "PORTERSECRET_"
 
 func (g *GithubActions) Setup() ([]byte, error) {
 	client, err := g.getClient()
@@ -80,6 +83,10 @@ func (g *GithubActions) Setup() ([]byte, error) {
 	if !g.DryRun {
 		// create porter token secret
 		if err := createGithubSecret(client, g.getPorterTokenSecretName(), g.PorterToken, g.GitRepoOwner, g.GitRepoName); err != nil {
+			return nil, err
+		}
+
+		if err := g.UpdateRepoBuildSecrets(client); err != nil {
 			return nil, err
 		}
 	}
@@ -191,7 +198,7 @@ func (g *GithubActions) GetGithubActionYAML() ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getSetTagStep(),
-		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.ProjectID, g.ClusterID, g.ReleaseName, g.ReleaseNamespace, g.Version),
+		getUpdateAppStep(g.ServerURL, g.getPorterTokenSecretName(), g.BuildSecrets, g.ProjectID, g.ClusterID, g.ReleaseName, g.ReleaseNamespace, g.Version),
 	}
 
 	branch := g.GitBranch
@@ -307,6 +314,22 @@ func createGithubSecret(
 	return err
 }
 
+func getGithubSecrets(
+	client *github.Client,
+	gitRepoOwner,
+	gitRepoName string,
+) ([]string, error) {
+	// write the secret to the repo
+	response, _, err := client.Actions.ListRepoSecrets(context.TODO(), gitRepoOwner, gitRepoName, &github.ListOptions{})
+
+	secrets := make([]string, 0)
+	for _, secret := range response.Secrets {
+		secrets = append(secrets, secret.Name)
+	}
+
+	return secrets, err
+}
+
 func (g *GithubActions) deleteGithubSecret(
 	client *github.Client,
 	secretName string,
@@ -330,6 +353,34 @@ func (g *GithubActions) CreateEnvSecret() error {
 	}
 
 	return g.createEnvSecret(client)
+}
+
+func (g *GithubActions) UpdateRepoBuildSecrets(client *github.Client) error {
+	// if build secrets were provided, bring them to the desired state, otherwise skip
+	if g.BuildSecrets != nil {
+		secrets, err := getGithubSecrets(client, g.GitRepoOwner, g.GitRepoName)
+		if err != nil {
+			return err
+		}
+		// Clear any old secrets if no longer needed
+		for _, secret := range secrets {
+			// If this secret is not in our desired build secrets, delete it
+			if !strings.HasPrefix(secret, GithubSecretPrefix) {
+				continue
+			}
+			secretWithoutPrefix := secret[len(GithubSecretPrefix):]
+			if _, ok := g.BuildSecrets[secretWithoutPrefix]; !ok {
+				g.deleteGithubSecret(client, secret)
+			}
+		}
+		// Create/update the new secrets
+		for key, value := range g.BuildSecrets {
+			if err := createGithubSecret(client, fmt.Sprintf("%s%s", GithubSecretPrefix, key), value, g.GitRepoOwner, g.GitRepoName); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (g *GithubActions) createEnvSecret(client *github.Client) error {

@@ -23,18 +23,29 @@ func getSetTagStep() GithubActionYAMLStep {
 	}
 }
 
-func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string, appNamespace, actionVersion string) GithubActionYAMLStep {
+func getUpdateAppStep(serverURL, porterTokenSecretName string, buildSecrets map[string]string, projectID uint, clusterID uint, appName string, appNamespace, actionVersion string) GithubActionYAMLStep {
+
+	// Build a comma-separated list of secrets
+	secretsParameter := ""
+	for key := range buildSecrets {
+		if len(secretsParameter) > 0 {
+			secretsParameter += ","
+		}
+		secretsParameter += fmt.Sprintf("%s=\"${{ secrets.%s%s\" }}", key, GithubSecretPrefix, key)
+	}
+
 	return GithubActionYAMLStep{
 		Name: "Update Porter App",
 		Uses: fmt.Sprintf("%s@%s", updateAppActionName, actionVersion),
 		With: map[string]string{
-			"app":       appName,
-			"cluster":   fmt.Sprintf("%d", clusterID),
-			"host":      serverURL,
-			"project":   fmt.Sprintf("%d", projectID),
-			"token":     fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
-			"tag":       "${{ steps.vars.outputs.sha_short }}",
-			"namespace": appNamespace,
+			"app":           appName,
+			"cluster":       fmt.Sprintf("%d", clusterID),
+			"host":          serverURL,
+			"project":       fmt.Sprintf("%d", projectID),
+			"token":         fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
+			"tag":           "${{ steps.vars.outputs.sha_short }}",
+			"namespace":     appNamespace,
+			"build_secrets": secretsParameter,
 		},
 		Timeout: 20,
 	}

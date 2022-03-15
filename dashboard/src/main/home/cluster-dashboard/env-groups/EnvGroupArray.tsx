@@ -12,6 +12,7 @@ export type KeyValueType = {
   hidden: boolean;
   locked: boolean;
   deleted: boolean;
+  build_arg: boolean;
 };
 
 type PropsType = {
@@ -112,6 +113,14 @@ const EnvGroupArray = ({
                     type={entry.hidden ? "password" : "text"}
                     spellCheck={false}
                   />
+
+                  {!disabled && (
+                    <label><input type="checkbox" onChange={(e: any) => {
+                      let _values = values;
+                      _values[i].build_arg = e.target.value;
+                      setValues(_values);
+                    }} />Build Argument</label>
+                  )}
 
                   {secretOption && (
                     <HideButton

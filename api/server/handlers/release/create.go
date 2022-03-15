@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
@@ -28,6 +29,22 @@ import (
 type CreateReleaseHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
+}
+
+type CreateReleaseEnvValues struct {
+	Container struct {
+		Env struct {
+			Normal map[string]string
+			Synced []struct {
+				Name    string
+				Version int
+				Keys    []struct {
+					Name   string
+					Secret bool
+				}
+			}
+		}
+	}
 }
 
 func NewCreateReleaseHandler(
@@ -117,6 +134,31 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	buildSecrets := make(map[string]string)
+
+	// Marshal and unmarshal into a nice struct so we don't need to type assert maps of interfaces
+	raw, _ := json.Marshal(request.CreateReleaseBaseRequest.Values)
+	envVals := CreateReleaseEnvValues{}
+	json.Unmarshal(raw, &envVals)
+
+	// Get all normal secrets
+	for key, val := range envVals.Container.Env.Normal {
+		if strings.HasPrefix(val, "PORTERSECRET_") {
+			// TODO: convert the PORTERSECRET_group_v1 format into the actual value
+			buildSecrets[key] = val
+		}
+	}
+
+	agent, err := c.KubernetesAgentGetter.GetAgent(r, cluster, namespace)
+
+	// Get all synced secrets
+	for _, group := range envVals.Container.Env.Synced {
+		// Load all secrets from the group
+		eg, _ := envgroup.GetEnvGroup(agent, group.Name, namespace, uint(group.Version))
+		// TODO: read the secret values so that we can write them to GitHub
+		_ = eg
+	}
+
 	if request.GithubActionConfig != nil {
 		_, _, err := createGitAction(
 			c.Config(),
@@ -127,6 +169,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			request.Name,
 			namespace,
 			release,
+			buildSecrets,
 		)
 
 		if err != nil {
@@ -202,6 +245,7 @@ func createGitAction(
 	request *types.CreateGitActionConfigRequest,
 	name, namespace string,
 	release *models.Release,
+	buildSecrets map[string]string,
 ) (*types.GitActionConfig, []byte, error) {
 	// if the registry was provisioned through Porter, create a repository if necessary
 	if release != nil && request.RegistryID != 0 {
@@ -268,6 +312,7 @@ func createGitAction(
 		Version:                "v0.1.0",
 		ShouldCreateWorkflow:   request.ShouldCreateWorkflow,
 		DryRun:                 release == nil,
+		BuildSecrets:           buildSecrets,
 	}
 
 	// Save the github err for after creating the git action config. However, we

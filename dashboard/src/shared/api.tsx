@@ -1588,6 +1588,63 @@ const getPreviousLogsForContainer = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
 );
 
+const getIncidents = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
+);
+
+const getIncidentsByReleaseName = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace, release_name: name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/incidents`
+);
+
+const getIncidentById = baseApi<
+  {
+    incident_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace, release_name: name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/incidents`
+);
+
+const getIncidentLogsByLogId = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+    log_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace, release_name: name, log_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/incidents/logs/${log_id}`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1741,4 +1798,8 @@ export default {
   provisionDatabase,
   getDatabases,
   getPreviousLogsForContainer,
+  getIncidents,
+  getIncidentsByReleaseName,
+  getIncidentById,
+  getIncidentLogsByLogId,
 };

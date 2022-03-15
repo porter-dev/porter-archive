@@ -341,6 +341,27 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 
 	mergedValues := utils.CoalesceValues(d.release.Config, overrideValues)
 
+	// if blue-green deployments are enabled, preserve the active tag value and append the new tag to the
+	// imageTags object
+	if bgInter, ok := mergedValues["bluegreen"]; ok {
+		if bgVal, ok := bgInter.(map[string]interface{}); ok {
+			if enabledInter, ok := bgVal["enabled"]; ok {
+				if enabledVal, ok := enabledInter.(bool); ok && enabledVal {
+					// they're enabled -- read the activeTagValue and construct the new bluegreen object
+					if activeTagInter, ok := bgVal["activeImageTag"]; ok {
+						if activeTagVal, ok := activeTagInter.(string); ok {
+							mergedValues["bluegreen"] = map[string]interface{}{
+								"enabled":        true,
+								"activeImageTag": activeTagVal,
+								"imageTags":      []string{activeTagVal, d.tag},
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
 

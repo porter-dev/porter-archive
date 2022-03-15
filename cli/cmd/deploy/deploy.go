@@ -350,10 +350,14 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 					// they're enabled -- read the activeTagValue and construct the new bluegreen object
 					if activeTagInter, ok := bgVal["activeImageTag"]; ok {
 						if activeTagVal, ok := activeTagInter.(string); ok {
-							mergedValues["bluegreen"] = map[string]interface{}{
-								"enabled":        true,
-								"activeImageTag": activeTagVal,
-								"imageTags":      []string{activeTagVal, d.tag},
+							// only overwrite if the active tag value is not the same as the target tag. otherwise
+							// this has been modified already and inserted into overrideValues.
+							if activeTagVal != d.tag {
+								mergedValues["bluegreen"] = map[string]interface{}{
+									"enabled":        true,
+									"activeImageTag": activeTagVal,
+									"imageTags":      []string{activeTagVal, d.tag},
+								}
 							}
 						}
 					}

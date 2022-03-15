@@ -7,6 +7,8 @@ import TitleSection from "components/TitleSection";
 import backArrow from "assets/back_arrow.png";
 import nodePng from "assets/node.png";
 import StatusSection from "components/StatusSection";
+import { Drawer, withStyles } from "@material-ui/core";
+import EventDrawer from "./EventDrawer";
 
 type IncidentPageParams = {
   incident_id: string;
@@ -16,6 +18,8 @@ const IncidentPage = () => {
   const { incident_id } = useParams<IncidentPageParams>();
 
   const [incident, setIncident] = useState<Incident>(null);
+
+  const [selectedEvent, setSelectedEvent] = useState<IncidentEvent>(null);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -59,16 +63,58 @@ const IncidentPage = () => {
       <BodyWrapper>
         {Object.entries(events).map(([date, events_list]) => {
           return (
-            <div>
-              <div>{date}</div>
+            <>
+              <StyledDate>{date}</StyledDate>
 
               {events_list.map((event) => {
-                return <>{event.event_id}</>;
+                return (
+                  <StyledCard
+                    onClick={() => setSelectedEvent(event)}
+                    active={selectedEvent?.event_id === event.event_id}
+                  >
+                    <ContentContainer>
+                      <Icon
+                        status={"normal"}
+                        className="material-icons-outlined"
+                      >
+                        info
+                      </Icon>
+                      <EventInformation>
+                        <EventName>
+                          <Helper>Pod:</Helper>
+                          {event.pod_name}
+                        </EventName>
+                        <EventReason>{event.message}</EventReason>
+                      </EventInformation>
+                    </ContentContainer>
+                    <ActionContainer>
+                      <TimestampContainer>
+                        <TimestampIcon className="material-icons-outlined">
+                          access_time
+                        </TimestampIcon>
+                        <span>
+                          {Intl.DateTimeFormat([], {
+                            // @ts-ignore
+                            dateStyle: "full",
+                            timeStyle: "long",
+                          }).format(new Date(event.timestamp))}
+                        </span>
+                      </TimestampContainer>
+                    </ActionContainer>
+                  </StyledCard>
+                );
               })}
-            </div>
+            </>
           );
         })}
       </BodyWrapper>
+      <StyledDrawer
+        anchor="right"
+        open={!!selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+      >
+        <EventDrawer event={selectedEvent} />
+      </StyledDrawer>
     </StyledExpandedNodeView>
   );
 };
@@ -184,7 +230,7 @@ const incident_mock = {
   ],
 };
 
-type IncidentContainerEvent = {
+export type IncidentContainerEvent = {
   container_name: string;
   reason: string;
   message: string;
@@ -192,7 +238,7 @@ type IncidentContainerEvent = {
   log_id: string;
 };
 
-type IncidentEvent = {
+export type IncidentEvent = {
   event_id: string;
   pod_name: string;
   cluster: string;
@@ -207,7 +253,7 @@ type IncidentEvent = {
   container_events: IncidentContainerEvent[];
 };
 
-type Incident = {
+export type Incident = {
   incident_id: string;
   release_name: string; // eg: "sample-web"
   latest_state: string; // "ONGOING" or "RESOLVED"
@@ -273,18 +319,6 @@ const BackButtonImg = styled.img`
   opacity: 0.75;
 `;
 
-const StatusWrapper = styled.div`
-  margin-left: 3px;
-  margin-bottom: 20px;
-`;
-
-const InstanceType = styled.div`
-  font-weight: 400;
-  color: #ffffff44;
-  margin-left: 12px;
-  font-size: 16px;
-`;
-
 const BodyWrapper = styled.div`
   width: 100%;
   height: 100%;
@@ -316,3 +350,115 @@ const StyledExpandedNodeView = styled.div`
     }
   }
 `;
+
+const StyledDate = styled.div`
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  :first-child {
+    margin-top: 0px;
+  }
+`;
+
+const StyledCard = styled.div<{ active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid ${({ active }) => (active ? "#819bfd" : "#ffffff44")};
+  background: #ffffff08;
+  margin-bottom: 5px;
+  border-radius: 10px;
+  padding: 14px;
+  overflow: hidden;
+  height: 80px;
+  font-size: 13px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+    border: 1px solid ${({ active }) => (active ? "#819bfd" : "#ffffff66")};
+  }
+  animation: fadeIn 0.5s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  :not(:last-child) {
+    margin-bottom: 15px;
+  }
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+`;
+
+const Icon = styled.span<{ status: "critical" | "normal" }>`
+  font-size: 20px;
+  margin-left: 10px;
+  margin-right: 20px;
+  color: ${({ status }) => (status === "critical" ? "#ff385d" : "#aaaabb")};
+`;
+
+const EventInformation = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+`;
+
+const EventName = styled.div`
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  color: #ffffff;
+`;
+
+const Helper = styled.span`
+  text-transform: capitalize;
+  color: #ffffff44;
+  margin-right: 5px;
+`;
+
+const EventReason = styled.div`
+  font-family: "Work Sans", sans-serif;
+  color: #aaaabb;
+  margin-top: 5px;
+`;
+
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  height: 100%;
+`;
+
+const TimestampContainer = styled.div`
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+  justify-self: flex-end;
+  color: #ffffff55;
+  margin-right: 10px;
+  font-size: 13px;
+  min-width: 130px;
+  justify-content: space-between;
+`;
+
+const TimestampIcon = styled.span`
+  margin-right: 7px;
+  font-size: 18px;
+`;
+
+const StyledDrawer = withStyles({
+  paperAnchorRight: {
+    background: "#202227",
+    minWidth: "700px",
+  },
+})(Drawer);

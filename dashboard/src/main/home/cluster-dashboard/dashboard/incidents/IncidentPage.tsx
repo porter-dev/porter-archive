@@ -1,14 +1,14 @@
 import Loading from "components/Loading";
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useHistory, useParams } from "react-router";
 import styled from "styled-components";
 import TitleSection from "components/TitleSection";
 
 import backArrow from "assets/back_arrow.png";
 import nodePng from "assets/node.png";
-import StatusSection from "components/StatusSection";
 import { Drawer, withStyles } from "@material-ui/core";
 import EventDrawer from "./EventDrawer";
+import { useRouting } from "shared/routing";
 
 type IncidentPageParams = {
   incident_id: string;
@@ -20,6 +20,10 @@ const IncidentPage = () => {
   const [incident, setIncident] = useState<Incident>(null);
 
   const [selectedEvent, setSelectedEvent] = useState<IncidentEvent>(null);
+
+  const { getQueryParam, pushFiltered } = useRouting();
+
+  const history = useHistory();
 
   useEffect(() => {
     let isSubscribed = true;
@@ -45,7 +49,15 @@ const IncidentPage = () => {
     return <Loading />;
   }
 
-  const handleClose = () => {};
+  const handleClose = () => {
+    const redirect_url = getQueryParam("redirect_url");
+    if (!redirect_url) {
+      pushFiltered("/cluster-dashboard", []);
+      return;
+    }
+
+    pushFiltered(redirect_url, []);
+  };
 
   return (
     <StyledExpandedNodeView>

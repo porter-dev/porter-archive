@@ -66,10 +66,10 @@ const IncidentPage = () => {
           <BackButtonImg src={backArrow} />
         </BackButton>
         <TitleSection icon={nodePng}>{incident.incident_id}</TitleSection>
+        <IncidentMessage>{incident.latest_message}</IncidentMessage>
         <IncidentStatus status={incident.latest_state}>
           Status: <i>{incident.latest_state}</i>
         </IncidentStatus>
-        <IncidentMessage>{incident.latest_message}</IncidentMessage>
       </HeaderWrapper>
       <LineBreak />
       <BodyWrapper>

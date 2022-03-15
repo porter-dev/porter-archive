@@ -1,3 +1,4 @@
+import Loading from "components/Loading";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -36,21 +37,23 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
         }));
     });
 
-    Promise.all(promises).then((data) => {
-      if (!isSubscribed) {
-        return;
-      }
+    Promise.all(promises)
+      .then((data) => {
+        if (!isSubscribed) {
+          return;
+        }
 
-      const tmpContainerLogs = data.reduce<{ [key: string]: string }>(
-        (acc, c) => {
-          acc[c.container_name] = c.contents;
-          return acc;
-        },
-        {}
-      );
+        const tmpContainerLogs = data.reduce<{ [key: string]: string }>(
+          (acc, c) => {
+            acc[c.container_name] = c.contents;
+            return acc;
+          },
+          {}
+        );
 
-      setContainerLogs(tmpContainerLogs);
-    });
+        setContainerLogs(tmpContainerLogs);
+      })
+      .catch(() => console.log("nope"));
 
     return () => {
       isSubscribed = false;
@@ -59,6 +62,10 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
 
   if (!event) {
     return null;
+  }
+
+  if (!containerLogs) {
+    return <Loading />;
   }
 
   return (

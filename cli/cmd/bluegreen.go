@@ -124,8 +124,6 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 				// determine if the deployment has an appropriate number of ready replicas
 				minUnavailable := *(depl.Spec.Replicas) - getMaxUnavailable(depl)
 
-				fmt.Println("min unavabile is", minUnavailable, "curr is", depl.Status.ReadyReplicas)
-
 				// if the number of ready replicas is greater than the number of min unavailable,
 				// the controller is ready for a traffic switch
 				if minUnavailable <= depl.Status.ReadyReplicas {

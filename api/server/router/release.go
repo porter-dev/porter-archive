@@ -782,34 +782,5 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/incidents -> release.NewGetIncidentsByReleaseNameHandler
-	getIncidentsByReleaseNameEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: "/releases/{name}/incidents",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-				types.NamespaceScope,
-			},
-		},
-	)
-
-	getIncidentsByReleaseNameHandler := release.NewGetIncidentsByReleaseNameHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &Route{
-		Endpoint: getIncidentsByReleaseNameEndpoint,
-		Handler:  getIncidentsByReleaseNameHandler,
-		Router:   r,
-	})
-
 	return routes, newPath
 }

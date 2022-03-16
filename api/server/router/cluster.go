@@ -936,6 +936,7 @@ func getClusterRoutes(
 
 	getIncidentsHandler := cluster.NewGetIncidentsHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 

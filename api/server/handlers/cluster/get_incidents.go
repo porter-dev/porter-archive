@@ -1,12 +1,17 @@
 package cluster
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
+	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 type GetIncidentsHandler struct {
@@ -16,14 +21,77 @@ type GetIncidentsHandler struct {
 
 func NewGetIncidentsHandler(
 	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *GetIncidentsHandler {
 	return &GetIncidentsHandler{
-		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
+	request := &types.GetIncidentsRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
+	incidentID := request.IncidentID
+	releaseName := request.ReleaseName
+	namespace := request.Namespace
+
+	fmt.Printf("incidentID: %s\nreleaseName: %s\nnamespace: %s\n", incidentID, releaseName, namespace)
+
+	agent, err := c.GetAgent(r, cluster, "")
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// get agent service
+	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if incidentID != "" {
+		events, err := porter_agent.GetIncidentEventsByID(agent.Clientset, agentSvc, incidentID)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		c.WriteResult(w, r, events)
+		return
+	} else if releaseName != "" {
+		if namespace == "" {
+			namespace = "default"
+		}
+
+		incidents, err := porter_agent.GetIncidentsByReleaseNamespace(agent.Clientset, agentSvc, releaseName, namespace)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		c.WriteResult(w, r, incidents)
+		return
+	}
+
+	incidents, err := porter_agent.GetAllIncidents(agent.Clientset, agentSvc)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	c.WriteResult(w, r, incidents)
 }

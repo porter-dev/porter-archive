@@ -29,7 +29,7 @@ const IncidentsTable = () => {
     setHasError(false);
 
     api
-      .getIncidents<IncidentsWithoutEvents[]>(
+      .getIncidents<{ incidents: IncidentsWithoutEvents[] }>(
         "<token>",
         {},
         {
@@ -42,7 +42,7 @@ const IncidentsTable = () => {
           return;
         }
 
-        setIncidents(res.data);
+        setIncidents(res.data?.incidents || []);
       })
       .catch((err) => {
         setHasError(true);

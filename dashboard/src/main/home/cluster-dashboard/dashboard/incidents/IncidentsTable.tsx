@@ -7,7 +7,12 @@ import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import { Incident } from "./IncidentPage";
 
-export type IncidentsWithoutEvents = Omit<Incident, "events">;
+export type IncidentsWithoutEvents = Omit<
+  Incident,
+  "events" | "incident_id"
+> & {
+  id: string;
+};
 
 const IncidentsTable = () => {
   const { currentCluster, currentProject, setCurrentError } = useContext(

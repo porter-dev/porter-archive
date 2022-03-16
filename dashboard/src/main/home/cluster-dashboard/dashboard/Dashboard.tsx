@@ -11,11 +11,10 @@ import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
-import EventsTab from "./events/EventsTab";
 import EnvironmentList from "./preview-environments/EnvironmentList";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
-import IncidentsTable from "./incidents/IncidentsTable";
+import IncidentsTab from "./incidents/IncidentsTab";
 
 type TabEnum =
   | "preview_environments"
@@ -55,7 +54,7 @@ export const Dashboard: React.FunctionComponent = () => {
         }
         return <NodeList />;
       case "incidents":
-        return <IncidentsTable />;
+        return <IncidentsTab />;
       case "settings":
         return <ClusterSettings />;
       case "metrics":

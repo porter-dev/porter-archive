@@ -1,5 +1,5 @@
 import Loading from "components/Loading";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import styled from "styled-components";
 import TitleSection from "components/TitleSection";
@@ -9,6 +9,8 @@ import nodePng from "assets/node.png";
 import { Drawer, withStyles } from "@material-ui/core";
 import EventDrawer from "./EventDrawer";
 import { useRouting } from "shared/routing";
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 type IncidentPageParams = {
   incident_id: string;
@@ -16,6 +18,8 @@ type IncidentPageParams = {
 
 const IncidentPage = () => {
   const { incident_id } = useParams<IncidentPageParams>();
+
+  const { currentProject, currentCluster } = useContext(Context);
 
   const [incident, setIncident] = useState<Incident>(null);
 
@@ -30,11 +34,20 @@ const IncidentPage = () => {
 
     setIncident(null);
 
-    mockApi().then((res) => {
-      if (isSubscribed) {
-        setIncident(res.data);
-      }
-    });
+    api
+      .getIncidentById<Incident>(
+        "<token>",
+        { incident_id },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
+      .then((res) => {
+        if (isSubscribed) {
+          setIncident(res.data);
+        }
+      });
 
     return () => {
       isSubscribed = false;

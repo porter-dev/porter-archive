@@ -27,8 +27,6 @@ const IncidentPage = () => {
 
   const { getQueryParam, pushFiltered } = useRouting();
 
-  const history = useHistory();
-
   useEffect(() => {
     let isSubscribed = true;
 
@@ -172,89 +170,6 @@ const groupEventsByDate = (
   );
 };
 
-const mockApi = () =>
-  new Promise<{ data: Incident }>((resolve) => {
-    setTimeout(() => {
-      resolve({ data: incident_mock });
-    }, 1000);
-  });
-
-const incident_mock = {
-  incident_id: "incident:sample-web:default", // eg: "incident:sample-web:default",
-  release_name: "sample-web", // eg: "sample-web"
-  latest_state: "ONGOING", // "ONGOING" or "RESOLVED"
-  latest_reason: "Out of memory", // eg: "Out of memory",
-  latest_message: "Application crash due to out of memory issue", // eg: "Application crash due to out of memory issue"
-  events: [
-    {
-      event_id: "incident:sample-web:default:1647267140", // eg: "incident:sample-web:default:1647267140"
-      pod_name: "sample-web-9x8dsa", // eg: "sample-web-9x8dsa"
-      cluster: "crowdcow-production", // eg: "crowdcow-production"
-      namespace: "production", // eg: "production"
-      release_name: "sample-web", // eg: "sample-web" (release name)
-      release_type: "Deployment", // "Deployment" or "Job"
-      timestamp: 1549312452, // UNIX timestamp of event occurrence
-      pod_phase: "Terminated", // eg: "Terminated"
-      pod_status: "CrashLoopBackOff", // eg: "CrashLoopBackOff"
-      reason: "Out of memory", // eg: "Out of memory"
-      message: "Application crash due to out of memory issue", // eg: "Application crash due to out of memory issue",
-      container_events: [
-        {
-          container_name: "web",
-          reason: "Something",
-          message: "Something",
-          exit_code: 3,
-          log_id: "Something", // eg: "log:<UUID>"
-        },
-      ],
-    },
-    {
-      event_id: "Something", // eg: "incident:sample-web:default:1647267140"
-      pod_name: "Something", // eg: "sample-web-9x8dsa"
-      cluster: "Something", // eg: "crowdcow-production"
-      namespace: "Something", // eg: "production"
-      release_name: "Something", // eg: "sample-web" (release name)
-      release_type: "Something", // "Deployment" or "Job"
-      timestamp: 1549312452, // UNIX timestamp of event occurrence
-      pod_phase: "Something", // eg: "Terminated"
-      pod_status: "Something", // eg: "CrashLoopBackOff"
-      reason: "Something", // eg: "Out of memory"
-      message: "Something", // eg: "Application crash due to out of memory issue",
-      container_events: [
-        {
-          container_name: "Something",
-          reason: "Something",
-          message: "Something",
-          exit_code: 3,
-          log_id: "Something", // eg: "log:<UUID>"
-        },
-      ],
-    },
-    {
-      event_id: "Something", // eg: "incident:sample-web:default:1647267140"
-      pod_name: "Something", // eg: "sample-web-9x8dsa"
-      cluster: "Something", // eg: "crowdcow-production"
-      namespace: "Something", // eg: "production"
-      release_name: "Something", // eg: "sample-web" (release name)
-      release_type: "Something", // "Deployment" or "Job"
-      timestamp: 1647358791310, // UNIX timestamp of event occurrence
-      pod_phase: "Something", // eg: "Terminated"
-      pod_status: "Something", // eg: "CrashLoopBackOff"
-      reason: "Something", // eg: "Out of memory"
-      message: "Something", // eg: "Application crash due to out of memory issue",
-      container_events: [
-        {
-          container_name: "Something",
-          reason: "Something",
-          message: "Something",
-          exit_code: 3,
-          log_id: "Something", // eg: "log:<UUID>"
-        },
-      ],
-    },
-  ],
-};
-
 export type IncidentContainerEvent = {
   container_name: string;
   reason: string;
@@ -275,7 +190,9 @@ export type IncidentEvent = {
   pod_status: string;
   reason: string;
   message: string;
-  container_events: IncidentContainerEvent[];
+  container_events: {
+    [key: string]: IncidentContainerEvent;
+  };
 };
 
 export type Incident = {

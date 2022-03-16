@@ -1,9 +1,10 @@
 import Loading from "components/Loading";
-import React, { useContext, useEffect, useState } from "react";
+import { isEmpty, isObjectLike } from "lodash";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
-import { IncidentEvent } from "./IncidentPage";
+import { IncidentContainerEvent, IncidentEvent } from "./IncidentPage";
 
 const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -12,13 +13,26 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
     null
   );
 
+  const containers: IncidentContainerEvent[] = useMemo(() => {
+    if (isEmpty(event?.container_events)) {
+      return [];
+    }
+
+    return Object.values(event?.container_events || {});
+  }, [event]);
+
   useEffect(() => {
     if (!event) {
       return () => {};
     }
 
     let isSubscribed = true;
-    const promises = event.container_events.map((container) => {
+
+    const containersWithLogs = containers.filter(
+      (container) => !container.log_id
+    );
+
+    const promises = containersWithLogs.map((container) => {
       return api
         .getIncidentLogsByLogId<{ contents: string }>(
           "<token>",
@@ -58,7 +72,7 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
     return () => {
       isSubscribed = false;
     };
-  }, [event]);
+  }, [containers]);
 
   if (!event) {
     return null;
@@ -77,14 +91,18 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
         <span>Pod Phase: {event?.pod_phase}</span>
         <span>Pod Status: {event?.pod_status}</span>
       </div>
-      {event.container_events.map((container) => {
+      {containers.map((container) => {
+        const logs = containerLogs[container.container_name];
+
         return (
           <>
             <h3>{container.container_name}</h3>
             <span>
               {container.message} - Exit Code: {container.exit_code}
             </span>
-            <div>{containerLogs[container.container_name]}</div>
+            <div>
+              {logs ? <>{logs}</> : <>No logs available for this container.</>}
+            </div>
           </>
         );
       })}

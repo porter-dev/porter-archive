@@ -15,6 +15,7 @@ import EventsTab from "./events/EventsTab";
 import EnvironmentList from "./preview-environments/EnvironmentList";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
+import IncidentsTable from "./incidents/IncidentsTable";
 
 type TabEnum =
   | "preview_environments"
@@ -22,7 +23,7 @@ type TabEnum =
   | "settings"
   | "namespaces"
   | "metrics"
-  | "events";
+  | "incidents";
 
 const tabOptions: {
   label: string;
@@ -30,7 +31,7 @@ const tabOptions: {
 }[] = [
   { label: "Preview Environments", value: "preview_environments" },
   { label: "Nodes", value: "nodes" },
-  { label: "Events", value: "events" },
+  { label: "Incidents", value: "incidents" },
   { label: "Metrics", value: "metrics" },
   { label: "Namespaces", value: "namespaces" },
   { label: "Settings", value: "settings" },
@@ -53,8 +54,8 @@ export const Dashboard: React.FunctionComponent = () => {
           return <EnvironmentList />;
         }
         return <NodeList />;
-      case "events":
-        return <EventsTab />;
+      case "incidents":
+        return <IncidentsTable />;
       case "settings":
         return <ClusterSettings />;
       case "metrics":

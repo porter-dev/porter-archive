@@ -1643,6 +1643,15 @@ const getIncidentLogsByLogId = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/incidents/logs/${log_id}`
 );
 
+const upgradePorterAgent = baseApi<
+  {},
+  { project_id: number; cluster_id: number }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/agent/upgrade`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1800,4 +1809,5 @@ export default {
   getIncidentsByReleaseName,
   getIncidentById,
   getIncidentLogsByLogId,
+  upgradePorterAgent,
 };

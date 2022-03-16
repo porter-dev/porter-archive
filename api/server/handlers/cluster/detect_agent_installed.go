@@ -6,6 +6,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -14,15 +15,16 @@ import (
 )
 
 type DetectAgentInstalledHandler struct {
-	handlers.PorterHandler
+	handlers.PorterHandlerWriter
 	authz.KubernetesAgentGetter
 }
 
 func NewDetectAgentInstalledHandler(
 	config *config.Config,
+	writer shared.ResultWriter,
 ) *DetectAgentInstalledHandler {
 	return &DetectAgentInstalledHandler{
-		PorterHandler:         handlers.NewDefaultPorterHandler(config, nil, nil),
+		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
 		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
 	}
 }
@@ -37,7 +39,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	_, err = agent.GetPorterAgent()
+	depl, err := agent.GetPorterAgent()
 
 	if targetErr := kubernetes.IsNotFoundError; err != nil && errors.Is(err, targetErr) {
 		http.NotFound(w, r)
@@ -47,5 +49,16 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// detect the version of the agent which is installed
+	res := &types.GetAgentResponse{}
+
+	versionAnn, ok := depl.ObjectMeta.Annotations["porter.run/agent-major-version"]
+
+	if !ok {
+		res.Version = "v1"
+	} else {
+		res.Version = versionAnn
+	}
+
+	c.WriteResult(w, r, res)
 }

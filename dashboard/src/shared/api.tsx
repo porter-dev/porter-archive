@@ -1647,7 +1647,7 @@ const upgradePorterAgent = baseApi<
   {},
   { project_id: number; cluster_id: number }
 >(
-  "GET",
+  "POST",
   ({ project_id, cluster_id }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/agent/upgrade`
 );

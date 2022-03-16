@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/spf13/cobra"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,9 +73,8 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 		return fmt.Errorf("target application is not a web chart")
 	}
 
-	// TODO: check that bluegreen is enabled
+	currActiveImage := deploy.GetCurrActiveBlueGreenImage(webRelease.Config)
 
-	// get the replicasets attached to the deployment
 	sharedConf := &PorterRunSharedConfig{
 		Client: client,
 	}
@@ -90,6 +90,8 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 	prevRefresh := time.Now()
 
 	success := false
+
+	color.New(color.FgGreen).Printf("Waiting for the new version of the application %s to be ready\n", app)
 
 	for time.Now().Before(timeWait) {
 		// refresh the client every 10 minutes
@@ -136,13 +138,23 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 						return err
 					}
 
-					err = deployAgent.UpdateImageAndValues(map[string]interface{}{
-						"bluegreen": map[string]interface{}{
-							"enabled":        true,
-							"activeImageTag": tag,
-							"imageTags":      []string{tag},
-						},
-					})
+					if currActiveImage == "" {
+						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
+							"bluegreen": map[string]interface{}{
+								"enabled":        true,
+								"activeImageTag": tag,
+								"imageTags":      []string{tag},
+							},
+						})
+					} else {
+						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
+							"bluegreen": map[string]interface{}{
+								"enabled":        true,
+								"activeImageTag": tag,
+								"imageTags":      []string{currActiveImage, tag},
+							},
+						})
+					}
 
 					if err != nil {
 						return err
@@ -168,6 +180,23 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 	if !success {
 		return fmt.Errorf("new application was not ready within 30 minutes")
 	}
+
+	// wait 30 seconds before removing old deployment
+	time.Sleep(30 * time.Second)
+
+	deployAgent, err := updateGetAgent(client)
+
+	if err != nil {
+		return err
+	}
+
+	err = deployAgent.UpdateImageAndValues(map[string]interface{}{
+		"bluegreen": map[string]interface{}{
+			"enabled":        true,
+			"activeImageTag": tag,
+			"imageTags":      []string{tag},
+		},
+	})
 
 	return nil
 }

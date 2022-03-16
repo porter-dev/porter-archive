@@ -247,3 +247,9 @@ type ListClusterResponse []*Cluster
 type CreateClusterCandidateResponse []*ClusterCandidate
 
 type ListClusterCandidateResponse []*ClusterCandidate
+
+type GetIncidentsRequest struct {
+	IncidentID  string `schema:"incident_id"`
+	ReleaseName string `schema:"release_name"`
+	Namespace   string `schema:"namespace"`
+}

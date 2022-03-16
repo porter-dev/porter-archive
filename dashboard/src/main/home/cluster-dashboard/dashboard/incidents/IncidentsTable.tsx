@@ -4,18 +4,24 @@ import { Column } from "react-table";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
+import styled from "styled-components";
 import { Incident } from "./IncidentPage";
 
 export type IncidentsWithoutEvents = Omit<Incident, "events">;
 
 const IncidentsTable = () => {
-  const { currentCluster, currentProject } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
   const { pushFiltered } = useRouting();
 
   const [incidents, setIncidents] = useState<IncidentsWithoutEvents[]>(null);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     let isSubscribed = true;
+    setIncidents(null);
+    setHasError(false);
 
     api
       .getIncidents<IncidentsWithoutEvents[]>(
@@ -32,6 +38,10 @@ const IncidentsTable = () => {
         }
 
         setIncidents(res.data);
+      })
+      .catch((err) => {
+        setHasError(true);
+        setCurrentError(err);
       });
 
     return () => {
@@ -64,15 +74,41 @@ const IncidentsTable = () => {
   }, [incidents]);
 
   return (
-    <Table
-      columns={columns}
-      data={data}
-      isLoading={incidents === null}
-      onRowClick={(row: any) => {
-        pushFiltered(`/cluster-dashboard/incidents/${row?.original?.id}`, []);
-      }}
-    />
+    <TableWrapper>
+      <StyledCard>
+        <Table
+          columns={columns}
+          data={data}
+          isLoading={incidents === null}
+          onRowClick={(row: any) => {
+            pushFiltered(
+              `/cluster-dashboard/incidents/${row?.original?.id}`,
+              []
+            );
+          }}
+          hasError={hasError}
+        />
+      </StyledCard>
+    </TableWrapper>
   );
 };
 
 export default IncidentsTable;
+
+const TableWrapper = styled.div`
+  margin-top: 35px;
+`;
+
+const StyledCard = styled.div`
+  background: #26282f;
+  padding: 14px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px 0px #00000055;
+  position: relative;
+  border: 2px solid #9eb4ff00;
+  width: 100%;
+  height: 100%;
+  :not(:last-child) {
+    margin-bottom: 25px;
+  }
+`;

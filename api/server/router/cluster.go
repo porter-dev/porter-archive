@@ -585,7 +585,7 @@ func getClusterRoutes(
 		},
 	)
 
-	detectAgentInstalledHandler := cluster.NewDetectAgentInstalledHandler(config)
+	detectAgentInstalledHandler := cluster.NewDetectAgentInstalledHandler(config, factory.GetResultWriter())
 
 	routes = append(routes, &Route{
 		Endpoint: detectAgentInstalledEndpoint,
@@ -619,6 +619,35 @@ func getClusterRoutes(
 	routes = append(routes, &Route{
 		Endpoint: installAgentEndpoint,
 		Handler:  installAgentHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/agent/upgrade -> cluster.NewInstallAgentHandler
+	upgradeAgentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/agent/upgrade",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	upgradeAgentHandler := cluster.NewUpgradeAgentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: upgradeAgentEndpoint,
+		Handler:  upgradeAgentHandler,
 		Router:   r,
 	})
 
@@ -914,6 +943,64 @@ func getClusterRoutes(
 	routes = append(routes, &Route{
 		Endpoint: getPodsEndpoint,
 		Handler:  getPodsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents -> cluster.NewGetIncidentsHandler
+	getIncidentsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/incidents",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getIncidentsHandler := cluster.NewGetIncidentsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getIncidentsEndpoint,
+		Handler:  getIncidentsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/logs -> cluster.NewGetIncidentsHandler
+	getIncidentEventLogsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/incidents/logs",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getIncidentEventLogsHandler := cluster.NewGetIncidentEventLogsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getIncidentEventLogsEndpoint,
+		Handler:  getIncidentEventLogsHandler,
 		Router:   r,
 	})
 

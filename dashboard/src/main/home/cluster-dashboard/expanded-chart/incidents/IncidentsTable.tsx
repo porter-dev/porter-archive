@@ -5,16 +5,15 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
-import { Incident } from "./IncidentPage";
+import { IncidentsWithoutEvents } from "../../dashboard/incidents/IncidentsTable";
 
-export type IncidentsWithoutEvents = Omit<
-  Incident,
-  "events" | "incident_id"
-> & {
-  id: string;
-};
-
-const IncidentsTable = () => {
+const IncidentsTable = ({
+  releaseName,
+  namespace,
+}: {
+  releaseName: string;
+  namespace: string;
+}) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
@@ -29,12 +28,14 @@ const IncidentsTable = () => {
     setHasError(false);
 
     api
-      .getIncidents<IncidentsWithoutEvents[]>(
+      .getIncidentsByReleaseName<IncidentsWithoutEvents[]>(
         "<token>",
         {},
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
+          namespace: namespace,
+          release_name: releaseName,
         }
       )
       .then((res) => {
@@ -57,8 +58,8 @@ const IncidentsTable = () => {
   const columns = useMemo(() => {
     return [
       {
-        Header: "Release name",
-        accessor: "release_name",
+        Header: "Incident ID",
+        accessor: "id",
       },
       {
         Header: "Latest state",

@@ -39,6 +39,8 @@ export type TableProps = {
   disableGlobalFilter?: boolean;
   disableHover?: boolean;
   enablePagination?: boolean;
+  hasError?: boolean;
+  errorMessage?: string;
 };
 
 const MIN_PAGE_SIZE = 1;
@@ -51,6 +53,8 @@ const Table: React.FC<TableProps> = ({
   disableGlobalFilter = false,
   disableHover,
   enablePagination,
+  hasError,
+  errorMessage = "An unexpected error occurred, please try again.",
 }) => {
   const {
     getTableProps,
@@ -87,10 +91,20 @@ const Table: React.FC<TableProps> = ({
   }, [data, enablePagination]);
 
   const renderRows = () => {
+    if (hasError) {
+      return (
+        <StyledTr disableHover={true} selected={false}>
+          <StyledTd colSpan={visibleColumns.length} align="center">
+            {errorMessage}
+          </StyledTd>
+        </StyledTr>
+      );
+    }
+
     if (isLoading) {
       return (
         <StyledTr disableHover={true} selected={false}>
-          <StyledTd colSpan={visibleColumns.length}>
+          <StyledTd colSpan={visibleColumns.length} height="150px">
             <Loading />
           </StyledTd>
         </StyledTr>
@@ -100,7 +114,9 @@ const Table: React.FC<TableProps> = ({
     if (!page.length) {
       return (
         <StyledTr disableHover={true} selected={false}>
-          <StyledTd colSpan={visibleColumns.length}>No data available</StyledTd>
+          <StyledTd colSpan={visibleColumns.length} align="center">
+            No data available
+          </StyledTd>
         </StyledTr>
       );
     }
@@ -281,6 +297,12 @@ export const StyledTd = styled.td`
     padding-right: 10px;
   }
   user-select: text;
+
+  ${(props: { align?: "center" | "left" }) => {
+    if (props.align) {
+      return `text-align:${props.align};`;
+    }
+  }}
 `;
 
 export const StyledTHead = styled.thead`

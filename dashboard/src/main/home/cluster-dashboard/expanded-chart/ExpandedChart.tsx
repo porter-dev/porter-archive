@@ -33,9 +33,8 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
-import EventsTab from "./events/EventsTab";
 import { onlyInLeft } from "shared/array_utils";
-import BuildpackEditPage from "./BuildpackEditPage";
+import IncidentsTable from "./incidents/IncidentsTable";
 
 type Props = {
   namespace: string;
@@ -432,8 +431,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
-      case "events":
-        return <EventsTab controllers={controllers} />;
+      case "incidents":
+        return (
+          <IncidentsTable
+            releaseName={chart?.name}
+            namespace={chart?.namespace}
+          />
+        );
       case "status":
         if (isLoadingChartData) {
           return (
@@ -535,7 +539,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
     leftTabOptions.push({ label: "Status", value: "status" });
-    leftTabOptions.push({ label: "Events", value: "events" });
+    leftTabOptions.push({ label: "Incidents", value: "incidents" });
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });

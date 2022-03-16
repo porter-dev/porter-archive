@@ -36,6 +36,14 @@ type IncidentsResponse struct {
 }
 
 type EventsResponse struct {
-	IncidentID string      `json:"incident_id" form:"required"`
-	Events     []*PodEvent `json:"events" form:"required"`
+	IncidentID    string      `json:"incident_id" form:"required"`
+	ReleaseName   string      `json:"release_name"`
+	LatestState   string      `json:"latest_state"`
+	LatestReason  string      `json:"latest_reason"`
+	LatestMessage string      `json:"latest_message"`
+	Events        []*PodEvent `json:"events" form:"required"`
+}
+
+type LogsResponse struct {
+	Contents string `json:"contents" form:"required"`
 }

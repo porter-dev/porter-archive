@@ -162,21 +162,21 @@ func GlobalStreamListener(
 
 			switch fmt.Sprintf("%v", statusVal) {
 			case "created":
-				err := handleOperationCreated(config, client, infra, operation, workspaceID)
+			case "error":
+			case "destroyed":
+				err := cleanupOperation(config, client, infra, operation, workspaceID)
 
 				if err != nil {
 					config.Alerter.SendAlert(context.Background(), err, map[string]interface{}{
 						"workspace_id": workspaceID,
 					})
 				}
-			case "error":
-			case "destroyed":
 			}
 		}
 	}
 }
 
-func handleOperationCreated(config *config.Config, client *redis.Client, infra *models.Infra, operation *models.Operation, workspaceID string) error {
+func cleanupOperation(config *config.Config, client *redis.Client, infra *models.Infra, operation *models.Operation, workspaceID string) error {
 	err := pushNewStateToStorage(config, client, infra, operation, workspaceID)
 
 	if err != nil {

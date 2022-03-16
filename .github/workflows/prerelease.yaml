@@ -179,8 +179,8 @@ jobs:
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       - name: Install gon via HomeBrew for code signing and app notarization
         run: |
-          brew tap mitchellh/gon
-          brew install mitchellh/gon/gon
+          brew tap porter-dev/gon
+          brew install porter-dev/gon/gon
       - name: Create a porter.gon.json file
         run: |
           echo "

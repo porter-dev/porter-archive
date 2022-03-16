@@ -80,5 +80,53 @@ func GetIncidentsByReleaseNamespace(
 	service *v1.Service,
 	releaseName, namespace string,
 ) (*IncidentsResponse, error) {
-	return nil, nil
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		fmt.Sprintf("/incidents/namespaces/%s/releases/%s", namespace, releaseName),
+		nil,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	incidentsResp := &IncidentsResponse{}
+
+	err = json.Unmarshal(rawQuery, incidentsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return incidentsResp, nil
+}
+
+func GetLogs(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	logID string,
+) (*LogsResponse, error) {
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		fmt.Sprintf("/incidents/logs/%s", logID),
+		nil,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	logsResp := &LogsResponse{}
+
+	err = json.Unmarshal(rawQuery, logsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return logsResp, nil
 }

@@ -253,3 +253,7 @@ type GetIncidentsRequest struct {
 	ReleaseName string `schema:"release_name"`
 	Namespace   string `schema:"namespace"`
 }
+
+type GetIncidentEventLogsRequest struct {
+	LogID string `schema:"log_id"`
+}

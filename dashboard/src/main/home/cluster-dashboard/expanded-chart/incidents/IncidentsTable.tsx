@@ -1,5 +1,6 @@
 import Table from "components/Table";
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router";
 import { Column } from "react-table";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -18,6 +19,7 @@ const IncidentsTable = ({
     Context
   );
   const { pushFiltered } = useRouting();
+  const location = useLocation();
 
   const [incidents, setIncidents] = useState<IncidentsWithoutEvents[]>(null);
   const [hasError, setHasError] = useState(false);
@@ -89,8 +91,11 @@ const IncidentsTable = ({
           isLoading={incidents === null}
           onRowClick={(row: any) => {
             pushFiltered(
-              `/cluster-dashboard/incidents/${row?.original?.id}`,
-              []
+              `/cluster-dashboard/incidents/${row?.original?.id}/`,
+              [],
+              {
+                redirect_url: location.pathname,
+              }
             );
           }}
           hasError={hasError}

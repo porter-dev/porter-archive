@@ -122,7 +122,6 @@ const StyledCard = styled.div`
   position: relative;
   border: 2px solid #9eb4ff00;
   width: 100%;
-  height: 100%;
   :not(:last-child) {
     margin-bottom: 25px;
   }

@@ -30,12 +30,13 @@ const IncidentsTable = ({
     api
       .getIncidentsByReleaseName<{ incidents: IncidentsWithoutEvents[] }>(
         "<token>",
-        {},
+        {
+          namespace: namespace,
+          release_name: releaseName,
+        },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          namespace: namespace,
-          release_name: releaseName,
         }
       )
       .then((res) => {

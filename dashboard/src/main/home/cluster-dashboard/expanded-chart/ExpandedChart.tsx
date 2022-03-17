@@ -29,7 +29,7 @@ import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
 import { onlyInLeft } from "shared/array_utils";
-import IncidentsTable from "./incidents/IncidentsTable";
+import IncidentsTab from "./incidents/IncidentsTab";
 
 type Props = {
   namespace: string;
@@ -427,7 +427,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return <MetricsSection currentChart={chart} />;
       case "incidents":
         return (
-          <IncidentsTable
+          <IncidentsTab
             releaseName={chart?.name}
             namespace={chart?.namespace}
           />

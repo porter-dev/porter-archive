@@ -1629,18 +1629,19 @@ const getIncidentById = baseApi<
 );
 
 const getIncidentLogsByLogId = baseApi<
-  {},
+  {
+    log_id: string;
+  },
   {
     project_id: number;
     cluster_id: number;
     namespace: string;
     release_name: string;
-    log_id: string;
   }
 >(
   "GET",
-  ({ project_id, cluster_id, namespace, release_name: name, log_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/incidents/logs/${log_id}`
+  ({ project_id, cluster_id, namespace, release_name: name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/incidents/logs`
 );
 
 const upgradePorterAgent = baseApi<

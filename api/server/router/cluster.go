@@ -1004,5 +1004,63 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/notify_new -> cluster.NewNotifyNewIncidentHandler
+	notifyNewIncidentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/incidents/notify_new",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	notifyNewIncidentHandler := cluster.NewNotifyNewIncidentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: notifyNewIncidentEndpoint,
+		Handler:  notifyNewIncidentHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/notify_resolved -> cluster.NewNotifyResolvedIncidentHandler
+	notifyResolvedIncidentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/incidents/notify_resolved",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	notifyResolvedIncidentHandler := cluster.NewNotifyResolvedIncidentHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: notifyResolvedIncidentEndpoint,
+		Handler:  notifyResolvedIncidentHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -257,3 +257,7 @@ type GetIncidentsRequest struct {
 type GetIncidentEventLogsRequest struct {
 	LogID string `schema:"log_id"`
 }
+
+type IncidentNotifyRequest struct {
+	IncidentID string `json:"incident_id" form:"required"`
+}

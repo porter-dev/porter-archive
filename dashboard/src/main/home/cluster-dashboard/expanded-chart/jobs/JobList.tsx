@@ -42,7 +42,7 @@ const JobListFC = (props: PropsType): JSX.Element => {
     canPreviousPage,
   } = usePagination({
     count: props.jobs?.length,
-    initialPageSize: 10,
+    initialPageSize: 30,
   });
 
   const deleteJob = () => {
@@ -116,7 +116,8 @@ const JobListFC = (props: PropsType): JSX.Element => {
           })}
       </JobListWrapper>
       <FlexEnd style={{ marginTop: "15px" }}>
-        <PageCountWrapper>
+        {/* Disable the page count selector until find a fix for their styles */}
+        {/* <PageCountWrapper>
           Page size:
           <Selector
             activeValue={String(pageSize)}
@@ -141,13 +142,13 @@ const JobListFC = (props: PropsType): JSX.Element => {
             setActiveValue={(val) => setPageSize(Number(val))}
             width="70px"
           ></Selector>
-        </PageCountWrapper>
+        </PageCountWrapper> */}
         <PaginationActionsWrapper>
           <PaginationAction disabled={!canPreviousPage} onClick={prevPage}>
             {"<"}
           </PaginationAction>
           <PageCounter>
-            {page} of {totalPages}
+            Page {page} of {totalPages}
           </PageCounter>
           <PaginationAction disabled={!canNextPage} onClick={nextPage}>
             {">"}

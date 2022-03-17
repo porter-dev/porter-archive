@@ -5,6 +5,8 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import JobResource from "./JobResource";
 import useAuth from "shared/auth/useAuth";
+import usePagination from "shared/hooks/usePagination";
+import Selector from "components/Selector";
 
 type PropsType = {
   jobs: any[];
@@ -26,6 +28,22 @@ const JobListFC = (props: PropsType): JSX.Element => {
   } = useContext(Context);
   const [deletionCandidate, setDeletionCandidate] = useState(null);
   const [deletionJob, setDeletionJob] = useState(null);
+
+  const {
+    firstContentIndex,
+    lastContentIndex,
+    nextPage,
+    page,
+    prevPage,
+    totalPages,
+    pageSize,
+    setPageSize,
+    canNextPage,
+    canPreviousPage,
+  } = usePagination({
+    count: props.jobs?.length,
+    initialPageSize: 10,
+  });
 
   const deleteJob = () => {
     let job = deletionCandidate;
@@ -66,38 +84,122 @@ const JobListFC = (props: PropsType): JSX.Element => {
   }
 
   return (
-    <JobListWrapper>
-      {props.jobs.map((job: any, i: number) => {
-        return (
-          <JobResource
-            key={job?.metadata?.name}
-            expandJob={props.expandJob}
-            job={job}
-            handleDelete={() => {
-              setDeletionCandidate(job);
-              setCurrentOverlay({
-                message: "Are you sure you want to delete this job run?",
-                onYes: deleteJob,
-                onNo: () => {
-                  setDeletionCandidate(null);
-                  setCurrentOverlay(null);
-                },
-              });
-            }}
-            deleting={deletionJob?.metadata?.name == job.metadata?.name}
-            readOnly={!isAuthorized("job", "", ["get", "update", "delete"])}
-            isDeployedFromGithub={props.isDeployedFromGithub}
-            repositoryUrl={props.repositoryUrl}
-            currentChartVersion={props.currentChartVersion}
-            latestChartVersion={props.latestChartVersion}
-          />
-        );
-      })}
-    </JobListWrapper>
+    <>
+      <JobListWrapper>
+        {props.jobs
+          .slice(firstContentIndex, lastContentIndex)
+          .map((job: any, i: number) => {
+            return (
+              <JobResource
+                key={job?.metadata?.name}
+                expandJob={props.expandJob}
+                job={job}
+                handleDelete={() => {
+                  setDeletionCandidate(job);
+                  setCurrentOverlay({
+                    message: "Are you sure you want to delete this job run?",
+                    onYes: deleteJob,
+                    onNo: () => {
+                      setDeletionCandidate(null);
+                      setCurrentOverlay(null);
+                    },
+                  });
+                }}
+                deleting={deletionJob?.metadata?.name == job.metadata?.name}
+                readOnly={!isAuthorized("job", "", ["get", "update", "delete"])}
+                isDeployedFromGithub={props.isDeployedFromGithub}
+                repositoryUrl={props.repositoryUrl}
+                currentChartVersion={props.currentChartVersion}
+                latestChartVersion={props.latestChartVersion}
+              />
+            );
+          })}
+      </JobListWrapper>
+      <FlexEnd style={{ marginTop: "15px" }}>
+        <PageCountWrapper>
+          Page size:
+          <Selector
+            activeValue={String(pageSize)}
+            options={[
+              {
+                label: "10",
+                value: "10",
+              },
+              {
+                label: "20",
+                value: "20",
+              },
+              {
+                label: "50",
+                value: "50",
+              },
+              {
+                label: "100",
+                value: "100",
+              },
+            ]}
+            setActiveValue={(val) => setPageSize(Number(val))}
+            width="70px"
+          ></Selector>
+        </PageCountWrapper>
+        <PaginationActionsWrapper>
+          <PaginationAction disabled={!canPreviousPage} onClick={prevPage}>
+            {"<"}
+          </PaginationAction>
+          <PageCounter>
+            {page} of {totalPages}
+          </PageCounter>
+          <PaginationAction disabled={!canNextPage} onClick={nextPage}>
+            {">"}
+          </PaginationAction>
+        </PaginationActionsWrapper>
+      </FlexEnd>
+    </>
   );
 };
 
 export default JobListFC;
+
+const FlexEnd = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+`;
+
+const PaginationActionsWrapper = styled.div``;
+
+const PageCountWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 160px;
+  margin-right: 10px;
+`;
+
+const PaginationAction = styled.button`
+  border: none;
+  background: unset;
+  color: white;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  :hover {
+    background: #ffffff40;
+  }
+
+  :disabled {
+    color: #ffffff88;
+    cursor: unset;
+    :hover {
+      background: unset;
+    }
+  }
+`;
+
+const PageCounter = styled.span`
+  margin: 0 5px;
+`;
 
 const Placeholder = styled.div`
   width: 100%;

@@ -29,7 +29,7 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
     let isSubscribed = true;
 
     const containersWithLogs = containers.filter(
-      (container) => !container.log_id
+      (container) => container.log_id
     );
 
     const promises = containersWithLogs.map((container) => {
@@ -95,7 +95,7 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
         const logs = containerLogs[container.container_name];
 
         return (
-          <>
+          <div key={container.container_name}>
             <h3>{container.container_name}</h3>
             <span>
               {container.message} - Exit Code: {container.exit_code}
@@ -103,15 +103,7 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
             <div>
               {logs ? <>{logs}</> : <>No logs available for this container.</>}
             </div>
-          </>
-        );
-      })}
-      {Object.entries(containerLogs || {}).map(([key, value]) => {
-        return (
-          <>
-            <h3>{key}</h3>
-            <div>{value}</div>
-          </>
+          </div>
         );
       })}
     </EventDrawerContainer>

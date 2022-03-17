@@ -84,52 +84,48 @@ const IncidentPage = () => {
       </HeaderWrapper>
       <LineBreak />
       <BodyWrapper>
-        {Object.entries(events).map(([date, events_list]) => {
-          return (
-            <>
-              <StyledDate>{date}</StyledDate>
+        {Object.entries(events).map(([date, events_list]) => (
+          <React.Fragment key={date}>
+            <StyledDate>{date}</StyledDate>
 
-              {events_list.map((event) => {
-                return (
-                  <StyledCard
-                    onClick={() => setSelectedEvent(event)}
-                    active={selectedEvent?.event_id === event.event_id}
-                  >
-                    <ContentContainer>
-                      <Icon
-                        status={"normal"}
-                        className="material-icons-outlined"
-                      >
-                        info
-                      </Icon>
-                      <EventInformation>
-                        <EventName>
-                          <Helper>Pod:</Helper>
-                          {event.pod_name}
-                        </EventName>
-                        <EventReason>{event.message}</EventReason>
-                      </EventInformation>
-                    </ContentContainer>
-                    <ActionContainer>
-                      <TimestampContainer>
-                        <TimestampIcon className="material-icons-outlined">
-                          access_time
-                        </TimestampIcon>
-                        <span>
-                          {Intl.DateTimeFormat([], {
-                            // @ts-ignore
-                            dateStyle: "full",
-                            timeStyle: "long",
-                          }).format(new Date(event.timestamp))}
-                        </span>
-                      </TimestampContainer>
-                    </ActionContainer>
-                  </StyledCard>
-                );
-              })}
-            </>
-          );
-        })}
+            {events_list.map((event) => {
+              return (
+                <StyledCard
+                  key={event.event_id}
+                  onClick={() => setSelectedEvent(event)}
+                  active={selectedEvent?.event_id === event.event_id}
+                >
+                  <ContentContainer>
+                    <Icon status={"normal"} className="material-icons-outlined">
+                      info
+                    </Icon>
+                    <EventInformation>
+                      <EventName>
+                        <Helper>Pod:</Helper>
+                        {event.pod_name}
+                      </EventName>
+                      <EventReason>{event.message}</EventReason>
+                    </EventInformation>
+                  </ContentContainer>
+                  <ActionContainer>
+                    <TimestampContainer>
+                      <TimestampIcon className="material-icons-outlined">
+                        access_time
+                      </TimestampIcon>
+                      <span>
+                        {Intl.DateTimeFormat([], {
+                          // @ts-ignore
+                          dateStyle: "full",
+                          timeStyle: "long",
+                        }).format(new Date(event.timestamp))}
+                      </span>
+                    </TimestampContainer>
+                  </ActionContainer>
+                </StyledCard>
+              );
+            })}
+          </React.Fragment>
+        ))}
       </BodyWrapper>
       <StyledDrawer
         anchor="right"

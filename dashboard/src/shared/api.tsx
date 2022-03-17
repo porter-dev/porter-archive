@@ -1601,17 +1601,18 @@ const getIncidents = baseApi<
 );
 
 const getIncidentsByReleaseName = baseApi<
-  {},
+  {
+    namespace: string;
+    release_name: string;
+  },
   {
     project_id: number;
     cluster_id: number;
-    namespace: string;
-    release_name: string;
   }
 >(
   "GET",
-  ({ project_id, cluster_id, namespace, release_name: name }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/incidents`
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
 );
 
 const getIncidentById = baseApi<

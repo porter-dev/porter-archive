@@ -42,9 +42,17 @@ const IncidentPage = () => {
         }
       )
       .then((res) => {
-        if (isSubscribed) {
-          setIncident(res.data);
+        if (!isSubscribed) {
+          return;
         }
+
+        let incident = res.data;
+
+        incident.events = convertEventsTimestampsToMilliseconds(
+          incident.events
+        );
+
+        setIncident(incident);
       });
 
     return () => {
@@ -139,6 +147,16 @@ const IncidentPage = () => {
 };
 
 export default IncidentPage;
+
+const convertEventsTimestampsToMilliseconds = (events: IncidentEvent[]) => {
+  return events.map((e) => {
+    let newEvent = e;
+
+    newEvent.timestamp = newEvent.timestamp * 1000;
+
+    return newEvent;
+  });
+};
 
 const groupEventsByDate = (
   events: IncidentEvent[]

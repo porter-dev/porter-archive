@@ -33,13 +33,6 @@ func (s *ProvisionerServer) StoreLog(stream pb.Provisioner_StoreLogServer) error
 		tfLog, err := stream.Recv()
 
 		if err == io.EOF {
-			// push to the global stream
-			err := redis_stream.PushToGlobalStream(s.config.RedisClient, infra, operation, "created")
-
-			if err != nil {
-				return err
-			}
-
 			return stream.SendAndClose(&pb.TerraformStateMeta{})
 		} else if err != nil {
 			return err

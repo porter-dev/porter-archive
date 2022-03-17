@@ -1,5 +1,5 @@
 import Loading from "components/Loading";
-import { isEmpty, isObjectLike } from "lodash";
+import { isEmpty } from "lodash";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -36,13 +36,14 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
       return api
         .getIncidentLogsByLogId<{ contents: string }>(
           "<token>",
-          {},
+          {
+            log_id: container.log_id,
+          },
           {
             project_id: currentProject.id,
             cluster_id: currentCluster.id,
             namespace: event.namespace,
             release_name: event.release_name,
-            log_id: container.log_id,
           }
         )
         .then((res) => ({

@@ -23,7 +23,7 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
 
   useEffect(() => {
     if (!event) {
-      return () => {};
+      return () => { };
     }
 
     let isSubscribed = true;
@@ -42,8 +42,6 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
           {
             project_id: currentProject.id,
             cluster_id: currentCluster.id,
-            namespace: event.namespace,
-            release_name: event.release_name,
           }
         )
         .then((res) => ({

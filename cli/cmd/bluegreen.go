@@ -120,7 +120,7 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 
 		// get the deployment which matches the new image tag
 		for _, depl := range depls.Items {
-			if depl.ObjectMeta.Name == fmt.Sprintf("%s-web-%s", app, tag) {
+			if depl.ObjectMeta.Name == fmt.Sprintf("%s-web-%s", app, tag) || depl.ObjectMeta.Name == fmt.Sprintf("%s-%s", app, tag) {
 				foundDeployment = true
 
 				// determine if the deployment has an appropriate number of ready replicas

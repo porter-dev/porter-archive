@@ -76,8 +76,9 @@ func NewDigitalOceanClient(cfg *Config) *oauth2.Config {
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  DOAuthURL,
-			TokenURL: DOTokenURL,
+			AuthURL:   DOAuthURL,
+			TokenURL:  DOTokenURL,
+			AuthStyle: oauth2.AuthStyleInParams,
 		},
 		RedirectURL: cfg.BaseURL + "/api/oauth/digitalocean/callback",
 		Scopes:      cfg.Scopes,

@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -36,6 +37,12 @@ func (c *StreamJobRunsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
+	req := &types.StreamJobRunsRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, req); !ok {
+		return
+	}
+
 	agent, err := c.GetAgent(r, cluster, "")
 
 	if err != nil {
@@ -47,7 +54,13 @@ func (c *StreamJobRunsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		namespace = ""
 	}
 
-	err = agent.StreamJobs(namespace, "", safeRW)
+	selectors := ""
+
+	if req.Name != "" {
+		selectors = fmt.Sprintf("meta.helm.sh/release-name=%s", req.Name)
+	}
+
+	err = agent.StreamJobs(namespace, selectors, safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

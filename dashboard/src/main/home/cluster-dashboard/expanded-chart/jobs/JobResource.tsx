@@ -427,7 +427,7 @@ const CommandString = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 300px;
+  max-width: 200px;
   color: #ffffff55;
   margin-right: 27px;
   font-family: monospace;

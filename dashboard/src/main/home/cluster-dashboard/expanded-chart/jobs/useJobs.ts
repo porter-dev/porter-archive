@@ -21,6 +21,8 @@ export const useJobs = (chart: ChartType) => {
   );
   const [jobs, setJobs] = useState([]);
   const jobsRef = useRef([]);
+  const lastStreamStatus = useRef("");
+  const [hasError, setHasError] = useState(false);
   const [hasPorterImageTemplate, setHasPorterImageTemplate] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
   const [status, setStatus] = useState<"loading" | "ready">("loading");
@@ -42,21 +44,12 @@ export const useJobs = (chart: ChartType) => {
   const sortJobsAndSave = (newJobs: any[]) => {
     // Set job run from URL if needed
     const urlParams = new URLSearchParams(location.search);
-    const urlJob = urlParams.get("job");
 
     const getTime = (job: any) => {
       return new Date(job?.status?.startTime).getTime();
     };
 
-    newJobs.sort((job1, job2) => {
-      // if (job1.metadata.name === urlJob) {
-      //   this.setJobRun(job1);
-      // } else if (job2.metadata.name === urlJob) {
-      //   this.setJobRun(job2);
-      // }
-
-      return getTime(job2) - getTime(job1);
-    });
+    newJobs.sort((job1, job2) => getTime(job2) - getTime(job1));
 
     let latestImageDetected =
       newJobs[0]?.spec?.template?.spec?.containers[0]?.image;
@@ -66,6 +59,23 @@ export const useJobs = (chart: ChartType) => {
     }
     jobsRef.current = newJobs;
     setJobs(newJobs);
+  };
+
+  const addJob = (newJob: any) => {
+    let newJobs = [...jobsRef.current];
+    const existingJobIndex = newJobs.findIndex((currentJob) => {
+      return (
+        currentJob.metadata?.name === newJob.metadata?.name &&
+        currentJob.metadata?.namespace === newJob.metadata?.namespace
+      );
+    });
+
+    if (existingJobIndex > -1) {
+      return;
+    }
+
+    newJobs.push(newJob);
+    sortJobsAndSave(newJobs);
   };
 
   const mergeNewJob = (newJob: any) => {
@@ -183,8 +193,13 @@ export const useJobs = (chart: ChartType) => {
           return;
         }
 
+        if (event.event_type === "ADD") {
+          addJob(event.Object);
+          return;
+        }
+
         // if event type is add or update, merge with existing jobs
-        if (event.event_type === "ADD" || event.event_type === "UPDATE") {
+        if (event.event_type === "UPDATE") {
           mergeNewJob(event.Object);
           return;
         }
@@ -216,22 +231,61 @@ export const useJobs = (chart: ChartType) => {
     setSelectedJob(job);
   };
 
-  useEffect(() => {
-    let isSubscribed = true;
+  // useEffect(() => {
+  //   let isSubscribed = true;
 
-    if (!chart) {
-      return () => {
-        isSubscribed = false;
-      };
+  //   if (!chart) {
+  //     return () => {
+  //       isSubscribed = false;
+  //     };
+  //   }
+
+  //   if (
+  //     previousChart?.name === chart?.name &&
+  //     previousChart?.namespace === chart?.namespace
+  //   ) {
+  //     return () => {
+  //       isSubscribed = false;
+  //     };
+  //   }
+
+  //   setStatus("loading");
+  //   const newestImage = chart?.config?.image?.repository;
+
+  //   setHasPorterImageTemplate(PORTER_IMAGE_TEMPLATES.includes(newestImage));
+
+  //   api
+  //     .getJobs(
+  //       "<token>",
+  //       {},
+  //       {
+  //         id: currentProject?.id,
+  //         cluster_id: currentCluster?.id,
+  //         namespace: chart.namespace,
+  //         release_name: chart.name,
+  //       }
+  //     )
+  //     .then((res) => {
+  //       if (isSubscribed) {
+  //         sortJobsAndSave(res.data);
+  //         setStatus("ready");
+  //       }
+  //     });
+  //   return () => {
+  //     isSubscribed = false;
+  //   };
+  // }, [chart]);
+
+  useEffect(() => {
+    if (!chart || !chart.namespace || !chart.name) {
+      return () => {};
     }
 
     if (
       previousChart?.name === chart?.name &&
       previousChart?.namespace === chart?.namespace
     ) {
-      return () => {
-        isSubscribed = false;
-      };
+      return () => {};
     }
 
     setStatus("loading");
@@ -239,28 +293,56 @@ export const useJobs = (chart: ChartType) => {
 
     setHasPorterImageTemplate(PORTER_IMAGE_TEMPLATES.includes(newestImage));
 
-    api
-      .getJobs(
-        "<token>",
-        {},
-        {
-          id: currentProject?.id,
-          cluster_id: currentCluster?.id,
-          namespace: chart.namespace,
-          release_name: chart.name,
-        }
-      )
-      .then((res) => {
-        if (isSubscribed) {
-          sortJobsAndSave(res.data);
+    const namespace = chart.namespace;
+    const release_name = chart.name;
+
+    closeAllWebsockets();
+    jobsRef.current = [];
+    lastStreamStatus.current = "";
+    setJobs([]);
+
+    const websocketId = `job-runs-websocket-${release_name}-${namespace}`;
+
+    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/jobs/stream?name=${release_name}`;
+
+    const config: NewWebsocketOptions = {
+      onopen: console.log,
+      onmessage: (message) => {
+        const data = JSON.parse(message.data);
+
+        if (data.streamStatus === "finished") {
+          setHasError(false);
           setStatus("ready");
+          sortJobsAndSave(jobsRef.current);
+          lastStreamStatus.current = data.streamStatus;
           setupJobWebsocket();
           setupCronJobWebsocket();
+          return;
         }
-      });
-    return () => {
-      isSubscribed = false;
+
+        if (data.streamStatus === "errored") {
+          setHasError(true);
+          jobsRef.current = [];
+          setJobs([]);
+          setStatus("ready");
+          return;
+        }
+
+        jobsRef.current = [...jobsRef.current, data];
+      },
+      onclose: (event) => {
+        console.log(event);
+        closeWebsocket(websocketId);
+      },
+      onerror: (error) => {
+        setHasError(true);
+        setStatus("ready");
+        console.log(error);
+        closeWebsocket(websocketId);
+      },
     };
+    newWebsocket(websocketId, endpoint, config);
+    openWebsocket(websocketId);
   }, [chart]);
 
   useEffect(() => {

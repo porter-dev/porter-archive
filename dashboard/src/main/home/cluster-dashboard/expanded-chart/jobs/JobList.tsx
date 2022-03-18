@@ -1,13 +1,14 @@
-import React, { Component } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 import JobResource from "./JobResource";
-import ConfirmOverlay from "components/ConfirmOverlay";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import useAuth from "shared/auth/useAuth";
+import usePagination from "shared/hooks/usePagination";
+import Selector from "components/Selector";
 
-type PropsType = WithAuthProps & {
+type PropsType = {
   jobs: any[];
   setJobs: (job: any) => void;
   expandJob: any;
@@ -17,72 +18,36 @@ type PropsType = WithAuthProps & {
   repositoryUrl?: string;
 };
 
-type StateType = {
-  deletionCandidate: any;
-  deletionJob: any;
-};
+const JobListFC = (props: PropsType): JSX.Element => {
+  const [isAuthorized] = useAuth();
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentOverlay,
+    setCurrentError,
+  } = useContext(Context);
+  const [deletionCandidate, setDeletionCandidate] = useState(null);
+  const [deletionJob, setDeletionJob] = useState(null);
 
-class JobList extends Component<PropsType, StateType> {
-  state = {
-    deletionCandidate: null as any,
-    deletionJob: null as any,
-  };
+  const {
+    firstContentIndex,
+    lastContentIndex,
+    nextPage,
+    page,
+    prevPage,
+    totalPages,
+    pageSize,
+    setPageSize,
+    canNextPage,
+    canPreviousPage,
+  } = usePagination({
+    count: props.jobs?.length,
+    initialPageSize: 30,
+  });
 
-  renderJobList = () => {
-    if (this.props.jobs.length === 0) {
-      return (
-        <Placeholder>
-          <i className="material-icons">category</i>
-          There are no jobs currently running.
-        </Placeholder>
-      );
-    } else {
-      return (
-        <>
-          {this.props.jobs.map((job: any, i: number) => {
-            return (
-              <JobResource
-                key={job?.metadata?.name}
-                expandJob={this.props.expandJob}
-                job={job}
-                handleDelete={() => {
-                  this.setState({ deletionCandidate: job });
-                  this.context.setCurrentOverlay({
-                    message: `Are you sure you want to delete this job run?`,
-                    onYes: this.deleteJob,
-                    onNo: () => {
-                      this.setState({ deletionCandidate: null });
-                      this.context.setCurrentOverlay(null);
-                    },
-                  });
-                }}
-                deleting={
-                  this.state.deletionJob?.metadata?.name == job.metadata?.name
-                }
-                readOnly={
-                  !this.props.isAuthorized("job", "", [
-                    "get",
-                    "update",
-                    "delete",
-                  ])
-                }
-                isDeployedFromGithub={this.props.isDeployedFromGithub}
-                repositoryUrl={this.props.repositoryUrl}
-                currentChartVersion={this.props.currentChartVersion}
-                latestChartVersion={this.props.latestChartVersion}
-              />
-            );
-          })}
-        </>
-      );
-    }
-  };
-
-  deleteJob = () => {
-    let { currentCluster, currentProject, setCurrentError } = this.context;
-    let job = this.state.deletionCandidate;
-    this.context.setCurrentOverlay(null);
-
+  const deleteJob = () => {
+    let job = deletionCandidate;
+    setCurrentOverlay(null);
     api
       .deleteJob(
         "<token>",
@@ -95,10 +60,8 @@ class JobList extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        this.setState({
-          deletionJob: this.state.deletionCandidate,
-          deletionCandidate: null,
-        });
+        setDeletionJob(deletionCandidate);
+        setDeletionCandidate(null);
       })
       .catch((err) => {
         let parsedErr = err?.response?.data?.error;
@@ -109,14 +72,135 @@ class JobList extends Component<PropsType, StateType> {
       });
   };
 
-  render() {
-    return <JobListWrapper>{this.renderJobList()}</JobListWrapper>;
+  if (!props.jobs?.length) {
+    return (
+      <JobListWrapper>
+        <Placeholder>
+          <i className="material-icons">category</i>
+          There are no jobs currently running.
+        </Placeholder>
+      </JobListWrapper>
+    );
   }
-}
 
-JobList.contextType = Context;
+  return (
+    <>
+      <JobListWrapper>
+        {props.jobs
+          .slice(firstContentIndex, lastContentIndex)
+          .map((job: any, i: number) => {
+            return (
+              <JobResource
+                key={job?.metadata?.name}
+                expandJob={props.expandJob}
+                job={job}
+                handleDelete={() => {
+                  setDeletionCandidate(job);
+                  setCurrentOverlay({
+                    message: "Are you sure you want to delete this job run?",
+                    onYes: deleteJob,
+                    onNo: () => {
+                      setDeletionCandidate(null);
+                      setCurrentOverlay(null);
+                    },
+                  });
+                }}
+                deleting={deletionJob?.metadata?.name == job.metadata?.name}
+                readOnly={!isAuthorized("job", "", ["get", "update", "delete"])}
+                isDeployedFromGithub={props.isDeployedFromGithub}
+                repositoryUrl={props.repositoryUrl}
+                currentChartVersion={props.currentChartVersion}
+                latestChartVersion={props.latestChartVersion}
+              />
+            );
+          })}
+      </JobListWrapper>
+      <FlexEnd style={{ marginTop: "15px" }}>
+        {/* Disable the page count selector until find a fix for their styles */}
+        {/* <PageCountWrapper>
+          Page size:
+          <Selector
+            activeValue={String(pageSize)}
+            options={[
+              {
+                label: "10",
+                value: "10",
+              },
+              {
+                label: "20",
+                value: "20",
+              },
+              {
+                label: "50",
+                value: "50",
+              },
+              {
+                label: "100",
+                value: "100",
+              },
+            ]}
+            setActiveValue={(val) => setPageSize(Number(val))}
+            width="70px"
+          ></Selector>
+        </PageCountWrapper> */}
+        <PaginationActionsWrapper>
+          <PaginationAction disabled={!canPreviousPage} onClick={prevPage}>
+            {"<"}
+          </PaginationAction>
+          <PageCounter>
+            Page {page} of {totalPages}
+          </PageCounter>
+          <PaginationAction disabled={!canNextPage} onClick={nextPage}>
+            {">"}
+          </PaginationAction>
+        </PaginationActionsWrapper>
+      </FlexEnd>
+    </>
+  );
+};
 
-export default withAuth(JobList);
+export default JobListFC;
+
+const FlexEnd = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+`;
+
+const PaginationActionsWrapper = styled.div``;
+
+const PageCountWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 160px;
+  margin-right: 10px;
+`;
+
+const PaginationAction = styled.button`
+  border: none;
+  background: unset;
+  color: white;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  :hover {
+    background: #ffffff40;
+  }
+
+  :disabled {
+    color: #ffffff88;
+    cursor: unset;
+    :hover {
+      background: unset;
+    }
+  }
+`;
+
+const PageCounter = styled.span`
+  margin: 0 5px;
+`;
 
 const Placeholder = styled.div`
   width: 100%;

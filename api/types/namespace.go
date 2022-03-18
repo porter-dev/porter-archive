@@ -185,3 +185,7 @@ type GetJobRunsRequest struct {
 	Status string `schema:"status"`
 	Sort   string `schema:"sort"`
 }
+
+type StreamJobRunsRequest struct {
+	Name string `schema:"name"`
+}

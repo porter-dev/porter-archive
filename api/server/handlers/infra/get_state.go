@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -10,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/provisioner/client"
 )
 
 type InfraGetStateHandler struct {
@@ -33,6 +35,11 @@ func (c *InfraGetStateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	resp, err := c.Config().ProvisionerClient.GetState(context.Background(), proj.ID, infra.ID)
 
 	if err != nil {
+		if errors.Is(err, client.ErrDoesNotExist) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

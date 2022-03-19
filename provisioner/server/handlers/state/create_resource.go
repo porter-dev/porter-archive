@@ -3,6 +3,7 @@ package state
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -18,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/server/config"
 	ptypes "github.com/porter-dev/porter/provisioner/types"
+	"gorm.io/gorm"
 )
 
 type CreateResourceHandler struct {
@@ -83,20 +85,16 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// switch on the kind of resource and write the corresponding objects to the database
 	switch req.Kind {
+	case string(types.InfraEKS), string(types.InfraDOKS), string(types.InfraGKE):
+		_, err = createCluster(c.Config, infra, operation, req.Output)
 	case string(types.InfraECR):
 		_, err = createECRRegistry(c.Config, infra, operation, req.Output)
-	case string(types.InfraEKS):
-		_, err = createEKSCluster(c.Config, infra, operation, req.Output)
 	case string(types.InfraRDS):
 		_, err = createRDSDatabase(c.Config, infra, operation, req.Output)
 	case string(types.InfraDOCR):
 		_, err = createDOCRRegistry(c.Config, infra, operation, req.Output)
-	case string(types.InfraDOKS):
-		_, err = createDOKSCluster(c.Config, infra, operation, req.Output)
 	case string(types.InfraGCR):
 		_, err = createGCRRegistry(c.Config, infra, operation, req.Output)
-	case string(types.InfraGKE):
-		_, err = createGKECluster(c.Config, infra, operation, req.Output)
 	}
 
 	if err != nil {
@@ -146,20 +144,39 @@ func createECRRegistry(config *config.Config, infra *models.Infra, operation *mo
 }
 
 func createRDSDatabase(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Database, error) {
-	database := &models.Database{
-		ProjectID:        infra.ProjectID,
-		ClusterID:        infra.ParentClusterID,
-		InfraID:          infra.ID,
-		InstanceID:       output["rds_instance_id"].(string),
-		InstanceEndpoint: output["rds_connection_endpoint"].(string),
-		InstanceName:     output["rds_instance_name"].(string),
-		Status:           "Running",
+	// check for infra id being 0 as a safeguard so that all non-provisioned
+	// clusters are not matched by read
+	if infra.ID == 0 {
+		return nil, fmt.Errorf("infra id cannot be 0")
 	}
 
-	database, err := config.Repo.Database().CreateDatabase(database)
+	var database *models.Database
+	var err error
+	var isNotFound bool
 
-	if err != nil {
+	database, err = config.Repo.Database().ReadDatabaseByInfraID(infra.ProjectID, infra.ID)
+
+	isNotFound = err != nil && errors.Is(err, gorm.ErrRecordNotFound)
+
+	if isNotFound {
+		database = &models.Database{
+			ProjectID: infra.ProjectID,
+			ClusterID: infra.ParentClusterID,
+			InfraID:   infra.ID,
+			Status:    "Running",
+		}
+	} else if err != nil {
 		return nil, err
+	}
+
+	database.InstanceID = output["rds_instance_id"].(string)
+	database.InstanceEndpoint = output["rds_connection_endpoint"].(string)
+	database.InstanceName = output["rds_instance_name"].(string)
+
+	if isNotFound {
+		database, err = config.Repo.Database().CreateDatabase(database)
+	} else {
+		database, err = config.Repo.Database().UpdateDatabase(database)
 	}
 
 	infra.DatabaseID = database.ID
@@ -185,21 +202,79 @@ func createRDSDatabase(config *config.Config, infra *models.Infra, operation *mo
 	return database, nil
 }
 
-func createEKSCluster(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Cluster, error) {
-	cluster := &models.Cluster{
-		AuthMechanism:            models.AWS,
-		ProjectID:                infra.ProjectID,
-		AWSIntegrationID:         infra.AWSIntegrationID,
-		InfraID:                  infra.ID,
-		Name:                     output["cluster_id"].(string),
-		Server:                   output["cluster_endpoint"].(string),
-		CertificateAuthorityData: []byte(output["cluster_ca_data"].(string)),
+func createCluster(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Cluster, error) {
+	// check for infra id being 0 as a safeguard so that all non-provisioned
+	// clusters are not matched by read
+	if infra.ID == 0 {
+		return nil, fmt.Errorf("infra id cannot be 0")
 	}
 
+	var cluster *models.Cluster
+	var err error
+	var isNotFound bool
+
+	// look for cluster matching infra in database; if the cluster already exists, update the cluster but
+	// don't add it again
+	cluster, err = config.Repo.Cluster().ReadClusterByInfraID(infra.ProjectID, infra.ID)
+
+	isNotFound = err != nil && errors.Is(err, gorm.ErrRecordNotFound)
+
+	if isNotFound {
+		cluster = getNewCluster(infra)
+	} else if err != nil {
+		return nil, err
+	}
+
+	caData, err := transformClusterCAData([]byte(output["cluster_ca_data"].(string)))
+
+	if err != nil {
+		return nil, err
+	}
+
+	cluster.Name = output["cluster_name"].(string)
+	cluster.Server = output["cluster_endpoint"].(string)
+	cluster.CertificateAuthorityData = caData
+
+	if isNotFound {
+		cluster, err = config.Repo.Cluster().CreateCluster(cluster)
+	} else {
+		cluster, err = config.Repo.Cluster().UpdateCluster(cluster)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cluster, nil
+}
+
+func getNewCluster(infra *models.Infra) *models.Cluster {
+	res := &models.Cluster{
+		ProjectID: infra.ProjectID,
+		InfraID:   infra.ID,
+	}
+
+	switch infra.Kind {
+	case types.InfraEKS:
+		res.AuthMechanism = models.AWS
+		res.AWSIntegrationID = infra.AWSIntegrationID
+	case types.InfraGKE:
+		res.AuthMechanism = models.GCP
+		res.GCPIntegrationID = infra.GCPIntegrationID
+	case types.InfraDOKS:
+		res.AuthMechanism = models.DO
+		res.DOIntegrationID = infra.DOIntegrationID
+	}
+
+	return res
+}
+
+func transformClusterCAData(ca []byte) ([]byte, error) {
 	re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
 
 	// if it matches the base64 regex, decode it
-	caData := string(cluster.CertificateAuthorityData)
+	caData := string(ca)
+
 	if re.MatchString(caData) {
 		decoded, err := base64.StdEncoding.DecodeString(caData)
 
@@ -207,16 +282,11 @@ func createEKSCluster(config *config.Config, infra *models.Infra, operation *mod
 			return nil, err
 		}
 
-		cluster.CertificateAuthorityData = []byte(decoded)
+		return []byte(decoded), nil
 	}
 
-	cluster, err := config.Repo.Cluster().CreateCluster(cluster)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return cluster, nil
+	// otherwise just return the CA
+	return ca, nil
 }
 
 func createDOCRRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
@@ -231,34 +301,6 @@ func createDOCRRegistry(config *config.Config, infra *models.Infra, operation *m
 	return config.Repo.Registry().CreateRegistry(reg)
 }
 
-func createDOKSCluster(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Cluster, error) {
-	cluster := &models.Cluster{
-		AuthMechanism:            models.DO,
-		ProjectID:                infra.ProjectID,
-		DOIntegrationID:          infra.DOIntegrationID,
-		InfraID:                  infra.ID,
-		Name:                     output["cluster_name"].(string),
-		Server:                   output["cluster_endpoint"].(string),
-		CertificateAuthorityData: []byte(output["cluster_ca_data"].(string)),
-	}
-
-	re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
-
-	// if it matches the base64 regex, decode it
-	caData := string(cluster.CertificateAuthorityData)
-	if re.MatchString(caData) {
-		decoded, err := base64.StdEncoding.DecodeString(caData)
-
-		if err != nil {
-			return nil, err
-		}
-
-		cluster.CertificateAuthorityData = []byte(decoded)
-	}
-
-	return config.Repo.Cluster().CreateCluster(cluster)
-}
-
 func createGCRRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
 	reg := &models.Registry{
 		ProjectID:        infra.ProjectID,
@@ -269,34 +311,6 @@ func createGCRRegistry(config *config.Config, infra *models.Infra, operation *mo
 	}
 
 	return config.Repo.Registry().CreateRegistry(reg)
-}
-
-func createGKECluster(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Cluster, error) {
-	cluster := &models.Cluster{
-		AuthMechanism:            models.GCP,
-		ProjectID:                infra.ProjectID,
-		GCPIntegrationID:         infra.GCPIntegrationID,
-		InfraID:                  infra.ID,
-		Name:                     output["cluster_name"].(string),
-		Server:                   output["cluster_endpoint"].(string),
-		CertificateAuthorityData: []byte(output["cluster_ca_data"].(string)),
-	}
-
-	re := regexp.MustCompile(`^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$`)
-
-	// if it matches the base64 regex, decode it
-	caData := string(cluster.CertificateAuthorityData)
-	if re.MatchString(caData) {
-		decoded, err := base64.StdEncoding.DecodeString(caData)
-
-		if err != nil {
-			return nil, err
-		}
-
-		cluster.CertificateAuthorityData = []byte(decoded)
-	}
-
-	return config.Repo.Cluster().CreateCluster(cluster)
 }
 
 func createRDSEnvGroup(config *config.Config, infra *models.Infra, database *models.Database, lastApplied map[string]interface{}) error {

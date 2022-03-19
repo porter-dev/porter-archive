@@ -63,6 +63,14 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// push to the global stream
+	err = redis_stream.PushToGlobalStream(c.Config.RedisClient, infra, operation, "created")
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
 	// update the infra to indicate completion
 	infra.Status = "created"
 

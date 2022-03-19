@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/provisioner/integrations/redis_stream"
 	"github.com/porter-dev/porter/provisioner/server/config"
@@ -80,4 +81,19 @@ func (c *ReportErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(
 		fmt.Errorf(req.Error),
 	), false)
+
+	switch infra.Kind {
+	case types.InfraEKS, types.InfraDOKS, types.InfraGKE:
+		var cluster *models.Cluster
+
+		if cluster != nil {
+			c.Config.AnalyticsClient.Track(analytics.ClusterProvisioningErrorTrack(
+				&analytics.ClusterProvisioningErrorTrackOpts{
+					ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(0, infra.ProjectID),
+					ClusterType:            infra.Kind,
+					InfraID:                infra.ID,
+				},
+			))
+		}
+	}
 }

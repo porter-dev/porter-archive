@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/random"
 	"github.com/porter-dev/porter/provisioner/integrations/provisioner"
@@ -141,6 +142,26 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// return the operation response type to the server
 	c.resultWriter.WriteResult(w, r, op)
+
+	// if this is a cluster or registry infra type, send to analytics client
+	switch infra.Kind {
+	case types.InfraDOKS, types.InfraEKS, types.InfraGKE:
+		c.Config.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
+			&analytics.ClusterProvisioningStartTrackOpts{
+				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(0, infra.ProjectID),
+				ClusterType:            infra.Kind,
+				InfraID:                infra.ID,
+			},
+		))
+	case types.InfraDOCR, types.InfraECR, types.InfraGCR:
+		c.Config.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
+			&analytics.RegistryProvisioningStartTrackOpts{
+				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(0, infra.ProjectID),
+				RegistryType:           infra.Kind,
+				InfraID:                infra.ID,
+			},
+		))
+	}
 }
 
 func createCredentialsExchangeToken(conf *config.Config, infra *models.Infra) (*models.CredentialsExchangeToken, string, error) {

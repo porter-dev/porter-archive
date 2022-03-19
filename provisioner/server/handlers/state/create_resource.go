@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
@@ -86,7 +87,19 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// switch on the kind of resource and write the corresponding objects to the database
 	switch req.Kind {
 	case string(types.InfraEKS), string(types.InfraDOKS), string(types.InfraGKE):
-		_, err = createCluster(c.Config, infra, operation, req.Output)
+		var cluster *models.Cluster
+
+		cluster, err = createCluster(c.Config, infra, operation, req.Output)
+
+		if cluster != nil {
+			c.Config.AnalyticsClient.Track(analytics.ClusterProvisioningSuccessTrack(
+				&analytics.ClusterProvisioningSuccessTrackOpts{
+					ClusterScopedTrackOpts: analytics.GetClusterScopedTrackOpts(0, infra.ProjectID, cluster.ID),
+					ClusterType:            infra.Kind,
+					InfraID:                infra.ID,
+				},
+			))
+		}
 	case string(types.InfraECR):
 		_, err = createECRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraRDS):

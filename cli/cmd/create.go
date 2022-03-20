@@ -12,7 +12,9 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/gitutils"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/util/homedir"
 	"sigs.k8s.io/yaml"
 )
 
@@ -175,6 +177,24 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	var err error
 
+	fullPath, err := filepath.Abs(localPath)
+
+	if err != nil {
+		return err
+	}
+
+	if source == "local" && fullPath == homedir.HomeDir() {
+		proceed, err := utils.PromptConfirm("You are deploying your home directory. Do you want to continue?", false)
+
+		if err != nil {
+			return err
+		}
+
+		if !proceed {
+			return nil
+		}
+	}
+
 	// read the values if necessary
 	valuesObj, err := readValuesFile()
 	if err != nil {
@@ -182,12 +202,6 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", args[0], name)
-
-	fullPath, err := filepath.Abs(localPath)
-
-	if err != nil {
-		return err
-	}
 
 	var buildMethod deploy.DeployBuildType
 

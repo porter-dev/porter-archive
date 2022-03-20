@@ -3,13 +3,16 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/util/homedir"
 )
 
 // updateCmd represents the "porter update" base command when called
@@ -318,6 +321,24 @@ func init() {
 }
 
 func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	fullPath, err := filepath.Abs(localPath)
+
+	if err != nil {
+		return err
+	}
+
+	if source == "local" && fullPath == homedir.HomeDir() {
+		proceed, err := utils.PromptConfirm("You are deploying your home directory. Do you want to continue?", false)
+
+		if err != nil {
+			return err
+		}
+
+		if !proceed {
+			return nil
+		}
+	}
+
 	color.New(color.FgGreen).Println("Deploying app:", app)
 
 	updateAgent, err := updateGetAgent(client)

@@ -11,6 +11,11 @@ import EventDrawer from "./EventDrawer";
 import { useRouting } from "shared/routing";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import DynamicLink from "components/DynamicLink";
+import Header from "components/expanded-object/Header";
+import { capitalize, readableDate } from "shared/string_utils";
+import Description from "components/Description";
+import { dateFormatter } from "../../chart/JobRunTable";
 
 type IncidentPageParams = {
   incident_id: string;
@@ -81,14 +86,52 @@ const IncidentPage = () => {
   return (
     <StyledExpandedNodeView>
       <HeaderWrapper>
-        <BackButton onClick={handleClose}>
+        {/* <BackButton onClick={handleClose}>
           <BackButtonImg src={backArrow} />
-        </BackButton>
-        <TitleSection icon={nodePng}>Incident for {incident.release_name}</TitleSection>
-        <IncidentMessage>{incident.latest_message}</IncidentMessage>
-        <IncidentStatus status={incident.latest_state}>
-          Status: <i>{incident.latest_state}</i>
-        </IncidentStatus>
+        </BackButton> */}
+        <Header
+          last_updated={readableDate("2022-03-18T21:02:50.602847-04:00")}
+          back_link={"/infrastructure"}
+          name={"Incident for " + incident.release_name}
+          icon={"error"}
+          materialIconClass="material-icons"
+          inline_title_items={[
+            <ResourceLink
+              key="resource_link"
+              to={"/"}
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {incident.release_name}
+              <i className="material-icons">open_in_new</i>
+            </ResourceLink>,
+          ]}
+          sub_title_items={[
+            <StatusContainer>
+              <Status>
+                <StatusDot status={incident.latest_state} />
+                {capitalize(incident.latest_state)}
+              </Status>
+              <StatusText>
+                - started {dateFormatter("2022-03-18T21:02:50.602847-04:00")},
+                last updated {dateFormatter("2022-03-18T21:02:50.602847-04:00")}
+              </StatusText>
+              <Description></Description>
+            </StatusContainer>,
+          ]}
+        />
+        {/* <TitleSection materialIconClass="material-icons" icon="error">
+          Incident for {incident.release_name}
+          <ResourceLink
+            to={"/"}
+            target="_blank"
+            onClick={(e: any) => e.stopPropagation()}
+          >
+            {incident.release_name}
+            <i className="material-icons">open_in_new</i>
+          </ResourceLink>
+        </TitleSection>
+         */}
       </HeaderWrapper>
       <LineBreak />
       <BodyWrapper>
@@ -240,11 +283,11 @@ const IncidentStatus = styled.span`
   > i {
     margin-left: 5px;
     color: ${(props: { status: string }) => {
-    if (props.status === "ONGOING") {
-      return "#f5cb42";
-    }
-    return "#00d12a";
-  }};
+      if (props.status === "ONGOING") {
+        return "#f5cb42";
+      }
+      return "#00d12a";
+    }};
   }
 `;
 
@@ -418,3 +461,54 @@ const StyledDrawer = withStyles({
     minWidth: "700px",
   },
 })(Drawer);
+
+const ResourceLink = styled(DynamicLink)`
+  font-size: 13px;
+  font-weight: 400;
+  margin-left: 20px;
+  color: #aaaabb;
+  display: flex;
+  align-items: center;
+
+  :hover {
+    text-decoration: underline;
+    color: white;
+  }
+
+  > i {
+    margin-left: 7px;
+    font-size: 17px;
+  }
+`;
+
+const Status = styled.span`
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  margin-left: 1px;
+  min-height: 17px;
+  color: #a7a6bb;
+  margin-right: 6px;
+`;
+
+const StatusDot = styled.div`
+  width: 8px;
+  height: 8px;
+  background: ${(props: { status: string }) =>
+    props.status === "ONGOING" ? "#ed5f85" : "#4797ff"};
+  border-radius: 20px;
+  margin-left: 3px;
+  margin-right: 15px;
+`;
+
+const StatusContainer = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #aaaabb;
+  width: 100%;
+`;
+
+const StatusText = styled.div`
+  width: 100%;
+`;

@@ -139,7 +139,7 @@ export default IncidentsTable;
 const KindContainer = styled.div`
   display: flex;
   align-items: center;
-  min-width: 120px;
+  min-width: 150px;
 `;
 
 const Kind = styled.div`
@@ -163,7 +163,7 @@ const StatusDot = styled.div`
   width: 8px;
   height: 8px;
   background: ${(props: { status: string }) =>
-    props.status === "ONGOING" ? "#ed5f85" : "#f5cb42"};
+    props.status === "ONGOING" ? "#ed5f85" : "#4797ff"};
   border-radius: 20px;
   margin-left: 3px;
   margin-right: 15px;
@@ -173,5 +173,5 @@ const Message = styled.div`
   white-space: nowrap;
   overflow-x: hidden;
   text-overflow: ellipsis;
-  max-width: 400px;
+  max-width: 500px;
 `;

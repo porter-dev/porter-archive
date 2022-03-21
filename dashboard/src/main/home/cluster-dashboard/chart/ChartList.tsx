@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import _ from "lodash";
+import _, { differenceBy, differenceWith, isEqual } from "lodash";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -16,6 +16,7 @@ import { PorterUrl } from "shared/routing";
 import Chart from "./Chart";
 import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
+import { usePrevious } from "shared/hooks/usePrevious";
 
 type Props = {
   currentCluster: ClusterType;
@@ -47,6 +48,9 @@ const ChartList: React.FunctionComponent<Props> = ({
     closeAllWebsockets,
   } = useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
+
+  const previousCharts = usePrevious<ChartType[]>(charts, []);
+
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -272,6 +276,97 @@ const ChartList: React.FunctionComponent<Props> = ({
     openWebsocket(websocketID);
   };
 
+  const getLatestJobRunFromRelease = async (chart: ChartType) => {
+    try {
+      const job = await api
+        .getLatestJobRunFromRelease(
+          "<token>",
+          {},
+          {
+            project_id: context.currentProject.id,
+            cluster_id: context.currentCluster.id,
+            namespace: chart.namespace,
+            release_name: chart.name,
+          }
+        )
+        .then((res) => res.data);
+
+      const chartName = job.metadata.labels["app.kubernetes.io/instance"];
+      const chartNamespace = job.metadata.namespace;
+      const key = getChartKey(chartName, chartNamespace);
+
+      setJobStatus((currentStatus) => {
+        let nextStatus: JobStatusType = null;
+        for (const status of Object.values(JobStatusType)) {
+          if (_.get(job.status, status, 0) > 0) {
+            nextStatus = status;
+            break;
+          }
+        }
+
+        const existingValue: JobStatusWithTimeAndVersion = _.get(
+          currentStatus,
+          key,
+          null
+        );
+        const newValue: JobStatusWithTimeAndVersion = {
+          status: nextStatus,
+          start_time: job.status.startTime,
+          resource_version: job.metadata.resourceVersion,
+        };
+
+        if (
+          !existingValue ||
+          Number(newValue.resource_version) >
+            Number(existingValue.resource_version)
+        ) {
+          return {
+            ...currentStatus,
+            [key]: newValue,
+          };
+        }
+
+        return currentStatus;
+      });
+    } catch (error) {
+      console.log("failed");
+    } finally {
+    }
+  };
+
+  useEffect(() => {
+    if (!charts?.length) {
+      return () => {};
+    }
+    const changedCharts = differenceWith<ChartType, ChartType>(
+      charts,
+      previousCharts,
+      isEqual
+    );
+
+    if (!changedCharts.length) {
+      return () => {};
+    }
+
+    const jobCharts = changedCharts.filter(
+      (chart) => chart.chart.metadata.name === "job"
+    );
+
+    const promises = jobCharts.map((chart) => {
+      getLatestJobRunFromRelease(chart);
+    });
+
+    const jobWebsocketID = "job";
+
+    Promise.all(promises).then(() => {
+      setupJobWebsocket(jobWebsocketID);
+    });
+
+    return () => {
+      closeWebsocket(jobWebsocketID);
+    };
+  }, [charts]);
+
   // Setup basic websockets on start
   useEffect(() => {
     const controllers = [
@@ -282,12 +377,9 @@ const ChartList: React.FunctionComponent<Props> = ({
     ];
     setupControllerWebsockets(controllers);
 
-    const jobWebsocketID = "job";
-    setupJobWebsocket(jobWebsocketID);
-
     return () => {
       controllers.map((controller) => closeWebsocket(controller));
-      closeWebsocket(jobWebsocketID);
+      closeWebsocket("job");
     };
   }, []);
 

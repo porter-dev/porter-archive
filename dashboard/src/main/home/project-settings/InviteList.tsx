@@ -96,24 +96,25 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const parseCollaboratorsResponse = (
     collaborators: Array<Collaborator>
   ): Array<InviteType> => {
-    return (
-      collaborators
-        // Parse role id to number
-        .map((c) => ({ ...c, id: Number(c.id) }))
-        // Sort them so the owner will be first allways
-        .sort((curr, prev) => curr.id - prev.id)
-        // Remove the owner from list
-        .slice(1)
-        // Parse the remainings to InviteType
-        .map((c) => ({
-          email: c.email,
-          expired: false,
-          id: Number(c.user_id),
-          kind: c.kind,
-          accepted: true,
-          token: "",
-        }))
-    );
+    const admins = collaborators
+      .filter((c) => c.kind === "admin")
+      .map((c) => ({ ...c, id: Number(c.id) }))
+      .sort((curr, prev) => curr.id - prev.id)
+      .slice(1);
+
+    const nonAdmins = collaborators
+      .filter((c) => c.kind !== "admin")
+      .map((c) => ({ ...c, id: Number(c.id) }))
+      .sort((curr, prev) => curr.id - prev.id);
+
+    return [...admins, ...nonAdmins].map((c) => ({
+      email: c.email,
+      expired: false,
+      id: Number(c.user_id),
+      kind: c.kind,
+      accepted: true,
+      token: "",
+    }));
   };
 
   const createInvite = () => {

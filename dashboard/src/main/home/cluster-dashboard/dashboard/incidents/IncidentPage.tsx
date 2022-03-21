@@ -84,7 +84,9 @@ const IncidentPage = () => {
         <BackButton onClick={handleClose}>
           <BackButtonImg src={backArrow} />
         </BackButton>
-        <TitleSection icon={nodePng}>Incident for {incident.release_name}</TitleSection>
+        <TitleSection materialIconClass="material-icons" icon="error">
+          Incident for {incident.release_name}
+        </TitleSection>
         <IncidentMessage>{incident.latest_message}</IncidentMessage>
         <IncidentStatus status={incident.latest_state}>
           Status: <i>{incident.latest_state}</i>
@@ -240,11 +242,11 @@ const IncidentStatus = styled.span`
   > i {
     margin-left: 5px;
     color: ${(props: { status: string }) => {
-    if (props.status === "ONGOING") {
-      return "#f5cb42";
-    }
-    return "#00d12a";
-  }};
+      if (props.status === "ONGOING") {
+        return "#f5cb42";
+      }
+      return "#00d12a";
+    }};
   }
 `;
 

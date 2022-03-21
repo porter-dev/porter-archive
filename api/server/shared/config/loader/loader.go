@@ -204,11 +204,9 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	provClient, err := getProvisionerServiceClient(sc)
 
-	if err != nil {
-		return nil, err
+	if err == nil && provClient != nil {
+		res.ProvisionerClient = provClient
 	}
-
-	res.ProvisionerClient = provClient
 
 	res.AnalyticsClient = analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, res.Logger)
 

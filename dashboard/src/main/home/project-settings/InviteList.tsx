@@ -44,7 +44,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
   useEffect(() => {
     api
-      .getAvailableRoles("<token>", {}, { project_id: currentProject.id })
+      .getAvailableRoles("<token>", {}, { project_id: currentProject?.id })
       .then(({ data }: { data: string[] }) => {
         const availableRoleList = data?.map((role) => ({
           value: role,
@@ -69,7 +69,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         "<token>",
         {},
         {
-          id: currentProject.id,
+          id: currentProject?.id,
         }
       );
       invites = response.data.filter((i: InviteType) => !i.accepted);
@@ -82,7 +82,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         "<token>",
         {},
         {
-          project_id: currentProject.id,
+          project_id: currentProject?.id,
         }
       );
       collaborators = parseCollaboratorsResponse(response.data);
@@ -333,6 +333,10 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       currentProject.id
     }/invites/${token}
     `;
+
+    if (!user) {
+      return [];
+    }
 
     const mappedInviteList = inviteList.map(
       ({ accepted, expired, token, ...rest }) => {

@@ -15,7 +15,7 @@ type Props = {
   sortType: "Newest" | "Oldest" | "Alphabetical";
 };
 
-const dateFormatter = (date: string) => {
+export const dateFormatter = (date: string) => {
   if (!date) {
     return "N/A";
   }
@@ -35,7 +35,7 @@ const dateFormatter = (date: string) => {
   return rtf.format(-time.time, time.unitOfTime);
 };
 
-const runnedFor = (start: string | number, end?: string | number) => {
+export const runnedFor = (start: string | number, end?: string | number) => {
   const duration = timeFrom(start, end);
 
   const unit =
@@ -46,7 +46,7 @@ const runnedFor = (start: string | number, end?: string | number) => {
   return `${duration.time} ${unit}`;
 };
 
-function timeFrom(time: string | number, secondTime?: string | number) {
+export function timeFrom(time: string | number, secondTime?: string | number) {
   // Get timestamps
   let unixTime = new Date(time).getTime();
   if (!unixTime) return;
@@ -442,7 +442,7 @@ const RedirectButton = styled(DynamicLink)`
   }
 `;
 
-type JobRun = {
+export type JobRun = {
   metadata: {
     name: string;
     namespace: string;

@@ -183,7 +183,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		return err
 	}
 
-	if source == "local" && fullPath == homedir.HomeDir() {
+	if os.Getenv("GITHUB_ACTIONS") == "" && source == "local" && fullPath == homedir.HomeDir() {
 		proceed, err := utils.PromptConfirm("You are deploying your home directory. Do you want to continue?", false)
 
 		if err != nil {

@@ -503,11 +503,7 @@ jobs:
           git config user.name "Update Bot"
           git config user.email "support@porter.run"
 
-          git add .
-
-          git diff --quiet --exit-code || git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}"
-
-          git push -f
+          git diff --quiet --exit-code || git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f
   run-new-release-tests-workflows:
     name: Run new-release-tests Porter workflows
     runs-on: ubuntu-latest

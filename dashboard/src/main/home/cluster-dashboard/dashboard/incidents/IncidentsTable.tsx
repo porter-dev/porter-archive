@@ -139,7 +139,7 @@ export default IncidentsTable;
 const KindContainer = styled.div`
   display: flex;
   align-items: center;
-  min-width: 150px;
+  min-width: 200px;
 `;
 
 const Kind = styled.div`

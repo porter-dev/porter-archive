@@ -1,9 +1,12 @@
+import Description from "components/Description";
 import Loading from "components/Loading";
 import { isEmpty } from "lodash";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
+import ExpandedContainer from "./ExpandedContainer";
 import { IncidentContainerEvent, IncidentEvent } from "./IncidentPage";
 
 const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
@@ -23,7 +26,7 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
 
   useEffect(() => {
     if (!event) {
-      return () => { };
+      return () => {};
     }
 
     let isSubscribed = true;
@@ -83,28 +86,22 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
 
   return (
     <EventDrawerContainer>
-      <EventDrawerTitle>{event?.pod_name}</EventDrawerTitle>
-      <span>{event?.message}</span>
-
-      <div>
-        <span>Pod Phase: {event?.pod_phase}</span>
-        <span>Pod Status: {event?.pod_status}</span>
-      </div>
-      {containers.map((container) => {
-        const logs = containerLogs[container.container_name];
-
-        return (
-          <div key={container.container_name}>
-            <h3>{container.container_name}</h3>
-            <span>
-              {container.message} - Exit Code: {container.exit_code}
-            </span>
-            <div>
-              {logs ? <>{logs}</> : <>No logs available for this container.</>}
-            </div>
-          </div>
-        );
-      })}
+      <EventDrawerTitle>Pod: {event?.pod_name}</EventDrawerTitle>
+      <Description>
+        Event reported on{" "}
+        {Intl.DateTimeFormat([], {
+          // @ts-ignore
+          dateStyle: "full",
+          timeStyle: "long",
+        }).format(new Date(event?.timestamp))}
+      </Description>
+      <Description>{event?.message}</Description>
+      {containers.map((container) => (
+        <ExpandedContainer
+          container={container}
+          logs={containerLogs[container.container_name]}
+        />
+      ))}
     </EventDrawerContainer>
   );
 };
@@ -120,5 +117,5 @@ const EventDrawerTitle = styled.span`
   display: block;
   font-size: 24px;
   font-weight: bold;
-  color: #ffffff90;
+  color: #ffffff;
 `;

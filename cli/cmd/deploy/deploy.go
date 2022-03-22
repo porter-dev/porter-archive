@@ -341,6 +341,19 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 
 	mergedValues := utils.CoalesceValues(d.release.Config, overrideValues)
 
+	activeBlueGreenTagVal := GetCurrActiveBlueGreenImage(mergedValues)
+
+	// only overwrite if the active tag value is not the same as the target tag. otherwise
+	// this has been modified already and inserted into overrideValues.
+	if activeBlueGreenTagVal != "" && activeBlueGreenTagVal != d.tag {
+		mergedValues["bluegreen"] = map[string]interface{}{
+			"enabled":                  true,
+			"disablePrimaryDeployment": true,
+			"activeImageTag":           activeBlueGreenTagVal,
+			"imageTags":                []string{activeBlueGreenTagVal, d.tag},
+		}
+	}
+
 	// overwrite the tag based on a new image
 	currImageSection := mergedValues["image"].(map[string]interface{})
 
@@ -676,4 +689,23 @@ func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]inte
 	}
 
 	return res, nil
+}
+
+func GetCurrActiveBlueGreenImage(vals map[string]interface{}) string {
+	if bgInter, ok := vals["bluegreen"]; ok {
+		if bgVal, ok := bgInter.(map[string]interface{}); ok {
+			if enabledInter, ok := bgVal["enabled"]; ok {
+				if enabledVal, ok := enabledInter.(bool); ok && enabledVal {
+					// they're enabled -- read the activeTagValue and construct the new bluegreen object
+					if activeTagInter, ok := bgVal["activeImageTag"]; ok {
+						if activeTagVal, ok := activeTagInter.(string); ok {
+							return activeTagVal
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return ""
 }

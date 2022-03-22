@@ -7,7 +7,6 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers/job"
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
-	"github.com/porter-dev/porter/api/server/handlers/provision"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -57,37 +56,7 @@ func getNamespaceRoutes(
 
 	routes := make([]*Route, 0)
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/provision/rds/ -> provision.NewProvisionRDSHandler
-	provisionRDSEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/provision/rds",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-				types.NamespaceScope,
-			},
-		},
-	)
-
-	provisionRDSHandler := provision.NewProvisionRDSHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &Route{
-		Endpoint: provisionRDSEndpoint,
-		Handler:  provisionRDSHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroup/list -> namespace.NewListEnvGroupsHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroups/list -> namespace.NewListEnvGroupsHandler
 	listEnvGroupsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -450,6 +419,40 @@ func getNamespaceRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/jobs/stream -> namespace.NewStreamJobRunsHandler
+	streamJobRunsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/jobs/stream",
+					relPath,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+			},
+			IsWebsocket: true,
+		},
+	)
+
+	streamJobRunsHandler := namespace.NewStreamJobRunsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: streamJobRunsEndpoint,
+		Handler:  streamJobRunsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/pod/{name}/previous_logs
 	getPreviousLogsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -680,7 +683,7 @@ func getNamespaceRoutes(
 	})
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/ingresses/{name} ->
-	// release.NewGetJobsHandler
+	// namespace.NewGetIngressHandler
 	getIngressEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

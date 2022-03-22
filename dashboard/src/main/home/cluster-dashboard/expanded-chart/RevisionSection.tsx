@@ -11,19 +11,19 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
+import { readableDate } from "shared/string_utils";
 
 type PropsType = WithAuthProps & {
-  showRevisions: boolean;
-  toggleShowRevisions: () => void;
   chart: ChartType;
   refreshChart: () => void;
   setRevision: (x: ChartType, isCurrent?: boolean) => void;
   forceRefreshRevisions: boolean;
   refreshRevisionsOff: () => void;
-  status: string;
   shouldUpdate: boolean;
   upgradeVersion: (version: string, cb: () => void) => void;
   latestVersion: string;
+  showRevisions?: boolean;
+  toggleShowRevisions?: () => void;
 };
 
 type StateType = {
@@ -32,6 +32,7 @@ type StateType = {
   upgradeVersion: string;
   loading: boolean;
   maxVersion: number;
+  expandRevisions: boolean;
 };
 
 // TODO: handle refresh when new revision is generated from an old revision
@@ -42,6 +43,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     upgradeVersion: "",
     loading: false,
     maxVersion: 0, // Track most recent version even when previewing old revisions
+    expandRevisions: false,
   };
 
   refreshHistory = () => {
@@ -149,16 +151,6 @@ class RevisionSection extends Component<PropsType, StateType> {
     }
   }
 
-  readableDate = (s: string) => {
-    let ts = new Date(s);
-    let date = ts.toLocaleDateString();
-    let time = ts.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${time} on ${date}`;
-  };
-
   handleRollback = () => {
     let { setCurrentError, currentCluster, currentProject } = this.context;
 
@@ -200,23 +192,6 @@ class RevisionSection extends Component<PropsType, StateType> {
     }
   };
 
-  renderStatus = (revision: ChartType) => {
-    if (
-      this.props.chart.version === revision.version &&
-      this.props.status == "loading"
-    ) {
-      return (
-        <div>
-          {this.props.status}
-          <LoadingGif src={loading} revision={true} />
-        </div>
-      );
-    } else if (this.props.chart.version === revision.version) {
-      return this.props.status;
-    }
-    return revision.info.status;
-  };
-
   renderRevisionList = () => {
     return this.state.revisions.map((revision: ChartType, i: number) => {
       let isCurrent = revision.version === this.state.maxVersion;
@@ -234,7 +209,7 @@ class RevisionSection extends Component<PropsType, StateType> {
           selected={this.props.chart.version === revision.version}
         >
           <Td>{revision.version}</Td>
-          <Td>{this.readableDate(revision.info.last_deployed)}</Td>
+          <Td>{readableDate(revision.info.last_deployed)}</Td>
           <Td>
             {!imageTag ? (
               "N/A"
@@ -272,7 +247,7 @@ class RevisionSection extends Component<PropsType, StateType> {
   };
 
   renderExpanded = () => {
-    if (this.props.showRevisions) {
+    if (this.state.expandRevisions) {
       return (
         <TableWrapper>
           <RevisionsTable>
@@ -333,7 +308,15 @@ class RevisionSection extends Component<PropsType, StateType> {
         <RevisionHeader
           showRevisions={this.props.showRevisions}
           isCurrent={isCurrent}
-          onClick={this.props.toggleShowRevisions}
+          onClick={() => {
+            if (typeof this.props.toggleShowRevisions === "function") {
+              this.props.toggleShowRevisions();
+            }
+            this.setState((prev) => ({
+              ...prev,
+              expandRevisions: !prev.expandRevisions,
+            }));
+          }}
         >
           <RevisionPreview>
             {isCurrent
@@ -363,7 +346,7 @@ class RevisionSection extends Component<PropsType, StateType> {
 
   render() {
     return (
-      <StyledRevisionSection showRevisions={this.props.showRevisions}>
+      <StyledRevisionSection showRevisions={this.state.expandRevisions}>
         {this.renderContents()}
         <ConfirmOverlay
           show={this.state.rollbackRevision && true}

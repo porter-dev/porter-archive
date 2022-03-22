@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 
@@ -76,7 +77,7 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(slackInt.ClientID) > 0 {
-		cipherData, err := repository.Encrypt(slackInt.ClientID, key)
+		cipherData, err := encryption.Encrypt(slackInt.ClientID, key)
 
 		if err != nil {
 			return err
@@ -86,7 +87,7 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 	}
 
 	if len(slackInt.AccessToken) > 0 {
-		cipherData, err := repository.Encrypt(slackInt.AccessToken, key)
+		cipherData, err := encryption.Encrypt(slackInt.AccessToken, key)
 
 		if err != nil {
 			return err
@@ -96,7 +97,7 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 	}
 
 	if len(slackInt.RefreshToken) > 0 {
-		cipherData, err := repository.Encrypt(slackInt.RefreshToken, key)
+		cipherData, err := encryption.Encrypt(slackInt.RefreshToken, key)
 
 		if err != nil {
 			return err
@@ -106,7 +107,7 @@ func (repo *SlackIntegrationRepository) EncryptSlackIntegrationData(
 	}
 
 	if len(slackInt.Webhook) > 0 {
-		cipherData, err := repository.Encrypt(slackInt.Webhook, key)
+		cipherData, err := encryption.Encrypt(slackInt.Webhook, key)
 
 		if err != nil {
 			return err
@@ -125,7 +126,7 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 	key *[32]byte,
 ) error {
 	if len(slackInt.ClientID) > 0 {
-		plaintext, err := repository.Decrypt(slackInt.ClientID, key)
+		plaintext, err := encryption.Decrypt(slackInt.ClientID, key)
 
 		if err != nil {
 			return err
@@ -135,7 +136,7 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 	}
 
 	if len(slackInt.AccessToken) > 0 {
-		plaintext, err := repository.Decrypt(slackInt.AccessToken, key)
+		plaintext, err := encryption.Decrypt(slackInt.AccessToken, key)
 
 		if err != nil {
 			return err
@@ -145,7 +146,7 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 	}
 
 	if len(slackInt.RefreshToken) > 0 {
-		plaintext, err := repository.Decrypt(slackInt.RefreshToken, key)
+		plaintext, err := encryption.Decrypt(slackInt.RefreshToken, key)
 
 		if err != nil {
 			return err
@@ -155,7 +156,7 @@ func (repo *SlackIntegrationRepository) DecryptSlackIntegrationData(
 	}
 
 	if len(slackInt.Webhook) > 0 {
-		plaintext, err := repository.Decrypt(slackInt.Webhook, key)
+		plaintext, err := encryption.Decrypt(slackInt.Webhook, key)
 
 		if err != nil {
 			return err

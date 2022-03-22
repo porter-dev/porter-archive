@@ -9,6 +9,8 @@ import api from "shared/api";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 import Loading from "components/Loading";
+import { readableDate } from "shared/string_utils";
+import { Infrastructure } from "shared/types";
 
 const tierOptions = [
   { value: "basic", label: "Basic" },
@@ -27,16 +29,6 @@ const regionOptions = [
   { value: "sgp1", label: "Singapore 1" },
   { value: "tor1", label: "Toronto 1" },
 ];
-
-const readableDate = (s: string) => {
-  const ts = new Date(s);
-  const date = ts.toLocaleDateString();
-  const time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
 
 /**
  * This will redirect to DO, and we should pass the redirection URI to be /onboarding/provision?provider=do
@@ -161,6 +153,61 @@ export const SettingsForm: React.FC<{
   const [tier, setTier] = useState("basic");
   const [region, setRegion] = useState("nyc1");
   const [clusterName, setClusterName] = useState(`${project.name}-cluster`);
+  const [currDOKSInfra, setCurrDOKSInfra] = useState<Infrastructure>();
+  const [currDOCRInfra, setCurrDOCRInfra] = useState<Infrastructure>();
+
+  useEffect(() => {
+    if (!project) {
+      return;
+    }
+
+    api
+      .getInfra<Infrastructure[]>("<token>", {}, { project_id: project.id })
+      .then(({ data }) => {
+        let sortFunc = (a: Infrastructure, b: Infrastructure) => {
+          return b.id < a.id ? -1 : b.id > a.id ? 1 : 0;
+        };
+
+        const matchedDOKSInfras = data
+          .filter((infra) => infra.kind == "doks")
+          .sort(sortFunc);
+        const matchedDOCRInfras = data
+          .filter((infra) => infra.kind == "docr")
+          .sort(sortFunc);
+
+        if (matchedDOKSInfras.length > 0) {
+          // get the infra with latest operation details from the API
+          api
+            .getInfraByID(
+              "<token>",
+              {},
+              { project_id: project.id, infra_id: matchedDOKSInfras[0].id }
+            )
+            .then(({ data }) => {
+              setCurrDOKSInfra(data);
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        }
+
+        if (matchedDOCRInfras.length > 0) {
+          api
+            .getInfraByID(
+              "<token>",
+              {},
+              { project_id: project.id, infra_id: matchedDOCRInfras[0].id }
+            )
+            .then(({ data }) => {
+              setCurrDOCRInfra(data);
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        }
+      })
+      .catch((err) => {});
+  }, [project]);
 
   const validate = () => {
     if (!clusterName) {
@@ -189,7 +236,7 @@ export const SettingsForm: React.FC<{
     infras: { kind: string; status: string }[]
   ) => {
     return !!infras.find(
-      (i) => ["docr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
+      (i) => ["docr", "docr", "ecr"].includes(i.kind) && i.status === "created"
     );
   };
 
@@ -203,22 +250,50 @@ export const SettingsForm: React.FC<{
 
   const provisionDOCR = async (integrationId: number, tier: string) => {
     console.log("Provisioning DOCR...");
-    try {
-      return await api
-        .createDOCR(
+
+    // See if there's an infra for DOKS that is in an errored state and the last operation
+    // was an attempt at creation. If so, re-use that infra.
+    if (
+      currDOCRInfra?.latest_operation?.type == "create" ||
+      currDOCRInfra?.latest_operation?.type == "retry_create"
+    ) {
+      try {
+        const res = await api.retryCreateInfra(
           "<token>",
           {
             do_integration_id: integrationId,
-            docr_name: project.name,
-            docr_subscription_tier: tier,
+            values: {
+              docr_name: project.name,
+              docr_subscription_tier: tier,
+            },
           },
-          {
-            project_id: project.id,
-          }
-        )
-        .then((res) => res?.data);
-    } catch (error) {
-      catchError(error);
+          { project_id: project.id, infra_id: currDOCRInfra.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
+    } else {
+      try {
+        return await api
+          .provisionInfra(
+            "<token>",
+            {
+              kind: "docr",
+              do_integration_id: integrationId,
+              values: {
+                docr_name: project.name,
+                docr_subscription_tier: tier,
+              },
+            },
+            {
+              project_id: project.id,
+            }
+          )
+          .then((res) => res?.data);
+      } catch (error) {
+        catchError(error);
+      }
     }
   };
 
@@ -228,23 +303,52 @@ export const SettingsForm: React.FC<{
     clusterName: string
   ) => {
     console.log("Provisioning DOKS...");
-    try {
-      return await api
-        .createDOKS(
+
+    // See if there's an infra for DOKS that is in an errored state and the last operation
+    // was an attempt at creation. If so, re-use that infra.
+    if (
+      currDOKSInfra?.latest_operation?.type == "create" ||
+      currDOKSInfra?.latest_operation?.type == "retry_create"
+    ) {
+      try {
+        const res = await api.retryCreateInfra(
           "<token>",
           {
             do_integration_id: integrationId,
-            doks_name: clusterName,
-            do_region: region,
-            issuer_email: snap.StateHandler.user_email,
+            values: {
+              cluster_name: clusterName,
+              do_region: region,
+              issuer_email: snap.StateHandler.user_email,
+            },
           },
-          {
-            project_id: project.id,
-          }
-        )
-        .then((res) => res?.data);
-    } catch (error) {
-      catchError(error);
+          { project_id: project.id, infra_id: currDOKSInfra.id }
+        );
+        return res?.data;
+      } catch (error) {
+        return catchError(error);
+      }
+    } else {
+      try {
+        return await api
+          .provisionInfra(
+            "<token>",
+            {
+              kind: "doks",
+              do_integration_id: integrationId,
+              values: {
+                cluster_name: clusterName,
+                do_region: region,
+                issuer_email: snap.StateHandler.user_email,
+              },
+            },
+            {
+              project_id: project.id,
+            }
+          )
+          .then((res) => res?.data);
+      } catch (error) {
+        catchError(error);
+      }
     }
   };
 

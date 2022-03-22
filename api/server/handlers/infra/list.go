@@ -12,22 +12,29 @@ import (
 )
 
 type InfraListHandler struct {
-	handlers.PorterHandlerWriter
+	handlers.PorterHandlerReadWriter
 }
 
 func NewInfraListHandler(
 	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *InfraListHandler {
 	return &InfraListHandler{
-		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
 func (p *InfraListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	infras, err := p.Repo().Infra().ListInfrasByProjectID(proj.ID)
+	req := &types.ListInfraRequest{}
+
+	if ok := p.DecodeAndValidate(w, r, req); !ok {
+		return
+	}
+
+	infras, err := p.Repo().Infra().ListInfrasByProjectID(proj.ID, req.Version)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

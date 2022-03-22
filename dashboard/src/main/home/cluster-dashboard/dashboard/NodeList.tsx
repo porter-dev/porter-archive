@@ -20,6 +20,10 @@ const NodeList: React.FC = () => {
       {
         Header: "Node Name",
         accessor: "name",
+        Cell: ({ row }) => {
+          return <NameWrapper>{row.values.name}</NameWrapper>;
+        },
+        width: "max-content",
       },
       {
         Header: "Machine Type",
@@ -184,4 +188,9 @@ const StatusButton = styled.div`
     background: ${(props: { success: boolean }) =>
       props.success ? "#405eddbb" : "#e83162"};
   }
+`;
+
+const NameWrapper = styled.span`
+  white-space: nowrap;
+  margin-right: 10px;
 `;

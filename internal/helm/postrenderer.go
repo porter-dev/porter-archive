@@ -2,9 +2,11 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -237,10 +239,14 @@ func (d *DockerSecretsPostRenderer) Run(
 	defer encoder.Close()
 
 	for _, resource := range d.resources {
-		err = encoder.Encode(resource)
+		// if the resource is empty, we skip encoding it to prevent errors. Helm/k8s expects empty resources to take the form "{}",
+		// while this library writes an empty string, causing problems during installation.
+		if len(resource) != 0 {
+			err = encoder.Encode(resource)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -314,7 +320,9 @@ func decodeRenderedManifests(
 			return resArr, err
 		}
 
-		resArr = append(resArr, res)
+		if len(res) != 0 {
+			resArr = append(resArr, res)
+		}
 	}
 
 	return resArr, nil
@@ -742,6 +750,11 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 			for _, envVar := range envVars {
 				envVarArr = append(envVarArr, envVar)
 			}
+
+			// Sort the slices according to a stable ordering. This is hacky and inefficient.
+			sort.SliceStable(envVarArr, func(i, j int) bool {
+				return fmt.Sprintf("%v", envVarArr[i]) > fmt.Sprintf("%v", envVarArr[j])
+			})
 
 			_container["env"] = envVarArr
 			newContainers = append(newContainers, _container)

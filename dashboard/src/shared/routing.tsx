@@ -6,6 +6,7 @@ export type PorterUrl =
   | "integrations"
   | "new-project"
   | "cluster-dashboard"
+  | "infrastructure"
   | "project-settings"
   | "applications"
   | "env-groups"
@@ -20,6 +21,7 @@ export const PorterUrls = [
   "new-project",
   "cluster-dashboard",
   "project-settings",
+  "infrastructure",
   "applications",
   "env-groups",
   "jobs",
@@ -28,12 +30,19 @@ export const PorterUrls = [
 ];
 
 // TODO: consolidate with pushFiltered
-export const pushQueryParams = (props: any, params: any) => {
+export const pushQueryParams = (
+  props: any,
+  params: any,
+  removedParams?: string[]
+) => {
   let { location, history } = props;
   const urlParams = new URLSearchParams(location.search);
   Object.keys(params)?.forEach((key: string) => {
     params[key] && urlParams.set(key, params[key]);
   });
+
+  removedParams?.map((deletedParam) => urlParams.delete(deletedParam));
+
   history.push({
     pathname: location.pathname,
     search: urlParams.toString(),
@@ -78,8 +87,11 @@ export const useRouting = () => {
   const history = useHistory();
 
   return {
-    pushQueryParams: (params: { [key: string]: unknown }) => {
-      return pushQueryParams({ location, history }, params);
+    pushQueryParams: (
+      params: { [key: string]: unknown },
+      removedParams?: string[]
+    ) => {
+      return pushQueryParams({ location, history }, params, removedParams);
     },
     pushFiltered: (
       pathname: string,

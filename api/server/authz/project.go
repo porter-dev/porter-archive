@@ -41,14 +41,14 @@ func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrForbidden(
+			apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrForbidden(
 				fmt.Errorf("project not found with id %d", projID),
 			), true)
 
 			return
 		}
 
-		apierrors.HandleAPIError(p.config, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
 

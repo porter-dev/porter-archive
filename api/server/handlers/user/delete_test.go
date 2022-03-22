@@ -26,7 +26,7 @@ func TestDeleteUserSuccessful(t *testing.T) {
 
 	handler := user.NewUserDeleteHandler(
 		config,
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)
@@ -63,7 +63,7 @@ func TestFailingDeleteUserMethod(t *testing.T) {
 
 	handler := user.NewUserDeleteHandler(
 		config,
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

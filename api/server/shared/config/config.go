@@ -10,12 +10,12 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
+	"github.com/porter-dev/porter/provisioner/client"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 )
@@ -75,9 +75,8 @@ type Config struct {
 	// URLCache contains a cache of chart names to chart repos
 	URLCache *urlcache.ChartURLCache
 
-	// ProvisionerAgent is the kubernetes client responsible for creating new provisioner
-	// jobs
-	ProvisionerAgent *kubernetes.Agent
+	// ProvisionerClient is an authenticated client for the provisioner service
+	ProvisionerClient *client.Client
 
 	// DB is the gorm DB instance
 	DB *gorm.DB

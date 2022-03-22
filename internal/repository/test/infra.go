@@ -57,6 +57,7 @@ func (repo *InfraRepository) ReadInfra(
 // for a given project id
 func (repo *InfraRepository) ListInfrasByProjectID(
 	projectID uint,
+	apiVersion string,
 ) ([]*models.Infra, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
@@ -89,4 +90,26 @@ func (repo *InfraRepository) UpdateInfra(
 	repo.infras[index] = ai
 
 	return ai, nil
+}
+
+func (repo *InfraRepository) AddOperation(infra *models.Infra, operation *models.Operation) (*models.Operation, error) {
+	panic("unimplemented")
+}
+
+func (repo *InfraRepository) GetLatestOperation(infra *models.Infra) (*models.Operation, error) {
+	panic("unimplemented")
+}
+
+func (repo *InfraRepository) ListOperations(infraID uint) ([]*models.Operation, error) {
+	panic("unimplemented")
+}
+
+func (repo *InfraRepository) ReadOperation(infraID uint, operationUID string) (*models.Operation, error) {
+	panic("unimplemented")
+}
+
+func (repo *InfraRepository) UpdateOperation(
+	operation *models.Operation,
+) (*models.Operation, error) {
+	panic("unimplemented")
 }

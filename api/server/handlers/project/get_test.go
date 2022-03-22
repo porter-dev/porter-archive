@@ -29,7 +29,7 @@ func TestGetProjectSuccessful(t *testing.T) {
 
 	handler := project.NewProjectGetHandler(
 		config,
-		shared.NewDefaultResultWriter(config),
+		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
 	)
 
 	handler.ServeHTTP(rr, req)

@@ -141,17 +141,19 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 					if currActiveImage == "" {
 						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
 							"bluegreen": map[string]interface{}{
-								"enabled":        true,
-								"activeImageTag": tag,
-								"imageTags":      []string{tag},
+								"enabled":                  true,
+								"disablePrimaryDeployment": true,
+								"activeImageTag":           tag,
+								"imageTags":                []string{tag},
 							},
 						})
 					} else {
 						err = deployAgent.UpdateImageAndValues(map[string]interface{}{
 							"bluegreen": map[string]interface{}{
-								"enabled":        true,
-								"activeImageTag": tag,
-								"imageTags":      []string{currActiveImage, tag},
+								"enabled":                  true,
+								"disablePrimaryDeployment": true,
+								"activeImageTag":           tag,
+								"imageTags":                []string{currActiveImage, tag},
 							},
 						})
 					}
@@ -192,9 +194,10 @@ func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, 
 
 	err = deployAgent.UpdateImageAndValues(map[string]interface{}{
 		"bluegreen": map[string]interface{}{
-			"enabled":        true,
-			"activeImageTag": tag,
-			"imageTags":      []string{tag},
+			"enabled":                  true,
+			"disablePrimaryDeployment": true,
+			"activeImageTag":           tag,
+			"imageTags":                []string{tag},
 		},
 	})
 

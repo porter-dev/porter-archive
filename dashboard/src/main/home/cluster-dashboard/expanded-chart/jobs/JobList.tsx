@@ -8,8 +8,9 @@ import useAuth from "shared/auth/useAuth";
 import usePagination from "shared/hooks/usePagination";
 import Selector from "components/Selector";
 import DisplaySwitch from "components/DisplaySwitch";
-import { CellProps, Column } from "react-table";
+import { CellProps, Column, Row } from "react-table";
 import { dateFormatter, JobRun, runnedFor } from "../../chart/JobRunTable";
+import Table from "components/Table";
 
 type PropsType = {
   jobs: any[];
@@ -96,34 +97,58 @@ const JobListFC = (props: PropsType): JSX.Element => {
         value={view}
       />
       <JobListWrapper>
-        {props.jobs
-          .slice(firstContentIndex, lastContentIndex)
-          .map((job: any, i: number) => {
-            return (
-              <JobResource
-                key={job?.metadata?.name}
-                expandJob={props.expandJob}
-                job={job}
-                handleDelete={() => {
-                  setDeletionCandidate(job);
-                  setCurrentOverlay({
-                    message: "Are you sure you want to delete this job run?",
-                    onYes: deleteJob,
-                    onNo: () => {
-                      setDeletionCandidate(null);
-                      setCurrentOverlay(null);
-                    },
-                  });
-                }}
-                deleting={deletionJob?.metadata?.name == job.metadata?.name}
-                readOnly={!isAuthorized("job", "", ["get", "update", "delete"])}
-                isDeployedFromGithub={props.isDeployedFromGithub}
-                repositoryUrl={props.repositoryUrl}
-                currentChartVersion={props.currentChartVersion}
-                latestChartVersion={props.latestChartVersion}
-              />
-            );
-          })}
+        {view === "table" ? (
+          <JobTableRenderer
+            jobs={props.jobs.slice(firstContentIndex, lastContentIndex)}
+            handleDelete={(jobRun) => {
+              setDeletionCandidate(jobRun);
+              setCurrentOverlay({
+                message: "Are you sure you want to delete this job run?",
+                onYes: deleteJob,
+                onNo: () => {
+                  setDeletionCandidate(null);
+                  setCurrentOverlay(null);
+                },
+              });
+            }}
+            deletionJob={deletionJob}
+            {...props}
+          />
+        ) : (
+          <>
+            {props.jobs
+              .slice(firstContentIndex, lastContentIndex)
+              .map((job: any, i: number) => {
+                return (
+                  <JobResource
+                    key={job?.metadata?.name}
+                    expandJob={props.expandJob}
+                    job={job}
+                    handleDelete={() => {
+                      setDeletionCandidate(job);
+                      setCurrentOverlay({
+                        message:
+                          "Are you sure you want to delete this job run?",
+                        onYes: deleteJob,
+                        onNo: () => {
+                          setDeletionCandidate(null);
+                          setCurrentOverlay(null);
+                        },
+                      });
+                    }}
+                    deleting={deletionJob?.metadata?.name == job.metadata?.name}
+                    readOnly={
+                      !isAuthorized("job", "", ["get", "update", "delete"])
+                    }
+                    isDeployedFromGithub={props.isDeployedFromGithub}
+                    repositoryUrl={props.repositoryUrl}
+                    currentChartVersion={props.currentChartVersion}
+                    latestChartVersion={props.latestChartVersion}
+                  />
+                );
+              })}
+          </>
+        )}
       </JobListWrapper>
       <FlexEnd style={{ marginTop: "15px" }}>
         {/* Disable the page count selector until find a fix for their styles */}
@@ -173,7 +198,7 @@ export default JobListFC;
 
 type JobTableRendererType = {
   jobs: JobRun[];
-  handleDelete: () => void;
+  handleDelete: (jobRun: JobRun) => void;
   deletionJob: JobRun;
   currentChartVersion: number;
   latestChartVersion: number;
@@ -182,7 +207,31 @@ type JobTableRendererType = {
 };
 
 const JobTableRenderer = (props: JobTableRendererType): JSX.Element => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
+
+  const stopJob = (jobName: string, jobNamespace: string) => {
+    api
+      .stopJob(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          name: jobName,
+          namespace: jobNamespace,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {})
+      .catch((err) => {
+        let parsedErr = err?.response?.data?.error;
+        if (parsedErr) {
+          err = parsedErr;
+        }
+        setCurrentError(err);
+      });
+  };
 
   const columns = useMemo<Column<JobRun>[]>(
     () => [
@@ -293,6 +342,33 @@ const JobTableRenderer = (props: JobTableRendererType): JSX.Element => {
         },
       },
       {
+        id: "stop",
+        Cell: ({ row }: CellProps<JobRun>) => {
+          const jobRun = row.original;
+          if (jobRun.status?.succeeded || jobRun.status?.failed) {
+            return null;
+          }
+
+          if (jobRun.spec?.template?.spec?.containers?.length < 2) {
+            return null;
+          }
+
+          return (
+            <i
+              className="material-icons"
+              onClick={() =>
+                stopJob(
+                  row.original?.metadata?.name,
+                  row.original?.metadata?.namespace
+                )
+              }
+            >
+              stop
+            </i>
+          );
+        },
+      },
+      {
         id: "delete",
         Cell: ({ row }: CellProps<JobRun>) => {
           return (
@@ -300,7 +376,7 @@ const JobTableRenderer = (props: JobTableRendererType): JSX.Element => {
               className="material-icons"
               onClick={(e) => {
                 e.stopPropagation();
-                props.handleDelete();
+                props.handleDelete(row.original);
               }}
             >
               delete
@@ -313,9 +389,15 @@ const JobTableRenderer = (props: JobTableRendererType): JSX.Element => {
     []
   );
 
-  const data = useMemo(() => {}, [props.jobs]);
+  const data = useMemo(() => {
+    return props.jobs || [];
+  }, [props.jobs]);
 
-  return <></>;
+  return (
+    <>
+      <Table data={data} isLoading={!props.jobs?.length} columns={columns} />
+    </>
+  );
 };
 
 const CommandString = styled.div`

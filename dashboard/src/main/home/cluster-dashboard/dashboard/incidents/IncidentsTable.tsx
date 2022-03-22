@@ -66,14 +66,11 @@ const IncidentsTable = () => {
         Cell: ({ row }) => {
           let original = row.original;
 
+          let chartName = original?.chart_name.split("-")[0] || "web";
+
           return (
             <KindContainer>
-              <Icon
-                src={
-                  hardcodedIcons[original?.chart_name || "web"] ||
-                  hardcodedIcons["web"]
-                }
-              />
+              <Icon src={hardcodedIcons[chartName] || hardcodedIcons["web"]} />
               <Kind>{original.release_name}</Kind>
             </KindContainer>
           );

@@ -10,7 +10,7 @@ import { capitalize, readableDate } from "shared/string_utils";
 import styled from "styled-components";
 import ExpandedContainer from "./ExpandedContainer";
 import { IncidentContainerEvent, IncidentEvent } from "./IncidentPage";
-import backArrow from "assets/back_arrow.png";
+import close from "assets/close.png";
 
 const EventDrawer: React.FC<{
   event: IncidentEvent;
@@ -102,10 +102,13 @@ const EventDrawer: React.FC<{
 
   return (
     <EventDrawerContainer>
-      <BackButton onClick={closeDrawer}>
-        <BackButtonImg src={backArrow} />
-      </BackButton>
-      <EventDrawerTitle>Pod: {event?.pod_name}</EventDrawerTitle>
+      <EventDrawerTitleContainer>
+        <EventDrawerTitle>Pod: {event?.pod_name}</EventDrawerTitle>
+        <BackButton onClick={closeDrawer}>
+          <i className="material-icons">close</i>
+        </BackButton>
+      </EventDrawerTitleContainer>
+
       <StyledHelper>
         {hasPodStatusErrored ? (
           "We couldn't retrieve last pod status, please try again later"
@@ -364,6 +367,7 @@ const BackButton = styled.div`
   border: 1px solid #ffffff55;
   border-radius: 100px;
   background: #ffffff11;
+  color: #ffffffaa;
 
   > i {
     font-size: 20px;
@@ -402,4 +406,10 @@ const StatusColor = styled.div`
 const BackButtonImg = styled.img`
   width: 16px;
   opacity: 0.75;
+`;
+
+const EventDrawerTitleContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;

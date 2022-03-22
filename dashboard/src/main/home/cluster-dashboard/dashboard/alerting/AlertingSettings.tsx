@@ -4,7 +4,7 @@ import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
-import { isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -41,7 +41,7 @@ const AlertingSettings = () => {
         }
         const newAlertingConfig = res.data?.backends;
         setAlertingConfig(newAlertingConfig || []);
-        initialAlertingConfig.current = newAlertingConfig;
+        initialAlertingConfig.current = cloneDeep(newAlertingConfig);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -180,7 +180,7 @@ const AlertingSettings = () => {
           clearPosition
           status={saveButtonStatus}
           statusPosition={"left"}
-          disabled={valuesHaveChanged}
+          disabled={!valuesHaveChanged}
         />
       </SaveButtonWrapper>
     </StyledSettingsSection>

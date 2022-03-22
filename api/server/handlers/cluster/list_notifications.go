@@ -96,7 +96,9 @@ func (c *ListNotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 		for _, action := range prometheusBackendResp.Actions {
 			if _, ok := activeRulesMap[action.ID]; ok {
-				action.Value = "true"
+				if action.Type == "toggle" {
+					action.Value = true
+				}
 			}
 		}
 	}

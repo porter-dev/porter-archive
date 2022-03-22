@@ -1062,5 +1062,62 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/notifications -> cluster.NewListNotificationsHandler
+	listNotificationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/notifications",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listNotificationsHandler := cluster.NewListNotificationsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listNotificationsEndpoint,
+		Handler:  listNotificationsHandler,
+		Router:   r,
+	})
+
+	// PUT /api/projects/{project_id}/clusters/{cluster_id}/notifications -> cluster.NewSetNotificationHandler
+	setNotificationEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPut,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/notifications",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	setNotifiationHandler := cluster.NewSetNotificationHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: setNotificationEndpoint,
+		Handler:  setNotifiationHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -1,11 +1,8 @@
 import Loading from "components/Loading";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useHistory, useParams } from "react-router";
+import { useParams } from "react-router";
 import styled from "styled-components";
-import TitleSection from "components/TitleSection";
 
-import backArrow from "assets/back_arrow.png";
-import nodePng from "assets/node.png";
 import { Drawer, withStyles } from "@material-ui/core";
 import EventDrawer from "./EventDrawer";
 import { useRouting } from "shared/routing";
@@ -13,7 +10,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import DynamicLink from "components/DynamicLink";
 import Header from "components/expanded-object/Header";
-import { capitalize, readableDate } from "shared/string_utils";
+import { capitalize } from "shared/string_utils";
 import Description from "components/Description";
 import { dateFormatter } from "../../chart/JobRunTable";
 
@@ -73,14 +70,11 @@ const IncidentPage = () => {
     return <Loading />;
   }
 
-  const handleClose = () => {
-    const redirect_url = getQueryParam("redirect_url");
-    if (!redirect_url) {
-      pushFiltered("/cluster-dashboard", []);
-      return;
-    }
-
-    pushFiltered(redirect_url, []);
+  const getBackLink = () => {
+    return (
+      getQueryParam("redirect_url") ||
+      "/cluster-dashboard?selected_tab=incidents"
+    );
   };
 
   const getResourceLink = () => {
@@ -97,12 +91,9 @@ const IncidentPage = () => {
   return (
     <StyledExpandedNodeView>
       <HeaderWrapper>
-        {/* <BackButton onClick={handleClose}>
-          <BackButtonImg src={backArrow} />
-        </BackButton> */}
         <Header
-          last_updated={readableDate("2022-03-18T21:02:50.602847-04:00")}
-          back_link={"/infrastructure"}
+          last_updated={dateFormatter(incident.updated_at * 1000)}
+          back_link={getBackLink()}
           name={"Incident for " + incident.release_name}
           icon={"error"}
           materialIconClass="material-icons"
@@ -131,18 +122,6 @@ const IncidentPage = () => {
             </StatusContainer>,
           ]}
         />
-        {/* <TitleSection materialIconClass="material-icons" icon="error">
-          Incident for {incident.release_name}
-          <ResourceLink
-            to={"/"}
-            target="_blank"
-            onClick={(e: any) => e.stopPropagation()}
-          >
-            {incident.release_name}
-            <i className="material-icons">open_in_new</i>
-          </ResourceLink>
-        </TitleSection>
-         */}
       </HeaderWrapper>
       <LineBreak />
       <BodyWrapper>
@@ -283,56 +262,6 @@ const LineBreak = styled.div`
   height: 2px;
   background: #ffffff20;
   margin: 10px 0px 35px;
-`;
-
-const IncidentMessage = styled.span`
-  display: block;
-  font-size: 16px;
-  color: #ffffff88;
-  margin-top: 10px;
-`;
-
-const IncidentStatus = styled.span`
-  display: block;
-  font-size: 16px;
-  color: #ffffff88;
-  margin-top: 10px;
-  > i {
-    margin-left: 5px;
-    color: ${(props: { status: string }) => {
-      if (props.status === "ONGOING") {
-        return "#f5cb42";
-      }
-      return "#00d12a";
-    }};
-  }
-`;
-
-const BackButton = styled.div`
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  display: flex;
-  width: 36px;
-  cursor: pointer;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
-  }
-`;
-
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
 `;
 
 const BodyWrapper = styled.div`

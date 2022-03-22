@@ -6,11 +6,10 @@ import { isEmpty } from "lodash";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { capitalize, readableDate } from "shared/string_utils";
+import { capitalize } from "shared/string_utils";
 import styled from "styled-components";
 import ExpandedContainer from "./ExpandedContainer";
 import { IncidentContainerEvent, IncidentEvent } from "./IncidentPage";
-import close from "assets/close.png";
 
 const EventDrawer: React.FC<{
   event: IncidentEvent;
@@ -163,40 +162,9 @@ const EventDrawerTitle = styled.span`
   color: #ffffff;
 `;
 
-const PorterFormContainer = styled.div`
-  position: relative;
-  min-width: 300px;
-`;
-
 const Br = styled.div`
   width: 100%;
   height: 20px;
-`;
-
-const StyledCard = styled.div`
-  display: grid;
-  grid-row-gap: 15px;
-  grid-template-columns: 1;
-`;
-
-const BackArrowContainer = styled.div`
-  width: 100%;
-  height: 24px;
-`;
-
-const BackArrow = styled.div`
-  > i {
-    color: #aaaabb;
-    font-size: 18px;
-    margin-right: 6px;
-  }
-
-  color: #aaaabb;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  cursor: pointer;
-  width: 120px;
 `;
 
 const MetadataContainer = styled.div`
@@ -209,151 +177,11 @@ const MetadataContainer = styled.div`
   margin: 12px 0;
 `;
 
-const LogTitleContainer = styled.div`
-  padding: 0 20px;
-  margin-bottom: 20px;
-`;
-
-const LogSectionContainer = styled.div`
-  margin-bottom: 3px;
-  border-radius: 6px;
-  background: #2e3135;
-  overflow: hidden;
-  max-height: 500px;
-  font-size: 13px;
-`;
-
-const LogContainer = styled.div`
-  padding: 14px;
-  font-size: 13px;
-  background: #121318;
-  user-select: text;
-  overflow-wrap: break-word;
-  overflow-y: auto;
-  min-height: 55px;
-  color: #aaaabb;
-  height: 400px;
-`;
-
-const Log = styled.div`
-  font-family: monospace, sans-serif;
-  font-size: 12px;
-  color: white;
-`;
-
 const StyledHelper = styled.div`
   color: #aaaabb;
   line-height: 1.6em;
   font-size: 13px;
   margin-top: 6px;
-`;
-
-const Placeholder = styled.div`
-  padding: 30px;
-  padding-bottom: 40px;
-  font-size: 13px;
-  color: #ffffff44;
-  min-height: 340px;
-  margin-top: 20px;
-  background: #ffffff08;
-  height: calc(50vh - 60px);
-  border-radius: 8px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  > i {
-    font-size: 18px;
-    margin-right: 8px;
-  }
-`;
-
-const RailCover = styled.div`
-  background: #202227;
-  height: 100%;
-  width: 35px;
-  position: absolute;
-  top: 20px;
-  left: 0;
-`;
-
-const Penumbra = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #202227;
-  padding: 8px;
-  border-radius: 30px;
-  margin-right: 4px;
-`;
-
-const TimelineNode = styled.div`
-  position: absolute;
-  top: 0;
-  left: 7px;
-  display: flex;
-  align-items: center;
-  color: #aaaabb;
-  font-size: 13px;
-`;
-
-const Circle = styled.div`
-  width: 7px;
-  height: 7px;
-  border-radius: 20px;
-  background: #aaaabb;
-`;
-
-const Wrapper = styled.div`
-  position: relative;
-  width: 100%;
-  padding-top: 35px;
-  padding-left: 35px;
-`;
-
-const Rail = styled.div`
-  position: absolute;
-  top: -8px;
-  left: 17px;
-  width: 3px;
-  height: 100%;
-  z-index: -1;
-  background: #36383d;
-`;
-
-const Timeline = styled.div`
-  margin-top: ${(props: { enableTopMargin: boolean }) =>
-    props.enableTopMargin ? "30px" : "unset"};
-  animation: floatIn 0.3s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
-  @keyframes floatIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-  }
-`;
-
-const Icon = styled.span<{ status: "critical" | "normal" }>`
-  font-size: 26px;
-  margin-left: 17px;
-  margin-right: 10px;
-  color: ${({ status }) => (status === "critical" ? "#ff385d" : "#aaaabb")};
-`;
-
-const ControlRow = styled.div`
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-left: 0px;
-  font-weight: 500;
 `;
 
 const BackButton = styled.div`
@@ -381,11 +209,6 @@ const BackButton = styled.div`
   }
 `;
 
-const EventsGrid = styled.div`
-  position: relative;
-  padding-top: 9px;
-`;
-
 const StatusColor = styled.div`
   display: inline-block;
   margin-right: 7px;
@@ -401,11 +224,6 @@ const StatusColor = styled.div`
       ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
-`;
-
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
 `;
 
 const EventDrawerTitleContainer = styled.div`

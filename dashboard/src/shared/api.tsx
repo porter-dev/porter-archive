@@ -1588,6 +1588,27 @@ const getPreviousLogsForContainer = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
 );
 
+const getAlertingConfig = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/notifications`
+);
+
+const saveAlertingConfig = baseApi<
+  {},
+  { project_id: number; cluster_id: number }
+>(
+  "PUT",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/notifications`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1741,4 +1762,6 @@ export default {
   provisionDatabase,
   getDatabases,
   getPreviousLogsForContainer,
+  getAlertingConfig,
+  saveAlertingConfig,
 };

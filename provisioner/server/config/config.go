@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	klocal "github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -68,6 +69,9 @@ type Config struct {
 	RedisClient *redis.Client
 
 	Provisioner provisioner.Provisioner
+
+	// AnalyticsClient if Segment analytics reporting is enabled on the API instance
+	AnalyticsClient analytics.AnalyticsSegmentClient
 }
 
 // ProvisionerConf is the env var configuration for the provisioner server
@@ -110,6 +114,9 @@ type ProvisionerConf struct {
 
 	// Options to configure for the "local" provisioner method
 	LocalTerraformDirectory string `env:"LOCAL_TERRAFORM_DIRECTORY"`
+
+	// Client key for segment to report provisioning events
+	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 }
 
 type EnvConf struct {
@@ -220,6 +227,8 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 			BaseURL:      envConf.ProvisionerConf.DOClientServerURL,
 		})
 	}
+
+	res.AnalyticsClient = analytics.InitializeAnalyticsSegmentClient(envConf.ProvisionerConf.SegmentClientKey, res.Logger)
 
 	return res, nil
 }

@@ -66,10 +66,19 @@ const AlertingSettings = () => {
         { project_id: currentProject?.id, cluster_id: currentCluster?.id }
       );
 
-      setSaveButtonStatus("success");
+      setSaveButtonStatus("successful");
+      clearSaveButtonStatus();
     } catch (error) {
       setSaveButtonStatus("Couldn't save the new config, please try again.");
+      setCurrentError(error);
+      clearSaveButtonStatus();
     }
+  };
+
+  const clearSaveButtonStatus = () => {
+    setTimeout(() => {
+      setSaveButtonStatus("");
+    }, 500);
   };
 
   const handleInputChange = (

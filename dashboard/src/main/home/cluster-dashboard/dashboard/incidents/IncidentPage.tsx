@@ -83,6 +83,17 @@ const IncidentPage = () => {
     pushFiltered(redirect_url, []);
   };
 
+  const getResourceLink = () => {
+    let chartName = incident?.chart_name.split("-")[0] || "web";
+    let namespace = incident?.incident_id.split(":")[2] || "default";
+
+    if (chartName == "job") {
+      return `/jobs/${currentCluster.name}/${namespace}/${incident?.release_name}`;
+    }
+
+    return `/applications/${currentCluster.name}/${namespace}/${incident?.release_name}`;
+  };
+
   return (
     <StyledExpandedNodeView>
       <HeaderWrapper>
@@ -98,7 +109,7 @@ const IncidentPage = () => {
           inline_title_items={[
             <ResourceLink
               key="resource_link"
-              to={"/"}
+              to={getResourceLink()}
               target="_blank"
               onClick={(e) => e.stopPropagation()}
             >
@@ -183,7 +194,10 @@ const IncidentPage = () => {
         open={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}
       >
-        <EventDrawer event={selectedEvent} />
+        <EventDrawer
+          event={selectedEvent}
+          closeDrawer={() => setSelectedEvent(null)}
+        />
       </StyledDrawer>
     </StyledExpandedNodeView>
   );

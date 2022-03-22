@@ -2,6 +2,8 @@ import CheckboxRow from "components/form-components/CheckboxRow";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
+import Loading from "components/Loading";
+import SaveButton from "components/SaveButton";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -9,12 +11,18 @@ import { capitalize } from "shared/string_utils";
 import styled from "styled-components";
 
 const AlertingSettings = () => {
-  const { currentCluster, currentProject } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
   const [alertingConfig, setAlertingConfig] = useState<AlertingBackend[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [saveButtonStatus, setSaveButtonStatus] = useState("");
 
   useEffect(() => {
     let isSubscribed = true;
+    setIsLoading(true);
     api
       .getAlertingConfig<AlertingConfigResponse>(
         "<token>",
@@ -30,12 +38,35 @@ const AlertingSettings = () => {
         }
         const alertingConfig = res.data?.backends;
         setAlertingConfig(alertingConfig || []);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        setIsLoading(false);
+        setHasError(true);
+        setCurrentError(err);
       });
 
     return () => {
       isSubscribed = false;
     };
   }, [currentProject, currentCluster]);
+
+  const saveAlertingConfig = async () => {
+    setSaveButtonStatus("loading");
+    try {
+      await api.saveAlertingConfig(
+        "<token>",
+        {
+          backends: alertingConfig,
+        },
+        { project_id: currentProject?.id, cluster_id: currentCluster?.id }
+      );
+
+      setSaveButtonStatus("success");
+    } catch (error) {
+      setSaveButtonStatus("Couldn't save the new config, please try again.");
+    }
+  };
 
   const handleInputChange = (
     action: AlertingAction,
@@ -94,6 +125,24 @@ const AlertingSettings = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <StyledSettingsSection>
+        <Loading height={"400px"} />
+      </StyledSettingsSection>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <StyledSettingsSection>
+        <ErrorText>
+          An unexpected error has happened, please try again.
+        </ErrorText>
+      </StyledSettingsSection>
+    );
+  }
+
   return (
     <StyledSettingsSection>
       {alertingConfig.map((backend) => {
@@ -106,11 +155,27 @@ const AlertingSettings = () => {
           </>
         );
       })}
+      <SaveButtonWrapper>
+        <SaveButton
+          text="Save alerting config"
+          onClick={saveAlertingConfig}
+          clearPosition
+          status={saveButtonStatus}
+          statusPosition={"left"}
+        />
+      </SaveButtonWrapper>
     </StyledSettingsSection>
   );
 };
 
 export default AlertingSettings;
+
+const SaveButtonWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+`;
 
 const StyledSettingsSection = styled.div`
   margin-top: 35px;
@@ -122,6 +187,16 @@ const StyledSettingsSection = styled.div`
   border-radius: 8px;
   overflow: auto;
   height: fit-content;
+`;
+
+const ErrorText = styled.div`
+  height: 400px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #ffffff90;
 `;
 
 type AlertingConfigResponse = {

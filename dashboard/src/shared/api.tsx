@@ -1601,7 +1601,7 @@ const getAlertingConfig = baseApi<
 );
 
 const saveAlertingConfig = baseApi<
-  {},
+  { backends: any },
   { project_id: number; cluster_id: number }
 >(
   "PUT",

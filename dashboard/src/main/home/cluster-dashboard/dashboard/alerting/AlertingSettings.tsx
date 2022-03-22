@@ -108,21 +108,29 @@ const AlertingSettings = () => {
         );
       case "string_input":
         return (
-          <InputRow
-            type="text"
-            value={action.value}
-            setValue={(val) => handleInputChange(action, backend, val)}
-            disabled={saveButtonStatus === "loading"}
-          />
+          <InputWrapper>
+            <InputRow
+              type="text"
+              label={action.description}
+              value={action.value}
+              setValue={(val) => handleInputChange(action, backend, val)}
+              disabled={saveButtonStatus === "loading"}
+              width={"100%"}
+            />
+          </InputWrapper>
         );
       case "integer_input":
         return (
-          <InputRow
-            type="number"
-            value={action.value}
-            setValue={(val) => handleInputChange(action, backend, val)}
-            disabled={saveButtonStatus === "loading"}
-          />
+          <InputWrapper>
+            <InputRow
+              type="number"
+              label={action.description}
+              value={action.value}
+              setValue={(val) => handleInputChange(action, backend, val)}
+              disabled={saveButtonStatus === "loading"}
+              width={"100%"}
+            />
+          </InputWrapper>
         );
     }
   };
@@ -199,6 +207,10 @@ const ErrorText = styled.div`
   justify-content: center;
   font-size: 14px;
   color: #ffffff90;
+`;
+
+const InputWrapper = styled.div`
+  max-width: 400px;
 `;
 
 type AlertingConfigResponse = {

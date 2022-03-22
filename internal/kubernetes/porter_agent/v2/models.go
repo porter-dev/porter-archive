@@ -26,6 +26,7 @@ type PodEvent struct {
 type Incident struct {
 	ID            string `json:"id" form:"required"`
 	ReleaseName   string `json:"release_name" form:"required"`
+	ChartName     string `json:"chart_name"`
 	CreatedAt     int64  `json:"created_at" form:"required"`
 	UpdatedAt     int64  `json:"updated_at" form:"required"`
 	LatestState   string `json:"latest_state" form:"required"`
@@ -34,13 +35,12 @@ type Incident struct {
 }
 
 type IncidentsResponse struct {
-	AgentVersion string      `json:"agent_version"`
-	Incidents    []*Incident `json:"incidents" form:"required"`
+	Incidents []*Incident `json:"incidents" form:"required"`
 }
 
 type EventsResponse struct {
-	AgentVersion  string      `json:"agent_version"`
 	IncidentID    string      `json:"incident_id" form:"required"`
+	ChartName     string      `json:"chart_name"`
 	ReleaseName   string      `json:"release_name"`
 	CreatedAt     int64       `json:"created_at"`
 	UpdatedAt     int64       `json:"updated_at"`

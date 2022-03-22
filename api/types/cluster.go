@@ -249,10 +249,10 @@ type CreateClusterCandidateResponse []*ClusterCandidate
 type ListClusterCandidateResponse []*ClusterCandidate
 
 type NotificationAction struct {
-	ID          string `json:"id"`
-	Description string `json:"description"`
-	Type        string `json:"type"`
-	Value       string `json:"value"`
+	ID          string      `json:"id"`
+	Description string      `json:"description"`
+	Type        string      `json:"type"`
+	Value       interface{} `json:"value"`
 }
 
 type NotificationsBackendResponse struct {
@@ -265,8 +265,8 @@ type ListNotificationsResponse struct {
 }
 
 type NotificationsBackendRequest struct {
-	Name    string   `json:"name"`
-	Actions []string `json:"actions"`
+	Name    string                `json:"name"`
+	Actions []*NotificationAction `json:"actions"`
 }
 
 type SetNotificationRequest struct {

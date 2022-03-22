@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -85,7 +86,7 @@ func (b *prometheusBackend) Actions() map[string]*types.NotificationAction {
 	return b.actions
 }
 
-func (a *prometheusBackend) Apply(r *http.Request, actions []string) error {
+func (a *prometheusBackend) Apply(r *http.Request, actions []*types.NotificationAction) error {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	helmAgent, err := a.GetHelmAgent(r, cluster, "monitoring")
 
@@ -109,12 +110,38 @@ func (a *prometheusBackend) Apply(r *http.Request, actions []string) error {
 		Name: "Default Alerts",
 	}
 
-	for _, actionID := range actions {
-		if _, ok := a.actions[actionID]; !ok {
+	for _, action := range actions {
+		if _, ok := a.actions[action.ID]; !ok {
 			continue
 		}
 
-		ruleGroup.Rules = append(ruleGroup.Rules, a.prometheusRules[actionID])
+		if action.Type == "toggle" {
+			value, ok := action.Value.(bool)
+			if !ok {
+				return fmt.Errorf("error converting to boolean value for action ID: %s", action.ID)
+			}
+
+			if value {
+				ruleGroup.Rules = append(ruleGroup.Rules, a.prometheusRules[action.ID])
+			}
+		} else if action.Type == "string_input" {
+			value, ok := action.Value.(string)
+			if !ok {
+				return fmt.Errorf("error converting to string value for action ID: %s", action.ID)
+			}
+
+			if value != "" {
+				// TODO: how to apply this value to an alertmanager rule?
+			}
+		} else if action.Type == "integer_input" {
+			_, ok := action.Value.(int) // TODO: how to apply this value to an alertmanager rule?
+
+			if !ok {
+				return fmt.Errorf("error converting to int value for action ID: %s", action.ID)
+			}
+		} else {
+			return fmt.Errorf("invalid action type: %s for action ID: %s", action.Type, action.ID)
+		}
 	}
 
 	ruleGroups := &PrometheusRuleGroups{

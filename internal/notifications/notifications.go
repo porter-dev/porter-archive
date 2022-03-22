@@ -10,7 +10,7 @@ import (
 type NotificationsBackend interface {
 	Name() string
 	Actions() map[string]*types.NotificationAction
-	Apply(*http.Request, []string) error
+	Apply(*http.Request, []*types.NotificationAction) error
 }
 
 type NotificationsManager struct {

@@ -6,6 +6,7 @@ import TitleSection from "components/TitleSection";
 
 import backArrow from "assets/back_arrow.png";
 import nodePng from "assets/node.png";
+import loading from "assets/loading.gif";
 import { Drawer, withStyles } from "@material-ui/core";
 import EventDrawer from "./EventDrawer";
 import { useRouting } from "shared/routing";
@@ -28,6 +29,7 @@ const IncidentPage = () => {
 
   const [incident, setIncident] = useState<Incident>(null);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<IncidentEvent>(null);
 
   const { getQueryParam, pushFiltered } = useRouting();
@@ -64,6 +66,29 @@ const IncidentPage = () => {
       isSubscribed = false;
     };
   }, [incident_id]);
+
+  const refreshIncident = async () => {
+    setIsRefreshing(true);
+    try {
+      let incident = await api
+        .getIncidentById<Incident>(
+          "<token>",
+          { incident_id },
+          {
+            cluster_id: currentCluster.id,
+            project_id: currentProject.id,
+          }
+        )
+        .then((res) => res.data);
+
+      incident.events = convertEventsTimestampsToMilliseconds(incident.events);
+
+      setIncident(incident);
+    } catch (error) {
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const events = useMemo(() => {
     return groupEventsByDate(incident?.events);
@@ -146,6 +171,15 @@ const IncidentPage = () => {
       </HeaderWrapper>
       <LineBreak />
       <BodyWrapper>
+        <RefreshButton onClick={refreshIncident} disabled={isRefreshing}>
+          {isRefreshing ? (
+            <>
+              <img src={loading} alt="loading icon" />
+            </>
+          ) : (
+            <i className="material-icons">refresh</i>
+          )}
+        </RefreshButton>
         {Object.entries(events).map(([date, events_list]) => (
           <React.Fragment key={date}>
             <StyledDate>{date}</StyledDate>
@@ -278,6 +312,35 @@ export type Incident = {
   chart_name: string;
 };
 
+const RefreshButton = styled.button`
+  position: absolute;
+  right: 0px;
+  top: 20px;
+  border: 1px solid #ffffff00;
+  border-radius: 50%;
+  background: inherit;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+
+  > i {
+    font-size: 20px;
+  }
+  > img {
+    width: 20px;
+    height: 20px;
+  }
+
+  :hover {
+    color: #ffffff88;
+    border-color: #ffffff88;
+  }
+`;
+
 const LineBreak = styled.div`
   width: calc(100% - 0px);
   height: 2px;
@@ -285,57 +348,8 @@ const LineBreak = styled.div`
   margin: 10px 0px 35px;
 `;
 
-const IncidentMessage = styled.span`
-  display: block;
-  font-size: 16px;
-  color: #ffffff88;
-  margin-top: 10px;
-`;
-
-const IncidentStatus = styled.span`
-  display: block;
-  font-size: 16px;
-  color: #ffffff88;
-  margin-top: 10px;
-  > i {
-    margin-left: 5px;
-    color: ${(props: { status: string }) => {
-      if (props.status === "ONGOING") {
-        return "#f5cb42";
-      }
-      return "#00d12a";
-    }};
-  }
-`;
-
-const BackButton = styled.div`
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  display: flex;
-  width: 36px;
-  cursor: pointer;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
-  }
-`;
-
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
-`;
-
 const BodyWrapper = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;

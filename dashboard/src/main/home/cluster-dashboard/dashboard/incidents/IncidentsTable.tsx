@@ -27,6 +27,8 @@ const IncidentsTable = () => {
   const [incidents, setIncidents] = useState<IncidentsWithoutEvents[]>(null);
   const [hasError, setHasError] = useState(false);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     let isSubscribed = true;
     setIncidents(null);
@@ -57,6 +59,29 @@ const IncidentsTable = () => {
       isSubscribed = false;
     };
   }, [currentCluster, currentProject]);
+
+  const refreshIncidents = async () => {
+    setIsRefreshing(true);
+    try {
+      const incidents = await api
+        .getIncidents<{ incidents: IncidentsWithoutEvents[] }>(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        )
+        .then((res) => res.data?.incidents || []);
+
+      setIncidents(incidents);
+    } catch (err) {
+      setHasError(true);
+      setCurrentError(err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const columns = useMemo(() => {
     return [
@@ -136,6 +161,8 @@ const IncidentsTable = () => {
         pushFiltered(`/cluster-dashboard/incidents/${row?.original?.id}`, []);
       }}
       hasError={hasError}
+      onRefresh={refreshIncidents}
+      isRefreshing={isRefreshing}
     />
   );
 };

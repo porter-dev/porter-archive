@@ -4,7 +4,8 @@ import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
-import React, { useContext, useEffect, useState } from "react";
+import { isEqual } from "lodash";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { capitalize } from "shared/string_utils";
@@ -16,6 +17,8 @@ const AlertingSettings = () => {
   );
 
   const [alertingConfig, setAlertingConfig] = useState<AlertingBackend[]>([]);
+  const initialAlertingConfig = useRef<AlertingBackend[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [saveButtonStatus, setSaveButtonStatus] = useState("");
@@ -36,8 +39,9 @@ const AlertingSettings = () => {
         if (!isSubscribed) {
           return;
         }
-        const alertingConfig = res.data?.backends;
-        setAlertingConfig(alertingConfig || []);
+        const newAlertingConfig = res.data?.backends;
+        setAlertingConfig(newAlertingConfig || []);
+        initialAlertingConfig.current = newAlertingConfig;
         setIsLoading(false);
       })
       .catch((err) => {
@@ -135,6 +139,10 @@ const AlertingSettings = () => {
     }
   };
 
+  const valuesHaveChanged = useMemo(() => {
+    return !isEqual(alertingConfig, initialAlertingConfig.current);
+  }, [alertingConfig]);
+
   if (isLoading) {
     return (
       <StyledSettingsSection>
@@ -155,10 +163,10 @@ const AlertingSettings = () => {
 
   return (
     <StyledSettingsSection>
+      <Heading>Alerting settings</Heading>
       {alertingConfig.map((backend) => {
         return (
           <>
-            <Heading>{capitalize(backend.name)}</Heading>
             {backend.actions.map((action) => {
               return <>{inputRenderer(action, backend)}</>;
             })}
@@ -172,6 +180,7 @@ const AlertingSettings = () => {
           clearPosition
           status={saveButtonStatus}
           statusPosition={"left"}
+          disabled={valuesHaveChanged}
         />
       </SaveButtonWrapper>
     </StyledSettingsSection>

@@ -10,8 +10,12 @@ import { capitalize, readableDate } from "shared/string_utils";
 import styled from "styled-components";
 import ExpandedContainer from "./ExpandedContainer";
 import { IncidentContainerEvent, IncidentEvent } from "./IncidentPage";
+import backArrow from "assets/back_arrow.png";
 
-const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
+const EventDrawer: React.FC<{
+  event: IncidentEvent;
+  closeDrawer: () => void;
+}> = ({ event, closeDrawer }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [containerLogs, setContainerLogs] = useState<{ [key: string]: string }>(
@@ -98,6 +102,9 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
 
   return (
     <EventDrawerContainer>
+      <BackButton onClick={closeDrawer}>
+        <BackButtonImg src={backArrow} />
+      </BackButton>
       <EventDrawerTitle>Pod: {event?.pod_name}</EventDrawerTitle>
       <StyledHelper>
         {hasPodStatusErrored ? (
@@ -141,6 +148,7 @@ const EventDrawer: React.FC<{ event: IncidentEvent }> = ({ event }) => {
 export default EventDrawer;
 
 const EventDrawerContainer = styled.div`
+  position: relative;
   color: #ffffff;
   padding: 25px 30px;
 `;
@@ -389,4 +397,9 @@ const StatusColor = styled.div`
       ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
 `;

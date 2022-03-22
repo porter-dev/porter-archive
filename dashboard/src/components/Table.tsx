@@ -9,8 +9,13 @@ import {
 } from "react-table";
 import Loading from "components/Loading";
 import Selector from "./Selector";
+import loading from "assets/loading.gif";
 
-const GlobalFilter: React.FunctionComponent<any> = ({ setGlobalFilter }) => {
+const GlobalFilter: React.FunctionComponent<any> = ({
+  setGlobalFilter,
+  onRefresh,
+  isRefreshing,
+}) => {
   const [value, setValue] = React.useState("");
   const onChange = (value: string) => {
     setValue(value);
@@ -18,16 +23,29 @@ const GlobalFilter: React.FunctionComponent<any> = ({ setGlobalFilter }) => {
   };
 
   return (
-    <SearchRow>
-      <i className="material-icons">search</i>
-      <SearchInput
-        value={value}
-        onChange={(e: any) => {
-          onChange(e.target.value);
-        }}
-        placeholder="Search"
-      />
-    </SearchRow>
+    <SearchRowWrapper>
+      <SearchRow>
+        <i className="material-icons">search</i>
+        <SearchInput
+          value={value}
+          onChange={(e: any) => {
+            onChange(e.target.value);
+          }}
+          placeholder="Search"
+        />
+      </SearchRow>
+      {typeof onRefresh === "function" && (
+        <RefreshButton onClick={onRefresh} disabled={isRefreshing}>
+          {isRefreshing ? (
+            <>
+              <img src={loading} alt="loading icon" />
+            </>
+          ) : (
+            <i className="material-icons">refresh</i>
+          )}
+        </RefreshButton>
+      )}
+    </SearchRowWrapper>
   );
 };
 
@@ -41,6 +59,8 @@ export type TableProps = {
   enablePagination?: boolean;
   hasError?: boolean;
   errorMessage?: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 };
 
 const MIN_PAGE_SIZE = 1;
@@ -55,6 +75,8 @@ const Table: React.FC<TableProps> = ({
   enablePagination,
   hasError,
   errorMessage = "An unexpected error occurred, please try again.",
+  onRefresh,
+  isRefreshing = false,
 }) => {
   const {
     getTableProps,
@@ -156,7 +178,11 @@ const Table: React.FC<TableProps> = ({
   return (
     <TableWrapper>
       {!disableGlobalFilter && (
-        <GlobalFilter setGlobalFilter={setGlobalFilter} />
+        <GlobalFilter
+          setGlobalFilter={setGlobalFilter}
+          onRefresh={onRefresh}
+          isRefreshing={isRefreshing}
+        />
       )}
       <StyledTable {...getTableProps()}>
         <StyledTHead>
@@ -354,13 +380,47 @@ const SearchRow = styled.div`
   min-width: 300px;
   max-width: min-content;
   background: #ffffff11;
-  margin-bottom: 15px;
-  margin-top: 0px;
+
   i {
     width: 18px;
     height: 18px;
     margin-left: 12px;
     margin-right: 12px;
     font-size: 20px;
+  }
+`;
+
+const SearchRowWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  margin-top: 0px;
+`;
+
+const RefreshButton = styled.button`
+  justify-self: flex-end;
+  border: 1px solid #ffffff00;
+  border-radius: 50%;
+  background: inherit;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+
+  > i {
+    font-size: 20px;
+  }
+  > img {
+    width: 20px;
+    height: 20px;
+  }
+
+  :hover {
+    color: #ffffff88;
+    border-color: #ffffff88;
   }
 `;

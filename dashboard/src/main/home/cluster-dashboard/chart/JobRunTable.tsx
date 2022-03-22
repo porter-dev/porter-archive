@@ -15,7 +15,7 @@ type Props = {
   sortType: "Newest" | "Oldest" | "Alphabetical";
 };
 
-export const dateFormatter = (date: string) => {
+export const dateFormatter = (date: string | number) => {
   if (!date) {
     return "N/A";
   }

@@ -113,8 +113,8 @@ const IncidentPage = () => {
                 {capitalize(incident.latest_state)}
               </Status>
               <StatusText>
-                - started {dateFormatter("2022-03-18T21:02:50.602847-04:00")},
-                last updated {dateFormatter("2022-03-18T21:02:50.602847-04:00")}
+                - started {dateFormatter(incident.created_at * 1000)}, last
+                updated {dateFormatter(incident.updated_at * 1000)}
               </StatusText>
               <Description></Description>
             </StatusContainer>,
@@ -259,6 +259,9 @@ export type Incident = {
   latest_reason: string; // eg: "Out of memory",
   latest_message: string; // eg: "Application crash due to out of memory issue"
   events: IncidentEvent[];
+  created_at: number;
+  updated_at: number;
+  chart_name: string;
 };
 
 const LineBreak = styled.div`

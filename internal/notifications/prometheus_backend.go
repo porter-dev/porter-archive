@@ -195,7 +195,7 @@ func newK8sNodeReadyAction() (*types.NotificationAction, *PrometheusRule) {
 		ID:          "KubernetesNodeReady",
 		Description: "Alert when a cluster node is unavailable",
 		Type:        "toggle",
-		Value:       "false",
+		Value:       false,
 	}
 
 	rule := &PrometheusRule{
@@ -219,7 +219,7 @@ func newK8sJobFailedAction() (*types.NotificationAction, *PrometheusRule) {
 		ID:          "KubernetesJobFailed",
 		Description: "Alert when a job fails",
 		Type:        "toggle",
-		Value:       "false",
+		Value:       false,
 	}
 
 	rule := &PrometheusRule{
@@ -243,7 +243,7 @@ func newK8sMemoryPressureAction() (*types.NotificationAction, *PrometheusRule) {
 		ID:          "KubernetesMemoryPressure",
 		Description: "Alert in case of memory pressure",
 		Type:        "toggle",
-		Value:       "false",
+		Value:       false,
 	}
 
 	rule := &PrometheusRule{
@@ -267,7 +267,7 @@ func newK8sPodCPUThrottlingAction() (*types.NotificationAction, *PrometheusRule)
 		ID:          "PodCPUThrottling",
 		Description: "Alert in case of CPU throttling",
 		Type:        "toggle",
-		Value:       "false",
+		Value:       false,
 	}
 
 	rule := &PrometheusRule{
@@ -291,7 +291,7 @@ func newK8sContainerOomKillerAction() (*types.NotificationAction, *PrometheusRul
 		ID:          "KubernetesContainerOomKiller",
 		Description: "Alert in case of an out-of-memory error in a Pod",
 		Type:        "toggle",
-		Value:       "false",
+		Value:       false,
 	}
 
 	rule := &PrometheusRule{
@@ -315,7 +315,7 @@ func newK8sPodCrashLoopingAction() (*types.NotificationAction, *PrometheusRule) 
 		ID:          "KubernetesPodCrashLooping",
 		Description: "Alert in case of a Pod crash loop backing off",
 		Type:        "toggle",
-		Value:       "false",
+		Value:       false,
 	}
 
 	rule := &PrometheusRule{
@@ -339,7 +339,7 @@ func newK8sCronjobTooLongAction() (*types.NotificationAction, *PrometheusRule) {
 		ID:          "KubernetesCronjobTooLong",
 		Description: "Alert in case of a stuck cron job",
 		Type:        "toggle",
-		Value:       "false",
+		Value:       false,
 	}
 
 	rule := &PrometheusRule{

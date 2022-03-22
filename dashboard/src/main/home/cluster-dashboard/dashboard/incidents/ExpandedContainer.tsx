@@ -1,4 +1,5 @@
 import Description from "components/Description";
+import useLastSeenPodStatus from "components/events/useLastSeenPodStatus";
 import Heading from "components/form-components/Heading";
 import Loading from "components/Loading";
 import { isEmpty } from "lodash";
@@ -17,35 +18,17 @@ const ExpandedContainer: React.FC<Props> = ({ container, logs }) => {
   return (
     <StyledCard>
       <MetadataContainer>
-        <Heading>{container.container_name}</Heading>
+        <Heading>Container: {container.container_name}</Heading>
         <Description>
           Container exited with code {container.exit_code}, {container.message}
         </Description>
         <Description>
           The following are the container logs from this application instance:
         </Description>
-        <Br />
         <LogContainer>
           {logs ? <>{logs}</> : <>No logs available for this container.</>}
         </LogContainer>
       </MetadataContainer>
-      {/* <MetadataContainer>
-        <Heading>Configuration</Heading>
-        <Description>
-          Your infrastructure was deployed with the following configuration:
-        </Description>
-        <PorterFormContainer>
-          <PorterFormWrapper
-            showStateDebugger={false}
-            formData={operation.form}
-            valuesToOverride={{}}
-            isReadOnly={true}
-            color="#f5cb42"
-            isInModal={false}
-            hideBottomSpacer={false}
-          />
-        </PorterFormContainer>
-      </MetadataContainer> */}
     </StyledCard>
   );
 };
@@ -96,6 +79,7 @@ const MetadataContainer = styled.div`
   overflow-y: auto;
   min-height: 100px;
   font-size: 13px;
+  margin: 12px 0;
 `;
 
 const LogTitleContainer = styled.div`
@@ -122,6 +106,8 @@ const LogContainer = styled.div`
   min-height: 55px;
   color: #aaaabb;
   height: 400px;
+  border-radius: 4px;
+  margin: 12px 0 24px 0;
 `;
 
 const Log = styled.div`

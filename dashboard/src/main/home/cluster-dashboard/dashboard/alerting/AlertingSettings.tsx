@@ -104,6 +104,7 @@ const AlertingSettings = () => {
             label={action.description}
             checked={JSON.parse(action.value)}
             toggle={() => handleInputChange(action, backend, !action.value)}
+            disabled={saveButtonStatus === "loading"}
           />
         );
       case "string_input":
@@ -112,6 +113,7 @@ const AlertingSettings = () => {
             type="text"
             value={action.value}
             setValue={(val) => handleInputChange(action, backend, val)}
+            disabled={saveButtonStatus === "loading"}
           />
         );
       case "integer_input":
@@ -120,6 +122,7 @@ const AlertingSettings = () => {
             type="number"
             value={action.value}
             setValue={(val) => handleInputChange(action, backend, val)}
+            disabled={saveButtonStatus === "loading"}
           />
         );
     }

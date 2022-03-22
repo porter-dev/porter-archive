@@ -73,7 +73,6 @@ const AlertingSettings = () => {
     backend: AlertingBackend,
     newValue: any
   ) => {
-    console.log("HERE", newValue);
     setAlertingConfig((prev) => {
       const config = [...prev];
       const modifiedBackend = { ...backend };

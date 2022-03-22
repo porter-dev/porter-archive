@@ -3,6 +3,7 @@ package cluster
 import (
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -101,6 +102,12 @@ func (c *ListNotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				}
 			}
 		}
+	}
+
+	for _, backend := range resp.Backends {
+		sort.SliceStable(backend.Actions, func(i, j int) bool {
+			return backend.Actions[i].ID < backend.Actions[j].ID
+		})
 	}
 
 	c.WriteResult(w, r, resp)

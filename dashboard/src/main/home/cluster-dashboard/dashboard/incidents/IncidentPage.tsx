@@ -183,7 +183,10 @@ const IncidentPage = () => {
         open={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}
       >
-        <EventDrawer event={selectedEvent} />
+        <EventDrawer
+          event={selectedEvent}
+          closeDrawer={() => setSelectedEvent(null)}
+        />
       </StyledDrawer>
     </StyledExpandedNodeView>
   );

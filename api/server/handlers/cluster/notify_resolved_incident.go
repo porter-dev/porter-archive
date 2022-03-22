@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/integrations/slack"
+	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -34,16 +35,16 @@ func NewNotifyResolvedIncidentHandler(
 func (c *NotifyResolvedIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.IncidentNotifyRequest{}
+	request := &porter_agent.Incident{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
 	// FIXME: better error detection for correct incident ID
-	segments := strings.Split(request.IncidentID, ":")
+	segments := strings.Split(request.ID, ":")
 	if len(segments) != 4 || (len(segments) > 0 && segments[0] != "incident") {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("invalid incident ID: %s", request.IncidentID)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("invalid incident ID: %s", request.ID)))
 		return
 	}
 
@@ -68,23 +69,21 @@ func (c *NotifyResolvedIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http
 		notifConf = conf.ToNotificationConfigType()
 	}
 
-	notifier := slack.NewSlackNotifier(notifConf, slackInts...)
-
-	notifyOpts := &slack.NotifyOpts{
-		ProjectID:   cluster.ProjectID,
-		ClusterID:   cluster.ID,
-		ClusterName: cluster.Name,
-		Name:        segments[1],
-		Namespace:   segments[2],
-		URL: fmt.Sprintf(
-			"%s/cluster-dashboard/incidents/%s?namespace=%s",
-			c.Config().ServerConf.ServerURL,
-			request.IncidentID,
-			segments[2],
-		),
-	}
+	notifier := slack.NewIncidentsNotifier(notifConf, slackInts...)
 
 	if !cluster.NotificationsDisabled {
-		notifier.Notify(notifyOpts)
+		err := notifier.NotifyResolved(
+			request, fmt.Sprintf(
+				"%s/cluster-dashboard/incidents/%s?namespace=%s",
+				c.Config().ServerConf.ServerURL,
+				request.ID,
+				segments[2],
+			),
+		)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 }

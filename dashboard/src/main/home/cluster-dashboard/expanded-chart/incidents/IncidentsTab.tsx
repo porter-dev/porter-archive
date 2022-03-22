@@ -117,7 +117,6 @@ const IncidentsTab = (props: {
 export default IncidentsTab;
 
 const StyledCard = styled.div`
-  margin-top: 35px;
   background: #26282f;
   padding: 14px;
   border-radius: 8px;

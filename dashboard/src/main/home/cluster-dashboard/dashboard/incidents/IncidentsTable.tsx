@@ -68,7 +68,12 @@ const IncidentsTable = () => {
 
           return (
             <KindContainer>
-              <Icon src={hardcodedIcons["web"]} />
+              <Icon
+                src={
+                  hardcodedIcons[original?.chart_name || "web"] ||
+                  hardcodedIcons["web"]
+                }
+              />
               <Kind>{original.release_name}</Kind>
             </KindContainer>
           );
@@ -99,16 +104,20 @@ const IncidentsTable = () => {
       },
       {
         Header: "Started",
-        accessor: "",
-        Cell: () => {
-          return dateFormatter("2022-03-18T21:02:50.602847-04:00");
+        accessor: "created_at",
+        Cell: ({ row }) => {
+          let original = row.original;
+
+          return dateFormatter(original.created_at * 1000);
         },
       },
       {
         Header: "Last Updated",
-        accessor: "",
-        Cell: () => {
-          return dateFormatter("2022-03-18T21:02:50.602847-04:00");
+        accessor: "updated_at",
+        Cell: ({ row }) => {
+          let original = row.original;
+
+          return dateFormatter(original.updated_at * 1000);
         },
       },
     ] as Column<IncidentsWithoutEvents>[];

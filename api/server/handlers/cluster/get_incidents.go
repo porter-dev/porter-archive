@@ -57,11 +57,6 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	agentVersion := agentSvc.Annotations["porter.run/agent-major-version"]
-	if agentVersion == "" {
-		agentVersion = "v1"
-	}
-
 	if incidentID != "" {
 		events, err := porter_agent.GetIncidentEventsByID(agent.Clientset, agentSvc, incidentID)
 
@@ -69,8 +64,6 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
-
-		events.AgentVersion = agentVersion
 
 		c.WriteResult(w, r, events)
 		return
@@ -86,8 +79,6 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		incidents.AgentVersion = agentVersion
-
 		c.WriteResult(w, r, incidents)
 		return
 	}
@@ -98,8 +89,6 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	incidents.AgentVersion = agentVersion
 
 	c.WriteResult(w, r, incidents)
 }

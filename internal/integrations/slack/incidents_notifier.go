@@ -32,49 +32,29 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 		url,
 	)
 
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewSectionBlock(
-		goslack.NewTextBlockObject(
-			"mrkdwn", topSectionMarkdwn, true, false,
-		), nil, nil,
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewDividerBlock())
-
 	namespace := strings.Split(incident.ID, ":")[2]
 	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
 
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"mrkdwn",
-			fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`"),
-			false, false,
+	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewTextBlockObject(
+		goslack.MarkdownType, topSectionMarkdwn, false, false,
+	), goslack.NewDividerBlock(), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf(
+			"*Created at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			createdAt.Unix(),
+			createdAt.Format("2006-01-02 15:04:05 UTC"),
 		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"mrkdwn",
-			fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`"),
-			false, false,
-		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"mrkdwn",
-			fmt.Sprintf(
-				"*Created at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
-				createdAt.Unix(),
-				createdAt.Format("2006-01-02 15:04:05 UTC"),
-			),
-			false, false,
-		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewSectionBlock(
-		goslack.NewTextBlockObject(
-			"mrkdwn", fmt.Sprintf("```\n%s\n```", incident.LatestMessage), false, false,
-		), nil, nil,
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType, fmt.Sprintf("```\n%s\n```", incident.LatestMessage), false, false,
 	))
 
 	for _, slackInt := range s.slackInts {
@@ -95,60 +75,42 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url string) error {
 	blockSet := &goslack.Blocks{}
 
+	namespace := strings.Split(incident.ID, ":")[2]
+	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
+	resolvedAt := time.Unix(incident.UpdatedAt, 0).UTC()
+
 	topSectionMarkdwn := fmt.Sprintf(
 		":white_check_mark: The incident for application %s has been resolved. <%s|View the incident.>",
 		"`"+incident.ReleaseName+"`",
 		url,
 	)
 
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewSectionBlock(
-		goslack.NewTextBlockObject(
-			"mrkdwn", topSectionMarkdwn, true, false,
-		), nil, nil,
-	))
-
-	namespace := strings.Split(incident.ID, ":")[2]
-	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
-	resolvedAt := time.Unix(incident.UpdatedAt, 0).UTC()
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"mrkdwn",
-			fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`"),
-			false, false,
+	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewTextBlockObject(
+		goslack.MarkdownType, topSectionMarkdwn, false, false,
+	), goslack.NewDividerBlock(), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf(
+			"*Created at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			createdAt.Unix(),
+			createdAt.Format("2006-01-02 15:04:05 UTC"),
 		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"mrkdwn",
-			fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`"),
-			false, false,
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf(
+			"*Resolved at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			resolvedAt.Unix(),
+			resolvedAt.Format("2006-01-02 15:04:05 UTC"),
 		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"mrkdwn",
-			fmt.Sprintf(
-				"*Created at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
-				createdAt.Unix(),
-				createdAt.Format("2006-01-02 15:04:05 UTC"),
-			),
-			false, false,
-		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"mrkdwn",
-			fmt.Sprintf(
-				"*Resolved at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
-				resolvedAt.Unix(),
-				resolvedAt.Format("2006-01-02 15:04:05 UTC"),
-			),
-			false, false,
-		),
+		false, false,
 	))
 
 	for _, slackInt := range s.slackInts {

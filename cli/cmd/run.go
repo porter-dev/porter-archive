@@ -332,16 +332,18 @@ func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, er
 	res := make([]podSimple, 0)
 
 	for _, pod := range pods {
-		containerNames := make([]string, 0)
+		if pod.Status.Phase == v1.PodRunning {
+			containerNames := make([]string, 0)
 
-		for _, container := range pod.Spec.Containers {
-			containerNames = append(containerNames, container.Name)
+			for _, container := range pod.Spec.Containers {
+				containerNames = append(containerNames, container.Name)
+			}
+
+			res = append(res, podSimple{
+				Name:           pod.ObjectMeta.Name,
+				ContainerNames: containerNames,
+			})
 		}
-
-		res = append(res, podSimple{
-			Name:           pod.ObjectMeta.Name,
-			ContainerNames: containerNames,
-		})
 	}
 
 	return res, nil

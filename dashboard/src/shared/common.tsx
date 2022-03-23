@@ -25,7 +25,8 @@ export const integrationList: any = {
     buttonText: "Link a Github Account",
   },
   slack: {
-    icon: "https://image.flaticon.com/icons/png/512/2111/2111615.png",
+    icon:
+      "https://cdn.bfldr.com/5H442O3W/at/pl546j-7le8zk-6gwiyo/Slack_Mark.svg?auto=webp&format=png",
     label: "Slack",
     buttonText: "Install Application",
   },

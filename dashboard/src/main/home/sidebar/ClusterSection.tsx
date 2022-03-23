@@ -9,6 +9,7 @@ import { ClusterType } from "shared/types";
 import Drawer from "./Drawer";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushFiltered } from "shared/routing";
+import { NavLink } from "react-router-dom";
 
 type PropsType = RouteComponentProps & {
   forceCloseDrawer: boolean;
@@ -171,16 +172,19 @@ class ClusterSection extends Component<PropsType, StateType> {
 
     if (clusters.length > 0) {
       return (
-        <ClusterSelector isSelected={false}>
-          <LinkWrapper
-            onClick={() => pushFiltered(this.props, "/cluster-dashboard", [])}
-          >
+        <ClusterSelector to="/cluster-dashboard">
+          <LinkWrapper>
             <ClusterIcon>
               <i className="material-icons">device_hub</i>
             </ClusterIcon>
             <ClusterName>{currentCluster && currentCluster.name}</ClusterName>
           </LinkWrapper>
-          <DrawerButton onClick={this.toggleDrawer}>
+          <DrawerButton
+            onClick={(e) => {
+              e.preventDefault();
+              this.toggleDrawer();
+            }}
+          >
             <BgAccent src={drawerBg} />
             <DropdownIcon showDrawer={showDrawer}>
               <i className="material-icons">arrow_drop_down</i>
@@ -332,7 +336,7 @@ const LinkWrapper = styled.div`
   width: 100%;
 `;
 
-const ClusterSelector = styled.div`
+const ClusterSelector = styled(NavLink)`
   position: relative;
   display: block;
   padding-left: 7px;
@@ -343,12 +347,17 @@ const ClusterSelector = styled.div`
   font-weight: 500;
   color: white;
   cursor: pointer;
-  background: ${(props: { isSelected: boolean }) =>
-    props.isSelected ? "#ffffff08" : ""};
   z-index: 1;
 
+  &.active {
+    background: #ffffff11;
+
+    :hover {
+      background: #ffffff11;
+    }
+  }
+
   :hover {
-    background: ${(props: { isSelected: boolean }) =>
-      props.isSelected ? "" : "#ffffff08"};
+    background: #ffffff08;
   }
 `;

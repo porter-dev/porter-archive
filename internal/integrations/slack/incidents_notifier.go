@@ -26,37 +26,35 @@ func NewIncidentsNotifier(conf *types.NotificationConfig, slackInts ...*integrat
 func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url string) error {
 	blockSet := &goslack.Blocks{}
 
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewSectionBlock(
-		goslack.NewTextBlockObject(
-			"plain_text", "⚠️ New incident for your Porter application", true, false,
-		), nil, nil,
-	))
+	topSectionMarkdwn := fmt.Sprintf(
+		":warning: Your application %s crashed on Porter. <%s|View the incident.>",
+		"`"+incident.ReleaseName+"`",
+		url,
+	)
 
 	namespace := strings.Split(incident.ID, ":")[2]
-	createdAt := time.Unix(incident.CreatedAt, 0).UTC().Format(time.RFC850)
+	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
 
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"plain_text",
-			fmt.Sprintf("Release: %s\nNamespace: %s\nCreated at: %s", incident.ReleaseName, namespace, createdAt),
-			false, false,
+	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewTextBlockObject(
+		goslack.MarkdownType, topSectionMarkdwn, false, false,
+	), goslack.NewDividerBlock(), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf(
+			"*Created at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			createdAt.Unix(),
+			createdAt.Format("2006-01-02 15:04:05 UTC"),
 		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewSectionBlock(
-		goslack.NewTextBlockObject(
-			"plain_text", incident.LatestMessage, false, false,
-		), nil, nil,
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewActionBlock(
-		"", &goslack.ButtonBlockElement{
-			Type: goslack.METButton,
-			Text: goslack.NewTextBlockObject(
-				"plain_text", "View Incident", false, false,
-			),
-			URL: url,
-		},
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType, fmt.Sprintf("```\n%s\n```", incident.LatestMessage), false, false,
 	))
 
 	for _, slackInt := range s.slackInts {
@@ -77,32 +75,42 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url string) error {
 	blockSet := &goslack.Blocks{}
 
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewSectionBlock(
-		goslack.NewTextBlockObject(
-			"plain_text", "✅ Incident resolved for your Porter application", true, false,
-		), nil, nil,
-	))
-
 	namespace := strings.Split(incident.ID, ":")[2]
-	createdAt := time.Unix(incident.CreatedAt, 0).UTC().Format(time.RFC850)
-	resolvedAt := time.Unix(incident.UpdatedAt, 0).UTC().Format(time.RFC850)
+	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
+	resolvedAt := time.Unix(incident.UpdatedAt, 0).UTC()
 
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewContextBlock(
-		"", goslack.NewTextBlockObject(
-			"plain_text",
-			fmt.Sprintf("Release: %s\nNamespace: %s\nCreated at: %s\nResolved at: %s", incident.ReleaseName, namespace, createdAt, resolvedAt),
-			false, false,
+	topSectionMarkdwn := fmt.Sprintf(
+		":white_check_mark: The incident for application %s has been resolved. <%s|View the incident.>",
+		"`"+incident.ReleaseName+"`",
+		url,
+	)
+
+	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewTextBlockObject(
+		goslack.MarkdownType, topSectionMarkdwn, false, false,
+	), goslack.NewDividerBlock(), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`"),
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf(
+			"*Created at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			createdAt.Unix(),
+			createdAt.Format("2006-01-02 15:04:05 UTC"),
 		),
-	))
-
-	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewActionBlock(
-		"", &goslack.ButtonBlockElement{
-			Type: goslack.METButton,
-			Text: goslack.NewTextBlockObject(
-				"plain_text", "View Incident", false, false,
-			),
-			URL: url,
-		},
+		false, false,
+	), goslack.NewTextBlockObject(
+		goslack.MarkdownType,
+		fmt.Sprintf(
+			"*Resolved at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			resolvedAt.Unix(),
+			resolvedAt.Format("2006-01-02 15:04:05 UTC"),
+		),
+		false, false,
 	))
 
 	for _, slackInt := range s.slackInts {

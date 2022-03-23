@@ -45,7 +45,7 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 
 	blockSet.BlockSet = append(blockSet.BlockSet, goslack.NewSectionBlock(
 		goslack.NewTextBlockObject(
-			"plaint_text", incident.LatestMessage, false, false,
+			"plain_text", incident.LatestMessage, false, false,
 		), nil, nil,
 	))
 

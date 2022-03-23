@@ -308,14 +308,14 @@ const ChartList: React.FunctionComponent<Props> = ({
       },
       onclose: (event) => {
         console.log(event);
-        closeAllWebsockets();
+        closeWebsocket(wsStreamId);
       },
       onerror: (error) => {
         setCurrentError(
           "We couldn't get the latest status for the jobs, try reolading or opening a job to see their status."
         );
         console.log(error);
-        closeAllWebsockets();
+        closeWebsocket(wsStreamId);
       },
     };
     newWebsocket(websocketId, endpoint, config);
@@ -379,6 +379,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     getJobRuns(wsStreamId, wsLiveUpdateId);
 
     return () => {
+      console.log("called");
       closeWebsocket(wsStreamId);
       closeWebsocket(wsLiveUpdateId);
     };

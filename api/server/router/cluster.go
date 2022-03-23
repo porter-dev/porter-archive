@@ -1004,7 +1004,7 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/notify_new -> cluster.NewNotifyNewIncidentHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/incidents/notify_new -> cluster.NewNotifyNewIncidentHandler
 	notifyNewIncidentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -1033,7 +1033,7 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/notify_resolved -> cluster.NewNotifyResolvedIncidentHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/incidents/notify_resolved -> cluster.NewNotifyResolvedIncidentHandler
 	notifyResolvedIncidentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,

@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-import _ from "lodash";
+import _, { differenceBy, differenceWith, isEqual } from "lodash";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -15,7 +15,8 @@ import { PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
 import Loading from "components/Loading";
-import { useWebsockets } from "shared/hooks/useWebsockets";
+import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import { usePrevious } from "shared/hooks/usePrevious";
 
 type Props = {
   currentCluster: ClusterType;
@@ -47,6 +48,11 @@ const ChartList: React.FunctionComponent<Props> = ({
     closeAllWebsockets,
   } = useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
+  const tmpJobRuns = useRef([]);
+  const lastStreamStatus = useRef("");
+
+  const previousCharts = usePrevious<ChartType[]>(charts, []);
+
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -272,6 +278,112 @@ const ChartList: React.FunctionComponent<Props> = ({
     openWebsocket(websocketID);
   };
 
+  const getJobRuns = (wsStreamId: string, wsLiveUpdateId: string) => {
+    const { currentProject, currentCluster, setCurrentError } = context;
+    closeAllWebsockets();
+    tmpJobRuns.current = [];
+    lastStreamStatus.current = "";
+    const websocketId = wsStreamId;
+    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/jobs/stream`;
+
+    const config: NewWebsocketOptions = {
+      onopen: console.log,
+      onmessage: (message) => {
+        const data = JSON.parse(message.data);
+
+        if (data.streamStatus === "finished") {
+          const processedJobs = processLastJobs(tmpJobRuns.current);
+          setJobStatus(processedJobs);
+          setupJobWebsocket(wsLiveUpdateId);
+          lastStreamStatus.current = data.streamStatus;
+          return;
+        }
+
+        if (data.streamStatus === "errored") {
+          tmpJobRuns.current = [];
+          return;
+        }
+
+        tmpJobRuns.current = [...tmpJobRuns.current, data];
+      },
+      onclose: (event) => {
+        console.log(event);
+        closeAllWebsockets();
+      },
+      onerror: (error) => {
+        setCurrentError(
+          "We couldn't get the latest status for the jobs, try reolading or opening a job to see their status."
+        );
+        console.log(error);
+        closeAllWebsockets();
+      },
+    };
+    newWebsocket(websocketId, endpoint, config);
+    openWebsocket(websocketId);
+  };
+
+  const processLastJobs = (jobRuns: any[]) => {
+    const jobs = charts
+      .filter((chart) => chart.chart?.metadata?.name === "job")
+      .reduce<{ [key: string]: JobStatusWithTimeAndVersion }>((acc, chart) => {
+        const chartName = chart.name;
+        const chartNamespace = chart.namespace;
+        const key = getChartKey(chartName, chartNamespace);
+        acc[key] = jobRuns
+          .filter(
+            (job) =>
+              job.metadata.labels["app.kubernetes.io/instance"] === chartName
+          )
+          .map((job) => {
+            let nextStatus: JobStatusType = null;
+            for (const status of Object.values(JobStatusType)) {
+              if (_.get(job.status, status, 0) > 0) {
+                nextStatus = status;
+                break;
+              }
+            }
+
+            return {
+              resource_version: job.metadata.resourceVersion,
+              start_time: job.status.startTime,
+              status: nextStatus,
+            };
+          })
+          .sort(
+            (prev, next) =>
+              Number(next.resource_version) - Number(prev.resource_version)
+          )
+          .slice(1)[0];
+        return acc;
+      }, {});
+    return jobs;
+  };
+
+  useEffect(() => {
+    if (!charts?.length) {
+      return () => {};
+    }
+    const changedCharts = differenceWith<ChartType, ChartType>(
+      charts,
+      previousCharts,
+      isEqual
+    );
+
+    if (!changedCharts.length) {
+      return () => {};
+    }
+
+    const wsStreamId = "stream-jobs";
+    const wsLiveUpdateId = "live-update-jobs";
+
+    getJobRuns(wsStreamId, wsLiveUpdateId);
+
+    return () => {
+      closeWebsocket(wsStreamId);
+      closeWebsocket(wsLiveUpdateId);
+    };
+  }, [charts]);
+
   // Setup basic websockets on start
   useEffect(() => {
     const controllers = [
@@ -282,12 +394,9 @@ const ChartList: React.FunctionComponent<Props> = ({
     ];
     setupControllerWebsockets(controllers);
 
-    const jobWebsocketID = "job";
-    setupJobWebsocket(jobWebsocketID);
-
     return () => {
       controllers.map((controller) => closeWebsocket(controller));
-      closeWebsocket(jobWebsocketID);
+      closeWebsocket("job");
     };
   }, []);
 

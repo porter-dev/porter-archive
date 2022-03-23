@@ -278,12 +278,12 @@ const ChartList: React.FunctionComponent<Props> = ({
     openWebsocket(websocketID);
   };
 
-  const getJobRuns = () => {
+  const getJobRuns = (wsStreamId: string, wsLiveUpdateId: string) => {
     const { currentProject, currentCluster, setCurrentError } = context;
     closeAllWebsockets();
     tmpJobRuns.current = [];
     lastStreamStatus.current = "";
-    const websocketId = `job-runs-for-all-charts-ws`;
+    const websocketId = wsStreamId;
     const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/jobs/stream`;
 
     const config: NewWebsocketOptions = {
@@ -294,7 +294,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         if (data.streamStatus === "finished") {
           const processedJobs = processLastJobs(tmpJobRuns.current);
           setJobStatus(processedJobs);
-          setupJobWebsocket("jobs-live-update");
+          setupJobWebsocket(wsLiveUpdateId);
           lastStreamStatus.current = data.streamStatus;
           return;
         }
@@ -359,51 +359,6 @@ const ChartList: React.FunctionComponent<Props> = ({
     return jobs;
   };
 
-  // const getLatestJobRunFromRelease = async (chart: ChartType) => {
-  //   try {
-  //     const chartName = job.metadata.labels["app.kubernetes.io/instance"];
-  //     const chartNamespace = job.metadata.namespace;
-  //     const key = getChartKey(chartName, chartNamespace);
-
-  //     setJobStatus((currentStatus) => {
-  //       let nextStatus: JobStatusType = null;
-  //       for (const status of Object.values(JobStatusType)) {
-  //         if (_.get(job.status, status, 0) > 0) {
-  //           nextStatus = status;
-  //           break;
-  //         }
-  //       }
-
-  //       const existingValue: JobStatusWithTimeAndVersion = _.get(
-  //         currentStatus,
-  //         key,
-  //         null
-  //       );
-  //       const newValue: JobStatusWithTimeAndVersion = {
-  //         status: nextStatus,
-  //         start_time: job.status.startTime,
-  //         resource_version: job.metadata.resourceVersion,
-  //       };
-
-  //       if (
-  //         !existingValue ||
-  //         Number(newValue.resource_version) >
-  //           Number(existingValue.resource_version)
-  //       ) {
-  //         return {
-  //           ...currentStatus,
-  //           [key]: newValue,
-  //         };
-  //       }
-
-  //       return currentStatus;
-  //     });
-  //   } catch (error) {
-  //     console.log("failed");
-  //   } finally {
-  //   }
-  // };
-
   useEffect(() => {
     if (!charts?.length) {
       return () => {};
@@ -418,23 +373,14 @@ const ChartList: React.FunctionComponent<Props> = ({
       return () => {};
     }
 
-    getJobRuns();
-    // const jobCharts = changedCharts.filter(
-    //   (chart) => chart.chart.metadata.name === "job"
-    // );
+    const wsStreamId = "stream-jobs";
+    const wsLiveUpdateId = "live-update-jobs";
 
-    // const promises = jobCharts.map((chart) => {
-    //   getLatestJobRunFromRelease(chart);
-    // });
-
-    // const jobWebsocketID = "job";
-
-    // Promise.all(promises).then(() => {
-    //   setupJobWebsocket(jobWebsocketID);
-    // });
+    getJobRuns(wsStreamId, wsLiveUpdateId);
 
     return () => {
-      // closeWebsocket(jobWebsocketID);
+      closeWebsocket(wsStreamId);
+      closeWebsocket(wsLiveUpdateId);
     };
   }, [charts]);
 

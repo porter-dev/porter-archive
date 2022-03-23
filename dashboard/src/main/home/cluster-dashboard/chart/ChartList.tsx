@@ -327,7 +327,9 @@ const ChartList: React.FunctionComponent<Props> = ({
       .filter((chart) => chart.chart?.metadata?.name === "job")
       .reduce<{ [key: string]: JobStatusWithTimeAndVersion }>((acc, chart) => {
         const chartName = chart.name;
-        acc[chartName] = jobRuns
+        const chartNamespace = chart.namespace;
+        const key = getChartKey(chartName, chartNamespace);
+        acc[key] = jobRuns
           .filter(
             (job) =>
               job.metadata.labels["app.kubernetes.io/instance"] === chartName

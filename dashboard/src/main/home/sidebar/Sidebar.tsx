@@ -193,7 +193,7 @@ class Sidebar extends Component<PropsType, StateType> {
             Launch
           </NavButton>
           {currentProject && currentProject.managed_infra_enabled && (
-            <NavButton to="/infrastructure">
+            <NavButton to={"/infrastructure"}>
               <i className="material-icons">build_circle</i>
               Infrastructure
             </NavButton>

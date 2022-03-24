@@ -20,6 +20,7 @@ type Props = {
   setActionConfig: (x: ActionConfigType) => void;
   userId?: number;
   readOnly: boolean;
+  filteredRepos?: string[];
 };
 
 const RepoList: React.FC<Props> = ({
@@ -27,6 +28,7 @@ const RepoList: React.FC<Props> = ({
   setActionConfig,
   userId,
   readOnly,
+  filteredRepos,
 }) => {
   const [repos, setRepos] = useState<RepoType[]>([]);
   const [repoLoading, setRepoLoading] = useState(true);
@@ -123,7 +125,6 @@ const RepoList: React.FC<Props> = ({
       });
   }, []);
 
-
   // clear out actionConfig and SelectedRepository if new search is performed
   useEffect(() => {
     setActionConfig({
@@ -132,15 +133,15 @@ const RepoList: React.FC<Props> = ({
       git_branch: null,
       git_repo_id: 0,
     });
-    setSelectedRepo(null)
-  }, [searchFilter])
+    setSelectedRepo(null);
+  }, [searchFilter]);
 
   const setRepo = (x: RepoType) => {
     let updatedConfig = actionConfig;
     updatedConfig.git_repo = x.FullName;
     updatedConfig.git_repo_id = x.GHRepoID;
     setActionConfig(updatedConfig);
-    setSelectedRepo(x.FullName)
+    setSelectedRepo(x.FullName);
   };
 
   const renderRepoList = () => {
@@ -191,16 +192,20 @@ const RepoList: React.FC<Props> = ({
       return <LoadingWrapper>No matching Github repos found.</LoadingWrapper>;
     } else {
       return results.map((repo: RepoType, i: number) => {
+        const shouldDisable = !!filteredRepos.find(
+          (filteredRepo) => repo.FullName === filteredRepo
+        );
         return (
           <RepoName
             key={i}
             isSelected={repo.FullName === selectedRepo}
             lastItem={i === repos.length - 1}
             onClick={() => setRepo(repo)}
-            readOnly={readOnly}
+            readOnly={readOnly || shouldDisable}
           >
             <img src={github} alt={"github icon"} />
             {repo.FullName}
+            {shouldDisable && ` - This repo was already added`}
           </RepoName>
         );
       });

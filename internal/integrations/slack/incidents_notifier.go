@@ -97,7 +97,7 @@ func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url 
 		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`")),
 		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`")),
 		getMarkdownBlock(fmt.Sprintf(
-			"*Created at:* <!date^%d^Alerted at {date_num} {time_secs}|Alerted at %s>",
+			"*Created at:* <!date^%d^ {date_num} {time_secs}| %s>",
 			createdAt.Unix(),
 			createdAt.Format("2006-01-02 15:04:05 UTC"),
 		)),

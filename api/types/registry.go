@@ -108,7 +108,8 @@ type GetRegistryGCRTokenRequest struct {
 }
 
 type GetRegistryECRTokenRequest struct {
-	Region string `schema:"region"`
+	Region    string `schema:"region"`
+	AccountID string `schema:"account_id"`
 }
 
 type GetRegistryDOCRTokenRequest struct {

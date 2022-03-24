@@ -475,6 +475,13 @@ const ChartList: React.FunctionComponent<Props> = ({
     return result;
   }, [charts, sortType, jobStatus, lastRunStatus]);
 
+  const isLoadingJobStatus = useMemo(() => {
+    if (lastStreamStatus.current !== "finished") {
+      return true;
+    }
+    return false;
+  }, [jobStatus]);
+
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {
       return (
@@ -504,11 +511,11 @@ const ChartList: React.FunctionComponent<Props> = ({
           key={getChartKey(chart.name, chart.namespace)}
           chart={chart}
           controllers={controllers || {}}
-          jobStatus={_.get(
-            jobStatus,
-            getChartKey(chart.name, chart.namespace),
-            null
-          )}
+          jobStatus={
+            isLoadingJobStatus
+              ? JobStatusType.Loading
+              : _.get(jobStatus, getChartKey(chart.name, chart.namespace), null)
+          }
           isJob={currentView === "jobs"}
           closeChartRedirectUrl={closeChartRedirectUrl}
         />

@@ -327,6 +327,7 @@ export enum JobStatusType {
   Succeeded = "succeeded",
   Running = "active",
   Failed = "failed",
+  Loading = "loading",
 }
 
 export interface JobStatusWithTimeType {

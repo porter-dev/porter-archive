@@ -360,6 +360,10 @@ const ChartList: React.FunctionComponent<Props> = ({
   };
 
   useEffect(() => {
+    if (currentView === "applications") {
+      return () => {};
+    }
+
     if (!charts?.length) {
       return () => {};
     }
@@ -476,11 +480,15 @@ const ChartList: React.FunctionComponent<Props> = ({
   }, [charts, sortType, jobStatus, lastRunStatus]);
 
   const isLoadingJobStatus = useMemo(() => {
+    if (currentView === "applications") {
+      return false;
+    }
+
     if (lastStreamStatus.current !== "finished") {
       return true;
     }
     return false;
-  }, [jobStatus]);
+  }, [jobStatus, currentView]);
 
   const renderChartList = () => {
     if (isLoading || (!namespace && namespace !== "")) {

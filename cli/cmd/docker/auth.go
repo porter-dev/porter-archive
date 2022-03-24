@@ -155,7 +155,7 @@ func (a *AuthGetter) GetECRCredentials(serverURL string, projID uint) (user stri
 		// get a token from the server
 		tokenResp, err := a.Client.GetECRAuthorizationToken(context.Background(), projID, &types.GetRegistryECRTokenRequest{
 			Region:    matches[3],
-			AccountID: matches[0],
+			AccountID: matches[1],
 		})
 
 		if err != nil {

@@ -193,13 +193,7 @@ class Sidebar extends Component<PropsType, StateType> {
             Launch
           </NavButton>
           {currentProject && currentProject.managed_infra_enabled && (
-            <NavButton
-              onClick={() =>
-                currentView !== "infrastructure" &&
-                pushFiltered(this.props, "/infrastructure", ["project_id"])
-              }
-              selected={currentView === "infrastructure"}
-            >
+            <NavButton to={"/infrastructure"}>
               <i className="material-icons">build_circle</i>
               Infrastructure
             </NavButton>

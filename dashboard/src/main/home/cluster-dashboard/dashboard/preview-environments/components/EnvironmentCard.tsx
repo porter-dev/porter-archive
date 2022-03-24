@@ -1,19 +1,49 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { PRDeployment } from "../EnvironmentList";
+import { Environment, PRDeployment } from "../EnvironmentList";
 import pr_icon from "assets/pull_request_icon.svg";
 import { integrationList } from "shared/common";
 import { useRouteMatch } from "react-router";
 import DynamicLink from "components/DynamicLink";
 import { capitalize, readableDate } from "shared/string_utils";
+import api from "shared/api";
+import { useContext } from "react";
+import { Context } from "shared/Context";
 
-const EnvironmentCard: React.FC<{ deployment: PRDeployment }> = ({
-  deployment,
-}) => {
+const EnvironmentCard: React.FC<{
+  deployment: PRDeployment;
+  environment: Environment;
+  onDelete: () => void;
+}> = ({ deployment, environment, onDelete }) => {
+  const { setCurrentOverlay } = useContext(Context);
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { url: currentUrl } = useRouteMatch();
 
   let repository = `${deployment.gh_repo_owner}/${deployment.gh_repo_name}`;
+
+  const deleteDeployment = () => {
+    setIsDeleting(true);
+
+    api
+      .deletePRDeployment(
+        "<token>",
+        {
+          namespace: deployment.namespace,
+        },
+        {
+          cluster_id: environment.cluster_id,
+          project_id: environment.project_id,
+          git_installation_id: environment.git_installation_id,
+          git_repo_owner: environment.git_repo_owner,
+          git_repo_name: environment.git_repo_name,
+        }
+      )
+      .then(() => {
+        setIsDeleting(false);
+        onDelete();
+      });
+  };
 
   return (
     <EnvironmentCardWrapper key={deployment.id}>
@@ -52,20 +82,38 @@ const EnvironmentCard: React.FC<{ deployment: PRDeployment }> = ({
         </Flex>
       </DataContainer>
       <Flex>
+        {!isDeleting && (
+          <React.Fragment>
+            <RowButton
+              to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+              key={deployment.id}
+            >
+              <i className="material-icons-outlined">info</i>
+              Details
+            </RowButton>
+            <RowButton
+              to={deployment.subdomain}
+              key={deployment.subdomain}
+              target="_blank"
+            >
+              <i className="material-icons">open_in_new</i>
+              View Live
+            </RowButton>
+          </React.Fragment>
+        )}
         <RowButton
-          to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
-          key={deployment.id}
-        >
-          <i className="material-icons-outlined">info</i>
-          Details
-        </RowButton>
-        <RowButton
-          to={deployment.subdomain}
+          to={"#"}
           key={deployment.subdomain}
-          target="_blank"
+          onClick={() =>
+            setCurrentOverlay({
+              message: `Are you sure you want to delete ${name}?`,
+              onYes: deleteDeployment,
+              onNo: () => setCurrentOverlay(null),
+            })
+          }
         >
-          <i className="material-icons">open_in_new</i>
-          View Live
+          <i className="material-icons">delete</i>
+          Delete
         </RowButton>
       </Flex>
     </EnvironmentCardWrapper>

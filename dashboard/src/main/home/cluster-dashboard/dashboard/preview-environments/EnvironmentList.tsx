@@ -262,7 +262,16 @@ const EnvironmentList = () => {
     }
 
     return deploymentList.map((d) => {
-      return <EnvironmentCard deployment={d} />;
+      const environment = environmentList?.find((e) => {
+        return e.id === d.environment_id;
+      });
+      return (
+        <EnvironmentCard
+          deployment={d}
+          environment={environment}
+          onDelete={handleRefresh}
+        />
+      );
     });
   };
 

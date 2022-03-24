@@ -106,7 +106,7 @@ const EnvironmentCard: React.FC<{
           key={deployment.subdomain}
           onClick={() =>
             setCurrentOverlay({
-              message: `Are you sure you want to delete ${name}?`,
+              message: `Are you sure you want to delete this preview deployment?`,
               onYes: deleteDeployment,
               onNo: () => setCurrentOverlay(null),
             })

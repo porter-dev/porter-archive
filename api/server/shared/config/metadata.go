@@ -18,7 +18,7 @@ type Metadata struct {
 
 func MetadataFromConf(sc *env.ServerConf, version string) *Metadata {
 	return &Metadata{
-		Provisioning:       sc.ProvisionerServerURL != "",
+		Provisioning:       sc.ProvisionerServerURL != "" && sc.ProvisionerToken != "",
 		Github:             hasGithubAppVars(sc),
 		GithubLogin:        sc.GithubClientID != "" && sc.GithubClientSecret != "" && sc.GithubLoginEnabled,
 		BasicLogin:         sc.BasicLoginEnabled,

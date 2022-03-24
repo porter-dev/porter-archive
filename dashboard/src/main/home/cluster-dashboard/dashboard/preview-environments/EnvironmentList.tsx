@@ -226,7 +226,7 @@ const EnvironmentList = () => {
     );
   }
 
-  if (isLoading || !hasPermissionsLoaded) {
+  if (!hasPermissionsLoaded) {
     return (
       <Placeholder>
         <Loading />
@@ -252,6 +252,14 @@ const EnvironmentList = () => {
   }
 
   let renderDeploymentList = () => {
+    if (isLoading) {
+      return (
+        <Placeholder>
+          <Loading />
+        </Placeholder>
+      );
+    }
+
     if (!deploymentList.length) {
       return (
         <Placeholder>

@@ -12,15 +12,15 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-
-const porterYamlDocsLink =
-  "https://docs.porter.run/preview-environments/porter-yaml-reference";
+import { Environment } from "../EnvironmentList";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
   const [repo, setRepo] = useState(null);
+  const [filteredRepos, setFilteredRepos] = useState<string[]>([]);
+
   const [status, setStatus] = useState(null);
   const { pushFiltered } = useRouting();
 
@@ -35,6 +35,30 @@ const ConnectNewRepo: React.FC = () => {
   useEffect(() => {}, [repo]);
 
   const { url } = useRouteMatch();
+
+  useEffect(() => {
+    api
+      .listEnvironments<Environment[]>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then(({ data }) => {
+        console.log("github account", data);
+
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+        const newFilteredRepos = data.map((env) => {
+          return `${env.git_repo_owner}/${env.git_repo_name}`;
+        });
+        setFilteredRepos(newFilteredRepos || []);
+      })
+      .catch(() => {});
+  }, []);
 
   const addRepo = () => {
     let [owner, repoName] = repo.split("/");
@@ -84,6 +108,7 @@ const ConnectNewRepo: React.FC = () => {
           setRepo(a.git_repo);
         }}
         readOnly={false}
+        filteredRepos={filteredRepos}
       />
       <HelperContainer>
         Note: you will need to add a <CodeBlock>porter.yaml</CodeBlock> file to

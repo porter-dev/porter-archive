@@ -338,6 +338,28 @@ const getPRDeployment = baseApi<
   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
 });
 
+const deletePRDeployment = baseApi<
+  {
+    namespace: string;
+  },
+  {
+    cluster_id: number;
+    project_id: number;
+    git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
+  }
+>("DELETE", (pathParams) => {
+  const {
+    cluster_id,
+    project_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
+});
+
 const getNotificationConfig = baseApi<
   {},
   {
@@ -1834,4 +1856,5 @@ export default {
   upgradePorterAgent,
   getAlertingConfig,
   saveAlertingConfig,
+  deletePRDeployment,
 };

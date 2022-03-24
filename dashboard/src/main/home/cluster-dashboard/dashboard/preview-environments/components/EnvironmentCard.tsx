@@ -85,21 +85,25 @@ const EnvironmentCard: React.FC<{
       <Flex>
         {!isDeleting ? (
           <>
-            <RowButton
-              to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
-              key={deployment.id}
-            >
-              <i className="material-icons-outlined">info</i>
-              Details
-            </RowButton>
-            <RowButton
-              to={deployment.subdomain}
-              key={deployment.subdomain}
-              target="_blank"
-            >
-              <i className="material-icons">open_in_new</i>
-              View Live
-            </RowButton>
+            {deployment.status !== "creating" && (
+              <>
+                <RowButton
+                  to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+                  key={deployment.id}
+                >
+                  <i className="material-icons-outlined">info</i>
+                  Details
+                </RowButton>
+                <RowButton
+                  to={deployment.subdomain}
+                  key={deployment.subdomain}
+                  target="_blank"
+                >
+                  <i className="material-icons">open_in_new</i>
+                  View Live
+                </RowButton>
+              </>
+            )}
             <RowButton
               to={"#"}
               key={deployment.subdomain}
@@ -138,10 +142,18 @@ const DeleteMessage = styled.div`
 
 export const DissapearAnimation = keyframes`
   0% { 
-    background-color: white; 
+    background-color: #ffffff; 
+  }
+
+  25% {
+    background-color: #ffffff50;
   }
 
   50% { 
+    background-color: none;
+  }
+
+  75% {
     background-color: #ffffff50;
   }
 
@@ -153,9 +165,10 @@ export const DissapearAnimation = keyframes`
 const Dot = styled.div`
   background-color: black;
   border-radius: 50%;
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 5px;
+  height: 5px;
   margin: 0 0.25rem;
+  margin-bottom: 2px;
   //Animation
   animation: ${DissapearAnimation} 0.5s linear infinite;
   animation-delay: ${(props: { delay: string }) => props.delay};

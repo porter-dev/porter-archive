@@ -200,7 +200,7 @@ const EnvironmentList = () => {
         if (!Array.isArray(data)) {
           throw Error("Data is not an array");
         }
-        setEnvironmentList(data);
+        setDeploymentList(data);
       })
       .catch((err) => {
         setHasError(true);

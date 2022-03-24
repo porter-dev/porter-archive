@@ -98,8 +98,6 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 				token = *output.AuthorizationData[0].AuthorizationToken
 				expiresAt = output.AuthorizationData[0].ExpiresAt
-
-				break
 			}
 		}
 	}

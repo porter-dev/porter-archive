@@ -97,13 +97,18 @@ const IncidentsTab = (props: {
 
   if (!isAgentInstalled || isAgentOutdated) {
     return (
-      <StyledCard>
-        <Placeholder>
+      <Placeholder>
+        <AgentButtonContainer>
+          <Header>Incident detection is not enabled on this cluster.</Header>
+          <Subheader>
+            In order to view incidents, you must enable incident detection on
+            this cluster.
+          </Subheader>
           <InstallPorterAgentButton onClick={() => triggerInstall()}>
-            <i className="material-icons">add</i> Enable incidents detection
+            <i className="material-icons">add</i> Enable Incident Detection
           </InstallPorterAgentButton>
-        </Placeholder>
-      </StyledCard>
+        </AgentButtonContainer>
+      </Placeholder>
     );
   }
 
@@ -135,6 +140,7 @@ const InstallPorterAgentButton = styled.button`
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
+  width: 200px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
   border: none;
@@ -179,15 +185,33 @@ const Placeholder = styled.div`
   color: #ffffff44;
   min-height: 400px;
   height: 50vh;
-  background: #26282f;
+  background: #ffffff11;
   border-radius: 8px;
-  width: 100%;
   display: flex;
-  align-items: center;
+  align-items: left;
   justify-content: center;
+  flex-direction: column;
 
   > i {
     font-size: 18px;
     margin-right: 8px;
   }
 `;
+
+const AgentButtonContainer = styled.div`
+  display: flex;
+  align-items: left;
+  justify-content: center;
+  flex-direction: column;
+  width: 500px;
+  margin: 0 auto;
+`;
+
+const Header = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+`;
+
+const Subheader = styled.div``;

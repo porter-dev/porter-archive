@@ -200,7 +200,7 @@ const EnvironmentList = () => {
         if (!Array.isArray(data)) {
           throw Error("Data is not an array");
         }
-        setEnvironmentList(data);
+        setDeploymentList(data);
       })
       .catch((err) => {
         setHasError(true);
@@ -226,7 +226,7 @@ const EnvironmentList = () => {
     );
   }
 
-  if (isLoading || !hasPermissionsLoaded) {
+  if (!hasPermissionsLoaded) {
     return (
       <Placeholder>
         <Loading />
@@ -252,6 +252,14 @@ const EnvironmentList = () => {
   }
 
   let renderDeploymentList = () => {
+    if (isLoading) {
+      return (
+        <Placeholder>
+          <Loading />
+        </Placeholder>
+      );
+    }
+
     if (!deploymentList.length) {
       return (
         <Placeholder>

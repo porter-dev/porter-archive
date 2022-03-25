@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { Environment, PRDeployment } from "../EnvironmentList";
 import pr_icon from "assets/pull_request_icon.svg";
 import { integrationList } from "shared/common";
@@ -42,6 +42,7 @@ const EnvironmentCard: React.FC<{
       .then(() => {
         setIsDeleting(false);
         onDelete();
+        setCurrentOverlay(null);
       });
   };
 
@@ -82,45 +83,97 @@ const EnvironmentCard: React.FC<{
         </Flex>
       </DataContainer>
       <Flex>
-        {!isDeleting && (
-          <React.Fragment>
+        {!isDeleting ? (
+          <>
+            {deployment.status !== "creating" && (
+              <>
+                <RowButton
+                  to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+                  key={deployment.id}
+                >
+                  <i className="material-icons-outlined">info</i>
+                  Details
+                </RowButton>
+                <RowButton
+                  to={deployment.subdomain}
+                  key={deployment.subdomain}
+                  target="_blank"
+                >
+                  <i className="material-icons">open_in_new</i>
+                  View Live
+                </RowButton>
+              </>
+            )}
             <RowButton
-              to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
-              key={deployment.id}
-            >
-              <i className="material-icons-outlined">info</i>
-              Details
-            </RowButton>
-            <RowButton
-              to={deployment.subdomain}
+              to={"#"}
               key={deployment.subdomain}
-              target="_blank"
+              onClick={() =>
+                setCurrentOverlay({
+                  message: `Are you sure you want to delete this deployment?`,
+                  onYes: deleteDeployment,
+                  onNo: () => setCurrentOverlay(null),
+                })
+              }
             >
-              <i className="material-icons">open_in_new</i>
-              View Live
+              <i className="material-icons">delete</i>
+              Delete
             </RowButton>
-          </React.Fragment>
+          </>
+        ) : (
+          <DeleteMessage>
+            Deleting
+            <Dot delay="0s" />
+            <Dot delay="0.1s" />
+            <Dot delay="0.2s" />
+          </DeleteMessage>
         )}
-        <RowButton
-          to={"#"}
-          key={deployment.subdomain}
-          onClick={() =>
-            setCurrentOverlay({
-              message: `Are you sure you want to delete this deployment?`,
-              onYes: deleteDeployment,
-              onNo: () => setCurrentOverlay(null),
-            })
-          }
-        >
-          <i className="material-icons">delete</i>
-          Delete
-        </RowButton>
       </Flex>
     </EnvironmentCardWrapper>
   );
 };
 
 export default EnvironmentCard;
+
+const DeleteMessage = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+`;
+
+export const DissapearAnimation = keyframes`
+  0% { 
+    background-color: #ffffff; 
+  }
+
+  25% {
+    background-color: #ffffff50;
+  }
+
+  50% { 
+    background-color: none;
+  }
+
+  75% {
+    background-color: #ffffff50;
+  }
+
+  100% { 
+    background-color: #ffffff;
+  }
+`;
+
+const Dot = styled.div`
+  background-color: black;
+  border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  margin: 0 0.25rem;
+  margin-bottom: 2px;
+  //Animation
+  animation: ${DissapearAnimation} 0.5s linear infinite;
+  animation-delay: ${(props: { delay: string }) => props.delay};
+`;
+
 const Flex = styled.div`
   display: flex;
   align-items: center;

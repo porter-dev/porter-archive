@@ -252,7 +252,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
                 onClick={() =>
                   replaceInvite(
                     row.values.email,
-                    row.values.id,
+                    row.original.id,
                     row.values.kind
                   )
                 }

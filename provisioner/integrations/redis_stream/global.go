@@ -126,12 +126,14 @@ func GlobalStreamListener(
 			id, exists := msg.Values["id"]
 
 			if !exists {
+				config.Logger.Debug().Msg("skipping message parsing as id does not exist")
 				continue
 			}
 
 			workspaceID, ok := id.(string)
 
 			if !ok {
+				config.Logger.Debug().Msg("skipping message parsing as workspace id does not exist")
 				continue
 			}
 
@@ -139,24 +141,30 @@ func GlobalStreamListener(
 			name, err := models.ParseWorkspaceID(workspaceID)
 
 			if err != nil {
+				config.Logger.Debug().Msg(fmt.Sprintf("could not parse workspace ID: %s %s", workspaceID, err.Error()))
 				continue
 			}
+
+			config.Logger.Debug().Msg(fmt.Sprintf("reading infra %d and operation %s for project %d", name.InfraID, name.OperationUID, name.ProjectID))
 
 			infra, err := repo.Infra().ReadInfra(name.ProjectID, name.InfraID)
 
 			if err != nil {
+				config.Logger.Debug().Msg(fmt.Sprintf("could not read infra %d in project %d: %s", name.InfraID, name.ProjectID, err.Error()))
 				continue
 			}
 
 			operation, err := repo.Infra().ReadOperation(name.InfraID, name.OperationUID)
 
 			if err != nil {
+				config.Logger.Debug().Msg(fmt.Sprintf("could not read operation %s, infra %d in project %d: %s", name.OperationUID, name.InfraID, name.ProjectID, err.Error()))
 				continue
 			}
 
 			statusVal, exists := msg.Values["status"]
 
 			if !exists {
+				config.Logger.Debug().Msg("skipping message parsing as status does not exist")
 				continue
 			}
 

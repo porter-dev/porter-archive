@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
 import ConnectNewRepo from "./components/ConnectNewRepo";
-import EnvironmentDetail from "./EnvironmentDetail";
+import EnvironmentDetail from "./DeploymentDetail";
 import PreviewEnvironmentsHome from "./PreviewEnvironmentsHome";
 
 export const Routes = () => {

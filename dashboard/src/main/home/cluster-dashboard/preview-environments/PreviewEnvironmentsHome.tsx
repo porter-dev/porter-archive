@@ -1,49 +1,103 @@
+import Loading from "components/Loading";
 import TabSelector from "components/TabSelector";
-import TitleSection from "components/TitleSection";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
+import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
+import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
 import DeploymentList from "./DeploymentList";
-
-const Header = () => (
-  <>
-    <TitleSection>
-      <DashboardIcon>
-        <i className="material-icons">device_hub</i>
-      </DashboardIcon>
-      Preview environments
-    </TitleSection>
-    <InfoSection>
-      <TopRow>
-        <InfoLabel>
-          <i className="material-icons">info</i> Info
-        </InfoLabel>
-      </TopRow>
-      <Description>
-        Create preview environments for your pull requests
-      </Description>
-    </InfoSection>
-  </>
-);
+import EnvironmentsList from "./EnvironmentsList";
 
 type TabEnum = "repositories" | "pull_requests";
 
 const PreviewEnvironmentsHome = () => {
   const { currentCluster, currentProject } = useContext(Context);
 
+  const [isEnabled, setIsEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
   const [currentTab, setCurrentTab] = useState<TabEnum>("repositories");
+
+  useEffect(() => {
+    let isSubscribed = true;
+    api
+      .listEnvironments(
+        "<token>",
+        {},
+        {
+          project_id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+        }
+      )
+      .then(({ data }) => {
+        if (isSubscribed) {
+          setIsEnabled(true);
+        }
+
+        if (!Array.isArray(data)) {
+          throw Error("Data is not an array");
+        }
+
+        setIsEnabled(!!data.length);
+      })
+
+      .catch((err) => {
+        console.error(err);
+        if (isSubscribed) {
+          setHasError(true);
+        }
+      })
+      .finally(() => {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [currentCluster, currentProject]);
+
+  if (isLoading) {
+    return (
+      <Placeholder>
+        <Loading />
+      </Placeholder>
+    );
+  }
+
+  if (hasError) {
+    return <Placeholder>Something went wrong, please try again</Placeholder>;
+  }
+
+  if (!isEnabled) {
+    return (
+      <>
+        <PreviewEnvironmentsHeader />
+        <LineBreak />
+        <Placeholder>
+          <Title>Preview environments are not enabled on this cluster</Title>
+          <Subtitle>
+            In order to use preview environments, you must enable preview
+            environments on this cluster.
+          </Subtitle>
+          <ButtonEnablePREnvironments />
+        </Placeholder>
+      </>
+    );
+  }
 
   return (
     <>
-      <Header />
+      <PreviewEnvironmentsHeader />
       <TabSelector
         options={[
           {
             label: "Linked Repositories",
             value: "repositories",
-            component: () => {
-              return <> Repoooos </>;
-            },
+            component: <EnvironmentsList />,
           },
           {
             label: "Pull requests",
@@ -60,51 +114,43 @@ const PreviewEnvironmentsHome = () => {
 
 export default PreviewEnvironmentsHome;
 
-const DashboardIcon = styled.div`
-  height: 45px;
-  min-width: 45px;
-  width: 45px;
-  border-radius: 5px;
-  margin-right: 17px;
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 10px 0px 35px;
+`;
+
+const Placeholder = styled.div`
+  padding: 30px;
+  margin-top: 35px;
+  padding-bottom: 40px;
+  font-size: 13px;
+  color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff11;
+  border-radius: 8px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #676c7c;
-  border: 2px solid #8e94aa;
+  flex-direction: column;
+
   > i {
-    font-size: 22px;
-  }
-`;
-
-const TopRow = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const Description = styled.div`
-  color: #aaaabb;
-  margin-top: 13px;
-  margin-left: 2px;
-  font-size: 13px;
-`;
-
-const InfoLabel = styled.div`
-  width: 72px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  color: #7a838f;
-  font-size: 13px;
-  > i {
-    color: #8b949f;
     font-size: 18px;
-    margin-right: 5px;
+    margin-right: 8px;
   }
 `;
 
-const InfoSection = styled.div`
-  margin-top: 36px;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 0px;
-  margin-bottom: 35px;
+const Title = styled.div`
+  font-weight: 500;
+  color: #aaaabb;
+  font-size: 16px;
+  margin-bottom: 15px;
+  width: 50%;
+`;
+
+const Subtitle = styled.div`
+  width: 50%;
 `;

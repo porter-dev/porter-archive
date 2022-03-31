@@ -12,6 +12,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import { Environment } from "../DeploymentList";
+import { PreviewEnvironmentsHeader } from "./PreviewEnvironmentsHeader";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -78,9 +79,7 @@ const ConnectNewRepo: React.FC = () => {
       )
       .then(() => {
         setStatus("successful");
-        pushFiltered(`${url}`, [], {
-          selected_tab: "preview_environments",
-        });
+        pushFiltered(`/preview-environments`, []);
       })
       .catch((err) => {
         err = JSON.stringify(err);
@@ -90,9 +89,11 @@ const ConnectNewRepo: React.FC = () => {
   };
 
   return (
-    <div>
+    <>
+      <PreviewEnvironmentsHeader />
+      <LineBreak />
       <ControlRow>
-        <BackButton to={`${url}?selected_tab=preview_environments`}>
+        <BackButton to={`/preview-environments`}>
           <i className="material-icons">close</i>
         </BackButton>
         <Title>Enable Preview Environments</Title>
@@ -129,11 +130,18 @@ const ConnectNewRepo: React.FC = () => {
           statusPosition={"left"}
         ></SaveButton>
       </ActionContainer>
-    </div>
+    </>
   );
 };
 
 export default ConnectNewRepo;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 10px 0px 35px;
+`;
 
 const ControlRow = styled.div`
   display: flex;

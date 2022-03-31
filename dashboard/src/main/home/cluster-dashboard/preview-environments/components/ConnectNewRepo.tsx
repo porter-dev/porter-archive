@@ -1,6 +1,5 @@
 import DynamicLink from "components/DynamicLink";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 import RepoList from "components/repo-selector/RepoList";
 import SaveButton from "components/SaveButton";
 import DocsHelper from "components/DocsHelper";
@@ -12,7 +11,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import { Environment } from "../EnvironmentList";
+import { Environment } from "../DeploymentList";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(

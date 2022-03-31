@@ -12,7 +12,6 @@ import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
 import EventsTab from "./events/EventsTab";
-import EnvironmentList from "../preview-environments/EnvironmentList";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
 
@@ -30,7 +29,6 @@ const tabOptions: {
 ];
 
 export const Dashboard: React.FunctionComponent = () => {
-  const { currentProject } = useContext(Context);
   const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();

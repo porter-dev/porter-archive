@@ -39,7 +39,7 @@ export type Environment = {
   git_repo_name: string;
 };
 
-const EnvironmentList = () => {
+const DeploymentList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [hasPermissions, setHasPermissions] = useState(false);
@@ -333,7 +333,7 @@ const EnvironmentList = () => {
   );
 };
 
-export default EnvironmentList;
+export default DeploymentList;
 
 const ActionsWrapper = styled.div`
   display: flex;

@@ -3,7 +3,7 @@ import TitleSection from "components/TitleSection";
 import React, { useContext, useState } from "react";
 import { Context } from "shared/Context";
 import styled from "styled-components";
-import EnvironmentList from "./EnvironmentList";
+import DeploymentList from "./DeploymentList";
 
 const Header = () => (
   <>
@@ -48,7 +48,7 @@ const PreviewEnvironmentsHome = () => {
           {
             label: "Pull requests",
             value: "pull_requests",
-            component: <EnvironmentList />,
+            component: <DeploymentList />,
           },
         ]}
         currentTab={currentTab}

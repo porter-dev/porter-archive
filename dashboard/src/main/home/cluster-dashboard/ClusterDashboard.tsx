@@ -38,6 +38,14 @@ const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
   fallback: <Loading />,
 });
 
+const LazyPreviewEnvironmentsRoutes = loadable(
+  // @ts-ignore
+  () => import("./preview-environments/routes.tsx"),
+  {
+    fallback: <Loading />,
+  }
+);
+
 type PropsType = RouteComponentProps &
   WithAuthProps & {
     currentCluster: ClusterType;
@@ -270,24 +278,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     );
   };
 
-  // renderContents = () => {
-  //   let { currentCluster, setSidebar, currentView } = this.props;
-  //   if (currentView === "env-groups") {
-  //     return <EnvGroupDashboard currentCluster={this.props.currentCluster} />;
-  //   }
-
-  //   return (
-  //     <>
-  //       <DashboardHeader
-  //         image={currentView === "jobs" ? monojob : monoweb}
-  //         title={currentView}
-  //         description={this.getDescription(currentView)}
-  //       />
-  //       {this.renderBody()}
-  //     </>
-  //   );
-  // };
-
   render() {
     let { currentView } = this.props;
     let { setSidebar } = this.props;
@@ -335,9 +325,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           resource=""
           verb={["get", "list"]}
         >
-          {/* {this.renderContents()} */}
           <EnvGroupDashboard currentCluster={this.props.currentCluster} />
         </GuardedRoute>
+        <Route path={"/preview-environments"}>
+          <LazyPreviewEnvironmentsRoutes />
+        </Route>
         <Route path={"/databases"}>
           <LazyDatabasesRoutes />
         </Route>

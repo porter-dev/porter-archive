@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { Environment, PRDeployment } from "../EnvironmentList";
+import { Environment, PRDeployment } from "./EnvironmentList";
 import pr_icon from "assets/pull_request_icon.svg";
 import { integrationList } from "shared/common";
 import { useRouteMatch } from "react-router";

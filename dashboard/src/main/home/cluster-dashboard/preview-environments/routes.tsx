@@ -1,20 +1,25 @@
 import React, { useContext } from "react";
 import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
-import { Dashboard } from "./Dashboard";
-import ExpandedNodeView from "./node-view/ExpandedNodeView";
+import EnvironmentDetail from "./EnvironmentDetail";
+import PreviewEnvironmentsHome from "./PreviewEnvironmentsHome";
 
 export const Routes = () => {
   const { url } = useRouteMatch();
   const { currentProject } = useContext(Context);
+
+  // if (!currentProject?.preview_envs_enabled) {
+  //   return <Redirect to={`/`} />;
+  // }
+
   return (
     <>
       <Switch>
-        <Route path={`${url}/node-view/:nodeId`}>
-          <ExpandedNodeView />
+        <Route path={`${url}/details/:namespace`}>
+          <EnvironmentDetail />
         </Route>
         <Route path={`${url}/`}>
-          <Dashboard />
+          <PreviewEnvironmentsHome />
         </Route>
       </Switch>
     </>

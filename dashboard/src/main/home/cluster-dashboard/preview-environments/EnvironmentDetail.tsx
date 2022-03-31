@@ -9,7 +9,7 @@ import { PRDeployment, Environment } from "./EnvironmentList";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import ChartList from "../../chart/ChartList";
+import ChartList from "../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
@@ -163,7 +163,8 @@ const GHALink = styled(DynamicLink)`
     margin-right: 9px;
     margin-left: 5px;
 
-    :text-decoration: none;
+    text-decoration: none;
+
     :hover {
       text-decoration: underline;
       color: white;

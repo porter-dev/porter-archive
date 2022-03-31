@@ -12,7 +12,7 @@ import ConnectNewRepo from "./components/ConnectNewRepo";
 import Loading from "components/Loading";
 
 import _, { flatMapDepth } from "lodash";
-import EnvironmentCard from "./components/EnvironmentCard";
+import EnvironmentCard from "./EnvironmentCard";
 
 export type PRDeployment = {
   id: number;

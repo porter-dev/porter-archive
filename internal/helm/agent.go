@@ -266,7 +266,7 @@ func (a *Agent) UpgradeReleaseByValues(
 			secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace).List(
 				context.Background(),
 				v1.ListOptions{
-					LabelSelector: fmt.Sprintf("owner=helm,status in (pending-install, pending-upgrade, pending-rollback),name=%s", rel.Name),
+					LabelSelector: fmt.Sprintf("owner=helm,name=%s", rel.Name),
 				},
 			)
 
@@ -286,29 +286,26 @@ func (a *Agent) UpgradeReleaseByValues(
 					}
 				}
 
-				prevRelease, err := a.GetRelease(conf.Name, 0, true)
-
-				if err != nil {
-					return nil, err
-				}
-
 				// run the equivalent of `helm template` to get the manifest string for the new release
 				installCmd := action.NewInstall(a.ActionConfig)
 
 				installCmd.ReleaseName = conf.Name
+				installCmd.Namespace = rel.Namespace
 				installCmd.DryRun = true
 				installCmd.Replace = true
 
-				installCmd.ClientOnly = true
+				installCmd.ClientOnly = false
 				installCmd.IncludeCRDs = true
 
-				newRelDryRun, err := cmd.Run(conf.Name, ch, conf.Values)
+				newRelDryRun, err := installCmd.Run(ch, conf.Values)
 
 				if err != nil {
 					return nil, err
 				}
 
-				oldManifestBuffer := bytes.NewBufferString(prevRelease.Manifest)
+				a.ActionConfig.Log("helm template ran successfully")
+
+				oldManifestBuffer := bytes.NewBufferString(rel.Manifest)
 				newManifestBuffer := bytes.NewBufferString(newRelDryRun.Manifest)
 
 				versionMapper := &DeprecatedAPIVersionMapper{}
@@ -319,17 +316,17 @@ func (a *Agent) UpgradeReleaseByValues(
 					return nil, err
 				}
 
-				prevRelease.Manifest = updatedManifestBuffer.String()
+				rel.Manifest = updatedManifestBuffer.String()
 
 				helmSecrets := driver.NewSecrets(a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace))
 
-				err = helmSecrets.Update(mostRecentSecret.GetName(), prevRelease)
+				err = helmSecrets.Update(mostRecentSecret.GetName(), rel)
 
 				if err != nil {
 					return nil, fmt.Errorf("Upgrade failed: %w", err)
 				}
-				// retry upgrade
-				res, err = cmd.Run(conf.Name, ch, conf.Values)
+
+				res, err := cmd.Run(conf.Name, ch, conf.Values)
 
 				if err != nil {
 					return nil, fmt.Errorf("Upgrade failed: %w", err)

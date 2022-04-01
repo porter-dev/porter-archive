@@ -931,7 +931,7 @@ func getResourceName(res resource) (string, bool) {
 		return "", false
 	}
 
-	metadata, ok := metadataVal.(map[string]interface{})
+	metadata, ok := metadataVal.(resource)
 
 	if !ok {
 		return "", false
@@ -943,7 +943,9 @@ func getResourceName(res resource) (string, bool) {
 		return "", false
 	}
 
-	return nameVal.(string), true
+	name, ok := nameVal.(string)
+
+	return name, ok
 }
 
 func getKindAndAPIVersion(res resource) (kind string, apiVersion string, ok bool) {

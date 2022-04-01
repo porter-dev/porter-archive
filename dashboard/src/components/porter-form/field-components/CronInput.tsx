@@ -8,23 +8,20 @@ import CronParser from "cronstrue";
 import styled from "styled-components";
 
 const CronInput: React.FC<CronField> = (props) => {
-  const { id, variable } = props;
+  const { id, variable, label, placeholder } = props;
 
-  const { state, variables, setVars, setValidation, validation } = useFormField(
-    id,
-    {
-      initValidation: {
-        validated: hasSetValue(props),
-      },
-    }
-  );
-
-  console.log(validation[id]);
+  const { variables, setVars, setValidation, validation } = useFormField(id, {
+    initValidation: {
+      validated: hasSetValue(props),
+    },
+  });
 
   return (
     <>
       <InputRow
         type="text"
+        label={label}
+        placeholder={placeholder}
         value={variables[variable]}
         setValue={(x: string) => {
           setVars((vars) => {

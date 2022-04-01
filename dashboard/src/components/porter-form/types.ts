@@ -121,6 +121,11 @@ export interface VariableField extends GenericInputField {
 
 export interface CronField extends GenericInputField {
   type: "cron";
+  label: string;
+  placeholder: string;
+  settings: {
+    default: string;
+  };
 }
 
 export type FormField =

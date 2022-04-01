@@ -9,7 +9,7 @@ import { PRDeployment } from "./DeploymentList";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import ChartList from "../chart/ChartList";
+import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";

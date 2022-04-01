@@ -11,7 +11,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import { Environment } from "../DeploymentList";
+import { Environment } from "../deployments/DeploymentList";
 import { PreviewEnvironmentsHeader } from "./PreviewEnvironmentsHeader";
 
 const ConnectNewRepo: React.FC = () => {

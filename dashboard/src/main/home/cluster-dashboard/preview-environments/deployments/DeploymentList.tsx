@@ -7,8 +7,8 @@ import { getQueryParam } from "shared/routing";
 import styled from "styled-components";
 import Selector from "components/Selector";
 
-import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
-import ConnectNewRepo from "./components/ConnectNewRepo";
+import ButtonEnablePREnvironments from "../components/ButtonEnablePREnvironments";
+import ConnectNewRepo from "../components/ConnectNewRepo";
 import Loading from "components/Loading";
 
 import _, { flatMapDepth } from "lodash";

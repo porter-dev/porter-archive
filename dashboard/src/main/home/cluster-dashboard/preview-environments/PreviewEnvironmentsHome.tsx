@@ -6,7 +6,7 @@ import { Context } from "shared/Context";
 import styled from "styled-components";
 import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
 import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
-import DeploymentList from "./DeploymentList";
+import DeploymentList from "./deployments/DeploymentList";
 import EnvironmentsList from "./EnvironmentsList";
 
 type TabEnum = "repositories" | "pull_requests";

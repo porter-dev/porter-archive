@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
 import ConnectNewRepo from "./components/ConnectNewRepo";
-import EnvironmentDetail from "./DeploymentDetail";
+import DeploymentDetail from "./deployments/DeploymentDetail";
 import PreviewEnvironmentsHome from "./PreviewEnvironmentsHome";
 
 export const Routes = () => {
@@ -20,7 +20,7 @@ export const Routes = () => {
           <ConnectNewRepo />
         </Route>
         <Route path={`${url}/details/:namespace`}>
-          <EnvironmentDetail />
+          <DeploymentDetail />
         </Route>
         <Route path={`${url}/:selected_tab?`}>
           <PreviewEnvironmentsHome />

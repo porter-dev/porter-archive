@@ -85,7 +85,7 @@ export interface KeyValueArrayField extends GenericInputField {
   settings?: {
     options?: {
       enable_synced_env_groups: boolean;
-    },
+    };
     type: "env" | "normal";
   };
 }
@@ -119,6 +119,10 @@ export interface VariableField extends GenericInputField {
   };
 }
 
+export interface CronField extends GenericInputField {
+  type: "cron";
+}
+
 export type FormField =
   | HeadingField
   | SubtitleField
@@ -130,7 +134,8 @@ export type FormField =
   | ServiceIPListField
   | ResourceListField
   | VeleroBackupField
-  | VariableField;
+  | VariableField
+  | CronField;
 
 export interface ShowIfAnd {
   and: ShowIf[];

@@ -6,15 +6,27 @@ import { hasSetValue } from "../utils";
 import { isValidCron } from "cron-validator";
 import CronParser from "cronstrue";
 import styled from "styled-components";
+import DocsHelper from "components/DocsHelper";
+import DynamicLink from "components/DynamicLink";
 
 const CronInput: React.FC<CronField> = (props) => {
-  const { id, variable, label, placeholder } = props;
+  const { id, variable, label, placeholder, value } = props;
 
-  const { variables, setVars, setValidation, validation } = useFormField(id, {
-    initValidation: {
-      validated: hasSetValue(props),
-    },
-  });
+  const { state, variables, setVars, setValidation, validation } = useFormField(
+    id,
+    {
+      initValidation: {
+        validated: hasSetValue(props) ? isValidCron(value[0]) : true,
+      },
+      initVars: {
+        [variable]: hasSetValue(props) ? value[0] : undefined,
+      },
+    }
+  );
+
+  if (!state || validation[id]?.validated === undefined) {
+    return null;
+  }
 
   return (
     <>
@@ -38,13 +50,28 @@ const CronInput: React.FC<CronField> = (props) => {
           });
         }}
         width={"100%"}
-        hasError={!validation[id].validated}
+        hasError={!validation[id]?.validated}
       />
-      <Label error={!validation[id].validated}>
-        {CronParser.toString(variables[variable], {
-          throwExceptionOnParseError: false,
-          verbose: true,
-        })}
+      <Label error={!validation[id]?.validated}>
+        {!validation[id]?.validated ? (
+          <>
+            The expresion is not valid, to learn more about cron jobs please
+            click{" "}
+            <DynamicLink
+              style={{ color: "red", textDecoration: "underline" }}
+              to="https://docs.porter.run/running-jobs/deploying-jobs#deploying-a-cron-job"
+            >
+              here
+            </DynamicLink>
+          </>
+        ) : (
+          <>
+            {CronParser.toString(variables[variable], {
+              throwExceptionOnParseError: false,
+              verbose: true,
+            })}
+          </>
+        )}
       </Label>
     </>
   );

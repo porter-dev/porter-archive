@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strconv"
@@ -258,6 +259,83 @@ func (a *Agent) UpgradeReleaseByValues(
 					// ask the user to wait for about a minute before retrying for the above fix to kick in
 					return nil, fmt.Errorf("another operation (install/upgrade/rollback) is in progress. If this error persists, please wait for 60 seconds to force an upgrade")
 				}
+			}
+		} else if strings.Contains(err.Error(), "current release manifest contains removed kubernetes api(s)") {
+			// ref: https://helm.sh/docs/topics/kubernetes_apis/#updating-api-versions-of-a-release-manifest
+			// in this case, we manually update the secret containing the new manifests
+			secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace).List(
+				context.Background(),
+				v1.ListOptions{
+					LabelSelector: fmt.Sprintf("owner=helm,status in (pending-install, pending-upgrade, pending-rollback),name=%s", rel.Name),
+				},
+			)
+
+			if err != nil {
+				return nil, fmt.Errorf("Upgrade failed: %w", err)
+			}
+
+			if len(secretList.Items) > 0 {
+				mostRecentSecret := secretList.Items[0]
+
+				for i := 1; i < len(secretList.Items); i += 1 {
+					oldVersion, _ := strconv.Atoi(mostRecentSecret.Labels["version"])
+					newVersion, _ := strconv.Atoi(secretList.Items[i].Labels["version"])
+
+					if oldVersion < newVersion {
+						mostRecentSecret = secretList.Items[i]
+					}
+				}
+
+				prevRelease, err := a.GetRelease(conf.Name, 0, true)
+
+				if err != nil {
+					return nil, err
+				}
+
+				// run the equivalent of `helm template` to get the manifest string for the new release
+				installCmd := action.NewInstall(a.ActionConfig)
+
+				installCmd.ReleaseName = conf.Name
+				installCmd.DryRun = true
+				installCmd.Replace = true
+
+				installCmd.ClientOnly = true
+				installCmd.IncludeCRDs = true
+
+				newRelDryRun, err := cmd.Run(conf.Name, ch, conf.Values)
+
+				if err != nil {
+					return nil, err
+				}
+
+				oldManifestBuffer := bytes.NewBufferString(prevRelease.Manifest)
+				newManifestBuffer := bytes.NewBufferString(newRelDryRun.Manifest)
+
+				versionMapper := &DeprecatedAPIVersionMapper{}
+
+				updatedManifestBuffer, err := versionMapper.Run(oldManifestBuffer, newManifestBuffer)
+
+				if err != nil {
+					return nil, err
+				}
+
+				prevRelease.Manifest = updatedManifestBuffer.String()
+
+				helmSecrets := driver.NewSecrets(a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace))
+
+				err = helmSecrets.Update(mostRecentSecret.GetName(), prevRelease)
+
+				if err != nil {
+					return nil, fmt.Errorf("Upgrade failed: %w", err)
+				}
+				// retry upgrade
+				res, err = cmd.Run(conf.Name, ch, conf.Values)
+
+				if err != nil {
+					return nil, fmt.Errorf("Upgrade failed: %w", err)
+				}
+
+				return res, nil
 			}
 		}
 

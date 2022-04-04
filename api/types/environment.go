@@ -10,11 +10,15 @@ type Environment struct {
 	GitRepoOwner      string `json:"git_repo_owner"`
 	GitRepoName       string `json:"git_repo_name"`
 
-	Name string `json:"name"`
+	Name         string `json:"name"`
+	Mode         string `json:"mode"`
+	PRCount      uint   `json:"pr_count"`
+	LastPRStatus string `json:"last_pr_status"`
 }
 
 type CreateEnvironmentRequest struct {
 	Name string `json:"name" form:"required"`
+	Mode string `json:"mode" form:"required"`
 }
 
 type GitHubMetadata struct {
@@ -23,6 +27,8 @@ type GitHubMetadata struct {
 	RepoName     string `json:"gh_repo_name"`
 	RepoOwner    string `json:"gh_repo_owner"`
 	CommitSHA    string `json:"gh_commit_sha"`
+	PRBranchFrom string `json:"gh_pr_branch_from"`
+	PRBranchInto string `json:"gh_pr_branch_into"`
 }
 
 type DeploymentStatus string
@@ -32,6 +38,7 @@ const (
 	DeploymentStatusCreating DeploymentStatus = "creating"
 	DeploymentStatusInactive DeploymentStatus = "inactive"
 	DeploymentStatusFailed   DeploymentStatus = "failed"
+	DeploymentStatusDisabled DeploymentStatus = "disabled"
 )
 
 type Deployment struct {

@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -58,6 +59,9 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Name:              request.Name,
 		GitRepoOwner:      owner,
 		GitRepoName:       name,
+		Mode:              request.Mode,
+		PRCount:           0,
+		LastPRStatus:      "",
 	})
 
 	if err != nil {
@@ -67,6 +71,52 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// write Github actions files to the repo
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	hooks, _, err := client.Repositories.ListHooks(
+		r.Context(), owner, name, &github.ListOptions{},
+	)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	webhookURL := fmt.Sprintf("%s/api/github/incoming_webhook", c.Config().ServerConf.ServerURL)
+
+	for _, hook := range hooks {
+		if hook.GetURL() == webhookURL {
+			// if a previous webhook exists then we should delete it
+			// this ensures that an updated webhook secret is maintained
+			_, err = client.Repositories.DeleteHook(
+				r.Context(), owner, name, hook.GetID(),
+			)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			break
+		}
+	}
+
+	// create incoming webhook
+	_, _, err = client.Repositories.CreateHook(
+		r.Context(), owner, name, &github.Hook{
+			Config: map[string]interface{}{
+				"url":          webhookURL,
+				"content_type": "json",
+				"secret":       c.Config().ServerConf.GithubIncomingWebhookSecret,
+			},
+			Events: []string{"pull_requests"},
+			Active: github.Bool(false),
+		},
+	)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 )
 
+type EnvironmentMode uint
+
 type Environment struct {
 	gorm.Model
 
@@ -14,7 +16,10 @@ type Environment struct {
 	GitRepoOwner      string
 	GitRepoName       string
 
-	Name string
+	Name         string
+	Mode         string
+	PRCount      uint
+	LastPRStatus string
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
@@ -25,7 +30,11 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
-		Name:              e.Name,
+
+		Name:         e.Name,
+		Mode:         e.Mode,
+		PRCount:      e.PRCount,
+		LastPRStatus: e.LastPRStatus,
 	}
 }
 
@@ -42,6 +51,8 @@ type Deployment struct {
 	RepoName       string
 	RepoOwner      string
 	CommitSHA      string
+	PRBranchFrom   string
+	PRBranchInto   string
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
@@ -52,6 +63,8 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		RepoName:     d.RepoName,
 		RepoOwner:    d.RepoOwner,
 		CommitSHA:    d.CommitSHA,
+		PRBranchFrom: d.PRBranchFrom,
+		PRBranchInto: d.PRBranchInto,
 	}
 
 	return &types.Deployment{

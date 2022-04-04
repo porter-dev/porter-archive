@@ -84,6 +84,8 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		RepoName:       request.GitHubMetadata.RepoName,
 		PRName:         request.GitHubMetadata.PRName,
 		CommitSHA:      request.GitHubMetadata.CommitSHA,
+		PRBranchFrom:   request.GitHubMetadata.PRBranchFrom,
+		PRBranchInto:   request.GitHubMetadata.PRBranchInto,
 	})
 
 	if err != nil {

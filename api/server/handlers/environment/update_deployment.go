@@ -86,7 +86,7 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// create the deployment
+	// update the deployment
 	depl, err = c.Repo().Environment().UpdateDeployment(depl)
 
 	if err != nil {

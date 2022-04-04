@@ -51,6 +51,18 @@ func (repo *EnvironmentRepository) ReadEnvironmentByID(projectID, clusterID, env
 	return env, nil
 }
 
+func (repo *EnvironmentRepository) ReadEnvironmentByOwnerRepoName(
+	gitRepoOwner, gitRepoName string,
+) (*models.Environment, error) {
+	env := &models.Environment{}
+	if err := repo.db.Order("id desc").Where("git_repo_owner = ? AND git_repo_name = ?",
+		gitRepoOwner, gitRepoName,
+	).First(&env).Error; err != nil {
+		return nil, err
+	}
+	return env, nil
+}
+
 func (repo *EnvironmentRepository) ListEnvironments(projectID, clusterID uint) ([]*models.Environment, error) {
 	envs := make([]*models.Environment, 0)
 
@@ -99,6 +111,21 @@ func (repo *EnvironmentRepository) ReadDeploymentByCluster(projectID, clusterID 
 		Joins("INNER JOIN environments ON environments.id = deployments.environment_id").
 		Where("environments.project_id = ? AND environments.cluster_id = ? AND environments.deleted_at IS NULL AND namespace = ?", projectID, clusterID, depl.Namespace).
 		Find(&depl).Error; err != nil {
+		return nil, err
+	}
+
+	return depl, nil
+}
+
+func (repo *EnvironmentRepository) ReadDeploymentByGitDetails(
+	environmentID uint, gitRepoOwner, gitRepoName string, prNumber uint,
+) (*models.Deployment, error) {
+	depl := &models.Deployment{}
+
+	if err := repo.db.Order("id asc").
+		Where("environment_id = ? AND repo_owner = ? AND repo_name = ? AND pull_request_id = ?",
+			environmentID, gitRepoOwner, gitRepoName, prNumber).
+		First(&depl).Error; err != nil {
 		return nil, err
 	}
 

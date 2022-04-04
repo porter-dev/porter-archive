@@ -86,6 +86,17 @@ func setDockerConfig(client *api.Client) error {
 		}
 	}
 
+	// create a docker dir if it does not exist
+	dockerDir := filepath.Join(home, ".docker")
+
+	if _, err := os.Stat(dockerDir); os.IsNotExist(err) {
+		err = os.Mkdir(dockerDir, 0700)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	dockerConfigFile := filepath.Join(home, ".docker", "config.json")
 
 	// determine if configfile exists

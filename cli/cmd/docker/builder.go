@@ -25,6 +25,7 @@ type BuildOpts struct {
 	BuildContext      string
 	DockerfilePath    string
 	IsDockerfileInCtx bool
+	UseCache          bool
 
 	Env map[string]string
 }

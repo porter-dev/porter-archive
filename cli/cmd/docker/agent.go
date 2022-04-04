@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -31,28 +30,6 @@ type Agent struct {
 	authGetter *AuthGetter
 	ctx        context.Context
 	label      string
-}
-
-// ImagePull overrides the default docker client ImagePull to inject registry credentials
-func (a *Agent) ImagePull(ctx context.Context, refStr string, options types.ImagePullOptions) (io.ReadCloser, error) {
-	opts, err := a.getPullOptions(refStr)
-
-	if err != nil {
-		return a.Client.ImagePull(ctx, refStr, options)
-	}
-
-	return a.Client.ImagePull(ctx, refStr, opts)
-}
-
-// ImagePush overrides the default docker client ImagePush to inject registry credentials
-func (a *Agent) ImagePush(ctx context.Context, image string, options types.ImagePushOptions) (io.ReadCloser, error) {
-	opts, err := a.getPushOptions(image)
-
-	if err != nil {
-		return a.Client.ImagePush(ctx, image, options)
-	}
-
-	return a.Client.ImagePush(ctx, image, opts)
 }
 
 // CreateLocalVolumeIfNotExist creates a volume using driver type "local" with the

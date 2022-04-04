@@ -43,8 +43,11 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc
 		Builder:         "paketobuildpacks/builder:full",
 		AppPath:         opts.BuildContext,
 		Env:             opts.Env,
-		CacheImage:      cacheImage,
-		Publish:         true,
+	}
+
+	if opts.UseCache {
+		buildOpts.CacheImage = cacheImage
+		buildOpts.Publish = true
 	}
 
 	if buildConfig != nil {

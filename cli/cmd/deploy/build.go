@@ -49,6 +49,7 @@ func (b *BuildAgent) BuildDocker(
 		Env:               b.env,
 		DockerfilePath:    dockerfilePath,
 		IsDockerfileInCtx: isDockerfileInCtx,
+		UseCache:          b.UseCache,
 	}
 
 	return dockerAgent.BuildLocal(
@@ -78,6 +79,7 @@ func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag stri
 		Tag:          tag,
 		BuildContext: dst,
 		Env:          b.env,
+		UseCache:     b.UseCache,
 	}
 
 	// call builder

@@ -46,6 +46,10 @@ func init() {
 }
 
 func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	return setDockerConfig(client)
+}
+
+func setDockerConfig(client *api.Client) error {
 	pID := config.Project
 
 	// get all registries that should be added

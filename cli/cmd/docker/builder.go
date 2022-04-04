@@ -66,7 +66,7 @@ func (a *Agent) BuildLocal(opts *BuildOpts) error {
 	inlineCacheVal := "1"
 	buildArgs["BUILDKIT_INLINE_CACHE"] = &inlineCacheVal
 
-	out, err := a.client.ImageBuild(context.Background(), tar, types.ImageBuildOptions{
+	out, err := a.ImageBuild(context.Background(), tar, types.ImageBuildOptions{
 		Dockerfile: dockerfilePath,
 		BuildArgs:  buildArgs,
 		Tags: []string{

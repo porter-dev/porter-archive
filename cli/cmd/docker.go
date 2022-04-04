@@ -89,7 +89,7 @@ func setDockerConfig(client *api.Client) error {
 	dockerConfigFile := filepath.Join(home, ".docker", "config.json")
 
 	// determine if configfile exists
-	if info, err := os.Stat(dockerConfigFile); info.IsDir() || os.IsNotExist(err) {
+	if _, err := os.Stat(dockerConfigFile); os.IsNotExist(err) {
 		// if it does not exist, create it
 		err := ioutil.WriteFile(dockerConfigFile, []byte("{}"), 0700)
 

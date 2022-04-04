@@ -136,7 +136,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc
 	}
 
 	if len(buildOpts.Buildpacks) > 0 && strings.HasPrefix(buildOpts.Builder, "heroku") {
-		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile")
+		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile@1.0.0")
 	}
 
 	return client.Build(context.Background(), buildOpts)

@@ -213,13 +213,13 @@ func (a *Agent) upsertPorterContainer(opts PorterServerStartOpts) (id string, er
 		if len(container.Names) > 0 && container.Names[0] == "/"+opts.Name {
 			timeout, _ := time.ParseDuration("15s")
 
-			err := a.client.ContainerStop(a.ctx, container.ID, &timeout)
+			err := a.ContainerStop(a.ctx, container.ID, &timeout)
 
 			if err != nil {
 				return "", a.handleDockerClientErr(err, "Could not stop container "+container.ID)
 			}
 
-			err = a.client.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
+			err = a.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
 
 			if err != nil {
 				return "", a.handleDockerClientErr(err, "Could not remove container "+container.ID)
@@ -247,7 +247,7 @@ func (a *Agent) pullAndCreatePorterContainer(opts PorterServerStartOpts) (id str
 	labels[a.label] = "true"
 
 	// create the container with a label specifying this was created via the CLI
-	resp, err := a.client.ContainerCreate(a.ctx, &container.Config{
+	resp, err := a.ContainerCreate(a.ctx, &container.Config{
 		Image:   opts.Image,
 		Cmd:     opts.StartCmd,
 		Tty:     false,
@@ -274,7 +274,7 @@ func (a *Agent) pullAndCreatePorterContainer(opts PorterServerStartOpts) (id str
 
 // start the container
 func (a *Agent) startPorterContainer(id string) error {
-	if err := a.client.ContainerStart(a.ctx, id, types.ContainerStartOptions{}); err != nil {
+	if err := a.ContainerStart(a.ctx, id, types.ContainerStartOptions{}); err != nil {
 		return a.handleDockerClientErr(err, "Could not start Porter container")
 	}
 
@@ -328,7 +328,7 @@ func (a *Agent) upsertPostgresContainer(opts PostgresOpts) (id string, err error
 		if len(container.Names) > 0 && container.Names[0] == "/"+opts.Name {
 			timeout, _ := time.ParseDuration("15s")
 
-			err := a.client.ContainerStop(a.ctx, container.ID, &timeout)
+			err := a.ContainerStop(a.ctx, container.ID, &timeout)
 
 			if err != nil {
 				return "", a.handleDockerClientErr(err, "Could not stop postgres container "+container.ID)
@@ -349,7 +349,7 @@ func (a *Agent) pullAndCreatePostgresContainer(opts PostgresOpts) (id string, er
 	labels[a.label] = "true"
 
 	// create the container with a label specifying this was created via the CLI
-	resp, err := a.client.ContainerCreate(a.ctx, &container.Config{
+	resp, err := a.ContainerCreate(a.ctx, &container.Config{
 		Image:   opts.Image,
 		Tty:     false,
 		Labels:  labels,
@@ -377,7 +377,7 @@ func (a *Agent) pullAndCreatePostgresContainer(opts PostgresOpts) (id string, er
 
 // start the container in the background
 func (a *Agent) startPostgresContainer(id string) error {
-	if err := a.client.ContainerStart(a.ctx, id, types.ContainerStartOptions{}); err != nil {
+	if err := a.ContainerStart(a.ctx, id, types.ContainerStartOptions{}); err != nil {
 		return a.handleDockerClientErr(err, "Could not start Postgres container")
 	}
 
@@ -397,14 +397,14 @@ func (a *Agent) StopPorterContainers(remove bool) error {
 	for _, container := range containers {
 		timeout, _ := time.ParseDuration("15s")
 
-		err := a.client.ContainerStop(a.ctx, container.ID, &timeout)
+		err := a.ContainerStop(a.ctx, container.ID, &timeout)
 
 		if err != nil {
 			return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
 		}
 
 		if remove {
-			err = a.client.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
+			err = a.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
 
 			if err != nil {
 				return a.handleDockerClientErr(err, "Could not remove container "+container.ID)
@@ -430,14 +430,14 @@ func (a *Agent) StopPorterContainersWithProcessID(processID string, remove bool)
 		if strings.Contains(container.Names[0], "_"+processID) {
 			timeout, _ := time.ParseDuration("15s")
 
-			err := a.client.ContainerStop(a.ctx, container.ID, &timeout)
+			err := a.ContainerStop(a.ctx, container.ID, &timeout)
 
 			if err != nil {
 				return a.handleDockerClientErr(err, "Could not stop container "+container.ID)
 			}
 
 			if remove {
-				err = a.client.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
+				err = a.ContainerRemove(a.ctx, container.ID, types.ContainerRemoveOptions{})
 
 				if err != nil {
 					return a.handleDockerClientErr(err, "Could not remove container "+container.ID)
@@ -452,7 +452,7 @@ func (a *Agent) StopPorterContainersWithProcessID(processID string, remove bool)
 // getContainersCreatedByStart gets all containers that were created by the "porter start"
 // command by looking for the label "CreatedByPorterCLI" (or .label of the agent)
 func (a *Agent) getContainersCreatedByStart() ([]types.Container, error) {
-	containers, err := a.client.ContainerList(a.ctx, types.ContainerListOptions{
+	containers, err := a.ContainerList(a.ctx, types.ContainerListOptions{
 		All: true,
 	})
 

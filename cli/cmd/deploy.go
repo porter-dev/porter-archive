@@ -460,6 +460,7 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 			OverrideTag:     tag,
 			Method:          buildMethod,
 			AdditionalEnv:   additionalEnv,
+			UseCache:        useCache,
 		},
 		Local: source != "github",
 	})

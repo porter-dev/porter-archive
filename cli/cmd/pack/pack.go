@@ -25,7 +25,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc
 	//initialize a pack client
 	logger := newPackLogger()
 
-	client, err := packclient.NewClient(packclient.WithLogger(logger), packclient.WithDockerClient(dc))
+	client, err := packclient.NewClient(packclient.WithLogger(logger))
 
 	if err != nil {
 		return err

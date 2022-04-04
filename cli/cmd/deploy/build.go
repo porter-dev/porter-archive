@@ -83,7 +83,7 @@ func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag stri
 	}
 
 	// call builder
-	return packAgent.Build(opts, buildConfig, dockerAgent, fmt.Sprintf("%s:%s", b.imageRepo, "pack-cache"))
+	return packAgent.Build(opts, buildConfig, dockerAgent, fmt.Sprintf("%s:%s", b.CacheImageRepo, "pack-cache"))
 }
 
 // ResolveDockerPaths returns a path to the dockerfile that is either relative or absolute, and a path

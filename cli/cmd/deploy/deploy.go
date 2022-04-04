@@ -32,7 +32,7 @@ const (
 type DeployAgent struct {
 	App string
 
-	client         *client.Client
+	Client         *client.Client
 	release        *types.GetReleaseResponse
 	agent          *docker.Agent
 	opts           *DeployOpts
@@ -57,7 +57,7 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 	deployAgent := &DeployAgent{
 		App:    app,
 		opts:   opts,
-		client: client,
+		Client: client,
 		env:    make(map[string]string),
 	}
 
@@ -137,7 +137,7 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 	deployAgent.tag = opts.OverrideTag
 
-	err = coalesceEnvGroups(deployAgent.client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
+	err = coalesceEnvGroups(deployAgent.Client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
 		deployAgent.opts.Namespace, deployAgent.opts.EnvGroups, deployAgent.release.Config)
 
 	deployAgent.imageExists = deployAgent.agent.CheckIfImageExists(deployAgent.imageRepo, deployAgent.tag)
@@ -160,7 +160,7 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		}
 	}
 
-	env, err := GetEnvForRelease(d.client, conf, d.opts.ProjectID, d.opts.ClusterID, d.opts.Namespace)
+	env, err := GetEnvForRelease(d.Client, conf, d.opts.ProjectID, d.opts.ClusterID, d.opts.Namespace)
 
 	if err != nil {
 		return nil, err
@@ -250,7 +250,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 			return fmt.Errorf("invalid formatting of repo name")
 		}
 
-		zipResp, err := d.client.GetRepoZIPDownloadURL(
+		zipResp, err := d.Client.GetRepoZIPDownloadURL(
 			context.Background(),
 			d.opts.ProjectID,
 			int64(d.release.GitActionConfig.GitRepoID),
@@ -292,7 +292,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 
 	buildAgent := &BuildAgent{
 		SharedOpts:  d.opts.SharedOpts,
-		client:      d.client,
+		client:      d.Client,
 		imageRepo:   d.imageRepo,
 		env:         d.env,
 		imageExists: d.imageExists,
@@ -383,7 +383,7 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 		return err
 	}
 
-	return d.client.UpgradeRelease(
+	return d.Client.UpgradeRelease(
 		context.Background(),
 		d.opts.ProjectID,
 		d.opts.ClusterID,
@@ -650,7 +650,7 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 }
 
 func (d *DeployAgent) StreamEvent(event types.SubEvent) error {
-	return d.client.CreateEvent(
+	return d.Client.CreateEvent(
 		context.Background(),
 		d.opts.ProjectID, d.opts.ClusterID,
 		d.release.Namespace, d.release.Name,

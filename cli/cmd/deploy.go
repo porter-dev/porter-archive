@@ -210,6 +210,7 @@ var method string
 var stream bool
 var buildFlagsEnv []string
 var forcePush bool
+var useCache bool
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -224,6 +225,13 @@ func init() {
 	)
 
 	updateCmd.MarkPersistentFlagRequired("app")
+
+	updateCmd.PersistentFlags().BoolVar(
+		&useCache,
+		"use-cache",
+		false,
+		"Whether to use cache (currently in beta)",
+	)
 
 	updateCmd.PersistentFlags().StringVar(
 		&namespace,
@@ -469,6 +477,14 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 			Status:  types.EventStatusInProgress,
 			Info:    "",
 		})
+	}
+
+	if useCache {
+		err := setDockerConfig(updateAgent.Client)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	// read the values if necessary

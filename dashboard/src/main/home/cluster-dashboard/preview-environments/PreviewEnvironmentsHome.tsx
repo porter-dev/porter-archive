@@ -7,7 +7,7 @@ import styled from "styled-components";
 import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
 import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
 import DeploymentList from "./deployments/DeploymentList";
-import EnvironmentsList from "./EnvironmentsList";
+import EnvironmentsList from "./environments/EnvironmentsList";
 
 type TabEnum = "repositories" | "pull_requests";
 
@@ -72,22 +72,22 @@ const PreviewEnvironmentsHome = () => {
     return <Placeholder>Something went wrong, please try again</Placeholder>;
   }
 
-  if (!isEnabled) {
-    return (
-      <>
-        <PreviewEnvironmentsHeader />
-        <LineBreak />
-        <Placeholder>
-          <Title>Preview environments are not enabled on this cluster</Title>
-          <Subtitle>
-            In order to use preview environments, you must enable preview
-            environments on this cluster.
-          </Subtitle>
-          <ButtonEnablePREnvironments />
-        </Placeholder>
-      </>
-    );
-  }
+  // if (!isEnabled) {
+  //   return (
+  //     <>
+  //       <PreviewEnvironmentsHeader />
+  //       <LineBreak />
+  //       <Placeholder>
+  //         <Title>Preview environments are not enabled on this cluster</Title>
+  //         <Subtitle>
+  //           In order to use preview environments, you must enable preview
+  //           environments on this cluster.
+  //         </Subtitle>
+  //         <ButtonEnablePREnvironments />
+  //       </Placeholder>
+  //     </>
+  //   );
+  // }
 
   return (
     <>

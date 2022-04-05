@@ -11,33 +11,9 @@ import ButtonEnablePREnvironments from "../components/ButtonEnablePREnvironments
 import ConnectNewRepo from "../components/ConnectNewRepo";
 import Loading from "components/Loading";
 
-import _, { flatMapDepth } from "lodash";
+import _ from "lodash";
 import EnvironmentCard from "./DeploymentCard";
-
-export type PRDeployment = {
-  id: number;
-  created_at: string;
-  updated_at: string;
-  subdomain: string;
-  status: string;
-  environment_id: number;
-  pull_request_id: number;
-  namespace: string;
-  gh_pr_name: string;
-  gh_repo_owner: string;
-  gh_repo_name: string;
-  gh_commit_sha: string;
-};
-
-export type Environment = {
-  id: Number;
-  project_id: number;
-  cluster_id: number;
-  git_installation_id: number;
-  name: string;
-  git_repo_owner: string;
-  git_repo_name: string;
-};
+import { Environment, PRDeployment } from "../types";
 
 const DeploymentList = () => {
   const [isLoading, setIsLoading] = useState(true);

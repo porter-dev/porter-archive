@@ -42,7 +42,21 @@ func (c *GetIngressHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ingress, err := agent.GetIngress(namespace, name)
+	ingress1, err := agent.GetExtensionsV1Beta1Ingress(namespace, name)
+
+	if err == nil && ingress1 != nil {
+		c.WriteResult(w, r, ingress1)
+		return
+	}
+
+	ingress2, err := agent.GetNetworkingV1Beta1Ingress(namespace, name)
+
+	if err == nil && ingress2 != nil {
+		c.WriteResult(w, r, ingress2)
+		return
+	}
+
+	ingress3, err := agent.GetNetworkingV1Ingress(namespace, name)
 
 	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -56,5 +70,5 @@ func (c *GetIngressHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.WriteResult(w, r, ingress)
+	c.WriteResult(w, r, ingress3)
 }

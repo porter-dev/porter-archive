@@ -14,6 +14,7 @@ import { pushFiltered } from "shared/routing";
 import api from "shared/api";
 import { readableDate } from "shared/string_utils";
 import { Tooltip, Zoom } from "@material-ui/core";
+import CronParser from "cron-parser";
 
 type Props = {
   chart: ChartType;
@@ -84,6 +85,21 @@ const Chart: React.FunctionComponent<Props> = ({
     });
     return tmpControllers;
   }, [chartControllers, controllers]);
+
+  let interval = null;
+  if (chart?.config?.schedule?.enabled) {
+    interval = CronParser.parseExpression(chart?.config?.schedule.value, {
+      currentDate: new Date(),
+    });
+  }
+
+  // @ts-ignore
+  const rtf = new Intl.DateTimeFormat("en", {
+    localeMatcher: "best fit", // other values: "lookup"
+    // @ts-ignore
+    dateStyle: "full",
+    timeStyle: "long",
+  });
 
   return (
     <StyledChart
@@ -160,6 +176,14 @@ const Chart: React.FunctionComponent<Props> = ({
                 </JobStatus>
               </>
             )}
+            {chart.config?.schedule?.enabled ? (
+              <>
+                <Dot style={{ marginLeft: "10px" }}>•</Dot>
+                <JobStatus>
+                  Next run {rtf.format(interval?.next().toDate() || new Date())}
+                </JobStatus>
+              </>
+            ) : null}
           </LastDeployed>
         </InfoWrapper>
 

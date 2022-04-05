@@ -110,6 +110,10 @@ export interface ChartTypeWithExtendedConfig extends ChartType {
     showStartCommand: boolean;
     statefulset: { enabled: boolean };
     terminationGracePeriodSeconds: number;
+    schedule: {
+      enabled: boolean;
+      value: string;
+    };
   };
 }
 

@@ -15,6 +15,7 @@ type PropsType = {
   isRequired?: boolean;
   className?: string;
   maxLength?: number;
+  hasError?: boolean;
 };
 
 type StateType = {
@@ -65,7 +66,7 @@ export default class InputRow extends Component<PropsType, StateType> {
             {this.props.isRequired && <Required>{" *"}</Required>}
           </Label>
         )}
-        <InputWrapper>
+        <InputWrapper hasError={this.props.hasError}>
           <Input
             readOnly={this.state.readOnly}
             onFocus={() => this.setState({ readOnly: false })}
@@ -103,7 +104,8 @@ const InputWrapper = styled.div`
   display: flex;
   margin-bottom: -1px;
   align-items: center;
-  border: 1px solid #ffffff55;
+  border: 1px solid
+    ${(props: { hasError: boolean }) => (props.hasError ? "red" : "#ffffff55")};
   border-radius: 3px;
 `;
 

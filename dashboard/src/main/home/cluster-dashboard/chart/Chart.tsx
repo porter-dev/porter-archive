@@ -13,6 +13,7 @@ import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
 import api from "shared/api";
 import { readableDate } from "shared/string_utils";
+import { Tooltip, Zoom } from "@material-ui/core";
 
 type Props = {
   chart: ChartType;
@@ -31,6 +32,7 @@ const Chart: React.FunctionComponent<Props> = ({
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
+  const [showDescription, setShowDescription] = useState(false);
   const context = useContext(Context);
   const location = useLocation();
   const history = useHistory();
@@ -104,7 +106,25 @@ const Chart: React.FunctionComponent<Props> = ({
         {chart?.config?.description && (
           <>
             <Dot style={{ marginLeft: "9px", color: "#ffffff88" }}>•</Dot>
-            <Description>{chart.config.description}</Description>
+
+            <Tooltip
+              TransitionComponent={Zoom}
+              placement={"bottom-start"}
+              title={
+                <div
+                  style={{
+                    fontFamily: "Work Sans, sans-serif",
+                    fontSize: "14px",
+                    fontWeight: "normal",
+                    padding: "5px 6px",
+                  }}
+                >
+                  {chart.config.description as string}
+                </div>
+              }
+            >
+              <Description>{chart.config.description}</Description>
+            </Tooltip>
           </>
         )}
       </Title>
@@ -159,6 +179,7 @@ const Description = styled.div`
   text-overflow: ellipsis;
   max-width: 200px;
   color: #ffffff88;
+  position: relative;
 `;
 
 const BottomWrapper = styled.div`

@@ -49,6 +49,7 @@ func (b *BuildAgent) BuildDocker(
 		Env:               b.env,
 		DockerfilePath:    dockerfilePath,
 		IsDockerfileInCtx: isDockerfileInCtx,
+		UseCache:          b.UseCache,
 	}
 
 	return dockerAgent.BuildLocal(
@@ -74,26 +75,15 @@ func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag stri
 	packAgent := &pack.Agent{}
 
 	opts := &docker.BuildOpts{
-		ImageRepo: b.imageRepo,
-		// We tag the image with a stable param "pack-cache" so that pack can use the
-		// local image without attempting to re-pull from registry. We handle getting
-		// registry credentials and pushing/pulling the image.
-		Tag:          "pack-cache",
+		ImageRepo:    b.imageRepo,
+		Tag:          tag,
 		BuildContext: dst,
 		Env:          b.env,
+		UseCache:     b.UseCache,
 	}
 
 	// call builder
-	err := packAgent.Build(opts, buildConfig)
-
-	if err != nil {
-		return err
-	}
-
-	return dockerAgent.TagImage(
-		fmt.Sprintf("%s:%s", b.imageRepo, "pack-cache"),
-		fmt.Sprintf("%s:%s", b.imageRepo, tag),
-	)
+	return packAgent.Build(opts, buildConfig, dockerAgent, fmt.Sprintf("%s:%s", b.CacheImageRepo, "pack-cache"))
 }
 
 // ResolveDockerPaths returns a path to the dockerfile that is either relative or absolute, and a path

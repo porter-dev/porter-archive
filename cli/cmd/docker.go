@@ -46,6 +46,10 @@ func init() {
 }
 
 func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	return setDockerConfig(client)
+}
+
+func setDockerConfig(client *api.Client) error {
 	pID := config.Project
 
 	// get all registries that should be added
@@ -82,10 +86,21 @@ func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client *api.Client,
 		}
 	}
 
+	// create a docker dir if it does not exist
+	dockerDir := filepath.Join(home, ".docker")
+
+	if _, err := os.Stat(dockerDir); os.IsNotExist(err) {
+		err = os.Mkdir(dockerDir, 0700)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	dockerConfigFile := filepath.Join(home, ".docker", "config.json")
 
 	// determine if configfile exists
-	if info, err := os.Stat(dockerConfigFile); info.IsDir() || os.IsNotExist(err) {
+	if _, err := os.Stat(dockerConfigFile); os.IsNotExist(err) {
 		// if it does not exist, create it
 		err := ioutil.WriteFile(dockerConfigFile, []byte("{}"), 0700)
 

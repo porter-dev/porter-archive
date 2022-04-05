@@ -103,6 +103,14 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 	return depl, nil
 }
 
+func (repo *EnvironmentRepository) ReadDeploymentByID(id uint) (*models.Deployment, error) {
+	depl := &models.Deployment{}
+	if err := repo.db.Where("id = ?", id).First(&depl).Error; err != nil {
+		return nil, err
+	}
+	return depl, nil
+}
+
 func (repo *EnvironmentRepository) ReadDeploymentByCluster(projectID, clusterID uint, namespace string) (*models.Deployment, error) {
 	depl := &models.Deployment{}
 

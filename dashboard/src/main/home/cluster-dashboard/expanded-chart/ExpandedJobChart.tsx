@@ -336,6 +336,9 @@ const ExpandedJobHeader: React.FC<{
         Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
       </TagWrapper>
     </TitleSection>
+    {chart?.config?.description ? (
+      <Description>{chart?.config?.description}</Description>
+    ) : null}
 
     <InfoWrapper>
       <LastDeployed>
@@ -367,6 +370,15 @@ const ExpandedJobHeader: React.FC<{
     />
   </HeaderWrapper>
 );
+
+const Description = styled.div`
+  color: #ffffff88;
+  position: relative;
+  line-height: 16px;
+  font-size: 14px;
+  padding-left: 10px;
+  user-select: all;
+`;
 
 const CLIModalIconWrapper = styled.div`
   height: 35px;

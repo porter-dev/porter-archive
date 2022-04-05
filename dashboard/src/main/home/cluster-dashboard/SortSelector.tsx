@@ -8,6 +8,7 @@ import Selector from "components/Selector";
 type PropsType = {
   setSortType: (x: string) => void;
   sortType: string;
+  currentView: string;
 };
 
 type StateType = {
@@ -21,8 +22,26 @@ export default class SortSelector extends Component<PropsType, StateType> {
       { label: "Newest", value: "Newest" },
       { label: "Oldest", value: "Oldest" },
       { label: "Alphabetical", value: "Alphabetical" },
+      { label: "Next Run", value: "Next Run" },
     ] as { label: string; value: string }[],
   };
+
+  getSortOptions() {
+    if (this.props.currentView === "jobs") {
+      return [
+        { label: "Newest", value: "Newest" },
+        { label: "Oldest", value: "Oldest" },
+        { label: "Alphabetical", value: "Alphabetical" },
+        { label: "Next Run", value: "Next Run" },
+      ];
+    }
+
+    return [
+      { label: "Newest", value: "Newest" },
+      { label: "Oldest", value: "Oldest" },
+      { label: "Alphabetical", value: "Alphabetical" },
+    ];
+  }
 
   render() {
     return (
@@ -33,7 +52,7 @@ export default class SortSelector extends Component<PropsType, StateType> {
         <Selector
           activeValue={this.props.sortType}
           setActiveValue={(sortType) => this.props.setSortType(sortType)}
-          options={this.state.sortOptions}
+          options={this.getSortOptions()}
           dropdownLabel="Sort By"
           width="150px"
           dropdownWidth="230px"

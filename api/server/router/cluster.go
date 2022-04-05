@@ -376,6 +376,62 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// PATCH /api/projects/{project_id}/clusters/{cluster_id}/deployments/{deployment_id}/reenable -> environment.NewReenableDeploymentHandler
+		reenableDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate,
+				Method: types.HTTPVerbPatch,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/{deployment_id}/reenable",
+				},
+				Scopes: []types.PermissionScope{
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		reenableDeploymentHandler := environment.NewReenableDeploymentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: reenableDeploymentEndpoint,
+			Handler:  reenableDeploymentHandler,
+			Router:   r,
+		})
+
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/deployments/pull_request -> environment.NewEnablePullRequestHandler
+		enablePullRequestEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/pull_request",
+				},
+				Scopes: []types.PermissionScope{
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		enablePullRequestHandler := environment.NewEnablePullRequestHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: enablePullRequestEndpoint,
+			Handler:  enablePullRequestHandler,
+			Router:   r,
+		})
+
 	}
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewClusterListNamespacesHandler

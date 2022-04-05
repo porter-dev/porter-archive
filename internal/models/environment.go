@@ -16,10 +16,8 @@ type Environment struct {
 	GitRepoOwner      string
 	GitRepoName       string
 
-	Name         string
-	Mode         string
-	PRCount      uint
-	LastPRStatus string
+	Name string
+	Mode string
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
@@ -31,10 +29,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		Name:         e.Name,
-		Mode:         e.Mode,
-		PRCount:      e.PRCount,
-		LastPRStatus: e.LastPRStatus,
+		Name: e.Name,
+		Mode: e.Mode,
 	}
 }
 

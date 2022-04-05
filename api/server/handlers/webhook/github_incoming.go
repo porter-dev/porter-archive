@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -98,7 +99,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			return err
 		}
 
-		if depl.Status != "disabled" {
+		if depl.Status != types.DeploymentStatusInactive {
 			_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 				r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 				github.CreateWorkflowDispatchEventRequest{

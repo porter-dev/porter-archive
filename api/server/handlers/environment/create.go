@@ -60,8 +60,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitRepoOwner:      owner,
 		GitRepoName:       name,
 		Mode:              request.Mode,
-		PRCount:           0,
-		LastPRStatus:      "",
 	})
 
 	if err != nil {

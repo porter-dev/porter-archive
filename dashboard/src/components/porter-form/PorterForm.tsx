@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import {
   ArrayInputField,
   CheckboxField,
+  CronField,
   FormField,
   InputField,
   KeyValueArrayField,
@@ -24,6 +25,7 @@ import Select from "./field-components/Select";
 import ServiceIPList from "./field-components/ServiceIPList";
 import ResourceList from "./field-components/ResourceList";
 import VeleroForm from "./field-components/VeleroForm";
+import CronInput from "./field-components/CronInput";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -84,6 +86,8 @@ const PorterForm: React.FC<Props> = (props) => {
         return <ResourceList {...(bundledProps as ResourceListField)} />;
       case "velero-create-backup":
         return <VeleroForm />;
+      case "cron":
+        return <CronInput {...(bundledProps as CronField)} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

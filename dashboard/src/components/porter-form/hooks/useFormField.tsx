@@ -9,6 +9,7 @@ import {
 interface FormFieldData<T> {
   state: T;
   variables: PorterFormVariableList;
+  validation: { [key: string]: PorterFormFieldValidationState };
   setState: (setFunc: (prev: T) => Partial<T>) => void;
   setVars: (
     setFunc: (vars: PorterFormVariableList) => PorterFormVariableList
@@ -89,6 +90,7 @@ const useFormField = <T extends PorterFormFieldFieldState>(
   return {
     state: formState.components[fieldId]?.state as T,
     variables: formState.variables,
+    validation: formState.validation,
     setState,
     setVars,
     setValidation,

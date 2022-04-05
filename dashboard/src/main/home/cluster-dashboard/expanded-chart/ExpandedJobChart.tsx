@@ -25,6 +25,8 @@ import { useChart } from "shared/hooks/useChart";
 import Modal from "main/home/modals/Modal";
 import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal";
 import CommandLineIcon from "assets/command-line-icon";
+import CronParser from "cron-parser";
+import CronPrettifier from "cronstrue";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -131,10 +133,28 @@ export const ExpandedJobChartFC: React.FC<{
       );
     }
 
+    let interval = null;
+    if (chart?.config?.schedule.enabled) {
+      interval = CronParser.parseExpression(chart?.config?.schedule.value, {
+        currentDate: new Date(),
+      });
+    }
+    // @ts-ignore
+    const rtf = new Intl.DateTimeFormat("en", {
+      localeMatcher: "best fit", // other values: "lookup"
+      // @ts-ignore
+      dateStyle: "full",
+      timeStyle: "long",
+    });
+
     if (currentTab === "jobs") {
       return (
         <TabWrapper>
-          <ButtonWrapper>
+          <ButtonWrapper
+            style={{
+              marginBottom: chart?.config?.schedule?.enabled ? "0px" : "35px",
+            }}
+          >
             <SaveButton
               onClick={() => {
                 runJob();
@@ -158,20 +178,40 @@ export const ExpandedJobChartFC: React.FC<{
             </CLIModalIconWrapper>
           </ButtonWrapper>
 
+          {chart?.config?.schedule?.enabled ? (
+            <RunsDescription>
+              Runs{" "}
+              {CronPrettifier.toString(
+                chart?.config?.schedule.value
+              ).toLowerCase()}
+              <Dot
+                style={{
+                  color: "#ffffff88",
+                }}
+              >
+                •
+              </Dot>{" "}
+              Next run on
+              {" " + rtf.format(interval.next().toDate())}
+            </RunsDescription>
+          ) : null}
+
           {jobsStatus === "loading" ? (
             <Loading></Loading>
           ) : (
-            <JobList
-              jobs={jobs}
-              setJobs={() => {}}
-              expandJob={(job: any) => {
-                setSelectedJob(job);
-              }}
-              isDeployedFromGithub={!!chart?.git_action_config?.git_repo}
-              repositoryUrl={chart?.git_action_config?.git_repo}
-              currentChartVersion={Number(chart.version)}
-              latestChartVersion={Number(chart.latest_version)}
-            />
+            <>
+              <JobList
+                jobs={jobs}
+                setJobs={() => {}}
+                expandJob={(job: any) => {
+                  setSelectedJob(job);
+                }}
+                isDeployedFromGithub={!!chart?.git_action_config?.git_repo}
+                repositoryUrl={chart?.git_action_config?.git_repo}
+                currentChartVersion={Number(chart.version)}
+                latestChartVersion={Number(chart.latest_version)}
+              />
+            </>
           )}
         </TabWrapper>
       );
@@ -380,6 +420,14 @@ const ExpandedJobHeader: React.FC<{
   </HeaderWrapper>
 );
 
+const RunsDescription = styled.div`
+  color: #ffffff;
+  font-size: 14px;
+  margin-top: 15px;
+  margin-bottom: 35px;
+  display: flex;
+`;
+
 const Description = styled.div`
   color: #ffffff88;
   position: relative;
@@ -437,7 +485,7 @@ const LineBreak = styled.div`
 
 const ButtonWrapper = styled.div`
   display: flex;
-  margin: 5px 0 35px;
+  margin: 5px 0 0 0;
   justify-content: space-between;
 `;
 const BackButton = styled.div`
@@ -519,9 +567,9 @@ const Dot = styled.div`
 
 const InfoWrapper = styled.div`
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
   margin: 24px 0px 17px 0px;
-  height: 20px;
 `;
 
 const LastDeployed = styled.div`

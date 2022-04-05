@@ -19,6 +19,8 @@ type SharedOpts struct {
 	Method          DeployBuildType
 	AdditionalEnv   map[string]string
 	EnvGroups       []types.EnvGroupMeta
+	UseCache        bool
+	CacheImageRepo  string
 }
 
 func coalesceEnvGroups(

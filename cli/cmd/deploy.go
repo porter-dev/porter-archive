@@ -211,7 +211,6 @@ var stream bool
 var buildFlagsEnv []string
 var forcePush bool
 var useCache bool
-var cacheImage string
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -232,13 +231,6 @@ func init() {
 		"use-cache",
 		false,
 		"Whether to use cache (currently in beta)",
-	)
-
-	updateCmd.PersistentFlags().StringVar(
-		&cacheImage,
-		"cache-image",
-		"",
-		"Image repo URI to use for the cache image",
 	)
 
 	updateCmd.PersistentFlags().StringVar(
@@ -469,7 +461,6 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 			Method:          buildMethod,
 			AdditionalEnv:   additionalEnv,
 			UseCache:        useCache,
-			CacheImageRepo:  cacheImage,
 		},
 		Local: source != "github",
 	})
@@ -565,7 +556,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 }
 
 func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
-	if useCache && cacheImage != "" {
+	if useCache {
 		color.New(color.FgGreen).Println("Skipping image push for", app, "as use-cache is set")
 
 		return nil

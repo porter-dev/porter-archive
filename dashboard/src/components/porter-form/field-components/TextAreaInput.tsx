@@ -61,8 +61,8 @@ const TextAreaInput: React.FC<TextAreaField> = (props) => {
         </Label>
       ) : null}
       <TextArea
-        maxLength={settings?.maxCount}
-        minLength={settings?.minCount}
+        maxLength={settings?.options?.maxCount}
+        minLength={settings?.options?.minCount}
         disabled={isReadOnly}
         value={variables[variable]}
         placeholder={placeholder}

@@ -10,24 +10,36 @@ type Props = {
   name: string;
   icon: string;
   inline_title_items?: React.ReactNodeArray;
+  sub_title_items?: React.ReactNodeArray;
+  materialIconClass?: string;
 };
 
 const Header: React.FunctionComponent<Props> = (props) => {
-  const { last_updated, back_link, icon, name, inline_title_items } = props;
+  const {
+    last_updated,
+    back_link,
+    icon,
+    name,
+    inline_title_items,
+    sub_title_items,
+    materialIconClass,
+  } = props;
 
   return (
     <HeaderWrapper>
       <BackButton to={back_link}>
         <BackButtonImg src={backArrow} />
       </BackButton>
-      <Title icon={icon} iconWidth="25px">
+      <Title icon={icon} iconWidth="25px" materialIconClass={materialIconClass}>
         {name}
         <Flex>{inline_title_items}</Flex>
       </Title>
 
-      <InfoWrapper>
-        <InfoText>Last updated {last_updated}</InfoText>
-      </InfoWrapper>
+      {sub_title_items || (
+        <InfoWrapper>
+          <InfoText>Last updated {last_updated}</InfoText>
+        </InfoWrapper>
+      )}
     </HeaderWrapper>
   );
 };

@@ -424,7 +424,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = fmt.Sprintf("%s-%s", repoOwner, repoName)
+			repoSuffix = strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-")
 		}
 	}
 

@@ -101,6 +101,12 @@ const Chart: React.FunctionComponent<Props> = ({
       <Title>
         <IconWrapper>{renderIcon()}</IconWrapper>
         {chart.name}
+        {chart?.config?.description && (
+          <>
+            <Dot style={{ marginLeft: "9px", color: "#ffffff88" }}>•</Dot>
+            <Description>{chart.config.description}</Description>
+          </>
+        )}
       </Title>
 
       <BottomWrapper>
@@ -146,6 +152,14 @@ const Chart: React.FunctionComponent<Props> = ({
 };
 
 export default Chart;
+
+const Description = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  color: #ffffff88;
+`;
 
 const BottomWrapper = styled.div`
   display: flex;
@@ -244,6 +258,7 @@ const IconWrapper = styled.div`
 `;
 
 const Title = styled.div`
+  display: flex;
   position: relative;
   text-decoration: none;
   padding: 12px 35px 12px 45px;

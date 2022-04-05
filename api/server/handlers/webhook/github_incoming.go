@@ -89,32 +89,32 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		if err != nil {
 			return err
 		}
-	}
-
-	depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(
-		env.ID, owner, repo, uint(event.GetPullRequest().GetNumber()),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	if depl.Status != "disabled" {
-		_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
-			r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
-			github.CreateWorkflowDispatchEventRequest{
-				Ref: event.PullRequest.GetHead().GetRef(),
-				Inputs: map[string]interface{}{
-					"pr_number":      event.PullRequest.GetNumber(),
-					"pr_title":       event.PullRequest.GetTitle(),
-					"pr_branch_from": event.PullRequest.GetHead().GetRef(),
-					"pr_branch_into": event.PullRequest.GetBase().GetRef(),
-				},
-			},
+	} else if event.GetAction() == "synchronize" {
+		depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(
+			env.ID, owner, repo, uint(event.GetPullRequest().GetNumber()),
 		)
 
 		if err != nil {
 			return err
+		}
+
+		if depl.Status != "disabled" {
+			_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
+				r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+				github.CreateWorkflowDispatchEventRequest{
+					Ref: event.PullRequest.GetHead().GetRef(),
+					Inputs: map[string]interface{}{
+						"pr_number":      event.PullRequest.GetNumber(),
+						"pr_title":       event.PullRequest.GetTitle(),
+						"pr_branch_from": event.PullRequest.GetHead().GetRef(),
+						"pr_branch_into": event.PullRequest.GetBase().GetRef(),
+					},
+				},
+			)
+
+			if err != nil {
+				return err
+			}
 		}
 	}
 

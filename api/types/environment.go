@@ -81,7 +81,7 @@ type UpdateDeploymentRequest struct {
 }
 
 type ListDeploymentRequest struct {
-	Status []string `schema:"status"`
+	EnvironmentID uint `schema:"environment_id"`
 }
 
 type UpdateDeploymentStatusRequest struct {
@@ -98,4 +98,13 @@ type DeleteDeploymentRequest struct {
 
 type GetDeploymentRequest struct {
 	Namespace string `schema:"namespace" form:"required"`
+}
+
+type PullRequest struct {
+	Title      string `json:"pr_title"`
+	Number     uint   `json:"pr_number"`
+	RepoOwner  string `json:"repo_owner"`
+	RepoName   string `json:"repo_name"`
+	BranchFrom string `json:"branch_from"`
+	BranchInto string `json:"branch_into"`
 }

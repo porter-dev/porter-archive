@@ -56,8 +56,7 @@ type Deployment struct {
 }
 
 type CreateGHDeploymentRequest struct {
-	Branch   string `json:"branch" form:"required"`
-	ActionID uint   `json:"action_id" form:"required"`
+	ActionID uint `json:"action_id" form:"required"`
 }
 
 type CreateDeploymentRequest struct {
@@ -76,8 +75,9 @@ type FinalizeDeploymentRequest struct {
 type UpdateDeploymentRequest struct {
 	*CreateGHDeploymentRequest
 
-	CommitSHA string `json:"commit_sha" form:"required"`
-	Namespace string `json:"namespace" form:"required"`
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	CommitSHA    string `json:"commit_sha" form:"required"`
+	Namespace    string `json:"namespace" form:"required"`
 }
 
 type ListDeploymentRequest struct {
@@ -87,8 +87,9 @@ type ListDeploymentRequest struct {
 type UpdateDeploymentStatusRequest struct {
 	*CreateGHDeploymentRequest
 
-	Status    string `json:"status" form:"required,oneof=created creating inactive failed"`
-	Namespace string `json:"namespace" form:"required"`
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`
+	Namespace    string `json:"namespace" form:"required"`
 }
 
 type DeleteDeploymentRequest struct {

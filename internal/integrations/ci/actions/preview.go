@@ -229,13 +229,39 @@ func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 			opts.ProjectID,
 			opts.ClusterID,
 			opts.GitInstallationID,
+			opts.GitRepoOwner,
 			opts.GitRepoName,
 			"v0.1.0",
 		),
 	}
 
 	actionYAML := GithubActionYAML{
-		On:   []string{"pull_request"},
+		On: map[string]interface{}{
+			"workflow_dispatch": map[string]interface{}{
+				"inputs": map[string]interface{}{
+					"pr_number": map[string]interface{}{
+						"description": "Pull request number",
+						"type":        "number",
+						"required":    true,
+					},
+					"pr_title": map[string]interface{}{
+						"description": "Pull request title",
+						"type":        "string",
+						"required":    true,
+					},
+					"pr_branch_from": map[string]interface{}{
+						"description": "Pull request head branch",
+						"type":        "string",
+						"required":    true,
+					},
+					"pr_branch_into": map[string]interface{}{
+						"description": "Pull request base branch",
+						"type":        "string",
+						"required":    true,
+					},
+				},
+			},
+		},
 		Name: "Porter Preview Environment",
 		Jobs: map[string]GithubActionYAMLJob{
 			"porter-preview": {

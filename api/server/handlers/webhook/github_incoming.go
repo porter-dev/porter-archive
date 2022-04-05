@@ -77,6 +77,12 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: event.PullRequest.GetHead().GetRef(),
+				Inputs: map[string]interface{}{
+					"pr_number":      event.PullRequest.GetNumber(),
+					"pr_title":       event.PullRequest.GetTitle(),
+					"pr_branch_from": event.PullRequest.GetHead().GetRef(),
+					"pr_branch_into": event.PullRequest.GetBase().GetRef(),
+				},
 			},
 		)
 
@@ -98,6 +104,12 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: event.PullRequest.GetHead().GetRef(),
+				Inputs: map[string]interface{}{
+					"pr_number":      event.PullRequest.GetNumber(),
+					"pr_title":       event.PullRequest.GetTitle(),
+					"pr_branch_from": event.PullRequest.GetHead().GetRef(),
+					"pr_branch_into": event.PullRequest.GetBase().GetRef(),
+				},
 			},
 		)
 

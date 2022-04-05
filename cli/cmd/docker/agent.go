@@ -26,8 +26,8 @@ import (
 // Agent is a Docker client for performing operations that interact
 // with the Docker engine over REST
 type Agent struct {
+	*client.Client
 	authGetter *AuthGetter
-	client     *client.Client
 	ctx        context.Context
 	label      string
 }
@@ -36,7 +36,7 @@ type Agent struct {
 // given name if it does not exist. If the volume does exist but does not contain
 // the required label (a.label), an error is thrown.
 func (a *Agent) CreateLocalVolumeIfNotExist(name string) (*types.Volume, error) {
-	volListBody, err := a.client.VolumeList(a.ctx, filters.Args{})
+	volListBody, err := a.VolumeList(a.ctx, filters.Args{})
 
 	if err != nil {
 		return nil, a.handleDockerClientErr(err, "Could not list volumes")
@@ -67,7 +67,7 @@ func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
 		Labels: labels,
 	}
 
-	vol, err := a.client.VolumeCreate(a.ctx, opts)
+	vol, err := a.VolumeCreate(a.ctx, opts)
 
 	if err != nil {
 		return nil, a.handleDockerClientErr(err, "Could not create volume "+name)
@@ -78,14 +78,14 @@ func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
 
 // RemoveLocalVolume removes a volume by name
 func (a *Agent) RemoveLocalVolume(name string) error {
-	return a.client.VolumeRemove(a.ctx, name, true)
+	return a.VolumeRemove(a.ctx, name, true)
 }
 
 // CreateBridgeNetworkIfNotExist creates a volume using driver type "local" with the
 // given name if it does not exist. If the volume does exist but does not contain
 // the required label (a.label), an error is thrown.
 func (a *Agent) CreateBridgeNetworkIfNotExist(name string) (id string, err error) {
-	networks, err := a.client.NetworkList(a.ctx, types.NetworkListOptions{})
+	networks, err := a.NetworkList(a.ctx, types.NetworkListOptions{})
 
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not list volumes")
@@ -113,7 +113,7 @@ func (a *Agent) CreateBridgeNetwork(name string) (id string, err error) {
 		Attachable: true,
 	}
 
-	net, err := a.client.NetworkCreate(a.ctx, name, opts)
+	net, err := a.NetworkCreate(a.ctx, name, opts)
 
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not create network "+name)
@@ -125,7 +125,7 @@ func (a *Agent) CreateBridgeNetwork(name string) (id string, err error) {
 // ConnectContainerToNetwork attaches a container to a specified network
 func (a *Agent) ConnectContainerToNetwork(networkID, containerID, containerName string) error {
 	// check if the container is connected already
-	net, err := a.client.NetworkInspect(a.ctx, networkID, types.NetworkInspectOptions{})
+	net, err := a.NetworkInspect(a.ctx, networkID, types.NetworkInspectOptions{})
 
 	if err != nil {
 		return a.handleDockerClientErr(err, "Could not inspect network"+networkID)
@@ -138,11 +138,11 @@ func (a *Agent) ConnectContainerToNetwork(networkID, containerID, containerName 
 		}
 	}
 
-	return a.client.NetworkConnect(a.ctx, networkID, containerID, &network.EndpointSettings{})
+	return a.NetworkConnect(a.ctx, networkID, containerID, &network.EndpointSettings{})
 }
 
 func (a *Agent) TagImage(old, new string) error {
-	return a.client.ImageTag(a.ctx, old, new)
+	return a.ImageTag(a.ctx, old, new)
 }
 
 // PullImageEvent represents a response from the Docker API with an image pull event
@@ -267,7 +267,7 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 		return false
 	}
 
-	_, err = a.client.DistributionInspect(context.Background(), image, encodedRegistryAuth)
+	_, err = a.DistributionInspect(context.Background(), image, encodedRegistryAuth)
 
 	if err == nil {
 		return true
@@ -288,7 +288,7 @@ func (a *Agent) PullImage(image string) error {
 	}
 
 	// pull the specified image
-	out, err := a.client.ImagePull(a.ctx, image, opts)
+	out, err := a.ImagePull(a.ctx, image, opts)
 
 	if err != nil {
 		if client.IsErrNotFound(err) {
@@ -315,7 +315,7 @@ func (a *Agent) PushImage(image string) error {
 		return err
 	}
 
-	out, err := a.client.ImagePush(
+	out, err := a.ImagePush(
 		context.Background(),
 		image,
 		opts,
@@ -437,7 +437,7 @@ func GetServerURLFromTag(image string) (string, error) {
 // WaitForContainerStop waits until a container has stopped to exit
 func (a *Agent) WaitForContainerStop(id string) error {
 	// wait for container to stop before exit
-	statusCh, errCh := a.client.ContainerWait(a.ctx, id, container.WaitConditionNotRunning)
+	statusCh, errCh := a.ContainerWait(a.ctx, id, container.WaitConditionNotRunning)
 
 	select {
 	case err := <-errCh:
@@ -455,7 +455,7 @@ func (a *Agent) WaitForContainerStop(id string) error {
 // checks.
 func (a *Agent) WaitForContainerHealthy(id string, streak int) error {
 	for {
-		cont, err := a.client.ContainerInspect(a.ctx, id)
+		cont, err := a.ContainerInspect(a.ctx, id)
 
 		if err != nil {
 			return a.handleDockerClientErr(err, "Error waiting for stopped container")
@@ -479,7 +479,7 @@ func (a *Agent) WaitForContainerHealthy(id string, streak int) error {
 
 func (a *Agent) handleDockerClientErr(err error, errPrefix string) error {
 	if strings.Contains(err.Error(), "Cannot connect to the Docker daemon") {
-		return fmt.Errorf("The Docker daemon must be running in order to start Porter: connection to %s failed", a.client.DaemonHost())
+		return fmt.Errorf("The Docker daemon must be running in order to start Porter: connection to %s failed", a.DaemonHost())
 	}
 
 	return fmt.Errorf("%s:%s", errPrefix, err.Error())

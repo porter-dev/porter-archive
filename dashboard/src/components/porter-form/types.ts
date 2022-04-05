@@ -135,8 +135,10 @@ export interface TextAreaField extends GenericInputField {
   info: string;
   settings: {
     default?: string;
-    maxCount?: number;
-    minCount?: number;
+    options?: {
+      maxCount?: number;
+      minCount?: number;
+    };
   };
 }
 

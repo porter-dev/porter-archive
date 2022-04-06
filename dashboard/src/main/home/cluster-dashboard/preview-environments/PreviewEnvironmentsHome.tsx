@@ -1,15 +1,19 @@
 import Loading from "components/Loading";
 import TabSelector from "components/TabSelector";
 import React, { useContext, useEffect, useState } from "react";
+import { useHistory, useLocation } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
 import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
 import DeploymentList from "./deployments/DeploymentList";
 import EnvironmentsList from "./environments/EnvironmentsList";
 
-type TabEnum = "repositories" | "pull_requests";
+const AvailableTabs = ["repositories", "pull_requests"];
+
+type TabEnum = typeof AvailableTabs[number];
 
 const PreviewEnvironmentsHome = () => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -20,6 +24,9 @@ const PreviewEnvironmentsHome = () => {
   const [environments, setEnvironments] = useState([]);
 
   const [currentTab, setCurrentTab] = useState<TabEnum>("repositories");
+  const { getQueryParam, pushQueryParams } = useRouting();
+  const location = useLocation();
+  const history = useHistory();
 
   useEffect(() => {
     let isSubscribed = true;
@@ -61,6 +68,19 @@ const PreviewEnvironmentsHome = () => {
       isSubscribed = false;
     };
   }, [currentCluster, currentProject]);
+
+  useEffect(() => {
+    const current_tab = getQueryParam("current_tab");
+
+    if (!AvailableTabs.includes(current_tab)) {
+      pushQueryParams({}, ["current_tab"]);
+      return;
+    }
+
+    if (current_tab !== currentTab) {
+      setCurrentTab(current_tab);
+    }
+  }, [location.search, history]);
 
   if (isLoading) {
     return (

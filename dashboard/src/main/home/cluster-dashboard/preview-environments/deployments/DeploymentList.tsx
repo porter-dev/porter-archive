@@ -15,6 +15,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const [hasError, setHasError] = useState(false);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [statusSelectorVal, setStatusSelectorVal] = useState<string>("all");
+  const [selectedRepo, setSelectedRepo] = useState("all");
 
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -109,6 +110,16 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     });
   };
 
+  const repoOptions = environments
+    .map((env) => ({
+      label: `${env.git_repo_owner}/${env.git_repo_name}`,
+      value: `${env.git_repo_owner}/${env.git_repo_name}`,
+    }))
+    .concat({
+      label: "All",
+      value: "all",
+    });
+
   return (
     <Container>
       <ControlRow>
@@ -148,6 +159,15 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
               closeOverlay={true}
             />
           </StyledStatusSelector>
+          <Selector
+            activeValue={selectedRepo}
+            setActiveValue={(val) => setSelectedRepo(val)}
+            options={repoOptions}
+            dropdownLabel="Repository"
+            width="200px"
+            dropdownWidth="300px"
+            closeOverlay
+          ></Selector>
         </ActionsWrapper>
       </ControlRow>
       <EventsGrid>{renderDeploymentList()}</EventsGrid>

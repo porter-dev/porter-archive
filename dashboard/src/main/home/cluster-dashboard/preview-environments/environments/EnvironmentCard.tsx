@@ -12,6 +12,7 @@ import { useRouting } from "shared/routing";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import Modal from "main/home/modals/Modal";
+import InputRow from "components/form-components/InputRow";
 
 type Props = {
   environment: Environment;
@@ -25,7 +26,9 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
   const { pushFiltered } = useRouting();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteFormError, setDeleteFormError] = useState(false);
+  const [deleteConfirmationRepoName, setDeleteConfirmationRepoName] = useState(
+    ""
+  );
 
   const {
     id,
@@ -35,7 +38,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
     git_repo_name,
     git_installation_id,
     last_deployment_status,
-    mode,
   } = environment;
 
   const showOpenPrs = () => {
@@ -46,6 +48,9 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
   };
 
   const handleDelete = () => {
+    if (!canDelete()) {
+      return;
+    }
     api
       .deleteEnvironment(
         "<token>",
@@ -68,17 +73,14 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
       });
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
-    e.persist();
-    e.preventDefault();
-    // @ts-ignore
-    const repoName = e.target.elements?.repo_name?.value;
+  const closeForm = () => {
+    setShowDeleteModal(false);
+    setDeleteConfirmationRepoName("");
+  };
 
-    if (repoName === `${git_repo_owner}/${git_repo_name}`) {
-      handleDelete();
-    } else {
-      setDeleteFormError(true);
-    }
+  const canDelete = () => {
+    const repoName = deleteConfirmationRepoName;
+    return repoName === `${git_repo_owner}/${git_repo_name}`;
   };
 
   return (
@@ -86,14 +88,31 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
       {showDeleteModal ? (
         <Modal
           title={`Are you sure you wanna remove preview environments for ${git_repo_owner}/${git_repo_name}`}
-          width="fit-content"
-          height="400px"
-          onRequestClose={() => setShowDeleteModal(false)}
+          width="800px"
+          height="260px"
+          onRequestClose={closeForm}
         >
-          <form onSubmit={handleSubmit}>
-            <input type="text" name="repo_name" />
-            <button type="submit">Delete</button>
-          </form>
+          <Warning highlight>
+            ⚠️ Removing this repository from preview environments will delete
+            all the deployments associated. Meaning you will not be able to
+            access those preview environments no more.
+          </Warning>
+          <InputRow
+            type="text"
+            label="Please write down the repo name before proceeding"
+            value={deleteConfirmationRepoName}
+            setValue={(x: string) => setDeleteConfirmationRepoName(x)}
+            width={"300px"}
+          />
+          <ActionWrapper>
+            <CancelButton onClick={closeForm}>Cancel</CancelButton>
+            <DeleteButton
+              onClick={() => handleDelete()}
+              disabled={!canDelete()}
+            >
+              Delete
+            </DeleteButton>
+          </ActionWrapper>
         </Modal>
       ) : null}
       <EnvironmentCardWrapper>
@@ -108,6 +127,12 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
           <Status>
             <StatusDot status={last_deployment_status} />
             {capitalize(last_deployment_status || "")}
+
+            <Dot>•</Dot>
+            <span>
+              Pull {deployment_count > 1 ? "requests" : "request"} deployed:{" "}
+              {deployment_count}
+            </span>
           </Status>
         </DataContainer>
         <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
@@ -184,4 +209,82 @@ const Icon = styled.img`
   width: 20px;
   height: 20px;
   margin-right: 5px;
+`;
+
+const Button = styled.button`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 10px;
+  color: white;
+  height: 35px;
+  padding: 10px 16px;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-shadow: 0 5px 8px 0px #00000010;
+  cursor: pointer;
+  border: none;
+  :not(:last-child) {
+    margin-right: 10px;
+  }
+`;
+
+const DeleteButton = styled(Button)`
+  ${({ disabled }: { disabled: boolean }) => {
+    if (disabled) {
+      return `
+      background: #aaaabbee;
+      :hover {
+        background: #aaaabbee;
+      }    
+      `;
+    }
+
+    return `
+      background: #dd4b4b;
+      :hover {
+        background: #b13d3d;
+      }`;
+  }}
+`;
+
+const CancelButton = styled(Button)`
+  background: #616feecc;
+  :hover {
+    background: #505edddd;
+  }
+`;
+
+const ActionWrapper = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Warning = styled.div`
+  font-size: 13px;
+  display: flex;
+  border-radius: 3px;
+  width: calc(100%);
+  margin-top: 10px;
+  margin-left: 2px;
+  line-height: 1.4em;
+  align-items: center;
+  color: white;
+  > i {
+    margin-right: 10px;
+    font-size: 18px;
+  }
+  color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
+    props.highlight ? "#f5cb42" : ""};
+`;
+
+const Dot = styled.div`
+  margin-right: 9px;
+  margin-left: 9px;
 `;

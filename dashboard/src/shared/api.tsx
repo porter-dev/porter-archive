@@ -95,6 +95,7 @@ const createEnvironment = baseApi<
     git_installation_id: number;
     git_repo_owner: string;
     git_repo_name: string;
+    mode: "auto" | "manual";
   }
 >("POST", (pathParams) => {
   let {

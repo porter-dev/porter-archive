@@ -20,7 +20,6 @@ type SharedOpts struct {
 	AdditionalEnv   map[string]string
 	EnvGroups       []types.EnvGroupMeta
 	UseCache        bool
-	CacheImageRepo  string
 }
 
 func coalesceEnvGroups(

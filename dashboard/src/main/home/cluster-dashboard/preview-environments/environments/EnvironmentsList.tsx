@@ -8,56 +8,14 @@ import { deployments, environments } from "../mocks";
 import { Environment } from "../types";
 import EnvironmentCard from "./EnvironmentCard";
 
-const EnvironmentsList = () => {
-  const { currentCluster, currentProject } = useContext(Context);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [environments, setEnvironments] = useState<Environment[]>([]);
+type Props = {
+  environments: Environment[];
+  setEnvironments: (
+    setFunction: (prev: Environment[]) => Environment[]
+  ) => void;
+};
 
-  useEffect(() => {
-    let isSubscribed = true;
-    api
-      .listEnvironments<Environment[]>(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id,
-          cluster_id: currentCluster?.id,
-        }
-      )
-      .then(({ data }) => {
-        if (!isSubscribed) {
-          return;
-        }
-
-        if (!Array.isArray(data)) {
-          throw Error("Data is not an array");
-        }
-
-        setEnvironments(data);
-      })
-
-      .catch((err) => {
-        console.error(err);
-        if (isSubscribed) {
-          setHasError(true);
-        }
-      })
-      .finally(() => {
-        if (isSubscribed) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [currentCluster, currentProject]);
-
-  if (isLoading) {
-    return <Loading />;
-  }
-
+const EnvironmentsList = ({ environments, setEnvironments }: Props) => {
   const removeEnvironmentFromList = (deletedEnv: Environment) => {
     setEnvironments((prev) => {
       return prev.filter((env) => env.id === deletedEnv.id);

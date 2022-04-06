@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
@@ -8,17 +8,15 @@ import Loading from "components/Loading";
 
 import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
-import { PRDeployment } from "../types";
+import { Environment, PRDeployment } from "../types";
 
-const DeploymentList = () => {
+const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
-  const [statusSelectorVal, setStatusSelectorVal] = useState<string>("active");
+  const [statusSelectorVal, setStatusSelectorVal] = useState<string>("all");
 
-  const { currentProject, currentCluster, setCurrentModal } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster } = useContext(Context);
 
   const getPRDeploymentList = () => {
     return api.getPRDeploymentList(
@@ -74,6 +72,12 @@ const DeploymentList = () => {
     return <Placeholder>Error</Placeholder>;
   }
 
+  const filteredDeployments = useMemo(() => {
+    return deploymentList.filter((d) => {
+      return d.status === statusSelectorVal;
+    });
+  }, [statusSelectorVal]);
+
   const renderDeploymentList = () => {
     if (isLoading) {
       return (
@@ -92,7 +96,15 @@ const DeploymentList = () => {
       );
     }
 
-    return deploymentList.map((d) => {
+    if (!filteredDeployments.length) {
+      return (
+        <Placeholder>
+          No preview apps have been found with the given filter.
+        </Placeholder>
+      );
+    }
+
+    return filteredDeployments.map((d) => {
       return <DeploymentCard deployment={d} onDelete={handleRefresh} />;
     });
   };
@@ -110,6 +122,18 @@ const DeploymentList = () => {
               setActiveValue={setStatusSelectorVal}
               options={[
                 {
+                  value: "all",
+                  label: "All",
+                },
+                {
+                  value: "creating",
+                  label: "Creating",
+                },
+                {
+                  value: "failed",
+                  label: "Failed",
+                },
+                {
                   value: "active",
                   label: "Active",
                 },
@@ -124,15 +148,6 @@ const DeploymentList = () => {
               closeOverlay={true}
             />
           </StyledStatusSelector>
-
-          <SettingsButton
-            onClick={() => {
-              setCurrentModal("PreviewEnvSettingsModal", {});
-            }}
-          >
-            <i className="material-icons-outlined">settings</i>
-            Configure
-          </SettingsButton>
         </ActionsWrapper>
       </ControlRow>
       <EventsGrid>{renderDeploymentList()}</EventsGrid>

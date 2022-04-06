@@ -128,6 +128,20 @@ export interface CronField extends GenericInputField {
   };
 }
 
+export interface TextAreaField extends GenericInputField {
+  type: "text-area";
+  label: string;
+  placeholder: string;
+  info: string;
+  settings: {
+    default?: string;
+    options?: {
+      maxCount?: number;
+      minCount?: number;
+    };
+  };
+}
+
 export type FormField =
   | HeadingField
   | SubtitleField
@@ -140,7 +154,8 @@ export type FormField =
   | ResourceListField
   | VeleroBackupField
   | VariableField
-  | CronField;
+  | CronField
+  | TextAreaField;
 
 export interface ShowIfAnd {
   and: ShowIf[];

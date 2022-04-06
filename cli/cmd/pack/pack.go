@@ -15,13 +15,11 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"k8s.io/client-go/util/homedir"
-
-	"github.com/docker/docker/client"
 )
 
 type Agent struct{}
 
-func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc client.CommonAPIClient, cacheImage string) error {
+func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, cacheImage string) error {
 	//initialize a pack client
 	logger := newPackLogger()
 
@@ -43,6 +41,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc
 		Builder:         "paketobuildpacks/builder:full",
 		AppPath:         opts.BuildContext,
 		Env:             opts.Env,
+		GroupID:         0,
 	}
 
 	if opts.UseCache {

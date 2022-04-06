@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { Environment, PRDeployment } from "../EnvironmentList";
+import { Environment, PRDeployment } from "../types";
 import pr_icon from "assets/pull_request_icon.svg";
 import { integrationList } from "shared/common";
 import { useRouteMatch } from "react-router";
@@ -10,7 +10,7 @@ import api from "shared/api";
 import { useContext } from "react";
 import { Context } from "shared/Context";
 
-const EnvironmentCard: React.FC<{
+const DeploymentCard: React.FC<{
   deployment: PRDeployment;
   environment: Environment;
   onDelete: () => void;
@@ -47,7 +47,7 @@ const EnvironmentCard: React.FC<{
   };
 
   return (
-    <EnvironmentCardWrapper key={deployment.id}>
+    <DeploymentCardWrapper key={deployment.id}>
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
@@ -128,11 +128,11 @@ const EnvironmentCard: React.FC<{
           </DeleteMessage>
         )}
       </Flex>
-    </EnvironmentCardWrapper>
+    </DeploymentCardWrapper>
   );
 };
 
-export default EnvironmentCard;
+export default DeploymentCard;
 
 const DeleteMessage = styled.div`
   display: flex;
@@ -188,7 +188,7 @@ const PRName = styled.div`
   margin-bottom: 10px;
 `;
 
-const EnvironmentCardWrapper = styled.div`
+const DeploymentCardWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;

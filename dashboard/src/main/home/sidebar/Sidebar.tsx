@@ -172,6 +172,7 @@ class Sidebar extends Component<PropsType, StateType> {
                 Databases
               </NavButton>
             )}
+          <NavButton to="/preview-environments"> Prev envs</NavButton>
         </>
       );
     }

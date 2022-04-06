@@ -424,6 +424,7 @@ const RunsDescription = styled.div`
   border: 1px solid #ffffff22;
   color: #ffffffdd;
   border-radius: 4px;
+  user-select: text;
 
   > i {
     font-size: 16px;

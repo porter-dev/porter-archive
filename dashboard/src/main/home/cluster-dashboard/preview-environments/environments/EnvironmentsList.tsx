@@ -2,6 +2,7 @@ import Loading from "components/Loading";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import styled from "styled-components";
 import { deployments, environments } from "../mocks";
 import { Environment } from "../types";
 import EnvironmentCard from "./EnvironmentCard";
@@ -57,11 +58,23 @@ const EnvironmentsList = () => {
     return <Loading />;
   }
 
+  const removeEnvironmentFromList = (deletedEnv: Environment) => {
+    setEnvironments((prev) => {
+      return prev.filter((env) => env.id === deletedEnv.id);
+    });
+  };
+
   return (
     <>
-      {environments.map((env) => (
-        <EnvironmentCard key={env.id} environment={env} />
-      ))}
+      <EnvironmentsGrid>
+        {environments.map((env) => (
+          <EnvironmentCard
+            key={env.id}
+            environment={env}
+            onDelete={removeEnvironmentFromList}
+          />
+        ))}
+      </EnvironmentsGrid>
     </>
   );
 };
@@ -74,3 +87,10 @@ const mockRequest = () =>
       res({ data: environments });
     }, 1000);
   });
+
+const EnvironmentsGrid = styled.div`
+  margin-top: 32px;
+  padding-bottom: 150px;
+  display: grid;
+  grid-row-gap: 25px;
+`;

@@ -9,19 +9,23 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/buildpacks/pack"
+	packclient "github.com/buildpacks/pack/pkg/client"
 	githubApi "github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"k8s.io/client-go/util/homedir"
+
+	"github.com/docker/docker/client"
 )
 
 type Agent struct{}
 
-func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) error {
+func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc client.CommonAPIClient, cacheImage string) error {
 	//initialize a pack client
-	client, err := pack.NewClient(pack.WithLogger(newPackLogger()))
+	logger := newPackLogger()
+
+	client, err := packclient.NewClient(packclient.WithLogger(logger))
 
 	if err != nil {
 		return err
@@ -33,13 +37,17 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 		return err
 	}
 
-	buildOpts := pack.BuildOptions{
+	buildOpts := packclient.BuildOptions{
 		RelativeBaseDir: filepath.Dir(absPath),
 		Image:           fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
 		Builder:         "paketobuildpacks/builder:full",
 		AppPath:         opts.BuildContext,
-		TrustBuilder:    true,
 		Env:             opts.Env,
+	}
+
+	if opts.UseCache {
+		buildOpts.CacheImage = cacheImage
+		buildOpts.Publish = true
 	}
 
 	if buildConfig != nil {
@@ -128,7 +136,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig) er
 	}
 
 	if len(buildOpts.Buildpacks) > 0 && strings.HasPrefix(buildOpts.Builder, "heroku") {
-		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile")
+		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile@1.0.0")
 	}
 
 	return client.Build(context.Background(), buildOpts)

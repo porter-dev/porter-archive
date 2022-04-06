@@ -303,8 +303,6 @@ func (a *Agent) UpgradeReleaseByValues(
 					return nil, err
 				}
 
-				a.ActionConfig.Log("helm template ran successfully")
-
 				oldManifestBuffer := bytes.NewBufferString(rel.Manifest)
 				newManifestBuffer := bytes.NewBufferString(newRelDryRun.Manifest)
 

@@ -23,7 +23,7 @@ func NewAgentFromEnv() (*Agent, error) {
 	}
 
 	return &Agent{
-		client: cli,
+		Client: cli,
 		ctx:    ctx,
 		label:  label,
 	}, nil

@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/buildpacks/pack/logging"
+	"github.com/buildpacks/pack/pkg/logging"
 )
 
 type packLogger struct {
@@ -37,9 +37,16 @@ func (l *packLogger) Debugf(format string, v ...interface{}) {
 	// We do not want to print the environment variables for now as they might
 	// contain sensitive information like client IDs and secrets
 	// Refer: https://github.com/buildpacks/pack/blob/main/internal/builder/builder.go#L349
-	if !strings.HasPrefix(format, "Provided Environment Variables") {
-		l.out.Printf(prefixFmt, debugPrefix, fmt.Sprintf(format, v...))
+	if strings.HasPrefix(format, "Provided Environment Variables") {
+		return
 	}
+
+	// We do not print the registry auth credentials -- this should also be treated as sensitive information
+	if strings.Contains(fmt.Sprintf(format, v...), "CNB_REGISTRY_AUTH") {
+		return
+	}
+
+	l.out.Printf(prefixFmt, debugPrefix, fmt.Sprintf(format, v...))
 }
 
 func (l *packLogger) Info(msg string) {

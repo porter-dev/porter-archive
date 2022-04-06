@@ -185,6 +185,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             <SortSelector
               setSortType={(sortType) => this.setState({ sortType })}
               sortType={this.state.sortType}
+              currentView={currentView}
             />
           </SortFilterWrapper>
         </ControlRow>
@@ -255,6 +256,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             <SortSelector
               setSortType={(sortType) => this.setState({ sortType })}
               sortType={this.state.sortType}
+              currentView={currentView}
             />
           </SortFilterWrapper>
         </ControlRow>

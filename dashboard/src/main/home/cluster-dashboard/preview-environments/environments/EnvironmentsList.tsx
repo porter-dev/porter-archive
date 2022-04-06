@@ -15,16 +15,15 @@ const EnvironmentsList = () => {
 
   useEffect(() => {
     let isSubscribed = true;
-    // api
-    //   .listEnvironments<Environment[]>(
-    //     "<token>",
-    //     {},
-    //     {
-    //       project_id: currentProject?.id,
-    //       cluster_id: currentCluster?.id,
-    //     }
-    //   )
-    mockRequest()
+    api
+      .listEnvironments<Environment[]>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+        }
+      )
       .then(({ data }) => {
         if (!isSubscribed) {
           return;

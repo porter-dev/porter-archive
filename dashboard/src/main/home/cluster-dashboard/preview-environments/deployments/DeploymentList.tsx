@@ -38,7 +38,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
           return;
         }
 
-        setDeploymentList(data.deployments);
+        setDeploymentList(data.deployments || []);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -57,10 +57,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     setIsLoading(true);
     getPRDeploymentList()
       .then(({ data }) => {
-        if (!Array.isArray(data)) {
-          throw Error("Data is not an array");
-        }
-        setDeploymentList(data);
+        setDeploymentList(data.deployments || []);
       })
       .catch((err) => {
         setHasError(true);

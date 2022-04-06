@@ -12,8 +12,8 @@ import { Context } from "shared/Context";
 
 const DeploymentCard: React.FC<{
   deployment: PRDeployment;
-  environment: Environment;
-  onDelete: () => void;
+  environment?: Environment;
+  onDelete?: () => void;
 }> = ({ deployment, environment, onDelete }) => {
   const { setCurrentOverlay } = useContext(Context);
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
@@ -25,25 +25,25 @@ const DeploymentCard: React.FC<{
   const deleteDeployment = () => {
     setIsDeleting(true);
 
-    api
-      .deletePRDeployment(
-        "<token>",
-        {
-          namespace: deployment.namespace,
-        },
-        {
-          cluster_id: environment.cluster_id,
-          project_id: environment.project_id,
-          git_installation_id: environment.git_installation_id,
-          git_repo_owner: environment.git_repo_owner,
-          git_repo_name: environment.git_repo_name,
-        }
-      )
-      .then(() => {
-        setIsDeleting(false);
-        onDelete();
-        setCurrentOverlay(null);
-      });
+    // api
+    //   .deletePRDeployment(
+    //     "<token>",
+    //     {
+    //       namespace: deployment.namespace,
+    //     },
+    //     {
+    //       cluster_id: environment.cluster_id,
+    //       project_id: environment.project_id,
+    //       git_installation_id: environment.git_installation_id,
+    //       git_repo_owner: environment.git_repo_owner,
+    //       git_repo_name: environment.git_repo_name,
+    //     }
+    //   )
+    //   .then(() => {
+    //     setIsDeleting(false);
+    //     onDelete();
+    //     setCurrentOverlay(null);
+    //   });
   };
 
   return (

@@ -11,18 +11,18 @@ import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
-import EventsTab from "./events/EventsTab";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
+import IncidentsTab from "./incidents/IncidentsTab";
 
-type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "events";
+type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents";
 
 const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
   { label: "Nodes", value: "nodes" },
-  { label: "Events", value: "events" },
+  { label: "Incidents", value: "incidents" },
   { label: "Metrics", value: "metrics" },
   { label: "Namespaces", value: "namespaces" },
   { label: "Settings", value: "settings" },
@@ -37,8 +37,8 @@ export const Dashboard: React.FunctionComponent = () => {
   const context = useContext(Context);
   const renderTab = () => {
     switch (currentTab) {
-      case "events":
-        return <EventsTab />;
+      case "incidents":
+        return <IncidentsTab />;
       case "settings":
         return <ClusterSettings />;
       case "metrics":

@@ -17,6 +17,7 @@ const PreviewEnvironmentsHome = () => {
   const [isEnabled, setIsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [environments, setEnvironments] = useState([]);
 
   const [currentTab, setCurrentTab] = useState<TabEnum>("repositories");
 
@@ -41,6 +42,7 @@ const PreviewEnvironmentsHome = () => {
         }
 
         setIsEnabled(!!data.length);
+        setEnvironments(data);
       })
 
       .catch((err) => {
@@ -97,12 +99,17 @@ const PreviewEnvironmentsHome = () => {
           {
             label: "Linked Repositories",
             value: "repositories",
-            component: <EnvironmentsList />,
+            component: (
+              <EnvironmentsList
+                environments={environments}
+                setEnvironments={setEnvironments}
+              />
+            ),
           },
           {
             label: "Pull requests",
             value: "pull_requests",
-            component: <DeploymentList />,
+            component: <DeploymentList environments={environments} />,
           },
         ]}
         currentTab={currentTab}

@@ -432,6 +432,35 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployments/{deployment_id} ->
+		// environment.NewDeleteDeploymentHandler
+		deleteDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbDelete,
+				Method: types.HTTPVerbDelete,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/{deployment_id}",
+				},
+				Scopes: []types.PermissionScope{
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		deleteDeploymentHandler := environment.NewDeleteDeploymentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: deleteDeploymentEndpoint,
+			Handler:  deleteDeploymentHandler,
+			Router:   r,
+		})
+
 	}
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewClusterListNamespacesHandler

@@ -11,14 +11,18 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import { Environment } from "../deployments/DeploymentList";
+import { Environment } from "../types";
 import { PreviewEnvironmentsHeader } from "./PreviewEnvironmentsHeader";
+import CheckboxRow from "components/form-components/CheckboxRow";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
   const [repo, setRepo] = useState(null);
+  const [enableAutomaticDeployments, setEnableAutomaticDeployments] = useState(
+    false
+  );
   const [filteredRepos, setFilteredRepos] = useState<string[]>([]);
 
   const [status, setStatus] = useState(null);
@@ -75,6 +79,7 @@ const ConnectNewRepo: React.FC = () => {
           git_installation_id: actionConfig.git_repo_id,
           git_repo_name: repoName,
           git_repo_owner: owner,
+          mode: enableAutomaticDeployments ? "auto" : "manual",
         }
       )
       .then(() => {
@@ -99,6 +104,12 @@ const ConnectNewRepo: React.FC = () => {
         <Title>Enable Preview Environments</Title>
       </ControlRow>
 
+      <CheckboxRow
+        label="Enable automatic deployments"
+        isRequired
+        checked={enableAutomaticDeployments}
+        toggle={() => setEnableAutomaticDeployments((prev) => !prev)}
+      />
       <Heading>Select a Repository</Heading>
       <br />
       <RepoList

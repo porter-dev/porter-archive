@@ -339,25 +339,15 @@ const getPRDeployment = baseApi<
 });
 
 const deletePRDeployment = baseApi<
-  {
-    namespace: string;
-  },
+  {},
   {
     cluster_id: number;
     project_id: number;
-    git_installation_id: number;
-    git_repo_owner: string;
-    git_repo_name: string;
+    deployment_id: number;
   }
 >("DELETE", (pathParams) => {
-  const {
-    cluster_id,
-    project_id,
-    git_installation_id,
-    git_repo_owner,
-    git_repo_name,
-  } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
+  const { cluster_id, project_id, deployment_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
 const getNotificationConfig = baseApi<

@@ -1,3 +1,4 @@
+import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";

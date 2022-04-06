@@ -180,6 +180,7 @@ export const ExpandedJobChartFC: React.FC<{
 
           {chart?.config?.schedule?.enabled ? (
             <RunsDescription>
+              <i className="material-icons">access_time</i>
               Runs{" "}
               {CronPrettifier.toString(
                 chart?.config?.schedule.value
@@ -422,19 +423,32 @@ const ExpandedJobHeader: React.FC<{
 
 const RunsDescription = styled.div`
   color: #ffffff;
-  font-size: 14px;
-  margin-top: 15px;
-  margin-bottom: 35px;
+  font-size: 13px;
+  margin-top: 20px;
+  margin-bottom: 20px;
   display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  background: #2b2e36;
+  border: 1px solid #ffffff22;
+  color: #ffffffdd;
+  border-radius: 4px;
+
+  > i {
+    font-size: 16px;
+    color: #ffffffdd;
+    margin-right: 10px;
+  }
 `;
 
 const Description = styled.div`
-  color: #ffffff88;
-  position: relative;
-  line-height: 16px;
-  font-size: 14px;
-  padding-left: 10px;
-  user-select: all;
+  user-select: text;
+  font-size: 13px;
+  margin-left: 0;
+  display: flex;
+  align-items: center;
+  color: #ffffffdd;
+  line-height: 150%;
 `;
 
 const CLIModalIconWrapper = styled.div`

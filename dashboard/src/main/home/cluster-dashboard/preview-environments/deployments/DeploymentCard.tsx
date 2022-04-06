@@ -15,7 +15,9 @@ const DeploymentCard: React.FC<{
   environment?: Environment;
   onDelete?: () => void;
 }> = ({ deployment, environment, onDelete }) => {
-  const { setCurrentOverlay. currentProject, currentCluster } = useContext(Context);
+  const { setCurrentOverlay, currentProject, currentCluster } = useContext(
+    Context
+  );
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { url: currentUrl } = useRouteMatch();
@@ -28,8 +30,7 @@ const DeploymentCard: React.FC<{
     api
       .deletePRDeployment(
         "<token>",
-        {
-        },
+        {},
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,

@@ -402,42 +402,6 @@ func getGitInstallationRoutes(
 			Router:   r,
 		})
 
-		// DELETE /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
-		// environment.NewDeleteDeploymentHandler
-		deleteDeploymentEndpoint := factory.NewAPIEndpoint(
-			&types.APIRequestMetadata{
-				Verb:   types.APIVerbDelete,
-				Method: types.HTTPVerbDelete,
-				Path: &types.Path{
-					Parent: basePath,
-					RelativePath: fmt.Sprintf(
-						"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
-						relPath,
-						types.URLParamGitRepoOwner,
-						types.URLParamGitRepoName,
-					),
-				},
-				Scopes: []types.PermissionScope{
-					types.UserScope,
-					types.ProjectScope,
-					types.GitInstallationScope,
-					types.ClusterScope,
-				},
-			},
-		)
-
-		deleteDeploymentHandler := environment.NewDeleteDeploymentHandler(
-			config,
-			factory.GetDecoderValidator(),
-			factory.GetResultWriter(),
-		)
-
-		routes = append(routes, &Route{
-			Endpoint: deleteDeploymentEndpoint,
-			Handler:  deleteDeploymentHandler,
-			Router:   r,
-		})
-
 	}
 
 	// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/repos ->

@@ -18,9 +18,7 @@ export const OptionsDropdown: React.FC<{
 
   return (
     <OptionsButton onClick={handleClick} onBlur={handleOnBlur}>
-      <i className="material-icons">
-        {isOpen ? { shrinkIcon } : { expandIcon }}
-      </i>
+      <i className="material-icons">{isOpen ? shrinkIcon : expandIcon}</i>
       {isOpen && <DropdownMenu>{children}</DropdownMenu>}
     </OptionsButton>
   );

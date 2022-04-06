@@ -72,6 +72,7 @@ const ConnectNewRepo: React.FC = () => {
         "<token>",
         {
           name: "Preview",
+          mode: enableAutomaticDeployments ? "auto" : "manual",
         },
         {
           project_id: currentProject.id,
@@ -79,7 +80,6 @@ const ConnectNewRepo: React.FC = () => {
           git_installation_id: actionConfig.git_repo_id,
           git_repo_name: repoName,
           git_repo_owner: owner,
-          mode: enableAutomaticDeployments ? "auto" : "manual",
         }
       )
       .then(() => {

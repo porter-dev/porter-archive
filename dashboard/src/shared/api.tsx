@@ -88,6 +88,7 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 const createEnvironment = baseApi<
   {
     name: string;
+    mode: "auto" | "manual";
   },
   {
     project_id: number;
@@ -95,7 +96,6 @@ const createEnvironment = baseApi<
     git_installation_id: number;
     git_repo_owner: string;
     git_repo_name: string;
-    mode: "auto" | "manual";
   }
 >("POST", (pathParams) => {
   let {

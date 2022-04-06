@@ -66,7 +66,7 @@ export default class InputRow extends Component<PropsType, StateType> {
             {this.props.isRequired && <Required>{" *"}</Required>}
           </Label>
         )}
-        <InputWrapper hasError={this.props.hasError}>
+        <InputWrapper hasError={this.props.hasError} width={width}>
           <Input
             readOnly={this.state.readOnly}
             onFocus={() => this.setState({ readOnly: false })}
@@ -105,8 +105,14 @@ const InputWrapper = styled.div`
   margin-bottom: -1px;
   align-items: center;
   border: 1px solid
-    ${(props: { hasError: boolean }) => (props.hasError ? "red" : "#ffffff55")};
+    ${(props: { width: string; hasError: boolean }) =>
+      props.hasError ? "red" : "#ffffff55"};
   border-radius: 3px;
+  ${(props: { width: string; hasError: boolean }) => {
+    if (props.width) {
+      return `width:${props.width};`;
+    }
+  }}
 `;
 
 const Input = styled.input<{ disabled: boolean; width: string }>`

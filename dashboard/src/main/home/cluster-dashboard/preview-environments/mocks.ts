@@ -150,3 +150,14 @@ export const deployments = [
     pull_request_id: 20,
   },
 ];
+
+export const pull_requests = [
+  {
+    pr_title: "Testing PR with job run",
+    pr_number: 1,
+    repo_owner: "porter-docs",
+    repo_name: "porter-dev",
+    branch_from: "some_branch",
+    branch_into: "main",
+  },
+];

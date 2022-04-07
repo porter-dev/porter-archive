@@ -25,3 +25,12 @@ export type Environment = {
   deployment_count: number;
   mode: "manual" | "auto";
 };
+
+export type PullRequest = {
+  pr_title: string;
+  pr_number: number;
+  repo_owner: string;
+  repo_name: string;
+  branch_from: string;
+  branch_into: string;
+};

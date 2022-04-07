@@ -111,7 +111,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				"content_type": "json",
 				"secret":       c.Config().ServerConf.GithubIncomingWebhookSecret,
 			},
-			Events: []string{"pull_requests"},
+			Events: []string{"pull_request"},
 			Active: github.Bool(false),
 		},
 	)

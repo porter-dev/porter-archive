@@ -1,3 +1,4 @@
+import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { release } from "process";
 import { baseApi } from "./baseApi";
 
@@ -129,6 +130,28 @@ const deleteEnvironment = baseApi<
   } = pathParams;
   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
 });
+
+const createPreviewEnvironmentDeployment = baseApi<
+  PullRequest,
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/pull_request`
+);
+
+const reenablePreviewEnvironmentDeployment = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    deployment_id: number;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, deployment_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}/reenable`
+);
 
 const listEnvironments = baseApi<
   {},
@@ -1679,6 +1702,8 @@ export default {
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,
+  createPreviewEnvironmentDeployment,
+  reenablePreviewEnvironmentDeployment,
   listEnvironments,
   createGCPIntegration,
   createInvite,

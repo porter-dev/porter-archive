@@ -1,15 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import styled from "styled-components";
 import pr_icon from "assets/pull_request_icon.svg";
 import { PullRequest } from "../types";
 import { integrationList } from "shared/common";
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-const PullRequestCard = ({ pullRequest }: { pullRequest: PullRequest }) => {
+const PullRequestCard = ({
+  pullRequest,
+  onCreation,
+}: {
+  pullRequest: PullRequest;
+  onCreation: (pullRequest: PullRequest) => void;
+}) => {
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
 
   const repository = `${pullRequest.repo_owner}/${pullRequest.repo_name}`;
 
-  const createPreviewEnvironment = () => {};
+  const createPreviewEnvironment = async () => {
+    try {
+      await api.createPreviewEnvironmentDeployment("<token>", pullRequest, {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+      });
+      onCreation(pullRequest);
+    } catch (error) {
+      setCurrentError(error);
+    }
+  };
 
   return (
     <DeploymentCardWrapper>
@@ -48,7 +69,7 @@ const PullRequestCard = ({ pullRequest }: { pullRequest: PullRequest }) => {
         </Flex>
       </DataContainer>
       <Flex>
-        <CreatePreviewEnvironmentButton>
+        <CreatePreviewEnvironmentButton onClick={createPreviewEnvironment}>
           <i className="material-icons">add</i>
           Create Preview environment
         </CreatePreviewEnvironmentButton>

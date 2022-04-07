@@ -374,7 +374,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           firstInterval = CronParser.parseExpression(
             a?.config?.schedule.value,
             {
-              currentDate: new Date(),
+              utc: true,
             }
           );
         }
@@ -384,7 +384,7 @@ const ChartList: React.FunctionComponent<Props> = ({
           secondInterval = CronParser.parseExpression(
             b?.config?.schedule.value,
             {
-              currentDate: new Date(),
+              utc: true,
             }
           );
         }

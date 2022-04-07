@@ -43,15 +43,15 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const history = useHistory();
 
   const getPRDeploymentList = () => {
-    // return api.getPRDeploymentList(
-    //   "<token>",
-    //   {},
-    //   {
-    //     project_id: currentProject.id,
-    //     cluster_id: currentCluster.id,
-    //   }
-    // );
-    return mockRequest();
+    return api.getPRDeploymentList(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    );
+    // return mockRequest();
   };
 
   useEffect(() => {

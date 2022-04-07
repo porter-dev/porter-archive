@@ -31,16 +31,16 @@ const PreviewEnvironmentsHome = () => {
 
   useEffect(() => {
     let isSubscribed = true;
-    // api
-    //   .listEnvironments(
-    //     "<token>",
-    //     {},
-    //     {
-    //       project_id: currentProject?.id,
-    //       cluster_id: currentCluster?.id,
-    //     }
-    //   )
-    mockRequest()
+    api
+      .listEnvironments(
+        "<token>",
+        {},
+        {
+          project_id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+        }
+      )
+      // mockRequest()
       .then(({ data }) => {
         if (isSubscribed) {
           setIsEnabled(true);

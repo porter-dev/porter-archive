@@ -7,6 +7,7 @@ import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 import settings from "assets/settings.svg";
 import sliders from "assets/sliders.svg";
+import CodeBranchIcon from "assets/code-branch-icon";
 
 import { Context } from "shared/Context";
 
@@ -172,7 +173,10 @@ class Sidebar extends Component<PropsType, StateType> {
                 Databases
               </NavButton>
             )}
-          <NavButton to="/preview-environments"> Prev envs</NavButton>
+          <NavButton to="/preview-environments">
+            <StyledCodeBranchIcon />
+            Preview environments
+          </NavButton>
         </>
       );
     }
@@ -352,6 +356,16 @@ const Img = styled.img<{ enlarge?: boolean }>`
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 10px;
+`;
+
+const StyledCodeBranchIcon = styled(CodeBranchIcon)`
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+
+  > path {
+    fill: #ffffff99;
+  }
 `;
 
 const SidebarBg = styled.div`

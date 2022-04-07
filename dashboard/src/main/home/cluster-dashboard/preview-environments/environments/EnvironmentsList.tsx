@@ -44,13 +44,6 @@ const EnvironmentsList = ({ environments, setEnvironments }: Props) => {
 
 export default EnvironmentsList;
 
-const mockRequest = () =>
-  new Promise((res) => {
-    setTimeout(() => {
-      res({ data: environments });
-    }, 1000);
-  });
-
 const EnvironmentsGrid = styled.div`
   margin-top: 32px;
   padding-bottom: 150px;
@@ -63,7 +56,7 @@ const ControlRow = styled.div`
   margin-left: auto;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 35px;
+  margin: 35px 0;
   padding-left: 0px;
 `;
 

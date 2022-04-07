@@ -10,6 +10,7 @@ import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments"
 import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
 import DeploymentList from "./deployments/DeploymentList";
 import EnvironmentsList from "./environments/EnvironmentsList";
+import { environments } from "./mocks";
 
 const AvailableTabs = ["repositories", "pull_requests"];
 
@@ -30,15 +31,16 @@ const PreviewEnvironmentsHome = () => {
 
   useEffect(() => {
     let isSubscribed = true;
-    api
-      .listEnvironments(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id,
-          cluster_id: currentCluster?.id,
-        }
-      )
+    // api
+    //   .listEnvironments(
+    //     "<token>",
+    //     {},
+    //     {
+    //       project_id: currentProject?.id,
+    //       cluster_id: currentCluster?.id,
+    //     }
+    //   )
+    mockRequest()
       .then(({ data }) => {
         if (isSubscribed) {
           setIsEnabled(true);
@@ -111,6 +113,11 @@ const PreviewEnvironmentsHome = () => {
     );
   }
 
+  const handleSetTab = (tab: TabEnum) => {
+    pushQueryParams({ current_tab: tab });
+    setCurrentTab(tab);
+  };
+
   return (
     <>
       <PreviewEnvironmentsHeader />
@@ -133,13 +140,20 @@ const PreviewEnvironmentsHome = () => {
           },
         ]}
         currentTab={currentTab}
-        setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+        setCurrentTab={handleSetTab}
       />
     </>
   );
 };
 
 export default PreviewEnvironmentsHome;
+
+const mockRequest = () =>
+  new Promise((res) => {
+    setTimeout(() => {
+      res({ data: environments });
+    }, 1000);
+  });
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);

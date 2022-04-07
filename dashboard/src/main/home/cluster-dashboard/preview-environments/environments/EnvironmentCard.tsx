@@ -42,8 +42,8 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
 
   const showOpenPrs = () => {
     pushFiltered("/preview-environments", [], {
-      selected_tab: "pull_requests",
-      environment_id: id,
+      current_tab: "pull_requests",
+      repository: `${git_repo_owner}/${git_repo_name}`,
     });
   };
 

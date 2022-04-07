@@ -9,15 +9,33 @@ import Loading from "components/Loading";
 import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
 import { Environment, PRDeployment } from "../types";
+import { useRouting } from "shared/routing";
+import { useHistory, useLocation } from "react-router";
+
+const AvailableStatusFilters = [
+  "all",
+  "creating",
+  "failed",
+  "active",
+  "inactive",
+];
+
+type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 
 const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
-  const [statusSelectorVal, setStatusSelectorVal] = useState<string>("all");
+  const [
+    statusSelectorVal,
+    setStatusSelectorVal,
+  ] = useState<AvailableStatusFiltersType>("all");
   const [selectedRepo, setSelectedRepo] = useState("all");
 
   const { currentProject, currentCluster } = useContext(Context);
+  const { getQueryParam, pushQueryParams } = useRouting();
+  const location = useLocation();
+  const history = useHistory();
 
   const getPRDeploymentList = () => {
     return api.getPRDeploymentList(
@@ -29,6 +47,40 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       }
     );
   };
+
+  useEffect(() => {
+    const selected_repo = getQueryParam("repository");
+
+    const repo = environments.find(
+      (env) => `${env.git_repo_owner}/${env.git_repo_name}` === selected_repo
+    );
+
+    if (!repo) {
+      pushQueryParams({}, ["repository"]);
+      return;
+    }
+
+    if (selected_repo !== selectedRepo) {
+      setSelectedRepo(`${repo.git_repo_owner}/${repo.git_repo_name}`);
+    }
+  }, [location.search, history]);
+
+  useEffect(() => {
+    const status_filter = getQueryParam("status_filter");
+
+    if (!AvailableStatusFilters.includes(status_filter)) {
+      pushQueryParams({}, ["status_filter"]);
+      return;
+    }
+
+    if (status_filter !== statusSelectorVal) {
+      setStatusSelectorVal(status_filter);
+    }
+  }, [location.search, history]);
+
+  useEffect(() => {
+    pushQueryParams({}, ["status_filter", "repository"]);
+  }, []);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -117,17 +169,28 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       value: "all",
     });
 
+  const handleStatusFilterChange = (value: string) => {
+    pushQueryParams({ status_filter: value });
+    setStatusSelectorVal(value);
+  };
+
+  const handleRepoFilterChange = (value: string) => {
+    pushQueryParams({ repository: value });
+    setSelectedRepo(value);
+  };
+
   return (
     <Container>
       <ControlRow>
         <ActionsWrapper>
-          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
-            <i className="material-icons">refresh</i>
-          </RefreshButton>
           <StyledStatusSelector>
+            <Label>
+              <i className="material-icons">filter_alt</i>
+              Status
+            </Label>
             <Selector
               activeValue={statusSelectorVal}
-              setActiveValue={setStatusSelectorVal}
+              setActiveValue={handleStatusFilterChange}
               options={[
                 {
                   value: "all",
@@ -156,15 +219,25 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
               closeOverlay={true}
             />
           </StyledStatusSelector>
-          <Selector
-            activeValue={selectedRepo}
-            setActiveValue={(val) => setSelectedRepo(val)}
-            options={repoOptions}
-            dropdownLabel="Repository"
-            width="200px"
-            dropdownWidth="300px"
-            closeOverlay
-          ></Selector>
+          <StyledStatusSelector>
+            <Label>
+              <i className="material-icons">filter_alt</i>
+              Repository
+            </Label>
+            <Selector
+              activeValue={selectedRepo}
+              setActiveValue={handleRepoFilterChange}
+              options={repoOptions}
+              dropdownLabel="Repository"
+              width="200px"
+              dropdownWidth="300px"
+              closeOverlay
+            />
+          </StyledStatusSelector>
+
+          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+            <i className="material-icons">refresh</i>
+          </RefreshButton>
         </ActionsWrapper>
       </ControlRow>
       <EventsGrid>{renderDeploymentList()}</EventsGrid>
@@ -187,34 +260,13 @@ const RefreshButton = styled.button`
   border: none;
   background: none;
   border-radius: 50%;
-  margin-right: 10px;
+  margin-left: 10px;
   > i {
     font-size: 20px;
   }
   :hover {
     background-color: rgb(97 98 102 / 44%);
     color: white;
-  }
-`;
-
-const SettingsButton = styled.div`
-  font-size: 12px;
-  padding: 8px 10px;
-  margin-left: 10px;
-  border-radius: 5px;
-  color: white;
-  display: flex;
-  align-items: center;
-  background: #ffffff08;
-  cursor: pointer;
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    color: white;
-    font-size: 18px;
-    margin-right: 8px;
   }
 `;
 
@@ -264,6 +316,9 @@ const StyledStatusSelector = styled.div`
   display: flex;
   align-items: center;
   font-size: 13px;
+  :not(:first-child) {
+    margin-left: 15px;
+  }
 `;
 
 const Header = styled.div`
@@ -276,4 +331,15 @@ const Header = styled.div`
 
 const Subheader = styled.div`
   width: 50%;
+`;
+
+const Label = styled.div`
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+
+  > i {
+    margin-right: 8px;
+    font-size: 18px;
+  }
 `;

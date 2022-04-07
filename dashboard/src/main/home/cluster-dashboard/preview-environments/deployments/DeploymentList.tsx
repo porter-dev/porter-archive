@@ -126,6 +126,19 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       .finally(() => setIsLoading(false));
   };
 
+  const handlePreviewEnvironmentManualCreation = (pullRequest: PullRequest) => {
+    setPullRequests((prev) => {
+      return prev.filter((pr) => {
+        return (
+          pr.pr_title === pullRequest.pr_title &&
+          `${pr.repo_owner}/${pr.repo_name}` ===
+            `${pullRequest.repo_owner}/${pullRequest.repo_name}`
+        );
+      });
+    });
+    handleRefresh();
+  };
+
   const filteredDeployments = useMemo(() => {
     if (statusSelectorVal === "not_deployed") {
       return [];
@@ -198,7 +211,13 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     return (
       <>
         {filteredPullRequests.map((pr) => {
-          return <PullRequestCard key={pr.pr_title} pullRequest={pr} />;
+          return (
+            <PullRequestCard
+              key={pr.pr_title}
+              pullRequest={pr}
+              onCreation={handlePreviewEnvironmentManualCreation}
+            />
+          );
         })}
         {filteredDeployments.map((d) => {
           return (

@@ -1,61 +1,29 @@
 import React, { useState } from "react";
-import styled, { keyframes } from "styled-components";
-import { Environment, PRDeployment } from "../types";
+import styled from "styled-components";
 import pr_icon from "assets/pull_request_icon.svg";
+import { PullRequest } from "../types";
 import { integrationList } from "shared/common";
-import { useRouteMatch } from "react-router";
-import DynamicLink from "components/DynamicLink";
-import { capitalize, readableDate } from "shared/string_utils";
-import api from "shared/api";
-import { useContext } from "react";
-import { Context } from "shared/Context";
 
-const DeploymentCard: React.FC<{
-  deployment: PRDeployment;
-  onDelete?: () => void;
-}> = ({ deployment, onDelete }) => {
-  const { setCurrentOverlay, currentProject, currentCluster } = useContext(
-    Context
-  );
+const PullRequestCard = ({ pullRequest }: { pullRequest: PullRequest }) => {
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { url: currentUrl } = useRouteMatch();
 
-  let repository = `${deployment.gh_repo_owner}/${deployment.gh_repo_name}`;
+  const repository = `${pullRequest.repo_owner}/${pullRequest.repo_name}`;
 
-  const deleteDeployment = () => {
-    setIsDeleting(true);
-
-    api
-      .deletePRDeployment(
-        "<token>",
-        {},
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-          deployment_id: deployment.id,
-        }
-      )
-      .then(() => {
-        setIsDeleting(false);
-        onDelete();
-        setCurrentOverlay(null);
-      });
-  };
+  const createPreviewEnvironment = () => {};
 
   return (
     <DeploymentCardWrapper>
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
-          {deployment.gh_pr_name}
+          {pullRequest.pr_title}
         </PRName>
 
         <Flex>
           <StatusContainer>
             <Status>
-              <StatusDot status={deployment.status} />
-              {capitalize(deployment.status)}
+              <StatusDot status="" />
+              Not deployed
             </Status>
           </StatusContainer>
           <DeploymentImageContainer>
@@ -73,102 +41,43 @@ const DeploymentCard: React.FC<{
             {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
             <InfoWrapper>
               <LastDeployed>
-                Last updated {readableDate(deployment.updated_at)}
+                From: {pullRequest.branch_from} Into: {pullRequest.branch_into}
               </LastDeployed>
             </InfoWrapper>
           </DeploymentImageContainer>
         </Flex>
       </DataContainer>
       <Flex>
-        {!isDeleting ? (
-          <>
-            {deployment.status !== "creating" && (
-              <>
-                <RowButton
-                  to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
-                  key={deployment.id}
-                >
-                  <i className="material-icons-outlined">info</i>
-                  Details
-                </RowButton>
-                <RowButton
-                  to={deployment.subdomain}
-                  key={deployment.subdomain}
-                  target="_blank"
-                >
-                  <i className="material-icons">open_in_new</i>
-                  View Live
-                </RowButton>
-              </>
-            )}
-            <RowButton
-              to={"#"}
-              key={deployment.subdomain}
-              onClick={() =>
-                setCurrentOverlay({
-                  message: `Are you sure you want to delete this deployment?`,
-                  onYes: deleteDeployment,
-                  onNo: () => setCurrentOverlay(null),
-                })
-              }
-            >
-              <i className="material-icons">delete</i>
-              Delete
-            </RowButton>
-          </>
-        ) : (
-          <DeleteMessage>
-            Deleting
-            <Dot delay="0s" />
-            <Dot delay="0.1s" />
-            <Dot delay="0.2s" />
-          </DeleteMessage>
-        )}
+        <CreatePreviewEnvironmentButton>
+          <i className="material-icons">add</i>
+          Create Preview environment
+        </CreatePreviewEnvironmentButton>
       </Flex>
     </DeploymentCardWrapper>
   );
 };
 
-export default DeploymentCard;
+export default PullRequestCard;
 
-const DeleteMessage = styled.div`
+const CreatePreviewEnvironmentButton = styled.button`
+  font-size: 12px;
+  padding: 8px 10px;
+  margin-left: 10px;
+  border-radius: 5px;
+  color: #ffffff;
+  border: 1px solid #aaaabb;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-`;
-
-export const DissapearAnimation = keyframes`
-  0% { 
-    background-color: #ffffff; 
+  align-items: center;
+  background: #ffffff08;
+  cursor: pointer;
+  :hover {
+    background: #ffffff22;
   }
 
-  25% {
-    background-color: #ffffff50;
+  > i {
+    font-size: 14px;
+    margin-right: 8px;
   }
-
-  50% { 
-    background-color: none;
-  }
-
-  75% {
-    background-color: #ffffff50;
-  }
-
-  100% { 
-    background-color: #ffffff;
-  }
-`;
-
-const Dot = styled.div`
-  background-color: black;
-  border-radius: 50%;
-  width: 5px;
-  height: 5px;
-  margin: 0 0.25rem;
-  margin-bottom: 2px;
-  //Animation
-  animation: ${DissapearAnimation} 0.5s linear infinite;
-  animation-delay: ${(props: { delay: string }) => props.delay};
 `;
 
 const Flex = styled.div`
@@ -227,27 +136,6 @@ const PRIcon = styled.img`
   margin-right: 10px;
   color: #aaaabb;
   opacity: 50%;
-`;
-
-const RowButton = styled(DynamicLink)`
-  font-size: 12px;
-  padding: 8px 10px;
-  margin-left: 10px;
-  border-radius: 5px;
-  color: #ffffff;
-  border: 1px solid #aaaabb;
-  display: flex;
-  align-items: center;
-  background: #ffffff08;
-  cursor: pointer;
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    font-size: 14px;
-    margin-right: 8px;
-  }
 `;
 
 const Status = styled.span`

@@ -8,9 +8,11 @@ import Loading from "components/Loading";
 
 import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
-import { Environment, PRDeployment } from "../types";
+import { Environment, PRDeployment, PullRequest } from "../types";
 import { useRouting } from "shared/routing";
 import { useHistory, useLocation } from "react-router";
+import { deployments, pull_requests } from "../mocks";
+import PullRequestCard from "./PullRequestCard";
 
 const AvailableStatusFilters = [
   "all",
@@ -18,6 +20,7 @@ const AvailableStatusFilters = [
   "failed",
   "active",
   "inactive",
+  "not_deployed",
 ];
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
@@ -26,6 +29,8 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
+  const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
+
   const [
     statusSelectorVal,
     setStatusSelectorVal,
@@ -38,14 +43,15 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const history = useHistory();
 
   const getPRDeploymentList = () => {
-    return api.getPRDeploymentList(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-      }
-    );
+    // return api.getPRDeploymentList(
+    //   "<token>",
+    //   {},
+    //   {
+    //     project_id: currentProject.id,
+    //     cluster_id: currentCluster.id,
+    //   }
+    // );
+    return mockRequest();
   };
 
   useEffect(() => {
@@ -91,6 +97,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
         }
 
         setDeploymentList(data.deployments || []);
+        setPullRequests(data.pull_requests || []);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -110,6 +117,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     getPRDeploymentList()
       .then(({ data }) => {
         setDeploymentList(data.deployments || []);
+        setPullRequests(data.pull_requests || []);
       })
       .catch((err) => {
         setHasError(true);
@@ -118,15 +126,48 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       .finally(() => setIsLoading(false));
   };
 
+  const filteredDeployments = useMemo(() => {
+    if (statusSelectorVal === "not_deployed") {
+      return [];
+    }
+
+    if (statusSelectorVal === "all" && selectedRepo === "all") {
+      return deploymentList;
+    }
+
+    let tmpDeploymentList = [...deploymentList];
+
+    if (selectedRepo !== "all") {
+      tmpDeploymentList = tmpDeploymentList.filter((deployment) => {
+        return (
+          `${deployment.gh_repo_owner}/${deployment.gh_repo_name}` ===
+          selectedRepo
+        );
+      });
+    }
+
+    if (statusSelectorVal !== "all") {
+      tmpDeploymentList = tmpDeploymentList.filter((d) => {
+        return d.status === statusSelectorVal;
+      });
+    }
+
+    return tmpDeploymentList;
+  }, [selectedRepo, statusSelectorVal, deploymentList]);
+
+  const filteredPullRequests = useMemo(() => {
+    if (selectedRepo === "all") {
+      return pullRequests;
+    }
+
+    return pullRequests.filter((pr) => {
+      return `${pr.repo_owner}/${pr.repo_name}` === selectedRepo;
+    });
+  }, [selectedRepo, pullRequests]);
+
   if (hasError) {
     return <Placeholder>Error</Placeholder>;
   }
-
-  const filteredDeployments = useMemo(() => {
-    return deploymentList.filter((d) => {
-      return d.status === statusSelectorVal;
-    });
-  }, [statusSelectorVal]);
 
   const renderDeploymentList = () => {
     if (isLoading) {
@@ -137,7 +178,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       );
     }
 
-    if (!deploymentList.length) {
+    if (!deploymentList.length && !pullRequests.length) {
       return (
         <Placeholder>
           No preview apps have been found. Open a PR to create a new preview
@@ -146,7 +187,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       );
     }
 
-    if (!filteredDeployments.length) {
+    if (!filteredDeployments.length && !filteredPullRequests.length) {
       return (
         <Placeholder>
           No preview apps have been found with the given filter.
@@ -154,9 +195,22 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       );
     }
 
-    return filteredDeployments.map((d) => {
-      return <DeploymentCard deployment={d} onDelete={handleRefresh} />;
-    });
+    return (
+      <>
+        {filteredPullRequests.map((pr) => {
+          return <PullRequestCard key={pr.pr_title} pullRequest={pr} />;
+        })}
+        {filteredDeployments.map((d) => {
+          return (
+            <DeploymentCard
+              key={d.id}
+              deployment={d}
+              onDelete={handleRefresh}
+            />
+          );
+        })}
+      </>
+    );
   };
 
   const repoOptions = environments
@@ -212,6 +266,10 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
                   value: "inactive",
                   label: "Inactive",
                 },
+                {
+                  value: "not_deployed",
+                  label: "Not deployed",
+                },
               ]}
               dropdownLabel="Status"
               width="150px"
@@ -246,6 +304,17 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
 };
 
 export default DeploymentList;
+
+const mockRequest = () =>
+  new Promise((res) => {
+    setTimeout(
+      () =>
+        res({
+          data: { deployments: deployments, pull_requests: pull_requests },
+        }),
+      1000
+    );
+  });
 
 const ActionsWrapper = styled.div`
   display: flex;

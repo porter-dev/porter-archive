@@ -10,11 +10,15 @@ type Environment struct {
 	GitRepoOwner      string `json:"git_repo_owner"`
 	GitRepoName       string `json:"git_repo_name"`
 
-	Name string `json:"name"`
+	Name                 string `json:"name"`
+	Mode                 string `json:"mode"`
+	DeploymentCount      uint   `json:"deployment_count"`
+	LastDeploymentStatus string `json:"last_deployment_status"`
 }
 
 type CreateEnvironmentRequest struct {
 	Name string `json:"name" form:"required"`
+	Mode string `json:"mode" form:"oneof=auto manual" default:"manual"`
 }
 
 type GitHubMetadata struct {
@@ -23,6 +27,8 @@ type GitHubMetadata struct {
 	RepoName     string `json:"gh_repo_name"`
 	RepoOwner    string `json:"gh_repo_owner"`
 	CommitSHA    string `json:"gh_commit_sha"`
+	PRBranchFrom string `json:"gh_pr_branch_from"`
+	PRBranchInto string `json:"gh_pr_branch_into"`
 }
 
 type DeploymentStatus string
@@ -49,8 +55,7 @@ type Deployment struct {
 }
 
 type CreateGHDeploymentRequest struct {
-	Branch   string `json:"branch" form:"required"`
-	ActionID uint   `json:"action_id" form:"required"`
+	ActionID uint `json:"action_id" form:"required"`
 }
 
 type CreateDeploymentRequest struct {
@@ -69,19 +74,21 @@ type FinalizeDeploymentRequest struct {
 type UpdateDeploymentRequest struct {
 	*CreateGHDeploymentRequest
 
-	CommitSHA string `json:"commit_sha" form:"required"`
-	Namespace string `json:"namespace" form:"required"`
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	CommitSHA    string `json:"commit_sha" form:"required"`
+	Namespace    string `json:"namespace" form:"required"`
 }
 
 type ListDeploymentRequest struct {
-	Status []string `schema:"status"`
+	EnvironmentID uint `schema:"environment_id"`
 }
 
 type UpdateDeploymentStatusRequest struct {
 	*CreateGHDeploymentRequest
 
-	Status    string `json:"status" form:"required,oneof=created creating inactive failed"`
-	Namespace string `json:"namespace" form:"required"`
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`
+	Namespace    string `json:"namespace" form:"required"`
 }
 
 type DeleteDeploymentRequest struct {
@@ -90,4 +97,13 @@ type DeleteDeploymentRequest struct {
 
 type GetDeploymentRequest struct {
 	Namespace string `schema:"namespace" form:"required"`
+}
+
+type PullRequest struct {
+	Title      string `json:"pr_title"`
+	Number     uint   `json:"pr_number"`
+	RepoOwner  string `json:"repo_owner"`
+	RepoName   string `json:"repo_name"`
+	BranchFrom string `json:"branch_from"`
+	BranchInto string `json:"branch_into"`
 }

@@ -66,7 +66,7 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ghDeployment, err := createDeployment(client, env, request.CreateGHDeploymentRequest)
+	ghDeployment, err := createDeployment(client, env, request.PRBranchFrom, request.ActionID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -84,6 +84,8 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		RepoName:       request.GitHubMetadata.RepoName,
 		PRName:         request.GitHubMetadata.PRName,
 		CommitSHA:      request.GitHubMetadata.CommitSHA,
+		PRBranchFrom:   request.GitHubMetadata.PRBranchFrom,
+		PRBranchInto:   request.GitHubMetadata.PRBranchInto,
 	})
 
 	if err != nil {
@@ -109,16 +111,18 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	c.WriteResult(w, r, depl.ToDeploymentType())
 }
 
-func createDeployment(client *github.Client, env *models.Environment, request *types.CreateGHDeploymentRequest) (*github.Deployment, error) {
-	branch := request.Branch
-	envName := "Preview"
-	automerge := false
+func createDeployment(
+	client *github.Client,
+	env *models.Environment,
+	branchFrom string,
+	actionID uint,
+) (*github.Deployment, error) {
 	requiredContexts := []string{}
 
 	deploymentRequest := github.DeploymentRequest{
-		Ref:              &branch,
-		Environment:      &envName,
-		AutoMerge:        &automerge,
+		Ref:              github.String(branchFrom),
+		Environment:      github.String("Preview"),
+		AutoMerge:        github.Bool(false),
 		RequiredContexts: &requiredContexts,
 	}
 
@@ -138,7 +142,7 @@ func createDeployment(client *github.Client, env *models.Environment, request *t
 	// Create Deployment Status to indicate it's in progress
 
 	state := "in_progress"
-	log_url := fmt.Sprintf("https://github.com/%s/%s/runs/%d", env.GitRepoOwner, env.GitRepoName, request.ActionID)
+	log_url := fmt.Sprintf("https://github.com/%s/%s/runs/%d", env.GitRepoOwner, env.GitRepoName, actionID)
 
 	deploymentStatusRequest := github.DeploymentStatusRequest{
 		State:  &state,

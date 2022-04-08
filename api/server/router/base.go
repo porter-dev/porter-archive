@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/metadata"
 	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/handlers/user"
+	"github.com/porter-dev/porter/api/server/handlers/webhook"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -535,6 +536,35 @@ func GetBaseRoutes(
 		Handler:  addProjectBillingHandler,
 		Router:   r,
 	})
+
+	if config.ServerConf.GithubIncomingWebhookSecret != "" {
+
+		// POST /api/github/incoming_webhook -> webhook.NewGithubIncomingWebhook
+		githubIncomingWebhookEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: "/github/incoming_webhook",
+				},
+				Scopes: []types.PermissionScope{},
+			},
+		)
+
+		githubIncomingWebhookHandler := webhook.NewGithubIncomingWebhookHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: githubIncomingWebhookEndpoint,
+			Handler:  githubIncomingWebhookHandler,
+			Router:   r,
+		})
+
+	}
 
 	return routes
 }

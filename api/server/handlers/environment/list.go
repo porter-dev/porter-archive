@@ -38,7 +38,22 @@ func (c *ListEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	res := make([]*types.Environment, 0)
 
 	for _, env := range envs {
-		res = append(res, env.ToEnvironmentType())
+		environment := env.ToEnvironmentType()
+
+		depls, err := c.Repo().Environment().ListDeployments(env.ID)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		environment.DeploymentCount = uint(len(depls))
+
+		if environment.DeploymentCount > 0 {
+			environment.LastDeploymentStatus = string(depls[0].Status)
+		}
+
+		res = append(res, environment)
 	}
 
 	c.WriteResult(w, r, res)

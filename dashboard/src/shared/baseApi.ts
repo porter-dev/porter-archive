@@ -64,6 +64,15 @@ const buildAxiosConfig: BuildAxiosConfigFunction = (
     };
   }
 
+  if (method.toUpperCase() === "PATCH") {
+    return {
+      ...config,
+      params: params,
+      paramsSerializer: (params) =>
+        qs.stringify(params, { arrayFormat: "repeat" }),
+    };
+  }
+
   return config;
 };
 

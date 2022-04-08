@@ -115,7 +115,7 @@ func populateOpenPullRequests(
 		return nil, err
 	}
 
-	openPRs, _, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
+	openPRs, resp, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 		&github.PullRequestListOptions{
 			ListOptions: github.ListOptions{
 				PerPage: 50,
@@ -123,11 +123,15 @@ func populateOpenPullRequests(
 		},
 	)
 
+	var prs []*types.PullRequest
+
+	if resp.StatusCode == 404 {
+		return prs, nil
+	}
+
 	if err != nil {
 		return nil, err
 	}
-
-	var prs []*types.PullRequest
 
 	for _, pr := range openPRs {
 		prs = append(prs, &types.PullRequest{

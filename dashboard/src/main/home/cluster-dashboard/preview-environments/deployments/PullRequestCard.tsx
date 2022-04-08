@@ -5,6 +5,8 @@ import { PullRequest } from "../types";
 import { integrationList } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { ActionButton } from "../components/ActionButton";
+import Loading from "components/Loading";
 
 const PullRequestCard = ({
   pullRequest,
@@ -17,10 +19,13 @@ const PullRequestCard = ({
     Context
   );
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const repository = `${pullRequest.repo_owner}/${pullRequest.repo_name}`;
 
   const createPreviewEnvironment = async () => {
+    setIsLoading(true);
     try {
       await api.createPreviewEnvironmentDeployment("<token>", pullRequest, {
         cluster_id: currentCluster?.id,
@@ -29,6 +34,12 @@ const PullRequestCard = ({
       onCreation(pullRequest);
     } catch (error) {
       setCurrentError(error);
+      setHasError(true);
+      setTimeout(() => {
+        setHasError(false);
+      }, 500);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -69,37 +80,26 @@ const PullRequestCard = ({
         </Flex>
       </DataContainer>
       <Flex>
-        <CreatePreviewEnvironmentButton onClick={createPreviewEnvironment}>
-          <i className="material-icons">add</i>
-          Create Preview environment
-        </CreatePreviewEnvironmentButton>
+        <ActionButton
+          onClick={createPreviewEnvironment}
+          disabled={isLoading}
+          hasError={hasError}
+        >
+          {isLoading ? (
+            <Loading width="198px" height="14px" />
+          ) : (
+            <>
+              <i className="material-icons">add</i>
+              Create Preview environment
+            </>
+          )}
+        </ActionButton>
       </Flex>
     </DeploymentCardWrapper>
   );
 };
 
 export default PullRequestCard;
-
-const CreatePreviewEnvironmentButton = styled.button`
-  font-size: 12px;
-  padding: 8px 10px;
-  margin-left: 10px;
-  border-radius: 5px;
-  color: #ffffff;
-  border: 1px solid #aaaabb;
-  display: flex;
-  align-items: center;
-  background: #ffffff08;
-  cursor: pointer;
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    font-size: 14px;
-    margin-right: 8px;
-  }
-`;
 
 const Flex = styled.div`
   display: flex;

@@ -225,6 +225,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
               key={d.id}
               deployment={d}
               onDelete={handleRefresh}
+              onReEnable={handleRefresh}
             />
           );
         })}

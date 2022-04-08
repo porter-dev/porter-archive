@@ -11,6 +11,8 @@ export type PRDeployment = {
   gh_repo_owner: string;
   gh_repo_name: string;
   gh_commit_sha: string;
+  gh_branch_from?: string;
+  gh_branch_into?: string;
 };
 
 export type Environment = {

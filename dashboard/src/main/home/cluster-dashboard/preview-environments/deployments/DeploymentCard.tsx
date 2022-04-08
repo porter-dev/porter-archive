@@ -27,6 +27,7 @@ const DeploymentCard: React.FC<{
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasErrorOnReEnabling, setHasErrorOnReEnabling] = useState(false);
+  const [showMergeInfoTooltip, setShowMergeInfoTooltip] = useState(false);
   const { url: currentUrl } = useRouteMatch();
 
   let repository = `${deployment.gh_repo_owner}/${deployment.gh_repo_name}`;
@@ -53,6 +54,7 @@ const DeploymentCard: React.FC<{
 
   const reEnablePreviewEnvironment = () => {
     setIsLoading(true);
+
     api
       .reenablePreviewEnvironmentDeployment(
         "<token>",
@@ -82,7 +84,29 @@ const DeploymentCard: React.FC<{
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
-          {deployment.gh_pr_name}
+          <DynamicLink
+            to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
+            target="_blank"
+          >
+            {deployment.gh_pr_name}
+          </DynamicLink>
+          {deployment.gh_branch_from && deployment.gh_branch_into ? (
+            <MergeInfoWrapper>
+              <MergeInfo
+                onMouseOver={() => setShowMergeInfoTooltip(true)}
+                onMouseOut={() => setShowMergeInfoTooltip(false)}
+              >
+                From: {deployment.gh_branch_from} Into:{" "}
+                {deployment.gh_branch_into}
+              </MergeInfo>
+              {showMergeInfoTooltip && (
+                <Tooltip>
+                  From: {deployment.gh_branch_from} Into:{" "}
+                  {deployment.gh_branch_into}
+                </Tooltip>
+              )}
+            </MergeInfoWrapper>
+          ) : null}
         </PRName>
 
         <Flex>
@@ -313,7 +337,7 @@ const Status = styled.span`
 const StatusDot = styled.div`
   width: 8px;
   height: 8px;
-  margin-right: 15px;
+  margin-right: 10px;
   background: ${(props: { status: string }) =>
     props.status === "created"
       ? "#4797ff"
@@ -399,4 +423,23 @@ const LastDeployed = styled.div`
   display: flex;
   align-items: center;
   color: #aaaabb66;
+`;
+
+const MergeInfoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  position: relative;
+`;
+
+const MergeInfo = styled.div`
+  font-size: 13px;
+  margin-left: 14px;
+  margin-top: -1px;
+  align-items: center;
+  color: #aaaabb66;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 300px;
 `;

@@ -13,6 +13,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import Modal from "main/home/modals/Modal";
 import InputRow from "components/form-components/InputRow";
+import DynamicLink from "components/DynamicLink";
 
 type Props = {
   environment: Environment;
@@ -122,7 +123,12 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
               src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
               alt="git repository icon"
             />
-            {git_repo_owner}/{git_repo_name}
+            <DynamicLink
+              to={`https://github.com/${git_repo_owner}/${git_repo_name}`}
+              target="_blank"
+            >
+              {git_repo_owner}/{git_repo_name}
+            </DynamicLink>
           </RepoName>
           <Status>
             <StatusDot status={last_deployment_status} />

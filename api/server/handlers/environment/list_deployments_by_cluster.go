@@ -133,8 +133,8 @@ func populateOpenPullRequests(
 		prs = append(prs, &types.PullRequest{
 			Title:      pr.GetTitle(),
 			Number:     uint(pr.GetNumber()),
-			RepoOwner:  pr.GetHead().GetRepo().GetOwner().GetName(),
-			RepoName:   pr.GetHead().GetRepo().GetName(),
+			RepoOwner:  env.GitRepoOwner,
+			RepoName:   env.GitRepoName,
 			BranchFrom: pr.GetHead().GetRef(),
 			BranchInto: pr.GetBase().GetRef(),
 		})

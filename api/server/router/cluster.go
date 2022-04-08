@@ -386,6 +386,7 @@ func getClusterRoutes(
 					RelativePath: relPath + "/deployments/{deployment_id}/reenable",
 				},
 				Scopes: []types.PermissionScope{
+					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
 				},
@@ -414,6 +415,7 @@ func getClusterRoutes(
 					RelativePath: relPath + "/deployments/pull_request",
 				},
 				Scopes: []types.PermissionScope{
+					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
 				},
@@ -443,6 +445,7 @@ func getClusterRoutes(
 					RelativePath: relPath + "/deployments/{deployment_id}",
 				},
 				Scopes: []types.PermissionScope{
+					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
 				},

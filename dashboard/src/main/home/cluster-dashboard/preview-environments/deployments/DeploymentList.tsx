@@ -233,15 +233,10 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     );
   };
 
-  const repoOptions = environments
-    .map((env) => ({
-      label: `${env.git_repo_owner}/${env.git_repo_name}`,
-      value: `${env.git_repo_owner}/${env.git_repo_name}`,
-    }))
-    .concat({
-      label: "All",
-      value: "all",
-    });
+  const repoOptions = environments.map((env) => ({
+    label: `${env.git_repo_owner}/${env.git_repo_name}`,
+    value: `${env.git_repo_owner}/${env.git_repo_name}`,
+  }));
 
   const handleStatusFilterChange = (value: string) => {
     pushQueryParams({ status_filter: value });
@@ -305,7 +300,13 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
             <Selector
               activeValue={selectedRepo}
               setActiveValue={handleRepoFilterChange}
-              options={repoOptions}
+              options={[
+                {
+                  label: "All",
+                  value: "all",
+                },
+                ...repoOptions,
+              ]}
               dropdownLabel="Repository"
               width="200px"
               dropdownWidth="300px"

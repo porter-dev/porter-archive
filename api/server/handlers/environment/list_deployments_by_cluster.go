@@ -60,12 +60,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		}
 
 		for _, env := range envList {
-			err = populateOpenPullRequests(r.Context(), c.Config(), env, pullRequests)
+			prs, err := populateOpenPullRequests(r.Context(), c.Config(), env)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
+
+			pullRequests = append(pullRequests, prs...)
 		}
 	} else {
 		depls, err := c.Repo().Environment().ListDeployments(req.EnvironmentID)
@@ -86,12 +88,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			return
 		}
 
-		err = populateOpenPullRequests(r.Context(), c.Config(), env, pullRequests)
+		prs, err := populateOpenPullRequests(r.Context(), c.Config(), env)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+
+		pullRequests = append(pullRequests, prs...)
 	}
 
 	c.WriteResult(w, r, map[string]interface{}{
@@ -104,12 +108,11 @@ func populateOpenPullRequests(
 	ctx context.Context,
 	config *config.Config,
 	env *models.Environment,
-	pullRequests []*types.PullRequest,
-) error {
+) ([]*types.PullRequest, error) {
 	client, err := getGithubClientFromEnvironment(config, env)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	openPRs, _, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
@@ -121,11 +124,13 @@ func populateOpenPullRequests(
 	)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	var prs []*types.PullRequest
+
 	for _, pr := range openPRs {
-		pullRequests = append(pullRequests, &types.PullRequest{
+		prs = append(prs, &types.PullRequest{
 			Title:      pr.GetTitle(),
 			Number:     uint(pr.GetNumber()),
 			RepoOwner:  pr.GetHead().GetRepo().GetOwner().GetName(),
@@ -135,5 +140,5 @@ func populateOpenPullRequests(
 		})
 	}
 
-	return nil
+	return prs, nil
 }

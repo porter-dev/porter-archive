@@ -47,7 +47,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+	ghResp, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 		r.Context(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: request.BranchFrom,
@@ -59,6 +59,11 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			},
 		},
 	)
+
+	if ghResp.StatusCode == 404 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("workflow file not found"), 404))
+		return
+	}
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -68,6 +68,7 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
       )
       .then(() => {
         onDelete(environment);
+        closeForm();
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));

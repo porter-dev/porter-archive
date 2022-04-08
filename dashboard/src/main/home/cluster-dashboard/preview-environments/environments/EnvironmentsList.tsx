@@ -18,7 +18,7 @@ type Props = {
 const EnvironmentsList = ({ environments, setEnvironments }: Props) => {
   const removeEnvironmentFromList = (deletedEnv: Environment) => {
     setEnvironments((prev) => {
-      return prev.filter((env) => env.id === deletedEnv.id);
+      return prev.filter((env) => env.id !== deletedEnv.id);
     });
   };
 

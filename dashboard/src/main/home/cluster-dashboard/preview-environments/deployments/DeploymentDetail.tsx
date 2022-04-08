@@ -5,7 +5,7 @@ import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { PRDeployment } from "./DeploymentList";
+import { PRDeployment } from "../types";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";

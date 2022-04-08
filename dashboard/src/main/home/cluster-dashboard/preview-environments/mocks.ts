@@ -129,7 +129,7 @@ export const deployments = [
     git_installation_id: 0,
     environment_id: 37,
     namespace: "pr-1-porter-docs",
-    status: "failed",
+    status: "inactive",
     subdomain: "https://docs-web-7b93751b98e68139.staging-onporter.run",
     pull_request_id: 1,
   },

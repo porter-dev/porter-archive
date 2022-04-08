@@ -8,6 +8,7 @@ import { Context } from "shared/Context";
 import { ActionButton } from "../components/ActionButton";
 import Loading from "components/Loading";
 import DynamicLink from "components/DynamicLink";
+import RecreateWorkflowFilesModal from "../components/RecreateWorkflowFilesModal";
 
 const PullRequestCard = ({
   pullRequest,
@@ -21,6 +22,10 @@ const PullRequestCard = ({
   );
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [showMergeInfoTooltip, setShowMergeInfoTooltip] = useState(false);
+  const [
+    openRecreateWorkflowFilesModal,
+    setOpenRecreateWorkflowFilesModal,
+  ] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
 
@@ -35,6 +40,7 @@ const PullRequestCard = ({
       });
       onCreation(pullRequest);
     } catch (error) {
+      debugger;
       setCurrentError(error);
       setHasError(true);
       setTimeout(() => {
@@ -46,72 +52,80 @@ const PullRequestCard = ({
   };
 
   return (
-    <DeploymentCardWrapper>
-      <DataContainer>
-        <PRName>
-          <PRIcon src={pr_icon} alt="pull request icon" />
-          <DynamicLink
-            to={`https://github.com/${pullRequest.repo_owner}/${pullRequest.repo_name}/pull/${pullRequest.pr_number}`}
-            target="_blank"
-          >
-            {pullRequest.pr_title}
-          </DynamicLink>
-
-          <InfoWrapper>
-            <MergeInfo
-              onMouseOver={() => setShowMergeInfoTooltip(true)}
-              onMouseOut={() => setShowMergeInfoTooltip(false)}
+    <>
+      <RecreateWorkflowFilesModal
+        hide={!openRecreateWorkflowFilesModal}
+        onClose={() => setOpenRecreateWorkflowFilesModal(false)}
+        isReEnable={false}
+      />
+      <DeploymentCardWrapper>
+        <DataContainer>
+          <PRName>
+            <PRIcon src={pr_icon} alt="pull request icon" />
+            <DynamicLink
+              to={`https://github.com/${pullRequest.repo_owner}/${pullRequest.repo_name}/pull/${pullRequest.pr_number}`}
+              target="_blank"
             >
-              From: {pullRequest.branch_from} Into: {pullRequest.branch_into}
-            </MergeInfo>
-            {showMergeInfoTooltip && (
-              <Tooltip>
+              {pullRequest.pr_title}
+            </DynamicLink>
+
+            <InfoWrapper>
+              <MergeInfo
+                onMouseOver={() => setShowMergeInfoTooltip(true)}
+                onMouseOut={() => setShowMergeInfoTooltip(false)}
+              >
                 From: {pullRequest.branch_from} Into: {pullRequest.branch_into}
-              </Tooltip>
-            )}
-          </InfoWrapper>
-        </PRName>
+              </MergeInfo>
+              {showMergeInfoTooltip && (
+                <Tooltip>
+                  From: {pullRequest.branch_from} Into:{" "}
+                  {pullRequest.branch_into}
+                </Tooltip>
+              )}
+            </InfoWrapper>
+          </PRName>
 
+          <Flex>
+            <StatusContainer>
+              <Status>
+                <StatusDot />
+                Not deployed
+              </Status>
+            </StatusContainer>
+            <DeploymentImageContainer>
+              <DeploymentTypeIcon src={integrationList.repo.icon} />
+              <RepositoryName
+                onMouseOver={() => {
+                  setShowRepoTooltip(true);
+                }}
+                onMouseOut={() => {
+                  setShowRepoTooltip(false);
+                }}
+              >
+                {repository}
+              </RepositoryName>
+              {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+            </DeploymentImageContainer>
+          </Flex>
+        </DataContainer>
         <Flex>
-          <StatusContainer>
-            <Status>
-              <StatusDot />
-              Not deployed
-            </Status>
-          </StatusContainer>
-          <DeploymentImageContainer>
-            <DeploymentTypeIcon src={integrationList.repo.icon} />
-            <RepositoryName
-              onMouseOver={() => {
-                setShowRepoTooltip(true);
-              }}
-              onMouseOut={() => {
-                setShowRepoTooltip(false);
-              }}
-            >
-              {repository}
-            </RepositoryName>
-            {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
-          </DeploymentImageContainer>
+          <ActionButton
+            onClick={createPreviewEnvironment}
+            disabled={isLoading}
+            hasError={hasError}
+          >
+            {isLoading ? (
+              <Loading width="198px" height="14px" />
+            ) : (
+              <>
+                <i className="material-icons">add</i>
+                Create Preview environment
+              </>
+            )}
+          </ActionButton>
         </Flex>
-      </DataContainer>
-      <Flex>
-        <ActionButton
-          onClick={createPreviewEnvironment}
-          disabled={isLoading}
-          hasError={hasError}
-        >
-          {isLoading ? (
-            <Loading width="198px" height="14px" />
-          ) : (
-            <>
-              <i className="material-icons">add</i>
-              Create Preview environment
-            </>
-          )}
-        </ActionButton>
-      </Flex>
-    </DeploymentCardWrapper>
+      </DeploymentCardWrapper>
+    </>
   );
 };
 

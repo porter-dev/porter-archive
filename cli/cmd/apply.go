@@ -367,6 +367,7 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	}
 
 	if appConfig.Build.UseCache {
+		// set the docker config so that pack caching can use the repo credentials
 		err := setDockerConfig(client)
 
 		if err != nil {
@@ -469,6 +470,28 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 	if appConf.Build.Method == "registry" {
 		subdomain, err = createAgent.CreateFromRegistry(appConf.Build.Image, appConf.Values)
 	} else {
+		// if useCache is set, create the image repository first
+		if appConf.Build.UseCache {
+			regID, imageURL, err := createAgent.GetImageRepoURL(resource.Name, sharedOpts.Namespace)
+
+			if err != nil {
+				return nil, err
+			}
+
+			err = client.CreateRepository(
+				context.Background(),
+				sharedOpts.ProjectID,
+				regID,
+				&types.CreateRegistryRepositoryRequest{
+					ImageRepoURI: imageURL,
+				},
+			)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig, appConf.Build.ForceBuild)
 	}
 
@@ -634,6 +657,14 @@ func getSource(input map[string]interface{}, output *Source) error {
 		}
 
 		return fmt.Errorf("source does not exist in any repo")
+	} else {
+		// we look in the passed-in repo
+		values, err := existsInRepo(output.Name, output.Version, output.Repo)
+
+		if err == nil {
+			output.SourceValues = values
+			return nil
+		}
 	}
 
 	return fmt.Errorf("source '%s' does not exist in repo '%s'", output.Name, output.Repo)

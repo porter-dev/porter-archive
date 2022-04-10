@@ -634,6 +634,14 @@ func getSource(input map[string]interface{}, output *Source) error {
 		}
 
 		return fmt.Errorf("source does not exist in any repo")
+	} else {
+		// we look in the passed-in repo
+		values, err := existsInRepo(output.Name, output.Version, output.Repo)
+
+		if err == nil {
+			output.SourceValues = values
+			return nil
+		}
 	}
 
 	return fmt.Errorf("source '%s' does not exist in repo '%s'", output.Name, output.Repo)

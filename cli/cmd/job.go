@@ -170,6 +170,8 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	// if it does not exist, we set the default to 30 minutes
 	timeoutVal := getJobTimeoutValue(jobRelease.Release.Config)
 
+	color.New(color.FgYellow).Printf("Waiting for timeout seconds %d\n", timeoutVal.Seconds())
+
 	// if no job exists with the given revision, wait for the timeout value
 	timeWait := time.Now().Add(timeoutVal)
 

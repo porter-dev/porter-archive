@@ -386,6 +386,8 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		color.New(color.FgYellow).Printf("Skipping creation for %s as onlyCreate is set to true\n", resource.Name)
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {

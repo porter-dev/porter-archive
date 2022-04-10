@@ -171,9 +171,14 @@ type Target struct {
 type ApplicationConfig struct {
 	WaitForJob bool
 
+	// If set to true, this does not run an update, it only creates the initial application and job,
+	// skipping subsequent updates
+	OnlyCreate bool
+
 	Build struct {
 		ForceBuild bool
 		ForcePush  bool
+		UseCache   bool
 		Method     string
 		Context    string
 		Dockerfile string
@@ -358,6 +363,15 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		OverrideTag:     tag,
 		Method:          deploy.DeployBuildType(method),
 		EnvGroups:       appConfig.EnvGroups,
+		UseCache:        appConfig.Build.UseCache,
+	}
+
+	if appConfig.Build.UseCache {
+		err := setDockerConfig(client)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if shouldCreate {
@@ -366,19 +380,21 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if !appConfig.OnlyCreate {
 		resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		color.New(color.FgYellow).Printf("Skipping creation for %s as onlyCreate is set to true\n", resource.Name)
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {
 		return nil, err
 	}
 
-	if d.source.Name == "job" && appConfig.WaitForJob {
+	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
 
 		prevProject := config.Project
@@ -507,10 +523,12 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			return nil, err
 		}
 
-		err = updateAgent.Push(appConf.Build.ForcePush)
+		if !appConf.Build.UseCache {
+			err = updateAgent.Push(appConf.Build.ForcePush)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

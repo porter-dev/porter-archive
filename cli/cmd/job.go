@@ -166,8 +166,14 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		return pausedErr
 	}
 
-	// if no job exists with the given revision, wait up to 30 minutes
-	timeWait := time.Now().Add(30 * time.Minute)
+	// attempt to parse out the timeout value for the job, given by `sidecar.timeout`
+	// if it does not exist, we set the default to 30 minutes
+	timeoutVal := getJobTimeoutValue(jobRelease.Release.Config)
+
+	color.New(color.FgYellow).Printf("Waiting for timeout seconds %d\n", timeoutVal.Seconds())
+
+	// if no job exists with the given revision, wait for the timeout value
+	timeWait := time.Now().Add(timeoutVal)
 
 	for time.Now().Before(timeWait) {
 		// get the jobs for that job chart
@@ -221,4 +227,33 @@ func getJobMatchingRevision(revision uint, jobs []v1.Job) *v1.Job {
 	}
 
 	return nil
+}
+
+func getJobTimeoutValue(values map[string]interface{}) time.Duration {
+	defaultTimeout := time.Minute * 60
+	sidecarInter, ok := values["sidecar"]
+
+	if !ok {
+		return defaultTimeout
+	}
+
+	sidecarVal, ok := sidecarInter.(map[string]interface{})
+
+	if !ok {
+		return defaultTimeout
+	}
+
+	timeoutInter, ok := sidecarVal["timeout"]
+
+	if !ok {
+		return defaultTimeout
+	}
+
+	timeoutVal, ok := timeoutInter.(int64)
+
+	if !ok {
+		return defaultTimeout
+	}
+
+	return time.Second * time.Duration(timeoutVal)
 }

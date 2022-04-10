@@ -2,7 +2,6 @@ package docker
 
 import (
 	"context"
-	"time"
 
 	"github.com/docker/docker/client"
 	api "github.com/porter-dev/porter/api/client"
@@ -17,7 +16,6 @@ func NewAgentFromEnv() (*Agent, error) {
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithAPIVersionNegotiation(),
-		client.WithTimeout(30*time.Second),
 	)
 
 	if err != nil {

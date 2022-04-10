@@ -327,10 +327,12 @@ func (c *CreateAgent) CreateFromDocker(
 			return "", err
 		}
 
-		err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
+		if !opts.SharedOpts.UseCache {
+			err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
-		if err != nil {
-			return "", err
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 

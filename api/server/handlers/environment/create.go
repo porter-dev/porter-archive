@@ -76,15 +76,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	hooks, _, err := client.Repositories.ListHooks(
-		r.Context(), owner, name, &github.ListOptions{},
-	)
-
-	if err != nil {
-		c.deleteEnvAndReportError(w, r, env, err)
-		return
-	}
-
 	webhookURL := fmt.Sprintf("%s/api/github/incoming_webhook", c.Config().ServerConf.ServerURL)
 
 	// create incoming webhook

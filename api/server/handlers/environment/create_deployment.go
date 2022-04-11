@@ -121,7 +121,7 @@ func createDeployment(
 
 	deploymentRequest := github.DeploymentRequest{
 		Ref:              github.String(branchFrom),
-		Environment:      github.String("Preview"),
+		Environment:      github.String(env.Name),
 		AutoMerge:        github.Bool(false),
 		RequiredContexts: &requiredContexts,
 	}

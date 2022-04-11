@@ -63,7 +63,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -80,7 +80,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			)
 
 			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				c.deleteEnvAndReportError(w, r, env, err)
 				return
 			}
 
@@ -117,7 +117,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -125,14 +125,14 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -149,11 +149,18 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
 	c.WriteResult(w, r, env.ToEnvironmentType())
+}
+
+func (c *CreateEnvironmentHandler) deleteEnvAndReportError(
+	w http.ResponseWriter, r *http.Request, env *models.Environment, err error,
+) {
+	c.Repo().Environment().DeleteEnvironment(env)
+	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 }
 
 func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {

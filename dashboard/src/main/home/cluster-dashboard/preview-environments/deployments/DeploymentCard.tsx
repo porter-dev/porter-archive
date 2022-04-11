@@ -88,21 +88,21 @@ const DeploymentCard: React.FC<{
             to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
             target="_blank"
           >
-            {deployment.gh_pr_name}
+            {deployment.gh_pr_name} #{deployment.pull_request_id}
           </DynamicLink>
-          {deployment.gh_branch_from && deployment.gh_branch_into ? (
+          {deployment.gh_pr_branch_from && deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>
               <MergeInfo
                 onMouseOver={() => setShowMergeInfoTooltip(true)}
                 onMouseOut={() => setShowMergeInfoTooltip(false)}
               >
-                From: {deployment.gh_branch_from} Into:{" "}
-                {deployment.gh_branch_into}
+                From: {deployment.gh_pr_branch_from} Into:{" "}
+                {deployment.gh_pr_branch_into}
               </MergeInfo>
               {showMergeInfoTooltip && (
                 <Tooltip>
-                  From: {deployment.gh_branch_from} Into:{" "}
-                  {deployment.gh_branch_into}
+                  From: {deployment.gh_pr_branch_from} Into:{" "}
+                  {deployment.gh_pr_branch_into}
                 </Tooltip>
               )}
             </MergeInfoWrapper>
@@ -144,7 +144,7 @@ const DeploymentCard: React.FC<{
               deployment.status !== "inactive" && (
                 <>
                   <RowButton
-                    to={`${currentUrl}/pr-env-detail/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+                    to={`/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
                     key={deployment.id}
                   >
                     <i className="material-icons-outlined">info</i>

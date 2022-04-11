@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
-import ConnectNewRepo from "./components/ConnectNewRepo";
+import ConnectNewRepo from "./ConnectNewRepo";
 import DeploymentDetail from "./deployments/DeploymentDetail";
 import PreviewEnvironmentsHome from "./PreviewEnvironmentsHome";
 

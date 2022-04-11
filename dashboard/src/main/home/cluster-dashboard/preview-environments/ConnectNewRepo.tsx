@@ -11,8 +11,8 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import { Environment } from "../types";
-import { PreviewEnvironmentsHeader } from "./PreviewEnvironmentsHeader";
+import { Environment } from "./types";
+import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
 import CheckboxRow from "components/form-components/CheckboxRow";
 
 const ConnectNewRepo: React.FC = () => {
@@ -71,7 +71,7 @@ const ConnectNewRepo: React.FC = () => {
       .createEnvironment(
         "<token>",
         {
-          name: "Preview",
+          name: `preview`,
           mode: enableAutomaticDeployments ? "auto" : "manual",
         },
         {

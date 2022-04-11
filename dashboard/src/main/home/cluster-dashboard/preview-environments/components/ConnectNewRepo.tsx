@@ -71,7 +71,7 @@ const ConnectNewRepo: React.FC = () => {
       .createEnvironment(
         "<token>",
         {
-          name: "Preview",
+          name: "preview",
           mode: enableAutomaticDeployments ? "auto" : "manual",
         },
         {

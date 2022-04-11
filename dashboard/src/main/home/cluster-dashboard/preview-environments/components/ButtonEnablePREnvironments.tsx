@@ -80,6 +80,20 @@ const ButtonEnablePREnvironments = () => {
       </Container>
     );
   }
+
+  if (!hasGHAccountConnected) {
+    return (
+      <>
+        <Container>
+          <Button {...getButtonProps()}>
+            <img src={pr_icon} alt="Pull request icon" />
+            Connect repositories
+          </Button>
+        </Container>
+      </>
+    );
+  }
+
   return (
     <>
       <Container>

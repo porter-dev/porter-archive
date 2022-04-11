@@ -69,8 +69,7 @@ const ButtonEnablePREnvironments = () => {
       };
     }
     return {
-      to:
-        "/cluster-dashboard?selected_tab=preview_environments&action=connect-repo",
+      to: "/preview-environments/connect-repo",
     };
   };
 

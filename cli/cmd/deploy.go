@@ -210,6 +210,7 @@ var method string
 var stream bool
 var buildFlagsEnv []string
 var forcePush bool
+var useCache bool
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -224,6 +225,13 @@ func init() {
 	)
 
 	updateCmd.MarkPersistentFlagRequired("app")
+
+	updateCmd.PersistentFlags().BoolVar(
+		&useCache,
+		"use-cache",
+		false,
+		"Whether to use cache (currently in beta)",
+	)
 
 	updateCmd.PersistentFlags().StringVar(
 		&namespace,
@@ -452,6 +460,7 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 			OverrideTag:     tag,
 			Method:          buildMethod,
 			AdditionalEnv:   additionalEnv,
+			UseCache:        useCache,
 		},
 		Local: source != "github",
 	})
@@ -469,6 +478,14 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 			Status:  types.EventStatusInProgress,
 			Info:    "",
 		})
+	}
+
+	if useCache {
+		err := setDockerConfig(updateAgent.Client)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	// read the values if necessary
@@ -539,6 +556,12 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 }
 
 func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
+	if useCache {
+		color.New(color.FgGreen).Println("Skipping image push for", app, "as use-cache is set")
+
+		return nil
+	}
+
 	// push the deployment
 	color.New(color.FgGreen).Println("Pushing new image for", app)
 

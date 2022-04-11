@@ -12,7 +12,8 @@ export type PorterUrl =
   | "env-groups"
   | "jobs"
   | "onboarding"
-  | "databases";
+  | "databases"
+  | "preview-environments";
 
 export const PorterUrls = [
   "dashboard",
@@ -27,6 +28,7 @@ export const PorterUrls = [
   "jobs",
   "onboarding",
   "databases",
+  "preview-environments",
 ];
 
 // TODO: consolidate with pushFiltered

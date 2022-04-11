@@ -77,15 +77,16 @@ func GetGithubAppClientFromRequest(config *config.Config, r *http.Request) (*git
 }
 
 type GithubAppPermissions struct {
-	Actions        string
-	Administration string
-	Contents       string
-	Deployments    string
-	Environments   string
-	Metadata       string
-	PullRequests   string
-	Secrets        string
-	Workflows      string
+	Actions           string
+	Administration    string
+	Contents          string
+	Deployments       string
+	Environments      string
+	Metadata          string
+	PullRequests      string
+	Secrets           string
+	Workflows         string
+	RepositoryWebhook string
 }
 
 // GetGithubAppClientFromRequest gets the github app installation id from the request and authenticates
@@ -115,15 +116,16 @@ func GetGithubAppPermissions(config *config.Config, r *http.Request) (*GithubApp
 	permissions, err := itr.Permissions()
 
 	return &GithubAppPermissions{
-		Actions:        permissionToString(permissions.Actions),
-		Administration: permissionToString(permissions.Administration),
-		Contents:       permissionToString(permissions.Contents),
-		Deployments:    permissionToString(permissions.Deployments),
-		Environments:   permissionToString(permissions.Environments),
-		Metadata:       permissionToString(permissions.Metadata),
-		PullRequests:   permissionToString(permissions.PullRequests),
-		Secrets:        permissionToString(permissions.Secrets),
-		Workflows:      permissionToString(permissions.Workflows),
+		Actions:           permissionToString(permissions.Actions),
+		Administration:    permissionToString(permissions.Administration),
+		Contents:          permissionToString(permissions.Contents),
+		Deployments:       permissionToString(permissions.Deployments),
+		Environments:      permissionToString(permissions.Environments),
+		Metadata:          permissionToString(permissions.Metadata),
+		PullRequests:      permissionToString(permissions.PullRequests),
+		Secrets:           permissionToString(permissions.Secrets),
+		Workflows:         permissionToString(permissions.Workflows),
+		RepositoryWebhook: permissionToString(permissions.RepositoryHooks),
 	}, err
 }
 

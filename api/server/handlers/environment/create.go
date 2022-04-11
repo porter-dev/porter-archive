@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -86,23 +87,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	webhookURL := fmt.Sprintf("%s/api/github/incoming_webhook", c.Config().ServerConf.ServerURL)
 
-	for _, hook := range hooks {
-		if hook.GetURL() == webhookURL {
-			// if a previous webhook exists then we should delete it
-			// this ensures that an updated webhook secret is maintained
-			_, err = client.Repositories.DeleteHook(
-				r.Context(), owner, name, hook.GetID(),
-			)
-
-			if err != nil {
-				c.deleteEnvAndReportError(w, r, env, err)
-				return
-			}
-
-			break
-		}
-	}
-
 	// create incoming webhook
 	_, _, err = client.Repositories.CreateHook(
 		r.Context(), owner, name, &github.Hook{
@@ -116,7 +100,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		},
 	)
 
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "already exists on this repository") {
 		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}

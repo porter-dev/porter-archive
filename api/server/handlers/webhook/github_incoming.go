@@ -79,7 +79,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: event.PullRequest.GetHead().GetRef(),
 				Inputs: map[string]interface{}{
-					"pr_number":      event.PullRequest.GetNumber(),
+					"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
 					"pr_title":       event.PullRequest.GetTitle(),
 					"pr_branch_from": event.PullRequest.GetHead().GetRef(),
 					"pr_branch_into": event.PullRequest.GetBase().GetRef(),
@@ -105,7 +105,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 				github.CreateWorkflowDispatchEventRequest{
 					Ref: event.PullRequest.GetHead().GetRef(),
 					Inputs: map[string]interface{}{
-						"pr_number":      event.PullRequest.GetNumber(),
+						"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
 						"pr_title":       event.PullRequest.GetTitle(),
 						"pr_branch_from": event.PullRequest.GetHead().GetRef(),
 						"pr_branch_into": event.PullRequest.GetBase().GetRef(),

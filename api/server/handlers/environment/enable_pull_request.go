@@ -3,6 +3,7 @@ package environment
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -52,7 +53,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: request.BranchFrom,
 			Inputs: map[string]interface{}{
-				"pr_number":      request.Number,
+				"pr_number":      strconv.FormatUint(uint64(request.Number), 10),
 				"pr_title":       request.Title,
 				"pr_branch_from": request.BranchFrom,
 				"pr_branch_into": request.BranchInto,

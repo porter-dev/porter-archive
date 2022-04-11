@@ -5,7 +5,7 @@ import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { PRDeployment, Environment } from "./EnvironmentList";
+import { PRDeployment } from "../types";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -14,17 +14,13 @@ import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
 
-const EnvironmentDetail = () => {
+const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
 
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster } = useContext(Context);
 
   const { search } = useLocation();
   let searchParams = new URLSearchParams(search);
@@ -55,13 +51,7 @@ const EnvironmentDetail = () => {
       .catch((err) => {
         console.error(err);
         if (isSubscribed) {
-          setHasError(true);
           setPRDeployment(null);
-        }
-      })
-      .finally(() => {
-        if (isSubscribed) {
-          setIsLoading(false);
         }
       });
   }, [params]);
@@ -137,7 +127,7 @@ const EnvironmentDetail = () => {
   );
 };
 
-export default EnvironmentDetail;
+export default DeploymentDetail;
 
 const Flex = styled.div`
   display: flex;
@@ -163,7 +153,8 @@ const GHALink = styled(DynamicLink)`
     margin-right: 9px;
     margin-left: 5px;
 
-    :text-decoration: none;
+    text-decoration: none;
+
     :hover {
       text-decoration: underline;
       color: white;

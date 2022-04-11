@@ -57,7 +57,7 @@ func (c *GithubIncomingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.
 }
 
 func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.PullRequestEvent, r *http.Request) error {
-	owner := event.GetOrganization().GetName()
+	owner := event.GetRepo().GetOwner().GetLogin()
 	repo := event.GetRepo().GetName()
 
 	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(owner, repo)

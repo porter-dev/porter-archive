@@ -19,7 +19,8 @@ type TabEnum = typeof AvailableTabs[number];
 const PreviewEnvironmentsHome = () => {
   const { currentCluster, currentProject } = useContext(Context);
 
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [hasGHAccountsLinked, setHasGHAccountsLinked] = useState(false);
+  const [hasEnvironments, setHasEnvironments] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [environments, setEnvironments] = useState([]);
@@ -29,45 +30,75 @@ const PreviewEnvironmentsHome = () => {
   const location = useLocation();
   const history = useHistory();
 
-  useEffect(() => {
-    let isSubscribed = true;
-    api
-      .listEnvironments(
+  const getAccounts = async () => {
+    try {
+      const res = await api.getGithubAccounts("<token>", {}, {});
+      if (res.status !== 200) {
+        throw new Error("Not authorized");
+      }
+
+      return res.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const getEnvironments = async () => {
+    try {
+      const { data } = await api.listEnvironments(
         "<token>",
         {},
         {
           project_id: currentProject?.id,
           cluster_id: currentCluster?.id,
         }
-      )
-      // mockRequest()
-      .then(({ data }) => {
-        if (isSubscribed) {
-          setIsEnabled(true);
-        }
+      );
 
-        if (!Array.isArray(data)) {
-          throw Error("Data is not an array");
-        }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
 
-        setIsEnabled(!!data.length);
-        setEnvironments(data);
-      })
+  const checkPreviewEnvironmentsEnabling = async (subscribeStauts: {
+    subscribed: boolean;
+  }) => {
+    try {
+      await getAccounts();
 
-      .catch((err) => {
-        console.error(err);
-        if (isSubscribed) {
-          setHasError(true);
-        }
-      })
-      .finally(() => {
-        if (isSubscribed) {
-          setIsLoading(false);
-        }
-      });
+      const envs = await getEnvironments();
+      // const envs = await mockRequest();
+
+      if (!subscribeStauts.subscribed) {
+        return;
+      }
+
+      if (!Array.isArray(envs)) {
+        setHasGHAccountsLinked(true);
+        return;
+      }
+
+      setHasGHAccountsLinked(true);
+      setHasEnvironments(true);
+      setEnvironments(envs);
+    } catch (error) {
+      setHasGHAccountsLinked(false);
+    }
+  };
+
+  useEffect(() => {
+    let subscribedStatus = { subscribed: true };
+
+    setIsLoading(true);
+
+    checkPreviewEnvironmentsEnabling(subscribedStatus).finally(() => {
+      if (subscribedStatus.subscribed) {
+        setIsLoading(false);
+      }
+    });
 
     return () => {
-      isSubscribed = false;
+      subscribedStatus.subscribed = false;
     };
   }, [currentCluster, currentProject]);
 
@@ -96,7 +127,24 @@ const PreviewEnvironmentsHome = () => {
     return <Placeholder>Something went wrong, please try again</Placeholder>;
   }
 
-  if (!isEnabled) {
+  if (!hasGHAccountsLinked) {
+    return (
+      <>
+        <PreviewEnvironmentsHeader />
+        <LineBreak />
+        <Placeholder>
+          <Title>There are no repositories linked</Title>
+          <Subtitle>
+            In order to use preview environments, you must install the porter
+            app in at least one repository.
+          </Subtitle>
+          <ButtonEnablePREnvironments />
+        </Placeholder>
+      </>
+    );
+  }
+
+  if (!hasEnvironments) {
     return (
       <>
         <PreviewEnvironmentsHeader />

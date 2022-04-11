@@ -2,6 +2,7 @@ package environment
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v41/github"
@@ -48,8 +49,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			return
 		}
 
+		deplInfoMap := make(map[string]bool)
+
 		for _, depl := range depls {
-			deployments = append(deployments, depl.ToDeploymentType())
+			deployment := depl.ToDeploymentType()
+			deplInfoMap[fmt.Sprintf(
+				"%s-%s-%d", deployment.RepoOwner, deployment.RepoName, deployment.PullRequestID,
+			)] = true
+			deployments = append(deployments, deployment)
 		}
 
 		envList, err := c.Repo().Environment().ListEnvironments(project.ID, cluster.ID)
@@ -60,7 +67,7 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		}
 
 		for _, env := range envList {
-			prs, err := populateOpenPullRequests(r.Context(), c.Config(), env)
+			prs, err := fetchOpenPullRequests(r.Context(), c.Config(), env, deplInfoMap)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -77,8 +84,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			return
 		}
 
+		deplInfoMap := make(map[string]bool)
+
 		for _, depl := range depls {
-			deployments = append(deployments, depl.ToDeploymentType())
+			deployment := depl.ToDeploymentType()
+			deplInfoMap[fmt.Sprintf(
+				"%s-%s-%d", deployment.RepoOwner, deployment.RepoName, deployment.PullRequestID,
+			)] = true
+			deployments = append(deployments, deployment)
 		}
 
 		env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, req.EnvironmentID)
@@ -88,7 +101,7 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			return
 		}
 
-		prs, err := populateOpenPullRequests(r.Context(), c.Config(), env)
+		prs, err := fetchOpenPullRequests(r.Context(), c.Config(), env, deplInfoMap)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -104,10 +117,11 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	})
 }
 
-func populateOpenPullRequests(
+func fetchOpenPullRequests(
 	ctx context.Context,
 	config *config.Config,
 	env *models.Environment,
+	deplInfoMap map[string]bool,
 ) ([]*types.PullRequest, error) {
 	client, err := getGithubClientFromEnvironment(config, env)
 
@@ -134,14 +148,16 @@ func populateOpenPullRequests(
 	}
 
 	for _, pr := range openPRs {
-		prs = append(prs, &types.PullRequest{
-			Title:      pr.GetTitle(),
-			Number:     uint(pr.GetNumber()),
-			RepoOwner:  env.GitRepoOwner,
-			RepoName:   env.GitRepoName,
-			BranchFrom: pr.GetHead().GetRef(),
-			BranchInto: pr.GetBase().GetRef(),
-		})
+		if _, ok := deplInfoMap[fmt.Sprintf("%s-%s-%d", env.GitRepoOwner, env.GitRepoName, pr.GetNumber())]; !ok {
+			prs = append(prs, &types.PullRequest{
+				Title:      pr.GetTitle(),
+				Number:     uint(pr.GetNumber()),
+				RepoOwner:  env.GitRepoOwner,
+				RepoName:   env.GitRepoName,
+				BranchFrom: pr.GetHead().GetRef(),
+				BranchInto: pr.GetBase().GetRef(),
+			})
+		}
 	}
 
 	return prs, nil

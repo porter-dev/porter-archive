@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -36,7 +37,20 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	deplID, reqErr := requestutils.GetURLParamUint(r, "deployment_id")
+	envID, reqErr := requestutils.GetURLParamUint(r, "environment_id")
+
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+		return
+	}
+
+	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
+
+	if !ok {
+		return
+	}
+
+	prNumber, reqErr := requestutils.GetURLParamUint(r, "pr_number")
 
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
@@ -44,7 +58,7 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	// read the deployment
-	depl, err := c.Repo().Environment().ReadDeploymentByID(deplID)
+	depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(envID, owner, name, prNumber)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

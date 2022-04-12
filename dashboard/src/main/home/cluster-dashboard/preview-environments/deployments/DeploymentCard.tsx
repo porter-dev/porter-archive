@@ -42,7 +42,10 @@ const DeploymentCard: React.FC<{
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
-          deployment_id: deployment.id,
+          environment_id: deployment.environment_id,
+          repo_owner: deployment.gh_repo_owner,
+          repo_name: deployment.gh_repo_name,
+          pr_number: deployment.pull_request_id,
         }
       )
       .then(() => {
@@ -214,15 +217,15 @@ const DeleteMessage = styled.div`
 `;
 
 export const DissapearAnimation = keyframes`
-  0% { 
-    background-color: #ffffff; 
+  0% {
+    background-color: #ffffff;
   }
 
   25% {
     background-color: #ffffff50;
   }
 
-  50% { 
+  50% {
     background-color: none;
   }
 
@@ -230,7 +233,7 @@ export const DissapearAnimation = keyframes`
     background-color: #ffffff50;
   }
 
-  100% { 
+  100% {
     background-color: #ffffff;
   }
 `;

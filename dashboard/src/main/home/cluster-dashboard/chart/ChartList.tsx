@@ -16,6 +16,7 @@ import { PorterUrl } from "shared/routing";
 import Chart from "./Chart";
 import Loading from "components/Loading";
 import { useWebsockets } from "shared/hooks/useWebsockets";
+import CronParser from "cron-parser";
 
 type Props = {
   currentCluster: ClusterType;
@@ -360,6 +361,41 @@ const ChartList: React.FunctionComponent<Props> = ({
       );
     } else if (sortType == "Alphabetical") {
       result.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+    } else if (sortType == "Next Run" && currentView === "jobs") {
+      const cronJobs = result.filter(
+        (chart) => chart?.config?.schedule?.enabled
+      );
+      const nonCronJobs = result.filter(
+        (chart) => !chart?.config?.schedule?.enabled
+      );
+      cronJobs.sort((a: any, b: any) => {
+        let firstInterval = null;
+        if (a?.config?.schedule?.enabled) {
+          firstInterval = CronParser.parseExpression(
+            a?.config?.schedule.value,
+            {
+              utc: true,
+            }
+          );
+        }
+
+        let secondInterval = null;
+        if (b?.config?.schedule?.enabled) {
+          secondInterval = CronParser.parseExpression(
+            b?.config?.schedule.value,
+            {
+              utc: true,
+            }
+          );
+        }
+
+        return Date.parse(firstInterval.next().toISOString()) >
+          Date.parse(secondInterval.next().toISOString())
+          ? 1
+          : -1;
+      });
+
+      return [...cronJobs, ...nonCronJobs];
     }
 
     return result;

@@ -179,8 +179,8 @@ jobs:
           p12-password: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}
       - name: Install gon via HomeBrew for code signing and app notarization
         run: |
-          brew tap mitchellh/gon
-          brew install mitchellh/gon/gon
+          brew tap porter-dev/gon
+          brew install porter-dev/gon/gon
       - name: Create a porter.gon.json file
         run: |
           echo "
@@ -503,11 +503,7 @@ jobs:
           git config user.name "Update Bot"
           git config user.email "support@porter.run"
 
-          git add .
-
-          git diff --quiet --exit-code || git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}"
-
-          git push -f
+          git diff --quiet --exit-code || git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f
   run-new-release-tests-workflows:
     name: Run new-release-tests Porter workflows
     runs-on: ubuntu-latest

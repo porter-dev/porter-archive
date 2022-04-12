@@ -20,6 +20,7 @@ type Props = {
   setActionConfig: (x: ActionConfigType) => void;
   userId?: number;
   readOnly: boolean;
+  filteredRepos?: string[];
 };
 
 const RepoList: React.FC<Props> = ({
@@ -27,6 +28,7 @@ const RepoList: React.FC<Props> = ({
   setActionConfig,
   userId,
   readOnly,
+  filteredRepos,
 }) => {
   const [repos, setRepos] = useState<RepoType[]>([]);
   const [repoLoading, setRepoLoading] = useState(true);
@@ -123,7 +125,6 @@ const RepoList: React.FC<Props> = ({
       });
   }, []);
 
-
   // clear out actionConfig and SelectedRepository if new search is performed
   useEffect(() => {
     setActionConfig({
@@ -132,15 +133,15 @@ const RepoList: React.FC<Props> = ({
       git_branch: null,
       git_repo_id: 0,
     });
-    setSelectedRepo(null)
-  }, [searchFilter])
+    setSelectedRepo(null);
+  }, [searchFilter]);
 
   const setRepo = (x: RepoType) => {
     let updatedConfig = actionConfig;
     updatedConfig.git_repo = x.FullName;
     updatedConfig.git_repo_id = x.GHRepoID;
     setActionConfig(updatedConfig);
-    setSelectedRepo(x.FullName)
+    setSelectedRepo(x.FullName);
   };
 
   const renderRepoList = () => {
@@ -191,6 +192,9 @@ const RepoList: React.FC<Props> = ({
       return <LoadingWrapper>No matching Github repos found.</LoadingWrapper>;
     } else {
       return results.map((repo: RepoType, i: number) => {
+        const shouldDisable = !!filteredRepos?.find(
+          (filteredRepo) => repo.FullName === filteredRepo
+        );
         return (
           <RepoName
             key={i}
@@ -198,9 +202,11 @@ const RepoList: React.FC<Props> = ({
             lastItem={i === repos.length - 1}
             onClick={() => setRepo(repo)}
             readOnly={readOnly}
+            disabled={shouldDisable}
           >
             <img src={github} alt={"github icon"} />
             {repo.FullName}
+            {shouldDisable && ` - This repo was already added`}
           </RepoName>
         );
       });
@@ -237,32 +243,40 @@ const RepoListWrapper = styled.div`
   overflow-y: auto;
 `;
 
-const RepoName = styled.div`
+type RepoNameProps = {
+  lastItem: boolean;
+  isSelected: boolean;
+  readOnly: boolean;
+  disabled: boolean;
+};
+
+const RepoName = styled.div<RepoNameProps>`
   display: flex;
   width: 100%;
   font-size: 13px;
   border-bottom: 1px solid
-    ${(props: { lastItem: boolean; isSelected: boolean; readOnly: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
-  color: #ffffff;
+    ${(props) => (props.lastItem ? "#00000000" : "#606166")};
+  color: ${(props) => (props.disabled ? "#ffffff88" : "#ffffff")};
   user-select: none;
   align-items: center;
   padding: 10px 0px;
-  cursor: ${(props: {
-    lastItem: boolean;
-    isSelected: boolean;
-    readOnly: boolean;
-  }) => (props.readOnly ? "default" : "pointer")};
-  pointer-events: ${(props: {
-    lastItem: boolean;
-    isSelected: boolean;
-    readOnly: boolean;
-  }) => (props.readOnly ? "none" : "auto")};
-  background: ${(props: {
-    lastItem: boolean;
-    isSelected: boolean;
-    readOnly: boolean;
-  }) => (props.isSelected ? "#ffffff22" : "#ffffff11")};
+  cursor: ${(props) =>
+    props.readOnly || props.disabled ? "default" : "pointer"};
+  pointer-events: ${(props) =>
+    props.readOnly || props.disabled ? "none" : "auto"};
+
+  ${(props) => {
+    if (props.disabled) {
+      return "";
+    }
+
+    if (props.isSelected) {
+      return `background: #ffffff22;`;
+    }
+
+    return `background: #ffffff11;`;
+  }}
+
   :hover {
     background: #ffffff22;
 

@@ -13,6 +13,14 @@ import StatusIndicator from "components/StatusIndicator";
 import { pushFiltered } from "shared/routing";
 import api from "shared/api";
 import { readableDate } from "shared/string_utils";
+import { Tooltip, Zoom } from "@material-ui/core";
+import CronParser from "cron-parser";
+
+import {
+  createTheme,
+  MuiThemeProvider,
+  withStyles,
+} from "@material-ui/core/styles";
 
 type Props = {
   chart: ChartType;
@@ -21,6 +29,17 @@ type Props = {
   isJob: boolean;
   closeChartRedirectUrl?: string;
 };
+
+const theme = createTheme({
+  overrides: {
+    MuiTooltip: {
+      tooltip: {
+        backgroundColor: "#3E3F44",
+        border: "1px solid #ffffff33",
+      },
+    },
+  },
+});
 
 const Chart: React.FunctionComponent<Props> = ({
   chart,
@@ -31,6 +50,7 @@ const Chart: React.FunctionComponent<Props> = ({
 }) => {
   const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
+  const [showDescription, setShowDescription] = useState(false);
   const context = useContext(Context);
   const location = useLocation();
   const history = useHistory();
@@ -83,6 +103,21 @@ const Chart: React.FunctionComponent<Props> = ({
     return tmpControllers;
   }, [chartControllers, controllers]);
 
+  let interval = null;
+  if (chart?.config?.schedule?.enabled) {
+    interval = CronParser.parseExpression(chart?.config?.schedule.value, {
+      utc: true,
+    });
+  }
+
+  // @ts-ignore
+  const rtf = new Intl.DateTimeFormat("en", {
+    localeMatcher: "best fit", // other values: "lookup"
+    // @ts-ignore
+    dateStyle: "full",
+    timeStyle: "long",
+  });
+
   return (
     <StyledChart
       onMouseEnter={() => setExpand(true)}
@@ -101,6 +136,33 @@ const Chart: React.FunctionComponent<Props> = ({
       <Title>
         <IconWrapper>{renderIcon()}</IconWrapper>
         {chart.name}
+        {chart?.config?.description && (
+          <>
+            <Dot style={{ marginLeft: "9px", color: "#ffffff88" }}>•</Dot>
+            <MuiThemeProvider theme={theme}>
+              <Tooltip
+                TransitionComponent={Zoom}
+                placement={"bottom-start"}
+                title={
+                  <div
+                    style={{
+                      fontFamily: "Work Sans, sans-serif",
+                      fontSize: "12px",
+                      fontWeight: "normal",
+                      padding: "5px 6px",
+                      color: "#ffffffdd",
+                      lineHeight: "16px",
+                    }}
+                  >
+                    {chart.config.description as string}
+                  </div>
+                }
+              >
+                <Description>{chart.config.description}</Description>
+              </Tooltip>
+            </MuiThemeProvider>
+          </>
+        )}
       </Title>
 
       <BottomWrapper>
@@ -129,6 +191,14 @@ const Chart: React.FunctionComponent<Props> = ({
                 </JobStatus>
               </>
             )}
+            {chart.config?.schedule?.enabled ? (
+              <>
+                <Dot style={{ marginLeft: "10px" }}>•</Dot>
+                <JobStatus>
+                  Next run {rtf.format(interval?.next().toDate() || new Date())}
+                </JobStatus>
+              </>
+            ) : null}
           </LastDeployed>
         </InfoWrapper>
 
@@ -146,6 +216,17 @@ const Chart: React.FunctionComponent<Props> = ({
 };
 
 export default Chart;
+
+const Description = styled.div`
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 80%;
+  color: #ffffff88;
+  position: relative;
+  font-size: 13px;
+  padding-top: 1px;
+`;
 
 const BottomWrapper = styled.div`
   display: flex;
@@ -244,6 +325,7 @@ const IconWrapper = styled.div`
 `;
 
 const Title = styled.div`
+  display: flex;
   position: relative;
   text-decoration: none;
   padding: 12px 35px 12px 45px;

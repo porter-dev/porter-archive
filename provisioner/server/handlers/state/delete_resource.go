@@ -48,6 +48,14 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// push to the global stream
+	err = redis_stream.PushToGlobalStream(c.Config.RedisClient, infra, operation, "destroyed")
+
+	if err != nil {
+		apierrors.HandleAPIError(c.Config.Logger, c.Config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		return
+	}
+
 	// update the infra to indicate deletion
 	infra.Status = "deleted"
 
@@ -60,13 +68,9 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// switch on the kind of resource and write the corresponding objects to the database
 	switch infra.Kind {
-	case types.InfraECR:
-	case types.InfraGCR:
-	case types.InfraDOCR:
+	case types.InfraECR, types.InfraGCR, types.InfraDOCR:
 		_, err = deleteRegistry(c.Config, infra, operation)
-	case types.InfraEKS:
-	case types.InfraDOKS:
-	case types.InfraGKE:
+	case types.InfraEKS, types.InfraDOKS, types.InfraGKE:
 		_, err = deleteCluster(c.Config, infra, operation)
 	case types.InfraRDS:
 		_, err = deleteDatabase(c.Config, infra, operation)

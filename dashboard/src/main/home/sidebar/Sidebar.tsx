@@ -33,6 +33,7 @@ type StateType = {
   pressingCtrl: boolean;
   showTooltip: boolean;
   forceCloseDrawer: boolean;
+  showLinkTooltip: { [linkKey: string]: boolean };
 };
 
 class Sidebar extends Component<PropsType, StateType> {
@@ -43,6 +44,9 @@ class Sidebar extends Component<PropsType, StateType> {
     pressingCtrl: false,
     showTooltip: false,
     forceCloseDrawer: false,
+    showLinkTooltip: {
+      prev_envs: false,
+    },
   };
 
   componentDidMount() {
@@ -173,10 +177,38 @@ class Sidebar extends Component<PropsType, StateType> {
                 Databases
               </NavButton>
             )}
-          <NavButton to="/preview-environments">
-            <StyledCodeBranchIcon />
-            Preview environments
-          </NavButton>
+          {currentProject?.preview_envs_enabled && (
+            <NavButton to="/preview-environments">
+              <InlineSVGWrapper>
+                <StyledCodeBranchIcon />
+              </InlineSVGWrapper>
+              <EllipsisTextWrapper
+                onMouseOver={() => {
+                  this.setState((prev) => ({
+                    ...prev,
+                    showLinkTooltip: {
+                      ...prev.showLinkTooltip,
+                      prev_envs: true,
+                    },
+                  }));
+                }}
+                onMouseOut={() => {
+                  this.setState((prev) => ({
+                    ...prev,
+                    showLinkTooltip: {
+                      ...prev.showLinkTooltip,
+                      prev_envs: false,
+                    },
+                  }));
+                }}
+              >
+                Preview environments
+                {this.state.showLinkTooltip["prev_envs"] && (
+                  <Tooltip>Preview environments</Tooltip>
+                )}
+              </EllipsisTextWrapper>
+            </NavButton>
+          )}
         </>
       );
     }
@@ -323,9 +355,6 @@ const NavButton = styled(NavLink)`
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
   color: #ffffff;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
@@ -366,6 +395,15 @@ const StyledCodeBranchIcon = styled(CodeBranchIcon)`
   > path {
     fill: #ffffff99;
   }
+`;
+
+const InlineSVGWrapper = styled.div``;
+
+const EllipsisTextWrapper = styled.span`
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const SidebarBg = styled.div`
@@ -417,7 +455,7 @@ const Tooltip = styled.div`
   position: absolute;
   right: -60px;
   top: 34px;
-  width: 67px;
+  min-width: 67px;
   height: 18px;
   padding-bottom: 2px;
   background: #383842dd;

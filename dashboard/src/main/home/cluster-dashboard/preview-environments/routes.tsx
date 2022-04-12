@@ -9,9 +9,9 @@ export const Routes = () => {
   const { url } = useRouteMatch();
   const { currentProject } = useContext(Context);
 
-  // if (!currentProject?.preview_envs_enabled) {
-  //   return <Redirect to={`/`} />;
-  // }
+  if (!currentProject?.preview_envs_enabled) {
+    return <Redirect to={`/`} />;
+  }
 
   return (
     <>

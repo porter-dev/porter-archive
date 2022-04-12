@@ -292,10 +292,10 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 
 	buildAgent := &BuildAgent{
 		SharedOpts:  d.opts.SharedOpts,
-		client:      d.Client,
-		imageRepo:   d.imageRepo,
-		env:         d.env,
-		imageExists: d.imageExists,
+		APIClient:   d.Client,
+		ImageRepo:   d.imageRepo,
+		Env:         d.env,
+		ImageExists: d.imageExists,
 	}
 
 	if d.opts.Method == DeployBuildTypeDocker {

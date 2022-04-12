@@ -132,14 +132,23 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             </DynamicLink>
           </RepoName>
           <Status>
-            <StatusDot status={last_deployment_status} />
-            {capitalize(last_deployment_status || "")}
-
-            <Dot>•</Dot>
-            <span>
-              Pull {deployment_count > 1 ? "requests" : "request"} deployed:{" "}
-              {deployment_count}
-            </span>
+            {deployment_count > 0 ? (
+              <span>
+                Pull {deployment_count > 1 ? "requests" : "request"} deployed:{" "}
+                {deployment_count || 0}
+              </span>
+            ) : (
+              <span>
+                There is no pull request deployed for this environment
+              </span>
+            )}
+            {deployment_count > 0 ? (
+              <>
+                <Dot>•</Dot>
+                <StatusDot status={last_deployment_status} />
+                Last PR status was {capitalize(last_deployment_status || "")}
+              </>
+            ) : null}
           </Status>
         </DataContainer>
         <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">

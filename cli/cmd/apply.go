@@ -97,10 +97,12 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	}
 
 	worker := worker.NewWorker()
-	worker.RegisterDriver("porter.deploy", NewPorterDriver)
-	worker.RegisterDriver("porter.build", preview.NewBuildDriver)
+	worker.RegisterDriver("deploy", NewPorterDriver)
+	worker.RegisterDriver("build-image", preview.NewBuildDriver)
+	worker.RegisterDriver("push-image", preview.NewPushDriver)
+	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
 
-	worker.SetDefaultDriver("porter.deploy")
+	worker.SetDefaultDriver("deploy")
 
 	if hasDeploymentHookEnvVars() {
 		deplNamespace := os.Getenv("PORTER_NAMESPACE")

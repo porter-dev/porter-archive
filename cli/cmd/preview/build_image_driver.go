@@ -61,14 +61,11 @@ func NewBuildDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (
 		return nil, err
 	}
 
-	driver.target = target
-
-	buildDriverConfig, err := driver.getConfig(resource)
-	if err != nil {
-		return nil, err
+	if target.AppName == "" {
+		return nil, fmt.Errorf("target app_name is missing")
 	}
 
-	driver.config = buildDriverConfig
+	driver.target = target
 
 	return driver, nil
 }
@@ -78,8 +75,16 @@ func (d *BuildDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error) {
+	buildDriverConfig, err := d.getConfig(resource)
+	if err != nil {
+		return nil, err
+	}
+
+	d.config = buildDriverConfig
+
 	client := config.GetAPIClient()
 
+	// FIXME: give tag option in config build, but override if PORTER_TAG is present
 	tag := os.Getenv("PORTER_TAG")
 
 	if tag == "" {
@@ -186,9 +191,6 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 	imageExists := agent.CheckIfImageExists(imageURL, tag) // FIXME: does not seem to work with gcr.io images
 
-	fmt.Printf("imageExists: %v\n", imageExists)
-	fmt.Printf("force_build: %v\n", d.config.Build.ForceBuild)
-
 	if imageExists && tag != "latest" && !d.config.Build.ForceBuild {
 		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, tag)
 	} else {
@@ -197,8 +199,6 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Printf("mergedValues: %v\n", mergedValues)
 
 		env, err := deploy.GetEnvForRelease(
 			client,
@@ -211,8 +211,6 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		if err != nil {
 			env = map[string]string{}
 		}
-
-		fmt.Printf("env: %v\n", env)
 
 		buildAgent := &deploy.BuildAgent{
 			SharedOpts:  createAgent.CreateOpts.SharedOpts,
@@ -268,8 +266,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	d.output["registry_url"] = domain
 	d.output["image_repo"] = imageRepo
 	d.output["image_tag"] = tag
-
-	fmt.Println(d.output)
+	d.output["image"] = fmt.Sprintf("%s:%s", imageURL, tag)
 
 	return resource, nil
 }

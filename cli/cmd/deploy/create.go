@@ -480,8 +480,6 @@ func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (st
 		return "", nil, err
 	}
 
-	fmt.Printf("latestVersion: %v\n", latestVersion)
-
 	// get the values of the template
 	values, err := c.GetLatestTemplateDefaultValues(c.CreateOpts.Kind, latestVersion)
 
@@ -489,16 +487,12 @@ func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (st
 		return "", nil, err
 	}
 
-	fmt.Printf("values: %v\n", values)
-
 	err = coalesceEnvGroups(c.Client, c.CreateOpts.ProjectID, c.CreateOpts.ClusterID,
 		c.CreateOpts.Namespace, c.CreateOpts.EnvGroups, values)
 
 	if err != nil {
 		return "", nil, err
 	}
-
-	fmt.Printf("values: %v\n", values)
 
 	// merge existing values with overriding values
 	mergedValues := utils.CoalesceValues(values, overrideValues)

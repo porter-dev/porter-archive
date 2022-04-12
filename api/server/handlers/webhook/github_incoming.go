@@ -90,7 +90,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		if err != nil {
 			return err
 		}
-	} else if event.GetAction() == "synchronize" {
+	} else if event.GetAction() == "synchronize" || event.GetAction() == "closed" {
 		depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(
 			env.ID, owner, repo, uint(event.GetPullRequest().GetNumber()),
 		)
@@ -100,21 +100,40 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		}
 
 		if depl.Status != types.DeploymentStatusInactive {
-			_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
-				r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
-				github.CreateWorkflowDispatchEventRequest{
-					Ref: event.PullRequest.GetHead().GetRef(),
-					Inputs: map[string]interface{}{
-						"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
-						"pr_title":       event.PullRequest.GetTitle(),
-						"pr_branch_from": event.PullRequest.GetHead().GetRef(),
-						"pr_branch_into": event.PullRequest.GetBase().GetRef(),
+			if event.GetAction() == "synchronize" {
+				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
+					r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+					github.CreateWorkflowDispatchEventRequest{
+						Ref: event.PullRequest.GetHead().GetRef(),
+						Inputs: map[string]interface{}{
+							"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
+							"pr_title":       event.PullRequest.GetTitle(),
+							"pr_branch_from": event.PullRequest.GetHead().GetRef(),
+							"pr_branch_into": event.PullRequest.GetBase().GetRef(),
+						},
 					},
-				},
-			)
+				)
 
-			if err != nil {
-				return err
+				if err != nil {
+					return err
+				}
+			} else {
+				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
+					r.Context(), owner, repo, fmt.Sprintf("porter_%s_delete_env.yml", env.Name),
+					github.CreateWorkflowDispatchEventRequest{
+						Ref: event.PullRequest.GetHead().GetRef(),
+						Inputs: map[string]interface{}{
+							"environment_id": strconv.FormatUint(uint64(depl.EnvironmentID), 10),
+							"repo_owner":     owner,
+							"repo_name":      repo,
+							"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
+						},
+					},
+				)
+
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

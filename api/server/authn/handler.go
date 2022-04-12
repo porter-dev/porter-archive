@@ -12,7 +12,6 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthNFactory generates a middleware handler `AuthN`
@@ -138,12 +137,6 @@ func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 
-		// next, compare the secret against the hashed version
-		if err := bcrypt.CompareHashAndPassword([]byte(apiToken.SecretKey), []byte(tok.Secret)); err != nil {
-			authn.sendForbiddenError(fmt.Errorf("incorrect secret key for token %s", tok.TokenID), w, r)
-			return
-		}
-
 		authn.nextWithAPIToken(w, r, apiToken)
 	} else {
 		// otherwise we just use nextWithUser using the `iby` field for the token
@@ -155,6 +148,13 @@ func (authn *AuthN) verifyTokenWithNext(w http.ResponseWriter, r *http.Request, 
 func (authn *AuthN) nextWithAPIToken(w http.ResponseWriter, r *http.Request, tok *models.APIToken) {
 	ctx := r.Context()
 	ctx = context.WithValue(ctx, "api_token", tok)
+
+	// add a service account user to the project: note that any calls depending on a DB lookup for the
+	// user will fail
+	ctx = context.WithValue(ctx, types.UserScope, &models.User{
+		Email:         fmt.Sprintf("%s-%d", tok.Name, tok.ProjectID),
+		EmailVerified: true,
+	})
 
 	r = r.Clone(ctx)
 	authn.next.ServeHTTP(w, r)

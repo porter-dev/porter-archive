@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -165,6 +166,13 @@ func init() {
 		false,
 		"set this to force build an image",
 	)
+
+	createCmd.PersistentFlags().BoolVar(
+		&useCache,
+		"use-cache",
+		false,
+		"Whether to use cache (currently in beta)",
+	)
 }
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
@@ -231,6 +239,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 				LocalDockerfile: dockerfile,
 				Method:          buildMethod,
 				AdditionalEnv:   additionalEnv,
+				UseCache:        useCache,
 			},
 			Kind:        args[0],
 			ReleaseName: name,
@@ -239,6 +248,33 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 	}
 
 	if source == "local" {
+		if useCache {
+			regID, imageURL, err := createAgent.GetImageRepoURL(name, namespace)
+
+			if err != nil {
+				return err
+			}
+
+			err = client.CreateRepository(
+				context.Background(),
+				config.Project,
+				regID,
+				&types.CreateRegistryRepositoryRequest{
+					ImageRepoURI: imageURL,
+				},
+			)
+
+			if err != nil {
+				return err
+			}
+
+			err = setDockerConfig(createAgent.Client)
+
+			if err != nil {
+				return err
+			}
+		}
+
 		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil, forceBuild)
 
 		return handleSubdomainCreate(subdomain, err)

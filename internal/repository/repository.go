@@ -35,4 +35,6 @@ type Repository interface {
 	CredentialsExchangeToken() CredentialsExchangeTokenRepository
 	BuildConfig() BuildConfigRepository
 	Allowlist() AllowlistRepository
+	APIToken() APITokenRepository
+	Policy() PolicyRepository
 }

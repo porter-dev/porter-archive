@@ -106,7 +106,7 @@ const Chart: React.FunctionComponent<Props> = ({
   let interval = null;
   if (chart?.config?.schedule?.enabled) {
     interval = CronParser.parseExpression(chart?.config?.schedule.value, {
-      currentDate: new Date(),
+      utc: true,
     });
   }
 

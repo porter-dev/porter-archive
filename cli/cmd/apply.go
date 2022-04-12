@@ -175,9 +175,14 @@ type Target struct {
 type ApplicationConfig struct {
 	WaitForJob bool
 
+	// If set to true, this does not run an update, it only creates the initial application and job,
+	// skipping subsequent updates
+	OnlyCreate bool
+
 	Build struct {
 		ForceBuild bool
 		ForcePush  bool
+		UseCache   bool
 		Method     string
 		Context    string
 		Dockerfile string
@@ -362,6 +367,16 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		OverrideTag:     tag,
 		Method:          deploy.DeployBuildType(method),
 		EnvGroups:       appConfig.EnvGroups,
+		UseCache:        appConfig.Build.UseCache,
+	}
+
+	if appConfig.Build.UseCache {
+		// set the docker config so that pack caching can use the repo credentials
+		err := setDockerConfig(client)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if shouldCreate {
@@ -370,19 +385,21 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if !appConfig.OnlyCreate {
 		resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		color.New(color.FgYellow).Printf("Skipping creation for %s as onlyCreate is set to true\n", resource.Name)
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {
 		return nil, err
 	}
 
-	if d.source.Name == "job" && appConfig.WaitForJob {
+	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
 
 		prevProject := config.Project
@@ -457,6 +474,28 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 	if appConf.Build.Method == "registry" {
 		subdomain, err = createAgent.CreateFromRegistry(appConf.Build.Image, appConf.Values)
 	} else {
+		// if useCache is set, create the image repository first
+		if appConf.Build.UseCache {
+			regID, imageURL, err := createAgent.GetImageRepoURL(resource.Name, sharedOpts.Namespace)
+
+			if err != nil {
+				return nil, err
+			}
+
+			err = client.CreateRepository(
+				context.Background(),
+				sharedOpts.ProjectID,
+				regID,
+				&types.CreateRegistryRepositoryRequest{
+					ImageRepoURI: imageURL,
+				},
+			)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig, appConf.Build.ForceBuild)
 	}
 
@@ -511,10 +550,12 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			return nil, err
 		}
 
-		err = updateAgent.Push(appConf.Build.ForcePush)
+		if !appConf.Build.UseCache {
+			err = updateAgent.Push(appConf.Build.ForcePush)
 
-		if err != nil {
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -620,6 +661,14 @@ func getSource(input map[string]interface{}, output *Source) error {
 		}
 
 		return fmt.Errorf("source does not exist in any repo")
+	} else {
+		// we look in the passed-in repo
+		values, err := existsInRepo(output.Name, output.Version, output.Repo)
+
+		if err == nil {
+			output.SourceValues = values
+			return nil
+		}
 	}
 
 	return fmt.Errorf("source '%s' does not exist in repo '%s'", output.Name, output.Repo)

@@ -5,6 +5,10 @@ import { PullRequest } from "../types";
 import { integrationList } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { ActionButton } from "../components/ActionButton";
+import Loading from "components/Loading";
+import DynamicLink from "components/DynamicLink";
+import RecreateWorkflowFilesModal from "../components/RecreateWorkflowFilesModal";
 
 const PullRequestCard = ({
   pullRequest,
@@ -17,10 +21,18 @@ const PullRequestCard = ({
     Context
   );
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
+  const [showMergeInfoTooltip, setShowMergeInfoTooltip] = useState(false);
+  const [
+    openRecreateWorkflowFilesModal,
+    setOpenRecreateWorkflowFilesModal,
+  ] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const repository = `${pullRequest.repo_owner}/${pullRequest.repo_name}`;
 
   const createPreviewEnvironment = async () => {
+    setIsLoading(true);
     try {
       await api.createPreviewEnvironmentDeployment("<token>", pullRequest, {
         cluster_id: currentCluster?.id,
@@ -28,78 +40,96 @@ const PullRequestCard = ({
       });
       onCreation(pullRequest);
     } catch (error) {
+      debugger;
       setCurrentError(error);
+      setHasError(true);
+      setTimeout(() => {
+        setHasError(false);
+      }, 500);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <DeploymentCardWrapper>
-      <DataContainer>
-        <PRName>
-          <PRIcon src={pr_icon} alt="pull request icon" />
-          {pullRequest.pr_title}
-        </PRName>
-
-        <Flex>
-          <StatusContainer>
-            <Status>
-              <StatusDot status="" />
-              Not deployed
-            </Status>
-          </StatusContainer>
-          <DeploymentImageContainer>
-            <DeploymentTypeIcon src={integrationList.repo.icon} />
-            <RepositoryName
-              onMouseOver={() => {
-                setShowRepoTooltip(true);
-              }}
-              onMouseOut={() => {
-                setShowRepoTooltip(false);
-              }}
+    <>
+      <RecreateWorkflowFilesModal
+        hide={!openRecreateWorkflowFilesModal}
+        onClose={() => setOpenRecreateWorkflowFilesModal(false)}
+        isReEnable={false}
+      />
+      <DeploymentCardWrapper>
+        <DataContainer>
+          <PRName>
+            <PRIcon src={pr_icon} alt="pull request icon" />
+            <DynamicLink
+              to={`https://github.com/${pullRequest.repo_owner}/${pullRequest.repo_name}/pull/${pullRequest.pr_number}`}
+              target="_blank"
             >
-              {repository}
-            </RepositoryName>
-            {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+              {pullRequest.pr_title}
+            </DynamicLink>
+
             <InfoWrapper>
-              <LastDeployed>
+              <MergeInfo
+                onMouseOver={() => setShowMergeInfoTooltip(true)}
+                onMouseOut={() => setShowMergeInfoTooltip(false)}
+              >
                 From: {pullRequest.branch_from} Into: {pullRequest.branch_into}
-              </LastDeployed>
+              </MergeInfo>
+              {showMergeInfoTooltip && (
+                <Tooltip>
+                  From: {pullRequest.branch_from} Into:{" "}
+                  {pullRequest.branch_into}
+                </Tooltip>
+              )}
             </InfoWrapper>
-          </DeploymentImageContainer>
+          </PRName>
+
+          <Flex>
+            <StatusContainer>
+              <Status>
+                <StatusDot />
+                Not deployed
+              </Status>
+            </StatusContainer>
+            <DeploymentImageContainer>
+              <DeploymentTypeIcon src={integrationList.repo.icon} />
+              <RepositoryName
+                onMouseOver={() => {
+                  setShowRepoTooltip(true);
+                }}
+                onMouseOut={() => {
+                  setShowRepoTooltip(false);
+                }}
+              >
+                {repository}
+              </RepositoryName>
+              {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
+            </DeploymentImageContainer>
+          </Flex>
+        </DataContainer>
+        <Flex>
+          <ActionButton
+            onClick={createPreviewEnvironment}
+            disabled={isLoading}
+            hasError={hasError}
+          >
+            {isLoading ? (
+              <Loading width="198px" height="14px" />
+            ) : (
+              <>
+                <i className="material-icons">add</i>
+                Create Preview environment
+              </>
+            )}
+          </ActionButton>
         </Flex>
-      </DataContainer>
-      <Flex>
-        <CreatePreviewEnvironmentButton onClick={createPreviewEnvironment}>
-          <i className="material-icons">add</i>
-          Create Preview environment
-        </CreatePreviewEnvironmentButton>
-      </Flex>
-    </DeploymentCardWrapper>
+      </DeploymentCardWrapper>
+    </>
   );
 };
 
 export default PullRequestCard;
-
-const CreatePreviewEnvironmentButton = styled.button`
-  font-size: 12px;
-  padding: 8px 10px;
-  margin-left: 10px;
-  border-radius: 5px;
-  color: #ffffff;
-  border: 1px solid #aaaabb;
-  display: flex;
-  align-items: center;
-  background: #ffffff08;
-  cursor: pointer;
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    font-size: 14px;
-    margin-right: 8px;
-  }
-`;
 
 const Flex = styled.div`
   display: flex;
@@ -124,7 +154,6 @@ const DeploymentCardWrapper = styled.div`
   margin-bottom: 5px;
   border-radius: 10px;
   padding: 14px;
-  overflow: hidden;
   height: 80px;
   font-size: 13px;
   animation: fadeIn 0.5s;
@@ -170,15 +199,8 @@ const Status = styled.span`
 const StatusDot = styled.div`
   width: 8px;
   height: 8px;
-  margin-right: 15px;
-  background: ${(props: { status: string }) =>
-    props.status === "created"
-      ? "#4797ff"
-      : props.status === "failed"
-      ? "#ed5f85"
-      : props.status === "completed"
-      ? "#00d12a"
-      : "#f5cb42"};
+  margin-right: 10px;
+  background: #ffffff88;
   border-radius: 20px;
   margin-left: 3px;
 `;
@@ -216,8 +238,8 @@ const RepositoryName = styled.div`
 
 const Tooltip = styled.div`
   position: absolute;
-  left: -20px;
-  top: 10px;
+  left: 14px;
+  top: 20px;
   min-height: 18px;
   max-width: calc(700px);
   padding: 5px 7px;
@@ -243,17 +265,18 @@ const Tooltip = styled.div`
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   margin-right: 8px;
+  position: relative;
 `;
 
-const LastDeployed = styled.div`
+const MergeInfo = styled.div`
   font-size: 13px;
   margin-left: 14px;
   margin-top: -1px;
-  display: flex;
   align-items: center;
   color: #aaaabb66;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 300px;
 `;

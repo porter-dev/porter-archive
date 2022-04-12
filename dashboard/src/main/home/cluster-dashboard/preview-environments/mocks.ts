@@ -25,6 +25,8 @@ export const environments = [
     git_repo_owner: "jnfrati",
     git_repo_name: "porter-docs",
     name: "Preview",
+    deployment_count: 3,
+    last_deployment_status: "failed",
   },
   {
     id: 38,
@@ -129,7 +131,7 @@ export const deployments = [
     git_installation_id: 0,
     environment_id: 37,
     namespace: "pr-1-porter-docs",
-    status: "failed",
+    status: "inactive",
     subdomain: "https://docs-web-7b93751b98e68139.staging-onporter.run",
     pull_request_id: 1,
   },

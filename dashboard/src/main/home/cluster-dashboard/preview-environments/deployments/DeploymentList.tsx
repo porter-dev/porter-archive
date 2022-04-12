@@ -16,7 +16,7 @@ import PullRequestCard from "./PullRequestCard";
 
 const AvailableStatusFilters = [
   "all",
-  "creating",
+  "created",
   "failed",
   "active",
   "inactive",
@@ -169,6 +169,10 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   }, [selectedRepo, statusSelectorVal, deploymentList]);
 
   const filteredPullRequests = useMemo(() => {
+    if (statusSelectorVal !== "not_deployed" && statusSelectorVal !== "all") {
+      return [];
+    }
+
     if (selectedRepo === "all") {
       return pullRequests;
     }
@@ -225,6 +229,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
               key={d.id}
               deployment={d}
               onDelete={handleRefresh}
+              onReEnable={handleRefresh}
             />
           );
         })}
@@ -232,15 +237,10 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     );
   };
 
-  const repoOptions = environments
-    .map((env) => ({
-      label: `${env.git_repo_owner}/${env.git_repo_name}`,
-      value: `${env.git_repo_owner}/${env.git_repo_name}`,
-    }))
-    .concat({
-      label: "All",
-      value: "all",
-    });
+  const repoOptions = environments.map((env) => ({
+    label: `${env.git_repo_owner}/${env.git_repo_name}`,
+    value: `${env.git_repo_owner}/${env.git_repo_name}`,
+  }));
 
   const handleStatusFilterChange = (value: string) => {
     pushQueryParams({ status_filter: value });
@@ -278,8 +278,8 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
                   label: "Failed",
                 },
                 {
-                  value: "active",
-                  label: "Active",
+                  value: "created",
+                  label: "Created",
                 },
                 {
                   value: "inactive",
@@ -304,7 +304,13 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
             <Selector
               activeValue={selectedRepo}
               setActiveValue={handleRepoFilterChange}
-              options={repoOptions}
+              options={[
+                {
+                  label: "All",
+                  value: "all",
+                },
+                ...repoOptions,
+              ]}
               dropdownLabel="Repository"
               width="200px"
               dropdownWidth="300px"

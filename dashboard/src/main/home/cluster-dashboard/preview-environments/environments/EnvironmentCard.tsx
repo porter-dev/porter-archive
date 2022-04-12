@@ -13,6 +13,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import Modal from "main/home/modals/Modal";
 import InputRow from "components/form-components/InputRow";
+import DynamicLink from "components/DynamicLink";
 
 type Props = {
   environment: Environment;
@@ -67,6 +68,7 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
       )
       .then(() => {
         onDelete(environment);
+        closeForm();
       })
       .catch((err) => {
         setCurrentError(JSON.stringify(err));
@@ -122,17 +124,31 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
               src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
               alt="git repository icon"
             />
-            {git_repo_owner}/{git_repo_name}
+            <DynamicLink
+              to={`https://github.com/${git_repo_owner}/${git_repo_name}`}
+              target="_blank"
+            >
+              {git_repo_owner}/{git_repo_name}
+            </DynamicLink>
           </RepoName>
           <Status>
-            <StatusDot status={last_deployment_status} />
-            {capitalize(last_deployment_status || "")}
-
-            <Dot>•</Dot>
-            <span>
-              Pull {deployment_count > 1 ? "requests" : "request"} deployed:{" "}
-              {deployment_count}
-            </span>
+            {deployment_count > 0 ? (
+              <span>
+                Pull {deployment_count > 1 ? "requests" : "request"} deployed:{" "}
+                {deployment_count || 0}
+              </span>
+            ) : (
+              <span>
+                There is no pull request deployed for this environment
+              </span>
+            )}
+            {deployment_count > 0 ? (
+              <>
+                <Dot>•</Dot>
+                <StatusDot status={last_deployment_status} />
+                Last PR status was {capitalize(last_deployment_status || "")}
+              </>
+            ) : null}
           </Status>
         </DataContainer>
         <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">

@@ -231,7 +231,7 @@ func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 			opts.GitInstallationID,
 			opts.GitRepoOwner,
 			opts.GitRepoName,
-			"v0.1.0",
+			"v0.2.0",
 		),
 	}
 
@@ -281,16 +281,36 @@ func getPreviewDeleteActionYAML(opts *EnvOpts) ([]byte, error) {
 			getPorterTokenSecretName(opts.ProjectID),
 			opts.ProjectID,
 			opts.ClusterID,
-			opts.GitInstallationID,
 			opts.GitRepoName,
-			"v0.1.0",
+			"v0.2.0",
 		),
 	}
 
 	actionYAML := GithubActionYAML{
 		On: map[string]interface{}{
-			"pull_request": map[string]interface{}{
-				"types": []string{"closed"},
+			"workflow_dispatch": map[string]interface{}{
+				"inputs": map[string]interface{}{
+					"environment_id": map[string]interface{}{
+						"description": "Environment ID",
+						"type":        "number",
+						"required":    true,
+					},
+					"repo_owner": map[string]interface{}{
+						"description": "Repository owner",
+						"type":        "string",
+						"required":    true,
+					},
+					"repo_name": map[string]interface{}{
+						"description": "Repository name",
+						"type":        "string",
+						"required":    true,
+					},
+					"pr_number": map[string]interface{}{
+						"description": "Pull request number",
+						"type":        "number",
+						"required":    true,
+					},
+				},
 			},
 		},
 		Name: "Porter Preview Environment",

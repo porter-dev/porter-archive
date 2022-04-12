@@ -84,9 +84,6 @@ ${note.note}
   render() {
     return (
       <StyledUpgradeChartModal>
-        <CloseButton onClick={this.props.closeModal}>
-          <CloseButtonImg src={close} />
-        </CloseButton>
         {this.renderContent()}
         <SaveButton
           disabled={false}

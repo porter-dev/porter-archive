@@ -92,3 +92,20 @@ func PromptMultiselect(prompt string, options []string) ([]string, error) {
 
 	return ans, err
 }
+
+func PromptConfirm(message string, defaultVal bool) (bool, error) {
+	value := false
+
+	prompt := &survey.Confirm{
+		Message: message,
+		Default: defaultVal,
+	}
+
+	err := survey.AskOne(prompt, &value)
+
+	if err != nil {
+		return false, err
+	}
+
+	return value, nil
+}

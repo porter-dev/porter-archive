@@ -295,109 +295,182 @@ func getSelectionRegex(kind, name string) (string, error) {
 }
 
 func createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionRegex, hpaName, namespace, appLabel, hpaMetricName string) string {
-	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
+	kubeMetricsPodSelectorOne := getKubeMetricsPodSelector(podSelectionRegex, namespace, "namespace")
+	kubeMetricsPodSelectorTwo := getKubeMetricsPodSelector(podSelectionRegex, namespace, "exported_namespace")
 
-	kubeMetricsHPASelector := fmt.Sprintf(
+	kubeMetricsHPASelectorOne := fmt.Sprintf(
 		`%s="%s",namespace="%s",metric_name="cpu",metric_target_type="utilization"`,
 		hpaMetricName,
 		hpaName,
 		namespace,
 	)
 
+	kubeMetricsHPASelectorTwo := fmt.Sprintf(
+		`%s="%s",exported_namespace="%s",metric_name="cpu",metric_target_type="utilization"`,
+		hpaMetricName,
+		hpaName,
+		namespace,
+	)
+
 	if cpuMetricName == "kube_pod_container_resource_requests" {
-		kubeMetricsPodSelector += `,resource="cpu",unit="core"`
+		kubeMetricsPodSelectorOne += `,resource="cpu",unit="core"`
+		kubeMetricsPodSelectorTwo += `,resource="cpu",unit="core"`
 	}
 
 	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
 	// as well
 	if appLabel != "" {
-		kubeMetricsPodSelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
-		kubeMetricsHPASelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsPodSelectorOne += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsPodSelectorTwo += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelectorOne += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelectorTwo += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
 	}
 
-	requestCPU := fmt.Sprintf(
+	requestCPUOne := fmt.Sprintf(
 		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
 		hpaMetricName,
 		cpuMetricName,
-		kubeMetricsPodSelector,
+		kubeMetricsPodSelectorOne,
 		hpaMetricName,
 		hpaName,
 	)
 
-	targetCPUUtilThreshold := fmt.Sprintf(
+	targetCPUUtilThresholdOne := fmt.Sprintf(
 		`%s{%s} / 100`,
 		metricName,
-		kubeMetricsHPASelector,
+		kubeMetricsHPASelectorOne,
 	)
 
-	return fmt.Sprintf(`%s * on(%s) %s`, requestCPU, hpaMetricName, targetCPUUtilThreshold)
+	requestCPUTwo := fmt.Sprintf(
+		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		hpaMetricName,
+		cpuMetricName,
+		kubeMetricsPodSelectorTwo,
+		hpaMetricName,
+		hpaName,
+	)
+
+	targetCPUUtilThresholdTwo := fmt.Sprintf(
+		`%s{%s} / 100`,
+		metricName,
+		kubeMetricsHPASelectorTwo,
+	)
+
+	return fmt.Sprintf(
+		`(%s * on(%s) %s) or (%s * on(%s) %s)`,
+		requestCPUOne, hpaMetricName, targetCPUUtilThresholdOne,
+		requestCPUTwo, hpaMetricName, targetCPUUtilThresholdTwo,
+	)
 }
 
 func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelectionRegex, hpaName, namespace, appLabel, hpaMetricName string) string {
-	kubeMetricsPodSelector := getKubeMetricsPodSelector(podSelectionRegex, namespace)
+	kubeMetricsPodSelectorOne := getKubeMetricsPodSelector(podSelectionRegex, namespace, "namespace")
+	kubeMetricsPodSelectorTwo := getKubeMetricsPodSelector(podSelectionRegex, namespace, "exported_namespace")
 
-	kubeMetricsHPASelector := fmt.Sprintf(
+	kubeMetricsHPASelectorOne := fmt.Sprintf(
 		`%s="%s",namespace="%s",metric_name="memory",metric_target_type="utilization"`,
 		hpaMetricName,
 		hpaName,
 		namespace,
 	)
 
+	kubeMetricsHPASelectorTwo := fmt.Sprintf(
+		`%s="%s",exported_namespace="%s",metric_name="memory",metric_target_type="utilization"`,
+		hpaMetricName,
+		hpaName,
+		namespace,
+	)
+
 	if memMetricName == "kube_pod_container_resource_requests" {
-		kubeMetricsPodSelector += `,resource="memory",unit="byte"`
+		kubeMetricsPodSelectorOne += `,resource="memory",unit="byte"`
+		kubeMetricsPodSelectorTwo += `,resource="memory",unit="byte"`
 	}
 
 	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
 	// as well
 	if appLabel != "" {
-		kubeMetricsPodSelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
-		kubeMetricsHPASelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsPodSelectorOne += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsPodSelectorTwo += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelectorOne += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelectorTwo += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
 	}
 
-	requestMem := fmt.Sprintf(
+	requestMemOne := fmt.Sprintf(
 		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
 		hpaMetricName,
 		memMetricName,
-		kubeMetricsPodSelector,
+		kubeMetricsPodSelectorOne,
 		hpaMetricName,
 		hpaName,
 	)
 
-	targetMemUtilThreshold := fmt.Sprintf(
+	targetMemUtilThresholdOne := fmt.Sprintf(
 		`%s{%s} / 100`,
 		metricName,
-		kubeMetricsHPASelector,
+		kubeMetricsHPASelectorOne,
 	)
 
-	return fmt.Sprintf(`%s * on(%s) %s`, requestMem, hpaMetricName, targetMemUtilThreshold)
+	requestMemTwo := fmt.Sprintf(
+		`sum by (%s) (label_replace(%s{%s},"%s", "%s", "", ""))`,
+		hpaMetricName,
+		memMetricName,
+		kubeMetricsPodSelectorTwo,
+		hpaMetricName,
+		hpaName,
+	)
+
+	targetMemUtilThresholdTwo := fmt.Sprintf(
+		`%s{%s} / 100`,
+		metricName,
+		kubeMetricsHPASelectorTwo,
+	)
+
+	fmt.Println("query is:")
+
+	return fmt.Sprintf(
+		`(%s * on(%s) %s) or (%s * on(%s) %s)`,
+		requestMemOne, hpaMetricName, targetMemUtilThresholdOne,
+		requestMemTwo, hpaMetricName, targetMemUtilThresholdTwo,
+	)
 }
 
-func getKubeMetricsPodSelector(podSelectionRegex, namespace string) string {
+func getKubeMetricsPodSelector(podSelectionRegex, namespace, namespaceLabel string) string {
 	return fmt.Sprintf(
-		`pod=~"%s",namespace="%s",container!="POD",container!=""`,
+		`pod=~"%s",%s="%s",container!="POD",container!=""`,
 		podSelectionRegex,
+		namespaceLabel,
 		namespace,
 	)
 }
 
 func createHPACurrentReplicasQuery(metricName, hpaName, namespace, appLabel, hpaMetricName string) string {
-	kubeMetricsHPASelector := fmt.Sprintf(
+	kubeMetricsHPASelectorOne := fmt.Sprintf(
 		`%s="%s",namespace="%s"`,
 		hpaMetricName,
 		hpaName,
 		namespace,
 	)
 
+	kubeMetricsHPASelectorTwo := fmt.Sprintf(
+		`%s="%s",exported_namespace="%s"`,
+		hpaMetricName,
+		hpaName,
+		namespace,
+	)
+
 	// the kube-state-metrics queries are less prone to error if the field app_kubernetes_io_instance is matched
 	// as well
 	if appLabel != "" {
-		kubeMetricsHPASelector += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelectorOne += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
+		kubeMetricsHPASelectorTwo += fmt.Sprintf(`,app_kubernetes_io_instance="%s"`, appLabel)
 	}
 
 	return fmt.Sprintf(
-		`%s{%s}`,
+		`(%s{%s}) or (%s{%s})`,
 		metricName,
-		kubeMetricsHPASelector,
+		kubeMetricsHPASelectorOne,
+		metricName,
+		kubeMetricsHPASelectorTwo,
 	)
 }
 

@@ -31,6 +31,8 @@ import (
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -744,12 +746,18 @@ func (a *Agent) StreamJobs(namespace string, selectors string, rw *websocket.Web
 					return
 				}
 
+				labelSelector := "meta.helm.sh/release-name"
+
+				if selectors != "" {
+					labelSelector = selectors
+				}
+
 				jobs, err := a.Clientset.BatchV1().Jobs(namespace).List(
 					ctx,
 					metav1.ListOptions{
 						Limit:         100,
 						Continue:      continueVal,
-						LabelSelector: "meta.helm.sh/release-name",
+						LabelSelector: labelSelector,
 					},
 				)
 
@@ -823,8 +831,40 @@ func (a *Agent) GetJobPods(namespace, jobName string) ([]v1.Pod, error) {
 }
 
 // GetIngress gets ingress given the name and namespace
-func (a *Agent) GetIngress(namespace string, name string) (*v1beta1.Ingress, error) {
+func (a *Agent) GetExtensionsV1Beta1Ingress(namespace string, name string) (*v1beta1.Ingress, error) {
 	resp, err := a.Clientset.ExtensionsV1beta1().Ingresses(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (a *Agent) GetNetworkingV1Ingress(namespace string, name string) (*netv1.Ingress, error) {
+	resp, err := a.Clientset.NetworkingV1().Ingresses(namespace).Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	if err != nil && errors.IsNotFound(err) {
+		return nil, IsNotFoundError
+	} else if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (a *Agent) GetNetworkingV1Beta1Ingress(namespace string, name string) (*netv1beta1.Ingress, error) {
+	resp, err := a.Clientset.NetworkingV1beta1().Ingresses(namespace).Get(
 		context.TODO(),
 		name,
 		metav1.GetOptions{},

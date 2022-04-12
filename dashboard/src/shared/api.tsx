@@ -1,4 +1,5 @@
 import { PolicyDocType } from "./auth/types";
+import { release } from "process";
 import { baseApi } from "./baseApi";
 
 import { FullActionConfigType, StorageType } from "./types";
@@ -328,6 +329,28 @@ const getPRDeployment = baseApi<
     git_repo_name: string;
   }
 >("GET", (pathParams) => {
+  const {
+    cluster_id,
+    project_id,
+    git_installation_id,
+    git_repo_owner,
+    git_repo_name,
+  } = pathParams;
+  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
+});
+
+const deletePRDeployment = baseApi<
+  {
+    namespace: string;
+  },
+  {
+    cluster_id: number;
+    project_id: number;
+    git_installation_id: number;
+    git_repo_owner: string;
+    git_repo_name: string;
+  }
+>("DELETE", (pathParams) => {
   const {
     cluster_id,
     project_id,
@@ -1622,6 +1645,70 @@ const getPreviousLogsForContainer = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
 );
 
+const getIncidents = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
+);
+
+const getIncidentsByReleaseName = baseApi<
+  {
+    namespace: string;
+    release_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
+);
+
+const getIncidentById = baseApi<
+  {
+    incident_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
+);
+
+const getIncidentLogsByLogId = baseApi<
+  {
+    log_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/logs`
+);
+
+const upgradePorterAgent = baseApi<
+  {},
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/agent/upgrade`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1780,4 +1867,10 @@ export default {
   provisionDatabase,
   getDatabases,
   getPreviousLogsForContainer,
+  getIncidents,
+  getIncidentsByReleaseName,
+  getIncidentById,
+  getIncidentLogsByLogId,
+  upgradePorterAgent,
+  deletePRDeployment,
 };

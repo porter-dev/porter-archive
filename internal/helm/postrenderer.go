@@ -2,9 +2,11 @@ package helm
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -749,6 +751,11 @@ func (e *EnvironmentVariablePostrenderer) updatePodSpecs() error {
 				envVarArr = append(envVarArr, envVar)
 			}
 
+			// Sort the slices according to a stable ordering. This is hacky and inefficient.
+			sort.SliceStable(envVarArr, func(i, j int) bool {
+				return fmt.Sprintf("%v", envVarArr[i]) > fmt.Sprintf("%v", envVarArr[j])
+			})
+
 			_container["env"] = envVarArr
 			newContainers = append(newContainers, _container)
 		}
@@ -815,4 +822,156 @@ func getRegNameFromImageRef(image string) (string, error) {
 	}
 
 	return regName, nil
+}
+
+type DeprecatedAPIVersionMapper struct {
+}
+
+type APIVersionKind struct {
+	oldAPIVersion, newAPIVersion, oldKind, newKind string
+}
+
+func (d *DeprecatedAPIVersionMapper) Run(
+	oldRenderedManifests *bytes.Buffer,
+	newRenderedManifests *bytes.Buffer,
+) (modifiedManifests *bytes.Buffer, err error) {
+	oldResources, err := decodeRenderedManifests(oldRenderedManifests)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newResources, err := decodeRenderedManifests(newRenderedManifests)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newNameResourceMap := make(map[string]resource)
+
+	for _, newRes := range newResources {
+		name, ok := getResourceName(newRes)
+
+		if !ok {
+			continue
+		}
+
+		newKind, _, ok := getKindAndAPIVersion(newRes)
+
+		if !ok {
+			continue
+		}
+
+		uniqueName := fmt.Sprintf("%s-%s", strings.ToLower(newKind), name)
+
+		newNameResourceMap[uniqueName] = newRes
+	}
+
+	nameMap := make(map[string]APIVersionKind)
+
+	for _, oldRes := range oldResources {
+		oldName, ok := getResourceName(oldRes)
+
+		if !ok {
+			continue
+		}
+
+		oldKind, oldAPIVersion, ok := getKindAndAPIVersion(oldRes)
+
+		if !ok {
+			continue
+		}
+
+		uniqueName := fmt.Sprintf("%s-%s", strings.ToLower(oldKind), oldName)
+
+		newRes, exists := newNameResourceMap[uniqueName]
+
+		if !exists {
+			continue
+		}
+
+		newKind, newAPIVersion, ok := getKindAndAPIVersion(newRes)
+
+		if !ok {
+			continue
+		}
+
+		nameMap[oldName] = APIVersionKind{
+			oldAPIVersion: oldAPIVersion,
+			newAPIVersion: newAPIVersion,
+			oldKind:       oldKind,
+			newKind:       newKind,
+		}
+
+		// if the API versions don't match, update the old api version to the new api version
+		if oldAPIVersion != newAPIVersion {
+			oldRes["apiVersion"] = newAPIVersion
+		}
+	}
+
+	modifiedManifests = bytes.NewBuffer([]byte{})
+	encoder := yaml.NewEncoder(modifiedManifests)
+	defer encoder.Close()
+
+	for _, resource := range oldResources {
+		err = encoder.Encode(resource)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return modifiedManifests, nil
+}
+
+func getResourceName(res resource) (string, bool) {
+	metadataVal, hasMetadataVal := res["metadata"]
+
+	if !hasMetadataVal {
+		return "", false
+	}
+
+	metadata, ok := metadataVal.(resource)
+
+	if !ok {
+		return "", false
+	}
+
+	nameVal, ok := metadata["name"]
+
+	if !ok {
+		return "", false
+	}
+
+	name, ok := nameVal.(string)
+
+	return name, ok
+}
+
+func getKindAndAPIVersion(res resource) (kind string, apiVersion string, ok bool) {
+	kindVal, hasKindVal := res["kind"]
+
+	if !hasKindVal {
+		return "", "", false
+	}
+
+	kind, ok = kindVal.(string)
+
+	if !ok {
+		return "", "", false
+	}
+
+	apiVersionVal, hasAPIVersionVal := res["apiVersion"]
+
+	if !hasAPIVersionVal {
+		return "", "", false
+	}
+
+	apiVersion, ok = apiVersionVal.(string)
+
+	if !ok {
+		return "", "", false
+	}
+
+	return kind, apiVersion, true
 }

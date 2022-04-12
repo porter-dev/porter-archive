@@ -3,13 +3,16 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
+	"k8s.io/client-go/util/homedir"
 )
 
 // updateCmd represents the "porter update" base command when called
@@ -207,6 +210,7 @@ var method string
 var stream bool
 var buildFlagsEnv []string
 var forcePush bool
+var useCache bool
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -221,6 +225,13 @@ func init() {
 	)
 
 	updateCmd.MarkPersistentFlagRequired("app")
+
+	updateCmd.PersistentFlags().BoolVar(
+		&useCache,
+		"use-cache",
+		false,
+		"Whether to use cache (currently in beta)",
+	)
 
 	updateCmd.PersistentFlags().StringVar(
 		&namespace,
@@ -318,6 +329,24 @@ func init() {
 }
 
 func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	fullPath, err := filepath.Abs(localPath)
+
+	if err != nil {
+		return err
+	}
+
+	if os.Getenv("GITHUB_ACTIONS") == "" && source == "local" && fullPath == homedir.HomeDir() {
+		proceed, err := utils.PromptConfirm("You are deploying your home directory. Do you want to continue?", false)
+
+		if err != nil {
+			return err
+		}
+
+		if !proceed {
+			return nil
+		}
+	}
+
 	color.New(color.FgGreen).Println("Deploying app:", app)
 
 	updateAgent, err := updateGetAgent(client)
@@ -431,6 +460,7 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 			OverrideTag:     tag,
 			Method:          buildMethod,
 			AdditionalEnv:   additionalEnv,
+			UseCache:        useCache,
 		},
 		Local: source != "github",
 	})
@@ -448,6 +478,14 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 			Status:  types.EventStatusInProgress,
 			Info:    "",
 		})
+	}
+
+	if useCache {
+		err := setDockerConfig(updateAgent.Client)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	// read the values if necessary
@@ -518,6 +556,12 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 }
 
 func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
+	if useCache {
+		color.New(color.FgGreen).Println("Skipping image push for", app, "as use-cache is set")
+
+		return nil
+	}
+
 	// push the deployment
 	color.New(color.FgGreen).Println("Pushing new image for", app)
 

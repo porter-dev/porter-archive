@@ -15,6 +15,8 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
+
+	"github.com/aws/aws-sdk-go/aws/arn"
 )
 
 type RegistryGetECRTokenHandler struct {
@@ -60,7 +62,23 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 				return
 			}
 
-			if awsInt.AWSRegion == request.Region {
+			// if the aws integration doesn't have an ARN populated, populate it
+			if awsInt.AWSArn == "" {
+				err = awsInt.PopulateAWSArn()
+
+				if err != nil {
+					continue
+				}
+			}
+
+			parsedARN, err := arn.Parse(awsInt.AWSArn)
+
+			if err != nil {
+				continue
+			}
+
+			// if the account id is passed as part of the request, verify the account id matches the account id in the ARN
+			if awsInt.AWSRegion == request.Region && (request.AccountID == "" || request.AccountID == parsedARN.AccountID) {
 				// get the aws integration and session
 				sess, err := awsInt.GetSession()
 

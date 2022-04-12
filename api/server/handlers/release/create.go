@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -21,6 +22,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/release"
 )
@@ -232,14 +234,7 @@ func createGitAction(
 		return nil, nil, fmt.Errorf("invalid formatting of repo name")
 	}
 
-	// generate porter jwt token
-	jwt, err := token.GetTokenForAPI(userID, projectID)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	encoded, err := jwt.EncodeToken(config.TokenConf)
+	encoded, err := getToken(config, userID, projectID, clusterID, request)
 
 	if err != nil {
 		return nil, nil, err
@@ -315,6 +310,110 @@ func createGitAction(
 	}
 
 	return ga.ToGitActionConfigType(), workflowYAML, nil
+}
+
+func getToken(
+	config *config.Config,
+	userID, projectID, clusterID uint,
+	request *types.CreateGitActionConfigRequest,
+) (string, error) {
+	// create a policy for the token
+	policy := []*types.PolicyDocument{
+		{
+			Scope: types.ProjectScope,
+			// This token allows no API verbs at the project level, meaning child resources need to explicitly
+			// declare granted verbs and scopes. Thus we do not allow repo-scoped tokens to access things like
+			// project settings or infra.
+			Verbs: []types.APIVerb{},
+			Children: map[types.PermissionScope]*types.PolicyDocument{
+				types.ClusterScope: {
+					Scope: types.ClusterScope,
+					Verbs: types.ReadWriteVerbGroup(),
+				},
+				types.HelmRepoScope: {
+					Scope: types.HelmRepoScope,
+					Verbs: []types.APIVerb{
+						types.APIVerbGet, types.APIVerbList,
+					},
+				},
+			},
+		},
+	}
+
+	uid, err := encryption.GenerateRandomBytes(16)
+
+	if err != nil {
+		return "", err
+	}
+
+	policyBytes, err := json.Marshal(policy)
+
+	if err != nil {
+		return "", err
+	}
+
+	policyModel := &models.Policy{
+		ProjectID:       projectID,
+		UniqueID:        uid,
+		CreatedByUserID: userID,
+		Name:            strings.ToLower(fmt.Sprintf("repo-%s-token-policy", request.GitRepo)),
+		PolicyBytes:     policyBytes,
+	}
+
+	policyModel, err = config.Repo.Policy().CreatePolicy(policyModel)
+
+	if err != nil {
+		return "", err
+	}
+
+	// create the token in the database
+	tokenUID, err := encryption.GenerateRandomBytes(16)
+
+	if err != nil {
+		return "", err
+	}
+
+	secretKey, err := encryption.GenerateRandomBytes(16)
+
+	if err != nil {
+		return "", err
+	}
+
+	// hash the secret key for storage in the db
+	hashedToken, err := bcrypt.GenerateFromPassword([]byte(secretKey), 8)
+
+	if err != nil {
+		return "", err
+	}
+
+	expiresAt := time.Now().Add(time.Hour * 24 * 365)
+
+	apiToken := &models.APIToken{
+		UniqueID:        tokenUID,
+		ProjectID:       projectID,
+		CreatedByUserID: userID,
+		Expiry:          &expiresAt,
+		Revoked:         false,
+		PolicyUID:       policyModel.UniqueID,
+		PolicyName:      policyModel.Name,
+		Name:            strings.ToLower(fmt.Sprintf("repo-%s-token", request.GitRepo)),
+		SecretKey:       hashedToken,
+	}
+
+	apiToken, err = config.Repo.APIToken().CreateAPIToken(apiToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	// generate porter jwt token
+	jwt, err := token.GetStoredTokenForAPI(userID, projectID, apiToken.UniqueID, secretKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	return jwt.EncodeToken(config.TokenConf)
 }
 
 func createBuildConfig(

@@ -127,7 +127,7 @@ export const ExpandedJobChartFC: React.FC<{
     let interval = null;
     if (chart?.config?.schedule.enabled) {
       interval = CronParser.parseExpression(chart?.config?.schedule.value, {
-        currentDate: new Date(),
+        utc: true,
       });
     }
     // @ts-ignore
@@ -175,7 +175,8 @@ export const ExpandedJobChartFC: React.FC<{
               Runs{" "}
               {CronPrettifier.toString(
                 chart?.config?.schedule.value
-              ).toLowerCase()}
+              ).toLowerCase()}{" "}
+              UTC
               <Dot
                 style={{
                   color: "#ffffff88",
@@ -424,6 +425,7 @@ const RunsDescription = styled.div`
   border: 1px solid #ffffff22;
   color: #ffffffdd;
   border-radius: 4px;
+  user-select: text;
 
   > i {
     font-size: 16px;

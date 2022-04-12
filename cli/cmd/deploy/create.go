@@ -313,24 +313,26 @@ func (c *CreateAgent) CreateFromDocker(
 			return "", err
 		}
 
-		// create repository
-		err = c.Client.CreateRepository(
-			context.Background(),
-			opts.ProjectID,
-			regID,
-			&types.CreateRegistryRepositoryRequest{
-				ImageRepoURI: imageURL,
-			},
-		)
+		if !opts.SharedOpts.UseCache {
+			// create repository
+			err = c.Client.CreateRepository(
+				context.Background(),
+				opts.ProjectID,
+				regID,
+				&types.CreateRegistryRepositoryRequest{
+					ImageRepoURI: imageURL,
+				},
+			)
 
-		if err != nil {
-			return "", err
-		}
+			if err != nil {
+				return "", err
+			}
 
-		err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
+			err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
 
-		if err != nil {
-			return "", err
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 

@@ -15,22 +15,25 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"k8s.io/client-go/util/homedir"
-
-	"github.com/docker/docker/client"
 )
 
-type Agent struct{}
+var sharedPackClient *packclient.Client
 
-func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc client.CommonAPIClient, cacheImage string) error {
+func init() {
+	var err error
 	//initialize a pack client
 	logger := newPackLogger()
 
-	client, err := packclient.NewClient(packclient.WithLogger(logger))
+	sharedPackClient, err = packclient.NewClient(packclient.WithLogger(logger))
 
 	if err != nil {
-		return err
+		panic(err)
 	}
+}
 
+type Agent struct{}
+
+func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, cacheImage string) error {
 	absPath, err := filepath.Abs(opts.BuildContext)
 
 	if err != nil {
@@ -43,6 +46,7 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc
 		Builder:         "paketobuildpacks/builder:full",
 		AppPath:         opts.BuildContext,
 		Env:             opts.Env,
+		GroupID:         0,
 	}
 
 	if opts.UseCache {
@@ -139,5 +143,5 @@ func (a *Agent) Build(opts *docker.BuildOpts, buildConfig *types.BuildConfig, dc
 		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile@1.0.0")
 	}
 
-	return client.Build(context.Background(), buildOpts)
+	return sharedPackClient.Build(context.Background(), buildOpts)
 }

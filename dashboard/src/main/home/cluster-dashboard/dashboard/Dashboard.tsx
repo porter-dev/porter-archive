@@ -11,14 +11,12 @@ import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 import useAuth from "shared/auth/useAuth";
 import Metrics from "./Metrics";
-import EnvironmentList from "./preview-environments/EnvironmentList";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
 import IncidentsTab from "./incidents/IncidentsTab";
 import AlertingSettings from "./alerting/AlertingSettings";
 
 type TabEnum =
-  | "preview_environments"
   | "nodes"
   | "settings"
   | "namespaces"
@@ -30,7 +28,6 @@ const tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [
-  { label: "Preview Environments", value: "preview_environments" },
   { label: "Nodes", value: "nodes" },
   { label: "Incidents", value: "incidents" },
   { label: "Metrics", value: "metrics" },
@@ -40,10 +37,7 @@ const tabOptions: {
 ];
 
 export const Dashboard: React.FunctionComponent = () => {
-  const { currentProject } = useContext(Context);
-  const [currentTab, setCurrentTab] = useState<TabEnum>(() =>
-    currentProject.preview_envs_enabled ? "preview_environments" : "nodes"
-  );
+  const [currentTab, setCurrentTab] = useState<TabEnum>("nodes");
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
   const location = useLocation();
@@ -51,11 +45,6 @@ export const Dashboard: React.FunctionComponent = () => {
   const context = useContext(Context);
   const renderTab = () => {
     switch (currentTab) {
-      case "preview_environments":
-        if (currentProject.preview_envs_enabled) {
-          return <EnvironmentList />;
-        }
-        return <NodeList />;
       case "incidents":
         return <IncidentsTab />;
       case "alerting":
@@ -75,10 +64,6 @@ export const Dashboard: React.FunctionComponent = () => {
   useEffect(() => {
     setCurrentTabOptions(
       tabOptions.filter((option) => {
-        if (option.value === "preview_environments") {
-          return currentProject.preview_envs_enabled;
-        }
-
         if (option.value === "settings") {
           return isAuthorized("cluster", "", ["get", "delete"]);
         }

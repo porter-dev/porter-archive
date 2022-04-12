@@ -131,7 +131,11 @@ func hasDeploymentHookEnvVars() bool {
 		return false
 	}
 
-	if branchName := os.Getenv("PORTER_BRANCH_NAME"); branchName == "" {
+	if branchFrom := os.Getenv("PORTER_BRANCH_FROM"); branchFrom == "" {
+		return false
+	}
+
+	if branchInto := os.Getenv("PORTER_BRANCH_INTO"); branchInto == "" {
 		return false
 	}
 

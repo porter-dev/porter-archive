@@ -1,4 +1,5 @@
 import { PolicyDocType } from "./auth/types";
+import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { release } from "process";
 import { baseApi } from "./baseApi";
 
@@ -89,6 +90,7 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 const createEnvironment = baseApi<
   {
     name: string;
+    mode: "auto" | "manual";
   },
   {
     project_id: number;
@@ -129,6 +131,28 @@ const deleteEnvironment = baseApi<
   } = pathParams;
   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
 });
+
+const createPreviewEnvironmentDeployment = baseApi<
+  PullRequest,
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/pull_request`
+);
+
+const reenablePreviewEnvironmentDeployment = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    deployment_id: number;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, deployment_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}/reenable`
+);
 
 const listEnvironments = baseApi<
   {},
@@ -340,25 +364,25 @@ const getPRDeployment = baseApi<
 });
 
 const deletePRDeployment = baseApi<
-  {
-    namespace: string;
-  },
+  {},
   {
     cluster_id: number;
     project_id: number;
-    git_installation_id: number;
-    git_repo_owner: string;
-    git_repo_name: string;
+    environment_id: number;
+    repo_owner: string;
+    repo_name: string;
+    pr_number: number;
   }
 >("DELETE", (pathParams) => {
   const {
     cluster_id,
     project_id,
-    git_installation_id,
-    git_repo_owner,
-    git_repo_name,
+    environment_id,
+    repo_owner,
+    repo_name,
+    pr_number,
   } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${environment_id}/${repo_owner}/${repo_name}/${pr_number}`;
 });
 
 const getNotificationConfig = baseApi<
@@ -1743,6 +1767,8 @@ export default {
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,
+  createPreviewEnvironmentDeployment,
+  reenablePreviewEnvironmentDeployment,
   listEnvironments,
   createGCPIntegration,
   createInvite,

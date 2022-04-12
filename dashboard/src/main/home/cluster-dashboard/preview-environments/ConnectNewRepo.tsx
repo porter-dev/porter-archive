@@ -1,6 +1,5 @@
 import DynamicLink from "components/DynamicLink";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 import RepoList from "components/repo-selector/RepoList";
 import SaveButton from "components/SaveButton";
 import DocsHelper from "components/DocsHelper";
@@ -12,13 +11,18 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import { Environment } from "../EnvironmentList";
+import { Environment } from "./types";
+import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
+import CheckboxRow from "components/form-components/CheckboxRow";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
   const [repo, setRepo] = useState(null);
+  const [enableAutomaticDeployments, setEnableAutomaticDeployments] = useState(
+    false
+  );
   const [filteredRepos, setFilteredRepos] = useState<string[]>([]);
 
   const [status, setStatus] = useState(null);
@@ -67,7 +71,8 @@ const ConnectNewRepo: React.FC = () => {
       .createEnvironment(
         "<token>",
         {
-          name: "Preview",
+          name: `preview`,
+          mode: enableAutomaticDeployments ? "auto" : "manual",
         },
         {
           project_id: currentProject.id,
@@ -79,9 +84,7 @@ const ConnectNewRepo: React.FC = () => {
       )
       .then(() => {
         setStatus("successful");
-        pushFiltered(`${url}`, [], {
-          selected_tab: "preview_environments",
-        });
+        pushFiltered(`/preview-environments`, []);
       })
       .catch((err) => {
         err = JSON.stringify(err);
@@ -91,14 +94,22 @@ const ConnectNewRepo: React.FC = () => {
   };
 
   return (
-    <div>
+    <>
+      <PreviewEnvironmentsHeader />
+      <LineBreak />
       <ControlRow>
-        <BackButton to={`${url}?selected_tab=preview_environments`}>
+        <BackButton to={`/preview-environments`}>
           <i className="material-icons">close</i>
         </BackButton>
         <Title>Enable Preview Environments</Title>
       </ControlRow>
 
+      <CheckboxRow
+        label="Enable automatic deployments"
+        isRequired
+        checked={enableAutomaticDeployments}
+        toggle={() => setEnableAutomaticDeployments((prev) => !prev)}
+      />
       <Heading>Select a Repository</Heading>
       <br />
       <RepoList
@@ -130,11 +141,18 @@ const ConnectNewRepo: React.FC = () => {
           statusPosition={"left"}
         ></SaveButton>
       </ActionContainer>
-    </div>
+    </>
   );
 };
 
 export default ConnectNewRepo;
+
+const LineBreak = styled.div`
+  width: calc(100% - 0px);
+  height: 2px;
+  background: #ffffff20;
+  margin: 10px 0px 35px;
+`;
 
 const ControlRow = styled.div`
   display: flex;

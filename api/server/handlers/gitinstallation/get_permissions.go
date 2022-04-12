@@ -38,6 +38,7 @@ func (c *GithubGetPermissionsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		PreviewEnvironments: p.Administration == "write" &&
 			p.Deployments == "write" &&
 			p.Environments == "write" &&
-			p.PullRequests == "write",
+			p.PullRequests == "write" &&
+			p.RepositoryWebhook == "write",
 	})
 }

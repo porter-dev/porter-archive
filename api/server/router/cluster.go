@@ -386,6 +386,7 @@ func getClusterRoutes(
 					RelativePath: relPath + "/deployments/{deployment_id}/reenable",
 				},
 				Scopes: []types.PermissionScope{
+					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
 				},
@@ -414,6 +415,7 @@ func getClusterRoutes(
 					RelativePath: relPath + "/deployments/pull_request",
 				},
 				Scopes: []types.PermissionScope{
+					types.UserScope,
 					types.ProjectScope,
 					types.ClusterScope,
 				},
@@ -429,6 +431,41 @@ func getClusterRoutes(
 		routes = append(routes, &Route{
 			Endpoint: enablePullRequestEndpoint,
 			Handler:  enablePullRequestHandler,
+			Router:   r,
+		})
+
+		// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployments/{environment_id}/{owner}/{name}/{pr_number} ->
+		// environment.NewDeleteDeploymentHandler
+		deleteDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbDelete,
+				Method: types.HTTPVerbDelete,
+				Path: &types.Path{
+					Parent: basePath,
+					RelativePath: fmt.Sprintf(
+						"%s/deployments/{environment_id}/{%s}/{%s}/{pr_number}",
+						relPath,
+						types.URLParamGitRepoOwner,
+						types.URLParamGitRepoName,
+					),
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		deleteDeploymentHandler := environment.NewDeleteDeploymentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: deleteDeploymentEndpoint,
+			Handler:  deleteDeploymentHandler,
 			Router:   r,
 		})
 

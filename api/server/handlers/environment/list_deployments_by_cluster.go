@@ -2,6 +2,7 @@ package environment
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v41/github"
@@ -48,8 +49,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			return
 		}
 
+		deplInfoMap := make(map[string]bool)
+
 		for _, depl := range depls {
-			deployments = append(deployments, depl.ToDeploymentType())
+			deployment := depl.ToDeploymentType()
+			deplInfoMap[fmt.Sprintf(
+				"%s-%s-%d", deployment.RepoOwner, deployment.RepoName, deployment.PullRequestID,
+			)] = true
+			deployments = append(deployments, deployment)
 		}
 
 		envList, err := c.Repo().Environment().ListEnvironments(project.ID, cluster.ID)
@@ -60,12 +67,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		}
 
 		for _, env := range envList {
-			err = populateOpenPullRequests(r.Context(), c.Config(), env, pullRequests)
+			prs, err := fetchOpenPullRequests(r.Context(), c.Config(), env, deplInfoMap)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
+
+			pullRequests = append(pullRequests, prs...)
 		}
 	} else {
 		depls, err := c.Repo().Environment().ListDeployments(req.EnvironmentID)
@@ -75,8 +84,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			return
 		}
 
+		deplInfoMap := make(map[string]bool)
+
 		for _, depl := range depls {
-			deployments = append(deployments, depl.ToDeploymentType())
+			deployment := depl.ToDeploymentType()
+			deplInfoMap[fmt.Sprintf(
+				"%s-%s-%d", deployment.RepoOwner, deployment.RepoName, deployment.PullRequestID,
+			)] = true
+			deployments = append(deployments, deployment)
 		}
 
 		env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, req.EnvironmentID)
@@ -86,12 +101,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			return
 		}
 
-		err = populateOpenPullRequests(r.Context(), c.Config(), env, pullRequests)
+		prs, err := fetchOpenPullRequests(r.Context(), c.Config(), env, deplInfoMap)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+
+		pullRequests = append(pullRequests, prs...)
 	}
 
 	c.WriteResult(w, r, map[string]interface{}{
@@ -100,19 +117,19 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	})
 }
 
-func populateOpenPullRequests(
+func fetchOpenPullRequests(
 	ctx context.Context,
 	config *config.Config,
 	env *models.Environment,
-	pullRequests []*types.PullRequest,
-) error {
+	deplInfoMap map[string]bool,
+) ([]*types.PullRequest, error) {
 	client, err := getGithubClientFromEnvironment(config, env)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	openPRs, _, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
+	openPRs, resp, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 		&github.PullRequestListOptions{
 			ListOptions: github.ListOptions{
 				PerPage: 50,
@@ -120,20 +137,28 @@ func populateOpenPullRequests(
 		},
 	)
 
+	var prs []*types.PullRequest
+
+	if resp.StatusCode == 404 {
+		return prs, nil
+	}
+
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, pr := range openPRs {
-		pullRequests = append(pullRequests, &types.PullRequest{
-			Title:      pr.GetTitle(),
-			Number:     uint(pr.GetNumber()),
-			RepoOwner:  pr.GetHead().GetRepo().GetOwner().GetName(),
-			RepoName:   pr.GetHead().GetRepo().GetName(),
-			BranchFrom: pr.GetHead().GetRef(),
-			BranchInto: pr.GetBase().GetRef(),
-		})
+		if _, ok := deplInfoMap[fmt.Sprintf("%s-%s-%d", env.GitRepoOwner, env.GitRepoName, pr.GetNumber())]; !ok {
+			prs = append(prs, &types.PullRequest{
+				Title:      pr.GetTitle(),
+				Number:     uint(pr.GetNumber()),
+				RepoOwner:  env.GitRepoOwner,
+				RepoName:   env.GitRepoName,
+				BranchFrom: pr.GetHead().GetRef(),
+				BranchInto: pr.GetBase().GetRef(),
+			})
+		}
 	}
 
-	return nil
+	return prs, nil
 }

@@ -452,8 +452,8 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 	// initialize the update agent
 	return deploy.NewDeployAgent(client, app, &deploy.DeployOpts{
 		SharedOpts: &deploy.SharedOpts{
-			ProjectID:       config.Project,
-			ClusterID:       config.Cluster,
+			ProjectID:       cliConf.Project,
+			ClusterID:       cliConf.Cluster,
 			Namespace:       namespace,
 			LocalPath:       localPath,
 			LocalDockerfile: dockerfile,

@@ -62,7 +62,7 @@ func init() {
 
 func bluegreenSwitch(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	// get the web release
-	webRelease, err := client.GetRelease(context.Background(), config.Project, config.Cluster, namespace, app)
+	webRelease, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, app)
 
 	if err != nil {
 		return err

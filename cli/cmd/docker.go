@@ -15,6 +15,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	ptypes "github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/spf13/cobra"
 
@@ -50,7 +51,7 @@ func dockerConfig(user *ptypes.GetAuthenticatedUserResponse, client *api.Client,
 }
 
 func setDockerConfig(client *api.Client) error {
-	pID := config.Project
+	pID := cliConf.Project
 
 	// get all registries that should be added
 	regToAdd := make([]string, 0)
@@ -146,7 +147,7 @@ func setDockerConfig(client *api.Client) error {
 		Filename: dockerConfigFile,
 	}
 
-	err = json.Unmarshal(configBytes, config)
+	err = json.Unmarshal(configBytes, config.GetCLIConfig())
 
 	if err != nil {
 		return err
@@ -174,7 +175,7 @@ func setDockerConfig(client *api.Client) error {
 
 			if !isAuthenticated {
 				// get a dockerhub token from the Porter API
-				tokenResp, err := client.GetDockerhubAuthorizationToken(context.Background(), config.Project)
+				tokenResp, err := client.GetDockerhubAuthorizationToken(context.Background(), cliConf.Project)
 
 				if err != nil {
 					return err

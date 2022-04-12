@@ -232,8 +232,8 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		Client: client,
 		CreateOpts: &deploy.CreateOpts{
 			SharedOpts: &deploy.SharedOpts{
-				ProjectID:       config.Project,
-				ClusterID:       config.Cluster,
+				ProjectID:       cliConf.Project,
+				ClusterID:       cliConf.Cluster,
 				Namespace:       namespace,
 				LocalPath:       fullPath,
 				LocalDockerfile: dockerfile,
@@ -257,7 +257,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 			err = client.CreateRepository(
 				context.Background(),
-				config.Project,
+				cliConf.Project,
 				regID,
 				&types.CreateRegistryRepositoryRequest{
 					ImageRepoURI: imageURL,

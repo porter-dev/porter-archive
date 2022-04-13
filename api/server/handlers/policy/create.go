@@ -2,7 +2,9 @@ package policy
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -34,6 +36,16 @@ func (p *PolicyCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	req := &types.CreatePolicy{}
 
 	if ok := p.DecodeAndValidate(w, r, req); !ok {
+		return
+	}
+
+	// policy can't be one of the preset policy names
+	if name := strings.ToLower(req.Name); name == "admin" || name == "developer" || name == "viewer" {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("name cannot be one of the preset policy names"),
+			http.StatusBadRequest,
+		))
+
 		return
 	}
 

@@ -14,7 +14,7 @@ import (
 
 type PolicyLoaderOpts struct {
 	ProjectID, UserID uint
-	Token             *models.APIToken
+	ProjectToken      *models.APIToken
 }
 
 type PolicyDocumentLoader interface {
@@ -34,9 +34,14 @@ func NewBasicPolicyDocumentLoader(projRepo repository.ProjectRepository, policyR
 func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
 	opts *PolicyLoaderOpts,
 ) ([]*types.PolicyDocument, apierrors.RequestError) {
-	if opts.Token != nil {
+	if opts.ProjectToken != nil {
+		// check that the token belongs to the project, in this case it's solely project-scoped
+		if opts.ProjectID == 0 || opts.ProjectToken.ProjectID == 0 || opts.ProjectID != opts.ProjectToken.ProjectID {
+			return nil, apierrors.NewErrForbidden(fmt.Errorf("project id %d does not match token id %d", opts.ProjectID, opts.ProjectToken.ProjectID))
+		}
+
 		// load the policy
-		apiPolicy, reqErr := GetAPIPolicyFromUID(b.policyRepo, opts.Token.ProjectID, opts.Token.PolicyUID)
+		apiPolicy, reqErr := GetAPIPolicyFromUID(b.policyRepo, opts.ProjectToken.ProjectID, opts.ProjectToken.PolicyUID)
 
 		if reqErr != nil {
 			return nil, reqErr

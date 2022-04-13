@@ -52,7 +52,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// first check if an api token exists in context
 	if r.Context().Value("api_token") != nil {
 		apiToken, _ := r.Context().Value("api_token").(*models.APIToken)
-		policyLoaderOpts.Token = apiToken
+		policyLoaderOpts.ProjectToken = apiToken
 		policyLoaderOpts.ProjectID = apiToken.ProjectID
 	} else {
 		projID := reqScopes[types.ProjectScope].Resource.UInt

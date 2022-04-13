@@ -1,20 +1,25 @@
 package environment
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/go-github/v41/github"
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 )
 
 type EnablePullRequestHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 func NewEnablePullRequestHandler(
@@ -24,10 +29,12 @@ func NewEnablePullRequestHandler(
 ) *EnablePullRequestHandler {
 	return &EnablePullRequestHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	request := &types.PullRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -61,6 +68,12 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		},
 	)
 
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(ghResp.Body)
+	responseString := buf.String()
+
+	fmt.Println(responseString)
+
 	if ghResp.StatusCode == 404 {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("workflow file not found"), 404))
 		return
@@ -70,4 +83,42 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	// FIXME: hardcoded namespace
+	namespace := fmt.Sprintf("pr-%d-%s", request.Number, strings.ReplaceAll(env.GitRepoName, "_", "-"))
+
+	// create the deployment
+	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{
+		EnvironmentID: env.ID,
+		Namespace:     namespace,
+		Status:        types.DeploymentStatusCreating,
+		PullRequestID: request.Number,
+		// GHDeploymentID: ghDeployment.GetID(),
+		RepoOwner:    request.RepoOwner,
+		RepoName:     request.RepoName,
+		PRName:       request.Title,
+		PRBranchFrom: request.BranchFrom,
+		PRBranchInto: request.BranchInto,
+	})
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// create the backing namespace
+	agent, err := c.GetAgent(r, cluster, "")
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	_, err = agent.CreateNamespace(depl.Namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 }

@@ -88,7 +88,7 @@ var registryImageListCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registryCmd)
 
-	registryCmd.PersistentFlags().AddFlagSet(registryFlagSet)
+	registryCmd.PersistentFlags().AddFlagSet(utils.RegistryFlagSet)
 
 	registryCmd.AddCommand(registryReposCmd)
 	registryCmd.AddCommand(registryListCmd)
@@ -101,7 +101,7 @@ func init() {
 }
 
 func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	pID := config.Project
+	pID := cliConf.Project
 
 	// get the list of namespaces
 	resp, err := client.ListRegistries(
@@ -120,7 +120,7 @@ func listRegistries(user *types.GetAuthenticatedUserResponse, client *api.Client
 
 	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "URL", "SERVICE")
 
-	currRegistryID := config.Registry
+	currRegistryID := cliConf.Registry
 
 	for _, registry := range registries {
 		if currRegistryID == registry.ID {
@@ -155,7 +155,7 @@ func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client
 			return err
 		}
 
-		err = client.DeleteProjectRegistry(context.Background(), config.Project, uint(id))
+		err = client.DeleteProjectRegistry(context.Background(), cliConf.Project, uint(id))
 
 		if err != nil {
 			return err
@@ -168,8 +168,8 @@ func deleteRegistry(user *types.GetAuthenticatedUserResponse, client *api.Client
 }
 
 func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	pID := config.Project
-	rID := config.Registry
+	pID := cliConf.Project
+	rID := cliConf.Registry
 
 	// get the list of namespaces
 	resp, err := client.ListRegistryRepositories(
@@ -199,8 +199,8 @@ func listRepos(user *types.GetAuthenticatedUserResponse, client *api.Client, arg
 }
 
 func listImages(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	pID := config.Project
-	rID := config.Registry
+	pID := cliConf.Project
+	rID := cliConf.Registry
 	repoName := args[0]
 
 	// get the list of namespaces

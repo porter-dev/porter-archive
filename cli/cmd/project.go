@@ -80,7 +80,7 @@ func createProject(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 
 	color.New(color.FgGreen).Printf("Created project with name %s and id %d\n", args[0], resp.ID)
 
-	return config.SetProject(resp.ID)
+	return cliConf.SetProject(resp.ID)
 }
 
 func listProjects(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
@@ -97,7 +97,7 @@ func listProjects(user *types.GetAuthenticatedUserResponse, client *api.Client, 
 
 	fmt.Fprintf(w, "%s\t%s\n", "ID", "NAME")
 
-	currProjectID := config.Project
+	currProjectID := cliConf.Project
 
 	for _, project := range projects {
 		if currProjectID == project.ID {
@@ -154,7 +154,7 @@ func setProjectCluster(client *api.Client, projectID uint) error {
 	clusters := *resp
 
 	if len(clusters) > 0 {
-		config.SetCluster(clusters[0].ID)
+		cliConf.SetCluster(clusters[0].ID)
 	}
 
 	return nil

@@ -3,18 +3,16 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/spf13/cobra"
 )
-
-// Version will be linked by an ldflag during build
-var Version string = "v0.19.6"
 
 var versionCmd = &cobra.Command{
 	Use:     "version",
 	Aliases: []string{"v", "--version"},
 	Short:   "Prints the version of the Porter CLI",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(Version)
+		fmt.Println(config.Version)
 	},
 }
 

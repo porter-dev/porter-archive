@@ -16,7 +16,7 @@ import PullRequestCard from "./PullRequestCard";
 
 const AvailableStatusFilters = [
   "all",
-  "creating",
+  "created",
   "failed",
   "active",
   "inactive",
@@ -169,6 +169,10 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   }, [selectedRepo, statusSelectorVal, deploymentList]);
 
   const filteredPullRequests = useMemo(() => {
+    if (statusSelectorVal !== "not_deployed" && statusSelectorVal !== "all") {
+      return [];
+    }
+
     if (selectedRepo === "all") {
       return pullRequests;
     }
@@ -274,8 +278,8 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
                   label: "Failed",
                 },
                 {
-                  value: "active",
-                  label: "Active",
+                  value: "created",
+                  label: "Created",
                 },
                 {
                   value: "inactive",

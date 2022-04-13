@@ -10,4 +10,6 @@ type TagRepository interface {
 	ListTagsByProjectId(projectId uint) ([]*models.Tag, error)
 	UpdateTag(tag *models.Tag) (*models.Tag, error)
 	DeleteTag(id uint) error
+	AddTagToRelease(release *models.Release, tag *models.Tag) error
+	RemoveTagFromRelease(release *models.Release, tag *models.Tag) error
 }

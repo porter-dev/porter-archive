@@ -93,7 +93,6 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({
   const [policy, setPolicy] = useState("developer");
   const [createdToken, setCreatedToken] = useState<APIToken>(null);
   const [copied, setCopied] = useState(false);
-  const [shouldCreatePolicy, setShouldCreatePolicy] = useState(false);
   const [selectedClusterFields, setSelectedClusterFields] = useState<
     ScopeOption[]
   >([]);
@@ -107,12 +106,9 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({
     ScopeOption[]
   >([]);
   const [policyName, setPolicyName] = useState("");
-  const [policyID, setPolicyID] = useState("");
 
   const createToken = () => {
-    createPolicy((policyUID) => {
-      console.log("policy uid is", policyUID);
-
+    let cb = (policyUID: string) => {
       api
         .createAPIToken(
           "<token>",
@@ -129,7 +125,13 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({
         .catch((err) => {
           console.error(err);
         });
-    });
+    };
+
+    if (policy == "admin" || policy == "developer" || policy == "viewer") {
+      cb(policy);
+    } else {
+      createPolicy(cb);
+    }
   };
 
   const getVerbsForScope = (
@@ -330,6 +332,7 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({
         onClick={createToken}
         makeFlush={true}
         clearPosition={true}
+        disabled={!apiTokenName}
       />
     </CreateTokenWrapper>
   );

@@ -75,8 +75,36 @@ func TestAddTagToRelease(t *testing.T) {
 	}
 
 	setupTestEnv(tester, t)
+	initProject(tester, t)
+	initRelease(tester, t)
 	defer cleanup(tester, t)
 
+	release, err := tester.repo.Release().ReadRelease(1, "denver-meister-dakota", "default")
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	initialTagCount := len(release.Tags)
+
+	err = tester.repo.Tag().AddTagToRelease(release, &models.Tag{
+		Name:  "some-tag",
+		Color: "#ffffff",
+	})
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	release, err = tester.repo.Release().ReadRelease(1, "denver-meister-dakota", "default")
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
+
+	if initialTagCount > len(release.Tags) {
+		t.Fatal("Tag wasn't added to the release")
+	}
 }
 
 func TestRemoveTagFromRelease(t *testing.T) {

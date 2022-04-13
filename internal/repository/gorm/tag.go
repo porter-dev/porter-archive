@@ -77,3 +77,17 @@ func (repo *TagRepository) DeleteTag(id uint) error {
 
 	return nil
 }
+
+func (repo *TagRepository) AddTagToRelease(release *models.Release, tag *models.Tag) error {
+	err := repo.db.Model(&release).Association("tags").Append(tag)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *TagRepository) RemoveTagFromRelease(release *models.Release, tag *models.Tag) error {
+	return nil
+}

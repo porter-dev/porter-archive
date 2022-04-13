@@ -79,7 +79,7 @@ func (repo *TagRepository) DeleteTag(id uint) error {
 }
 
 func (repo *TagRepository) AddTagToRelease(release *models.Release, tag *models.Tag) error {
-	err := repo.db.Model(&release).Association("tags").Append(tag)
+	err := repo.db.Model(&release).Association("Tags").Append(tag)
 
 	if err != nil {
 		return err
@@ -89,5 +89,11 @@ func (repo *TagRepository) AddTagToRelease(release *models.Release, tag *models.
 }
 
 func (repo *TagRepository) RemoveTagFromRelease(release *models.Release, tag *models.Tag) error {
+	err := repo.db.Model(&release).Association("Tags").Delete(tag)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

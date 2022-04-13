@@ -21,7 +21,7 @@ func (repo *APITokenRepository) ListAPITokensByProjectID(projectID uint) ([]*mod
 	panic("unimplemented")
 }
 
-func (repo *APITokenRepository) ReadAPIToken(uid string) (*models.APIToken, error) {
+func (repo *APITokenRepository) ReadAPIToken(projectID uint, uid string) (*models.APIToken, error) {
 	panic("unimplemented")
 }
 

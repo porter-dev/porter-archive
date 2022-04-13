@@ -228,16 +228,24 @@ func createGitAction(
 		}
 	}
 
+	isDryRun := release == nil
+
 	repoSplit := strings.Split(request.GitRepo, "/")
 
 	if len(repoSplit) != 2 {
 		return nil, nil, fmt.Errorf("invalid formatting of repo name")
 	}
 
-	encoded, err := getToken(config, userID, projectID, clusterID, request)
+	encoded := ""
+	var err error
 
-	if err != nil {
-		return nil, nil, err
+	// if this isn't a dry run, generate the token
+	if !isDryRun {
+		encoded, err = getToken(config, userID, projectID, clusterID, request)
+
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// create the commit in the git repo
@@ -262,7 +270,7 @@ func createGitAction(
 		PorterToken:            encoded,
 		Version:                "v0.1.0",
 		ShouldCreateWorkflow:   request.ShouldCreateWorkflow,
-		DryRun:                 release == nil,
+		DryRun:                 isDryRun,
 	}
 
 	// Save the github err for after creating the git action config. However, we
@@ -321,20 +329,19 @@ func getToken(
 	policy := []*types.PolicyDocument{
 		{
 			Scope: types.ProjectScope,
-			// This token allows no API verbs at the project level, meaning child resources need to explicitly
-			// declare granted verbs and scopes. Thus we do not allow repo-scoped tokens to access things like
-			// project settings or infra.
-			Verbs: []types.APIVerb{},
+			Verbs: types.ReadWriteVerbGroup(),
 			Children: map[types.PermissionScope]*types.PolicyDocument{
 				types.ClusterScope: {
 					Scope: types.ClusterScope,
 					Verbs: types.ReadWriteVerbGroup(),
 				},
+				types.RegistryScope: {
+					Scope: types.RegistryScope,
+					Verbs: types.ReadVerbGroup(),
+				},
 				types.HelmRepoScope: {
 					Scope: types.HelmRepoScope,
-					Verbs: []types.APIVerb{
-						types.APIVerbGet, types.APIVerbList,
-					},
+					Verbs: types.ReadVerbGroup(),
 				},
 			},
 		},

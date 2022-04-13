@@ -60,11 +60,11 @@ func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
 		// load role based on role kind
 		switch role.Kind {
 		case types.RoleAdmin:
-			return AdminPolicy, nil
+			return types.AdminPolicy, nil
 		case types.RoleDeveloper:
-			return DeveloperPolicy, nil
+			return types.DeveloperPolicy, nil
 		case types.RoleViewer:
-			return ViewerPolicy, nil
+			return types.ViewerPolicy, nil
 		default:
 			return nil, apierrors.NewErrForbidden(
 				fmt.Errorf("%s role not supported for user %d, project %d", string(role.Kind), userID, projectID),
@@ -77,39 +77,6 @@ func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
 	)
 }
 
-var AdminPolicy = []*types.PolicyDocument{
-	{
-		Scope: types.ProjectScope,
-		Verbs: types.ReadWriteVerbGroup(),
-	},
-}
-
-var DeveloperPolicy = []*types.PolicyDocument{
-	{
-		Scope: types.ProjectScope,
-		Verbs: types.ReadWriteVerbGroup(),
-		Children: map[types.PermissionScope]*types.PolicyDocument{
-			types.SettingsScope: {
-				Scope: types.SettingsScope,
-				Verbs: types.ReadVerbGroup(),
-			},
-		},
-	},
-}
-
-var ViewerPolicy = []*types.PolicyDocument{
-	{
-		Scope: types.ProjectScope,
-		Verbs: types.ReadVerbGroup(),
-		Children: map[types.PermissionScope]*types.PolicyDocument{
-			types.SettingsScope: {
-				Scope: types.SettingsScope,
-				Verbs: []types.APIVerb{},
-			},
-		},
-	},
-}
-
 func GetAPIPolicyFromUID(policyRepo repository.PolicyRepository, projectID uint, uid string) (*types.APIPolicy, apierrors.RequestError) {
 	switch uid {
 	case "admin":
@@ -118,7 +85,7 @@ func GetAPIPolicyFromUID(policyRepo repository.PolicyRepository, projectID uint,
 				Name: "admin",
 				UID:  "admin",
 			},
-			Policy: AdminPolicy,
+			Policy: types.AdminPolicy,
 		}, nil
 	case "developer":
 		return &types.APIPolicy{
@@ -126,7 +93,7 @@ func GetAPIPolicyFromUID(policyRepo repository.PolicyRepository, projectID uint,
 				Name: "developer",
 				UID:  "developer",
 			},
-			Policy: DeveloperPolicy,
+			Policy: types.DeveloperPolicy,
 		}, nil
 	case "viewer":
 		return &types.APIPolicy{
@@ -134,7 +101,7 @@ func GetAPIPolicyFromUID(policyRepo repository.PolicyRepository, projectID uint,
 				Name: "viewer",
 				UID:  "viewer",
 			},
-			Policy: ViewerPolicy,
+			Policy: types.ViewerPolicy,
 		}, nil
 	default:
 		// look up the policy and make sure it exists

@@ -117,6 +117,16 @@ func populateAndVerifyPolicyDocument(
 
 	processedChildren := 0
 
+	// by default, we pass the parent's verbs to the child.
+	passedParentVerbs := currDoc.Verbs
+
+	// however, if the current scope is a project scope, we don't pass the parent's verbs to
+	// the child. This is to avoid additional verbs being added later as a child of the ProjectScope,
+	// which would unintentionally grant permission to future-added scopes.
+	if currScope == types.ProjectScope {
+		passedParentVerbs = []types.APIVerb{}
+	}
+
 	for currScope := range subTree {
 		if _, exists := currDoc.Children[currScope]; exists {
 			processedChildren++
@@ -126,7 +136,7 @@ func populateAndVerifyPolicyDocument(
 			currDoc.Children[currScope],
 			subTree,
 			currScope,
-			currDoc.Verbs,
+			passedParentVerbs,
 			reqScopes,
 			matchDocs,
 		)

@@ -51,9 +51,11 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// first check if an api token exists in context
 	if r.Context().Value("api_token") != nil {
+		projID := reqScopes[types.ProjectScope].Resource.UInt
+
 		apiToken, _ := r.Context().Value("api_token").(*models.APIToken)
 		policyLoaderOpts.ProjectToken = apiToken
-		policyLoaderOpts.ProjectID = apiToken.ProjectID
+		policyLoaderOpts.ProjectID = projID
 	} else {
 		projID := reqScopes[types.ProjectScope].Resource.UInt
 		user, _ := r.Context().Value(types.UserScope).(*models.User)

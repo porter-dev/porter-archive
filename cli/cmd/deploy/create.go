@@ -92,7 +92,7 @@ func (c *CreateAgent) CreateFromGithub(
 		return "", fmt.Errorf("could not find a linked github repo for %s. Make sure you have linked your Github account on the Porter dashboard.", ghOpts.Repo)
 	}
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -173,7 +173,7 @@ func (c *CreateAgent) CreateFromRegistry(
 
 	opts := c.CreateOpts
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -255,7 +255,7 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -291,10 +291,10 @@ func (c *CreateAgent) CreateFromDocker(
 
 		buildAgent := &BuildAgent{
 			SharedOpts:  opts.SharedOpts,
-			client:      c.Client,
-			imageRepo:   imageURL,
-			env:         env,
-			imageExists: false,
+			APIClient:   c.Client,
+			ImageRepo:   imageURL,
+			Env:         env,
+			ImageExists: false,
 		}
 
 		if opts.Method == DeployBuildTypeDocker {
@@ -472,7 +472,7 @@ func (c *CreateAgent) GetLatestTemplateDefaultValues(templateName, templateVersi
 	return chart.Values, nil
 }
 
-func (c *CreateAgent) getMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
+func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
 	// deploy the template
 	latestVersion, err := c.GetLatestTemplateVersion(c.CreateOpts.Kind)
 

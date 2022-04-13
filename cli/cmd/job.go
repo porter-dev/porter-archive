@@ -135,8 +135,8 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 
 	return client.UpdateBatchImage(
 		context.TODO(),
-		config.Project,
-		config.Cluster,
+		cliConf.Project,
+		cliConf.Cluster,
 		namespace,
 		&types.UpdateImageBatchRequest{
 			ImageRepoURI: imageRepoURI,
@@ -148,7 +148,7 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 // waits for a job with a given name/namespace
 func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	// get the job release
-	jobRelease, err := client.GetRelease(context.Background(), config.Project, config.Cluster, namespace, name)
+	jobRelease, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, name)
 
 	if err != nil {
 		return err
@@ -177,7 +177,7 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	for time.Now().Before(timeWait) {
 		// get the jobs for that job chart
-		jobs, err := client.GetJobs(context.Background(), config.Project, config.Cluster, namespace, name)
+		jobs, err := client.GetJobs(context.Background(), cliConf.Project, cliConf.Cluster, namespace, name)
 
 		if err != nil {
 			return err

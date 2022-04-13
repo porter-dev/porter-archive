@@ -16,10 +16,10 @@ import (
 type BuildAgent struct {
 	*SharedOpts
 
-	client      *api.Client
-	imageRepo   string
-	env         map[string]string
-	imageExists bool
+	APIClient   *api.Client
+	ImageRepo   string
+	Env         map[string]string
+	ImageExists bool
 }
 
 // BuildDocker uses the local Docker daemon to build the image
@@ -42,11 +42,11 @@ func (b *BuildAgent) BuildDocker(
 	}
 
 	opts := &docker.BuildOpts{
-		ImageRepo:         b.imageRepo,
+		ImageRepo:         b.ImageRepo,
 		Tag:               tag,
 		CurrentTag:        currentTag,
 		BuildContext:      buildCtx,
-		Env:               b.env,
+		Env:               b.Env,
 		DockerfilePath:    dockerfilePath,
 		IsDockerfileInCtx: isDockerfileInCtx,
 		UseCache:          b.UseCache,
@@ -60,10 +60,10 @@ func (b *BuildAgent) BuildDocker(
 // BuildPack uses the cloud-native buildpack client to build a container image
 func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag string, buildConfig *types.BuildConfig) error {
 	// retag the image with "pack-cache" tag so that it doesn't re-pull from the registry
-	if b.imageExists {
+	if b.ImageExists {
 		err := dockerAgent.TagImage(
-			fmt.Sprintf("%s:%s", b.imageRepo, prevTag),
-			fmt.Sprintf("%s:%s", b.imageRepo, "pack-cache"),
+			fmt.Sprintf("%s:%s", b.ImageRepo, prevTag),
+			fmt.Sprintf("%s:%s", b.ImageRepo, "pack-cache"),
 		)
 
 		if err != nil {
@@ -75,15 +75,15 @@ func (b *BuildAgent) BuildPack(dockerAgent *docker.Agent, dst, tag, prevTag stri
 	packAgent := &pack.Agent{}
 
 	opts := &docker.BuildOpts{
-		ImageRepo:    b.imageRepo,
+		ImageRepo:    b.ImageRepo,
 		Tag:          tag,
 		BuildContext: dst,
-		Env:          b.env,
+		Env:          b.Env,
 		UseCache:     b.UseCache,
 	}
 
 	// call builder
-	return packAgent.Build(opts, buildConfig, fmt.Sprintf("%s:%s", b.imageRepo, "pack-cache"))
+	return packAgent.Build(opts, buildConfig, fmt.Sprintf("%s:%s", b.ImageRepo, "pack-cache"))
 }
 
 // ResolveDockerPaths returns a path to the dockerfile that is either relative or absolute, and a path

@@ -2,6 +2,8 @@ package gorm_test
 
 import (
 	"testing"
+
+	"github.com/porter-dev/porter/internal/models"
 )
 
 func TestCreateNewTag(t *testing.T) {
@@ -10,8 +12,21 @@ func TestCreateNewTag(t *testing.T) {
 	}
 
 	setupTestEnv(tester, t)
+	initUser(tester, t)
+	initProject(tester, t)
 	defer cleanup(tester, t)
 
+	tag := &models.Tag{
+		ProjectID: 1,
+		Name:      "very-first-tag",
+		Color:     "#ffffff",
+	}
+
+	_, err := tester.repo.Tag().CreateTag(tag)
+
+	if err != nil {
+		t.Fatalf("%v\n", err)
+	}
 }
 
 func TestCreateTagThatAlreadyExistsOnProject(t *testing.T) {

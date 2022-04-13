@@ -93,7 +93,14 @@ resultOrErrorReader:
 		select {
 		case result, ok := <-resultChannel:
 			if ok {
-				res.Accounts = append(res.Accounts, *result.Login)
+				installation, err := c.Repo().GithubAppInstallation().ReadGithubAppInstallationByAccountID(*result.ID)
+				if err != nil {
+					res.Accounts = append(res.Accounts, types.GHAccount{
+						Login:          *result.Login,
+						AvatarURL:      *result.AvatarURL,
+						InstallationID: installation.InstallationID,
+					})
+				}
 			} else {
 				// channel has been closed now
 				break resultOrErrorReader
@@ -127,10 +134,16 @@ resultOrErrorReader:
 	}
 
 	if installation != nil {
-		res.Accounts = append(res.Accounts, *authUser.Login)
+		res.Accounts = append(res.Accounts, types.GHAccount{
+			Login:          *authUser.Login,
+			AvatarURL:      *authUser.AvatarURL,
+			InstallationID: installation.InstallationID,
+		})
 	}
 
-	sort.Strings(res.Accounts)
+	sort.Slice(res.Accounts[:], func(i, j int) bool {
+		return res.Accounts[i].Login < res.Accounts[j].Login
+	})
 
 	c.WriteResult(w, r, res)
 }

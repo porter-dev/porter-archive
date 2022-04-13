@@ -61,9 +61,15 @@ type GetTarballURLResponse struct {
 	LatestCommitSHA string `json:"latest_commit_sha"`
 }
 
+type GHAccount struct {
+	Login          string `json:"login"`
+	AvatarURL      string `json:"avatar_url"`
+	InstallationID int64  `json:"installation_id"`
+}
+
 type GetGithubAppAccountsResponse struct {
-	Username string   `json:"username,omitempty"`
-	Accounts []string `json:"accounts,omitempty"`
+	Username string      `json:"username,omitempty"`
+	Accounts []GHAccount `json:"accounts,omitempty"`
 }
 
 type GitInstallationPermission struct {

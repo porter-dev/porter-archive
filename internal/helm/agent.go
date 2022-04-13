@@ -381,7 +381,7 @@ func (a *Agent) InstallChart(
 
 	cmd.ReleaseName = conf.Name
 	cmd.Namespace = conf.Namespace
-	cmd.Timeout = 300
+	cmd.Timeout = 300 * time.Second
 
 	if err := checkIfInstallable(conf.Chart); err != nil {
 		return nil, err

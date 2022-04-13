@@ -10,8 +10,8 @@ import (
 type Tag struct {
 	gorm.Model
 
-	ProjectID uint       `json:"project_id" gorm:"primaryKey;autoIncrement:false"`
-	Name      string     `json:"name" gorm:"primaryKey"`
+	ProjectID uint       `json:"project_id"`
+	Name      string     `json:"name"`
 	Color     string     `json:"color"`
 	Releases  []*Release `json:"releases" gorm:"many2many:release_tags"`
 }

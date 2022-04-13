@@ -267,7 +267,7 @@ func (f *failingDocLoader) LoadPolicyDocuments(opts *policy.PolicyLoaderOpts) ([
 type viewerDocLoader struct{}
 
 func (f *viewerDocLoader) LoadPolicyDocuments(opts *policy.PolicyLoaderOpts) ([]*types.PolicyDocument, apierrors.RequestError) {
-	return policy.ViewerPolicy, nil
+	return types.ViewerPolicy, nil
 }
 
 type testHandler struct {

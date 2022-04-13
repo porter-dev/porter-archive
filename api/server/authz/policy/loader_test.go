@@ -26,17 +26,17 @@ var basicLoaderTests = []basicLoaderTest{
 	{
 		description: "should load admin policy",
 		roleKind:    types.RoleAdmin,
-		expPolicy:   policy.AdminPolicy,
+		expPolicy:   types.AdminPolicy,
 	},
 	{
 		description: "should load developer policy",
 		roleKind:    types.RoleDeveloper,
-		expPolicy:   policy.DeveloperPolicy,
+		expPolicy:   types.DeveloperPolicy,
 	},
 	{
 		description: "should load viewer policy",
 		roleKind:    types.RoleViewer,
-		expPolicy:   policy.ViewerPolicy,
+		expPolicy:   types.ViewerPolicy,
 	},
 	{
 		description:      "should not load custom policy for basic loader",

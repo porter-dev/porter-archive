@@ -23,7 +23,7 @@ func (repo *PolicyRepository) ListPoliciesByProjectID(projectID uint) ([]*models
 	panic("unimplemented")
 }
 
-func (repo *PolicyRepository) ReadPolicy(uid string) (*models.Policy, error) {
+func (repo *PolicyRepository) ReadPolicy(projectID uint, uid string) (*models.Policy, error) {
 	panic("unimplemented")
 }
 

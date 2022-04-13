@@ -356,7 +356,7 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 
 	if appConfig.Build.UseCache {
 		// set the docker config so that pack caching can use the repo credentials
-		err := setDockerConfig(client)
+		err := config.SetDockerConfig(client)
 
 		if err != nil {
 			return nil, err

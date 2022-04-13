@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
@@ -481,7 +482,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	if useCache {
-		err := setDockerConfig(updateAgent.Client)
+		err := config.SetDockerConfig(updateAgent.Client)
 
 		if err != nil {
 			return err

@@ -20,14 +20,14 @@ import (
 
 type BuildDriverConfig struct {
 	Build struct {
-		ForceBuild bool `mapstructure:"force_build"`
-		UseCache   bool `mapstructure:"use_cache"`
-		Method     string
-		Context    string
-		Dockerfile string
-		Builder    string
-		Buildpacks []string
-		Image      string
+		ForceBuild   bool `mapstructure:"force_build"`
+		UsePackCache bool `mapstructure:"use_pack_cache"`
+		Method       string
+		Context      string
+		Dockerfile   string
+		Builder      string
+		Buildpacks   []string
+		Image        string
 	}
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -144,7 +144,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 				LocalDockerfile: d.config.Build.Dockerfile,
 				Method:          deploy.DeployBuildType(d.config.Build.Method),
 				EnvGroups:       d.config.EnvGroups,
-				UseCache:        d.config.Build.UseCache,
+				UseCache:        d.config.Build.UsePackCache,
 			},
 			Kind:        d.source.Name,
 			ReleaseName: d.target.AppName,
@@ -153,9 +153,51 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		},
 	}
 
-	_, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, d.target.Namespace)
+	regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, d.target.Namespace)
 	if err != nil {
 		return nil, err
+	}
+
+	if d.config.Build.UsePackCache {
+		err := config.SetDockerConfig(client)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if d.config.Build.Method == "pack" {
+			repoResp, err := client.ListRegistryRepositories(context.Background(), d.target.Project, regID)
+
+			if err != nil {
+				return nil, err
+			}
+
+			repos := *repoResp
+
+			found := false
+
+			for _, repo := range repos {
+				if repo.URI == imageURL {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				err = client.CreateRepository(
+					context.Background(),
+					d.target.Project,
+					regID,
+					&types.CreateRegistryRepositoryRequest{
+						ImageRepoURI: imageURL,
+					},
+				)
+
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
 	}
 
 	if d.config.Build.Method != "" {

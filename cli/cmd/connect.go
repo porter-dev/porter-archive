@@ -134,7 +134,7 @@ func init() {
 func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	isLocal := false
 
-	if config.Driver == "local" {
+	if cliConf.Driver == "local" {
 		isLocal = true
 	}
 
@@ -142,7 +142,7 @@ func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Cli
 		client,
 		kubeconfigPath,
 		*contexts,
-		config.Project,
+		cliConf.Project,
 		isLocal,
 	)
 
@@ -150,83 +150,83 @@ func runConnectKubeconfig(_ *types.GetAuthenticatedUserResponse, client *api.Cli
 		return err
 	}
 
-	return config.SetCluster(id)
+	return cliConf.SetCluster(id)
 }
 
 func runConnectECR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.ECR(
 		client,
-		config.Project,
+		cliConf.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return config.SetRegistry(regID)
+	return cliConf.SetRegistry(regID)
 }
 
 func runConnectGCR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.GCR(
 		client,
-		config.Project,
+		cliConf.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return config.SetRegistry(regID)
+	return cliConf.SetRegistry(regID)
 }
 
 func runConnectDOCR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.DOCR(
 		client,
-		config.Project,
+		cliConf.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return config.SetRegistry(regID)
+	return cliConf.SetRegistry(regID)
 }
 
 func runConnectDockerhub(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.Dockerhub(
 		client,
-		config.Project,
+		cliConf.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return config.SetRegistry(regID)
+	return cliConf.SetRegistry(regID)
 }
 
 func runConnectRegistry(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.Registry(
 		client,
-		config.Project,
+		cliConf.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return config.SetRegistry(regID)
+	return cliConf.SetRegistry(regID)
 }
 
 func runConnectHelmRepo(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	hrID, err := connect.HelmRepo(
 		client,
-		config.Project,
+		cliConf.Project,
 	)
 
 	if err != nil {
 		return err
 	}
 
-	return config.SetHelmRepo(hrID)
+	return cliConf.SetHelmRepo(hrID)
 }

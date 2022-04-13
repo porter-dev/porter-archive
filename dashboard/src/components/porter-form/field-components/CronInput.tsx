@@ -69,7 +69,8 @@ const CronInput: React.FC<CronField> = (props) => {
             {CronParser.toString(variables[variable], {
               throwExceptionOnParseError: false,
               verbose: true,
-            })}
+            })}{" "}
+            UTC
           </>
         )}
       </Label>

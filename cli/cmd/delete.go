@@ -47,13 +47,13 @@ func init() {
 }
 
 func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	projectID := config.Project
+	projectID := cliConf.Project
 
 	if projectID == 0 {
 		return fmt.Errorf("project id must be set")
 	}
 
-	clusterID := config.Cluster
+	clusterID := cliConf.Cluster
 
 	if clusterID == 0 {
 		return fmt.Errorf("cluster id must be set")

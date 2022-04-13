@@ -33,7 +33,7 @@ func Execute() {
 
 	rootCmd.PersistentFlags().AddFlagSet(utils.DefaultFlagSet)
 
-	if Version != "dev" {
+	if config.Version != "dev" {
 		ghClient := github.NewClient(nil)
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -41,7 +41,7 @@ func Execute() {
 		if err == nil {
 			release.GetURL()
 			// we do not care for an error here because we do not want to block the user here
-			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(Version, "v")))
+			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(config.Version, "v")))
 			if err == nil {
 				latestRelease, err := semver.NewVersion(strings.TrimPrefix(release.GetTagName(), "v"))
 				if err == nil {

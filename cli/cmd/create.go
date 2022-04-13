@@ -11,6 +11,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/gitutils"
 	"github.com/porter-dev/porter/cli/cmd/utils"
@@ -268,7 +269,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 				return err
 			}
 
-			err = setDockerConfig(createAgent.Client)
+			err = config.SetDockerConfig(createAgent.Client)
 
 			if err != nil {
 				return err

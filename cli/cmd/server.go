@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/fatih/color"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
 	"github.com/porter-dev/porter/cli/cmd/utils"
@@ -182,12 +182,12 @@ func startLocal(
 
 	// otherwise, check the version flag of the binary
 	cmdVersionPorter := exec.Command(cmdPath, "--version")
-	writer := &versionWriter{}
+	writer := &config.VersionWriter{}
 	cmdVersionPorter.Stdout = writer
 
 	err := cmdVersionPorter.Run()
 
-	if err != nil || writer.Version != Version {
+	if err != nil || writer.Version != config.Version {
 		err := downloadMatchingRelease(porterDir)
 
 		if err != nil {
@@ -264,7 +264,7 @@ func downloadMatchingRelease(porterDir string) error {
 		},
 	}
 
-	err := z.GetRelease(Version)
+	err := z.GetRelease(config.Version)
 
 	if err != nil {
 		return err
@@ -285,15 +285,5 @@ func downloadMatchingRelease(porterDir string) error {
 		},
 	}
 
-	return zStatic.GetRelease(Version)
-}
-
-type versionWriter struct {
-	Version string
-}
-
-func (v *versionWriter) Write(p []byte) (n int, err error) {
-	v.Version = strings.TrimSpace(string(p))
-
-	return len(p), nil
+	return zStatic.GetRelease(config.Version)
 }

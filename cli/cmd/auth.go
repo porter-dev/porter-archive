@@ -9,6 +9,7 @@ import (
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	loginBrowser "github.com/porter-dev/porter/cli/cmd/login"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
@@ -75,17 +76,17 @@ func init() {
 }
 
 func login() error {
-	client := api.NewClientWithToken(config.Host+"/api", config.Token)
+	client := api.NewClientWithToken(cliConf.Host+"/api", cliConf.Token)
 
 	user, err := client.AuthCheck(context.Background())
 
 	if err == nil {
 		// set the token if the user calls login with the --token flag or the PORTER_TOKEN env
-		if config.Token != "" {
-			config.SetToken(config.Token)
+		if cliConf.Token != "" {
+			cliConf.SetToken(cliConf.Token)
 			color.New(color.FgGreen).Println("Successfully logged in!")
 
-			projID, exists, err := api.GetProjectIDFromToken(config.Token)
+			projID, exists, err := api.GetProjectIDFromToken(cliConf.Token)
 
 			if err != nil {
 				return err
@@ -102,7 +103,7 @@ func login() error {
 			} else {
 				// if the project ID does exist for the token, this is a project-issued token, and
 				// the project should be set automatically
-				err = config.SetProject(projID)
+				err = cliConf.SetProject(projID)
 
 				if err != nil {
 					return err
@@ -127,20 +128,20 @@ func login() error {
 	}
 
 	// log the user in
-	token, err := loginBrowser.Login(config.Host)
+	token, err := loginBrowser.Login(cliConf.Host)
 
 	if err != nil {
 		return err
 	}
 
 	// set the token in config
-	err = config.SetToken(token)
+	err = cliConf.SetToken(token)
 
 	if err != nil {
 		return err
 	}
 
-	client = api.NewClientWithToken(config.Host+"/api", token)
+	client = api.NewClientWithToken(cliConf.Host+"/api", token)
 
 	user, err = client.AuthCheck(context.Background())
 
@@ -165,7 +166,7 @@ func setProjectForUser(client *api.Client, userID uint) error {
 	projects := *resp
 
 	if len(projects) > 0 {
-		config.SetProject(projects[0].ID)
+		cliConf.SetProject(projects[0].ID)
 
 		err = setProjectCluster(client, projects[0].ID)
 
@@ -178,7 +179,7 @@ func setProjectForUser(client *api.Client, userID uint) error {
 }
 
 func loginManual() error {
-	client := api.NewClient(config.Host+"/api", "cookie.json")
+	client := api.NewClient(cliConf.Host+"/api", "cookie.json")
 
 	var username, pw string
 
@@ -206,7 +207,7 @@ func loginManual() error {
 	}
 
 	// set the token to empty since this is manual (cookie-based) login
-	config.SetToken("")
+	cliConf.SetToken("")
 
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
@@ -220,7 +221,7 @@ func loginManual() error {
 	projects := *resp
 
 	if len(projects) > 0 {
-		config.SetProject(projects[0].ID)
+		cliConf.SetProject(projects[0].ID)
 
 		err = setProjectCluster(client, projects[0].ID)
 
@@ -247,7 +248,7 @@ func register() error {
 		return err
 	}
 
-	client := GetAPIClient(config)
+	client := config.GetAPIClient()
 
 	resp, err := client.CreateUser(context.Background(), &types.CreateUserRequest{
 		Email:    username,
@@ -270,7 +271,7 @@ func logout(user *types.GetAuthenticatedUserResponse, client *api.Client, args [
 		return err
 	}
 
-	config.SetToken("")
+	cliConf.SetToken("")
 
 	color.Green("Successfully logged out")
 

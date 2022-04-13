@@ -5,11 +5,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/fatih/color"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/github"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -34,8 +35,8 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Starts a Porter server instance on the host",
 	Run: func(cmd *cobra.Command, args []string) {
-		if config.Driver == "docker" {
-			config.SetDriver("docker")
+		if cliConf.Driver == "docker" {
+			cliConf.SetDriver("docker")
 
 			err := startDocker(
 				opts.imageTag,
@@ -57,7 +58,7 @@ var startCmd = &cobra.Command{
 				os.Exit(1)
 			}
 		} else {
-			config.SetDriver("local")
+			cliConf.SetDriver("local")
 			err := startLocal(
 				opts.db,
 				*opts.port,
@@ -76,7 +77,7 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stops a Porter instance running on the Docker engine",
 	Run: func(cmd *cobra.Command, args []string) {
-		if config.Driver == "docker" {
+		if cliConf.Driver == "docker" {
 			if err := stopDocker(); err != nil {
 				color.New(color.FgRed).Println("Shutdown unsuccessful:", err.Error())
 				os.Exit(1)
@@ -91,7 +92,7 @@ func init() {
 	serverCmd.AddCommand(startCmd)
 	serverCmd.AddCommand(stopCmd)
 
-	serverCmd.PersistentFlags().AddFlagSet(driverFlagSet)
+	serverCmd.PersistentFlags().AddFlagSet(utils.DriverFlagSet)
 
 	startCmd.PersistentFlags().StringVar(
 		&opts.db,
@@ -152,7 +153,7 @@ func startDocker(
 
 	green.Printf("Server ready: listening on localhost:%d\n", port)
 
-	return config.SetHost(fmt.Sprintf("http://localhost:%d", port))
+	return cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port))
 }
 
 func startLocal(
@@ -163,7 +164,7 @@ func startLocal(
 		return fmt.Errorf("postgres not available for local driver, run \"porter server start --db postgres --driver docker\"")
 	}
 
-	config.SetHost(fmt.Sprintf("http://localhost:%d", port))
+	cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port))
 
 	porterDir := filepath.Join(home, ".porter")
 	cmdPath := filepath.Join(home, ".porter", "portersvr")
@@ -181,12 +182,12 @@ func startLocal(
 
 	// otherwise, check the version flag of the binary
 	cmdVersionPorter := exec.Command(cmdPath, "--version")
-	writer := &versionWriter{}
+	writer := &config.VersionWriter{}
 	cmdVersionPorter.Stdout = writer
 
 	err := cmdVersionPorter.Run()
 
-	if err != nil || writer.Version != Version {
+	if err != nil || writer.Version != config.Version {
 		err := downloadMatchingRelease(porterDir)
 
 		if err != nil {
@@ -263,7 +264,7 @@ func downloadMatchingRelease(porterDir string) error {
 		},
 	}
 
-	err := z.GetRelease(Version)
+	err := z.GetRelease(config.Version)
 
 	if err != nil {
 		return err
@@ -284,15 +285,5 @@ func downloadMatchingRelease(porterDir string) error {
 		},
 	}
 
-	return zStatic.GetRelease(Version)
-}
-
-type versionWriter struct {
-	Version string
-}
-
-func (v *versionWriter) Write(p []byte) (n int, err error) {
-	v.Version = strings.TrimSpace(string(p))
-
-	return len(p), nil
+	return zStatic.GetRelease(config.Version)
 }

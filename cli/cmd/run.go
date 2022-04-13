@@ -261,8 +261,8 @@ type PorterRunSharedConfig struct {
 }
 
 func (p *PorterRunSharedConfig) setSharedConfig() error {
-	pID := config.Project
-	cID := config.Cluster
+	pID := cliConf.Project
+	cID := cliConf.Cluster
 
 	kubeResp, err := p.Client.GetKubeconfig(context.TODO(), pID, cID)
 
@@ -318,8 +318,8 @@ type podSimple struct {
 }
 
 func getPods(client *api.Client, namespace, releaseName string) ([]podSimple, error) {
-	pID := config.Project
-	cID := config.Cluster
+	pID := cliConf.Project
+	cID := cliConf.Cluster
 
 	resp, err := client.GetK8sAllPods(context.TODO(), pID, cID, namespace, releaseName)
 

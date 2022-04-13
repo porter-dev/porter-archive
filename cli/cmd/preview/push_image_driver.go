@@ -12,8 +12,9 @@ import (
 
 type PushDriverConfig struct {
 	Push struct {
-		ForcePush bool `mapstructure:"force_push"`
-		Image     string
+		ForcePush    bool `mapstructure:"force_push"`
+		UsePackCache bool `mapstructure:"use_pack_cache"`
+		Image        string
 	}
 }
 
@@ -55,6 +56,12 @@ func (d *PushDriver) Apply(resource *models.Resource) (*models.Resource, error) 
 	}
 
 	d.config = pushDriverConfig
+
+	if d.config.Push.UsePackCache {
+		d.output["image"] = d.config.Push.Image
+
+		return resource, nil
+	}
 
 	client := config.GetAPIClient()
 

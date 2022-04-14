@@ -252,6 +252,8 @@ tabs:
           value: "12.7"
         - label: "v12.8"
           value: "12.8"
+        - label: "v12.10"
+          value: "12.10"
   - name: pg-13-versions
     show_if: 
       is: "postgres13"
@@ -342,6 +344,16 @@ tabs:
         options:
         - label: t2.medium
           value: t2.medium
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t2.2xlarge
+          value: t2.2xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.xlarge
+          value: t3.xlarge
+        - label: t3.2xlarge
+          value: t3.2xlarge
     - type: string-input
       label: 👤 Issuer Email
       required: true

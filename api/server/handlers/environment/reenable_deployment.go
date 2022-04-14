@@ -51,6 +51,15 @@ func (c *ReenableDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	depl.Status = types.DeploymentStatusCreating
+
+	depl, err = c.Repo().Environment().UpdateDeployment(depl)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, depl.EnvironmentID)
 
 	if err != nil {

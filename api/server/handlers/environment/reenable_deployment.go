@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/google/go-github/v41/github"
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -17,6 +18,7 @@ import (
 
 type ReenableDeploymentHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 func NewReenableDeploymentHandler(
@@ -26,6 +28,7 @@ func NewReenableDeploymentHandler(
 ) *ReenableDeploymentHandler {
 	return &ReenableDeploymentHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -54,6 +57,21 @@ func (c *ReenableDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	depl.Status = types.DeploymentStatusCreating
 
 	depl, err = c.Repo().Environment().UpdateDeployment(depl)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// create the backing namespace
+	agent, err := c.GetAgent(r, cluster, "")
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	_, err = agent.CreateNamespace(depl.Namespace)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

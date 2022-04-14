@@ -8,9 +8,11 @@ import (
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
+	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
@@ -118,13 +120,12 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 			},
 		}
 
-		subdomain, err := createAgent.CreateFromRegistry(d.config.UpdateConfig.Image, d.config.Values)
+		_, err := createAgent.CreateFromRegistry(d.config.UpdateConfig.Image, d.config.Values)
 
 		if err != nil {
 			return nil, err
 		}
 
-		d.output["live_url"] = subdomain
 	} else {
 		updateAgent, err := deploy.NewDeployAgent(client, d.target.AppName, &deploy.DeployOpts{
 			SharedOpts: sharedOpts,
@@ -140,6 +141,12 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	err = d.assignOutput(resource, client)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return resource, nil
@@ -169,4 +176,22 @@ func (d *UpdateConfigDriver) getConfig(resource *models.Resource) (*UpdateConfig
 	}
 
 	return config, nil
+}
+
+func (d *UpdateConfigDriver) assignOutput(resource *models.Resource, client *api.Client) error {
+	release, err := client.GetRelease(
+		context.Background(),
+		d.target.Project,
+		d.target.Cluster,
+		d.target.Namespace,
+		d.target.AppName,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	d.output = utils.CoalesceValues(d.source.SourceValues, release.Config)
+
+	return nil
 }

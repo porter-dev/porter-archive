@@ -24,6 +24,22 @@ module.exports = () => {
   if (process.env.NODE_ENV !== env.NODE_ENV) {
     isDevelopment = process.env.NODE_ENV !== "production";
   }
+
+  let htmlPluginOpts = {
+    template: path.resolve(__dirname, "src", "index.html"),
+  };
+
+  if (env.IS_HOSTED) {
+    htmlPluginOpts = {
+      template: path.resolve(__dirname, "src", "hosted.index.html"),
+      cohereKey: `${env.COHERE_KEY}`,
+      intercomAppId: `${env.INTERCOM_APP_ID}`,
+      intercomSrc: `${process.env.INTERCOM_SRC}`,
+      segmentWriteKey: `${process.env.SEGMENT_WRITE_KEY}`,
+      segmentKey: `${process.env.SEGMENT_PUBLIC_KEY}`,
+    };
+  }
+
   /**
    * @type {webpack.Configuration}
    */

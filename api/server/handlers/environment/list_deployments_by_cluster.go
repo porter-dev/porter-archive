@@ -139,7 +139,7 @@ func fetchOpenPullRequests(
 
 	var prs []*types.PullRequest
 
-	if resp.StatusCode == 404 {
+	if resp != nil && resp.StatusCode == 404 {
 		return prs, nil
 	}
 

@@ -343,7 +343,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       setSaveValueStatus("successful");
       setForceRefreshRevisions(true);
 
-      window.analytics.track("Chart Upgraded", {
+      window.analytics?.track("Chart Upgraded", {
         chart: currentChart.name,
         values: valuesYaml,
       });
@@ -358,7 +358,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
       setCurrentError(parsedErr);
 
-      window.analytics.track("Failed to Upgrade Chart", {
+      window.analytics?.track("Failed to Upgrade Chart", {
         chart: currentChart.name,
         values: valuesYaml,
         error: err,
@@ -397,7 +397,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setSaveValueStatus("successful");
         setForceRefreshRevisions(true);
 
-        window.analytics.track("Chart Upgraded", {
+        window.analytics?.track("Chart Upgraded", {
           chart: currentChart.name,
           values: valuesYaml,
         });
@@ -413,7 +413,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setSaveValueStatus(err);
         setCurrentError(parsedErr);
 
-        window.analytics.track("Failed to Upgrade Chart", {
+        window.analytics?.track("Failed to Upgrade Chart", {
           chart: currentChart.name,
           values: valuesYaml,
           error: err,
@@ -734,7 +734,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   useEffect(() => {
-    window.analytics.track("Opened Chart", {
+    window.analytics?.track("Opened Chart", {
       chart: currentChart.name,
     });
 

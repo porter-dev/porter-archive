@@ -35,7 +35,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     statusSelectorVal,
     setStatusSelectorVal,
   ] = useState<AvailableStatusFiltersType>("all");
-  const [selectedRepo, setSelectedRepo] = useState("all");
+  const [selectedRepo, setSelectedRepo] = useState("");
 
   const { currentProject, currentCluster } = useContext(Context);
   const { getQueryParam, pushQueryParams } = useRouting();
@@ -58,15 +58,11 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     const selected_repo = getQueryParam("repository");
 
     const repo = environments.find(
-      (env) => `${env.git_repo_owner}/${env.git_repo_name}` === selected_repo
+      env => `${env.git_repo_owner}/${env.git_repo_name}` === selected_repo
     );
 
-    if (!repo) {
-      pushQueryParams({}, ["repository"]);
-      return;
-    }
-
-    if (selected_repo !== selectedRepo) {
+    if (repo && true) {
+      console.log("tested", repo);
       setSelectedRepo(`${repo.git_repo_owner}/${repo.git_repo_name}`);
     }
   }, [location.search, history]);
@@ -85,7 +81,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   }, [location.search, history]);
 
   useEffect(() => {
-    pushQueryParams({}, ["status_filter", "repository"]);
+    pushQueryParams({}, ["status_filter"]);
   }, []);
 
   useEffect(() => {
@@ -182,10 +178,6 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     });
   }, [selectedRepo, pullRequests]);
 
-  if (hasError) {
-    return <Placeholder>Error</Placeholder>;
-  }
-
   const renderDeploymentList = () => {
     if (isLoading) {
       return (
@@ -214,15 +206,6 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
 
     return (
       <>
-        {filteredPullRequests.map((pr) => {
-          return (
-            <PullRequestCard
-              key={pr.pr_title}
-              pullRequest={pr}
-              onCreation={handlePreviewEnvironmentManualCreation}
-            />
-          );
-        })}
         {filteredDeployments.map((d) => {
           return (
             <DeploymentCard
@@ -233,99 +216,98 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
             />
           );
         })}
+        {filteredPullRequests.map((pr) => {
+          return (
+            <PullRequestCard
+              key={pr.pr_title}
+              pullRequest={pr}
+              onCreation={handlePreviewEnvironmentManualCreation}
+            />
+          );
+        })}
       </>
     );
   };
-
-  const repoOptions = environments.map((env) => ({
-    label: `${env.git_repo_owner}/${env.git_repo_name}`,
-    value: `${env.git_repo_owner}/${env.git_repo_name}`,
-  }));
 
   const handleStatusFilterChange = (value: string) => {
     pushQueryParams({ status_filter: value });
     setStatusSelectorVal(value);
   };
 
-  const handleRepoFilterChange = (value: string) => {
-    pushQueryParams({ repository: value });
-    setSelectedRepo(value);
-  };
+  const renderMain = () => {
+    return (
+      <Container>
+        <ControlRow>
+          <ActionsWrapper>
+            <StyledStatusSelector>
+              <Label>
+                <i className="material-icons">filter_alt</i>
+                Status
+              </Label>
+              <Selector
+                activeValue={statusSelectorVal}
+                setActiveValue={handleStatusFilterChange}
+                options={[
+                  {
+                    value: "all",
+                    label: "All",
+                  },
+                  {
+                    value: "creating",
+                    label: "Creating",
+                  },
+                  {
+                    value: "failed",
+                    label: "Failed",
+                  },
+                  {
+                    value: "created",
+                    label: "Created",
+                  },
+                  {
+                    value: "inactive",
+                    label: "Inactive",
+                  },
+                  {
+                    value: "not_deployed",
+                    label: "Not deployed",
+                  },
+                ]}
+                dropdownLabel="Status"
+                width="150px"
+                dropdownWidth="230px"
+                closeOverlay={true}
+              />
+            </StyledStatusSelector>
+
+            <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+              <i className="material-icons">refresh</i>
+            </RefreshButton>
+          </ActionsWrapper>
+        </ControlRow>
+        <EventsGrid>{renderDeploymentList()}</EventsGrid>
+      </Container>
+    );
+  }
 
   return (
-    <Container>
-      <ControlRow>
-        <ActionsWrapper>
-          <StyledStatusSelector>
-            <Label>
-              <i className="material-icons">filter_alt</i>
-              Status
-            </Label>
-            <Selector
-              activeValue={statusSelectorVal}
-              setActiveValue={handleStatusFilterChange}
-              options={[
-                {
-                  value: "all",
-                  label: "All",
-                },
-                {
-                  value: "creating",
-                  label: "Creating",
-                },
-                {
-                  value: "failed",
-                  label: "Failed",
-                },
-                {
-                  value: "created",
-                  label: "Created",
-                },
-                {
-                  value: "inactive",
-                  label: "Inactive",
-                },
-                {
-                  value: "not_deployed",
-                  label: "Not deployed",
-                },
-              ]}
-              dropdownLabel="Status"
-              width="150px"
-              dropdownWidth="230px"
-              closeOverlay={true}
-            />
-          </StyledStatusSelector>
-          <StyledStatusSelector>
-            <Label>
-              <i className="material-icons">filter_alt</i>
-              Repository
-            </Label>
-            <Selector
-              activeValue={selectedRepo}
-              setActiveValue={handleRepoFilterChange}
-              options={[
-                {
-                  label: "All",
-                  value: "all",
-                },
-                ...repoOptions,
-              ]}
-              dropdownLabel="Repository"
-              width="200px"
-              dropdownWidth="300px"
-              closeOverlay
-            />
-          </StyledStatusSelector>
-
-          <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
-            <i className="material-icons">refresh</i>
-          </RefreshButton>
-        </ActionsWrapper>
-      </ControlRow>
-      <EventsGrid>{renderDeploymentList()}</EventsGrid>
-    </Container>
-  );
+    <>
+      <Flex>
+        <i
+          className="material-icons"
+          onClick={() => pushQueryParams({}, ["status_filter", "repository"])}
+        >
+          keyboard_backspace
+        </i>
+        <Icon
+          src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
+          alt="git repository icon"
+        />
+        <Title>{selectedRepo}</Title>
+      </Flex>
+      {renderMain()}
+    </>
+  )
 };
 
 export default DeploymentList;
@@ -340,6 +322,38 @@ const mockRequest = () =>
       1000
     );
   });
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+
+  > i {
+    cursor: pointer;
+    font-size 24px;
+    color: #969Fbbaa;
+    padding: 3px;
+    border-radius: 100px;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+`;
+
+const Icon = styled.img`
+  width: 25px;
+  height: 25px;
+  margin-right: 6px;
+  margin-left: 14px;
+`;
+
+const Title = styled.div`
+  font-size: 20px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  margin-left: 10px;
+  border-radius: 2px;
+  color: #ffffff;
+`;
 
 const ActionsWrapper = styled.div`
   display: flex;
@@ -366,13 +380,11 @@ const RefreshButton = styled.button`
 
 const Placeholder = styled.div`
   padding: 30px;
-  margin-top: 35px;
   padding-bottom: 40px;
   font-size: 13px;
   color: #ffffff44;
   min-height: 400px;
-  height: 50vh;
-  background: #ffffff11;
+  height: 40vh;
   border-radius: 8px;
   width: 100%;
   display: flex;

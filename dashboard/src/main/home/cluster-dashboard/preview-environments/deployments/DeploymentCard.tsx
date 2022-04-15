@@ -87,29 +87,33 @@ const DeploymentCard: React.FC<{
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
-          <DynamicLink
-            to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
-            target="_blank"
-          >
-            {deployment.gh_pr_name} #{deployment.pull_request_id}
-          </DynamicLink>
+          {deployment.gh_pr_name}
           {deployment.gh_pr_branch_from && deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>
               <MergeInfo
                 onMouseOver={() => setShowMergeInfoTooltip(true)}
                 onMouseOut={() => setShowMergeInfoTooltip(false)}
               >
-                From: {deployment.gh_pr_branch_from} Into:{" "}
+                {deployment.gh_pr_branch_from}
+                <i className="material-icons">arrow_forward</i>
                 {deployment.gh_pr_branch_into}
               </MergeInfo>
               {showMergeInfoTooltip && (
                 <Tooltip>
-                  From: {deployment.gh_pr_branch_from} Into:{" "}
-                  {deployment.gh_pr_branch_into}
+                  {deployment.gh_pr_branch_from} {"->"} {deployment.gh_pr_branch_into}
                 </Tooltip>
               )}
             </MergeInfoWrapper>
           ) : null}
+          <RepoLink
+            onClick={e => {
+              e.stopPropagation();
+              window.open(`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`, "_blank")
+            }}
+          >
+            <i className="material-icons">open_in_new</i>
+            View PR
+          </RepoLink>
         </PRName>
 
         <Flex>
@@ -120,19 +124,8 @@ const DeploymentCard: React.FC<{
             </Status>
           </StatusContainer>
           <DeploymentImageContainer>
-            <DeploymentTypeIcon src={integrationList.repo.icon} />
-            <RepositoryName
-              onMouseOver={() => {
-                setShowRepoTooltip(true);
-              }}
-              onMouseOut={() => {
-                setShowRepoTooltip(false);
-              }}
-            >
-              {repository}
-            </RepositoryName>
-            {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
             <InfoWrapper>
+              <SepDot>•</SepDot>
               <LastDeployed>
                 Last updated {readableDate(deployment.updated_at)}
               </LastDeployed>
@@ -210,6 +203,34 @@ const DeploymentCard: React.FC<{
 
 export default DeploymentCard;
 
+const RepoLink = styled.div`
+  height: 22px;
+  border-radius: 50px;
+  margin-left: 4px;
+  display: flex;
+  font-size: 12px;
+  cursor: pointer;
+  color: #a7a6bb;
+  align-items: center;
+  justify-content: center;
+  :hover {
+    color: #ffffff;
+    > i {
+      color: #ffffff;
+    }
+  }
+
+  > i {
+    margin-right: 5px;
+    color: #a7a6bb;
+    font-size: 16px;
+  }
+`;
+
+const SepDot = styled.div`
+  color: #aaaabb66;
+`;
+
 const DeleteMessage = styled.div`
   display: flex;
   align-items: flex-end;
@@ -260,22 +281,22 @@ const PRName = styled.div`
   font-weight: 500;
   color: #ffffff;
   display: flex;
+  font-size: 14px;
   align-items: center;
   margin-bottom: 10px;
 `;
 
 const DeploymentCardWrapper = styled.div`
   display: flex;
-  align-items: center;
+  background: #2b2e3699;
   justify-content: space-between;
-  border: 1px solid #ffffff44;
-  background: #ffffff08;
-  margin-bottom: 5px;
-  border-radius: 10px;
-  padding: 14px;
-  overflow: hidden;
-  height: 80px;
+  border-radius: 5px;
   font-size: 13px;
+  height: 75px;
+  padding: 12px;
+  padding-left: 14px;
+  border: 1px solid #ffffff0f;
+
   animation: fadeIn 0.5s;
   @keyframes fadeIn {
     from {
@@ -358,12 +379,11 @@ const DeploymentImageContainer = styled.div`
   font-size: 13px;
   position: relative;
   display: flex;
-  margin-left: 15px;
   align-items: center;
   font-weight: 400;
   justify-content: center;
   color: #ffffff66;
-  padding-left: 5px;
+  padding-left: 10px;
 `;
 
 const Icon = styled.img`
@@ -421,8 +441,8 @@ const InfoWrapper = styled.div`
 
 const LastDeployed = styled.div`
   font-size: 13px;
-  margin-left: 14px;
   margin-top: -1px;
+  margin-left: 10px;
   display: flex;
   align-items: center;
   color: #aaaabb66;
@@ -438,11 +458,17 @@ const MergeInfoWrapper = styled.div`
 const MergeInfo = styled.div`
   font-size: 13px;
   margin-left: 14px;
-  margin-top: -1px;
   align-items: center;
   color: #aaaabb66;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 300px;
+
+  > i {
+    font-size: 16px;
+    margin: 0 2px;
+  }
 `;

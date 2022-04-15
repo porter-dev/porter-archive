@@ -12,7 +12,8 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import { Environment } from "./types";
-import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
+import DashboardHeader from "../DashboardHeader";
+import PullRequestIcon from "assets/pull_request_icon.svg";
 import CheckboxRow from "components/form-components/CheckboxRow";
 
 const ConnectNewRepo: React.FC = () => {
@@ -95,21 +96,20 @@ const ConnectNewRepo: React.FC = () => {
 
   return (
     <>
-      <PreviewEnvironmentsHeader />
-      <LineBreak />
-      <ControlRow>
-        <BackButton to={`/preview-environments`}>
-          <i className="material-icons">close</i>
-        </BackButton>
-        <Title>Enable Preview Environments</Title>
-      </ControlRow>
-
-      <CheckboxRow
-        label="Enable automatic deployments"
-        isRequired
-        checked={enableAutomaticDeployments}
-        toggle={() => setEnableAutomaticDeployments((prev) => !prev)}
+      <DashboardHeader
+        image={PullRequestIcon}
+        title="Preview Environments"
+        description="Create full-stack preview environments for your pull requests."
       />
+
+      <HeaderSection>
+        <Button to={`/preview-environments`}>
+          <i className="material-icons">keyboard_backspace</i>
+          Back
+        </Button>
+        <Title>Enable Preview Environments on a Repository</Title>
+      </HeaderSection>
+
       <Heading>Select a Repository</Heading>
       <br />
       <RepoList
@@ -125,10 +125,26 @@ const ConnectNewRepo: React.FC = () => {
         Note: you will need to add a <CodeBlock>porter.yaml</CodeBlock> file to
         create a preview environment.
         <DocsHelper
+          disableMargin
           tooltipText="A Porter YAML file is a declarative set of resources that Porter uses to build and update your preview environment deployments."
           link="https://docs.porter.run/preview-environments/porter-yaml-reference"
         />
       </HelperContainer>
+
+      <FlexWrap>
+        <CheckboxRow
+          label="Enable automatic deployments"
+          checked={enableAutomaticDeployments}
+          toggle={() => setEnableAutomaticDeployments((prev) => !prev)}
+        />
+        <Div>
+          <DocsHelper
+            disableMargin
+            tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
+            placement="top-start"
+          />
+        </Div>
+      </FlexWrap>
 
       <ActionContainer>
         <SaveButton
@@ -147,55 +163,59 @@ const ConnectNewRepo: React.FC = () => {
 
 export default ConnectNewRepo;
 
-const LineBreak = styled.div`
-  width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
-  margin: 10px 0px 35px;
+const Div = styled.div`
+  margin-bottom: -7px;
 `;
 
-const ControlRow = styled.div`
+const FlexWrap = styled.div`
   display: flex;
-  margin-left: auto;
   align-items: center;
-  margin-bottom: 35px;
-  padding-left: 0px;
 `;
 
-const BackButton = styled(DynamicLink)`
+const Button = styled(DynamicLink)`
   display: flex;
-  width: 37px;
-  z-index: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
   cursor: pointer;
-  height: 37px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 20px;
   color: white;
-  > i {
-    font-size: 20px;
-  }
-
+  height: 35px;
+  margin-left: -2px;
+  padding: 0px 8px;
+  padding-bottom: 1px;
+  font-weight: 500;
+  padding-right: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  border: 2px solid #969fbbaa;
   :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
+    background: #ffffff11;
   }
-`;
 
-const Title = styled(TitleSection)`
-  margin-left: 10px;
-  margin-bottom: 0;
-  font-size: 18px;
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    color: #969fbbaa;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
 `;
 
 const ActionContainer = styled.div`
   display: flex;
   justify-content: flex-end;
-  margin-top: 50px;
+  margin-top: 20px;
 `;
 
 const CodeBlock = styled.span`
@@ -211,11 +231,44 @@ const CodeBlock = styled.span`
 
 const HelperContainer = styled.div`
   margin-top: 24px;
-  width: 600px;
+  width: 555px;
   display: flex;
   justify-content: start;
   align-items: center;
   color: #aaaabb;
   line-height: 1.6em;
   font-size: 13px;
+`;
+
+const Title = styled.div`
+  font-size: 20px;
+  font-weight: 500;
+  font-family: "Work Sans", sans-serif;
+  margin-left: 15px;
+  border-radius: 2px;
+  color: #ffffff;
+`;
+
+const HeaderSection = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 40px;
+
+  > i {
+    cursor: pointer;
+    font-size 20px;
+    color: #969Fbbaa;
+    padding: 2px;
+    border: 2px solid #969fbbaa;
+    border-radius: 100px;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+
+  > img {
+    width: 20px;
+    margin-left: 17px;
+    margin-right: 7px;
+  }
 `;

@@ -101,6 +101,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	worker.RegisterDriver("build-image", preview.NewBuildDriver)
 	worker.RegisterDriver("push-image", preview.NewPushDriver)
 	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
+	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
+	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
 
 	worker.SetDefaultDriver("deploy")
 
@@ -824,6 +826,10 @@ func NewCloneEnvGroupHook(client *api.Client, resourceGroup *switchboardTypes.Re
 
 func (t *CloneEnvGroupHook) PreApply() error {
 	for _, res := range t.resGroup.Resources {
+		if res.Driver == "env-group" {
+			continue
+		}
+
 		config := &ApplicationConfig{}
 
 		err := mapstructure.Decode(res.Config, &config)

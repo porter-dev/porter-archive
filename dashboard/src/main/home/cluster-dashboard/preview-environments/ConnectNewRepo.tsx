@@ -216,6 +216,7 @@ const ActionContainer = styled.div`
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+  padding-bottom: 100px;
 `;
 
 const CodeBlock = styled.span`

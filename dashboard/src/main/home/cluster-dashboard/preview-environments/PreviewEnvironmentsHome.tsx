@@ -1,5 +1,4 @@
 import Loading from "components/Loading";
-import TabSelector from "components/TabSelector";
 import React, { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import api from "shared/api";
@@ -7,7 +6,8 @@ import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import ButtonEnablePREnvironments from "./components/ButtonEnablePREnvironments";
-import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
+import DashboardHeader from "../DashboardHeader";
+import PullRequestIcon from "assets/pull_request_icon.svg";
 import DeploymentList from "./deployments/DeploymentList";
 import EnvironmentsList from "./environments/EnvironmentsList";
 import { environments } from "./mocks";
@@ -24,8 +24,8 @@ const PreviewEnvironmentsHome = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [environments, setEnvironments] = useState([]);
+  const [selectedRepo, setSelectedRepo] = useState("");
 
-  const [currentTab, setCurrentTab] = useState<TabEnum>("repositories");
   const { getQueryParam, pushQueryParams } = useRouting();
   const location = useLocation();
   const history = useHistory();
@@ -103,35 +103,25 @@ const PreviewEnvironmentsHome = () => {
   }, [currentCluster, currentProject]);
 
   useEffect(() => {
-    const current_tab = getQueryParam("current_tab");
-
-    if (!AvailableTabs.includes(current_tab)) {
-      pushQueryParams({}, ["current_tab"]);
-      return;
-    }
-
-    if (current_tab !== currentTab) {
-      setCurrentTab(current_tab);
-    }
+    const current_repo = getQueryParam("repository");
+    setSelectedRepo(current_repo);
   }, [location.search, history]);
 
-  if (isLoading) {
-    return (
-      <Placeholder>
-        <Loading />
-      </Placeholder>
-    );
-  }
-
-  if (hasError) {
-    return <Placeholder>Something went wrong, please try again</Placeholder>;
-  }
-
-  if (!hasGHAccountsLinked) {
-    return (
-      <>
-        <PreviewEnvironmentsHeader />
-        <LineBreak />
+  const renderMain = () => {
+    if (isLoading) {
+      return (
+        <Placeholder>
+          <Loading />
+        </Placeholder>
+      );
+    }
+  
+    if (hasError) {
+      return <Placeholder>Something went wrong, please try again</Placeholder>;
+    }
+  
+    if (!hasGHAccountsLinked) {
+      return (
         <Placeholder>
           <Title>There are no repositories linked</Title>
           <Subtitle>
@@ -140,15 +130,11 @@ const PreviewEnvironmentsHome = () => {
           </Subtitle>
           <ButtonEnablePREnvironments />
         </Placeholder>
-      </>
-    );
-  }
-
-  if (!hasEnvironments) {
-    return (
-      <>
-        <PreviewEnvironmentsHeader />
-        <LineBreak />
+      );
+    }
+  
+    if (!hasEnvironments) {
+      return (
         <Placeholder>
           <Title>Preview environments are not enabled on this cluster</Title>
           <Subtitle>
@@ -157,43 +143,41 @@ const PreviewEnvironmentsHome = () => {
           </Subtitle>
           <ButtonEnablePREnvironments />
         </Placeholder>
-      </>
+      );
+    }
+
+    if (!selectedRepo) {
+      return (
+        <EnvironmentsList
+          environments={environments}
+          setEnvironments={setEnvironments}
+        />
+      );
+    }
+
+    return (
+      <DeploymentList
+        // selectedRepo={selectedRepo}
+        environments={environments}
+      />
     );
   }
 
-  const handleSetTab = (tab: TabEnum) => {
-    pushQueryParams({ current_tab: tab });
-    setCurrentTab(tab);
-  };
-
   return (
     <>
-      <PreviewEnvironmentsHeader />
-      <TabSelector
-        options={[
-          {
-            label: "Linked Repositories",
-            value: "repositories",
-            component: (
-              <EnvironmentsList
-                environments={environments}
-                setEnvironments={setEnvironments}
-              />
-            ),
-          },
-          {
-            label: "Pull requests",
-            value: "pull_requests",
-            component: <DeploymentList environments={environments} />,
-          },
-        ]}
-        currentTab={currentTab}
-        setCurrentTab={handleSetTab}
+      <DashboardHeader
+        image={PullRequestIcon}
+        title="Preview Environments"
+        description="Create full-stack preview environments for your pull requests."
       />
+      {renderMain()}
     </>
   );
 };
 
+/*
+<DeploymentList environments={environments} />
+*/
 export default PreviewEnvironmentsHome;
 
 const mockRequest = () =>

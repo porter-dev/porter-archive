@@ -5,7 +5,7 @@ import { ClickAwayListener } from "@material-ui/core";
 
 type Props = {
   tooltipText: string;
-  link: string;
+  link?: string;
   placement?: TooltipPlacement;
   disableMargin?: boolean;
 };
@@ -45,9 +45,11 @@ const DocsHelper: React.FC<Props> = ({
             <Tooltip placement={placement}>
               <StyledContent onClick={handleTooltipOpen}>
                 {tooltipText}
+                {link && (
                 <A target="_blank" href={link}>
                   Documentation {">"}
                 </A>
+                )}
               </StyledContent>
             </Tooltip>
           )}

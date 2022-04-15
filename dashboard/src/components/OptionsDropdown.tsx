@@ -39,6 +39,10 @@ const OptionsButton = styled.button`
     background: #32343a;
     cursor: pointer;
   }
+
+  > i {
+    font-size: 20px;
+  }
 `;
 
 const DropdownMenu = styled.div`
@@ -51,6 +55,8 @@ const DropdownMenu = styled.div`
   background: #26282f;
   box-shadow: 0 8px 20px 0px #00000088;
   color: white;
+  overflow: hidden;
+  border-radius: 5px;
 `;
 
 const DropdownOption = styled.div`
@@ -60,6 +66,7 @@ const DropdownOption = styled.div`
   cursor: pointer;
   padding-left: 10px;
   padding-right: 10px;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -78,7 +85,7 @@ const DropdownOption = styled.div`
   }
 
   > i {
-    margin-right: 5px;
+    margin-right: 7px;
     font-size: 16px;
   }
 `;

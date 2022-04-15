@@ -28,7 +28,6 @@ const DeploymentDetail = () => {
   useEffect(() => {
     let isSubscribed = true;
     let environment_id = parseInt(searchParams.get("environment_id"));
-
     api
       .getPRDeploymentByCluster(
         "<token>",
@@ -65,11 +64,29 @@ const DeploymentDetail = () => {
   return (
     <StyledExpandedChart>
       <HeaderWrapper>
-        <BackButton to={"/cluster-dashboard?selected_tab=preview_environments"}>
+        <BackButton to={"/preview-environments"}>
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">
           {prDeployment.gh_pr_name}
+        </Title>
+        <InfoWrapper>
+          {prDeployment.subdomain && (
+            <PRLink to={prDeployment.subdomain} target="_blank">
+              <i className="material-icons">link</i>
+              {prDeployment.subdomain}
+            </PRLink>
+          )}
+          <TagWrapper>
+            Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
+          </TagWrapper>
+        </InfoWrapper>
+        <Flex>
+          <Status>
+            <StatusDot status={prDeployment.status} />
+            {capitalize(prDeployment.status)}
+          </Status>
+          <Dot>•</Dot>
           <DeploymentImageContainer>
             <DeploymentTypeIcon src={integrationList.repo.icon} />
             <RepositoryName
@@ -84,29 +101,12 @@ const DeploymentDetail = () => {
             </RepositoryName>
             {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
           </DeploymentImageContainer>
-          <TagWrapper>
-            Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
-          </TagWrapper>
-        </Title>
-        <InfoWrapper>
-          {prDeployment.subdomain && (
-            <PRLink to={prDeployment.subdomain} target="_blank">
-              <i className="material-icons">link</i>
-              {prDeployment.subdomain}
-            </PRLink>
-          )}
-        </InfoWrapper>
-        <Flex>
-          <Status>
-            <StatusDot status={prDeployment.status} />
-            {capitalize(prDeployment.status)}
-          </Status>
           <Dot>•</Dot>
           <GHALink
             to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
             target="_blank"
           >
-            <img src={github} /> GitHub
+            <img src={github} /> GitHub PR
             <i className="material-icons">open_in_new</i>
           </GHALink>
         </Flex>
@@ -203,6 +203,7 @@ const BackButtonImg = styled.img`
 
 const HeaderWrapper = styled.div`
   position: relative;
+  padding-right: 40px;
 `;
 
 const Dot = styled.div`
@@ -214,8 +215,7 @@ const Dot = styled.div`
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  width: auto;
-  justify-content: space-between;
+  margin-top: 20px;
 `;
 
 const TagWrapper = styled.div`
@@ -336,7 +336,7 @@ const DeploymentImageContainer = styled.div`
   font-size: 13px;
   position: relative;
   display: flex;
-  margin-left: 15px;
+  margin-left: 5px;
   margin-bottom: -3px;
   align-items: center;
   font-weight: 400;

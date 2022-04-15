@@ -12,7 +12,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 )
 
-// listCmd represents the "porter get" base command when called
+// listCmd represents the "porter list" base command when called
 // without any subcommands
 var listCmd = &cobra.Command{
 	Use:   "list",

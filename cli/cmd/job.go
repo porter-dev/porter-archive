@@ -135,8 +135,8 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 
 	return client.UpdateBatchImage(
 		context.TODO(),
-		config.Project,
-		config.Cluster,
+		cliConf.Project,
+		cliConf.Cluster,
 		namespace,
 		&types.UpdateImageBatchRequest{
 			ImageRepoURI: imageRepoURI,
@@ -148,7 +148,7 @@ func batchImageUpdate(_ *types.GetAuthenticatedUserResponse, client *api.Client,
 // waits for a job with a given name/namespace
 func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	// get the job release
-	jobRelease, err := client.GetRelease(context.Background(), config.Project, config.Cluster, namespace, name)
+	jobRelease, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, name)
 
 	if err != nil {
 		return err
@@ -168,7 +168,7 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	// attempt to parse out the timeout value for the job, given by `sidecar.timeout`
 	// if it does not exist, we set the default to 30 minutes
-	timeoutVal := getJobTimeoutValue(jobRelease.Release.Config)
+	timeoutVal := GetJobTimeoutValue(jobRelease.Release.Config)
 
 	color.New(color.FgYellow).Printf("Waiting for timeout seconds %.1f\n", timeoutVal.Seconds())
 
@@ -177,7 +177,7 @@ func waitForJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	for time.Now().Before(timeWait) {
 		// get the jobs for that job chart
-		jobs, err := client.GetJobs(context.Background(), config.Project, config.Cluster, namespace, name)
+		jobs, err := client.GetJobs(context.Background(), cliConf.Project, cliConf.Cluster, namespace, name)
 
 		if err != nil {
 			return err
@@ -229,7 +229,7 @@ func getJobMatchingRevision(revision uint, jobs []v1.Job) *v1.Job {
 	return nil
 }
 
-func getJobTimeoutValue(values map[string]interface{}) time.Duration {
+func GetJobTimeoutValue(values map[string]interface{}) time.Duration {
 	defaultTimeout := time.Minute * 60
 	sidecarInter, ok := values["sidecar"]
 
@@ -249,7 +249,7 @@ func getJobTimeoutValue(values map[string]interface{}) time.Duration {
 		return defaultTimeout
 	}
 
-	timeoutVal, ok := timeoutInter.(int64)
+	timeoutVal, ok := timeoutInter.(float64)
 
 	if !ok {
 		return defaultTimeout

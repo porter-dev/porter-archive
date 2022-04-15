@@ -16,7 +16,9 @@ import (
 	"github.com/mitchellh/mapstructure"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
@@ -95,8 +97,12 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	}
 
 	worker := worker.NewWorker()
-	worker.RegisterDriver("porter.deploy", NewPorterDriver)
-	worker.SetDefaultDriver("porter.deploy")
+	worker.RegisterDriver("deploy", NewPorterDriver)
+	worker.RegisterDriver("build-image", preview.NewBuildDriver)
+	worker.RegisterDriver("push-image", preview.NewPushDriver)
+	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
+
+	worker.SetDefaultDriver("deploy")
 
 	if hasDeploymentHookEnvVars() {
 		deplNamespace := os.Getenv("PORTER_NAMESPACE")
@@ -158,20 +164,6 @@ func hasDeploymentHookEnvVars() bool {
 	return true
 }
 
-type Source struct {
-	Name          string
-	Repo          string
-	Version       string
-	IsApplication bool
-	SourceValues  map[string]interface{}
-}
-
-type Target struct {
-	Project   uint
-	Cluster   uint
-	Namespace string
-}
-
 type ApplicationConfig struct {
 	WaitForJob bool
 
@@ -180,9 +172,9 @@ type ApplicationConfig struct {
 	OnlyCreate bool
 
 	Build struct {
-		ForceBuild bool
-		ForcePush  bool
-		UseCache   bool
+		ForceBuild bool `mapstructure:"force_build"`
+		ForcePush  bool `mapstructure:"force_push"`
+		UseCache   bool `mapstructure:"use_cache"`
 		Method     string
 		Context    string
 		Dockerfile string
@@ -191,14 +183,14 @@ type ApplicationConfig struct {
 		Buildpacks []string
 	}
 
-	EnvGroups []types.EnvGroupMeta
+	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
 
 	Values map[string]interface{}
 }
 
 type Driver struct {
-	source      *Source
-	target      *Target
+	source      *preview.Source
+	target      *preview.Target
 	output      map[string]interface{}
 	lookupTable *map[string]drivers.Driver
 	logger      *zerolog.Logger
@@ -211,18 +203,14 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		output:      make(map[string]interface{}),
 	}
 
-	source := &Source{}
-
-	err := getSource(resource.Source, source)
+	source, err := preview.GetSource(resource.Source)
 	if err != nil {
 		return nil, err
 	}
 
 	driver.source = source
 
-	target := &Target{}
-
-	err = getTarget(resource.Target, target)
+	target, err := preview.GetTarget(resource.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +225,7 @@ func (d *Driver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
-	client := GetAPIClient(config)
+	client := config.GetAPIClient()
 	name := resource.Name
 
 	if name == "" {
@@ -372,7 +360,7 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 
 	if appConfig.Build.UseCache {
 		// set the docker config so that pack caching can use the repo credentials
-		err := setDockerConfig(client)
+		err := config.SetDockerConfig(client)
 
 		if err != nil {
 			return nil, err
@@ -402,12 +390,12 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
 
-		prevProject := config.Project
-		prevCluster := config.Cluster
+		prevProject := cliConf.Project
+		prevCluster := cliConf.Cluster
 		name = resource.Name
 		namespace = d.target.Namespace
-		config.Project = d.target.Project
-		config.Cluster = d.target.Cluster
+		cliConf.Project = d.target.Project
+		cliConf.Cluster = d.target.Cluster
 
 		err = waitForJob(nil, client, []string{})
 
@@ -415,8 +403,8 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 			return nil, err
 		}
 
-		config.Project = prevProject
-		config.Cluster = prevCluster
+		cliConf.Project = prevProject
+		cliConf.Cluster = prevCluster
 	}
 
 	return resource, err
@@ -590,155 +578,6 @@ func (d *Driver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func getSource(input map[string]interface{}, output *Source) error {
-	// first read from env vars
-	output.Name = os.Getenv("PORTER_SOURCE_NAME")
-	output.Repo = os.Getenv("PORTER_SOURCE_REPO")
-	output.Version = os.Getenv("PORTER_SOURCE_VERSION")
-
-	// next, check for values in the YAML file
-	if output.Name == "" {
-		if name, ok := input["name"]; ok {
-			nameVal, ok := name.(string)
-			if !ok {
-				return fmt.Errorf("invalid name provided")
-			}
-			output.Name = nameVal
-		}
-	}
-
-	if output.Name == "" {
-		return fmt.Errorf("source name required")
-	}
-
-	if output.Repo == "" {
-		if repo, ok := input["repo"]; ok {
-			repoVal, ok := repo.(string)
-			if !ok {
-				return fmt.Errorf("invalid repo provided")
-			}
-			output.Repo = repoVal
-		}
-	}
-
-	if output.Version == "" {
-		if version, ok := input["version"]; ok {
-			versionVal, ok := version.(string)
-			if !ok {
-				return fmt.Errorf("invalid version provided")
-			}
-			output.Version = versionVal
-		}
-	}
-
-	// lastly, just put in the defaults
-	if output.Version == "" {
-		output.Version = "latest"
-	}
-
-	output.IsApplication = output.Repo == "https://charts.getporter.dev"
-
-	if output.Repo == "" {
-		output.Repo = "https://charts.getporter.dev"
-
-		values, err := existsInRepo(output.Name, output.Version, output.Repo)
-
-		if err == nil {
-			// found in "https://charts.getporter.dev"
-			output.SourceValues = values
-			output.IsApplication = true
-			return nil
-		}
-
-		output.Repo = "https://chart-addons.getporter.dev"
-
-		values, err = existsInRepo(output.Name, output.Version, output.Repo)
-
-		if err == nil {
-			// found in https://chart-addons.getporter.dev
-			output.SourceValues = values
-			return nil
-		}
-
-		return fmt.Errorf("source does not exist in any repo")
-	} else {
-		// we look in the passed-in repo
-		values, err := existsInRepo(output.Name, output.Version, output.Repo)
-
-		if err == nil {
-			output.SourceValues = values
-			return nil
-		}
-	}
-
-	return fmt.Errorf("source '%s' does not exist in repo '%s'", output.Name, output.Repo)
-}
-
-func getTarget(input map[string]interface{}, output *Target) error {
-	// first read from env vars
-	if projectEnv := os.Getenv("PORTER_PROJECT"); projectEnv != "" {
-		project, err := strconv.Atoi(projectEnv)
-		if err != nil {
-			return err
-		}
-		output.Project = uint(project)
-	}
-
-	if clusterEnv := os.Getenv("PORTER_CLUSTER"); clusterEnv != "" {
-		cluster, err := strconv.Atoi(clusterEnv)
-		if err != nil {
-			return err
-		}
-		output.Cluster = uint(cluster)
-	}
-
-	output.Namespace = os.Getenv("PORTER_NAMESPACE")
-
-	// next, check for values in the YAML file
-	if output.Project == 0 {
-		if project, ok := input["project"]; ok {
-			projectVal, ok := project.(uint)
-			if !ok {
-				return fmt.Errorf("project value must be an integer")
-			}
-			output.Project = projectVal
-		}
-	}
-
-	if output.Cluster == 0 {
-		if cluster, ok := input["cluster"]; ok {
-			clusterVal, ok := cluster.(uint)
-			if !ok {
-				return fmt.Errorf("cluster value must be an integer")
-			}
-			output.Cluster = clusterVal
-		}
-	}
-
-	if output.Namespace == "" {
-		if namespace, ok := input["namespace"]; ok {
-			namespaceVal, ok := namespace.(string)
-			if !ok {
-				return fmt.Errorf("invalid namespace provided")
-			}
-			output.Namespace = namespaceVal
-		}
-	}
-
-	// lastly, just put in the defaults
-	if output.Project == 0 {
-		output.Project = config.Project
-	}
-	if output.Cluster == 0 {
-		output.Cluster = config.Cluster
-	}
-	if output.Namespace == "" {
-		output.Namespace = "default"
-	}
-
-	return nil
-}
-
 func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
@@ -764,22 +603,6 @@ func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationCo
 	}
 
 	return config, nil
-}
-
-func existsInRepo(name, version, url string) (map[string]interface{}, error) {
-	chart, err := GetAPIClient(config).GetTemplate(
-		context.Background(),
-		name, version,
-		&types.GetTemplateRequest{
-			TemplateGetBaseRequest: types.TemplateGetBaseRequest{
-				RepoURL: url,
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return chart.Values, nil
 }
 
 type DeploymentHook struct {
@@ -814,13 +637,13 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 
 	res.prID = uint(prID)
 
-	res.projectID = config.Project
+	res.projectID = cliConf.Project
 
 	if res.projectID == 0 {
 		return nil, fmt.Errorf("project id must be set")
 	}
 
-	res.clusterID = config.Cluster
+	res.clusterID = cliConf.Cluster
 
 	if res.clusterID == 0 {
 		return nil, fmt.Errorf("cluster id must be set")
@@ -1017,9 +840,7 @@ func (t *CloneEnvGroupHook) PreApply() error {
 		}
 
 		if config != nil && len(config.EnvGroups) > 0 {
-			target := &Target{}
-
-			err = getTarget(res.Target, target)
+			target, err := preview.GetTarget(res.Target)
 
 			if err != nil {
 				return err

@@ -72,7 +72,7 @@ type getReleaseInfo struct {
 }
 
 func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	rel, err := client.GetRelease(context.Background(), config.Project, config.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
 
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 }
 
 func getValues(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	rel, err := client.GetRelease(context.Background(), config.Project, config.Cluster, namespace, args[0])
+	rel, err := client.GetRelease(context.Background(), cliConf.Project, cliConf.Cluster, namespace, args[0])
 
 	if err != nil {
 		return err

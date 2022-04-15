@@ -275,7 +275,9 @@ export default class JobResource extends Component<PropsType, StateType> {
           to={`https://github.com/${this.props.repositoryUrl}/commit/${tag}`}
           onClick={(e) => e.preventDefault()}
           target="_blank"
-        ></DynamicLink>
+        >
+          {tag}
+        </DynamicLink>
       );
     }
 

@@ -2,7 +2,6 @@ package preview
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
@@ -56,8 +55,6 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 	client := config.GetAPIClient()
 
 	for _, group := range d.config.EnvGroups {
-		fmt.Println(group)
-
 		if group.Namespace == "" {
 			color.New(color.FgYellow).Printf("env group %s has empty namespace so defaulting to target namespace %s\n",
 				group.Name, d.target.Namespace)

@@ -34,7 +34,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const [
     statusSelectorVal,
     setStatusSelectorVal,
-  ] = useState<AvailableStatusFiltersType>("all");
+  ] = useState<AvailableStatusFiltersType>("active");
   const [selectedRepo, setSelectedRepo] = useState("");
 
   const { currentProject, currentCluster } = useContext(Context);
@@ -155,21 +155,26 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       });
     }
 
-    if (statusSelectorVal !== "all") {
+    // Only filter out inactive when status filter is "active"
+    if (statusSelectorVal === "active") {
       tmpDeploymentList = tmpDeploymentList.filter((d) => {
-        return d.status === statusSelectorVal;
+        return d.status !== "inactive";
       });
+    } else if (statusSelectorVal === "inactive") {
+      tmpDeploymentList = tmpDeploymentList.filter((d) => {
+        return d.status === "inactive";
+      });      
     }
 
     return tmpDeploymentList;
   }, [selectedRepo, statusSelectorVal, deploymentList]);
 
   const filteredPullRequests = useMemo(() => {
-    if (statusSelectorVal !== "not_deployed" && statusSelectorVal !== "all") {
+    if (statusSelectorVal !== "not_deployed" && statusSelectorVal !== "inactive") {
       return [];
     }
 
-    if (selectedRepo === "all") {
+    if (selectedRepo === "inactive") {
       return pullRequests;
     }
 
@@ -206,6 +211,15 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
 
     return (
       <>
+        {filteredPullRequests.map((pr) => {
+          return (
+            <PullRequestCard
+              key={pr.pr_title}
+              pullRequest={pr}
+              onCreation={handlePreviewEnvironmentManualCreation}
+            />
+          );
+        })}
         {filteredDeployments.map((d) => {
           return (
             <DeploymentCard
@@ -213,15 +227,6 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
               deployment={d}
               onDelete={handleRefresh}
               onReEnable={handleRefresh}
-            />
-          );
-        })}
-        {filteredPullRequests.map((pr) => {
-          return (
-            <PullRequestCard
-              key={pr.pr_title}
-              pullRequest={pr}
-              onCreation={handlePreviewEnvironmentManualCreation}
             />
           );
         })}
@@ -237,54 +242,6 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   const renderMain = () => {
     return (
       <Container>
-        <ControlRow>
-          <ActionsWrapper>
-            <StyledStatusSelector>
-              <Label>
-                <i className="material-icons">filter_alt</i>
-                Status
-              </Label>
-              <Selector
-                activeValue={statusSelectorVal}
-                setActiveValue={handleStatusFilterChange}
-                options={[
-                  {
-                    value: "all",
-                    label: "All",
-                  },
-                  {
-                    value: "creating",
-                    label: "Creating",
-                  },
-                  {
-                    value: "failed",
-                    label: "Failed",
-                  },
-                  {
-                    value: "created",
-                    label: "Created",
-                  },
-                  {
-                    value: "inactive",
-                    label: "Inactive",
-                  },
-                  {
-                    value: "not_deployed",
-                    label: "Not deployed",
-                  },
-                ]}
-                dropdownLabel="Status"
-                width="150px"
-                dropdownWidth="230px"
-                closeOverlay={true}
-              />
-            </StyledStatusSelector>
-
-            <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
-              <i className="material-icons">refresh</i>
-            </RefreshButton>
-          </ActionsWrapper>
-        </ControlRow>
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>
     );
@@ -303,7 +260,33 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
           src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
           alt="git repository icon"
         />
-        <Title>{selectedRepo}</Title>
+        <Title>{selectedRepo}snowflake-db-organization/backed-node-main-test-ultra</Title>
+
+        <ActionsWrapper>
+          <StyledStatusSelector>
+            <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
+              <i className="material-icons">refresh</i>
+            </RefreshButton>
+            <Selector
+              activeValue={statusSelectorVal}
+              setActiveValue={handleStatusFilterChange}
+              options={[
+                {
+                  value: "active",
+                  label: "Active",
+                },
+                {
+                  value: "inactive",
+                  label: "Inactive",
+                }
+              ]}
+              dropdownLabel="Status"
+              width="150px"
+              dropdownWidth="230px"
+              closeOverlay={true}
+            />
+          </StyledStatusSelector>
+        </ActionsWrapper>
       </Flex>
       {renderMain()}
     </>
@@ -357,6 +340,7 @@ const Title = styled.div`
 
 const ActionsWrapper = styled.div`
   display: flex;
+  margin-left: auto;
 `;
 
 const RefreshButton = styled.button`
@@ -366,6 +350,9 @@ const RefreshButton = styled.button`
   color: ${(props: { color: string }) => props.color};
   cursor: pointer;
   border: none;
+  width: 30px;
+  height: 30px;
+  margin-right: 15px;
   background: none;
   border-radius: 50%;
   margin-left: 10px;

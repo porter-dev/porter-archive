@@ -89,6 +89,8 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 			if err != nil {
 				return nil, err
 			}
+		} else if err != nil {
+			return nil, err
 		}
 
 		d.output[envGroup.Name] = map[string]interface{}{

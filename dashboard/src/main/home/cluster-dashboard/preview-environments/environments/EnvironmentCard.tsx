@@ -43,7 +43,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
 
   const showOpenPrs = () => {
     pushFiltered("/preview-environments", [], {
-      current_tab: "pull_requests",
       repository: `${git_repo_owner}/${git_repo_name}`,
     });
   };
@@ -89,25 +88,23 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
     <>
       {showDeleteModal ? (
         <Modal
-          title={`Are you sure you wanna remove preview environments for ${git_repo_owner}/${git_repo_name}`}
+          title={`Remove Preview Envs for ${git_repo_owner}/${git_repo_name}`}
           width="800px"
           height="260px"
           onRequestClose={closeForm}
         >
           <Warning highlight>
-            ⚠️ Removing this repository from preview environments will delete
-            all the deployments associated. Meaning you will not be able to
-            access those preview environments no more.
+            ⚠️ All Preview Environment deployments associated with this repo will be deleted.
           </Warning>
           <InputRow
             type="text"
-            label="Please write down the repo name before proceeding"
+            label="Enter the full name of the repository to delete Preview Environments:"
             value={deleteConfirmationRepoName}
+            placeholder={`${git_repo_owner}/${git_repo_name}`}
             setValue={(x: string) => setDeleteConfirmationRepoName(x)}
-            width={"300px"}
+            width={"500px"}
           />
           <ActionWrapper>
-            <CancelButton onClick={closeForm}>Cancel</CancelButton>
             <DeleteButton
               onClick={() => handleDelete()}
               disabled={!canDelete()}
@@ -117,46 +114,51 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
           </ActionWrapper>
         </Modal>
       ) : null}
-      <EnvironmentCardWrapper>
+      <EnvironmentCardWrapper onClick={showOpenPrs}>
         <DataContainer>
           <RepoName>
             <Icon
               src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
               alt="git repository icon"
             />
-            <DynamicLink
-              to={`https://github.com/${git_repo_owner}/${git_repo_name}`}
-              target="_blank"
+            {git_repo_owner}/{git_repo_name}
+            <RepoLink
+              onClick={e => {
+                e.stopPropagation();
+                window.open(`https://github.com/${git_repo_owner}/${git_repo_name}`, "_blank")
+              }}
             >
-              {git_repo_owner}/{git_repo_name}
-            </DynamicLink>
+              <i className="material-icons">open_in_new</i>
+              View Repo
+            </RepoLink>
           </RepoName>
           <Status>
             {deployment_count > 0 ? (
-              <span>
-                Pull {deployment_count > 1 ? "requests" : "request"} deployed:{" "}
-                {deployment_count || 0}
-              </span>
-            ) : (
-              <span>
-                There is no pull request deployed for this environment
-              </span>
-            )}
-            {deployment_count > 0 ? (
               <>
-                <Dot>•</Dot>
                 <StatusDot status={last_deployment_status} />
-                Last PR status was {capitalize(last_deployment_status || "")}
+                Last PR status was "{capitalize(last_deployment_status || "")}"
+                <Dot>•</Dot>
               </>
             ) : null}
+            {deployment_count > 0 ? (
+              <Span>
+                {deployment_count || 0}{" "}
+                pull {deployment_count > 1 ? "requests" : "request"} deployed
+              </Span>
+            ) : (
+              <Span>
+                There is no pull request deployed for this environment
+              </Span>
+            )}
           </Status>
         </DataContainer>
-        <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
-          <Options.Option onClick={showOpenPrs}>View opened PRs</Options.Option>
-          <Options.Option onClick={() => setShowDeleteModal(true)}>
-            Delete
-          </Options.Option>
-        </Options.Dropdown>
+        <OptionWrapper>
+          <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
+            <Options.Option onClick={() => setShowDeleteModal(true)}>
+              <i className="material-icons">delete</i> Delete
+            </Options.Option>
+          </Options.Dropdown>
+        </OptionWrapper>
       </EnvironmentCardWrapper>
     </>
   );
@@ -164,16 +166,53 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
 
 export default EnvironmentCard;
 
-const EnvironmentCardWrapper = styled.div`
+const Span = styled.span`
+  color: #aaaabb66;
+`;
+
+const OptionWrapper = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
+`;
+
+const RepoLink = styled.div`
+  height: 22px;
+  border-radius: 50px;
+  margin-left: 10px;
+  display: flex;
+  font-size: 12px;
+  color: #a7a6bb;
+  align-items: center;
+  justify-content: center;
+  :hover {
+    color: #ffffff;
+    > i {
+      color: #ffffff;
+    }
+  }
+
+  > i {
+    margin-right: 5px;
+    color: #a7a6bb;
+    font-size: 16px;
+  }
+`;
+
+const EnvironmentCardWrapper = styled.div`
+  display: flex;
+  background: #2b2e3699;
   justify-content: space-between;
-  border: 1px solid #ffffff44;
-  background: #ffffff08;
-  border-radius: 10px;
-  padding: 14px;
-  min-height: 80px;
-  font-size: 13px;
+  border-radius: 5px;
+  cursor: pointer;
+  height: 75px;
+  padding: 12px;
+  padding-left: 14px;
+  border: 1px solid #ffffff0f;
+
+  :hover {
+    border: 1px solid #ffffff3c;
+  }
   animation: fadeIn 0.5s;
   @keyframes fadeIn {
     from {
@@ -192,7 +231,8 @@ const DataContainer = styled.div`
 
 const RepoName = styled.div`
   display: flex;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 500;
   align-items: center;
 `;
 
@@ -218,13 +258,13 @@ const StatusDot = styled.div`
       ? "#00d12a"
       : "#f5cb42"};
   border-radius: 20px;
-  margin-left: 3px;
+  margin-left: 4px;
 `;
 
 const Icon = styled.img`
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
 `;
 
 const Button = styled.button`
@@ -233,9 +273,10 @@ const Button = styled.button`
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
+  margin-top: 13px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
-  border-radius: 10px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   padding: 10px 16px;
@@ -287,7 +328,7 @@ const Warning = styled.div`
   display: flex;
   border-radius: 3px;
   width: calc(100%);
-  margin-top: 10px;
+  margin-top: 18px;
   margin-left: 2px;
   line-height: 1.4em;
   align-items: center;
@@ -302,5 +343,6 @@ const Warning = styled.div`
 
 const Dot = styled.div`
   margin-right: 9px;
+  color: #aaaabb66;
   margin-left: 9px;
 `;

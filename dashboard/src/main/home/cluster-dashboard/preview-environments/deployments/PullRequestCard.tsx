@@ -62,19 +62,15 @@ const PullRequestCard = ({
         <DataContainer>
           <PRName>
             <PRIcon src={pr_icon} alt="pull request icon" />
-            <DynamicLink
-              to={`https://github.com/${pullRequest.repo_owner}/${pullRequest.repo_name}/pull/${pullRequest.pr_number}`}
-              target="_blank"
-            >
-              {pullRequest.pr_title}
-            </DynamicLink>
-
+            {pullRequest.pr_title}
             <InfoWrapper>
               <MergeInfo
                 onMouseOver={() => setShowMergeInfoTooltip(true)}
                 onMouseOut={() => setShowMergeInfoTooltip(false)}
               >
-                From: {pullRequest.branch_from} Into: {pullRequest.branch_into}
+                {pullRequest.branch_from}
+                <i className="material-icons">arrow_forward</i>
+                {pullRequest.branch_into}
               </MergeInfo>
               {showMergeInfoTooltip && (
                 <Tooltip>
@@ -83,6 +79,15 @@ const PullRequestCard = ({
                 </Tooltip>
               )}
             </InfoWrapper>
+            <RepoLink
+              onClick={e => {
+                e.stopPropagation();
+                window.open(`https://github.com/${pullRequest.repo_owner}/${pullRequest.repo_name}/pull/${pullRequest.pr_number}`, "_blank")
+              }}
+            >
+              <i className="material-icons">open_in_new</i>
+              View PR
+            </RepoLink>
           </PRName>
 
           <Flex>
@@ -92,20 +97,6 @@ const PullRequestCard = ({
                 Not deployed
               </Status>
             </StatusContainer>
-            <DeploymentImageContainer>
-              <DeploymentTypeIcon src={integrationList.repo.icon} />
-              <RepositoryName
-                onMouseOver={() => {
-                  setShowRepoTooltip(true);
-                }}
-                onMouseOut={() => {
-                  setShowRepoTooltip(false);
-                }}
-              >
-                {repository}
-              </RepositoryName>
-              {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
-            </DeploymentImageContainer>
           </Flex>
         </DataContainer>
         <Flex>
@@ -131,6 +122,30 @@ const PullRequestCard = ({
 
 export default PullRequestCard;
 
+const RepoLink = styled.div`
+  height: 22px;
+  border-radius: 50px;
+  margin-left: 4px;
+  display: flex;
+  font-size: 12px;
+  cursor: pointer;
+  color: #a7a6bb;
+  align-items: center;
+  justify-content: center;
+  :hover {
+    color: #ffffff;
+    > i {
+      color: #ffffff;
+    }
+  }
+
+  > i {
+    margin-right: 5px;
+    color: #a7a6bb;
+    font-size: 16px;
+  }
+`;
+
 const Flex = styled.div`
   display: flex;
   align-items: center;
@@ -147,15 +162,15 @@ const PRName = styled.div`
 
 const DeploymentCardWrapper = styled.div`
   display: flex;
-  align-items: center;
+  background: #2b2e3699;
   justify-content: space-between;
-  border: 1px solid #ffffff44;
-  background: #ffffff08;
-  margin-bottom: 5px;
-  border-radius: 10px;
-  padding: 14px;
-  height: 80px;
+  border-radius: 5px;
   font-size: 13px;
+  height: 75px;
+  padding: 12px;
+  padding-left: 14px;
+  border: 1px solid #ffffff0f;
+
   animation: fadeIn 0.5s;
   @keyframes fadeIn {
     from {
@@ -272,11 +287,17 @@ const InfoWrapper = styled.div`
 const MergeInfo = styled.div`
   font-size: 13px;
   margin-left: 14px;
-  margin-top: -1px;
   align-items: center;
   color: #aaaabb66;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 300px;
+
+  > i {
+    font-size: 16px;
+    margin: 0 2px;
+  }
 `;

@@ -476,7 +476,7 @@ const StartedText = styled.div`
 const StyledJob = styled.div`
   display: flex;
   flex-direction: column;
-  background: #2b2e36;
+  background: #2b2e3699;
   margin-bottom: 20px;
   border-radius: 5px;
   overflow: hidden;

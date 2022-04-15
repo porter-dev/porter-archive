@@ -109,10 +109,7 @@ module.exports = () => {
       hot: true,
     },
     plugins: [
-      new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, "src", "index.html"),
-        segmentKey: `${process.env.SEGMENT_PUBLIC_KEY}`,
-      }),
+      new HtmlWebpackPlugin(htmlPluginOpts),
       new webpack.DefinePlugin(envKeys),
       isDevelopment && new ReactRefreshWebpackPlugin(),
     ].filter(Boolean),

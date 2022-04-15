@@ -2,6 +2,7 @@ package preview
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
@@ -55,6 +56,10 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 	client := config.GetAPIClient()
 
 	for _, group := range d.config.EnvGroups {
+		if group.Name == "" {
+			return nil, fmt.Errorf("env group name cannot be empty")
+		}
+
 		if group.Namespace == "" {
 			color.New(color.FgYellow).Printf("env group %s has empty namespace so defaulting to target namespace %s\n",
 				group.Name, d.target.Namespace)
@@ -62,16 +67,34 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 			group.Namespace = d.target.Namespace
 		}
 
-		_, err = client.CreateEnvGroup(
-			context.Background(), d.target.Project, d.target.Cluster, group.Namespace,
-			&types.CreateEnvGroupRequest{
-				Name:      group.Name,
-				Variables: group.Variables,
+		envGroup, err := client.GetEnvGroup(
+			context.Background(),
+			d.target.Project,
+			d.target.Cluster,
+			group.Namespace,
+			&types.GetEnvGroupRequest{
+				Name: group.Name,
 			},
 		)
 
-		if err != nil {
+		if err != nil && err.Error() == "env group not found" {
+			envGroup, err = client.CreateEnvGroup(
+				context.Background(), d.target.Project, d.target.Cluster, group.Namespace,
+				&types.CreateEnvGroupRequest{
+					Name:      group.Name,
+					Variables: group.Variables,
+				},
+			)
+
+			if err != nil {
+				return nil, err
+			}
+		} else if err != nil {
 			return nil, err
+		}
+
+		d.output[envGroup.Name] = map[string]interface{}{
+			"variables": envGroup.Variables,
 		}
 	}
 

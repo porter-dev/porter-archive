@@ -290,13 +290,13 @@ tabs:
     - type: heading
       label: Storage Settings
     - type: number-input
-      label: Gigabytes
+      label: Specify the amount of storage to allocate to this instance in gigabytes.
       variable: db_allocated_storage
       placeholder: "ex: 10"
       settings:
         default: 10
     - type: number-input
-      label: Gigabytes
+      label: Specify the maximum storage that this instance can scale to in gigabytes.
       variable: db_max_allocated_storage
       placeholder: "ex: 20"
       settings:
@@ -305,7 +305,22 @@ tabs:
       variable: db_storage_encrypted
       label: Enable storage encryption for the database. 
       settings:
-        default: false`
+        default: false
+- name: advanced
+  label: Advanced
+  sections:
+  - name: replicas
+    contents:
+    - type: heading
+      label: Read Replicas
+    - type: subtitle
+      label: Specify the number of read replicas to run alongside your RDS instance.
+    - type: number-input
+      label: Replicas
+      variable: db_replicas
+      placeholder: "ex: 1"
+      settings:
+        default: 0`
 
 const ecrForm = `name: ECR
 hasSource: false

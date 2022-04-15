@@ -140,7 +140,7 @@ const DeploymentCard: React.FC<{
               deployment.status !== "inactive" && (
                 <>
                   <RowButton
-                    to={`/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+                    to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
                     key={deployment.id}
                   >
                     <i className="material-icons-outlined">info</i>

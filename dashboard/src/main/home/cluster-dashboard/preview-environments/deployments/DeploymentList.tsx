@@ -260,7 +260,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
           src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
           alt="git repository icon"
         />
-        <Title>{selectedRepo}snowflake-db-organization/backed-node-main-test-ultra</Title>
+        <Title>{selectedRepo}</Title>
 
         <ActionsWrapper>
           <StyledStatusSelector>

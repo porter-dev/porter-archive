@@ -253,7 +253,12 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 
 // Simple apply for addons
 func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
-	var err error
+	addonConfig, err := d.getAddonConfig(resource)
+
+	if err != nil {
+		return nil, err
+	}
+
 	if shouldCreate {
 		err = client.DeployAddon(
 			context.Background(),
@@ -265,13 +270,13 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 					RepoURL:         d.source.Repo,
 					TemplateName:    d.source.Name,
 					TemplateVersion: d.source.Version,
-					Values:          resource.Config,
+					Values:          addonConfig,
 					Name:            resource.Name,
 				},
 			},
 		)
 	} else {
-		bytes, err := json.Marshal(resource.Config)
+		bytes, err := json.Marshal(addonConfig)
 
 		if err != nil {
 			return nil, err
@@ -601,6 +606,14 @@ func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationCo
 	}
 
 	return config, nil
+}
+
+func (d *Driver) getAddonConfig(resource *models.Resource) (map[string]interface{}, error) {
+	return drivers.ConstructConfig(&drivers.ConstructConfigOpts{
+		RawConf:      resource.Config,
+		LookupTable:  *d.lookupTable,
+		Dependencies: resource.Dependencies,
+	})
 }
 
 type DeploymentHook struct {

@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -400,7 +401,12 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		cliConf.Project = d.target.Project
 		cliConf.Cluster = d.target.Cluster
 
-		err = waitForJob(nil, client, []string{})
+		err = wait.WaitForJob(client, &wait.WaitOpts{
+			ProjectID: cliConf.Project,
+			ClusterID: cliConf.Cluster,
+			Namespace: namespace,
+			Name:      name,
+		})
 
 		if err != nil {
 			return nil, err

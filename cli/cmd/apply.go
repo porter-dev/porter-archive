@@ -140,7 +140,11 @@ func hasDeploymentHookEnvVars() bool {
 		return false
 	}
 
-	if branchName := os.Getenv("PORTER_BRANCH_NAME"); branchName == "" {
+	if branchFrom := os.Getenv("PORTER_BRANCH_FROM"); branchFrom == "" {
+		return false
+	}
+
+	if branchInto := os.Getenv("PORTER_BRANCH_INTO"); branchInto == "" {
 		return false
 	}
 
@@ -623,10 +627,10 @@ func (d *Driver) getAddonConfig(resource *models.Resource) (map[string]interface
 }
 
 type DeploymentHook struct {
-	client                                                    *api.Client
-	resourceGroup                                             *switchboardTypes.ResourceGroup
-	gitInstallationID, projectID, clusterID, prID, actionID   uint
-	branch, namespace, repoName, repoOwner, prName, commitSHA string
+	client                                                                    *api.Client
+	resourceGroup                                                             *switchboardTypes.ResourceGroup
+	gitInstallationID, projectID, clusterID, prID, actionID                   uint
+	branchFrom, branchInto, namespace, repoName, repoOwner, prName, commitSHA string
 }
 
 func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
@@ -666,8 +670,11 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 		return nil, fmt.Errorf("cluster id must be set")
 	}
 
-	branchName := os.Getenv("PORTER_BRANCH_NAME")
-	res.branch = branchName
+	branchFrom := os.Getenv("PORTER_BRANCH_FROM")
+	res.branchFrom = branchFrom
+
+	branchInto := os.Getenv("PORTER_BRANCH_INTO")
+	res.branchInto = branchInto
 
 	actionIDStr := os.Getenv("PORTER_ACTION_ID")
 	actionID, err := strconv.Atoi(actionIDStr)
@@ -720,14 +727,15 @@ func (t *DeploymentHook) PreApply() error {
 				Namespace:     t.namespace,
 				PullRequestID: t.prID,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
 				GitHubMetadata: &types.GitHubMetadata{
-					PRName:    t.prName,
-					RepoName:  t.repoName,
-					RepoOwner: t.repoOwner,
-					CommitSHA: t.commitSHA,
+					PRName:       t.prName,
+					RepoName:     t.repoName,
+					RepoOwner:    t.repoOwner,
+					CommitSHA:    t.commitSHA,
+					PRBranchFrom: t.branchFrom,
+					PRBranchInto: t.branchInto,
 				},
 			},
 		)
@@ -739,10 +747,10 @@ func (t *DeploymentHook) PreApply() error {
 			&types.UpdateDeploymentRequest{
 				Namespace: t.namespace,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
-				CommitSHA: t.commitSHA,
+				PRBranchFrom: t.branchFrom,
+				CommitSHA:    t.commitSHA,
 			},
 		)
 	}
@@ -822,10 +830,10 @@ func (t *DeploymentHook) OnError(err error) {
 			&types.UpdateDeploymentStatusRequest{
 				Namespace: t.namespace,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
-				Status: string(types.DeploymentStatusFailed),
+				PRBranchFrom: t.branchFrom,
+				Status:       string(types.DeploymentStatusFailed),
 			},
 		)
 	}

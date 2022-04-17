@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
@@ -27,8 +26,6 @@ The following are the environment variables that can be used to set certain valu
 deleting a configuration:
   PORTER_CLUSTER              Cluster ID that contains the project
   PORTER_PROJECT              Project ID that contains the application
-  PORTER_GIT_INSTALLATION_ID  The Github installation ID that this deployment is associated with.
-  PORTER_NAMESPACE            The namespace associated with the deployment.
 	`,
 		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter delete\":"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
@@ -59,47 +56,37 @@ func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 		return fmt.Errorf("cluster id must be set")
 	}
 
-	deplNamespace := os.Getenv("PORTER_NAMESPACE")
-
-	if deplNamespace == "" {
-		return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
-	}
-
-	var ghID uint
-
-	if ghIDStr := os.Getenv("PORTER_GIT_INSTALLATION_ID"); ghIDStr != "" {
-		ghIDInt, err := strconv.Atoi(ghIDStr)
-
-		if err != nil {
-			return err
-		}
-
-		ghID = uint(ghIDInt)
-	} else if ghIDStr == "" {
-		return fmt.Errorf("Git installation ID must be defined, set by PORTER_GIT_INSTALLATION_ID")
-	}
-
+	var environmentID string
 	var gitRepoName string
 	var gitRepoOwner string
+	var gitPRNumber string
+
+	if envID := os.Getenv("PORTER_ENVIRONMENT_ID"); envID != "" {
+		environmentID = envID
+	} else {
+		return fmt.Errorf("Environment ID must be defined, set by PORTER_ENVIRONMENT_ID")
+	}
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		gitRepoName = repoName
-	} else if repoName == "" {
+	} else {
 		return fmt.Errorf("Repo name must be defined, set by PORTER_REPO_NAME")
 	}
 
 	if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
 		gitRepoOwner = repoOwner
-	} else if repoOwner == "" {
+	} else {
 		return fmt.Errorf("Repo owner must be defined, set by PORTER_REPO_OWNER")
 	}
 
+	if prNumber := os.Getenv("PORTER_PR_NUMBER"); prNumber != "" {
+		gitPRNumber = prNumber
+	} else {
+		return fmt.Errorf("Pull request number must be defined, set by PORTER_PR_NUMBER")
+	}
+
 	return client.DeleteDeployment(
-		context.Background(),
-		projectID, ghID, clusterID,
-		gitRepoOwner, gitRepoName,
-		&types.DeleteDeploymentRequest{
-			Namespace: deplNamespace,
-		},
+		context.Background(), projectID, clusterID, environmentID,
+		gitRepoOwner, gitRepoName, gitPRNumber,
 	)
 }

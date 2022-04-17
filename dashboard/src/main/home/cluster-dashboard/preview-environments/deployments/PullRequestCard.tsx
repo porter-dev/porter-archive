@@ -109,8 +109,8 @@ const PullRequestCard = ({
               <Loading width="198px" height="14px" />
             ) : (
               <>
-                <i className="material-icons">add</i>
-                Create Preview environment
+                <i className="material-icons">play_arrow</i>
+                Activate Preview Environment
               </>
             )}
           </ActionButton>

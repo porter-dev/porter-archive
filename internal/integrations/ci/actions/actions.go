@@ -480,7 +480,7 @@ func deleteGithubFile(
 		opts,
 	)
 
-	if response.StatusCode == 404 {
+	if response != nil && response.StatusCode == 404 {
 		return nil
 	}
 

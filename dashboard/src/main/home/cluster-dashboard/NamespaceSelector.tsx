@@ -102,7 +102,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
   }
 
   handleSetActive = (namespace: any) => {
-    console.log("SELECTED", namespace);
+    // console.log("SELECTED", namespace);
     this.props.setNamespace(namespace);
   };
 

@@ -249,7 +249,7 @@ export const SettingsForm: React.FC<{
   };
 
   const provisionDOCR = async (integrationId: number, tier: string) => {
-    console.log("Provisioning DOCR...");
+    // console.log("Provisioning DOCR...");
 
     // See if there's an infra for DOKS that is in an errored state and the last operation
     // was an attempt at creation. If so, re-use that infra.
@@ -302,7 +302,7 @@ export const SettingsForm: React.FC<{
     region: string,
     clusterName: string
   ) => {
-    console.log("Provisioning DOKS...");
+    // console.log("Provisioning DOKS...");
 
     // See if there's an infra for DOKS that is in an errored state and the last operation
     // was an attempt at creation. If so, re-use that infra.

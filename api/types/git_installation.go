@@ -23,10 +23,11 @@ type Repo struct {
 type ListReposResponse []Repo
 
 const (
-	URLParamGitKind      URLParam = "kind"
-	URLParamGitRepoOwner URLParam = "owner"
-	URLParamGitRepoName  URLParam = "name"
-	URLParamGitBranch    URLParam = "branch"
+	URLParamGitKind           URLParam = "kind"
+	URLParamGitRepoOwner      URLParam = "owner"
+	URLParamGitRepoName       URLParam = "name"
+	URLParamGitBranch         URLParam = "branch"
+	URLParamIncomingWebhookID URLParam = "webhook_id"
 )
 
 type ListRepoBranchesResponse []string

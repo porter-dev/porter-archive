@@ -52,11 +52,24 @@ func (repo *EnvironmentRepository) ReadEnvironmentByID(projectID, clusterID, env
 }
 
 func (repo *EnvironmentRepository) ReadEnvironmentByOwnerRepoName(
+	projectID, clusterID uint,
 	gitRepoOwner, gitRepoName string,
 ) (*models.Environment, error) {
 	env := &models.Environment{}
-	if err := repo.db.Order("id desc").Where("git_repo_owner = ? AND git_repo_name = ?",
-		gitRepoOwner, gitRepoName,
+	if err := repo.db.Order("id desc").Where("project_id = ? AND cluster_id = ? AND git_repo_owner = ? AND git_repo_name = ?",
+		projectID, clusterID, gitRepoOwner, gitRepoName,
+	).First(&env).Error; err != nil {
+		return nil, err
+	}
+	return env, nil
+}
+
+func (repo *EnvironmentRepository) ReadEnvironmentByWebhookIDOwnerRepoName(
+	webhookID, gitRepoOwner, gitRepoName string,
+) (*models.Environment, error) {
+	env := &models.Environment{}
+	if err := repo.db.Order("id desc").Where("webhook_id = ? AND git_repo_owner = ? AND git_repo_name = ?",
+		webhookID, gitRepoOwner, gitRepoName,
 	).First(&env).Error; err != nil {
 		return nil, err
 	}

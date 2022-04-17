@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -57,10 +58,17 @@ func (c *GithubIncomingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.
 }
 
 func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.PullRequestEvent, r *http.Request) error {
+	// get the webhook id from the request
+	webhookID, reqErr := requestutils.GetURLParamString(r, types.URLParamIncomingWebhookID)
+
+	if reqErr != nil {
+		return fmt.Errorf(reqErr.Error())
+	}
+
 	owner := event.GetRepo().GetOwner().GetLogin()
 	repo := event.GetRepo().GetName()
 
-	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(owner, repo)
+	env, err := c.Repo().Environment().ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repo)
 
 	if err != nil {
 		return err

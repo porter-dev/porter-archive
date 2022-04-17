@@ -105,7 +105,7 @@ func (c *ReenableDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		},
 	)
 
-	if ghResp.StatusCode == 404 {
+	if ghResp != nil && ghResp.StatusCode == 404 {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("workflow file not found"), 404))
 		return
 	}

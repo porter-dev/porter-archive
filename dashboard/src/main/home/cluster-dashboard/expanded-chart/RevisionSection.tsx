@@ -89,7 +89,7 @@ class RevisionSection extends Component<PropsType, StateType> {
     const ws = new WebSocket(`${url}${apiPath}`);
 
     ws.onopen = () => {
-      console.log("connected to chart live updates websocket");
+      // console.log("connected to chart live updates websocket");
     };
 
     ws.onmessage = (evt: MessageEvent) => {

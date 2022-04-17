@@ -186,7 +186,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
   };
 
   const provisionECR = async (awsIntegrationId: number) => {
-    console.log("Started provision ECR");
+    // console.log("Started provision ECR");
     const { currentProject } = context;
     try {
       await api.provisionInfra(
@@ -405,7 +405,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
           selected={selectedInfras}
           setSelected={(x: { value: string; label: string }[]) => {
             setIsFormDirty(true);
-            console.log(x);
+            // console.log(x);
             setSelectedInfras(x);
           }}
         />

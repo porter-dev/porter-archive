@@ -229,7 +229,7 @@ const LogsFC: React.FC<{
         <Refresh
           onClick={() => {
             // this.refreshLogs();
-            console.log("Refresh logs");
+            // console.log("Refresh logs");
             refresh();
           }}
         >
@@ -400,7 +400,7 @@ const useLogs = (
   };
 
   useEffect(() => {
-    console.log("Selected pod updated");
+    // console.log("Selected pod updated");
     if (currentPod?.metadata?.name === currentPodName.current) {
       return () => {};
     }

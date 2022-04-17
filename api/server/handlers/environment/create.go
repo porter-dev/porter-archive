@@ -1,8 +1,10 @@
 package environment
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -13,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
@@ -51,6 +54,14 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// create a random webhook id
+	webhookUID, err := encryption.GenerateRandomBytes(32)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	env, err := c.Repo().Environment().CreateEnvironment(&models.Environment{
 		ProjectID:         project.ID,
 		ClusterID:         cluster.ID,
@@ -58,10 +69,12 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Name:              request.Name,
 		GitRepoOwner:      owner,
 		GitRepoName:       name,
+		Mode:              request.Mode,
+		WebhookID:         string(webhookUID),
 	})
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -69,7 +82,27 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
+		return
+	}
+
+	webhookURL := fmt.Sprintf("%s/api/github/incoming_webhook/%s", c.Config().ServerConf.ServerURL, string(webhookUID))
+
+	// create incoming webhook
+	_, _, err = client.Repositories.CreateHook(
+		r.Context(), owner, name, &github.Hook{
+			Config: map[string]interface{}{
+				"url":          webhookURL,
+				"content_type": "json",
+				"secret":       c.Config().ServerConf.GithubIncomingWebhookSecret,
+			},
+			Events: []string{"pull_request"},
+			Active: github.Bool(true),
+		},
+	)
+
+	if err != nil && !strings.Contains(err.Error(), "already exists on this repository") {
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -77,14 +110,14 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
@@ -101,11 +134,18 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.deleteEnvAndReportError(w, r, env, err)
 		return
 	}
 
 	c.WriteResult(w, r, env.ToEnvironmentType())
+}
+
+func (c *CreateEnvironmentHandler) deleteEnvAndReportError(
+	w http.ResponseWriter, r *http.Request, env *models.Environment, err error,
+) {
+	c.Repo().Environment().DeleteEnvironment(env)
+	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 }
 
 func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {

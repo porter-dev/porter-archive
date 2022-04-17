@@ -642,6 +642,18 @@ func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
 
 // DeleteNamespace deletes the namespace given the name.
 func (a *Agent) DeleteNamespace(name string) error {
+	// check if namespace exists
+	_, err := a.Clientset.CoreV1().Namespaces().Get(
+		context.TODO(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	// if the namespace is not found, don't return an error.
+	if err != nil && errors.IsNotFound(err) {
+		return nil
+	}
+
 	return a.Clientset.CoreV1().Namespaces().Delete(
 		context.TODO(),
 		name,

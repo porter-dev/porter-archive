@@ -116,11 +116,16 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 	return depl, nil
 }
 
-func (repo *EnvironmentRepository) ReadDeploymentByID(id uint) (*models.Deployment, error) {
+func (repo *EnvironmentRepository) ReadDeploymentByID(projectID, clusterID, id uint) (*models.Deployment, error) {
 	depl := &models.Deployment{}
-	if err := repo.db.Where("id = ?", id).First(&depl).Error; err != nil {
+
+	if err := repo.db.
+		Order("deployments.updated_at desc").
+		Joins("INNER JOIN environments ON environments.id = deployments.environment_id").
+		Where("environments.project_id = ? AND environments.cluster_id = ? AND id = ?", projectID, clusterID, id).First(&depl).Error; err != nil {
 		return nil, err
 	}
+
 	return depl, nil
 }
 

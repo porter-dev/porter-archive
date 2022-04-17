@@ -2,6 +2,8 @@ package environment
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type DeleteDeploymentHandler struct {
@@ -44,6 +47,19 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// check that the environment belongs to the project and cluster IDs
+	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("environment id not found in cluster and project")))
+			return
+		}
+
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+		return
+	}
+
 	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
 
 	if !ok {
@@ -59,14 +75,6 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	// read the deployment
 	depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(envID, owner, name, prNumber)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// read the environment to get the environment id
-	env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, depl.EnvironmentID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

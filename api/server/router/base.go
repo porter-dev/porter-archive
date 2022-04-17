@@ -540,7 +540,7 @@ func GetBaseRoutes(
 	})
 
 	if config.ServerConf.GithubIncomingWebhookSecret != "" {
-		// POST /api/github/incoming_webhook -> webhook.NewGithubIncomingWebhook
+		// POST /api/github/incoming_webhook/{webhook_id} -> webhook.NewGithubIncomingWebhook
 		githubIncomingWebhookEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
 				Verb:   types.APIVerbCreate,

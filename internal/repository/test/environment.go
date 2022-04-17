@@ -58,7 +58,7 @@ func (repo *EnvironmentRepository) ReadDeployment(environmentID uint, namespace 
 	panic("unimplemented")
 }
 
-func (repo *EnvironmentRepository) ReadDeploymentByID(id uint) (*models.Deployment, error) {
+func (repo *EnvironmentRepository) ReadDeploymentByID(projectID, clusterID, id uint) (*models.Deployment, error) {
 	panic("unimplemented")
 }
 

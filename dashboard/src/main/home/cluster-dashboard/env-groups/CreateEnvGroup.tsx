@@ -101,7 +101,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       )
       .then((res) => {
         this.setState({ submitStatus: "successful" });
-        console.log(res);
+        // console.log(res);
         this.props.goBack();
       })
       .catch((err) => {

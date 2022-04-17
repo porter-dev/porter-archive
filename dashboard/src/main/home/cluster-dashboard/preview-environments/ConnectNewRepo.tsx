@@ -52,7 +52,7 @@ const ConnectNewRepo: React.FC = () => {
         }
       )
       .then(({ data }) => {
-        console.log("github account", data);
+        // console.log("github account", data);
 
         if (!Array.isArray(data)) {
           throw Error("Data is not an array");

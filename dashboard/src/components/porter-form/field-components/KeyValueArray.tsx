@@ -60,7 +60,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
   useEffect(() => {
     if (hasSetValue(props) && !Array.isArray(state?.synced_env_groups)) {
       const values = props.value[0];
-      console.log(values);
+      // console.log(values);
       const envGroups = values?.synced || [];
       const promises = Promise.all(
         envGroups.map(async (envGroup: any) => {

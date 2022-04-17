@@ -90,7 +90,7 @@ const SettingsSection: React.FC<PropsType> = ({
   const handleSubmit = async () => {
     setSaveValuesStatus("loading");
 
-    console.log(selectedImageUrl);
+    // console.log(selectedImageUrl);
 
     let values = {};
     if (selectedTag) {

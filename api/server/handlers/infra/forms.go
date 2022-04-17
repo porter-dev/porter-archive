@@ -379,6 +379,11 @@ tabs:
       required: true
       placeholder: my-cluster
       variable: cluster_name
+    - type: checkbox
+      variable: spot_instances_enabled
+      label: Enable spot instances for this cluster.
+      settings:
+        default: false
 `
 
 const gcrForm = `name: GCR

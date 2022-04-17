@@ -71,11 +71,8 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(ghResp.Body)
-	responseString := buf.String()
 
-	fmt.Println(responseString)
-
-	if ghResp.StatusCode == 404 {
+	if ghResp != nil && ghResp.StatusCode == 404 {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("workflow file not found"), 404))
 		return
 	}
@@ -85,7 +82,6 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// FIXME: hardcoded namespace
 	namespace := fmt.Sprintf("pr-%d-%s", request.Number, strings.ReplaceAll(env.GitRepoName, "_", "-"))
 
 	// create the deployment
@@ -94,12 +90,11 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Namespace:     namespace,
 		Status:        types.DeploymentStatusCreating,
 		PullRequestID: request.Number,
-		// GHDeploymentID: ghDeployment.GetID(),
-		RepoOwner:    request.RepoOwner,
-		RepoName:     request.RepoName,
-		PRName:       request.Title,
-		PRBranchFrom: request.BranchFrom,
-		PRBranchInto: request.BranchInto,
+		RepoOwner:     request.RepoOwner,
+		RepoName:      request.RepoName,
+		PRName:        request.Title,
+		PRBranchFrom:  request.BranchFrom,
+		PRBranchInto:  request.BranchInto,
 	})
 
 	if err != nil {

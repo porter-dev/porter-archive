@@ -56,13 +56,21 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ghResp, err := client.Actions.CreateWorkflowDispatchEventByFileName(
+	// add an extra check that the installation has permission to read this pull request
+	pr, ghResp, err := client.PullRequests.Get(r.Context(), env.GitRepoOwner, env.GitRepoName, int(request.Number))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	ghResp, err = client.Actions.CreateWorkflowDispatchEventByFileName(
 		r.Context(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: request.BranchFrom,
 			Inputs: map[string]interface{}{
 				"pr_number":      strconv.FormatUint(uint64(request.Number), 10),
-				"pr_title":       request.Title,
+				"pr_title":       *pr.Title,
 				"pr_branch_from": request.BranchFrom,
 				"pr_branch_into": request.BranchInto,
 			},

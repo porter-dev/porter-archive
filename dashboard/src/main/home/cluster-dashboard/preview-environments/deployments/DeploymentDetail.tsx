@@ -64,7 +64,7 @@ const DeploymentDetail = () => {
   return (
     <StyledExpandedChart>
       <HeaderWrapper>
-        <BackButton to={"/preview-environments"}>
+        <BackButton to={`/preview-environments?repository=${repository}`}>
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">

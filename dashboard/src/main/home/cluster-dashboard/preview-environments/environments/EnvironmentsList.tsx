@@ -29,6 +29,11 @@ const EnvironmentsList = ({ environments, setEnvironments }: Props) => {
           <i className="material-icons">add</i> Add Repository
         </Button>
       </ControlRow>
+      {environments.length === 0 && (
+        <Placeholder>
+          No repositories found with Preview Environments enabled.
+        </Placeholder>
+      )}
       <EnvironmentsGrid>
         {environments.map((env) => (
           <EnvironmentCard
@@ -43,6 +48,28 @@ const EnvironmentsList = ({ environments, setEnvironments }: Props) => {
 };
 
 export default EnvironmentsList;
+
+const Placeholder = styled.div`
+  padding: 30px;
+  margin-top: 35px;
+  padding-bottom: 40px;
+  font-size: 13px;
+  color: #ffffff44;
+  min-height: 400px;
+  height: 50vh;
+  background: #ffffff11;
+  border-radius: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  > i {
+    font-size: 18px;
+    margin-right: 8px;
+  }
+`;
 
 const EnvironmentsGrid = styled.div`
   margin-top: 32px;

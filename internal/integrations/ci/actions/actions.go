@@ -472,13 +472,17 @@ func deleteGithubFile(
 		}
 	}
 
-	_, _, err := client.Repositories.DeleteFile(
+	_, response, err := client.Repositories.DeleteFile(
 		context.TODO(),
 		gitRepoOwner,
 		gitRepoName,
 		filepath,
 		opts,
 	)
+
+	if response.StatusCode == 404 {
+		return nil
+	}
 
 	if err != nil {
 		return err

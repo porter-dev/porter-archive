@@ -12,12 +12,19 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
 type UpdateConfigDriverConfig struct {
+	WaitForJob bool
+
+	// If set to true, this does not run an update, it only creates the initial application and job,
+	// skipping subsequent updates
+	OnlyCreate bool
+
 	UpdateConfig struct {
 		Image string
 	} `mapstructure:"update_config"`
@@ -137,6 +144,21 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		}
 
 		err = updateAgent.UpdateImageAndValues(d.config.Values)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if d.source.Name == "job" && updateConfigDriverConfig.WaitForJob && (shouldCreate || !updateConfigDriverConfig.OnlyCreate) {
+		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
+
+		err = wait.WaitForJob(client, &wait.WaitOpts{
+			ProjectID: d.target.Project,
+			ClusterID: d.target.Cluster,
+			Namespace: d.target.Namespace,
+			Name:      d.target.AppName,
+		})
 
 		if err != nil {
 			return nil, err

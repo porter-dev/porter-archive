@@ -467,6 +467,7 @@ class Home extends Component<PropsType, StateType> {
                 "/jobs",
                 "/env-groups",
                 "/databases",
+                "/preview-environments",
               ]}
               render={() => {
                 let { currentCluster } = this.context;

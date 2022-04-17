@@ -62,7 +62,6 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     );
 
     if (repo && true) {
-      console.log("tested", repo);
       setSelectedRepo(`${repo.git_repo_owner}/${repo.git_repo_name}`);
     }
   }, [location.search, history]);

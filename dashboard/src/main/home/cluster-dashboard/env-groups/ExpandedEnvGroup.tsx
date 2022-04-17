@@ -334,7 +334,7 @@ export const ExpandedEnvGroupFC = ({
         };
       }, {});
 
-      console.log({ normalObject, secretObject });
+      // console.log({ normalObject, secretObject });
 
       try {
         const updatedEnvGroup = await api

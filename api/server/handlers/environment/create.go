@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
@@ -53,6 +54,14 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// create a random webhook id
+	webhookUID, err := encryption.GenerateRandomBytes(32)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	env, err := c.Repo().Environment().CreateEnvironment(&models.Environment{
 		ProjectID:         project.ID,
 		ClusterID:         cluster.ID,
@@ -61,6 +70,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitRepoOwner:      owner,
 		GitRepoName:       name,
 		Mode:              request.Mode,
+		WebhookID:         string(webhookUID),
 	})
 
 	if err != nil {
@@ -76,7 +86,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	webhookURL := fmt.Sprintf("%s/api/github/incoming_webhook", c.Config().ServerConf.ServerURL)
+	webhookURL := fmt.Sprintf("%s/api/github/incoming_webhook/%s", c.Config().ServerConf.ServerURL, string(webhookUID))
 
 	// create incoming webhook
 	_, _, err = client.Repositories.CreateHook(

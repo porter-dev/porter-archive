@@ -34,6 +34,7 @@ func NewEnablePullRequestHandler(
 }
 
 func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	request := &types.PullRequest{}
 
@@ -41,7 +42,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(request.RepoOwner, request.RepoName)
+	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(project.ID, cluster.ID, request.RepoOwner, request.RepoName)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

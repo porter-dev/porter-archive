@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/credentials"
@@ -538,7 +540,6 @@ func GetBaseRoutes(
 	})
 
 	if config.ServerConf.GithubIncomingWebhookSecret != "" {
-
 		// POST /api/github/incoming_webhook -> webhook.NewGithubIncomingWebhook
 		githubIncomingWebhookEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
@@ -546,7 +547,7 @@ func GetBaseRoutes(
 				Method: types.HTTPVerbPost,
 				Path: &types.Path{
 					Parent:       basePath,
-					RelativePath: "/github/incoming_webhook",
+					RelativePath: fmt.Sprintf("/github/incoming_webhook/{%s}", types.URLParamIncomingWebhookID),
 				},
 				Scopes: []types.PermissionScope{},
 			},
@@ -563,7 +564,6 @@ func GetBaseRoutes(
 			Handler:  githubIncomingWebhookHandler,
 			Router:   r,
 		})
-
 	}
 
 	return routes

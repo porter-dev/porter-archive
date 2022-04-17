@@ -18,6 +18,10 @@ type Environment struct {
 
 	Name string
 	Mode string
+
+	// WebhookID uniquely identifies the environment when other fields (project, cluster)
+	// aren't present
+	WebhookID string
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {

@@ -27,7 +27,14 @@ func (repo *EnvironmentRepository) ReadEnvironmentByID(projectID, clusterID, env
 	panic("unimplemented")
 }
 
-func (repo *EnvironmentRepository) ReadEnvironmentByOwnerRepoName(owner, repoName string) (*models.Environment, error) {
+func (repo *EnvironmentRepository) ReadEnvironmentByOwnerRepoName(
+	projectID, clusterID uint,
+	gitRepoOwner, gitRepoName string,
+) (*models.Environment, error) {
+	panic("unimplemented")
+}
+
+func (repo *EnvironmentRepository) ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repoName string) (*models.Environment, error) {
 	panic("unimplemented")
 }
 

@@ -288,91 +288,188 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/environments -> environment.NewListEnvironmentHandler
-	listEnvEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/environments",
+	if config.ServerConf.GithubIncomingWebhookSecret != "" {
+
+		// GET /api/projects/{project_id}/clusters/{cluster_id}/environments -> environment.NewListEnvironmentHandler
+		listEnvEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbGet,
+				Method: types.HTTPVerbGet,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/environments",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
 			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
+		)
+
+		listEnvHandler := environment.NewListEnvironmentHandler(
+			config,
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: listEnvEndpoint,
+			Handler:  listEnvHandler,
+			Router:   r,
+		})
+
+		// GET /api/projects/{project_id}/clusters/{cluster_id}/deployments -> environment.NewListDeploymentsByClusterHandler
+		listDeploymentsEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbGet,
+				Method: types.HTTPVerbGet,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
 			},
-		},
-	)
+		)
 
-	listEnvHandler := environment.NewListEnvironmentHandler(
-		config,
-		factory.GetResultWriter(),
-	)
+		listDeploymentsHandler := environment.NewListDeploymentsByClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
 
-	routes = append(routes, &Route{
-		Endpoint: listEnvEndpoint,
-		Handler:  listEnvHandler,
-		Router:   r,
-	})
+		routes = append(routes, &Route{
+			Endpoint: listDeploymentsEndpoint,
+			Handler:  listDeploymentsHandler,
+			Router:   r,
+		})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/deployments -> environment.NewListDeploymentsByClusterHandler
-	listDeploymentsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/deployments",
+		// GET /api/projects/{project_id}/clusters/{cluster_id}/{environment_id}/deployment -> environment.NewGetDeploymentByClusterHandler
+		getDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbGet,
+				Method: types.HTTPVerbGet,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/{environment_id}/deployment",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
 			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
+		)
+
+		getDeploymentHandler := environment.NewGetDeploymentByClusterHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: getDeploymentEndpoint,
+			Handler:  getDeploymentHandler,
+			Router:   r,
+		})
+
+		// PATCH /api/projects/{project_id}/clusters/{cluster_id}/deployments/{deployment_id}/reenable -> environment.NewReenableDeploymentHandler
+		reenableDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate,
+				Method: types.HTTPVerbPatch,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/{deployment_id}/reenable",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
 			},
-		},
-	)
+		)
 
-	listDeploymentsHandler := environment.NewListDeploymentsByClusterHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
+		reenableDeploymentHandler := environment.NewReenableDeploymentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
 
-	routes = append(routes, &Route{
-		Endpoint: listDeploymentsEndpoint,
-		Handler:  listDeploymentsHandler,
-		Router:   r,
-	})
+		routes = append(routes, &Route{
+			Endpoint: reenableDeploymentEndpoint,
+			Handler:  reenableDeploymentHandler,
+			Router:   r,
+		})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/{environment_id}/deployment -> environment.NewGetDeploymentByClusterHandler
-	getDeploymentEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/{environment_id}/deployment",
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/deployments/pull_request -> environment.NewEnablePullRequestHandler
+		enablePullRequestEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/pull_request",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
 			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
+		)
+
+		enablePullRequestHandler := environment.NewEnablePullRequestHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: enablePullRequestEndpoint,
+			Handler:  enablePullRequestHandler,
+			Router:   r,
+		})
+
+		// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployments/{environment_id}/{owner}/{name}/{pr_number} ->
+		// environment.NewDeleteDeploymentHandler
+		deleteDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbDelete,
+				Method: types.HTTPVerbDelete,
+				Path: &types.Path{
+					Parent: basePath,
+					RelativePath: fmt.Sprintf(
+						"%s/deployments/{environment_id}/{%s}/{%s}/{pr_number}",
+						relPath,
+						types.URLParamGitRepoOwner,
+						types.URLParamGitRepoName,
+					),
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
 			},
-		},
-	)
+		)
 
-	getDeploymentHandler := environment.NewGetDeploymentByClusterHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
+		deleteDeploymentHandler := environment.NewDeleteDeploymentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
 
-	routes = append(routes, &Route{
-		Endpoint: getDeploymentEndpoint,
-		Handler:  getDeploymentHandler,
-		Router:   r,
-	})
+		routes = append(routes, &Route{
+			Endpoint: deleteDeploymentEndpoint,
+			Handler:  deleteDeploymentHandler,
+			Router:   r,
+		})
+
+	}
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewClusterListNamespacesHandler
 	listNamespacesEndpoint := factory.NewAPIEndpoint(

@@ -388,7 +388,7 @@ export const SettingsForm: React.FC<{
   };
 
   const provisionGCR = async (id: number) => {
-    console.log("Provisioning GCR");
+    // console.log("Provisioning GCR");
 
     // See if there's an infra for GKE that is in an errored state and the last operation
     // was an attempt at creation. If so, re-use that infra.
@@ -428,7 +428,7 @@ export const SettingsForm: React.FC<{
   };
 
   const provisionGKE = async (id: number) => {
-    console.log("Provisioning GKE");
+    // console.log("Provisioning GKE");
 
     // See if there's an infra for GKE that is in an errored state and the last operation
     // was an attempt at creation. If so, re-use that infra.

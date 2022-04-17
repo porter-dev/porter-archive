@@ -71,7 +71,6 @@ export default class GCRForm extends Component<PropsType, StateType> {
         )
       )
       .then((res) => {
-        console.log(res.data);
         this.props.closeForm();
       })
       .catch(this.catchError);

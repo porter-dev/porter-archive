@@ -26,7 +26,7 @@ const (
 	HTTPVerbGet    HTTPVerb = "GET"
 	HTTPVerbPost   HTTPVerb = "POST"
 	HTTPVerbPut    HTTPVerb = "PUT"
-	HTTPVerbPatch  HTTPVerb = "PUT"
+	HTTPVerbPatch  HTTPVerb = "PATCH"
 	HTTPVerbDelete HTTPVerb = "DELETE"
 )
 

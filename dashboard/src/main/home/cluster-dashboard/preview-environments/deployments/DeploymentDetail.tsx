@@ -5,7 +5,7 @@ import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
 import DynamicLink from "components/DynamicLink";
-import { PRDeployment, Environment } from "./EnvironmentList";
+import { PRDeployment } from "../types";
 import Loading from "components/Loading";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -14,17 +14,13 @@ import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
 
-const EnvironmentDetail = () => {
+const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
 
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster } = useContext(Context);
 
   const { search } = useLocation();
   let searchParams = new URLSearchParams(search);
@@ -32,7 +28,6 @@ const EnvironmentDetail = () => {
   useEffect(() => {
     let isSubscribed = true;
     let environment_id = parseInt(searchParams.get("environment_id"));
-
     api
       .getPRDeploymentByCluster(
         "<token>",
@@ -55,13 +50,7 @@ const EnvironmentDetail = () => {
       .catch((err) => {
         console.error(err);
         if (isSubscribed) {
-          setHasError(true);
           setPRDeployment(null);
-        }
-      })
-      .finally(() => {
-        if (isSubscribed) {
-          setIsLoading(false);
         }
       });
   }, [params]);
@@ -75,11 +64,29 @@ const EnvironmentDetail = () => {
   return (
     <StyledExpandedChart>
       <HeaderWrapper>
-        <BackButton to={"/cluster-dashboard?selected_tab=preview_environments"}>
+        <BackButton to={`/preview-environments?repository=${repository}`}>
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">
           {prDeployment.gh_pr_name}
+        </Title>
+        <InfoWrapper>
+          {prDeployment.subdomain && (
+            <PRLink to={prDeployment.subdomain} target="_blank">
+              <i className="material-icons">link</i>
+              {prDeployment.subdomain}
+            </PRLink>
+          )}
+          <TagWrapper>
+            Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
+          </TagWrapper>
+        </InfoWrapper>
+        <Flex>
+          <Status>
+            <StatusDot status={prDeployment.status} />
+            {capitalize(prDeployment.status)}
+          </Status>
+          <Dot>•</Dot>
           <DeploymentImageContainer>
             <DeploymentTypeIcon src={integrationList.repo.icon} />
             <RepositoryName
@@ -94,29 +101,12 @@ const EnvironmentDetail = () => {
             </RepositoryName>
             {showRepoTooltip && <Tooltip>{repository}</Tooltip>}
           </DeploymentImageContainer>
-          <TagWrapper>
-            Namespace <NamespaceTag>{params.namespace}</NamespaceTag>
-          </TagWrapper>
-        </Title>
-        <InfoWrapper>
-          {prDeployment.subdomain && (
-            <PRLink to={prDeployment.subdomain} target="_blank">
-              <i className="material-icons">link</i>
-              {prDeployment.subdomain}
-            </PRLink>
-          )}
-        </InfoWrapper>
-        <Flex>
-          <Status>
-            <StatusDot status={prDeployment.status} />
-            {capitalize(prDeployment.status)}
-          </Status>
           <Dot>•</Dot>
           <GHALink
             to={`https://github.com/${repository}/pull/${prDeployment.pull_request_id}`}
             target="_blank"
           >
-            <img src={github} /> GitHub
+            <img src={github} /> GitHub PR
             <i className="material-icons">open_in_new</i>
           </GHALink>
         </Flex>
@@ -137,7 +127,7 @@ const EnvironmentDetail = () => {
   );
 };
 
-export default EnvironmentDetail;
+export default DeploymentDetail;
 
 const Flex = styled.div`
   display: flex;
@@ -163,7 +153,8 @@ const GHALink = styled(DynamicLink)`
     margin-right: 9px;
     margin-left: 5px;
 
-    :text-decoration: none;
+    text-decoration: none;
+
     :hover {
       text-decoration: underline;
       color: white;
@@ -212,6 +203,7 @@ const BackButtonImg = styled.img`
 
 const HeaderWrapper = styled.div`
   position: relative;
+  padding-right: 40px;
 `;
 
 const Dot = styled.div`
@@ -223,8 +215,7 @@ const Dot = styled.div`
 const InfoWrapper = styled.div`
   display: flex;
   align-items: center;
-  width: auto;
-  justify-content: space-between;
+  margin-top: 20px;
 `;
 
 const TagWrapper = styled.div`
@@ -345,7 +336,7 @@ const DeploymentImageContainer = styled.div`
   font-size: 13px;
   position: relative;
   display: flex;
-  margin-left: 15px;
+  margin-left: 5px;
   margin-bottom: -3px;
   align-items: center;
   font-weight: 400;

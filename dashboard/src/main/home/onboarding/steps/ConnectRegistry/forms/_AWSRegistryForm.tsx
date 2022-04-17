@@ -321,7 +321,7 @@ export const TestRegistryConnection: React.FC<{ nextFormStep: () => void }> = ({
   nextFormStep,
 }) => {
   const snap = useSnapshot(StateHandler);
-  console.log(snap.connected_registry.settings);
+  // console.log(snap.connected_registry.settings);
   return (
     <>
       <RegistryImageList

@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -139,7 +140,11 @@ func hasDeploymentHookEnvVars() bool {
 		return false
 	}
 
-	if branchName := os.Getenv("PORTER_BRANCH_NAME"); branchName == "" {
+	if branchFrom := os.Getenv("PORTER_BRANCH_FROM"); branchFrom == "" {
+		return false
+	}
+
+	if branchInto := os.Getenv("PORTER_BRANCH_INTO"); branchInto == "" {
 		return false
 	}
 
@@ -253,7 +258,12 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 
 // Simple apply for addons
 func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
-	var err error
+	addonConfig, err := d.getAddonConfig(resource)
+
+	if err != nil {
+		return nil, err
+	}
+
 	if shouldCreate {
 		err = client.DeployAddon(
 			context.Background(),
@@ -265,13 +275,13 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 					RepoURL:         d.source.Repo,
 					TemplateName:    d.source.Name,
 					TemplateVersion: d.source.Version,
-					Values:          resource.Config,
+					Values:          addonConfig,
 					Name:            resource.Name,
 				},
 			},
 		)
 	} else {
-		bytes, err := json.Marshal(resource.Config)
+		bytes, err := json.Marshal(addonConfig)
 
 		if err != nil {
 			return nil, err
@@ -395,7 +405,12 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		cliConf.Project = d.target.Project
 		cliConf.Cluster = d.target.Cluster
 
-		err = waitForJob(nil, client, []string{})
+		err = wait.WaitForJob(client, &wait.WaitOpts{
+			ProjectID: cliConf.Project,
+			ClusterID: cliConf.Cluster,
+			Namespace: namespace,
+			Name:      name,
+		})
 
 		if err != nil {
 			return nil, err
@@ -603,11 +618,19 @@ func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationCo
 	return config, nil
 }
 
+func (d *Driver) getAddonConfig(resource *models.Resource) (map[string]interface{}, error) {
+	return drivers.ConstructConfig(&drivers.ConstructConfigOpts{
+		RawConf:      resource.Config,
+		LookupTable:  *d.lookupTable,
+		Dependencies: resource.Dependencies,
+	})
+}
+
 type DeploymentHook struct {
-	client                                                    *api.Client
-	resourceGroup                                             *switchboardTypes.ResourceGroup
-	gitInstallationID, projectID, clusterID, prID, actionID   uint
-	branch, namespace, repoName, repoOwner, prName, commitSHA string
+	client                                                                    *api.Client
+	resourceGroup                                                             *switchboardTypes.ResourceGroup
+	gitInstallationID, projectID, clusterID, prID, actionID                   uint
+	branchFrom, branchInto, namespace, repoName, repoOwner, prName, commitSHA string
 }
 
 func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.ResourceGroup, namespace string) (*DeploymentHook, error) {
@@ -647,8 +670,11 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 		return nil, fmt.Errorf("cluster id must be set")
 	}
 
-	branchName := os.Getenv("PORTER_BRANCH_NAME")
-	res.branch = branchName
+	branchFrom := os.Getenv("PORTER_BRANCH_FROM")
+	res.branchFrom = branchFrom
+
+	branchInto := os.Getenv("PORTER_BRANCH_INTO")
+	res.branchInto = branchInto
 
 	actionIDStr := os.Getenv("PORTER_ACTION_ID")
 	actionID, err := strconv.Atoi(actionIDStr)
@@ -701,14 +727,15 @@ func (t *DeploymentHook) PreApply() error {
 				Namespace:     t.namespace,
 				PullRequestID: t.prID,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
 				GitHubMetadata: &types.GitHubMetadata{
-					PRName:    t.prName,
-					RepoName:  t.repoName,
-					RepoOwner: t.repoOwner,
-					CommitSHA: t.commitSHA,
+					PRName:       t.prName,
+					RepoName:     t.repoName,
+					RepoOwner:    t.repoOwner,
+					CommitSHA:    t.commitSHA,
+					PRBranchFrom: t.branchFrom,
+					PRBranchInto: t.branchInto,
 				},
 			},
 		)
@@ -720,10 +747,10 @@ func (t *DeploymentHook) PreApply() error {
 			&types.UpdateDeploymentRequest{
 				Namespace: t.namespace,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
-				CommitSHA: t.commitSHA,
+				PRBranchFrom: t.branchFrom,
+				CommitSHA:    t.commitSHA,
 			},
 		)
 	}
@@ -803,10 +830,10 @@ func (t *DeploymentHook) OnError(err error) {
 			&types.UpdateDeploymentStatusRequest{
 				Namespace: t.namespace,
 				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					Branch:   t.branch,
 					ActionID: t.actionID,
 				},
-				Status: string(types.DeploymentStatusFailed),
+				PRBranchFrom: t.branchFrom,
+				Status:       string(types.DeploymentStatusFailed),
 			},
 		)
 	}

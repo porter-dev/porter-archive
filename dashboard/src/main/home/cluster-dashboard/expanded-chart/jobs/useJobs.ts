@@ -336,7 +336,7 @@ export const useJobs = (chart: ChartType) => {
         jobsRef.current = [...jobsRef.current, data];
       },
       onclose: (event) => {
-        console.log(event);
+        // console.log(event);
         closeWebsocket(websocketId);
       },
       onerror: (error) => {

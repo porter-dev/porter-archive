@@ -36,12 +36,12 @@ export const useWebsockets = () => {
     options: NewWebsocketOptions
   ): WebsocketConfig => {
     if (!id) {
-      console.log("Id cannot be empty");
+      // console.log("Id cannot be empty");
       return;
     }
 
     if (!apiEndpoint) {
-      console.log("Api endpoint string cannot be empty");
+      // console.log("Api endpoint string cannot be empty");
       return;
     }
 
@@ -75,7 +75,7 @@ export const useWebsockets = () => {
 
     // Prevent calling openWebsocket before newWebsocket
     if (!wsConfig) {
-      console.log("Couldn't find ws config");
+      // console.log("Couldn't find ws config");
       return;
     }
     // In case of having a previous websocket opened with the same ID, close the previous one
@@ -103,7 +103,7 @@ export const useWebsockets = () => {
     const ws = websocketMap.current[id];
 
     if (!ws) {
-      console.log(`Couldn't find websocket to close for id: ${id}`);
+      // console.log(`Couldn't find websocket to close for id: ${id}`);
       return;
     }
 

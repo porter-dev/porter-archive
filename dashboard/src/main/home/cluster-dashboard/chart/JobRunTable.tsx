@@ -148,7 +148,7 @@ const JobRunTable: React.FC<Props> = ({
         tmpJobRuns.current = [...tmpJobRuns.current, data];
       },
       onclose: (event) => {
-        console.log(event);
+        // console.log(event);
         closeAllWebsockets();
       },
       onerror: (error) => {

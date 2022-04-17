@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 )
 
+type EnvironmentMode uint
+
 type Environment struct {
 	gorm.Model
 
@@ -15,6 +17,11 @@ type Environment struct {
 	GitRepoName       string
 
 	Name string
+	Mode string
+
+	// WebhookID uniquely identifies the environment when other fields (project, cluster)
+	// aren't present
+	WebhookID string `gorm:"unique"`
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
@@ -25,7 +32,9 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
-		Name:              e.Name,
+
+		Name: e.Name,
+		Mode: e.Mode,
 	}
 }
 
@@ -42,6 +51,8 @@ type Deployment struct {
 	RepoName       string
 	RepoOwner      string
 	CommitSHA      string
+	PRBranchFrom   string
+	PRBranchInto   string
 }
 
 func (d *Deployment) ToDeploymentType() *types.Deployment {
@@ -52,6 +63,8 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		RepoName:     d.RepoName,
 		RepoOwner:    d.RepoOwner,
 		CommitSHA:    d.CommitSHA,
+		PRBranchFrom: d.PRBranchFrom,
+		PRBranchInto: d.PRBranchInto,
 	}
 
 	return &types.Deployment{

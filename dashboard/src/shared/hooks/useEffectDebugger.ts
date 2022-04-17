@@ -27,7 +27,7 @@ export const useEffectDebugger = (
   );
 
   if (Object.keys(changedDeps).length) {
-    console.log("[use-effect-debugger] ", changedDeps);
+    // console.log("[use-effect-debugger] ", changedDeps);
   }
 
   useEffect(effectHook, dependencies);

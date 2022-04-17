@@ -153,7 +153,7 @@ class SettingsPage extends Component<PropsType, StateType> {
               !this.props.isAuthorized("namespace", "", ["get", "create"])
             }
             onSubmit={(val) => {
-              console.log(val);
+              // console.log(val);
               onSubmit(val);
             }}
             hideBottomSpacer={!!this.props.fullActionConfig?.git_repo}

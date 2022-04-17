@@ -4,7 +4,6 @@ import { Context } from "shared/Context";
 import { Dashboard } from "./Dashboard";
 import IncidentPage from "./incidents/IncidentPage";
 import ExpandedNodeView from "./node-view/ExpandedNodeView";
-import EnvironmentDetail from "./preview-environments/EnvironmentDetail";
 
 export const Routes = () => {
   const { url } = useRouteMatch();
@@ -18,15 +17,6 @@ export const Routes = () => {
         <Route path={`${url}/node-view/:nodeId`}>
           <ExpandedNodeView />
         </Route>
-        <Route
-          path={`${url}/pr-env-detail/:namespace`}
-          render={() => {
-            if (currentProject.preview_envs_enabled) {
-              return <EnvironmentDetail />;
-            }
-            return <Redirect to={`${url}/`} />;
-          }}
-        ></Route>
         <Route path={`${url}/`}>
           <Dashboard />
         </Route>

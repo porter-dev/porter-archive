@@ -167,7 +167,7 @@ const DeploymentCard: React.FC<{
                 ) : (
                   <>
                     <i className="material-icons">play_arrow</i>
-                    Activate preview environment
+                    Activate Preview Environment
                   </>
                 )}
               </ActionButton>

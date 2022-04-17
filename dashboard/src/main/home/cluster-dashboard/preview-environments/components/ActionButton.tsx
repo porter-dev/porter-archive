@@ -33,7 +33,7 @@ export const ActionButton = styled.button`
   color: #ffffff;
   border: 1px solid
     ${(props: { disabled: boolean; hasError: boolean }) =>
-      props.hasError ? "red" : "#aaaabb"};
+      props.hasError ? "#dd4b4b" : "#aaaabb"};
   display: flex;
   align-items: center;
   background: ${(props: { disabled: boolean; hasError: boolean }) =>

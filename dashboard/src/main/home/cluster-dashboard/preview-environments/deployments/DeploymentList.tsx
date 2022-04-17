@@ -235,6 +235,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   };
 
   const handleStatusFilterChange = (value: string) => {
+    setIsLoading(true);
     pushQueryParams({ status_filter: value });
     setStatusSelectorVal(value);
   };

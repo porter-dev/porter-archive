@@ -172,20 +172,18 @@ const DeploymentCard: React.FC<{
                 )}
               </ActionButton>
             ) : (
-              <RowButton
-                to={"#"}
-                key={deployment.subdomain}
-                onClick={() =>
+              <Button
+                onClick={() => {
                   setCurrentOverlay({
                     message: `Are you sure you want to delete this deployment?`,
                     onYes: deleteDeployment,
                     onNo: () => setCurrentOverlay(null),
                   })
-                }
+                }}
               >
                 <i className="material-icons">delete</i>
                 Delete
-              </RowButton>
+              </Button>
             )}
           </>
         ) : (
@@ -330,6 +328,27 @@ const PRIcon = styled.img`
 `;
 
 const RowButton = styled(DynamicLink)`
+  font-size: 12px;
+  padding: 8px 10px;
+  margin-left: 10px;
+  border-radius: 5px;
+  color: #ffffff;
+  border: 1px solid #aaaabb;
+  display: flex;
+  align-items: center;
+  background: #ffffff08;
+  cursor: pointer;
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    font-size: 14px;
+    margin-right: 8px;
+  }
+`;
+
+const Button = styled.div`
   font-size: 12px;
   padding: 8px 10px;
   margin-left: 10px;

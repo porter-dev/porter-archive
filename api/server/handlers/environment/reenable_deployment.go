@@ -43,7 +43,7 @@ func (c *ReenableDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	depl, err := c.Repo().Environment().ReadDeploymentByID(deplID)
+	depl, err := c.Repo().Environment().ReadDeploymentByID(project.ID, cluster.ID, deplID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -21,7 +21,7 @@ type Environment struct {
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
-	WebhookID string
+	WebhookID string `gorm:"unique"`
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {

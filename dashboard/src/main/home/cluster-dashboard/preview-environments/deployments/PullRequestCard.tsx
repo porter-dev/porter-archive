@@ -125,7 +125,7 @@ export default PullRequestCard;
 const RepoLink = styled.div`
   height: 22px;
   border-radius: 50px;
-  margin-left: 4px;
+  margin-left: 6px;
   display: flex;
   font-size: 12px;
   cursor: pointer;

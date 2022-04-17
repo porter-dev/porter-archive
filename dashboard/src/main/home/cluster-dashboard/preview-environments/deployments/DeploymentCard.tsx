@@ -140,7 +140,7 @@ const DeploymentCard: React.FC<{
               deployment.status !== "inactive" && (
                 <>
                   <RowButton
-                    to={`/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
+                    to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
                     key={deployment.id}
                   >
                     <i className="material-icons-outlined">info</i>
@@ -206,7 +206,7 @@ export default DeploymentCard;
 const RepoLink = styled.div`
   height: 22px;
   border-radius: 50px;
-  margin-left: 4px;
+  margin-left: 6px;
   display: flex;
   font-size: 12px;
   cursor: pointer;

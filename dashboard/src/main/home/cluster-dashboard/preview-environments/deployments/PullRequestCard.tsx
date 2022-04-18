@@ -21,7 +21,6 @@ const PullRequestCard = ({
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-  const [showPRTitleTooltip, setShowPRTitleTooltip] = useState(false);
   const [showMergeInfoTooltip, setShowMergeInfoTooltip] = useState(false);
   const [
     openRecreateWorkflowFilesModal,
@@ -60,13 +59,8 @@ const PullRequestCard = ({
         <DataContainer>
           <PRName>
             <PRIcon src={pr_icon} alt="pull request icon" />
-            <EllipsisTextWrapper
-              onMouseOver={() => setShowPRTitleTooltip(true)}
-              onMouseOut={() => setShowPRTitleTooltip(false)}
-            >
+            <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
               {pullRequest.pr_title}
-
-              {showPRTitleTooltip && <Tooltip>{pullRequest.pr_title}</Tooltip>}
             </EllipsisTextWrapper>
             <InfoWrapper>
               <MergeInfo

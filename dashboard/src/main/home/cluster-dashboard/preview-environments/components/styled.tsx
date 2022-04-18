@@ -4,10 +4,11 @@ import React, { useState } from "react";
 
 export const EllipsisTextWrapper: React.FC<
   { tooltipText?: string } & React.HTMLAttributes<HTMLDivElement>
-> = ({ children, tooltipText, className }) => {
+> = ({ children, tooltipText, className, ...divProps }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   return (
     <StyledTooltipWrapper
+      {...divProps}
       className={className}
       onMouseOver={() => setShowTooltip(true)}
       onMouseOut={() => setShowTooltip(false)}
@@ -55,6 +56,7 @@ export const StyledEllipsisTextWrapper = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   position: relative;
+  max-width: 350px;
 `;
 
 export const RepoLink = styled(DynamicLink)`

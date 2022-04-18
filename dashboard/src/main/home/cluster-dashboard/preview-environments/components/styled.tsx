@@ -6,6 +6,7 @@ export const EllipsisTextWrapper = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  position: relative;
 `;
 
 export const RepoLink = styled(DynamicLink)`

@@ -14,6 +14,7 @@ import { Context } from "shared/Context";
 import Modal from "main/home/modals/Modal";
 import InputRow from "components/form-components/InputRow";
 import DynamicLink from "components/DynamicLink";
+import { RepoLink } from "../components/styled";
 
 type Props = {
   environment: Environment;
@@ -94,7 +95,8 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
           onRequestClose={closeForm}
         >
           <Warning highlight>
-            ⚠️ All Preview Environment deployments associated with this repo will be deleted.
+            ⚠️ All Preview Environment deployments associated with this repo
+            will be deleted.
           </Warning>
           <InputRow
             type="text"
@@ -123,10 +125,8 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             />
             {git_repo_owner}/{git_repo_name}
             <RepoLink
-              onClick={e => {
-                e.stopPropagation();
-                window.open(`https://github.com/${git_repo_owner}/${git_repo_name}`, "_blank")
-              }}
+              to={`https://github.com/${git_repo_owner}/${git_repo_name}`}
+              target="_blank"
             >
               <i className="material-icons">open_in_new</i>
               View Repo
@@ -142,8 +142,8 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             ) : null}
             {deployment_count > 0 ? (
               <Span>
-                {deployment_count || 0}{" "}
-                pull {deployment_count > 1 ? "requests" : "request"} deployed
+                {deployment_count || 0} pull{" "}
+                {deployment_count > 1 ? "requests" : "request"} deployed
               </Span>
             ) : (
               <Span>
@@ -174,29 +174,6 @@ const OptionWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-`;
-
-const RepoLink = styled.div`
-  height: 22px;
-  border-radius: 50px;
-  margin-left: 10px;
-  display: flex;
-  font-size: 12px;
-  color: #a7a6bb;
-  align-items: center;
-  justify-content: center;
-  :hover {
-    color: #ffffff;
-    > i {
-      color: #ffffff;
-    }
-  }
-
-  > i {
-    margin-right: 5px;
-    color: #a7a6bb;
-    font-size: 16px;
-  }
 `;
 
 const EnvironmentCardWrapper = styled.div`

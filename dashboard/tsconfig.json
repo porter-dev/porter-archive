@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "lib": ["ESNext"],
     "baseUrl": "src",
     "outDir": "./build/",
     "sourceMap": true,

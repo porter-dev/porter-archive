@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import styled, { css, keyframes } from "styled-components";
-import { Environment, PRDeployment } from "../types";
+import styled, { keyframes } from "styled-components";
+import { PRDeployment } from "../types";
 import pr_icon from "assets/pull_request_icon.svg";
-import { integrationList } from "shared/common";
 import { useRouteMatch } from "react-router";
 import DynamicLink from "components/DynamicLink";
 import { capitalize, readableDate } from "shared/string_utils";
@@ -11,6 +10,7 @@ import { useContext } from "react";
 import { Context } from "shared/Context";
 import Loading from "components/Loading";
 import { ActionButton } from "../components/ActionButton";
+import { EllipsisTextWrapper, RepoLink } from "../components/styled";
 
 const DeploymentCard: React.FC<{
   deployment: PRDeployment;
@@ -23,14 +23,10 @@ const DeploymentCard: React.FC<{
     currentCluster,
     setCurrentError,
   } = useContext(Context);
-  const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasErrorOnReEnabling, setHasErrorOnReEnabling] = useState(false);
   const [showMergeInfoTooltip, setShowMergeInfoTooltip] = useState(false);
-  const { url: currentUrl } = useRouteMatch();
-
-  let repository = `${deployment.gh_repo_owner}/${deployment.gh_repo_name}`;
 
   const deleteDeployment = () => {
     setIsDeleting(true);
@@ -87,7 +83,9 @@ const DeploymentCard: React.FC<{
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
-          {deployment.gh_pr_name}
+          <EllipsisTextWrapper tooltipText={deployment.gh_pr_name}>
+            {deployment.gh_pr_name}
+          </EllipsisTextWrapper>
           {deployment.gh_pr_branch_from && deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>
               <MergeInfo
@@ -100,16 +98,15 @@ const DeploymentCard: React.FC<{
               </MergeInfo>
               {showMergeInfoTooltip && (
                 <Tooltip>
-                  {deployment.gh_pr_branch_from} {"->"} {deployment.gh_pr_branch_into}
+                  {deployment.gh_pr_branch_from} {"->"}{" "}
+                  {deployment.gh_pr_branch_into}
                 </Tooltip>
               )}
             </MergeInfoWrapper>
           ) : null}
           <RepoLink
-            onClick={e => {
-              e.stopPropagation();
-              window.open(`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`, "_blank")
-            }}
+            to={`https://github.com/${deployment.gh_repo_owner}/${deployment.gh_repo_name}/pull/${deployment.pull_request_id}`}
+            target="_blank"
           >
             <i className="material-icons">open_in_new</i>
             View PR
@@ -178,7 +175,7 @@ const DeploymentCard: React.FC<{
                     message: `Are you sure you want to delete this deployment?`,
                     onYes: deleteDeployment,
                     onNo: () => setCurrentOverlay(null),
-                  })
+                  });
                 }}
               >
                 <i className="material-icons">delete</i>
@@ -200,30 +197,6 @@ const DeploymentCard: React.FC<{
 };
 
 export default DeploymentCard;
-
-const RepoLink = styled.div`
-  height: 22px;
-  border-radius: 50px;
-  margin-left: 6px;
-  display: flex;
-  font-size: 12px;
-  cursor: pointer;
-  color: #a7a6bb;
-  align-items: center;
-  justify-content: center;
-  :hover {
-    color: #ffffff;
-    > i {
-      color: #ffffff;
-    }
-  }
-
-  > i {
-    margin-right: 5px;
-    color: #a7a6bb;
-    font-size: 16px;
-  }
-`;
 
 const SepDot = styled.div`
   color: #aaaabb66;
@@ -328,6 +301,7 @@ const PRIcon = styled.img`
 `;
 
 const RowButton = styled(DynamicLink)`
+  white-space: nowrap;
   font-size: 12px;
   padding: 8px 10px;
   margin-left: 10px;

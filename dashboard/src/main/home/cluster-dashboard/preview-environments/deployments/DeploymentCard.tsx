@@ -23,7 +23,6 @@ const DeploymentCard: React.FC<{
     currentCluster,
     setCurrentError,
   } = useContext(Context);
-  const [showPRTitleTooltip, setShowPRTitleTooltip] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasErrorOnReEnabling, setHasErrorOnReEnabling] = useState(false);
@@ -84,12 +83,8 @@ const DeploymentCard: React.FC<{
       <DataContainer>
         <PRName>
           <PRIcon src={pr_icon} alt="pull request icon" />
-          <EllipsisTextWrapper
-            onMouseOver={() => setShowPRTitleTooltip(true)}
-            onMouseOut={() => setShowPRTitleTooltip(false)}
-          >
+          <EllipsisTextWrapper tooltipText={deployment.gh_pr_name}>
             {deployment.gh_pr_name}
-            {showPRTitleTooltip && <Tooltip>{deployment.gh_pr_name}</Tooltip>}
           </EllipsisTextWrapper>
           {deployment.gh_pr_branch_from && deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>

@@ -9,6 +9,7 @@ import { ActionButton } from "../components/ActionButton";
 import Loading from "components/Loading";
 import DynamicLink from "components/DynamicLink";
 import RecreateWorkflowFilesModal from "../components/RecreateWorkflowFilesModal";
+import { EllipsisTextWrapper, RepoLink } from "../components/styled";
 
 const PullRequestCard = ({
   pullRequest,
@@ -20,7 +21,6 @@ const PullRequestCard = ({
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
-  const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [showMergeInfoTooltip, setShowMergeInfoTooltip] = useState(false);
   const [
     openRecreateWorkflowFilesModal,
@@ -28,8 +28,6 @@ const PullRequestCard = ({
   ] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
-
-  const repository = `${pullRequest.repo_owner}/${pullRequest.repo_name}`;
 
   const createPreviewEnvironment = async () => {
     setIsLoading(true);
@@ -40,7 +38,6 @@ const PullRequestCard = ({
       });
       onCreation(pullRequest);
     } catch (error) {
-      debugger;
       setCurrentError(error);
       setHasError(true);
       setTimeout(() => {
@@ -62,7 +59,9 @@ const PullRequestCard = ({
         <DataContainer>
           <PRName>
             <PRIcon src={pr_icon} alt="pull request icon" />
-            {pullRequest.pr_title}
+            <EllipsisTextWrapper tooltipText={pullRequest.pr_title}>
+              {pullRequest.pr_title}
+            </EllipsisTextWrapper>
             <InfoWrapper>
               <MergeInfo
                 onMouseOver={() => setShowMergeInfoTooltip(true)}
@@ -80,10 +79,8 @@ const PullRequestCard = ({
               )}
             </InfoWrapper>
             <RepoLink
-              onClick={e => {
-                e.stopPropagation();
-                window.open(`https://github.com/${pullRequest.repo_owner}/${pullRequest.repo_name}/pull/${pullRequest.pr_number}`, "_blank")
-              }}
+              to={`https://github.com/${pullRequest.repo_owner}/${pullRequest.repo_name}/pull/${pullRequest.pr_number}`}
+              target="_blank"
             >
               <i className="material-icons">open_in_new</i>
               View PR
@@ -121,30 +118,6 @@ const PullRequestCard = ({
 };
 
 export default PullRequestCard;
-
-const RepoLink = styled.div`
-  height: 22px;
-  border-radius: 50px;
-  margin-left: 6px;
-  display: flex;
-  font-size: 12px;
-  cursor: pointer;
-  color: #a7a6bb;
-  align-items: center;
-  justify-content: center;
-  :hover {
-    color: #ffffff;
-    > i {
-      color: #ffffff;
-    }
-  }
-
-  > i {
-    margin-right: 5px;
-    color: #a7a6bb;
-    font-size: 16px;
-  }
-`;
 
 const Flex = styled.div`
   display: flex;

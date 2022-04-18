@@ -58,7 +58,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     const selected_repo = getQueryParam("repository");
 
     const repo = environments.find(
-      env => `${env.git_repo_owner}/${env.git_repo_name}` === selected_repo
+      (env) => `${env.git_repo_owner}/${env.git_repo_name}` === selected_repo
     );
 
     if (repo && true) {
@@ -162,14 +162,17 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     } else if (statusSelectorVal === "inactive") {
       tmpDeploymentList = tmpDeploymentList.filter((d) => {
         return d.status === "inactive";
-      });      
+      });
     }
 
     return tmpDeploymentList;
   }, [selectedRepo, statusSelectorVal, deploymentList]);
 
   const filteredPullRequests = useMemo(() => {
-    if (statusSelectorVal !== "not_deployed" && statusSelectorVal !== "inactive") {
+    if (
+      statusSelectorVal !== "not_deployed" &&
+      statusSelectorVal !== "inactive"
+    ) {
       return [];
     }
 
@@ -245,7 +248,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>
     );
-  }
+  };
 
   return (
     <>
@@ -278,7 +281,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
                 {
                   value: "inactive",
                   label: "Inactive",
-                }
+                },
               ]}
               dropdownLabel="Status"
               width="150px"
@@ -290,7 +293,7 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
       </Flex>
       {renderMain()}
     </>
-  )
+  );
 };
 
 export default DeploymentList;
@@ -312,8 +315,8 @@ const Flex = styled.div`
 
   > i {
     cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
+    font-size: 24px;
+    color: #969fbbaa;
     padding: 3px;
     border-radius: 100px;
     :hover {

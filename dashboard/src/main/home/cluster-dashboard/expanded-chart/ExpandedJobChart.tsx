@@ -112,6 +112,11 @@ export const ExpandedJobChartFC: React.FC<{
     return conf;
   };
 
+  const handleDeleteChart = async () => {
+    deleteChart();
+    setCurrentOverlay(null);
+  };
+
   const renderTabContents = (currentTab: string) => {
     if (currentTab === "jobs" && hasPorterImageTemplate) {
       return (
@@ -241,7 +246,7 @@ export const ExpandedJobChartFC: React.FC<{
             if (showOverlay) {
               setCurrentOverlay({
                 message: `Are you sure you want to delete ${chart.name}?`,
-                onYes: deleteChart,
+                onYes: handleDeleteChart,
                 onNo: () => setCurrentOverlay(null),
               });
             } else {

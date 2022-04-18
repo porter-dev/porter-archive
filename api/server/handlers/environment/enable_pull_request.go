@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -77,12 +76,15 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		},
 	)
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(ghResp.Body)
-
-	if ghResp != nil && ghResp.StatusCode == 404 {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("workflow file not found"), 404))
-		return
+	if ghResp != nil {
+		if ghResp.StatusCode == 404 {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("workflow file not found"), 404))
+			return
+		} else if ghResp.StatusCode == 422 {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("please make sure the workflow file in branch %s is up to date", request.BranchFrom), 422))
+			return
+		}
 	}
 
 	if err != nil {

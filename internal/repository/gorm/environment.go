@@ -122,7 +122,7 @@ func (repo *EnvironmentRepository) ReadDeploymentByID(projectID, clusterID, id u
 	if err := repo.db.
 		Order("deployments.updated_at desc").
 		Joins("INNER JOIN environments ON environments.id = deployments.environment_id").
-		Where("environments.project_id = ? AND environments.cluster_id = ? AND id = ?", projectID, clusterID, id).First(&depl).Error; err != nil {
+		Where("environments.project_id = ? AND environments.cluster_id = ? AND deployments.id = ?", projectID, clusterID, id).First(&depl).Error; err != nil {
 		return nil, err
 	}
 

@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
@@ -101,6 +102,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	worker.RegisterDriver("build-image", preview.NewBuildDriver)
 	worker.RegisterDriver("push-image", preview.NewPushDriver)
 	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
+	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
+	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
 
 	worker.SetDefaultDriver("deploy")
 
@@ -255,7 +258,12 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 
 // Simple apply for addons
 func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
-	var err error
+	addonConfig, err := d.getAddonConfig(resource)
+
+	if err != nil {
+		return nil, err
+	}
+
 	if shouldCreate {
 		err = client.DeployAddon(
 			context.Background(),
@@ -267,13 +275,13 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 					RepoURL:         d.source.Repo,
 					TemplateName:    d.source.Name,
 					TemplateVersion: d.source.Version,
-					Values:          resource.Config,
+					Values:          addonConfig,
 					Name:            resource.Name,
 				},
 			},
 		)
 	} else {
-		bytes, err := json.Marshal(resource.Config)
+		bytes, err := json.Marshal(addonConfig)
 
 		if err != nil {
 			return nil, err
@@ -397,7 +405,12 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		cliConf.Project = d.target.Project
 		cliConf.Cluster = d.target.Cluster
 
-		err = waitForJob(nil, client, []string{})
+		err = wait.WaitForJob(client, &wait.WaitOpts{
+			ProjectID: cliConf.Project,
+			ClusterID: cliConf.Cluster,
+			Namespace: namespace,
+			Name:      name,
+		})
 
 		if err != nil {
 			return nil, err
@@ -603,6 +616,14 @@ func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationCo
 	}
 
 	return config, nil
+}
+
+func (d *Driver) getAddonConfig(resource *models.Resource) (map[string]interface{}, error) {
+	return drivers.ConstructConfig(&drivers.ConstructConfigOpts{
+		RawConf:      resource.Config,
+		LookupTable:  *d.lookupTable,
+		Dependencies: resource.Dependencies,
+	})
 }
 
 type DeploymentHook struct {
@@ -832,6 +853,10 @@ func NewCloneEnvGroupHook(client *api.Client, resourceGroup *switchboardTypes.Re
 
 func (t *CloneEnvGroupHook) PreApply() error {
 	for _, res := range t.resGroup.Resources {
+		if res.Driver == "env-group" {
+			continue
+		}
+
 		config := &ApplicationConfig{}
 
 		err := mapstructure.Decode(res.Config, &config)

@@ -394,9 +394,8 @@ tabs:
     show_if: spot_instances_enabled
     contents:
     - type: string-input
-      label: Assign a bid price for the spot instance.
+      label: Assign a bid price for the spot instance (optional).
       variable: spot_price
-      required: true
       placeholder: "ex: 0.05"
 `
 

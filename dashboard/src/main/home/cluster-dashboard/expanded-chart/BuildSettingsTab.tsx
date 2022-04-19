@@ -1,11 +1,30 @@
+import Heading from "components/form-components/Heading";
+import KeyValueArray from "components/form-components/KeyValueArray";
 import MultiSaveButton from "components/MultiSaveButton";
-import React from "react";
+import React, { useContext } from "react";
+import { Context } from "shared/Context";
+import { ChartTypeWithExtendedConfig } from "shared/types";
 import styled from "styled-components";
 
-const BuildSettingsTab = () => {
+const BuildSettingsTab: React.FC<{ chart: ChartTypeWithExtendedConfig }> = ({
+  chart,
+}) => {
+  const { currentCluster } = useContext(Context);
+
   return (
     <Wrapper>
       <StyledSettingsSection>
+        <Heading>Build step env variables</Heading>
+
+        <KeyValueArray
+          values={chart.config.container.env}
+          envLoader
+          label="Environment Variables: "
+          externalValues={{
+            namespace: chart.namespace,
+            clusterId: currentCluster.id,
+          }}
+        ></KeyValueArray>
         <MultiSaveButton
           options={[
             {

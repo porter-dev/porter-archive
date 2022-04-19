@@ -257,8 +257,8 @@ const HeaderSection = styled.div`
 
   > i {
     cursor: pointer;
-    font-size 20px;
-    color: #969Fbbaa;
+    font-size: 20px;
+    color: #969fbbaa;
     padding: 2px;
     border: 2px solid #969fbbaa;
     border-radius: 100px;

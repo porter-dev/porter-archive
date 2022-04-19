@@ -26,12 +26,17 @@ export default class CurrentError extends Component<PropsType, StateType> {
   }
 
   render() {
+    if (!this.props.currentError) {
+      return null;
+    }
+
     // Check if it's an error from the API then retrieve the error message that we get from the API
     let currentError =
       this.props.currentError?.response?.data?.error || this.props.currentError;
     if (!React.isValidElement(currentError)) {
       currentError = String(currentError);
     }
+
     if (currentError) {
       if (!this.state.expanded) {
         return (

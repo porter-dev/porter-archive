@@ -56,6 +56,13 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			deplInfoMap[fmt.Sprintf(
 				"%s-%s-%d", deployment.RepoOwner, deployment.RepoName, deployment.PullRequestID,
 			)] = true
+
+			env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, deployment.EnvironmentID)
+
+			if err == nil {
+				updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
+			}
+
 			deployments = append(deployments, deployment)
 		}
 
@@ -77,7 +84,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			pullRequests = append(pullRequests, prs...)
 		}
 	} else {
-		depls, err := c.Repo().Environment().ListDeployments(req.EnvironmentID)
+		env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, req.EnvironmentID)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		depls, err := c.Repo().Environment().ListDeployments(env.ID)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -91,14 +105,10 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			deplInfoMap[fmt.Sprintf(
 				"%s-%s-%d", deployment.RepoOwner, deployment.RepoName, deployment.PullRequestID,
 			)] = true
+
+			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
+
 			deployments = append(deployments, deployment)
-		}
-
-		env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, req.EnvironmentID)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
 		}
 
 		prs, err := fetchOpenPullRequests(r.Context(), c.Config(), env, deplInfoMap)
@@ -115,6 +125,41 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		"pull_requests": pullRequests,
 		"deployments":   deployments,
 	})
+}
+
+func updateDeploymentWithGithubWorkflowRunStatus(
+	ctx context.Context,
+	config *config.Config,
+	env *models.Environment,
+	deployment *types.Deployment,
+) {
+	client, err := getGithubClientFromEnvironment(config, env)
+
+	if err == nil {
+		workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
+			ctx, deployment.RepoOwner, deployment.RepoName,
+			fmt.Sprintf("porter_%s_env.yml", env.Name), &github.ListWorkflowRunsOptions{
+				Branch: deployment.PRBranchFrom,
+			},
+		)
+
+		if err == nil && workflowRuns.GetTotalCount() > 0 {
+			latestWorkflowRun := workflowRuns.WorkflowRuns[0]
+
+			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
+
+			if latestWorkflowRun.GetStatus() == "in_progress" ||
+				latestWorkflowRun.GetStatus() == "queued" {
+				deployment.Status = types.DeploymentStatusUpdating
+			} else if latestWorkflowRun.GetStatus() == "completed" {
+				if latestWorkflowRun.GetConclusion() == "failed" {
+					deployment.Status = types.DeploymentStatusFailed
+				} else if latestWorkflowRun.GetStatus() == "timed_out" {
+					deployment.Status = types.DeploymentStatusTimedOut
+				}
+			}
+		}
+	}
 }
 
 func fetchOpenPullRequests(

@@ -38,7 +38,7 @@ const PullRequestCard = ({
       });
       onCreation(pullRequest);
     } catch (error) {
-      setCurrentError(error);
+      setCurrentError(error?.response?.data?.error || error);
       setHasError(true);
       setTimeout(() => {
         setHasError(false);

@@ -517,7 +517,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           />
         );
       case "build-settings":
-        return <BuildSettingsTab />;
+        return <BuildSettingsTab chart={chart} />;
       default:
     }
   };

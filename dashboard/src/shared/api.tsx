@@ -314,7 +314,7 @@ const updateNotificationConfig = baseApi<
 
 const getPRDeploymentList = baseApi<
   {
-    status?: string[];
+    environment_id?: number;
   },
   {
     cluster_id: number;

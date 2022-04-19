@@ -10,7 +10,7 @@ import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
 import { Environment, PRDeployment, PullRequest } from "../types";
 import { useRouting } from "shared/routing";
-import { useHistory, useLocation } from "react-router";
+import { useHistory, useLocation, useParams } from "react-router";
 import { deployments, pull_requests } from "../mocks";
 import PullRequestCard from "./PullRequestCard";
 
@@ -25,7 +25,7 @@ const AvailableStatusFilters = [
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 
-const DeploymentList = ({ environments }: { environments: Environment[] }) => {
+const DeploymentList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
@@ -35,17 +35,25 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     statusSelectorVal,
     setStatusSelectorVal,
   ] = useState<AvailableStatusFiltersType>("active");
-  const [selectedRepo, setSelectedRepo] = useState("");
 
   const { currentProject, currentCluster } = useContext(Context);
   const { getQueryParam, pushQueryParams } = useRouting();
   const location = useLocation();
   const history = useHistory();
+  const { environment_id, repo_name, repo_owner } = useParams<{
+    environment_id: string;
+    repo_name: string;
+    repo_owner: string;
+  }>();
+
+  const selectedRepo = `${repo_owner}/${repo_name}`;
 
   const getPRDeploymentList = () => {
     return api.getPRDeploymentList(
       "<token>",
-      {},
+      {
+        environment_id: Number(environment_id),
+      },
       {
         project_id: currentProject.id,
         cluster_id: currentCluster.id,
@@ -53,18 +61,6 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     );
     // return mockRequest();
   };
-
-  useEffect(() => {
-    const selected_repo = getQueryParam("repository");
-
-    const repo = environments.find(
-      (env) => `${env.git_repo_owner}/${env.git_repo_name}` === selected_repo
-    );
-
-    if (repo && true) {
-      setSelectedRepo(`${repo.git_repo_owner}/${repo.git_repo_name}`);
-    }
-  }, [location.search, history]);
 
   useEffect(() => {
     const status_filter = getQueryParam("status_filter");
@@ -105,20 +101,20 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     return () => {
       isSubscribed = false;
     };
-  }, [currentCluster, currentProject, statusSelectorVal]);
+  }, [currentCluster, currentProject]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    getPRDeploymentList()
-      .then(({ data }) => {
-        setDeploymentList(data.deployments || []);
-        setPullRequests(data.pull_requests || []);
-      })
-      .catch((err) => {
-        setHasError(true);
-        console.error(err);
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const { data } = await getPRDeploymentList();
+      setDeploymentList(data.deployments || []);
+      setPullRequests(data.pull_requests || []);
+    } catch (error) {
+      setHasError(true);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePreviewEnvironmentManualCreation = (pullRequest: PullRequest) => {
@@ -135,55 +131,29 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   };
 
   const filteredDeployments = useMemo(() => {
-    if (statusSelectorVal === "not_deployed") {
-      return [];
-    }
-
-    if (statusSelectorVal === "all" && selectedRepo === "all") {
-      return deploymentList;
-    }
-
-    let tmpDeploymentList = [...deploymentList];
-
-    if (selectedRepo !== "all") {
-      tmpDeploymentList = tmpDeploymentList.filter((deployment) => {
-        return (
-          `${deployment.gh_repo_owner}/${deployment.gh_repo_name}` ===
-          selectedRepo
-        );
-      });
-    }
-
     // Only filter out inactive when status filter is "active"
     if (statusSelectorVal === "active") {
-      tmpDeploymentList = tmpDeploymentList.filter((d) => {
+      return deploymentList.filter((d) => {
         return d.status !== "inactive";
       });
-    } else if (statusSelectorVal === "inactive") {
-      tmpDeploymentList = tmpDeploymentList.filter((d) => {
+    }
+
+    if (statusSelectorVal === "inactive") {
+      return deploymentList.filter((d) => {
         return d.status === "inactive";
       });
     }
 
-    return tmpDeploymentList;
-  }, [selectedRepo, statusSelectorVal, deploymentList]);
+    return deploymentList;
+  }, [statusSelectorVal, deploymentList]);
 
   const filteredPullRequests = useMemo(() => {
-    if (
-      statusSelectorVal !== "not_deployed" &&
-      statusSelectorVal !== "inactive"
-    ) {
+    if (statusSelectorVal !== "inactive") {
       return [];
     }
 
-    if (selectedRepo === "inactive") {
-      return pullRequests;
-    }
-
-    return pullRequests.filter((pr) => {
-      return `${pr.repo_owner}/${pr.repo_name}` === selectedRepo;
-    });
-  }, [selectedRepo, pullRequests]);
+    return pullRequests;
+  }, [pullRequests, statusSelectorVal]);
 
   const renderDeploymentList = () => {
     if (isLoading) {
@@ -237,17 +207,8 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   };
 
   const handleStatusFilterChange = (value: string) => {
-    setIsLoading(true);
     pushQueryParams({ status_filter: value });
     setStatusSelectorVal(value);
-  };
-
-  const renderMain = () => {
-    return (
-      <Container>
-        <EventsGrid>{renderDeploymentList()}</EventsGrid>
-      </Container>
-    );
   };
 
   return (
@@ -291,7 +252,9 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
           </StyledStatusSelector>
         </ActionsWrapper>
       </Flex>
-      {renderMain()}
+      <Container>
+        <EventsGrid>{renderDeploymentList()}</EventsGrid>
+      </Container>
     </>
   );
 };

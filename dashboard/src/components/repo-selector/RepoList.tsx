@@ -76,9 +76,9 @@ const RepoList: React.FC<Props> = ({
     try {
       const resolvedRepoList = await Promise.allSettled(repoListPromises);
 
-      const repos: RepoType[][] = resolvedRepoList
-        .map((repo) => (repo.status === "fulfilled" ? repo.value.data : null))
-        .filter(Boolean);
+      const repos: RepoType[][] = resolvedRepoList.map((repo) =>
+        repo.status === "fulfilled" ? repo.value.data : []
+      );
 
       const names = new Set();
       // note: would be better to use .flat() here but you need es2019 for

@@ -137,7 +137,7 @@ const DeploymentList = () => {
   const searchFilter = (value: string | number) => {
     const val = String(value);
 
-    return val.toLowerCase().includes(searchValue);
+    return val.toLowerCase().includes(searchValue.toLowerCase());
   };
 
   const filteredDeployments = useMemo(() => {

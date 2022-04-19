@@ -285,6 +285,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     let { setSidebar } = this.props;
     return (
       <Switch>
+        <Route path={"/preview-environments"}>
+          <LazyPreviewEnvironmentsRoutes />
+        </Route>
         <Route path="/:baseRoute/:clusterName+/:namespace/:chartName">
           <ExpandedChartWrapper
             setSidebar={setSidebar}
@@ -329,9 +332,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         >
           <EnvGroupDashboard currentCluster={this.props.currentCluster} />
         </GuardedRoute>
-        <Route path={"/preview-environments"}>
-          <LazyPreviewEnvironmentsRoutes />
-        </Route>
         <Route path={"/databases"}>
           <LazyDatabasesRoutes />
         </Route>

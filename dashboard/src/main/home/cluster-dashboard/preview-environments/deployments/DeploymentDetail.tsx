@@ -111,7 +111,9 @@ const DeploymentDetail = () => {
           </GHALink>
           {prDeployment.last_workflow_run_url ? (
             <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
-              <i className="material-icons-outlined">play_circle_outline</i>
+              <span className="material-icons-outlined">
+                play_circle_outline
+              </span>
               Last workflow run
               <i className="material-icons">open_in_new</i>
             </GHALink>
@@ -155,8 +157,7 @@ const GHALink = styled(DynamicLink)`
     color: white;
   }
 
-  > img,
-  span {
+  > img {
     height: 16px;
     margin-right: 9px;
     margin-left: 5px;
@@ -167,6 +168,13 @@ const GHALink = styled(DynamicLink)`
       text-decoration: underline;
       color: white;
     }
+  }
+
+  > span {
+    font-size: 17px;
+    margin-right: 9px;
+    margin-left: 5px;
+    text-decoration: none;
   }
 
   > i {

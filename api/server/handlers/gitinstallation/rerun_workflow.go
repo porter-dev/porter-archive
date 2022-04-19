@@ -3,6 +3,7 @@ package gitinstallation
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v41/github"
@@ -10,7 +11,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 )
 
 var ErrNoWorkflowRuns = errors.New("no previous workflow runs found")
@@ -36,10 +36,10 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	filename, reqErr := requestutils.GetURLParamString(r, "filename")
+	filename := r.URL.Query().Get("filename")
 
-	if reqErr != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+	if filename == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("filename query param not set")))
 		return
 	}
 

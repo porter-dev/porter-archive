@@ -118,7 +118,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         }
       )
       .then((_) => {
-        window.analytics.track("Deployed Add-on", {
+        window.analytics?.track("Deployed Add-on", {
           name: props.currentTemplate.name,
           namespace: selectedNamespace,
           values: values,
@@ -132,7 +132,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         setSaveValuesStatus(err);
 
         setCurrentError(err);
-        window.analytics.track("Failed to Deploy Add-on", {
+        window.analytics?.track("Failed to Deploy Add-on", {
           name: props.currentTemplate.name,
           namespace: selectedNamespace,
           values: values,

@@ -3,6 +3,7 @@ import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
 import ConnectNewRepo from "./ConnectNewRepo";
 import DeploymentDetail from "./deployments/DeploymentDetail";
+import DeploymentList from "./deployments/DeploymentList";
 import PreviewEnvironmentsHome from "./PreviewEnvironmentsHome";
 
 export const Routes = () => {
@@ -22,7 +23,12 @@ export const Routes = () => {
         <Route path={`${url}/details/:namespace?`}>
           <DeploymentDetail />
         </Route>
-        <Route path={`${url}/:selected_tab?`}>
+        <Route
+          path={`${url}/environment/:environment_id/:repo_owner/:repo_name`}
+        >
+          <DeploymentList />
+        </Route>
+        <Route path={`${url}/`}>
           <PreviewEnvironmentsHome />
         </Route>
       </Switch>

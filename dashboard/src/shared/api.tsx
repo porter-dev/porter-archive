@@ -313,7 +313,7 @@ const updateNotificationConfig = baseApi<
 
 const getPRDeploymentList = baseApi<
   {
-    status?: string[];
+    environment_id?: number;
   },
   {
     cluster_id: number;
@@ -373,7 +373,14 @@ const deletePRDeployment = baseApi<
     pr_number: number;
   }
 >("DELETE", (pathParams) => {
-  const { cluster_id, project_id, environment_id, repo_owner, repo_name, pr_number } = pathParams;
+  const {
+    cluster_id,
+    project_id,
+    environment_id,
+    repo_owner,
+    repo_name,
+    pr_number,
+  } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${environment_id}/${repo_owner}/${repo_name}/${pr_number}`;
 });
 

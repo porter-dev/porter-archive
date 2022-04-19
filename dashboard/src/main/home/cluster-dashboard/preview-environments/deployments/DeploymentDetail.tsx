@@ -18,6 +18,7 @@ const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
+  const [environmentId, setEnvironmentId] = useState("");
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
 
   const { currentProject, currentCluster } = useContext(Context);
@@ -28,6 +29,7 @@ const DeploymentDetail = () => {
   useEffect(() => {
     let isSubscribed = true;
     let environment_id = parseInt(searchParams.get("environment_id"));
+    setEnvironmentId(searchParams.get("environment_id"));
     api
       .getPRDeploymentByCluster(
         "<token>",
@@ -64,7 +66,9 @@ const DeploymentDetail = () => {
   return (
     <StyledExpandedChart>
       <HeaderWrapper>
-        <BackButton to={`/preview-environments?repository=${repository}`}>
+        <BackButton
+          to={`/preview-environments/deployments/${environmentId}/${repository}`}
+        >
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">

@@ -104,7 +104,7 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
         </Modal>
       ) : null}
       <EnvironmentCardWrapper
-        to={`/environment/${id}/${git_repo_owner}/${git_repo_name}`}
+        to={`/preview-environments/deployments/${id}/${git_repo_owner}/${git_repo_name}`}
       >
         <DataContainer>
           <RepoName>

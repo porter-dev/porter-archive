@@ -616,5 +616,41 @@ func getGitInstallationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/rerun_workflow ->
+	// gitinstallation.NewRerunWorkflowHandler
+	rerunWorkflowEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf(
+					"%s/{%s}/{%s}/clusters/{cluster_id}/rerun_workflow",
+					relPath,
+					types.URLParamGitRepoOwner,
+					types.URLParamGitRepoName,
+				),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.GitInstallationScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	rerunWorkflowHandler := gitinstallation.NewRerunWorkflowHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: rerunWorkflowEndpoint,
+		Handler:  rerunWorkflowHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

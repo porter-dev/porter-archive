@@ -18,6 +18,7 @@ const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
   const context = useContext(Context);
   const [prDeployment, setPRDeployment] = useState<PRDeployment>(null);
+  const [environmentId, setEnvironmentId] = useState("");
   const [showRepoTooltip, setShowRepoTooltip] = useState(false);
 
   const { currentProject, currentCluster } = useContext(Context);
@@ -28,6 +29,7 @@ const DeploymentDetail = () => {
   useEffect(() => {
     let isSubscribed = true;
     let environment_id = parseInt(searchParams.get("environment_id"));
+    setEnvironmentId(searchParams.get("environment_id"));
     api
       .getPRDeploymentByCluster(
         "<token>",
@@ -64,7 +66,9 @@ const DeploymentDetail = () => {
   return (
     <StyledExpandedChart>
       <HeaderWrapper>
-        <BackButton to={`/preview-environments?repository=${repository}`}>
+        <BackButton
+          to={`/preview-environments/deployments/${environmentId}/${repository}`}
+        >
           <BackButtonImg src={backArrow} />
         </BackButton>
         <Title icon={pr_icon} iconWidth="25px">
@@ -109,6 +113,15 @@ const DeploymentDetail = () => {
             <img src={github} /> GitHub PR
             <i className="material-icons">open_in_new</i>
           </GHALink>
+          {prDeployment.last_workflow_run_url ? (
+            <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
+              <span className="material-icons-outlined">
+                play_circle_outline
+              </span>
+              Last workflow run
+              <i className="material-icons">open_in_new</i>
+            </GHALink>
+          ) : null}
         </Flex>
         <LinkToActionsWrapper></LinkToActionsWrapper>
       </HeaderWrapper>
@@ -159,6 +172,13 @@ const GHALink = styled(DynamicLink)`
       text-decoration: underline;
       color: white;
     }
+  }
+
+  > span {
+    font-size: 17px;
+    margin-right: 9px;
+    margin-left: 5px;
+    text-decoration: none;
   }
 
   > i {

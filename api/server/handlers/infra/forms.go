@@ -379,6 +379,12 @@ tabs:
       required: true
       placeholder: my-cluster
       variable: cluster_name
+    - type: number-input
+      label: Maximum number of EC2 instances to create in the application autoscaling group.
+      variable: max_instances
+      placeholder: "ex: 10"
+      settings:
+        default: 10
     - type: checkbox
       variable: spot_instances_enabled
       label: Enable spot instances for this cluster.

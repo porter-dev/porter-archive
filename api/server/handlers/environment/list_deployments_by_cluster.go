@@ -148,8 +148,9 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 
-			if latestWorkflowRun.GetStatus() == "in_progress" ||
-				latestWorkflowRun.GetStatus() == "queued" {
+			if deployment.Status != types.DeploymentStatusCreating &&
+				(latestWorkflowRun.GetStatus() == "in_progress" ||
+					latestWorkflowRun.GetStatus() == "queued") {
 				deployment.Status = types.DeploymentStatusUpdating
 			} else if latestWorkflowRun.GetStatus() == "completed" {
 				if latestWorkflowRun.GetConclusion() == "failed" {
@@ -177,7 +178,7 @@ func fetchOpenPullRequests(
 	openPRs, resp, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 		&github.PullRequestListOptions{
 			ListOptions: github.ListOptions{
-				PerPage: 50,
+				PerPage: 100,
 			},
 		},
 	)
@@ -190,6 +191,21 @@ func fetchOpenPullRequests(
 
 	if err != nil {
 		return nil, err
+	}
+
+	var ghPRs []*github.PullRequest
+
+	for resp.NextPage != 0 && err != nil {
+		ghPRs, resp, err = client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
+			&github.PullRequestListOptions{
+				ListOptions: github.ListOptions{
+					PerPage: 100,
+					Page:    resp.NextPage,
+				},
+			},
+		)
+
+		openPRs = append(openPRs, ghPRs...)
 	}
 
 	for _, pr := range openPRs {

@@ -24,7 +24,7 @@ export const Routes = () => {
           <DeploymentDetail />
         </Route>
         <Route
-          path={`${url}/environment/:environment_id/:repo_owner/:repo_name`}
+          path={`${url}/deployments/:environment_id/:repo_owner/:repo_name`}
         >
           <DeploymentList />
         </Route>

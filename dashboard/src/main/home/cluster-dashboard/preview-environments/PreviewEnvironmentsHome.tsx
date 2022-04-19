@@ -11,6 +11,7 @@ import PullRequestIcon from "assets/pull_request_icon.svg";
 import DeploymentList from "./deployments/DeploymentList";
 import EnvironmentsList from "./environments/EnvironmentsList";
 import { environments } from "./mocks";
+import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
 
 const PreviewEnvironmentsHome = () => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -102,21 +103,10 @@ const PreviewEnvironmentsHome = () => {
     setSelectedRepo(current_repo);
   }, [location.search, history]);
 
-  const renderHeader = useCallback(
-    () => (
-      <DashboardHeader
-        image={PullRequestIcon}
-        title="Preview Environments"
-        description="Create full-stack preview environments for your pull requests."
-      />
-    ),
-    []
-  );
-
   if (isLoading) {
     return (
       <>
-        {renderHeader()}
+        <PreviewEnvironmentsHeader />
         <Placeholder>
           <Loading />
         </Placeholder>
@@ -127,7 +117,7 @@ const PreviewEnvironmentsHome = () => {
   if (!hasGHAccountsLinked) {
     return (
       <>
-        {renderHeader()}
+        <PreviewEnvironmentsHeader />
         <Placeholder>
           <Title>There are no repositories linked</Title>
           <Subtitle>
@@ -143,7 +133,7 @@ const PreviewEnvironmentsHome = () => {
   if (!hasEnvironments) {
     return (
       <>
-        {renderHeader()}
+        <PreviewEnvironmentsHeader />
 
         <Placeholder>
           <Title>Preview environments are not enabled on this cluster</Title>
@@ -157,22 +147,13 @@ const PreviewEnvironmentsHome = () => {
     );
   }
 
-  if (!selectedRepo) {
-    return (
-      <>
-        {renderHeader()}
-        <EnvironmentsList
-          environments={environments}
-          setEnvironments={setEnvironments}
-        />
-      </>
-    );
-  }
-
   return (
     <>
-      {renderHeader()}
-      <DeploymentList />
+      <PreviewEnvironmentsHeader />
+      <EnvironmentsList
+        environments={environments}
+        setEnvironments={setEnvironments}
+      />
     </>
   );
 };

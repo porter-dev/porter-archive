@@ -178,7 +178,7 @@ func fetchOpenPullRequests(
 	openPRs, resp, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 		&github.PullRequestListOptions{
 			ListOptions: github.ListOptions{
-				PerPage: 50,
+				PerPage: 100,
 			},
 		},
 	)
@@ -191,6 +191,21 @@ func fetchOpenPullRequests(
 
 	if err != nil {
 		return nil, err
+	}
+
+	var ghPRs []*github.PullRequest
+
+	for resp.NextPage != 0 && err != nil {
+		ghPRs, resp, err = client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
+			&github.PullRequestListOptions{
+				ListOptions: github.ListOptions{
+					PerPage: 100,
+					Page:    resp.NextPage,
+				},
+			},
+		)
+
+		openPRs = append(openPRs, ghPRs...)
 	}
 
 	for _, pr := range openPRs {

@@ -195,7 +195,7 @@ func fetchOpenPullRequests(
 
 	var ghPRs []*github.PullRequest
 
-	for resp.NextPage != 0 && err != nil {
+	for resp.NextPage != 0 && err == nil {
 		ghPRs, resp, err = client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 			&github.PullRequestListOptions{
 				ListOptions: github.ListOptions{

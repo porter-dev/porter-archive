@@ -384,6 +384,14 @@ tabs:
       label: Enable spot instances for this cluster.
       settings:
         default: false
+  - name: spot_instance_price
+    show_if: spot_instances_enabled
+    contents:
+    - type: string-input
+      label: Assign a bid price for the spot instance.
+      variable: spot_price
+      required: true
+      placeholder: "ex: 0.05"
 `
 
 const gcrForm = `name: GCR

@@ -109,6 +109,13 @@ const DeploymentDetail = () => {
             <img src={github} /> GitHub PR
             <i className="material-icons">open_in_new</i>
           </GHALink>
+          {prDeployment.last_workflow_run_url ? (
+            <GHALink to={prDeployment.last_workflow_run_url} target="_blank">
+              <i className="material-icons-outlined">play_circle_outline</i>
+              Last workflow run
+              <i className="material-icons">open_in_new</i>
+            </GHALink>
+          ) : null}
         </Flex>
         <LinkToActionsWrapper></LinkToActionsWrapper>
       </HeaderWrapper>
@@ -148,7 +155,8 @@ const GHALink = styled(DynamicLink)`
     color: white;
   }
 
-  > img {
+  > img,
+  span {
     height: 16px;
     margin-right: 9px;
     margin-left: 5px;

@@ -102,13 +102,16 @@ const PreviewEnvironmentsHome = () => {
     setSelectedRepo(current_repo);
   }, [location.search, history]);
 
-  const renderHeader = useCallback(() => {
-    <DashboardHeader
-      image={PullRequestIcon}
-      title="Preview Environments"
-      description="Create full-stack preview environments for your pull requests."
-    />;
-  }, []);
+  const renderHeader = useCallback(
+    () => (
+      <DashboardHeader
+        image={PullRequestIcon}
+        title="Preview Environments"
+        description="Create full-stack preview environments for your pull requests."
+      />
+    ),
+    []
+  );
 
   if (isLoading) {
     return (

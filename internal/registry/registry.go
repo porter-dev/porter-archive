@@ -131,7 +131,7 @@ func (r *Registry) listGCRRepositories(
 
 	regURL := r.URL
 
-	if !strings.Contains(regURL, "http") {
+	if !strings.HasPrefix(regURL, "http") {
 		regURL = fmt.Sprintf("https://%s", regURL)
 	}
 

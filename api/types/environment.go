@@ -22,13 +22,15 @@ type CreateEnvironmentRequest struct {
 }
 
 type GitHubMetadata struct {
-	DeploymentID int64  `json:"gh_deployment_id"`
-	PRName       string `json:"gh_pr_name"`
-	RepoName     string `json:"gh_repo_name"`
-	RepoOwner    string `json:"gh_repo_owner"`
-	CommitSHA    string `json:"gh_commit_sha"`
-	PRBranchFrom string `json:"gh_pr_branch_from"`
-	PRBranchInto string `json:"gh_pr_branch_into"`
+	DeploymentID     int64  `json:"gh_deployment_id"`
+	PRName           string `json:"gh_pr_name"`
+	RepoName         string `json:"gh_repo_name"`
+	RepoOwner        string `json:"gh_repo_owner"`
+	CommitSHA        string `json:"gh_commit_sha"`
+	PRBranchFrom     string `json:"gh_pr_branch_from"`
+	PRBranchInto     string `json:"gh_pr_branch_into"`
+	WorkflowFilename string `json:"gh_workflow_filename"`
+	InstallationID   uint   `json:"gh_installation_id"`
 }
 
 type DeploymentStatus string
@@ -48,7 +50,6 @@ type Deployment struct {
 	ID                 uint             `json:"id"`
 	CreatedAt          time.Time        `json:"created_at"`
 	UpdatedAt          time.Time        `json:"updated_at"`
-	GitInstallationID  uint             `json:"git_installation_id"`
 	EnvironmentID      uint             `json:"environment_id"`
 	Namespace          string           `json:"namespace"`
 	Status             DeploymentStatus `json:"status"`

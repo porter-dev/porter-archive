@@ -405,6 +405,35 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/deployments/{deployment_id}/trigger_workflow -> environment.NewTriggerDeploymentWorkflowHandler
+		triggerDeploymentWorkflowEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/{deployment_id}/trigger_workflow",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		triggerDeploymentWorkflowHandler := environment.NewTriggerDeploymentWorkflowHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &Route{
+			Endpoint: triggerDeploymentWorkflowEndpoint,
+			Handler:  triggerDeploymentWorkflowHandler,
+			Router:   r,
+		})
+
 		// POST /api/projects/{project_id}/clusters/{cluster_id}/deployments/pull_request -> environment.NewEnablePullRequestHandler
 		enablePullRequestEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{

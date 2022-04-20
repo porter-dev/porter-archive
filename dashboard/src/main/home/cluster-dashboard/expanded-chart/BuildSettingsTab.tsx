@@ -84,9 +84,10 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
   };
 
   const saveEnvVariables = async () => {
-    const values = chart.config;
+    let values = chart.config;
 
-    set(values, "container.env.normal", envVariables);
+    values.container.env.normal = envVariables;
+
     const valuesYaml = yaml.dump({ ...values });
     try {
       await api.upgradeChartValues(

@@ -1,6 +1,8 @@
 package environment
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,6 +16,8 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
+
+var ErrNoWorkflowRuns = errors.New("no previous workflow runs found")
 
 type TriggerDeploymentWorkflowHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -65,6 +69,22 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
+	latestWorkflowRun, err := getLatestWorkflowRun(client, env.GitRepoOwner, env.GitRepoName,
+		fmt.Sprintf("porter_%s_env.yml", env.Name))
+
+	if err != nil && errors.Is(err, ErrNoWorkflowRuns) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 400))
+		return
+	} else if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if latestWorkflowRun.GetStatus() == "in_progress" || latestWorkflowRun.GetStatus() == "queued" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("workflow already in progress"), 409))
+		return
+	}
+
 	ghResp, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 		r.Context(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
 		github.CreateWorkflowDispatchEventRequest{
@@ -87,4 +107,25 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+}
+
+func getLatestWorkflowRun(client *github.Client, owner, repo, filename string) (*github.WorkflowRun, error) {
+	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
+		context.Background(), owner, repo, filename, &github.ListWorkflowRunsOptions{
+			ListOptions: github.ListOptions{
+				Page:    1,
+				PerPage: 1,
+			},
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if workflowRuns.GetTotalCount() == 0 {
+		return nil, ErrNoWorkflowRuns
+	}
+
+	return workflowRuns.WorkflowRuns[0], nil
 }

@@ -161,15 +161,12 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 
-			fmt.Println(latestWorkflowRun.GetStatus())
-			fmt.Println(latestWorkflowRun.GetConclusion())
-
 			if (latestWorkflowRun.GetStatus() == "in_progress" ||
 				latestWorkflowRun.GetStatus() == "queued") &&
 				deployment.Status != types.DeploymentStatusCreating {
 				deployment.Status = types.DeploymentStatusUpdating
 			} else if latestWorkflowRun.GetStatus() == "completed" {
-				if latestWorkflowRun.GetConclusion() == "failed" {
+				if latestWorkflowRun.GetConclusion() == "failure" {
 					deployment.Status = types.DeploymentStatusFailed
 				} else if latestWorkflowRun.GetConclusion() == "timed_out" {
 					deployment.Status = types.DeploymentStatusTimedOut

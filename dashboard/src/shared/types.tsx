@@ -21,6 +21,7 @@ export interface DetailedIngressError {
 export interface ChartType {
   image_repo_uri: string;
   git_action_config: any;
+  build_config: BuildConfig;
   name: string;
   info: {
     last_deployed: string;
@@ -539,4 +540,12 @@ export type InfraCredentialOptions =
 
 export type InfraCredentials = {
   [key in InfraCredentialOptions]?: number;
+};
+
+export type BuildConfig = {
+  builder: string;
+  buildpacks: string[];
+  config: null | {
+    [key: string]: string;
+  };
 };

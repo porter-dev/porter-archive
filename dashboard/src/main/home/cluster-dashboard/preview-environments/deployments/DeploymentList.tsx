@@ -148,7 +148,7 @@ const DeploymentList = () => {
           return d.status !== "inactive";
         })
         .filter((d) => {
-          return Boolean(Object.values(d).find(searchFilter));
+          return Object.values(d).find(searchFilter) !== undefined;
         });
     }
 
@@ -158,7 +158,7 @@ const DeploymentList = () => {
           return d.status === "inactive";
         })
         .filter((d) => {
-          return Boolean(Object.values(d).find(searchFilter));
+          return Object.values(d).find(searchFilter) !== undefined;
         });
     }
 
@@ -171,7 +171,7 @@ const DeploymentList = () => {
     }
 
     return pullRequests.filter((pr) => {
-      return Boolean(Object.values(pr).find(searchFilter));
+      return Object.values(d).find(searchFilter) !== undefined;
     });
   }, [pullRequests, statusSelectorVal, searchValue]);
 

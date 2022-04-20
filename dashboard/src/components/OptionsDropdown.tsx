@@ -9,6 +9,7 @@ export const OptionsDropdown: React.FC<{
 
   const handleClick = (e: any) => {
     e.stopPropagation();
+    e.preventDefault();
     setIsOpen(!isOpen);
   };
 

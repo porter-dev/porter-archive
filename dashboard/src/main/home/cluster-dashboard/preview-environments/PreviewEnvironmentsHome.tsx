@@ -1,5 +1,5 @@
 import Loading from "components/Loading";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -11,10 +11,7 @@ import PullRequestIcon from "assets/pull_request_icon.svg";
 import DeploymentList from "./deployments/DeploymentList";
 import EnvironmentsList from "./environments/EnvironmentsList";
 import { environments } from "./mocks";
-
-const AvailableTabs = ["repositories", "pull_requests"];
-
-type TabEnum = typeof AvailableTabs[number];
+import { PreviewEnvironmentsHeader } from "./components/PreviewEnvironmentsHeader";
 
 const PreviewEnvironmentsHome = () => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -22,11 +19,10 @@ const PreviewEnvironmentsHome = () => {
   const [hasGHAccountsLinked, setHasGHAccountsLinked] = useState(false);
   const [hasEnvironments, setHasEnvironments] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
   const [environments, setEnvironments] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState("");
 
-  const { getQueryParam, pushQueryParams } = useRouting();
+  const { getQueryParam } = useRouting();
   const location = useLocation();
   const history = useHistory();
 
@@ -107,21 +103,21 @@ const PreviewEnvironmentsHome = () => {
     setSelectedRepo(current_repo);
   }, [location.search, history]);
 
-  const renderMain = () => {
-    if (isLoading) {
-      return (
+  if (isLoading) {
+    return (
+      <>
+        <PreviewEnvironmentsHeader />
         <Placeholder>
           <Loading />
         </Placeholder>
-      );
-    }
-  
-    if (hasError) {
-      return <Placeholder>Something went wrong, please try again</Placeholder>;
-    }
-  
-    if (!hasGHAccountsLinked) {
-      return (
+      </>
+    );
+  }
+
+  if (!hasGHAccountsLinked) {
+    return (
+      <>
+        <PreviewEnvironmentsHeader />
         <Placeholder>
           <Title>There are no repositories linked</Title>
           <Subtitle>
@@ -130,11 +126,15 @@ const PreviewEnvironmentsHome = () => {
           </Subtitle>
           <ButtonEnablePREnvironments />
         </Placeholder>
-      );
-    }
-  
-    if (!hasEnvironments) {
-      return (
+      </>
+    );
+  }
+
+  if (!hasEnvironments) {
+    return (
+      <>
+        <PreviewEnvironmentsHeader />
+
         <Placeholder>
           <Title>Preview environments are not enabled on this cluster</Title>
           <Subtitle>
@@ -143,56 +143,22 @@ const PreviewEnvironmentsHome = () => {
           </Subtitle>
           <ButtonEnablePREnvironments />
         </Placeholder>
-      );
-    }
-
-    if (!selectedRepo) {
-      return (
-        <EnvironmentsList
-          environments={environments}
-          setEnvironments={setEnvironments}
-        />
-      );
-    }
-
-    return (
-      <DeploymentList
-        // selectedRepo={selectedRepo}
-        environments={environments}
-      />
+      </>
     );
   }
 
   return (
     <>
-      <DashboardHeader
-        image={PullRequestIcon}
-        title="Preview Environments"
-        description="Create full-stack preview environments for your pull requests."
+      <PreviewEnvironmentsHeader />
+      <EnvironmentsList
+        environments={environments}
+        setEnvironments={setEnvironments}
       />
-      {renderMain()}
     </>
   );
 };
 
-/*
-<DeploymentList environments={environments} />
-*/
 export default PreviewEnvironmentsHome;
-
-const mockRequest = () =>
-  new Promise((res) => {
-    setTimeout(() => {
-      res({ data: environments });
-    }, 1000);
-  });
-
-const LineBreak = styled.div`
-  width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
-  margin: 10px 0px 35px;
-`;
 
 const Placeholder = styled.div`
   padding: 30px;

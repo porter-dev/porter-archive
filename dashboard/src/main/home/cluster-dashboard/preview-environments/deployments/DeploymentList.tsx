@@ -10,9 +10,12 @@ import _ from "lodash";
 import DeploymentCard from "./DeploymentCard";
 import { Environment, PRDeployment, PullRequest } from "../types";
 import { useRouting } from "shared/routing";
-import { useHistory, useLocation } from "react-router";
+import { useHistory, useLocation, useParams } from "react-router";
 import { deployments, pull_requests } from "../mocks";
 import PullRequestCard from "./PullRequestCard";
+import DynamicLink from "components/DynamicLink";
+import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
+import SearchBar from "components/SearchBar";
 
 const AvailableStatusFilters = [
   "all",
@@ -25,27 +28,36 @@ const AvailableStatusFilters = [
 
 type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
 
-const DeploymentList = ({ environments }: { environments: Environment[] }) => {
+const DeploymentList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
+  const [searchValue, setSearchValue] = useState("");
 
   const [
     statusSelectorVal,
     setStatusSelectorVal,
   ] = useState<AvailableStatusFiltersType>("active");
-  const [selectedRepo, setSelectedRepo] = useState("");
 
   const { currentProject, currentCluster } = useContext(Context);
   const { getQueryParam, pushQueryParams } = useRouting();
   const location = useLocation();
   const history = useHistory();
+  const { environment_id, repo_name, repo_owner } = useParams<{
+    environment_id: string;
+    repo_name: string;
+    repo_owner: string;
+  }>();
+
+  const selectedRepo = `${repo_owner}/${repo_name}`;
 
   const getPRDeploymentList = () => {
     return api.getPRDeploymentList(
       "<token>",
-      {},
+      {
+        environment_id: Number(environment_id),
+      },
       {
         project_id: currentProject.id,
         cluster_id: currentCluster.id,
@@ -53,18 +65,6 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     );
     // return mockRequest();
   };
-
-  useEffect(() => {
-    const selected_repo = getQueryParam("repository");
-
-    const repo = environments.find(
-      (env) => `${env.git_repo_owner}/${env.git_repo_name}` === selected_repo
-    );
-
-    if (repo && true) {
-      setSelectedRepo(`${repo.git_repo_owner}/${repo.git_repo_name}`);
-    }
-  }, [location.search, history]);
 
   useEffect(() => {
     const status_filter = getQueryParam("status_filter");
@@ -105,20 +105,20 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     return () => {
       isSubscribed = false;
     };
-  }, [currentCluster, currentProject, statusSelectorVal]);
+  }, [currentCluster, currentProject]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    getPRDeploymentList()
-      .then(({ data }) => {
-        setDeploymentList(data.deployments || []);
-        setPullRequests(data.pull_requests || []);
-      })
-      .catch((err) => {
-        setHasError(true);
-        console.error(err);
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const { data } = await getPRDeploymentList();
+      setDeploymentList(data.deployments || []);
+      setPullRequests(data.pull_requests || []);
+    } catch (error) {
+      setHasError(true);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePreviewEnvironmentManualCreation = (pullRequest: PullRequest) => {
@@ -134,56 +134,46 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
     handleRefresh();
   };
 
+  const searchFilter = (value: string | number) => {
+    const val = String(value);
+
+    return val.toLowerCase().includes(searchValue.toLowerCase());
+  };
+
   const filteredDeployments = useMemo(() => {
-    if (statusSelectorVal === "not_deployed") {
-      return [];
-    }
-
-    if (statusSelectorVal === "all" && selectedRepo === "all") {
-      return deploymentList;
-    }
-
-    let tmpDeploymentList = [...deploymentList];
-
-    if (selectedRepo !== "all") {
-      tmpDeploymentList = tmpDeploymentList.filter((deployment) => {
-        return (
-          `${deployment.gh_repo_owner}/${deployment.gh_repo_name}` ===
-          selectedRepo
-        );
-      });
-    }
-
     // Only filter out inactive when status filter is "active"
     if (statusSelectorVal === "active") {
-      tmpDeploymentList = tmpDeploymentList.filter((d) => {
-        return d.status !== "inactive";
-      });
-    } else if (statusSelectorVal === "inactive") {
-      tmpDeploymentList = tmpDeploymentList.filter((d) => {
-        return d.status === "inactive";
-      });
+      return deploymentList
+        .filter((d) => {
+          return d.status !== "inactive";
+        })
+        .filter((d) => {
+          return Object.values(d).find(searchFilter) !== undefined;
+        });
     }
 
-    return tmpDeploymentList;
-  }, [selectedRepo, statusSelectorVal, deploymentList]);
+    if (statusSelectorVal === "inactive") {
+      return deploymentList
+        .filter((d) => {
+          return d.status === "inactive";
+        })
+        .filter((d) => {
+          return Object.values(d).find(searchFilter) !== undefined;
+        });
+    }
+
+    return deploymentList;
+  }, [statusSelectorVal, deploymentList, searchValue]);
 
   const filteredPullRequests = useMemo(() => {
-    if (
-      statusSelectorVal !== "not_deployed" &&
-      statusSelectorVal !== "inactive"
-    ) {
+    if (statusSelectorVal !== "inactive") {
       return [];
-    }
-
-    if (selectedRepo === "inactive") {
-      return pullRequests;
     }
 
     return pullRequests.filter((pr) => {
-      return `${pr.repo_owner}/${pr.repo_name}` === selectedRepo;
+      return Object.values(d).find(searchFilter) !== undefined;
     });
-  }, [selectedRepo, pullRequests]);
+  }, [pullRequests, statusSelectorVal, searchValue]);
 
   const renderDeploymentList = () => {
     if (isLoading) {
@@ -237,28 +227,18 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
   };
 
   const handleStatusFilterChange = (value: string) => {
-    setIsLoading(true);
     pushQueryParams({ status_filter: value });
     setStatusSelectorVal(value);
   };
 
-  const renderMain = () => {
-    return (
-      <Container>
-        <EventsGrid>{renderDeploymentList()}</EventsGrid>
-      </Container>
-    );
-  };
-
   return (
     <>
+      <PreviewEnvironmentsHeader />
       <Flex>
-        <i
-          className="material-icons"
-          onClick={() => pushQueryParams({}, ["status_filter", "repository"])}
-        >
+        <BackButton to={"/preview-environments"} className="material-icons">
           keyboard_backspace
-        </i>
+        </BackButton>
+
         <Icon
           src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
           alt="git repository icon"
@@ -270,6 +250,16 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
             <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
               <i className="material-icons">refresh</i>
             </RefreshButton>
+            <SearchRow>
+              <i className="material-icons">search</i>
+              <SearchInput
+                value={searchValue}
+                onChange={(e: any) => {
+                  setSearchValue(e.target.value);
+                }}
+                placeholder="Search"
+              />
+            </SearchRow>
             <Selector
               activeValue={statusSelectorVal}
               setActiveValue={handleStatusFilterChange}
@@ -291,7 +281,9 @@ const DeploymentList = ({ environments }: { environments: Environment[] }) => {
           </StyledStatusSelector>
         </ActionsWrapper>
       </Flex>
-      {renderMain()}
+      <Container>
+        <EventsGrid>{renderDeploymentList()}</EventsGrid>
+      </Container>
     </>
   );
 };
@@ -312,16 +304,16 @@ const mockRequest = () =>
 const Flex = styled.div`
   display: flex;
   align-items: center;
+`;
 
-  > i {
-    cursor: pointer;
-    font-size: 24px;
-    color: #969fbbaa;
-    padding: 3px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
+const BackButton = styled(DynamicLink)`
+  cursor: pointer;
+  font-size: 24px;
+  color: #969fbbaa;
+  padding: 3px;
+  border-radius: 100px;
+  :hover {
+    background: #ffffff11;
   }
 `;
 
@@ -393,15 +385,6 @@ const Container = styled.div`
   padding-bottom: 120px;
 `;
 
-const ControlRow = styled.div`
-  display: flex;
-  margin-left: auto;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-  padding-left: 0px;
-`;
-
 const EventsGrid = styled.div`
   display: grid;
   grid-row-gap: 20px;
@@ -417,25 +400,37 @@ const StyledStatusSelector = styled.div`
   }
 `;
 
-const Header = styled.div`
-  font-weight: 500;
-  color: #aaaabb;
-  font-size: 16px;
-  margin-bottom: 15px;
-  width: 50%;
+const SearchInput = styled.input`
+  outline: none;
+  border: none;
+  font-size: 13px;
+  background: none;
+  width: 100%;
+  color: white;
+  padding: 0;
+  height: 20px;
 `;
 
-const Subheader = styled.div`
-  width: 50%;
-`;
-
-const Label = styled.div`
+const SearchRow = styled.div`
   display: flex;
+  width: 100%;
+  font-size: 13px;
+  color: #ffffff55;
+  border-radius: 4px;
+  user-select: none;
   align-items: center;
-  margin-right: 12px;
+  padding: 10px 0px;
+  min-width: 300px;
+  max-width: min-content;
+  max-height: 35px;
+  background: #ffffff11;
+  margin-right: 15px;
 
-  > i {
-    margin-right: 8px;
-    font-size: 18px;
+  i {
+    width: 18px;
+    height: 18px;
+    margin-left: 12px;
+    margin-right: 12px;
+    font-size: 20px;
   }
 `;

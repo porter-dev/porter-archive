@@ -171,7 +171,7 @@ const DeploymentList = () => {
     }
 
     return pullRequests.filter((pr) => {
-      return Object.values(d).find(searchFilter) !== undefined;
+      return Object.values(pr).find(searchFilter) !== undefined;
     });
   }, [pullRequests, statusSelectorVal, searchValue]);
 

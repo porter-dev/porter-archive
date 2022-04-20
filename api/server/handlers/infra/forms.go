@@ -273,6 +273,8 @@ tabs:
           value: "13.3"
         - label: "v13.4"
           value: "13.4"
+        - label: "v13.6"
+          value: "13.6"
   - name: additional-settings
     contents:
     - type: heading

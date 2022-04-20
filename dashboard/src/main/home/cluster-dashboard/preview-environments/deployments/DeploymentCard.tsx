@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { PRDeployment } from "../types";
+import { DeploymentStatus, PRDeployment } from "../types";
 import pr_icon from "assets/pull_request_icon.svg";
-import { useRouteMatch } from "react-router";
 import DynamicLink from "components/DynamicLink";
 import { capitalize, readableDate } from "shared/string_utils";
 import api from "shared/api";
@@ -11,12 +10,14 @@ import { Context } from "shared/Context";
 import Loading from "components/Loading";
 import { ActionButton } from "../components/ActionButton";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
+import MaterialTooltip from "@material-ui/core/Tooltip";
 
 const DeploymentCard: React.FC<{
   deployment: PRDeployment;
   onDelete: () => void;
   onReEnable: () => void;
-}> = ({ deployment, onDelete, onReEnable }) => {
+  onReRun: () => void;
+}> = ({ deployment, onDelete, onReEnable, onReRun }) => {
   const {
     setCurrentOverlay,
     currentProject,
@@ -27,6 +28,8 @@ const DeploymentCard: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [hasErrorOnReEnabling, setHasErrorOnReEnabling] = useState(false);
   const [showMergeInfoTooltip, setShowMergeInfoTooltip] = useState(false);
+  const [isReRunningWorkflow, setIsReRunningWorkflow] = useState(false);
+  const [hasErrorOnReRun, setHasErrorOnReRun] = useState(false);
 
   const deleteDeployment = () => {
     setIsDeleting(true);
@@ -51,11 +54,10 @@ const DeploymentCard: React.FC<{
       });
   };
 
-  const reEnablePreviewEnvironment = () => {
+  const reEnablePreviewEnvironment = async () => {
     setIsLoading(true);
-
-    api
-      .reenablePreviewEnvironmentDeployment(
+    try {
+      await api.reenablePreviewEnvironmentDeployment(
         "<token>",
         {},
         {
@@ -63,19 +65,42 @@ const DeploymentCard: React.FC<{
           project_id: currentProject.id,
           deployment_id: deployment.id,
         }
-      )
-      .then(() => {
-        setIsLoading(false);
-        onReEnable();
-      })
-      .catch((err) => {
-        setHasErrorOnReEnabling(true);
-        setIsLoading(false);
-        setCurrentError(err?.response?.data?.error || err);
-        setTimeout(() => {
-          setHasErrorOnReEnabling(false);
-        }, 500);
-      });
+      );
+
+      setIsLoading(false);
+      onReEnable();
+    } catch (err) {
+      setHasErrorOnReEnabling(true);
+      setIsLoading(false);
+      setCurrentError(err?.response?.data?.error || err);
+      setTimeout(() => {
+        setHasErrorOnReEnabling(false);
+      }, 500);
+    }
+  };
+
+  const reRunWorkflow = async () => {
+    setIsReRunningWorkflow(true);
+    try {
+      await api.triggerPreviewEnvWorkflow(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          deployment_id: deployment.id,
+        }
+      );
+      setIsReRunningWorkflow(false);
+      onReEnable();
+    } catch (error) {
+      setHasErrorOnReRun(true);
+      setIsReRunningWorkflow(false);
+      setCurrentError(error);
+      setTimeout(() => {
+        setHasErrorOnReRun(false);
+      }, 500);
+    }
   };
 
   return (
@@ -111,6 +136,12 @@ const DeploymentCard: React.FC<{
             <i className="material-icons">open_in_new</i>
             View PR
           </RepoLink>
+          {deployment.last_workflow_run_url ? (
+            <RepoLink to={deployment.last_workflow_run_url} target="_blank">
+              <i className="material-icons">open_in_new</i>
+              View last workflow
+            </RepoLink>
+          ) : null}
         </PRName>
 
         <Flex>
@@ -133,8 +164,23 @@ const DeploymentCard: React.FC<{
       <Flex>
         {!isDeleting ? (
           <>
-            {deployment.status !== "creating" &&
-              deployment.status !== "inactive" && (
+            {deployment.status === DeploymentStatus.Failed ||
+            deployment.status === DeploymentStatus.TimedOut ? (
+              <>
+                <MaterialTooltip title="Re run last github workflow">
+                  <ReRunButton
+                    onClick={() => reRunWorkflow()}
+                    disabled={isReRunningWorkflow}
+                    hasError={hasErrorOnReRun}
+                  >
+                    <i className="material-icons-outlined">loop</i>
+                  </ReRunButton>
+                </MaterialTooltip>
+              </>
+            ) : null}
+
+            {deployment.status !== DeploymentStatus.Creating &&
+              deployment.status !== DeploymentStatus.Inactive && (
                 <>
                   <RowButton
                     to={`/preview-environments/details/${deployment.namespace}?environment_id=${deployment.environment_id}`}
@@ -153,7 +199,7 @@ const DeploymentCard: React.FC<{
                   </RowButton>
                 </>
               )}
-            {deployment.status === "inactive" ? (
+            {deployment.status === DeploymentStatus.Inactive ? (
               <ActionButton
                 onClick={reEnablePreviewEnvironment}
                 disabled={isLoading}
@@ -197,6 +243,14 @@ const DeploymentCard: React.FC<{
 };
 
 export default DeploymentCard;
+
+const ReRunButton = styled(ActionButton)`
+  min-width: unset;
+
+  > i {
+    margin-right: unset;
+  }
+`;
 
 const SepDot = styled.div`
   color: #aaaabb66;

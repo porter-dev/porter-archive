@@ -48,12 +48,12 @@ type Deployment struct {
 	ID                 uint             `json:"id"`
 	CreatedAt          time.Time        `json:"created_at"`
 	UpdatedAt          time.Time        `json:"updated_at"`
-	GitInstallationID  uint             `json:"git_installation_id"`
 	EnvironmentID      uint             `json:"environment_id"`
 	Namespace          string           `json:"namespace"`
 	Status             DeploymentStatus `json:"status"`
 	Subdomain          string           `json:"subdomain"`
 	PullRequestID      uint             `json:"pull_request_id"`
+	InstallationID     uint             `json:"gh_installation_id"`
 	LastWorkflowRunURL string           `json:"last_workflow_run_url"`
 }
 

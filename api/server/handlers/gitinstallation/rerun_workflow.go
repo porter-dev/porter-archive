@@ -85,7 +85,12 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 func getLatestWorkflowRun(client *github.Client, owner, repo, filename string) (*github.WorkflowRun, error) {
 	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
-		context.Background(), owner, repo, filename, &github.ListWorkflowRunsOptions{},
+		context.Background(), owner, repo, filename, &github.ListWorkflowRunsOptions{
+			ListOptions: github.ListOptions{
+				Page:    1,
+				PerPage: 1,
+			},
+		},
 	)
 
 	if err != nil {

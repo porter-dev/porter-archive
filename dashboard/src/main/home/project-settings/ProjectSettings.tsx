@@ -74,10 +74,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
         });
       }
 
-      tabOptions.push({
-        value: "api-tokens",
-        label: "API Tokens",
-      });
+      if (currentProject?.api_tokens_enabled) {
+        tabOptions.push({
+          value: "api-tokens",
+          label: "API Tokens",
+        });
+      }
 
       tabOptions.push({
         value: "additional-settings",

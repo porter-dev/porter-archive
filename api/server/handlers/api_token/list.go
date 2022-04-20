@@ -1,6 +1,7 @@
 package api_token
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -27,6 +28,11 @@ func NewAPITokenListHandler(
 
 func (p *APITokenListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
+	if !proj.APITokensEnabled {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("api token endpoints are not enabled for this project")))
+		return
+	}
 
 	tokens, err := p.Repo().APIToken().ListAPITokensByProjectID(proj.ID)
 

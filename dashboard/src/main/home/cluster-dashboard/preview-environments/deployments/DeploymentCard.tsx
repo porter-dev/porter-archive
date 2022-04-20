@@ -81,16 +81,13 @@ const DeploymentCard: React.FC<{
   const reRunWorkflow = async () => {
     setIsReRunningWorkflow(true);
     try {
-      await api.reRunGHWorkflow(
+      await api.triggerPreviewEnvWorkflow(
         "<token>",
         {},
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          owner: deployment.gh_repo_owner,
-          name: deployment.gh_repo_name,
-          filename: deployment.gh_workflow_filename,
-          git_installation_id: deployment.gh_installation_id,
+          deployment_id: deployment.id,
         }
       );
       setIsReRunningWorkflow(false);

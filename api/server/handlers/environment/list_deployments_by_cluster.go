@@ -59,9 +59,15 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 			env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, deployment.EnvironmentID)
 
-			if err == nil {
-				updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
 			}
+
+			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
+
+			deployment.InstallationID = env.GitInstallationID
+			deployment.WorkflowFilename = fmt.Sprintf("porter_%s_env.yml", env.Name)
 
 			deployments = append(deployments, deployment)
 		}
@@ -107,6 +113,9 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			)] = true
 
 			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
+
+			deployment.InstallationID = env.GitInstallationID
+			deployment.WorkflowFilename = fmt.Sprintf("porter_%s_env.yml", env.Name)
 
 			deployments = append(deployments, deployment)
 		}
@@ -154,9 +163,9 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 
-			if deployment.Status != types.DeploymentStatusCreating &&
-				(latestWorkflowRun.GetStatus() == "in_progress" ||
-					latestWorkflowRun.GetStatus() == "queued") {
+			if (latestWorkflowRun.GetStatus() == "in_progress" ||
+				latestWorkflowRun.GetStatus() == "queued") &&
+				deployment.Status != types.DeploymentStatusCreating {
 				deployment.Status = types.DeploymentStatusUpdating
 			} else if latestWorkflowRun.GetStatus() == "completed" {
 				if latestWorkflowRun.GetConclusion() == "failed" {
@@ -201,7 +210,7 @@ func fetchOpenPullRequests(
 
 	var ghPRs []*github.PullRequest
 
-	for resp.NextPage != 0 && err != nil {
+	for resp.NextPage != 0 && err == nil {
 		ghPRs, resp, err = client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 			&github.PullRequestListOptions{
 				ListOptions: github.ListOptions{

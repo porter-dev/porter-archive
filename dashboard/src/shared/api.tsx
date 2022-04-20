@@ -2,7 +2,7 @@ import { PullRequest } from "main/home/cluster-dashboard/preview-environments/ty
 import { release } from "process";
 import { baseApi } from "./baseApi";
 
-import { FullActionConfigType, StorageType } from "./types";
+import { BuildConfig, FullActionConfigType, StorageType } from "./types";
 
 /**
  * Generic api call format
@@ -373,7 +373,14 @@ const deletePRDeployment = baseApi<
     pr_number: number;
   }
 >("DELETE", (pathParams) => {
-  const { cluster_id, project_id, environment_id, repo_owner, repo_name, pr_number } = pathParams;
+  const {
+    cluster_id,
+    project_id,
+    environment_id,
+    repo_owner,
+    repo_name,
+    pr_number,
+  } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${environment_id}/${repo_owner}/${repo_name}/${pr_number}`;
 });
 
@@ -1692,6 +1699,20 @@ const upgradePorterAgent = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/agent/upgrade`
 );
 
+const updateBuildConfig = baseApi<
+  BuildConfig,
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1853,4 +1874,5 @@ export default {
   getIncidentLogsByLogId,
   upgradePorterAgent,
   deletePRDeployment,
+  updateBuildConfig,
 };

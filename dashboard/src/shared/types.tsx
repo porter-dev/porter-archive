@@ -543,3 +543,11 @@ export type InfraCredentialOptions =
 export type InfraCredentials = {
   [key in InfraCredentialOptions]?: number;
 };
+
+export type BuildConfig = {
+  builder: string;
+  buildpacks: string[];
+  config: null | {
+    [key: string]: string;
+  };
+};

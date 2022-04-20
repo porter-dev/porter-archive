@@ -35,6 +35,7 @@ import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
 import { onlyInLeft } from "shared/array_utils";
 import IncidentsTab from "./incidents/IncidentsTab";
+import BuildSettingsTab from "./BuildSettingsTab";
 
 type Props = {
   namespace: string;
@@ -475,15 +476,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
             />
           );
         }
-      case "buildpack":
-        return (
-          <BuildpackEditPage
-            actionConfig={chart.git_action_config}
-            currentChart={chart}
-            refreshChart={() => getChartData(currentChart)}
-            handleUpdateBuildConfig={handleUpdateBuildConfig}
-          />
-        );
       case "settings":
         return (
           <SettingsSection
@@ -529,6 +521,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
+      case "build-settings":
+        return <BuildSettingsTab chart={chart} />;
       default:
     }
   };
@@ -553,12 +547,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
       );
     }
 
-    if (
-      currentChart.git_action_config?.git_repo_id &&
-      currentChart.build_config?.builder
-    ) {
-      rightTabOptions.push({ label: "Buildpack", value: "buildpack" });
-    }
+    // if (currentChart?.git_action_config?.git_repo) {
+    rightTabOptions.push({
+      label: "Build Settings",
+      value: "build-settings",
+    });
+    // }
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {
@@ -601,47 +595,47 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
   };
 
-  const chartStatus = useMemo(() => {
-    const getAvailability = (kind: string, c: any) => {
-      switch (kind?.toLowerCase()) {
-        case "deployment":
-        case "replicaset":
-          return c.status.availableReplicas == c.status.replicas;
-        case "statefulset":
-          return c.status.readyReplicas == c.status.replicas;
-        case "daemonset":
-          return c.status.numberAvailable == c.status.desiredNumberScheduled;
-      }
-    };
+  // const chartStatus = useMemo(() => {
+  //   const getAvailability = (kind: string, c: any) => {
+  //     switch (kind?.toLowerCase()) {
+  //       case "deployment":
+  //       case "replicaset":
+  //         return c.status.availableReplicas == c.status.replicas;
+  //       case "statefulset":
+  //         return c.status.readyReplicas == c.status.replicas;
+  //       case "daemonset":
+  //         return c.status.numberAvailable == c.status.desiredNumberScheduled;
+  //     }
+  //   };
 
-    const chartStatus = currentChart.info.status;
+  //   const chartStatus = currentChart.info.status;
 
-    if (chartStatus === "deployed") {
-      for (var uid in controllers) {
-        let value = controllers[uid];
-        let available = getAvailability(value.metadata.kind, value);
-        let progressing = true;
+  //   if (chartStatus === "deployed") {
+  //     for (var uid in controllers) {
+  //       let value = controllers[uid];
+  //       let available = getAvailability(value.metadata.kind, value);
+  //       let progressing = true;
 
-        controllers[uid]?.status?.conditions?.forEach((condition: any) => {
-          if (
-            condition.type == "Progressing" &&
-            condition.status == "False" &&
-            condition.reason == "ProgressDeadlineExceeded"
-          ) {
-            progressing = false;
-          }
-        });
+  //       controllers[uid]?.status?.conditions?.forEach((condition: any) => {
+  //         if (
+  //           condition.type == "Progressing" &&
+  //           condition.status == "False" &&
+  //           condition.reason == "ProgressDeadlineExceeded"
+  //         ) {
+  //           progressing = false;
+  //         }
+  //       });
 
-        if (!available && progressing) {
-          return "loading";
-        } else if (!available && !progressing) {
-          return "failed";
-        }
-      }
-      return "deployed";
-    }
-    return chartStatus;
-  }, [currentChart, controllers]);
+  //       if (!available && progressing) {
+  //         return "loading";
+  //       } else if (!available && !progressing) {
+  //         return "failed";
+  //       }
+  //     }
+  //     return "deployed";
+  //   }
+  //   return chartStatus;
+  // }, [currentChart, controllers]);
 
   const renderUrl = () => {
     if (url) {
@@ -865,7 +859,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
                 setRevision={setRevision}
                 forceRefreshRevisions={forceRefreshRevisions}
                 refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                status={chartStatus}
                 shouldUpdate={
                   currentChart.latest_version &&
                   currentChart.latest_version !==

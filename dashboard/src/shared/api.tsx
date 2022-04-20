@@ -1754,6 +1754,20 @@ const saveAlertingConfig = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/notifications`
 );
 
+const updateBuildConfig = baseApi<
+  BuildConfig,
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
+);
+
 const reRunGHWorkflow = baseApi<
   {},
   {
@@ -1947,6 +1961,7 @@ export default {
   getAlertingConfig,
   saveAlertingConfig,
   deletePRDeployment,
+  updateBuildConfig,
   reRunGHWorkflow,
   triggerPreviewEnvWorkflow,
 };

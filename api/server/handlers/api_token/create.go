@@ -1,6 +1,7 @@
 package api_token
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -33,6 +34,11 @@ func NewAPITokenCreateHandler(
 func (p *APITokenCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
+	if !proj.APITokensEnabled {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("api token endpoints are not enabled for this project")))
+		return
+	}
 
 	req := &types.CreateAPIToken{}
 

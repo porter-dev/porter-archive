@@ -33,6 +33,11 @@ func NewAPITokenGetHandler(
 func (p *APITokenGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
+	if !proj.APITokensEnabled {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("api token endpoints are not enabled for this project")))
+		return
+	}
+
 	// get the token id from the request
 	tokenID, reqErr := requestutils.GetURLParamString(r, types.URLParamTokenID)
 

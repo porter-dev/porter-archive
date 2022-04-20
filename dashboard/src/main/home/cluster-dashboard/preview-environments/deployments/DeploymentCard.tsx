@@ -16,7 +16,8 @@ const DeploymentCard: React.FC<{
   deployment: PRDeployment;
   onDelete: () => void;
   onReEnable: () => void;
-}> = ({ deployment, onDelete, onReEnable }) => {
+  onReRun: () => void;
+}> = ({ deployment, onDelete, onReEnable, onReRun }) => {
   const {
     setCurrentOverlay,
     currentProject,
@@ -91,6 +92,7 @@ const DeploymentCard: React.FC<{
         }
       );
       setIsReRunningWorkflow(false);
+      onReEnable();
     } catch (error) {
       setHasErrorOnReRun(true);
       setIsReRunningWorkflow(false);

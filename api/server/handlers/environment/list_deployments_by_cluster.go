@@ -140,11 +140,17 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 			ctx, deployment.RepoOwner, deployment.RepoName,
 			fmt.Sprintf("porter_%s_env.yml", env.Name), &github.ListWorkflowRunsOptions{
 				Branch: deployment.PRBranchFrom,
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 1,
+				},
 			},
 		)
 
 		if err == nil && workflowRuns.GetTotalCount() > 0 {
 			latestWorkflowRun := workflowRuns.WorkflowRuns[0]
+
+			fmt.Println(latestWorkflowRun)
 
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 

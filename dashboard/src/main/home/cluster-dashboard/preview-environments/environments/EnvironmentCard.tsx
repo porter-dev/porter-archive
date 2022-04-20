@@ -1,14 +1,8 @@
-import React, {
-  FormEvent,
-  FormEventHandler,
-  useContext,
-  useState,
-} from "react";
+import React, { useContext, useState } from "react";
 import { capitalize } from "shared/string_utils";
 import styled from "styled-components";
 import { Environment } from "../types";
 import Options from "components/OptionsDropdown";
-import { useRouting } from "shared/routing";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import Modal from "main/home/modals/Modal";
@@ -25,7 +19,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-  const { pushFiltered } = useRouting();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationRepoName, setDeleteConfirmationRepoName] = useState(
@@ -41,12 +34,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
     git_installation_id,
     last_deployment_status,
   } = environment;
-
-  const showOpenPrs = () => {
-    pushFiltered("/preview-environments", [], {
-      repository: `${git_repo_owner}/${git_repo_name}`,
-    });
-  };
 
   const handleDelete = () => {
     if (!canDelete()) {
@@ -116,7 +103,9 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
           </ActionWrapper>
         </Modal>
       ) : null}
-      <EnvironmentCardWrapper onClick={showOpenPrs}>
+      <EnvironmentCardWrapper
+        to={`/preview-environments/deployments/${id}/${git_repo_owner}/${git_repo_name}`}
+      >
         <DataContainer>
           <RepoName>
             <Icon
@@ -176,8 +165,9 @@ const OptionWrapper = styled.div`
   justify-content: center;
 `;
 
-const EnvironmentCardWrapper = styled.div`
+const EnvironmentCardWrapper = styled(DynamicLink)`
   display: flex;
+  color: #ffffff;
   background: #2b2e3699;
   justify-content: space-between;
   border-radius: 5px;

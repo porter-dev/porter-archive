@@ -71,7 +71,7 @@ const DeploymentCard: React.FC<{
       .catch((err) => {
         setHasErrorOnReEnabling(true);
         setIsLoading(false);
-        setCurrentError(err);
+        setCurrentError(err?.response?.data?.error || err);
         setTimeout(() => {
           setHasErrorOnReEnabling(false);
         }, 500);

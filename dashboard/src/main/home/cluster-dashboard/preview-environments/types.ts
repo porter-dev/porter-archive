@@ -13,6 +13,7 @@ export type PRDeployment = {
   gh_commit_sha: string;
   gh_pr_branch_from?: string;
   gh_pr_branch_into?: string;
+  last_workflow_run_url: string;
 };
 
 export type Environment = {

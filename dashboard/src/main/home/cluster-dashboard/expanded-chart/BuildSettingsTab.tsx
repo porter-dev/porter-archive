@@ -87,7 +87,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
     const values = chart.config;
 
     set(values, "container.env.normal", envVariables);
-    debugger;
     const valuesYaml = yaml.dump({ ...values });
     try {
       await api.upgradeChartValues(
@@ -105,7 +104,20 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
     } catch (error) {}
   };
 
-  const triggerWorkflow = async () => {};
+  const triggerWorkflow = async () => {
+    await api.reRunGHWorkflow(
+      "",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+        git_installation_id: chart.git_action_config?.git_repo_id,
+        owner: chart.git_action_config.repo?.split("/")[0],
+        name: chart.git_action_config.repo?.split("/")[1],
+        filename: `porter_${chart.name.replaceAll("-", "_")}.yaml`,
+      }
+    );
+  };
 
   const handleSave = async () => {
     try {

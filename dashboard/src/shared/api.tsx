@@ -1699,6 +1699,31 @@ const upgradePorterAgent = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/agent/upgrade`
 );
 
+const reRunGHWorkflow = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    owner: string;
+    name: string;
+    filename: string;
+  }
+>(
+  "POST",
+  ({ project_id, git_installation_id, owner, name, cluster_id, filename }) =>
+    `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?filename=${filename}`
+);
+
+const triggerPreviewEnvWorkflow = baseApi<
+  {},
+  { project_id: number; cluster_id: number; deployment_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id, deployment_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}/trigger_workflow`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1860,4 +1885,6 @@ export default {
   getIncidentLogsByLogId,
   upgradePorterAgent,
   deletePRDeployment,
+  reRunGHWorkflow,
+  triggerPreviewEnvWorkflow,
 };

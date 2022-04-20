@@ -76,7 +76,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
         }
       );
 
-      window.analytics.track("Chart Upgraded", {
+      window.analytics?.track("Chart Upgraded", {
         chart: chart.name,
         values: valuesYaml,
       });
@@ -88,7 +88,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
       }
       setCurrentError(parsedErr);
 
-      window.analytics.track("Failed to Upgrade Chart", {
+      window.analytics?.track("Failed to Upgrade Chart", {
         chart: chart.name,
         values: valuesYaml,
         error: err,

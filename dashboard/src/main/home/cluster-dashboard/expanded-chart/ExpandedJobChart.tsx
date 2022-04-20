@@ -113,11 +113,8 @@ export const ExpandedJobChartFC: React.FC<{
   };
 
   const handleDeleteChart = async () => {
-    try {
-      await deleteChart();
-    } finally {
-      setCurrentOverlay(null);
-    }
+    deleteChart();
+    setCurrentOverlay(null);
   };
 
   const renderTabContents = (currentTab: string) => {

@@ -273,6 +273,8 @@ tabs:
           value: "13.3"
         - label: "v13.4"
           value: "13.4"
+        - label: "v13.6"
+          value: "13.6"
   - name: additional-settings
     contents:
     - type: heading
@@ -379,11 +381,24 @@ tabs:
       required: true
       placeholder: my-cluster
       variable: cluster_name
+    - type: number-input
+      label: Maximum number of EC2 instances to create in the application autoscaling group.
+      variable: max_instances
+      placeholder: "ex: 10"
+      settings:
+        default: 10
     - type: checkbox
       variable: spot_instances_enabled
       label: Enable spot instances for this cluster.
       settings:
         default: false
+  - name: spot_instance_price
+    show_if: spot_instances_enabled
+    contents:
+    - type: string-input
+      label: Assign a bid price for the spot instance (optional).
+      variable: spot_price
+      placeholder: "ex: 0.05"
 `
 
 const gcrForm = `name: GCR

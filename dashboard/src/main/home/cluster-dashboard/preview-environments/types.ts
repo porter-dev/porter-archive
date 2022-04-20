@@ -20,7 +20,7 @@ export type PRDeployment = {
   namespace: string;
   last_workflow_run_url: string;
   gh_installation_id: number;
-  gh_workflow_filename: string;
+  gh_deployment_id: number;
   gh_pr_name: string;
   gh_repo_owner: string;
   gh_repo_name: string;

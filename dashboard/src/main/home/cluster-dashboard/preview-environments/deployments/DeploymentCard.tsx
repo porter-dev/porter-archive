@@ -16,7 +16,8 @@ const DeploymentCard: React.FC<{
   deployment: PRDeployment;
   onDelete: () => void;
   onReEnable: () => void;
-}> = ({ deployment, onDelete, onReEnable }) => {
+  onReRun: () => void;
+}> = ({ deployment, onDelete, onReEnable, onReRun }) => {
   const {
     setCurrentOverlay,
     currentProject,
@@ -91,6 +92,7 @@ const DeploymentCard: React.FC<{
         }
       );
       setIsReRunningWorkflow(false);
+      onReEnable();
     } catch (error) {
       setHasErrorOnReRun(true);
       setIsReRunningWorkflow(false);
@@ -134,6 +136,12 @@ const DeploymentCard: React.FC<{
             <i className="material-icons">open_in_new</i>
             View PR
           </RepoLink>
+          {deployment.last_workflow_run_url ? (
+            <RepoLink to={deployment.last_workflow_run_url} target="_blank">
+              <i className="material-icons">open_in_new</i>
+              View last workflow
+            </RepoLink>
+          ) : null}
         </PRName>
 
         <Flex>

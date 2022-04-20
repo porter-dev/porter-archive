@@ -67,7 +67,6 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
 
 			deployment.InstallationID = env.GitInstallationID
-			deployment.WorkflowFilename = fmt.Sprintf("porter_%s_env.yml", env.Name)
 
 			deployments = append(deployments, deployment)
 		}
@@ -115,7 +114,6 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
 
 			deployment.InstallationID = env.GitInstallationID
-			deployment.WorkflowFilename = fmt.Sprintf("porter_%s_env.yml", env.Name)
 
 			deployments = append(deployments, deployment)
 		}

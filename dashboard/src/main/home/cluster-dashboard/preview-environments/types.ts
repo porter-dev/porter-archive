@@ -1,19 +1,32 @@
+export enum DeploymentStatus {
+  Failed = "failed",
+  Created = "created",
+  Creating = "creating",
+  Inactive = "inactive",
+  TimedOut = "timed_out",
+  Updating = "updating",
+}
+
+export type DeploymentStatusUnion = `${DeploymentStatus}`;
+
 export type PRDeployment = {
   id: number;
   created_at: string;
   updated_at: string;
   subdomain: string;
-  status: "creating" | "failed" | "created" | "inactive";
+  status: DeploymentStatusUnion;
   environment_id: number;
   pull_request_id: number;
   namespace: string;
+  last_workflow_run_url: string;
+  gh_installation_id: number;
+  gh_deployment_id: number;
   gh_pr_name: string;
   gh_repo_owner: string;
   gh_repo_name: string;
   gh_commit_sha: string;
   gh_pr_branch_from?: string;
   gh_pr_branch_into?: string;
-  last_workflow_run_url: string;
 };
 
 export type Environment = {
@@ -24,7 +37,7 @@ export type Environment = {
   name: string;
   git_repo_owner: string;
   git_repo_name: string;
-  last_deployment_status: "failed" | "created" | "inactive" | "disabled";
+  last_deployment_status: DeploymentStatusUnion;
   deployment_count: number;
   mode: "manual" | "auto";
 };

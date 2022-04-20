@@ -219,6 +219,7 @@ const DeploymentList = () => {
               deployment={d}
               onDelete={handleRefresh}
               onReEnable={handleRefresh}
+              onReRun={handleRefresh}
             />
           );
         })}

@@ -59,9 +59,14 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 			env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, deployment.EnvironmentID)
 
-			if err == nil {
-				updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
 			}
+
+			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
+
+			deployment.InstallationID = env.GitInstallationID
 
 			deployments = append(deployments, deployment)
 		}
@@ -108,6 +113,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
 
+			deployment.InstallationID = env.GitInstallationID
+
 			deployments = append(deployments, deployment)
 		}
 
@@ -140,6 +147,10 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 			ctx, deployment.RepoOwner, deployment.RepoName,
 			fmt.Sprintf("porter_%s_env.yml", env.Name), &github.ListWorkflowRunsOptions{
 				Branch: deployment.PRBranchFrom,
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 1,
+				},
 			},
 		)
 
@@ -148,12 +159,12 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 
-			if deployment.Status != types.DeploymentStatusCreating &&
-				(latestWorkflowRun.GetStatus() == "in_progress" ||
-					latestWorkflowRun.GetStatus() == "queued") {
+			if (latestWorkflowRun.GetStatus() == "in_progress" ||
+				latestWorkflowRun.GetStatus() == "queued") &&
+				deployment.Status != types.DeploymentStatusCreating {
 				deployment.Status = types.DeploymentStatusUpdating
 			} else if latestWorkflowRun.GetStatus() == "completed" {
-				if latestWorkflowRun.GetConclusion() == "failed" {
+				if latestWorkflowRun.GetConclusion() == "failure" {
 					deployment.Status = types.DeploymentStatusFailed
 				} else if latestWorkflowRun.GetConclusion() == "timed_out" {
 					deployment.Status = types.DeploymentStatusTimedOut

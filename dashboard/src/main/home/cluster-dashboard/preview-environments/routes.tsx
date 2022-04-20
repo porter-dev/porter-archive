@@ -3,10 +3,11 @@ import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
 import ConnectNewRepo from "./ConnectNewRepo";
 import DeploymentDetail from "./deployments/DeploymentDetail";
+import DeploymentList from "./deployments/DeploymentList";
 import PreviewEnvironmentsHome from "./PreviewEnvironmentsHome";
 
 export const Routes = () => {
-  const { url } = useRouteMatch();
+  const { path } = useRouteMatch();
   const { currentProject } = useContext(Context);
 
   if (!currentProject?.preview_envs_enabled) {
@@ -16,13 +17,18 @@ export const Routes = () => {
   return (
     <>
       <Switch>
-        <Route path={`${url}/connect-repo`}>
+        <Route path={`${path}/connect-repo`}>
           <ConnectNewRepo />
         </Route>
-        <Route path={`${url}/details/:namespace?`}>
+        <Route path={`${path}/details/:namespace?`}>
           <DeploymentDetail />
         </Route>
-        <Route path={`${url}/:selected_tab?`}>
+        <Route
+          path={`${path}/deployments/:environment_id/:repo_owner/:repo_name`}
+        >
+          <DeploymentList />
+        </Route>
+        <Route path={`${path}/`}>
           <PreviewEnvironmentsHome />
         </Route>
       </Switch>

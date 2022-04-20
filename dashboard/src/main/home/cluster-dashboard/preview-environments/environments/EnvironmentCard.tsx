@@ -1,19 +1,14 @@
-import React, {
-  FormEvent,
-  FormEventHandler,
-  useContext,
-  useState,
-} from "react";
+import React, { useContext, useState } from "react";
 import { capitalize } from "shared/string_utils";
 import styled from "styled-components";
 import { Environment } from "../types";
 import Options from "components/OptionsDropdown";
-import { useRouting } from "shared/routing";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import Modal from "main/home/modals/Modal";
 import InputRow from "components/form-components/InputRow";
 import DynamicLink from "components/DynamicLink";
+import { RepoLink } from "../components/styled";
 
 type Props = {
   environment: Environment;
@@ -24,7 +19,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
-  const { pushFiltered } = useRouting();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationRepoName, setDeleteConfirmationRepoName] = useState(
@@ -40,12 +34,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
     git_installation_id,
     last_deployment_status,
   } = environment;
-
-  const showOpenPrs = () => {
-    pushFiltered("/preview-environments", [], {
-      repository: `${git_repo_owner}/${git_repo_name}`,
-    });
-  };
 
   const handleDelete = () => {
     if (!canDelete()) {
@@ -94,7 +82,8 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
           onRequestClose={closeForm}
         >
           <Warning highlight>
-            ⚠️ All Preview Environment deployments associated with this repo will be deleted.
+            ⚠️ All Preview Environment deployments associated with this repo
+            will be deleted.
           </Warning>
           <InputRow
             type="text"
@@ -114,7 +103,9 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
           </ActionWrapper>
         </Modal>
       ) : null}
-      <EnvironmentCardWrapper onClick={showOpenPrs}>
+      <EnvironmentCardWrapper
+        to={`/preview-environments/deployments/${id}/${git_repo_owner}/${git_repo_name}`}
+      >
         <DataContainer>
           <RepoName>
             <Icon
@@ -123,10 +114,8 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             />
             {git_repo_owner}/{git_repo_name}
             <RepoLink
-              onClick={e => {
-                e.stopPropagation();
-                window.open(`https://github.com/${git_repo_owner}/${git_repo_name}`, "_blank")
-              }}
+              to={`https://github.com/${git_repo_owner}/${git_repo_name}`}
+              target="_blank"
             >
               <i className="material-icons">open_in_new</i>
               View Repo
@@ -142,8 +131,8 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             ) : null}
             {deployment_count > 0 ? (
               <Span>
-                {deployment_count || 0}{" "}
-                pull {deployment_count > 1 ? "requests" : "request"} deployed
+                {deployment_count || 0} pull{" "}
+                {deployment_count > 1 ? "requests" : "request"} deployed
               </Span>
             ) : (
               <Span>
@@ -176,31 +165,9 @@ const OptionWrapper = styled.div`
   justify-content: center;
 `;
 
-const RepoLink = styled.div`
-  height: 22px;
-  border-radius: 50px;
-  margin-left: 10px;
+const EnvironmentCardWrapper = styled(DynamicLink)`
   display: flex;
-  font-size: 12px;
-  color: #a7a6bb;
-  align-items: center;
-  justify-content: center;
-  :hover {
-    color: #ffffff;
-    > i {
-      color: #ffffff;
-    }
-  }
-
-  > i {
-    margin-right: 5px;
-    color: #a7a6bb;
-    font-size: 16px;
-  }
-`;
-
-const EnvironmentCardWrapper = styled.div`
-  display: flex;
+  color: #ffffff;
   background: #2b2e3699;
   justify-content: space-between;
   border-radius: 5px;

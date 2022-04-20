@@ -51,7 +51,7 @@ class ClusterSection extends Component<PropsType, StateType> {
     api
       .getClusters("<token>", {}, { id: currentProject.id })
       .then((res) => {
-        window.analytics.identify(user.userId, {
+        window.analytics?.identify(user.userId, {
           currentProject,
           clusters: res.data,
         });

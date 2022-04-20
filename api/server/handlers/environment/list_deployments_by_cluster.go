@@ -150,7 +150,7 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 		if err == nil && workflowRuns.GetTotalCount() > 0 {
 			latestWorkflowRun := workflowRuns.WorkflowRuns[0]
 
-			fmt.Println(latestWorkflowRun)
+			fmt.Println(latestWorkflowRun.GetConclusion())
 
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 

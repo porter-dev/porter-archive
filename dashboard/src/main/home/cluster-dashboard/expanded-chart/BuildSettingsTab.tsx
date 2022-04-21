@@ -127,8 +127,8 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
           git_installation_id: chart.git_action_config?.git_repo_id,
-          owner: chart.git_action_config.repo?.split("/")[0],
-          name: chart.git_action_config.repo?.split("/")[1],
+          owner: chart.git_action_config?.git_repo?.split("/")[0],
+          name: chart.git_action_config?.git_repo?.split("/")[1],
           filename: `porter_${chart.name.replaceAll("-", "_")}.yaml`,
         }
       );

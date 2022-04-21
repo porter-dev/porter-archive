@@ -140,6 +140,10 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 	env *models.Environment,
 	deployment *types.Deployment,
 ) {
+	if deployment.Status == types.DeploymentStatusInactive {
+		return
+	}
+
 	client, err := getGithubClientFromEnvironment(config, env)
 
 	if err == nil {

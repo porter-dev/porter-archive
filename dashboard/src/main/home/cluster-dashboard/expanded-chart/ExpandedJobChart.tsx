@@ -28,6 +28,7 @@ import CommandLineIcon from "assets/command-line-icon";
 import { readableDate } from "shared/string_utils";
 import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
+import BuildSettingsTab from "./BuildSettingsTab";
 
 export const ExpandedJobChartFC: React.FC<{
   namespace: string;
@@ -73,6 +74,13 @@ export const ExpandedJobChartFC: React.FC<{
 
   if (isAuthorized("job", "", ["get", "delete"])) {
     rightTabOptions.push({ label: "Settings", value: "settings" });
+  }
+
+  if (chart?.git_action_config?.git_repo) {
+    rightTabOptions.push({
+      label: "Build Settings",
+      value: "build-settings",
+    });
   }
 
   const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
@@ -223,6 +231,10 @@ export const ExpandedJobChartFC: React.FC<{
           disabled={!isAuthorized("job", "", ["get", "update"])}
         />
       );
+    }
+
+    if (currentTab === "build-settings") {
+      return <BuildSettingsTab chart={chart} />;
     }
 
     if (

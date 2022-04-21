@@ -5,7 +5,7 @@ import KeyValueArray from "components/form-components/KeyValueArray";
 import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
-import { set, unionBy } from "lodash";
+import { unionBy } from "lodash";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -55,18 +55,31 @@ type Props = {
 };
 
 const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
-  const { currentCluster, currentProject } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
 
   const [buildConfig, setBuildConfig] = useState<BuildConfig>(null);
   const [envVariables, setEnvVariables] = useState(
-    chart.config.container.env.normal
+    chart.config?.container?.env?.build || null
   );
+  const [buttonStatus, setButtonStatus] = useState<
+    "loading" | "successful" | string
+  >("");
 
-  const saveBuildConfig = async () => {
+  const saveBuildConfig = async (config: BuildConfig) => {
+    if (config === null) {
+      return;
+    }
+
+    if (!config.builder.length || !config.buildpacks.length) {
+      return;
+    }
+
     try {
       await api.updateBuildConfig<UpdateBuildconfigResponse>(
         "<token>",
-        buildConfig,
+        { ...config },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
@@ -75,19 +88,17 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
         }
       );
     } catch (err) {
-      let parsedErr = err?.response?.data?.error;
-
-      if (parsedErr) {
-        err = parsedErr;
-      }
+      throw err;
     }
   };
 
-  const saveEnvVariables = async () => {
-    let values = chart.config;
+  const saveEnvVariables = async (envs: { [key: string]: string }) => {
+    let values = { ...chart.config };
+    if (envs === null) {
+      return;
+    }
 
-    values.container.env.normal = envVariables;
-
+    values.container.env.build = { ...envs };
     const valuesYaml = yaml.dump({ ...values });
     try {
       await api.upgradeChartValues(
@@ -102,37 +113,63 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
           cluster_id: currentCluster.id,
         }
       );
-    } catch (error) {}
+    } catch (error) {
+      throw error;
+    }
   };
 
   const triggerWorkflow = async () => {
-    await api.reRunGHWorkflow(
-      "",
-      {},
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-        git_installation_id: chart.git_action_config?.git_repo_id,
-        owner: chart.git_action_config.repo?.split("/")[0],
-        name: chart.git_action_config.repo?.split("/")[1],
-        filename: `porter_${chart.name.replaceAll("-", "_")}.yaml`,
-      }
-    );
+    try {
+      await api.reRunGHWorkflow(
+        "",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          git_installation_id: chart.git_action_config?.git_repo_id,
+          owner: chart.git_action_config?.git_repo?.split("/")[0],
+          name: chart.git_action_config?.git_repo?.split("/")[1],
+          filename: `porter_${chart.name.replaceAll("-", "_")}.yaml`,
+        }
+      );
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const clearButtonStatus = () => {
+    setTimeout(() => {
+      setButtonStatus("");
+    }, 800);
   };
 
   const handleSave = async () => {
+    setButtonStatus("loading");
     try {
-      await saveBuildConfig();
-      await saveEnvVariables();
-    } catch (error) {}
+      await saveBuildConfig(buildConfig);
+      await saveEnvVariables(envVariables);
+      setButtonStatus("successful");
+    } catch (error) {
+      setButtonStatus("Something went wrong");
+      setCurrentError(error);
+    } finally {
+      clearButtonStatus();
+    }
   };
 
   const handleSaveAndReDeploy = async () => {
+    setButtonStatus("loading");
     try {
-      await saveBuildConfig();
-      await saveEnvVariables();
+      await saveBuildConfig(buildConfig);
+      await saveEnvVariables(envVariables);
       await triggerWorkflow();
-    } catch (error) {}
+      setButtonStatus("successful");
+    } catch (error) {
+      setButtonStatus("Something went wrong");
+      setCurrentError(error);
+    } finally {
+      clearButtonStatus();
+    }
   };
 
   return (
@@ -147,7 +184,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
             clusterId: currentCluster.id,
           }}
           setValues={(values) => {
-            console.log(values);
             setEnvVariables(values);
           }}
         ></KeyValueArray>
@@ -163,13 +199,13 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
             options={[
               {
                 text: "Save",
-                onClick: () => handleSave(),
+                onClick: handleSave,
                 description:
                   "Save the values to be applied in the next workflow run",
               },
               {
                 text: "Save and re deploy",
-                onClick: () => handleSaveAndReDeploy(),
+                onClick: handleSaveAndReDeploy,
                 description:
                   "Save the values and trigger the workflow to create a new deployment with the latest saved changes",
               },
@@ -177,8 +213,10 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
             disabled={false}
             makeFlush={true}
             clearPosition={true}
-            statusPosition="right"
+            statusPosition="left"
+            expandTo="left"
             saveText=""
+            status={buttonStatus}
           ></MultiSaveButton>
         </SaveButtonWrapper>
       </StyledSettingsSection>

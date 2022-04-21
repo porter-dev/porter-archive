@@ -948,7 +948,6 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
-  overflow: hidden;
   margin-bottom: 120px;
 `;
 

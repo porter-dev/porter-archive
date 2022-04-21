@@ -116,7 +116,7 @@ class Sidebar extends Component<PropsType, StateType> {
               let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
               if (pathNamespace) {
-                search.concat(`&namespace=${pathNamespace}`);
+                search = search.concat(`&namespace=${pathNamespace}`);
               }
 
               return {
@@ -136,7 +136,7 @@ class Sidebar extends Component<PropsType, StateType> {
               let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
               if (pathNamespace) {
-                search.concat(`&namespace=${pathNamespace}`);
+                search = search.concat(`&namespace=${pathNamespace}`);
               }
 
               return {
@@ -156,7 +156,7 @@ class Sidebar extends Component<PropsType, StateType> {
               let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
               if (pathNamespace) {
-                search.concat(`&namespace=${pathNamespace}`);
+                search = search.concat(`&namespace=${pathNamespace}`);
               }
 
               return {

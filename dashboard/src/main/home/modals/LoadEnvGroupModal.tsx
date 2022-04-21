@@ -30,6 +30,7 @@ type PropsType = {
   enableSyncedEnvGroups?: boolean;
   syncedEnvGroups?: PopulatedEnvGroup[];
   setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
+  normalEnvVarsOnly?: boolean;
 };
 
 type StateType = {
@@ -132,6 +133,9 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     } else {
       return this.state.envGroups
         .filter((envGroup) => {
+          if (!Array.isArray(this.props.syncedEnvGroups)) {
+            return true;
+          }
           return !this.props.syncedEnvGroups.find(
             (syncedEnvGroup) => syncedEnvGroup.name === envGroup.name
           );
@@ -265,11 +269,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                   />
                 </IconWrapper>
               </>
-            ) : (
+            ) : !this.props.normalEnvVarsOnly ? (
               <Helper color="#f5cb42">
                 Upgrade the job template to enable sync env groups
               </Helper>
-            )}
+            ) : null}
           </AbsoluteWrapper>
         </GroupModalSections>
 

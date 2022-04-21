@@ -130,7 +130,9 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled || value.includes("PORTERSECRET")}
+                disabled={
+                  this.props.disabled || value?.includes("PORTERSECRET")
+                }
                 spellCheck={false}
               />
               <Spacer />
@@ -145,12 +147,14 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   let obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
-                disabled={this.props.disabled || value.includes("PORTERSECRET")}
-                type={value.includes("PORTERSECRET") ? "password" : "text"}
+                disabled={
+                  this.props.disabled || value?.includes("PORTERSECRET")
+                }
+                type={value?.includes("PORTERSECRET") ? "password" : "text"}
                 spellCheck={false}
               />
               {this.renderDeleteButton(i)}
-              {this.renderHiddenOption(value.includes("PORTERSECRET"), i)}
+              {this.renderHiddenOption(value?.includes("PORTERSECRET"), i)}
             </InputWrapper>
           );
         })}
@@ -176,6 +180,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
               this.props.setValues(newValues);
               this.setState({ values: this.objectToValues(newValues) });
             }}
+            normalEnvVarsOnly
           />
         </Modal>
       );

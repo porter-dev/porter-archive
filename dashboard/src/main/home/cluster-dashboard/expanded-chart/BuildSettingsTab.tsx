@@ -61,7 +61,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
 
   const [buildConfig, setBuildConfig] = useState<BuildConfig>(null);
   const [envVariables, setEnvVariables] = useState(
-    chart.config?.container?.env?.normal || null
+    chart.config?.container?.env?.build || null
   );
   const [buttonStatus, setButtonStatus] = useState<
     "loading" | "successful" | string
@@ -98,7 +98,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
       return;
     }
 
-    values.container.env.normal = envs;
+    values.container.env.build = { ...envs };
     const valuesYaml = yaml.dump({ ...values });
     try {
       await api.upgradeChartValues(
@@ -184,7 +184,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
             clusterId: currentCluster.id,
           }}
           setValues={(values) => {
-            console.log(values);
             setEnvVariables(values);
           }}
         ></KeyValueArray>

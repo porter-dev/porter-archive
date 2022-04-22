@@ -398,26 +398,31 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
 
-		prevProject := cliConf.Project
-		prevCluster := cliConf.Cluster
-		name = resource.Name
-		namespace = d.target.Namespace
-		cliConf.Project = d.target.Project
-		cliConf.Cluster = d.target.Cluster
-
 		err = wait.WaitForJob(client, &wait.WaitOpts{
-			ProjectID: cliConf.Project,
-			ClusterID: cliConf.Cluster,
-			Namespace: namespace,
-			Name:      name,
+			ProjectID: d.target.Project,
+			ClusterID: d.target.Cluster,
+			Namespace: d.target.Namespace,
+			Name:      resource.Name,
 		})
 
 		if err != nil {
-			return nil, err
-		}
+			if appConfig.OnlyCreate {
+				err = client.DeleteRelease(
+					context.Background(),
+					d.target.Project,
+					d.target.Cluster,
+					d.target.Namespace,
+					resource.Name,
+				)
 
-		cliConf.Project = prevProject
-		cliConf.Cluster = prevCluster
+				if err != nil {
+					return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+						resource.Name, err)
+				}
+			}
+
+			return nil, fmt.Errorf("error waiting for job %s: %w", resource.Name, err)
+		}
 	}
 
 	return resource, err

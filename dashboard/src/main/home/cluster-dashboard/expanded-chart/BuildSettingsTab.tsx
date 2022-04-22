@@ -153,7 +153,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
        * Temporary usage of setCurrentError until a context is applied to keep the state of the ReRunError during re renders.
        */
 
-      if (tmpError.code === "400") {
+      if (tmpError.response.status === 400) {
         // setReRunError({
         //   title: "No previous run found",
         //   description:
@@ -165,7 +165,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
         return;
       }
 
-      if (tmpError.code === "409") {
+      if (tmpError.response.status === 409) {
         // setReRunError({
         //   title: "The workflow is still running",
         //   description:
@@ -182,7 +182,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
         return;
       }
 
-      if (tmpError.code === "404") {
+      if (tmpError.response.status === 404) {
         let description =
           "Apparently there's no action file that corresponds to this deployment.";
         if (typeof tmpError.response.data === "string") {

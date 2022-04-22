@@ -135,6 +135,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
           git_installation_id: chart.git_action_config?.git_repo_id,
           owner: chart.git_action_config?.git_repo?.split("/")[0],
           name: chart.git_action_config?.git_repo?.split("/")[1],
+          branch: chart.git_action_config?.git_branch,
           release_name: chart.name,
         }
       );
@@ -279,12 +280,16 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
           }}
         ></KeyValueArray>
 
-        <Heading>Buildpack settings</Heading>
-        <BuildpackConfigSection
-          currentChart={chart}
-          actionConfig={chart.git_action_config}
-          onChange={(buildConfig) => setBuildConfig(buildConfig)}
-        />
+        {chart.git_action_config.dockerfile_path ? (
+          <>
+            <Heading>Buildpack settings</Heading>
+            <BuildpackConfigSection
+              currentChart={chart}
+              actionConfig={chart.git_action_config}
+              onChange={(buildConfig) => setBuildConfig(buildConfig)}
+            />
+          </>
+        ) : null}
         <SaveButtonWrapper>
           <MultiSaveButton
             options={[

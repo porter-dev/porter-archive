@@ -41,10 +41,7 @@ const DeploymentCard: React.FC<{
         {
           cluster_id: currentCluster.id,
           project_id: currentProject.id,
-          environment_id: deployment.environment_id,
-          repo_owner: deployment.gh_repo_owner,
-          repo_name: deployment.gh_repo_name,
-          pr_number: deployment.pull_request_id,
+          deployment_id: deployment.id,
         }
       )
       .then(() => {

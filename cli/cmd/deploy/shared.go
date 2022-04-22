@@ -49,7 +49,7 @@ func coalesceEnvGroups(
 			return err
 		}
 
-		envConfig, err := getNestedMap(config, "container", "env", "normal")
+		envConfig, err := GetNestedMap(config, "container", "env", "normal")
 
 		if err != nil || envConfig == nil {
 			envConfig = make(map[string]interface{})

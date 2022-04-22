@@ -1,4 +1,3 @@
-import DynamicLink from "components/DynamicLink";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import KeyValueArray from "components/form-components/KeyValueArray";
@@ -129,7 +128,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
           git_installation_id: chart.git_action_config?.git_repo_id,
           owner: chart.git_action_config?.git_repo?.split("/")[0],
           name: chart.git_action_config?.git_repo?.split("/")[1],
-          filename: `porter_${chart.name.replaceAll("-", "_")}.yaml`,
+          release_name: chart.name,
         }
       );
     } catch (error) {
@@ -243,8 +242,6 @@ const BuildpackConfigSection: React.FC<{
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
     []
   );
-
-  const [runningWorkflowURL, setRunningWorkflowURL] = useState<string>(null);
 
   useEffect(() => {
     const currentBuildConfig = currentChart?.build_config;
@@ -465,28 +462,6 @@ const BuildpackConfigSection: React.FC<{
 
   return (
     <BuildpackConfigurationContainer>
-      {runningWorkflowURL && (
-        <AlertCard>
-          <AlertCardIcon className="material-icons">error</AlertCardIcon>
-          <AlertCardContent className="content">
-            <AlertCardTitle className="title">
-              The workflow is still running
-            </AlertCardTitle>
-            Please wait until it finishes before changing the buildpack
-            configuration. To go to the workflow{" "}
-            <DynamicLink to={runningWorkflowURL} target="_blank">
-              click here
-            </DynamicLink>
-          </AlertCardContent>
-          <AlertCardAction
-            onClick={() => {
-              setRunningWorkflowURL("");
-            }}
-          >
-            <span className="material-icons">close</span>
-          </AlertCardAction>
-        </AlertCard>
-      )}
       <>
         <SelectRow
           value={selectedBuilder}
@@ -519,17 +494,6 @@ const BuildpackConfigSection: React.FC<{
         )}
       </>
     </BuildpackConfigurationContainer>
-    // <SaveButtonWrapper>
-    //   <SaveButton
-    //     onClick={() => {
-    //       handleSubmit();
-    //     }}
-    //     status={buttonStatus}
-    //     text="Save build config"
-    //     makeFlush
-    //     clearPosition
-    //   />
-    // </SaveButtonWrapper>
   );
 };
 
@@ -539,55 +503,6 @@ const fadeIn = keyframes`
   }
   to {
     opacity: 1;
-  }
-`;
-
-const AlertCard = styled.div`
-  transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
-  border-radius: 4px;
-  box-shadow: none;
-  font-weight: 400;
-  font-size: 0.875rem;
-  line-height: 1.43;
-  letter-spacing: 0.01071em;
-  border: 1px solid rgb(229, 115, 115);
-  display: flex;
-  padding: 6px 16px;
-  color: rgb(244, 199, 199);
-  margin-top: 20px;
-  position: relative;
-`;
-
-const AlertCardIcon = styled.span`
-  color: rgb(239, 83, 80);
-  margin-right: 12px;
-  padding: 7px 0px;
-  display: flex;
-  font-size: 22px;
-  opacity: 0.9;
-`;
-
-const AlertCardTitle = styled.div`
-  margin: -2px 0px 0.35em;
-  font-size: 1rem;
-  line-height: 1.5;
-  letter-spacing: 0.00938em;
-  font-weight: 500;
-`;
-
-const AlertCardContent = styled.div`
-  padding: 8px 0px;
-`;
-
-const AlertCardAction = styled.button`
-  position: absolute;
-  right: 5px;
-  top: 5px;
-  border: none;
-  background-color: unset;
-  color: white;
-  :hover {
-    cursor: pointer;
   }
 `;
 
@@ -660,12 +575,6 @@ const EventName = styled.div`
   color: #ffffff;
 `;
 
-const EventReason = styled.div`
-  font-family: "Work Sans", sans-serif;
-  color: #aaaabb;
-  margin-top: 5px;
-`;
-
 const ActionContainer = styled.div`
   display: flex;
   align-items: center;
@@ -693,30 +602,5 @@ const DeleteButton = styled.button`
 
   > span {
     font-size: 20px;
-  }
-`;
-
-const SubmitButton = styled.button`
-  height: 35px;
-  font-size: 13px;
-  margin-top: 20px;
-  margin-bottom: 30px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: white;
-  padding: 6px 20px 7px 20px;
-  text-align: left;
-  border: 0;
-  border-radius: 5px;
-  background: ${(props) => (!props.disabled ? props.color : "#aaaabb")};
-  box-shadow: ${(props) =>
-    !props.disabled ? "0 2px 5px 0 #00000030" : "none"};
-  cursor: ${(props) => (!props.disabled ? "pointer" : "default")};
-  user-select: none;
-  :focus {
-    outline: 0;
-  }
-  :hover {
-    filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
   }
 `;

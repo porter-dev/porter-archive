@@ -15,6 +15,8 @@ import {
 } from "shared/types";
 import styled, { keyframes } from "styled-components";
 import yaml from "js-yaml";
+import DynamicLink from "components/DynamicLink";
+import { AxiosError } from "axios";
 
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
@@ -62,6 +64,11 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
   const [envVariables, setEnvVariables] = useState(
     chart.config?.container?.env?.build || null
   );
+  const [runningWorkflowURL, setRunningWorkflowURL] = useState("");
+  const [reRunError, setReRunError] = useState<{
+    title: string;
+    description: string;
+  }>(null);
   const [buttonStatus, setButtonStatus] = useState<
     "loading" | "successful" | string
   >("");
@@ -132,7 +139,46 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
         }
       );
     } catch (error) {
-      throw error;
+      if (!error?.response) {
+        throw error;
+      }
+
+      let tmpError: AxiosError = error;
+
+      if (tmpError.code === "400") {
+        setReRunError({
+          title: "No previous run found",
+          description:
+            "There are no previous runs for this workflow, please trigger manually a run before changing the build settings.",
+        });
+      }
+
+      if (tmpError.code === "409") {
+        setReRunError({
+          title: "The workflow is still running",
+          description:
+            'If you want to make more changes, please choose the option "Save" until the workflow finishes.',
+        });
+
+        if (typeof tmpError.response.data === "string") {
+          setRunningWorkflowURL(tmpError.response.data);
+        }
+      }
+
+      if (tmpError.code === "404") {
+        let description =
+          "Apparently there's no action file that corresponds to this deployment.";
+        if (typeof tmpError.response.data === "string") {
+          const filename = tmpError.response.data;
+          description = description.concat(
+            `Please check that the file ${filename} exists on your repository.`
+          );
+        }
+        setReRunError({
+          title: "The action doesn't seem to exist",
+          description,
+        });
+      }
     }
   };
 
@@ -173,6 +219,34 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
 
   return (
     <Wrapper>
+      {reRunError !== null ? (
+        <AlertCard>
+          <AlertCardIcon className="material-icons">error</AlertCardIcon>
+          <AlertCardContent className="content">
+            <AlertCardTitle className="title">
+              {reRunError.title}
+            </AlertCardTitle>
+            {reRunError.description}
+            {runningWorkflowURL.length ? (
+              <>
+                {" "}
+                To go to the workflow{" "}
+                <DynamicLink to={runningWorkflowURL} target="_blank">
+                  click here
+                </DynamicLink>
+              </>
+            ) : null}
+          </AlertCardContent>
+          <AlertCardAction
+            onClick={() => {
+              setReRunError(null);
+              setRunningWorkflowURL("");
+            }}
+          >
+            <span className="material-icons">close</span>
+          </AlertCardAction>
+        </AlertCard>
+      ) : null}
       <StyledSettingsSection>
         <Heading isAtTop>Build step environment variables:</Heading>
         <KeyValueArray
@@ -602,5 +676,54 @@ const DeleteButton = styled.button`
 
   > span {
     font-size: 20px;
+  }
+`;
+
+const AlertCard = styled.div`
+  transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  border-radius: 4px;
+  box-shadow: none;
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.43;
+  letter-spacing: 0.01071em;
+  border: 1px solid rgb(229, 115, 115);
+  display: flex;
+  padding: 6px 16px;
+  color: rgb(244, 199, 199);
+  margin-top: 20px;
+  position: relative;
+`;
+
+const AlertCardIcon = styled.span`
+  color: rgb(239, 83, 80);
+  margin-right: 12px;
+  padding: 7px 0px;
+  display: flex;
+  font-size: 22px;
+  opacity: 0.9;
+`;
+
+const AlertCardTitle = styled.div`
+  margin: -2px 0px 0.35em;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.00938em;
+  font-weight: 500;
+`;
+
+const AlertCardContent = styled.div`
+  padding: 8px 0px;
+`;
+
+const AlertCardAction = styled.button`
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  border: none;
+  background-color: unset;
+  color: white;
+  :hover {
+    cursor: pointer;
   }
 `;

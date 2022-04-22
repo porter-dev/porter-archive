@@ -107,3 +107,20 @@ func (c *Client) UpgradeRelease(
 		},
 	)
 }
+
+// DeleteRelease deletes a Porter release
+func (c *Client) DeleteRelease(
+	ctx context.Context,
+	projID, clusterID uint,
+	namespace, name string,
+) error {
+	return c.deleteRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/namespaces/%s/releases/%s/0",
+			projID, clusterID,
+			namespace, name,
+		),
+		nil,
+		nil,
+	)
+}

@@ -39,7 +39,23 @@ deleting a configuration:
 	},
 }
 
+// deleteAppsCmd represents the "porter delete apps" subcommand
+var deleteAppsCmd = &cobra.Command{
+	Use:     "apps",
+	Aliases: []string{"app"},
+	Short:   "Deletes an existing app",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, deleteApp)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
+	deleteCmd.AddCommand(deleteAppsCmd)
+
 	rootCmd.AddCommand(deleteCmd)
 }
 
@@ -89,4 +105,9 @@ func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 		context.Background(), projectID, clusterID, environmentID,
 		gitRepoOwner, gitRepoName, gitPRNumber,
 	)
+}
+
+func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+
+	return nil
 }

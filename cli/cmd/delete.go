@@ -42,7 +42,7 @@ deleting a configuration:
 // deleteAppsCmd represents the "porter delete apps" subcommand
 var deleteAppsCmd = &cobra.Command{
 	Use:     "apps",
-	Aliases: []string{"app"},
+	Aliases: []string{"app", "applications", "application"},
 	Short:   "Deletes an existing app",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

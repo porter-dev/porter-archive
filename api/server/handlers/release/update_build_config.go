@@ -2,7 +2,6 @@ package release
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
-	helmRel "helm.sh/helm/v3/pkg/release"
 )
 
 type UpdateBuildConfigHandler struct {
@@ -35,7 +33,6 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
-	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*helmRel.Release)
 
 	request := &types.UpdateBuildConfigRequest{}
 
@@ -67,84 +64,10 @@ func (c *UpdateBuildConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	buildConfig.ID = release.BuildConfig
-
-	rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	gitAction := rel.GitActionConfig
-
-	if gitAction != nil && gitAction.ID != 0 {
-		user, _ := r.Context().Value(types.UserScope).(*models.User)
-
-		gaRunner, err := getGARunner(
-			c.Config(),
-			user.ID,
-			cluster.ProjectID,
-			cluster.ID,
-			rel.GitActionConfig,
-			helmRelease.Name,
-			helmRelease.Namespace,
-			rel,
-			helmRelease,
-		)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		workflow, err := gaRunner.GetWorkflow()
-
-		if err != nil {
-
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		status := workflow.GetStatus()
-		if status == "in_progress" || status == "queued" {
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errors.New("The workflow is still running;"+workflow.GetHTMLURL()), http.StatusBadRequest))
-			return
-		}
-	}
-
 	_, err = c.Repo().BuildConfig().UpdateBuildConfig(buildConfig)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	if gitAction != nil && gitAction.ID != 0 {
-		user, _ := r.Context().Value(types.UserScope).(*models.User)
-
-		gaRunner, err := getGARunner(
-			c.Config(),
-			user.ID,
-			cluster.ProjectID,
-			cluster.ID,
-			rel.GitActionConfig,
-			helmRelease.Name,
-			helmRelease.Namespace,
-			rel,
-			helmRelease,
-		)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		err = gaRunner.RerunLastWorkflow()
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-	}
-
-	c.WriteResult(w, r, buildConfig)
 }

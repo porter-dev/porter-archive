@@ -140,6 +140,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
         }
       );
     } catch (error) {
+      console.log(error);
       if (!error?.response) {
         throw error;
       }
@@ -198,6 +199,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
         setCurrentError(description);
         return;
       }
+      throw error;
     }
   };
 

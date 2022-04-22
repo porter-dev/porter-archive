@@ -1770,6 +1770,7 @@ const reRunGHWorkflow = baseApi<
     git_installation_id: number;
     owner: string;
     name: string;
+    branch: string;
     filename?: string;
     release_name?: string;
   }
@@ -1783,8 +1784,11 @@ const reRunGHWorkflow = baseApi<
     cluster_id,
     filename,
     release_name,
+    branch,
   }) => {
     const queryParams = new URLSearchParams();
+
+    queryParams.set("branch", branch);
 
     if (release_name) {
       queryParams.set("release_name", release_name);

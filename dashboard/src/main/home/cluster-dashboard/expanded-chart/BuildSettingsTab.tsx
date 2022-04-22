@@ -145,24 +145,39 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
 
       let tmpError: AxiosError = error;
 
+      /**
+       * @smell
+       * Currently the expanded chart is clearing all the state when a chart update is triggered (saveEnvVariables).
+       * Temporary usage of setCurrentError until a context is applied to keep the state of the ReRunError during re renders.
+       */
+
       if (tmpError.code === "400") {
-        setReRunError({
-          title: "No previous run found",
-          description:
-            "There are no previous runs for this workflow, please trigger manually a run before changing the build settings.",
-        });
+        // setReRunError({
+        //   title: "No previous run found",
+        //   description:
+        //     "There are no previous runs for this workflow, please trigger manually a run before changing the build settings.",
+        // });
+        setCurrentError(
+          "There are no previous runs for this workflow, please trigger manually a run before changing the build settings."
+        );
+        return;
       }
 
       if (tmpError.code === "409") {
-        setReRunError({
-          title: "The workflow is still running",
-          description:
-            'If you want to make more changes, please choose the option "Save" until the workflow finishes.',
-        });
+        // setReRunError({
+        //   title: "The workflow is still running",
+        //   description:
+        //     'If you want to make more changes, please choose the option "Save" until the workflow finishes.',
+        // });
 
-        if (typeof tmpError.response.data === "string") {
-          setRunningWorkflowURL(tmpError.response.data);
-        }
+        // if (typeof tmpError.response.data === "string") {
+        //   setRunningWorkflowURL(tmpError.response.data);
+        // }
+        setCurrentError(
+          'The workflow is still running. If you want to make more changes, please choose the option "Save" until the workflow finishes. You can check the current status of the workflow here ' +
+            tmpError.response.data
+        );
+        return;
       }
 
       if (tmpError.code === "404") {
@@ -174,10 +189,13 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
             `Please check that the file ${filename} exists on your repository.`
           );
         }
-        setReRunError({
-          title: "The action doesn't seem to exist",
-          description,
-        });
+        // setReRunError({
+        //   title: "The action doesn't seem to exist",
+        //   description,
+        // });
+
+        setCurrentError(description);
+        return;
       }
     }
   };
@@ -219,7 +237,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
 
   return (
     <Wrapper>
-      {reRunError !== null ? (
+      {/* {reRunError !== null ? (
         <AlertCard>
           <AlertCardIcon className="material-icons">error</AlertCardIcon>
           <AlertCardContent className="content">
@@ -246,7 +264,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
             <span className="material-icons">close</span>
           </AlertCardAction>
         </AlertCard>
-      ) : null}
+      ) : null} */}
       <StyledSettingsSection>
         <Heading isAtTop>Build step environment variables:</Heading>
         <KeyValueArray

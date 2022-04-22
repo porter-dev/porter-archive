@@ -166,6 +166,16 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		return nil, err
 	}
 
+	buildEnv, err := GetNestedMap(conf, "container", "env", "build")
+
+	if err == nil {
+		for key, val := range buildEnv {
+			if valStr, ok := val.(string); ok {
+				env[key] = valStr
+			}
+		}
+	}
+
 	// add additional env based on options
 	for key, val := range d.opts.SharedOpts.AdditionalEnv {
 		env[key] = val
@@ -412,7 +422,7 @@ func GetEnvForRelease(client *client.Client, config map[string]interface{}, proj
 	res := make(map[string]string)
 
 	// first, get the env vars from "container.env.normal"
-	envConfig, err := getNestedMap(config, "container", "env", "normal")
+	envConfig, err := GetNestedMap(config, "container", "env", "normal")
 
 	// if the field is not found, set envConfig to an empty map; this release has no env set
 	if err != nil {
@@ -435,7 +445,7 @@ func GetEnvForRelease(client *client.Client, config map[string]interface{}, proj
 
 	// next, get the env vars specified by "container.env.synced"
 	// look for container.env.synced
-	envConf, err := getNestedMap(config, "container", "env")
+	envConf, err := GetNestedMap(config, "container", "env")
 
 	// if error, just return the env detected from above
 	if err != nil {
@@ -558,7 +568,7 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 	}
 
 	// get the image from the conig
-	imageConfig, err := getNestedMap(d.release.Config, "image")
+	imageConfig, err := GetNestedMap(d.release.Config, "image")
 
 	if err != nil {
 		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
@@ -581,7 +591,7 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 
 func (d *DeployAgent) pullCurrentReleaseImage() (string, error) {
 	// pull the currently deployed image to use cache, if possible
-	imageConfig, err := getNestedMap(d.release.Config, "image")
+	imageConfig, err := GetNestedMap(d.release.Config, "image")
 
 	if err != nil {
 		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
@@ -668,7 +678,7 @@ func (e *NestedMapFieldNotFoundError) Error() string {
 	return fmt.Sprintf("could not find field %s in configuration", e.Field)
 }
 
-func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
+func GetNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	curr := obj
 

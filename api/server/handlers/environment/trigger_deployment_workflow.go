@@ -70,7 +70,7 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	latestWorkflowRun, err := getLatestWorkflowRun(client, env.GitRepoOwner, env.GitRepoName,
-		fmt.Sprintf("porter_%s_env.yml", env.Name))
+		fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
 
 	if err != nil && errors.Is(err, ErrNoWorkflowRuns) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 400))
@@ -107,11 +107,22 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	// set the status to updating manually here for the frontend to case on
+	depl.Status = types.DeploymentStatusUpdating
+
+	_, err = c.Repo().Environment().UpdateDeployment(depl)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 }
 
-func getLatestWorkflowRun(client *github.Client, owner, repo, filename string) (*github.WorkflowRun, error) {
+func getLatestWorkflowRun(client *github.Client, owner, repo, filename, branch string) (*github.WorkflowRun, error) {
 	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
 		context.Background(), owner, repo, filename, &github.ListWorkflowRunsOptions{
+			Branch: branch,
 			ListOptions: github.ListOptions{
 				Page:    1,
 				PerPage: 1,

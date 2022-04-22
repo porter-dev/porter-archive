@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -38,9 +39,24 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	filename := r.URL.Query().Get("filename")
 
-	if filename == "" {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("filename query param not set")))
+	release_name := r.URL.Query().Get("release_name")
+
+	if filename == "" && release_name == "" {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("filename and release name are both empty")))
 		return
+	}
+
+	if filename == "" {
+		if c.Config().ServerConf.InstanceName != "" {
+			filename = fmt.Sprintf("porter_%s_%s.yml", strings.Replace(
+				strings.ToLower(release_name), "-", "_", -1),
+				strings.ToLower(c.Config().ServerConf.InstanceName),
+			)
+		} else {
+			filename = fmt.Sprintf("porter_%s.yml", strings.Replace(
+				strings.ToLower(release_name), "-", "_", -1),
+			)
+		}
 	}
 
 	client, err := GetGithubAppClientFromRequest(c.Config(), r)

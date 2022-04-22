@@ -15,6 +15,7 @@ import (
 )
 
 var ErrNoWorkflowRuns = errors.New("no previous workflow runs found")
+var ErrWorkflowNotFound = errors.New("no workflow found, file missing")
 
 type RerunWorkflowHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -71,6 +72,10 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil && errors.Is(err, ErrNoWorkflowRuns) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 400))
 		return
+	} else if err != nil && errors.Is(err, ErrWorkflowNotFound) {
+		w.WriteHeader(http.StatusNotFound)
+		c.WriteResult(w, r, filename)
+		return
 	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -100,7 +105,7 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func getLatestWorkflowRun(client *github.Client, owner, repo, filename string) (*github.WorkflowRun, error) {
-	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
+	workflowRuns, ghResponse, err := client.Actions.ListWorkflowRunsByFileName(
 		context.Background(), owner, repo, filename, &github.ListWorkflowRunsOptions{
 			ListOptions: github.ListOptions{
 				Page:    1,
@@ -108,6 +113,10 @@ func getLatestWorkflowRun(client *github.Client, owner, repo, filename string) (
 			},
 		},
 	)
+
+	if ghResponse.StatusCode == http.StatusNotFound {
+		return nil, ErrWorkflowNotFound
+	}
 
 	if err != nil {
 		return nil, err

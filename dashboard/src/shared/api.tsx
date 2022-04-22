@@ -1721,12 +1721,31 @@ const reRunGHWorkflow = baseApi<
     git_installation_id: number;
     owner: string;
     name: string;
-    filename: string;
+    filename?: string;
+    release_name?: string;
   }
 >(
   "POST",
-  ({ project_id, git_installation_id, owner, name, cluster_id, filename }) =>
-    `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?filename=${filename}`
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    release_name,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?${queryParams.toString()}`;
+  }
 );
 
 const triggerPreviewEnvWorkflow = baseApi<

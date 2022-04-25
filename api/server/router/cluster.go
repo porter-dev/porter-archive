@@ -463,20 +463,15 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
-		// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployments/{environment_id}/{owner}/{name}/{pr_number} ->
+		// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployments/{deployment_id} ->
 		// environment.NewDeleteDeploymentHandler
 		deleteDeploymentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
 				Verb:   types.APIVerbDelete,
 				Method: types.HTTPVerbDelete,
 				Path: &types.Path{
-					Parent: basePath,
-					RelativePath: fmt.Sprintf(
-						"%s/deployments/{environment_id}/{%s}/{%s}/{pr_number}",
-						relPath,
-						types.URLParamGitRepoOwner,
-						types.URLParamGitRepoName,
-					),
+					Parent:       basePath,
+					RelativePath: relPath + "/deployments/{deployment_id}",
 				},
 				Scopes: []types.PermissionScope{
 					types.UserScope,

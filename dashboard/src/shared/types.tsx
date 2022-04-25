@@ -73,6 +73,9 @@ export interface ChartTypeWithExtendedConfig extends ChartType {
         normal: {
           [key: string]: string;
         };
+        build: {
+          [key: string]: string;
+        };
         synced: any;
       };
       lifecycle: { postStart: string; preStop: string };

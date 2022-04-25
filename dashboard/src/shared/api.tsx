@@ -367,21 +367,15 @@ const deletePRDeployment = baseApi<
   {
     cluster_id: number;
     project_id: number;
-    environment_id: number;
-    repo_owner: string;
-    repo_name: string;
-    pr_number: number;
+    deployment_id: number;
   }
 >("DELETE", (pathParams) => {
   const {
     cluster_id,
     project_id,
-    environment_id,
-    repo_owner,
-    repo_name,
-    pr_number,
+    deployment_id,
   } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${environment_id}/${repo_owner}/${repo_name}/${pr_number}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
 const getNotificationConfig = baseApi<
@@ -1721,12 +1715,35 @@ const reRunGHWorkflow = baseApi<
     git_installation_id: number;
     owner: string;
     name: string;
-    filename: string;
+    branch: string;
+    filename?: string;
+    release_name?: string;
   }
 >(
   "POST",
-  ({ project_id, git_installation_id, owner, name, cluster_id, filename }) =>
-    `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?filename=${filename}`
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    release_name,
+    branch,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    queryParams.set("branch", branch);
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?${queryParams.toString()}`;
+  }
 );
 
 const triggerPreviewEnvWorkflow = baseApi<

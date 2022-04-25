@@ -542,12 +542,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
       );
     }
 
-    // if (currentChart?.git_action_config?.git_repo) {
-    rightTabOptions.push({
-      label: "Build Settings",
-      value: "build-settings",
-    });
-    // }
+    if (currentChart?.git_action_config?.git_repo) {
+      rightTabOptions.push({
+        label: "Build Settings",
+        value: "build-settings",
+      });
+    }
 
     // Settings tab is always last
     if (isAuthorized("application", "", ["get", "delete"])) {
@@ -948,7 +948,6 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
-  overflow: hidden;
   margin-bottom: 120px;
 `;
 

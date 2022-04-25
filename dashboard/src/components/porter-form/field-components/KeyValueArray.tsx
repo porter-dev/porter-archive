@@ -511,6 +511,10 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
       }
     });
 
+    if (Array.isArray(props.value) && props.value[0]?.build) {
+      obj.build = props.value[0].build;
+    }
+
     if (state.synced_env_groups?.length) {
       obj.synced = state.synced_env_groups.map((envGroup) => ({
         name: envGroup?.name,

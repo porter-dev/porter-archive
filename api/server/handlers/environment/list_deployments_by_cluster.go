@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -147,22 +148,12 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 	client, err := getGithubClientFromEnvironment(config, env)
 
 	if err == nil {
-		workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
-			ctx, deployment.RepoOwner, deployment.RepoName,
-			fmt.Sprintf("porter_%s_env.yml", env.Name), &github.ListWorkflowRunsOptions{
-				Branch: deployment.PRBranchFrom,
-				ListOptions: github.ListOptions{
-					Page:    1,
-					PerPage: 1,
-				},
-			},
-		)
+		latestWorkflowRun, err := commonutils.GetLatestWorkflowRun(client, env.GitRepoOwner, env.GitRepoName,
+			fmt.Sprintf("porter_%s_env.yml", env.Name), deployment.PRBranchFrom)
 
-		if err == nil && workflowRuns.GetTotalCount() > 0 {
-			latestWorkflowRun := workflowRuns.WorkflowRuns[0]
+		fmt.Println(latestWorkflowRun.GetConclusion())
 
-			fmt.Println(latestWorkflowRun.GetConclusion())
-
+		if err == nil {
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 
 			if (latestWorkflowRun.GetStatus() == "in_progress" ||

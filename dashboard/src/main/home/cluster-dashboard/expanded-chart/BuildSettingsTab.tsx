@@ -53,9 +53,10 @@ type UpdateBuildconfigResponse = {
 
 type Props = {
   chart: ChartTypeWithExtendedConfig;
+  isPreviousVersion: boolean;
 };
 
-const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
+const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
@@ -239,7 +240,14 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
 
   return (
     <Wrapper>
-      {/* {reRunError !== null ? (
+      {isPreviousVersion ? (
+        <DisabledOverlay>
+          Build config is disabled when reviewing past versions. Please go to
+          the current revision to update your app build configuration.
+        </DisabledOverlay>
+      ) : null}
+      <StyledSettingsSection blurContent={isPreviousVersion}>
+        {/* {reRunError !== null ? (
         <AlertCard>
           <AlertCardIcon className="material-icons">error</AlertCardIcon>
           <AlertCardContent className="content">
@@ -267,7 +275,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart }) => {
           </AlertCardAction>
         </AlertCard>
       ) : null} */}
-      <StyledSettingsSection>
         <Heading isAtTop>Build step environment variables:</Heading>
         <KeyValueArray
           values={envVariables}
@@ -595,6 +602,19 @@ const BuildpackConfigSection: React.FC<{
   );
 };
 
+const DisabledOverlay = styled.div`
+  position: absolute;
+  width: 100%;
+  height: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #00000099;
+  z-index: 1000;
+  border-radius: 8px;
+  padding: 0 35px;
+  text-align: center;
+`;
 const fadeIn = keyframes`
   from {
     opacity: 0;
@@ -616,12 +636,13 @@ const BuildpackConfigurationContainer = styled.div`
 `;
 
 const Wrapper = styled.div`
+  position: relative;
   width: 100%;
-  padding-bottom: 65px;
+  margin-bottom: 65px;
   height: 100%;
 `;
 
-const StyledSettingsSection = styled.div`
+const StyledSettingsSection = styled.div<{ blurContent: boolean }>`
   width: 100%;
   background: #ffffff11;
   padding: 0 35px;
@@ -630,6 +651,7 @@ const StyledSettingsSection = styled.div`
   position: relative;
   border-radius: 8px;
   height: calc(100% - 55px);
+  ${(props) => (props.blurContent ? "filter: blur(5px);" : "")}
 `;
 
 const StyledCard = styled.div`

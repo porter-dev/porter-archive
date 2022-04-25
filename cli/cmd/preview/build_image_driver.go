@@ -254,6 +254,16 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 			env = map[string]string{}
 		}
 
+		buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
+
+		if err == nil {
+			for key, val := range buildEnv {
+				if valStr, ok := val.(string); ok {
+					env[key] = valStr
+				}
+			}
+		}
+
 		buildAgent := &deploy.BuildAgent{
 			SharedOpts:  createAgent.CreateOpts.SharedOpts,
 			APIClient:   client,

@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/utils"
+	templaterUtils "github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
 )
@@ -496,8 +497,9 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-		UseNewConfig: true,
-		NewConfig:    valuesObj,
+		UseNewConfig:    true,
+		NewConfig:       valuesObj,
+		IncludeBuildEnv: true,
 	})
 
 	if err != nil {
@@ -635,6 +637,20 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			})
 		}
 		return err
+	}
+
+	env, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: false,
+	})
+
+	if err == nil && len(env) > 0 {
+		valuesObj = templaterUtils.CoalesceValues(valuesObj, map[string]interface{}{
+			"container": map[string]interface{}{
+				"env": map[string]interface{}{
+					"normal": env,
+				},
+			},
+		})
 	}
 
 	err = updateAgent.UpdateImageAndValues(valuesObj)

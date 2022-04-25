@@ -284,6 +284,16 @@ func (c *CreateAgent) CreateFromDocker(
 			env = map[string]string{}
 		}
 
+		buildEnv, err := GetNestedMap(mergedValues, "container", "env", "build")
+
+		if err == nil {
+			for key, val := range buildEnv {
+				if valStr, ok := val.(string); ok {
+					env[key] = valStr
+				}
+			}
+		}
+
 		// add additional env based on options
 		for key, val := range opts.SharedOpts.AdditionalEnv {
 			env[key] = val
@@ -506,7 +516,7 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 	// check for automatic subdomain creation if web kind
 	if c.CreateOpts.Kind == "web" {
 		// look for ingress.enabled and no custom domains set
-		ingressMap, err := getNestedMap(mergedValues, "ingress")
+		ingressMap, err := GetNestedMap(mergedValues, "ingress")
 
 		if err == nil {
 			enabledVal, enabledExists := ingressMap["enabled"]

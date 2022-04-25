@@ -1,21 +1,17 @@
 package gitinstallation
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 )
-
-var ErrNoWorkflowRuns = errors.New("no previous workflow runs found")
-var ErrWorkflowNotFound = errors.New("no workflow found, file missing")
 
 type RerunWorkflowHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -39,10 +35,13 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	filename := r.URL.Query().Get("filename")
+	// if branch is empty then the latest workflow run is rerun, meaning that if
+	// there were multiple workflow runs for the same file but for different branches
+	// only the very latest of the workflow runs will be rerun
+	branch := r.URL.Query().Get("branch")
+	releaseName := r.URL.Query().Get("release_name")
 
-	release_name := r.URL.Query().Get("release_name")
-
-	if filename == "" && release_name == "" {
+	if filename == "" && releaseName == "" {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("filename and release name are both empty")))
 		return
 	}
@@ -50,12 +49,12 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if filename == "" {
 		if c.Config().ServerConf.InstanceName != "" {
 			filename = fmt.Sprintf("porter_%s_%s.yml", strings.Replace(
-				strings.ToLower(release_name), "-", "_", -1),
+				strings.ToLower(releaseName), "-", "_", -1),
 				strings.ToLower(c.Config().ServerConf.InstanceName),
 			)
 		} else {
 			filename = fmt.Sprintf("porter_%s.yml", strings.Replace(
-				strings.ToLower(release_name), "-", "_", -1),
+				strings.ToLower(releaseName), "-", "_", -1),
 			)
 		}
 	}
@@ -67,12 +66,12 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	latestWorkflowRun, err := getLatestWorkflowRun(client, owner, name, filename)
+	latestWorkflowRun, err := commonutils.GetLatestWorkflowRun(client, owner, name, filename, branch)
 
-	if err != nil && errors.Is(err, ErrNoWorkflowRuns) {
+	if err != nil && errors.Is(err, commonutils.ErrNoWorkflowRuns) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, 400))
 		return
-	} else if err != nil && errors.Is(err, ErrWorkflowNotFound) {
+	} else if err != nil && errors.Is(err, commonutils.ErrWorkflowNotFound) {
 		w.WriteHeader(http.StatusNotFound)
 		c.WriteResult(w, r, filename)
 		return
@@ -94,7 +93,7 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	latestWorkflowRun, err = getLatestWorkflowRun(client, owner, name, filename)
+	latestWorkflowRun, err = commonutils.GetLatestWorkflowRun(client, owner, name, filename, branch)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -102,29 +101,4 @@ func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	c.WriteResult(w, r, latestWorkflowRun.GetHTMLURL())
-}
-
-func getLatestWorkflowRun(client *github.Client, owner, repo, filename string) (*github.WorkflowRun, error) {
-	workflowRuns, ghResponse, err := client.Actions.ListWorkflowRunsByFileName(
-		context.Background(), owner, repo, filename, &github.ListWorkflowRunsOptions{
-			ListOptions: github.ListOptions{
-				Page:    1,
-				PerPage: 1,
-			},
-		},
-	)
-
-	if ghResponse.StatusCode == http.StatusNotFound {
-		return nil, ErrWorkflowNotFound
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if workflowRuns.GetTotalCount() == 0 {
-		return nil, ErrNoWorkflowRuns
-	}
-
-	return workflowRuns.WorkflowRuns[0], nil
 }

@@ -160,7 +160,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
         //     "There are no previous runs for this workflow, please trigger manually a run before changing the build settings.",
         // });
         setCurrentError(
-          "There are no previous runs for this workflow, please trigger manually a run before changing the build settings."
+          "There are no previous runs for this workflow. Please manually trigger a run before changing build settings."
         );
         return;
       }
@@ -176,7 +176,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
           setRunningWorkflowURL(tmpError.response.data);
         }
         setCurrentError(
-          'The workflow is still running. If you want to make more changes, please choose the option "Save" until the workflow finishes. You can check the current status of the workflow here ' +
+          'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
             tmpError.response.data
         );
         return;
@@ -184,11 +184,11 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
 
       if (tmpError.response.status === 404) {
         let description =
-          "Apparently there's no action file that corresponds to this deployment. ";
+          "No action file matching this deployment was found.";
         if (typeof tmpError.response.data === "string") {
           const filename = tmpError.response.data;
           description = description.concat(
-            `Please check that the file ${filename} exists on your repository.`
+            `Please check that the file "${filename}" exists in your repository.`
           );
         }
         // setReRunError({
@@ -275,7 +275,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
           </AlertCardAction>
         </AlertCard>
       ) : null} */}
-        <Heading isAtTop>Build step environment variables:</Heading>
+        <Heading isAtTop>Build Environment Variables</Heading>
         <KeyValueArray
           values={envVariables}
           envLoader
@@ -290,7 +290,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
 
         {!chart.git_action_config.dockerfile_path ? (
           <>
-            <Heading>Buildpack settings</Heading>
+            <Heading>Buildpack Settings</Heading>
             <BuildpackConfigSection
               currentChart={chart}
               actionConfig={chart.git_action_config}
@@ -305,13 +305,13 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
                 text: "Save",
                 onClick: handleSave,
                 description:
-                  "Save the values to be applied in the next workflow run",
+                  "Save the build settings to be used in the next workflow run",
               },
               {
-                text: "Save and re deploy",
+                text: "Save and Redeploy",
                 onClick: handleSaveAndReDeploy,
                 description:
-                  "Save the values and trigger the workflow to create a new deployment with the latest saved changes",
+                  "Immediately trigger a workflow run with updated build settings",
               },
             ]}
             disabled={false}

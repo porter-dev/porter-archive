@@ -284,12 +284,20 @@ func (c *CreateAgent) CreateFromDocker(
 			env = map[string]string{}
 		}
 
-		buildEnv, err := GetNestedMap(mergedValues, "container", "env", "build")
+		envConfig, err := GetNestedMap(mergedValues, "container", "env")
 
 		if err == nil {
-			for key, val := range buildEnv {
-				if valStr, ok := val.(string); ok {
-					env[key] = valStr
+			_, exists := envConfig["build"]
+
+			if exists {
+				buildEnv, err := GetNestedMap(mergedValues, "container", "env", "build")
+
+				if err == nil {
+					for key, val := range buildEnv {
+						if valStr, ok := val.(string); ok {
+							env[key] = valStr
+						}
+					}
 				}
 			}
 		}

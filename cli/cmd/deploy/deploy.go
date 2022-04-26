@@ -166,12 +166,20 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		return nil, err
 	}
 
-	buildEnv, err := GetNestedMap(conf, "container", "env", "build")
+	envConfig, err := GetNestedMap(conf, "container", "env")
 
 	if err == nil {
-		for key, val := range buildEnv {
-			if valStr, ok := val.(string); ok {
-				env[key] = valStr
+		_, exists := envConfig["build"]
+
+		if exists {
+			buildEnv, err := GetNestedMap(conf, "container", "env", "build")
+
+			if err == nil {
+				for key, val := range buildEnv {
+					if valStr, ok := val.(string); ok {
+						env[key] = valStr
+					}
+				}
 			}
 		}
 	}

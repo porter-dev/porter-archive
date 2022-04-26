@@ -79,10 +79,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
       return;
     }
 
-    if (!config.builder.length || !config.buildpacks.length) {
-      return;
-    }
-
     try {
       await api.updateBuildConfig<UpdateBuildconfigResponse>(
         "<token>",
@@ -183,8 +179,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
       }
 
       if (tmpError.response.status === 404) {
-        let description =
-          "No action file matching this deployment was found.";
+        let description = "No action file matching this deployment was found.";
         if (typeof tmpError.response.data === "string") {
           const filename = tmpError.response.data;
           description = description.concat(

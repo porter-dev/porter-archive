@@ -79,6 +79,10 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
       return;
     }
 
+    if (!config.builder.length || !config.buildpacks.length) {
+      throw new Error("You have to select at least one buildpack");
+    }
+
     try {
       await api.updateBuildConfig<UpdateBuildconfigResponse>(
         "<token>",

@@ -20,7 +20,6 @@ import (
 
 type BuildDriverConfig struct {
 	Build struct {
-		ForceBuild   bool `mapstructure:"force_build"`
 		UsePackCache bool `mapstructure:"use_pack_cache"`
 		Method       string
 		Context      string
@@ -230,85 +229,78 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	if err != nil {
 		return nil, err
 	}
+	_, mergedValues, err := createAgent.GetMergedValues(d.config.Values)
 
-	imageExists := agent.CheckIfImageExists(imageURL, tag) // FIXME: does not seem to work with gcr.io images
+	if err != nil {
+		return nil, err
+	}
 
-	if imageExists && tag != "latest" && !d.config.Build.ForceBuild {
-		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, tag)
-	} else {
-		_, mergedValues, err := createAgent.GetMergedValues(d.config.Values)
+	env, err := deploy.GetRuntimeEnvForRelease(
+		client,
+		mergedValues,
+		d.target.Project,
+		d.target.Cluster,
+		d.target.Namespace,
+	)
+
+	if err != nil {
+		env = map[string]string{}
+	}
+
+	buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
+
+	if err == nil {
+		for key, val := range buildEnv {
+			if valStr, ok := val.(string); ok {
+				env[key] = valStr
+			}
+		}
+	}
+
+	buildAgent := &deploy.BuildAgent{
+		SharedOpts:  createAgent.CreateOpts.SharedOpts,
+		APIClient:   client,
+		ImageRepo:   imageURL,
+		Env:         env,
+		ImageExists: false,
+	}
+
+	if d.config.Build.Method == string(deploy.DeployBuildTypeDocker) {
+		basePath, err := filepath.Abs(".")
 
 		if err != nil {
 			return nil, err
 		}
 
-		env, err := deploy.GetEnvForRelease(
-			client,
-			mergedValues,
-			d.target.Project,
-			d.target.Cluster,
-			d.target.Namespace,
+		err = buildAgent.BuildDocker(
+			agent,
+			basePath,
+			d.config.Build.Context,
+			d.config.Build.Dockerfile,
+			tag,
+			"",
 		)
+	} else {
+		var buildConfig *types.BuildConfig
 
-		if err != nil {
-			env = map[string]string{}
-		}
-
-		buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
-
-		if err == nil {
-			for key, val := range buildEnv {
-				if valStr, ok := val.(string); ok {
-					env[key] = valStr
-				}
+		if d.config.Build.Builder != "" {
+			buildConfig = &types.BuildConfig{
+				Builder:    d.config.Build.Builder,
+				Buildpacks: d.config.Build.Buildpacks,
 			}
 		}
 
-		buildAgent := &deploy.BuildAgent{
-			SharedOpts:  createAgent.CreateOpts.SharedOpts,
-			APIClient:   client,
-			ImageRepo:   imageURL,
-			Env:         env,
-			ImageExists: false,
-		}
+		err = buildAgent.BuildPack(
+			agent,
+			d.config.Build.Context,
+			tag,
+			"",
+			buildConfig,
+		)
+	}
 
-		if d.config.Build.Method == string(deploy.DeployBuildTypeDocker) {
-			basePath, err := filepath.Abs(".")
-
-			if err != nil {
-				return nil, err
-			}
-
-			err = buildAgent.BuildDocker(
-				agent,
-				basePath,
-				d.config.Build.Context,
-				d.config.Build.Dockerfile,
-				tag,
-				"",
-			)
-		} else {
-			var buildConfig *types.BuildConfig
-
-			if d.config.Build.Builder != "" {
-				buildConfig = &types.BuildConfig{
-					Builder:    d.config.Build.Builder,
-					Buildpacks: d.config.Build.Buildpacks,
-				}
-			}
-
-			err = buildAgent.BuildPack(
-				agent,
-				d.config.Build.Context,
-				tag,
-				"",
-				buildConfig,
-			)
-		}
-
-		if err != nil {
-			return nil, err
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	named, _ := reference.ParseNamed(imageURL)

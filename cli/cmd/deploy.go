@@ -683,7 +683,6 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			"container": map[string]interface{}{
 				"env": map[string]interface{}{
 					"normal": normalEnv,
-					"synced": syncedEnv,
 				},
 			},
 		})

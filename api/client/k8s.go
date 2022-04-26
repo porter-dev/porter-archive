@@ -91,6 +91,27 @@ func (c *Client) GetEnvGroup(
 	return resp, err
 }
 
+func (c *Client) CreateEnvGroup(
+	ctx context.Context,
+	projectID, clusterID uint,
+	namespace string,
+	req *types.CreateEnvGroupRequest,
+) (*types.EnvGroup, error) {
+	resp := &types.EnvGroup{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/namespaces/%s/envgroup/create",
+			projectID, clusterID,
+			namespace,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) CloneEnvGroup(
 	ctx context.Context,
 	projectID, clusterID uint,

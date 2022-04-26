@@ -39,7 +39,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/errors v0.9.1
-	github.com/porter-dev/switchboard v0.0.0-20220209153113-9d257b8e0dfb
+	github.com/porter-dev/switchboard v0.0.0-20220416181342-416fc450addb
 	github.com/rs/zerolog v1.26.0
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	github.com/spf13/cobra v1.3.0

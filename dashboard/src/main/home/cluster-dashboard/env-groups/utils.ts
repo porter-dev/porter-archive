@@ -37,9 +37,11 @@ export const parseStringToEnvObject = (src: any, options: any) => {
 
         obj[key] = val;
       } else if (debug) {
+        /*
         console.log(
           `did not match key and value when parsing line ${idx + 1}: ${line}`
         );
+        */
       }
     });
 

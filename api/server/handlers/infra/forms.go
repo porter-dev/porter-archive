@@ -252,6 +252,8 @@ tabs:
           value: "12.7"
         - label: "v12.8"
           value: "12.8"
+        - label: "v12.10"
+          value: "12.10"
   - name: pg-13-versions
     show_if: 
       is: "postgres13"
@@ -271,6 +273,8 @@ tabs:
           value: "13.3"
         - label: "v13.4"
           value: "13.4"
+        - label: "v13.6"
+          value: "13.6"
   - name: additional-settings
     contents:
     - type: heading
@@ -288,13 +292,13 @@ tabs:
     - type: heading
       label: Storage Settings
     - type: number-input
-      label: Gigabytes
+      label: Specify the amount of storage to allocate to this instance in gigabytes.
       variable: db_allocated_storage
       placeholder: "ex: 10"
       settings:
         default: 10
     - type: number-input
-      label: Gigabytes
+      label: Specify the maximum storage that this instance can scale to in gigabytes.
       variable: db_max_allocated_storage
       placeholder: "ex: 20"
       settings:
@@ -303,7 +307,22 @@ tabs:
       variable: db_storage_encrypted
       label: Enable storage encryption for the database. 
       settings:
-        default: false`
+        default: false
+- name: advanced
+  label: Advanced
+  sections:
+  - name: replicas
+    contents:
+    - type: heading
+      label: Read Replicas
+    - type: subtitle
+      label: Specify the number of read replicas to run alongside your RDS instance.
+    - type: number-input
+      label: Replicas
+      variable: db_replicas
+      placeholder: "ex: 1"
+      settings:
+        default: 0`
 
 const ecrForm = `name: ECR
 hasSource: false
@@ -342,6 +361,16 @@ tabs:
         options:
         - label: t2.medium
           value: t2.medium
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t2.2xlarge
+          value: t2.2xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.xlarge
+          value: t3.xlarge
+        - label: t3.2xlarge
+          value: t3.2xlarge
     - type: string-input
       label: 👤 Issuer Email
       required: true
@@ -352,6 +381,24 @@ tabs:
       required: true
       placeholder: my-cluster
       variable: cluster_name
+    - type: number-input
+      label: Maximum number of EC2 instances to create in the application autoscaling group.
+      variable: max_instances
+      placeholder: "ex: 10"
+      settings:
+        default: 10
+    - type: checkbox
+      variable: spot_instances_enabled
+      label: Enable spot instances for this cluster.
+      settings:
+        default: false
+  - name: spot_instance_price
+    show_if: spot_instances_enabled
+    contents:
+    - type: string-input
+      label: Assign a bid price for the spot instance (optional).
+      variable: spot_price
+      placeholder: "ex: 0.05"
 `
 
 const gcrForm = `name: GCR

@@ -10,7 +10,7 @@ import DocsHelper from "components/DocsHelper";
 import DynamicLink from "components/DynamicLink";
 
 const CronInput: React.FC<CronField> = (props) => {
-  const { id, variable, label, placeholder, value } = props;
+  const { id, variable, label, placeholder, value, isReadOnly } = props;
 
   const { state, variables, setVars, setValidation, validation } = useFormField(
     id,
@@ -35,6 +35,7 @@ const CronInput: React.FC<CronField> = (props) => {
         label={label}
         placeholder={placeholder}
         value={variables[variable]}
+        disabled={isReadOnly}
         setValue={(x: string) => {
           setVars((vars) => {
             return {

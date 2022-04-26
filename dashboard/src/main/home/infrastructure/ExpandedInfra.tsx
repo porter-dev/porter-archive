@@ -115,8 +115,6 @@ const ExpandedInfra: React.FunctionComponent = () => {
   };
 
   const setLatestOperation = (operation: Operation) => {
-    console.log("SETTING LATEST OPERATION", operation);
-
     let newInfra = infra;
     newInfra.latest_operation = operation;
     setInfra(newInfra);

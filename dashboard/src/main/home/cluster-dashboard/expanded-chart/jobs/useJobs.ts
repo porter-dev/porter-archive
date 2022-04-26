@@ -188,8 +188,13 @@ export const useJobs = (chart: ChartType) => {
         const chartLabel = event.Object?.metadata?.labels["helm.sh/chart"];
         const releaseLabel =
           event.Object?.metadata?.labels["meta.helm.sh/release-name"];
+        const namespace = event.Object?.metadata?.namespace;
 
-        if (chartLabel !== chartVersion || releaseLabel !== chart.name) {
+        if (
+          chartLabel !== chartVersion ||
+          releaseLabel !== chart.name ||
+          namespace !== chart.namespace
+        ) {
           return;
         }
 
@@ -331,7 +336,7 @@ export const useJobs = (chart: ChartType) => {
         jobsRef.current = [...jobsRef.current, data];
       },
       onclose: (event) => {
-        console.log(event);
+        // console.log(event);
         closeWebsocket(websocketId);
       },
       onerror: (error) => {

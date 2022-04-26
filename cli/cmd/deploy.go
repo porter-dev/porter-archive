@@ -9,8 +9,10 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/utils"
+	templaterUtils "github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
 )
@@ -452,8 +454,8 @@ func updateGetAgent(client *api.Client) (*deploy.DeployAgent, error) {
 	// initialize the update agent
 	return deploy.NewDeployAgent(client, app, &deploy.DeployOpts{
 		SharedOpts: &deploy.SharedOpts{
-			ProjectID:       config.Project,
-			ClusterID:       config.Cluster,
+			ProjectID:       cliConf.Project,
+			ClusterID:       cliConf.Cluster,
 			Namespace:       namespace,
 			LocalPath:       localPath,
 			LocalDockerfile: dockerfile,
@@ -481,7 +483,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	if useCache {
-		err := setDockerConfig(updateAgent.Client)
+		err := config.SetDockerConfig(updateAgent.Client)
 
 		if err != nil {
 			return err
@@ -634,6 +636,18 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			})
 		}
 		return err
+	}
+
+	env, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{UseNewConfig: false})
+
+	if err == nil && len(env) > 0 {
+		valuesObj = templaterUtils.CoalesceValues(valuesObj, map[string]interface{}{
+			"container": map[string]interface{}{
+				"env": map[string]interface{}{
+					"normal": env,
+				},
+			},
+		})
 	}
 
 	err = updateAgent.UpdateImageAndValues(valuesObj)

@@ -129,9 +129,22 @@ func (r *Registry) listGCRRepositories(
 	// for oauth. This also prevents us from making more requests.
 	client := &http.Client{}
 
+	regURL := r.URL
+
+	if !strings.HasPrefix(regURL, "http") {
+		regURL = fmt.Sprintf("https://%s", regURL)
+	}
+
+	regURLParsed, err := url.Parse(regURL)
+	regHostname := "gcr.io"
+
+	if err == nil {
+		regHostname = regURLParsed.Host
+	}
+
 	req, err := http.NewRequest(
 		"GET",
-		"https://gcr.io/v2/_catalog",
+		fmt.Sprintf("https://%s/v2/_catalog", regHostname),
 		nil,
 	)
 

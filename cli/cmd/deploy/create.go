@@ -92,7 +92,7 @@ func (c *CreateAgent) CreateFromGithub(
 		return "", fmt.Errorf("could not find a linked github repo for %s. Make sure you have linked your Github account on the Porter dashboard.", ghOpts.Repo)
 	}
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -173,7 +173,7 @@ func (c *CreateAgent) CreateFromRegistry(
 
 	opts := c.CreateOpts
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -255,7 +255,7 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -284,6 +284,16 @@ func (c *CreateAgent) CreateFromDocker(
 			env = map[string]string{}
 		}
 
+		buildEnv, err := GetNestedMap(mergedValues, "container", "env", "build")
+
+		if err == nil {
+			for key, val := range buildEnv {
+				if valStr, ok := val.(string); ok {
+					env[key] = valStr
+				}
+			}
+		}
+
 		// add additional env based on options
 		for key, val := range opts.SharedOpts.AdditionalEnv {
 			env[key] = val
@@ -291,10 +301,10 @@ func (c *CreateAgent) CreateFromDocker(
 
 		buildAgent := &BuildAgent{
 			SharedOpts:  opts.SharedOpts,
-			client:      c.Client,
-			imageRepo:   imageURL,
-			env:         env,
-			imageExists: false,
+			APIClient:   c.Client,
+			ImageRepo:   imageURL,
+			Env:         env,
+			ImageExists: false,
 		}
 
 		if opts.Method == DeployBuildTypeDocker {
@@ -472,7 +482,7 @@ func (c *CreateAgent) GetLatestTemplateDefaultValues(templateName, templateVersi
 	return chart.Values, nil
 }
 
-func (c *CreateAgent) getMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
+func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
 	// deploy the template
 	latestVersion, err := c.GetLatestTemplateVersion(c.CreateOpts.Kind)
 
@@ -506,7 +516,7 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 	// check for automatic subdomain creation if web kind
 	if c.CreateOpts.Kind == "web" {
 		// look for ingress.enabled and no custom domains set
-		ingressMap, err := getNestedMap(mergedValues, "ingress")
+		ingressMap, err := GetNestedMap(mergedValues, "ingress")
 
 		if err == nil {
 			enabledVal, enabledExists := ingressMap["enabled"]

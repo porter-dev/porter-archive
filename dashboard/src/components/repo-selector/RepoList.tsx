@@ -42,87 +42,74 @@ const RepoList: React.FC<Props> = ({
   const [searchFilter, setSearchFilter] = useState(null);
   const { currentProject } = useContext(Context);
 
+  const loadData = async () => {
+    try {
+      const { data } = await api.getGithubAccounts("<token>", {}, {});
+
+      setAccessData(data);
+      setAccessLoading(false);
+    } catch (error) {
+      setAccessError(true);
+      setAccessLoading(false);
+    }
+
+    let ids: number[] = [];
+
+    if (!userId && userId !== 0) {
+      ids = await api
+        .getGitRepos("token", {}, { project_id: currentProject.id })
+        .then((res) => res.data);
+    } else {
+      setRepoLoading(false);
+      setRepoError(true);
+      return;
+    }
+
+    const repoListPromises = ids.map((id) =>
+      api.getGitRepoList(
+        "<token>",
+        {},
+        { project_id: currentProject.id, git_repo_id: id }
+      )
+    );
+
+    try {
+      const resolvedRepoList = await Promise.allSettled(repoListPromises);
+
+      const repos: RepoType[][] = resolvedRepoList.map((repo) =>
+        repo.status === "fulfilled" ? repo.value.data : []
+      );
+
+      const names = new Set();
+      // note: would be better to use .flat() here but you need es2019 for
+      setRepos(
+        repos
+          .map((arr, idx) =>
+            arr.map((el) => {
+              el.GHRepoID = ids[idx];
+              return el;
+            })
+          )
+          .reduce((acc, val) => acc.concat(val), [])
+          .reduce((acc, val) => {
+            if (!names.has(val.FullName)) {
+              names.add(val.FullName);
+              return acc.concat(val);
+            } else {
+              return acc;
+            }
+          }, [])
+      );
+      setRepoLoading(false);
+    } catch (err) {
+      setRepoLoading(false);
+      setRepoError(true);
+    }
+  };
+
   // TODO: Try to unhook before unmount
   useEffect(() => {
-    api
-      .getGithubAccounts("<token>", {}, {})
-      .then(({ data }) => {
-        setAccessData(data);
-        setAccessLoading(false);
-      })
-      .catch(() => {
-        setAccessError(true);
-        setAccessLoading(false);
-      })
-      .finally(() => {
-        // load git repo ids, and then repo names from that
-        // this only happens once during the lifecycle
-        new Promise((resolve, reject) => {
-          if (!userId && userId !== 0) {
-            api
-              .getGitRepos("<token>", {}, { project_id: currentProject.id })
-              .then(async (res) => {
-                resolve(res.data);
-              })
-              .catch(() => {
-                resolve([]);
-              });
-          } else {
-            reject(null);
-          }
-        })
-          .then((ids: number[]) => {
-            Promise.all(
-              ids.map((id) => {
-                return new Promise((resolve, reject) => {
-                  api
-                    .getGitRepoList(
-                      "<token>",
-                      {},
-                      { project_id: currentProject.id, git_repo_id: id }
-                    )
-                    .then((res) => {
-                      resolve(res.data);
-                    })
-                    .catch((err) => {
-                      reject(err);
-                    });
-                });
-              })
-            )
-              .then((repos: RepoType[][]) => {
-                const names = new Set();
-                // note: would be better to use .flat() here but you need es2019 for
-                setRepos(
-                  repos
-                    .map((arr, idx) =>
-                      arr.map((el) => {
-                        el.GHRepoID = ids[idx];
-                        return el;
-                      })
-                    )
-                    .reduce((acc, val) => acc.concat(val), [])
-                    .reduce((acc, val) => {
-                      if (!names.has(val.FullName)) {
-                        names.add(val.FullName);
-                        return acc.concat(val);
-                      } else {
-                        return acc;
-                      }
-                    }, [])
-                );
-                setRepoLoading(false);
-              })
-              .catch((_) => {
-                setRepoLoading(false);
-                setRepoError(true);
-              });
-          })
-          .catch((_) => {
-            setRepoLoading(false);
-            setRepoError(true);
-          });
-      });
+    loadData();
   }, []);
 
   // clear out actionConfig and SelectedRepository if new search is performed

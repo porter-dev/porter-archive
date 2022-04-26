@@ -361,7 +361,7 @@ export const SettingsForm: React.FC<{
   };
 
   const provisionECR = async (awsIntegrationId: number) => {
-    console.log("Started provision ECR");
+    // console.log("Started provision ECR");
 
     // See if there's an infra for EKS that is in an errored state and the last operation
     // was an attempt at creation. If so, re-use that infra.

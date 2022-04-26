@@ -10,11 +10,15 @@ type Environment struct {
 	GitRepoOwner      string `json:"git_repo_owner"`
 	GitRepoName       string `json:"git_repo_name"`
 
-	Name string `json:"name"`
+	Name                 string `json:"name"`
+	Mode                 string `json:"mode"`
+	DeploymentCount      uint   `json:"deployment_count"`
+	LastDeploymentStatus string `json:"last_deployment_status"`
 }
 
 type CreateEnvironmentRequest struct {
 	Name string `json:"name" form:"required"`
+	Mode string `json:"mode" form:"oneof=auto manual" default:"manual"`
 }
 
 type GitHubMetadata struct {
@@ -23,6 +27,8 @@ type GitHubMetadata struct {
 	RepoName     string `json:"gh_repo_name"`
 	RepoOwner    string `json:"gh_repo_owner"`
 	CommitSHA    string `json:"gh_commit_sha"`
+	PRBranchFrom string `json:"gh_pr_branch_from"`
+	PRBranchInto string `json:"gh_pr_branch_into"`
 }
 
 type DeploymentStatus string
@@ -30,27 +36,29 @@ type DeploymentStatus string
 const (
 	DeploymentStatusCreated  DeploymentStatus = "created"
 	DeploymentStatusCreating DeploymentStatus = "creating"
+	DeploymentStatusUpdating DeploymentStatus = "updating"
 	DeploymentStatusInactive DeploymentStatus = "inactive"
+	DeploymentStatusTimedOut DeploymentStatus = "timed_out"
 	DeploymentStatusFailed   DeploymentStatus = "failed"
 )
 
 type Deployment struct {
 	*GitHubMetadata
 
-	ID                uint             `json:"id"`
-	CreatedAt         time.Time        `json:"created_at"`
-	UpdatedAt         time.Time        `json:"updated_at"`
-	GitInstallationID uint             `json:"git_installation_id"`
-	EnvironmentID     uint             `json:"environment_id"`
-	Namespace         string           `json:"namespace"`
-	Status            DeploymentStatus `json:"status"`
-	Subdomain         string           `json:"subdomain"`
-	PullRequestID     uint             `json:"pull_request_id"`
+	ID                 uint             `json:"id"`
+	CreatedAt          time.Time        `json:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at"`
+	EnvironmentID      uint             `json:"environment_id"`
+	Namespace          string           `json:"namespace"`
+	Status             DeploymentStatus `json:"status"`
+	Subdomain          string           `json:"subdomain"`
+	PullRequestID      uint             `json:"pull_request_id"`
+	InstallationID     uint             `json:"gh_installation_id"`
+	LastWorkflowRunURL string           `json:"last_workflow_run_url"`
 }
 
 type CreateGHDeploymentRequest struct {
-	Branch   string `json:"branch" form:"required"`
-	ActionID uint   `json:"action_id" form:"required"`
+	ActionID uint `json:"action_id" form:"required"`
 }
 
 type CreateDeploymentRequest struct {
@@ -63,25 +71,27 @@ type CreateDeploymentRequest struct {
 
 type FinalizeDeploymentRequest struct {
 	Namespace string `json:"namespace" form:"required"`
-	Subdomain string `json:"subdomain"`
+	Subdomain string `json:"subdomain" form:"required"`
 }
 
 type UpdateDeploymentRequest struct {
 	*CreateGHDeploymentRequest
 
-	CommitSHA string `json:"commit_sha" form:"required"`
-	Namespace string `json:"namespace" form:"required"`
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	CommitSHA    string `json:"commit_sha" form:"required"`
+	Namespace    string `json:"namespace" form:"required"`
 }
 
 type ListDeploymentRequest struct {
-	Status []string `schema:"status"`
+	EnvironmentID uint `schema:"environment_id"`
 }
 
 type UpdateDeploymentStatusRequest struct {
 	*CreateGHDeploymentRequest
 
-	Status    string `json:"status" form:"required,oneof=created creating inactive failed"`
-	Namespace string `json:"namespace" form:"required"`
+	PRBranchFrom string `json:"gh_pr_branch_from" form:"required"`
+	Status       string `json:"status" form:"required,oneof=created creating inactive failed"`
+	Namespace    string `json:"namespace" form:"required"`
 }
 
 type DeleteDeploymentRequest struct {
@@ -90,4 +100,13 @@ type DeleteDeploymentRequest struct {
 
 type GetDeploymentRequest struct {
 	Namespace string `schema:"namespace" form:"required"`
+}
+
+type PullRequest struct {
+	Title      string `json:"pr_title"`
+	Number     uint   `json:"pr_number"`
+	RepoOwner  string `json:"repo_owner"`
+	RepoName   string `json:"repo_name"`
+	BranchFrom string `json:"branch_from"`
+	BranchInto string `json:"branch_into"`
 }

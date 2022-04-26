@@ -77,7 +77,7 @@ func init() {
 }
 
 func listClusters(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	resp, err := client.ListProjectClusters(context.Background(), config.Project)
+	resp, err := client.ListProjectClusters(context.Background(), cliConf.Project)
 
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func listClusters(user *types.GetAuthenticatedUserResponse, client *api.Client, 
 
 	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "NAME", "SERVER")
 
-	currClusterID := config.Cluster
+	currClusterID := cliConf.Cluster
 
 	for _, cluster := range clusters {
 		if currClusterID == cluster.ID {
@@ -125,7 +125,7 @@ func deleteCluster(user *types.GetAuthenticatedUserResponse, client *api.Client,
 			return err
 		}
 
-		err = client.DeleteProjectCluster(context.Background(), config.Project, uint(id))
+		err = client.DeleteProjectCluster(context.Background(), cliConf.Project, uint(id))
 
 		if err != nil {
 			return err
@@ -138,10 +138,10 @@ func deleteCluster(user *types.GetAuthenticatedUserResponse, client *api.Client,
 }
 
 func listNamespaces(user *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	pID := config.Project
+	pID := cliConf.Project
 
 	// get the service account based on the cluster id
-	cID := config.Cluster
+	cID := cliConf.Cluster
 
 	// get the list of namespaces
 	namespaces, err := client.GetK8sNamespaces(

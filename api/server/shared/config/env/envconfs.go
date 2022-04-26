@@ -37,6 +37,8 @@ type ServerConf struct {
 	GithubClientSecret string `env:"GITHUB_CLIENT_SECRET"`
 	GithubLoginEnabled bool   `env:"GITHUB_LOGIN_ENABLED,default=true"`
 
+	GithubIncomingWebhookSecret string `env:"GITHUB_INCOMING_WEBHOOK_SECRET"`
+
 	GithubAppClientID      string `env:"GITHUB_APP_CLIENT_ID"`
 	GithubAppClientSecret  string `env:"GITHUB_APP_CLIENT_SECRET"`
 	GithubAppName          string `env:"GITHUB_APP_NAME"`

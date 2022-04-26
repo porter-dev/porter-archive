@@ -221,7 +221,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const onSubmit = async (rawValues: any) => {
-    console.log("raw", rawValues);
+    // console.log("raw", rawValues);
     // Convert dotted keys to nested objects
     let values: any = {};
 
@@ -318,7 +318,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
 
-    console.log("valuesYaml", valuesYaml);
+    // console.log("valuesYaml", valuesYaml);
     try {
       await api.upgradeChartValues(
         "<token>",
@@ -338,7 +338,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       setSaveValueStatus("successful");
       setForceRefreshRevisions(true);
 
-      window.analytics.track("Chart Upgraded", {
+      window.analytics?.track("Chart Upgraded", {
         chart: currentChart.name,
         values: valuesYaml,
       });
@@ -353,7 +353,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
       setCurrentError(parsedErr);
 
-      window.analytics.track("Failed to Upgrade Chart", {
+      window.analytics?.track("Failed to Upgrade Chart", {
         chart: currentChart.name,
         values: valuesYaml,
         error: err,
@@ -392,7 +392,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setSaveValueStatus("successful");
         setForceRefreshRevisions(true);
 
-        window.analytics.track("Chart Upgraded", {
+        window.analytics?.track("Chart Upgraded", {
           chart: currentChart.name,
           values: valuesYaml,
         });
@@ -408,7 +408,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setSaveValueStatus(err);
         setCurrentError(parsedErr);
 
-        window.analytics.track("Failed to Upgrade Chart", {
+        window.analytics?.track("Failed to Upgrade Chart", {
           chart: currentChart.name,
           values: valuesYaml,
           error: err,
@@ -421,7 +421,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderTabContents = (currentTab: string) => {
     let { setSidebar } = props;
     let chart = currentChart;
-    console.log("CONTROLLERS", controllers);
+    // console.log("CONTROLLERS", controllers);
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
@@ -704,7 +704,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   useEffect(() => {
-    window.analytics.track("Opened Chart", {
+    window.analytics?.track("Opened Chart", {
       chart: currentChart.name,
     });
 
@@ -855,6 +855,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     }}
                     renderTabContents={renderTabContents}
                     isReadOnly={
+                      isPreview ||
                       imageIsPlaceholder ||
                       !isAuthorized("application", "", ["get", "update"])
                     }

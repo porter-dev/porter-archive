@@ -527,33 +527,46 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 				enabled, eOK := enabledVal.(bool)
 				customDomain, cOK := customDomVal.(bool)
 
-				// in the case of ingress enabled but no custom domain, create subdomain
-				if eOK && cOK && enabled && !customDomain {
-					dnsRecord, err := c.Client.CreateDNSRecord(
-						context.Background(),
-						c.CreateOpts.ProjectID,
-						c.CreateOpts.ClusterID,
-						c.CreateOpts.Namespace,
-						c.CreateOpts.ReleaseName,
-					)
+				if eOK && cOK && enabled {
+					if customDomain {
+						// return the first custom domain when one exists
+						hostsArr, hostsExists := ingressMap["hosts"]
 
-					if err != nil {
-						return "", fmt.Errorf("Error creating subdomain: %s", err.Error())
-					}
+						if hostsExists {
+							hostsArrVal, hostsArrOk := hostsArr.([]string)
 
-					subdomain = dnsRecord.ExternalURL
-
-					if ingressVal, ok := mergedValues["ingress"]; !ok {
-						mergedValues["ingress"] = map[string]interface{}{
-							"porter_hosts": []string{
-								subdomain,
-							},
+							if hostsArrOk && len(hostsArrVal) > 0 {
+								subdomain = hostsArrVal[0]
+							}
 						}
 					} else {
-						ingressValMap := ingressVal.(map[string]interface{})
+						// in the case of ingress enabled but no custom domain, create subdomain
+						dnsRecord, err := c.Client.CreateDNSRecord(
+							context.Background(),
+							c.CreateOpts.ProjectID,
+							c.CreateOpts.ClusterID,
+							c.CreateOpts.Namespace,
+							c.CreateOpts.ReleaseName,
+						)
 
-						ingressValMap["porter_hosts"] = []string{
-							subdomain,
+						if err != nil {
+							return "", fmt.Errorf("Error creating subdomain: %s", err.Error())
+						}
+
+						subdomain = dnsRecord.ExternalURL
+
+						if ingressVal, ok := mergedValues["ingress"]; !ok {
+							mergedValues["ingress"] = map[string]interface{}{
+								"porter_hosts": []string{
+									subdomain,
+								},
+							}
+						} else {
+							ingressValMap := ingressVal.(map[string]interface{})
+
+							ingressValMap["porter_hosts"] = []string{
+								subdomain,
+							}
 						}
 					}
 				}

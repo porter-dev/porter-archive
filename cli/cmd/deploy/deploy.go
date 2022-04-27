@@ -146,9 +146,8 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 }
 
 type GetBuildEnvOpts struct {
-	UseNewConfig    bool
-	NewConfig       map[string]interface{}
-	IncludeBuildEnv bool
+	UseNewConfig bool
+	NewConfig    map[string]interface{}
 }
 
 // GetBuildEnv retrieves the build env from the release config and returns it.

@@ -1,12 +1,23 @@
 package gorm
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
+
+func randomHex(n int) (string, error) {
+	bytes := make([]byte, n)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
 
 // AllowlistRepository uses gorm.DB for querying the database
 type TagRepository struct {
@@ -30,6 +41,36 @@ func (repo *TagRepository) CreateTag(tag *models.Tag) (*models.Tag, error) {
 		return nil, err
 	}
 	return tag, nil
+}
+
+func (repo *TagRepository) CreateOrLinkTag(tagName string, release *models.Release) error {
+	project_id := release.ProjectID
+
+	existingTag, _ := repo.ReadTagByNameAndProjectId(tagName, project_id)
+
+	if existingTag != nil {
+		return repo.AddTagToRelease(release, existingTag)
+	}
+
+	randomColor, err := randomHex(3)
+
+	if err != nil {
+		randomColor = "ffffff"
+	}
+
+	newTag := &models.Tag{
+		Name:      tagName,
+		ProjectID: project_id,
+		Color:     strings.Join([]string{"#", randomColor}, ""),
+	}
+
+	newTag, err = repo.CreateTag(newTag)
+
+	if err != nil {
+		return err
+	}
+
+	return repo.AddTagToRelease(release, newTag)
 }
 
 func (repo *TagRepository) ReadTagByNameAndProjectId(tagName string, projectId uint) (*models.Tag, error) {

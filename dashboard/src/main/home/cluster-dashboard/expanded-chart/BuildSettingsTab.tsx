@@ -4,7 +4,7 @@ import KeyValueArray from "components/form-components/KeyValueArray";
 import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
-import { unionBy } from "lodash";
+import _, { unionBy } from "lodash";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -17,9 +17,11 @@ import styled, { keyframes } from "styled-components";
 import yaml from "js-yaml";
 import DynamicLink from "components/DynamicLink";
 import { AxiosError } from "axios";
+import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
 
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
+const URLRegex = /[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
 
 type Buildpack = {
   name: string;
@@ -394,8 +396,19 @@ const BuildpackConfigSection: React.FC<{
           }
         );
 
+        const customBuildpacks: any = currentBuildConfig.buildpacks
+          .filter(
+            (buildpack) =>
+              URLRegex.test(buildpack) &&
+              !buildpack.includes("gcr.io/paketo-buildpacks")
+          )
+          .map((b) => ({ buildpack: b, name: b }));
+
+        console.log(customBuildpacks);
+        console.log(userAddedBuildpacks);
+
         const detectedBuildpacks = unionBy(
-          userAddedBuildpacks,
+          [...userAddedBuildpacks, ...customBuildpacks],
           defaultBuilder.detected,
           "buildpack"
         );
@@ -458,6 +471,13 @@ const BuildpackConfigSection: React.FC<{
     }));
   }, [stacks]);
 
+  const handleAddCustomBuildpack = (buildpack: Buildpack) => {
+    setSelectedBuildpacks((selectedBuildpacks) => [
+      ...selectedBuildpacks,
+      buildpack,
+    ]);
+  };
+
   const handleSelectBuilder = (builderName: string) => {
     const builder = builders.find(
       (b) => b.name.toLowerCase() === builderName.toLowerCase()
@@ -493,10 +513,18 @@ const BuildpackConfigSection: React.FC<{
     return buildpacks?.map((buildpack) => {
       const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
 
+      let disableIcon = false;
+      if (
+        URLRegex.test(buildpack.buildpack) &&
+        !buildpack.buildpack.includes("gcr.io/paketo-buildpacks")
+      ) {
+        disableIcon = true;
+      }
+
       return (
         <StyledCard>
           <ContentContainer>
-            <Icon className={icon} />
+            <Icon disableMarginRight={disableIcon} className={icon} />
             <EventInformation>
               <EventName>{buildpack?.name}</EventName>
             </EventInformation>
@@ -590,12 +618,17 @@ const BuildpackConfigSection: React.FC<{
         {!!selectedBuildpacks?.length &&
           renderBuildpacksList(selectedBuildpacks, "remove")}
 
+        <Helper>Available buildpacks:</Helper>
         {!!availableBuildpacks?.length && (
-          <>
-            <Helper>Available buildpacks:</Helper>
-            {renderBuildpacksList(availableBuildpacks, "add")}
-          </>
+          <>{renderBuildpacksList(availableBuildpacks, "add")}</>
         )}
+
+        <Helper>
+          You may also add buildpacks by directly providing their GitHub links
+          or links to ZIP files that contain the buildpack source code.
+        </Helper>
+
+        <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
       </>
     </BuildpackConfigurationContainer>
   );
@@ -675,10 +708,14 @@ const ContentContainer = styled.div`
   align-items: center;
 `;
 
-const Icon = styled.span`
+const Icon = styled.span<{ disableMarginRight: boolean }>`
   font-size: 20px;
   margin-left: 10px;
-  margin-right: 20px;
+  ${(props) => {
+    if (!props.disableMarginRight) {
+      return "margin-right: 20px";
+    }
+  }}
 `;
 
 const EventInformation = styled.div`

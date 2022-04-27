@@ -6,6 +6,7 @@ import "github.com/porter-dev/porter/internal/models"
 // GitRepo model
 type TagRepository interface {
 	CreateTag(tag *models.Tag) (*models.Tag, error)
+	CreateOrLinkTag(tagName string, release *models.Release) error
 	ReadTagByNameAndProjectId(tagName string, projectID uint) (*models.Tag, error)
 	ListTagsByProjectId(projectId uint) ([]*models.Tag, error)
 	UpdateTag(tag *models.Tag) (*models.Tag, error)

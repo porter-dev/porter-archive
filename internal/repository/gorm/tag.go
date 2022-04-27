@@ -64,13 +64,31 @@ func (repo *TagRepository) CreateOrLinkTag(tagName string, release *models.Relea
 		Color:     strings.Join([]string{"#", randomColor}, ""),
 	}
 
-	newTag, err = repo.CreateTag(newTag)
-
 	if err != nil {
 		return err
 	}
 
 	return repo.AddTagToRelease(release, newTag)
+}
+
+func (repo *TagRepository) UnlinkTagsFromRelease(tags []string, release *models.Release) error {
+	fmt.Println(tags)
+	populatedTags := make([]*models.Tag, 0)
+	err := repo.db.Model(&models.Tag{}).Where("name IN ?", tags).Where("project_id = ?", release.ProjectID).Find(&populatedTags).Error
+
+	fmt.Println(populatedTags)
+
+	if err != nil {
+		return err
+	}
+
+	err = repo.db.Model(&release).Association("Tags").Delete(populatedTags)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (repo *TagRepository) ReadTagByNameAndProjectId(tagName string, projectId uint) (*models.Tag, error) {
@@ -123,7 +141,6 @@ func (repo *TagRepository) DeleteTag(id uint) error {
 
 func (repo *TagRepository) AddTagToRelease(release *models.Release, tag *models.Tag) error {
 	err := repo.db.Model(&release).Association("Tags").Append(tag)
-	_ = repo.db.Model(&tag).Association("Releases").Append(release)
 
 	if err != nil {
 		return err

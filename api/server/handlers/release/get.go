@@ -49,11 +49,6 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		res.ID = release.ID
 		res.WebhookToken = release.WebhookToken
 
-		for i := 0; i < len(release.Tags); i++ {
-			tag := release.Tags[i]
-			res.PorterRelease.Tags = append(res.PorterRelease.Tags, tag.Name)
-		}
-
 		if release.GitActionConfig != nil {
 			res.GitActionConfig = release.GitActionConfig.ToGitActionConfigType()
 		}

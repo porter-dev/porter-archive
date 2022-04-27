@@ -514,7 +514,9 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 func (d *Driver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
-	sharedOpts.AdditionalEnv = appConf.Build.Env
+	if len(appConf.Build.Env) > 0 {
+		sharedOpts.AdditionalEnv = appConf.Build.Env
+	}
 
 	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
 		SharedOpts: sharedOpts,

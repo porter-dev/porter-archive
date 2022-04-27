@@ -146,8 +146,9 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 }
 
 type GetBuildEnvOpts struct {
-	UseNewConfig bool
-	NewConfig    map[string]interface{}
+	UseNewConfig    bool
+	NewConfig       map[string]interface{}
+	IncludeBuildEnv bool
 }
 
 // GetBuildEnv retrieves the build env from the release config and returns it.
@@ -172,12 +173,14 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		return nil, err
 	}
 
-	buildEnv, err := GetNestedMap(conf, "container", "env", "build")
+	if opts.IncludeBuildEnv {
+		buildEnv, err := GetNestedMap(conf, "container", "env", "build")
 
-	if err == nil {
-		for key, val := range buildEnv {
-			if valStr, ok := val.(string); ok {
-				env[key] = valStr
+		if err == nil {
+			for key, val := range buildEnv {
+				if valStr, ok := val.(string); ok {
+					env[key] = valStr
+				}
 			}
 		}
 	}

@@ -27,6 +27,7 @@ import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal"
 import CommandLineIcon from "assets/command-line-icon";
 import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
+import BuildSettingsTab from "./BuildSettingsTab";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -82,6 +83,13 @@ export const ExpandedJobChartFC: React.FC<{
 
   if (isAuthorized("job", "", ["get", "delete"])) {
     rightTabOptions.push({ label: "Settings", value: "settings" });
+  }
+
+  if (chart?.git_action_config?.git_repo) {
+    rightTabOptions.push({
+      label: "Build Settings",
+      value: "build-settings",
+    });
   }
 
   const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
@@ -152,6 +160,17 @@ export const ExpandedJobChartFC: React.FC<{
       timeStyle: "long",
     });
 
+    let runDescription = "";
+
+    try {
+      runDescription = `Runs ${CronPrettifier.toString(
+        chart?.config?.schedule.value
+      ).toLowerCase()} UTC`;
+    } catch (error) {
+      runDescription =
+        "An unexpected error happened while trying to parse the cron expression.";
+    }
+
     if (currentTab === "jobs") {
       return (
         <TabWrapper>
@@ -186,11 +205,7 @@ export const ExpandedJobChartFC: React.FC<{
           {chart?.config?.schedule?.enabled ? (
             <RunsDescription>
               <i className="material-icons">access_time</i>
-              Runs{" "}
-              {CronPrettifier.toString(
-                chart?.config?.schedule.value
-              ).toLowerCase()}{" "}
-              UTC
+              {runDescription}
               <Dot
                 style={{
                   color: "#ffffff88",
@@ -232,6 +247,10 @@ export const ExpandedJobChartFC: React.FC<{
           disabled={!isAuthorized("job", "", ["get", "update"])}
         />
       );
+    }
+
+    if (currentTab === "build-settings") {
+      return <BuildSettingsTab chart={chart} />;
     }
 
     if (

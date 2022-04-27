@@ -249,12 +249,20 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 		env = make(map[string]string)
 	}
 
-	buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
+	envConfig, err := deploy.GetNestedMap(mergedValues, "container", "env")
 
 	if err == nil {
-		for key, val := range buildEnv {
-			if valStr, ok := val.(string); ok {
-				env[key] = valStr
+		_, exists := envConfig["build"]
+
+		if exists {
+			buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
+
+			if err == nil {
+				for key, val := range buildEnv {
+					if valStr, ok := val.(string); ok {
+						env[key] = valStr
+					}
+				}
 			}
 		}
 	}

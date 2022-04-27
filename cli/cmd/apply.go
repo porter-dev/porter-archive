@@ -182,6 +182,7 @@ type ApplicationConfig struct {
 		Image      string
 		Builder    string
 		Buildpacks []string
+		Env        map[string]string
 	}
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -513,6 +514,8 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 func (d *Driver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
+	sharedOpts.AdditionalEnv = appConf.Build.Env
+
 	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
 		SharedOpts: sharedOpts,
 		Local:      appConf.Build.Method != "registry",
@@ -525,9 +528,8 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 	// if the build method is registry, we do not trigger a build
 	if appConf.Build.Method != "registry" {
 		buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-			UseNewConfig:    true,
-			NewConfig:       appConf.Values,
-			IncludeBuildEnv: true,
+			UseNewConfig: true,
+			NewConfig:    appConf.Values,
 		})
 
 		if err != nil {
@@ -562,21 +564,6 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 				return nil, err
 			}
 		}
-	}
-
-	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-		UseNewConfig: true,
-		NewConfig:    appConf.Values,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = updateAgent.SetBuildEnv(buildEnv)
-
-	if err != nil {
-		return nil, err
 	}
 
 	err = updateAgent.UpdateImageAndValues(appConf.Values)

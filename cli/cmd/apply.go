@@ -175,8 +175,6 @@ type ApplicationConfig struct {
 	OnlyCreate bool
 
 	Build struct {
-		ForceBuild bool `mapstructure:"force_build"`
-		ForcePush  bool `mapstructure:"force_push"`
 		UseCache   bool `mapstructure:"use_cache"`
 		Method     string
 		Context    string
@@ -184,6 +182,7 @@ type ApplicationConfig struct {
 		Image      string
 		Builder    string
 		Buildpacks []string
+		Env        map[string]string
 	}
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -502,7 +501,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig, appConf.Build.ForceBuild)
+		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig)
 	}
 
 	if err != nil {
@@ -514,6 +513,10 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 
 func (d *Driver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
+
+	if len(appConf.Build.Env) > 0 {
+		sharedOpts.AdditionalEnv = appConf.Build.Env
+	}
 
 	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
 		SharedOpts: sharedOpts,
@@ -527,9 +530,8 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 	// if the build method is registry, we do not trigger a build
 	if appConf.Build.Method != "registry" {
 		buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-			UseNewConfig:    true,
-			NewConfig:       appConf.Values,
-			IncludeBuildEnv: true,
+			UseNewConfig: true,
+			NewConfig:    appConf.Values,
 		})
 
 		if err != nil {
@@ -551,34 +553,19 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		err = updateAgent.Build(buildConfig, appConf.Build.ForceBuild)
+		err = updateAgent.Build(buildConfig)
 
 		if err != nil {
 			return nil, err
 		}
 
 		if !appConf.Build.UseCache {
-			err = updateAgent.Push(appConf.Build.ForcePush)
+			err = updateAgent.Push()
 
 			if err != nil {
 				return nil, err
 			}
 		}
-	}
-
-	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-		UseNewConfig: true,
-		NewConfig:    appConf.Values,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = updateAgent.SetBuildEnv(buildEnv)
-
-	if err != nil {
-		return nil, err
 	}
 
 	err = updateAgent.UpdateImageAndValues(appConf.Values)

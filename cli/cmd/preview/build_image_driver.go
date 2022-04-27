@@ -27,6 +27,7 @@ type BuildDriverConfig struct {
 		Builder      string
 		Buildpacks   []string
 		Image        string
+		Env          map[string]string
 	}
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -244,7 +245,7 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	)
 
 	if err != nil {
-		env = map[string]string{}
+		env = make(map[string]string)
 	}
 
 	buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
@@ -255,6 +256,10 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 				env[key] = valStr
 			}
 		}
+	}
+
+	for k, v := range d.config.Build.Env {
+		env[k] = v
 	}
 
 	buildAgent := &deploy.BuildAgent{

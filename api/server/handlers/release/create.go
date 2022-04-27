@@ -423,8 +423,6 @@ func LinkTagsToRelease(config *config.Config, tags []string, release *models.Rel
 		}
 	}
 
-	fmt.Println("LINK TAGS TO RELEASE ERROR", err)
-
 	if err != nil {
 		return nil, err
 	}

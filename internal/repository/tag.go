@@ -13,4 +13,5 @@ type TagRepository interface {
 	DeleteTag(id uint) error
 	AddTagToRelease(release *models.Release, tag *models.Tag) error
 	RemoveTagFromRelease(release *models.Release, tag *models.Tag) error
+	UnlinkTagsFromRelease(tags []string, release *models.Release) error
 }

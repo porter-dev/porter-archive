@@ -272,10 +272,10 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	env, err := GetRuntimeEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
+	env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
 
 	if err != nil {
-		env = map[string]string{}
+		env = make(map[string]string)
 	}
 
 	buildEnv, err := GetNestedMap(mergedValues, "container", "env", "build")

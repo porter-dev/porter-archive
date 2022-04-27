@@ -167,7 +167,7 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		}
 	}
 
-	env, err := GetRuntimeEnvForRelease(d.Client, conf, d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace)
+	env, err := GetEnvForRelease(d.Client, conf, d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace)
 
 	if err != nil {
 		return nil, err
@@ -413,9 +413,9 @@ type SyncedEnvSectionKey struct {
 	Secret bool   `json:"secret" yaml:"secret"`
 }
 
-// GetRuntimeEnvForRelease gets the env vars for a standard Porter template config. These env
+// GetEnvForRelease gets the env vars for a standard Porter template config. These env
 // vars are found at `container.env.normal` and `container.env.synced`.
-func GetRuntimeEnvForRelease(
+func GetEnvForRelease(
 	client *client.Client,
 	config map[string]interface{},
 	projID, clusterID uint,
@@ -424,7 +424,7 @@ func GetRuntimeEnvForRelease(
 	res := make(map[string]string)
 
 	// first, get the env vars from "container.env.normal"
-	normalEnv, err := GetNormalEnv(client, config, projID, clusterID, namespace)
+	normalEnv, err := GetNormalEnv(client, config, projID, clusterID, namespace, true)
 
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching container.env.normal variables: %w", err)
@@ -436,7 +436,7 @@ func GetRuntimeEnvForRelease(
 
 	// next, get the env vars specified by "container.env.synced"
 	// look for container.env.synced
-	syncedEnv, err := GetSyncedEnv(client, config, projID, clusterID, namespace)
+	syncedEnv, err := GetSyncedEnv(client, config, projID, clusterID, namespace, true)
 
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching container.env.synced variables: %w", err)
@@ -454,6 +454,7 @@ func GetNormalEnv(
 	config map[string]interface{},
 	projID, clusterID uint,
 	namespace string,
+	buildTime bool,
 ) (map[string]string, error) {
 	res := make(map[string]string)
 
@@ -473,7 +474,9 @@ func GetNormalEnv(
 
 		// if the value contains PORTERSECRET, this is a "dummy" env that gets injected during
 		// run-time, so we ignore it
-		if !strings.Contains(valStr, "PORTERSECRET") {
+		if buildTime && strings.Contains(valStr, "PORTERSECRET") {
+			continue
+		} else {
 			res[key] = valStr
 		}
 	}
@@ -486,6 +489,7 @@ func GetSyncedEnv(
 	config map[string]interface{},
 	projID, clusterID uint,
 	namespace string,
+	buildTime bool,
 ) (map[string]string, error) {
 	res := make(map[string]string)
 
@@ -596,7 +600,9 @@ func GetSyncedEnv(
 			}
 
 			for key, val := range eg.Variables {
-				if !strings.Contains(val, "PORTERSECRET") {
+				if buildTime && strings.Contains(val, "PORTERSECRET") {
+					continue
+				} else {
 					res[key] = val
 				}
 			}

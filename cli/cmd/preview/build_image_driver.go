@@ -230,13 +230,14 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	if err != nil {
 		return nil, err
 	}
+
 	_, mergedValues, err := createAgent.GetMergedValues(d.config.Values)
 
 	if err != nil {
 		return nil, err
 	}
 
-	env, err := deploy.GetRuntimeEnvForRelease(
+	env, err := deploy.GetEnvForRelease(
 		client,
 		mergedValues,
 		d.target.Project,

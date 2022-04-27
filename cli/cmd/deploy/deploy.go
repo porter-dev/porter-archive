@@ -167,6 +167,21 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 		return nil, err
 	}
 
+<<<<<<< nafees/hotfixes
+	envConfig, err := GetNestedMap(conf, "container", "env")
+
+	if err == nil {
+		_, exists := envConfig["build"]
+
+		if exists {
+			buildEnv, err := GetNestedMap(conf, "container", "env", "build")
+
+			if err == nil {
+				for key, val := range buildEnv {
+					if valStr, ok := val.(string); ok {
+						env[key] = valStr
+					}
+=======
 	if opts.IncludeBuildEnv {
 		buildEnv, err := GetNestedMap(conf, "container", "env", "build")
 
@@ -174,6 +189,7 @@ func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, err
 			for key, val := range buildEnv {
 				if valStr, ok := val.(string); ok {
 					env[key] = valStr
+>>>>>>> master
 				}
 			}
 		}

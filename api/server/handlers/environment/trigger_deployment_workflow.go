@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
@@ -69,7 +69,7 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	latestWorkflowRun, err := getLatestWorkflowRun(client, env.GitRepoOwner, env.GitRepoName,
+	latestWorkflowRun, err := commonutils.GetLatestWorkflowRun(client, env.GitRepoOwner, env.GitRepoName,
 		fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
 
 	if err != nil && errors.Is(err, ErrNoWorkflowRuns) {
@@ -117,26 +117,4 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-}
-
-func getLatestWorkflowRun(client *github.Client, owner, repo, filename, branch string) (*github.WorkflowRun, error) {
-	workflowRuns, _, err := client.Actions.ListWorkflowRunsByFileName(
-		context.Background(), owner, repo, filename, &github.ListWorkflowRunsOptions{
-			Branch: branch,
-			ListOptions: github.ListOptions{
-				Page:    1,
-				PerPage: 1,
-			},
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if workflowRuns.GetTotalCount() == 0 {
-		return nil, ErrNoWorkflowRuns
-	}
-
-	return workflowRuns.WorkflowRuns[0], nil
 }

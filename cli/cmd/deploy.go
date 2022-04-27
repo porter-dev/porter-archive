@@ -501,8 +501,9 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-		UseNewConfig: true,
-		NewConfig:    valuesObj,
+		UseNewConfig:    true,
+		NewConfig:       valuesObj,
+		IncludeBuildEnv: true,
 	})
 
 	if err != nil {

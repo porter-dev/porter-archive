@@ -145,7 +145,7 @@ func writeReleases(client *api.Client, kind string) error {
 	}
 
 	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
+	w.Init(os.Stdout, 3, 8, 2, '\t', tabwriter.AlignRight)
 
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", "NAME", "NAMESPACE", "STATUS", "KIND")
 

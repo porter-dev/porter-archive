@@ -61,7 +61,7 @@ func (r *GitActionConfig) ToGitActionConfigType() *types.GitActionConfig {
 		GitRepo:        r.GitRepo,
 		GitBranch:      r.GitBranch,
 		ImageRepoURI:   r.ImageRepoURI,
-		GitRepoID:      r.GithubInstallationID,
+		GitRepoID:      r.GitRepoID,
 		DockerfilePath: r.DockerfilePath,
 		FolderPath:     r.FolderPath,
 	}

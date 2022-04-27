@@ -527,8 +527,9 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 	// if the build method is registry, we do not trigger a build
 	if appConf.Build.Method != "registry" {
 		buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-			UseNewConfig: true,
-			NewConfig:    appConf.Values,
+			UseNewConfig:    true,
+			NewConfig:       appConf.Values,
+			IncludeBuildEnv: true,
 		})
 
 		if err != nil {
@@ -563,6 +564,21 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 				return nil, err
 			}
 		}
+	}
+
+	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: true,
+		NewConfig:    appConf.Values,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = updateAgent.SetBuildEnv(buildEnv)
+
+	if err != nil {
+		return nil, err
 	}
 
 	err = updateAgent.UpdateImageAndValues(appConf.Values)

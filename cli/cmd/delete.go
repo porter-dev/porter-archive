@@ -224,7 +224,7 @@ func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 		return fmt.Errorf("no addon found with name: %s", name)
 	}
 
-	color.New(color.FgBlue).Printf("Deleting job: %s\n", name)
+	color.New(color.FgBlue).Printf("Deleting addon: %s\n", name)
 
 	err = client.DeleteRelease(
 		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,

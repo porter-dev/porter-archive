@@ -174,6 +174,8 @@ func init() {
 		false,
 		"Whether to use cache (currently in beta)",
 	)
+
+	createCmd.PersistentFlags().MarkDeprecated("force-build", "--force-build is deprecated")
 }
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
@@ -276,7 +278,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 			}
 		}
 
-		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil, forceBuild)
+		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {

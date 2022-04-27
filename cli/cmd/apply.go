@@ -175,8 +175,6 @@ type ApplicationConfig struct {
 	OnlyCreate bool
 
 	Build struct {
-		ForceBuild bool `mapstructure:"force_build"`
-		ForcePush  bool `mapstructure:"force_push"`
 		UseCache   bool `mapstructure:"use_cache"`
 		Method     string
 		Context    string
@@ -502,7 +500,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig, appConf.Build.ForceBuild)
+		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig)
 	}
 
 	if err != nil {
@@ -551,14 +549,14 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		err = updateAgent.Build(buildConfig, appConf.Build.ForceBuild)
+		err = updateAgent.Build(buildConfig)
 
 		if err != nil {
 			return nil, err
 		}
 
 		if !appConf.Build.UseCache {
-			err = updateAgent.Push(appConf.Build.ForcePush)
+			err = updateAgent.Push()
 
 			if err != nil {
 				return nil, err

@@ -324,6 +324,7 @@ export const AddCustomBuildpackForm: React.FC<{
       name: buildpackUrl,
       config: null,
     };
+    setBuildpackUrl("");
     onAdd(buildpack);
   };
 

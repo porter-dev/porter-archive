@@ -497,8 +497,9 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-		UseNewConfig: true,
-		NewConfig:    valuesObj,
+		UseNewConfig:    true,
+		NewConfig:       valuesObj,
+		IncludeBuildEnv: true,
 	})
 
 	if err != nil {
@@ -638,7 +639,9 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	env, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{UseNewConfig: false})
+	env, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
+		UseNewConfig: false,
+	})
 
 	if err == nil && len(env) > 0 {
 		valuesObj = templaterUtils.CoalesceValues(valuesObj, map[string]interface{}{

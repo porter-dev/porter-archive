@@ -17,6 +17,7 @@ import styled, { keyframes } from "styled-components";
 import yaml from "js-yaml";
 import DynamicLink from "components/DynamicLink";
 import { AxiosError } from "axios";
+import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
 
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
@@ -458,6 +459,13 @@ const BuildpackConfigSection: React.FC<{
     }));
   }, [stacks]);
 
+  const handleAddCustomBuildpack = (buildpack: Buildpack) => {
+    setSelectedBuildpacks((selectedBuildpacks) => [
+      ...selectedBuildpacks,
+      buildpack,
+    ]);
+  };
+
   const handleSelectBuilder = (builderName: string) => {
     const builder = builders.find(
       (b) => b.name.toLowerCase() === builderName.toLowerCase()
@@ -596,6 +604,8 @@ const BuildpackConfigSection: React.FC<{
             {renderBuildpacksList(availableBuildpacks, "add")}
           </>
         )}
+
+        <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
       </>
     </BuildpackConfigurationContainer>
   );

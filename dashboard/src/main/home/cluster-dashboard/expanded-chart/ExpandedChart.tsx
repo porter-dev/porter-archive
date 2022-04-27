@@ -877,6 +877,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     }}
                     renderTabContents={renderTabContents}
                     isReadOnly={
+                      isPreview ||
                       imageIsPlaceholder ||
                       !isAuthorized("application", "", ["get", "update"])
                     }

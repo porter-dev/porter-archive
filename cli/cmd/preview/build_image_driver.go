@@ -27,6 +27,7 @@ type BuildDriverConfig struct {
 		Builder      string
 		Buildpacks   []string
 		Image        string
+		Env          map[string]string
 	}
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -229,13 +230,14 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	if err != nil {
 		return nil, err
 	}
+
 	_, mergedValues, err := createAgent.GetMergedValues(d.config.Values)
 
 	if err != nil {
 		return nil, err
 	}
 
-	env, err := deploy.GetRuntimeEnvForRelease(
+	env, err := deploy.GetEnvForRelease(
 		client,
 		mergedValues,
 		d.target.Project,
@@ -244,17 +246,29 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	)
 
 	if err != nil {
-		env = map[string]string{}
+		env = make(map[string]string)
 	}
 
-	buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
+	envConfig, err := deploy.GetNestedMap(mergedValues, "container", "env")
 
 	if err == nil {
-		for key, val := range buildEnv {
-			if valStr, ok := val.(string); ok {
-				env[key] = valStr
+		_, exists := envConfig["build"]
+
+		if exists {
+			buildEnv, err := deploy.GetNestedMap(mergedValues, "container", "env", "build")
+
+			if err == nil {
+				for key, val := range buildEnv {
+					if valStr, ok := val.(string); ok {
+						env[key] = valStr
+					}
+				}
 			}
 		}
+	}
+
+	for k, v := range d.config.Build.Env {
+		env[k] = v
 	}
 
 	buildAgent := &deploy.BuildAgent{

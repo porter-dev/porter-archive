@@ -307,7 +307,7 @@ export const BuildpackSelection: React.FC<{
   );
 };
 
-const AddCustomBuildpackForm: React.FC<{
+export const AddCustomBuildpackForm: React.FC<{
   onAdd: (buildpack: Buildpack) => void;
 }> = ({ onAdd }) => {
   const [buildpackUrl, setBuildpackUrl] = useState("");

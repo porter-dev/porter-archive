@@ -501,9 +501,8 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 	}
 
 	buildEnv, err := updateAgent.GetBuildEnv(&deploy.GetBuildEnvOpts{
-		UseNewConfig:    true,
-		NewConfig:       valuesObj,
-		IncludeBuildEnv: true,
+		UseNewConfig: true,
+		NewConfig:    valuesObj,
 	})
 
 	if err != nil {
@@ -650,13 +649,14 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			updateAgent.Opts.ProjectID,
 			updateAgent.Opts.ClusterID,
 			updateAgent.Opts.Namespace,
+			false,
 		)
 
 		if err != nil {
 			return err
 		}
 
-		for k, _ := range updateAgent.Opts.AdditionalEnv {
+		for k := range updateAgent.Opts.AdditionalEnv {
 			if _, ok := syncedEnv[k]; ok {
 				return fmt.Errorf("environment variable %s already exists as part of a synced environment group", k)
 			}
@@ -668,6 +668,7 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			updateAgent.Opts.ProjectID,
 			updateAgent.Opts.ClusterID,
 			updateAgent.Opts.Namespace,
+			false,
 		)
 
 		if err != nil {

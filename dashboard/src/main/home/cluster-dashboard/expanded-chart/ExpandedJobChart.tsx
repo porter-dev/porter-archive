@@ -151,6 +151,17 @@ export const ExpandedJobChartFC: React.FC<{
       timeStyle: "long",
     });
 
+    let runDescription = "";
+
+    try {
+      runDescription = `Runs ${CronPrettifier.toString(
+        chart?.config?.schedule.value
+      ).toLowerCase()} UTC`;
+    } catch (error) {
+      runDescription =
+        "An unexpected error happened while trying to parse the cron expression.";
+    }
+
     if (currentTab === "jobs") {
       return (
         <TabWrapper>
@@ -185,11 +196,7 @@ export const ExpandedJobChartFC: React.FC<{
           {chart?.config?.schedule?.enabled ? (
             <RunsDescription>
               <i className="material-icons">access_time</i>
-              Runs{" "}
-              {CronPrettifier.toString(
-                chart?.config?.schedule.value
-              ).toLowerCase()}{" "}
-              UTC
+              {runDescription}
               <Dot
                 style={{
                   color: "#ffffff88",

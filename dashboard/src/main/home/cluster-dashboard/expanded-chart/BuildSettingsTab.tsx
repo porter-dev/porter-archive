@@ -4,7 +4,7 @@ import KeyValueArray from "components/form-components/KeyValueArray";
 import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
-import _, { unionBy } from "lodash";
+import _, { differenceBy, unionBy } from "lodash";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -349,6 +349,23 @@ const BuildpackConfigSection: React.FC<{
     []
   );
 
+  const populateBuildpacks = (
+    userBuildpacks: string[],
+    detectedBuildpacks: Buildpack[]
+  ) => {
+    const customBuildpackFactory = (name: string): Buildpack => ({
+      name: name,
+      buildpack: name,
+      config: null,
+    });
+
+    return userBuildpacks.map(
+      (ub) =>
+        detectedBuildpacks.find((db) => db.buildpack === ub) ||
+        customBuildpackFactory(ub)
+    );
+  };
+
   useEffect(() => {
     const currentBuildConfig = currentChart?.build_config;
 
@@ -378,38 +395,19 @@ const BuildpackConfigSection: React.FC<{
           builder.builders.find((stack) => stack === currentBuildConfig.builder)
         );
 
-        const availableBuildpacks = defaultBuilder.others?.filter(
-          (buildpack) => {
-            if (!currentBuildConfig.buildpacks.includes(buildpack.buildpack)) {
-              return true;
-            }
-            return false;
-          }
+        const fullDetectedBuildpacks = [
+          ...defaultBuilder.detected,
+          ...defaultBuilder.others,
+        ];
+
+        const userSelectedBuildpacks = populateBuildpacks(
+          currentBuildConfig.buildpacks,
+          fullDetectedBuildpacks
         );
 
-        const userAddedBuildpacks = defaultBuilder.others?.filter(
-          (buildpack) => {
-            if (currentBuildConfig.buildpacks.includes(buildpack.buildpack)) {
-              return true;
-            }
-            return false;
-          }
-        );
-
-        const customBuildpacks: any = currentBuildConfig.buildpacks
-          .filter(
-            (buildpack) =>
-              URLRegex.test(buildpack) &&
-              !buildpack.includes("gcr.io/paketo-buildpacks")
-          )
-          .map((b) => ({ buildpack: b, name: b }));
-
-        console.log(customBuildpacks);
-        console.log(userAddedBuildpacks);
-
-        const detectedBuildpacks = unionBy(
-          [...userAddedBuildpacks, ...customBuildpacks],
-          defaultBuilder.detected,
+        const availableBuildpacks = differenceBy(
+          fullDetectedBuildpacks,
+          userSelectedBuildpacks,
           "buildpack"
         );
 
@@ -422,10 +420,10 @@ const BuildpackConfigSection: React.FC<{
 
         setStacks(defaultBuilder.builders);
         setSelectedStack(defaultStack);
-        if (!Array.isArray(detectedBuildpacks)) {
+        if (!Array.isArray(userSelectedBuildpacks)) {
           setSelectedBuildpacks([]);
         } else {
-          setSelectedBuildpacks(detectedBuildpacks);
+          setSelectedBuildpacks(userSelectedBuildpacks);
         }
         if (!Array.isArray(availableBuildpacks)) {
           setAvailableBuildpacks([]);

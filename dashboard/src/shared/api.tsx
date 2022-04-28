@@ -2,7 +2,7 @@ import { PullRequest } from "main/home/cluster-dashboard/preview-environments/ty
 import { release } from "process";
 import { baseApi } from "./baseApi";
 
-import { FullActionConfigType, StorageType } from "./types";
+import { BuildConfig, FullActionConfigType, StorageType } from "./types";
 
 /**
  * Generic api call format
@@ -367,21 +367,15 @@ const deletePRDeployment = baseApi<
   {
     cluster_id: number;
     project_id: number;
-    environment_id: number;
-    repo_owner: string;
-    repo_name: string;
-    pr_number: number;
+    deployment_id: number;
   }
 >("DELETE", (pathParams) => {
   const {
     cluster_id,
     project_id,
-    environment_id,
-    repo_owner,
-    repo_name,
-    pr_number,
+    deployment_id,
   } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${environment_id}/${repo_owner}/${repo_name}/${pr_number}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
 const getNotificationConfig = baseApi<
@@ -1699,6 +1693,20 @@ const upgradePorterAgent = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/agent/upgrade`
 );
 
+const updateBuildConfig = baseApi<
+  BuildConfig,
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
+);
+
 const reRunGHWorkflow = baseApi<
   {},
   {
@@ -1707,12 +1715,37 @@ const reRunGHWorkflow = baseApi<
     git_installation_id: number;
     owner: string;
     name: string;
-    filename: string;
+    branch?: string;
+    filename?: string;
+    release_name?: string;
   }
 >(
   "POST",
-  ({ project_id, git_installation_id, owner, name, cluster_id, filename }) =>
-    `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?filename=${filename}`
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    release_name,
+    branch,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (branch) {
+      queryParams.set("branch", branch);
+    }
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?${queryParams.toString()}`;
+  }
 );
 
 const triggerPreviewEnvWorkflow = baseApi<
@@ -1885,6 +1918,7 @@ export default {
   getIncidentLogsByLogId,
   upgradePorterAgent,
   deletePRDeployment,
+  updateBuildConfig,
   reRunGHWorkflow,
   triggerPreviewEnvWorkflow,
 };

@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/utils"
+	templaterUtils "github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
 )
@@ -315,6 +316,10 @@ func init() {
 		"set this to force push an image (images tagged with \"latest\" have this set by default)",
 	)
 
+	updateCmd.PersistentFlags().MarkDeprecated("force-build", "--force-build is now deprecated")
+
+	updateCmd.PersistentFlags().MarkDeprecated("force-push", "--force-push is now deprecated")
+
 	updateCmd.AddCommand(updateGetEnvCmd)
 
 	updateGetEnvCmd.PersistentFlags().StringVar(
@@ -530,7 +535,7 @@ func updateBuildWithAgent(updateAgent *deploy.DeployAgent) error {
 		return err
 	}
 
-	if err := updateAgent.Build(nil, forceBuild); err != nil {
+	if err := updateAgent.Build(nil); err != nil {
 		if stream {
 			updateAgent.StreamEvent(types.SubEvent{
 				EventID: "build",
@@ -576,7 +581,7 @@ func updatePushWithAgent(updateAgent *deploy.DeployAgent) error {
 		})
 	}
 
-	if err := updateAgent.Push(forcePush); err != nil {
+	if err := updateAgent.Push(); err != nil {
 		if stream {
 			updateAgent.StreamEvent(types.SubEvent{
 				EventID: "push",
@@ -635,6 +640,53 @@ func updateUpgradeWithAgent(updateAgent *deploy.DeployAgent) error {
 			})
 		}
 		return err
+	}
+
+	if len(updateAgent.Opts.AdditionalEnv) > 0 {
+		syncedEnv, err := deploy.GetSyncedEnv(
+			updateAgent.Client,
+			updateAgent.Release.Config,
+			updateAgent.Opts.ProjectID,
+			updateAgent.Opts.ClusterID,
+			updateAgent.Opts.Namespace,
+			false,
+		)
+
+		if err != nil {
+			return err
+		}
+
+		for k := range updateAgent.Opts.AdditionalEnv {
+			if _, ok := syncedEnv[k]; ok {
+				return fmt.Errorf("environment variable %s already exists as part of a synced environment group", k)
+			}
+		}
+
+		normalEnv, err := deploy.GetNormalEnv(
+			updateAgent.Client,
+			updateAgent.Release.Config,
+			updateAgent.Opts.ProjectID,
+			updateAgent.Opts.ClusterID,
+			updateAgent.Opts.Namespace,
+			false,
+		)
+
+		if err != nil {
+			return err
+		}
+
+		// add the additional environment variables to container.env.normal
+		for k, v := range updateAgent.Opts.AdditionalEnv {
+			normalEnv[k] = v
+		}
+
+		valuesObj = templaterUtils.CoalesceValues(valuesObj, map[string]interface{}{
+			"container": map[string]interface{}{
+				"env": map[string]interface{}{
+					"normal": normalEnv,
+				},
+			},
+		})
 	}
 
 	err = updateAgent.UpdateImageAndValues(valuesObj)

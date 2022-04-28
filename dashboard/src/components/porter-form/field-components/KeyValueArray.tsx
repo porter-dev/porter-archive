@@ -31,7 +31,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
       initState: () => {
         let values = props.value[0];
         const normalValues = Object.entries(values?.normal || {});
-        values = omit(values, ["normal", "synced"]);
+        values = omit(values, ["normal", "synced", "build"]);
         return {
           values: hasSetValue(props)
             ? ([...Object.entries(values), ...normalValues]?.map(([k, v]) => {
@@ -510,6 +510,10 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
         obj.normal[entry.key] = fixNewlines(entry.value);
       }
     });
+
+    if (Array.isArray(props.value) && props.value[0]?.build) {
+      obj.build = props.value[0].build;
+    }
 
     if (state.synced_env_groups?.length) {
       obj.synced = state.synced_env_groups.map((envGroup) => ({

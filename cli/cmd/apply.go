@@ -175,8 +175,6 @@ type ApplicationConfig struct {
 	OnlyCreate bool
 
 	Build struct {
-		ForceBuild bool `mapstructure:"force_build"`
-		ForcePush  bool `mapstructure:"force_push"`
 		UseCache   bool `mapstructure:"use_cache"`
 		Method     string
 		Context    string
@@ -184,6 +182,7 @@ type ApplicationConfig struct {
 		Image      string
 		Builder    string
 		Buildpacks []string
+		Env        map[string]string
 	}
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -398,26 +397,31 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
 		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
 
-		prevProject := cliConf.Project
-		prevCluster := cliConf.Cluster
-		name = resource.Name
-		namespace = d.target.Namespace
-		cliConf.Project = d.target.Project
-		cliConf.Cluster = d.target.Cluster
-
 		err = wait.WaitForJob(client, &wait.WaitOpts{
-			ProjectID: cliConf.Project,
-			ClusterID: cliConf.Cluster,
-			Namespace: namespace,
-			Name:      name,
+			ProjectID: d.target.Project,
+			ClusterID: d.target.Cluster,
+			Namespace: d.target.Namespace,
+			Name:      resource.Name,
 		})
 
 		if err != nil {
-			return nil, err
-		}
+			if appConfig.OnlyCreate {
+				err = client.DeleteRelease(
+					context.Background(),
+					d.target.Project,
+					d.target.Cluster,
+					d.target.Namespace,
+					resource.Name,
+				)
 
-		cliConf.Project = prevProject
-		cliConf.Cluster = prevCluster
+				if err != nil {
+					return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+						resource.Name, err)
+				}
+			}
+
+			return nil, fmt.Errorf("error waiting for job %s: %w", resource.Name, err)
+		}
 	}
 
 	return resource, err
@@ -497,7 +501,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig, appConf.Build.ForceBuild)
+		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig)
 	}
 
 	if err != nil {
@@ -509,6 +513,10 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 
 func (d *Driver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
+
+	if len(appConf.Build.Env) > 0 {
+		sharedOpts.AdditionalEnv = appConf.Build.Env
+	}
 
 	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
 		SharedOpts: sharedOpts,
@@ -545,14 +553,14 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		err = updateAgent.Build(buildConfig, appConf.Build.ForceBuild)
+		err = updateAgent.Build(buildConfig)
 
 		if err != nil {
 			return nil, err
 		}
 
 		if !appConf.Build.UseCache {
-			err = updateAgent.Push(appConf.Build.ForcePush)
+			err = updateAgent.Push()
 
 			if err != nil {
 				return nil, err

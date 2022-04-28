@@ -485,15 +485,17 @@ const BuildpackConfigSection: React.FC<{
       return buildpack.buildpack;
     });
 
+    onChange(buildConfig);
+  }, [selectedBuilder, selectedBuildpacks, selectedStack]);
+
+  useEffect(() => {
     populateState(
       selectedBuilder,
       selectedStack,
       availableBuildpacks,
       selectedBuildpacks
     );
-
-    onChange(buildConfig);
-  }, [selectedBuilder, selectedBuildpacks, selectedStack]);
+  }, [selectedBuilder, selectedBuildpacks, selectedStack, availableBuildpacks]);
 
   const builderOptions = useMemo(() => {
     if (!Array.isArray(builders)) {
@@ -547,7 +549,24 @@ const BuildpackConfigSection: React.FC<{
     buildpacks: Buildpack[],
     action: "remove" | "add"
   ) => {
-    return buildpacks?.map((buildpack) => {
+    if (!buildpacks.length && action === "remove") {
+      return (
+        <StyledCard>
+          Buildpacks are going to be automatically detected.
+        </StyledCard>
+      );
+    }
+
+    if (!buildpacks.length && action === "add") {
+      return (
+        <StyledCard>
+          There are no more buildpacks available, you can try adding a custom
+          one if you want.
+        </StyledCard>
+      );
+    }
+
+    return buildpacks?.map((buildpack, i) => {
       const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
 
       let disableIcon = false;
@@ -559,7 +578,7 @@ const BuildpackConfigSection: React.FC<{
       }
 
       return (
-        <StyledCard>
+        <StyledCard key={i}>
           <ContentContainer>
             <Icon disableMarginRight={disableIcon} className={icon} />
             <EventInformation>
@@ -639,7 +658,6 @@ const BuildpackConfigSection: React.FC<{
           setActiveValue={(option) => handleSelectBuilder(option)}
           label="Select a builder"
         />
-
         <SelectRow
           value={selectedStack}
           width="100%"
@@ -651,20 +669,13 @@ const BuildpackConfigSection: React.FC<{
           The following buildpacks were automatically detected. You can also
           manually add/remove buildpacks.
         </Helper>
-
-        {!!selectedBuildpacks?.length &&
-          renderBuildpacksList(selectedBuildpacks, "remove")}
-
+        <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
         <Helper>Available buildpacks:</Helper>
-        {!!availableBuildpacks?.length && (
-          <>{renderBuildpacksList(availableBuildpacks, "add")}</>
-        )}
-
+        <>{renderBuildpacksList(availableBuildpacks, "add")}</>
         <Helper>
           You may also add buildpacks by directly providing their GitHub links
           or links to ZIP files that contain the buildpack source code.
         </Helper>
-
         <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
       </>
     </BuildpackConfigurationContainer>

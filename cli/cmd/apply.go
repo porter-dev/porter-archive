@@ -786,7 +786,7 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 			// determine if we should query for porter_hosts or just hosts
 			isCustomDomain := false
 
-			ingressMap, err := deploy.GetNestedMap(resource.Config, "ingress")
+			ingressMap, err := deploy.GetNestedMap(resource.Config, "values", "ingress")
 
 			if err == nil {
 				enabledVal, enabledExists := ingressMap["enabled"]

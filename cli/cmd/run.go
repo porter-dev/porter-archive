@@ -499,8 +499,15 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 		}
 
 		for _, cronJob := range cronJobs.Items {
-			if cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
+			if namespace.Name == "default" && cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
 				return nil
+			} else if cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
+				err = config.Clientset.BatchV1beta1().CronJobs(namespace.Name).Delete(
+					context.Background(), cronJob.Name, metav1.DeleteOptions{},
+				)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -551,7 +558,7 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 			},
 		},
 	}
-	_, err = config.Clientset.BatchV1beta1().CronJobs(namespace).Create(
+	_, err = config.Clientset.BatchV1beta1().CronJobs("default").Create(
 		context.Background(), cronJob, metav1.CreateOptions{},
 	)
 	if err != nil {

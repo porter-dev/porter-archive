@@ -1,20 +1,19 @@
 package preview
 
 import (
-	"math/rand"
-	"time"
+	"crypto/rand"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+const defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+const lowerCharset = "abcdefghijklmnopqrstuvwxyz"
 
 type RandomStringDriverConfig struct {
-	Length uint
+	Length int
+	Lower  bool
 }
 
 type RandomStringDriver struct {
@@ -49,7 +48,13 @@ func (d *RandomStringDriver) ShouldApply(resource *models.Resource) bool {
 }
 
 func (d *RandomStringDriver) Apply(resource *models.Resource) (*models.Resource, error) {
-	d.output["value"] = randomString(d.config.Length)
+	useCharset := defaultCharset
+
+	if d.config.Lower {
+		useCharset = lowerCharset
+	}
+
+	d.output["value"] = randomString(d.config.Length, useCharset)
 
 	return resource, nil
 }
@@ -58,10 +63,12 @@ func (d *RandomStringDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func randomString(length uint) string {
+func randomString(length int, charset string) string {
+	ll := len(charset)
 	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+	rand.Read(b) // generates len(b) random bytes
+	for i := 0; i < length; i++ {
+		b[i] = charset[int(b[i])%ll]
 	}
 	return string(b)
 }

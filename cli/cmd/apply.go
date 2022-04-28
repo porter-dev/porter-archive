@@ -803,11 +803,13 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 							hostsArr, hostsExists := ingressMap["hosts"]
 
 							if hostsExists {
-								hostsArrVal, hostsArrOk := hostsArr.([]string)
+								hostsArrVal, hostsArrOk := hostsArr.([]interface{})
 
 								if hostsArrOk && len(hostsArrVal) > 0 {
-									res[resource.Name] = fmt.Sprintf("{ .%s.ingress.hosts[0] }", resource.Name)
-									isCustomDomain = true
+									if _, ok := hostsArrVal[0].(string); ok {
+										res[resource.Name] = fmt.Sprintf("{ .%s.ingress.hosts[0] }", resource.Name)
+										isCustomDomain = true
+									}
 								}
 							}
 						}

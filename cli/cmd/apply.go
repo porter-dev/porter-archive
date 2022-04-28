@@ -783,7 +783,41 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 		}
 
 		if isWeb {
-			res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
+			// determine if we should query for porter_hosts or just hosts
+			isCustomDomain := false
+
+			ingressMap, err := deploy.GetNestedMap(resource.Config, "ingress")
+
+			if err == nil {
+				enabledVal, enabledExists := ingressMap["enabled"]
+
+				customDomVal, customDomExists := ingressMap["custom_domain"]
+
+				if enabledExists && customDomExists {
+					enabled, eOK := enabledVal.(bool)
+					customDomain, cOK := customDomVal.(bool)
+
+					if eOK && cOK && enabled {
+						if customDomain {
+							// return the first custom domain when one exists
+							hostsArr, hostsExists := ingressMap["hosts"]
+
+							if hostsExists {
+								hostsArrVal, hostsArrOk := hostsArr.([]string)
+
+								if hostsArrOk && len(hostsArrVal) > 0 {
+									res[resource.Name] = fmt.Sprintf("{ .%s.ingress.hosts[0] }", resource.Name)
+									isCustomDomain = true
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if !isCustomDomain {
+				res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
+			}
 		}
 	}
 

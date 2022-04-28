@@ -5,7 +5,7 @@ import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
 import _, { differenceBy, unionBy } from "lodash";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import {
@@ -79,10 +79,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   const saveBuildConfig = async (config: BuildConfig) => {
     if (config === null) {
       return;
-    }
-
-    if (!config.builder.length || !config.buildpacks.length) {
-      throw new Error("You have to select at least one buildpack");
     }
 
     try {
@@ -349,6 +345,30 @@ const BuildpackConfigSection: React.FC<{
     []
   );
 
+  const state = useRef<null | {
+    [builder: string]: {
+      stack: string;
+      selectedBuildpacks: Buildpack[];
+      availableBuildpacks: Buildpack[];
+    };
+  }>(null);
+
+  const populateState = (
+    builder: string,
+    stack: string,
+    availableBuildpacks: Buildpack[] = [],
+    selectedBuildpacks: Buildpack[] = []
+  ) => {
+    state.current = {
+      ...state.current,
+      [builder]: {
+        stack: stack,
+        availableBuildpacks: availableBuildpacks,
+        selectedBuildpacks: selectedBuildpacks,
+      },
+    };
+  };
+
   const populateBuildpacks = (
     userBuildpacks: string[],
     detectedBuildpacks: Buildpack[]
@@ -395,6 +415,13 @@ const BuildpackConfigSection: React.FC<{
           builder.builders.find((stack) => stack === currentBuildConfig.builder)
         );
 
+        const nonSelectedBuilder = builders.find(
+          (builder) =>
+            !builder.builders.find(
+              (stack) => stack === currentBuildConfig.builder
+            )
+        );
+
         const fullDetectedBuildpacks = [
           ...defaultBuilder.detected,
           ...defaultBuilder.others,
@@ -403,7 +430,7 @@ const BuildpackConfigSection: React.FC<{
         const userSelectedBuildpacks = populateBuildpacks(
           currentBuildConfig.buildpacks,
           fullDetectedBuildpacks
-        );
+        ).filter((b) => b.buildpack);
 
         const availableBuildpacks = differenceBy(
           fullDetectedBuildpacks,
@@ -414,6 +441,20 @@ const BuildpackConfigSection: React.FC<{
         const defaultStack = defaultBuilder.builders.find((stack) => {
           return stack === currentBuildConfig.builder;
         });
+
+        populateState(
+          defaultBuilder.name.toLowerCase(),
+          defaultStack,
+          userSelectedBuildpacks,
+          availableBuildpacks
+        );
+
+        populateState(
+          nonSelectedBuilder.name.toLowerCase(),
+          nonSelectedBuilder.builders[0],
+          nonSelectedBuilder.others,
+          nonSelectedBuilder.detected
+        );
 
         setBuilders(builders);
         setSelectedBuilder(defaultBuilder.name.toLowerCase());
@@ -443,6 +484,13 @@ const BuildpackConfigSection: React.FC<{
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
     });
+
+    populateState(
+      selectedBuilder,
+      selectedStack,
+      availableBuildpacks,
+      selectedBuildpacks
+    );
 
     onChange(buildConfig);
   }, [selectedBuilder, selectedBuildpacks, selectedStack]);
@@ -480,27 +528,18 @@ const BuildpackConfigSection: React.FC<{
     const builder = builders.find(
       (b) => b.name.toLowerCase() === builderName.toLowerCase()
     );
-    const detectedBuildpacks = builder.detected;
-    const availableBuildpacks = builder.others;
-    const defaultStack = builder.builders.find((stack) => {
-      return stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK;
-    });
-    setSelectedBuilder(builderName);
+
     setBuilders(builders);
-    setSelectedBuilder(builderName.toLowerCase());
-
     setStacks(builder.builders);
-    setSelectedStack(defaultStack);
 
-    if (!Array.isArray(detectedBuildpacks)) {
-      setSelectedBuildpacks([]);
-    } else {
-      setSelectedBuildpacks(detectedBuildpacks);
-    }
-    if (!Array.isArray(availableBuildpacks)) {
-      setAvailableBuildpacks([]);
-    } else {
-      setAvailableBuildpacks(availableBuildpacks);
+    const currState = state.current;
+    if (currState[builderName]) {
+      const stateBuilder = currState[builderName];
+      setSelectedBuilder(builderName);
+      setSelectedStack(stateBuilder.stack);
+      setAvailableBuildpacks(stateBuilder.availableBuildpacks);
+      setSelectedBuildpacks(stateBuilder.selectedBuildpacks);
+      return;
     }
   };
 

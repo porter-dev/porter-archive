@@ -534,10 +534,14 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 						hostsArr, hostsExists := ingressMap["hosts"]
 
 						if hostsExists {
-							hostsArrVal, hostsArrOk := hostsArr.([]string)
+							hostsArrVal, hostsArrOk := hostsArr.([]interface{})
 
 							if hostsArrOk && len(hostsArrVal) > 0 {
-								subdomain = hostsArrVal[0]
+								subdomainStr, ok := hostsArrVal[0].(string)
+
+								if ok {
+									subdomain = subdomainStr
+								}
 							}
 						}
 					} else {

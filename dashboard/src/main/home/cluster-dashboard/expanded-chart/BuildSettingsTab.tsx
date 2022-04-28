@@ -551,17 +551,15 @@ const BuildpackConfigSection: React.FC<{
   ) => {
     if (!buildpacks.length && action === "remove") {
       return (
-        <StyledCard>
-          Buildpacks are going to be automatically detected.
-        </StyledCard>
+        <StyledCard>Buildpacks will be automatically detected.</StyledCard>
       );
     }
 
     if (!buildpacks.length && action === "add") {
       return (
         <StyledCard>
-          There are no more buildpacks available, you can try adding a custom
-          one if you want.
+          No additional buildpacks are available. You can add a custom buildpack
+          below.
         </StyledCard>
       );
     }

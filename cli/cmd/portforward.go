@@ -18,6 +18,8 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -163,6 +165,19 @@ func portForward(user *types.GetAuthenticatedUserResponse, client *api.Client, a
 		return err
 	}
 
+	restConf.GroupVersion = &schema.GroupVersion{
+		Group:   "api",
+		Version: "v1",
+	}
+
+	restConf.NegotiatedSerializer = runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{})
+
+	restClient, err := rest.RESTClientFor(restConf)
+
+	if err != nil {
+		return err
+	}
+
 	err = checkUDPPortInPod(args[1:], &pod)
 
 	if err != nil {
@@ -188,12 +203,6 @@ func portForward(user *types.GetAuthenticatedUserResponse, client *api.Client, a
 			close(stopChannel)
 		}
 	}()
-
-	restClient, err := rest.RESTClientFor(restConf)
-
-	if err != nil {
-		return err
-	}
 
 	req := restClient.Post().
 		Resource("pods").

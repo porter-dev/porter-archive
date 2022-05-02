@@ -10,8 +10,8 @@ import (
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/billing"
-	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository/test"
+	"github.com/porter-dev/porter/pkg/logger"
 )
 
 type TestConfigLoader struct {

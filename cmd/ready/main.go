@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
-	lr "github.com/porter-dev/porter/internal/logger"
+	lr "github.com/porter-dev/porter/pkg/logger"
 )
 
 func main() {

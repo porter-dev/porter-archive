@@ -22,7 +22,7 @@ func GetLatestWorkflowRun(client *github.Client, owner, repo, filename, branch s
 		},
 	)
 
-	if ghResponse.StatusCode == http.StatusNotFound {
+	if ghResponse != nil && ghResponse.StatusCode == http.StatusNotFound {
 		return nil, ErrWorkflowNotFound
 	}
 
@@ -30,7 +30,7 @@ func GetLatestWorkflowRun(client *github.Client, owner, repo, filename, branch s
 		return nil, err
 	}
 
-	if workflowRuns.GetTotalCount() == 0 {
+	if workflowRuns == nil || workflowRuns.GetTotalCount() == 0 {
 		return nil, ErrNoWorkflowRuns
 	}
 

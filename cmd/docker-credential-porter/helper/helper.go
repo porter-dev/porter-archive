@@ -2,7 +2,8 @@ package helper
 
 import (
 	"github.com/docker/docker-credential-helpers/credentials"
-	"github.com/porter-dev/porter/cli/cmd"
+	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/docker"
 )
 
@@ -18,16 +19,24 @@ type PorterHelper struct {
 
 func NewPorterHelper(debug bool) *PorterHelper {
 	// get the current project ID
-	config := cmd.InitAndLoadNewConfig()
+	cliConfig := config.InitAndLoadNewConfig()
 	cache := docker.NewFileCredentialsCache()
+
+	var client *api.Client
+
+	if token := cliConfig.Token; token != "" {
+		client = api.NewClientWithToken(cliConfig.Host+"/api", token)
+	} else {
+		client = api.NewClient(cliConfig.Host+"/api", "cookie.json")
+	}
 
 	return &PorterHelper{
 		Debug:     debug,
-		ProjectID: config.Project,
+		ProjectID: cliConfig.Project,
 		AuthGetter: &docker.AuthGetter{
-			Client:    cmd.GetAPIClient(config),
+			Client:    client,
 			Cache:     cache,
-			ProjectID: config.Project,
+			ProjectID: cliConfig.Project,
 		},
 		Cache: cache,
 	}

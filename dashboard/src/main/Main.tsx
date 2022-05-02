@@ -5,7 +5,9 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import Cohere from "cohere-js";
 
-Cohere.init(process.env.COHERE_API_KEY);
+if (window.location.href.includes("dashboard.getporter.dev")) {
+  Cohere.init(process.env.COHERE_API_KEY);
+}
 
 import ResetPasswordInit from "./auth/ResetPasswordInit";
 import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
@@ -45,10 +47,13 @@ export default class Main extends Component<PropsType, StateType> {
       .checkAuth("", {}, {})
       .then((res) => {
         if (res && res?.data) {
-          Cohere.identify(res?.data?.id, {
-            displayName: res?.data?.email,
-            email: res?.data?.email,
-          });
+          if (window.location.href.includes("dashboard.getporter.dev")) {
+            Cohere.identify(res?.data?.id, {
+              displayName: res?.data?.email,
+              email: res?.data?.email,
+            });
+          }
+
           setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,

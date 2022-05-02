@@ -1,7 +1,6 @@
-import React, { Component, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import loading from "assets/loading.gif";
-import MultiSelect from "./porter-form/field-components/MultiSelect";
 import Description from "./Description";
 
 type MultiSelectOption = {
@@ -27,12 +26,11 @@ type Props = {
   // Provide the classname to modify styles from other components
   className?: string;
   successText?: string;
+  expandTo?: OptionsWrapperProps["expandTo"];
 };
 
 const MultiSaveButton: React.FC<Props> = (props) => {
-  const [currOption, setCurrOption] = useState<MultiSelectOption>(
-    props.options[0]
-  );
+  const [currOptionIndex, setCurrOptionIndex] = useState<number>(0);
 
   const [isDropdownExpanded, setIsDropdownExpanded] = useState(false);
 
@@ -86,6 +84,7 @@ const MultiSaveButton: React.FC<Props> = (props) => {
         <>
           <DropdownOverlay onClick={() => setIsDropdownExpanded(false)} />
           <OptionWrapper
+            expandTo={props.expandTo || "right"}
             dropdownWidth="400px"
             dropdownMaxHeight="300px"
             onClick={() => setIsDropdownExpanded(false)}
@@ -102,8 +101,8 @@ const MultiSaveButton: React.FC<Props> = (props) => {
       return (
         <Option
           key={i}
-          selected={option.text === currOption.text}
-          onClick={() => setCurrOption(option)}
+          selected={option.text === originalArray[currOptionIndex]?.text}
+          onClick={() => setCurrOptionIndex(i)}
           lastItem={i === originalArray.length - 1}
         >
           {option.text}
@@ -126,10 +125,10 @@ const MultiSaveButton: React.FC<Props> = (props) => {
         <Button
           rounded={props.rounded}
           disabled={props.disabled}
-          onClick={currOption.onClick}
+          onClick={props.options[currOptionIndex]?.onClick}
           color={props.color || "#5561C0"}
         >
-          {currOption.text}
+          {props.options[currOptionIndex]?.text}
         </Button>
         <DropdownButton
           disabled={props.disabled}
@@ -165,12 +164,13 @@ const StatusTextWrapper = styled.p`
   margin: 0;
 `;
 
-// TODO: prevent status re-render on form refresh to allow animation
-// animation: statusFloatIn 0.5s;
-const StatusWrapper = styled.div<{
+type StatusWrapperProps = {
   successful: boolean;
   position: "right" | "left";
-}>`
+};
+// TODO: prevent status re-render on form refresh to allow animation
+// animation: statusFloatIn 0.5s;
+const StatusWrapper = styled.div<StatusWrapperProps>`
   display: flex;
   align-items: center;
   font-family: "Work Sans", sans-serif;
@@ -239,11 +239,13 @@ const ButtonWrapper = styled.div`
   }}
 `;
 
-const Button = styled.button<{
+type ButtonProps = {
   disabled: boolean;
   color: string;
   rounded: boolean;
-}>`
+};
+
+const Button = styled.button<ButtonProps>`
   height: 35px;
   font-size: 13px;
   font-weight: 500;
@@ -321,15 +323,19 @@ const DropdownOverlay = styled.div`
   cursor: default;
 `;
 
-const OptionWrapper = styled.div`
+type OptionsWrapperProps = {
+  expandTo: "left" | "right";
+  dropdownWidth: string;
+  dropdownMaxHeight: string;
+};
+
+const OptionWrapper = styled.div<OptionsWrapperProps>`
   position: absolute;
-  left: 0;
+  ${(props) => (props.expandTo === "right" ? "left: 0" : "right: 0")};
   top: calc(100% + 10px);
   background: #26282f;
-  width: ${(props: { dropdownWidth: string; dropdownMaxHeight: string }) =>
-    props.dropdownWidth};
-  max-height: ${(props: { dropdownWidth: string; dropdownMaxHeight: string }) =>
-    props.dropdownMaxHeight || "300px"};
+  width: ${(props) => props.dropdownWidth};
+  max-height: ${(props) => props.dropdownMaxHeight || "300px"};
   border-radius: 3px;
   z-index: 999;
   overflow-y: auto;

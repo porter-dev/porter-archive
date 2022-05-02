@@ -69,8 +69,7 @@ const ButtonEnablePREnvironments = () => {
       };
     }
     return {
-      to:
-        "/cluster-dashboard?selected_tab=preview_environments&action=connect-repo",
+      to: "/preview-environments/connect-repo",
     };
   };
 
@@ -81,6 +80,20 @@ const ButtonEnablePREnvironments = () => {
       </Container>
     );
   }
+
+  if (!hasGHAccountConnected) {
+    return (
+      <>
+        <Container>
+          <Button {...getButtonProps()}>
+            <img src={pr_icon} alt="Pull request icon" />
+            Connect repositories
+          </Button>
+        </Container>
+      </>
+    );
+  }
+
   return (
     <>
       <Container>

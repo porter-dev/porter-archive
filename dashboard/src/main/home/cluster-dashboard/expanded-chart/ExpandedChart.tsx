@@ -30,6 +30,7 @@ import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
 import { onlyInLeft } from "shared/array_utils";
 import IncidentsTab from "./incidents/IncidentsTab";
+import BuildSettingsTab from "./BuildSettingsTab";
 
 type Props = {
   namespace: string;
@@ -221,7 +222,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const onSubmit = async (rawValues: any) => {
-    console.log("raw", rawValues);
+    // console.log("raw", rawValues);
     // Convert dotted keys to nested objects
     let values: any = {};
 
@@ -318,7 +319,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
 
-    console.log("valuesYaml", valuesYaml);
+    // console.log("valuesYaml", valuesYaml);
     try {
       await api.upgradeChartValues(
         "<token>",
@@ -338,7 +339,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       setSaveValueStatus("successful");
       setForceRefreshRevisions(true);
 
-      window.analytics.track("Chart Upgraded", {
+      window.analytics?.track("Chart Upgraded", {
         chart: currentChart.name,
         values: valuesYaml,
       });
@@ -353,7 +354,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
       setCurrentError(parsedErr);
 
-      window.analytics.track("Failed to Upgrade Chart", {
+      window.analytics?.track("Failed to Upgrade Chart", {
         chart: currentChart.name,
         values: valuesYaml,
         error: err,
@@ -392,7 +393,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setSaveValueStatus("successful");
         setForceRefreshRevisions(true);
 
-        window.analytics.track("Chart Upgraded", {
+        window.analytics?.track("Chart Upgraded", {
           chart: currentChart.name,
           values: valuesYaml,
         });
@@ -408,7 +409,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         setSaveValueStatus(err);
         setCurrentError(parsedErr);
 
-        window.analytics.track("Failed to Upgrade Chart", {
+        window.analytics?.track("Failed to Upgrade Chart", {
           chart: currentChart.name,
           values: valuesYaml,
           error: err,
@@ -421,7 +422,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderTabContents = (currentTab: string) => {
     let { setSidebar } = props;
     let chart = currentChart;
-    console.log("CONTROLLERS", controllers);
+    // console.log("CONTROLLERS", controllers);
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
@@ -515,6 +516,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
+      case "build-settings":
+        return <BuildSettingsTab chart={chart} isPreviousVersion={isPreview} />;
       default:
     }
   };
@@ -537,6 +540,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
         { label: "Manifests", value: "list" },
         { label: "Helm Values", value: "values" }
       );
+    }
+
+    if (currentChart?.git_action_config?.git_repo) {
+      rightTabOptions.push({
+        label: "Build Settings",
+        value: "build-settings",
+      });
     }
 
     // Settings tab is always last
@@ -580,47 +590,47 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
   };
 
-  const chartStatus = useMemo(() => {
-    const getAvailability = (kind: string, c: any) => {
-      switch (kind?.toLowerCase()) {
-        case "deployment":
-        case "replicaset":
-          return c.status.availableReplicas == c.status.replicas;
-        case "statefulset":
-          return c.status.readyReplicas == c.status.replicas;
-        case "daemonset":
-          return c.status.numberAvailable == c.status.desiredNumberScheduled;
-      }
-    };
+  // const chartStatus = useMemo(() => {
+  //   const getAvailability = (kind: string, c: any) => {
+  //     switch (kind?.toLowerCase()) {
+  //       case "deployment":
+  //       case "replicaset":
+  //         return c.status.availableReplicas == c.status.replicas;
+  //       case "statefulset":
+  //         return c.status.readyReplicas == c.status.replicas;
+  //       case "daemonset":
+  //         return c.status.numberAvailable == c.status.desiredNumberScheduled;
+  //     }
+  //   };
 
-    const chartStatus = currentChart.info.status;
+  //   const chartStatus = currentChart.info.status;
 
-    if (chartStatus === "deployed") {
-      for (var uid in controllers) {
-        let value = controllers[uid];
-        let available = getAvailability(value.metadata.kind, value);
-        let progressing = true;
+  //   if (chartStatus === "deployed") {
+  //     for (var uid in controllers) {
+  //       let value = controllers[uid];
+  //       let available = getAvailability(value.metadata.kind, value);
+  //       let progressing = true;
 
-        controllers[uid]?.status?.conditions?.forEach((condition: any) => {
-          if (
-            condition.type == "Progressing" &&
-            condition.status == "False" &&
-            condition.reason == "ProgressDeadlineExceeded"
-          ) {
-            progressing = false;
-          }
-        });
+  //       controllers[uid]?.status?.conditions?.forEach((condition: any) => {
+  //         if (
+  //           condition.type == "Progressing" &&
+  //           condition.status == "False" &&
+  //           condition.reason == "ProgressDeadlineExceeded"
+  //         ) {
+  //           progressing = false;
+  //         }
+  //       });
 
-        if (!available && progressing) {
-          return "loading";
-        } else if (!available && !progressing) {
-          return "failed";
-        }
-      }
-      return "deployed";
-    }
-    return chartStatus;
-  }, [currentChart, controllers]);
+  //       if (!available && progressing) {
+  //         return "loading";
+  //       } else if (!available && !progressing) {
+  //         return "failed";
+  //       }
+  //     }
+  //     return "deployed";
+  //   }
+  //   return chartStatus;
+  // }, [currentChart, controllers]);
 
   const renderUrl = () => {
     if (url) {
@@ -704,7 +714,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   useEffect(() => {
-    window.analytics.track("Opened Chart", {
+    window.analytics?.track("Opened Chart", {
       chart: currentChart.name,
     });
 
@@ -836,7 +846,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
                 setRevision={setRevision}
                 forceRefreshRevisions={forceRefreshRevisions}
                 refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                status={chartStatus}
                 shouldUpdate={
                   currentChart.latest_version &&
                   currentChart.latest_version !==
@@ -855,6 +864,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     }}
                     renderTabContents={renderTabContents}
                     isReadOnly={
+                      isPreview ||
                       imageIsPlaceholder ||
                       !isAuthorized("application", "", ["get", "update"])
                     }
@@ -939,7 +949,6 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
-  overflow: hidden;
   margin-bottom: 120px;
 `;
 

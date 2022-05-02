@@ -72,7 +72,7 @@ jobs:
           NODE_ENV: production
       - name: Build Linux binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./docker-credential-porter ./cmd/docker-credential-porter/ &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./portersvr ./cmd/app/ &
           wait
@@ -129,7 +129,7 @@ jobs:
           EOL
       - name: Build and Zip MacOS amd64 binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./amd64/porter ./cli &
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=${{steps.tag_name.outputs.tag}}'" -a -tags cli -o ./amd64/porter ./cli &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -o ./amd64/docker-credential-porter ./cmd/docker-credential-porter/ &
           go build -ldflags="-w -s -X 'main.Version=${{steps.tag_name.outputs.tag}}'" -a -tags ee -o ./amd64/portersvr ./cmd/app/ &
           wait

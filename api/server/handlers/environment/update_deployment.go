@@ -71,7 +71,7 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ghDeployment, err := createDeployment(client, env, request.CreateGHDeploymentRequest)
+	ghDeployment, err := createDeployment(client, env, request.PRBranchFrom, request.ActionID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -86,7 +86,7 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// create the deployment
+	// update the deployment
 	depl, err = c.Repo().Environment().UpdateDeployment(depl)
 
 	if err != nil {

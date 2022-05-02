@@ -92,7 +92,7 @@ func (c *CreateAgent) CreateFromGithub(
 		return "", fmt.Errorf("could not find a linked github repo for %s. Make sure you have linked your Github account on the Porter dashboard.", ghOpts.Repo)
 	}
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -173,7 +173,7 @@ func (c *CreateAgent) CreateFromRegistry(
 
 	opts := c.CreateOpts
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -219,7 +219,6 @@ func (c *CreateAgent) CreateFromDocker(
 	overrideValues map[string]interface{},
 	imageTag string,
 	extraBuildConfig *types.BuildConfig,
-	forceBuild bool,
 ) (string, error) {
 	opts := c.CreateOpts
 
@@ -255,7 +254,7 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	latestVersion, mergedValues, err := c.getMergedValues(overrideValues)
+	latestVersion, mergedValues, err := c.GetMergedValues(overrideValues)
 
 	if err != nil {
 		return "", err
@@ -273,66 +272,78 @@ func (c *CreateAgent) CreateFromDocker(
 		return "", err
 	}
 
-	imageExists := agent.CheckIfImageExists(imageURL, imageTag)
+	env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
 
-	if imageExists && imageTag != "latest" && !forceBuild {
-		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", imageURL, imageTag)
-	} else { // image does not exist or has tag "latest" so we (re)build one
-		env, err := GetEnvForRelease(c.Client, mergedValues, opts.ProjectID, opts.ClusterID, opts.Namespace)
+	if err != nil {
+		env = make(map[string]string)
+	}
 
-		if err != nil {
-			env = map[string]string{}
-		}
+	envConfig, err := GetNestedMap(mergedValues, "container", "env")
 
-		// add additional env based on options
-		for key, val := range opts.SharedOpts.AdditionalEnv {
-			env[key] = val
-		}
+	if err == nil {
+		_, exists := envConfig["build"]
 
-		buildAgent := &BuildAgent{
-			SharedOpts:  opts.SharedOpts,
-			client:      c.Client,
-			imageRepo:   imageURL,
-			env:         env,
-			imageExists: false,
-		}
+		if exists {
+			buildEnv, err := GetNestedMap(mergedValues, "container", "env", "build")
 
-		if opts.Method == DeployBuildTypeDocker {
-			basePath, err := filepath.Abs(".")
-
-			if err != nil {
-				return "", err
+			if err == nil {
+				for key, val := range buildEnv {
+					if valStr, ok := val.(string); ok {
+						env[key] = valStr
+					}
+				}
 			}
-
-			err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
-		} else {
-			err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
 		}
+	}
+
+	// add additional env based on options
+	for key, val := range opts.SharedOpts.AdditionalEnv {
+		env[key] = val
+	}
+
+	buildAgent := &BuildAgent{
+		SharedOpts:  opts.SharedOpts,
+		APIClient:   c.Client,
+		ImageRepo:   imageURL,
+		Env:         env,
+		ImageExists: false,
+	}
+
+	if opts.Method == DeployBuildTypeDocker {
+		basePath, err := filepath.Abs(".")
 
 		if err != nil {
 			return "", err
 		}
 
-		if !opts.SharedOpts.UseCache {
-			// create repository
-			err = c.Client.CreateRepository(
-				context.Background(),
-				opts.ProjectID,
-				regID,
-				&types.CreateRegistryRepositoryRequest{
-					ImageRepoURI: imageURL,
-				},
-			)
+		err = buildAgent.BuildDocker(agent, basePath, opts.LocalPath, opts.LocalDockerfile, imageTag, "")
+	} else {
+		err = buildAgent.BuildPack(agent, opts.LocalPath, imageTag, "", extraBuildConfig)
+	}
 
-			if err != nil {
-				return "", err
-			}
+	if err != nil {
+		return "", err
+	}
 
-			err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
+	if !opts.SharedOpts.UseCache {
+		// create repository
+		err = c.Client.CreateRepository(
+			context.Background(),
+			opts.ProjectID,
+			regID,
+			&types.CreateRegistryRepositoryRequest{
+				ImageRepoURI: imageURL,
+			},
+		)
 
-			if err != nil {
-				return "", err
-			}
+		if err != nil {
+			return "", err
+		}
+
+		err = agent.PushImage(fmt.Sprintf("%s:%s", imageURL, imageTag))
+
+		if err != nil {
+			return "", err
 		}
 	}
 
@@ -472,7 +483,7 @@ func (c *CreateAgent) GetLatestTemplateDefaultValues(templateName, templateVersi
 	return chart.Values, nil
 }
 
-func (c *CreateAgent) getMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
+func (c *CreateAgent) GetMergedValues(overrideValues map[string]interface{}) (string, map[string]interface{}, error) {
 	// deploy the template
 	latestVersion, err := c.GetLatestTemplateVersion(c.CreateOpts.Kind)
 
@@ -506,7 +517,7 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 	// check for automatic subdomain creation if web kind
 	if c.CreateOpts.Kind == "web" {
 		// look for ingress.enabled and no custom domains set
-		ingressMap, err := getNestedMap(mergedValues, "ingress")
+		ingressMap, err := GetNestedMap(mergedValues, "ingress")
 
 		if err == nil {
 			enabledVal, enabledExists := ingressMap["enabled"]
@@ -517,33 +528,50 @@ func (c *CreateAgent) CreateSubdomainIfRequired(mergedValues map[string]interfac
 				enabled, eOK := enabledVal.(bool)
 				customDomain, cOK := customDomVal.(bool)
 
-				// in the case of ingress enabled but no custom domain, create subdomain
-				if eOK && cOK && enabled && !customDomain {
-					dnsRecord, err := c.Client.CreateDNSRecord(
-						context.Background(),
-						c.CreateOpts.ProjectID,
-						c.CreateOpts.ClusterID,
-						c.CreateOpts.Namespace,
-						c.CreateOpts.ReleaseName,
-					)
+				if eOK && cOK && enabled {
+					if customDomain {
+						// return the first custom domain when one exists
+						hostsArr, hostsExists := ingressMap["hosts"]
 
-					if err != nil {
-						return "", fmt.Errorf("Error creating subdomain: %s", err.Error())
-					}
+						if hostsExists {
+							hostsArrVal, hostsArrOk := hostsArr.([]interface{})
 
-					subdomain = dnsRecord.ExternalURL
+							if hostsArrOk && len(hostsArrVal) > 0 {
+								subdomainStr, ok := hostsArrVal[0].(string)
 
-					if ingressVal, ok := mergedValues["ingress"]; !ok {
-						mergedValues["ingress"] = map[string]interface{}{
-							"porter_hosts": []string{
-								subdomain,
-							},
+								if ok {
+									subdomain = subdomainStr
+								}
+							}
 						}
 					} else {
-						ingressValMap := ingressVal.(map[string]interface{})
+						// in the case of ingress enabled but no custom domain, create subdomain
+						dnsRecord, err := c.Client.CreateDNSRecord(
+							context.Background(),
+							c.CreateOpts.ProjectID,
+							c.CreateOpts.ClusterID,
+							c.CreateOpts.Namespace,
+							c.CreateOpts.ReleaseName,
+						)
 
-						ingressValMap["porter_hosts"] = []string{
-							subdomain,
+						if err != nil {
+							return "", fmt.Errorf("Error creating subdomain: %s", err.Error())
+						}
+
+						subdomain = dnsRecord.ExternalURL
+
+						if ingressVal, ok := mergedValues["ingress"]; !ok {
+							mergedValues["ingress"] = map[string]interface{}{
+								"porter_hosts": []string{
+									subdomain,
+								},
+							}
+						} else {
+							ingressValMap := ingressVal.(map[string]interface{})
+
+							ingressValMap["porter_hosts"] = []string{
+								subdomain,
+							}
 						}
 					}
 				}

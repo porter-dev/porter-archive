@@ -39,7 +39,7 @@ require (
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/pkg/errors v0.9.1
-	github.com/porter-dev/switchboard v0.0.0-20220209153113-9d257b8e0dfb
+	github.com/porter-dev/switchboard v0.0.0-20220416181342-416fc450addb
 	github.com/rs/zerolog v1.26.0
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	github.com/spf13/cobra v1.3.0
@@ -118,6 +118,7 @@ require (
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gdamore/tcell/v2 v2.4.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect

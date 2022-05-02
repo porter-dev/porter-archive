@@ -11,7 +11,8 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
 	"github.com/google/go-github/v41/github"
-	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/cli/cmd/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/homedir"
 )
@@ -30,9 +31,9 @@ var home = homedir.HomeDir()
 func Execute() {
 	Setup()
 
-	rootCmd.PersistentFlags().AddFlagSet(defaultFlagSet)
+	rootCmd.PersistentFlags().AddFlagSet(utils.DefaultFlagSet)
 
-	if Version != "dev" {
+	if config.Version != "dev" {
 		ghClient := github.NewClient(nil)
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -40,7 +41,7 @@ func Execute() {
 		if err == nil {
 			release.GetURL()
 			// we do not care for an error here because we do not want to block the user here
-			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(Version, "v")))
+			constraint, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(config.Version, "v")))
 			if err == nil {
 				latestRelease, err := semver.NewVersion(strings.TrimPrefix(release.GetTagName(), "v"))
 				if err == nil {
@@ -65,13 +66,5 @@ func Execute() {
 }
 
 func Setup() {
-	InitAndLoadConfig()
-}
-
-func GetAPIClient(config *CLIConfig) *api.Client {
-	if token := config.Token; token != "" {
-		return api.NewClientWithToken(config.Host+"/api", token)
-	}
-
-	return api.NewClient(config.Host+"/api", "cookie.json")
+	config.InitAndLoadConfig()
 }

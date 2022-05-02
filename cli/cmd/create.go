@@ -11,6 +11,7 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/gitutils"
 	"github.com/porter-dev/porter/cli/cmd/utils"
@@ -173,6 +174,8 @@ func init() {
 		false,
 		"Whether to use cache (currently in beta)",
 	)
+
+	createCmd.PersistentFlags().MarkDeprecated("force-build", "--force-build is deprecated")
 }
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
@@ -232,8 +235,8 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 		Client: client,
 		CreateOpts: &deploy.CreateOpts{
 			SharedOpts: &deploy.SharedOpts{
-				ProjectID:       config.Project,
-				ClusterID:       config.Cluster,
+				ProjectID:       cliConf.Project,
+				ClusterID:       cliConf.Cluster,
 				Namespace:       namespace,
 				LocalPath:       fullPath,
 				LocalDockerfile: dockerfile,
@@ -257,7 +260,7 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 			err = client.CreateRepository(
 				context.Background(),
-				config.Project,
+				cliConf.Project,
 				regID,
 				&types.CreateRegistryRepositoryRequest{
 					ImageRepoURI: imageURL,
@@ -268,14 +271,14 @@ func createFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 				return err
 			}
 
-			err = setDockerConfig(createAgent.Client)
+			err = config.SetDockerConfig(createAgent.Client)
 
 			if err != nil {
 				return err
 			}
 		}
 
-		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil, forceBuild)
+		subdomain, err := createAgent.CreateFromDocker(valuesObj, "default", nil)
 
 		return handleSubdomainCreate(subdomain, err)
 	} else if source == "github" {

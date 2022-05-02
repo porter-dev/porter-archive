@@ -5,7 +5,7 @@ import close from "assets/close.png";
 import { Context } from "shared/Context";
 
 type PropsType = {
-  currentError: string;
+  currentError: any;
 };
 
 type StateType = {};
@@ -26,11 +26,18 @@ export default class CurrentError extends Component<PropsType, StateType> {
   }
 
   render() {
-    let currentError = this.props.currentError;
-    if (!React.isValidElement(this.props.currentError)) {
-      currentError = String(this.props.currentError);
+    if (!this.props.currentError) {
+      return null;
     }
-    if (this.props.currentError) {
+
+    // Check if it's an error from the API then retrieve the error message that we get from the API
+    let currentError =
+      this.props.currentError?.response?.data?.error || this.props.currentError;
+    if (!React.isValidElement(currentError)) {
+      currentError = String(currentError);
+    }
+
+    if (currentError) {
       if (!this.state.expanded) {
         return (
           <StyledCurrentError>

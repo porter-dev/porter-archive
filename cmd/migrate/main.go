@@ -7,8 +7,8 @@ import (
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
-	lr "github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository/gorm"
+	lr "github.com/porter-dev/porter/pkg/logger"
 
 	"github.com/joeshaw/envdecode"
 )

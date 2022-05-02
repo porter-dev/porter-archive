@@ -25,7 +25,7 @@ import (
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	"github.com/porter-dev/porter/provisioner/client"
 
-	lr "github.com/porter-dev/porter/internal/logger"
+	lr "github.com/porter-dev/porter/pkg/logger"
 
 	pgorm "gorm.io/gorm"
 )

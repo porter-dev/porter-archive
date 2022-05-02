@@ -1,7 +1,7 @@
 package analytics
 
 import (
-	"github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/pkg/logger"
 	segment "gopkg.in/segmentio/analytics-go.v3"
 )
 

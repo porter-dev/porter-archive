@@ -9,7 +9,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/pkg/logger"
 	"helm.sh/helm/v3/pkg/storage"
 	"k8s.io/client-go/kubernetes/fake"
 )

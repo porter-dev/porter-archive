@@ -4,8 +4,8 @@ import KeyValueArray from "components/form-components/KeyValueArray";
 import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
-import _, { unionBy } from "lodash";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import _, { differenceBy, unionBy } from "lodash";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import {
@@ -79,10 +79,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   const saveBuildConfig = async (config: BuildConfig) => {
     if (config === null) {
       return;
-    }
-
-    if (!config.builder.length || !config.buildpacks.length) {
-      throw new Error("You have to select at least one buildpack");
     }
 
     try {
@@ -349,6 +345,47 @@ const BuildpackConfigSection: React.FC<{
     []
   );
 
+  const state = useRef<null | {
+    [builder: string]: {
+      stack: string;
+      selectedBuildpacks: Buildpack[];
+      availableBuildpacks: Buildpack[];
+    };
+  }>(null);
+
+  const populateState = (
+    builder: string,
+    stack: string,
+    availableBuildpacks: Buildpack[] = [],
+    selectedBuildpacks: Buildpack[] = []
+  ) => {
+    state.current = {
+      ...state.current,
+      [builder]: {
+        stack: stack,
+        availableBuildpacks: availableBuildpacks,
+        selectedBuildpacks: selectedBuildpacks,
+      },
+    };
+  };
+
+  const populateBuildpacks = (
+    userBuildpacks: string[],
+    detectedBuildpacks: Buildpack[]
+  ) => {
+    const customBuildpackFactory = (name: string): Buildpack => ({
+      name: name,
+      buildpack: name,
+      config: null,
+    });
+
+    return userBuildpacks.map(
+      (ub) =>
+        detectedBuildpacks.find((db) => db.buildpack === ub) ||
+        customBuildpackFactory(ub)
+    );
+  };
+
   useEffect(() => {
     const currentBuildConfig = currentChart?.build_config;
 
@@ -378,38 +415,26 @@ const BuildpackConfigSection: React.FC<{
           builder.builders.find((stack) => stack === currentBuildConfig.builder)
         );
 
-        const availableBuildpacks = defaultBuilder.others?.filter(
-          (buildpack) => {
-            if (!currentBuildConfig.buildpacks.includes(buildpack.buildpack)) {
-              return true;
-            }
-            return false;
-          }
+        const nonSelectedBuilder = builders.find(
+          (builder) =>
+            !builder.builders.find(
+              (stack) => stack === currentBuildConfig.builder
+            )
         );
 
-        const userAddedBuildpacks = defaultBuilder.others?.filter(
-          (buildpack) => {
-            if (currentBuildConfig.buildpacks.includes(buildpack.buildpack)) {
-              return true;
-            }
-            return false;
-          }
-        );
+        const fullDetectedBuildpacks = [
+          ...defaultBuilder.detected,
+          ...defaultBuilder.others,
+        ];
 
-        const customBuildpacks: any = currentBuildConfig.buildpacks
-          .filter(
-            (buildpack) =>
-              URLRegex.test(buildpack) &&
-              !buildpack.includes("gcr.io/paketo-buildpacks")
-          )
-          .map((b) => ({ buildpack: b, name: b }));
+        const userSelectedBuildpacks = populateBuildpacks(
+          currentBuildConfig.buildpacks,
+          fullDetectedBuildpacks
+        ).filter((b) => b.buildpack);
 
-        console.log(customBuildpacks);
-        console.log(userAddedBuildpacks);
-
-        const detectedBuildpacks = unionBy(
-          [...userAddedBuildpacks, ...customBuildpacks],
-          defaultBuilder.detected,
+        const availableBuildpacks = differenceBy(
+          fullDetectedBuildpacks,
+          userSelectedBuildpacks,
           "buildpack"
         );
 
@@ -417,15 +442,29 @@ const BuildpackConfigSection: React.FC<{
           return stack === currentBuildConfig.builder;
         });
 
+        populateState(
+          defaultBuilder.name.toLowerCase(),
+          defaultStack,
+          userSelectedBuildpacks,
+          availableBuildpacks
+        );
+
+        populateState(
+          nonSelectedBuilder.name.toLowerCase(),
+          nonSelectedBuilder.builders[0],
+          nonSelectedBuilder.others,
+          nonSelectedBuilder.detected
+        );
+
         setBuilders(builders);
         setSelectedBuilder(defaultBuilder.name.toLowerCase());
 
         setStacks(defaultBuilder.builders);
         setSelectedStack(defaultStack);
-        if (!Array.isArray(detectedBuildpacks)) {
+        if (!Array.isArray(userSelectedBuildpacks)) {
           setSelectedBuildpacks([]);
         } else {
-          setSelectedBuildpacks(detectedBuildpacks);
+          setSelectedBuildpacks(userSelectedBuildpacks);
         }
         if (!Array.isArray(availableBuildpacks)) {
           setAvailableBuildpacks([]);
@@ -448,6 +487,15 @@ const BuildpackConfigSection: React.FC<{
 
     onChange(buildConfig);
   }, [selectedBuilder, selectedBuildpacks, selectedStack]);
+
+  useEffect(() => {
+    populateState(
+      selectedBuilder,
+      selectedStack,
+      availableBuildpacks,
+      selectedBuildpacks
+    );
+  }, [selectedBuilder, selectedBuildpacks, selectedStack, availableBuildpacks]);
 
   const builderOptions = useMemo(() => {
     if (!Array.isArray(builders)) {
@@ -482,27 +530,18 @@ const BuildpackConfigSection: React.FC<{
     const builder = builders.find(
       (b) => b.name.toLowerCase() === builderName.toLowerCase()
     );
-    const detectedBuildpacks = builder.detected;
-    const availableBuildpacks = builder.others;
-    const defaultStack = builder.builders.find((stack) => {
-      return stack === DEFAULT_HEROKU_STACK || stack === DEFAULT_PAKETO_STACK;
-    });
-    setSelectedBuilder(builderName);
+
     setBuilders(builders);
-    setSelectedBuilder(builderName.toLowerCase());
-
     setStacks(builder.builders);
-    setSelectedStack(defaultStack);
 
-    if (!Array.isArray(detectedBuildpacks)) {
-      setSelectedBuildpacks([]);
-    } else {
-      setSelectedBuildpacks(detectedBuildpacks);
-    }
-    if (!Array.isArray(availableBuildpacks)) {
-      setAvailableBuildpacks([]);
-    } else {
-      setAvailableBuildpacks(availableBuildpacks);
+    const currState = state.current;
+    if (currState[builderName]) {
+      const stateBuilder = currState[builderName];
+      setSelectedBuilder(builderName);
+      setSelectedStack(stateBuilder.stack);
+      setAvailableBuildpacks(stateBuilder.availableBuildpacks);
+      setSelectedBuildpacks(stateBuilder.selectedBuildpacks);
+      return;
     }
   };
 
@@ -510,7 +549,22 @@ const BuildpackConfigSection: React.FC<{
     buildpacks: Buildpack[],
     action: "remove" | "add"
   ) => {
-    return buildpacks?.map((buildpack) => {
+    if (!buildpacks.length && action === "remove") {
+      return (
+        <StyledCard>Buildpacks will be automatically detected.</StyledCard>
+      );
+    }
+
+    if (!buildpacks.length && action === "add") {
+      return (
+        <StyledCard>
+          No additional buildpacks are available. You can add a custom buildpack
+          below.
+        </StyledCard>
+      );
+    }
+
+    return buildpacks?.map((buildpack, i) => {
       const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
 
       let disableIcon = false;
@@ -522,7 +576,7 @@ const BuildpackConfigSection: React.FC<{
       }
 
       return (
-        <StyledCard>
+        <StyledCard key={i}>
           <ContentContainer>
             <Icon disableMarginRight={disableIcon} className={icon} />
             <EventInformation>
@@ -602,7 +656,6 @@ const BuildpackConfigSection: React.FC<{
           setActiveValue={(option) => handleSelectBuilder(option)}
           label="Select a builder"
         />
-
         <SelectRow
           value={selectedStack}
           width="100%"
@@ -614,20 +667,13 @@ const BuildpackConfigSection: React.FC<{
           The following buildpacks were automatically detected. You can also
           manually add/remove buildpacks.
         </Helper>
-
-        {!!selectedBuildpacks?.length &&
-          renderBuildpacksList(selectedBuildpacks, "remove")}
-
+        <>{renderBuildpacksList(selectedBuildpacks, "remove")}</>
         <Helper>Available buildpacks:</Helper>
-        {!!availableBuildpacks?.length && (
-          <>{renderBuildpacksList(availableBuildpacks, "add")}</>
-        )}
-
+        <>{renderBuildpacksList(availableBuildpacks, "add")}</>
         <Helper>
           You may also add buildpacks by directly providing their GitHub links
           or links to ZIP files that contain the buildpack source code.
         </Helper>
-
         <AddCustomBuildpackForm onAdd={handleAddCustomBuildpack} />
       </>
     </BuildpackConfigurationContainer>

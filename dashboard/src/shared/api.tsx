@@ -1,8 +1,9 @@
 import { PolicyDocType } from "./auth/types";
+import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { release } from "process";
 import { baseApi } from "./baseApi";
 
-import { FullActionConfigType, StorageType } from "./types";
+import { BuildConfig, FullActionConfigType, StorageType } from "./types";
 
 /**
  * Generic api call format
@@ -89,6 +90,7 @@ const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
 const createEnvironment = baseApi<
   {
     name: string;
+    mode: "auto" | "manual";
   },
   {
     project_id: number;
@@ -129,6 +131,28 @@ const deleteEnvironment = baseApi<
   } = pathParams;
   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
 });
+
+const createPreviewEnvironmentDeployment = baseApi<
+  PullRequest,
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/pull_request`
+);
+
+const reenablePreviewEnvironmentDeployment = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    deployment_id: number;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, deployment_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}/reenable`
+);
 
 const listEnvironments = baseApi<
   {},
@@ -290,7 +314,7 @@ const updateNotificationConfig = baseApi<
 
 const getPRDeploymentList = baseApi<
   {
-    status?: string[];
+    environment_id?: number;
   },
   {
     cluster_id: number;
@@ -340,25 +364,19 @@ const getPRDeployment = baseApi<
 });
 
 const deletePRDeployment = baseApi<
-  {
-    namespace: string;
-  },
+  {},
   {
     cluster_id: number;
     project_id: number;
-    git_installation_id: number;
-    git_repo_owner: string;
-    git_repo_name: string;
+    deployment_id: number;
   }
 >("DELETE", (pathParams) => {
   const {
     cluster_id,
     project_id,
-    git_installation_id,
-    git_repo_owner,
-    git_repo_name,
+    deployment_id,
   } = pathParams;
-  return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/deployment`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
 const getNotificationConfig = baseApi<
@@ -1709,6 +1727,70 @@ const upgradePorterAgent = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/agent/upgrade`
 );
 
+const updateBuildConfig = baseApi<
+  BuildConfig,
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
+);
+
+const reRunGHWorkflow = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    git_installation_id: number;
+    owner: string;
+    name: string;
+    branch?: string;
+    filename?: string;
+    release_name?: string;
+  }
+>(
+  "POST",
+  ({
+    project_id,
+    git_installation_id,
+    owner,
+    name,
+    cluster_id,
+    filename,
+    release_name,
+    branch,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (branch) {
+      queryParams.set("branch", branch);
+    }
+
+    if (release_name) {
+      queryParams.set("release_name", release_name);
+    }
+    if (filename) {
+      queryParams.set("filename", filename);
+    }
+
+    return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${owner}/${name}/clusters/${cluster_id}/rerun_workflow?${queryParams.toString()}`;
+  }
+);
+
+const triggerPreviewEnvWorkflow = baseApi<
+  {},
+  { project_id: number; cluster_id: number; deployment_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id, deployment_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}/trigger_workflow`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1722,6 +1804,8 @@ export default {
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,
+  createPreviewEnvironmentDeployment,
+  reenablePreviewEnvironmentDeployment,
   listEnvironments,
   createGCPIntegration,
   createInvite,
@@ -1873,4 +1957,7 @@ export default {
   getIncidentLogsByLogId,
   upgradePorterAgent,
   deletePRDeployment,
+  updateBuildConfig,
+  reRunGHWorkflow,
+  triggerPreviewEnvWorkflow,
 };

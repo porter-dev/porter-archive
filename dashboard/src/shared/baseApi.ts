@@ -25,15 +25,10 @@ const buildAxiosConfig: BuildAxiosConfigFunction = (
     url: typeof endpoint === "function" ? endpoint(pathParams) : endpoint,
   };
 
-  const AuthHeaders = {
-    Authorization: `Bearer ${token}`,
-  };
-
   if (method.toUpperCase() === "POST") {
     return {
       ...config,
       data: params,
-      headers: AuthHeaders,
     };
   }
 
@@ -41,7 +36,6 @@ const buildAxiosConfig: BuildAxiosConfigFunction = (
     return {
       ...config,
       data: params,
-      headers: AuthHeaders,
     };
   }
 

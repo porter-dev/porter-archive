@@ -118,7 +118,7 @@ class Templates extends Component<PropsType, StateType> {
           (v: any) => v.name === template_name
         );
 
-        console.log(currentTemplate);
+        // console.log(currentTemplate);
         if (currentTemplate.versions.find((v: any) => v === version)) {
           currentTemplate.currentVersion = version;
         }

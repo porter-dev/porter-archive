@@ -28,7 +28,7 @@ const RegistryImageList: React.FC<{
         if (!res?.data) {
           throw new Error("No data found");
         }
-        console.log(res.data);
+        // console.log(res.data);
         setImageList(res.data);
       })
       .catch(console.error);

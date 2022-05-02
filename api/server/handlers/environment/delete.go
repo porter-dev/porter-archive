@@ -27,6 +27,7 @@ func NewDeleteEnvironmentHandler(
 ) *DeleteEnvironmentHandler {
 	return &DeleteEnvironmentHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 

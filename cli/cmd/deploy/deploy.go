@@ -33,9 +33,9 @@ type DeployAgent struct {
 	App string
 
 	Client         *client.Client
-	release        *types.GetReleaseResponse
+	Opts           *DeployOpts
+	Release        *types.GetReleaseResponse
 	agent          *docker.Agent
-	opts           *DeployOpts
 	tag            string
 	envPrefix      string
 	env            map[string]string
@@ -56,7 +56,7 @@ type DeployOpts struct {
 func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*DeployAgent, error) {
 	deployAgent := &DeployAgent{
 		App:    app,
-		opts:   opts,
+		Opts:   opts,
 		Client: client,
 		env:    make(map[string]string),
 	}
@@ -68,7 +68,7 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 		return nil, err
 	}
 
-	deployAgent.release = release
+	deployAgent.Release = release
 
 	// set an environment prefix to avoid collisions
 	deployAgent.envPrefix = fmt.Sprintf("PORTER_%s", strings.Replace(
@@ -90,27 +90,27 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 			// if the git action config exists, and dockerfile path is not empty, build type
 			// is docker
 			if release.GitActionConfig.DockerfilePath != "" {
-				deployAgent.opts.Method = DeployBuildTypeDocker
+				deployAgent.Opts.Method = DeployBuildTypeDocker
 			} else {
 				// otherwise build type is pack
-				deployAgent.opts.Method = DeployBuildTypePack
+				deployAgent.Opts.Method = DeployBuildTypePack
 			}
 		} else {
 			// if the git action config does not exist, we use docker by default
-			deployAgent.opts.Method = DeployBuildTypeDocker
+			deployAgent.Opts.Method = DeployBuildTypeDocker
 		}
 	}
 
-	if deployAgent.opts.Method == DeployBuildTypeDocker {
+	if deployAgent.Opts.Method == DeployBuildTypeDocker {
 		if release.GitActionConfig != nil {
 			deployAgent.dockerfilePath = release.GitActionConfig.DockerfilePath
 		}
 
-		if deployAgent.opts.LocalDockerfile != "" {
-			deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
+		if deployAgent.Opts.LocalDockerfile != "" {
+			deployAgent.dockerfilePath = deployAgent.Opts.LocalDockerfile
 		}
 
-		if deployAgent.dockerfilePath == "" && deployAgent.opts.LocalDockerfile == "" {
+		if deployAgent.dockerfilePath == "" && deployAgent.Opts.LocalDockerfile == "" {
 			deployAgent.dockerfilePath = "./Dockerfile"
 		}
 	}
@@ -119,7 +119,7 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 	// will fail. we set the image based on the git action config or the image written in the
 	// helm values
 	if release.GitActionConfig == nil {
-		deployAgent.opts.Local = true
+		deployAgent.Opts.Local = true
 
 		imageRepo, err := deployAgent.getReleaseImage()
 
@@ -129,16 +129,16 @@ func NewDeployAgent(client *client.Client, app string, opts *DeployOpts) (*Deplo
 
 		deployAgent.imageRepo = imageRepo
 
-		deployAgent.dockerfilePath = deployAgent.opts.LocalDockerfile
+		deployAgent.dockerfilePath = deployAgent.Opts.LocalDockerfile
 	} else {
 		deployAgent.imageRepo = release.GitActionConfig.ImageRepoURI
-		deployAgent.opts.LocalPath = release.GitActionConfig.FolderPath
+		deployAgent.Opts.LocalPath = release.GitActionConfig.FolderPath
 	}
 
 	deployAgent.tag = opts.OverrideTag
 
-	err = coalesceEnvGroups(deployAgent.Client, deployAgent.opts.ProjectID, deployAgent.opts.ClusterID,
-		deployAgent.opts.Namespace, deployAgent.opts.EnvGroups, deployAgent.release.Config)
+	err = coalesceEnvGroups(deployAgent.Client, deployAgent.Opts.ProjectID, deployAgent.Opts.ClusterID,
+		deployAgent.Opts.Namespace, deployAgent.Opts.EnvGroups, deployAgent.Release.Config)
 
 	deployAgent.imageExists = deployAgent.agent.CheckIfImageExists(deployAgent.imageRepo, deployAgent.tag)
 
@@ -150,24 +150,48 @@ type GetBuildEnvOpts struct {
 	NewConfig    map[string]interface{}
 }
 
-// GetBuildEnv retrieves the build env from the release config and returns it
+// GetBuildEnv retrieves the build env from the release config and returns it.
+//
+// It returns a flattened map of all environment variables including:
+//    1. container.env.normal from the release config
+//    2. container.env.build from the release config
+//    3. container.env.synced from the release config
+//    4. any additional env var that was passed into the DeployAgent as opts.SharedOpts.AdditionalEnv
 func (d *DeployAgent) GetBuildEnv(opts *GetBuildEnvOpts) (map[string]string, error) {
-	conf := d.release.Config
+	conf := d.Release.Config
 
 	if opts.UseNewConfig {
 		if opts.NewConfig != nil {
-			conf = utils.CoalesceValues(d.release.Config, opts.NewConfig)
+			conf = utils.CoalesceValues(d.Release.Config, opts.NewConfig)
 		}
 	}
 
-	env, err := GetEnvForRelease(d.Client, conf, d.opts.ProjectID, d.opts.ClusterID, d.opts.Namespace)
+	env, err := GetEnvForRelease(d.Client, conf, d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace)
 
 	if err != nil {
 		return nil, err
 	}
 
+	envConfig, err := GetNestedMap(conf, "container", "env")
+
+	if err == nil {
+		_, exists := envConfig["build"]
+
+		if exists {
+			buildEnv, err := GetNestedMap(conf, "container", "env", "build")
+
+			if err == nil {
+				for key, val := range buildEnv {
+					if valStr, ok := val.(string); ok {
+						env[key] = valStr
+					}
+				}
+			}
+		}
+	}
+
 	// add additional env based on options
-	for key, val := range d.opts.SharedOpts.AdditionalEnv {
+	for key, val := range d.Opts.SharedOpts.AdditionalEnv {
 		env[key] = val
 	}
 
@@ -221,30 +245,23 @@ func (d *DeployAgent) WriteBuildEnv(fileDest string) error {
 
 // Build uses the deploy agent options to build a new container image from either
 // buildpack or docker.
-func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild bool) error {
+func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig) error {
 	// retrieve current image to use for cache
-	currImageSection := d.release.Config["image"].(map[string]interface{})
+	currImageSection := d.Release.Config["image"].(map[string]interface{})
 	currentTag := currImageSection["tag"].(string)
 
 	if d.tag == "" {
 		d.tag = currentTag
 	}
 
-	// we do not want to re-build an image
-	// FIXME: what if overrideBuildConfig == nil but the image stays the same?
-	if overrideBuildConfig == nil && d.imageExists && d.tag != "latest" && !forceBuild {
-		fmt.Printf("%s:%s already exists in the registry, so skipping build\n", d.imageRepo, d.tag)
-		return nil
-	}
-
 	// if build is not local, fetch remote source
 	var basePath string
 	var err error
 
-	buildCtx := d.opts.LocalPath
+	buildCtx := d.Opts.LocalPath
 
-	if !d.opts.Local {
-		repoSplit := strings.Split(d.release.GitActionConfig.GitRepo, "/")
+	if !d.Opts.Local {
+		repoSplit := strings.Split(d.Release.GitActionConfig.GitRepo, "/")
 
 		if len(repoSplit) != 2 {
 			return fmt.Errorf("invalid formatting of repo name")
@@ -252,12 +269,12 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 
 		zipResp, err := d.Client.GetRepoZIPDownloadURL(
 			context.Background(),
-			d.opts.ProjectID,
-			int64(d.release.GitActionConfig.GitRepoID),
+			d.Opts.ProjectID,
+			int64(d.Release.GitActionConfig.GitRepoID),
 			"github",
 			repoSplit[0],
 			repoSplit[1],
-			d.release.GitActionConfig.GitBranch,
+			d.Release.GitActionConfig.GitBranch,
 		)
 
 		if err != nil {
@@ -291,14 +308,14 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 	}
 
 	buildAgent := &BuildAgent{
-		SharedOpts:  d.opts.SharedOpts,
-		client:      d.Client,
-		imageRepo:   d.imageRepo,
-		env:         d.env,
-		imageExists: d.imageExists,
+		SharedOpts:  d.Opts.SharedOpts,
+		APIClient:   d.Client,
+		ImageRepo:   d.imageRepo,
+		Env:         d.env,
+		ImageExists: d.imageExists,
 	}
 
-	if d.opts.Method == DeployBuildTypeDocker {
+	if d.Opts.Method == DeployBuildTypeDocker {
 		return buildAgent.BuildDocker(
 			d.agent,
 			basePath,
@@ -309,7 +326,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 		)
 	}
 
-	buildConfig := d.release.BuildConfig
+	buildConfig := d.Release.BuildConfig
 
 	if overrideBuildConfig != nil {
 		buildConfig = overrideBuildConfig
@@ -319,12 +336,7 @@ func (d *DeployAgent) Build(overrideBuildConfig *types.BuildConfig, forceBuild b
 }
 
 // Push pushes a local image to the remote repository linked in the release
-func (d *DeployAgent) Push(forcePush bool) error {
-	if d.imageExists && !forcePush && d.tag != "latest" {
-		fmt.Printf("%s:%s has been pushed already, so skipping push\n", d.imageRepo, d.tag)
-		return nil
-	}
-
+func (d *DeployAgent) Push() error {
 	return d.agent.PushImage(fmt.Sprintf("%s:%s", d.imageRepo, d.tag))
 }
 
@@ -335,11 +347,11 @@ func (d *DeployAgent) Push(forcePush bool) error {
 func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
 	// if this is a job chart, set "paused" to false so that the job doesn't run, unless
 	// the user has explicitly overriden the "paused" field
-	if _, exists := overrideValues["paused"]; d.release.Chart.Name() == "job" && !exists {
+	if _, exists := overrideValues["paused"]; d.Release.Chart.Name() == "job" && !exists {
 		overrideValues["paused"] = true
 	}
 
-	mergedValues := utils.CoalesceValues(d.release.Config, overrideValues)
+	mergedValues := utils.CoalesceValues(d.Release.Config, overrideValues)
 
 	activeBlueGreenTagVal := GetCurrActiveBlueGreenImage(mergedValues)
 
@@ -385,10 +397,10 @@ func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}
 
 	return d.Client.UpgradeRelease(
 		context.Background(),
-		d.opts.ProjectID,
-		d.opts.ClusterID,
-		d.release.Namespace,
-		d.release.Name,
+		d.Opts.ProjectID,
+		d.Opts.ClusterID,
+		d.Release.Namespace,
+		d.Release.Name,
 		&types.UpgradeReleaseRequest{
 			Values: string(bytes),
 		},
@@ -407,12 +419,51 @@ type SyncedEnvSectionKey struct {
 }
 
 // GetEnvForRelease gets the env vars for a standard Porter template config. These env
-// vars are found at `container.env.normal`.
-func GetEnvForRelease(client *client.Client, config map[string]interface{}, projID, clusterID uint, namespace string) (map[string]string, error) {
+// vars are found at `container.env.normal` and `container.env.synced`.
+func GetEnvForRelease(
+	client *client.Client,
+	config map[string]interface{},
+	projID, clusterID uint,
+	namespace string,
+) (map[string]string, error) {
 	res := make(map[string]string)
 
 	// first, get the env vars from "container.env.normal"
-	envConfig, err := getNestedMap(config, "container", "env", "normal")
+	normalEnv, err := GetNormalEnv(client, config, projID, clusterID, namespace, true)
+
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching container.env.normal variables: %w", err)
+	}
+
+	for k, v := range normalEnv {
+		res[k] = v
+	}
+
+	// next, get the env vars specified by "container.env.synced"
+	// look for container.env.synced
+	syncedEnv, err := GetSyncedEnv(client, config, projID, clusterID, namespace, true)
+
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching container.env.synced variables: %w", err)
+	}
+
+	for k, v := range syncedEnv {
+		res[k] = v
+	}
+
+	return res, nil
+}
+
+func GetNormalEnv(
+	client *client.Client,
+	config map[string]interface{},
+	projID, clusterID uint,
+	namespace string,
+	buildTime bool,
+) (map[string]string, error) {
+	res := make(map[string]string)
+
+	envConfig, err := GetNestedMap(config, "container", "env", "normal")
 
 	// if the field is not found, set envConfig to an empty map; this release has no env set
 	if err != nil {
@@ -428,14 +479,26 @@ func GetEnvForRelease(client *client.Client, config map[string]interface{}, proj
 
 		// if the value contains PORTERSECRET, this is a "dummy" env that gets injected during
 		// run-time, so we ignore it
-		if !strings.Contains(valStr, "PORTERSECRET") {
+		if buildTime && strings.Contains(valStr, "PORTERSECRET") {
+			continue
+		} else {
 			res[key] = valStr
 		}
 	}
 
-	// next, get the env vars specified by "container.env.synced"
-	// look for container.env.synced
-	envConf, err := getNestedMap(config, "container", "env")
+	return res, nil
+}
+
+func GetSyncedEnv(
+	client *client.Client,
+	config map[string]interface{},
+	projID, clusterID uint,
+	namespace string,
+	buildTime bool,
+) (map[string]string, error) {
+	res := make(map[string]string)
+
+	envConf, err := GetNestedMap(config, "container", "env")
 
 	// if error, just return the env detected from above
 	if err != nil {
@@ -542,7 +605,9 @@ func GetEnvForRelease(client *client.Client, config map[string]interface{}, proj
 			}
 
 			for key, val := range eg.Variables {
-				if !strings.Contains(val, "PORTERSECRET") {
+				if buildTime && strings.Contains(val, "PORTERSECRET") {
+					continue
+				} else {
 					res[key] = val
 				}
 			}
@@ -553,12 +618,12 @@ func GetEnvForRelease(client *client.Client, config map[string]interface{}, proj
 }
 
 func (d *DeployAgent) getReleaseImage() (string, error) {
-	if d.release.ImageRepoURI != "" {
-		return d.release.ImageRepoURI, nil
+	if d.Release.ImageRepoURI != "" {
+		return d.Release.ImageRepoURI, nil
 	}
 
 	// get the image from the conig
-	imageConfig, err := getNestedMap(d.release.Config, "image")
+	imageConfig, err := GetNestedMap(d.Release.Config, "image")
 
 	if err != nil {
 		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
@@ -581,7 +646,7 @@ func (d *DeployAgent) getReleaseImage() (string, error) {
 
 func (d *DeployAgent) pullCurrentReleaseImage() (string, error) {
 	// pull the currently deployed image to use cache, if possible
-	imageConfig, err := getNestedMap(d.release.Config, "image")
+	imageConfig, err := GetNestedMap(d.Release.Config, "image")
 
 	if err != nil {
 		return "", fmt.Errorf("could not get image config from release: %s", err.Error())
@@ -616,7 +681,7 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	downloader := &github.ZIPDownloader{
 		ZipFolderDest:       dstDir,
 		AssetFolderDest:     dstDir,
-		ZipName:             fmt.Sprintf("%s.zip", strings.Replace(d.release.GitActionConfig.GitRepo, "/", "-", 1)),
+		ZipName:             fmt.Sprintf("%s.zip", strings.Replace(d.Release.GitActionConfig.GitRepo, "/", "-", 1)),
 		RemoveAfterDownload: true,
 	}
 
@@ -637,7 +702,7 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 	dstFiles, err := ioutil.ReadDir(dstDir)
 
 	for _, info := range dstFiles {
-		if info.Mode().IsDir() && strings.Contains(info.Name(), strings.Replace(d.release.GitActionConfig.GitRepo, "/", "-", 1)) {
+		if info.Mode().IsDir() && strings.Contains(info.Name(), strings.Replace(d.Release.GitActionConfig.GitRepo, "/", "-", 1)) {
 			res = filepath.Join(dstDir, info.Name())
 		}
 	}
@@ -652,8 +717,8 @@ func (d *DeployAgent) downloadRepoToDir(downloadURL string) (string, error) {
 func (d *DeployAgent) StreamEvent(event types.SubEvent) error {
 	return d.Client.CreateEvent(
 		context.Background(),
-		d.opts.ProjectID, d.opts.ClusterID,
-		d.release.Namespace, d.release.Name,
+		d.Opts.ProjectID, d.Opts.ClusterID,
+		d.Release.Namespace, d.Release.Name,
 		&types.UpdateReleaseStepsRequest{
 			Event: event,
 		},
@@ -668,7 +733,7 @@ func (e *NestedMapFieldNotFoundError) Error() string {
 	return fmt.Sprintf("could not find field %s in configuration", e.Field)
 }
 
-func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
+func GetNestedMap(obj map[string]interface{}, fields ...string) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	curr := obj
 

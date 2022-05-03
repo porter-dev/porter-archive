@@ -370,11 +370,7 @@ const deletePRDeployment = baseApi<
     deployment_id: number;
   }
 >("DELETE", (pathParams) => {
-  const {
-    cluster_id,
-    project_id,
-    deployment_id,
-  } = pathParams;
+  const { cluster_id, project_id, deployment_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
@@ -1757,6 +1753,11 @@ const triggerPreviewEnvWorkflow = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}/trigger_workflow`
 );
 
+const getTagsByProjectId = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/tags`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1921,4 +1922,5 @@ export default {
   updateBuildConfig,
   reRunGHWorkflow,
   triggerPreviewEnvWorkflow,
+  getTagsByProjectId,
 };

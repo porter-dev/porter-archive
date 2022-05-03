@@ -106,9 +106,7 @@ func (repo *TagRepository) ReadTagByNameAndProjectId(tagName string, projectId u
 func (repo *TagRepository) ListTagsByProjectId(projectId uint) ([]*models.Tag, error) {
 	tags := make([]*models.Tag, 0)
 
-	err := repo.db.Model(&models.Tag{}).Where("project_id = ?", projectId).Preload("Releases", func(tx *gorm.DB) *gorm.DB {
-		return tx.Select("Name")
-	}).Find(&tags).Error
+	err := repo.db.Model(&models.Tag{}).Where("project_id = ?", projectId).Preload("Releases").Find(&tags).Error
 
 	if err != nil {
 		return nil, err

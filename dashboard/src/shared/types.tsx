@@ -49,6 +49,7 @@ export interface ChartType {
   version: number;
   namespace: string;
   latest_version: string;
+  tags: any;
 }
 
 export interface ChartTypeWithExtendedConfig extends ChartType {

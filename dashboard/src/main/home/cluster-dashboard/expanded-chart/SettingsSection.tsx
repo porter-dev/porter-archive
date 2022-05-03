@@ -16,6 +16,9 @@ import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import { Link } from "react-router-dom";
+import Autocomplete from "components/Autocomplete";
+// import { Autocomplete, AutocompleteGetTagProps } from "@material-ui/lab";
+// import TextField from "@material-ui/core/TextField";
 
 type PropsType = {
   currentChart: ChartType;
@@ -53,6 +56,10 @@ const SettingsSection: React.FC<PropsType> = ({
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
+
+  const [fullTagList, setFullTagList] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+
   const [isAuthorized] = useAuth();
 
   useEffect(() => {
@@ -84,8 +91,18 @@ const SettingsSection: React.FC<PropsType> = ({
       .catch(console.log)
       .finally(() => setLoadingWebhookToken(false));
 
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+    };
   }, [currentChart, currentCluster, currentProject]);
+
+  useEffect(() => {
+    api
+      .getTagsByProjectId("<token>", {}, { project_id: currentProject.id })
+      .then(({ data }) => {
+        setFullTagList(data);
+      });
+  }, [currentProject]);
 
   const handleSubmit = async () => {
     setSaveValuesStatus("loading");
@@ -213,6 +230,16 @@ const SettingsSection: React.FC<PropsType> = ({
     return (
       <>
         <>
+          <Heading>Application tags</Heading>
+          <Autocomplete
+            defaultValue={
+              currentChart.tags?.map((tagName: string) => ({
+                name: tagName,
+              })) || []
+            }
+            onChange={(value) => setSelectedTags(value)}
+            options={fullTagList}
+          />
           <Heading>Source Settings</Heading>
           <Helper>Specify an image tag to use.</Helper>
           <ImageSelector

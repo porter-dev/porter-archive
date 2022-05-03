@@ -7,7 +7,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/pkg/logger"
 )
 
 type RequestError interface {

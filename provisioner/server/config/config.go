@@ -16,10 +16,10 @@ import (
 	klocal "github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/oauth"
 
-	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
 	"github.com/porter-dev/porter/internal/repository/gorm"
+	"github.com/porter-dev/porter/pkg/logger"
 	"github.com/porter-dev/porter/provisioner/integrations/provisioner"
 	"github.com/porter-dev/porter/provisioner/integrations/provisioner/k8s"
 	"github.com/porter-dev/porter/provisioner/integrations/provisioner/local"

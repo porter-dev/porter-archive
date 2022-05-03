@@ -12,7 +12,6 @@ import (
 
 type PushDriverConfig struct {
 	Push struct {
-		ForcePush    bool `mapstructure:"force_push"`
 		UsePackCache bool `mapstructure:"use_pack_cache"`
 		Image        string
 	}

@@ -175,8 +175,6 @@ type ApplicationConfig struct {
 	OnlyCreate bool
 
 	Build struct {
-		ForceBuild bool `mapstructure:"force_build"`
-		ForcePush  bool `mapstructure:"force_push"`
 		UseCache   bool `mapstructure:"use_cache"`
 		Method     string
 		Context    string
@@ -184,6 +182,7 @@ type ApplicationConfig struct {
 		Image      string
 		Builder    string
 		Buildpacks []string
+		Env        map[string]string
 	}
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -502,7 +501,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig, appConf.Build.ForceBuild)
+		subdomain, err = createAgent.CreateFromDocker(appConf.Values, sharedOpts.OverrideTag, buildConfig)
 	}
 
 	if err != nil {
@@ -514,6 +513,10 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 
 func (d *Driver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
+
+	if len(appConf.Build.Env) > 0 {
+		sharedOpts.AdditionalEnv = appConf.Build.Env
+	}
 
 	updateAgent, err := deploy.NewDeployAgent(client, resource.Name, &deploy.DeployOpts{
 		SharedOpts: sharedOpts,
@@ -550,14 +553,14 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 			}
 		}
 
-		err = updateAgent.Build(buildConfig, appConf.Build.ForceBuild)
+		err = updateAgent.Build(buildConfig)
 
 		if err != nil {
 			return nil, err
 		}
 
 		if !appConf.Build.UseCache {
-			err = updateAgent.Push(appConf.Build.ForcePush)
+			err = updateAgent.Push()
 
 			if err != nil {
 				return nil, err
@@ -780,7 +783,43 @@ func (t *DeploymentHook) DataQueries() map[string]interface{} {
 		}
 
 		if isWeb {
-			res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
+			// determine if we should query for porter_hosts or just hosts
+			isCustomDomain := false
+
+			ingressMap, err := deploy.GetNestedMap(resource.Config, "values", "ingress")
+
+			if err == nil {
+				enabledVal, enabledExists := ingressMap["enabled"]
+
+				customDomVal, customDomExists := ingressMap["custom_domain"]
+
+				if enabledExists && customDomExists {
+					enabled, eOK := enabledVal.(bool)
+					customDomain, cOK := customDomVal.(bool)
+
+					if eOK && cOK && enabled {
+						if customDomain {
+							// return the first custom domain when one exists
+							hostsArr, hostsExists := ingressMap["hosts"]
+
+							if hostsExists {
+								hostsArrVal, hostsArrOk := hostsArr.([]interface{})
+
+								if hostsArrOk && len(hostsArrVal) > 0 {
+									if _, ok := hostsArrVal[0].(string); ok {
+										res[resource.Name] = fmt.Sprintf("{ .%s.ingress.hosts[0] }", resource.Name)
+										isCustomDomain = true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if !isCustomDomain {
+				res[resource.Name] = fmt.Sprintf("{ .%s.ingress.porter_hosts[0] }", resource.Name)
+			}
 		}
 	}
 

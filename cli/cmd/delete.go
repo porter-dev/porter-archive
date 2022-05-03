@@ -39,7 +39,63 @@ deleting a configuration:
 	},
 }
 
+// deleteAppsCmd represents the "porter delete apps" subcommand
+var deleteAppsCmd = &cobra.Command{
+	Use:     "apps",
+	Aliases: []string{"app", "applications", "application"},
+	Short:   "Deletes an existing app",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, deleteApp)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+// deleteJobsCmd represents the "porter delete jobs" subcommand
+var deleteJobsCmd = &cobra.Command{
+	Use:     "jobs",
+	Aliases: []string{"job"},
+	Short:   "Deletes an existing job",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, deleteJob)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+// deleteAddonsCmd represents the "porter delete addons" subcommand
+var deleteAddonsCmd = &cobra.Command{
+	Use:     "addons",
+	Aliases: []string{"addon"},
+	Short:   "Deletes an existing addon",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, deleteAddon)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
+	deleteCmd.PersistentFlags().StringVar(
+		&namespace,
+		"namespace",
+		"default",
+		"Namespace of the application",
+	)
+
+	deleteCmd.AddCommand(deleteAppsCmd)
+	deleteCmd.AddCommand(deleteJobsCmd)
+	deleteCmd.AddCommand(deleteAddonsCmd)
+
 	rootCmd.AddCommand(deleteCmd)
 }
 
@@ -89,4 +145,94 @@ func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 		context.Background(), projectID, clusterID, environmentID,
 		gitRepoOwner, gitRepoName, gitPRNumber,
 	)
+}
+
+func deleteApp(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	name := args[0]
+
+	resp, err := client.GetRelease(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	rel := *resp
+
+	if rel.Chart.Name() != "web" && rel.Chart.Name() != "worker" {
+		return fmt.Errorf("no app found with name: %s", name)
+	}
+
+	color.New(color.FgBlue).Printf("Deleting app: %s\n", name)
+
+	err = client.DeleteRelease(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteJob(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	name := args[0]
+
+	resp, err := client.GetRelease(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	rel := *resp
+
+	if rel.Chart.Name() != "job" {
+		return fmt.Errorf("no job found with name: %s", name)
+	}
+
+	color.New(color.FgBlue).Printf("Deleting job: %s\n", name)
+
+	err = client.DeleteRelease(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	name := args[0]
+
+	resp, err := client.GetRelease(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	rel := *resp
+
+	if rel.Chart.Name() == "web" || rel.Chart.Name() == "worker" || rel.Chart.Name() == "job" {
+		return fmt.Errorf("no addon found with name: %s", name)
+	}
+
+	color.New(color.FgBlue).Printf("Deleting addon: %s\n", name)
+
+	err = client.DeleteRelease(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

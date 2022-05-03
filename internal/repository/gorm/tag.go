@@ -1,23 +1,12 @@
 package gorm
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
-	"strings"
 
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
-
-func randomHex(n int) (string, error) {
-	bytes := make([]byte, n)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
-}
 
 // AllowlistRepository uses gorm.DB for querying the database
 type TagRepository struct {
@@ -43,32 +32,21 @@ func (repo *TagRepository) CreateTag(tag *models.Tag) (*models.Tag, error) {
 	return tag, nil
 }
 
-func (repo *TagRepository) CreateOrLinkTag(tagName string, release *models.Release) error {
-	project_id := release.ProjectID
-
-	existingTag, _ := repo.ReadTagByNameAndProjectId(tagName, project_id)
-
-	if existingTag != nil {
-		return repo.AddTagToRelease(release, existingTag)
-	}
-
-	randomColor, err := randomHex(3)
+func (repo *TagRepository) LinkTagsToRelease(tags []string, release *models.Release) ([]*models.Tag, error) {
+	populatedTags := make([]*models.Tag, 0)
+	err := repo.db.Model(&models.Tag{}).Where("name IN ?", tags).Where("project_id = ?", release.ProjectID).Find(&populatedTags).Error
 
 	if err != nil {
-		randomColor = "ffffff"
+		return nil, err
 	}
 
-	newTag := &models.Tag{
-		Name:      tagName,
-		ProjectID: project_id,
-		Color:     strings.Join([]string{"#", randomColor}, ""),
-	}
+	err = repo.db.Model(&release).Association("Tags").Append(populatedTags)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return repo.AddTagToRelease(release, newTag)
+	return populatedTags, nil
 }
 
 func (repo *TagRepository) UnlinkTagsFromRelease(tags []string, release *models.Release) error {
@@ -131,26 +109,6 @@ func (repo *TagRepository) UpdateTag(tag *models.Tag) (*models.Tag, error) {
 
 func (repo *TagRepository) DeleteTag(id uint) error {
 	if err := repo.db.Delete(&models.Tag{}, id).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (repo *TagRepository) AddTagToRelease(release *models.Release, tag *models.Tag) error {
-	err := repo.db.Model(&release).Association("Tags").Append(tag)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (repo *TagRepository) RemoveTagFromRelease(release *models.Release, tag *models.Tag) error {
-	err := repo.db.Model(&release).Association("Tags").Delete(tag)
-
-	if err != nil {
 		return err
 	}
 

@@ -16,10 +16,8 @@ import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import { Link } from "react-router-dom";
-import Autocomplete from "components/Autocomplete";
-// import { Autocomplete, AutocompleteGetTagProps } from "@material-ui/lab";
-// import TextField from "@material-ui/core/TextField";
 import { isDeployedFromGithub } from "shared/release/utils";
+import TagSelector from "./TagSelector";
 
 type PropsType = {
   currentChart: ChartType;
@@ -231,7 +229,8 @@ const SettingsSection: React.FC<PropsType> = ({
     return (
       <>
         <Heading>Application tags</Heading>
-        <Autocomplete
+        <TagSelector
+          release={currentChart}
           defaultValue={
             currentChart.tags?.map((tagName: string) => ({
               name: tagName,

@@ -118,10 +118,10 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	if request.Tags != nil {
-		tmpRelease, err := LinkTagsToRelease(c.Config(), request.Tags, release)
+		tags, err := c.Config().Repo.Tag().LinkTagsToRelease(request.Tags, release)
 
 		if err == nil {
-			release = tmpRelease
+			release.Tags = append(release.Tags, tags...)
 		}
 	}
 
@@ -410,22 +410,4 @@ func getGARunner(
 		ImageRepoURL:           ga.ImageRepoURI,
 		Version:                "v0.1.0",
 	}, nil
-}
-
-// Gets a list of tags to be added into a release and then returns the updated release
-func LinkTagsToRelease(config *config.Config, tags []string, release *models.Release) (*models.Release, error) {
-	var err error
-	for i := 0; i < len(tags); i++ {
-		err = config.Repo.Tag().CreateOrLinkTag(tags[i], release)
-
-		if err != nil {
-			break
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return config.Repo.Release().ReadRelease(release.ClusterID, release.Name, release.Namespace)
 }

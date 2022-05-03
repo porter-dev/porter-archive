@@ -56,12 +56,14 @@ func (c *UpdateReleaseTagsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	release, err = LinkTagsToRelease(c.Config(), request.Tags, release)
+	_, err = c.Config().Repo.Tag().LinkTagsToRelease(request.Tags, release)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	release, err = c.Config().Repo.Release().ReadRelease(cluster.ID, name, namespace)
 
 	w.WriteHeader(http.StatusCreated)
 	c.WriteResult(w, r, release)

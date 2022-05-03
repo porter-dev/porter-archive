@@ -25,7 +25,7 @@ type Release struct {
 	EventContainer     uint
 	NotificationConfig uint
 	BuildConfig        uint
-	Tags               []Tag `json:"tags" gorm:"many2many:release_tags"`
+	Tags               []*Tag `json:"tags" gorm:"many2many:release_tags"`
 }
 
 func (r *Release) ToReleaseType() *types.PorterRelease {

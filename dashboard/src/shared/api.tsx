@@ -1758,6 +1758,27 @@ const getTagsByProjectId = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/tags`
 );
 
+const createTag = baseApi<
+  { name: string; color: string },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/tags`);
+
+const updateReleaseTags = baseApi<
+  {
+    tags: string[];
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_tags`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1923,4 +1944,6 @@ export default {
   reRunGHWorkflow,
   triggerPreviewEnvWorkflow,
   getTagsByProjectId,
+  createTag,
+  updateReleaseTags,
 };

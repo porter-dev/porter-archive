@@ -12,6 +12,7 @@ COPY /cli ./cli
 COPY /internal ./internal
 COPY /api ./api
 COPY /ee ./ee
+COPY /pkg ./pkg
 
 RUN --mount=type=cache,target=$GOPATH/pkg/mod \
     go mod download

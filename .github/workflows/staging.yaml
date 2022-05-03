@@ -54,7 +54,6 @@ jobs:
       - name: Deploy to cluster
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name staging
-          sed -e 's/v1alpha1/v1beta1/' ~/.kube/config
             
           kubectl rollout restart deployment/porter
   deploy-provisioner:

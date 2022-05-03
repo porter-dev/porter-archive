@@ -20,7 +20,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Install kubectl
-        uses: azure/setup-kubectl@v1
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: 'v1.19.15'
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout
@@ -54,7 +56,6 @@ jobs:
       - name: Deploy to cluster
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name staging
-          sed -e 's/v1alpha1/v1beta1/' ~/.kube/config
             
           kubectl rollout restart deployment/porter
   deploy-provisioner:
@@ -73,7 +74,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Install kubectl
-        uses: azure/setup-kubectl@v1
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: 'v1.19.15'
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout

@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/logger"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/pkg/logger"
 	"golang.org/x/oauth2"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chartutil"

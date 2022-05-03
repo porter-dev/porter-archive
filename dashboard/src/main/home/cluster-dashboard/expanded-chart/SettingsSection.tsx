@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import Autocomplete from "components/Autocomplete";
 // import { Autocomplete, AutocompleteGetTagProps } from "@material-ui/lab";
 // import TextField from "@material-ui/core/TextField";
+import { isDeployedFromGithub } from "shared/release/utils";
 
 type PropsType = {
   currentChart: ChartType;
@@ -229,43 +230,45 @@ const SettingsSection: React.FC<PropsType> = ({
 
     return (
       <>
-        <>
-          <Heading>Application tags</Heading>
-          <Autocomplete
-            defaultValue={
-              currentChart.tags?.map((tagName: string) => ({
-                name: tagName,
-              })) || []
-            }
-            onChange={(value) => setSelectedTags(value)}
-            options={fullTagList}
-          />
-          <Heading>Source Settings</Heading>
-          <Helper>Specify an image tag to use.</Helper>
-          <ImageSelector
-            selectedTag={selectedTag}
-            selectedImageUrl={selectedImageUrl}
-            setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
-            setSelectedTag={(x: string) => setSelectedTag(x)}
-            forceExpanded={true}
-            disableImageSelect={true}
-          />
-          {!loadingWebhookToken && (
-            <>
-              <Br />
-              <Br />
-              <Br />
-              <SaveButton
-                clearPosition={true}
-                statusPosition="right"
-                text="Save Source Settings"
-                status={saveValuesStatus}
-                onClick={handleSubmit}
-              />
-            </>
-          )}
-          <Br />
-        </>
+        <Heading>Application tags</Heading>
+        <Autocomplete
+          defaultValue={
+            currentChart.tags?.map((tagName: string) => ({
+              name: tagName,
+            })) || []
+          }
+          onChange={(value) => setSelectedTags(value)}
+          options={fullTagList}
+        />
+        {!isDeployedFromGithub(currentChart) ? (
+          <>
+            <Heading>Source Settings</Heading>
+            <Helper>Specify an image tag to use.</Helper>
+            <ImageSelector
+              selectedTag={selectedTag}
+              selectedImageUrl={selectedImageUrl}
+              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
+              setSelectedTag={(x: string) => setSelectedTag(x)}
+              forceExpanded={true}
+              disableImageSelect={true}
+            />
+            {!loadingWebhookToken && (
+              <>
+                <Br />
+                <Br />
+                <Br />
+                <SaveButton
+                  clearPosition={true}
+                  statusPosition="right"
+                  text="Save Source Settings"
+                  status={saveValuesStatus}
+                  onClick={handleSubmit}
+                />
+              </>
+            )}
+            <Br />
+          </>
+        ) : null}
 
         <>
           <Heading>Redeploy Webhook</Heading>

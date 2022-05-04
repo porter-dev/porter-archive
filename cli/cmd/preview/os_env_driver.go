@@ -28,7 +28,11 @@ func (d *OSEnvDriver) Apply(resource *models.Resource) (*models.Resource, error)
 
 		if len(keyVal) == 2 && keyVal[0] != "" && keyVal[1] != "" &&
 			strings.HasPrefix(keyVal[0], "PORTER_APPLY_") {
-			d.output[strings.TrimPrefix(keyVal[0], "PORTER_APPLY_")] = keyVal[1]
+			envName := strings.TrimPrefix(keyVal[0], "PORTER_APPLY_")
+
+			if len(envName) > 0 {
+				d.output[envName] = keyVal[1]
+			}
 		}
 	}
 

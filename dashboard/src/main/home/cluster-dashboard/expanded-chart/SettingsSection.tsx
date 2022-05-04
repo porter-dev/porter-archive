@@ -16,6 +16,7 @@ import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import { Link } from "react-router-dom";
+import { isDeployedFromGithub } from "shared/release/utils";
 
 type PropsType = {
   currentChart: ChartType;
@@ -212,33 +213,35 @@ const SettingsSection: React.FC<PropsType> = ({
 
     return (
       <>
-        <>
-          <Heading>Source Settings</Heading>
-          <Helper>Specify an image tag to use.</Helper>
-          <ImageSelector
-            selectedTag={selectedTag}
-            selectedImageUrl={selectedImageUrl}
-            setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
-            setSelectedTag={(x: string) => setSelectedTag(x)}
-            forceExpanded={true}
-            disableImageSelect={true}
-          />
-          {!loadingWebhookToken && (
-            <>
-              <Br />
-              <Br />
-              <Br />
-              <SaveButton
-                clearPosition={true}
-                statusPosition="right"
-                text="Save Source Settings"
-                status={saveValuesStatus}
-                onClick={handleSubmit}
-              />
-            </>
-          )}
-          <Br />
-        </>
+        {!isDeployedFromGithub(currentChart) ? (
+          <>
+            <Heading>Source Settings</Heading>
+            <Helper>Specify an image tag to use.</Helper>
+            <ImageSelector
+              selectedTag={selectedTag}
+              selectedImageUrl={selectedImageUrl}
+              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
+              setSelectedTag={(x: string) => setSelectedTag(x)}
+              forceExpanded={true}
+              disableImageSelect={true}
+            />
+            {!loadingWebhookToken && (
+              <>
+                <Br />
+                <Br />
+                <Br />
+                <SaveButton
+                  clearPosition={true}
+                  statusPosition="right"
+                  text="Save Source Settings"
+                  status={saveValuesStatus}
+                  onClick={handleSubmit}
+                />
+              </>
+            )}
+            <Br />
+          </>
+        ) : null}
 
         <>
           <Heading>Redeploy Webhook</Heading>

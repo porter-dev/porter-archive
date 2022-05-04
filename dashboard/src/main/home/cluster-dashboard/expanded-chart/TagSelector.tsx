@@ -103,13 +103,11 @@ const TagSelector = ({ onSave, release }: Props) => {
     <>
       {openModal ? (
         <CreateTagModal
-          onSave={(newTag) =>
-            setValues((prev) => {
-              const newValues = [...prev, newTag];
-              onSave(newValues);
-              return newValues;
-            })
-          }
+          onSave={async (newTag) => {
+            const newValues = [...values, newTag];
+            await onSave(newValues);
+            setValues(newValues);
+          }}
           onClose={() => setOpenModal(false)}
           release={release}
         />
@@ -175,7 +173,7 @@ const CreateTagModal = ({
   onClose,
   release,
 }: {
-  onSave: (tag: any) => void;
+  onSave: ((tag: any) => void) | ((tag: any) => Promise<void>);
   onClose: () => void;
   release: ChartType;
 }) => {
@@ -216,7 +214,7 @@ const CreateTagModal = ({
         }
       );
       setButtonStatus("successful");
-      onSave({ name, color });
+      await onSave({ name, color });
       setTimeout(() => {
         onClose();
       }, 800);

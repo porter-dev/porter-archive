@@ -21,7 +21,7 @@ import TagSelector from "./TagSelector";
 
 type PropsType = {
   currentChart: ChartType;
-  refreshChart: () => void;
+  refreshChart: () => Promise<void>;
   setShowDeleteOverlay: (x: boolean) => void;
   saveButtonText?: string | null;
 };
@@ -218,10 +218,7 @@ const SettingsSection: React.FC<PropsType> = ({
     return (
       <>
         <Heading>Application tags</Heading>
-        <TagSelector
-          release={currentChart}
-          onSave={(val) => console.log(val)}
-        />
+        <TagSelector release={currentChart} onSave={(val) => refreshChart()} />
         {!isDeployedFromGithub(currentChart) ? (
           <>
             <Heading>Source Settings</Heading>

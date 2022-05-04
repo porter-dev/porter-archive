@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Autocomplete as MaterialAutocomplete } from "@material-ui/lab";
 import styled from "styled-components";
 import { Tooltip } from "@material-ui/core";
 import Modal from "main/home/modals/Modal";
@@ -11,9 +10,10 @@ import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 import Helper from "components/form-components/Helper";
 import { differenceBy } from "lodash";
+import SearchSelector from "components/SearchSelector";
 
 type Props = {
-  onSave: (values: any[]) => void;
+  onSave: ((values: any[]) => void) | ((values: any[]) => Promise<void>);
   release: ChartType;
 };
 
@@ -29,7 +29,8 @@ const TagSelector = ({ onSave, release }: Props) => {
   const onDelete = (index: number) => {
     setValues((prev) => {
       const newValues = [...prev];
-      newValues.splice(index, 1);
+      const removedTag = newValues.splice(index, 1);
+      setAvailableTags((prevAt) => [...prevAt, ...removedTag]);
       return newValues;
     });
   };
@@ -40,7 +41,7 @@ const TagSelector = ({ onSave, release }: Props) => {
     try {
       await api.updateReleaseTags(
         "<token>",
-        { tags: [...(release.tags || []), name] },
+        { tags: [...values.map((tag) => tag.name)] },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
@@ -48,7 +49,7 @@ const TagSelector = ({ onSave, release }: Props) => {
           release_name: release.name,
         }
       );
-      onSave(values);
+      await onSave(values);
       setButtonStatus("successful");
     } catch (error) {
       console.log(error);
@@ -76,20 +77,26 @@ const TagSelector = ({ onSave, release }: Props) => {
           release.tags?.includes(tag.name)
         );
         const tmpAvailableTags = differenceBy(data, releaseTags, "name");
-        debugger;
+
         setValues(releaseTags);
         setAvailableTags(tmpAvailableTags);
       });
   }, [currentProject]);
 
   const hasUnsavedChanges = useMemo(() => {
-    const difference = differenceBy(
+    const hasAddedSomething = !!differenceBy(
       values,
       release.tags?.map((tagName: string) => ({ name: tagName })) || [],
       "name"
-    );
+    ).length;
 
-    return !!difference.length;
+    const hasDeletedSomething = !!differenceBy(
+      release.tags?.map((tagName: string) => ({ name: tagName })) || [],
+      values,
+      "name"
+    ).length;
+
+    return hasAddedSomething || hasDeletedSomething;
   }, [values, release]);
 
   return (
@@ -107,30 +114,22 @@ const TagSelector = ({ onSave, release }: Props) => {
           release={release}
         />
       ) : null}
+
       <Flex>
-        <MaterialAutocomplete
-          fullWidth
-          filterSelectedOptions
-          options={availableTags.filter(
-            (option) => !values.find((v) => v.name === option.name)
-          )}
-          onChange={(_, value) => {
+        <SearchSelector
+          options={availableTags}
+          dropdownLabel="Select a tag"
+          filterBy="name"
+          onSelect={(value) => {
+            console.log(value);
+            setAvailableTags((prev) =>
+              prev.filter((prevVal) => prevVal.name !== value.name)
+            );
             setValues((prev) => [...prev, value]);
           }}
           getOptionLabel={(option) => option.name}
-          getOptionSelected={(option, value) => option.name === value}
-          renderInput={(params) => {
-            console.log(params);
-            return (
-              <>
-                <InputWrapper ref={params.InputProps.ref}>
-                  <Input {...params.inputProps} />
-                </InputWrapper>
-                {params.InputProps.startAdornment}
-              </>
-            );
-          }}
-        ></MaterialAutocomplete>
+          renderOptionIcon={(option) => <TagColorBox color={option.color} />}
+        ></SearchSelector>
         <Tooltip title="Create a new tag">
           <AddButton
             className="material-icons-outlined"
@@ -164,7 +163,7 @@ const TagSelector = ({ onSave, release }: Props) => {
           text="Save changes"
           onClick={() => handleSave()}
           status={buttonStatus}
-          disabled={!hasUnsavedChanges}
+          disabled={!hasUnsavedChanges || buttonStatus === "loading"}
         ></SaveButton>
       </Flex>
     </>
@@ -321,7 +320,7 @@ const Tag = styled.div<{ color: string }>`
   > .material-icons {
     font-size: 20px;
     margin-left: 5px;
-    filter: invert(1);
+    mix-blend-mode: difference;
     :hover {
       cursor: pointer;
     }
@@ -336,26 +335,6 @@ const TagText = styled.span`
   text-overflow: ellipsis;
 `;
 
-const InputWrapper = styled.div`
-  display: flex;
-  margin-bottom: -1px;
-  align-items: center;
-  border: 1px solid #ffffff55;
-  border-radius: 3px;
-  background: #ffffff11;
-`;
-
-const Input = styled.input`
-  outline: none;
-  border: none;
-  font-size: 13px;
-  background: none;
-  color: #ffffff;
-  padding: 5px 10px;
-  min-height: 35px;
-  max-height: 45px;
-`;
-
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;
@@ -363,4 +342,12 @@ const Label = styled.div`
   align-items: center;
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
+`;
+
+const TagColorBox = styled.div`
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  border-radius: 5px;
+  background-color: ${(props: { color: string }) => props.color};
 `;

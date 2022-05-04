@@ -14,7 +14,7 @@ package helm
 // TODO -- include support for SQL storage...
 
 import (
-	"github.com/porter-dev/porter/internal/logger"
+	"github.com/porter-dev/porter/pkg/logger"
 
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"

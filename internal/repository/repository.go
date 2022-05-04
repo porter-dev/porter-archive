@@ -36,4 +36,6 @@ type Repository interface {
 	BuildConfig() BuildConfigRepository
 	Allowlist() AllowlistRepository
 	Tag() TagRepository
+	APIToken() APITokenRepository
+	Policy() PolicyRepository
 }

@@ -25,19 +25,10 @@ import { useChart } from "shared/hooks/useChart";
 import Modal from "main/home/modals/Modal";
 import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal";
 import CommandLineIcon from "assets/command-line-icon";
+import { readableDate } from "shared/string_utils";
 import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
 import BuildSettingsTab from "./BuildSettingsTab";
-
-const readableDate = (s: string) => {
-  let ts = new Date(s);
-  let date = ts.toLocaleDateString();
-  let time = ts.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return `${time} on ${date}`;
-};
 
 export const ExpandedJobChartFC: React.FC<{
   namespace: string;

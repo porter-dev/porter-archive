@@ -25,7 +25,7 @@ import {
 type Props = {
   chart: ChartType;
   controllers: Record<string, any>;
-  jobStatus: JobStatusWithTimeType;
+  jobStatus: JobStatusWithTimeType | JobStatusType.Loading;
   isJob: boolean;
   closeChartRedirectUrl?: string;
 };
@@ -173,7 +173,12 @@ const Chart: React.FunctionComponent<Props> = ({
             margin_left={"17px"}
           />
           <LastDeployed>
-            {jobStatus?.status ? (
+            {jobStatus === JobStatusType.Loading ? (
+              <>
+                <Dot>•</Dot>
+                <JobStatus status={jobStatus}>Loading...</JobStatus>
+              </>
+            ) : typeof jobStatus !== "string" && jobStatus?.status ? (
               <>
                 <Dot>•</Dot>
                 <JobStatus status={jobStatus.status}>
@@ -360,6 +365,8 @@ const JobStatus = styled.span<{ status?: JobStatusType }>`
       ? "rgb(56, 168, 138)"
       : props.status === JobStatusType.Failed
       ? "#ff385d"
+      : props.status === JobStatusType.Loading
+      ? "#ffffff90"
       : "#aaaabb66"
   }`}
 `;

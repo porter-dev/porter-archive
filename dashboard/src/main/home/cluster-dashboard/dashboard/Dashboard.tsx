@@ -14,8 +14,15 @@ import Metrics from "./Metrics";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
 import IncidentsTab from "./incidents/IncidentsTab";
+import AlertingSettings from "./alerting/AlertingSettings";
 
-type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents";
+type TabEnum =
+  | "nodes"
+  | "settings"
+  | "namespaces"
+  | "metrics"
+  | "incidents"
+  | "alerting";
 
 const tabOptions: {
   label: string;
@@ -25,6 +32,7 @@ const tabOptions: {
   { label: "Incidents", value: "incidents" },
   { label: "Metrics", value: "metrics" },
   { label: "Namespaces", value: "namespaces" },
+  { label: "Alerting", value: "alerting" },
   { label: "Settings", value: "settings" },
 ];
 
@@ -39,6 +47,8 @@ export const Dashboard: React.FunctionComponent = () => {
     switch (currentTab) {
       case "incidents":
         return <IncidentsTab />;
+      case "alerting":
+        return <AlertingSettings />;
       case "settings":
         return <ClusterSettings />;
       case "metrics":

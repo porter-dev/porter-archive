@@ -56,6 +56,8 @@ const ChartList: React.FunctionComponent<Props> = ({
   >({});
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [selectedTag, setSelectedTag] = useState("");
 
   const context = useContext(Context);
 
@@ -324,6 +326,13 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
 
     const result = charts
+      .filter((chart) => {
+        if (!selectedTag) {
+          return false;
+        }
+
+        return chart.tags.includes(selectedTag);
+      })
       .filter((chart: ChartType) => {
         return (
           (currentView == "jobs" && chart.chart.metadata.name == "job") ||

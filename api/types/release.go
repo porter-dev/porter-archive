@@ -21,6 +21,7 @@ type PorterRelease struct {
 	GitActionConfig *GitActionConfig `json:"git_action_config,omitempty"`
 	ImageRepoURI    string           `json:"image_repo_uri"`
 	BuildConfig     *BuildConfig     `json:"build_config,omitempty"`
+	Tags            []string         `json:"tags,omitempty"`
 }
 
 type GetReleaseResponse Release
@@ -47,6 +48,7 @@ type CreateReleaseRequest struct {
 	ImageURL           string                        `json:"image_url" form:"required"`
 	GithubActionConfig *CreateGitActionConfigRequest `json:"github_action_config,omitempty"`
 	BuildConfig        *CreateBuildConfigRequest     `json:"build_config,omitempty"`
+	Tags               []string                      `json:"tags,omitempty"`
 }
 
 type CreateAddonRequest struct {
@@ -136,3 +138,7 @@ type DNSRecord struct {
 }
 
 type GetReleaseAllPodsResponse []v1.Pod
+
+type PatchUpdateReleaseTags struct {
+	Tags []string `json:"tags"`
+}

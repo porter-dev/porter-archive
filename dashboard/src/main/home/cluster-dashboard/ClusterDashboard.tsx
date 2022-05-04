@@ -60,6 +60,8 @@ type StateType = {
   currentChart: ChartType | null;
   isMetricsInstalled: boolean;
   showRuns: boolean;
+  tags: any[];
+  selectedTag: string;
 };
 
 // TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
@@ -73,6 +75,8 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     currentChart: null as ChartType | null,
     isMetricsInstalled: false,
     showRuns: false,
+    tags: [] as any[],
+    selectedTag: "none",
   };
 
   componentDidMount() {
@@ -98,6 +102,14 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       .catch(() => {
         this.setState({ isMetricsInstalled: false });
       });
+
+    api
+      .getTagsByProjectId("<token>", {}, { project_id: currentProject.id })
+      .then((res) => {
+        const tags = res.data;
+
+        this.setState({ tags });
+      });
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -114,7 +126,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         () => pushQueryParams(this.props, { namespace: "default" })
       );
     }
-
     if (prevProps.currentView !== this.props.currentView) {
       let params = this.props.match.params as any;
       let currentNamespace = params.namespace;
@@ -136,12 +147,48 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
   }
 
-  getDescription = (currentView: string): string => {
-    if (currentView === "jobs") {
-      return "Scripts and tasks that run once or on a repeating interval.";
-    } else {
-      return "Continuously running web services, workers, and add-ons.";
-    }
+  renderCommonFilters = () => {
+    const { currentView } = this.props;
+
+    return (
+      <>
+        <StyledTagSelector>
+          <Label>
+            <i className="material-icons">filter_alt</i>
+            Tag
+          </Label>
+          <Selector
+            activeValue={this.state.selectedTag}
+            options={[{ label: "No tag selected", value: "none" }].concat(
+              this.state.tags.map((tag) => ({
+                value: tag.name,
+                label: tag.name,
+              }))
+            )}
+            setActiveValue={(newVal) => this.setState({ selectedTag: newVal })}
+            width={"150px"}
+            dropdownWidth="fit-content"
+          />
+        </StyledTagSelector>
+
+        <NamespaceSelector
+          setNamespace={(namespace) =>
+            this.setState({ namespace }, () => {
+              console.log(window.location, namespace);
+              pushQueryParams(this.props, {
+                namespace: this.state.namespace || "ALL",
+              });
+            })
+          }
+          namespace={this.state.namespace}
+        />
+        <SortSelector
+          setSortType={(sortType) => this.setState({ sortType })}
+          sortType={this.state.sortType}
+          currentView={currentView}
+        />
+      </>
+    );
   };
 
   renderBodyForApps = () => {
@@ -151,6 +198,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       [],
       ["get", "create"]
     );
+
+    const currentTag = this.state.tags.find(
+      (tag) => tag.name === this.state.selectedTag
+    );
+
     return (
       <>
         <ControlRow>
@@ -163,31 +215,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">add</i> Launch Template
             </Button>
           )}
-          <SortFilterWrapper>
-            {currentView === "jobs" && (
-              <LastRunStatusSelector
-                lastRunStatus={this.state.lastRunStatus}
-                setLastRunStatus={(lastRunStatus: JobStatusType) => {
-                  this.setState({ lastRunStatus });
-                }}
-              />
-            )}
-            <NamespaceSelector
-              setNamespace={(namespace) =>
-                this.setState({ namespace }, () => {
-                  pushQueryParams(this.props, {
-                    namespace: this.state.namespace || "ALL",
-                  });
-                })
-              }
-              namespace={this.state.namespace}
-            />
-            <SortSelector
-              setSortType={(sortType) => this.setState({ sortType })}
-              sortType={this.state.sortType}
-              currentView={currentView}
-            />
-          </SortFilterWrapper>
+          <SortFilterWrapper>{this.renderCommonFilters()}</SortFilterWrapper>
         </ControlRow>
 
         <ChartList
@@ -196,6 +224,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           lastRunStatus={this.state.lastRunStatus}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
+          selectedTag={currentTag}
         />
       </>
     );
@@ -208,6 +237,11 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       [],
       ["get", "create"]
     );
+
+    const currentTag = this.state.tags.find(
+      (tag) => tag.name === this.state.selectedTag
+    );
+
     return (
       <>
         <TabSelector
@@ -235,29 +269,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             </Button>
           )}
           <SortFilterWrapper>
-            {currentView === "jobs" && (
-              <LastRunStatusSelector
-                lastRunStatus={this.state.lastRunStatus}
-                setLastRunStatus={(lastRunStatus: JobStatusType) => {
-                  this.setState({ lastRunStatus });
-                }}
-              />
-            )}
-            <NamespaceSelector
-              setNamespace={(namespace) =>
-                this.setState({ namespace }, () => {
-                  pushQueryParams(this.props, {
-                    namespace: this.state.namespace || "ALL",
-                  });
-                })
-              }
-              namespace={this.state.namespace}
+            <LastRunStatusSelector
+              lastRunStatus={this.state.lastRunStatus}
+              setLastRunStatus={(lastRunStatus: JobStatusType) => {
+                this.setState({ lastRunStatus });
+              }}
             />
-            <SortSelector
-              setSortType={(sortType) => this.setState({ sortType })}
-              sortType={this.state.sortType}
-              currentView={currentView}
-            />
+            {this.renderCommonFilters()}
           </SortFilterWrapper>
         </ControlRow>
         <HidableElement show={this.state.showRuns}>
@@ -274,6 +292,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             lastRunStatus={this.state.lastRunStatus}
             namespace={this.state.namespace}
             sortType={this.state.sortType}
+            selectedTag={currentTag}
           />
         </HidableElement>
       </>
@@ -303,7 +322,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           <DashboardHeader
             image={monojob}
             title={currentView}
-            description={this.getDescription(currentView)}
+            description="Scripts and tasks that run once or on a repeating interval."
             disableLineBreak
           />
 
@@ -315,11 +334,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           resource=""
           verb={["get", "list"]}
         >
-          {/* {this.renderContents()} */}
           <DashboardHeader
             image={monoweb}
             title={currentView}
-            description={this.getDescription(currentView)}
+            description="Continuously running web services, workers, and add-ons."
           />
 
           {this.renderBodyForApps()}
@@ -509,4 +527,21 @@ const SortFilterWrapper = styled.div`
   > div:not(:first-child) {
     margin-left: 30px;
   }
+`;
+
+const Label = styled.div`
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+
+  > i {
+    margin-right: 8px;
+    font-size: 18px;
+  }
+`;
+
+const StyledTagSelector = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 13px;
 `;

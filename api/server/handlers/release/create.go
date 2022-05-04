@@ -119,6 +119,14 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if request.Tags != nil {
+		tags, err := c.Config().Repo.Tag().LinkTagsToRelease(request.Tags, release)
+
+		if err == nil {
+			release.Tags = append(release.Tags, tags...)
+		}
+	}
+
 	if request.GithubActionConfig != nil {
 		_, _, err := createGitAction(
 			c.Config(),

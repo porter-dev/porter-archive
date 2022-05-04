@@ -39,6 +39,7 @@ type TestRepository struct {
 	buildConfig               repository.BuildConfigRepository
 	database                  repository.DatabaseRepository
 	allowlist                 repository.AllowlistRepository
+	tag                       repository.TagRepository
 	apiToken                  repository.APITokenRepository
 	policy                    repository.PolicyRepository
 }
@@ -179,6 +180,10 @@ func (t *TestRepository) Allowlist() repository.AllowlistRepository {
 	return t.allowlist
 }
 
+func (t *TestRepository) Tag() repository.TagRepository {
+	return t.tag
+}
+
 func (t *TestRepository) APIToken() repository.APITokenRepository {
 	return t.apiToken
 }
@@ -225,6 +230,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		buildConfig:               NewBuildConfigRepository(canQuery),
 		database:                  NewDatabaseRepository(),
 		allowlist:                 NewAllowlistRepository(canQuery),
+		tag:                       NewTagRepository(),
 		apiToken:                  NewAPITokenRepository(canQuery),
 		policy:                    NewPolicyRepository(canQuery),
 	}

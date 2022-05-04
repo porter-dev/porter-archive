@@ -41,6 +41,7 @@ type GormRepository struct {
 	ceToken                   repository.CredentialsExchangeTokenRepository
 	buildConfig               repository.BuildConfigRepository
 	allowlist                 repository.AllowlistRepository
+	tag                       repository.TagRepository
 	apiToken                  repository.APITokenRepository
 	policy                    repository.PolicyRepository
 }
@@ -181,6 +182,10 @@ func (t *GormRepository) Allowlist() repository.AllowlistRepository {
 	return t.allowlist
 }
 
+func (t *GormRepository) Tag() repository.TagRepository {
+	return t.tag
+}
+
 func (t *GormRepository) APIToken() repository.APITokenRepository {
 	return t.apiToken
 }
@@ -227,6 +232,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		ceToken:                   NewCredentialsExchangeTokenRepository(db),
 		buildConfig:               NewBuildConfigRepository(db),
 		allowlist:                 NewAllowlistRepository(db),
+		tag:                       NewTagRepository(db),
 		apiToken:                  NewAPITokenRepository(db),
 		policy:                    NewPolicyRepository(db),
 	}

@@ -28,6 +28,7 @@ type Props = {
   currentView: PorterUrl;
   disableBottomPadding?: boolean;
   closeChartRedirectUrl?: string;
+  selectedTag?: any;
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -41,6 +42,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   currentView,
   disableBottomPadding,
   closeChartRedirectUrl,
+  selectedTag,
 }) => {
   const {
     newWebsocket,
@@ -438,6 +440,15 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
 
     const result = charts
+      .filter((chart) => {
+        if (!selectedTag) {
+          return true;
+        }
+
+        return !!selectedTag.releases?.find((release: ChartType) => {
+          return release.name === chart.name;
+        });
+      })
       .filter((chart: ChartType) => {
         return (
           (currentView == "jobs" && chart.chart.metadata.name == "job") ||
@@ -513,7 +524,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     }
 
     return result;
-  }, [charts, sortType, jobStatus, lastRunStatus]);
+  }, [charts, sortType, jobStatus, lastRunStatus, selectedTag]);
 
   const isLoadingJobStatus = useMemo(() => {
     if (currentView === "applications") {

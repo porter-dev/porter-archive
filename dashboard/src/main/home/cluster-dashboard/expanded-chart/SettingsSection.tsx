@@ -56,9 +56,6 @@ const SettingsSection: React.FC<PropsType> = ({
     Context
   );
 
-  const [fullTagList, setFullTagList] = useState([]);
-  const [selectedTags, setSelectedTags] = useState([]);
-
   const [isAuthorized] = useAuth();
 
   useEffect(() => {
@@ -94,14 +91,6 @@ const SettingsSection: React.FC<PropsType> = ({
       isSubscribed = false;
     };
   }, [currentChart, currentCluster, currentProject]);
-
-  useEffect(() => {
-    api
-      .getTagsByProjectId("<token>", {}, { project_id: currentProject.id })
-      .then(({ data }) => {
-        setFullTagList(data);
-      });
-  }, [currentProject]);
 
   const handleSubmit = async () => {
     setSaveValuesStatus("loading");
@@ -231,13 +220,7 @@ const SettingsSection: React.FC<PropsType> = ({
         <Heading>Application tags</Heading>
         <TagSelector
           release={currentChart}
-          defaultValue={
-            currentChart.tags?.map((tagName: string) => ({
-              name: tagName,
-            })) || []
-          }
-          onChange={(value) => setSelectedTags(value)}
-          options={fullTagList}
+          onSave={(val) => console.log(val)}
         />
         {!isDeployedFromGithub(currentChart) ? (
           <>

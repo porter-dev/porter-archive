@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Autocomplete as MaterialAutocomplete } from "@material-ui/lab";
 import styled from "styled-components";
 import { Tooltip } from "@material-ui/core";
@@ -9,21 +9,22 @@ import SaveButton from "components/SaveButton";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
+import Helper from "components/form-components/Helper";
+import { differenceBy } from "lodash";
 
 type Props = {
-  options: any[];
-  defaultValue: any[];
-  onChange: (values: any[]) => void;
+  onSave: (values: any[]) => void;
   release: ChartType;
 };
 
-const TagSelector = ({ options, defaultValue, onChange, release }: Props) => {
-  const [values, setValues] = useState(() => defaultValue || []);
+const TagSelector = ({ onSave, release }: Props) => {
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
+  const [values, setValues] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
   const [openModal, setOpenModal] = useState(false);
-
-  useEffect(() => {
-    onChange(values);
-  }, [values]);
+  const [buttonStatus, setButtonStatus] = useState("");
 
   const onDelete = (index: number) => {
     setValues((prev) => {
@@ -33,11 +34,75 @@ const TagSelector = ({ options, defaultValue, onChange, release }: Props) => {
     });
   };
 
+  const handleSave = async () => {
+    setButtonStatus("loading");
+
+    try {
+      await api.updateReleaseTags(
+        "<token>",
+        { tags: [...(release.tags || []), name] },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: release.namespace,
+          release_name: release.name,
+        }
+      );
+      onSave(values);
+      setButtonStatus("successful");
+    } catch (error) {
+      console.log(error);
+      setCurrentError(
+        "We couldn't link the tag to the release, please try again."
+      );
+      setButtonStatus("Couldn't link the tag to the release");
+      return;
+    } finally {
+      setTimeout(() => {
+        setButtonStatus("");
+      }, 800);
+    }
+  };
+
+  useEffect(() => {
+    api
+      .getTagsByProjectId<any[]>(
+        "<token>",
+        {},
+        { project_id: currentProject.id }
+      )
+      .then(({ data }) => {
+        const releaseTags = data.filter((tag) =>
+          release.tags?.includes(tag.name)
+        );
+        const tmpAvailableTags = differenceBy(data, releaseTags, "name");
+        debugger;
+        setValues(releaseTags);
+        setAvailableTags(tmpAvailableTags);
+      });
+  }, [currentProject]);
+
+  const hasUnsavedChanges = useMemo(() => {
+    const difference = differenceBy(
+      values,
+      release.tags?.map((tagName: string) => ({ name: tagName })) || [],
+      "name"
+    );
+
+    return !!difference.length;
+  }, [values, release]);
+
   return (
     <>
       {openModal ? (
         <CreateTagModal
-          onSave={(newTag) => setValues((prev) => [...prev, newTag])}
+          onSave={(newTag) =>
+            setValues((prev) => {
+              const newValues = [...prev, newTag];
+              onSave(newValues);
+              return newValues;
+            })
+          }
           onClose={() => setOpenModal(false)}
           release={release}
         />
@@ -46,7 +111,7 @@ const TagSelector = ({ options, defaultValue, onChange, release }: Props) => {
         <MaterialAutocomplete
           fullWidth
           filterSelectedOptions
-          options={options.filter(
+          options={availableTags.filter(
             (option) => !values.find((v) => v.name === option.name)
           )}
           onChange={(_, value) => {
@@ -87,6 +152,21 @@ const TagSelector = ({ options, defaultValue, onChange, release }: Props) => {
           </Tag>
         );
       })}
+      <Flex
+        style={{
+          marginTop: "35px",
+        }}
+      >
+        <SaveButton
+          helper={hasUnsavedChanges ? "Unsaved changes" : ""}
+          clearPosition
+          statusPosition="right"
+          text="Save changes"
+          onClick={() => handleSave()}
+          status={buttonStatus}
+          disabled={!hasUnsavedChanges}
+        ></SaveButton>
+      </Flex>
     </>
   );
 };
@@ -138,7 +218,9 @@ const CreateTagModal = ({
       );
       setButtonStatus("successful");
       onSave({ name, color });
-      onClose();
+      setTimeout(() => {
+        onClose();
+      }, 800);
     } catch (error) {
       console.log(error);
       setCurrentError(
@@ -151,6 +233,11 @@ const CreateTagModal = ({
 
   return (
     <Modal title="Create a new tag" onRequestClose={onClose} height="auto">
+      <Helper>
+        Create a new tag and link the release you're currently at to the brand
+        new tag.
+      </Helper>
+
       <InputRow
         type="text"
         label="Tag name"
@@ -170,11 +257,18 @@ const CreateTagModal = ({
       <Tag color={color} style={{ maxWidth: "none", marginTop: "0px" }}>
         <TagText>{name}</TagText>
       </Tag>
-      <SaveButton
-        onClick={() => createTag()}
-        text={"Create Tag"}
-        disabled={!name.length || buttonStatus === "loading"}
-      ></SaveButton>
+      <Flex
+        style={{
+          justifyContent: "flex-end",
+        }}
+      >
+        <SaveButton
+          clearPosition
+          onClick={() => createTag()}
+          text={"Create Tag"}
+          disabled={!name.length || buttonStatus === "loading"}
+        ></SaveButton>
+      </Flex>
     </Modal>
   );
 };

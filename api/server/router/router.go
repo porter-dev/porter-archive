@@ -104,6 +104,29 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		registerRoutes(config, allRoutes)
 	})
 
+	r.Route("/api/v1", func(r chi.Router) {
+		// set panic middleware for all API endpoints to catch panics
+		r.Use(panicMW.Middleware)
+
+		// set the content type for all API endpoints and log all request info
+		r.Use(middleware.ContentTypeJSON)
+
+		var allRoutes []*Route
+
+		v1NamespaceRoutes := NewV1ClusterScopedRegisterer().GetRoutes(
+			r,
+			config,
+			&types.Path{
+				RelativePath: "",
+			},
+			endpointFactory,
+		)
+
+		allRoutes = append(allRoutes, v1NamespaceRoutes...)
+
+		registerRoutes(config, allRoutes)
+	})
+
 	staticFilePath := config.ServerConf.StaticFilePath
 	fs := http.FileServer(http.Dir(staticFilePath))
 

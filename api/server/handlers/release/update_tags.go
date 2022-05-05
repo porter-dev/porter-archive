@@ -63,7 +63,7 @@ func (c *UpdateReleaseTagsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	release, err = c.Config().Repo.Release().ReadRelease(cluster.ID, name, namespace)
+	release, _ = c.Config().Repo.Release().ReadRelease(cluster.ID, name, namespace)
 
 	w.WriteHeader(http.StatusCreated)
 	c.WriteResult(w, r, release)

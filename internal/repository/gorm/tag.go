@@ -40,7 +40,9 @@ func (repo *TagRepository) LinkTagsToRelease(tags []string, release *models.Rele
 		return nil, err
 	}
 
-	err = repo.db.Model(&release).Association("Tags").Append(populatedTags)
+	release.Tags = populatedTags
+
+	err = repo.db.Save(release).Error
 
 	if err != nil {
 		return nil, err
@@ -50,11 +52,8 @@ func (repo *TagRepository) LinkTagsToRelease(tags []string, release *models.Rele
 }
 
 func (repo *TagRepository) UnlinkTagsFromRelease(tags []string, release *models.Release) error {
-	fmt.Println(tags)
 	populatedTags := make([]*models.Tag, 0)
 	err := repo.db.Model(&models.Tag{}).Where("name IN ?", tags).Where("project_id = ?", release.ProjectID).Find(&populatedTags).Error
-
-	fmt.Println(populatedTags)
 
 	if err != nil {
 		return err

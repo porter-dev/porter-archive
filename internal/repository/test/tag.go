@@ -27,10 +27,9 @@ func (repo *TagRepository) UpdateTag(tag *models.Tag) (*models.Tag, error) {
 func (repo *TagRepository) DeleteTag(id uint) error {
 	panic("not implemented")
 }
-func (repo *TagRepository) AddTagToRelease(release *models.Release, tag *models.Tag) error {
+func (repo *TagRepository) UnlinkTagsFromRelease(tags []string, release *models.Release) error {
 	panic("not implemented")
 }
-
-func (repo *TagRepository) RemoveTagFromRelease(release *models.Release, tag *models.Tag) error {
+func (repo *TagRepository) LinkTagsToRelease(tags []string, release *models.Release) ([]*models.Tag, error) {
 	panic("not implemented")
 }

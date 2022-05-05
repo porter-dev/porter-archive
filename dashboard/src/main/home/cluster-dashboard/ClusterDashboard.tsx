@@ -79,6 +79,18 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     selectedTag: "none",
   };
 
+  getTags() {
+    const { currentProject } = this.context;
+
+    api
+      .getTagsByProjectId("<token>", {}, { project_id: currentProject.id })
+      .then((res) => {
+        const tags = res.data;
+
+        this.setState({ tags });
+      });
+  }
+
   componentDidMount() {
     let { currentCluster, currentProject } = this.context;
     let params = this.props.match.params as any;
@@ -103,13 +115,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         this.setState({ isMetricsInstalled: false });
       });
 
-    api
-      .getTagsByProjectId("<token>", {}, { project_id: currentProject.id })
-      .then((res) => {
-        const tags = res.data;
-
-        this.setState({ tags });
-      });
+    this.getTags();
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -144,6 +150,8 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               this.state.namespace === null ? "default" : this.state.namespace,
           })
       );
+
+      this.getTags();
     }
   }
 

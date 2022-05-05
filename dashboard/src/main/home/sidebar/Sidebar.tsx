@@ -14,7 +14,7 @@ import { Context } from "shared/Context";
 import ClusterSection from "./ClusterSection";
 import ProjectSectionContainer from "./ProjectSectionContainer";
 import { RouteComponentProps, withRouter } from "react-router";
-import { pushFiltered } from "shared/routing";
+import { getQueryParam, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { NavLink } from "react-router-dom";
 
@@ -115,6 +115,10 @@ class Sidebar extends Component<PropsType, StateType> {
               let pathNamespace = params.namespace;
               let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
+              if (!pathNamespace) {
+                pathNamespace = getQueryParam(this.props, "namespace");
+              }
+
               if (pathNamespace) {
                 search = search.concat(`&namespace=${pathNamespace}`);
               }
@@ -135,6 +139,10 @@ class Sidebar extends Component<PropsType, StateType> {
               let pathNamespace = params.namespace;
               let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
 
+              if (!pathNamespace) {
+                pathNamespace = getQueryParam(this.props, "namespace");
+              }
+
               if (pathNamespace) {
                 search = search.concat(`&namespace=${pathNamespace}`);
               }
@@ -154,6 +162,10 @@ class Sidebar extends Component<PropsType, StateType> {
               let params = this.props.match.params as any;
               let pathNamespace = params.namespace;
               let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
+
+              if (!pathNamespace) {
+                pathNamespace = getQueryParam(this.props, "namespace");
+              }
 
               if (pathNamespace) {
                 search = search.concat(`&namespace=${pathNamespace}`);

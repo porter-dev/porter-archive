@@ -13,7 +13,7 @@ import Modal from "../../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
-import _, { omit } from "lodash";
+import _, { isObject, omit } from "lodash";
 import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import Loading from "components/Loading";
@@ -595,37 +595,46 @@ const ExpandableEnvGroup: React.FC<{
         {isExpanded && (
           <>
             <Buffer />
-            {Object.entries(envGroup.variables || {})?.map(
-              ([key, value], i: number) => {
-                // Preprocess non-string env values set via raw Helm values
-                if (typeof value === "object") {
-                  value = JSON.stringify(value);
-                } else {
-                  value = String(value);
-                }
+            {isObject(envGroup.variables) ? (
+              <>
+                {Object.entries(envGroup.variables || {})?.map(
+                  ([key, value], i: number) => {
+                    // Preprocess non-string env values set via raw Helm values
+                    if (typeof value === "object") {
+                      value = JSON.stringify(value);
+                    } else {
+                      value = String(value);
+                    }
 
-                return (
-                  <InputWrapper key={i}>
-                    <Input
-                      placeholder="ex: key"
-                      width="270px"
-                      value={key}
-                      disabled
-                    />
-                    <Spacer />
-                    <Input
-                      placeholder="ex: value"
-                      width="270px"
-                      value={value}
-                      disabled
-                      type={
-                        value.includes("PORTERSECRET") ? "password" : "text"
-                      }
-                    />
-                  </InputWrapper>
-                );
-              }
+                    return (
+                      <InputWrapper key={i}>
+                        <Input
+                          placeholder="ex: key"
+                          width="270px"
+                          value={key}
+                          disabled
+                        />
+                        <Spacer />
+                        <Input
+                          placeholder="ex: value"
+                          width="270px"
+                          value={value}
+                          disabled
+                          type={
+                            value.includes("PORTERSECRET") ? "password" : "text"
+                          }
+                        />
+                      </InputWrapper>
+                    );
+                  }
+                )}
+              </>
+            ) : (
+              <NoVariablesTextWrapper>
+                This env group has no variables yet
+              </NoVariablesTextWrapper>
             )}
+
             <Br />
           </>
         )}
@@ -872,4 +881,11 @@ const ActionButton = styled.button`
   > span {
     font-size: 20px;
   }
+`;
+
+const NoVariablesTextWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff99;
 `;

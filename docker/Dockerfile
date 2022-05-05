@@ -13,6 +13,7 @@ COPY /internal ./internal
 COPY /api ./api
 COPY /scripts ./scripts
 COPY /provisioner ./provisioner
+COPY /pkg ./pkg
 
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
 RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1

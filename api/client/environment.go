@@ -109,13 +109,12 @@ func (c *Client) FinalizeDeployment(
 
 func (c *Client) DeleteDeployment(
 	ctx context.Context,
-	projID, clusterID uint,
-	envID, gitRepoOwner, gitRepoName, prNumber string,
+	projID, clusterID, deploymentID uint,
 ) error {
 	return c.deleteRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/deployments/%s/%s/%s/%s",
-			projID, clusterID, envID, gitRepoOwner, gitRepoName, prNumber,
+			"/projects/%d/clusters/%d/deployments/%d",
+			projID, clusterID, deploymentID,
 		),
 		nil, nil,
 	)

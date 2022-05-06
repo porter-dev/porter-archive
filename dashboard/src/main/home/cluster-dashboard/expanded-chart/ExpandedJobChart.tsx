@@ -94,10 +94,11 @@ export const ExpandedJobChartFC: React.FC<{
 
   const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
 
-  const processValuesToUpdateChart = (newConfig?: any) => (
-    currentChart: ChartType
-  ) => {
-    // return "";
+  const processValuesToUpdateChart = (props?: {
+    values: any;
+    metadata: any;
+  }) => (currentChart: ChartType) => {
+    const newConfig = props.values;
     let conf: string;
     let values = currentChart.config;
 
@@ -117,7 +118,7 @@ export const ExpandedJobChartFC: React.FC<{
       conf = yaml.dump(values, { forceQuotes: true });
     }
 
-    return conf;
+    return { yaml: conf, metadata: props.metadata };
   };
 
   const handleDeleteChart = async () => {
@@ -250,7 +251,7 @@ export const ExpandedJobChartFC: React.FC<{
     }
 
     if (currentTab === "build-settings") {
-      return <BuildSettingsTab chart={chart} />;
+      return <BuildSettingsTab chart={chart} isPreviousVersion={disableForm} />;
     }
 
     if (
@@ -357,6 +358,7 @@ export const ExpandedJobChartFC: React.FC<{
               onSubmit={(formValues) =>
                 updateChart(processValuesToUpdateChart(formValues))
               }
+              includeMetadata
               leftTabOptions={leftTabOptions}
               rightTabOptions={rightTabOptions}
               saveValuesStatus={saveStatus}

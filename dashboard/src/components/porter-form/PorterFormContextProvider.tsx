@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer } from "react";
 import {
   GetFinalVariablesFunction,
+  GetMetadataFunction,
   PorterFormAction,
   PorterFormData,
   PorterFormState,
@@ -15,22 +16,38 @@ import {
   ShowIfOr,
 } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
-import { getFinalVariablesForKeyValueArray } from "./field-components/KeyValueArray";
+import {
+  getFinalVariablesForKeyValueArray,
+  getMetadata as getMetadataForKeyValueArray,
+} from "./field-components/KeyValueArray";
 import { Context } from "../../shared/Context";
 import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
 import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
 import { getFinalVariablesForSelect } from "./field-components/Select";
-import api from "shared/api";
 
-interface Props {
+export interface BaseProps {
   rawFormData: PorterFormData;
-  onSubmit: (vars: PorterFormVariableList, cb?: () => void) => void;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
   includeHiddenFields?: boolean;
   isReadOnly?: boolean;
   doDebug?: boolean;
 }
+
+export interface PropsWithMetadata extends BaseProps {
+  onSubmit: (
+    data: { vars: PorterFormVariableList; metadata: PorterFormVariableList },
+    cb?: () => void
+  ) => void;
+  includeMetadata: true;
+}
+
+export interface PropsWithoutMetadata extends BaseProps {
+  onSubmit: (vars: PorterFormVariableList, cb?: () => void) => void;
+  includeMetadata: false;
+}
+
+export type Props = PropsWithMetadata | PropsWithoutMetadata;
 
 interface ContextProps {
   formData: PorterFormData;
@@ -43,7 +60,7 @@ interface ContextProps {
 }
 
 export const PorterFormContext = createContext<ContextProps | undefined>(
-  undefined!
+  undefined
 );
 const { Provider } = PorterFormContext;
 
@@ -453,6 +470,41 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         })
       )
     );
+
+    if (props.includeMetadata) {
+      const metadataFunctions: Record<string, GetMetadataFunction> = {
+        "key-value-array": getMetadataForKeyValueArray,
+      };
+      const metadataList: PorterFormVariableList[] = [];
+      data?.tabs?.map((tab) =>
+        tab.sections?.map((section) =>
+          section.contents?.map((field) => {
+            if (metadataFunctions[field?.type]) {
+              metadataList.push(
+                metadataFunctions[field?.type](
+                  state.variables,
+                  field,
+                  state.components[field.id]?.state,
+                  context
+                )
+              );
+            }
+          })
+        )
+      );
+
+      if (props.doDebug)
+        console.log({
+          values: Object.assign.apply({}, varList),
+          metadata: Object.assign.apply({}, metadataList),
+        });
+
+      return {
+        values: Object.assign.apply({}, varList),
+        metadata: Object.assign.apply({}, metadataList),
+      };
+    }
+
     if (props.doDebug) console.log(Object.assign.apply({}, varList));
 
     return Object.assign.apply({}, varList);

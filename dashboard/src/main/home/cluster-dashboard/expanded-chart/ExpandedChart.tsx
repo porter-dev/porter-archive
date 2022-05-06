@@ -221,7 +221,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
   };
 
-  const onSubmit = async (rawValues: any) => {
+  const onSubmit = async (props: any) => {
+    const rawValues = props.values;
+
     // console.log("raw", rawValues);
     // Convert dotted keys to nested objects
     let values: any = {};
@@ -244,29 +246,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
       ...values,
     });
 
-    const oldSyncedEnvGroups =
-      props.currentChart.config?.container?.env?.synced || [];
-    const newSyncedEnvGroups = values?.container?.env?.synced || [];
+    const deletedEnvGroups = props?.metadata?.deleted || [];
 
-    const deletedEnvGroups = onlyInLeft<{
-      keys: Array<any>;
-      name: string;
-      version: number;
-    }>(
-      oldSyncedEnvGroups,
-      newSyncedEnvGroups,
-      (oldVal, newVal) => oldVal.name === newVal.name
-    );
-
-    const addedEnvGroups = onlyInLeft<{
-      keys: Array<any>;
-      name: string;
-      version: number;
-    }>(
-      newSyncedEnvGroups,
-      oldSyncedEnvGroups,
-      (oldVal, newVal) => oldVal.name === newVal.name
-    );
+    const addedEnvGroups = props?.metadata?.added || [];
 
     const addApplicationToEnvGroupPromises = addedEnvGroups.map(
       (envGroup: any) => {
@@ -869,6 +851,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                       !isAuthorized("application", "", ["get", "update"])
                     }
                     onSubmit={onSubmit}
+                    includeMetadata
                     rightTabOptions={rightTabOptions}
                     leftTabOptions={leftTabOptions}
                     color={isPreview ? "#f5cb42" : null}

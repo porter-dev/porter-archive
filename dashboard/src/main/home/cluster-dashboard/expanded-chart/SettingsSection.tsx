@@ -217,8 +217,6 @@ const SettingsSection: React.FC<PropsType> = ({
 
     return (
       <>
-        <Heading>Application tags</Heading>
-        <TagSelector release={currentChart} onSave={(val) => refreshChart()} />
         {!isDeployedFromGithub(currentChart) ? (
           <>
             <Heading>Source Settings</Heading>
@@ -282,6 +280,9 @@ const SettingsSection: React.FC<PropsType> = ({
             </Webhook>
           )}
         </>
+        <Heading>Application Tags</Heading>
+        <Helper>Add tags for filtering applications.</Helper>
+        <TagSelector release={currentChart} onSave={(val) => refreshChart()} />
       </>
     );
   };
@@ -342,6 +343,12 @@ const SettingsSection: React.FC<PropsType> = ({
 };
 
 export default SettingsSection;
+
+const DarkMatter = styled.div`
+  width: 100%;
+  height: 0;
+  margin-top: -10px;
+`;
 
 const Br = styled.div`
   width: 100%;

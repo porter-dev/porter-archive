@@ -6,6 +6,7 @@ import { TwitterPicker } from "react-color";
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
 import api from "shared/api";
+import Color from "color";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
 import Helper from "components/form-components/Helper";
@@ -99,22 +100,8 @@ const TagSelector = ({ onSave, release }: Props) => {
     return hasAddedSomething || hasDeletedSomething;
   }, [values, release]);
 
-  return (
-    <>
-      {openModal ? (
-        <CreateTagModal
-          onSave={async (newTag) => {
-            const newValues = [...values, newTag];
-            await onSave(newValues);
-            setValues(newValues);
-          }}
-          onClose={() => setOpenModal(false)}
-          release={release}
-        />
-      ) : null}
-
-      <Flex>
-        <SearchSelector
+  /*
+          <SearchSelector
           options={availableTags}
           dropdownLabel="Select a tag"
           filterBy="name"
@@ -128,6 +115,33 @@ const TagSelector = ({ onSave, release }: Props) => {
           getOptionLabel={(option) => option.name}
           renderOptionIcon={(option) => <TagColorBox color={option.color} />}
         ></SearchSelector>
+  */
+  return (
+    <>
+      {openModal ? (
+        <CreateTagModal
+          onSave={async (newTag) => {
+            const newValues = [...values, newTag];
+            await onSave(newValues);
+            setValues(newValues);
+          }}
+          onClose={() => setOpenModal(false)}
+          release={release}
+        />
+      ) : null}
+      <Flex>
+        {values.map((val, index) => {
+          return (
+            <Tag color={val.color} key={index}>
+              <Tooltip title={val.name}>
+                <TagText>{val.name}</TagText>
+              </Tooltip>
+              <i className="material-icons" onClick={() => onDelete(index)}>
+                cancel
+              </i>
+            </Tag>
+          );
+        })}
         <Tooltip title="Create a new tag">
           <AddButton
             className="material-icons-outlined"
@@ -137,21 +151,9 @@ const TagSelector = ({ onSave, release }: Props) => {
           </AddButton>
         </Tooltip>
       </Flex>
-      {values.map((val, index) => {
-        return (
-          <Tag color={val.color} key={index}>
-            <Tooltip title={val.name}>
-              <TagText>{val.name}</TagText>
-            </Tooltip>
-            <i className="material-icons" onClick={() => onDelete(index)}>
-              delete
-            </i>
-          </Tag>
-        );
-      })}
       <Flex
         style={{
-          marginTop: "35px",
+          marginTop: "25px",
         }}
       >
         <SaveButton
@@ -164,9 +166,15 @@ const TagSelector = ({ onSave, release }: Props) => {
           disabled={!hasUnsavedChanges || buttonStatus === "loading"}
         ></SaveButton>
       </Flex>
+      <Br />
     </>
   );
 };
+
+const Br = styled.div`
+  width: 100%;
+  height: 10px;
+`;
 
 const CreateTagModal = ({
   onSave,
@@ -280,12 +288,15 @@ const AddButton = styled.div`
   border-radius: 50%;
   border: 1px solid #ffffff11;
   padding: 5px;
+  height: 20px;
+  width: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-left: 10px;
   background: #ffffff11;
   color: #ffffff88;
+  font-size: 18px;
   :hover {
     background: #ffffff22;
     color: #ffffff;
@@ -295,20 +306,19 @@ const AddButton = styled.div`
 
 const Tag = styled.div<{ color: string }>`
   display: inline-flex;
-  color: ${(props) => props.color || "inherit"};
+  color: ${(props) => Color(props.color).darken(0.4).string() || "inherit"};
   user-select: none;
-  border: 1px solid black;
-  border-radius: 15px;
-  padding: 5px 10px;
+  border: 1px solid ${props => Color(props.color).darken(0.4).string()};
+  border-radius: 5px;
+  padding: 4px 8px;
+  position: relative;
+  padding-right: 24px;
   text-align: center;
   align-items: center;
-  font-size: 14px;
+  font-size: 13px;
   background-color: ${(props) => props.color || "inherit"};
-  margin-top: 15px;
-  margin-bottom: 5px;
 
   max-width: 150px;
-  min-height: 30px;
   min-width: 60px;
 
   :not(:last-child) {
@@ -316,9 +326,10 @@ const Tag = styled.div<{ color: string }>`
   }
 
   > .material-icons {
-    font-size: 20px;
-    margin-left: 5px;
-    mix-blend-mode: difference;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 16px;
     :hover {
       cursor: pointer;
     }
@@ -326,8 +337,6 @@ const Tag = styled.div<{ color: string }>`
 `;
 
 const TagText = styled.span`
-  mix-blend-mode: difference;
-
   overflow-x: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

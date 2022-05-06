@@ -32,7 +32,7 @@ const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
   return (
     <StyledTagSelector>
       <Label>
-        <i className="material-icons">filter_alt</i>
+        <i className="material-icons">tag</i>
         Tag
       </Label>
       <Selector

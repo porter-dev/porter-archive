@@ -40,7 +40,7 @@ func (c *UpdateReleaseTagsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	release, err := c.Config().Repo.Release().ReadRelease(cluster.ID, name, namespace)
+	release, err := c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -49,21 +49,25 @@ func (c *UpdateReleaseTagsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	tagsToDelete := difference(release.ToReleaseType().Tags, request.Tags)
 
-	err = c.Config().Repo.Tag().UnlinkTagsFromRelease(tagsToDelete, release)
+	err = c.Repo().Tag().UnlinkTagsFromRelease(tagsToDelete, release)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	_, err = c.Config().Repo.Tag().LinkTagsToRelease(request.Tags, release)
+	_, err = c.Repo().Tag().LinkTagsToRelease(request.Tags, release)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	release, _ = c.Config().Repo.Release().ReadRelease(cluster.ID, name, namespace)
+	release, err = c.Repo().Release().ReadRelease(cluster.ID, name, namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	c.WriteResult(w, r, release)

@@ -34,7 +34,7 @@ func (repo *TagRepository) CreateTag(tag *models.Tag) (*models.Tag, error) {
 
 func (repo *TagRepository) LinkTagsToRelease(tags []string, release *models.Release) ([]*models.Tag, error) {
 	populatedTags := make([]*models.Tag, 0)
-	err := repo.db.Model(&models.Tag{}).Where("name IN ?", tags).Where("project_id = ?", release.ProjectID).Find(&populatedTags).Error
+	err := repo.db.Where("name IN ?", tags).Where("project_id = ?", release.ProjectID).Find(&populatedTags).Error
 
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (repo *TagRepository) LinkTagsToRelease(tags []string, release *models.Rele
 
 func (repo *TagRepository) UnlinkTagsFromRelease(tags []string, release *models.Release) error {
 	populatedTags := make([]*models.Tag, 0)
-	err := repo.db.Model(&models.Tag{}).Where("name IN ?", tags).Where("project_id = ?", release.ProjectID).Find(&populatedTags).Error
+	err := repo.db.Where("name IN ?", tags).Where("project_id = ?", release.ProjectID).Find(&populatedTags).Error
 
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (repo *TagRepository) ReadTagByNameAndProjectId(tagName string, projectId u
 func (repo *TagRepository) ListTagsByProjectId(projectId uint) ([]*models.Tag, error) {
 	tags := make([]*models.Tag, 0)
 
-	err := repo.db.Model(&models.Tag{}).Where("project_id = ?", projectId).Preload("Releases").Find(&tags).Error
+	err := repo.db.Preload("Releases").Where("project_id = ?", projectId).Find(&tags).Error
 
 	if err != nil {
 		return nil, err

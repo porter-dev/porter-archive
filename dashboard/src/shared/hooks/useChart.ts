@@ -125,34 +125,17 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
    */
   const updateChart = async (
     processValues:
-      | ((chart: ChartType) => string)
-      | ((chart: ChartType, oldChart?: ChartType) => string)
+      | ((chart: ChartType) => { yaml: string; metadata: any })
+      | ((
+          chart: ChartType,
+          oldChart?: ChartType
+        ) => { yaml: string; metadata: any })
   ) => {
     setSaveStatus("loading");
-    const values = processValues(chart, oldChart);
+    const { yaml: values, metadata } = processValues(chart, oldChart);
 
-    const oldSyncedEnvGroups = oldChart.config?.container?.env?.synced || [];
-    const newSyncedEnvGroups = chart.config?.container?.env?.synced || [];
-
-    const deletedEnvGroups = onlyInLeft<{
-      keys: Array<any>;
-      name: string;
-      version: number;
-    }>(
-      oldSyncedEnvGroups,
-      newSyncedEnvGroups,
-      (oldVal, newVal) => oldVal.name === newVal.name
-    );
-
-    const addedEnvGroups = onlyInLeft<{
-      keys: Array<any>;
-      name: string;
-      version: number;
-    }>(
-      newSyncedEnvGroups,
-      oldSyncedEnvGroups,
-      (oldVal, newVal) => oldVal.name === newVal.name
-    );
+    const addedEnvGroups = metadata?.added || [];
+    const deletedEnvGroups = metadata?.deleted || [];
 
     const addApplicationToEnvGroupPromises = addedEnvGroups.map(
       (envGroup: any) => {

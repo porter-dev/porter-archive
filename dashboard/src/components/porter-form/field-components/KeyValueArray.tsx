@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
   GetFinalVariablesFunction,
+  GetMetadataFunction,
   KeyValueArrayField,
   KeyValueArrayFieldState,
   PopulatedEnvGroup,
@@ -13,7 +14,7 @@ import Modal from "../../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
-import _, { omit } from "lodash";
+import _, { differenceBy, omit } from "lodash";
 import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import Loading from "components/Loading";
@@ -563,6 +564,31 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
       [props.variable]: obj,
     };
   }
+};
+
+type KeyValueArrayMetadata = {
+  added: { name: string }[];
+  deleted: { name: string }[];
+};
+
+export const getMetadata: GetMetadataFunction<KeyValueArrayMetadata> = (
+  vars,
+  props: KeyValueArrayField,
+  state: KeyValueArrayFieldState
+) => {
+  const originalSyncedEnvGroups: { name: string }[] =
+    props.value[0]?.synced || [];
+  const currSynced = state.synced_env_groups || [];
+
+  let obj: KeyValueArrayMetadata = {
+    added: [],
+    deleted: [],
+  };
+
+  obj.added = differenceBy(currSynced, originalSyncedEnvGroups, "name");
+  obj.deleted = differenceBy(originalSyncedEnvGroups, currSynced, "name");
+
+  return obj;
 };
 
 export default KeyValueArray;

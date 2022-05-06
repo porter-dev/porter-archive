@@ -20,6 +20,7 @@ import {
 } from "components/porter-form/types";
 import Helper from "components/form-components/Helper";
 import DocsHelper from "components/DocsHelper";
+import { isObject } from "lodash";
 
 type PropsType = {
   namespace: string;
@@ -157,6 +158,9 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   potentiallyOverriddenKeys(incoming: Record<string, string>): KeyValue[] {
+    if (!incoming) {
+      return [];
+    }
     // console.log(incoming, this.props.existingValues);
     return Object.entries(incoming)
       .filter(([key]) => this.props.existingValues[key])
@@ -227,12 +231,18 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
           {this.state.selectedEnvGroup && (
             <SidebarSection>
               <GroupEnvPreview>
-                {Object.entries(this.state.selectedEnvGroup.variables)
-                  .map(
-                    ([key, value]) =>
-                      `${key}=${formattedEnvironmentValue(value)}`
-                  )
-                  .join("\n")}
+                {isObject(this.state.selectedEnvGroup.variables) ? (
+                  <>
+                    {Object.entries(this.state.selectedEnvGroup.variables || {})
+                      .map(
+                        ([key, value]) =>
+                          `${key}=${formattedEnvironmentValue(value)}`
+                      )
+                      .join("\n")}
+                  </>
+                ) : (
+                  <>This environment group has no variables</>
+                )}
               </GroupEnvPreview>
               {clashingKeys?.length > 0 && (
                 <>

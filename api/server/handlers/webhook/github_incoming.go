@@ -131,10 +131,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					github.CreateWorkflowDispatchEventRequest{
 						Ref: event.PullRequest.GetHead().GetRef(),
 						Inputs: map[string]interface{}{
-							"environment_id": strconv.FormatUint(uint64(depl.EnvironmentID), 10),
-							"repo_owner":     owner,
-							"repo_name":      repo,
-							"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
+							"deployment_id": strconv.FormatUint(uint64(depl.ID), 10),
 						},
 					},
 				)

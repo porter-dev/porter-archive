@@ -290,23 +290,8 @@ func getPreviewDeleteActionYAML(opts *EnvOpts) ([]byte, error) {
 		On: map[string]interface{}{
 			"workflow_dispatch": map[string]interface{}{
 				"inputs": map[string]interface{}{
-					"environment_id": map[string]interface{}{
-						"description": "Environment ID",
-						"type":        "number",
-						"required":    true,
-					},
-					"repo_owner": map[string]interface{}{
-						"description": "Repository owner",
-						"type":        "string",
-						"required":    true,
-					},
-					"repo_name": map[string]interface{}{
-						"description": "Repository name",
-						"type":        "string",
-						"required":    true,
-					},
-					"pr_number": map[string]interface{}{
-						"description": "Pull request number",
+					"deployment_id": map[string]interface{}{
+						"description": "Deployment ID",
 						"type":        "number",
 						"required":    true,
 					},

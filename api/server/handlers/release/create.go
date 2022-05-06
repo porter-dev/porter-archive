@@ -118,7 +118,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	if request.Tags != nil {
-		tags, err := c.Config().Repo.Tag().LinkTagsToRelease(request.Tags, release)
+		tags, err := c.Repo().Tag().LinkTagsToRelease(request.Tags, release)
 
 		if err == nil {
 			release.Tags = append(release.Tags, tags...)

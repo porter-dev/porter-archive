@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -35,11 +34,10 @@ func (c *CreateTagHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	newTag := &types.CreateTagRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, newTag); !ok {
-		fmt.Println("HERE")
 		return
 	}
 
-	tag, err := c.Config().Repo.Tag().CreateTag(&models.Tag{
+	tag, err := c.Repo().Tag().CreateTag(&models.Tag{
 		Name:      newTag.Name,
 		Color:     newTag.Color,
 		ProjectID: project.ID,

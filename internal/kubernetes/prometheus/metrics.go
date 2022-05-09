@@ -425,8 +425,6 @@ func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelecti
 		kubeMetricsHPASelectorTwo,
 	)
 
-	fmt.Println("query is:")
-
 	return fmt.Sprintf(
 		`(%s * on(%s) %s) or (%s * on(%s) %s)`,
 		requestMemOne, hpaMetricName, targetMemUtilThresholdOne,

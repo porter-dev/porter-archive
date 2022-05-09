@@ -29,6 +29,7 @@ type GormRepository struct {
 	oauthIntegration          repository.OAuthIntegrationRepository
 	gcpIntegration            repository.GCPIntegrationRepository
 	awsIntegration            repository.AWSIntegrationRepository
+	azIntegration             repository.AzureIntegrationRepository
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
@@ -131,6 +132,10 @@ func (t *GormRepository) AWSIntegration() repository.AWSIntegrationRepository {
 	return t.awsIntegration
 }
 
+func (t *GormRepository) AzureIntegration() repository.AzureIntegrationRepository {
+	return t.azIntegration
+}
+
 func (t *GormRepository) GithubAppInstallation() repository.GithubAppInstallationRepository {
 	return t.githubAppInstallation
 }
@@ -205,6 +210,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		oauthIntegration:          NewOAuthIntegrationRepository(db, key, storageBackend),
 		gcpIntegration:            NewGCPIntegrationRepository(db, key, storageBackend),
 		awsIntegration:            NewAWSIntegrationRepository(db, key, storageBackend),
+		azIntegration:             NewAzureIntegrationRepository(db, key, storageBackend),
 		githubAppInstallation:     NewGithubAppInstallationRepository(db),
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),

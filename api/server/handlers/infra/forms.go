@@ -361,12 +361,16 @@ tabs:
         options:
         - label: t2.medium
           value: t2.medium
+        - label: t2.large
+          value: t2.large
         - label: t2.xlarge
           value: t2.xlarge
         - label: t2.2xlarge
           value: t2.2xlarge
         - label: t3.medium
           value: t3.medium
+        - label: t3.large
+          value: t3.large
         - label: t3.xlarge
           value: t3.xlarge
         - label: t3.2xlarge
@@ -390,6 +394,32 @@ tabs:
 - name: advanced
   label: Advanced
   sections:
+  - name: system_machine_type
+    contents:
+    - type: heading
+      label: System Machine Type Settings
+    - type: select
+      label: ⚙️ AWS System Machine Type
+      variable: system_machine_type
+      settings:
+        default: t2.medium
+        options:
+        - label: t2.medium
+          value: t2.medium
+        - label: t2.large
+          value: t2.large
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t2.2xlarge
+          value: t2.2xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.large
+          value: t3.large
+        - label: t3.xlarge
+          value: t3.xlarge
+        - label: t3.2xlarge
+          value: t3.2xlarge
   - name: spot_instance_should_enable
     contents:
     - type: heading

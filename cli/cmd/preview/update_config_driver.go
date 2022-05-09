@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
@@ -27,6 +28,7 @@ type UpdateConfigDriverConfig struct {
 
 	UpdateConfig struct {
 		Image string
+		Tag   string
 	} `mapstructure:"update_config"`
 
 	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
@@ -93,8 +95,11 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 
 	shouldCreate := err != nil
 
-	// FIXME: give tag option in config build, but override if PORTER_TAG is present
 	tag := os.Getenv("PORTER_TAG")
+
+	if tag == "" {
+		tag = d.config.UpdateConfig.Tag
+	}
 
 	if tag == "" {
 		commit, err := git.LastCommit()
@@ -104,6 +109,28 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 		}
 
 		tag = commit.Sha[:7]
+	}
+
+	regList, err := client.ListRegistries(context.Background(), d.target.Project)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var registryURL string
+
+	if len(*regList) == 0 {
+		return nil, fmt.Errorf("no registry found")
+	} else {
+		registryURL = (*regList)[0].URL
+	}
+
+	var repoSuffix string
+
+	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
+		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
+			repoSuffix = strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-")
+		}
 	}
 
 	sharedOpts := &deploy.SharedOpts{
@@ -124,15 +151,35 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 				SharedOpts:  sharedOpts,
 				Kind:        d.source.Name,
 				ReleaseName: d.target.AppName,
+				RegistryURL: registryURL,
+				RepoSuffix:  repoSuffix,
 			},
 		}
 
-		_, err := createAgent.CreateFromRegistry(d.config.UpdateConfig.Image, d.config.Values)
+		regID, imageURL, err := createAgent.GetImageRepoURL(d.target.AppName, sharedOpts.Namespace)
 
 		if err != nil {
 			return nil, err
 		}
 
+		err = client.CreateRepository(
+			context.Background(),
+			sharedOpts.ProjectID,
+			regID,
+			&types.CreateRegistryRepositoryRequest{
+				ImageRepoURI: imageURL,
+			},
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = createAgent.CreateFromRegistry(d.config.UpdateConfig.Image, d.config.Values)
+
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		updateAgent, err := deploy.NewDeployAgent(client, d.target.AppName, &deploy.DeployOpts{
 			SharedOpts: sharedOpts,

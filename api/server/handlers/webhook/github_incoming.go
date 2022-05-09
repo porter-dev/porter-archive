@@ -174,17 +174,13 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 		State: &state,
 	}
 
-	_, _, err = client.Repositories.CreateDeploymentStatus(
+	client.Repositories.CreateDeploymentStatus(
 		context.Background(),
 		env.GitRepoOwner,
 		env.GitRepoName,
 		depl.GHDeploymentID,
 		&deploymentStatusRequest,
 	)
-
-	if err != nil {
-		return err
-	}
 
 	depl.Status = types.DeploymentStatusInactive
 

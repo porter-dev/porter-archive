@@ -361,7 +361,6 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 			return "", "", err
 		}
 
-		// TODO: CALL GENERATE CREDENTIALS ENDPOINT
 		registriesClient, err := armcontainerregistry.NewRegistriesClient(az.AzureSubscriptionID, cred, nil)
 
 		if err != nil {

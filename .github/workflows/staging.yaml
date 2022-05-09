@@ -45,7 +45,7 @@ jobs:
           ADDON_CHART_REPO_URL=https://chart-addons.staging.getporter.dev
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
-          SENTRY_ENV=staging
+          SENTRY_ENV=frontend-staging
           EOL
       - name: Build
         run: |

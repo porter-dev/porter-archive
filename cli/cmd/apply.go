@@ -104,6 +104,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
 	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
 	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
+	worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
 
 	worker.SetDefaultDriver("deploy")
 

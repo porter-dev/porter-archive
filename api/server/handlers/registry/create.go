@@ -57,6 +57,7 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		AWSIntegrationID:   request.AWSIntegrationID,
 		DOIntegrationID:    request.DOIntegrationID,
 		BasicIntegrationID: request.BasicIntegrationID,
+		AzureIntegrationID: request.AzureIntegrationID,
 	}
 
 	if regModel.URL == "" && regModel.AWSIntegrationID != 0 {

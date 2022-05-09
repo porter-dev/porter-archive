@@ -91,6 +91,10 @@ type CreateRegistryRequest struct {
 	DOIntegrationID    uint   `json:"do_integration_id"`
 	BasicIntegrationID uint   `json:"basic_integration_id"`
 	AzureIntegrationID uint   `json:"azure_integration_id"`
+
+	// Additional Azure-specific fields
+	ACRResourceGroupName string `json:"acr_resource_group_name"`
+	ACRName              string `json:"acr_name"`
 }
 
 type CreateRegistryRepositoryRequest struct {

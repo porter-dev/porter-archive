@@ -37,6 +37,7 @@ jobs:
           DISCORD_CID=${{secrets.DISCORD_CID}}
           FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
           IS_HOSTED=true
+          ENABLE_COHERE=true
           COHERE_KEY=${{secrets.COHERE_KEY}}
           INTERCOM_APP_ID=${{secrets.INTERCOM_APP_ID}}
           INTERCOM_SRC=${{secrets.INTERCOM_SRC}}
@@ -46,7 +47,7 @@ jobs:
           ADDON_CHART_REPO_URL=https://chart-addons.getporter.dev
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
-          SENTRY_ENV=production
+          SENTRY_ENV=frontend-production
           EOL
       - name: Build
         run: |

@@ -147,6 +147,44 @@ func (c *Client) getAWSCredentialPath(awsIntegration *integrations.AWSIntegratio
 	)
 }
 
+func (c *Client) WriteAzureCredential(
+	azIntegration *integrations.AzureIntegration,
+	data *credentials.AzureCredential) error {
+	reqData := &CreateVaultSecretRequest{
+		Data: data,
+	}
+
+	return c.postRequest(fmt.Sprintf("/v1/%s", c.getAzureCredentialPath(azIntegration)), reqData, nil)
+}
+
+func (c *Client) GetAzureCredential(azIntegration *integrations.AzureIntegration) (*credentials.AzureCredential, error) {
+	resp := &GetAzureCredentialResponse{}
+
+	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getAzureCredentialPath(azIntegration)), resp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Data.Data, nil
+}
+
+func (c *Client) CreateAzureToken(azIntegration *integrations.AzureIntegration) (string, error) {
+	credPath := c.getAzureCredentialPath(azIntegration)
+	policyName := fmt.Sprintf("access-%d-azure-%d", azIntegration.ProjectID, azIntegration.ID)
+
+	return c.getToken(credPath, policyName)
+}
+
+func (c *Client) getAzureCredentialPath(azIntegration *integrations.AzureIntegration) string {
+	return fmt.Sprintf(
+		"kv/data/secret/%s/%d/azure/%d",
+		c.secretPrefix,
+		azIntegration.ProjectID,
+		azIntegration.ID,
+	)
+}
+
 const readOnlyPolicyTemplate = `path "%s" {
   capabilities = ["read"]
 }`

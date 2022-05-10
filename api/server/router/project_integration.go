@@ -272,5 +272,33 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/integrations/azure -> project_integration.NewCreateAzureHandler
+	createAzureEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/azure",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createAzureHandler := project_integration.NewCreateAzureHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createAzureEndpoint,
+		Handler:  createAzureHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

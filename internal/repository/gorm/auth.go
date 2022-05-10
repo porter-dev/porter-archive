@@ -1419,13 +1419,8 @@ func (repo *AzureIntegrationRepository) OverwriteAzureIntegration(
 		}
 	}
 
-	err = repo.DecryptAzureIntegrationData(az, repo.key)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return az, nil
+	// perform another read
+	return repo.ReadAzureIntegration(az.ProjectID, az.ID)
 }
 
 // ReadAzureIntegration finds a Azure auth mechanism by id

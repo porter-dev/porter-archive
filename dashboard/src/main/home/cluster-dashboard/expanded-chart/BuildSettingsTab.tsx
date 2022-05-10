@@ -15,13 +15,9 @@ import {
 } from "shared/types";
 import styled, { keyframes } from "styled-components";
 import yaml from "js-yaml";
-import DynamicLink from "components/DynamicLink";
 import { AxiosError } from "axios";
 import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
-
-const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
-const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
-const URLRegex = /[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
+import { DeviconsNameList } from "assets/devicons-name-list";
 
 type Buildpack = {
   name: string;
@@ -565,13 +561,16 @@ const BuildpackConfigSection: React.FC<{
     }
 
     return buildpacks?.map((buildpack, i) => {
-      const icon = `devicon-${buildpack?.name?.toLowerCase()}-plain colored`;
+      const [languageName] = buildpack.name?.split("/").reverse();
+
+      const devicon = DeviconsNameList.find(
+        (devicon) => languageName.toLowerCase() === devicon.name
+      );
+
+      const icon = `devicon-${devicon?.name}-plain colored`;
 
       let disableIcon = false;
-      if (
-        URLRegex.test(buildpack.buildpack) &&
-        !buildpack.buildpack.includes("gcr.io/paketo-buildpacks")
-      ) {
+      if (!devicon) {
         disableIcon = true;
       }
 

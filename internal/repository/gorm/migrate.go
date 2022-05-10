@@ -54,6 +54,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&ints.OAuthIntegration{},
 		&ints.GCPIntegration{},
 		&ints.AWSIntegration{},
+		&ints.AzureIntegration{},
 		&ints.TokenCache{},
 		&ints.ClusterTokenCache{},
 		&ints.RegTokenCache{},

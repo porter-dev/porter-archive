@@ -1,7 +1,8 @@
 import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import TitleSection from "components/TitleSection";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import Cohere from "cohere-js";
 import { useParams } from "react-router";
 import styled from "styled-components";
 import ProviderSelector, {
@@ -22,12 +23,11 @@ import api from "shared/api";
 import Placeholder from "components/Placeholder";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
+import buildLogger from "shared/error_handling/logger";
 
-type Props = {};
+const ProvisionResourcesLogger = buildLogger("onboarding.provision_resources");
 
-type SaveButtonOptions = "retry" | "delete_all" | "back";
-
-const ProvisionResources: React.FC<Props> = () => {
+const ProvisionResources: React.FC<{}> = () => {
   const snap = useSnapshot(OFState);
   const { step } = useParams<{ step: any }>();
   const [infraStatus, setInfraStatus] = useState<{
@@ -35,10 +35,6 @@ const ProvisionResources: React.FC<Props> = () => {
     errored_infras: number[];
     description?: string;
   }>(null);
-  const [
-    failedSaveButtonOption,
-    setFailedSaveButtonOption,
-  ] = useState<SaveButtonOptions>("retry");
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -134,49 +130,6 @@ const ProvisionResources: React.FC<Props> = () => {
       });
   };
 
-  const getFailedSaveButton = () => {
-    switch (failedSaveButtonOption) {
-      case "retry":
-        return (
-          <SaveButton
-            text="Retry"
-            disabled={false}
-            onClick={retryFailedInfras}
-            makeFlush={true}
-            clearPosition={true}
-            statusPosition="right"
-            saveText=""
-          />
-        );
-      case "delete_all":
-        return (
-          <SaveButton
-            text="Delete All Infrastructure"
-            disabled={false}
-            onClick={deleteAllInfras}
-            makeFlush={true}
-            clearPosition={true}
-            statusPosition="right"
-            saveText=""
-          />
-        );
-      case "back":
-        return (
-          <SaveButton
-            text="Configure Settings"
-            disabled={false}
-            onClick={() => {
-              handleGoBack("");
-            }}
-            makeFlush={true}
-            clearPosition={true}
-            statusPosition="right"
-            saveText=""
-          />
-        );
-    }
-  };
-
   const renderSaveButton = () => {
     if (typeof infraStatus?.hasError !== "boolean") {
       return;
@@ -237,15 +190,15 @@ const ProvisionResources: React.FC<Props> = () => {
     }
   };
 
-  const getDescription = () => {
-    if (infraStatus && infraStatus.hasError) {
+  const description = useMemo(() => {
+    if (infraStatus?.hasError) {
       return "Error while creating infrastructure. Please select an option below to continue.";
     }
 
     return "Note: Provisioning can take up to 15 minutes.";
-  };
+  }, [infraStatus]);
 
-  const getFilterOpts = (): string[] => {
+  const filterOpts = useMemo(() => {
     switch (provider) {
       case "aws":
         return ["eks", "ecr"];
@@ -256,7 +209,27 @@ const ProvisionResources: React.FC<Props> = () => {
     }
 
     return [];
-  };
+  }, [provider]);
+
+  useEffect(() => {
+    if (!infraStatus) return;
+
+    if (typeof infraStatus.hasError !== "boolean") return;
+
+    if (infraStatus.hasError) {
+      Cohere.widget("show");
+      Cohere.widget("expand");
+      ProvisionResourcesLogger.critical(new Error(infraStatus.description));
+    } else {
+      Cohere.widget("hide");
+    }
+  }, [infraStatus]);
+
+  useEffect(() => {
+    return () => {
+      Cohere.widget("hide");
+    };
+  }, []);
 
   const Content = () => {
     switch (step) {
@@ -276,7 +249,7 @@ const ProvisionResources: React.FC<Props> = () => {
           <>
             <StatusPage
               project_id={project?.id}
-              filter={getFilterOpts()}
+              filter={filterOpts}
               setInfraStatus={setInfraStatus}
               filterLatest
               auto_expanded
@@ -285,7 +258,7 @@ const ProvisionResources: React.FC<Props> = () => {
               can_delete={false}
             />
             <Br />
-            <Helper>{getDescription()}</Helper>
+            <Helper>{description}</Helper>
             {renderSaveButton()}
           </>
         );

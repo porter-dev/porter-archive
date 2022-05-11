@@ -61,6 +61,15 @@ type AWSIntegrationRepository interface {
 	ListAWSIntegrationsByProjectID(projectID uint) ([]*ints.AWSIntegration, error)
 }
 
+// AzureIntegrationRepository represents the set of queries on the AWS auth
+// mechanism
+type AzureIntegrationRepository interface {
+	CreateAzureIntegration(az *ints.AzureIntegration) (*ints.AzureIntegration, error)
+	OverwriteAzureIntegration(az *ints.AzureIntegration) (*ints.AzureIntegration, error)
+	ReadAzureIntegration(projectID, id uint) (*ints.AzureIntegration, error)
+	ListAzureIntegrationsByProjectID(projectID uint) ([]*ints.AzureIntegration, error)
+}
+
 // GCPIntegrationRepository represents the set of queries on the GCP auth
 // mechanism
 type GCPIntegrationRepository interface {

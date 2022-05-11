@@ -348,7 +348,7 @@ const ControlRow = styled.div`
   margin-left: auto;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 35px;
+  flex-wrap: wrap;
   padding-left: 0px;
 `;
 
@@ -396,7 +396,9 @@ const Button = styled.div`
   border-radius: 20px;
   color: white;
   height: 35px;
+  margin-bottom: 35px;
   padding: 0px 8px;
+  min-width: 155px;
   padding-bottom: 1px;
   margin-right: 10px;
   font-weight: 500;
@@ -493,6 +495,7 @@ const Img = styled.img`
 const SortFilterWrapper = styled.div`
   display: flex;
   justify-content: space-between;
+  margin-bottom: 35px;
   > div:not(:first-child) {
     margin-left: 30px;
   }

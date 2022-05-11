@@ -782,5 +782,37 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/update_tags ->
+	// release.NewGetLatestJobRunHandler
+	updateReleaseTagsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/update_tags",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	updateReleaseTagsHandler := release.NewUpdateReleaseTagsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: updateReleaseTagsEndpoint,
+		Handler:  updateReleaseTagsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -26,6 +26,7 @@ type TestRepository struct {
 	oauthIntegration          repository.OAuthIntegrationRepository
 	gcpIntegration            repository.GCPIntegrationRepository
 	awsIntegration            repository.AWSIntegrationRepository
+	azIntegration             repository.AzureIntegrationRepository
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
@@ -125,6 +126,10 @@ func (t *TestRepository) AWSIntegration() repository.AWSIntegrationRepository {
 	return t.awsIntegration
 }
 
+func (t *TestRepository) AzureIntegration() repository.AzureIntegrationRepository {
+	return t.azIntegration
+}
+
 func (t *TestRepository) GithubAppInstallation() repository.GithubAppInstallationRepository {
 	return t.githubAppInstallation
 }
@@ -202,6 +207,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		oauthIntegration:          NewOAuthIntegrationRepository(canQuery),
 		gcpIntegration:            NewGCPIntegrationRepository(canQuery),
 		awsIntegration:            NewAWSIntegrationRepository(canQuery),
+		azIntegration:             NewAzureIntegrationRepository(),
 		githubAppInstallation:     NewGithubAppInstallationRepository(canQuery),
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),

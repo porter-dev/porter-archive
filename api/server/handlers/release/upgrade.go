@@ -153,21 +153,22 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 				} else {
 					repoStr = rel.ImageRepoURI
 				}
+
+				if repoStr == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+					repoStr == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+						fmt.Errorf("malformed image repository"),
+						http.StatusBadRequest,
+					))
+
+					return
+				}
+
+				imageMap["repository"] = repoStr
+				valuesYAML["image"] = imageMap
+
+				request.Values, _ = valuesYAML.YAML()
 			}
-
-			if repoStr == "public.ecr.aws/o1j4x7p4/hello-porter" ||
-				repoStr == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-					fmt.Errorf("malformed image repository"),
-					http.StatusBadRequest,
-				))
-
-				return
-			}
-
-			valuesYAML["image"] = imageMap
-
-			request.Values, _ = valuesYAML.YAML()
 		}
 	}
 

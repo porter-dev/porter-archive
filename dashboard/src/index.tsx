@@ -14,7 +14,7 @@ declare global {
   }
 }
 
-if (process.env.ENABLE_COHERE) {
+if (process.env.ENABLE_COHERE && process.env.COHERE_API_KEY) {
   Cohere.init(process.env.COHERE_API_KEY);
 }
 

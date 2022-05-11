@@ -12,13 +12,25 @@ const TerserPlugin = require("terser-webpack-plugin");
 
 module.exports = () => {
   let env = dotenv.config().parsed;
+
   if (!env) {
     env = process.env;
   }
   const envKeys = Object.keys(env).reduce((prev, next) => {
-    prev[`process.env.${next}`] = JSON.stringify(env[next]);
+    const varName = `process.env.${next}`;
+    if (typeof env[next] !== "string") return prev;
+
+    if (env[next].toLowerCase() === "true") {
+      prev[varName] = true;
+    } else if (env[next].toLowerCase() === "false") {
+      prev[varName] = false;
+    } else {
+      prev[varName] = JSON.stringify(env[next]);
+    }
+
     return prev;
   }, {});
+
   // Check first the env file and if it's empty, check out the node env of the process.
   let isDevelopment = env.NODE_ENV !== "production";
   if (process.env.NODE_ENV !== env.NODE_ENV) {

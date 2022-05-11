@@ -219,7 +219,20 @@ const ProvisionResources: React.FC<{}> = () => {
     if (infraStatus.hasError) {
       Cohere.widget("show");
       Cohere.widget("expand");
-      ProvisionResourcesLogger.critical(new Error(infraStatus.description));
+
+      const cause = new Error(
+        JSON.stringify({
+          description: infraStatus.description,
+          errored_infras: infraStatus.errored_infras,
+        })
+      );
+
+      ProvisionResourcesLogger.critical(
+        new Error(
+          `Provisioner error detected ${snap.StateHandler.project.id}`,
+          { cause }
+        )
+      );
     } else {
       Cohere.widget("hide");
     }

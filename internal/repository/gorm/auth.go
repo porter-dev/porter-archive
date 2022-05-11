@@ -1315,3 +1315,233 @@ func (repo *GithubAppOAuthIntegrationRepository) UpdateGithubAppOauthIntegration
 
 	return am, nil
 }
+
+// AzureIntegrationRepository uses gorm.DB for querying the database
+type AzureIntegrationRepository struct {
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
+}
+
+// NewAzureIntegrationRepository returns a AzureIntegrationRepository which uses
+// gorm.DB for querying the database. It accepts an encryption key to encrypt
+// sensitive data
+func NewAzureIntegrationRepository(
+	db *gorm.DB,
+	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
+) repository.AzureIntegrationRepository {
+	return &AzureIntegrationRepository{db, key, storageBackend}
+}
+
+// CreateAzureIntegration creates a new Azure auth mechanism
+func (repo *AzureIntegrationRepository) CreateAzureIntegration(
+	az *ints.AzureIntegration,
+) (*ints.AzureIntegration, error) {
+	err := repo.EncryptAzureIntegrationData(az, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.AzureCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.ServicePrincipalSecret = az.ServicePrincipalSecret
+		credentialData.ACRPassword1 = az.ACRPassword1
+		credentialData.ACRPassword2 = az.ACRPassword2
+		az.ServicePrincipalSecret = []byte{}
+		az.ACRPassword1 = []byte{}
+		az.ACRPassword2 = []byte{}
+	}
+
+	project := &models.Project{}
+
+	if err := repo.db.Where("id = ?", az.ProjectID).First(&project).Error; err != nil {
+		return nil, err
+	}
+
+	assoc := repo.db.Model(&project).Association("AzureIntegrations")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Append(az); err != nil {
+		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteAzureCredential(az, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return az, nil
+}
+
+// OverwriteAzureIntegration overwrites the Azure credential in the DB
+func (repo *AzureIntegrationRepository) OverwriteAzureIntegration(
+	az *ints.AzureIntegration,
+) (*ints.AzureIntegration, error) {
+	err := repo.EncryptAzureIntegrationData(az, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.AzureCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.ServicePrincipalSecret = az.ServicePrincipalSecret
+		credentialData.ACRPassword1 = az.ACRPassword1
+		credentialData.ACRPassword2 = az.ACRPassword2
+		az.ServicePrincipalSecret = []byte{}
+		az.ACRPassword1 = []byte{}
+		az.ACRPassword2 = []byte{}
+	}
+
+	if err := repo.db.Save(az).Error; err != nil {
+		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteAzureCredential(az, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// perform another read
+	return repo.ReadAzureIntegration(az.ProjectID, az.ID)
+}
+
+// ReadAzureIntegration finds a Azure auth mechanism by id
+func (repo *AzureIntegrationRepository) ReadAzureIntegration(
+	projectID, id uint,
+) (*ints.AzureIntegration, error) {
+	az := &ints.AzureIntegration{}
+
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&az).Error; err != nil {
+		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		credentialData, err := repo.storageBackend.GetAzureCredential(az)
+
+		if err != nil {
+			return nil, err
+		}
+
+		az.ServicePrincipalSecret = credentialData.ServicePrincipalSecret
+		az.ACRPassword1 = credentialData.ACRPassword1
+		az.ACRPassword2 = credentialData.ACRPassword2
+	}
+
+	err := repo.DecryptAzureIntegrationData(az, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return az, nil
+}
+
+// ListAzureIntegrationsByProjectID finds all Azure auth mechanisms
+// for a given project id
+func (repo *AzureIntegrationRepository) ListAzureIntegrationsByProjectID(
+	projectID uint,
+) ([]*ints.AzureIntegration, error) {
+	azs := []*ints.AzureIntegration{}
+
+	if err := repo.db.Where("project_id = ?", projectID).Find(&azs).Error; err != nil {
+		return nil, err
+	}
+
+	return azs, nil
+}
+
+// EncryptAWSIntegrationData will encrypt the aws integration data before
+// writing to the DB
+func (repo *AzureIntegrationRepository) EncryptAzureIntegrationData(
+	az *ints.AzureIntegration,
+	key *[32]byte,
+) error {
+	if len(az.ServicePrincipalSecret) > 0 {
+		cipherData, err := encryption.Encrypt(az.ServicePrincipalSecret, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.ServicePrincipalSecret = cipherData
+	}
+
+	if len(az.ACRPassword1) > 0 {
+		cipherData, err := encryption.Encrypt(az.ACRPassword1, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.ACRPassword1 = cipherData
+	}
+
+	if len(az.ACRPassword2) > 0 {
+		cipherData, err := encryption.Encrypt(az.ACRPassword2, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.ACRPassword2 = cipherData
+	}
+
+	return nil
+}
+
+// DecryptAzureIntegrationData will decrypt the Azure integration data before
+// returning it from the DB
+func (repo *AzureIntegrationRepository) DecryptAzureIntegrationData(
+	az *ints.AzureIntegration,
+	key *[32]byte,
+) error {
+	if len(az.ServicePrincipalSecret) > 0 {
+		plaintext, err := encryption.Decrypt(az.ServicePrincipalSecret, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.ServicePrincipalSecret = plaintext
+	}
+
+	if len(az.ACRPassword1) > 0 {
+		plaintext, err := encryption.Decrypt(az.ACRPassword1, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.ACRPassword1 = plaintext
+	}
+
+	if len(az.ACRPassword2) > 0 {
+		plaintext, err := encryption.Decrypt(az.ACRPassword2, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.ACRPassword2 = plaintext
+	}
+
+	return nil
+}

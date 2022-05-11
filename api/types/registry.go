@@ -27,6 +27,9 @@ type Registry struct {
 	// The AWS integration that was used to create or connect the registry
 	AWSIntegrationID uint `json:"aws_integration_id,omitempty"`
 
+	// The Azure integration that was used to create or connect the registry
+	AzureIntegrationID uint `json:"azure_integration_id,omitempty"`
+
 	// The GCP integration that was used to create or connect the registry
 	GCPIntegrationID uint `json:"gcp_integration_id,omitempty"`
 
@@ -73,6 +76,7 @@ type RegistryService string
 const (
 	GCR       RegistryService = "gcr"
 	ECR       RegistryService = "ecr"
+	ACR       RegistryService = "acr"
 	DOCR      RegistryService = "docr"
 	DockerHub RegistryService = "dockerhub"
 )
@@ -86,6 +90,11 @@ type CreateRegistryRequest struct {
 	AWSIntegrationID   uint   `json:"aws_integration_id"`
 	DOIntegrationID    uint   `json:"do_integration_id"`
 	BasicIntegrationID uint   `json:"basic_integration_id"`
+	AzureIntegrationID uint   `json:"azure_integration_id"`
+
+	// Additional Azure-specific fields
+	ACRResourceGroupName string `json:"acr_resource_group_name"`
+	ACRName              string `json:"acr_name"`
 }
 
 type CreateRegistryRepositoryRequest struct {

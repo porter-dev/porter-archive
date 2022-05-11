@@ -361,12 +361,16 @@ tabs:
         options:
         - label: t2.medium
           value: t2.medium
+        - label: t2.large
+          value: t2.large
         - label: t2.xlarge
           value: t2.xlarge
         - label: t2.2xlarge
           value: t2.2xlarge
         - label: t3.medium
           value: t3.medium
+        - label: t3.large
+          value: t3.large
         - label: t3.xlarge
           value: t3.xlarge
         - label: t3.2xlarge
@@ -382,11 +386,116 @@ tabs:
       placeholder: my-cluster
       variable: cluster_name
     - type: number-input
+      label: Minimum number of EC2 instances to create in the application autoscaling group.
+      variable: min_instances
+      placeholder: "ex: 1"
+      settings:
+        default: 1
+    - type: number-input
       label: Maximum number of EC2 instances to create in the application autoscaling group.
       variable: max_instances
       placeholder: "ex: 10"
       settings:
         default: 10
+- name: additional_nodegroup
+  label: Additional Node Groups
+  sections:
+  - name: is_additional_enabled
+    contents:
+    - type: heading
+      label: Additional Node Groups
+    - type: checkbox
+      variable: additional_nodegroup_enabled
+      label: Enable an additional node group for this cluster.
+      settings:
+        default: false
+  - name: additional_settings
+    show_if: additional_nodegroup_enabled
+    contents:
+    - type: string-input
+      label: Label for this node group.
+      variable: additional_nodegroup_label
+      placeholder: "ex: porter.run/workload-kind=job"
+      settings:
+        default: porter.run/workload-kind=database
+    - type: string-input
+      label: Taint for this node group.
+      variable: additional_nodegroup_taint
+      placeholder: "ex: porter.run/workload-kind=job:NoSchedule"
+      settings:
+        default: porter.run/workload-kind=database:NoSchedule
+    - type: checkbox
+      variable: additional_stateful_nodegroup_enabled
+      label: Stateful Workload
+      settings:
+        default: false
+    - type: select
+      label: ⚙️ AWS System Machine Type
+      variable: additional_nodegroup_machine_type
+      settings:
+        default: t2.medium
+        options:
+        - label: t2.medium
+          value: t2.medium
+        - label: t2.large
+          value: t2.large
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t2.2xlarge
+          value: t2.2xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.large
+          value: t3.large
+        - label: t3.xlarge
+          value: t3.xlarge
+        - label: t3.2xlarge
+          value: t3.2xlarge
+    - type: number-input
+      label: Minimum number of EC2 instances to create in the application autoscaling group.
+      variable: additional_nodegroup_min_instances
+      placeholder: "ex: 1"
+      settings:
+        default: 1
+    - type: number-input
+      label: Maximum number of EC2 instances to create in the application autoscaling group.
+      variable: additional_nodegroup_max_instances
+      placeholder: "ex: 10"
+      settings:
+        default: 10
+- name: advanced
+  label: Advanced
+  sections:
+  - name: system_machine_type
+    contents:
+    - type: heading
+      label: System Machine Type Settings
+    - type: select
+      label: ⚙️ AWS System Machine Type
+      variable: system_machine_type
+      settings:
+        default: t2.medium
+        options:
+        - label: t2.medium
+          value: t2.medium
+        - label: t2.large
+          value: t2.large
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t2.2xlarge
+          value: t2.2xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.large
+          value: t3.large
+        - label: t3.xlarge
+          value: t3.xlarge
+        - label: t3.2xlarge
+          value: t3.2xlarge
+  - name: spot_instance_should_enable
+    contents:
+    - type: heading
+      label: Spot Instance Settings
     - type: checkbox
       variable: spot_instances_enabled
       label: Enable spot instances for this cluster.
@@ -399,6 +508,16 @@ tabs:
       label: Assign a bid price for the spot instance (optional).
       variable: spot_price
       placeholder: "ex: 0.05"
+  - name: net_settings
+    contents:
+    - type: heading
+      label: Networking Settings
+    - type: string-input
+      label: "Add a different CIDR range prefix (first two octets: for example 10.99 will create a VPC with CIDR range 10.99.0.0/16)."
+      variable: cluster_vpc_cidr_octets
+      placeholder: "ex: 10.99"
+      settings:
+        default: "10.99"
 `
 
 const gcrForm = `name: GCR

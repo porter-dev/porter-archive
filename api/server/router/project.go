@@ -607,6 +607,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	//  GET /api/projects/{project_id}/registries/acr/token -> registry.NewRegistryGetACRTokenHandler
+	getACRTokenEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/registries/acr/token",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getACRTokenHandler := registry.NewRegistryGetACRTokenHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getACRTokenEndpoint,
+		Handler:  getACRTokenHandler,
+		Router:   r,
+	})
+
 	//  GET /api/projects/{project_id}/registries/dockerhub/token -> registry.NewRegistryGetDockerhubTokenHandler
 	getDockerhubTokenEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

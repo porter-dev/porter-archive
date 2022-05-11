@@ -22,7 +22,7 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v2.0
         with:
-          version: 'v1.19.15'
+          version: "v1.19.15"
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout
@@ -38,7 +38,7 @@ jobs:
           FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
           IS_HOSTED=true
           ENABLE_COHERE=true
-          COHERE_KEY=${{secrets.COHERE_KEY}}
+          COHERE_API_KEY=${{secrets.COHERE_KEY}}
           INTERCOM_APP_ID=${{secrets.INTERCOM_APP_ID}}
           INTERCOM_SRC=${{secrets.INTERCOM_SRC}}
           SEGMENT_WRITE_KEY=${{secrets.SEGMENT_WRITE_KEY}}
@@ -78,7 +78,7 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v2.0
         with:
-          version: 'v1.19.15'
+          version: "v1.19.15"
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout

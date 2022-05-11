@@ -44,7 +44,6 @@ module.exports = () => {
   if (env.IS_HOSTED) {
     htmlPluginOpts = {
       template: path.resolve(__dirname, "src", "hosted.index.html"),
-      cohereKey: `${env.COHERE_KEY}`,
       intercomAppId: `${env.INTERCOM_APP_ID}`,
       intercomSrc: `${process.env.INTERCOM_SRC}`,
       segmentWriteKey: `${process.env.SEGMENT_WRITE_KEY}`,

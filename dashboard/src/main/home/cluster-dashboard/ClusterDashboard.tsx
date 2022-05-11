@@ -32,6 +32,7 @@ import JobRunTable from "./chart/JobRunTable";
 import SwitchBase from "@material-ui/core/internal/SwitchBase";
 import Selector from "components/Selector";
 import TabSelector from "components/TabSelector";
+import TagFilter from "./TagFilter";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -60,6 +61,7 @@ type StateType = {
   currentChart: ChartType | null;
   isMetricsInstalled: boolean;
   showRuns: boolean;
+  selectedTag: any;
 };
 
 // TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
@@ -73,6 +75,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     currentChart: null as ChartType | null,
     isMetricsInstalled: false,
     showRuns: false,
+    selectedTag: "none",
   };
 
   componentDidMount() {
@@ -114,7 +117,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         () => pushQueryParams(this.props, { namespace: "default" })
       );
     }
-
     if (prevProps.currentView !== this.props.currentView) {
       let params = this.props.match.params as any;
       let currentNamespace = params.namespace;
@@ -136,12 +138,34 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     }
   }
 
-  getDescription = (currentView: string): string => {
-    if (currentView === "jobs") {
-      return "Scripts and tasks that run once or on a repeating interval.";
-    } else {
-      return "Continuously running web services, workers, and add-ons.";
-    }
+  renderCommonFilters = () => {
+    const { currentView } = this.props;
+
+    return (
+      <>
+        <TagFilter
+          onSelect={(newSelectedTag) =>
+            this.setState({ selectedTag: newSelectedTag })
+          }
+        />
+        <NamespaceSelector
+          setNamespace={(namespace) =>
+            this.setState({ namespace }, () => {
+              console.log(window.location, namespace);
+              pushQueryParams(this.props, {
+                namespace: this.state.namespace || "ALL",
+              });
+            })
+          }
+          namespace={this.state.namespace}
+        />
+        <SortSelector
+          setSortType={(sortType) => this.setState({ sortType })}
+          sortType={this.state.sortType}
+          currentView={currentView}
+        />
+      </>
+    );
   };
 
   renderBodyForApps = () => {
@@ -151,6 +175,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       [],
       ["get", "create"]
     );
+
     return (
       <>
         <ControlRow>
@@ -163,31 +188,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">add</i> Launch Template
             </Button>
           )}
-          <SortFilterWrapper>
-            {currentView === "jobs" && (
-              <LastRunStatusSelector
-                lastRunStatus={this.state.lastRunStatus}
-                setLastRunStatus={(lastRunStatus: JobStatusType) => {
-                  this.setState({ lastRunStatus });
-                }}
-              />
-            )}
-            <NamespaceSelector
-              setNamespace={(namespace) =>
-                this.setState({ namespace }, () => {
-                  pushQueryParams(this.props, {
-                    namespace: this.state.namespace || "ALL",
-                  });
-                })
-              }
-              namespace={this.state.namespace}
-            />
-            <SortSelector
-              setSortType={(sortType) => this.setState({ sortType })}
-              sortType={this.state.sortType}
-              currentView={currentView}
-            />
-          </SortFilterWrapper>
+          <SortFilterWrapper>{this.renderCommonFilters()}</SortFilterWrapper>
         </ControlRow>
 
         <ChartList
@@ -196,6 +197,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           lastRunStatus={this.state.lastRunStatus}
           namespace={this.state.namespace}
           sortType={this.state.sortType}
+          selectedTag={this.state.selectedTag}
         />
       </>
     );
@@ -208,6 +210,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
       [],
       ["get", "create"]
     );
+
     return (
       <>
         <TabSelector
@@ -235,29 +238,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             </Button>
           )}
           <SortFilterWrapper>
-            {currentView === "jobs" && (
-              <LastRunStatusSelector
-                lastRunStatus={this.state.lastRunStatus}
-                setLastRunStatus={(lastRunStatus: JobStatusType) => {
-                  this.setState({ lastRunStatus });
-                }}
-              />
-            )}
-            <NamespaceSelector
-              setNamespace={(namespace) =>
-                this.setState({ namespace }, () => {
-                  pushQueryParams(this.props, {
-                    namespace: this.state.namespace || "ALL",
-                  });
-                })
-              }
-              namespace={this.state.namespace}
+            <LastRunStatusSelector
+              lastRunStatus={this.state.lastRunStatus}
+              setLastRunStatus={(lastRunStatus: JobStatusType) => {
+                this.setState({ lastRunStatus });
+              }}
             />
-            <SortSelector
-              setSortType={(sortType) => this.setState({ sortType })}
-              sortType={this.state.sortType}
-              currentView={currentView}
-            />
+            {this.renderCommonFilters()}
           </SortFilterWrapper>
         </ControlRow>
         <HidableElement show={this.state.showRuns}>
@@ -274,6 +261,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             lastRunStatus={this.state.lastRunStatus}
             namespace={this.state.namespace}
             sortType={this.state.sortType}
+            selectedTag={this.state.selectedTag}
           />
         </HidableElement>
       </>
@@ -303,7 +291,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           <DashboardHeader
             image={monojob}
             title={currentView}
-            description={this.getDescription(currentView)}
+            description="Scripts and tasks that run once or on a repeating interval."
             disableLineBreak
           />
 
@@ -315,11 +303,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           resource=""
           verb={["get", "list"]}
         >
-          {/* {this.renderContents()} */}
           <DashboardHeader
             image={monoweb}
             title={currentView}
-            description={this.getDescription(currentView)}
+            description="Continuously running web services, workers, and add-ons."
           />
 
           {this.renderBodyForApps()}
@@ -361,7 +348,7 @@ const ControlRow = styled.div`
   margin-left: auto;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 35px;
+  flex-wrap: wrap;
   padding-left: 0px;
 `;
 
@@ -409,7 +396,9 @@ const Button = styled.div`
   border-radius: 20px;
   color: white;
   height: 35px;
+  margin-bottom: 35px;
   padding: 0px 8px;
+  min-width: 155px;
   padding-bottom: 1px;
   margin-right: 10px;
   font-weight: 500;
@@ -506,6 +495,7 @@ const Img = styled.img`
 const SortFilterWrapper = styled.div`
   display: flex;
   justify-content: space-between;
+  margin-bottom: 35px;
   > div:not(:first-child) {
     margin-left: 30px;
   }

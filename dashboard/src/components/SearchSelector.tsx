@@ -11,6 +11,7 @@ type Props = {
   filterBy?: ((option: any) => string) | string;
   noOptionsText?: string;
   dropdownMaxHeight?: string;
+  renderAddButton?: any;
   className?: string;
   renderOptionIcon?: (option: any) => React.ReactNode;
 };
@@ -24,6 +25,7 @@ const SearchSelector = ({
   filterBy,
   noOptionsText,
   dropdownMaxHeight,
+  renderAddButton,
   className,
   renderOptionIcon,
 }: Props) => {
@@ -68,8 +70,9 @@ const SearchSelector = ({
       >
         <Input
           value={filter}
+          placeholder="Find or add a tag..."
           onClick={(e) => {
-            e.preventDefault();
+            setIsExpanded(false);
             e.stopPropagation();
             setIsExpanded(true);
           }}
@@ -79,12 +82,38 @@ const SearchSelector = ({
           <DropdownWrapper>
             <Dropdown dropdownMaxHeight={dropdownMaxHeight}>
               {!filteredOptions.length ? (
-                <DropdownLabel>
-                  {noOptionsText || "No options available for this filter"}
-                </DropdownLabel>
+                <>
+                { !renderAddButton ? (
+                  <DropdownLabel>
+                    {noOptionsText || "No options available for this filter"}
+                  </DropdownLabel>
+                  ) : (
+                    <div 
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setFilter("");
+                      }}
+                    >
+                      {renderAddButton()}
+                    </div>
+                  )
+                }
+                </>
               ) : (
                 <>
-                  {dropdownLabel && (
+                  {renderAddButton && (
+                    <div 
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setFilter("");
+                      }}
+                    >
+                      {renderAddButton()}
+                    </div>
+                  )}
+                  {!renderAddButton && dropdownLabel && (
                     <DropdownLabel>{dropdownLabel}</DropdownLabel>
                   )}
                   {filteredOptions.map((option, i) => (
@@ -93,6 +122,7 @@ const SearchSelector = ({
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
+                        setFilter("");
                       }}
                       onClick={(e) => handleOptionClick(e, option)}
                     >

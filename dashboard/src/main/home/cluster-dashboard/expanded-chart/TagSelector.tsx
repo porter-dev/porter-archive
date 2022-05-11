@@ -101,20 +101,19 @@ const TagSelector = ({ onSave, release }: Props) => {
   }, [values, release]);
 
   /*
-          <SearchSelector
-          options={availableTags}
-          dropdownLabel="Select a tag"
-          filterBy="name"
-          onSelect={(value) => {
-            console.log(value);
-            setAvailableTags((prev) =>
-              prev.filter((prevVal) => prevVal.name !== value.name)
-            );
-            setValues((prev) => [...prev, value]);
-          }}
-          getOptionLabel={(option) => option.name}
-          renderOptionIcon={(option) => <TagColorBox color={option.color} />}
-        ></SearchSelector>
+          { 
+          values.length === 0 && "This application has no tags"
+        }
+        <Wrapper>
+          <Tooltip title="Create a new tag">
+            <AddButton
+              className="material-icons-outlined"
+              onClick={() => setOpenModal((prev) => !prev)}
+            >
+              add
+            </AddButton>
+          </Tooltip>
+        </Wrapper>
   */
   return (
     <>
@@ -142,15 +141,24 @@ const TagSelector = ({ onSave, release }: Props) => {
             </Tag>
           );
         })}
-        <Tooltip title="Create a new tag">
-          <AddButton
-            className="material-icons-outlined"
-            onClick={() => setOpenModal((prev) => !prev)}
-          >
-            add
-          </AddButton>
-        </Tooltip>
       </Flex>
+      <SearchSelector
+        options={availableTags}
+        dropdownLabel="Select a tag"
+        renderAddButton={() => <AddTagButton onClick={(e) => {
+          setOpenModal((prev) => !prev);
+        }}>+ Create a new tag</AddTagButton>}
+        filterBy="name"
+        onSelect={(value) => {
+          console.log(value);
+          setAvailableTags((prev) =>
+            prev.filter((prevVal) => prevVal.name !== value.name)
+          );
+          setValues((prev) => [...prev, value]);
+        }}
+        getOptionLabel={(option) => option.name}
+        renderOptionIcon={(option) => <TagColorBox color={option.color} />}
+      />
       <Flex
         style={{
           marginTop: "25px",
@@ -170,6 +178,38 @@ const TagSelector = ({ onSave, release }: Props) => {
     </>
   );
 };
+
+const AddTagButton = styled.div`
+  color: #aaaabb;
+  font-size: 13px;
+  padding: 10px 0;
+  z-index: 999;
+  padding-left: 12px;
+  cursor: pointer;
+  :hover {
+    color: white;
+  }
+`;
+
+const Wrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const TagSelectorWrapper = styled.div`
+  position: absolute;
+  bottom: -260px;
+  right: 0;
+  width: 330px;
+  border-radius: 5px;
+  height: 250px;
+  background: #33353b;
+  border-radius: 5px;
+  z-index: 999;
+  overflow-y: auto;
+  box-shadow: 0px 4px 15px 0px #000000aa;
+`;
 
 const Br = styled.div`
   width: 100%;
@@ -282,6 +322,7 @@ export default TagSelector;
 
 const Flex = styled.div`
   display: flex;
+  position: relative;
 `;
 
 const AddButton = styled.div`
@@ -294,6 +335,7 @@ const AddButton = styled.div`
   align-items: center;
   justify-content: center;
   margin-left: 10px;
+  margin-top: 2px;
   background: #ffffff11;
   color: #ffffff88;
   font-size: 18px;
@@ -313,6 +355,7 @@ const Tag = styled.div<{ color: string }>`
   padding: 4px 8px;
   position: relative;
   padding-right: 24px;
+  margin-bottom: 20px;
   text-align: center;
   align-items: center;
   font-size: 13px;
@@ -352,9 +395,9 @@ const Label = styled.div`
 `;
 
 const TagColorBox = styled.div`
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
-  border-radius: 5px;
+  width: 15px;
+  height: 15px;
+  margin-right: 10px;
+  border-radius: 0px;
   background-color: ${(props: { color: string }) => props.color};
 `;

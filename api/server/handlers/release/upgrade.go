@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	semver "github.com/Masterminds/semver/v3"
+	"k8s.io/helm/pkg/chartutil"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -117,6 +118,59 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		conf.Chart = chart
 	}
 
+	valuesYAML, err := chartutil.ReadValues([]byte(request.Values))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("malformed values YAML"),
+			http.StatusBadRequest,
+		))
+
+		return
+	}
+
+	rel, releaseErr := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
+
+	imageMap, ok := valuesYAML["image"].(map[string]interface{})
+
+	if ok {
+		repository, okRepo := imageMap["repository"]
+		tag, okTag := imageMap["tag"]
+
+		if okRepo && okTag {
+			repoStr, okRepo := repository.(string)
+			tagStr, okTag := tag.(string)
+
+			if okRepo && okTag && (repoStr == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+				repoStr == "public.ecr.aws/o1j4x7p4/hello-porter-job") && tagStr != "latest" {
+				if rel.ImageRepoURI == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+					rel.ImageRepoURI == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+					if rel.GitActionConfig != nil &&
+						rel.GitActionConfig.ImageRepoURI != "public.ecr.aws/o1j4x7p4/hello-porter" &&
+						rel.GitActionConfig.ImageRepoURI != "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+						repoStr = rel.GitActionConfig.ImageRepoURI
+					}
+				} else {
+					repoStr = rel.ImageRepoURI
+				}
+			}
+
+			if repoStr == "public.ecr.aws/o1j4x7p4/hello-porter" ||
+				repoStr == "public.ecr.aws/o1j4x7p4/hello-porter-job" {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("malformed image repository"),
+					http.StatusBadRequest,
+				))
+
+				return
+			}
+
+			valuesYAML["image"] = imageMap
+
+			request.Values, _ = valuesYAML.YAML()
+		}
+	}
+
 	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf)
 
 	if upgradeErr == nil && newHelmRelease != nil {
@@ -124,8 +178,6 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	slackInts, _ := c.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(cluster.ProjectID)
-
-	rel, releaseErr := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 
 	var notifConf *types.NotificationConfig
 	notifConf = nil

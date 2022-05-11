@@ -52,7 +52,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
@@ -119,7 +119,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
       - name: Write Dashboard Environment Variables
         run: |
           cat >./dashboard/.env <<EOL
@@ -251,8 +251,8 @@ jobs:
     name: Zip binaries, create release and upload assets
     runs-on: ubuntu-latest
     needs:
-    - notarize
-    - build-linux
+      - notarize
+      - build-linux
     steps:
       - name: Get tag name
         id: tag_name
@@ -515,5 +515,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
       - name: Run porter_test_docker_production.yml workflow
         run: gh workflow run porter_test_docker_production.yml --repo porter-dev/new-release-tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}
+      - name: Run test_porter_cli.yml workflow
+        run: gh workflow run test_porter_cli.yml --repo porter-dev/new-release-tests
         env:
           GITHUB_TOKEN: ${{ secrets.PORTER_DEV_GITHUB_TOKEN }}

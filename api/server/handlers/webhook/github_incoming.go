@@ -1,9 +1,11 @@
 package webhook
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -126,21 +128,67 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					return err
 				}
 			} else {
-				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
-					r.Context(), owner, repo, fmt.Sprintf("porter_%s_delete_env.yml", env.Name),
-					github.CreateWorkflowDispatchEventRequest{
-						Ref: event.PullRequest.GetHead().GetRef(),
-						Inputs: map[string]interface{}{
-							"deployment_id": strconv.FormatUint(uint64(depl.ID), 10),
-						},
-					},
-				)
+				err = c.deleteDeployment(r, depl, env, client)
 
 				if err != nil {
 					return err
 				}
 			}
 		}
+	}
+
+	return nil
+}
+
+func (c *GithubIncomingWebhookHandler) deleteDeployment(
+	r *http.Request,
+	depl *models.Deployment,
+	env *models.Environment,
+	client *github.Client,
+) error {
+	cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
+
+	if err != nil {
+		return err
+	}
+
+	agent, err := c.GetAgent(r, cluster, "")
+
+	if err != nil {
+		return err
+	}
+
+	// make sure we don't delete default or kube-system by checking for prefix, for now
+	if strings.Contains(depl.Namespace, "pr-") {
+		err = agent.DeleteNamespace(depl.Namespace)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create new deployment status to indicate deployment is ready
+	state := "inactive"
+
+	deploymentStatusRequest := github.DeploymentStatusRequest{
+		State: &state,
+	}
+
+	client.Repositories.CreateDeploymentStatus(
+		context.Background(),
+		env.GitRepoOwner,
+		env.GitRepoName,
+		depl.GHDeploymentID,
+		&deploymentStatusRequest,
+	)
+
+	depl.Status = types.DeploymentStatusInactive
+
+	// update the deployment to mark it inactive
+	_, err = c.Repo().Environment().UpdateDeployment(depl)
+
+	if err != nil {
+		return err
 	}
 
 	return nil

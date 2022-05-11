@@ -151,6 +151,8 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 		latestWorkflowRun, err := commonutils.GetLatestWorkflowRun(client, env.GitRepoOwner, env.GitRepoName,
 			fmt.Sprintf("porter_%s_env.yml", env.Name), deployment.PRBranchFrom)
 
+		fmt.Println(latestWorkflowRun.GetConclusion())
+
 		if err == nil {
 			deployment.LastWorkflowRunURL = latestWorkflowRun.GetHTMLURL()
 

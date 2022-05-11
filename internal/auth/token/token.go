@@ -25,6 +25,10 @@ type Token struct {
 	ProjectID uint       `json:"project_id"`
 	IBy       uint       `json:"iby"`
 	IAt       *time.Time `json:"iat"`
+
+	// Additional fields that may or may not be set
+	TokenID string `json:"token_id"`
+	Secret  string `json:"secret"`
 }
 
 func GetTokenForUser(userID uint) (*Token, error) {
@@ -58,6 +62,24 @@ func GetTokenForAPI(userID, projID uint) (*Token, error) {
 	}, nil
 }
 
+func GetStoredTokenForAPI(userID, projID uint, tokenID, secret string) (*Token, error) {
+	if userID == 0 || projID == 0 {
+		return nil, fmt.Errorf("id cannot be 0")
+	}
+
+	iat := time.Now()
+
+	return &Token{
+		SubKind:   API,
+		Sub:       string(API),
+		ProjectID: projID,
+		IBy:       userID,
+		IAt:       &iat,
+		TokenID:   tokenID,
+		Secret:    secret,
+	}, nil
+}
+
 func (t *Token) EncodeToken(conf *TokenGeneratorConf) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub_kind":   t.SubKind,
@@ -65,6 +87,8 @@ func (t *Token) EncodeToken(conf *TokenGeneratorConf) (string, error) {
 		"iby":        t.IBy,
 		"iat":        fmt.Sprintf("%d", t.IAt.Unix()),
 		"project_id": t.ProjectID,
+		"token_id":   t.TokenID,
+		"secret":     t.Secret,
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
@@ -105,13 +129,31 @@ func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, 
 
 		iat := time.Unix(iatUnix, 0)
 
-		return &Token{
+		res := &Token{
 			SubKind:   Subject(fmt.Sprintf("%v", claims["sub_kind"])),
 			Sub:       fmt.Sprintf("%v", claims["sub"]),
 			IBy:       uint(iby),
 			IAt:       &iat,
 			ProjectID: uint(projID),
-		}, nil
+		}
+
+		if tokenIDInter, ok := claims["token_id"]; ok {
+			tokenID, ok := tokenIDInter.(string)
+
+			if ok {
+				res.TokenID = tokenID
+			}
+		}
+
+		if secretInter, ok := claims["secret"]; ok {
+			secret, ok := secretInter.(string)
+
+			if ok {
+				res.Secret = secret
+			}
+		}
+
+		return res, nil
 	}
 
 	return nil, fmt.Errorf("invalid token")

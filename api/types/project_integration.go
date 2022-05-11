@@ -125,3 +125,35 @@ type CreateGCPRequest struct {
 type CreateGCPResponse struct {
 	*GCPIntegration
 }
+
+type AzureIntegration struct {
+	CreatedAt time.Time `json:"created_at"`
+
+	ID uint `json:"id"`
+
+	// The id of the user that linked this auth mechanism
+	UserID uint `json:"user_id"`
+
+	// The project that this integration belongs to
+	ProjectID uint `json:"project_id"`
+
+	// The Azure client ID that this is linked to
+	AzureClientID string `json:"azure_client_id"`
+
+	// The Azure subscription ID that this is linked to
+	AzureSubscriptionID string `json:"azure_subscription_id"`
+
+	// The Azure tenant ID that this is linked to
+	AzureTenantID string `json:"azure_tenant_id"`
+}
+
+type CreateAzureRequest struct {
+	AzureClientID       string `json:"azure_client_id" form:"required"`
+	AzureSubscriptionID string `json:"azure_subscription_id" form:"required"`
+	AzureTenantID       string `json:"azure_tenant_id" form:"required"`
+	ServicePrincipalKey string `json:"service_principal_key" form:"required"`
+}
+
+type CreateAzureResponse struct {
+	*AzureIntegration
+}

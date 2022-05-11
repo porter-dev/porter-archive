@@ -11,7 +11,12 @@ import backArrow from "assets/back_arrow.png";
 import _ from "lodash";
 import loadingSrc from "assets/loading.gif";
 
-import { ChartType, ClusterType, ResourceType } from "shared/types";
+import {
+  BuildConfig,
+  ChartType,
+  ClusterType,
+  ResourceType,
+} from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import StatusIndicator from "components/StatusIndicator";
@@ -711,6 +716,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
       console.log(error);
       setCurrentError("Couldn't uninstall chart, please try again");
     }
+  };
+
+  const handleUpdateBuildConfig = (updatedBuildConfig: BuildConfig) => {
+    const chart = { ...currentChart };
+
+    chart.build_config = updatedBuildConfig;
+
+    setCurrentChart(chart);
   };
 
   useEffect(() => {

@@ -361,12 +361,16 @@ tabs:
         options:
         - label: t2.medium
           value: t2.medium
+        - label: t2.large
+          value: t2.large
         - label: t2.xlarge
           value: t2.xlarge
         - label: t2.2xlarge
           value: t2.2xlarge
         - label: t3.medium
           value: t3.medium
+        - label: t3.large
+          value: t3.large
         - label: t3.xlarge
           value: t3.xlarge
         - label: t3.2xlarge
@@ -387,6 +391,39 @@ tabs:
       placeholder: "ex: 10"
       settings:
         default: 10
+- name: advanced
+  label: Advanced
+  sections:
+  - name: system_machine_type
+    contents:
+    - type: heading
+      label: System Machine Type Settings
+    - type: select
+      label: ⚙️ AWS System Machine Type
+      variable: system_machine_type
+      settings:
+        default: t2.medium
+        options:
+        - label: t2.medium
+          value: t2.medium
+        - label: t2.large
+          value: t2.large
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t2.2xlarge
+          value: t2.2xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.large
+          value: t3.large
+        - label: t3.xlarge
+          value: t3.xlarge
+        - label: t3.2xlarge
+          value: t3.2xlarge
+  - name: spot_instance_should_enable
+    contents:
+    - type: heading
+      label: Spot Instance Settings
     - type: checkbox
       variable: spot_instances_enabled
       label: Enable spot instances for this cluster.
@@ -399,6 +436,16 @@ tabs:
       label: Assign a bid price for the spot instance (optional).
       variable: spot_price
       placeholder: "ex: 0.05"
+  - name: net_settings
+    contents:
+    - type: heading
+      label: Networking Settings
+    - type: string-input
+      label: "Add a different CIDR range prefix (first two octets: for example 10.99 will create a VPC with CIDR range 10.99.0.0/16)."
+      variable: cluster_vpc_cidr_octets
+      placeholder: "ex: 10.99"
+      settings:
+        default: "10.99"
 `
 
 const gcrForm = `name: GCR

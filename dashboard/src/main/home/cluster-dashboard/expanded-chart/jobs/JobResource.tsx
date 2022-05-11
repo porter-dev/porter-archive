@@ -8,8 +8,8 @@ import Logs from "../status/Logs";
 import plus from "assets/plus.svg";
 import closeRounded from "assets/close-rounded.png";
 import KeyValueArray from "components/form-components/KeyValueArray";
-import DynamicLink from "components/DynamicLink";
 import { readableDate } from "shared/string_utils";
+import DynamicLink from "components/DynamicLink";
 import CommandLineIcon from "assets/command-line-icon";
 import ConnectToJobInstructionsModal from "./ConnectToJobInstructionsModal";
 

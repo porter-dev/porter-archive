@@ -26,6 +26,7 @@
     "clipboard": "^2.0.8",
     "cohere-js": "^1.0.19",
     "color": "^4.2.3",
+    "cohere-sentry": "^1.0.1",
     "core-js": "^3.16.1",
     "cron-parser": "^4.3.0",
     "cron-validator": "^1.3.1",

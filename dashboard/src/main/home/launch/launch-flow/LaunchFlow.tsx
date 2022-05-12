@@ -226,8 +226,10 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         break;
       case "aks":
         provider = "azure";
+        break;
       case "vke":
         provider = "vultr";
+        break;
       default:
         provider = "";
     }

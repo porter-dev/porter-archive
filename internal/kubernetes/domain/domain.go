@@ -28,6 +28,17 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 	var nginxSvc *v1.Service
 	exists := false
 
+	// if there are no items in the list, look for alternate services/names (just Azure for now)
+	if len(svcList.Items) == 0 {
+		svcList, err = clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+			LabelSelector: "app=addon-http-application-routing-nginx-ingress",
+		})
+
+		if err != nil {
+			return "", false, err
+		}
+	}
+
 	for _, svc := range svcList.Items {
 		// check that helm chart annotation is correct exists
 		if chartAnn, found := svc.ObjectMeta.Labels["helm.sh/chart"]; found {

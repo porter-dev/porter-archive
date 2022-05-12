@@ -281,6 +281,8 @@ export const ExpandedJobChartFC: React.FC<{
     return null;
   };
 
+  const formData = useMemo(() => cloneDeep(chart?.form || {}), [chart]);
+
   if (status === "loading") {
     return <Loading />;
   }
@@ -319,8 +321,6 @@ export const ExpandedJobChartFC: React.FC<{
       />
     );
   }
-
-  const formData = useMemo(() => cloneDeep(chart.form), [chart]);
 
   return (
     <>

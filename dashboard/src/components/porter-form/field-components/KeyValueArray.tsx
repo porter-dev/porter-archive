@@ -567,8 +567,10 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
 };
 
 type KeyValueArrayMetadata = {
-  added: { name: string }[];
-  deleted: { name: string }[];
+  [variable: string]: {
+    added: { name: string }[];
+    deleted: { name: string }[];
+  };
 };
 
 export const getMetadata: GetMetadataFunction<KeyValueArrayMetadata> = (
@@ -576,11 +578,18 @@ export const getMetadata: GetMetadataFunction<KeyValueArrayMetadata> = (
   props: KeyValueArrayField,
   state: KeyValueArrayFieldState
 ) => {
+  // We don't need any metadata for other key-value-array fields yet so we return null for that variable
+  if (!props?.variable?.includes("env")) {
+    return {
+      [props.variable]: null,
+    };
+  }
+
   const originalSyncedEnvGroups: { name: string }[] =
     props.value[0]?.synced || [];
-  const currSynced = state.synced_env_groups || [];
+  const currSynced = state?.synced_env_groups || [];
 
-  let obj: KeyValueArrayMetadata = {
+  let obj: KeyValueArrayMetadata[""] = {
     added: [],
     deleted: [],
   };
@@ -588,7 +597,18 @@ export const getMetadata: GetMetadataFunction<KeyValueArrayMetadata> = (
   obj.added = differenceBy(currSynced, originalSyncedEnvGroups, "name");
   obj.deleted = differenceBy(originalSyncedEnvGroups, currSynced, "name");
 
-  return obj;
+  // This will assure that the variable is always "container.env" and not "container.env.normal" as it is
+  // for some old versions of the jobs chart.
+  const variableContent = props.variable.split(".");
+  let variable = props.variable;
+
+  if (variable.includes("normal")) {
+    variable = `${variableContent[0]}.${variableContent[1]}`;
+  }
+
+  return {
+    [variable]: obj,
+  };
 };
 
 export default KeyValueArray;

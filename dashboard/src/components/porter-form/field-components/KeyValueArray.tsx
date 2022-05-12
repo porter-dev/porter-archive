@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
   GetFinalVariablesFunction,
+  GetMetadataFunction,
   KeyValueArrayField,
   KeyValueArrayFieldState,
   PopulatedEnvGroup,
@@ -13,7 +14,7 @@ import Modal from "../../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
-import _, { isObject, omit } from "lodash";
+import _, { isObject, differenceBy, omit } from "lodash";
 import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import Loading from "components/Loading";
@@ -563,6 +564,51 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
       [props.variable]: obj,
     };
   }
+};
+
+type KeyValueArrayMetadata = {
+  [variable: string]: {
+    added: { name: string }[];
+    deleted: { name: string }[];
+  };
+};
+
+export const getMetadata: GetMetadataFunction<KeyValueArrayMetadata> = (
+  vars,
+  props: KeyValueArrayField,
+  state: KeyValueArrayFieldState
+) => {
+  // We don't need any metadata for other key-value-array fields yet so we return null for that variable
+  if (!props?.variable?.includes("env")) {
+    return {
+      [props.variable]: null,
+    };
+  }
+
+  const originalSyncedEnvGroups: { name: string }[] =
+    props.value[0]?.synced || [];
+  const currSynced = state?.synced_env_groups || [];
+
+  let obj: KeyValueArrayMetadata[""] = {
+    added: [],
+    deleted: [],
+  };
+
+  obj.added = differenceBy(currSynced, originalSyncedEnvGroups, "name");
+  obj.deleted = differenceBy(originalSyncedEnvGroups, currSynced, "name");
+
+  // This will assure that the variable is always "container.env" and not "container.env.normal" as it is
+  // for some old versions of the jobs chart.
+  const variableContent = props.variable.split(".");
+  let variable = props.variable;
+
+  if (variable.includes("normal")) {
+    variable = `${variableContent[0]}.${variableContent[1]}`;
+  }
+
+  return {
+    [variable]: obj,
+  };
 };
 
 export default KeyValueArray;

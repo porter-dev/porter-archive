@@ -301,3 +301,10 @@ export type GetFinalVariablesFunction = (
   state: PorterFormFieldFieldState,
   context: Partial<ContextProps>
 ) => PorterFormVariableList;
+
+export type GetMetadataFunction<T = unknown> = (
+  vars: PorterFormVariableList,
+  props: FormField,
+  state: PorterFormFieldFieldState,
+  context: Partial<ContextProps>
+) => T;

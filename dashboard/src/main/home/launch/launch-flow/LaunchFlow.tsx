@@ -224,8 +224,25 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       case "doks":
         provider = "digitalocean";
         break;
+      case "aks":
+        provider = "azure";
+        break;
+      case "vke":
+        provider = "vultr";
+        break;
       default:
         provider = "";
+    }
+
+    // Check the server URL to see if we can detect the cluster provider.
+    // There's no standard URL format for GCP that's why it's not currently included
+    if (provider === "") {
+      const server = currentCluster.server;
+
+      if (server.includes("eks")) provider = "eks";
+      else if (server.includes("ondigitalocean")) provider = "digitalocean";
+      else if (server.includes("azmk8s")) provider = "azure";
+      else if (server.includes("vultr")) provider = "vultr";
     }
 
     // don't overwrite for templates that already have a source (i.e. non-Docker templates)

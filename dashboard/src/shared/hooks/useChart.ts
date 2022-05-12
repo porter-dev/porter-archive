@@ -124,18 +124,18 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
    * Update chart values
    */
   const updateChart = async (
-    processValues:
-      | ((chart: ChartType) => { yaml: string; metadata: any })
-      | ((
-          chart: ChartType,
-          oldChart?: ChartType
-        ) => { yaml: string; metadata: any })
+    processValues: (
+      chart: ChartType,
+      oldChart?: ChartType
+    ) => { yaml: string; metadata: any }
   ) => {
     setSaveStatus("loading");
     const { yaml: values, metadata } = processValues(chart, oldChart);
 
-    const addedEnvGroups = metadata?.added || [];
-    const deletedEnvGroups = metadata?.deleted || [];
+    const syncEnvGroups = metadata ? metadata["container.env"] : {};
+
+    const addedEnvGroups = syncEnvGroups?.added || [];
+    const deletedEnvGroups = syncEnvGroups?.deleted || [];
 
     const addApplicationToEnvGroupPromises = addedEnvGroups.map(
       (envGroup: any) => {

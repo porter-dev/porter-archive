@@ -1,14 +1,8 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
-import _ from "lodash";
+import _, { cloneDeep } from "lodash";
 import loadingSrc from "assets/loading.gif";
 
 import { ChartType, ClusterType, ResourceType } from "shared/types";
@@ -28,7 +22,6 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
-import { onlyInLeft } from "shared/array_utils";
 import IncidentsTab from "./incidents/IncidentsTab";
 import BuildSettingsTab from "./BuildSettingsTab";
 
@@ -229,7 +222,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let values: any = {};
 
     // Weave in preexisting values and convert to yaml
-    if (props.currentChart.config) {
+    if (props?.currentChart?.config) {
       values = props.currentChart.config;
     }
 
@@ -246,9 +239,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
       ...values,
     });
 
-    const deletedEnvGroups = props?.metadata?.deleted || [];
+    const syncedEnvGroups = props?.metadata
+      ? props?.metadata["container.env"]
+      : {};
 
-    const addedEnvGroups = props?.metadata?.added || [];
+    const deletedEnvGroups = syncedEnvGroups?.deleted || [];
+
+    const addedEnvGroups = syncedEnvGroups?.added || [];
 
     const addApplicationToEnvGroupPromises = addedEnvGroups.map(
       (envGroup: any) => {
@@ -332,9 +329,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
         err = parsedErr;
       }
 
-      setSaveValueStatus(err);
+      setSaveValueStatus("The api answered with an error");
 
-      setCurrentError(parsedErr);
+      setCurrentError(JSON.stringify(parsedErr));
 
       window.analytics?.track("Failed to Upgrade Chart", {
         chart: currentChart.name,
@@ -839,7 +836,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               {(isPreview || leftTabOptions.length > 0) && (
                 <BodyWrapper>
                   <PorterFormWrapper
-                    formData={currentChart.form}
+                    formData={cloneDeep(currentChart.form)}
                     valuesToOverride={{
                       namespace: props.namespace,
                       clusterId: currentCluster.id,

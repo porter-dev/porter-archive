@@ -83,6 +83,7 @@ func TestListReleasesByImageRepoURI(t *testing.T) {
 			ClusterID:    1,
 			WebhookToken: fmt.Sprintf("abcdefgh-%d", i),
 			ImageRepoURI: uri,
+			Tags:         make([]*models.Tag, 0),
 		}
 
 		release, err := tester.repo.Release().CreateRelease(release)

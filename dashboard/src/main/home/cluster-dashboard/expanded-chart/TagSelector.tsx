@@ -100,21 +100,6 @@ const TagSelector = ({ onSave, release }: Props) => {
     return hasAddedSomething || hasDeletedSomething;
   }, [values, release]);
 
-  /*
-          { 
-          values.length === 0 && "This application has no tags"
-        }
-        <Wrapper>
-          <Tooltip title="Create a new tag">
-            <AddButton
-              className="material-icons-outlined"
-              onClick={() => setOpenModal((prev) => !prev)}
-            >
-              add
-            </AddButton>
-          </Tooltip>
-        </Wrapper>
-  */
   return (
     <>
       {openModal ? (
@@ -145,9 +130,15 @@ const TagSelector = ({ onSave, release }: Props) => {
       <SearchSelector
         options={availableTags}
         dropdownLabel="Select a tag"
-        renderAddButton={() => <AddTagButton onClick={(e) => {
-          setOpenModal((prev) => !prev);
-        }}>+ Create a new tag</AddTagButton>}
+        renderAddButton={() => (
+          <AddTagButton
+            onClick={(e) => {
+              setOpenModal((prev) => !prev);
+            }}
+          >
+            + Create a new tag
+          </AddTagButton>
+        )}
         filterBy="name"
         onSelect={(value) => {
           console.log(value);
@@ -189,26 +180,6 @@ const AddTagButton = styled.div`
   :hover {
     color: white;
   }
-`;
-
-const Wrapper = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-`;
-
-const TagSelectorWrapper = styled.div`
-  position: absolute;
-  bottom: -260px;
-  right: 0;
-  width: 330px;
-  border-radius: 5px;
-  height: 250px;
-  background: #33353b;
-  border-radius: 5px;
-  z-index: 999;
-  overflow-y: auto;
-  box-shadow: 0px 4px 15px 0px #000000aa;
 `;
 
 const Br = styled.div`
@@ -325,36 +296,14 @@ const Flex = styled.div`
   position: relative;
 `;
 
-const AddButton = styled.div`
-  border-radius: 50%;
-  border: 1px solid #ffffff11;
-  padding: 5px;
-  height: 20px;
-  width: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 10px;
-  margin-top: 2px;
-  background: #ffffff11;
-  color: #ffffff88;
-  font-size: 18px;
-  :hover {
-    background: #ffffff22;
-    color: #ffffff;
-    cursor: pointer;
-  }
-`;
-
 const Tag = styled.div<{ color: string }>`
   display: inline-flex;
   color: ${(props) => Color(props.color).darken(0.4).string() || "inherit"};
   user-select: none;
-  border: 1px solid ${props => Color(props.color).darken(0.4).string()};
+  border: 1px solid ${(props) => Color(props.color).darken(0.4).string()};
   border-radius: 5px;
   padding: 4px 8px;
   position: relative;
-  padding-right: 24px;
   margin-bottom: 20px;
   text-align: center;
   align-items: center;
@@ -369,9 +318,6 @@ const Tag = styled.div<{ color: string }>`
   }
 
   > .material-icons {
-    position: absolute;
-    top: 4px;
-    right: 4px;
     font-size: 16px;
     :hover {
       cursor: pointer;

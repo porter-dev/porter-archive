@@ -28,8 +28,19 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 	var nginxSvc *v1.Service
 	exists := false
 
-	// if there are no items in the list, look for alternate services/names (just Azure for now)
-	if len(svcList.Items) == 0 {
+	for _, svc := range svcList.Items {
+		// check that helm chart annotation is correct exists
+		if chartAnn, found := svc.ObjectMeta.Labels["helm.sh/chart"]; found {
+			if (strings.Contains(chartAnn, "ingress-nginx") || strings.Contains(chartAnn, "nginx-ingress")) && svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+				nginxSvc = &svc
+				exists = true
+				break
+			}
+		}
+	}
+
+	if !exists {
+		// look for alternate services/names (just Azure for now)
 		svcList, err = clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
 			LabelSelector: "app=addon-http-application-routing-nginx-ingress",
 		})
@@ -38,31 +49,18 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 			return "", false, err
 		}
 
-		if len(svcList.Items) > 0 {
-			for _, svc := range svcList.Items {
-				// check that the service is type load balancer
-				if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
-					nginxSvc = &svc
-					exists = true
-					break
-				}
-			}
-		}
-	} else {
 		for _, svc := range svcList.Items {
-			// check that helm chart annotation is correct exists
-			if chartAnn, found := svc.ObjectMeta.Labels["helm.sh/chart"]; found {
-				if (strings.Contains(chartAnn, "ingress-nginx") || strings.Contains(chartAnn, "nginx-ingress")) && svc.Spec.Type == v1.ServiceTypeLoadBalancer {
-					nginxSvc = &svc
-					exists = true
-					break
-				}
+			// check that the service is type load balancer
+			if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+				nginxSvc = &svc
+				exists = true
+				break
 			}
 		}
-	}
 
-	if !exists {
-		return "", false, nil
+		if !exists {
+			return "", false, nil
+		}
 	}
 
 	if ipArr := nginxSvc.Status.LoadBalancer.Ingress; len(ipArr) > 0 {

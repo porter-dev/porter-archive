@@ -143,7 +143,7 @@ func (d *UpdateConfigDriver) Apply(resource *models.Resource) (*models.Resource,
 	}
 
 	if shouldCreate {
-		color.New(color.FgYellow).Printf("Could not read release %s/%s (%s): attempting creation\n", d.target.Namespace, d.target.AppName, err.Error())
+		color.New(color.FgYellow).Printf("Could not read release %s/%s: attempting creation\n", d.target.Namespace, d.target.AppName)
 
 		createAgent := &deploy.CreateAgent{
 			Client: client,

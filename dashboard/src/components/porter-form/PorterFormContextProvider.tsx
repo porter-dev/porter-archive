@@ -499,6 +499,13 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
           metadata: Object.assign.apply({}, metadataList),
         });
 
+      if (!metadataList.length) {
+        return {
+          values: Object.assign.apply({}, varList),
+          metadata: {},
+        };
+      }
+
       return {
         values: Object.assign.apply({}, varList),
         metadata: Object.assign.apply({}, metadataList),

@@ -26,7 +26,6 @@ const JobListFC = (props: PropsType): JSX.Element => {
     setCurrentOverlay,
     setCurrentError,
   } = useContext(Context);
-  const [deletionCandidate, setDeletionCandidate] = useState(null);
   const [deletionJob, setDeletionJob] = useState(null);
 
   const {
@@ -36,8 +35,6 @@ const JobListFC = (props: PropsType): JSX.Element => {
     page,
     prevPage,
     totalPages,
-    pageSize,
-    setPageSize,
     canNextPage,
     canPreviousPage,
   } = usePagination({
@@ -45,8 +42,7 @@ const JobListFC = (props: PropsType): JSX.Element => {
     initialPageSize: 30,
   });
 
-  const deleteJob = () => {
-    let job = deletionCandidate;
+  const deleteJob = (job: any) => {
     setCurrentOverlay(null);
     api
       .deleteJob(
@@ -60,8 +56,7 @@ const JobListFC = (props: PropsType): JSX.Element => {
         }
       )
       .then((res) => {
-        setDeletionJob(deletionCandidate);
-        setDeletionCandidate(null);
+        setDeletionJob(job);
       })
       .catch((err) => {
         let parsedErr = err?.response?.data?.error;
@@ -69,6 +64,9 @@ const JobListFC = (props: PropsType): JSX.Element => {
           err = parsedErr;
         }
         setCurrentError(err);
+      })
+      .finally(() => {
+        setCurrentOverlay(null);
       });
   };
 
@@ -95,14 +93,10 @@ const JobListFC = (props: PropsType): JSX.Element => {
                 expandJob={props.expandJob}
                 job={job}
                 handleDelete={() => {
-                  setDeletionCandidate(job);
                   setCurrentOverlay({
                     message: "Are you sure you want to delete this job run?",
-                    onYes: deleteJob,
-                    onNo: () => {
-                      setDeletionCandidate(null);
-                      setCurrentOverlay(null);
-                    },
+                    onYes: () => deleteJob(job),
+                    onNo: () => setCurrentOverlay(null),
                   });
                 }}
                 deleting={deletionJob?.metadata?.name == job.metadata?.name}

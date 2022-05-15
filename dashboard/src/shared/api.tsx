@@ -56,6 +56,11 @@ const getGCPIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gcp`
 );
 
+const getAzureIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/azure`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -709,6 +714,7 @@ const provisionInfra = baseApi<
     aws_integration_id?: number;
     gcp_integration_id?: number;
     do_integration_id?: number;
+    azure_integration_id?: number;
     cluster_id?: number;
   },
   {
@@ -1787,6 +1793,7 @@ export default {
   connectDORegistry,
   getAWSIntegration,
   getGCPIntegration,
+  getAzureIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
   createEmailVerification,

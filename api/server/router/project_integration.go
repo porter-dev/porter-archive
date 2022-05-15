@@ -217,6 +217,33 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/integrations/azure -> project_integration.NewListAzureHandler
+	listAzureEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/azure",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listAzureHandler := project_integration.NewListAzureHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listAzureEndpoint,
+		Handler:  listAzureHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/integrations/gcp -> project_integration.NewCreateGCPHandler
 	createGCPEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

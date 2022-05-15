@@ -145,7 +145,7 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// if this is a cluster or registry infra type, send to analytics client
 	switch infra.Kind {
-	case types.InfraDOKS, types.InfraEKS, types.InfraGKE:
+	case types.InfraDOKS, types.InfraEKS, types.InfraGKE, types.InfraAKS:
 		c.Config.AnalyticsClient.Track(analytics.ClusterProvisioningStartTrack(
 			&analytics.ClusterProvisioningStartTrackOpts{
 				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(0, infra.ProjectID),
@@ -153,7 +153,7 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 				InfraID:                infra.ID,
 			},
 		))
-	case types.InfraDOCR, types.InfraECR, types.InfraGCR:
+	case types.InfraDOCR, types.InfraECR, types.InfraGCR, types.InfraACR:
 		c.Config.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
 			&analytics.RegistryProvisioningStartTrackOpts{
 				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(0, infra.ProjectID),
@@ -181,12 +181,13 @@ func createCredentialsExchangeToken(conf *config.Config, infra *models.Infra) (*
 	}
 
 	ceToken := &models.CredentialsExchangeToken{
-		ProjectID:       infra.ProjectID,
-		Expiry:          &expiry,
-		Token:           hashedToken,
-		DOCredentialID:  infra.DOIntegrationID,
-		AWSCredentialID: infra.AWSIntegrationID,
-		GCPCredentialID: infra.GCPIntegrationID,
+		ProjectID:         infra.ProjectID,
+		Expiry:            &expiry,
+		Token:             hashedToken,
+		DOCredentialID:    infra.DOIntegrationID,
+		AWSCredentialID:   infra.AWSIntegrationID,
+		GCPCredentialID:   infra.GCPIntegrationID,
+		AzureCredentialID: infra.AzureIntegrationID,
 	}
 
 	// handle write to the database

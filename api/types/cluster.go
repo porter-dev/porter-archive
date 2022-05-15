@@ -167,6 +167,7 @@ const (
 	DOKS ClusterService = "doks"
 	GKE  ClusterService = "gke"
 	Kube ClusterService = "kube"
+	AKS  ClusterService = "aks"
 )
 
 // ClusterResolverName is the name for a cluster resolve

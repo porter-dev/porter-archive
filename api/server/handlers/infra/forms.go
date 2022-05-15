@@ -748,3 +748,78 @@ tabs:
       placeholder: my-cluster
       variable: cluster_name
 `
+
+const acrForm = `name: ACR
+hasSource: false
+includeHiddenFields: true
+isClusterScoped: false
+tabs:
+- name: main
+  label: Configuration
+  sections:
+  - name: section_one
+    contents: 
+    - type: heading
+      label: ACR Configuration
+    - type: select
+      label: 📍 Azure Region
+      variable: aks_region
+      settings:
+        default: East US
+        options:
+        - label: East US
+          value: East US
+        - label: East US 2
+          value: East US 2
+        - label: West US 2
+          value: West US 2
+        - label: West US 3
+          value: West US 3
+        - label: Norway East
+          value: Norway East
+    - type: string-input
+      label: ACR Name
+      required: true
+      placeholder: my-registry
+      variable: acr_name
+`
+
+const aksForm = `name: AKS
+hasSource: false
+includeHiddenFields: true
+isClusterScoped: false
+tabs:
+- name: main
+  label: Configuration
+  sections:
+  - name: section_one
+    contents: 
+    - type: heading
+      label: AKS Configuration
+    - type: select
+      label: 📍 Azure Region
+      variable: aks_region
+      settings:
+        default: East US
+        options:
+        - label: East US
+          value: East US
+        - label: East US 2
+          value: East US 2
+        - label: West US 2
+          value: West US 2
+        - label: West US 3
+          value: West US 3
+        - label: Norway East
+          value: Norway East
+    - type: string-input
+      label: 👤 Issuer Email
+      required: true
+      placeholder: example@example.com
+      variable: issuer_email
+    - type: string-input
+      label: AKS Cluster Name
+      required: true
+      placeholder: my-cluster
+      variable: cluster_name
+`

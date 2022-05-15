@@ -25,6 +25,7 @@ import Select from "components/porter-form/field-components/Select";
 import ClusterList from "./credentials/ClusterList";
 import { useLocation, useParams } from "react-router";
 import qs from "qs";
+import AzureCredentialsList from "./credentials/AzureCredentialList";
 
 type Props = {};
 
@@ -128,6 +129,7 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
           aws_integration_id: currentCredential["aws_integration_id"],
           do_integration_id: currentCredential["do_integration_id"],
           gcp_integration_id: currentCredential["gcp_integration_id"],
+          azure_integration_id: currentCredential["azure_integration_id"],
           cluster_id: selectedClusterID || null,
         },
         {
@@ -243,6 +245,21 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
               selectCredential={(i) =>
                 setCurrentCredential({
                   do_integration_id: i,
+                })
+              }
+            />
+          </ActionContainer>
+        );
+      } else if (
+        currentTemplate.required_credential == "azure_integration_id"
+      ) {
+        return (
+          <ActionContainer>
+            <Heading>Step 1 of {numSteps} - Link Azure Credentials</Heading>
+            <AzureCredentialsList
+              selectCredential={(i) =>
+                setCurrentCredential({
+                  azure_integration_id: i,
                 })
               }
             />

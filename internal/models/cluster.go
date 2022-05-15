@@ -20,6 +20,7 @@ const (
 	GCP       ClusterAuth = "gcp-sa"
 	AWS       ClusterAuth = "aws-sa"
 	DO        ClusterAuth = "do-oauth"
+	Azure     ClusterAuth = "azure-sp"
 	Local     ClusterAuth = "local"
 	InCluster ClusterAuth = "in-cluster"
 )
@@ -59,11 +60,12 @@ type Cluster struct {
 	// ------------------------------------------------------------------
 
 	// The various auth mechanisms available to the integration
-	KubeIntegrationID uint
-	OIDCIntegrationID uint
-	GCPIntegrationID  uint
-	AWSIntegrationID  uint
-	DOIntegrationID   uint
+	KubeIntegrationID  uint
+	OIDCIntegrationID  uint
+	GCPIntegrationID   uint
+	AWSIntegrationID   uint
+	DOIntegrationID    uint
+	AzureIntegrationID uint
 
 	// A token cache that can be used by an auth mechanism, if desired
 	TokenCache   integrations.ClusterTokenCache `json:"token_cache" gorm:"-" sql:"-"`
@@ -83,6 +85,8 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 		serv = types.GKE
 	} else if c.DOIntegrationID != 0 {
 		serv = types.DOKS
+	} else if c.AzureIntegrationID != 0 {
+		serv = types.AKS
 	}
 
 	return &types.Cluster{

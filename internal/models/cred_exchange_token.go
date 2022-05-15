@@ -13,9 +13,10 @@ type CredentialsExchangeToken struct {
 	Token     []byte
 	Expiry    *time.Time
 
-	DOCredentialID  uint
-	AWSCredentialID uint
-	GCPCredentialID uint
+	DOCredentialID    uint
+	AWSCredentialID   uint
+	GCPCredentialID   uint
+	AzureCredentialID uint
 }
 
 func (t *CredentialsExchangeToken) IsExpired() bool {

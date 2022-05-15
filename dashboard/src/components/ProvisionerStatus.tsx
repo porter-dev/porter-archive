@@ -394,16 +394,21 @@ type OperationDetailsProps = {
   infra: Infrastructure;
   can_delete?: boolean;
   refreshInfra: (completed?: boolean, errored?: boolean) => void;
+  useOperation?: Operation;
+  padding?: string;
 };
 
-const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
+export const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
   infra,
   can_delete,
   refreshInfra,
+  useOperation,
+  padding,
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!useOperation);
   const [hasError, setHasError] = useState(false);
-  const [operation, setOperation] = useState<Operation>(null);
+  const [operation, setOperation] = useState<Operation>(useOperation);
+
   const [infraState, setInfraState] = useState<TFState>(null);
   const [infraStateInitialized, setInfraStateInitialized] = useState(false);
   const { currentProject, setCurrentError } = useContext(Context);
@@ -526,7 +531,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
         {
           project_id: currentProject.id,
           infra_id: infra.id,
-          operation_id: infra.latest_operation.id,
+          operation_id: useOperation?.id || infra.latest_operation.id,
         }
       )
       .then(({ data }) => {
@@ -760,7 +765,7 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
   };
 
   return (
-    <StyledCard>
+    <StyledCard padding={padding}>
       {renderLoadingBar(
         createdResources.length + deletedResources.length,
         createdResources.length +
@@ -780,8 +785,8 @@ const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
   );
 };
 
-const StyledCard = styled.div`
-  padding: 12px 20px;
+const StyledCard = styled.div<{ padding?: string }>`
+  padding: ${(props) => props.padding || "12px 20px"};
   max-height: 300px;
   overflow-y: auto;
 `;

@@ -100,6 +100,20 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			AWSSessionToken:    awsInt.AWSSessionToken,
 			AWSRegion:          []byte(awsInt.AWSRegion),
 		}
+	} else if ceToken.AzureCredentialID != 0 {
+		azInt, err := repo.AzureIntegration().ReadAzureIntegration(ceToken.ProjectID, ceToken.AzureCredentialID)
+
+		if err != nil {
+			apierrors.HandleAPIError(c.config.Logger, c.config.Alerter, w, r, apierrors.NewErrForbidden(err), true)
+			return
+		}
+
+		resp.Azure = &credentials.AzureCredential{
+			SubscriptionID:         azInt.AzureSubscriptionID,
+			TenantID:               azInt.AzureTenantID,
+			ClientID:               azInt.AzureClientID,
+			ServicePrincipalSecret: azInt.ServicePrincipalSecret,
+		}
 	}
 
 	// return the decrypted credentials

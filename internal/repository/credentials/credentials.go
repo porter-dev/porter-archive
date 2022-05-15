@@ -40,12 +40,18 @@ type AWSCredential struct {
 }
 
 type AzureCredential struct {
+	SubscriptionID string `json:"subscription_id"`
+	TenantID       string `json:"tenant_id"`
+	ClientID       string `json:"client_id"`
+
 	// The Azure service principal key
 	ServicePrincipalSecret []byte `json:"service_principal_secret"`
 
 	// The ACR passwords, if set
-	ACRPassword1 []byte `json:"acr_password_1"`
-	ACRPassword2 []byte `json:"acr_password_2"`
+	ACRPassword1 []byte `json:"acr_password_1,omitempty"`
+	ACRPassword2 []byte `json:"acr_password_2,omitempty"`
+
+	AKSPassword []byte `json:"aks_password,omitempty"`
 }
 
 type CredentialStorage interface {

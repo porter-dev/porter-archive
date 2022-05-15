@@ -54,21 +54,37 @@ type SimpleIngress struct {
 // GetIngressesWithNGINXAnnotation gets an array of names for all ingresses controlled by
 // NGINX
 func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIngress, error) {
-	ingressList, err := clientset.NetworkingV1beta1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
-
-	if err != nil {
-		return nil, err
-	}
-
 	res := make([]SimpleIngress, 0)
 
-	for _, ingress := range ingressList.Items {
-		if ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]; found {
-			if ingressAnn == "nginx" {
-				res = append(res, SimpleIngress{
-					Name:      ingress.ObjectMeta.Name,
-					Namespace: ingress.ObjectMeta.Namespace,
-				})
+	v1beta1IngressList, v1beta1Err := clientset.NetworkingV1beta1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
+	v1IngressList, v1Err := clientset.NetworkingV1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
+
+	if v1beta1Err != nil && v1Err != nil {
+		return nil, fmt.Errorf("List ingresses error: %s, %s", v1beta1Err.Error(), v1Err.Error())
+	}
+
+	if v1beta1Err == nil && len(v1beta1IngressList.Items) > 0 {
+		for _, ingress := range v1beta1IngressList.Items {
+			if ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]; found {
+				if ingressAnn == "nginx" {
+					res = append(res, SimpleIngress{
+						Name:      ingress.ObjectMeta.Name,
+						Namespace: ingress.ObjectMeta.Namespace,
+					})
+				}
+			}
+		}
+	}
+
+	if v1Err == nil && len(v1IngressList.Items) > 0 {
+		for _, ingress := range v1IngressList.Items {
+			if ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]; found {
+				if ingressAnn == "nginx" {
+					res = append(res, SimpleIngress{
+						Name:      ingress.ObjectMeta.Name,
+						Namespace: ingress.ObjectMeta.Namespace,
+					})
+				}
 			}
 		}
 	}

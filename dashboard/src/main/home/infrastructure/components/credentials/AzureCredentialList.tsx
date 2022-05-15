@@ -4,7 +4,7 @@ import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
-// import AzureCredentialForm from "./AzureCredentialForm";
+import AzureCredentialForm from "./AzureCredentialForm";
 import CredentialList from "./CredentialList";
 import Description from "components/Description";
 
@@ -69,14 +69,14 @@ const AzureCredentialsList: React.FunctionComponent<Props> = ({
   }
 
   const renderContents = () => {
-    // if (shouldCreateCred) {
-    //   return (
-    //     <AzureCredentialForm
-    //       setCreatedCredential={selectCredential}
-    //       cancel={() => {}}
-    //     />
-    //   );
-    // }
+    if (shouldCreateCred) {
+      return (
+        <AzureCredentialForm
+          setCreatedCredential={selectCredential}
+          cancel={() => {}}
+        />
+      );
+    }
 
     return (
       <>

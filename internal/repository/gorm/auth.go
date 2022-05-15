@@ -1352,9 +1352,11 @@ func (repo *AzureIntegrationRepository) CreateAzureIntegration(
 		credentialData.ServicePrincipalSecret = az.ServicePrincipalSecret
 		credentialData.ACRPassword1 = az.ACRPassword1
 		credentialData.ACRPassword2 = az.ACRPassword2
+		credentialData.AKSPassword = az.AKSPassword
 		az.ServicePrincipalSecret = []byte{}
 		az.ACRPassword1 = []byte{}
 		az.ACRPassword2 = []byte{}
+		az.AKSPassword = []byte{}
 	}
 
 	project := &models.Project{}
@@ -1402,9 +1404,11 @@ func (repo *AzureIntegrationRepository) OverwriteAzureIntegration(
 		credentialData.ServicePrincipalSecret = az.ServicePrincipalSecret
 		credentialData.ACRPassword1 = az.ACRPassword1
 		credentialData.ACRPassword2 = az.ACRPassword2
+		credentialData.AKSPassword = az.AKSPassword
 		az.ServicePrincipalSecret = []byte{}
 		az.ACRPassword1 = []byte{}
 		az.ACRPassword2 = []byte{}
+		az.AKSPassword = []byte{}
 	}
 
 	if err := repo.db.Save(az).Error; err != nil {
@@ -1443,6 +1447,7 @@ func (repo *AzureIntegrationRepository) ReadAzureIntegration(
 		az.ServicePrincipalSecret = credentialData.ServicePrincipalSecret
 		az.ACRPassword1 = credentialData.ACRPassword1
 		az.ACRPassword2 = credentialData.ACRPassword2
+		az.AKSPassword = credentialData.AKSPassword
 	}
 
 	err := repo.DecryptAzureIntegrationData(az, repo.key)
@@ -1504,6 +1509,16 @@ func (repo *AzureIntegrationRepository) EncryptAzureIntegrationData(
 		az.ACRPassword2 = cipherData
 	}
 
+	if len(az.AKSPassword) > 0 {
+		cipherData, err := encryption.Encrypt(az.AKSPassword, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.AKSPassword = cipherData
+	}
+
 	return nil
 }
 
@@ -1541,6 +1556,16 @@ func (repo *AzureIntegrationRepository) DecryptAzureIntegrationData(
 		}
 
 		az.ACRPassword2 = plaintext
+	}
+
+	if len(az.AKSPassword) > 0 {
+		plaintext, err := encryption.Decrypt(az.AKSPassword, key)
+
+		if err != nil {
+			return err
+		}
+
+		az.AKSPassword = plaintext
 	}
 
 	return nil

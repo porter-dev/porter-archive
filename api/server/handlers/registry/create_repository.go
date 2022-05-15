@@ -43,7 +43,7 @@ func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 	// parse the name from the registry
 	nameSpl := strings.Split(request.ImageRepoURI, "/")
-	repoName := strings.ReplaceAll(nameSpl[len(nameSpl)-1], "_", "-")
+	repoName := strings.ToLower(strings.ReplaceAll(nameSpl[len(nameSpl)-1], "_", "-"))
 
 	err := regAPI.CreateRepository(p.Repo(), repoName)
 

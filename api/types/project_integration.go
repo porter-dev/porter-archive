@@ -157,3 +157,5 @@ type CreateAzureRequest struct {
 type CreateAzureResponse struct {
 	*AzureIntegration
 }
+
+type ListAzureResponse []*AzureIntegration

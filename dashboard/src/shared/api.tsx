@@ -56,6 +56,11 @@ const getGCPIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gcp`
 );
 
+const getAzureIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/azure`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -80,6 +85,18 @@ const overwriteAWSIntegration = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
+});
+
+const createAzureIntegration = baseApi<
+  {
+    azure_client_id: string;
+    azure_subscription_id: string;
+    azure_tenant_id: string;
+    service_principal_key: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/azure`;
 });
 
 const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
@@ -709,6 +726,7 @@ const provisionInfra = baseApi<
     aws_integration_id?: number;
     gcp_integration_id?: number;
     do_integration_id?: number;
+    azure_integration_id?: number;
     cluster_id?: number;
   },
   {
@@ -1787,8 +1805,10 @@ export default {
   connectDORegistry,
   getAWSIntegration,
   getGCPIntegration,
+  getAzureIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
+  createAzureIntegration,
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,

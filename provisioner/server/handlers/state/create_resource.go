@@ -86,7 +86,7 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// switch on the kind of resource and write the corresponding objects to the database
 	switch req.Kind {
-	case string(types.InfraEKS), string(types.InfraDOKS), string(types.InfraGKE):
+	case string(types.InfraEKS), string(types.InfraDOKS), string(types.InfraGKE), string(types.InfraAKS):
 		var cluster *models.Cluster
 
 		cluster, err = createCluster(c.Config, infra, operation, req.Output)
@@ -108,6 +108,8 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		_, err = createDOCRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraGCR):
 		_, err = createGCRRegistry(c.Config, infra, operation, req.Output)
+	case string(types.InfraACR):
+		_, err = createACRRegistry(c.Config, infra, operation, req.Output)
 	}
 
 	if err != nil {
@@ -244,6 +246,23 @@ func createCluster(config *config.Config, infra *models.Infra, operation *models
 		return nil, err
 	}
 
+	// if cluster_token is output and infra is azure, update the azure integration
+	if _, exists := output["cluster_token"]; exists && infra.AzureIntegrationID != 0 {
+		azInt, err := config.Repo.AzureIntegration().ReadAzureIntegration(infra.ProjectID, infra.AzureIntegrationID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		azInt.AKSPassword = []byte(output["cluster_token"].(string))
+
+		azInt, err = config.Repo.AzureIntegration().OverwriteAzureIntegration(azInt)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	cluster.Name = output["cluster_name"].(string)
 	cluster.Server = output["cluster_endpoint"].(string)
 	cluster.CertificateAuthorityData = caData
@@ -277,6 +296,9 @@ func getNewCluster(infra *models.Infra) *models.Cluster {
 	case types.InfraDOKS:
 		res.AuthMechanism = models.DO
 		res.DOIntegrationID = infra.DOIntegrationID
+	case types.InfraAKS:
+		res.AuthMechanism = models.Azure
+		res.AzureIntegrationID = infra.AzureIntegrationID
 	}
 
 	return res
@@ -321,6 +343,18 @@ func createGCRRegistry(config *config.Config, infra *models.Infra, operation *mo
 		InfraID:          infra.ID,
 		URL:              output["url"].(string),
 		Name:             "gcr-registry",
+	}
+
+	return config.Repo.Registry().CreateRegistry(reg)
+}
+
+func createACRRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
+	reg := &models.Registry{
+		ProjectID:          infra.ProjectID,
+		AzureIntegrationID: infra.AzureIntegrationID,
+		InfraID:            infra.ID,
+		URL:                output["url"].(string),
+		Name:               output["name"].(string),
 	}
 
 	return config.Repo.Registry().CreateRegistry(reg)

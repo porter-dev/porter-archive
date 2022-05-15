@@ -236,51 +236,6 @@ export const useJobs = (chart: ChartType) => {
     setSelectedJob(job);
   };
 
-  // useEffect(() => {
-  //   let isSubscribed = true;
-
-  //   if (!chart) {
-  //     return () => {
-  //       isSubscribed = false;
-  //     };
-  //   }
-
-  //   if (
-  //     previousChart?.name === chart?.name &&
-  //     previousChart?.namespace === chart?.namespace
-  //   ) {
-  //     return () => {
-  //       isSubscribed = false;
-  //     };
-  //   }
-
-  //   setStatus("loading");
-  //   const newestImage = chart?.config?.image?.repository;
-
-  //   setHasPorterImageTemplate(PORTER_IMAGE_TEMPLATES.includes(newestImage));
-
-  //   api
-  //     .getJobs(
-  //       "<token>",
-  //       {},
-  //       {
-  //         id: currentProject?.id,
-  //         cluster_id: currentCluster?.id,
-  //         namespace: chart.namespace,
-  //         release_name: chart.name,
-  //       }
-  //     )
-  //     .then((res) => {
-  //       if (isSubscribed) {
-  //         sortJobsAndSave(res.data);
-  //         setStatus("ready");
-  //       }
-  //     });
-  //   return () => {
-  //     isSubscribed = false;
-  //   };
-  // }, [chart]);
-
   useEffect(() => {
     if (!chart || !chart.namespace || !chart.name) {
       return () => {};
@@ -406,9 +361,6 @@ export const useJobs = (chart: ChartType) => {
           err = parsedErr;
         }
 
-        // this.setState({
-        //   saveValuesStatus: parsedErr,
-        // });
         setTriggerRunStatus("Couldn't trigger a new run for this job.");
         setTimeout(() => setTriggerRunStatus(""), 500);
         setCurrentError(parsedErr);

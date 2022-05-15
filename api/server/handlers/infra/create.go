@@ -148,6 +148,7 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 		infra.DOIntegrationID = req.DOIntegrationID
 		infra.AWSIntegrationID = 0
 		infra.GCPIntegrationID = 0
+		infra.AzureIntegrationID = 0
 	} else if req.AWSIntegrationID != 0 {
 		_, err := config.Repo.AWSIntegration().ReadAWSIntegration(proj.ID, req.AWSIntegrationID)
 
@@ -158,6 +159,7 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 		infra.DOIntegrationID = 0
 		infra.AWSIntegrationID = req.AWSIntegrationID
 		infra.GCPIntegrationID = 0
+		infra.AzureIntegrationID = 0
 	} else if req.GCPIntegrationID != 0 {
 		_, err := config.Repo.GCPIntegration().ReadGCPIntegration(proj.ID, req.GCPIntegrationID)
 
@@ -168,9 +170,21 @@ func checkInfraCredentials(config *config.Config, proj *models.Project, infra *m
 		infra.DOIntegrationID = 0
 		infra.AWSIntegrationID = 0
 		infra.GCPIntegrationID = req.GCPIntegrationID
+		infra.AzureIntegrationID = 0
+	} else if req.AzureIntegrationID != 0 {
+		_, err := config.Repo.AzureIntegration().ReadAzureIntegration(proj.ID, req.AzureIntegrationID)
+
+		if err != nil {
+			return fmt.Errorf("azure integration id %d not found in project %d", req.AzureIntegrationID, proj.ID)
+		}
+
+		infra.DOIntegrationID = 0
+		infra.AWSIntegrationID = 0
+		infra.GCPIntegrationID = 0
+		infra.AzureIntegrationID = req.AzureIntegrationID
 	}
 
-	if infra.DOIntegrationID == 0 && infra.AWSIntegrationID == 0 && infra.GCPIntegrationID == 0 {
+	if infra.DOIntegrationID == 0 && infra.AWSIntegrationID == 0 && infra.GCPIntegrationID == 0 && infra.AzureIntegrationID == 0 {
 		return fmt.Errorf("at least one integration id must be set")
 	}
 
@@ -195,6 +209,10 @@ func getSourceLinkAndVersion(kind types.InfraKind) (string, string) {
 		return "porter/do/docr", "v0.1.0"
 	case types.InfraDOKS:
 		return "porter/do/doks", "v0.1.0"
+	case types.InfraAKS:
+		return "porter/azure/aks", "v0.1.0"
+	case types.InfraACR:
+		return "porter/azure/acr", "v0.1.0"
 	}
 
 	return "porter/test", "v0.1.0"

@@ -3,7 +3,12 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
 import Loading from "components/Loading";
-import { Operation, OperationStatus, OperationType } from "shared/types";
+import {
+  Infrastructure,
+  Operation,
+  OperationStatus,
+  OperationType,
+} from "shared/types";
 import { readableDate } from "shared/string_utils";
 import Placeholder from "components/Placeholder";
 import { useWebsockets } from "shared/hooks/useWebsockets";
@@ -11,17 +16,20 @@ import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Description from "components/Description";
+import { OperationDetails } from "components/ProvisionerStatus";
 
 type Props = {
-  infra_id: number;
+  infra: Infrastructure;
   operation_id: string;
   back: (operation?: Operation) => void;
+  refreshInfra: () => void;
 };
 
 const ExpandedOperation: React.FunctionComponent<Props> = ({
-  infra_id,
+  infra,
   operation_id,
   back,
+  refreshInfra,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -38,7 +46,7 @@ const ExpandedOperation: React.FunctionComponent<Props> = ({
         {},
         {
           project_id: currentProject.id,
-          infra_id: infra_id,
+          infra_id: infra.id,
           operation_id: operation_id,
         }
       )
@@ -109,7 +117,7 @@ const ExpandedOperation: React.FunctionComponent<Props> = ({
           {},
           {
             project_id: currentProject.id,
-            infra_id: infra_id,
+            infra_id: infra.id,
             operation_id: operation_id,
           }
         )
@@ -129,7 +137,7 @@ const ExpandedOperation: React.FunctionComponent<Props> = ({
   const retry = () => {
     let pathParams = {
       project_id: currentProject.id,
-      infra_id: infra_id,
+      infra_id: infra.id,
     };
 
     let apiCall = api.updateInfra;
@@ -240,6 +248,35 @@ const ExpandedOperation: React.FunctionComponent<Props> = ({
     return logs.map((l, i) => <Log key={i}>{l}</Log>);
   };
 
+  const renderOperationDetails = () => {
+    if (infra.latest_operation.id == operation.id) {
+      return (
+        <>
+          <Description>Infrastructure progress:</Description>
+          <OperationDetails
+            infra={infra}
+            refreshInfra={refreshInfra}
+            useOperation={operation}
+            padding={"12px 0"}
+          />
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Description>
+          {getOperationDescription(
+            operation.type,
+            operation.status,
+            operation.last_updated
+          )}
+        </Description>
+        <Br />
+      </>
+    );
+  };
+
   return (
     <StyledCard>
       <BackArrowContainer>
@@ -250,14 +287,7 @@ const ExpandedOperation: React.FunctionComponent<Props> = ({
       </BackArrowContainer>
       <MetadataContainer>
         <Heading>Deployment Summary</Heading>
-        <Description>
-          {getOperationDescription(
-            operation.type,
-            operation.status,
-            operation.last_updated
-          )}
-        </Description>
-        <Br />
+        {renderOperationDetails()}
         {renderRerunButton()}
       </MetadataContainer>
       <MetadataContainer>
@@ -332,7 +362,7 @@ const MetadataContainer = styled.div`
   margin-bottom: 3px;
   border-radius: 6px;
   background: #2e3135;
-  padding: 0 20px;
+  padding: 0 20px 16px 20px;
   overflow-y: auto;
   min-height: 180px;
   font-size: 13px;

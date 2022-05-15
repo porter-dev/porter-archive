@@ -35,6 +35,7 @@ const SearchSelector = ({
   const handleOptionClick = (e: any, option: any) => {
     setIsExpanded(false);
     onSelect(option);
+    setFilter("");
   };
 
   const getLabel = (option: any) => {
@@ -83,12 +84,12 @@ const SearchSelector = ({
             <Dropdown dropdownMaxHeight={dropdownMaxHeight}>
               {!filteredOptions.length ? (
                 <>
-                { !renderAddButton ? (
-                  <DropdownLabel>
-                    {noOptionsText || "No options available for this filter"}
-                  </DropdownLabel>
+                  {!renderAddButton ? (
+                    <DropdownLabel>
+                      {noOptionsText || "No options available for this filter"}
+                    </DropdownLabel>
                   ) : (
-                    <div 
+                    <div
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -97,13 +98,12 @@ const SearchSelector = ({
                     >
                       {renderAddButton()}
                     </div>
-                  )
-                }
+                  )}
                 </>
               ) : (
                 <>
                   {renderAddButton && (
-                    <div 
+                    <div
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -122,7 +122,6 @@ const SearchSelector = ({
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        setFilter("");
                       }}
                       onClick={(e) => handleOptionClick(e, option)}
                     >
@@ -225,21 +224,5 @@ const Option = styled.div`
 
   :hover {
     background: #ffffff22;
-  }
-`;
-
-const Icon = styled.div`
-  height: 20px;
-  width: 30px;
-  margin-left: -5px;
-  margin-right: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-
-  > img {
-    height: 18px;
-    width: auto;
   }
 `;

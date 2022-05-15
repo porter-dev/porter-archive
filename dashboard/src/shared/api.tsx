@@ -87,6 +87,18 @@ const overwriteAWSIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
+const createAzureIntegration = baseApi<
+  {
+    azure_client_id: string;
+    azure_subscription_id: string;
+    azure_tenant_id: string;
+    service_principal_key: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/azure`;
+});
+
 const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
   return `/api/email/verify/initiate`;
 });
@@ -1796,6 +1808,7 @@ export default {
   getAzureIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
+  createAzureIntegration,
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,

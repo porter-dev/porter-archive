@@ -20,6 +20,7 @@ type ServerConf struct {
 	StaticFilePath       string        `env:"STATIC_FILE_PATH,default=/porter/static"`
 	CookieName           string        `env:"COOKIE_NAME,default=porter"`
 	CookieSecrets        []string      `env:"COOKIE_SECRETS,default=random_hash_key_;random_block_key"`
+	CookieInsecure       bool          `env:"COOKIE_INSECURE,default=false"`
 	TokenGeneratorSecret string        `env:"TOKEN_GENERATOR_SECRET,default=secret"`
 	TimeoutRead          time.Duration `env:"SERVER_TIMEOUT_READ,default=5s"`
 	TimeoutWrite         time.Duration `env:"SERVER_TIMEOUT_WRITE,default=10s"`

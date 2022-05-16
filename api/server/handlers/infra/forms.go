@@ -812,6 +812,18 @@ tabs:
           value: West US 3
         - label: Norway East
           value: Norway East
+    - type: select
+      label: ⚙️ Application Machine Type
+      variable: app_machine_type
+      settings:
+        default: Standard_A2_v2
+        options:
+        - label: Standard A2
+          value: Standard_A2_v2
+        - label: Standard A4
+          value: Standard_A4_v2
+        - label: Standard D2
+          value: Standard_D2_v3
     - type: string-input
       label: 👤 Issuer Email
       required: true

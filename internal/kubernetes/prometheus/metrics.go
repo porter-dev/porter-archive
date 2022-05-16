@@ -55,6 +55,7 @@ type SimpleIngress struct {
 // NGINX
 func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIngress, error) {
 	res := make([]SimpleIngress, 0)
+	foundMap := make(map[string]bool)
 
 	v1beta1IngressList, v1beta1Err := clientset.NetworkingV1beta1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
 	v1IngressList, v1Err := clientset.NetworkingV1().Ingresses("").List(context.TODO(), metav1.ListOptions{})
@@ -65,32 +66,32 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 
 	if v1beta1Err == nil && len(v1beta1IngressList.Items) > 0 {
 		for _, ingress := range v1beta1IngressList.Items {
-			if ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]; found && ingressAnn == "nginx" {
+			ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]
+			uid := fmt.Sprintf("%s/%s", ingress.ObjectMeta.Namespace, ingress.ObjectMeta.Name)
+
+			if _, exists := foundMap[uid]; !exists && ((found && ingressAnn == "nginx") || *ingress.Spec.IngressClassName == "nginx") {
 				res = append(res, SimpleIngress{
 					Name:      ingress.ObjectMeta.Name,
 					Namespace: ingress.ObjectMeta.Namespace,
 				})
-			} else if *ingress.Spec.IngressClassName == "nginx" {
-				res = append(res, SimpleIngress{
-					Name:      ingress.ObjectMeta.Name,
-					Namespace: ingress.ObjectMeta.Namespace,
-				})
+
+				foundMap[uid] = true
 			}
 		}
 	}
 
 	if v1Err == nil && len(v1IngressList.Items) > 0 {
 		for _, ingress := range v1IngressList.Items {
-			if ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]; found && (ingressAnn == "nginx") {
+			ingressAnn, found := ingress.ObjectMeta.Annotations["kubernetes.io/ingress.class"]
+			uid := fmt.Sprintf("%s/%s", ingress.ObjectMeta.Namespace, ingress.ObjectMeta.Name)
+
+			if _, exists := foundMap[uid]; !exists && ((found && ingressAnn == "nginx") || *ingress.Spec.IngressClassName == "nginx") {
 				res = append(res, SimpleIngress{
 					Name:      ingress.ObjectMeta.Name,
 					Namespace: ingress.ObjectMeta.Namespace,
 				})
-			} else if *ingress.Spec.IngressClassName == "nginx" {
-				res = append(res, SimpleIngress{
-					Name:      ingress.ObjectMeta.Name,
-					Namespace: ingress.ObjectMeta.Namespace,
-				})
+
+				foundMap[uid] = true
 			}
 		}
 	}

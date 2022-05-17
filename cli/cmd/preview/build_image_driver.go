@@ -280,7 +280,9 @@ func (d *BuildDriver) Apply(resource *models.Resource) (*models.Resource, error)
 	}
 
 	if d.config.Build.Method == string(deploy.DeployBuildTypeDocker) {
-		basePath, err := filepath.Abs(".")
+		var basePath string
+
+		basePath, err = filepath.Abs(".")
 
 		if err != nil {
 			return nil, err

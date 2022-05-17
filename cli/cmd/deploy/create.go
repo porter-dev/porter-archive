@@ -310,7 +310,9 @@ func (c *CreateAgent) CreateFromDocker(
 	}
 
 	if opts.Method == DeployBuildTypeDocker {
-		basePath, err := filepath.Abs(".")
+		var basePath string
+
+		basePath, err = filepath.Abs(".")
 
 		if err != nil {
 			return "", err

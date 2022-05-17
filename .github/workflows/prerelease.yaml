@@ -45,7 +45,7 @@ jobs:
       - name: Login to ECR public
         id: login-ecr
         run: |
-          aws ecr-public get-login-password --region us-east-2 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
       - name: Push to ECR public
         run: |
           docker tag porter1/porter:${{steps.tag_name.outputs.tag}} public.ecr.aws/o1j4x7p4/porter:${{steps.tag_name.outputs.tag}}
@@ -71,7 +71,7 @@ jobs:
       - name: Login to ECR public
         id: login-ecr
         run: |
-          aws ecr-public get-login-password --region us-east-2 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
       - name: Build
         run: |
           DOCKER_BUILDKIT=1 docker build . -t public.ecr.aws/o1j4x7p4/provisioner-service:${{steps.tag_name.outputs.tag}} -f ./ee/docker/provisioner.Dockerfile

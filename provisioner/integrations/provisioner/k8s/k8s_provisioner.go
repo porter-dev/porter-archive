@@ -21,6 +21,7 @@ type KubernetesProvisioner struct {
 }
 
 type KubernetesProvisionerConfig struct {
+	ProvisionerImageRepo       string
 	ProvisionerImageTag        string
 	ProvisionerImagePullSecret string
 	ProvisionerJobNamespace    string
@@ -90,7 +91,7 @@ func (k *KubernetesProvisioner) getProvisionerJobTemplate(opts *provisioner.Prov
 					Containers: []v1.Container{
 						{
 							Name:            "provisioner",
-							Image:           "gcr.io/porter-dev-273614/provisioner:" + k.pc.ProvisionerImageTag,
+							Image:           k.pc.ProvisionerImageRepo + ":" + k.pc.ProvisionerImageTag,
 							ImagePullPolicy: v1.PullAlways,
 							Args: []string{
 								string(opts.OperationKind),

@@ -4,7 +4,7 @@ on:
       - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 name: Create prerelease w/ binaries and docker image
 jobs:
-  docker-build-push:
+  build-push-porter:
     runs-on: ubuntu-latest
     steps:
       - name: Get tag name
@@ -36,6 +36,48 @@ jobs:
       - name: Push
         run: |
           docker push porter1/porter:${{steps.tag_name.outputs.tag}}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR public
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Push to ECR public
+        run: |
+          docker tag porter1/porter:${{steps.tag_name.outputs.tag}} public.ecr.aws/o1j4x7p4/porter:${{steps.tag_name.outputs.tag}}
+          docker push public.ecr.aws/o1j4x7p4/porter:${{steps.tag_name.outputs.tag}}
+  build-push-provisioner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get tag name
+        id: tag_name
+        run: |
+          tag=${GITHUB_TAG/refs\/tags\//}
+          echo ::set-output name=tag::$tag
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR public
+        id: login-ecr
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o1j4x7p4
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t public.ecr.aws/o1j4x7p4/provisioner-service:${{steps.tag_name.outputs.tag}} -f ./ee/docker/provisioner.Dockerfile
+      - name: Push to ECR public
+        run: |
+          docker push public.ecr.aws/o1j4x7p4/provisioner-service:${{steps.tag_name.outputs.tag}}
   build-linux:
     name: Build Linux binaries
     runs-on: ubuntu-latest

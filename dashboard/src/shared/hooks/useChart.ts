@@ -101,6 +101,32 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
    */
   const deleteChart = async () => {
     try {
+      const syncedEnvGroups = chart.config?.container?.env?.synced || [];
+      const removeApplicationToEnvGroupPromises = syncedEnvGroups.map(
+        (envGroup: any) => {
+          return api.removeApplicationFromEnvGroup(
+            "<token>",
+            {
+              name: envGroup?.name,
+              app_name: chart.name,
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+              namespace: chart.namespace,
+            }
+          );
+        }
+      );
+      try {
+        await Promise.all(removeApplicationToEnvGroupPromises);
+      } catch (error) {
+        setCurrentError(
+          "We coudln't remove the synced env group from the application, please remove it manually before uninstalling the chart, or try again."
+        );
+        return;
+      }
+
       await api.uninstallTemplate(
         "<token>",
         {},

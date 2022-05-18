@@ -23,6 +23,7 @@ import (
 	"github.com/porter-dev/porter/internal/registry"
 	"gopkg.in/yaml.v2"
 	"helm.sh/helm/v3/pkg/release"
+	v1 "k8s.io/api/core/v1"
 )
 
 type CreateReleaseHandler struct {
@@ -110,11 +111,45 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	k8sAgent, err := c.GetAgent(r, cluster, "")
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	configMaps := make([]*v1.ConfigMap, 0)
+
+	if request.SyncedEnvGroups != nil && len(request.SyncedEnvGroups) > 0 {
+		for _, envGroupName := range request.SyncedEnvGroups {
+			// read the attached configmap
+			cm, _, err := k8sAgent.GetLatestVersionedConfigMap(envGroupName, namespace)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Couldn't find the env group"), http.StatusNotFound))
+				return
+			}
+
+			configMaps = append(configMaps, cm)
+		}
+	}
+
 	release, err := createReleaseFromHelmRelease(c.Config(), cluster.ProjectID, cluster.ID, helmRelease)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	if len(configMaps) > 0 {
+		for _, cm := range configMaps {
+
+			_, err = k8sAgent.AddApplicationToVersionedConfigMap(cm, release.Name)
+
+			if err != nil {
+				c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(fmt.Errorf("Couldn't add %s to the config map %s", release.Name, cm.Name)))
+			}
+		}
 	}
 
 	if request.Tags != nil {

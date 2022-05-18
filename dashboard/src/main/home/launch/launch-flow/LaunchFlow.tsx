@@ -301,6 +301,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       }
     }
 
+    const synced = values?.container?.env?.synced || [];
+
     try {
       await api.deployTemplate(
         "<token>",
@@ -312,6 +314,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           name: release_name,
           github_action_config: githubActionConfig,
           build_config: buildConfig,
+          synced_env_groups: synced.map((s: any) => s.name),
         },
         {
           id: currentProject.id,
@@ -327,32 +330,6 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       setSaveValuesStatus(`Could not deploy template: ${err}`);
       setCurrentError(err);
       return;
-    }
-
-    // Save application into synced groups
-    const synced = values?.container?.env?.synced || [];
-
-    const addApplicationToEnvGroupPromises = synced.map((envGroup: any) => {
-      return api.addApplicationToEnvGroup(
-        "<token>",
-        {
-          name: envGroup?.name,
-          app_name: release_name,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          namespace: selectedNamespace,
-        }
-      );
-    });
-
-    try {
-      await Promise.all(addApplicationToEnvGroupPromises);
-    } catch (error) {
-      setCurrentError(
-        "We coudln't sync the env group to the application, please go to your recently deployed application and try again through the environment tab."
-      );
     }
 
     setSaveValuesStatus("successful");

@@ -6,6 +6,7 @@ import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushFiltered } from "shared/routing";
+import { Tooltip } from "@material-ui/core";
 
 type PropsType = RouteComponentProps & {
   toggleDrawer: () => void;
@@ -44,7 +45,9 @@ class Drawer extends Component<PropsType, StateType> {
             <ClusterIcon>
               <i className="material-icons">device_hub</i>
             </ClusterIcon>
-            <ClusterName>{cluster.name}</ClusterName>
+            <Tooltip title={cluster?.name}>
+              <ClusterName>{cluster.name}</ClusterName>
+            </Tooltip>
           </ClusterOption>
         );
       });

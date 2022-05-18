@@ -10,6 +10,7 @@ import Drawer from "./Drawer";
 import { RouteComponentProps, withRouter } from "react-router";
 import { pushFiltered } from "shared/routing";
 import { NavLink } from "react-router-dom";
+import { Tooltip } from "@material-ui/core";
 
 type PropsType = RouteComponentProps & {
   forceCloseDrawer: boolean;
@@ -177,7 +178,9 @@ class ClusterSection extends Component<PropsType, StateType> {
             <ClusterIcon>
               <i className="material-icons">device_hub</i>
             </ClusterIcon>
-            <ClusterName>{currentCluster && currentCluster.name}</ClusterName>
+            <Tooltip title={currentCluster?.name}>
+              <ClusterName>{currentCluster?.name}</ClusterName>
+            </Tooltip>
           </LinkWrapper>
           <DrawerButton
             onClick={(e) => {

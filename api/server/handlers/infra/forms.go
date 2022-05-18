@@ -375,6 +375,8 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.2xlarge
+          value: c6i.2xlarge
     - type: string-input
       label: 👤 Issuer Email
       required: true
@@ -451,6 +453,8 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.2xlarge
+          value: c6i.2xlarge
     - type: number-input
       label: Minimum number of EC2 instances to create in the application autoscaling group.
       variable: additional_nodegroup_min_instances
@@ -492,6 +496,8 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.2xlarge
+          value: c6i.2xlarge
   - name: spot_instance_should_enable
     contents:
     - type: heading
@@ -518,6 +524,15 @@ tabs:
       placeholder: "ex: 10.99"
       settings:
         default: "10.99"
+  - name: nginx_settings
+    contents:
+    - type: heading
+      label: NGINX Settings
+    - type: checkbox
+      variable: disable_nginx_load_balancer
+      label: Disable NGINX load balancer and expose NGINX only on a cluster IP address.
+      settings:
+        default: false
 `
 
 const gcrForm = `name: GCR

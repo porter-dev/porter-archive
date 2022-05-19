@@ -819,7 +819,7 @@ export const MultiLineInput = styled.textarea<InputProps>`
   min-width: ${(props) => (props.width ? props.width : "270px")};
   max-width: ${(props) => (props.width ? props.width : "270px")};
   color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
-  padding: 5px 10px;
+  padding: 8px 10px 5px 10px;
   min-height: 35px;
   max-height: 100px;
   white-space: nowrap;

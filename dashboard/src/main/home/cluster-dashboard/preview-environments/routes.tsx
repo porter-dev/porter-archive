@@ -4,7 +4,7 @@ import { Context } from "shared/Context";
 import ConnectNewRepo from "./ConnectNewRepo";
 import DeploymentDetail from "./deployments/DeploymentDetail";
 import DeploymentList from "./deployments/DeploymentList";
-import PreviewEnvironmentsHome from "./PreviewEnvironmentsHome";
+import EnvironmentsList from "./environments/EnvironmentsList";
 
 export const Routes = () => {
   const { path } = useRouteMatch();
@@ -29,7 +29,7 @@ export const Routes = () => {
           <DeploymentList />
         </Route>
         <Route path={`${path}/`}>
-          <PreviewEnvironmentsHome />
+          <EnvironmentsList />
         </Route>
       </Switch>
     </>

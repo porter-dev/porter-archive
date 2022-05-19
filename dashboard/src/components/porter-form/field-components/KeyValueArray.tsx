@@ -637,6 +637,7 @@ const ExpandableEnvGroup: React.FC<{
                             value={value}
                             disabled
                             rows={value?.split("\n").length}
+                            spellCheck={false}
                           ></MultiLineInput>
                         )}
                       </InputWrapper>
@@ -821,9 +822,13 @@ export const MultiLineInput = styled.textarea<InputProps>`
   padding: 5px 10px;
   min-height: 35px;
   max-height: 100px;
+  white-space: nowrap;
 
   ::-webkit-scrollbar {
     width: 8px;
+    :horizontal {
+      height: 8px;
+    }
   }
 
   ::-webkit-scrollbar-corner {

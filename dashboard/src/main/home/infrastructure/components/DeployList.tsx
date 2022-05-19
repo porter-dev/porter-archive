@@ -17,11 +17,13 @@ import ExpandedOperation from "./ExpandedOperation";
 type Props = {
   infra: Infrastructure;
   setLatestOperation: (operation: Operation) => void;
+  refreshInfra: () => void;
 };
 
 const DeployList: React.FunctionComponent<Props> = ({
   infra,
   setLatestOperation,
+  refreshInfra,
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -180,8 +182,9 @@ const DeployList: React.FunctionComponent<Props> = ({
       return (
         <ExpandedOperation
           operation_id={selectedOperation.id}
-          infra_id={selectedOperation.infra_id}
+          infra={infra}
           back={backFromExpandedOperation}
+          refreshInfra={refreshInfra}
         />
       );
     }

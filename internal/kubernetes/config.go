@@ -367,6 +367,17 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 
 		// add this as a bearer token
 		authInfoMap[authInfoName].Token = tok
+	case models.Azure:
+		azInt, err := conf.Repo.AzureIntegration().ReadAzureIntegration(
+			cluster.ProjectID,
+			cluster.AzureIntegrationID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		authInfoMap[authInfoName].Token = string(azInt.AKSPassword)
 	default:
 		return nil, errors.New("not a supported auth mechanism")
 	}

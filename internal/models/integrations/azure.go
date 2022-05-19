@@ -41,6 +41,9 @@ type AzureIntegration struct {
 	// The ACR passwords, if set
 	ACRPassword1 []byte `json:"acr_password_1"`
 	ACRPassword2 []byte `json:"acr_password_2"`
+
+	// The AKS password, if set (used for bearer token auth)
+	AKSPassword []byte `json:"aks_password"`
 }
 
 func (a *AzureIntegration) ToAzureIntegrationType() *types.AzureIntegration {

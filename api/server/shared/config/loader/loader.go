@@ -91,6 +91,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		&sessionstore.NewStoreOpts{
 			SessionRepository: res.Repo.Session(),
 			CookieSecrets:     envConf.ServerConf.CookieSecrets,
+			Insecure:          envConf.ServerConf.CookieInsecure,
 		},
 	)
 

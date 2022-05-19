@@ -11,7 +11,8 @@ type CredentialsExchangeRequest struct {
 }
 
 type CredentialsExchangeResponse struct {
-	DO  *credentials.OAuthCredential `json:"do,omitempty"`
-	GCP *credentials.GCPCredential   `json:"gcp,omitempty"`
-	AWS *credentials.AWSCredential   `json:"aws,omitempty"`
+	DO    *credentials.OAuthCredential `json:"do,omitempty"`
+	GCP   *credentials.GCPCredential   `json:"gcp,omitempty"`
+	AWS   *credentials.AWSCredential   `json:"aws,omitempty"`
+	Azure *credentials.AzureCredential `json:"azure,omitempty"`
 }

@@ -375,6 +375,8 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.2xlarge
+          value: c6i.2xlarge
     - type: string-input
       label: 👤 Issuer Email
       required: true
@@ -451,6 +453,8 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.2xlarge
+          value: c6i.2xlarge
     - type: number-input
       label: Minimum number of EC2 instances to create in the application autoscaling group.
       variable: additional_nodegroup_min_instances
@@ -492,6 +496,8 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.2xlarge
+          value: c6i.2xlarge
   - name: spot_instance_should_enable
     contents:
     - type: heading
@@ -518,6 +524,15 @@ tabs:
       placeholder: "ex: 10.99"
       settings:
         default: "10.99"
+  - name: nginx_settings
+    contents:
+    - type: heading
+      label: NGINX Settings
+    - type: checkbox
+      variable: disable_nginx_load_balancer
+      label: Disable NGINX load balancer and expose NGINX only on a cluster IP address.
+      settings:
+        default: false
 `
 
 const gcrForm = `name: GCR
@@ -744,6 +759,93 @@ tabs:
       variable: issuer_email
     - type: string-input
       label: DOKS Cluster Name
+      required: true
+      placeholder: my-cluster
+      variable: cluster_name
+`
+
+const acrForm = `name: ACR
+hasSource: false
+includeHiddenFields: true
+isClusterScoped: false
+tabs:
+- name: main
+  label: Configuration
+  sections:
+  - name: section_one
+    contents: 
+    - type: heading
+      label: ACR Configuration
+    - type: select
+      label: 📍 Azure Region
+      variable: aks_region
+      settings:
+        default: East US
+        options:
+        - label: East US
+          value: East US
+        - label: East US 2
+          value: East US 2
+        - label: West US 2
+          value: West US 2
+        - label: West US 3
+          value: West US 3
+        - label: Norway East
+          value: Norway East
+    - type: string-input
+      label: ACR Name
+      required: true
+      placeholder: my-registry
+      variable: acr_name
+`
+
+const aksForm = `name: AKS
+hasSource: false
+includeHiddenFields: true
+isClusterScoped: false
+tabs:
+- name: main
+  label: Configuration
+  sections:
+  - name: section_one
+    contents: 
+    - type: heading
+      label: AKS Configuration
+    - type: select
+      label: 📍 Azure Region
+      variable: aks_region
+      settings:
+        default: East US
+        options:
+        - label: East US
+          value: East US
+        - label: East US 2
+          value: East US 2
+        - label: West US 2
+          value: West US 2
+        - label: West US 3
+          value: West US 3
+        - label: Norway East
+          value: Norway East
+    - type: select
+      label: ⚙️ Application Machine Type
+      variable: app_machine_type
+      settings:
+        default: Standard_A2_v2
+        options:
+        - label: Standard A2
+          value: Standard_A2_v2
+        - label: Standard A4
+          value: Standard_A4_v2
+        - label: Standard D2
+          value: Standard_D2_v3
+    - type: string-input
+      label: 👤 Issuer Email
+      required: true
+      placeholder: example@example.com
+      variable: issuer_email
+    - type: string-input
+      label: AKS Cluster Name
       required: true
       placeholder: my-cluster
       variable: cluster_name

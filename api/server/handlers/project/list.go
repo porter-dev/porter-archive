@@ -29,7 +29,7 @@ func (p *ProjectListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	// read all projects for this user
-	projects, err := p.Config().Repo.Project().ListProjectsByUserID(user.ID)
+	projects, err := p.Repo().Project().ListProjectsByUserID(user.ID)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

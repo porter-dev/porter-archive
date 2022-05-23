@@ -51,6 +51,9 @@ type Infra struct {
 	// The AWS integration that was used to create the infra
 	AWSIntegrationID uint
 
+	// The Azure integration that was used to create the infra
+	AzureIntegrationID uint
+
 	// The GCP integration that was used to create the infra
 	GCPIntegrationID uint
 

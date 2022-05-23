@@ -16,10 +16,12 @@ import useAuth from "shared/auth/useAuth";
 import Loading from "components/Loading";
 import NotificationSettingsSection from "./NotificationSettingsSection";
 import { Link } from "react-router-dom";
+import { isDeployedFromGithub } from "shared/release/utils";
+import TagSelector from "./TagSelector";
 
 type PropsType = {
   currentChart: ChartType;
-  refreshChart: () => void;
+  refreshChart: () => Promise<void>;
   setShowDeleteOverlay: (x: boolean) => void;
   saveButtonText?: string | null;
 };
@@ -53,6 +55,7 @@ const SettingsSection: React.FC<PropsType> = ({
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
+
   const [isAuthorized] = useAuth();
 
   useEffect(() => {
@@ -84,7 +87,9 @@ const SettingsSection: React.FC<PropsType> = ({
       .catch(console.log)
       .finally(() => setLoadingWebhookToken(false));
 
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+    };
   }, [currentChart, currentCluster, currentProject]);
 
   const handleSubmit = async () => {
@@ -212,33 +217,35 @@ const SettingsSection: React.FC<PropsType> = ({
 
     return (
       <>
-        <>
-          <Heading>Source Settings</Heading>
-          <Helper>Specify an image tag to use.</Helper>
-          <ImageSelector
-            selectedTag={selectedTag}
-            selectedImageUrl={selectedImageUrl}
-            setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
-            setSelectedTag={(x: string) => setSelectedTag(x)}
-            forceExpanded={true}
-            disableImageSelect={true}
-          />
-          {!loadingWebhookToken && (
-            <>
-              <Br />
-              <Br />
-              <Br />
-              <SaveButton
-                clearPosition={true}
-                statusPosition="right"
-                text="Save Source Settings"
-                status={saveValuesStatus}
-                onClick={handleSubmit}
-              />
-            </>
-          )}
-          <Br />
-        </>
+        {!isDeployedFromGithub(currentChart) ? (
+          <>
+            <Heading>Source Settings</Heading>
+            <Helper>Specify an image tag to use.</Helper>
+            <ImageSelector
+              selectedTag={selectedTag}
+              selectedImageUrl={selectedImageUrl}
+              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
+              setSelectedTag={(x: string) => setSelectedTag(x)}
+              forceExpanded={true}
+              disableImageSelect={true}
+            />
+            {!loadingWebhookToken && (
+              <>
+                <Br />
+                <Br />
+                <Br />
+                <SaveButton
+                  clearPosition={true}
+                  statusPosition="right"
+                  text="Save Source Settings"
+                  status={saveValuesStatus}
+                  onClick={handleSubmit}
+                />
+              </>
+            )}
+            <Br />
+          </>
+        ) : null}
 
         <>
           <Heading>Redeploy Webhook</Heading>
@@ -273,6 +280,9 @@ const SettingsSection: React.FC<PropsType> = ({
             </Webhook>
           )}
         </>
+        <Heading>Application Tags</Heading>
+        <Helper>Add tags for filtering applications.</Helper>
+        <TagSelector release={currentChart} onSave={(val) => refreshChart()} />
       </>
     );
   };
@@ -333,6 +343,12 @@ const SettingsSection: React.FC<PropsType> = ({
 };
 
 export default SettingsSection;
+
+const DarkMatter = styled.div`
+  width: 100%;
+  height: 0;
+  margin-top: -10px;
+`;
 
 const Br = styled.div`
   width: 100%;

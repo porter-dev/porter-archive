@@ -26,6 +26,7 @@ type TestRepository struct {
 	oauthIntegration          repository.OAuthIntegrationRepository
 	gcpIntegration            repository.GCPIntegrationRepository
 	awsIntegration            repository.AWSIntegrationRepository
+	azIntegration             repository.AzureIntegrationRepository
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
@@ -41,6 +42,7 @@ type TestRepository struct {
 	allowlist                 repository.AllowlistRepository
 	apiToken                  repository.APITokenRepository
 	policy                    repository.PolicyRepository
+	tag                       repository.TagRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -127,6 +129,10 @@ func (t *TestRepository) AWSIntegration() repository.AWSIntegrationRepository {
 	return t.awsIntegration
 }
 
+func (t *TestRepository) AzureIntegration() repository.AzureIntegrationRepository {
+	return t.azIntegration
+}
+
 func (t *TestRepository) GithubAppInstallation() repository.GithubAppInstallationRepository {
 	return t.githubAppInstallation
 }
@@ -187,6 +193,10 @@ func (t *TestRepository) Policy() repository.PolicyRepository {
 	return t.policy
 }
 
+func (t *TestRepository) Tag() repository.TagRepository {
+	return t.tag
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -212,6 +222,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		oauthIntegration:          NewOAuthIntegrationRepository(canQuery),
 		gcpIntegration:            NewGCPIntegrationRepository(canQuery),
 		awsIntegration:            NewAWSIntegrationRepository(canQuery),
+		azIntegration:             NewAzureIntegrationRepository(),
 		githubAppInstallation:     NewGithubAppInstallationRepository(canQuery),
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
@@ -227,5 +238,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		allowlist:                 NewAllowlistRepository(canQuery),
 		apiToken:                  NewAPITokenRepository(canQuery),
 		policy:                    NewPolicyRepository(canQuery),
+		tag:                       NewTagRepository(),
 	}
 }

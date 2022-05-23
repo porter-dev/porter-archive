@@ -55,6 +55,8 @@ func (a *AuthGetter) GetCredentials(serverURL string) (user string, secret strin
 		return a.GetDOCRCredentials(serverURL, a.ProjectID)
 	} else if strings.Contains(serverURL, "index.docker.io") {
 		return a.GetDockerHubCredentials(serverURL, a.ProjectID)
+	} else if strings.Contains(serverURL, "azurecr.io") {
+		return a.GetACRCredentials(serverURL, a.ProjectID)
 	}
 
 	return a.GetECRCredentials(serverURL, a.ProjectID)
@@ -185,6 +187,34 @@ func (a *AuthGetter) GetDockerHubCredentials(serverURL string, projID uint) (use
 	} else {
 		// get a token from the server
 		tokenResp, err := a.Client.GetDockerhubAuthorizationToken(context.Background(), projID)
+
+		if err != nil {
+			return "", "", err
+		}
+
+		token = tokenResp.Token
+
+		// set the token in cache
+		a.Cache.Set(serverURL, &AuthEntry{
+			AuthorizationToken: token,
+			RequestedAt:        time.Now(),
+			ExpiresAt:          *tokenResp.ExpiresAt,
+			ProxyEndpoint:      serverURL,
+		})
+	}
+
+	return decodeDockerToken(token)
+}
+
+func (a *AuthGetter) GetACRCredentials(serverURL string, projID uint) (user string, secret string, err error) {
+	cachedEntry := a.Cache.Get(serverURL)
+	var token string
+
+	if cachedEntry != nil && cachedEntry.IsValid(time.Now()) {
+		token = cachedEntry.AuthorizationToken
+	} else {
+		// get a token from the server
+		tokenResp, err := a.Client.GetACRAuthorizationToken(context.Background(), projID)
 
 		if err != nil {
 			return "", "", err

@@ -29,6 +29,7 @@ type GormRepository struct {
 	oauthIntegration          repository.OAuthIntegrationRepository
 	gcpIntegration            repository.GCPIntegrationRepository
 	awsIntegration            repository.AWSIntegrationRepository
+	azIntegration             repository.AzureIntegrationRepository
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
@@ -43,6 +44,7 @@ type GormRepository struct {
 	allowlist                 repository.AllowlistRepository
 	apiToken                  repository.APITokenRepository
 	policy                    repository.PolicyRepository
+	tag                       repository.TagRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -133,6 +135,10 @@ func (t *GormRepository) AWSIntegration() repository.AWSIntegrationRepository {
 	return t.awsIntegration
 }
 
+func (t *GormRepository) AzureIntegration() repository.AzureIntegrationRepository {
+	return t.azIntegration
+}
+
 func (t *GormRepository) GithubAppInstallation() repository.GithubAppInstallationRepository {
 	return t.githubAppInstallation
 }
@@ -189,6 +195,10 @@ func (t *GormRepository) Policy() repository.PolicyRepository {
 	return t.policy
 }
 
+func (t *GormRepository) Tag() repository.TagRepository {
+	return t.tag
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -215,6 +225,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		oauthIntegration:          NewOAuthIntegrationRepository(db, key, storageBackend),
 		gcpIntegration:            NewGCPIntegrationRepository(db, key, storageBackend),
 		awsIntegration:            NewAWSIntegrationRepository(db, key, storageBackend),
+		azIntegration:             NewAzureIntegrationRepository(db, key, storageBackend),
 		githubAppInstallation:     NewGithubAppInstallationRepository(db),
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(db),
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
@@ -229,5 +240,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		allowlist:                 NewAllowlistRepository(db),
 		apiToken:                  NewAPITokenRepository(db),
 		policy:                    NewPolicyRepository(db),
+		tag:                       NewTagRepository(db),
 	}
 }

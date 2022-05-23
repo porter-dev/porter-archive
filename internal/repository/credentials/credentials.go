@@ -39,6 +39,21 @@ type AWSCredential struct {
 	AWSRegion []byte `json:"aws_region"`
 }
 
+type AzureCredential struct {
+	SubscriptionID string `json:"subscription_id"`
+	TenantID       string `json:"tenant_id"`
+	ClientID       string `json:"client_id"`
+
+	// The Azure service principal key
+	ServicePrincipalSecret []byte `json:"service_principal_secret"`
+
+	// The ACR passwords, if set
+	ACRPassword1 []byte `json:"acr_password_1,omitempty"`
+	ACRPassword2 []byte `json:"acr_password_2,omitempty"`
+
+	AKSPassword []byte `json:"aks_password,omitempty"`
+}
+
 type CredentialStorage interface {
 	WriteOAuthCredential(oauthIntegration *integrations.OAuthIntegration, data *OAuthCredential) error
 	GetOAuthCredential(oauthIntegration *integrations.OAuthIntegration) (*OAuthCredential, error)
@@ -49,4 +64,7 @@ type CredentialStorage interface {
 	WriteAWSCredential(awsIntegration *integrations.AWSIntegration, data *AWSCredential) error
 	GetAWSCredential(awsIntegration *integrations.AWSIntegration) (*AWSCredential, error)
 	CreateAWSToken(awsIntegration *integrations.AWSIntegration) (string, error)
+	WriteAzureCredential(azIntegration *integrations.AzureIntegration, data *AzureCredential) error
+	GetAzureCredential(azIntegration *integrations.AzureIntegration) (*AzureCredential, error)
+	CreateAzureToken(azIntegration *integrations.AzureIntegration) (string, error)
 }

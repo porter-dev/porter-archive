@@ -20,7 +20,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Install kubectl
-        uses: azure/setup-kubectl@v1
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: 'v1.19.15'
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout
@@ -37,7 +39,7 @@ jobs:
           ADDON_CHART_REPO_URL=https://chart-addons.dev.getporter.dev
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
-          SENTRY_ENV=development
+          SENTRY_ENV=frontend-development
           EOL
       - name: Build
         run: |
@@ -66,7 +68,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Install kubectl
-        uses: azure/setup-kubectl@v1
+        uses: azure/setup-kubectl@v2.0
+        with:
+          version: 'v1.19.15'
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout

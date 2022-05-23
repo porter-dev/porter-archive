@@ -118,7 +118,9 @@ func updateReleaseRepo(config *config.Config, release *models.Release, helmRelea
 		return fmt.Errorf("Could not find field repository in config")
 	}
 
-	if repoStr != release.ImageRepoURI {
+	if repoStr != release.ImageRepoURI &&
+		repoStr != "public.ecr.aws/o1j4x7p4/hello-porter" &&
+		repoStr != "public.ecr.aws/o1j4x7p4/hello-porter-job" {
 		release.ImageRepoURI = repoStr
 		_, err := config.Repo.Release().UpdateRelease(release)
 

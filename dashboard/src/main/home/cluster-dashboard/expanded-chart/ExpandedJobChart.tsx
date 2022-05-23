@@ -231,8 +231,8 @@ export const ExpandedJobChartFC: React.FC<{
                 }}
                 isDeployedFromGithub={!!chart?.git_action_config?.git_repo}
                 repositoryUrl={chart?.git_action_config?.git_repo}
-                currentChartVersion={Number(chart.version)}
-                latestChartVersion={Number(chart.latest_version)}
+                currentChartVersion={Number(chart?.version)}
+                latestChartVersion={Number(chart?.latest_version)}
               />
             </>
           )}
@@ -265,7 +265,7 @@ export const ExpandedJobChartFC: React.FC<{
           setShowDeleteOverlay={(showOverlay: boolean) => {
             if (showOverlay) {
               setCurrentOverlay({
-                message: `Are you sure you want to delete ${chart.name}?`,
+                message: `Are you sure you want to delete ${chart?.name}?`,
                 onYes: handleDeleteChart,
                 onNo: () => setCurrentOverlay(null),
               });
@@ -293,6 +293,7 @@ export const ExpandedJobChartFC: React.FC<{
         <ExpandedJobHeader
           chart={chart}
           jobs={jobs}
+          disableRevisions
           closeChart={closeChart}
           refreshChart={refreshChart}
           upgradeChart={upgradeChart}
@@ -303,7 +304,7 @@ export const ExpandedJobChartFC: React.FC<{
         <Placeholder>
           <TextWrap>
             <Header>
-              <Spinner src={loading} /> Deleting "{chart.name}"
+              <Spinner src={loading} /> Deleting "{chart?.name}"
             </Header>
             You will be automatically redirected after deletion is complete.
           </TextWrap>
@@ -346,7 +347,7 @@ export const ExpandedJobChartFC: React.FC<{
             <PorterFormWrapper
               formData={formData}
               valuesToOverride={{
-                namespace: chart.namespace,
+                namespace: chart?.namespace,
                 clusterId: currentCluster?.id,
               }}
               renderTabContents={renderTabContents}
@@ -393,6 +394,7 @@ const ExpandedJobHeader: React.FC<{
   upgradeChart: () => Promise<void>;
   loadChartWithSpecificRevision: (revision: number) => void;
   setDisableForm: (disable: boolean) => void;
+  disableRevisions?: boolean;
 }> = ({
   chart,
   closeChart,
@@ -401,13 +403,14 @@ const ExpandedJobHeader: React.FC<{
   upgradeChart,
   loadChartWithSpecificRevision,
   setDisableForm,
+  disableRevisions,
 }) => (
   <HeaderWrapper>
     <BackButton onClick={closeChart}>
       <BackButtonImg src={backArrow} />
     </BackButton>
-    <TitleSection icon={chart.chart.metadata.icon} iconWidth="33px">
-      {chart.name}
+    <TitleSection icon={chart?.chart.metadata.icon} iconWidth="33px">
+      {chart?.name}
       <DeploymentType currentChart={chart} />
       <TagWrapper>
         Namespace <NamespaceTag>{chart.namespace}</NamespaceTag>
@@ -423,28 +426,30 @@ const ExpandedJobHeader: React.FC<{
         {" " + readableDate(chart.info.last_deployed)}
       </LastDeployed>
     </InfoWrapper>
-    <RevisionSection
-      chart={chart}
-      refreshChart={() => refreshChart()}
-      setRevision={(chart, isCurrent) => {
-        loadChartWithSpecificRevision(chart?.version);
-        setDisableForm(!isCurrent);
-      }}
-      forceRefreshRevisions={false}
-      refreshRevisionsOff={() => {}}
-      shouldUpdate={
-        chart.latest_version &&
-        chart.latest_version !== chart.chart.metadata.version
-      }
-      latestVersion={chart.latest_version}
-      upgradeVersion={(_version, cb) => {
-        upgradeChart().then(() => {
-          if (typeof cb === "function") {
-            cb();
-          }
-        });
-      }}
-    />
+    {!disableRevisions ? (
+      <RevisionSection
+        chart={chart}
+        refreshChart={() => refreshChart()}
+        setRevision={(chart, isCurrent) => {
+          loadChartWithSpecificRevision(chart?.version);
+          setDisableForm(!isCurrent);
+        }}
+        forceRefreshRevisions={false}
+        refreshRevisionsOff={() => {}}
+        shouldUpdate={
+          chart?.latest_version &&
+          chart?.latest_version !== chart?.chart.metadata.version
+        }
+        latestVersion={chart?.latest_version}
+        upgradeVersion={(_version, cb) => {
+          upgradeChart().then(() => {
+            if (typeof cb === "function") {
+              cb();
+            }
+          });
+        }}
+      />
+    ) : null}
   </HeaderWrapper>
 );
 

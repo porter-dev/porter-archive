@@ -540,6 +540,9 @@ jobs:
           sed -i 's/uses: porter-dev\/porter-update-action.*/uses: porter-dev\/porter-update-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
           sed -i 's/uses: porter-dev\/porter-cli-action.*/uses: porter-dev\/porter-cli-action@${{ steps.tag_name.outputs.tag }}/g' porter_test_docker_production.yml
 
+          sed -i 's/uses: porter-dev\/porter-update-action.*/uses: porter-dev\/porter-update-action@${{ steps.tag_name.outputs.tag }}/g' test_porter_cli.yml
+          sed -i 's/uses: porter-dev\/porter-cli-action.*/uses: porter-dev\/porter-cli-action@${{ steps.tag_name.outputs.tag }}/g' test_porter_cli.yml
+
           cd ../..
 
           git config user.name "Update Bot"

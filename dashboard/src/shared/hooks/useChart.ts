@@ -100,6 +100,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
    * Delete/Uninstall chart
    */
   const deleteChart = async () => {
+    setStatus("deleting");
     try {
       const syncedEnvGroups = chart.config?.container?.env?.synced || [];
       const removeApplicationToEnvGroupPromises = syncedEnvGroups.map(

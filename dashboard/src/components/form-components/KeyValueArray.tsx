@@ -3,9 +3,11 @@ import styled from "styled-components";
 import Modal from "../../main/home/modals/Modal";
 import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
 import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
+import { dotenv_parse } from "shared/string_utils";
 
 import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
+import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
 
 export type KeyValue = {
   key: string;
@@ -136,23 +138,34 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                 spellCheck={false}
               />
               <Spacer />
-              <Input
-                placeholder="ex: value"
-                width="270px"
-                value={value}
-                onChange={(e: any) => {
-                  this.state.values[i].value = e.target.value;
-                  this.setState({ values: this.state.values });
+              {value?.includes("PORTERSECRET") ? (
+                <Input
+                  placeholder="ex: value"
+                  width="270px"
+                  value={value}
+                  disabled
+                  type={"password"}
+                  spellCheck={false}
+                />
+              ) : (
+                <MultiLineInput
+                  placeholder="ex: value"
+                  width="270px"
+                  value={value}
+                  onChange={(e: any) => {
+                    this.state.values[i].value = e.target.value;
+                    this.setState({ values: this.state.values });
 
-                  let obj = this.valuesToObject();
-                  this.props.setValues(obj);
-                }}
-                disabled={
-                  this.props.disabled || value?.includes("PORTERSECRET")
-                }
-                type={value?.includes("PORTERSECRET") ? "password" : "text"}
-                spellCheck={false}
-              />
+                    let obj = this.valuesToObject();
+                    this.props.setValues(obj);
+                  }}
+                  disabled={
+                    this.props.disabled || value?.includes("PORTERSECRET")
+                  }
+                  spellCheck={false}
+                  rows={value?.split("\n").length}
+                />
+              )}
               {this.renderDeleteButton(i)}
               {this.renderHiddenOption(value?.includes("PORTERSECRET"), i)}
             </InputWrapper>
@@ -204,57 +217,8 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     }
   };
 
-  // Parses src into an Object
-  parseEnv = (src: any, options: any) => {
-    const debug = Boolean(options && options.debug);
-    const obj = {} as Record<string, string>;
-    const NEWLINE = "\n";
-    const RE_INI_KEY_VAL = /^\s*([\w.-]+)\s*=\s*(.*)?\s*$/;
-    const RE_NEWLINES = /\\n/g;
-    const NEWLINES_MATCH = /\n|\r|\r\n/;
-
-    // convert Buffers before splitting into lines and processing
-    src
-      .toString()
-      .split(NEWLINES_MATCH)
-      .forEach(function (line: any, idx: any) {
-        // matching "KEY' and 'VAL' in 'KEY=VAL'
-        const keyValueArr = line.match(RE_INI_KEY_VAL);
-        // matched?
-        if (keyValueArr != null) {
-          const key = keyValueArr[1];
-          // default undefined or missing values to empty string
-          let val = keyValueArr[2] || "";
-          const end = val.length - 1;
-          const isDoubleQuoted = val[0] === '"' && val[end] === '"';
-          const isSingleQuoted = val[0] === "'" && val[end] === "'";
-
-          // if single or double quoted, remove quotes
-          if (isSingleQuoted || isDoubleQuoted) {
-            val = val.substring(1, end);
-
-            // if double quoted, expand newlines
-            if (isDoubleQuoted) {
-              val = val.replace(RE_NEWLINES, NEWLINE);
-            }
-          } else {
-            // remove surrounding whitespace
-            val = val.trim();
-          }
-
-          obj[key] = val;
-        } else if (debug) {
-          console.log(
-            `did not match key and value when parsing line ${idx + 1}: ${line}`
-          );
-        }
-      });
-
-    return obj;
-  };
-
   readFile = (env: string) => {
-    let envObj = this.parseEnv(env, null);
+    let envObj = dotenv_parse(env);
     let push = true;
 
     for (let key in envObj) {

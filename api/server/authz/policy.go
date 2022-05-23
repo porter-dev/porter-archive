@@ -52,6 +52,13 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// first check if an api token exists in context
 	if r.Context().Value("api_token") != nil {
 		projID := reqScopes[types.ProjectScope].Resource.UInt
+		proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
+		if !proj.APITokensEnabled {
+			apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r,
+				apierrors.NewErrForbidden(fmt.Errorf("api tokens are not enabled for this project")), true)
+			return
+		}
 
 		apiToken, _ := r.Context().Value("api_token").(*models.APIToken)
 		policyLoaderOpts.ProjectToken = apiToken

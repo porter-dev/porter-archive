@@ -430,6 +430,7 @@ const deployTemplate = baseApi<
     name: string;
     github_action_config?: FullActionConfigType;
     build_config?: any;
+    synced_env_groups?: string[];
   },
   {
     id: number;

@@ -3,7 +3,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
-import { ChartType } from "shared/types";
+import { ChartType, ChartTypeWithExtendedConfig } from "shared/types";
 import yaml from "js-yaml";
 import { usePrevious } from "shared/hooks/usePrevious";
 import { useRouting } from "shared/routing";
@@ -41,6 +41,27 @@ export const useJobs = (chart: ChartType) => {
     closeWebsocket,
   } = useWebsockets();
 
+  const isBeingDeployed = (latestJob: any) => {
+    const currentChart: ChartTypeWithExtendedConfig = chart;
+    const chartImage = currentChart.config.image.repository;
+
+    let latestImageDetected =
+      latestJob?.spec?.template?.spec?.containers[0]?.image;
+
+    if (!PORTER_IMAGE_TEMPLATES.includes(chartImage)) {
+      return false;
+    }
+
+    if (
+      latestImageDetected &&
+      !PORTER_IMAGE_TEMPLATES.includes(latestImageDetected)
+    ) {
+      return false;
+    }
+
+    return true;
+  };
+
   const sortJobsAndSave = (newJobs: any[]) => {
     // Set job run from URL if needed
     const urlParams = new URLSearchParams(location.search);
@@ -51,10 +72,7 @@ export const useJobs = (chart: ChartType) => {
 
     newJobs.sort((job1, job2) => getTime(job2) - getTime(job1));
 
-    let latestImageDetected =
-      newJobs[0]?.spec?.template?.spec?.containers[0]?.image;
-    if (!PORTER_IMAGE_TEMPLATES.includes(latestImageDetected)) {
-      // this.setState({ jobs, newestImage, imageIsPlaceholder: false });
+    if (!isBeingDeployed(newJobs[0])) {
       setHasPorterImageTemplate(false);
     }
     jobsRef.current = newJobs;

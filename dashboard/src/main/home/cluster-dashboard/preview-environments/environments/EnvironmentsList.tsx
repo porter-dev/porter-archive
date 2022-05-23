@@ -4,50 +4,116 @@ import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
-import { deployments, environments } from "../mocks";
+import ButtonEnablePREnvironments from "../components/ButtonEnablePREnvironments";
+import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
 import { Environment } from "../types";
 import EnvironmentCard from "./EnvironmentCard";
 
-type Props = {
-  environments: Environment[];
-  setEnvironments: (
-    setFunction: (prev: Environment[]) => Environment[]
-  ) => void;
-};
+const EnvironmentsList = () => {
+  const { currentCluster, currentProject } = useContext(Context);
+  const [isLoading, setIsLoading] = useState(true);
+  const [buttonIsReady, setButtonIsReady] = useState(false);
 
-const EnvironmentsList = ({ environments, setEnvironments }: Props) => {
+  const [environments, setEnvironments] = useState<Environment[]>([]);
+
   const removeEnvironmentFromList = (deletedEnv: Environment) => {
     setEnvironments((prev) => {
       return prev.filter((env) => env.id !== deletedEnv.id);
     });
   };
 
+  const getEnvironments = async () => {
+    try {
+      const { data } = await api.listEnvironments(
+        "<token>",
+        {},
+        {
+          project_id: currentProject?.id,
+          cluster_id: currentCluster?.id,
+        }
+      );
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const checkPreviewEnvironmentsEnabling = async (subscribeStauts: {
+    subscribed: boolean;
+  }) => {
+    try {
+      const envs = await getEnvironments();
+      // const envs = await mockRequest();
+
+      if (!subscribeStauts.subscribed) {
+        return;
+      }
+
+      if (!Array.isArray(envs)) {
+        return;
+      }
+
+      setEnvironments(envs);
+    } catch (error) {
+      setEnvironments([]);
+    }
+  };
+
+  useEffect(() => {
+    let subscribedStatus = { subscribed: true };
+
+    setIsLoading(true);
+
+    checkPreviewEnvironmentsEnabling(subscribedStatus).finally(() => {
+      if (subscribedStatus.subscribed) {
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      subscribedStatus.subscribed = false;
+    };
+  }, [currentCluster, currentProject]);
+
   return (
     <>
-      <ControlRow>
-        <Button to={`/preview-environments/connect-repo`}>
-          <i className="material-icons">add</i> Add Repository
-        </Button>
-      </ControlRow>
-      {environments.length === 0 && (
-        <Placeholder>
-          No repositories found with Preview Environments enabled.
-        </Placeholder>
-      )}
-      <EnvironmentsGrid>
-        {environments.map((env) => (
-          <EnvironmentCard
-            key={env.id}
-            environment={env}
-            onDelete={removeEnvironmentFromList}
-          />
-        ))}
-      </EnvironmentsGrid>
+      <PreviewEnvironmentsHeader />
+      <Relative>
+        {isLoading || !buttonIsReady ? (
+          <FloatingPlaceholder>
+            <Loading />
+          </FloatingPlaceholder>
+        ) : null}
+
+        <ControlRow>
+          <ButtonEnablePREnvironments setIsReady={setButtonIsReady} />
+        </ControlRow>
+        {environments.length === 0 ? (
+          <Placeholder>
+            No repositories found with Preview Environments enabled.
+          </Placeholder>
+        ) : (
+          <EnvironmentsGrid>
+            {environments.map((env) => (
+              <EnvironmentCard
+                key={env.id}
+                environment={env}
+                onDelete={removeEnvironmentFromList}
+              />
+            ))}
+          </EnvironmentsGrid>
+        )}
+      </Relative>
     </>
   );
 };
 
 export default EnvironmentsList;
+
+const Relative = styled.div`
+  position: relative;
+`;
 
 const Placeholder = styled.div`
   padding: 30px;
@@ -69,6 +135,14 @@ const Placeholder = styled.div`
     font-size: 18px;
     margin-right: 8px;
   }
+`;
+
+const FloatingPlaceholder = styled(Placeholder)`
+  position: absolute;
+  background: #3d3f42;
+  width: 100%;
+  height: 100%;
+  margin-top: 0px;
 `;
 
 const EnvironmentsGrid = styled.div`

@@ -104,6 +104,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
 	worker.RegisterDriver("random-string", preview.NewRandomStringDriver)
 	worker.RegisterDriver("env-group", preview.NewEnvGroupDriver)
+	worker.RegisterDriver("os-env", preview.NewOSEnvDriver)
 
 	worker.SetDefaultDriver("deploy")
 
@@ -450,7 +451,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 
 	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
 		if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-			repoSuffix = strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-")
+			repoSuffix = strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%s-%s", repoOwner, repoName), "_", "-"))
 		}
 	}
 

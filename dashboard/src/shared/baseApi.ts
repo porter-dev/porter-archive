@@ -58,6 +58,13 @@ const buildAxiosConfig: BuildAxiosConfigFunction = (
     };
   }
 
+  if (method.toUpperCase() === "PATCH") {
+    return {
+      ...config,
+      data: params,
+    };
+  }
+
   return config;
 };
 

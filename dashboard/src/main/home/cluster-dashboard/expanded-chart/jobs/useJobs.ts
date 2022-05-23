@@ -3,7 +3,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
-import { ChartType } from "shared/types";
+import { ChartType, ChartTypeWithExtendedConfig } from "shared/types";
 import yaml from "js-yaml";
 import { usePrevious } from "shared/hooks/usePrevious";
 import { useRouting } from "shared/routing";
@@ -41,6 +41,27 @@ export const useJobs = (chart: ChartType) => {
     closeWebsocket,
   } = useWebsockets();
 
+  const isBeingDeployed = (latestJob: any) => {
+    const currentChart: ChartTypeWithExtendedConfig = chart;
+    const chartImage = currentChart.config.image.repository;
+
+    let latestImageDetected =
+      latestJob?.spec?.template?.spec?.containers[0]?.image;
+
+    if (!PORTER_IMAGE_TEMPLATES.includes(chartImage)) {
+      return false;
+    }
+
+    if (
+      latestImageDetected &&
+      !PORTER_IMAGE_TEMPLATES.includes(latestImageDetected)
+    ) {
+      return false;
+    }
+
+    return true;
+  };
+
   const sortJobsAndSave = (newJobs: any[]) => {
     // Set job run from URL if needed
     const urlParams = new URLSearchParams(location.search);
@@ -51,10 +72,7 @@ export const useJobs = (chart: ChartType) => {
 
     newJobs.sort((job1, job2) => getTime(job2) - getTime(job1));
 
-    let latestImageDetected =
-      newJobs[0]?.spec?.template?.spec?.containers[0]?.image;
-    if (!PORTER_IMAGE_TEMPLATES.includes(latestImageDetected)) {
-      // this.setState({ jobs, newestImage, imageIsPlaceholder: false });
+    if (isBeingDeployed(newJobs[0])) {
       setHasPorterImageTemplate(false);
     }
     jobsRef.current = newJobs;
@@ -236,51 +254,6 @@ export const useJobs = (chart: ChartType) => {
     setSelectedJob(job);
   };
 
-  // useEffect(() => {
-  //   let isSubscribed = true;
-
-  //   if (!chart) {
-  //     return () => {
-  //       isSubscribed = false;
-  //     };
-  //   }
-
-  //   if (
-  //     previousChart?.name === chart?.name &&
-  //     previousChart?.namespace === chart?.namespace
-  //   ) {
-  //     return () => {
-  //       isSubscribed = false;
-  //     };
-  //   }
-
-  //   setStatus("loading");
-  //   const newestImage = chart?.config?.image?.repository;
-
-  //   setHasPorterImageTemplate(PORTER_IMAGE_TEMPLATES.includes(newestImage));
-
-  //   api
-  //     .getJobs(
-  //       "<token>",
-  //       {},
-  //       {
-  //         id: currentProject?.id,
-  //         cluster_id: currentCluster?.id,
-  //         namespace: chart.namespace,
-  //         release_name: chart.name,
-  //       }
-  //     )
-  //     .then((res) => {
-  //       if (isSubscribed) {
-  //         sortJobsAndSave(res.data);
-  //         setStatus("ready");
-  //       }
-  //     });
-  //   return () => {
-  //     isSubscribed = false;
-  //   };
-  // }, [chart]);
-
   useEffect(() => {
     if (!chart || !chart.namespace || !chart.name) {
       return () => {};
@@ -406,9 +379,6 @@ export const useJobs = (chart: ChartType) => {
           err = parsedErr;
         }
 
-        // this.setState({
-        //   saveValuesStatus: parsedErr,
-        // });
         setTriggerRunStatus("Couldn't trigger a new run for this job.");
         setTimeout(() => setTriggerRunStatus(""), 500);
         setCurrentError(parsedErr);

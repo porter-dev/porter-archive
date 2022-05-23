@@ -57,6 +57,11 @@ const getGCPIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gcp`
 );
 
+const getAzureIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/azure`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -81,6 +86,18 @@ const overwriteAWSIntegration = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
+});
+
+const createAzureIntegration = baseApi<
+  {
+    azure_client_id: string;
+    azure_subscription_id: string;
+    azure_tenant_id: string;
+    service_principal_key: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/azure`;
 });
 
 const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
@@ -371,11 +388,7 @@ const deletePRDeployment = baseApi<
     deployment_id: number;
   }
 >("DELETE", (pathParams) => {
-  const {
-    cluster_id,
-    project_id,
-    deployment_id,
-  } = pathParams;
+  const { cluster_id, project_id, deployment_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
@@ -418,6 +431,7 @@ const deployTemplate = baseApi<
     name: string;
     github_action_config?: FullActionConfigType;
     build_config?: any;
+    synced_env_groups?: string[];
   },
   {
     id: number;
@@ -714,6 +728,7 @@ const provisionInfra = baseApi<
     aws_integration_id?: number;
     gcp_integration_id?: number;
     do_integration_id?: number;
+    azure_integration_id?: number;
     cluster_id?: number;
   },
   {
@@ -1791,6 +1806,32 @@ const triggerPreviewEnvWorkflow = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}/trigger_workflow`
 );
 
+const getTagsByProjectId = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/tags`
+);
+
+const createTag = baseApi<
+  { name: string; color: string },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/tags`);
+
+const updateReleaseTags = baseApi<
+  {
+    tags: string[];
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_tags`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1799,8 +1840,10 @@ export default {
   connectDORegistry,
   getAWSIntegration,
   getGCPIntegration,
+  getAzureIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
+  createAzureIntegration,
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,
@@ -1960,4 +2003,7 @@ export default {
   updateBuildConfig,
   reRunGHWorkflow,
   triggerPreviewEnvWorkflow,
+  getTagsByProjectId,
+  createTag,
+  updateReleaseTags,
 };

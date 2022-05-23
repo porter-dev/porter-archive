@@ -37,8 +37,10 @@ const ExpandedInfra: React.FunctionComponent = () => {
       return;
     }
 
-    let isSubscribed = true;
+    refreshInfra();
+  }, [currentProject, infra_id]);
 
+  const refreshInfra = () => {
     api
       .getInfraByID(
         "<token>",
@@ -49,10 +51,6 @@ const ExpandedInfra: React.FunctionComponent = () => {
         }
       )
       .then(({ data }) => {
-        if (!isSubscribed) {
-          return;
-        }
-
         setInfra(data);
       })
       .catch((err) => {
@@ -60,7 +58,7 @@ const ExpandedInfra: React.FunctionComponent = () => {
         setHasError(true);
         setCurrentError(err.response?.data?.error);
       });
-  }, [currentProject, infra_id]);
+  };
 
   useEffect(() => {
     if (!currentProject || !infra) {
@@ -132,12 +130,16 @@ const ExpandedInfra: React.FunctionComponent = () => {
     switch (newTab) {
       case "deploys":
         return (
-          <DeployList infra={infra} setLatestOperation={setLatestOperation} />
+          <DeployList
+            infra={infra}
+            setLatestOperation={setLatestOperation}
+            refreshInfra={refreshInfra}
+          />
         );
       case "resources":
         return <InfraResourceList infra_id={infra_id} />;
       case "settings":
-        return <InfraSettings infra_id={infra_id} onDelete={() => {}} />;
+        return <InfraSettings infra_id={infra_id} onDelete={refreshInfra} />;
     }
   };
 

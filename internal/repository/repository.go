@@ -23,6 +23,7 @@ type Repository interface {
 	OAuthIntegration() OAuthIntegrationRepository
 	GCPIntegration() GCPIntegrationRepository
 	AWSIntegration() AWSIntegrationRepository
+	AzureIntegration() AzureIntegrationRepository
 	GithubAppInstallation() GithubAppInstallationRepository
 	GithubAppOAuthIntegration() GithubAppOAuthIntegrationRepository
 	SlackIntegration() SlackIntegrationRepository
@@ -37,4 +38,5 @@ type Repository interface {
 	Allowlist() AllowlistRepository
 	APIToken() APITokenRepository
 	Policy() PolicyRepository
+	Tag() TagRepository
 }

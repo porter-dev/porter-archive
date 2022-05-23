@@ -4,11 +4,6 @@ import { Route, Redirect, Switch } from "react-router-dom";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import Cohere from "cohere-js";
-
-if (window.location.href.includes("dashboard.getporter.dev")) {
-  Cohere.init(process.env.COHERE_API_KEY);
-}
-
 import ResetPasswordInit from "./auth/ResetPasswordInit";
 import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
 import Login from "./auth/Login";
@@ -47,7 +42,7 @@ export default class Main extends Component<PropsType, StateType> {
       .checkAuth("", {}, {})
       .then((res) => {
         if (res && res?.data) {
-          if (window.location.href.includes("dashboard.getporter.dev")) {
+          if (process.env.ENABLE_COHERE) {
             Cohere.identify(res?.data?.id, {
               displayName: res?.data?.email,
               email: res?.data?.email,

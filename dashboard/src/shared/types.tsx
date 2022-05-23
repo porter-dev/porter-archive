@@ -49,6 +49,7 @@ export interface ChartType {
   version: number;
   namespace: string;
   latest_version: string;
+  tags: any;
 }
 
 export interface ChartTypeWithExtendedConfig extends ChartType {
@@ -381,6 +382,8 @@ export type InfraKind =
   | "gcr"
   | "doks"
   | "docr"
+  | "aks"
+  | "acr"
   | "test";
 
 export type OperationStatus = "starting" | "completed" | "errored";
@@ -508,6 +511,20 @@ export const KindMap: ProviderInfoMap = {
     resource_link: "/dashboard",
     provider_name: "Digital Ocean Kubernetes Service (DOKS)",
   },
+  aks: {
+    provider: "azure",
+    source: "porter/azure/aks",
+    resource_name: "Cluster",
+    resource_link: "/dashboard",
+    provider_name: "Azure Kubernetes Service (AKS)",
+  },
+  acr: {
+    provider: "azure",
+    source: "porter/azure/acr",
+    resource_name: "Registry",
+    resource_link: "/integrations/registry",
+    provider_name: "Azure Container Registry (ACR)",
+  },
   test: {
     provider: "aws",
     source: "porter/test",
@@ -540,6 +557,7 @@ export type InfraCredentialOptions =
   | "aws_integration_id"
   | "gcp_integration_id"
   | "do_integration_id"
+  | "azure_integration_id"
   | "";
 
 export type InfraCredentials = {

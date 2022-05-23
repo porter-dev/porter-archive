@@ -40,6 +40,7 @@ type tester struct {
 	initGCPs       []*ints.GCPIntegration
 	initAWSs       []*ints.AWSIntegration
 	initAllowlist  []*models.Allowlist
+	initTags       []*models.Tag
 }
 
 func setupTestEnv(tester *tester, t *testing.T) {
@@ -76,6 +77,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.KubeSubEvent{},
 		&models.Onboarding{},
 		&models.Allowlist{},
+		&models.Tag{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

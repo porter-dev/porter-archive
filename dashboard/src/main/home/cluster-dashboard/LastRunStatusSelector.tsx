@@ -46,6 +46,7 @@ export default LastRunStatusSelector;
 const Label = styled.div`
   display: flex;
   align-items: center;
+  min-width: 130px;
   margin-right: 12px;
 
   > i {
@@ -57,5 +58,6 @@ const Label = styled.div`
 const StyledLastRunStatusSelector = styled.div`
   display: flex;
   align-items: center;
+  margin-right: -3px;
   font-size: 13px;
 `;

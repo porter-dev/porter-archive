@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import loading from "assets/loading.gif";
 import Description from "./Description";
+import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 
 type MultiSelectOption = {
   text: string;
@@ -33,6 +34,12 @@ const MultiSaveButton: React.FC<Props> = (props) => {
   const [currOptionIndex, setCurrOptionIndex] = useState<number>(0);
 
   const [isDropdownExpanded, setIsDropdownExpanded] = useState(false);
+
+  const wrapperRef = useRef<HTMLDivElement>();
+
+  useOutsideAlerter(wrapperRef, () => {
+    setIsDropdownExpanded(false);
+  });
 
   const renderStatus = () => {
     if (props.status) {
@@ -82,7 +89,6 @@ const MultiSaveButton: React.FC<Props> = (props) => {
     if (isDropdownExpanded) {
       return (
         <>
-          <DropdownOverlay onClick={() => setIsDropdownExpanded(false)} />
           <OptionWrapper
             expandTo={props.expandTo || "right"}
             dropdownWidth="400px"
@@ -115,7 +121,7 @@ const MultiSaveButton: React.FC<Props> = (props) => {
   };
 
   return (
-    <DropdownSelector>
+    <DropdownSelector ref={wrapperRef}>
       <ButtonWrapper
         makeFlush={props.makeFlush}
         clearPosition={props.clearPosition}
@@ -134,6 +140,9 @@ const MultiSaveButton: React.FC<Props> = (props) => {
           disabled={props.disabled}
           color={props.color || "#5561C0"}
           onClick={() => setIsDropdownExpanded(!isDropdownExpanded)}
+          onBlur={() => {
+            console.log("BLUR 2");
+          }}
         >
           <i className="material-icons expand-icon">
             {isDropdownExpanded ? "expand_less" : "expand_more"}

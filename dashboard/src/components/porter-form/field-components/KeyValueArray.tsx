@@ -324,6 +324,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
                   disabled
                   type={"password"}
                   spellCheck={false}
+                  value={value}
                 />
               ) : (
                 <MultiLineInput

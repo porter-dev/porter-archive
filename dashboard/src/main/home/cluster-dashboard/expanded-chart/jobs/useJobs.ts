@@ -72,7 +72,7 @@ export const useJobs = (chart: ChartType) => {
 
     newJobs.sort((job1, job2) => getTime(job2) - getTime(job1));
 
-    if (isBeingDeployed(newJobs[0])) {
+    if (!isBeingDeployed(newJobs[0])) {
       setHasPorterImageTemplate(false);
     }
     jobsRef.current = newJobs;

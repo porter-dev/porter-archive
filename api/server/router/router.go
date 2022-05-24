@@ -168,6 +168,10 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	// after authentication. Each subsequent http.Handler can lookup the user in context.
 	authNFactory := authn.NewAuthNFactory(config)
 
+	// Create a new "project-scoped" factory which will create a new project-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the project in context.
+	projFactory := authz.NewProjectScopedFactory(config)
+
 	// Create a new "cluster-scoped" factory which will create a new cluster-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the cluster in context.
 	clusterFactory := authz.NewClusterScopedFactory(config)
@@ -226,14 +230,10 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 					atomicGroup.Use(authNFactory.NewAuthenticated)
 				}
 			case types.ProjectScope:
-				// Create a new "project-scoped" factory which will create a new project-scoped request
-				// after authorization. Each subsequent http.Handler can lookup the project in context.
-				projFactory := authz.NewProjectScopedFactory(config, *route.Endpoint.Metadata)
-
 				policyFactory := authz.NewPolicyMiddleware(config, *route.Endpoint.Metadata, policyDocLoader)
 
-				atomicGroup.Use(projFactory.Middleware)
 				atomicGroup.Use(policyFactory.Middleware)
+				atomicGroup.Use(projFactory.Middleware)
 			case types.ClusterScope:
 				atomicGroup.Use(clusterFactory.Middleware)
 			case types.NamespaceScope:

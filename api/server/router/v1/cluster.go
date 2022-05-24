@@ -1,4 +1,4 @@
-package router
+package v1
 
 import (
 	"fmt"
@@ -7,12 +7,13 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewV1ClusterScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
-		GetRoutes: GetClusterScopedRoutes,
+func NewV1ClusterScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
+		GetRoutes: GetV1ClusterScopedRoutes,
 		Children:  children,
 	}
 }
@@ -22,8 +23,8 @@ func GetV1ClusterScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getV1ClusterRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -44,7 +45,7 @@ func getV1ClusterRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/clusters/{cluster_id}"
 
 	newPath := &types.Path{
@@ -52,7 +53,7 @@ func getV1ClusterRoutes(
 		RelativePath: relPath,
 	}
 
-	var routes []*Route
+	var routes []*router.Route
 
 	// ----------------
 	// NAMESPACES BEGIN
@@ -81,7 +82,7 @@ func getV1ClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createNamespaceEndpoint,
 		Handler:  createNamespaceHandler,
 		Router:   r,
@@ -109,7 +110,7 @@ func getV1ClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getNamespaceEndpoint,
 		Handler:  getNamespaceHandler,
 		Router:   r,
@@ -137,7 +138,7 @@ func getV1ClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listNamespacesEndpoint,
 		Handler:  listNamespacesHandler,
 		Router:   r,
@@ -165,7 +166,7 @@ func getV1ClusterRoutes(
 		factory.GetDecoderValidator(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteNamespaceEndpoint,
 		Handler:  deleteNamespaceHandler,
 		Router:   r,

@@ -1,15 +1,16 @@
-package router
+package v1
 
 import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewV1NamespaceScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
-		GetRoutes: GetNamespaceScopedRoutes,
+func NewV1NamespaceScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
+		GetRoutes: GetV1NamespaceScopedRoutes,
 		Children:  children,
 	}
 }
@@ -19,8 +20,8 @@ func GetV1NamespaceScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getV1NamespaceRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -41,7 +42,7 @@ func getV1NamespaceRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/namespaces/{namespace}"
 
 	newPath := &types.Path{
@@ -49,7 +50,7 @@ func getV1NamespaceRoutes(
 		RelativePath: relPath,
 	}
 
-	var routes []*Route
+	var routes []*router.Route
 
 	return routes, newPath
 }

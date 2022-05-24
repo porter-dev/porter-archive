@@ -12,8 +12,10 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/router/middleware"
+	v1 "github.com/porter-dev/porter/api/server/router/v1"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -90,13 +92,13 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 			userRegisterer.Children...,
 		)
 
-		routes := [][]*Route{
+		routes := [][]*router.Route{
 			baseRoutes,
 			userRoutes,
 			oauthCallbackRoutes,
 		}
 
-		var allRoutes []*Route
+		var allRoutes []*router.Route
 		for _, r := range routes {
 			allRoutes = append(allRoutes, r...)
 		}
@@ -111,9 +113,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		// set the content type for all API endpoints and log all request info
 		r.Use(middleware.ContentTypeJSON)
 
-		var allRoutes []*Route
+		var allRoutes []*router.Route
 
-		v1NamespaceRoutes := NewV1ClusterScopedRegisterer().GetRoutes(
+		v1NamespaceRoutes := v1.NewV1ClusterScopedRegisterer().GetRoutes(
 			r,
 			config,
 			&types.Path{
@@ -151,25 +153,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	return r
 }
 
-type Route struct {
-	Endpoint *shared.APIEndpoint
-	Handler  http.Handler
-	Router   chi.Router
-}
-
-type Registerer struct {
-	GetRoutes func(
-		r chi.Router,
-		config *config.Config,
-		basePath *types.Path,
-		factory shared.APIEndpointFactory,
-		children ...*Registerer,
-	) []*Route
-
-	Children []*Registerer
-}
-
-func registerRoutes(config *config.Config, routes []*Route) {
+func registerRoutes(config *config.Config, routes []*router.Route) {
 	// Create a new "user-scoped" factory which will create a new user-scoped request
 	// after authentication. Each subsequent http.Handler can lookup the user in context.
 	authNFactory := authn.NewAuthNFactory(config)

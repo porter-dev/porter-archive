@@ -13,11 +13,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewProjectScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewProjectScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetProjectScopedRoutes,
 		Children:  children,
 	}
@@ -28,8 +29,8 @@ func GetProjectScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getProjectRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -50,7 +51,7 @@ func getProjectRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/projects/{project_id}"
 
 	newPath := &types.Path{
@@ -58,7 +59,7 @@ func getProjectRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id} -> project.NewProjectGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
@@ -81,7 +82,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -108,7 +109,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
 		Router:   r,
@@ -135,7 +136,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPolicyEndpoint,
 		Handler:  getPolicyHandler,
 		Router:   r,
@@ -163,7 +164,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getOnboardingEndpoint,
 		Handler:  getOnboardingHandler,
 		Router:   r,
@@ -191,7 +192,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateOnboardingEndpoint,
 		Handler:  updateOnboardingHandler,
 		Router:   r,
@@ -218,7 +219,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getUsageEndpoint,
 		Handler:  getUsageHandler,
 		Router:   r,
@@ -245,7 +246,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getBillingEndpoint,
 		Handler:  getBillingHandler,
 		Router:   r,
@@ -274,7 +275,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getBillingTokenEndpoint,
 		Handler:  getBillingTokenHandler,
 		Router:   r,
@@ -298,7 +299,7 @@ func getProjectRoutes(
 		factory.GetDecoderValidator(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getBillingWebhookEndpoint,
 		Handler:  getBillingWebhookHandler,
 		Router:   r,
@@ -325,7 +326,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listClusterEndpoint,
 		Handler:  listClusterHandler,
 		Router:   r,
@@ -352,7 +353,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listGitReposEndpoint,
 		Handler:  listGitReposHandler,
 		Router:   r,
@@ -379,7 +380,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listCollaboratorsEndpoint,
 		Handler:  listCollaboratorsHandler,
 		Router:   r,
@@ -406,7 +407,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listRolesEndpoint,
 		Handler:  listRolesHandler,
 		Router:   r,
@@ -434,7 +435,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateRoleEndpoint,
 		Handler:  updateRoleHandler,
 		Router:   r,
@@ -462,7 +463,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteRoleEndpoint,
 		Handler:  deleteRoleHandler,
 		Router:   r,
@@ -489,7 +490,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listRegistriesEndpoint,
 		Handler:  listRegistriesHandler,
 		Router:   r,
@@ -517,7 +518,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createRegistryEndpoint,
 		Handler:  createRegistryHandler,
 		Router:   r,
@@ -545,7 +546,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getECRTokenEndpoint,
 		Handler:  getECRTokenHandler,
 		Router:   r,
@@ -573,7 +574,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getDOCRTokenEndpoint,
 		Handler:  getDOCRTokenHandler,
 		Router:   r,
@@ -601,7 +602,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getGCRTokenEndpoint,
 		Handler:  getGCRTokenHandler,
 		Router:   r,
@@ -629,7 +630,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getACRTokenEndpoint,
 		Handler:  getACRTokenHandler,
 		Router:   r,
@@ -657,7 +658,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getDockerhubTokenEndpoint,
 		Handler:  getDockerhubTokenHandler,
 		Router:   r,
@@ -685,7 +686,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createInfraEndpoint,
 		Handler:  createInfraHandler,
 		Router:   r,
@@ -712,7 +713,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTemplatesEndpoint,
 		Handler:  getTemplatesHandler,
 		Router:   r,
@@ -739,7 +740,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTemplateEndpoint,
 		Handler:  getTemplateHandler,
 		Router:   r,
@@ -767,7 +768,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionECREndpoint,
 	// 	Handler:  provisionECRHandler,
 	// 	Router:   r,
@@ -797,7 +798,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionEKSEndpoint,
 	// 	Handler:  provisionEKSHandler,
 	// 	Router:   r,
@@ -825,7 +826,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionDOCREndpoint,
 	// 	Handler:  provisionDOCRHandler,
 	// 	Router:   r,
@@ -855,7 +856,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionDOKSEndpoint,
 	// 	Handler:  provisionDOKSHandler,
 	// 	Router:   r,
@@ -883,7 +884,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionGCREndpoint,
 	// 	Handler:  provisionGCRHandler,
 	// 	Router:   r,
@@ -913,7 +914,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionGKEEndpoint,
 	// 	Handler:  provisionGKEHandler,
 	// 	Router:   r,
@@ -941,7 +942,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: hrCreateEndpoint,
 		Handler:  hrCreateHandler,
 		Router:   r,
@@ -968,7 +969,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: hrListEndpoint,
 		Handler:  hrListHandler,
 		Router:   r,
@@ -995,7 +996,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTagsEndpoint,
 		Handler:  getTagsHandler,
 		Router:   r,
@@ -1023,7 +1024,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createTagEndpoint,
 		Handler:  createTagHandler,
 		Router:   r,

@@ -131,6 +131,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 				RelativePath: "",
 			},
 			endpointFactory,
+			v1ProjRegisterer.Children...,
 		)
 
 		allRoutes = append(allRoutes, v1Routes...)

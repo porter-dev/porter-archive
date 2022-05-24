@@ -566,3 +566,43 @@ func (repo *GithubAppOAuthIntegrationRepository) UpdateGithubAppOauthIntegration
 
 	return am, nil
 }
+
+// AzureIntegrationRepository (unimplemented)
+type AzureIntegrationRepository struct {
+}
+
+// NewAzureIntegrationRepository returns a AzureIntegrationRepository which uses
+// gorm.DB for querying the database. It accepts an encryption key to encrypt
+// sensitive data
+func NewAzureIntegrationRepository() repository.AzureIntegrationRepository {
+	return &AzureIntegrationRepository{}
+}
+
+// CreateAzureIntegration creates a new Azure auth mechanism
+func (repo *AzureIntegrationRepository) CreateAzureIntegration(
+	az *ints.AzureIntegration,
+) (*ints.AzureIntegration, error) {
+	panic("unimplemented")
+}
+
+// OverwriteAzureIntegration overwrites the Azure credential in the DB
+func (repo *AzureIntegrationRepository) OverwriteAzureIntegration(
+	az *ints.AzureIntegration,
+) (*ints.AzureIntegration, error) {
+	panic("unimplemented")
+}
+
+// ReadAzureIntegration finds a Azure auth mechanism by id
+func (repo *AzureIntegrationRepository) ReadAzureIntegration(
+	projectID, id uint,
+) (*ints.AzureIntegration, error) {
+	panic("unimplemented")
+}
+
+// ListAzureIntegrationsByProjectID finds all Azure auth mechanisms
+// for a given project id
+func (repo *AzureIntegrationRepository) ListAzureIntegrationsByProjectID(
+	projectID uint,
+) ([]*ints.AzureIntegration, error) {
+	panic("unimplemented")
+}

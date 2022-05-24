@@ -77,6 +77,10 @@ func getFormBytesFromKind(kind string) []byte {
 		formBytes = []byte(docrForm)
 	case "doks":
 		formBytes = []byte(doksForm)
+	case "aks":
+		formBytes = []byte(aksForm)
+	case "acr":
+		formBytes = []byte(acrForm)
 	}
 
 	return formBytes

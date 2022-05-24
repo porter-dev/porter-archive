@@ -607,6 +607,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	//  GET /api/projects/{project_id}/registries/acr/token -> registry.NewRegistryGetACRTokenHandler
+	getACRTokenEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/registries/acr/token",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getACRTokenHandler := registry.NewRegistryGetACRTokenHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getACRTokenEndpoint,
+		Handler:  getACRTokenHandler,
+		Router:   r,
+	})
+
 	//  GET /api/projects/{project_id}/registries/dockerhub/token -> registry.NewRegistryGetDockerhubTokenHandler
 	getDockerhubTokenEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -943,6 +971,61 @@ func getProjectRoutes(
 	routes = append(routes, &Route{
 		Endpoint: hrListEndpoint,
 		Handler:  hrListHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/tags -> project.NewGetTagsHandler
+	getTagsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/tags",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getTagsHandler := project.NewGetTagsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getTagsEndpoint,
+		Handler:  getTagsHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/tags -> project.NewCreateTagHandler
+	createTagEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/tags",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createTagHandler := project.NewCreateTagHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createTagEndpoint,
+		Handler:  createTagHandler,
 		Router:   r,
 	})
 

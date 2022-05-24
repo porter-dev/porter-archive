@@ -97,4 +97,20 @@ var templateMap = map[string]*types.InfraTemplateMeta{
 		Kind:               "doks",
 		RequiredCredential: "do_integration_id",
 	},
+	"acr": {
+		Icon:               "",
+		Description:        "Create an Azure Container Registry.",
+		Name:               "ACR",
+		Version:            "v0.1.0",
+		Kind:               "acr",
+		RequiredCredential: "azure_integration_id",
+	},
+	"aks": {
+		Icon:               "",
+		Description:        "Create an Azure Kubernetes Service cluster",
+		Name:               "AKS",
+		Version:            "v0.1.0",
+		Kind:               "aks",
+		RequiredCredential: "azure_integration_id",
+	},
 }

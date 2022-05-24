@@ -2,7 +2,7 @@
 
 # Base Go environment
 # -------------------
-FROM golang:1.17 as base
+FROM golang:1.18 as base
 WORKDIR /porter
 
 RUN apt-get update && apt-get install -y gcc musl-dev git make

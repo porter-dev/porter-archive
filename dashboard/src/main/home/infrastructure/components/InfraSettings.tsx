@@ -1,18 +1,24 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import styled from "styled-components";
 import Heading from "components/form-components/Heading";
 import SaveButton from "components/SaveButton";
 import Description from "components/Description";
+import ConfirmOverlay from "components/ConfirmOverlay";
 
 type Props = {
   infra_id: number;
   onDelete: () => void;
 };
 
-const InfraSettings: React.FunctionComponent<Props> = ({ infra_id }) => {
-  const { currentProject, setCurrentError } = useContext(Context);
+const InfraSettings: React.FunctionComponent<Props> = ({
+  infra_id,
+  onDelete,
+}) => {
+  const { currentProject, setCurrentError, setCurrentOverlay } = useContext(
+    Context
+  );
 
   const deleteInfra = () => {
     api
@@ -24,7 +30,10 @@ const InfraSettings: React.FunctionComponent<Props> = ({ infra_id }) => {
           infra_id: infra_id,
         }
       )
-      .then()
+      .then(() => {
+        setCurrentOverlay(null);
+        onDelete();
+      })
       .catch((err) => {
         console.error(err);
         setCurrentError(err.response?.data?.error);
@@ -32,25 +41,34 @@ const InfraSettings: React.FunctionComponent<Props> = ({ infra_id }) => {
   };
 
   return (
-    <StyledCard>
-      <MetadataContainer>
-        <Heading>Delete Infrastructure</Heading>
-        <Description>
-          This will destroy all of the existing cloud infrastructure attached to
-          this module.
-        </Description>
-        <Br />
-        <SaveButton
-          onClick={deleteInfra}
-          text="Delete Infrastructure"
-          color="#b91133"
-          disabled={false}
-          makeFlush={true}
-          clearPosition={true}
-          saveText="Deletion process started, see the Deploys tab for info."
-        />
-      </MetadataContainer>
-    </StyledCard>
+    <>
+      <StyledCard>
+        <MetadataContainer>
+          <Heading>Delete Infrastructure</Heading>
+          <Description>
+            This will destroy all of the existing cloud infrastructure attached
+            to this module.
+          </Description>
+          <Br />
+
+          <SaveButton
+            onClick={() =>
+              setCurrentOverlay({
+                message: `Are you sure you want to delete this infrastructure?`,
+                onYes: deleteInfra,
+                onNo: () => setCurrentOverlay(null),
+              })
+            }
+            text="Delete Infrastructure"
+            color="#b91133"
+            disabled={false}
+            makeFlush={true}
+            clearPosition={true}
+            saveText="Deletion process started, see the Deploys tab for info."
+          />
+        </MetadataContainer>
+      </StyledCard>
+    </>
   );
 };
 

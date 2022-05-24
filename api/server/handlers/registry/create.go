@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -57,6 +58,7 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		AWSIntegrationID:   request.AWSIntegrationID,
 		DOIntegrationID:    request.DOIntegrationID,
 		BasicIntegrationID: request.BasicIntegrationID,
+		AzureIntegrationID: request.AzureIntegrationID,
 	}
 
 	if regModel.URL == "" && regModel.AWSIntegrationID != 0 {
@@ -68,6 +70,41 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 
 		regModel.URL = url
+	} else if request.AzureIntegrationID != 0 {
+		// if azure integration id is non-zero check that resource group name and repo name are set
+		if request.ACRName == "" {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("acr_name must be set if azure_integration_id is not 0"),
+				http.StatusBadRequest,
+			))
+
+			return
+		} else if request.ACRResourceGroupName == "" {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("acr_resource_group_name must be set if azure_integration_id is not 0"),
+				http.StatusBadRequest,
+			))
+
+			return
+		}
+
+		// get the azure integration and overwrite the names
+		az, err := p.Repo().AzureIntegration().ReadAzureIntegration(proj.ID, request.AzureIntegrationID)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		az.ACRName = request.ACRName
+		az.ACRResourceGroupName = request.ACRResourceGroupName
+
+		az, err = p.Repo().AzureIntegration().OverwriteAzureIntegration(az)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// handle write to the database

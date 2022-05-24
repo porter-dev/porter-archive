@@ -68,9 +68,9 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// switch on the kind of resource and write the corresponding objects to the database
 	switch infra.Kind {
-	case types.InfraECR, types.InfraGCR, types.InfraDOCR:
+	case types.InfraECR, types.InfraGCR, types.InfraDOCR, types.InfraACR:
 		_, err = deleteRegistry(c.Config, infra, operation)
-	case types.InfraEKS, types.InfraDOKS, types.InfraGKE:
+	case types.InfraEKS, types.InfraDOKS, types.InfraGKE, types.InfraAKS:
 		_, err = deleteCluster(c.Config, infra, operation)
 	case types.InfraRDS:
 		_, err = deleteDatabase(c.Config, infra, operation)

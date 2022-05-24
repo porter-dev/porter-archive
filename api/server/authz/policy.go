@@ -39,13 +39,8 @@ type PolicyHandler struct {
 }
 
 func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// get the full map of scopes to resource actions
-	reqScopes, reqErr := getRequestActionForEndpoint(r, h.endpointMeta)
-
-	if reqErr != nil {
-		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, reqErr, true)
-		return
-	}
+	// get the project id from the URL param context
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 
 	policyLoaderOpts := &policy.PolicyLoaderOpts{}
 

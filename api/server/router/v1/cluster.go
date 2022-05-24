@@ -55,10 +55,6 @@ func getV1ClusterRoutes(
 
 	var routes []*router.Route
 
-	// ----------------
-	// NAMESPACES BEGIN
-	// ----------------
-
 	// POST /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewCreateNamespaceHandler
 	createNamespaceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -171,10 +167,6 @@ func getV1ClusterRoutes(
 		Handler:  deleteNamespaceHandler,
 		Router:   r,
 	})
-
-	// ----------------
-	// NAMESPACES END
-	// ----------------
 
 	return routes, newPath
 }

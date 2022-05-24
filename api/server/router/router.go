@@ -115,7 +115,15 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 		var allRoutes []*router.Route
 
-		v1NamespaceRoutes := v1.NewV1ClusterScopedRegisterer().GetRoutes(
+		v1ReleaseRegisterer := v1.NewV1ReleaseScopedRegisterer()
+		v1NamespaceRegisterer := v1.NewV1NamespaceScopedRegisterer(v1ReleaseRegisterer)
+		v1ClusterRegisterer := v1.NewV1ClusterScopedRegisterer(v1NamespaceRegisterer)
+		v1ProjRegisterer := v1.NewV1ProjectScopedRegisterer(
+			v1ClusterRegisterer,
+			// v1RegistryRegisterer,
+		)
+
+		v1Routes := v1ProjRegisterer.GetRoutes(
 			r,
 			config,
 			&types.Path{
@@ -124,7 +132,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 			endpointFactory,
 		)
 
-		allRoutes = append(allRoutes, v1NamespaceRoutes...)
+		allRoutes = append(allRoutes, v1Routes...)
 
 		registerRoutes(config, allRoutes)
 	})

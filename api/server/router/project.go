@@ -945,7 +945,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: policyCreateEndpoint,
 		Handler:  policyCreateHandler,
 		Router:   r,
@@ -974,7 +974,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: policyListEndpoint,
 		Handler:  policyListHandler,
 		Router:   r,
@@ -1003,7 +1003,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: policyGetEndpoint,
 		Handler:  policyGetHandler,
 		Router:   r,
@@ -1032,7 +1032,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: apiTokenCreateEndpoint,
 		Handler:  apiTokenCreateHandler,
 		Router:   r,
@@ -1061,7 +1061,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: apiTokenListEndpoint,
 		Handler:  apiTokenListHandler,
 		Router:   r,
@@ -1090,7 +1090,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: apiTokenGetEndpoint,
 		Handler:  apiTokenGetHandler,
 		Router:   r,
@@ -1119,7 +1119,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: apiTokenRevokeEndpoint,
 		Handler:  apiTokenRevokeHandler,
 		Router:   r,

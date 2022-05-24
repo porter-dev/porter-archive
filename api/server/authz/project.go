@@ -13,27 +13,35 @@ import (
 )
 
 type ProjectScopedFactory struct {
-	config *config.Config
+	config       *config.Config
+	endpointMeta types.APIRequestMetadata
 }
 
 func NewProjectScopedFactory(
 	config *config.Config,
+	endpointMeta types.APIRequestMetadata,
 ) *ProjectScopedFactory {
-	return &ProjectScopedFactory{config}
+	return &ProjectScopedFactory{config, endpointMeta}
 }
 
 func (p *ProjectScopedFactory) Middleware(next http.Handler) http.Handler {
-	return &ProjectScopedMiddleware{next, p.config}
+	return &ProjectScopedMiddleware{next, p.endpointMeta, p.config}
 }
 
 type ProjectScopedMiddleware struct {
-	next   http.Handler
-	config *config.Config
+	next         http.Handler
+	endpointMeta types.APIRequestMetadata
+	config       *config.Config
 }
 
 func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// get the project id from the URL param context
-	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
+	// get the full map of scopes to resource actions
+	reqScopes, reqErr := getRequestActionForEndpoint(r, p.endpointMeta)
+
+	if reqErr != nil {
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, reqErr, true)
+		return
+	}
 
 	projID := reqScopes[types.ProjectScope].Resource.UInt
 
@@ -53,6 +61,7 @@ func (p *ProjectScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx := NewProjectContext(r.Context(), project)
+	ctx = NewRequestScopeCtx(ctx, reqScopes)
 	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }

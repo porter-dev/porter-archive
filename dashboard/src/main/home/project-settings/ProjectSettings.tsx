@@ -12,6 +12,7 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
 import { getQueryParam } from "shared/routing";
 import BillingPage from "./BillingPage";
+import APITokensSection from "./APITokensSection";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
@@ -72,6 +73,14 @@ class ProjectSettings extends Component<PropsType, StateType> {
           label: "Billing",
         });
       }
+
+      if (currentProject?.api_tokens_enabled) {
+        tabOptions.push({
+          value: "api-tokens",
+          label: "API Tokens",
+        });
+      }
+
       tabOptions.push({
         value: "additional-settings",
         label: "Additional Settings",
@@ -100,6 +109,8 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
     if (this.state.currentTab === "manage-access") {
       return <InvitePage />;
+    } else if (this.state.currentTab === "api-tokens") {
+      return <APITokensSection />;
     } else {
       return (
         <>

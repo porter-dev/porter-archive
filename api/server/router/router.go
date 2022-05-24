@@ -131,6 +131,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 				RelativePath: "",
 			},
 			endpointFactory,
+			v1ProjRegisterer.Children...,
 		)
 
 		allRoutes = append(allRoutes, v1Routes...)
@@ -166,10 +167,6 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	// Create a new "user-scoped" factory which will create a new user-scoped request
 	// after authentication. Each subsequent http.Handler can lookup the user in context.
 	authNFactory := authn.NewAuthNFactory(config)
-
-	// Create a new "project-scoped" factory which will create a new project-scoped request
-	// after authorization. Each subsequent http.Handler can lookup the project in context.
-	projFactory := authz.NewProjectScopedFactory(config)
 
 	// Create a new "cluster-scoped" factory which will create a new cluster-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the cluster in context.
@@ -208,7 +205,7 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	releaseFactory := authz.NewReleaseScopedFactory(config)
 
 	// Policy doc loader loads the policy documents for a specific project.
-	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
+	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project(), config.Repo.Policy())
 
 	// set up logging middleware to log information about the request
 	loggerMw := middleware.NewRequestLoggerMiddleware(config.Logger)
@@ -229,10 +226,14 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 					atomicGroup.Use(authNFactory.NewAuthenticated)
 				}
 			case types.ProjectScope:
+				// Create a new "project-scoped" factory which will create a new project-scoped request
+				// after authorization. Each subsequent http.Handler can lookup the project in context.
+				projFactory := authz.NewProjectScopedFactory(config, *route.Endpoint.Metadata)
+
 				policyFactory := authz.NewPolicyMiddleware(config, *route.Endpoint.Metadata, policyDocLoader)
 
-				atomicGroup.Use(policyFactory.Middleware)
 				atomicGroup.Use(projFactory.Middleware)
+				atomicGroup.Use(policyFactory.Middleware)
 			case types.ClusterScope:
 				atomicGroup.Use(clusterFactory.Middleware)
 			case types.NamespaceScope:

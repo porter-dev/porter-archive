@@ -39,19 +39,35 @@ type PolicyHandler struct {
 }
 
 func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// get the full map of scopes to resource actions
-	reqScopes, reqErr := getRequestActionForEndpoint(r, h.endpointMeta)
+	// get the project id from the URL param context
+	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 
-	if reqErr != nil {
-		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, reqErr, true)
-		return
+	policyLoaderOpts := &policy.PolicyLoaderOpts{}
+
+	// first check if an api token exists in context
+	if r.Context().Value("api_token") != nil {
+		projID := reqScopes[types.ProjectScope].Resource.UInt
+		proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
+		if !proj.APITokensEnabled {
+			apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r,
+				apierrors.NewErrForbidden(fmt.Errorf("api tokens are not enabled for this project")), true)
+			return
+		}
+
+		apiToken, _ := r.Context().Value("api_token").(*models.APIToken)
+		policyLoaderOpts.ProjectToken = apiToken
+		policyLoaderOpts.ProjectID = projID
+	} else {
+		projID := reqScopes[types.ProjectScope].Resource.UInt
+		user, _ := r.Context().Value(types.UserScope).(*models.User)
+
+		policyLoaderOpts.ProjectID = projID
+		policyLoaderOpts.UserID = user.ID
 	}
 
 	// load policy documents for the user + project
-	projID := reqScopes[types.ProjectScope].Resource.UInt
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-
-	policyDocs, reqErr := h.loader.LoadPolicyDocuments(user.ID, projID)
+	policyDocs, reqErr := h.loader.LoadPolicyDocuments(policyLoaderOpts)
 
 	if reqErr != nil {
 		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, reqErr, true)
@@ -67,7 +83,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.config.Alerter,
 			w,
 			r,
-			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action for user %d in project %d", user.ID, projID)),
+			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action in project %d", policyLoaderOpts.ProjectID)),
 			true,
 		)
 

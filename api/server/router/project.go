@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/helmrepo"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
+	"github.com/porter-dev/porter/api/server/handlers/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -919,6 +921,209 @@ func getProjectRoutes(
 	// 	Handler:  provisionGKEHandler,
 	// 	Router:   r,
 	// })
+
+	//  POST /api/projects/{project_id}/policy -> policy.NewPolicyCreateHandler
+	policyCreateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/policy",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyCreateHandler := policy.NewPolicyCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: policyCreateEndpoint,
+		Handler:  policyCreateHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/policies -> policy.NewPolicyListHandler
+	policyListEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/policies",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyListHandler := policy.NewPolicyListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: policyListEndpoint,
+		Handler:  policyListHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/policy/{policy_id} -> policy.NewPolicyGetHandler
+	policyGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/policy/{%s}", relPath, types.URLParamPolicyID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyGetHandler := policy.NewPolicyGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: policyGetEndpoint,
+		Handler:  policyGetHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/api_token -> api_token.NewAPITokenCreateHandler
+	apiTokenCreateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/api_token",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenCreateHandler := api_token.NewAPITokenCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenCreateEndpoint,
+		Handler:  apiTokenCreateHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/api_token -> api_token.NewAPITokenListHandler
+	apiTokenListEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenListHandler := api_token.NewAPITokenListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenListEndpoint,
+		Handler:  apiTokenListHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/api_token/{api_token_id} -> api_token.NewAPITokenGetHandler
+	apiTokenGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token/{%s}", relPath, types.URLParamTokenID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenGetHandler := api_token.NewAPITokenGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenGetEndpoint,
+		Handler:  apiTokenGetHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/api_token/{api_token_id}/revoke -> api_token.NewAPITokenRevokeHandler
+	apiTokenRevokeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token/{%s}/revoke", relPath, types.URLParamTokenID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenRevokeHandler := api_token.NewAPITokenRevokeHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenRevokeEndpoint,
+		Handler:  apiTokenRevokeHandler,
+		Router:   r,
+	})
 
 	//  POST /api/projects/{project_id}/helmrepos -> helmrepo.NewHelmRepoCreateHandler
 	hrCreateEndpoint := factory.NewAPIEndpoint(

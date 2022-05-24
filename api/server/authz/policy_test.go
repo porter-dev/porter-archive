@@ -240,7 +240,7 @@ func loadHandlers(
 	shouldLoaderLoadViewer bool,
 ) (*config.Config, http.Handler, *testHandler) {
 	config := apitest.LoadConfig(t)
-	var loader policy.PolicyDocumentLoader = policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
+	var loader policy.PolicyDocumentLoader = policy.NewBasicPolicyDocumentLoader(config.Repo.Project(), config.Repo.Policy())
 
 	if shouldLoaderFail {
 		loader = &failingDocLoader{}
@@ -260,14 +260,14 @@ func loadHandlers(
 
 type failingDocLoader struct{}
 
-func (f *failingDocLoader) LoadPolicyDocuments(userID, projectID uint) ([]*types.PolicyDocument, apierrors.RequestError) {
+func (f *failingDocLoader) LoadPolicyDocuments(opts *policy.PolicyLoaderOpts) ([]*types.PolicyDocument, apierrors.RequestError) {
 	return nil, apierrors.NewErrInternal(fmt.Errorf("new error internal"))
 }
 
 type viewerDocLoader struct{}
 
-func (f *viewerDocLoader) LoadPolicyDocuments(userID, projectID uint) ([]*types.PolicyDocument, apierrors.RequestError) {
-	return policy.ViewerPolicy, nil
+func (f *viewerDocLoader) LoadPolicyDocuments(opts *policy.PolicyLoaderOpts) ([]*types.PolicyDocument, apierrors.RequestError) {
+	return types.ViewerPolicy, nil
 }
 
 type testHandler struct {

@@ -5,11 +5,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/helmrepo"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewHelmRepoScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewHelmRepoScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetHelmRepoScopedRoutes,
 		Children:  children,
 	}
@@ -20,8 +21,8 @@ func GetHelmRepoScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getHelmRepoRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -42,7 +43,7 @@ func getHelmRepoRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/helmrepos/{helm_repo_id}"
 
 	newPath := &types.Path{
@@ -50,7 +51,7 @@ func getHelmRepoRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/helmrepos/{helm_repo_id} -> registry.NewHelmRepoGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
@@ -74,7 +75,7 @@ func getHelmRepoRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -103,7 +104,7 @@ func getHelmRepoRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: hrListEndpoint,
 		Handler:  hrListHandler,
 		Router:   r,
@@ -132,7 +133,7 @@ func getHelmRepoRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: chartGetEndpoint,
 		Handler:  chartGetHandler,
 		Router:   r,

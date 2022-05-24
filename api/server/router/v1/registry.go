@@ -1,4 +1,4 @@
-package router
+package v1
 
 import (
 	"fmt"
@@ -11,21 +11,21 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewRegistryScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+func NewV1RegistryScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
-		GetRoutes: GetRegistryScopedRoutes,
+		GetRoutes: GetV1RegistryScopedRoutes,
 		Children:  children,
 	}
 }
 
-func GetRegistryScopedRoutes(
+func GetV1RegistryScopedRoutes(
 	r chi.Router,
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 	children ...*router.Registerer,
 ) []*router.Route {
-	routes, projPath := getRegistryRoutes(r, config, basePath, factory)
+	routes, projPath := getV1RegistryRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
 		r.Route(projPath.RelativePath, func(r chi.Router) {
@@ -40,29 +40,57 @@ func GetRegistryScopedRoutes(
 	return routes
 }
 
-func getRegistryRoutes(
+func getV1RegistryRoutes(
 	r chi.Router,
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
-	relPath := "/registries/{registry_id}"
+	relPath := "/registries"
 
 	newPath := &types.Path{
 		Parent:       basePath,
 		RelativePath: relPath,
 	}
 
-	routes := make([]*router.Route, 0)
+	var routes []*router.Route
 
-	// GET /api/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryGetHandler
+	// POST /api/v1/projects/{project_id}/registries -> registry.NewRegistryCreateHandler
+	createRegistryEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createRegistryHandler := registry.NewRegistryCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createRegistryEndpoint,
+		Handler:  createRegistryHandler,
+		Router:   r,
+	})
+
+	// GET /api/v1/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath,
+				RelativePath: relPath + "/{registry_id}",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -83,11 +111,11 @@ func getRegistryRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryUpdateHandler
-	updateEndpoint := factory.NewAPIEndpoint(
+	// GET /api/v1/projects/{project_id}/registries -> registry.NewRegistryListHandler
+	listRegistriesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: relPath,
@@ -95,31 +123,29 @@ func getRegistryRoutes(
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
-				types.RegistryScope,
 			},
 		},
 	)
 
-	updateHandler := registry.NewRegistryUpdateHandler(
+	listRegistriesHandler := registry.NewRegistryListHandler(
 		config,
-		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: updateEndpoint,
-		Handler:  updateHandler,
+		Endpoint: listRegistriesEndpoint,
+		Handler:  listRegistriesHandler,
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryDeleteHandler
+	// DELETE /api/v1/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryDeleteHandler
 	deleteEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
 			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath,
+				RelativePath: relPath + "/{registry_id}",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -140,14 +166,43 @@ func getRegistryRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/registries/{registry_id}/repositories -> registry.NewRegistryListRepositoriesHandler
+	// POST /api/v1/projects/{project_id}/registries/{registry_id}/repositories -> registry.NewRegistryCreateRepositoryHandler
+	createRepositoryEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{registry_id}/repositories",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.RegistryScope,
+			},
+		},
+	)
+
+	createRepositoryHandler := registry.NewRegistryCreateRepositoryHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createRepositoryEndpoint,
+		Handler:  createRepositoryHandler,
+		Router:   r,
+	})
+
+	// GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories -> registry.NewRegistryListRepositoriesHandler
 	listRepositoriesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/repositories",
+				RelativePath: relPath + "/{registry_id}/repositories",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -168,7 +223,7 @@ func getRegistryRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/registries/{registry_id}/repositories/* -> registry.NewRegistryListImagesHandler
+	// GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories/* -> registry.NewRegistryListImagesHandler
 	listImagesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -176,7 +231,7 @@ func getRegistryRoutes(
 			Path: &types.Path{
 				Parent: basePath,
 				RelativePath: fmt.Sprintf(
-					"%s/repositories/%s",
+					"%s/{registry_id}/repositories/%s",
 					relPath,
 					types.URLParamWildcard,
 				),
@@ -197,35 +252,6 @@ func getRegistryRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: listImagesEndpoint,
 		Handler:  listImagesHandler,
-		Router:   r,
-	})
-
-	// POST /api/projects/{project_id}/registries/{registry_id}/repository -> registry.NewRegistryCreateRepositoryHandler
-	createRepositoryEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/repository",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.RegistryScope,
-			},
-		},
-	)
-
-	createRepositoryHandler := registry.NewRegistryCreateRepositoryHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: createRepositoryEndpoint,
-		Handler:  createRepositoryHandler,
 		Router:   r,
 	})
 

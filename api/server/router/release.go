@@ -5,11 +5,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewReleaseScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewReleaseScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetReleaseScopedRoutes,
 		Children:  children,
 	}
@@ -20,8 +21,8 @@ func GetReleaseScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getReleaseRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -42,7 +43,7 @@ func getReleaseRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/releases/{name}/{version}"
 
 	newPath := &types.Path{
@@ -50,7 +51,7 @@ func getReleaseRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version} -> release.NewReleaseGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
@@ -76,7 +77,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -108,7 +109,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: streamFormEndpoint,
 		Handler:  streamFormHandler,
 		Router:   r,
@@ -138,7 +139,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getControllersEndpoint,
 		Handler:  getControllersHandler,
 		Router:   r,
@@ -168,7 +169,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getComponentsEndpoint,
 		Handler:  getComponentsHandler,
 		Router:   r,
@@ -198,7 +199,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getHistoryEndpoint,
 		Handler:  getHistoryHandler,
 		Router:   r,
@@ -228,7 +229,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getAllPodsEndpoint,
 		Handler:  getAllPodsHandler,
 		Router:   r,
@@ -258,7 +259,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateNotifsEndpoint,
 		Handler:  updateNotifsHandler,
 		Router:   r,
@@ -287,7 +288,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getNotifsEndpoint,
 		Handler:  getNotifsHandler,
 		Router:   r,
@@ -317,7 +318,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateBuildConfigEndpoint,
 		Handler:  updateBuildConfigHandler,
 		Router:   r,
@@ -346,7 +347,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getWebhookEndpoint,
 		Handler:  getWebhookHandler,
 		Router:   r,
@@ -376,7 +377,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createWebhookEndpoint,
 		Handler:  createWebhookHandler,
 		Router:   r,
@@ -406,7 +407,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getStepsEndpoint,
 		Handler:  getStepsHandler,
 		Router:   r,
@@ -436,7 +437,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateStepsEndpoint,
 		Handler:  updateStepsHandler,
 		Router:   r,
@@ -466,7 +467,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createReleaseEndpoint,
 		Handler:  createReleaseHandler,
 		Router:   r,
@@ -496,7 +497,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createAddonEndpoint,
 		Handler:  createAddonHandler,
 		Router:   r,
@@ -526,7 +527,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getGHATemplateEndpoint,
 		Handler:  getGHATemplateHandler,
 		Router:   r,
@@ -558,7 +559,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: rollbackEndpoint,
 		Handler:  rollbackHandler,
 		Router:   r,
@@ -590,7 +591,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: upgradeEndpoint,
 		Handler:  upgradeHandler,
 		Router:   r,
@@ -622,7 +623,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
 		Router:   r,
@@ -653,7 +654,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateImageBatchEndpoint,
 		Handler:  updateImageBatchHandler,
 		Router:   r,
@@ -685,7 +686,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getJobsEndpoint,
 		Handler:  getJobsHandler,
 		Router:   r,
@@ -716,7 +717,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getLatestJobRunEndpoint,
 		Handler:  getLatestJobRunHandler,
 		Router:   r,
@@ -747,7 +748,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getJobsStatusEndpoint,
 		Handler:  getJobsStatusHandler,
 		Router:   r,
@@ -776,7 +777,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createSubdomainEndpoint,
 		Handler:  createSubdomainHandler,
 		Router:   r,
@@ -808,7 +809,7 @@ func getReleaseRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateReleaseTagsEndpoint,
 		Handler:  updateReleaseTagsHandler,
 		Router:   r,

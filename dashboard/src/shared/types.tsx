@@ -240,6 +240,7 @@ export interface ProjectType {
   preview_envs_enabled: boolean;
   enable_rds_databases: boolean;
   managed_infra_enabled: boolean;
+  api_tokens_enabled: boolean;
   roles: {
     id: number;
     kind: string;

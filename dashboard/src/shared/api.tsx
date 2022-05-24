@@ -1,3 +1,4 @@
+import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { release } from "process";
 import { baseApi } from "./baseApi";
@@ -1416,6 +1417,39 @@ const stopJob = baseApi<
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/stop`;
 });
 
+const listAPITokens = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/api_token`
+);
+
+const getAPIToken = baseApi<{}, { project_id: number; token: string }>(
+  "GET",
+  ({ project_id, token }) => `/api/projects/${project_id}/api_token/${token}`
+);
+
+const revokeAPIToken = baseApi<{}, { project_id: number; token: string }>(
+  "POST",
+  ({ project_id, token }) =>
+    `/api/projects/${project_id}/api_token/${token}/revoke`
+);
+
+const createAPIToken = baseApi<
+  {
+    name: string;
+    policy_uid: string;
+    expires_at?: string;
+  },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/api_token`);
+
+const createPolicy = baseApi<
+  {
+    name: string;
+    policy: PolicyDocType[];
+  },
+  { project_id: number }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/policy`);
+
 const getAvailableRoles = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/roles`
@@ -1925,6 +1959,11 @@ export default {
   deleteJob,
   stopJob,
   updateInvite,
+  listAPITokens,
+  getAPIToken,
+  revokeAPIToken,
+  createAPIToken,
+  createPolicy,
   getAvailableRoles,
   getCollaborators,
   updateCollaborator,

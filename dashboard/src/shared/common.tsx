@@ -25,7 +25,8 @@ export const integrationList: any = {
     buttonText: "Link a Github Account",
   },
   slack: {
-    icon: "https://user-images.githubusercontent.com/5147537/54070671-0a173780-4263-11e9-8946-09ac0e37d8c6.png",
+    icon:
+      "https://user-images.githubusercontent.com/5147537/54070671-0a173780-4263-11e9-8946-09ac0e37d8c6.png",
     label: "Slack",
     buttonText: "Install Application",
   },
@@ -77,6 +78,16 @@ export const integrationList: any = {
     icon:
       "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Digital Ocean Container Registry (DOCR)",
+  },
+  aks: {
+    icon:
+      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    label: "Azure Kubernetes Service (AKS)",
+  },
+  acr: {
+    icon:
+      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    label: "Azure Container Registry (ACR)",
   },
   aws: {
     icon: aws,

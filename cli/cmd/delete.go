@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
@@ -112,38 +113,22 @@ func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []st
 		return fmt.Errorf("cluster id must be set")
 	}
 
-	var environmentID string
-	var gitRepoName string
-	var gitRepoOwner string
-	var gitPRNumber string
+	var deploymentID uint
 
-	if envID := os.Getenv("PORTER_ENVIRONMENT_ID"); envID != "" {
-		environmentID = envID
-	} else {
-		return fmt.Errorf("Environment ID must be defined, set by PORTER_ENVIRONMENT_ID")
-	}
+	if deplIDStr := os.Getenv("PORTER_DEPLOYMENT_ID"); deplIDStr != "" {
+		deplID, err := strconv.ParseUint(deplIDStr, 10, 32)
 
-	if repoName := os.Getenv("PORTER_REPO_NAME"); repoName != "" {
-		gitRepoName = repoName
-	} else {
-		return fmt.Errorf("Repo name must be defined, set by PORTER_REPO_NAME")
-	}
+		if err != nil {
+			return fmt.Errorf("error parsing deployment ID: %s", deplIDStr)
+		}
 
-	if repoOwner := os.Getenv("PORTER_REPO_OWNER"); repoOwner != "" {
-		gitRepoOwner = repoOwner
+		deploymentID = uint(deplID)
 	} else {
-		return fmt.Errorf("Repo owner must be defined, set by PORTER_REPO_OWNER")
-	}
-
-	if prNumber := os.Getenv("PORTER_PR_NUMBER"); prNumber != "" {
-		gitPRNumber = prNumber
-	} else {
-		return fmt.Errorf("Pull request number must be defined, set by PORTER_PR_NUMBER")
+		return fmt.Errorf("Deployment ID must be defined, set by PORTER_DEPLOYMENT_ID")
 	}
 
 	return client.DeleteDeployment(
-		context.Background(), projectID, clusterID, environmentID,
-		gitRepoOwner, gitRepoName, gitPRNumber,
+		context.Background(), projectID, clusterID, deploymentID,
 	)
 }
 

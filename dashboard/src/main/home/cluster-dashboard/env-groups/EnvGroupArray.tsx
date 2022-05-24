@@ -4,7 +4,8 @@ import Modal from "main/home/modals/Modal";
 import EnvEditorModal from "main/home/modals/EnvEditorModal";
 
 import upload from "assets/upload.svg";
-import { parseStringToEnvObject } from "./utils";
+import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
+import { dotenv_parse } from "shared/string_utils";
 
 export type KeyValueType = {
   key: string;
@@ -44,7 +45,7 @@ const EnvGroupArray = ({
   }, [values]);
 
   const readFile = (env: string) => {
-    const envObj = parseStringToEnvObject(env, null);
+    const envObj = dotenv_parse(env);
     const _values = values;
 
     for (const key in envObj) {
@@ -99,19 +100,36 @@ const EnvGroupArray = ({
                     spellCheck={false}
                   />
                   <Spacer />
-                  <Input
-                    placeholder="ex: value"
-                    width="270px"
-                    value={entry.value}
-                    onChange={(e: any) => {
-                      let _values = values;
-                      _values[i].value = e.target.value;
-                      setValues(_values);
-                    }}
-                    disabled={disabled || entry.locked}
-                    type={entry.hidden ? "password" : "text"}
-                    spellCheck={false}
-                  />
+
+                  {entry.hidden ? (
+                    <Input
+                      placeholder="ex: value"
+                      width="270px"
+                      value={entry.value}
+                      onChange={(e: any) => {
+                        let _values = values;
+                        _values[i].value = e.target.value;
+                        setValues(_values);
+                      }}
+                      disabled={disabled || entry.locked}
+                      type={entry.hidden ? "password" : "text"}
+                      spellCheck={false}
+                    />
+                  ) : (
+                    <MultiLineInput
+                      placeholder="ex: value"
+                      width="270px"
+                      value={entry.value}
+                      onChange={(e: any) => {
+                        let _values = values;
+                        _values[i].value = e.target.value;
+                        setValues(_values);
+                      }}
+                      rows={entry.value?.split("\n").length}
+                      disabled={disabled || entry.locked}
+                      spellCheck={false}
+                    />
+                  )}
 
                   {secretOption && (
                     <HideButton
@@ -224,25 +242,6 @@ const AddRowButton = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-`;
-
-const LoadButton = styled(AddRowButton)`
-  background: none;
-  border: 1px solid #ffffff55;
-  > i {
-    color: #ffffff44;
-    font-size: 16px;
-    margin-left: 8px;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  > img {
-    width: 14px;
-    margin-left: 10px;
-    margin-right: 12px;
   }
 `;
 

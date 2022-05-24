@@ -111,6 +111,8 @@ func (store *PGStore) save(session *sessions.Session) error {
 type NewStoreOpts struct {
 	SessionRepository repository.SessionRepository
 	CookieSecrets     []string
+
+	Insecure bool
 }
 
 // NewStore takes an initialized db and session key pairs to create a session-store in postgres db.
@@ -126,7 +128,7 @@ func NewStore(opts *NewStoreOpts) (*PGStore, error) {
 		Options: &sessions.Options{
 			Path:     "/",
 			MaxAge:   86400 * 30,
-			Secure:   true,
+			Secure:   !opts.Insecure,
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
 		},

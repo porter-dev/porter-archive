@@ -55,6 +55,7 @@ type Project struct {
 	OAuthIntegrations []ints.OAuthIntegration `json:"oauth_integrations"`
 	AWSIntegrations   []ints.AWSIntegration   `json:"aws_integrations"`
 	GCPIntegrations   []ints.GCPIntegration   `json:"gcp_integrations"`
+	AzureIntegrations []ints.AzureIntegration `json:"azure_integrations"`
 
 	PreviewEnvsEnabled  bool
 	RDSDatabasesEnabled bool

@@ -48,6 +48,16 @@ type GetAWSCredentialData struct {
 	Data     *credentials.AWSCredential `json:"data"`
 }
 
+type GetAzureCredentialResponse struct {
+	*VaultGetResponse
+	Data *GetAzureCredentialData `json:"data"`
+}
+
+type GetAzureCredentialData struct {
+	Metadata *VaultMetadata               `json:"metadata"`
+	Data     *credentials.AzureCredential `json:"data"`
+}
+
 type CreatePolicyRequest struct {
 	Policy string `json:"policy"`
 }

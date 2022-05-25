@@ -140,7 +140,7 @@ func portForward(user *types.GetAuthenticatedUserResponse, client *api.Client, a
 			return err
 		}
 
-		pod = pods[podIdx]
+		pod = pods[podIdx-1]
 	} else {
 		pod = pods[0]
 	}

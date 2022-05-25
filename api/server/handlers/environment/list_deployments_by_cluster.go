@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -65,12 +66,30 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 				return
 			}
 
-			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
-
 			deployment.InstallationID = env.GitInstallationID
 
 			deployments = append(deployments, deployment)
 		}
+
+		var wg sync.WaitGroup
+		wg.Add(len(deployments))
+
+		for _, deployment := range deployments {
+			env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, deployment.EnvironmentID)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			go func(depl *types.Deployment) {
+				defer wg.Done()
+
+				updateDeploymentWithGithubWorkflowRunStatus(c.Config(), env, depl)
+			}(deployment)
+		}
+
+		wg.Wait()
 
 		envList, err := c.Repo().Environment().ListEnvironments(project.ID, cluster.ID)
 
@@ -112,12 +131,30 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 				"%s-%s-%d", deployment.RepoOwner, deployment.RepoName, deployment.PullRequestID,
 			)] = true
 
-			updateDeploymentWithGithubWorkflowRunStatus(r.Context(), c.Config(), env, deployment)
-
 			deployment.InstallationID = env.GitInstallationID
 
 			deployments = append(deployments, deployment)
 		}
+
+		var wg sync.WaitGroup
+		wg.Add(len(deployments))
+
+		for _, deployment := range deployments {
+			env, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, deployment.EnvironmentID)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			go func(depl *types.Deployment) {
+				defer wg.Done()
+
+				updateDeploymentWithGithubWorkflowRunStatus(c.Config(), env, depl)
+			}(deployment)
+		}
+
+		wg.Wait()
 
 		prs, err := fetchOpenPullRequests(r.Context(), c.Config(), env, deplInfoMap)
 
@@ -136,7 +173,6 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 }
 
 func updateDeploymentWithGithubWorkflowRunStatus(
-	ctx context.Context,
 	config *config.Config,
 	env *models.Environment,
 	deployment *types.Deployment,

@@ -20,7 +20,7 @@ import {
 } from "components/porter-form/types";
 import Helper from "components/form-components/Helper";
 import DocsHelper from "components/DocsHelper";
-import { isObject } from "lodash";
+import { isEmpty, isObject } from "lodash";
 
 type PropsType = {
   namespace: string;
@@ -161,6 +161,14 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
     if (!incoming) {
       return [];
     }
+
+    if (
+      !isObject(this.props.existingValues) ||
+      isEmpty(this.props.existingValues)
+    ) {
+      return [];
+    }
+
     // console.log(incoming, this.props.existingValues);
     return Object.entries(incoming)
       .filter(([key]) => this.props.existingValues[key])

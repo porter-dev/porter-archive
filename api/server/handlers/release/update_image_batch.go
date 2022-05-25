@@ -82,8 +82,9 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 			if err != nil {
 				mu.Lock()
-				errors = append(errors, err.Error())
+				errors = append(errors, fmt.Sprintf("Error for %s, index %d: %s", releases[index].Name, index, err.Error()))
 				mu.Unlock()
+				return
 			}
 
 			if rel.Chart.Name() == "job" {
@@ -105,7 +106,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 				if err != nil {
 					mu.Lock()
-					errors = append(errors, err.Error())
+					errors = append(errors, fmt.Sprintf("Error for %s, index %d: %s", releases[index].Name, index, err.Error()))
 					mu.Unlock()
 				}
 			}

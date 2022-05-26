@@ -24,6 +24,7 @@ import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
 import IncidentsTab from "./incidents/IncidentsTab";
 import BuildSettingsTab from "./BuildSettingsTab";
+import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 
 type Props = {
   namespace: string;
@@ -406,6 +407,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
       case "metrics":
         return <MetricsSection currentChart={chart} />;
       case "incidents":
+        if (DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
+          return null;
+        }
         return (
           <IncidentsTab
             releaseName={chart?.name}
@@ -506,7 +510,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let rightTabOptions = [] as any[];
     let leftTabOptions = [] as any[];
     leftTabOptions.push({ label: "Status", value: "status" });
-    leftTabOptions.push({ label: "Incidents", value: "incidents" });
+
+    if (!DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
+      leftTabOptions.push({ label: "Incidents", value: "incidents" });
+    }
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });

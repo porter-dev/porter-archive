@@ -690,6 +690,10 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
+	if len(resp.ImageIds) == 0 {
+		return []*ptypes.Image{}, nil
+	}
+
 	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 		RepositoryName: &repoName,
 		ImageIds:       resp.ImageIds,

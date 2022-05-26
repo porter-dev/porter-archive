@@ -172,7 +172,7 @@ export default class ImageList extends Component<PropsType, StateType> {
           <Loading />
         </LoadingWrapper>
       );
-    } else if (error || !images) {
+    } else if (error || !Array.isArray(images)) {
       return <LoadingWrapper>Error loading repos</LoadingWrapper>;
     } else if (images.length === 0) {
       return <LoadingWrapper>No registries found.</LoadingWrapper>;

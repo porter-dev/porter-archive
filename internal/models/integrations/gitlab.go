@@ -6,9 +6,6 @@ import "gorm.io/gorm"
 type GitlabIntegration struct {
 	gorm.Model
 
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-
 	// Project ID of the project that this gitlab integration is linked with
 	ProjectID uint `json:"project_id"`
 

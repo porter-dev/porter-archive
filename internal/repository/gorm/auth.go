@@ -1601,11 +1601,11 @@ func (repo *GitlabIntegrationRepository) CreateGitlabIntegration(gi *ints.Gitlab
 	var credentialData = &credentials.GitlabCredential{}
 
 	if repo.storageBackend != nil {
-		credentialData.SudoAccessToken = gi.SudoAccessToken
-		credentialData.SudoUsername = gi.SudoUsername
+		credentialData.AppClientID = gi.AppClientID
+		credentialData.AppClientSecret = gi.AppClientSecret
 
-		gi.SudoAccessToken = ""
-		gi.SudoUsername = ""
+		gi.AppClientID = []byte{}
+		gi.AppClientSecret = []byte{}
 	}
 
 	project := &models.Project{}
@@ -1649,9 +1649,9 @@ func (repo *GitlabIntegrationRepository) ReadGitlabIntegration(projectID, id uin
 			return nil, err
 		}
 
-		gi.SudoAccessToken = credentialData.SudoAccessToken
+		gi.AppClientID = credentialData.AppClientID
 
-		gi.SudoUsername = credentialData.SudoUsername
+		gi.AppClientSecret = credentialData.AppClientSecret
 	}
 
 	err := repo.DecryptGitlabIntegrationData(gi, repo.key)
@@ -1679,14 +1679,24 @@ func (repo *GitlabIntegrationRepository) EncryptGitlabIntegrationData(
 	gi *ints.GitlabIntegration,
 	key *[32]byte,
 ) error {
-	if len(gi.SudoAccessToken) > 0 {
-		cipherData, err := encryption.Encrypt([]byte(gi.SudoAccessToken), key)
+	if len(gi.AppClientID) > 0 {
+		cipherData, err := encryption.Encrypt(gi.AppClientID, key)
 
 		if err != nil {
 			return err
 		}
 
-		gi.SudoAccessToken = string(cipherData)
+		gi.AppClientID = cipherData
+	}
+
+	if len(gi.AppClientSecret) > 0 {
+		cipherData, err := encryption.Encrypt(gi.AppClientSecret, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AppClientSecret = cipherData
 	}
 
 	return nil
@@ -1698,14 +1708,24 @@ func (repo *GitlabIntegrationRepository) DecryptGitlabIntegrationData(
 	gi *ints.GitlabIntegration,
 	key *[32]byte,
 ) error {
-	if len(gi.SudoAccessToken) > 0 {
-		plaintext, err := encryption.Decrypt([]byte(gi.SudoAccessToken), key)
+	if len(gi.AppClientID) > 0 {
+		plaintext, err := encryption.Decrypt(gi.AppClientID, key)
 
 		if err != nil {
 			return err
 		}
 
-		gi.SudoAccessToken = string(plaintext)
+		gi.AppClientID = plaintext
+	}
+
+	if len(gi.AppClientSecret) > 0 {
+		plaintext, err := encryption.Decrypt(gi.AppClientSecret, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AppClientSecret = plaintext
 	}
 
 	return nil

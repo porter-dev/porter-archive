@@ -55,8 +55,8 @@ type AzureCredential struct {
 }
 
 type GitlabCredential struct {
-	SudoAccessToken string `json:"sudo_access_token"`
-	SudoUsername    string `json:"sudo_username"`
+	AppClientID     []byte `json:"app_client_id"`
+	AppClientSecret []byte `json:"app_client_secret"`
 }
 
 type CredentialStorage interface {

@@ -13,11 +13,11 @@ type GitlabIntegration struct {
 	ProjectID uint `json:"project_id"`
 
 	// URL of the Gitlab instance to talk to
-	ServerURL string `json:"server_url"`
+	InstanceURL string `json:"instance_url"`
 
-	// Personal access token from Gitlab for a sudo user
-	SudoAccessToken string `json:"sudo_access_token,omitempty"`
+	// Gitlab instance-wide app's client ID
+	AppClientID []byte `json:"app_client_id"`
 
-	// Username of the sudo admin account holder
-	SudoUsername string `json:"sudo_username,omitempty"`
+	// Gitlab instance-wide app's client secret
+	AppClientSecret []byte `json:"app_client_secret"`
 }

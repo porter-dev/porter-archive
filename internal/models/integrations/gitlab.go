@@ -2,7 +2,7 @@ package integrations
 
 import "gorm.io/gorm"
 
-// GitlabIntegration takes care of Gitlab related auth mechanisms and data
+// GitlabIntegration takes care of Gitlab app related data
 type GitlabIntegration struct {
 	gorm.Model
 
@@ -11,6 +11,10 @@ type GitlabIntegration struct {
 
 	// URL of the Gitlab instance to talk to
 	InstanceURL string `json:"instance_url"`
+
+	// ------------------------------------------------------------------
+	// All fields encrypted before storage.
+	// ------------------------------------------------------------------
 
 	// Gitlab instance-wide app's client ID
 	AppClientID []byte `json:"app_client_id"`

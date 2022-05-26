@@ -89,7 +89,12 @@ type GithubAppInstallationRepository interface {
 
 // GitlabIntegrationRepository represents the set of queries on the GitlabIntegration model
 type GitlabIntegrationRepository interface {
-	CreateGitlabIntegration(user *ints.GitlabIntegration) (*ints.GitlabIntegration, error)
+	CreateGitlabIntegration(gi *ints.GitlabIntegration) (*ints.GitlabIntegration, error)
 	ReadGitlabIntegration(projectID, id uint) (*ints.GitlabIntegration, error)
 	ListGitlabIntegrationsByProjectID(projectID uint) ([]*ints.GitlabIntegration, error)
+}
+
+// GitlabAppOAuthIntegrationRepository represents the set of queries on the GitlabOAuthIntegration model
+type GitlabAppOAuthIntegrationRepository interface {
+	CreateGitlabAppOAuthIntegration(gi *ints.GitlabAppOAuthIntegration) (*ints.GitlabAppOAuthIntegration, error)
 }

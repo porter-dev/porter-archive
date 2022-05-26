@@ -1730,3 +1730,29 @@ func (repo *GitlabIntegrationRepository) DecryptGitlabIntegrationData(
 
 	return nil
 }
+
+// GitlabAppOAuthIntegrationRepository uses gorm.DB for querying the database
+type GitlabAppOAuthIntegrationRepository struct {
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
+}
+
+// NewGitlabAppOAuthIntegrationRepository returns a GitlabAppOAuthIntegrationRepository which uses
+// gorm.DB for querying the database
+func NewGitlabAppOAuthIntegrationRepository(
+	db *gorm.DB,
+	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
+) repository.GitlabAppOAuthIntegrationRepository {
+	return &GitlabAppOAuthIntegrationRepository{db, key, storageBackend}
+}
+
+func (repo *GitlabAppOAuthIntegrationRepository) CreateGitlabAppOAuthIntegration(
+	gi *ints.GitlabAppOAuthIntegration,
+) (*ints.GitlabAppOAuthIntegration, error) {
+	if err := repo.db.Create(gi).Error; err != nil {
+		return nil, err
+	}
+	return gi, nil
+}

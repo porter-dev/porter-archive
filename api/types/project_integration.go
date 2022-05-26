@@ -159,3 +159,26 @@ type CreateAzureResponse struct {
 }
 
 type ListAzureResponse []*AzureIntegration
+
+type GitlabIntegration struct {
+	CreatedAt time.Time `json:"created_at"`
+
+	ID uint `json:"id"`
+
+	// The id of the user that linked this auth mechanism
+	UserID uint `json:"user_id"`
+
+	// The project that this integration belongs to
+	ProjectID uint `json:"project_id"`
+}
+
+type ListGitlabResponse []*GitlabIntegration
+
+type CreateGitlabRequest struct {
+	SudoAccessToken string `json:"sudo_access_token" form:"required"`
+	SudoUsername    string `json:"sudo_username" form:"required"`
+}
+
+type CreateGitlabResponse struct {
+	*GitlabIntegration
+}

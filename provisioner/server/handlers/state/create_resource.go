@@ -104,6 +104,8 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		_, err = createECRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraRDS):
 		_, err = createRDSDatabase(c.Config, infra, operation, req.Output)
+	case string(types.InfraS3):
+		err = createS3Bucket(c.Config, infra, operation, req.Output)
 	case string(types.InfraDOCR):
 		_, err = createDOCRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraGCR):
@@ -215,6 +217,18 @@ func createRDSDatabase(config *config.Config, infra *models.Infra, operation *mo
 	}
 
 	return database, nil
+}
+
+func createS3Bucket(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) error {
+	lastApplied := make(map[string]interface{})
+
+	err := json.Unmarshal(operation.LastApplied, &lastApplied)
+
+	if err != nil {
+		return err
+	}
+
+	return createS3EnvGroup(config, infra, lastApplied, output)
 }
 
 func createCluster(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Cluster, error) {
@@ -427,6 +441,72 @@ func deleteRDSEnvGroup(config *config.Config, infra *models.Infra, lastApplied m
 	}
 
 	err = envgroup.DeleteEnvGroup(agent, fmt.Sprintf("rds-credentials-%s", lastApplied["db_name"].(string)), "default")
+
+	if err != nil {
+		return fmt.Errorf("failed to create RDS env group: %s", err.Error())
+	}
+
+	return nil
+}
+
+func createS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}, output map[string]interface{}) error {
+	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
+
+	if err != nil {
+		return err
+	}
+
+	ooc := &kubernetes.OutOfClusterConfig{
+		Repo:              config.Repo,
+		DigitalOceanOAuth: config.DOConf,
+		Cluster:           cluster,
+	}
+
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+
+	if err != nil {
+		return fmt.Errorf("failed to get agent: %s", err.Error())
+	}
+
+	// split the instance endpoint on the port
+	_, err = envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
+		Name:      fmt.Sprintf("s3-credentials-%s", lastApplied["bucket_name"].(string)),
+		Namespace: "default",
+		Variables: map[string]string{},
+		SecretVariables: map[string]string{
+			"S3_AWS_ACCESS_KEY_ID": output["s3_aws_access_key_id"].(string),
+			"S3_AWS_SECRET_KEY":    output["s3_aws_secret_key"].(string),
+			"S3_BUCKET_NAME":       output["s3_bucket_name"].(string),
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create S3 env group: %s", err.Error())
+	}
+
+	return nil
+}
+
+func deleteS3EnvGroup(config *config.Config, infra *models.Infra, lastApplied map[string]interface{}) error {
+	cluster, err := config.Repo.Cluster().ReadCluster(infra.ProjectID, infra.ParentClusterID)
+
+	if err != nil {
+		return err
+	}
+
+	ooc := &kubernetes.OutOfClusterConfig{
+		Repo:              config.Repo,
+		DigitalOceanOAuth: config.DOConf,
+		Cluster:           cluster,
+	}
+
+	agent, err := kubernetes.GetAgentOutOfClusterConfig(ooc)
+
+	if err != nil {
+		return fmt.Errorf("failed to get agent: %s", err.Error())
+	}
+
+	err = envgroup.DeleteEnvGroup(agent, fmt.Sprintf("s3-credentials-%s", lastApplied["bucket_name"].(string)), "default")
 
 	if err != nil {
 		return fmt.Errorf("failed to create RDS env group: %s", err.Error())

@@ -327,5 +327,64 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/integrations/gitlab
+	listGitlabEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitlabHandler := project_integration.NewListGitlabHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitlabEndpoint,
+		Handler:  listGitlabHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/integrations/gitlab
+	createGitlabEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createGitlabHandler := project_integration.NewCreateGitlabIntegration(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createGitlabEndpoint,
+		Handler:  createGitlabHandler,
+		Router:   r,
+	})
+
+	// PATCH /api/projects/{project_id}/integrations/gitlab/{integration_id}
+
+	// DELETE /api/projects/{project_id}/integrations/gitlab/{integration_id}
+
 	return routes, newPath
 }

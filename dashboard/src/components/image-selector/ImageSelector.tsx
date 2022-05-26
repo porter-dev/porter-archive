@@ -95,7 +95,6 @@ export default class ImageSelector extends Component<PropsType, StateType> {
         <img src={icon} />
         <Input
           disabled={this.props.disableImageSelect}
-          autoFocus={true}
           onClick={(e: any) => e.stopPropagation()}
           value={selectedImageUrl}
           onChange={(e: any) => {

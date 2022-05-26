@@ -1,6 +1,7 @@
 package state
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared"
@@ -74,6 +75,8 @@ func (c *DeleteResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		_, err = deleteCluster(c.Config, infra, operation)
 	case types.InfraRDS:
 		_, err = deleteDatabase(c.Config, infra, operation)
+	case types.InfraS3:
+		err = deleteS3Bucket(c.Config, infra, operation)
 	}
 
 	if err != nil {
@@ -130,4 +133,16 @@ func deleteDatabase(config *config.Config, infra *models.Infra, operation *model
 	// TODO: add delete env group here
 
 	return database, nil
+}
+
+func deleteS3Bucket(config *config.Config, infra *models.Infra, operation *models.Operation) error {
+	lastApplied := make(map[string]interface{})
+
+	err := json.Unmarshal(operation.LastApplied, &lastApplied)
+
+	if err != nil {
+		return err
+	}
+
+	return deleteS3EnvGroup(config, infra, lastApplied)
 }

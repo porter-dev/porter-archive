@@ -72,16 +72,6 @@ func (g *OAuthIntegration) PopulateTargetMetadata() {
 	}
 }
 
-// GithubAppOAuthIntegration is the model used for storing github app oauth data
-// Unlike the above, this model is tied to a specific user, not a project
-type GithubAppOAuthIntegration struct {
-	gorm.Model
-	SharedOAuthModel
-
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-}
-
 // ToOAuthIntegrationType generates an external OAuthIntegration to be shared over REST
 func (o *OAuthIntegration) ToOAuthIntegrationType() *types.OAuthIntegration {
 	return &types.OAuthIntegration{
@@ -93,4 +83,30 @@ func (o *OAuthIntegration) ToOAuthIntegrationType() *types.OAuthIntegration {
 		TargetEmail: o.TargetEmail,
 		TargetName:  o.TargetName,
 	}
+}
+
+// GithubAppOAuthIntegration is the model used for storing github app oauth data
+// Unlike the above, this model is tied to a specific user, not a project
+type GithubAppOAuthIntegration struct {
+	gorm.Model
+	SharedOAuthModel
+
+	// The id of the user that linked this auth mechanism
+	UserID uint `json:"user_id"`
+}
+
+// GitlabAppOAuthIntegration is the model used for storing gitlab app oauth data
+// Unlike the above, this model is tied to a specific user, not a project
+type GitlabAppOAuthIntegration struct {
+	gorm.Model
+	SharedOAuthModel
+
+	// The id of the user that linked with this auth mechanism
+	UserID uint `json:"user_id"`
+
+	// The id of the project that linked with this auth mechanism
+	ProjectID uint `json:"project_id"`
+
+	// The id of the gitlab integration linked with this auth mechanism
+	IntegrationID uint `json:"integration_id"`
 }

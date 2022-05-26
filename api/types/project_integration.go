@@ -7,6 +7,7 @@ const (
 	OAuthGithub       OAuthIntegrationClient = "github"
 	OAuthDigitalOcean OAuthIntegrationClient = "do"
 	OAuthGoogle       OAuthIntegrationClient = "google"
+	OAuthGitlab       OAuthIntegrationClient = "gitlab"
 )
 
 // OAuthIntegrationClient is the name of an OAuth mechanism client

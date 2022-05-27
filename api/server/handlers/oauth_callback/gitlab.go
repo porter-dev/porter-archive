@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
@@ -47,23 +48,11 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	token, err := p.Config().DOConf.Exchange(context.Background(), r.URL.Query().Get("code"))
-
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
-		return
-	}
-
-	if !token.Valid() {
-		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("invalid token")))
-		return
-	}
-
 	userID, _ := session.Values["user_id"].(uint)
 	projID, _ := session.Values["project_id"].(uint)
 	integrationID := session.Values["integration_id"].(uint)
 
-	_, err = p.Repo().GitlabIntegration().ReadGitlabIntegration(projID, integrationID)
+	giIntegration, err := p.Repo().GitlabIntegration().ReadGitlabIntegration(projID, integrationID)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -75,6 +64,19 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		}
 
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	token, err := commonutils.GetGitlabOAuthConf(p.Config(), giIntegration).
+		Exchange(context.Background(), r.URL.Query().Get("code"))
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		return
+	}
+
+	if !token.Valid() {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("invalid token")))
 		return
 	}
 

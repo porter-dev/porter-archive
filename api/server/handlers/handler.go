@@ -132,7 +132,7 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(
 
 	if integrationID != 0 && len(integrationClient) > 0 {
 		session.Values["integration_id"] = integrationID
-		session.Values["integration_client"] = integrationClient
+		session.Values["integration_client"] = string(integrationClient)
 	}
 
 	if err := session.Save(r, w); err != nil {

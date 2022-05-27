@@ -28,8 +28,9 @@ type GitlabIntegration struct {
 
 func (gi *GitlabIntegration) ToGitlabIntegrationType() *types.GitlabIntegration {
 	return &types.GitlabIntegration{
-		CreatedAt: gi.CreatedAt,
-		ID:        gi.ID,
-		ProjectID: gi.ProjectID,
+		CreatedAt:   gi.CreatedAt,
+		ID:          gi.ID,
+		ProjectID:   gi.ProjectID,
+		InstanceURL: gi.InstanceURL,
 	}
 }

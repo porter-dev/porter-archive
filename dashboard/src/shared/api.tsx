@@ -61,6 +61,11 @@ const getAzureIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/azure`
 );
 
+const getGitlabIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -97,6 +102,17 @@ const createAzureIntegration = baseApi<
   { id: number }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/integrations/azure`;
+});
+
+const createGitlabIntegration = baseApi<
+  {
+    instance_url: string;
+    client_id: string;
+    client_secret: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/gitlab`;
 });
 
 const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
@@ -1807,9 +1823,11 @@ export default {
   getAWSIntegration,
   getGCPIntegration,
   getAzureIntegration,
+  getGitlabIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
   createAzureIntegration,
+  createGitlabIntegration,
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,

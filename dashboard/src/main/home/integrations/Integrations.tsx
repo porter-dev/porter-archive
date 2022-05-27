@@ -12,7 +12,11 @@ import TitleSection from "components/TitleSection";
 
 type PropsType = RouteComponentProps;
 
-const IntegrationCategoryStrings = ["registry", "slack"]; /*"kubernetes",*/
+const IntegrationCategoryStrings = [
+  "registry",
+  "slack",
+  "gitlab",
+]; /*"kubernetes",*/
 
 const Integrations: React.FC<PropsType> = (props) => {
   return (
@@ -69,7 +73,7 @@ const Integrations: React.FC<PropsType> = (props) => {
 
             <IntegrationList
               currentCategory={""}
-              integrations={["registry", "slack"]}
+              integrations={["registry", "slack", "gitlab"]}
               setCurrent={(x) =>
                 pushFiltered(props, `/integrations/${x}`, ["project_id"])
               }
@@ -106,8 +110,8 @@ const Flex = styled.div`
 
   > i {
     cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
+    font-size: 24px;
+    color: #969fbbaa;
     padding: 3px;
     margin-right: 11px;
     border-radius: 100px;

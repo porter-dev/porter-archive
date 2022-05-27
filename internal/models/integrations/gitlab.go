@@ -1,6 +1,9 @@
 package integrations
 
-import "gorm.io/gorm"
+import (
+	"github.com/porter-dev/porter/api/types"
+	"gorm.io/gorm"
+)
 
 // GitlabIntegration takes care of Gitlab app related data
 type GitlabIntegration struct {
@@ -21,4 +24,13 @@ type GitlabIntegration struct {
 
 	// Gitlab instance-wide app's client secret
 	AppClientSecret []byte `json:"app_client_secret"`
+}
+
+func (gi *GitlabIntegration) ToGitlabIntegrationType() *types.GitlabIntegration {
+	return &types.GitlabIntegration{
+		CreatedAt:   gi.CreatedAt,
+		ID:          gi.ID,
+		ProjectID:   gi.ProjectID,
+		InstanceURL: gi.InstanceURL,
+	}
 }

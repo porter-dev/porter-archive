@@ -166,18 +166,18 @@ type GitlabIntegration struct {
 
 	ID uint `json:"id"`
 
-	// The id of the user that linked this auth mechanism
-	UserID uint `json:"user_id"`
-
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
+
+	InstanceURL string `json:"instance_url"`
 }
 
 type ListGitlabResponse []*GitlabIntegration
 
 type CreateGitlabRequest struct {
-	SudoAccessToken string `json:"sudo_access_token" form:"required"`
-	SudoUsername    string `json:"sudo_username" form:"required"`
+	InstanceURL     string `json:"instance_url"`
+	AppClientID     string `json:"client_id"`
+	AppClientSecret string `json:"client_secret"`
 }
 
 type CreateGitlabResponse struct {

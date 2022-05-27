@@ -108,6 +108,7 @@ export const integrationList: any = {
   gitlab: {
     icon: "https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png",
     label: "Gitlab",
+    buttonText: "Add instance",
   },
   rds: {
     icon:

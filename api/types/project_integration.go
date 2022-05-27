@@ -168,6 +168,8 @@ type GitlabIntegration struct {
 
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
+
+	InstanceURL string `json:"instance_url"`
 }
 
 type ListGitlabResponse []*GitlabIntegration

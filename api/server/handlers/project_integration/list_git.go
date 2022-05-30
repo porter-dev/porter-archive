@@ -12,7 +12,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 )
 
@@ -60,7 +59,7 @@ func (p *ListGitIntegrationHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	client := github.NewClient(p.Config().GithubAppConf.Client(oauth2.NoContext, tok))
+	client := github.NewClient(p.Config().GithubAppConf.Client(context.Background(), tok))
 
 	var accountIDs []int64
 	accountIDMap := make(map[int64]string)

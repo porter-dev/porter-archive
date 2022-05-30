@@ -97,4 +97,5 @@ type GitlabIntegrationRepository interface {
 // GitlabAppOAuthIntegrationRepository represents the set of queries on the GitlabOAuthIntegration model
 type GitlabAppOAuthIntegrationRepository interface {
 	CreateGitlabAppOAuthIntegration(gi *ints.GitlabAppOAuthIntegration) (*ints.GitlabAppOAuthIntegration, error)
+	ReadGitlabAppOAuthIntegration(userID, projectID, integrationID uint) (*ints.GitlabAppOAuthIntegration, error)
 }

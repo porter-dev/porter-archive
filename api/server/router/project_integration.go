@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	project_integration "github.com/porter-dev/porter/api/server/handlers/project_integration"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -439,6 +441,63 @@ func getProjectIntegrationRoutes(
 	routes = append(routes, &Route{
 		Endpoint: listGitlabReposEndpoint,
 		Handler:  listGitlabReposHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/branches
+	listGitlabRepoBranchesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{integration_id}/repos/{%s}/{%s}/branches", relPath, types.URLParamGitRepoOwner, types.URLParamGitRepoName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitlabRepoBranchesHandler := project_integration.NewListGitlabRepoBranchesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitlabRepoBranchesEndpoint,
+		Handler:  listGitlabRepoBranchesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/contents
+	listGitlabRepoContentsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{integration_id}/repos/{%s}/{%s}/{%s}/contents", relPath,
+					types.URLParamGitRepoOwner, types.URLParamGitRepoName, types.URLParamGitBranch),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitlabRepoContentsHandler := project_integration.NewListGitlabRepoContentsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitlabRepoContentsEndpoint,
+		Handler:  listGitlabRepoContentsHandler,
 		Router:   r,
 	})
 

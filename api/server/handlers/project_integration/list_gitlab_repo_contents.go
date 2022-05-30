@@ -16,25 +16,54 @@ import (
 	"gorm.io/gorm"
 )
 
-type ListGitlabReposHandler struct {
+type ListGitlabRepoContentsHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewListGitlabReposHandler(
+func NewListGitlabRepoContentsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ListGitlabReposHandler {
-	return &ListGitlabReposHandler{
+) *ListGitlabRepoContentsHandler {
+	return &ListGitlabRepoContentsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *ListGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
+	request := &types.GetContentsRequest{}
+
+	ok := p.DecodeAndValidate(w, r, request)
+
+	if !ok {
+		return
+	}
+
 	integrationID, reqErr := requestutils.GetURLParamUint(r, "integration_id")
+
+	if reqErr != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+		return
+	}
+
+	owner, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoOwner)
+
+	if reqErr != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+		return
+	}
+
+	name, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoName)
+
+	if reqErr != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+		return
+	}
+
+	branch, reqErr := requestutils.GetURLParamString(r, types.URLParamGitBranch)
 
 	if reqErr != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
@@ -72,12 +101,16 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	giProjects, resp, err := client.Projects.ListProjects(&gitlab.ListProjectsOptions{
-		Simple: gitlab.Bool(true),
+	tree, resp, err := client.Repositories.ListTree(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListTreeOptions{
+		Path: gitlab.String(request.Dir),
+		Ref:  gitlab.String(branch),
 	})
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
+		return
+	} else if resp.StatusCode == http.StatusNotFound {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("no such gitlab project found"), http.StatusNotFound))
 		return
 	}
 
@@ -86,10 +119,13 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var res []string
+	var res types.GetContentsResponse
 
-	for _, giProject := range giProjects {
-		res = append(res, giProject.PathWithNamespace)
+	for _, node := range tree {
+		res = append(res, types.GithubDirectoryItem{
+			Path: node.Path,
+			Type: node.Type,
+		})
 	}
 
 	p.WriteResult(w, r, res)

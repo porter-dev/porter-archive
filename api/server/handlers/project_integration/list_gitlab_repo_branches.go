@@ -16,25 +16,39 @@ import (
 	"gorm.io/gorm"
 )
 
-type ListGitlabReposHandler struct {
+type ListGitlabRepoBranchesHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewListGitlabReposHandler(
+func NewListGitlabRepoBranchesHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ListGitlabReposHandler {
-	return &ListGitlabReposHandler{
+) *ListGitlabRepoBranchesHandler {
+	return &ListGitlabRepoBranchesHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *ListGitlabRepoBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	integrationID, reqErr := requestutils.GetURLParamUint(r, "integration_id")
+
+	if reqErr != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+		return
+	}
+
+	owner, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoOwner)
+
+	if reqErr != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+		return
+	}
+
+	name, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoName)
 
 	if reqErr != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
@@ -72,12 +86,13 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	giProjects, resp, err := client.Projects.ListProjects(&gitlab.ListProjectsOptions{
-		Simple: gitlab.Bool(true),
-	})
+	branches, resp, err := client.Branches.ListBranches(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListBranchesOptions{})
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
+		return
+	} else if resp.StatusCode == http.StatusNotFound {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("no such gitlab project found"), http.StatusNotFound))
 		return
 	}
 
@@ -88,8 +103,8 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	var res []string
 
-	for _, giProject := range giProjects {
-		res = append(res, giProject.PathWithNamespace)
+	for _, branch := range branches {
+		res = append(res, branch.Name)
 	}
 
 	p.WriteResult(w, r, res)

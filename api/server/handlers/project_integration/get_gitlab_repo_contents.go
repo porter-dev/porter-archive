@@ -16,21 +16,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type ListGitlabRepoContentsHandler struct {
+type GetGitlabRepoContentsHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewListGitlabRepoContentsHandler(
+func NewGetGitlabRepoContentsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ListGitlabRepoContentsHandler {
-	return &ListGitlabRepoContentsHandler{
+) *GetGitlabRepoContentsHandler {
+	return &GetGitlabRepoContentsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *ListGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 

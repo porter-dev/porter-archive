@@ -76,14 +76,16 @@ const ExpandableResource: React.FC<Props> = (props) => {
             </Pair>
           );
         })}
-        <StyledSaveButton
-          onClick={onSave}
-          clearPosition={true}
-          text={button.name}
-          helper={button.description}
-          statusPosition={"right"}
-          className="expanded-save-button"
-        />
+        {button && (
+          <StyledSaveButton
+            onClick={onSave}
+            clearPosition={true}
+            text={button.name}
+            helper={button.description}
+            statusPosition={"right"}
+            className="expanded-save-button"
+          />
+        )}
       </ExpandedWrapper>
     </ResourceTab>
   );

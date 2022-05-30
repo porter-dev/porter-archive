@@ -414,5 +414,33 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos
+	listGitlabReposEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab/{integration_id}/repos",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitlabReposHandler := project_integration.NewListGitlabReposHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitlabReposEndpoint,
+		Handler:  listGitlabReposHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

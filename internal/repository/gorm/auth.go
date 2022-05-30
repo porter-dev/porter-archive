@@ -1775,6 +1775,36 @@ func (repo *GitlabAppOAuthIntegrationRepository) CreateGitlabAppOAuthIntegration
 	return gi, nil
 }
 
+func (repo *GitlabAppOAuthIntegrationRepository) ReadGitlabAppOAuthIntegration(
+	userID, projectID, integrationID uint,
+) (*ints.GitlabAppOAuthIntegration, error) {
+	gi := &ints.GitlabAppOAuthIntegration{}
+
+	if err := repo.db.Where("user_id = ? AND project_id = ? AND integration_id = ?", userID, projectID, integrationID).First(&gi).Error; err != nil {
+		return nil, err
+	}
+
+	// if repo.storageBackend != nil {
+	// 	credentialData, err := repo.storageBackend.GetGitlabCredential(gi)
+
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	gi.AppClientID = credentialData.AppClientID
+
+	// 	gi.AppClientSecret = credentialData.AppClientSecret
+	// }
+
+	err := repo.DecryptGitlabAppOAuthIntegrationData(gi, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return gi, nil
+}
+
 // EncryptGitlabAppOAuthIntegrationData will encrypt the gitlab app oauth integration data before
 // writing to the DB
 func (repo *GitlabAppOAuthIntegrationRepository) EncryptGitlabAppOAuthIntegrationData(

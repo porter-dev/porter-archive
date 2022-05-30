@@ -1751,8 +1751,84 @@ func NewGitlabAppOAuthIntegrationRepository(
 func (repo *GitlabAppOAuthIntegrationRepository) CreateGitlabAppOAuthIntegration(
 	gi *ints.GitlabAppOAuthIntegration,
 ) (*ints.GitlabAppOAuthIntegration, error) {
+	err := repo.EncryptGitlabAppOAuthIntegrationData(gi, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	// var credentialData = &credentials.GitlabCredential{}
+
+	// if repo.storageBackend != nil {
+	// 	credentialData.AppClientID = gi.AppClientID
+	// 	credentialData.AppClientSecret = gi.AppClientSecret
+
+	// 	gi.AppClientID = []byte{}
+	// 	gi.AppClientSecret = []byte{}
+	// }
+
 	if err := repo.db.Create(gi).Error; err != nil {
 		return nil, err
 	}
 	return gi, nil
+}
+
+// EncryptGitlabAppOAuthIntegrationData will encrypt the gitlab app oauth integration data before
+// writing to the DB
+func (repo *GitlabAppOAuthIntegrationRepository) EncryptGitlabAppOAuthIntegrationData(
+	gi *ints.GitlabAppOAuthIntegration,
+	key *[32]byte,
+) error {
+	if len(gi.AccessToken) > 0 {
+		cipherData, err := encryption.Encrypt(gi.AccessToken, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AccessToken = cipherData
+	}
+
+	if len(gi.RefreshToken) > 0 {
+		cipherData, err := encryption.Encrypt(gi.RefreshToken, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.RefreshToken = cipherData
+	}
+
+	return nil
+}
+
+// DecryptAppOAuthGitlabIntegrationData will decrypt the gitlab app oauth integration data before
+// returning it from the DB
+func (repo *GitlabAppOAuthIntegrationRepository) DecryptGitlabAppOAuthIntegrationData(
+	gi *ints.GitlabAppOAuthIntegration,
+	key *[32]byte,
+) error {
+	if len(gi.AccessToken) > 0 {
+		plaintext, err := encryption.Decrypt(gi.AccessToken, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AccessToken = plaintext
+	}
+
+	if len(gi.RefreshToken) > 0 {
+		plaintext, err := encryption.Decrypt(gi.RefreshToken, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.RefreshToken = plaintext
+	}
+
+	return nil
 }

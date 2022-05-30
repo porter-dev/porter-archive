@@ -183,3 +183,13 @@ type CreateGitlabRequest struct {
 type CreateGitlabResponse struct {
 	*GitlabIntegration
 }
+
+type GitIntegration struct {
+	Provider       string `json:"provider" form:"required"`
+	Name           string `json:"name,omitempty"`
+	InstallationID int64  `json:"installation_id,omitempty"`
+	InstanceURL    string `json:"instance_url,omitempty"`
+	IntegrationID  uint   `json:"integration_id,omitempty"`
+}
+
+type ListGitIntegrationResponse []*GitIntegration

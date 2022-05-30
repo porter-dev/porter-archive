@@ -386,5 +386,33 @@ func getProjectIntegrationRoutes(
 
 	// DELETE /api/projects/{project_id}/integrations/gitlab/{integration_id}
 
+	// GET /api/projects/{project_id}/integrations/git
+	listGitIntegrationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/git",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitIntegrationsHandler := project_integration.NewListGitIntegrationHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitIntegrationsEndpoint,
+		Handler:  listGitIntegrationsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

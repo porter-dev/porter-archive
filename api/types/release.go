@@ -45,11 +45,11 @@ type CreateReleaseBaseRequest struct {
 type CreateReleaseRequest struct {
 	*CreateReleaseBaseRequest
 
-	ImageURL           string                        `json:"image_url" form:"required"`
-	GithubActionConfig *CreateGitActionConfigRequest `json:"github_action_config,omitempty"`
-	BuildConfig        *CreateBuildConfigRequest     `json:"build_config,omitempty"`
-	Tags               []string                      `json:"tags,omitempty"`
-	SyncedEnvGroups    []string                      `json:"synced_env_groups,omitempty"`
+	ImageURL        string                        `json:"image_url" form:"required"`
+	GitActionConfig *CreateGitActionConfigRequest `json:"git_action_config,omitempty"`
+	BuildConfig     *CreateBuildConfigRequest     `json:"build_config,omitempty"`
+	Tags            []string                      `json:"tags,omitempty"`
+	SyncedEnvGroups []string                      `json:"synced_env_groups,omitempty"`
 }
 
 type CreateAddonRequest struct {

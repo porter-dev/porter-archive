@@ -312,7 +312,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           template_name: props.currentTemplate.name.toLowerCase().trim(),
           template_version: props.currentTemplate?.currentVersion || "latest",
           name: release_name,
-          github_action_config: githubActionConfig,
+          git_action_config: githubActionConfig,
           build_config: buildConfig,
           synced_env_groups: synced.map((s: any) => s.name),
         },

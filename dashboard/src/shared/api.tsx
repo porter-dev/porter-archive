@@ -444,7 +444,7 @@ const deployTemplate = baseApi<
     image_url?: string;
     values?: any;
     name: string;
-    git_action_config?: FullActionConfigType;
+    github_action_config?: FullActionConfigType;
     build_config?: any;
     synced_env_groups?: string[];
   },
@@ -1814,6 +1814,51 @@ const updateReleaseTags = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_tags`
 );
 
+const getGitProviders = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/git`
+);
+
+const getGitlabRepos = baseApi<
+  {},
+  { project_id: number; integration_id: number }
+>(
+  "GET",
+  ({ project_id, integration_id }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos`
+);
+
+const getGitlabBranches = baseApi<
+  {},
+  {
+    project_id: number;
+    integration_id: number;
+    repo_owner: string;
+    repo_name: string;
+  }
+>(
+  "GET",
+  ({ project_id, integration_id, repo_owner, repo_name }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/branches`
+);
+
+const getGitlabFolderContent = baseApi<
+  {
+    dir: string;
+  },
+  {
+    project_id: number;
+    integration_id: number;
+    repo_owner: string;
+    repo_name: string;
+    branch: string;
+  }
+>(
+  "GET",
+  ({ project_id, integration_id, repo_owner, repo_name, branch }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/contents`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1985,4 +2030,8 @@ export default {
   getTagsByProjectId,
   createTag,
   updateReleaseTags,
+  getGitProviders,
+  getGitlabRepos,
+  getGitlabBranches,
+  getGitlabFolderContent,
 };

@@ -6,13 +6,19 @@ interface Props {
   setSearchFilter: (x: string) => void;
   disabled: boolean;
   prompt?: string;
+  fullWidth?: boolean;
 }
 
-const SearchBar: React.FC<Props> = ({ setSearchFilter, disabled, prompt }) => {
+const SearchBar: React.FC<Props> = ({
+  setSearchFilter,
+  disabled,
+  prompt,
+  fullWidth,
+}) => {
   const [searchInput, setSearchInput] = useState("");
 
   return (
-    <SearchRowWrapper>
+    <SearchRowWrapper fullWidth={fullWidth}>
       <SearchBarWrapper>
         <i className="material-icons">search</i>
         <SearchInput
@@ -55,6 +61,11 @@ const SearchRowWrapper = styled(SearchRow)`
   border-bottom: 0;
   border: 1px solid #ffffff55;
   border-radius: 3px;
+  ${(props: { fullWidth: boolean }) => {
+    if (props.fullWidth) {
+      return "width: 100%;";
+    }
+  }}
 `;
 
 const ButtonWrapper = styled.div`

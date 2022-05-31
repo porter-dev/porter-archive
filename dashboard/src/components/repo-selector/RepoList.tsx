@@ -8,6 +8,10 @@ import { Context } from "shared/Context";
 
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
+import OptionsDropdown from "components/OptionsDropdown";
+import { SelectField } from "material-ui";
+import SelectRow from "components/form-components/SelectRow";
+import SearchSelector from "components/SearchSelector";
 
 interface GithubAppAccessData {
   has_access: boolean;
@@ -30,87 +34,162 @@ const RepoList: React.FC<Props> = ({
   readOnly,
   filteredRepos,
 }) => {
+  const [providers, setProviders] = useState([]);
+  const [currentProvider, setCurrentProvider] = useState(null);
   const [repos, setRepos] = useState<RepoType[]>([]);
   const [repoLoading, setRepoLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoError, setRepoError] = useState(false);
-  const [accessLoading, setAccessLoading] = useState(true);
-  const [accessError, setAccessError] = useState(false);
-  const [accessData, setAccessData] = useState<GithubAppAccessData>({
-    has_access: false,
-  });
   const [searchFilter, setSearchFilter] = useState(null);
   const { currentProject } = useContext(Context);
 
-  const loadData = async () => {
+  // const loadData = async () => {
+  //   try {
+  //     const { data } = await api.getGithubAccounts("<token>", {}, {});
+
+  //     setAccessData(data);
+  //     setAccessLoading(false);
+  //   } catch (error) {
+  //     setAccessError(true);
+  //     setAccessLoading(false);
+  //   }
+
+  //   let ids: number[] = [];
+
+  //   if (!userId && userId !== 0) {
+  //     ids = await api
+  //       .getGitRepos("token", {}, { project_id: currentProject.id })
+  //       .then((res) => res.data);
+  //   } else {
+  //     setRepoLoading(false);
+  //     setRepoError(true);
+  //     return;
+  //   }
+
+  //   const repoListPromises = ids.map((id) =>
+  //     api.getGitRepoList(
+  //       "<token>",
+  //       {},
+  //       { project_id: currentProject.id, git_repo_id: id }
+  //     )
+  //   );
+
+  //   try {
+  //     const resolvedRepoList = await Promise.allSettled(repoListPromises);
+
+  //     const repos: RepoType[][] = resolvedRepoList.map((repo) =>
+  //       repo.status === "fulfilled" ? repo.value.data : []
+  //     );
+
+  //     const names = new Set();
+  //     // note: would be better to use .flat() here but you need es2019 for
+  //     setRepos(
+  //       repos
+  //         .map((arr, idx) =>
+  //           arr.map((el) => {
+  //             el.GHRepoID = ids[idx];
+  //             return el;
+  //           })
+  //         )
+  //         .reduce((acc, val) => acc.concat(val), [])
+  //         .reduce((acc, val) => {
+  //           if (!names.has(val.FullName)) {
+  //             names.add(val.FullName);
+  //             return acc.concat(val);
+  //           } else {
+  //             return acc;
+  //           }
+  //         }, [])
+  //     );
+  //     setRepoLoading(false);
+  //   } catch (err) {
+  //     setRepoLoading(false);
+  //     setRepoError(true);
+  //   }
+  // };
+
+  useEffect(() => {
+    let isSubscribed = true;
+    api
+      .getGitProviders("<token>", {}, { project_id: currentProject.id })
+      .then((res) => {
+        const data = res.data;
+        if (isSubscribed) {
+          setProviders(data);
+
+          setCurrentProvider(data[0]);
+        }
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, []);
+
+  const loadGithubRepos = async (repoId: number) => {
     try {
-      const { data } = await api.getGithubAccounts("<token>", {}, {});
+      const res = await api.getGitRepoList<
+        { FullName: string; Kind: "github" }[]
+      >("<token>", {}, { project_id: currentProject.id, git_repo_id: repoId });
 
-      setAccessData(data);
-      setAccessLoading(false);
-    } catch (error) {
-      setAccessError(true);
-      setAccessLoading(false);
-    }
+      const repos = res.data.map((repo) => ({ ...repo, GHRepoID: repoId }));
+      return repos;
+    } catch (error) {}
+  };
 
-    let ids: number[] = [];
-
-    if (!userId && userId !== 0) {
-      ids = await api
-        .getGitRepos("token", {}, { project_id: currentProject.id })
-        .then((res) => res.data);
-    } else {
-      setRepoLoading(false);
-      setRepoError(true);
-      return;
-    }
-
-    const repoListPromises = ids.map((id) =>
-      api.getGitRepoList(
+  const loadGitlabRepos = async (integrationId: number) => {
+    try {
+      const res = await api.getGitlabRepos<string[]>(
         "<token>",
         {},
-        { project_id: currentProject.id, git_repo_id: id }
-      )
-    );
-
-    try {
-      const resolvedRepoList = await Promise.allSettled(repoListPromises);
-
-      const repos: RepoType[][] = resolvedRepoList.map((repo) =>
-        repo.status === "fulfilled" ? repo.value.data : []
+        { project_id: currentProject.id, integration_id: integrationId }
       );
+      const repos: RepoType[] = res.data.map((repo) => ({
+        FullName: repo,
+        Kind: "gitlab",
+        GitIntegrationId: integrationId,
+      }));
+      return repos;
+    } catch (error) {}
+  };
 
-      const names = new Set();
-      // note: would be better to use .flat() here but you need es2019 for
-      setRepos(
-        repos
-          .map((arr, idx) =>
-            arr.map((el) => {
-              el.GHRepoID = ids[idx];
-              return el;
-            })
-          )
-          .reduce((acc, val) => acc.concat(val), [])
-          .reduce((acc, val) => {
-            if (!names.has(val.FullName)) {
-              names.add(val.FullName);
-              return acc.concat(val);
-            } else {
-              return acc;
-            }
-          }, [])
-      );
-      setRepoLoading(false);
-    } catch (err) {
-      setRepoLoading(false);
-      setRepoError(true);
+  const loadRepos = (provider: any) => {
+    if (provider.provider === "github") {
+      return loadGithubRepos(provider.installation_id);
+    } else {
+      return loadGitlabRepos(provider.integration_id);
     }
   };
 
-  // TODO: Try to unhook before unmount
   useEffect(() => {
-    loadData();
-  }, []);
+    let isSubscribed = true;
+    if (!currentProvider) {
+      return () => {
+        isSubscribed = false;
+      };
+    }
+
+    setRepoLoading(true);
+
+    loadRepos(currentProvider)
+      .then((repos) => {
+        if (isSubscribed) {
+          setRepos(repos);
+        }
+      })
+      .catch((err) => {
+        setRepos([]);
+        console.log(err);
+      })
+      .finally(() => {
+        setRepoLoading(false);
+      });
+  }, [currentProvider]);
+
+  // TODO: Try to unhook before unmount
+  // useEffect(() => {
+  //   loadData();
+  // }, []);
 
   // clear out actionConfig and SelectedRepository if new search is performed
   useEffect(() => {
@@ -119,6 +198,7 @@ const RepoList: React.FC<Props> = ({
       image_repo_uri: null,
       git_branch: null,
       git_repo_id: 0,
+      gitlab_integration_id: 0,
     });
     setSelectedRepo(null);
   }, [searchFilter]);
@@ -126,13 +206,17 @@ const RepoList: React.FC<Props> = ({
   const setRepo = (x: RepoType) => {
     let updatedConfig = actionConfig;
     updatedConfig.git_repo = x.FullName;
-    updatedConfig.git_repo_id = x.GHRepoID;
+    if (x.Kind === "gitlab") {
+      updatedConfig.gitlab_integration_id = x.GitIntegrationId;
+    } else {
+      updatedConfig.git_repo_id = x.GHRepoID;
+    }
     setActionConfig(updatedConfig);
     setSelectedRepo(x.FullName);
   };
 
   const renderRepoList = () => {
-    if (repoLoading || accessLoading) {
+    if (repoLoading) {
       return (
         <LoadingWrapper>
           <Loading />
@@ -140,19 +224,21 @@ const RepoList: React.FC<Props> = ({
       );
     } else if (repoError) {
       return <LoadingWrapper>Error loading repos.</LoadingWrapper>;
-    } else if (repos.length == 0) {
-      if (accessError) {
+    } else if (!Array.isArray(repos) || repos.length === 0) {
+      if (currentProvider.provider === "gitlab") {
         return (
           <LoadingWrapper>
-            No connected Github repos found.
-            <A href={"/api/integrations/github-app/oauth"}>
-              Authorize Porter to view your repositories.
+            We couldn't reach gitlab to get your repos. You can
+            <A
+              style={{ marginRight: "5px" }}
+              href={`/api/projects/${currentProject.id}/oauth/gitlab?integration_id=${currentProvider.integration_id}`}
+            >
+              Connect your gitlab account to porter
             </A>
+            or select another git provider.
           </LoadingWrapper>
         );
-      }
-
-      if (accessData.accounts?.length === 0) {
+      } else {
         return (
           <LoadingWrapper>
             No connected Github repos found. You can
@@ -206,11 +292,19 @@ const RepoList: React.FC<Props> = ({
     } else {
       return (
         <>
-          <SearchBar
-            setSearchFilter={setSearchFilter}
-            disabled={repoError || repoLoading || accessError || accessLoading}
-            prompt={"Search repos..."}
-          />
+          <div style={{ display: "flex" }}>
+            <ProviderSelector
+              values={providers}
+              currentValue={currentProvider}
+              onChange={setCurrentProvider}
+            />
+            <SearchBar
+              setSearchFilter={setSearchFilter}
+              disabled={repoError || repoLoading}
+              prompt={"Search repos..."}
+              fullWidth
+            />
+          </div>
           <RepoListWrapper>
             <ExpandedWrapper>{renderRepoList()}</ExpandedWrapper>
           </RepoListWrapper>
@@ -223,6 +317,80 @@ const RepoList: React.FC<Props> = ({
 };
 
 export default RepoList;
+
+const ProviderSelector = (props: {
+  values: any[];
+  currentValue: any;
+  onChange: (provider: any) => void;
+}) => {
+  const { values, currentValue, onChange } = props;
+  const [isOpen, setIsOpen] = useState(false);
+  const icon = `devicon-${currentValue?.provider}-plain colored`;
+  return (
+    <ProviderSelectorStyles.Wrapper>
+      <ProviderSelectorStyles.Button onClick={() => setIsOpen((prev) => !prev)}>
+        <ProviderSelectorStyles.Icon className={icon} />
+        {currentValue?.name || currentValue?.instance_url}
+      </ProviderSelectorStyles.Button>
+      {isOpen ? (
+        <ProviderSelectorStyles.OptionWrapper>
+          {values.map((provider) => {
+            return (
+              <ProviderSelectorStyles.Option onClick={() => onChange(provider)}>
+                <ProviderSelectorStyles.Icon
+                  className={`devicon-${provider?.provider}-plain colored`}
+                />
+                {provider?.name || provider?.instance_url}
+              </ProviderSelectorStyles.Option>
+            );
+          })}
+        </ProviderSelectorStyles.OptionWrapper>
+      ) : null}
+    </ProviderSelectorStyles.Wrapper>
+  );
+};
+
+const ProviderSelectorStyles = {
+  Wrapper: styled.div`
+    position: relative;
+    margin-bottom: 10px;
+    margin-right: 5px;
+  `,
+  Button: styled.div`
+    border-radius: 5px;
+    border: 1px solid white;
+    height: 100%;
+    border-bottom: 0;
+    border: 1px solid #ffffff55;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 15px;
+  `,
+  OptionWrapper: styled.div`
+    position: absolute;
+    background-color: #202227;
+  `,
+  Option: styled.div`
+    white-space: nowrap;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    :not(:last-child) {
+      border-bottom: 1px solid black;
+      border-bottom-width: 90%;
+    }
+    :hover {
+      background-color: #363940;
+    }
+  `,
+  Icon: styled.span`
+    font-size: 24px;
+    margin-right: 15px;
+    color: white;
+  `,
+};
 
 const RepoListWrapper = styled.div`
   border: 1px solid #ffffff55;
@@ -318,5 +486,6 @@ const A = styled.a`
   color: #8590ff;
   text-decoration: underline;
   margin-left: 5px;
+
   cursor: pointer;
 `;

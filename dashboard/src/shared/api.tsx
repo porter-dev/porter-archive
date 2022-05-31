@@ -444,7 +444,7 @@ const deployTemplate = baseApi<
     image_url?: string;
     values?: any;
     name: string;
-    github_action_config?: FullActionConfigType;
+    git_action_config?: FullActionConfigType;
     build_config?: any;
     synced_env_groups?: string[];
   },

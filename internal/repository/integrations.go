@@ -98,4 +98,5 @@ type GitlabIntegrationRepository interface {
 type GitlabAppOAuthIntegrationRepository interface {
 	CreateGitlabAppOAuthIntegration(gi *ints.GitlabAppOAuthIntegration) (*ints.GitlabAppOAuthIntegration, error)
 	ReadGitlabAppOAuthIntegration(userID, projectID, integrationID uint) (*ints.GitlabAppOAuthIntegration, error)
+	UpdateGitlabAppOAuthIntegration(gi *ints.GitlabAppOAuthIntegration) (*ints.GitlabAppOAuthIntegration, error)
 }

@@ -474,6 +474,5 @@ const StyledSourceBox = styled.div`
   border-radius: 5px;
   font-size: 13px;
   margin-top: 6px;
-  overflow: auto;
   margin-bottom: 25px;
 `;

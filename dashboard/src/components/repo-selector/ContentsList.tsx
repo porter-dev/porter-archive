@@ -63,13 +63,23 @@ export default class ContentsList extends Component<PropsType, StateType> {
     this.setState({ currentDir: x }, () => this.updateContents());
   };
 
-  updateContents = () => {
+  fetchContents = () => {
     let { currentProject } = this.context;
-    let { actionConfig, branch } = this.props;
-
-    // Get branch contents
-    api
-      .getBranchContents(
+    const { actionConfig, branch } = this.props;
+    if (actionConfig.gitlab_integration_id > 0) {
+      return api.getGitlabFolderContent(
+        "<token>",
+        { dir: this.state.currentDir || "./" },
+        {
+          project_id: currentProject.id,
+          integration_id: actionConfig.gitlab_integration_id,
+          repo_owner: actionConfig.git_repo.split("/")[0],
+          repo_name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      );
+    } else {
+      return api.getBranchContents(
         "<token>",
         { dir: this.state.currentDir || "./" },
         {
@@ -80,7 +90,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
           name: actionConfig.git_repo.split("/")[1],
           branch: branch,
         }
-      )
+      );
+    }
+  };
+
+  updateContents = () => {
+    let { currentProject } = this.context;
+    let { actionConfig, branch } = this.props;
+
+    // Get branch contents
+    this.fetchContents()
       .then((res) => {
         let files = [] as FileType[];
         let folders = [] as FileType[];

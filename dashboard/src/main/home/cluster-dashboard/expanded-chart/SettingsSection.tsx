@@ -217,35 +217,33 @@ const SettingsSection: React.FC<PropsType> = ({
 
     return (
       <>
-        {!isDeployedFromGithub(currentChart) ? (
-          <>
-            <Heading>Source Settings</Heading>
-            <Helper>Specify an image tag to use.</Helper>
-            <ImageSelector
-              selectedTag={selectedTag}
-              selectedImageUrl={selectedImageUrl}
-              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
-              setSelectedTag={(x: string) => setSelectedTag(x)}
-              forceExpanded={true}
-              disableImageSelect={true}
-            />
-            {!loadingWebhookToken && (
-              <>
-                <Br />
-                <Br />
-                <Br />
-                <SaveButton
-                  clearPosition={true}
-                  statusPosition="right"
-                  text="Save Source Settings"
-                  status={saveValuesStatus}
-                  onClick={handleSubmit}
-                />
-              </>
-            )}
-            <Br />
-          </>
-        ) : null}
+        <>
+          <Heading>Source Settings</Heading>
+          <Helper>Specify an image tag to use.</Helper>
+          <ImageSelector
+            selectedTag={selectedTag}
+            selectedImageUrl={selectedImageUrl}
+            setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
+            setSelectedTag={(x: string) => setSelectedTag(x)}
+            forceExpanded={true}
+            disableImageSelect={isDeployedFromGithub(currentChart)}
+          />
+          {!loadingWebhookToken && (
+            <>
+              <Br />
+              <Br />
+              <Br />
+              <SaveButton
+                clearPosition={true}
+                statusPosition="right"
+                text="Save Source Settings"
+                status={saveValuesStatus}
+                onClick={handleSubmit}
+              />
+            </>
+          )}
+          <Br />
+        </>
 
         <>
           <Heading>Redeploy Webhook</Heading>
@@ -287,15 +285,8 @@ const SettingsSection: React.FC<PropsType> = ({
     );
   };
 
-  const chartWasDeployedWithGithub = () => {
-    if (currentChart.git_action_config) {
-      return true;
-    }
-    return false;
-  };
-
   const canBeCloned = () => {
-    if (chartWasDeployedWithGithub()) {
+    if (isDeployedFromGithub(currentChart)) {
       return false;
     }
 

@@ -258,6 +258,9 @@ func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
 		"image":   "public.ecr.aws/o1j4x7p4/porter-cli:latest",
 		"stage":   jobName,
 		"timeout": "20 minutes",
+		"variables": map[string]string{
+			"GIT_STRATEGY": "clone",
+		},
 		"script": []string{
 			fmt.Sprintf("export PORTER_HOST=\"%s\"", g.ServerURL),
 			fmt.Sprintf("export PORTER_PROJECT=\"%d\"", g.ProjectID),

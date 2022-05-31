@@ -81,6 +81,8 @@ func (c *InfraCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		CreatedByUserID: user.ID,
 		SourceLink:      sourceLink,
 		SourceVersion:   sourceVersion,
+		// If the cluster ID was passed in, we store the parent cluster ID in the infra
+		// so it can be referenced later
 		ParentClusterID: req.ClusterID,
 	}
 
@@ -201,6 +203,8 @@ func getSourceLinkAndVersion(kind types.InfraKind) (string, string) {
 		return "porter/aws/eks", "v0.1.0"
 	case types.InfraRDS:
 		return "porter/aws/rds", "v0.1.0"
+	case types.InfraS3:
+		return "porter/aws/s3", "v0.1.0"
 	case types.InfraGCR:
 		return "porter/gcp/gcr", "v0.1.0"
 	case types.InfraGKE:

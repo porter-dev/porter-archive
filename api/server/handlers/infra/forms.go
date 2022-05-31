@@ -18,6 +18,27 @@ tabs:
         default: hello
 `
 
+const s3Form = `name: S3
+hasSource: false
+includeHiddenFields: true
+isClusterScoped: true
+tabs:
+- name: main
+  label: Main
+  sections:
+  - name: heading
+    contents: 
+    - type: heading
+      label: S3 Settings
+  - name: bucket_name
+    contents:
+    - type: string-input
+      label: Bucket Name
+      required: true
+      placeholder: "s3-bucket-name"
+      variable: bucket_name
+`
+
 const rdsForm = `name: RDS
 hasSource: false
 includeHiddenFields: true

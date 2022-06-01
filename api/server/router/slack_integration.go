@@ -5,11 +5,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/slack_integration"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewSlackIntegrationScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewSlackIntegrationScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetSlackIntegrationScopedRoutes,
 		Children:  children,
 	}
@@ -20,8 +21,8 @@ func GetSlackIntegrationScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getSlackIntegrationRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -42,7 +43,7 @@ func getSlackIntegrationRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/slack_integrations"
 
 	newPath := &types.Path{
@@ -50,7 +51,7 @@ func getSlackIntegrationRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/slack_integrations -> slack_integration.NewListHandler
 	listEndpoint := factory.NewAPIEndpoint(
@@ -73,7 +74,7 @@ func getSlackIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listEndpoint,
 		Handler:  listHandler,
 		Router:   r,
@@ -97,7 +98,7 @@ func getSlackIntegrationRoutes(
 
 	existsHandler := slack_integration.NewSlackIntegrationExists(config)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: existsEndpoint,
 		Handler:  existsHandler,
 		Router:   r,
@@ -121,7 +122,7 @@ func getSlackIntegrationRoutes(
 
 	deleteHandler := slack_integration.NewSlackIntegrationDelete(config)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
 		Router:   r,

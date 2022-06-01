@@ -5,11 +5,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/oauth_callback"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewOAuthCallbackRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewOAuthCallbackRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetOAuthCallbackRoutes,
 		Children:  children,
 	}
@@ -20,11 +21,11 @@ func GetOAuthCallbackRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	relPath := "/oauth"
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/oauth/slack/callback -> oauth_callback.NewOAuthCallbackSlackHandler
 	slackEndpoint := factory.NewAPIEndpoint(
@@ -44,7 +45,7 @@ func GetOAuthCallbackRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: slackEndpoint,
 		Handler:  slackHandler,
 		Router:   r,
@@ -68,7 +69,7 @@ func GetOAuthCallbackRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: doEndpoint,
 		Handler:  doHandler,
 		Router:   r,

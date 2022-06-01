@@ -640,6 +640,21 @@ func (a *Agent) CreateNamespace(name string) (*v1.Namespace, error) {
 	)
 }
 
+// GetNamespace gets the namespace given the name
+func (a *Agent) GetNamespace(name string) (*v1.Namespace, error) {
+	ns, err := a.Clientset.CoreV1().Namespaces().Get(
+		context.Background(),
+		name,
+		metav1.GetOptions{},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ns, nil
+}
+
 // DeleteNamespace deletes the namespace given the name.
 func (a *Agent) DeleteNamespace(name string) error {
 	// check if namespace exists

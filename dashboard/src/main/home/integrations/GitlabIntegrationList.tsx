@@ -11,46 +11,11 @@ interface Props {
 }
 
 const GitlabIntegrationList: React.FC<Props> = (props) => {
-  const [isDelete, setIsDelete] = useState(false);
-  const [deleteIndex, setDeleteIndex] = useState(-1); // guaranteed to be set when used
-  const { currentProject, setCurrentError } = useContext(Context);
-  const deleted = useRef(new Set());
-
-  const handleDelete = () => {
-    alert("NOT IMPLEMENTED");
-    // api
-    //   .deleteSlackIntegration(
-    //     "<token>",
-    //     {},
-    //     {
-    //       project_id: currentProject.id,
-    //       slack_integration_id: props.gitlabData[deleteIndex].id,
-    //     }
-    //   )
-    //   .then(() => {
-    //     deleted.current.add(deleteIndex);
-    //     setIsDelete(false);
-    //   })
-    //   .catch((err) => {
-    //     setCurrentError(err);
-    //   });
-  };
-
   return (
     <>
-      <ConfirmOverlay
-        show={isDelete}
-        message={
-          deleteIndex != -1 &&
-          `Are you sure you want to delete the gitlab instance ${props.gitlabData[deleteIndex].instance_url}?`
-        }
-        onYes={handleDelete}
-        onNo={() => setIsDelete(false)}
-      />
       <StyledIntegrationList>
         {props.gitlabData?.length > 0 ? (
           props.gitlabData.map((inst, idx) => {
-            if (deleted.current.has(idx)) return null;
             return (
               <Integration
                 onClick={() => {}}
@@ -63,15 +28,6 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
                     <Label>{inst.instance_url}</Label>
                   </Flex>
                   <MaterialIconTray disabled={false}>
-                    <i
-                      className="material-icons"
-                      onClick={() => {
-                        setDeleteIndex(idx);
-                        setIsDelete(true);
-                      }}
-                    >
-                      delete
-                    </i>
                     <i
                       className="material-icons"
                       onClick={() => {

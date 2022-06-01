@@ -8,16 +8,7 @@ import { Context } from "shared/Context";
 
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
-import OptionsDropdown from "components/OptionsDropdown";
-import { SelectField } from "material-ui";
-import SelectRow from "components/form-components/SelectRow";
-import SearchSelector from "components/SearchSelector";
-
-interface GithubAppAccessData {
-  has_access: boolean;
-  username?: string;
-  accounts?: string[];
-}
+import DynamicLink from "components/DynamicLink";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -41,72 +32,8 @@ const RepoList: React.FC<Props> = ({
   const [selectedRepo, setSelectedRepo] = useState(null);
   const [repoError, setRepoError] = useState(false);
   const [searchFilter, setSearchFilter] = useState(null);
-  const { currentProject } = useContext(Context);
-
-  // const loadData = async () => {
-  //   try {
-  //     const { data } = await api.getGithubAccounts("<token>", {}, {});
-
-  //     setAccessData(data);
-  //     setAccessLoading(false);
-  //   } catch (error) {
-  //     setAccessError(true);
-  //     setAccessLoading(false);
-  //   }
-
-  //   let ids: number[] = [];
-
-  //   if (!userId && userId !== 0) {
-  //     ids = await api
-  //       .getGitRepos("token", {}, { project_id: currentProject.id })
-  //       .then((res) => res.data);
-  //   } else {
-  //     setRepoLoading(false);
-  //     setRepoError(true);
-  //     return;
-  //   }
-
-  //   const repoListPromises = ids.map((id) =>
-  //     api.getGitRepoList(
-  //       "<token>",
-  //       {},
-  //       { project_id: currentProject.id, git_repo_id: id }
-  //     )
-  //   );
-
-  //   try {
-  //     const resolvedRepoList = await Promise.allSettled(repoListPromises);
-
-  //     const repos: RepoType[][] = resolvedRepoList.map((repo) =>
-  //       repo.status === "fulfilled" ? repo.value.data : []
-  //     );
-
-  //     const names = new Set();
-  //     // note: would be better to use .flat() here but you need es2019 for
-  //     setRepos(
-  //       repos
-  //         .map((arr, idx) =>
-  //           arr.map((el) => {
-  //             el.GHRepoID = ids[idx];
-  //             return el;
-  //           })
-  //         )
-  //         .reduce((acc, val) => acc.concat(val), [])
-  //         .reduce((acc, val) => {
-  //           if (!names.has(val.FullName)) {
-  //             names.add(val.FullName);
-  //             return acc.concat(val);
-  //           } else {
-  //             return acc;
-  //           }
-  //         }, [])
-  //     );
-  //     setRepoLoading(false);
-  //   } catch (err) {
-  //     setRepoLoading(false);
-  //     setRepoError(true);
-  //   }
-  // };
+  const [hasProviders, setHasProviders] = useState(true);
+  const { currentProject, setCurrentError } = useContext(Context);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -114,11 +41,21 @@ const RepoList: React.FC<Props> = ({
       .getGitProviders("<token>", {}, { project_id: currentProject.id })
       .then((res) => {
         const data = res.data;
-        if (isSubscribed) {
-          setProviders(data);
-
-          setCurrentProvider(data[0]);
+        if (!isSubscribed) {
+          return;
         }
+
+        if (!Array.isArray(data)) {
+          setHasProviders(false);
+          return;
+        }
+
+        setProviders(data);
+        setCurrentProvider(data[0]);
+      })
+      .catch((err) => {
+        setHasProviders(false);
+        setCurrentError(err);
       });
 
     return () => {
@@ -186,11 +123,6 @@ const RepoList: React.FC<Props> = ({
       });
   }, [currentProvider]);
 
-  // TODO: Try to unhook before unmount
-  // useEffect(() => {
-  //   loadData();
-  // }, []);
-
   // clear out actionConfig and SelectedRepository if new search is performed
   useEffect(() => {
     setActionConfig({
@@ -243,8 +175,7 @@ const RepoList: React.FC<Props> = ({
           <LoadingWrapper>
             We couldn't reach gitlab to get your repos. You can
             <A
-              style={{ marginRight: "5px" }}
-              href={`/api/projects/${currentProject.id}/oauth/gitlab?integration_id=${currentProvider.integration_id}`}
+              to={`/api/projects/${currentProject.id}/oauth/gitlab?integration_id=${currentProvider.integration_id}`}
             >
               Connect your gitlab account to porter
             </A>
@@ -255,10 +186,10 @@ const RepoList: React.FC<Props> = ({
         return (
           <LoadingWrapper>
             No connected Github repos found. You can
-            <A href={"/api/integrations/github-app/install"}>
+            <A to={"/api/integrations/github-app/install"}>
               Install Porter in more repositories
             </A>
-            .
+            or select another git provider.
           </LoadingWrapper>
         );
       }
@@ -329,6 +260,39 @@ const RepoList: React.FC<Props> = ({
       );
     }
   };
+
+  if (!hasProviders) {
+    return (
+      <>
+        <RepoListWrapper>
+          <ExpandedWrapper>
+            <LoadingWrapper>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div>We couldn't find any git provider to connect with.</div>
+                <div>
+                  You can
+                  <A to={"/api/integrations/github-app/install"}>
+                    Add Github repositories
+                  </A>
+                  or
+                  <A to={"/integrations"}>
+                    Add a Gitlab instance to your project
+                  </A>
+                </div>
+              </div>
+            </LoadingWrapper>
+          </ExpandedWrapper>
+        </RepoListWrapper>
+      </>
+    );
+  }
 
   return <>{renderExpanded()}</>;
 };
@@ -499,10 +463,11 @@ const ExpandedWrapperAlt = styled(ExpandedWrapper)`
   overflow-y: auto;
 `;
 
-const A = styled.a`
+const A = styled(DynamicLink)`
   color: #8590ff;
   text-decoration: underline;
   margin-left: 5px;
+  margin-right: 5px;
 
   cursor: pointer;
 `;

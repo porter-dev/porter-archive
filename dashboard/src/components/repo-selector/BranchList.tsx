@@ -24,8 +24,11 @@ const BranchList: React.FC<Props> = ({ setBranch, actionConfig }) => {
 
   useEffect(() => {
     // Get branches
+    if (!actionConfig) {
+      return () => {};
+    }
 
-    if (actionConfig.git_repo_id !== 0) {
+    if (actionConfig?.kind === "github") {
       api
         .getBranches(
           "<token>",

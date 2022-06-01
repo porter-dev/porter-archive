@@ -15,6 +15,6 @@ func GetGitlabOAuthConf(conf *config.Config, giIntegration *ints.GitlabIntegrati
 			TokenURL: giIntegration.InstanceURL + "/oauth/token",
 		},
 		RedirectURL: conf.ServerConf.ServerURL + "/api/oauth/gitlab/callback",
-		Scopes:      []string{"api"},
+		Scopes:      []string{"api", "profile", "email"},
 	}
 }

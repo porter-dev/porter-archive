@@ -84,6 +84,7 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		SharedOAuthModel: integrations.SharedOAuthModel{
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
+			Expiry:       token.Expiry,
 		},
 		UserID:        userID,
 		ProjectID:     projID,

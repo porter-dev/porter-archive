@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -72,6 +74,13 @@ func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
+	dir, err := url.QueryUnescape(request.Dir)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("malformed query param dir")))
+		return
+	}
+
 	gi, err := p.Repo().GitlabIntegration().ReadGitlabIntegration(project.ID, integrationID)
 
 	if err != nil {
@@ -114,7 +123,7 @@ func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	tree, resp, err := client.Repositories.ListTree(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListTreeOptions{
-		Path: gitlab.String(request.Dir),
+		Path: gitlab.String(strings.TrimPrefix(dir, "./")),
 		Ref:  gitlab.String(branch),
 	})
 

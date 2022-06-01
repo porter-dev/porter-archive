@@ -32,6 +32,7 @@ const defaultActionConfig: ActionConfigType = {
   image_repo_uri: "",
   git_branch: "",
   git_repo_id: 0,
+  kind: "github",
 };
 
 const ActionConfEditor: React.FC<Props> = (props) => {

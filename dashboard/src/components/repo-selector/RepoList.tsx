@@ -198,19 +198,32 @@ const RepoList: React.FC<Props> = ({
       image_repo_uri: null,
       git_branch: null,
       git_repo_id: 0,
-      gitlab_integration_id: 0,
+      kind: "github",
     });
     setSelectedRepo(null);
   }, [searchFilter]);
 
   const setRepo = (x: RepoType) => {
-    let updatedConfig = actionConfig;
-    updatedConfig.git_repo = x.FullName;
+    let repoConfig: any;
     if (x.Kind === "gitlab") {
-      updatedConfig.gitlab_integration_id = x.GitIntegrationId;
+      repoConfig = {
+        kind: "gitlab",
+        git_repo: x.FullName,
+        gitlab_integration_id: x.GitIntegrationId,
+      };
     } else {
-      updatedConfig.git_repo_id = x.GHRepoID;
+      repoConfig = {
+        kind: "github",
+        git_repo: x.FullName,
+        git_repo_id: x.GHRepoID,
+      };
     }
+
+    const updatedConfig = {
+      ...actionConfig,
+      ...repoConfig,
+    };
+
     setActionConfig(updatedConfig);
     setSelectedRepo(x.FullName);
   };
@@ -277,7 +290,11 @@ const RepoList: React.FC<Props> = ({
             readOnly={readOnly}
             disabled={shouldDisable}
           >
-            <img src={github} alt={"github icon"} />
+            {repo.Kind === "github" ? (
+              <img src={github} alt={"github icon"} />
+            ) : (
+              <i className="devicon-gitlab-plain colored" />
+            )}
             {repo.FullName}
             {shouldDisable && ` - This repo was already added`}
           </RepoName>

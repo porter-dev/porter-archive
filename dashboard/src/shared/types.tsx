@@ -286,9 +286,16 @@ export type ActionConfigType = {
   git_repo: string;
   git_branch: string;
   image_repo_uri: string;
-  git_repo_id?: number;
-  gitlab_integration_id?: number;
-};
+} & (
+  | {
+      kind: "gitlab";
+      gitlab_integration_id: number;
+    }
+  | {
+      kind: "github";
+      git_repo_id: number;
+    }
+);
 
 export type FullActionConfigType = ActionConfigType & {
   dockerfile_path: string;

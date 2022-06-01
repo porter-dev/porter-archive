@@ -530,5 +530,34 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/procfile
+	getGitlabRepoProcfileEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{integration_id}/repos/{%s}/{%s}/{%s}/procfile", relPath,
+					types.URLParamGitRepoOwner, types.URLParamGitRepoName, types.URLParamGitBranch),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getGitlabRepoProcfileHandler := project_integration.NewGetGitlabRepoProcfileHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getGitlabRepoProcfileEndpoint,
+		Handler:  getGitlabRepoProcfileHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

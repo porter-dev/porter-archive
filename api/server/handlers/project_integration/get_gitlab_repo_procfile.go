@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -18,25 +20,27 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetGitlabRepoContentsHandler struct {
+var procfileRegex = regexp.MustCompile("^([A-Za-z0-9_]+):\\s*(.+)$")
+
+type GetGitlabRepoProcfileHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewGetGitlabRepoContentsHandler(
+func NewGetGitlabRepoProcfileHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetGitlabRepoContentsHandler {
-	return &GetGitlabRepoContentsHandler{
+) *GetGitlabRepoProcfileHandler {
+	return &GetGitlabRepoProcfileHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *GetGitlabRepoProcfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
-	request := &types.GetContentsRequest{}
+	request := &types.GetProcfileRequest{}
 
 	ok := p.DecodeAndValidate(w, r, request)
 
@@ -113,16 +117,18 @@ func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	tree, resp, err := client.Repositories.ListTree(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListTreeOptions{
-		Path: gitlab.String(request.Dir),
-		Ref:  gitlab.String(branch),
-	})
+	file, resp, err := client.RepositoryFiles.GetRawFile(fmt.Sprintf("%s/%s", owner, name), request.Path,
+		&gitlab.GetRawFileOptions{
+			Ref: gitlab.String(branch),
+		},
+	)
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
 		return
 	} else if resp.StatusCode == http.StatusNotFound {
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("no such gitlab project found"), http.StatusNotFound))
+		w.WriteHeader(http.StatusNotFound)
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("no such procfile exists")))
 		return
 	}
 
@@ -131,14 +137,14 @@ func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	var res types.GetContentsResponse
+	parsedContents := make(types.GetProcfileResponse)
 
-	for _, node := range tree {
-		res = append(res, types.GithubDirectoryItem{
-			Path: node.Path,
-			Type: node.Type,
-		})
+	// parse the procfile information
+	for _, line := range strings.Split(string(file), "\n") {
+		if matches := procfileRegex.FindStringSubmatch(line); matches != nil {
+			parsedContents[matches[1]] = matches[2]
+		}
 	}
 
-	p.WriteResult(w, r, res)
+	p.WriteResult(w, r, parsedContents)
 }

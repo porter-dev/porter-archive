@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -76,6 +77,13 @@ func (p *GetGitlabRepoProcfileHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
+	path, err := url.QueryUnescape(request.Path)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("malformed query param path")))
+		return
+	}
+
 	gi, err := p.Repo().GitlabIntegration().ReadGitlabIntegration(project.ID, integrationID)
 
 	if err != nil {
@@ -117,8 +125,8 @@ func (p *GetGitlabRepoProcfileHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	file, resp, err := client.RepositoryFiles.GetRawFile(fmt.Sprintf("%s/%s", owner, name), request.Path,
-		&gitlab.GetRawFileOptions{
+	file, resp, err := client.RepositoryFiles.GetRawFile(fmt.Sprintf("%s/%s", owner, name),
+		strings.TrimPrefix(path, "./"), &gitlab.GetRawFileOptions{
 			Ref: gitlab.String(branch),
 		},
 	)

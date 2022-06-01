@@ -114,6 +114,11 @@ export const integrationList: any = {
       "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Database_copy_Amazon_RDS-512.png",
     label: "Amazon Relational Database Service",
   },
+  s3: {
+    icon:
+      "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Database_copy_Amazon_RDS-512.png",
+    label: "Amazon S3 Bucket",
+  },
 };
 
 export const isAlphanumeric = (x: string | null) => {

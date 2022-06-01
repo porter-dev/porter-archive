@@ -4,20 +4,23 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
+	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/helmrepo"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
+	"github.com/porter-dev/porter/api/server/handlers/policy"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewProjectScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewProjectScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetProjectScopedRoutes,
 		Children:  children,
 	}
@@ -28,8 +31,8 @@ func GetProjectScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getProjectRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -50,7 +53,7 @@ func getProjectRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/projects/{project_id}"
 
 	newPath := &types.Path{
@@ -58,7 +61,7 @@ func getProjectRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id} -> project.NewProjectGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
@@ -81,7 +84,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -108,7 +111,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
 		Router:   r,
@@ -135,7 +138,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPolicyEndpoint,
 		Handler:  getPolicyHandler,
 		Router:   r,
@@ -163,7 +166,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getOnboardingEndpoint,
 		Handler:  getOnboardingHandler,
 		Router:   r,
@@ -191,7 +194,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateOnboardingEndpoint,
 		Handler:  updateOnboardingHandler,
 		Router:   r,
@@ -218,7 +221,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getUsageEndpoint,
 		Handler:  getUsageHandler,
 		Router:   r,
@@ -245,7 +248,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getBillingEndpoint,
 		Handler:  getBillingHandler,
 		Router:   r,
@@ -274,7 +277,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getBillingTokenEndpoint,
 		Handler:  getBillingTokenHandler,
 		Router:   r,
@@ -298,7 +301,7 @@ func getProjectRoutes(
 		factory.GetDecoderValidator(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getBillingWebhookEndpoint,
 		Handler:  getBillingWebhookHandler,
 		Router:   r,
@@ -325,7 +328,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listClusterEndpoint,
 		Handler:  listClusterHandler,
 		Router:   r,
@@ -352,7 +355,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listGitReposEndpoint,
 		Handler:  listGitReposHandler,
 		Router:   r,
@@ -379,7 +382,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listCollaboratorsEndpoint,
 		Handler:  listCollaboratorsHandler,
 		Router:   r,
@@ -406,7 +409,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listRolesEndpoint,
 		Handler:  listRolesHandler,
 		Router:   r,
@@ -434,7 +437,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateRoleEndpoint,
 		Handler:  updateRoleHandler,
 		Router:   r,
@@ -462,7 +465,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteRoleEndpoint,
 		Handler:  deleteRoleHandler,
 		Router:   r,
@@ -489,7 +492,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listRegistriesEndpoint,
 		Handler:  listRegistriesHandler,
 		Router:   r,
@@ -517,7 +520,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createRegistryEndpoint,
 		Handler:  createRegistryHandler,
 		Router:   r,
@@ -545,7 +548,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getECRTokenEndpoint,
 		Handler:  getECRTokenHandler,
 		Router:   r,
@@ -573,7 +576,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getDOCRTokenEndpoint,
 		Handler:  getDOCRTokenHandler,
 		Router:   r,
@@ -601,7 +604,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getGCRTokenEndpoint,
 		Handler:  getGCRTokenHandler,
 		Router:   r,
@@ -629,7 +632,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getACRTokenEndpoint,
 		Handler:  getACRTokenHandler,
 		Router:   r,
@@ -657,7 +660,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getDockerhubTokenEndpoint,
 		Handler:  getDockerhubTokenHandler,
 		Router:   r,
@@ -685,7 +688,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createInfraEndpoint,
 		Handler:  createInfraHandler,
 		Router:   r,
@@ -712,7 +715,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTemplatesEndpoint,
 		Handler:  getTemplatesHandler,
 		Router:   r,
@@ -739,7 +742,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTemplateEndpoint,
 		Handler:  getTemplateHandler,
 		Router:   r,
@@ -767,7 +770,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionECREndpoint,
 	// 	Handler:  provisionECRHandler,
 	// 	Router:   r,
@@ -797,7 +800,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionEKSEndpoint,
 	// 	Handler:  provisionEKSHandler,
 	// 	Router:   r,
@@ -825,7 +828,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionDOCREndpoint,
 	// 	Handler:  provisionDOCRHandler,
 	// 	Router:   r,
@@ -855,7 +858,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionDOKSEndpoint,
 	// 	Handler:  provisionDOKSHandler,
 	// 	Router:   r,
@@ -883,7 +886,7 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionGCREndpoint,
 	// 	Handler:  provisionGCRHandler,
 	// 	Router:   r,
@@ -913,11 +916,214 @@ func getProjectRoutes(
 	// 	factory.GetResultWriter(),
 	// )
 
-	// routes = append(routes, &Route{
+	// routes = append(routes, &router.Route{
 	// 	Endpoint: provisionGKEEndpoint,
 	// 	Handler:  provisionGKEHandler,
 	// 	Router:   r,
 	// })
+
+	//  POST /api/projects/{project_id}/policy -> policy.NewPolicyCreateHandler
+	policyCreateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/policy",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyCreateHandler := policy.NewPolicyCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: policyCreateEndpoint,
+		Handler:  policyCreateHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/policies -> policy.NewPolicyListHandler
+	policyListEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/policies",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyListHandler := policy.NewPolicyListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: policyListEndpoint,
+		Handler:  policyListHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/policy/{policy_id} -> policy.NewPolicyGetHandler
+	policyGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/policy/{%s}", relPath, types.URLParamPolicyID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	policyGetHandler := policy.NewPolicyGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: policyGetEndpoint,
+		Handler:  policyGetHandler,
+		Router:   r,
+	})
+
+	//  POST /api/projects/{project_id}/api_token -> api_token.NewAPITokenCreateHandler
+	apiTokenCreateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/api_token",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenCreateHandler := api_token.NewAPITokenCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenCreateEndpoint,
+		Handler:  apiTokenCreateHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/api_token -> api_token.NewAPITokenListHandler
+	apiTokenListEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenListHandler := api_token.NewAPITokenListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenListEndpoint,
+		Handler:  apiTokenListHandler,
+		Router:   r,
+	})
+
+	//  GET /api/projects/{project_id}/api_token/{api_token_id} -> api_token.NewAPITokenGetHandler
+	apiTokenGetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token/{%s}", relPath, types.URLParamTokenID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenGetHandler := api_token.NewAPITokenGetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenGetEndpoint,
+		Handler:  apiTokenGetHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/api_token/{api_token_id}/revoke -> api_token.NewAPITokenRevokeHandler
+	apiTokenRevokeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/api_token/{%s}/revoke", relPath, types.URLParamTokenID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	apiTokenRevokeHandler := api_token.NewAPITokenRevokeHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: apiTokenRevokeEndpoint,
+		Handler:  apiTokenRevokeHandler,
+		Router:   r,
+	})
 
 	//  POST /api/projects/{project_id}/helmrepos -> helmrepo.NewHelmRepoCreateHandler
 	hrCreateEndpoint := factory.NewAPIEndpoint(
@@ -941,7 +1147,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: hrCreateEndpoint,
 		Handler:  hrCreateHandler,
 		Router:   r,
@@ -968,7 +1174,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: hrListEndpoint,
 		Handler:  hrListHandler,
 		Router:   r,
@@ -995,7 +1201,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTagsEndpoint,
 		Handler:  getTagsHandler,
 		Router:   r,
@@ -1023,7 +1229,7 @@ func getProjectRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createTagEndpoint,
 		Handler:  createTagHandler,
 		Router:   r,

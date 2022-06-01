@@ -92,6 +92,31 @@ func (e *ErrPassThroughToClient) GetStatusCode() int {
 	return e.statusCode
 }
 
+// errors that denote that a resource was not found
+type ErrNotFound struct {
+	err error
+}
+
+func NewErrNotFound(err error) RequestError {
+	return &ErrNotFound{err}
+}
+
+func (e *ErrNotFound) Error() string {
+	return e.err.Error()
+}
+
+func (e *ErrNotFound) InternalError() string {
+	return e.err.Error()
+}
+
+func (e *ErrNotFound) ExternalError() string {
+	return "Resource not found."
+}
+
+func (e *ErrNotFound) GetStatusCode() int {
+	return http.StatusNotFound
+}
+
 type ErrorOpts struct {
 	Code uint
 }

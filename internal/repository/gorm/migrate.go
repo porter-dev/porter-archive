@@ -48,6 +48,8 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.CredentialsExchangeToken{},
 		&models.BuildConfig{},
 		&models.Allowlist{},
+		&models.APIToken{},
+		&models.Policy{},
 		&models.Tag{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},

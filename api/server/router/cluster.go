@@ -10,11 +10,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/kube_events"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewClusterScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewClusterScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetClusterScopedRoutes,
 		Children:  children,
 	}
@@ -25,8 +26,8 @@ func GetClusterScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getClusterRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -47,7 +48,7 @@ func getClusterRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/clusters/{cluster_id}"
 
 	newPath := &types.Path{
@@ -55,7 +56,7 @@ func getClusterRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// POST /api/projects/{project_id}/clusters -> project.NewCreateClusterManualHandler
 	createEndpoint := factory.NewAPIEndpoint(
@@ -79,7 +80,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createEndpoint,
 		Handler:  createHandler,
 		Router:   r,
@@ -109,7 +110,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createCandidateEndpoint,
 		Handler:  createCandidateHandler,
 		Router:   r,
@@ -136,7 +137,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listCandidatesEndpoint,
 		Handler:  listCandidatesHandler,
 		Router:   r,
@@ -169,7 +170,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: resolveCandidateEndpoint,
 		Handler:  resolveCandidateHandler,
 		Router:   r,
@@ -198,7 +199,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateClusterEndpoint,
 		Handler:  updateClusterHandler,
 		Router:   r,
@@ -226,7 +227,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteClusterEndpoint,
 		Handler:  deleteClusterHandler,
 		Router:   r,
@@ -254,7 +255,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -282,7 +283,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listDatabaseEndpoint,
 		Handler:  listDatabaseHandler,
 		Router:   r,
@@ -312,7 +313,7 @@ func getClusterRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: listEnvEndpoint,
 			Handler:  listEnvHandler,
 			Router:   r,
@@ -341,7 +342,7 @@ func getClusterRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: listDeploymentsEndpoint,
 			Handler:  listDeploymentsHandler,
 			Router:   r,
@@ -370,7 +371,7 @@ func getClusterRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: getDeploymentEndpoint,
 			Handler:  getDeploymentHandler,
 			Router:   r,
@@ -399,7 +400,7 @@ func getClusterRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: reenableDeploymentEndpoint,
 			Handler:  reenableDeploymentHandler,
 			Router:   r,
@@ -428,7 +429,7 @@ func getClusterRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: triggerDeploymentWorkflowEndpoint,
 			Handler:  triggerDeploymentWorkflowHandler,
 			Router:   r,
@@ -457,7 +458,7 @@ func getClusterRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: enablePullRequestEndpoint,
 			Handler:  enablePullRequestHandler,
 			Router:   r,
@@ -487,7 +488,7 @@ func getClusterRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: deleteDeploymentEndpoint,
 			Handler:  deleteDeploymentHandler,
 			Router:   r,
@@ -517,7 +518,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listNamespacesEndpoint,
 		Handler:  listNamespacesHandler,
 		Router:   r,
@@ -545,7 +546,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listNodesEndpoint,
 		Handler:  listNodesHandler,
 		Router:   r,
@@ -573,7 +574,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getNodeEndpoint,
 		Handler:  getNodeHandler,
 		Router:   r,
@@ -602,7 +603,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createNamespaceEndpoint,
 		Handler:  createNamespaceHandler,
 		Router:   r,
@@ -630,7 +631,7 @@ func getClusterRoutes(
 		factory.GetDecoderValidator(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteNamespaceEndpoint,
 		Handler:  deleteNamespaceHandler,
 		Router:   r,
@@ -658,7 +659,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTemporaryKubeconfigEndpoint,
 		Handler:  getTemporaryKubeconfigHandler,
 		Router:   r,
@@ -683,7 +684,7 @@ func getClusterRoutes(
 
 	detectPrometheusInstalledHandler := cluster.NewDetectPrometheusInstalledHandler(config)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: detectPrometheusInstalledEndpoint,
 		Handler:  detectPrometheusInstalledHandler,
 		Router:   r,
@@ -708,7 +709,7 @@ func getClusterRoutes(
 
 	detectAgentInstalledHandler := cluster.NewDetectAgentInstalledHandler(config, factory.GetResultWriter())
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: detectAgentInstalledEndpoint,
 		Handler:  detectAgentInstalledHandler,
 		Router:   r,
@@ -737,7 +738,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: installAgentEndpoint,
 		Handler:  installAgentHandler,
 		Router:   r,
@@ -766,7 +767,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: upgradeAgentEndpoint,
 		Handler:  upgradeAgentHandler,
 		Router:   r,
@@ -795,7 +796,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listKubeEventsEndpoint,
 		Handler:  listKubeEventsHandler,
 		Router:   r,
@@ -824,7 +825,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getKubeEventEndpoint,
 		Handler:  getKubeEventHandler,
 		Router:   r,
@@ -853,7 +854,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getKubeEventLogsEndpoint,
 		Handler:  getKubeEventLogsHandler,
 		Router:   r,
@@ -882,7 +883,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getKubeEventLogBucketsEndpoint,
 		Handler:  getKubeEventLogBucketsHandler,
 		Router:   r,
@@ -911,7 +912,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createKubeEventsEndpoint,
 		Handler:  createKubeEventsHandler,
 		Router:   r,
@@ -939,7 +940,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listNGINXIngressesEndpoint,
 		Handler:  listNGINXIngressesHandler,
 		Router:   r,
@@ -968,7 +969,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPodMetricsEndpoint,
 		Handler:  getPodMetricsHandler,
 		Router:   r,
@@ -998,7 +999,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: streamHelmReleaseEndpoint,
 		Handler:  streamHelmReleaseHandler,
 		Router:   r,
@@ -1032,7 +1033,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: streamStatusEndpoint,
 		Handler:  streamStatusHandler,
 		Router:   r,
@@ -1061,7 +1062,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPodsEndpoint,
 		Handler:  getPodsHandler,
 		Router:   r,
@@ -1090,7 +1091,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getIncidentsEndpoint,
 		Handler:  getIncidentsHandler,
 		Router:   r,
@@ -1119,7 +1120,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getIncidentEventLogsEndpoint,
 		Handler:  getIncidentEventLogsHandler,
 		Router:   r,
@@ -1148,7 +1149,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: notifyNewIncidentEndpoint,
 		Handler:  notifyNewIncidentHandler,
 		Router:   r,
@@ -1177,7 +1178,7 @@ func getClusterRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: notifyResolvedIncidentEndpoint,
 		Handler:  notifyResolvedIncidentHandler,
 		Router:   r,

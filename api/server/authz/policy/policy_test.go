@@ -18,7 +18,7 @@ type testHasScopeAccess struct {
 var hasScopeAccessTests = []testHasScopeAccess{
 	{
 		description: "admin access to project",
-		policy:      policy.AdminPolicy,
+		policy:      types.AdminPolicy,
 		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ProjectScope: {
 				Verb: types.APIVerbGet,
@@ -31,7 +31,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	},
 	{
 		description: "viewer access cannot perform write operation",
-		policy:      policy.ViewerPolicy,
+		policy:      types.ViewerPolicy,
 		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.ClusterScope: {
 				Verb: types.APIVerbCreate,
@@ -44,7 +44,7 @@ var hasScopeAccessTests = []testHasScopeAccess{
 	},
 	{
 		description: "developer access cannot write settings",
-		policy:      policy.DeveloperPolicy,
+		policy:      types.DeveloperPolicy,
 		reqScopes: map[types.PermissionScope]*types.RequestAction{
 			types.SettingsScope: {
 				Verb: types.APIVerbUpdate,

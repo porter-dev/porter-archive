@@ -27,6 +27,7 @@ func NewGetGHATemplateHandler(
 
 func (c *GetGHATemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 
@@ -38,6 +39,7 @@ func (c *GetGHATemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	_, workflowYAML, err := createGitAction(
 		c.Config(),
+		proj,
 		user.ID,
 		cluster.ProjectID,
 		cluster.ID,

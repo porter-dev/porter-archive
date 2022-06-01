@@ -12,8 +12,10 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
 	"github.com/porter-dev/porter/api/server/router/middleware"
+	v1 "github.com/porter-dev/porter/api/server/router/v1"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -90,16 +92,49 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 			userRegisterer.Children...,
 		)
 
-		routes := [][]*Route{
+		routes := [][]*router.Route{
 			baseRoutes,
 			userRoutes,
 			oauthCallbackRoutes,
 		}
 
-		var allRoutes []*Route
+		var allRoutes []*router.Route
 		for _, r := range routes {
 			allRoutes = append(allRoutes, r...)
 		}
+
+		registerRoutes(config, allRoutes)
+	})
+
+	r.Route("/api/v1", func(r chi.Router) {
+		// set panic middleware for all API endpoints to catch panics
+		r.Use(panicMW.Middleware)
+
+		// set the content type for all API endpoints and log all request info
+		r.Use(middleware.ContentTypeJSON)
+
+		var allRoutes []*router.Route
+
+		v1RegistryRegisterer := v1.NewV1RegistryScopedRegisterer()
+		v1ReleaseRegisterer := v1.NewV1ReleaseScopedRegisterer()
+		v1NamespaceRegisterer := v1.NewV1NamespaceScopedRegisterer(v1ReleaseRegisterer)
+		v1ClusterRegisterer := v1.NewV1ClusterScopedRegisterer(v1NamespaceRegisterer)
+		v1ProjRegisterer := v1.NewV1ProjectScopedRegisterer(
+			v1ClusterRegisterer,
+			v1RegistryRegisterer,
+		)
+
+		v1Routes := v1ProjRegisterer.GetRoutes(
+			r,
+			config,
+			&types.Path{
+				RelativePath: "",
+			},
+			endpointFactory,
+			v1ProjRegisterer.Children...,
+		)
+
+		allRoutes = append(allRoutes, v1Routes...)
 
 		registerRoutes(config, allRoutes)
 	})
@@ -128,25 +163,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	return r
 }
 
-type Route struct {
-	Endpoint *shared.APIEndpoint
-	Handler  http.Handler
-	Router   chi.Router
-}
-
-type Registerer struct {
-	GetRoutes func(
-		r chi.Router,
-		config *config.Config,
-		basePath *types.Path,
-		factory shared.APIEndpointFactory,
-		children ...*Registerer,
-	) []*Route
-
-	Children []*Registerer
-}
-
-func registerRoutes(config *config.Config, routes []*Route) {
+func registerRoutes(config *config.Config, routes []*router.Route) {
 	// Create a new "user-scoped" factory which will create a new user-scoped request
 	// after authentication. Each subsequent http.Handler can lookup the user in context.
 	authNFactory := authn.NewAuthNFactory(config)
@@ -192,7 +209,7 @@ func registerRoutes(config *config.Config, routes []*Route) {
 	releaseFactory := authz.NewReleaseScopedFactory(config)
 
 	// Policy doc loader loads the policy documents for a specific project.
-	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project())
+	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project(), config.Repo.Policy())
 
 	// set up logging middleware to log information about the request
 	loggerMw := middleware.NewRequestLoggerMiddleware(config.Logger)

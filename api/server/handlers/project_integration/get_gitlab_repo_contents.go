@@ -81,6 +81,12 @@ func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
+	dir = strings.TrimPrefix(dir, "./")
+
+	if len(dir) == 0 {
+		dir = "."
+	}
+
 	gi, err := p.Repo().GitlabIntegration().ReadGitlabIntegration(project.ID, integrationID)
 
 	if err != nil {
@@ -123,7 +129,7 @@ func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	tree, resp, err := client.Repositories.ListTree(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListTreeOptions{
-		Path: gitlab.String(strings.TrimPrefix(dir, "./")),
+		Path: gitlab.String(dir),
 		Ref:  gitlab.String(branch),
 	})
 

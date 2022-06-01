@@ -223,11 +223,18 @@ export interface FormElement {
   };
 }
 
-export interface RepoType {
+export type RepoType = {
   FullName: string;
-  kind: string;
-  GHRepoID: number;
-}
+} & (
+  | {
+      Kind: "github";
+      GHRepoID: number;
+    }
+  | {
+      Kind: "gitlab";
+      GitIntegrationId: number;
+    }
+);
 
 export interface FileType {
   path: string;
@@ -275,19 +282,20 @@ export interface InviteType {
   id: number;
 }
 
-export interface ActionConfigType {
+export type ActionConfigType = {
   git_repo: string;
   git_branch: string;
   image_repo_uri: string;
-  git_repo_id: number;
-}
+  git_repo_id?: number;
+  gitlab_integration_id?: number;
+};
 
-export interface FullActionConfigType extends ActionConfigType {
+export type FullActionConfigType = ActionConfigType & {
   dockerfile_path: string;
   folder_path: string;
   registry_id: number;
   should_create_workflow: boolean;
-}
+};
 
 export interface CapabilityType {
   github: boolean;

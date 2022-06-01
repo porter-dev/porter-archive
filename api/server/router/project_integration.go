@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
 	project_integration "github.com/porter-dev/porter/api/server/handlers/project_integration"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -324,6 +326,236 @@ func getProjectIntegrationRoutes(
 	routes = append(routes, &Route{
 		Endpoint: createAzureEndpoint,
 		Handler:  createAzureHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab
+	listGitlabEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitlabHandler := project_integration.NewListGitlabHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitlabEndpoint,
+		Handler:  listGitlabHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/integrations/gitlab
+	createGitlabEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createGitlabHandler := project_integration.NewCreateGitlabIntegration(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: createGitlabEndpoint,
+		Handler:  createGitlabHandler,
+		Router:   r,
+	})
+
+	// PATCH /api/projects/{project_id}/integrations/gitlab/{integration_id}
+
+	// DELETE /api/projects/{project_id}/integrations/gitlab/{integration_id}
+
+	// GET /api/projects/{project_id}/integrations/git
+	listGitIntegrationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/git",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitIntegrationsHandler := project_integration.NewListGitIntegrationHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitIntegrationsEndpoint,
+		Handler:  listGitIntegrationsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos
+	listGitlabReposEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab/{integration_id}/repos",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitlabReposHandler := project_integration.NewListGitlabReposHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitlabReposEndpoint,
+		Handler:  listGitlabReposHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/branches
+	listGitlabRepoBranchesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{integration_id}/repos/{%s}/{%s}/branches", relPath, types.URLParamGitRepoOwner, types.URLParamGitRepoName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listGitlabRepoBranchesHandler := project_integration.NewListGitlabRepoBranchesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: listGitlabRepoBranchesEndpoint,
+		Handler:  listGitlabRepoBranchesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/contents
+	getGitlabRepoContentsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{integration_id}/repos/{%s}/{%s}/{%s}/contents", relPath,
+					types.URLParamGitRepoOwner, types.URLParamGitRepoName, types.URLParamGitBranch),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getGitlabRepoContentsHandler := project_integration.NewGetGitlabRepoContentsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getGitlabRepoContentsEndpoint,
+		Handler:  getGitlabRepoContentsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/buildpack/detect
+	getGitlabRepoBuildpackEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{integration_id}/repos/{%s}/{%s}/{%s}/buildpack/detect", relPath,
+					types.URLParamGitRepoOwner, types.URLParamGitRepoName, types.URLParamGitBranch),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getGitlabRepoBuildpackHandler := project_integration.NewGetGitlabRepoBuildpackHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getGitlabRepoBuildpackEndpoint,
+		Handler:  getGitlabRepoBuildpackHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/integrations/gitlab/{integration_id}/repos/{owner}/{name}/{branch}/procfile
+	getGitlabRepoProcfileEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent: basePath,
+				RelativePath: fmt.Sprintf("%s/gitlab/{integration_id}/repos/{%s}/{%s}/{%s}/procfile", relPath,
+					types.URLParamGitRepoOwner, types.URLParamGitRepoName, types.URLParamGitBranch),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getGitlabRepoProcfileHandler := project_integration.NewGetGitlabRepoProcfileHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &Route{
+		Endpoint: getGitlabRepoProcfileEndpoint,
+		Handler:  getGitlabRepoProcfileHandler,
 		Router:   r,
 	})
 

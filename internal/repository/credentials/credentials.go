@@ -54,6 +54,11 @@ type AzureCredential struct {
 	AKSPassword []byte `json:"aks_password,omitempty"`
 }
 
+type GitlabCredential struct {
+	AppClientID     []byte `json:"app_client_id"`
+	AppClientSecret []byte `json:"app_client_secret"`
+}
+
 type CredentialStorage interface {
 	WriteOAuthCredential(oauthIntegration *integrations.OAuthIntegration, data *OAuthCredential) error
 	GetOAuthCredential(oauthIntegration *integrations.OAuthIntegration) (*OAuthCredential, error)
@@ -67,4 +72,7 @@ type CredentialStorage interface {
 	WriteAzureCredential(azIntegration *integrations.AzureIntegration, data *AzureCredential) error
 	GetAzureCredential(azIntegration *integrations.AzureIntegration) (*AzureCredential, error)
 	CreateAzureToken(azIntegration *integrations.AzureIntegration) (string, error)
+	WriteGitlabCredential(giIntegration *integrations.GitlabIntegration, data *GitlabCredential) error
+	GetGitlabCredential(giIntegration *integrations.GitlabIntegration) (*GitlabCredential, error)
+	CreateGitlabToken(giIntegration *integrations.GitlabIntegration) (string, error)
 }

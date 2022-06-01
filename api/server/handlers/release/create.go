@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
+	"github.com/porter-dev/porter/internal/integrations/ci/gitlab"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
@@ -160,13 +161,13 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	if request.GithubActionConfig != nil {
+	if request.GitActionConfig != nil {
 		_, _, err := createGitAction(
 			c.Config(),
 			user.ID,
 			cluster.ProjectID,
 			cluster.ID,
-			request.GithubActionConfig,
+			request.GitActionConfig,
 			request.Name,
 			namespace,
 			release,
@@ -288,56 +289,80 @@ func createGitAction(
 		return nil, nil, err
 	}
 
-	// create the commit in the git repo
-	gaRunner := &actions.GithubActions{
-		InstanceName:           config.ServerConf.InstanceName,
-		ServerURL:              config.ServerConf.ServerURL,
-		GithubOAuthIntegration: nil,
-		GithubAppID:            config.GithubAppConf.AppID,
-		GithubAppSecretPath:    config.GithubAppConf.SecretPath,
-		GithubInstallationID:   request.GitRepoID,
-		GitRepoName:            repoSplit[1],
-		GitRepoOwner:           repoSplit[0],
-		Repo:                   config.Repo,
-		ProjectID:              projectID,
-		ClusterID:              clusterID,
-		ReleaseName:            name,
-		ReleaseNamespace:       namespace,
-		GitBranch:              request.GitBranch,
-		DockerFilePath:         request.DockerfilePath,
-		FolderPath:             request.FolderPath,
-		ImageRepoURL:           request.ImageRepoURI,
-		PorterToken:            encoded,
-		Version:                "v0.1.0",
-		ShouldCreateWorkflow:   request.ShouldCreateWorkflow,
-		DryRun:                 release == nil,
-	}
+	var workflowYAML []byte
+	var gitErr error
 
-	// Save the github err for after creating the git action config. However, we
-	// need to call Setup() in order to get the workflow file before writing the
-	// action config, in the case of a dry run, since the dry run does not create
-	// a git action config.
-	workflowYAML, githubErr := gaRunner.Setup()
-
-	if gaRunner.DryRun {
-		if githubErr != nil {
-			return nil, nil, githubErr
+	if request.GitlabIntegrationID != 0 {
+		giRunner := &gitlab.GitlabCI{
+			ServerURL:        config.ServerConf.ServerURL,
+			GitRepoOwner:     repoSplit[0],
+			GitRepoName:      repoSplit[1],
+			Repo:             config.Repo,
+			ProjectID:        projectID,
+			ClusterID:        clusterID,
+			UserID:           userID,
+			IntegrationID:    request.GitlabIntegrationID,
+			PorterConf:       config,
+			ReleaseName:      name,
+			ReleaseNamespace: namespace,
+			FolderPath:       request.FolderPath,
+			PorterToken:      encoded,
 		}
 
-		return nil, workflowYAML, nil
+		gitErr = giRunner.Setup()
+	} else {
+		// create the commit in the git repo
+		gaRunner := &actions.GithubActions{
+			InstanceName:           config.ServerConf.InstanceName,
+			ServerURL:              config.ServerConf.ServerURL,
+			GithubOAuthIntegration: nil,
+			GithubAppID:            config.GithubAppConf.AppID,
+			GithubAppSecretPath:    config.GithubAppConf.SecretPath,
+			GithubInstallationID:   request.GitRepoID,
+			GitRepoName:            repoSplit[1],
+			GitRepoOwner:           repoSplit[0],
+			Repo:                   config.Repo,
+			ProjectID:              projectID,
+			ClusterID:              clusterID,
+			ReleaseName:            name,
+			ReleaseNamespace:       namespace,
+			GitBranch:              request.GitBranch,
+			DockerFilePath:         request.DockerfilePath,
+			FolderPath:             request.FolderPath,
+			ImageRepoURL:           request.ImageRepoURI,
+			PorterToken:            encoded,
+			Version:                "v0.1.0",
+			ShouldCreateWorkflow:   request.ShouldCreateWorkflow,
+			DryRun:                 release == nil,
+		}
+
+		// Save the github err for after creating the git action config. However, we
+		// need to call Setup() in order to get the workflow file before writing the
+		// action config, in the case of a dry run, since the dry run does not create
+		// a git action config.
+		workflowYAML, githubErr := gaRunner.Setup()
+
+		if gaRunner.DryRun {
+			if githubErr != nil {
+				return nil, nil, githubErr
+			}
+
+			return nil, workflowYAML, nil
+		}
 	}
 
 	// handle write to the database
 	ga, err := config.Repo.GitActionConfig().CreateGitActionConfig(&models.GitActionConfig{
-		ReleaseID:      release.ID,
-		GitRepo:        request.GitRepo,
-		GitBranch:      request.GitBranch,
-		ImageRepoURI:   request.ImageRepoURI,
-		GitRepoID:      request.GitRepoID,
-		DockerfilePath: request.DockerfilePath,
-		FolderPath:     request.FolderPath,
-		IsInstallation: true,
-		Version:        "v0.1.0",
+		ReleaseID:           release.ID,
+		GitRepo:             request.GitRepo,
+		GitBranch:           request.GitBranch,
+		ImageRepoURI:        request.ImageRepoURI,
+		GitRepoID:           request.GitRepoID,
+		GitlabIntegrationID: request.GitlabIntegrationID,
+		DockerfilePath:      request.DockerfilePath,
+		FolderPath:          request.FolderPath,
+		IsInstallation:      true,
+		Version:             "v0.1.0",
 	})
 
 	if err != nil {
@@ -353,8 +378,8 @@ func createGitAction(
 		return nil, nil, err
 	}
 
-	if githubErr != nil {
-		return nil, nil, githubErr
+	if gitErr != nil {
+		return nil, nil, gitErr
 	}
 
 	return ga.ToGitActionConfigType(), workflowYAML, nil

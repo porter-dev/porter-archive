@@ -61,6 +61,11 @@ const getAzureIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/azure`
 );
 
+const getGitlabIntegration = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
+);
+
 const createAWSIntegration = baseApi<
   {
     aws_region: string;
@@ -97,6 +102,17 @@ const createAzureIntegration = baseApi<
   { id: number }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/integrations/azure`;
+});
+
+const createGitlabIntegration = baseApi<
+  {
+    instance_url: string;
+    client_id: string;
+    client_secret: string;
+  },
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/gitlab`;
 });
 
 const createEmailVerification = baseApi<{}, {}>("POST", (pathParams) => {
@@ -1798,6 +1814,51 @@ const updateReleaseTags = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/update_tags`
 );
 
+const getGitProviders = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/integrations/git`
+);
+
+const getGitlabRepos = baseApi<
+  {},
+  { project_id: number; integration_id: number }
+>(
+  "GET",
+  ({ project_id, integration_id }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos`
+);
+
+const getGitlabBranches = baseApi<
+  {},
+  {
+    project_id: number;
+    integration_id: number;
+    repo_owner: string;
+    repo_name: string;
+  }
+>(
+  "GET",
+  ({ project_id, integration_id, repo_owner, repo_name }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/branches`
+);
+
+const getGitlabFolderContent = baseApi<
+  {
+    dir: string;
+  },
+  {
+    project_id: number;
+    integration_id: number;
+    repo_owner: string;
+    repo_name: string;
+    branch: string;
+  }
+>(
+  "GET",
+  ({ project_id, integration_id, repo_owner, repo_name, branch }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/contents`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -1807,9 +1868,11 @@ export default {
   getAWSIntegration,
   getGCPIntegration,
   getAzureIntegration,
+  getGitlabIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
   createAzureIntegration,
+  createGitlabIntegration,
   createEmailVerification,
   createEnvironment,
   deleteEnvironment,
@@ -1967,4 +2030,8 @@ export default {
   getTagsByProjectId,
   createTag,
   updateReleaseTags,
+  getGitProviders,
+  getGitlabRepos,
+  getGitlabBranches,
+  getGitlabFolderContent,
 };

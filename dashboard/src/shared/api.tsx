@@ -444,7 +444,7 @@ const deployTemplate = baseApi<
     image_url?: string;
     values?: any;
     name: string;
-    github_action_config?: FullActionConfigType;
+    git_action_config?: FullActionConfigType;
     build_config?: any;
     synced_env_groups?: string[];
   },
@@ -539,6 +539,25 @@ const getProcfileContents = baseApi<
     pathParams.name
   }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
+
+const getGitlabProcfileContents = baseApi<
+  {
+    path: string;
+  },
+  {
+    project_id: number;
+    integration_id: number;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>(
+  "GET",
+  ({ project_id, integration_id, owner, name, branch }) =>
+    `/projects/${project_id}/integrations/gitlab/${integration_id}/${owner}/${name}/${encodeURIComponent(
+      branch
+    )}/procfile`
+);
 
 const getBranches = baseApi<
   {},
@@ -1955,6 +1974,7 @@ export default {
   getOAuthIds,
   getPodEvents,
   getProcfileContents,
+  getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,
   getProjectRepos,

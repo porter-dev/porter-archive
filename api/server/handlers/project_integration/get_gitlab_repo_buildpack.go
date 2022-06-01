@@ -8,11 +8,13 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/integrations/buildpacks"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/xanzy/go-gitlab"
 	"gorm.io/gorm"
 )
@@ -95,7 +97,17 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	client, err := gitlab.NewOAuthClient(string(giAppOAuth.AccessToken), gitlab.WithBaseURL(gi.InstanceURL))
+	accessToken, _, err := oauth.GetAccessToken(giAppOAuth.SharedOAuthModel, commonutils.GetGitlabOAuthConf(
+		p.Config(), gi,
+	), oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(giAppOAuth, p.Repo()))
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid gitlab access token"),
+			http.StatusUnauthorized))
+		return
+	}
+
+	client, err := gitlab.NewOAuthClient(accessToken, gitlab.WithBaseURL(gi.InstanceURL))
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

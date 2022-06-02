@@ -17,6 +17,7 @@ type GitlabCI struct {
 	ServerURL    string
 	GitRepoName  string
 	GitRepoOwner string
+	GitBranch    string
 
 	Repo repository.Repository
 
@@ -260,6 +261,11 @@ func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
 		"timeout": "20 minutes",
 		"variables": map[string]string{
 			"GIT_STRATEGY": "clone",
+		},
+		"rules": []map[string]string{
+			{
+				"if": fmt.Sprintf("$CI_COMMIT_BRANCH == \"%s\" && $CI_PIPELINE_SOURCE == \"push\"", g.GitBranch),
+			},
 		},
 		"script": []string{
 			fmt.Sprintf("export PORTER_HOST=\"%s\"", g.ServerURL),

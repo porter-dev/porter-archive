@@ -103,7 +103,7 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 					return
 				}
 			}()
-			buildpacks.Runtimes[idx].Detect(
+			buildpacks.Runtimes[idx].DetectGithub(
 				client, directoryContents, owner, name, request.Dir, repoContentOptions,
 				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],
 			)

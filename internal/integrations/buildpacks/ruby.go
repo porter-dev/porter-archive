@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/google/go-github/v41/github"
+	"github.com/xanzy/go-gitlab"
 )
 
 type rubyRuntime struct {
@@ -115,7 +116,7 @@ func (runtime *rubyRuntime) detectPassenger(gemfileContent string, results chan 
 	runtime.wg.Done()
 }
 
-func (runtime *rubyRuntime) detectRackup(
+func (runtime *rubyRuntime) detectRackupGithub(
 	client *github.Client, owner, name string,
 	repoContentOptions github.RepositoryContentGetOptions, results chan struct {
 		string
@@ -133,6 +134,43 @@ func (runtime *rubyRuntime) detectRackup(
 		runtime.wg.Done()
 		return
 	}
+
+	rackFound := false
+	scanner := bufio.NewScanner(strings.NewReader(gemfileLockContent))
+	for scanner.Scan() {
+		if strings.TrimSpace(scanner.Text()) == "GEM" {
+			for scanner.Scan() {
+				if strings.Contains(scanner.Text(), "rack") {
+					rackFound = true
+					break
+				}
+			}
+		}
+	}
+	if rackFound {
+		results <- struct {
+			string
+			bool
+		}{rackup, true}
+	}
+	runtime.wg.Done()
+}
+
+func (runtime *rubyRuntime) detectRackupGitlab(
+	client *gitlab.Client, owner, name, ref string, results chan struct {
+		string
+		bool
+	},
+) {
+	fileContent, _, err := client.RepositoryFiles.GetRawFile(
+		fmt.Sprintf("%s/%s", owner, name), "Gemfile.lock", &gitlab.GetRawFileOptions{
+			Ref: gitlab.String(ref),
+		})
+	if err != nil {
+		runtime.wg.Done()
+		return
+	}
+	gemfileLockContent := string(fileContent)
 
 	rackFound := false
 	scanner := bufio.NewScanner(strings.NewReader(gemfileLockContent))
@@ -179,7 +217,7 @@ func (runtime *rubyRuntime) detectRake(gemfileContent string, results chan struc
 	runtime.wg.Done()
 }
 
-func (runtime *rubyRuntime) Detect(
+func (runtime *rubyRuntime) DetectGithub(
 	client *github.Client,
 	directoryContent []*github.RepositoryContent,
 	owner, name, path string,
@@ -265,7 +303,104 @@ func (runtime *rubyRuntime) Detect(
 	}
 	go runtime.detectPassenger(gemfileContent, results)
 	if !configRuFound && gemfileLockFound {
-		go runtime.detectRackup(client, owner, name, repoContentOptions, results)
+		go runtime.detectRackupGithub(client, owner, name, repoContentOptions, results)
+	}
+	if rakefileFound {
+		go runtime.detectRake(gemfileContent, results)
+	}
+	runtime.wg.Wait()
+	close(results)
+
+	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
+
+	return nil
+}
+
+func (runtime *rubyRuntime) DetectGitlab(
+	client *gitlab.Client,
+	tree []*gitlab.TreeNode,
+	owner, name, path, ref string,
+	paketo, heroku *BuilderInfo,
+) error {
+	gemfileFound := false
+	gemfileLockFound := false
+	configRuFound := false
+	rakefileFound := false
+	for i := range tree {
+		name := tree[i].Name
+		if name == "Gemfile" {
+			gemfileFound = true
+		} else if name == "Gemfile.lock" {
+			gemfileLockFound = true
+		} else if name == "config.ru" {
+			configRuFound = true
+		} else if name == "Rakefile" || name == "Rakefile.rb" || name == "rakefile" || name == "rakefile.rb" {
+			rakefileFound = true
+		}
+	}
+
+	paketoBuildpackInfo := BuildpackInfo{
+		Name:      "Ruby",
+		Buildpack: "gcr.io/paketo-buildpacks/ruby",
+	}
+	herokuBuildpackInfo := BuildpackInfo{
+		Name:      "Ruby",
+		Buildpack: "heroku/ruby",
+	}
+
+	if !gemfileFound {
+		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+		return nil
+	}
+
+	fileContent, _, err := client.RepositoryFiles.GetRawFile(
+		fmt.Sprintf("%s/%s", owner, name), "Gemfile", &gitlab.GetRawFileOptions{
+			Ref: gitlab.String(ref),
+		})
+	if err != nil {
+		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+		return fmt.Errorf("error fetching contents of Gemfile for %s/%s: %v", owner, name, err)
+	}
+	gemfileContent := string(fileContent)
+
+	count := 6
+	if !configRuFound {
+		// unicorn needs config.ru
+		count -= 1
+		if !gemfileLockFound {
+			// rackup needs one of Gemfile.lock or config.ru
+			count -= 1
+		}
+	}
+	if !rakefileFound {
+		count -= 1
+	}
+	results := make(chan struct {
+		string
+		bool
+	}, count)
+
+	runtime.wg.Add(count)
+	go runtime.detectPuma(gemfileContent, results)
+	go runtime.detectThin(gemfileContent, results)
+	if configRuFound {
+		{
+			// FIXME: find a better, more readable way of doing this
+			results <- struct {
+				string
+				bool
+			}{rackup, true}
+			runtime.wg.Done()
+		}
+
+		go runtime.detectUnicorn(gemfileContent, results)
+	}
+	go runtime.detectPassenger(gemfileContent, results)
+	if !configRuFound && gemfileLockFound {
+		go runtime.detectRackupGitlab(client, owner, name, ref, results)
 	}
 	if rakefileFound {
 		go runtime.detectRake(gemfileContent, results)

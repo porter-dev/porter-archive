@@ -1666,7 +1666,7 @@ func (repo *GitlabIntegrationRepository) ReadGitlabIntegration(projectID, id uin
 func (repo *GitlabIntegrationRepository) ListGitlabIntegrationsByProjectID(projectID uint) ([]*ints.GitlabIntegration, error) {
 	gi := []*ints.GitlabIntegration{}
 
-	if err := repo.db.Where("project_id = ?", projectID).Find(&gi).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND deleted_at IS NULL", projectID).Find(&gi).Error; err != nil {
 		return nil, err
 	}
 
@@ -1780,7 +1780,13 @@ func (repo *GitlabAppOAuthIntegrationRepository) ReadGitlabAppOAuthIntegration(
 ) (*ints.GitlabAppOAuthIntegration, error) {
 	gi := &ints.GitlabAppOAuthIntegration{}
 
-	if err := repo.db.Where("user_id = ? AND project_id = ? AND integration_id = ?", userID, projectID, integrationID).First(&gi).Error; err != nil {
+	if err := repo.db.
+		Order("gitlab_app_o_auth_integrations.id desc").
+		Joins("INNER JOIN gitlab_integrations ON gitlab_integrations.id = gitlab_app_o_auth_integrations.integration_id").
+		Where("gitlab_app_o_auth_integrations.user_id = ? AND gitlab_app_o_auth_integrations.project_id = ? AND"+
+			" gitlab_integrations.integration_id = ? AND gitlab_integrations.deleted_at IS NULL AND"+
+			" gitlab_app_o_auth_integrations.deleted_at IS NULL",
+			userID, projectID, integrationID).First(&gi).Error; err != nil {
 		return nil, err
 	}
 

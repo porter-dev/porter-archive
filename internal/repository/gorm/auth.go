@@ -1784,7 +1784,7 @@ func (repo *GitlabAppOAuthIntegrationRepository) ReadGitlabAppOAuthIntegration(
 		Order("gitlab_app_o_auth_integrations.id desc").
 		Joins("INNER JOIN gitlab_integrations ON gitlab_integrations.id = gitlab_app_o_auth_integrations.integration_id").
 		Where("gitlab_app_o_auth_integrations.user_id = ? AND gitlab_app_o_auth_integrations.project_id = ? AND"+
-			" gitlab_integrations.integration_id = ? AND gitlab_integrations.deleted_at IS NULL AND"+
+			" gitlab_integrations.id = ? AND gitlab_integrations.deleted_at IS NULL AND"+
 			" gitlab_app_o_auth_integrations.deleted_at IS NULL",
 			userID, projectID, integrationID).First(&gi).Error; err != nil {
 		return nil, err

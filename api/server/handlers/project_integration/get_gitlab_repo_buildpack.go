@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -132,7 +133,44 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	p.WriteResult(w, r, tree)
+	builderInfoMap := initBuilderInfo()
+	var wg sync.WaitGroup
+	wg.Add(len(buildpacks.Runtimes))
+	for i := range buildpacks.Runtimes {
+		go func(idx int) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("panic detected in runtime detection")))
+					return
+				}
+			}()
+			buildpacks.Runtimes[idx].DetectGitlab(
+				client, tree, owner, name, request.Dir, branch,
+				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],
+			)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	// FIXME: add Java buildpacks
+	builderInfoMap[buildpacks.PaketoBuilder].Others = append(builderInfoMap[buildpacks.PaketoBuilder].Others,
+		buildpacks.BuildpackInfo{
+			Name:      "Java",
+			Buildpack: "gcr.io/paketo-buildpacks/java",
+		})
+	builderInfoMap[buildpacks.HerokuBuilder].Others = append(builderInfoMap[buildpacks.HerokuBuilder].Others,
+		buildpacks.BuildpackInfo{
+			Name:      "Java",
+			Buildpack: "heroku/java",
+		})
+
+	var builders []*buildpacks.BuilderInfo
+	for _, v := range builderInfoMap {
+		builders = append(builders, v)
+	}
+
+	p.WriteResult(w, r, builders)
 }
 
 func initBuilderInfo() map[string]*buildpacks.BuilderInfo {

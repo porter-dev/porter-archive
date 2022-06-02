@@ -8,11 +8,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewGitInstallationScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewGitInstallationScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetGitInstallationScopedRoutes,
 		Children:  children,
 	}
@@ -23,8 +24,8 @@ func GetGitInstallationScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getGitInstallationRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -45,7 +46,7 @@ func getGitInstallationRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/gitrepos/{git_installation_id}"
 
 	newPath := &types.Path{
@@ -53,7 +54,7 @@ func getGitInstallationRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/gitrepos/{git_installation_id} -> gitinstallation.NewGitInstallationGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
@@ -77,7 +78,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -106,7 +107,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPermissionsEndpoint,
 		Handler:  getPermissionsHandler,
 		Router:   r,
@@ -144,7 +145,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: createEnvironmentEndpoint,
 			Handler:  createEnvironmentHandler,
 			Router:   r,
@@ -180,7 +181,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: createDeploymentEndpoint,
 			Handler:  createDeploymentHandler,
 			Router:   r,
@@ -216,7 +217,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: getDeploymentEndpoint,
 			Handler:  getDeploymentHandler,
 			Router:   r,
@@ -252,7 +253,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: listDeploymentsEndpoint,
 			Handler:  listDeploymentsHandler,
 			Router:   r,
@@ -288,7 +289,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: finalizeDeploymentEndpoint,
 			Handler:  finalizeDeploymentHandler,
 			Router:   r,
@@ -324,7 +325,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: updateDeploymentEndpoint,
 			Handler:  updateDeploymentHandler,
 			Router:   r,
@@ -360,7 +361,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: updateDeploymentStatusEndpoint,
 			Handler:  updateDeploymentStatusHandler,
 			Router:   r,
@@ -396,7 +397,7 @@ func getGitInstallationRoutes(
 			factory.GetResultWriter(),
 		)
 
-		routes = append(routes, &Route{
+		routes = append(routes, &router.Route{
 			Endpoint: deleteEnvironmentEndpoint,
 			Handler:  deleteEnvironmentHandler,
 			Router:   r,
@@ -427,7 +428,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listReposEndpoint,
 		Handler:  listReposHandler,
 		Router:   r,
@@ -462,7 +463,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listBranchesEndpoint,
 		Handler:  listBranchesHandler,
 		Router:   r,
@@ -499,7 +500,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getBuildpackEndpoint,
 		Handler:  getBuildpackHandler,
 		Router:   r,
@@ -536,7 +537,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getContentsEndpoint,
 		Handler:  getContentsHandler,
 		Router:   r,
@@ -573,7 +574,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getProcfileEndpoint,
 		Handler:  getProcfileHandler,
 		Router:   r,
@@ -610,7 +611,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTarballURLEndpoint,
 		Handler:  getTarballURLHandler,
 		Router:   r,
@@ -646,7 +647,7 @@ func getGitInstallationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: rerunWorkflowEndpoint,
 		Handler:  rerunWorkflowHandler,
 		Router:   r,

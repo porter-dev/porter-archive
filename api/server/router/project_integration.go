@@ -7,11 +7,12 @@ import (
 	project_integration "github.com/porter-dev/porter/api/server/handlers/project_integration"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewProjectIntegrationScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewProjectIntegrationScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetProjectIntegrationScopedRoutes,
 		Children:  children,
 	}
@@ -22,8 +23,8 @@ func GetProjectIntegrationScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getProjectIntegrationRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -44,7 +45,7 @@ func getProjectIntegrationRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/integrations"
 
 	newPath := &types.Path{
@@ -52,7 +53,7 @@ func getProjectIntegrationRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/integrations/oauth -> project_integration.NewListOAuthHandler
 	listOAuthEndpoint := factory.NewAPIEndpoint(
@@ -75,7 +76,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listOAuthEndpoint,
 		Handler:  listOAuthHandler,
 		Router:   r,
@@ -102,7 +103,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listDOEndpoint,
 		Handler:  listDOHandler,
 		Router:   r,
@@ -130,7 +131,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createBasicEndpoint,
 		Handler:  createBasicHandler,
 		Router:   r,
@@ -158,7 +159,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createAWSEndpoint,
 		Handler:  createAWSHandler,
 		Router:   r,
@@ -185,7 +186,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listAWSEndpoint,
 		Handler:  listAWSHandler,
 		Router:   r,
@@ -213,7 +214,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: overwriteAWSEndpoint,
 		Handler:  overwriteAWSHandler,
 		Router:   r,
@@ -240,7 +241,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listAzureEndpoint,
 		Handler:  listAzureHandler,
 		Router:   r,
@@ -268,7 +269,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createGCPEndpoint,
 		Handler:  createGCPHandler,
 		Router:   r,
@@ -295,7 +296,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listGCPEndpoint,
 		Handler:  listGCPHandler,
 		Router:   r,
@@ -323,7 +324,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createAzureEndpoint,
 		Handler:  createAzureHandler,
 		Router:   r,
@@ -350,7 +351,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listGitlabEndpoint,
 		Handler:  listGitlabHandler,
 		Router:   r,
@@ -378,7 +379,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createGitlabEndpoint,
 		Handler:  createGitlabHandler,
 		Router:   r,
@@ -410,7 +411,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listGitIntegrationsEndpoint,
 		Handler:  listGitIntegrationsHandler,
 		Router:   r,
@@ -438,7 +439,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listGitlabReposEndpoint,
 		Handler:  listGitlabReposHandler,
 		Router:   r,
@@ -466,7 +467,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listGitlabRepoBranchesEndpoint,
 		Handler:  listGitlabRepoBranchesHandler,
 		Router:   r,
@@ -495,7 +496,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getGitlabRepoContentsEndpoint,
 		Handler:  getGitlabRepoContentsHandler,
 		Router:   r,
@@ -524,7 +525,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getGitlabRepoBuildpackEndpoint,
 		Handler:  getGitlabRepoBuildpackHandler,
 		Router:   r,
@@ -553,7 +554,7 @@ func getProjectIntegrationRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getGitlabRepoProcfileEndpoint,
 		Handler:  getGitlabRepoProcfileHandler,
 		Router:   r,

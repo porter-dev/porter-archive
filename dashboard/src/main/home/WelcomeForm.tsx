@@ -46,10 +46,10 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
           <Title>Welcome to Porter</Title>
           <Subtitle>Just two things before getting started.</Subtitle>
           <SubtitleAlt>
-            <Num>1</Num> What is your company name? *
+            <Num>1</Num> What is your company website? *
           </SubtitleAlt>
           <Input
-            placeholder="ex: Acme"
+            placeholder="ex: https://porter.run"
             value={company}
             onChange={(e: any) => setCompany(e.target.value)}
           />

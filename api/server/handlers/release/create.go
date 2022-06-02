@@ -297,6 +297,7 @@ func createGitAction(
 			ServerURL:        config.ServerConf.ServerURL,
 			GitRepoOwner:     repoSplit[0],
 			GitRepoName:      repoSplit[1],
+			GitBranch:        request.GitBranch,
 			Repo:             config.Repo,
 			ProjectID:        projectID,
 			ClusterID:        clusterID,

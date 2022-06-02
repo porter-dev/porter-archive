@@ -8,11 +8,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/infra"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewInfraScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewInfraScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetInfraScopedRoutes,
 		Children:  children,
 	}
@@ -23,8 +24,8 @@ func GetInfraScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getInfraRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -45,7 +46,7 @@ func getInfraRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/infras/{infra_id}"
 
 	newPath := &types.Path{
@@ -53,7 +54,7 @@ func getInfraRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/infra -> project.NewInfraListHandler
 	listInfraEndpoint := factory.NewAPIEndpoint(
@@ -77,7 +78,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listInfraEndpoint,
 		Handler:  listInfraHandler,
 		Router:   r,
@@ -105,7 +106,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -134,7 +135,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: retryCreateEndpoint,
 		Handler:  retryCreateHandler,
 		Router:   r,
@@ -163,7 +164,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateEndpoint,
 		Handler:  updateHandler,
 		Router:   r,
@@ -192,7 +193,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: retryDeleteEndpoint,
 		Handler:  retryDeleteHandler,
 		Router:   r,
@@ -220,7 +221,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listOperationsEndpoint,
 		Handler:  listOperationsHandler,
 		Router:   r,
@@ -249,7 +250,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getOperationEndpoint,
 		Handler:  getOperationHandler,
 		Router:   r,
@@ -279,7 +280,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: streamStateEndpoint,
 		Handler:  streamStateHandler,
 		Router:   r,
@@ -309,7 +310,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: streamLogEndpoint,
 		Handler:  streamLogHandler,
 		Router:   r,
@@ -338,7 +339,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getOperationLogsEndpoint,
 		Handler:  getOperationLogsHandler,
 		Router:   r,
@@ -366,7 +367,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getStateEndpoint,
 		Handler:  getStateHandler,
 		Router:   r,
@@ -395,7 +396,7 @@ func getInfraRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
 		Router:   r,
@@ -423,7 +424,7 @@ func getInfraRoutes(
 		factory.GetDecoderValidator(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateDBStatusEndpoint,
 		Handler:  updateDBStatusHandler,
 		Router:   r,

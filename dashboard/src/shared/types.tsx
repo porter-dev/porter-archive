@@ -247,6 +247,7 @@ export interface ProjectType {
   preview_envs_enabled: boolean;
   enable_rds_databases: boolean;
   managed_infra_enabled: boolean;
+  api_tokens_enabled: boolean;
   roles: {
     id: number;
     kind: string;
@@ -392,6 +393,7 @@ export type InfraKind =
   | "ecr"
   | "eks"
   | "rds"
+  | "s3"
   | "gke"
   | "gcr"
   | "doks"
@@ -496,6 +498,13 @@ export const KindMap: ProviderInfoMap = {
     resource_name: "Database",
     resource_link: "/databases",
     provider_name: "Relational Database Service (RDS)",
+  },
+  s3: {
+    provider: "aws",
+    source: "porter/aws/s3",
+    resource_name: "S3 Bucket",
+    resource_link: "/",
+    provider_name: "AWS S3 Bucket",
   },
   gcr: {
     provider: "gcp",

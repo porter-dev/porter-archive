@@ -7,11 +7,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewRegistryScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewRegistryScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetRegistryScopedRoutes,
 		Children:  children,
 	}
@@ -22,8 +23,8 @@ func GetRegistryScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getRegistryRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -44,7 +45,7 @@ func getRegistryRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/registries/{registry_id}"
 
 	newPath := &types.Path{
@@ -52,7 +53,7 @@ func getRegistryRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryGetHandler
 	getEndpoint := factory.NewAPIEndpoint(
@@ -76,7 +77,7 @@ func getRegistryRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEndpoint,
 		Handler:  getHandler,
 		Router:   r,
@@ -105,7 +106,7 @@ func getRegistryRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateEndpoint,
 		Handler:  updateHandler,
 		Router:   r,
@@ -133,7 +134,7 @@ func getRegistryRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
 		Router:   r,
@@ -161,7 +162,7 @@ func getRegistryRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listRepositoriesEndpoint,
 		Handler:  listRepositoriesHandler,
 		Router:   r,
@@ -193,7 +194,7 @@ func getRegistryRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listImagesEndpoint,
 		Handler:  listImagesHandler,
 		Router:   r,
@@ -222,7 +223,7 @@ func getRegistryRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createRepositoryEndpoint,
 		Handler:  createRepositoryHandler,
 		Router:   r,

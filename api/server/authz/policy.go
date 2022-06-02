@@ -47,11 +47,27 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// load policy documents for the user + project
-	projID := reqScopes[types.ProjectScope].Resource.UInt
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	policyLoaderOpts := &policy.PolicyLoaderOpts{}
 
-	policyDocs, reqErr := h.loader.LoadPolicyDocuments(user.ID, projID)
+	// first check if an api token exists in context
+	if r.Context().Value("api_token") != nil {
+		projID := reqScopes[types.ProjectScope].Resource.UInt
+
+		// FIXME: find a clean way to get the project
+
+		apiToken, _ := r.Context().Value("api_token").(*models.APIToken)
+		policyLoaderOpts.ProjectToken = apiToken
+		policyLoaderOpts.ProjectID = projID
+	} else {
+		projID := reqScopes[types.ProjectScope].Resource.UInt
+		user, _ := r.Context().Value(types.UserScope).(*models.User)
+
+		policyLoaderOpts.ProjectID = projID
+		policyLoaderOpts.UserID = user.ID
+	}
+
+	// load policy documents for the user + project
+	policyDocs, reqErr := h.loader.LoadPolicyDocuments(policyLoaderOpts)
 
 	if reqErr != nil {
 		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, reqErr, true)
@@ -67,7 +83,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.config.Alerter,
 			w,
 			r,
-			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action for user %d in project %d", user.ID, projID)),
+			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action in project %d", policyLoaderOpts.ProjectID)),
 			true,
 		)
 

@@ -65,7 +65,7 @@ func (g *GitlabCI) Setup() error {
 
 	jobName := getGitlabStageJobName(g.ReleaseName)
 
-	ciFile, resp, err := client.RepositoryFiles.GetFile(g.pID, ".gitlab-ci.yml", &gitlab.GetFileOptions{
+	ciFile, resp, err := client.RepositoryFiles.GetRawFile(g.pID, ".gitlab-ci.yml", &gitlab.GetRawFileOptions{
 		Ref: gitlab.String(g.defaultGitBranch),
 	})
 
@@ -95,7 +95,7 @@ func (g *GitlabCI) Setup() error {
 	} else {
 		// update .gitlab-ci.yml if needed
 		ciFileContentsMap := make(map[string]interface{})
-		err = yaml.Unmarshal([]byte(ciFile.Content), ciFileContentsMap)
+		err = yaml.Unmarshal(ciFile, ciFileContentsMap)
 
 		if err != nil {
 			return fmt.Errorf("error unmarshalling existing .gitlab-ci.yml: %w", err)

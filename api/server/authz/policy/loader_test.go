@@ -26,17 +26,17 @@ var basicLoaderTests = []basicLoaderTest{
 	{
 		description: "should load admin policy",
 		roleKind:    types.RoleAdmin,
-		expPolicy:   policy.AdminPolicy,
+		expPolicy:   types.AdminPolicy,
 	},
 	{
 		description: "should load developer policy",
 		roleKind:    types.RoleDeveloper,
-		expPolicy:   policy.DeveloperPolicy,
+		expPolicy:   types.DeveloperPolicy,
 	},
 	{
 		description: "should load viewer policy",
 		roleKind:    types.RoleViewer,
-		expPolicy:   policy.ViewerPolicy,
+		expPolicy:   types.ViewerPolicy,
 	},
 	{
 		description:      "should not load custom policy for basic loader",
@@ -53,7 +53,7 @@ func TestBasicPolicyDocumentLoader(t *testing.T) {
 	for _, basicTest := range basicLoaderTests {
 		// use the in-memory project repo
 		projRepo := test.NewProjectRepository(true)
-		loader := policy.NewBasicPolicyDocumentLoader(projRepo)
+		loader := policy.NewBasicPolicyDocumentLoader(projRepo, nil)
 
 		project := &models.Project{
 			Name: "test-project",
@@ -79,7 +79,10 @@ func TestBasicPolicyDocumentLoader(t *testing.T) {
 			t.Fatalf("%v", err)
 		}
 
-		docs, reqErr := loader.LoadPolicyDocuments(1, 1)
+		docs, reqErr := loader.LoadPolicyDocuments(&policy.PolicyLoaderOpts{
+			ProjectID: 1,
+			UserID:    1,
+		})
 
 		assert.Equal(
 			reqErr != nil,
@@ -123,7 +126,7 @@ func TestErrorForbiddenInvalidRole(t *testing.T) {
 
 	// use the in-memory project repo
 	projRepo := test.NewProjectRepository(true)
-	loader := policy.NewBasicPolicyDocumentLoader(projRepo)
+	loader := policy.NewBasicPolicyDocumentLoader(projRepo, nil)
 
 	project := &models.Project{
 		Name: "test-project",
@@ -149,7 +152,10 @@ func TestErrorForbiddenInvalidRole(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	_, reqErr := loader.LoadPolicyDocuments(2, 1)
+	_, reqErr := loader.LoadPolicyDocuments(&policy.PolicyLoaderOpts{
+		ProjectID: 1,
+		UserID:    2,
+	})
 
 	if reqErr == nil {
 		t.Fatalf("Expected forbidden error for invalid project role")
@@ -174,9 +180,12 @@ func TestErrorCannotQuery(t *testing.T) {
 
 	// use the in-memory project repo
 	projRepo := test.NewProjectRepository(false)
-	loader := policy.NewBasicPolicyDocumentLoader(projRepo)
+	loader := policy.NewBasicPolicyDocumentLoader(projRepo, nil)
 
-	_, reqErr := loader.LoadPolicyDocuments(2, 1)
+	_, reqErr := loader.LoadPolicyDocuments(&policy.PolicyLoaderOpts{
+		ProjectID: 2,
+		UserID:    1,
+	})
 
 	if reqErr == nil {
 		t.Fatalf("Expected internal error for failing to query")

@@ -5,11 +5,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/invite"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewInviteScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewInviteScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetInviteScopedRoutes,
 		Children:  children,
 	}
@@ -20,8 +21,8 @@ func GetInviteScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getInviteRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -42,7 +43,7 @@ func getInviteRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/invites/{invite_id}"
 
 	newPath := &types.Path{
@@ -50,7 +51,7 @@ func getInviteRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/invites -> invite.NewInvitesListHandler
 	listEndpoint := factory.NewAPIEndpoint(
@@ -74,7 +75,7 @@ func getInviteRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listEndpoint,
 		Handler:  listHandler,
 		Router:   r,
@@ -105,7 +106,7 @@ func getInviteRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createEndpoint,
 		Handler:  createHandler,
 		Router:   r,
@@ -131,7 +132,7 @@ func getInviteRoutes(
 
 	acceptHandler := invite.NewInviteAcceptHandler(config)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: acceptEndpoint,
 		Handler:  acceptHandler,
 		Router:   r,
@@ -160,7 +161,7 @@ func getInviteRoutes(
 		factory.GetDecoderValidator(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateRoleEndpoint,
 		Handler:  updateRoleHandler,
 		Router:   r,
@@ -188,7 +189,7 @@ func getInviteRoutes(
 		config,
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
 		Router:   r,

@@ -102,16 +102,21 @@ func (g *GitlabCI) Setup() error {
 			return fmt.Errorf("error unmarshalling existing .gitlab-ci.yml: %w", err)
 		}
 
-		stages, ok := ciFileContentsMap["stages"].([]string)
+		stages, ok := ciFileContentsMap["stages"].([]interface{})
 
 		if !ok {
-			return fmt.Errorf("error converting stages to string slice")
+			return fmt.Errorf("error converting stages to interface slice")
 		}
 
 		stageExists := false
 
 		for _, stage := range stages {
-			if stage == jobName {
+			stageStr, ok := stage.(string)
+			if !ok {
+				return fmt.Errorf("error converting from interface to string")
+			}
+
+			if stageStr == jobName {
 				stageExists = true
 				break
 			}
@@ -209,7 +214,7 @@ func (g *GitlabCI) Cleanup() error {
 		}
 	}
 
-	ciFileContentsMap["stage"] = newStages
+	ciFileContentsMap["stages"] = newStages
 
 	delete(ciFileContentsMap, jobName)
 

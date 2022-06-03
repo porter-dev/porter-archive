@@ -68,17 +68,28 @@ export default class ContentsList extends Component<PropsType, StateType> {
     const { actionConfig, branch } = this.props;
 
     if (actionConfig.kind === "gitlab") {
-      return api.getGitlabFolderContent(
-        "<token>",
-        { dir: this.state.currentDir || "./" },
-        {
-          project_id: currentProject.id,
-          integration_id: actionConfig.gitlab_integration_id,
-          repo_owner: actionConfig.git_repo.split("/")[0],
-          repo_name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      );
+      return api
+        .getGitlabFolderContent(
+          "<token>",
+          { dir: this.state.currentDir || "./" },
+          {
+            project_id: currentProject.id,
+            integration_id: actionConfig.gitlab_integration_id,
+            repo_owner: actionConfig.git_repo.split("/")[0],
+            repo_name: actionConfig.git_repo.split("/")[1],
+            branch: branch,
+          }
+        )
+        .then((res) => {
+          const { data } = res;
+
+          return {
+            data: data.map((x: FileType) => ({
+              ...x,
+              type: x.type === "tree" ? "dir" : "file",
+            })),
+          };
+        });
     }
     return api.getBranchContents(
       "<token>",

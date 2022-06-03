@@ -214,7 +214,7 @@ func (g *GitlabCI) Cleanup() error {
 		}
 	}
 
-	ciFileContentsMap["stage"] = newStages
+	ciFileContentsMap["stages"] = newStages
 
 	delete(ciFileContentsMap, jobName)
 

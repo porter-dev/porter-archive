@@ -286,6 +286,9 @@ func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
 			fmt.Sprintf("porter update --app \"%s\" --tag \"$PORTER_TAG\" --namespace \"%s\" --path \"%s\" --stream",
 				g.ReleaseName, g.ReleaseNamespace, g.FolderPath),
 		},
+		"tags": []string{
+			"porter-runner",
+		},
 	}
 }
 

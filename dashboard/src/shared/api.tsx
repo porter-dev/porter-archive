@@ -501,6 +501,21 @@ const detectBuildpack = baseApi<
   }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
+const detectGitlabBuildpack = baseApi<
+  { dir: string },
+  {
+    project_id: number;
+    integration_id: number;
+    repo_owner: string;
+    repo_name: string;
+    branch: string;
+  }
+>(
+  "GET",
+  ({ project_id, integration_id, repo_name, repo_owner, branch }) =>
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/buildpack/detect`
+);
+
 const getBranchContents = baseApi<
   {
     dir: string;
@@ -1956,6 +1971,7 @@ export default {
   destroyInfra,
   updateDatabaseStatus,
   detectBuildpack,
+  detectGitlabBuildpack,
   getBranchContents,
   getBranches,
   getMetadata,

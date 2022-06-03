@@ -115,7 +115,18 @@ export default class ContentsList extends Component<PropsType, StateType> {
       );
     }
 
-    return new Promise((_res, reject) => reject(new Error("Not implemented")));
+    return api.detectGitlabBuildpack(
+      "<token>",
+      { dir: this.state.currentDir || "." },
+      {
+        project_id: currentProject.id,
+        integration_id: actionConfig.gitlab_integration_id,
+
+        repo_owner: actionConfig.git_repo.split("/")[0],
+        repo_name: actionConfig.git_repo.split("/")[1],
+        branch: branch,
+      }
+    );
   };
 
   fetchProcfileContent = (procfilePath: string) => {

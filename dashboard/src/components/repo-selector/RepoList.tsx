@@ -175,7 +175,7 @@ const RepoList: React.FC<Props> = ({
           <LoadingWrapper>
             We couldn't reach gitlab to get your repos. You can
             <A
-              to={`/api/projects/${currentProject.id}/oauth/gitlab?integration_id=${currentProvider.integration_id}`}
+              to={`${window.location.origin}/api/projects/${currentProject.id}/oauth/gitlab?integration_id=${currentProvider.integration_id}`}
             >
               Connect your gitlab account to porter
             </A>
@@ -186,7 +186,9 @@ const RepoList: React.FC<Props> = ({
         return (
           <LoadingWrapper>
             No connected Github repos found. You can
-            <A to={"/api/integrations/github-app/install"}>
+            <A
+              to={`${window.location.origin}/api/integrations/github-app/install`}
+            >
               Install Porter in more repositories
             </A>
             or select another git provider.
@@ -278,7 +280,9 @@ const RepoList: React.FC<Props> = ({
                 <div>We couldn't find any git provider to connect with.</div>
                 <div>
                   You can
-                  <A to={"/api/integrations/github-app/install"}>
+                  <A
+                    to={`${window.location.origin}/api/integrations/github-app/install`}
+                  >
                     Add Github repositories
                   </A>
                   or

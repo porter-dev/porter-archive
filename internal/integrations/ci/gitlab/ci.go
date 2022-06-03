@@ -293,14 +293,34 @@ func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
 }
 
 func (g *GitlabCI) createGitlabSecret(client *gitlab.Client) error {
-	_, _, err := client.ProjectVariables.CreateVariable(g.pID, &gitlab.CreateProjectVariableOptions{
-		Key:    gitlab.String(g.getPorterTokenSecretName()),
-		Value:  gitlab.String(g.PorterToken),
-		Masked: gitlab.Bool(true),
-	})
+	_, resp, err := client.ProjectVariables.GetVariable(g.pID, g.getPorterTokenSecretName(),
+		&gitlab.GetProjectVariableOptions{})
+
+	if resp.StatusCode == http.StatusNotFound {
+		_, _, err = client.ProjectVariables.CreateVariable(g.pID, &gitlab.CreateProjectVariableOptions{
+			Key:    gitlab.String(g.getPorterTokenSecretName()),
+			Value:  gitlab.String(g.PorterToken),
+			Masked: gitlab.Bool(true),
+		})
+
+		if err != nil {
+			return fmt.Errorf("error creating porter token variable: %w", err)
+		}
+
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error getting porter token variable: %w", err)
+	}
+
+	_, _, err = client.ProjectVariables.UpdateVariable(g.pID, g.getPorterTokenSecretName(),
+		&gitlab.UpdateProjectVariableOptions{
+			Value:  gitlab.String(g.PorterToken),
+			Masked: gitlab.Bool(true),
+		},
+	)
 
 	if err != nil {
-		return fmt.Errorf("error creating porter token variable: %w", err)
+		return fmt.Errorf("error updating porter token variable: %w", err)
 	}
 
 	return nil

@@ -440,135 +440,138 @@ func (runtime *nodejsRuntime) DetectGitlab(
 		return nil
 	}
 
-	foundYarn := false
-	foundNPM := false
-	foundStandalone := false
-	for result := range results {
-		if result.string == yarn {
-			foundYarn = true
-		} else if result.string == npm {
-			foundNPM = true
-		} else if result.string == standalone {
-			foundStandalone = true
-		}
-	}
+	// foundYarn := false
+	// foundNPM := false
+	// foundStandalone := false
+	// for result := range results {
+	// 	if result.string == yarn {
+	// 		foundYarn = true
+	// 	} else if result.string == npm {
+	// 		foundNPM = true
+	// 	} else if result.string == standalone {
+	// 		foundStandalone = true
+	// 	}
+	// }
 
-	if foundYarn || foundNPM {
-		// it is safe to assume that the project contains a package.json
-		fileContent, _, err := client.RepositoryFiles.GetRawFile(
-			fmt.Sprintf("%s/%s", owner, name), fmt.Sprintf("%s/package.json", path),
-			&gitlab.GetRawFileOptions{
-				Ref: gitlab.String(ref),
-			},
-		)
-		if err != nil {
-			paketo.Others = append(paketo.Others, paketoBuildpackInfo)
-			heroku.Others = append(heroku.Others, herokuBuildpackInfo)
-			return fmt.Errorf("error fetching contents of package.json: %v", err)
-		}
-		var packageJSON struct {
-			Scripts map[string]string `json:"scripts"`
-			Engines struct {
-				Node string `json:"node"`
-			} `json:"engines"`
-		}
+	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
 
-		data := string(fileContent)
+	// if foundYarn || foundNPM {
+	// 	// it is safe to assume that the project contains a package.json
+	// 	fileContent, _, err := client.RepositoryFiles.GetRawFile(
+	// 		fmt.Sprintf("%s/%s", owner, name), fmt.Sprintf("%s/package.json", path),
+	// 		&gitlab.GetRawFileOptions{
+	// 			Ref: gitlab.String(ref),
+	// 		},
+	// 	)
+	// 	if err != nil {
+	// 		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+	// 		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+	// 		return fmt.Errorf("error fetching contents of package.json: %v", err)
+	// 	}
+	// 	var packageJSON struct {
+	// 		Scripts map[string]string `json:"scripts"`
+	// 		Engines struct {
+	// 			Node string `json:"node"`
+	// 		} `json:"engines"`
+	// 	}
 
-		err = json.NewDecoder(strings.NewReader(data)).Decode(&packageJSON)
-		if err != nil {
-			paketo.Others = append(paketo.Others, paketoBuildpackInfo)
-			heroku.Others = append(heroku.Others, herokuBuildpackInfo)
-			return fmt.Errorf("error decoding package.json contents to struct: %v", err)
-		}
+	// 	data := string(fileContent)
 
-		if packageJSON.Engines.Node == "" {
-			// we should now check for the node engine version in .nvmrc and then .node-version
-			nvmrcFound := false
-			nodeVersionFound := false
-			for i := 0; i < len(tree); i++ {
-				name := tree[i].Name
-				if name == ".nvmrc" {
-					nvmrcFound = true
-				} else if name == ".node-version" {
-					nodeVersionFound = true
-				}
-			}
+	// 	err = json.NewDecoder(strings.NewReader(data)).Decode(&packageJSON)
+	// 	if err != nil {
+	// 		paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+	// 		heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+	// 		return fmt.Errorf("error decoding package.json contents to struct: %v", err)
+	// 	}
 
-			if nvmrcFound {
-				// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
-				fileContent, _, err = client.RepositoryFiles.GetRawFile(
-					fmt.Sprintf("%s/%s", owner, name), fmt.Sprintf("%s/.nvmrc", path),
-					&gitlab.GetRawFileOptions{
-						Ref: gitlab.String(ref),
-					},
-				)
-				if err != nil {
-					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
-					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
-					return fmt.Errorf("error fetching contents of .nvmrc: %v", err)
-				}
-				data = string(fileContent)
+	// 	if packageJSON.Engines.Node == "" {
+	// 		// we should now check for the node engine version in .nvmrc and then .node-version
+	// 		nvmrcFound := false
+	// 		nodeVersionFound := false
+	// 		for i := 0; i < len(tree); i++ {
+	// 			name := tree[i].Name
+	// 			if name == ".nvmrc" {
+	// 				nvmrcFound = true
+	// 			} else if name == ".node-version" {
+	// 				nodeVersionFound = true
+	// 			}
+	// 		}
 
-				nvmrcVersion, err := validateNvmrc(data)
-				if err != nil {
-					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
-					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
-					return fmt.Errorf("error validating .nvmrc: %v", err)
-				}
-				nvmrcVersion = formatNvmrcContent(nvmrcVersion)
+	// 		if nvmrcFound {
+	// 			// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/nvmrc_parser.go
+	// 			fileContent, _, err = client.RepositoryFiles.GetRawFile(
+	// 				fmt.Sprintf("%s/%s", owner, name), fmt.Sprintf("%s/.nvmrc", path),
+	// 				&gitlab.GetRawFileOptions{
+	// 					Ref: gitlab.String(ref),
+	// 				},
+	// 			)
+	// 			if err != nil {
+	// 				paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+	// 				heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+	// 				return fmt.Errorf("error fetching contents of .nvmrc: %v", err)
+	// 			}
+	// 			data = string(fileContent)
 
-				if nvmrcVersion != "*" {
-					packageJSON.Engines.Node = data
-				}
-			}
+	// 			nvmrcVersion, err := validateNvmrc(data)
+	// 			if err != nil {
+	// 				paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+	// 				heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+	// 				return fmt.Errorf("error validating .nvmrc: %v", err)
+	// 			}
+	// 			nvmrcVersion = formatNvmrcContent(nvmrcVersion)
 
-			if packageJSON.Engines.Node == "" && nodeVersionFound {
-				// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/node_version_parser.go
-				fileContent, _, err = client.RepositoryFiles.GetRawFile(
-					fmt.Sprintf("%s/%s", owner, name), fmt.Sprintf("%s/.node-version", path),
-					&gitlab.GetRawFileOptions{
-						Ref: gitlab.String(ref),
-					},
-				)
-				if err != nil {
-					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
-					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
-					return fmt.Errorf("error fetching contents of .node-version: %v", err)
-				}
+	// 			if nvmrcVersion != "*" {
+	// 				packageJSON.Engines.Node = data
+	// 			}
+	// 		}
 
-				data = string(fileContent)
+	// 		if packageJSON.Engines.Node == "" && nodeVersionFound {
+	// 			// copy exact behavior of https://github.com/paketo-buildpacks/node-engine/blob/main/node_version_parser.go
+	// 			fileContent, _, err = client.RepositoryFiles.GetRawFile(
+	// 				fmt.Sprintf("%s/%s", owner, name), fmt.Sprintf("%s/.node-version", path),
+	// 				&gitlab.GetRawFileOptions{
+	// 					Ref: gitlab.String(ref),
+	// 				},
+	// 			)
+	// 			if err != nil {
+	// 				paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+	// 				heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+	// 				return fmt.Errorf("error fetching contents of .node-version: %v", err)
+	// 			}
 
-				nodeVersion, err := validateNodeVersion(data)
-				if err != nil {
-					paketo.Others = append(paketo.Others, paketoBuildpackInfo)
-					heroku.Others = append(heroku.Others, herokuBuildpackInfo)
-					return fmt.Errorf("error validating .node-version: %v", err)
-				}
-				if nodeVersion != "" {
-					packageJSON.Engines.Node = nodeVersion
-				}
-			}
-		}
+	// 			data = string(fileContent)
 
-		if packageJSON.Engines.Node == "" {
-			// use the default node engine version from https://github.com/paketo-buildpacks/node-engine/blob/main/buildpack.toml
-			packageJSON.Engines.Node = "16.*.*"
-		}
+	// 			nodeVersion, err := validateNodeVersion(data)
+	// 			if err != nil {
+	// 				paketo.Others = append(paketo.Others, paketoBuildpackInfo)
+	// 				heroku.Others = append(heroku.Others, herokuBuildpackInfo)
+	// 				return fmt.Errorf("error validating .node-version: %v", err)
+	// 			}
+	// 			if nodeVersion != "" {
+	// 				packageJSON.Engines.Node = nodeVersion
+	// 			}
+	// 		}
+	// 	}
 
-		paketoBuildpackInfo.Config = make(map[string]interface{})
-		paketoBuildpackInfo.Config["scripts"] = packageJSON.Scripts
-		paketoBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
-		paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+	// 	if packageJSON.Engines.Node == "" {
+	// 		// use the default node engine version from https://github.com/paketo-buildpacks/node-engine/blob/main/buildpack.toml
+	// 		packageJSON.Engines.Node = "16.*.*"
+	// 	}
 
-		herokuBuildpackInfo.Config = make(map[string]interface{})
-		herokuBuildpackInfo.Config["scripts"] = packageJSON.Scripts
-		herokuBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
-		heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
-	} else if foundStandalone {
-		paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
-		heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
-	}
+	// 	paketoBuildpackInfo.Config = make(map[string]interface{})
+	// 	paketoBuildpackInfo.Config["scripts"] = packageJSON.Scripts
+	// 	paketoBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
+	// 	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+
+	// 	herokuBuildpackInfo.Config = make(map[string]interface{})
+	// 	herokuBuildpackInfo.Config["scripts"] = packageJSON.Scripts
+	// 	herokuBuildpackInfo.Config["node_engine"] = packageJSON.Engines.Node
+	// 	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
+	// } else if foundStandalone {
+	// 	paketo.Detected = append(paketo.Detected, paketoBuildpackInfo)
+	// 	heroku.Detected = append(heroku.Detected, herokuBuildpackInfo)
+	// }
 
 	return nil
 }

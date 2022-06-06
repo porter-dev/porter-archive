@@ -1766,7 +1766,7 @@ func (repo *GitlabAppOAuthIntegrationRepository) ReadGitlabAppOAuthIntegration(
 	if err := repo.db.
 		Order("gitlab_app_o_auth_integrations.id desc").
 		Joins("INNER JOIN gitlab_integrations ON gitlab_integrations.id = gitlab_app_o_auth_integrations.gitlab_integration_id").
-		Joins("INNER JOIN o_auth_integrations ON o_auth_integrations.id = gitlab_app_o_auth_integrations.oauth_integration_id").
+		Joins("INNER JOIN o_auth_integrations ON o_auth_integrations.id = gitlab_app_o_auth_integrations.o_auth_integration_id").
 		Where("o_auth_integrations.user_id = ? AND o_auth_integrations.project_id = ? AND"+
 			" gitlab_integrations.id = ? AND gitlab_integrations.deleted_at IS NULL AND"+
 			" gitlab_app_o_auth_integrations.deleted_at IS NULL AND o_auth_integrations.deleted_at IS NULL",

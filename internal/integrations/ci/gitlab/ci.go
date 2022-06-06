@@ -95,42 +95,83 @@ func (g *GitlabCI) Setup() error {
 		return fmt.Errorf("error getting .gitlab-ci.yml file: %w", err)
 	} else {
 		// update .gitlab-ci.yml if needed
-		ciFileContentsMap := make(map[string]interface{})
-		err = yaml.Unmarshal(ciFile, ciFileContentsMap)
+
+		// to preserve the order of the YAML, we use a MapSlice
+		ciFileContentsMap := yaml.MapSlice{}
+		err = yaml.Unmarshal(ciFile, &ciFileContentsMap)
 
 		if err != nil {
 			return fmt.Errorf("error unmarshalling existing .gitlab-ci.yml: %w", err)
 		}
 
-		stages, ok := ciFileContentsMap["stages"].([]interface{})
+		var stagesInt []interface{}
+		stagesIdx := -1
 
-		if !ok {
-			return fmt.Errorf("error converting stages to interface slice")
+		for idx, elem := range ciFileContentsMap {
+			if key, ok := elem.Key.(string); ok {
+				if key == "stages" {
+					stages, ok := elem.Value.([]interface{})
+
+					if !ok {
+						return fmt.Errorf("error converting stages to interface slice")
+					}
+
+					stagesInt = stages
+					stagesIdx = idx
+
+					break
+				}
+			} else {
+				return fmt.Errorf("invalid key '%v' in .gitlab-ci.yml", elem.Key)
+			}
 		}
 
-		stageExists := false
+		// two cases can happen here:
+		// 1: "stages" exists
+		// 2: "stages" does not exist
 
-		for _, stage := range stages {
-			stageStr, ok := stage.(string)
-			if !ok {
-				return fmt.Errorf("error converting from interface to string")
+		if stagesIdx >= 0 { // 1: "stages" exists
+			stageExists := false
+
+			for _, stage := range stagesInt {
+				stageStr, ok := stage.(string)
+				if !ok {
+					return fmt.Errorf("error converting from interface to string")
+				}
+
+				if stageStr == jobName {
+					stageExists = true
+					break
+				}
 			}
 
-			if stageStr == jobName {
-				stageExists = true
-				break
+			if !stageExists {
+				stagesInt = append(stagesInt, jobName)
+
+				ciFileContentsMap[stagesIdx] = yaml.MapItem{
+					Key:   "stages",
+					Value: stagesInt,
+				}
 			}
+		} else { // 2: "stages" does not exist
+			stagesInt = append(stagesInt, jobName)
+
+			ciFileContentsMap = append(ciFileContentsMap, yaml.MapItem{
+				Key:   "stages",
+				Value: stagesInt,
+			})
 		}
 
-		if !stageExists {
-			stages = append(stages, jobName)
+		ciFileContentsMap = append(ciFileContentsMap, yaml.MapItem{
+			Key:   jobName,
+			Value: g.getCIJob(jobName),
+		})
 
-			ciFileContentsMap["stages"] = stages
+		contentsYAML, err := yaml.Marshal(ciFileContentsMap)
+
+		if err != nil {
+			return fmt.Errorf("error marshalling contents of .gitlab-ci.yml while updating to add porter job")
 		}
-
-		ciFileContentsMap[jobName] = g.getCIJob(jobName)
-
-		contentsYAML, _ := yaml.Marshal(ciFileContentsMap)
 
 		_, _, err = client.RepositoryFiles.UpdateFile(g.pID, ".gitlab-ci.yml", &gitlab.UpdateFileOptions{
 			Branch:        gitlab.String(g.defaultGitBranch),
@@ -188,37 +229,72 @@ func (g *GitlabCI) Cleanup() error {
 		return fmt.Errorf("error getting .gitlab-ci.yml file: %w", err)
 	}
 
-	ciFileContentsMap := make(map[string]interface{})
-	err = yaml.Unmarshal(ciFile, ciFileContentsMap)
+	ciFileContentsMap := yaml.MapSlice{}
+	err = yaml.Unmarshal(ciFile, &ciFileContentsMap)
 
 	if err != nil {
 		return fmt.Errorf("error unmarshalling existing .gitlab-ci.yml: %w", err)
 	}
 
-	stages, ok := ciFileContentsMap["stages"].([]interface{})
+	var stagesInt []interface{}
+	stagesIdx := -1
 
-	if !ok {
-		return fmt.Errorf("error converting stages to interface slice")
+	for idx, elem := range ciFileContentsMap {
+		if key, ok := elem.Key.(string); ok {
+			if key == "stages" {
+				stages, ok := elem.Value.([]interface{})
+
+				if !ok {
+					return fmt.Errorf("error converting stages to interface slice")
+				}
+
+				stagesInt = stages
+				stagesIdx = idx
+
+				break
+			}
+		} else {
+			return fmt.Errorf("invalid key '%v' in .gitlab-ci.yml", elem.Key)
+		}
 	}
 
-	var newStages []string
+	if stagesIdx >= 0 { // "stages" exists
+		var newStages []string
 
-	for _, stage := range stages {
-		stageStr, ok := stage.(string)
-		if !ok {
-			return fmt.Errorf("error converting from interface to string")
+		for _, stage := range stagesInt {
+			stageStr, ok := stage.(string)
+			if !ok {
+				return fmt.Errorf("error converting from interface to string")
+			}
+
+			if stageStr != jobName {
+				newStages = append(newStages, stageStr)
+			}
 		}
 
-		if stageStr != jobName {
-			newStages = append(newStages, stageStr)
+		ciFileContentsMap[stagesIdx] = yaml.MapItem{
+			Key:   "stages",
+			Value: newStages,
 		}
 	}
 
-	ciFileContentsMap["stages"] = newStages
+	newCIFileContentsMap := yaml.MapSlice{}
 
-	delete(ciFileContentsMap, jobName)
+	for _, elem := range ciFileContentsMap {
+		if key, ok := elem.Key.(string); ok {
+			if key != jobName {
+				newCIFileContentsMap = append(newCIFileContentsMap, elem)
+			}
+		} else {
+			return fmt.Errorf("invalid key '%v' in .gitlab-ci.yml", elem.Key)
+		}
+	}
 
-	contentsYAML, _ := yaml.Marshal(ciFileContentsMap)
+	contentsYAML, err := yaml.Marshal(newCIFileContentsMap)
+
+	if err != nil {
+		return fmt.Errorf("error unmarshalling contents of .gitlab-ci.yml while updating to remove porter job")
+	}
 
 	_, _, err = client.RepositoryFiles.UpdateFile(g.pID, ".gitlab-ci.yml", &gitlab.UpdateFileOptions{
 		Branch:        gitlab.String(g.defaultGitBranch),
@@ -327,7 +403,8 @@ func (g *GitlabCI) createGitlabSecret(client *gitlab.Client) error {
 }
 
 func (g *GitlabCI) deleteGitlabSecret(client *gitlab.Client) error {
-	_, err := client.ProjectVariables.RemoveVariable(g.pID, g.getPorterTokenSecretName(), &gitlab.RemoveProjectVariableOptions{})
+	_, err := client.ProjectVariables.RemoveVariable(g.pID, g.getPorterTokenSecretName(),
+		&gitlab.RemoveProjectVariableOptions{})
 
 	if err != nil {
 		return fmt.Errorf("error removing porter token variable: %w", err)
@@ -337,7 +414,7 @@ func (g *GitlabCI) deleteGitlabSecret(client *gitlab.Client) error {
 }
 
 func (g *GitlabCI) getPorterTokenSecretName() string {
-	return fmt.Sprintf("PORTER_TOKEN_%d", g.ProjectID)
+	return fmt.Sprintf("PORTER_TOKEN_%d_%s", g.ProjectID, getGitlabStageJobName(g.ReleaseName))
 }
 
 func getGitlabStageJobName(releaseName string) string {

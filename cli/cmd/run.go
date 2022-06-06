@@ -264,13 +264,29 @@ func (p *PorterRunSharedConfig) setSharedConfig() error {
 	pID := cliConf.Project
 	cID := cliConf.Cluster
 
-	kubeResp, err := p.Client.GetKubeconfig(context.TODO(), pID, cID)
+	var kubeBytes []byte
 
-	if err != nil {
-		return err
+	if cliConf.Kubeconfig == "" {
+		kubeResp, err := p.Client.GetKubeconfig(context.TODO(), pID, cID)
+
+		if err != nil {
+			return err
+		}
+
+		kubeBytes = kubeResp.Kubeconfig
+	} else {
+		file, err := os.Open(cliConf.Kubeconfig)
+
+		if err != nil {
+			return err
+		}
+
+		kubeBytes, err = io.ReadAll(file)
+
+		if err != nil {
+			return err
+		}
 	}
-
-	kubeBytes := kubeResp.Kubeconfig
 
 	cmdConf, err := clientcmd.NewClientConfigFromBytes(kubeBytes)
 

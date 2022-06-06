@@ -367,13 +367,13 @@ func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
 		},
 		"script": []string{
 			fmt.Sprintf(
-				`docker run --rm --entrypoint="" --workdir="/app"
-				-v /var/run/docker.sock:/var/run/docker.sock
-				-v $(pwd):/app
-				public.ecr.aws/o1j4x7p4/porter-cli:latest
-				porter update --host "%s" --project %d --cluster %d
-				--token "$%s" --app "%s"
-				--tag "$(echo $CI_COMMIT_SHA | cut -c1-7)" --namespace "%s" --stream`,
+				"docker run --rm --workdir=\"/app\" "+
+					"-v /var/run/docker.sock:/var/run/docker.sock "+
+					"-v $(pwd):/app "+
+					"public.ecr.aws/o1j4x7p4/porter-cli:latest "+
+					"update --host \"%s\" --project %d --cluster %d "+
+					"--token \"$%s\" --app \"%s\" "+
+					"--tag \"$(echo $CI_COMMIT_SHA | cut -c1-7)\" --namespace \"%s\" --stream",
 				g.ServerURL, g.ProjectID, g.ClusterID, g.getPorterTokenSecretName(),
 				g.ReleaseName, g.ReleaseNamespace,
 			),

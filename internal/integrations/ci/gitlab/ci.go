@@ -351,7 +351,10 @@ func (g *GitlabCI) getClient() (*gitlab.Client, error) {
 
 func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
 	return map[string]interface{}{
-		"image":   "public.ecr.aws/o1j4x7p4/porter-cli:latest",
+		"image": "docker:latest",
+		"services": []string{
+			"docker:dind",
+		},
 		"stage":   jobName,
 		"timeout": "20 minutes",
 		"variables": map[string]string{
@@ -363,13 +366,17 @@ func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
 			},
 		},
 		"script": []string{
-			fmt.Sprintf("export PORTER_HOST=\"%s\"", g.ServerURL),
-			fmt.Sprintf("export PORTER_PROJECT=\"%d\"", g.ProjectID),
-			fmt.Sprintf("export PORTER_CLUSTER=\"%d\"", g.ClusterID),
-			fmt.Sprintf("export PORTER_TOKEN=\"$%s\"", g.getPorterTokenSecretName()),
-			"export PORTER_TAG=\"$(echo $CI_COMMIT_SHA | cut -c1-7)\"",
-			fmt.Sprintf("porter update --app \"%s\" --tag \"$PORTER_TAG\" --namespace \"%s\" --path \"%s\" --stream",
-				g.ReleaseName, g.ReleaseNamespace, g.FolderPath),
+			fmt.Sprintf(
+				`docker run --rm --entrypoint="" --workdir="/app"
+				-v /var/run/docker.sock:/var/run/docker.sock
+				-v $(pwd):/app
+				public.ecr.aws/o1j4x7p4/porter-cli:latest
+				porter update --host "%s" --project %d --cluster %d
+				--token "$%s" --app "%s"
+				--tag "$(echo $CI_COMMIT_SHA | cut -c1-7)" --namespace "%s" --stream`,
+				g.ServerURL, g.ProjectID, g.ClusterID, g.getPorterTokenSecretName(),
+				g.ReleaseName, g.ReleaseNamespace,
+			),
 		},
 		"tags": []string{
 			"porter-runner",

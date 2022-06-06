@@ -97,7 +97,8 @@ func (p *ListGitlabReposHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	giProjects, resp, err := client.Projects.ListProjects(&gitlab.ListProjectsOptions{
-		Simple: gitlab.Bool(true),
+		Simple:     gitlab.Bool(true),
+		Membership: gitlab.Bool(true),
 	})
 
 	if resp.StatusCode == http.StatusUnauthorized {

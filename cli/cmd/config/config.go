@@ -1,6 +1,8 @@
 package config
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,8 +34,9 @@ type CLIConfig struct {
 
 	Token string `yaml:"token"`
 
-	Registry uint `yaml:"registry"`
-	HelmRepo uint `yaml:"helm_repo"`
+	Registry   uint   `yaml:"registry"`
+	HelmRepo   uint   `yaml:"helm_repo"`
+	Kubeconfig string `yaml:"kubeconfig"`
 }
 
 // InitAndLoadConfig populates the config object with the following precedence rules:
@@ -273,6 +276,30 @@ func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
 	}
 
 	config.HelmRepo = helmRepoID
+
+	return nil
+}
+
+func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
+	path, err := filepath.Abs(kubeconfig)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("%s does not exist", path)
+	}
+
+	viper.Set("kubeconfig", kubeconfig)
+	color.New(color.FgGreen).Printf("Set the path to kubeconfig as %s\n", kubeconfig)
+	err = viper.WriteConfig()
+
+	if err != nil {
+		return err
+	}
+
+	config.Kubeconfig = kubeconfig
 
 	return nil
 }

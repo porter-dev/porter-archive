@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -145,13 +146,29 @@ func portForward(user *types.GetAuthenticatedUserResponse, client *api.Client, a
 		pod = pods[0]
 	}
 
-	kubeResp, err := client.GetKubeconfig(context.Background(), cliConf.Project, cliConf.Cluster)
+	var kubeBytes []byte
 
-	if err != nil {
-		return err
+	if cliConf.Kubeconfig == "" {
+		kubeResp, err := client.GetKubeconfig(context.TODO(), cliConf.Project, cliConf.Cluster)
+
+		if err != nil {
+			return err
+		}
+
+		kubeBytes = kubeResp.Kubeconfig
+	} else {
+		file, err := os.Open(cliConf.Kubeconfig)
+
+		if err != nil {
+			return err
+		}
+
+		kubeBytes, err = io.ReadAll(file)
+
+		if err != nil {
+			return err
+		}
 	}
-
-	kubeBytes := kubeResp.Kubeconfig
 
 	cmdConf, err := clientcmd.NewClientConfigFromBytes(kubeBytes)
 

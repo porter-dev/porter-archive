@@ -423,8 +423,7 @@ func (g *GitlabCI) deleteGitlabSecret(client *gitlab.Client) error {
 }
 
 func (g *GitlabCI) getPorterTokenSecretName() string {
-	return fmt.Sprintf("PORTER_TOKEN_%d_%s", g.ProjectID,
-		fmt.Sprintf("porter-%s", strings.ToLower(strings.ReplaceAll(g.ReleaseName, "-", "_"))))
+	return fmt.Sprintf("PORTER_TOKEN_%d_%s", g.ProjectID, strings.ToLower(strings.ReplaceAll(g.ReleaseName, "-", "_")))
 }
 
 func getGitlabStageJobName(releaseName string) string {

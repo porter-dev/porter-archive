@@ -318,14 +318,23 @@ func (g *GitlabCI) getClient() (*gitlab.Client, error) {
 		return nil, err
 	}
 
-	oauthInt, err := g.Repo.GitlabAppOAuthIntegration().ReadGitlabAppOAuthIntegration(g.UserID, g.ProjectID, g.IntegrationID)
+	giOAuthInt, err := g.Repo.GitlabAppOAuthIntegration().ReadGitlabAppOAuthIntegration(g.UserID, g.ProjectID, g.IntegrationID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	accessToken, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, commonutils.GetGitlabOAuthConf(g.PorterConf, gi),
-		oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(oauthInt, g.Repo))
+	oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.ProjectID, giOAuthInt.GitlabIntegrationID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, _, err := oauth.GetAccessToken(
+		oauthInt.SharedOAuthModel,
+		commonutils.GetGitlabOAuthConf(g.PorterConf, gi),
+		oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(g.ProjectID, giOAuthInt, g.Repo),
+	)
 
 	if err != nil {
 		return nil, err

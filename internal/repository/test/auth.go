@@ -688,18 +688,3 @@ func (repo *GitlabAppOAuthIntegrationRepository) ReadGitlabAppOAuthIntegration(
 ) (*ints.GitlabAppOAuthIntegration, error) {
 	panic("not implemented")
 }
-
-func (repo *GitlabAppOAuthIntegrationRepository) UpdateGitlabAppOAuthIntegration(gi *ints.GitlabAppOAuthIntegration) (*ints.GitlabAppOAuthIntegration, error) {
-	if !repo.canQuery {
-		return nil, errors.New("Cannot write database")
-	}
-
-	if int(gi.ID-1) >= len(repo.gitlabAppOAuthIntegrations) || repo.gitlabAppOAuthIntegrations[gi.ID-1] == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	index := int(gi.ID - 1)
-	repo.gitlabAppOAuthIntegrations[index] = gi
-
-	return gi, nil
-}

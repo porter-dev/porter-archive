@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models/integrations"
 	"gorm.io/gorm"
 )
@@ -80,19 +81,36 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	oauthInt := &integrations.GitlabAppOAuthIntegration{
+	oauthInt := &integrations.OAuthIntegration{
 		SharedOAuthModel: integrations.SharedOAuthModel{
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
 			Expiry:       token.Expiry,
 		},
-		UserID:        userID,
-		ProjectID:     projID,
-		IntegrationID: integrationID,
+		Client:    types.OAuthGitlab,
+		UserID:    userID,
+		ProjectID: projID,
+	}
+
+	oauthInt, err = p.Repo().OAuthIntegration().CreateOAuthIntegration(oauthInt)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if oauthInt.ID == 0 {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating oauth integration for gitlab")))
+		return
+	}
+
+	giOAuthInt := &integrations.GitlabAppOAuthIntegration{
+		OAuthIntegrationID:  oauthInt.ID,
+		GitlabIntegrationID: integrationID,
 	}
 
 	// create the oauth integration first
-	_, err = p.Repo().GitlabAppOAuthIntegration().CreateGitlabAppOAuthIntegration(oauthInt)
+	_, err = p.Repo().GitlabAppOAuthIntegration().CreateGitlabAppOAuthIntegration(giOAuthInt)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

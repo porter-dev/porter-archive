@@ -194,7 +194,9 @@ func (c *Client) WriteGitlabCredential(giIntegration *integrations.GitlabIntegra
 	return c.postRequest(fmt.Sprintf("/v1/%s", c.getGitlabCredentialPath(giIntegration)), reqData, nil)
 }
 
-func (c *Client) GetGitlabCredential(giIntegration *integrations.GitlabIntegration) (*credentials.GitlabCredential, error) {
+func (c *Client) GetGitlabCredential(
+	giIntegration *integrations.GitlabIntegration,
+) (*credentials.GitlabCredential, error) {
 	resp := &GetGitlabCredentialResponse{}
 
 	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getGitlabCredentialPath(giIntegration)), resp)

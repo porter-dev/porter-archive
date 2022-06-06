@@ -60,18 +60,27 @@ type GitlabCredential struct {
 }
 
 type CredentialStorage interface {
+	// OAuth
 	WriteOAuthCredential(oauthIntegration *integrations.OAuthIntegration, data *OAuthCredential) error
 	GetOAuthCredential(oauthIntegration *integrations.OAuthIntegration) (*OAuthCredential, error)
 	CreateOAuthToken(oauthIntegration *integrations.OAuthIntegration) (string, error)
+
+	// GCP
 	WriteGCPCredential(gcpIntegration *integrations.GCPIntegration, data *GCPCredential) error
 	GetGCPCredential(gcpIntegration *integrations.GCPIntegration) (*GCPCredential, error)
 	CreateGCPToken(gcpIntegration *integrations.GCPIntegration) (string, error)
+
+	// AWS
 	WriteAWSCredential(awsIntegration *integrations.AWSIntegration, data *AWSCredential) error
 	GetAWSCredential(awsIntegration *integrations.AWSIntegration) (*AWSCredential, error)
 	CreateAWSToken(awsIntegration *integrations.AWSIntegration) (string, error)
+
+	// Azure
 	WriteAzureCredential(azIntegration *integrations.AzureIntegration, data *AzureCredential) error
 	GetAzureCredential(azIntegration *integrations.AzureIntegration) (*AzureCredential, error)
 	CreateAzureToken(azIntegration *integrations.AzureIntegration) (string, error)
+
+	// Gitlab
 	WriteGitlabCredential(giIntegration *integrations.GitlabIntegration, data *GitlabCredential) error
 	GetGitlabCredential(giIntegration *integrations.GitlabIntegration) (*GitlabCredential, error)
 	CreateGitlabToken(giIntegration *integrations.GitlabIntegration) (string, error)

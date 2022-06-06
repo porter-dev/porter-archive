@@ -324,7 +324,7 @@ func (g *GitlabCI) getClient() (*gitlab.Client, error) {
 		return nil, err
 	}
 
-	oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.ProjectID, giOAuthInt.GitlabIntegrationID)
+	oauthInt, err := g.Repo.OAuthIntegration().ReadOAuthIntegration(g.ProjectID, giOAuthInt.OAuthIntegrationID)
 
 	if err != nil {
 		return nil, err

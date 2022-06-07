@@ -406,14 +406,19 @@ func (g *GitlabCI) getCIJob(jobName string) yaml.MapSlice {
 	} else {
 		res = append(res,
 			yaml.MapItem{
-				Key:   "image",
-				Value: "public.ecr.aws/o1j4x7p4/porter-cli:latest",
+				Key: "image",
+				Value: map[string]interface{}{
+					"name": "public.ecr.aws/o1j4x7p4/porter-cli:latest",
+					"entrypoint": []string{
+						"",
+					},
+				},
 			},
 			yaml.MapItem{
 				Key: "script",
 				Value: []string{
 					fmt.Sprintf(
-						"update --host \"%s\" --project %d --cluster %d "+
+						"porter update --host \"%s\" --project %d --cluster %d "+
 							"--token \"$%s\" --app \"%s\" "+
 							"--tag \"$(echo $CI_COMMIT_SHA | cut -c1-7)\" --namespace \"%s\" --stream",
 						g.ServerURL, g.ProjectID, g.ClusterID, g.getPorterTokenSecretName(),

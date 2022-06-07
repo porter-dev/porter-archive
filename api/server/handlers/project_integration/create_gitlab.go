@@ -1,7 +1,9 @@
 package project_integration
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -32,6 +34,15 @@ func (p *CreateGitlabIntegration) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	request := &types.CreateGitlabRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
+	_, err := url.Parse(request.InstanceURL)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("malformed gitlab instance URL"), http.StatusBadRequest,
+		))
 		return
 	}
 

@@ -59,15 +59,15 @@ func (c *Client) GetKubeconfig(
 	ctx context.Context,
 	projectID uint,
 	clusterID uint,
-	localKubeconfig string,
+	localKubeconfigPath string,
 ) (*types.GetTemporaryKubeconfigResponse, error) {
 	resp := &types.GetTemporaryKubeconfigResponse{}
 
-	if localKubeconfig != "" {
-		color.New(color.FgBlue).Printf("using local kubeconfig: %s\n", localKubeconfig)
+	if localKubeconfigPath != "" {
+		color.New(color.FgBlue).Printf("using local kubeconfig: %s\n", localKubeconfigPath)
 
-		if _, err := os.Stat(localKubeconfig); !os.IsNotExist(err) {
-			file, err := os.Open(localKubeconfig)
+		if _, err := os.Stat(localKubeconfigPath); !os.IsNotExist(err) {
+			file, err := os.Open(localKubeconfigPath)
 
 			if err != nil {
 				return nil, err

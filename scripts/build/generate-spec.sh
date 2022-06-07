@@ -1,0 +1,1 @@
+swagger generate spec --scan-models --include github.com/porter-dev/porter --work-dir ./cmd/app/ --output openapi.yaml

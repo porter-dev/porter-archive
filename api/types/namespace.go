@@ -16,10 +16,30 @@ const (
 // ReleaseListFilter is a struct that represents the various filter options used for
 // retrieving the releases
 type ReleaseListFilter struct {
-	Namespace    string   `json:"namespace"`
-	Limit        int      `json:"limit"`
-	Skip         int      `json:"skip"`
-	ByDate       bool     `json:"byDate"`
+	// swagger:ignore
+	Namespace string `json:"namespace"`
+
+	// the pagination limit
+	//
+	// in: query
+	// example: 50
+	Limit int `json:"limit"`
+
+	// how many items to skip
+	//
+	// in: query
+	// example: 10
+	Skip int `json:"skip"`
+
+	// whether to sort by date
+	//
+	// in: query
+	// example: false
+	ByDate bool `json:"byDate"`
+
+	// which helm statuses to filter by
+	//
+	// in: query
 	StatusFilter []string `json:"statusFilter"`
 }
 
@@ -60,6 +80,7 @@ type ListReleasesRequest struct {
 	*ReleaseListFilter
 }
 
+// swagger:model
 type ListReleasesResponse []*release.Release
 
 type GetConfigMapRequest struct {

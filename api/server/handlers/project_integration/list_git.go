@@ -67,7 +67,6 @@ func (p *ListGitIntegrationHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	ghAuthUser, _, err := client.Users.Get(context.Background(), "")
 
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		p.WriteResult(w, r, res)
 		return
 	}

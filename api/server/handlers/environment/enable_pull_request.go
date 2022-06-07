@@ -101,7 +101,7 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	namespace := fmt.Sprintf("pr-%d-%s", request.Number, strings.ReplaceAll(env.GitRepoName, "_", "-"))
+	namespace := fmt.Sprintf("pr-%d-%s", request.Number, strings.ToLower(strings.ReplaceAll(env.GitRepoName, "_", "-")))
 
 	// create the deployment
 	depl, err := c.Repo().Environment().CreateDeployment(&models.Deployment{

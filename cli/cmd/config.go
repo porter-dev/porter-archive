@@ -155,7 +155,7 @@ var configSetHostCmd = &cobra.Command{
 }
 
 var configSetKubeconfigCmd = &cobra.Command{
-	Use:   "set-kubeconfig [host]",
+	Use:   "set-kubeconfig [kubeconfig-path]",
 	Args:  cobra.ExactArgs(1),
 	Short: "Saves the path to kubeconfig in the default configuration",
 	Run: func(cmd *cobra.Command, args []string) {

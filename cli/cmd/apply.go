@@ -115,6 +115,8 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 			return fmt.Errorf("namespace must be set by PORTER_NAMESPACE")
 		}
 
+		deplNamespace = strings.ToLower(strings.ReplaceAll(deplNamespace, "_", "-"))
+
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 
 		if err != nil {

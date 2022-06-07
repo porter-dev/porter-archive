@@ -81,8 +81,10 @@ const (
 	DockerHub RegistryService = "dockerhub"
 )
 
+// swagger:model ListRegistriesResponse
 type RegistryListResponse []Registry
 
+// swagger:model
 type CreateRegistryRequest struct {
 	URL                string `json:"url"`
 	Name               string `json:"name" form:"required"`
@@ -97,6 +99,13 @@ type CreateRegistryRequest struct {
 	ACRName              string `json:"acr_name"`
 }
 
+// swagger:model
+type CreateRegistryResponse Registry
+
+// swagger:model
+type GetRegistryResponse Registry
+
+// swagger:model
 type CreateRegistryRepositoryRequest struct {
 	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 }
@@ -125,6 +134,8 @@ type GetRegistryDOCRTokenRequest struct {
 	ServerURL string `schema:"server_url"`
 }
 
+// swagger:model ListRegistryRepositoriesResponse
 type ListRegistryRepositoryResponse []*RegistryRepository
 
+// swagger:model ListImagesResponse
 type ListImageResponse []*Image

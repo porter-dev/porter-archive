@@ -3,6 +3,7 @@ package gitlab
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
@@ -32,8 +33,9 @@ type GitlabCI struct {
 	FolderPath       string
 	PorterToken      string
 
-	defaultGitBranch string
-	pID              string
+	defaultGitBranch  string
+	pID               string
+	gitlabInstanceURL string
 }
 
 func (g *GitlabCI) Setup() error {
@@ -346,42 +348,100 @@ func (g *GitlabCI) getClient() (*gitlab.Client, error) {
 		return nil, err
 	}
 
+	g.gitlabInstanceURL = gi.InstanceURL
+
 	return client, nil
 }
 
-func (g *GitlabCI) getCIJob(jobName string) map[string]interface{} {
-	return map[string]interface{}{
-		"image": "docker:latest",
-		"services": []string{
-			"docker:dind",
-		},
-		"stage":   jobName,
-		"timeout": "20 minutes",
-		"variables": map[string]string{
-			"GIT_STRATEGY": "clone",
-		},
-		"rules": []map[string]string{
-			{
-				"if": fmt.Sprintf("$CI_COMMIT_BRANCH == \"%s\" && $CI_PIPELINE_SOURCE == \"push\"", g.GitBranch),
+func (g *GitlabCI) getCIJob(jobName string) yaml.MapSlice {
+	res := yaml.MapSlice{}
+	url, _ := url.Parse(g.gitlabInstanceURL)
+
+	res = append(res,
+		yaml.MapItem{
+			Key: "rules",
+			Value: []map[string]string{
+				{
+					"if": fmt.Sprintf("$CI_COMMIT_BRANCH == \"%s\" && $CI_PIPELINE_SOURCE == \"push\"", g.GitBranch),
+				},
 			},
 		},
-		"script": []string{
-			fmt.Sprintf(
-				"docker run --rm --workdir=\"/app\" "+
-					"-v /var/run/docker.sock:/var/run/docker.sock "+
-					"-v $(pwd):/app "+
-					"public.ecr.aws/o1j4x7p4/porter-cli:latest "+
-					"update --host \"%s\" --project %d --cluster %d "+
-					"--token \"$%s\" --app \"%s\" "+
-					"--tag \"$(echo $CI_COMMIT_SHA | cut -c1-7)\" --namespace \"%s\" --stream",
-				g.ServerURL, g.ProjectID, g.ClusterID, g.getPorterTokenSecretName(),
-				g.ReleaseName, g.ReleaseNamespace,
-			),
-		},
-		"tags": []string{
-			"porter-runner",
-		},
+	)
+
+	if url.Hostname() == "gitlab.com" || url.Hostname() == "www.gitlab.com" {
+		res = append(res,
+			yaml.MapItem{
+				Key:   "image",
+				Value: "docker:latest",
+			},
+			yaml.MapItem{
+				Key: "services",
+				Value: []string{
+					"docker:dind",
+				},
+			},
+			yaml.MapItem{
+				Key: "script",
+				Value: []string{
+					fmt.Sprintf(
+						"docker run --rm --workdir=\"/app\" "+
+							"-v /var/run/docker.sock:/var/run/docker.sock "+
+							"-v $(pwd):/app "+
+							"public.ecr.aws/o1j4x7p4/porter-cli:latest "+
+							"update --host \"%s\" --project %d --cluster %d "+
+							"--token \"$%s\" --app \"%s\" "+
+							"--tag \"$(echo $CI_COMMIT_SHA | cut -c1-7)\" --namespace \"%s\" --stream",
+						g.ServerURL, g.ProjectID, g.ClusterID, g.getPorterTokenSecretName(),
+						g.ReleaseName, g.ReleaseNamespace,
+					),
+				},
+			},
+		)
+	} else {
+		res = append(res,
+			yaml.MapItem{
+				Key:   "image",
+				Value: "public.ecr.aws/o1j4x7p4/porter-cli:latest",
+			},
+			yaml.MapItem{
+				Key: "script",
+				Value: []string{
+					fmt.Sprintf(
+						"update --host \"%s\" --project %d --cluster %d "+
+							"--token \"$%s\" --app \"%s\" "+
+							"--tag \"$(echo $CI_COMMIT_SHA | cut -c1-7)\" --namespace \"%s\" --stream",
+						g.ServerURL, g.ProjectID, g.ClusterID, g.getPorterTokenSecretName(),
+						g.ReleaseName, g.ReleaseNamespace,
+					),
+				},
+			},
+		)
 	}
+
+	res = append(res,
+		yaml.MapItem{
+			Key:   "stage",
+			Value: jobName,
+		},
+		yaml.MapItem{
+			Key: "tags",
+			Value: []string{
+				"porter-runner",
+			},
+		},
+		yaml.MapItem{
+			Key:   "timeout",
+			Value: "20 minutes",
+		},
+		yaml.MapItem{
+			Key: "variables",
+			Value: map[string]string{
+				"GIT_STRATEGY": "clone",
+			},
+		},
+	)
+
+	return res
 }
 
 func (g *GitlabCI) createGitlabSecret(client *gitlab.Client) error {

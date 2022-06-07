@@ -3,8 +3,12 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/api/types"
+
 	v1 "k8s.io/api/batch/v1"
 )
 
@@ -55,8 +59,33 @@ func (c *Client) GetKubeconfig(
 	ctx context.Context,
 	projectID uint,
 	clusterID uint,
+	localKubeconfigPath string,
 ) (*types.GetTemporaryKubeconfigResponse, error) {
 	resp := &types.GetTemporaryKubeconfigResponse{}
+
+	if localKubeconfigPath != "" {
+		color.New(color.FgBlue).Printf("using local kubeconfig: %s\n", localKubeconfigPath)
+
+		if _, err := os.Stat(localKubeconfigPath); !os.IsNotExist(err) {
+			file, err := os.Open(localKubeconfigPath)
+
+			if err != nil {
+				return nil, err
+			}
+
+			data, err := io.ReadAll(file)
+
+			if err != nil {
+				return nil, err
+			}
+
+			resp.Kubeconfig = append(resp.Kubeconfig, data...)
+
+			return resp, nil
+		}
+	}
+
+	color.New(color.FgBlue).Println("using remote kubeconfig")
 
 	err := c.getRequest(
 		fmt.Sprintf(

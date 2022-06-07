@@ -154,6 +154,20 @@ var configSetHostCmd = &cobra.Command{
 	},
 }
 
+var configSetKubeconfigCmd = &cobra.Command{
+	Use:   "set-kubeconfig [kubeconfig-path]",
+	Args:  cobra.ExactArgs(1),
+	Short: "Saves the path to kubeconfig in the default configuration",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := cliConf.SetKubeconfig(args[0])
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(configCmd)
 
@@ -162,6 +176,7 @@ func init() {
 	configCmd.AddCommand(configSetHostCmd)
 	configCmd.AddCommand(configSetRegistryCmd)
 	configCmd.AddCommand(configSetHelmRepoCmd)
+	configCmd.AddCommand(configSetKubeconfigCmd)
 }
 
 func printConfig() error {

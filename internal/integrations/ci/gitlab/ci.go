@@ -396,6 +396,12 @@ func (g *GitlabCI) getCIJob(jobName string) yaml.MapSlice {
 					),
 				},
 			},
+			yaml.MapItem{
+				Key: "tags",
+				Value: []string{
+					"docker",
+				},
+			},
 		)
 	} else {
 		res = append(res,
@@ -415,6 +421,12 @@ func (g *GitlabCI) getCIJob(jobName string) yaml.MapSlice {
 					),
 				},
 			},
+			yaml.MapItem{
+				Key: "tags",
+				Value: []string{
+					"porter-runner",
+				},
+			},
 		)
 	}
 
@@ -422,12 +434,6 @@ func (g *GitlabCI) getCIJob(jobName string) yaml.MapSlice {
 		yaml.MapItem{
 			Key:   "stage",
 			Value: jobName,
-		},
-		yaml.MapItem{
-			Key: "tags",
-			Value: []string{
-				"porter-runner",
-			},
 		},
 		yaml.MapItem{
 			Key:   "timeout",

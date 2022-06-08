@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package vault
@@ -182,6 +183,41 @@ func (c *Client) getAzureCredentialPath(azIntegration *integrations.AzureIntegra
 		c.secretPrefix,
 		azIntegration.ProjectID,
 		azIntegration.ID,
+	)
+}
+
+func (c *Client) WriteGitlabCredential(giIntegration *integrations.GitlabIntegration, data *credentials.GitlabCredential) error {
+	reqData := &CreateVaultSecretRequest{
+		Data: data,
+	}
+
+	return c.postRequest(fmt.Sprintf("/v1/%s", c.getGitlabCredentialPath(giIntegration)), reqData, nil)
+}
+
+func (c *Client) GetGitlabCredential(
+	giIntegration *integrations.GitlabIntegration,
+) (*credentials.GitlabCredential, error) {
+	resp := &GetGitlabCredentialResponse{}
+
+	err := c.getRequest(fmt.Sprintf("/v1/%s", c.getGitlabCredentialPath(giIntegration)), resp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Data.Data, nil
+}
+
+func (c *Client) CreateGitlabToken(giIntegration *integrations.GitlabIntegration) (string, error) {
+	panic("not implemented")
+}
+
+func (c *Client) getGitlabCredentialPath(giIntegration *integrations.GitlabIntegration) string {
+	return fmt.Sprintf(
+		"kv/data/secret/%s/%d/gitlab/%d",
+		c.secretPrefix,
+		giIntegration.ProjectID,
+		giIntegration.ID,
 	)
 }
 

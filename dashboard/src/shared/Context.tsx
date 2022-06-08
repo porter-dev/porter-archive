@@ -62,6 +62,8 @@ export interface GlobalContextType {
   setHasFinishedOnboarding: (onboardingStatus: boolean) => void;
   canCreateProject: boolean;
   setCanCreateProject: (canCreateProject: boolean) => void;
+  enableGitlab: boolean;
+  setEnableGitlab: (enableGitlab: boolean) => void;
 }
 
 /**
@@ -186,6 +188,10 @@ class ContextProvider extends Component<PropsType, StateType> {
     canCreateProject: false,
     setCanCreateProject: (canCreateProject: boolean) => {
       this.setState({ canCreateProject });
+    },
+    enableGitlab: false,
+    setEnableGitlab: (enableGitlab) => {
+      this.setState({ enableGitlab });
     },
   };
 

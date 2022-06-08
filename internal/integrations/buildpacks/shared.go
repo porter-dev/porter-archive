@@ -2,6 +2,7 @@ package buildpacks
 
 import (
 	"github.com/google/go-github/v41/github"
+	"github.com/xanzy/go-gitlab"
 )
 
 const (
@@ -48,13 +49,23 @@ type BuilderInfo struct {
 }
 
 type Runtime interface {
-	Detect(
+	DetectGithub(
 		*github.Client, // github client to pull contents of files
 		[]*github.RepositoryContent, // the root folder structure of the git repo
 		string, // owner
 		string, // name
 		string, // path
 		github.RepositoryContentGetOptions, // SHA, branch or tag
+		*BuilderInfo, // paketo
+		*BuilderInfo, // heroku
+	) error
+	DetectGitlab(
+		*gitlab.Client, // github client to pull contents of files
+		[]*gitlab.TreeNode, // the root folder structure of the git repo
+		string, // owner
+		string, // name
+		string, // path
+		string, // SHA, branch or tag
 		*BuilderInfo, // paketo
 		*BuilderInfo, // heroku
 	) error

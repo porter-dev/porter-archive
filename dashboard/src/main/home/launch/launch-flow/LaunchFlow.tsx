@@ -34,6 +34,7 @@ const defaultActionConfig: ActionConfigType = {
   image_repo_uri: "",
   git_branch: "",
   git_repo_id: 0,
+  kind: "github",
 };
 
 const LaunchFlow: React.FC<PropsType> = (props) => {
@@ -77,16 +78,31 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       imageRepoUri = selectedRegistry?.url;
     }
 
-    return {
-      git_repo: actionConfig.git_repo,
-      git_branch: branch,
-      registry_id: selectedRegistry?.id,
-      dockerfile_path: dockerfilePath,
-      folder_path: folderPath,
-      image_repo_uri: imageRepoUri,
-      git_repo_id: actionConfig.git_repo_id,
-      should_create_workflow: shouldCreateWorkflow,
-    };
+    if (actionConfig.kind === "github") {
+      return {
+        kind: "github",
+        git_repo: actionConfig.git_repo,
+        git_branch: branch,
+        registry_id: selectedRegistry?.id,
+        dockerfile_path: dockerfilePath,
+        folder_path: folderPath,
+        image_repo_uri: imageRepoUri,
+        git_repo_id: actionConfig.git_repo_id,
+        should_create_workflow: shouldCreateWorkflow,
+      };
+    } else {
+      return {
+        kind: "gitlab",
+        git_repo: actionConfig.git_repo,
+        git_branch: branch,
+        registry_id: selectedRegistry?.id,
+        dockerfile_path: dockerfilePath,
+        folder_path: folderPath,
+        image_repo_uri: imageRepoUri,
+        gitlab_integration_id: actionConfig.gitlab_integration_id,
+        should_create_workflow: shouldCreateWorkflow,
+      };
+    }
   };
 
   const handleSubmitAddon = async (wildcard?: any) => {
@@ -312,7 +328,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           template_name: props.currentTemplate.name.toLowerCase().trim(),
           template_version: props.currentTemplate?.currentVersion || "latest",
           name: release_name,
-          github_action_config: githubActionConfig,
+          git_action_config: githubActionConfig,
           build_config: buildConfig,
           synced_env_groups: synced.map((s: any) => s.name),
         },

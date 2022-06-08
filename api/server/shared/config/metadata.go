@@ -14,6 +14,7 @@ type Metadata struct {
 	Email              bool   `json:"email"`
 	Analytics          bool   `json:"analytics"`
 	Version            string `json:"version"`
+	Gitlab             bool   `json:"gitlab"`
 }
 
 func MetadataFromConf(sc *env.ServerConf, version string) *Metadata {
@@ -27,6 +28,7 @@ func MetadataFromConf(sc *env.ServerConf, version string) *Metadata {
 		Email:              sc.SendgridAPIKey != "",
 		Analytics:          sc.SegmentClientKey != "",
 		Version:            version,
+		Gitlab:             sc.EnableGitlab,
 	}
 }
 

@@ -7,6 +7,7 @@ const (
 	OAuthGithub       OAuthIntegrationClient = "github"
 	OAuthDigitalOcean OAuthIntegrationClient = "do"
 	OAuthGoogle       OAuthIntegrationClient = "google"
+	OAuthGitlab       OAuthIntegrationClient = "gitlab"
 )
 
 // OAuthIntegrationClient is the name of an OAuth mechanism client
@@ -159,3 +160,36 @@ type CreateAzureResponse struct {
 }
 
 type ListAzureResponse []*AzureIntegration
+
+type GitlabIntegration struct {
+	CreatedAt time.Time `json:"created_at"`
+
+	ID uint `json:"id"`
+
+	// The project that this integration belongs to
+	ProjectID uint `json:"project_id"`
+
+	InstanceURL string `json:"instance_url"`
+}
+
+type ListGitlabResponse []*GitlabIntegration
+
+type CreateGitlabRequest struct {
+	InstanceURL     string `json:"instance_url"`
+	AppClientID     string `json:"client_id"`
+	AppClientSecret string `json:"client_secret"`
+}
+
+type CreateGitlabResponse struct {
+	*GitlabIntegration
+}
+
+type GitIntegration struct {
+	Provider       string `json:"provider" form:"required"`
+	Name           string `json:"name,omitempty"`
+	InstallationID int64  `json:"installation_id,omitempty"`
+	InstanceURL    string `json:"instance_url,omitempty"`
+	IntegrationID  uint   `json:"integration_id,omitempty"`
+}
+
+type ListGitIntegrationResponse []*GitIntegration

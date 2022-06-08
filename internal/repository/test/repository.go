@@ -29,6 +29,8 @@ type TestRepository struct {
 	azIntegration             repository.AzureIntegrationRepository
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
+	gitlabIntegration         repository.GitlabIntegrationRepository
+	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
 	jobNotificationConfig     repository.JobNotificationConfigRepository
@@ -141,6 +143,14 @@ func (t *TestRepository) GithubAppOAuthIntegration() repository.GithubAppOAuthIn
 	return t.githubAppOAuthIntegration
 }
 
+func (t *TestRepository) GitlabIntegration() repository.GitlabIntegrationRepository {
+	return t.gitlabIntegration
+}
+
+func (t *TestRepository) GitlabAppOAuthIntegration() repository.GitlabAppOAuthIntegrationRepository {
+	return t.gitlabAppOAuthIntegration
+}
+
 func (t *TestRepository) SlackIntegration() repository.SlackIntegrationRepository {
 	return t.slackIntegration
 }
@@ -225,6 +235,8 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		azIntegration:             NewAzureIntegrationRepository(),
 		githubAppInstallation:     NewGithubAppInstallationRepository(canQuery),
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
+		gitlabIntegration:         NewGitlabIntegrationRepository(canQuery),
+		gitlabAppOAuthIntegration: NewGitlabAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		jobNotificationConfig:     NewJobNotificationConfigRepository(canQuery),

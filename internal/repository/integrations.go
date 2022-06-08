@@ -86,3 +86,16 @@ type GithubAppInstallationRepository interface {
 	ReadGithubAppInstallationByAccountIDs(accountIDs []int64) ([]*ints.GithubAppInstallation, error)
 	DeleteGithubAppInstallationByAccountID(accountID int64) error
 }
+
+// GitlabIntegrationRepository represents the set of queries on the GitlabIntegration model
+type GitlabIntegrationRepository interface {
+	CreateGitlabIntegration(gi *ints.GitlabIntegration) (*ints.GitlabIntegration, error)
+	ReadGitlabIntegration(projectID, id uint) (*ints.GitlabIntegration, error)
+	ListGitlabIntegrationsByProjectID(projectID uint) ([]*ints.GitlabIntegration, error)
+}
+
+// GitlabAppOAuthIntegrationRepository represents the set of queries on the GitlabOAuthIntegration model
+type GitlabAppOAuthIntegrationRepository interface {
+	CreateGitlabAppOAuthIntegration(gi *ints.GitlabAppOAuthIntegration) (*ints.GitlabAppOAuthIntegration, error)
+	ReadGitlabAppOAuthIntegration(userID, projectID, integrationID uint) (*ints.GitlabAppOAuthIntegration, error)
+}

@@ -67,6 +67,7 @@ export default class Main extends Component<PropsType, StateType> {
       .then((res) => {
         this.context.setEdition(res.data?.version);
         this.setState({ local: !res.data?.provisioner });
+        this.context.setEnableGitlab(res.data?.gitlab ? true : false);
       })
       .catch((err) => console.log(err));
   }

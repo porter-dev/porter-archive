@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 
 import { integrationList } from "shared/common";
@@ -9,16 +9,21 @@ import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";
 import IntegrationList from "./IntegrationList";
 import TitleSection from "components/TitleSection";
+import { Context } from "shared/Context";
 
 type PropsType = RouteComponentProps;
 
-const IntegrationCategoryStrings = [
-  "registry",
-  "slack",
-  ...(process.env.ENABLE_GITLAB ? ["gitlab"] : []),
-]; /*"kubernetes",*/
-
 const Integrations: React.FC<PropsType> = (props) => {
+  const { enableGitlab } = useContext(Context);
+
+  const IntegrationCategoryStrings = useMemo(() => {
+    if (!enableGitlab) {
+      return ["registry", "slack"];
+    }
+
+    return ["registry", "slack", "gitlab"];
+  }, [enableGitlab]);
+
   return (
     <StyledIntegrations>
       <Switch>

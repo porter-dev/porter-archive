@@ -24,6 +24,7 @@ type PorterRelease struct {
 	Tags            []string         `json:"tags,omitempty"`
 }
 
+// swagger:model
 type GetReleaseResponse Release
 
 type UpdateNotificationConfigRequest struct {
@@ -35,13 +36,14 @@ type UpdateNotificationConfigRequest struct {
 }
 
 type CreateReleaseBaseRequest struct {
-	RepoURL         string                 `schema:"repo_url"`
+	RepoURL         string                 `json:"-" schema:"repo_url"`
 	TemplateName    string                 `json:"template_name" form:"required"`
 	TemplateVersion string                 `json:"template_version" form:"required"`
 	Values          map[string]interface{} `json:"values"`
 	Name            string                 `json:"name" form:"required"`
 }
 
+// swagger:model
 type CreateReleaseRequest struct {
 	*CreateReleaseBaseRequest
 
@@ -62,6 +64,7 @@ type RollbackReleaseRequest struct {
 	Revision int `json:"revision" form:"required"`
 }
 
+// swagger:model UpdateReleaseRequest
 type UpgradeReleaseRequest struct {
 	Values       string `json:"values" form:"required"`
 	ChartVersion string `json:"version"`

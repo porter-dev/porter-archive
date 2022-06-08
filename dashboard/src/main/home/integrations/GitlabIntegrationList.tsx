@@ -42,7 +42,7 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
             );
           })
         ) : (
-          <Placeholder>No GitLab instances setted up yet.</Placeholder>
+          <Placeholder>No GitLab instances found</Placeholder>
         )}
       </StyledIntegrationList>
     </>

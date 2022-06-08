@@ -28,7 +28,7 @@ func NewRerunWorkflowHandler(
 }
 
 func (c *RerunWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	owner, name, ok := GetOwnerAndNameParams(c, w, r)
+	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 
 	if !ok {
 		return

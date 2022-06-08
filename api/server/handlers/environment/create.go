@@ -9,9 +9,9 @@ import (
 	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
@@ -41,7 +41,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
+	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 
 	if !ok {
 		return

@@ -3,14 +3,10 @@ package gitinstallation
 import (
 	"context"
 	"net/http"
-	"net/url"
 
 	ghinstallation "github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
-	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/models/integrations"
@@ -135,42 +131,4 @@ func permissionToString(permission *string) string {
 	}
 
 	return *permission
-}
-
-// GetOwnerAndNameParams gets the owner and name ref for the Github repo
-func GetOwnerAndNameParams(c handlers.PorterHandler, w http.ResponseWriter, r *http.Request) (string, string, bool) {
-	owner, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoOwner)
-
-	if reqErr != nil {
-		c.HandleAPIError(w, r, reqErr)
-		return "", "", false
-	}
-
-	name, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoName)
-
-	if reqErr != nil {
-		c.HandleAPIError(w, r, reqErr)
-		return "", "", false
-	}
-
-	return owner, name, true
-}
-
-// GetBranch gets the unencoded branch
-func GetBranch(c handlers.PorterHandler, w http.ResponseWriter, r *http.Request) (string, bool) {
-	branch, reqErr := requestutils.GetURLParamString(r, types.URLParamGitBranch)
-
-	if reqErr != nil {
-		c.HandleAPIError(w, r, reqErr)
-		return "", false
-	}
-
-	branch, err := url.QueryUnescape(branch)
-
-	if reqErr != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return "", false
-	}
-
-	return branch, true
 }

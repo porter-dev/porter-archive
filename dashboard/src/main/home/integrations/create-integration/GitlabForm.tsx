@@ -91,7 +91,7 @@ const GitlabForm: React.FC<Props> = () => {
     <>
       <StyledForm>
         <CredentialWrapper>
-          <Heading>Gitlab instance settings</Heading>
+          <Heading>GitLab Instance Settings</Heading>
 
           <InputRow
             type="string"
@@ -104,7 +104,7 @@ const GitlabForm: React.FC<Props> = () => {
           />
           <InputRow
             type="string"
-            label="Client ID"
+            label="Client Application ID"
             value={clientId}
             setValue={(val: string) => setClientId(val)}
             isRequired
@@ -123,8 +123,10 @@ const GitlabForm: React.FC<Props> = () => {
         </CredentialWrapper>
         <SaveButton
           onClick={submit}
-          text="Save new Gitlab instance"
+          makeFlush={true}
+          text="Save Gitlab Settings"
           status={buttonStatus || error?.message}
+          
         />
       </StyledForm>
     </>

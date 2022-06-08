@@ -10,12 +10,10 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/oauth"
+	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/xanzy/go-gitlab"
-	"gorm.io/gorm"
 )
 
 type ListGitlabRepoBranchesHandler struct {
@@ -35,77 +33,21 @@ func NewListGitlabRepoBranchesHandler(
 func (p *ListGitlabRepoBranchesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	gi, _ := r.Context().Value(types.GitlabIntegrationScope).(*ints.GitlabIntegration)
 
-	integrationID, reqErr := requestutils.GetURLParamUint(r, "integration_id")
+	owner, name, ok := commonutils.GetOwnerAndNameParams(p, w, r)
 
-	if reqErr != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
+	if !ok {
 		return
 	}
 
-	owner, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoOwner)
-
-	if reqErr != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
-		return
-	}
-
-	name, reqErr := requestutils.GetURLParamString(r, types.URLParamGitRepoName)
-
-	if reqErr != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
-		return
-	}
-
-	gi, err := p.Repo().GitlabIntegration().ReadGitlabIntegration(project.ID, integrationID)
+	client, err := getGitlabClient(p.Repo(), user.ID, project.ID, gi, p.Config())
 
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("no gitlab integration with ID: %d", integrationID), http.StatusNotFound))
-			return
+		if errors.Is(err, errUnauthorizedGitlabUser) {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(errUnauthorizedGitlabUser, http.StatusUnauthorized))
 		}
 
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	giAppOAuth, err := p.Repo().GitlabAppOAuthIntegration().ReadGitlabAppOAuthIntegration(user.ID, project.ID, integrationID)
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
-			return
-		}
-
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	oauthInt, err := p.Repo().OAuthIntegration().ReadOAuthIntegration(project.ID, giAppOAuth.OAuthIntegrationID)
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
-			return
-		}
-
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	accessToken, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, commonutils.GetGitlabOAuthConf(
-		p.Config(), gi,
-	), oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(project.ID, giAppOAuth, p.Repo()))
-
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid gitlab access token"),
-			http.StatusUnauthorized))
-		return
-	}
-
-	client, err := gitlab.NewOAuthClient(accessToken, gitlab.WithBaseURL(gi.InstanceURL))
-
-	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

@@ -242,7 +242,7 @@ const RepoList: React.FC<Props> = ({
     } else {
       return (
         <>
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", marginBottom: '10px' }}>
             <ProviderSelector
               values={providers}
               currentValue={currentProvider}
@@ -251,7 +251,7 @@ const RepoList: React.FC<Props> = ({
             <SearchBar
               setSearchFilter={setSearchFilter}
               disabled={repoError || repoLoading}
-              prompt={"Search repos..."}
+              prompt={"Search repos . . ."}
               fullWidth
             />
           </div>
@@ -277,13 +277,13 @@ const RepoList: React.FC<Props> = ({
                   justifyContent: "center",
                 }}
               >
-                <div>We couldn't find any git provider to connect with.</div>
+                <div>A connected Git provider wasn't found.</div>
                 <div>
                   You can
                   <A
                     to={`${window.location.origin}/api/integrations/github-app/install`}
                   >
-                    add GitHub repositories
+                    connect a GitHub repo
                   </A>
                   or
                   <A to={"/integrations"}>
@@ -312,67 +312,111 @@ const ProviderSelector = (props: {
   const [isOpen, setIsOpen] = useState(false);
   const icon = `devicon-${currentValue?.provider}-plain colored`;
   return (
-    <ProviderSelectorStyles.Wrapper>
+    <ProviderSelectorStyles.Wrapper isOpen={isOpen}>
+      <ProviderSelectorStyles.Icon className={icon} />
       <ProviderSelectorStyles.Button onClick={() => setIsOpen((prev) => !prev)}>
-        <ProviderSelectorStyles.Icon className={icon} />
         {currentValue?.name || currentValue?.instance_url}
       </ProviderSelectorStyles.Button>
+      <i className="material-icons">arrow_drop_down</i>
       {isOpen ? (
+        <>
+        <CloseOverlay onClick={() => setIsOpen(false)} />
         <ProviderSelectorStyles.OptionWrapper>
           {values.map((provider) => {
             return (
-              <ProviderSelectorStyles.Option onClick={() => onChange(provider)}>
-                <ProviderSelectorStyles.Icon
-                  className={`devicon-${provider?.provider}-plain colored`}
-                />
+              <Row>
+              <ProviderSelectorStyles.Icon
+                className={`devicon-${provider?.provider}-plain colored`}
+              />
+              <ProviderSelectorStyles.Option onClick={() => {
+                setIsOpen(false);
+                onChange(provider);
+              }}>
                 {provider?.name || provider?.instance_url}
               </ProviderSelectorStyles.Option>
+              </Row>
             );
           })}
         </ProviderSelectorStyles.OptionWrapper>
+        </>
       ) : null}
     </ProviderSelectorStyles.Wrapper>
   );
 };
 
+const CloseOverlay = styled.div`
+  width: 100vw;
+  height: 100vh;
+  cursor: default;
+  position: fixed;
+  top: 0;
+  left: 0;
+`;
+
+const Row = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const ProviderSelectorStyles = {
-  Wrapper: styled.div`
+  Wrapper: styled.div<{ isOpen?: boolean }>`
     position: relative;
     margin-bottom: 10px;
-    margin-right: 5px;
+    height: 40px;
+    display: flex;
+    min-width: 50%;
+    cursor: pointer;
+    margin-right: 10px;
+    margin-left: 2px;
+    align-items: center;
+
+    > i {
+      margin-left: -26px;
+      margin-right: 10px;
+      z-index: 0;
+      transform: ${props => props.isOpen ? "rotate(180deg)" : ""};
+    }
   `,
   Button: styled.div`
-    border-radius: 5px;
-    border: 1px solid white;
     height: 100%;
+    font-weight: bold;
+    font-size: 14px;
     border-bottom: 0;
-    border: 1px solid #ffffff55;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    z-index: 999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 6px 15px;
+    padding-left: 40px;
+    padding-right: 28px;
+    border-bottom: 2px solid #ffffff;
+    padding-top: 11px;
   `,
   OptionWrapper: styled.div`
+    top: 40px;
     position: absolute;
-    background-color: #202227;
+    background: #37393f;
+    border-radius: 3px;
+    width: calc(100% - 4px);
+    box-shadow: 0 8px 20px 0px #00000088;
   `,
   Option: styled.div`
+    font-weight: bold;
+    font-size: 14px;
+    margin-left: 40px;
+    height: 45px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 8px 10px;
-    display: flex;
-    align-items: center;
-    :not(:last-child) {
-      border-bottom: 1px solid black;
-      border-bottom-width: 90%;
-    }
-    :hover {
-      background-color: #363940;
-    }
+    width: 100%;
+    padding-top: 14px;
+    padding-left: 0;
   `,
   Icon: styled.span`
     font-size: 24px;
-    margin-right: 15px;
+    margin-left: 9px;
+    margin-right: -29px;
     color: white;
   `,
 };

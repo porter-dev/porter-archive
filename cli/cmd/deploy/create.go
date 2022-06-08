@@ -135,7 +135,7 @@ func (c *CreateAgent) CreateFromGithub(
 				Name:            opts.ReleaseName,
 			},
 			ImageURL: imageURL,
-			GithubActionConfig: &types.CreateGitActionConfigRequest{
+			GitActionConfig: &types.CreateGitActionConfigRequest{
 				GitRepo:              ghOpts.Repo,
 				GitBranch:            ghOpts.Branch,
 				ImageRepoURI:         imageURL,

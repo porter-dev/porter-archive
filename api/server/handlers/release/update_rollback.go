@@ -74,7 +74,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 			gitAction := rel.GitActionConfig
 
-			if gitAction != nil && gitAction.ID != 0 {
+			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
 				gaRunner, err := getGARunner(
 					c.Config(),
 					user.ID,

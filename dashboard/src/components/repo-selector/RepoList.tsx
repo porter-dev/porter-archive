@@ -173,13 +173,13 @@ const RepoList: React.FC<Props> = ({
       if (currentProvider.provider === "gitlab") {
         return (
           <LoadingWrapper>
-            We couldn't reach gitlab to get your repos. You can
+            GitLab could not be reached.
             <A
               to={`/api/projects/${currentProject.id}/oauth/gitlab?integration_id=${currentProvider.integration_id}`}
             >
-              Connect your gitlab account to porter
+              Connect your GitLab account to Porter
             </A>
-            or select another git provider.
+            or select another Git provider.
           </LoadingWrapper>
         );
       } else {
@@ -279,11 +279,11 @@ const RepoList: React.FC<Props> = ({
                 <div>
                   You can
                   <A to={"/api/integrations/github-app/install"}>
-                    Add Github repositories
+                    add GitHub repositories
                   </A>
                   or
                   <A to={"/integrations"}>
-                    Add a Gitlab instance to your project
+                    add a GitLab instance
                   </A>
                 </div>
               </div>

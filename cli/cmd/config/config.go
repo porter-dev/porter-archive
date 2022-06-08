@@ -303,8 +303,8 @@ func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 		return fmt.Errorf("%s does not exist", path)
 	}
 
-	viper.Set("kubeconfig", kubeconfig)
-	color.New(color.FgGreen).Printf("Set the path to kubeconfig as %s\n", kubeconfig)
+	viper.Set("kubeconfig", path)
+	color.New(color.FgGreen).Printf("Set the path to kubeconfig as %s\n", path)
 	err = viper.WriteConfig()
 
 	if err != nil {

@@ -40,7 +40,6 @@ jobs:
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
           SENTRY_ENV=frontend-development
-          ENABLE_GITLAB=true
           EOL
       - name: Build
         run: |
@@ -118,7 +117,6 @@ jobs:
         ENABLE_SENTRY=true
         SENTRY_DSN=${{secrets.SENTRY_DSN}}
         SENTRY_ENV=frontend-development
-        ENABLE_GITLAB=true
         EOL
     - name: Build
       run: |

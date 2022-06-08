@@ -19,6 +19,8 @@ type Environment struct {
 	Name string
 	Mode string
 
+	EnableNewComment bool
+
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
 	WebhookID string `gorm:"unique"`
@@ -32,6 +34,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
+
+		EnableNewComment: e.EnableNewComment,
 
 		Name: e.Name,
 		Mode: e.Mode,

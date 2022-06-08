@@ -16,6 +16,8 @@ import PullRequestCard from "./PullRequestCard";
 import DynamicLink from "components/DynamicLink";
 import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
 import SearchBar from "components/SearchBar";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import DocsHelper from "components/DocsHelper";
 
 const AvailableStatusFilters = [
   "all",
@@ -282,6 +284,24 @@ const DeploymentList = () => {
           </StyledStatusSelector>
         </ActionsWrapper>
       </Flex>
+      <Flex>
+        <ActionsWrapper>
+          <FlexWrap>
+            <CheckboxRow
+              label="Post a new comment"
+              checked={true}
+              toggle={() => {}}
+            />
+            <Div>
+              <DocsHelper
+                disableMargin
+                tooltipText="When enabled, Porter creates a new comment in the pull request after every deployment. Otherwise, the first comment is updated each time."
+                placement="top-end"
+              />
+            </Div>
+          </FlexWrap>
+        </ActionsWrapper>
+      </Flex>
       <Container>
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>
@@ -303,6 +323,15 @@ const mockRequest = () =>
   });
 
 const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Div = styled.div`
+  margin-bottom: -7px;
+`;
+
+const FlexWrap = styled.div`
   display: flex;
   align-items: center;
 `;

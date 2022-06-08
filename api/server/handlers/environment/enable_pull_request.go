@@ -35,7 +35,7 @@ func NewEnablePullRequestHandler(
 func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	request := &types.PullRequest{}
+	request := &types.EnablePullRequestRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return

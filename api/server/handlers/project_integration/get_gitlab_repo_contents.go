@@ -111,9 +111,21 @@ func (p *GetGitlabRepoContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	accessToken, _, err := oauth.GetAccessToken(giAppOAuth.SharedOAuthModel, commonutils.GetGitlabOAuthConf(
+	oauthInt, err := p.Repo().OAuthIntegration().ReadOAuthIntegration(project.ID, giAppOAuth.OAuthIntegrationID)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
+			return
+		}
+
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	accessToken, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, commonutils.GetGitlabOAuthConf(
 		p.Config(), gi,
-	), oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(giAppOAuth, p.Repo()))
+	), oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(project.ID, giAppOAuth, p.Repo()))
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid gitlab access token"),

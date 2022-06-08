@@ -46,7 +46,7 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
           <Title>Welcome to Porter</Title>
           <Subtitle>Just two things before getting started.</Subtitle>
           <SubtitleAlt>
-            <Num>1</Num> What is your company URL? *
+            <Num>1</Num> What is your company website? *
           </SubtitleAlt>
           <Input
             placeholder="ex: https://porter.run"

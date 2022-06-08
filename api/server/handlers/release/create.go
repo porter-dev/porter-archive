@@ -47,7 +47,6 @@ func NewCreateReleaseHandler(
 
 func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 	operationID := oauth.CreateRandomState()
@@ -167,7 +166,6 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if request.GitActionConfig != nil {
 		_, _, err := createGitAction(
 			c.Config(),
-			proj,
 			user.ID,
 			cluster.ProjectID,
 			cluster.ID,
@@ -246,7 +244,6 @@ func createReleaseFromHelmRelease(
 
 func createGitAction(
 	config *config.Config,
-	project *models.Project,
 	userID, projectID, clusterID uint,
 	request *types.CreateGitActionConfigRequest,
 	name, namespace string,
@@ -288,7 +285,7 @@ func createGitAction(
 
 	// if this isn't a dry run, generate the token
 	if !isDryRun {
-		encoded, err = getToken(config, project, userID, projectID, clusterID, request)
+		encoded, err = getToken(config, userID, projectID, clusterID, request)
 
 		if err != nil {
 			return nil, nil, err
@@ -394,7 +391,6 @@ func createGitAction(
 
 func getToken(
 	config *config.Config,
-	proj *models.Project,
 	userID, projectID, clusterID uint,
 	request *types.CreateGitActionConfigRequest,
 ) (string, error) {
@@ -478,10 +474,6 @@ func getToken(
 		PolicyName:      policyModel.Name,
 		Name:            strings.ToLower(fmt.Sprintf("repo-%s-token", request.GitRepo)),
 		SecretKey:       hashedToken,
-	}
-
-	if !proj.APITokensEnabled {
-		return "", fmt.Errorf("api tokens are not enabled for this project")
 	}
 
 	apiToken, err = config.Repo.APIToken().CreateAPIToken(apiToken)

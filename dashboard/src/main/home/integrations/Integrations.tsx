@@ -15,7 +15,7 @@ type PropsType = RouteComponentProps;
 const IntegrationCategoryStrings = [
   "registry",
   "slack",
-  "gitlab",
+  ...(process.env.ENABLE_GITLAB ? ["gitlab"] : []),
 ]; /*"kubernetes",*/
 
 const Integrations: React.FC<PropsType> = (props) => {
@@ -73,7 +73,7 @@ const Integrations: React.FC<PropsType> = (props) => {
 
             <IntegrationList
               currentCategory={""}
-              integrations={["registry", "slack", "gitlab"]}
+              integrations={IntegrationCategoryStrings}
               setCurrent={(x) =>
                 pushFiltered(props, `/integrations/${x}`, ["project_id"])
               }

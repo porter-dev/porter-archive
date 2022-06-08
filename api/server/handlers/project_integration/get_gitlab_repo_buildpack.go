@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -98,9 +100,21 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	accessToken, _, err := oauth.GetAccessToken(giAppOAuth.SharedOAuthModel, commonutils.GetGitlabOAuthConf(
+	oauthInt, err := p.Repo().OAuthIntegration().ReadOAuthIntegration(project.ID, giAppOAuth.OAuthIntegrationID)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unauthorized gitlab user"), http.StatusUnauthorized))
+			return
+		}
+
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	accessToken, _, err := oauth.GetAccessToken(oauthInt.SharedOAuthModel, commonutils.GetGitlabOAuthConf(
 		p.Config(), gi,
-	), oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(giAppOAuth, p.Repo()))
+	), oauth.MakeUpdateGitlabAppOAuthIntegrationFunction(project.ID, giAppOAuth, p.Repo()))
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid gitlab access token"),
@@ -115,8 +129,21 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	dir, err := url.QueryUnescape(request.Dir)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("malformed query param dir")))
+		return
+	}
+
+	dir = strings.TrimPrefix(dir, "./")
+
+	if len(dir) == 0 {
+		dir = "."
+	}
+
 	tree, resp, err := client.Repositories.ListTree(fmt.Sprintf("%s/%s", owner, name), &gitlab.ListTreeOptions{
-		Path: gitlab.String(request.Dir),
+		Path: gitlab.String(dir),
 		Ref:  gitlab.String(branch),
 	})
 
@@ -145,7 +172,7 @@ func (p *GetGitlabRepoBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http
 				}
 			}()
 			buildpacks.Runtimes[idx].DetectGitlab(
-				client, tree, owner, name, request.Dir, branch,
+				client, tree, owner, name, dir, branch,
 				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],
 			)
 			wg.Done()

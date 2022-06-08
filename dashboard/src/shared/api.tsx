@@ -570,7 +570,7 @@ const getGitlabProcfileContents = baseApi<
 >(
   "GET",
   ({ project_id, integration_id, owner, name, branch }) =>
-    `/projects/${project_id}/integrations/gitlab/${integration_id}/${owner}/${name}/${encodeURIComponent(
+    `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${owner}/${name}/${encodeURIComponent(
       branch
     )}/procfile`
 );

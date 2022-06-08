@@ -96,17 +96,12 @@ type GithubAppOAuthIntegration struct {
 }
 
 // GitlabAppOAuthIntegration is the model used for storing gitlab app oauth data
-// Unlike the above, this model is tied to a specific user, not a project
 type GitlabAppOAuthIntegration struct {
 	gorm.Model
-	SharedOAuthModel
 
-	// The id of the user that linked with this auth mechanism
-	UserID uint `json:"user_id"`
+	// The ID of the oauth integration linked with this auth mechanism
+	OAuthIntegrationID uint `json:"oauth_integration_id"`
 
-	// The id of the project that linked with this auth mechanism
-	ProjectID uint `json:"project_id"`
-
-	// The id of the gitlab integration linked with this auth mechanism
-	IntegrationID uint `json:"integration_id"`
+	// The ID of the gitlab integration linked with this auth mechanism
+	GitlabIntegrationID uint `json:"gitlab_integration_id"`
 }

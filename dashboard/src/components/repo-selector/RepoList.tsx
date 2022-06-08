@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import github from "assets/github.png";
 
@@ -9,6 +9,7 @@ import { Context } from "shared/Context";
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
 import DynamicLink from "components/DynamicLink";
+import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -242,7 +243,7 @@ const RepoList: React.FC<Props> = ({
     } else {
       return (
         <>
-          <div style={{ display: "flex", marginBottom: '10px' }}>
+          <div style={{ display: "flex", marginBottom: "10px" }}>
             <ProviderSelector
               values={providers}
               currentValue={currentProvider}
@@ -286,9 +287,7 @@ const RepoList: React.FC<Props> = ({
                     connect a GitHub repo
                   </A>
                   or
-                  <A to={"/integrations"}>
-                    add a GitLab instance
-                  </A>
+                  <A to={"/integrations"}>add a GitLab instance</A>
                 </div>
               </div>
             </LoadingWrapper>
@@ -308,11 +307,15 @@ const ProviderSelector = (props: {
   currentValue: any;
   onChange: (provider: any) => void;
 }) => {
+  const wrapperRef = useRef();
   const { values, currentValue, onChange } = props;
   const [isOpen, setIsOpen] = useState(false);
   const icon = `devicon-${currentValue?.provider}-plain colored`;
+  useOutsideAlerter(wrapperRef, () => {
+    setIsOpen(false);
+  });
   return (
-    <ProviderSelectorStyles.Wrapper isOpen={isOpen}>
+    <ProviderSelectorStyles.Wrapper ref={wrapperRef} isOpen={isOpen}>
       <ProviderSelectorStyles.Icon className={icon} />
       <ProviderSelectorStyles.Button onClick={() => setIsOpen((prev) => !prev)}>
         {currentValue?.name || currentValue?.instance_url}
@@ -320,43 +323,30 @@ const ProviderSelector = (props: {
       <i className="material-icons">arrow_drop_down</i>
       {isOpen ? (
         <>
-        <CloseOverlay onClick={() => setIsOpen(false)} />
-        <ProviderSelectorStyles.OptionWrapper>
-          {values.map((provider) => {
-            return (
-              <Row>
-              <ProviderSelectorStyles.Icon
-                className={`devicon-${provider?.provider}-plain colored`}
-              />
-              <ProviderSelectorStyles.Option onClick={() => {
-                setIsOpen(false);
-                onChange(provider);
-              }}>
-                {provider?.name || provider?.instance_url}
-              </ProviderSelectorStyles.Option>
-              </Row>
-            );
-          })}
-        </ProviderSelectorStyles.OptionWrapper>
+          <ProviderSelectorStyles.OptionWrapper>
+            {values.map((provider) => {
+              return (
+                <ProviderSelectorStyles.Option
+                  onClick={() => {
+                    setIsOpen(false);
+                    onChange(provider);
+                  }}
+                >
+                  <ProviderSelectorStyles.Icon
+                    className={`devicon-${provider?.provider}-plain colored`}
+                  />
+                  <ProviderSelectorStyles.Text>
+                    {provider?.name || provider?.instance_url}
+                  </ProviderSelectorStyles.Text>
+                </ProviderSelectorStyles.Option>
+              );
+            })}
+          </ProviderSelectorStyles.OptionWrapper>
         </>
       ) : null}
     </ProviderSelectorStyles.Wrapper>
   );
 };
-
-const CloseOverlay = styled.div`
-  width: 100vw;
-  height: 100vh;
-  cursor: default;
-  position: fixed;
-  top: 0;
-  left: 0;
-`;
-
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-`;
 
 const ProviderSelectorStyles = {
   Wrapper: styled.div<{ isOpen?: boolean }>`
@@ -374,7 +364,7 @@ const ProviderSelectorStyles = {
       margin-left: -26px;
       margin-right: 10px;
       z-index: 0;
-      transform: ${props => props.isOpen ? "rotate(180deg)" : ""};
+      transform: ${(props) => (props.isOpen ? "rotate(180deg)" : "")};
     }
   `,
   Button: styled.div`
@@ -401,6 +391,20 @@ const ProviderSelectorStyles = {
     box-shadow: 0 8px 20px 0px #00000088;
   `,
   Option: styled.div`
+    display: flex;
+    align-items: center;
+
+    :hover {
+      background-color: #ffffff22;
+    }
+  `,
+  Icon: styled.span`
+    font-size: 24px;
+    margin-left: 9px;
+    margin-right: -29px;
+    color: white;
+  `,
+  Text: styled.div`
     font-weight: bold;
     font-size: 14px;
     margin-left: 40px;
@@ -412,12 +416,6 @@ const ProviderSelectorStyles = {
     width: 100%;
     padding-top: 14px;
     padding-left: 0;
-  `,
-  Icon: styled.span`
-    font-size: 24px;
-    margin-left: 9px;
-    margin-right: -29px;
-    color: white;
   `,
 };
 

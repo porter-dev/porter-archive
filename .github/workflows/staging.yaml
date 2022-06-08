@@ -47,7 +47,6 @@ jobs:
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
           SENTRY_ENV=frontend-staging
-          ENABLE_GITLAB=true
           EOL
       - name: Build
         run: |

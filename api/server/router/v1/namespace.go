@@ -8,6 +8,26 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+// swagger:parameters getNamespace deleteNamespace createRelease
+type namespacePathParams struct {
+	// The project id
+	// in: path
+	// required: true
+	// minimum: 1
+	ProjectID uint `json:"project_id"`
+
+	// The cluster id
+	// in: path
+	// required: true
+	// minimum: 1
+	ClusterID uint `json:"cluster_id"`
+
+	// The namespace name
+	// in: path
+	// required: true
+	Namespace string `json:"namespace"`
+}
+
 func NewV1NamespaceScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
 		GetRoutes: GetV1NamespaceScopedRoutes,

@@ -49,6 +49,8 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	//  TODO!!!: validate the credentials here!!!
+
 	// create a registry model
 	regModel := &models.Registry{
 		Name:               request.Name,

@@ -494,6 +494,35 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// POST /api/projects/{project_id}/clusters/{cluster_id}/environment/{environment_id}/toggle_new_comment -> environment.NewToggleNewCommentHandler
+		toggleNewCommentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/environment/{environment_id}/toggle_new_comment",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		toggleNewCommentHandler := environment.NewToggleNewCommentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: toggleNewCommentEndpoint,
+			Handler:  toggleNewCommentHandler,
+			Router:   r,
+		})
+
 	}
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewClusterListNamespacesHandler

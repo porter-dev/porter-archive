@@ -71,6 +71,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitRepoName:       name,
 		Mode:              request.Mode,
 		WebhookID:         string(webhookUID),
+		EnableNewComment:  false,
 	})
 
 	if err != nil {

@@ -14,6 +14,7 @@ type Environment struct {
 	Mode                 string `json:"mode"`
 	DeploymentCount      uint   `json:"deployment_count"`
 	LastDeploymentStatus string `json:"last_deployment_status"`
+	EnableNewComment     bool   `json:"enable_new_comment"`
 }
 
 type CreateEnvironmentRequest struct {
@@ -102,11 +103,15 @@ type GetDeploymentRequest struct {
 	Namespace string `schema:"namespace" form:"required"`
 }
 
-type PullRequest struct {
+type EnablePullRequestRequest struct {
 	Title      string `json:"pr_title"`
 	Number     uint   `json:"pr_number"`
 	RepoOwner  string `json:"repo_owner"`
 	RepoName   string `json:"repo_name"`
 	BranchFrom string `json:"branch_from"`
 	BranchInto string `json:"branch_into"`
+}
+
+type ToggleNewCommentRequest struct {
+	Enable bool `json:"enable" form:"required"`
 }

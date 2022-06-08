@@ -314,37 +314,51 @@ const ProviderSelector = (props: {
   useOutsideAlerter(wrapperRef, () => {
     setIsOpen(false);
   });
+
+  if (!currentValue) {
+    return (
+      <ProviderSelectorStyles.Wrapper>
+        <Loading />
+      </ProviderSelectorStyles.Wrapper>
+    );
+  }
+
   return (
-    <ProviderSelectorStyles.Wrapper ref={wrapperRef} isOpen={isOpen}>
-      <ProviderSelectorStyles.Icon className={icon} />
-      <ProviderSelectorStyles.Button onClick={() => setIsOpen((prev) => !prev)}>
-        {currentValue?.name || currentValue?.instance_url}
-      </ProviderSelectorStyles.Button>
-      <i className="material-icons">arrow_drop_down</i>
-      {isOpen ? (
-        <>
-          <ProviderSelectorStyles.OptionWrapper>
-            {values.map((provider) => {
-              return (
-                <ProviderSelectorStyles.Option
-                  onClick={() => {
-                    setIsOpen(false);
-                    onChange(provider);
-                  }}
-                >
-                  <ProviderSelectorStyles.Icon
-                    className={`devicon-${provider?.provider}-plain colored`}
-                  />
-                  <ProviderSelectorStyles.Text>
-                    {provider?.name || provider?.instance_url}
-                  </ProviderSelectorStyles.Text>
-                </ProviderSelectorStyles.Option>
-              );
-            })}
-          </ProviderSelectorStyles.OptionWrapper>
-        </>
-      ) : null}
-    </ProviderSelectorStyles.Wrapper>
+    <>
+      <ProviderSelectorStyles.Wrapper ref={wrapperRef} isOpen={isOpen}>
+        <ProviderSelectorStyles.Icon className={icon} />
+
+        <ProviderSelectorStyles.Button
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          {currentValue?.name || currentValue?.instance_url}
+        </ProviderSelectorStyles.Button>
+        <i className="material-icons">arrow_drop_down</i>
+        {isOpen ? (
+          <>
+            <ProviderSelectorStyles.OptionWrapper>
+              {values.map((provider) => {
+                return (
+                  <ProviderSelectorStyles.Option
+                    onClick={() => {
+                      setIsOpen(false);
+                      onChange(provider);
+                    }}
+                  >
+                    <ProviderSelectorStyles.Icon
+                      className={`devicon-${provider?.provider}-plain colored`}
+                    />
+                    <ProviderSelectorStyles.Text>
+                      {provider?.name || provider?.instance_url}
+                    </ProviderSelectorStyles.Text>
+                  </ProviderSelectorStyles.Option>
+                );
+              })}
+            </ProviderSelectorStyles.OptionWrapper>
+          </>
+        ) : null}
+      </ProviderSelectorStyles.Wrapper>
+    </>
   );
 };
 

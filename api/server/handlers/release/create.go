@@ -2,6 +2,7 @@ package release
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -176,6 +177,14 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		)
 
 		if err != nil {
+			if errors.Is(err, actions.ErrProtectedBranch) {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("Error creating github action workflows. Cannot write to protected branch: %s",
+						request.GitActionConfig.GitBranch), http.StatusConflict,
+				))
+				return
+			}
+
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
@@ -344,11 +353,11 @@ func createGitAction(
 		// need to call Setup() in order to get the workflow file before writing the
 		// action config, in the case of a dry run, since the dry run does not create
 		// a git action config.
-		workflowYAML, githubErr := gaRunner.Setup()
+		workflowYAML, gitErr = gaRunner.Setup()
 
 		if gaRunner.DryRun {
-			if githubErr != nil {
-				return nil, nil, githubErr
+			if gitErr != nil {
+				return nil, nil, gitErr
 			}
 
 			return nil, workflowYAML, nil

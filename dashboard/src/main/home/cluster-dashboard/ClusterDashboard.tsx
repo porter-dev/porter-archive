@@ -29,8 +29,6 @@ import LastRunStatusSelector from "./LastRunStatusSelector";
 import loadable from "@loadable/component";
 import Loading from "components/Loading";
 import JobRunTable from "./chart/JobRunTable";
-import SwitchBase from "@material-ui/core/internal/SwitchBase";
-import Selector from "components/Selector";
 import TabSelector from "components/TabSelector";
 import TagFilter from "./TagFilter";
 
@@ -42,6 +40,14 @@ const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
 const LazyPreviewEnvironmentsRoutes = loadable(
   // @ts-ignore
   () => import("./preview-environments/routes.tsx"),
+  {
+    fallback: <Loading />,
+  }
+);
+
+const LazyStackRoutes = loadable(
+  // @ts-ignore
+  () => import("./stacks/routes.tsx"),
   {
     fallback: <Loading />,
   }
@@ -273,6 +279,9 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     let { setSidebar } = this.props;
     return (
       <Switch>
+        <Route path={"/stacks"}>
+          <LazyStackRoutes />
+        </Route>
         <Route path={"/preview-environments"}>
           <LazyPreviewEnvironmentsRoutes />
         </Route>

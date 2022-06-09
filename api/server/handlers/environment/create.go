@@ -152,6 +152,11 @@ func (c *CreateEnvironmentHandler) deleteEnvAndReportError(
 	}
 
 	if strings.Contains(err.Error(), "protected branch") {
+		if strings.Contains(err.Error(), "Please merge") {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusOK))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("Error creating preview environment workflow files on protected branch"), http.StatusConflict,
 		))

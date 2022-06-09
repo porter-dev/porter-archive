@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -134,8 +135,18 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 
 	if err != nil {
-		c.deleteEnvAndReportError(w, r, env, err)
-		return
+		unwrappedErr := errors.Unwrap(err)
+
+		if unwrappedErr != nil {
+			if errors.Is(unwrappedErr, actions.ErrProtectedBranch) {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
+			} else if errors.Is(unwrappedErr, actions.ErrCreatePRForProtectedBranch) {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
+			}
+		} else {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	c.WriteResult(w, r, env.ToEnvironmentType())
@@ -148,18 +159,6 @@ func (c *CreateEnvironmentHandler) deleteEnvAndReportError(
 
 	if delErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(delErr))
-		return
-	}
-
-	if strings.Contains(err.Error(), "protected branch") {
-		if strings.Contains(err.Error(), "Please merge") {
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusOK))
-			return
-		}
-
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("Error creating preview environment workflow files on protected branch"), http.StatusConflict,
-		))
 		return
 	}
 

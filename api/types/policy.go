@@ -17,6 +17,7 @@ const (
 	NamespaceScope       PermissionScope = "namespace"
 	SettingsScope        PermissionScope = "settings"
 	ReleaseScope         PermissionScope = "release"
+	StackScope           PermissionScope = "stack"
 )
 
 type NameOrUInt struct {
@@ -40,6 +41,7 @@ var ScopeHeirarchy = ScopeTree{
 	ProjectScope: {
 		ClusterScope: {
 			NamespaceScope: {
+				StackScope:   {},
 				ReleaseScope: {},
 			},
 		},

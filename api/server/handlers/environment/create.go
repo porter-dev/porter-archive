@@ -144,7 +144,20 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 func (c *CreateEnvironmentHandler) deleteEnvAndReportError(
 	w http.ResponseWriter, r *http.Request, env *models.Environment, err error,
 ) {
-	c.Repo().Environment().DeleteEnvironment(env)
+	_, delErr := c.Repo().Environment().DeleteEnvironment(env)
+
+	if delErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(delErr))
+		return
+	}
+
+	if strings.Contains(err.Error(), "protected branch") {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("Error creating preview environment workflow files on protected branch"), http.StatusConflict,
+		))
+		return
+	}
+
 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 }
 

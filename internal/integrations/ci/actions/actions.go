@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -19,6 +20,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 )
+
+var ErrProtectedBranch = errors.New("protected branch")
 
 type GithubActions struct {
 	ServerURL    string
@@ -76,6 +79,23 @@ func (g *GithubActions) Setup() ([]byte, error) {
 	}
 
 	g.defaultBranch = repo.GetDefaultBranch()
+
+	// check if the default branch is write-protected
+	branch, _, err := client.Repositories.GetBranch(
+		context.Background(),
+		g.GitRepoOwner,
+		g.GitRepoName,
+		g.defaultBranch,
+		true,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if branch.GetProtected() {
+		return nil, ErrProtectedBranch
+	}
 
 	if !g.DryRun {
 		// create porter token secret

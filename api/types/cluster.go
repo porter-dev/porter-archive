@@ -195,11 +195,13 @@ type CreateNamespaceRequest struct {
 	Name string `json:"name" form:"required"`
 }
 
+type CreateNamespaceResponseMeta struct {
+	Name string `json:"name,omitempty"`
+}
+
 // swagger:model
 type CreateNamespaceResponse struct {
-	Metadata struct {
-		Name string `json:"name,omitempty"`
-	} `json:"metadata,omitempty"`
+	Metadata CreateNamespaceResponseMeta `json:"metadata,omitempty"`
 }
 
 // swagger:model

@@ -39,4 +39,5 @@ type Repository interface {
 	APIToken() APITokenRepository
 	Policy() PolicyRepository
 	Tag() TagRepository
+	Stack() StackRepository
 }

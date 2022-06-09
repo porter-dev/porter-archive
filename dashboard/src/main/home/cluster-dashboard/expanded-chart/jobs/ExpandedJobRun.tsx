@@ -25,12 +25,58 @@ const readableDate = (s: string) => {
   return `${time} on ${date}`;
 };
 
-const renderStatus = (job: any, time: string) => {
+const getLatestPod = (pods: any[]) => {
+  if (!Array.isArray(pods)) {
+    return undefined;
+  }
+
+  return [...pods]
+    .sort((a: any, b: any) => {
+      if (!a?.metadata?.creationTimestamp) {
+        return 1;
+      }
+
+      if (!b?.metadata?.creationTimestamp) {
+        return -1;
+      }
+
+      return (
+        new Date(b?.metadata?.creationTimestamp).getTime() -
+        new Date(a?.metadata?.creationTimestamp).getTime()
+      );
+    })
+    .shift();
+};
+
+const renderStatus = (job: any, pods: any[], time: string) => {
   if (job.status?.succeeded >= 1) {
     return <Status color="#38a88a">Succeeded {time}</Status>;
   }
 
   if (job.status?.failed >= 1) {
+    const appPod = getLatestPod(pods);
+
+    if (appPod) {
+      const appContainerStatus = appPod?.status?.containerStatuses?.find(
+        (container: any) =>
+          container?.state?.terminated?.reason !== "Completed" &&
+          !container?.state?.running
+      );
+
+      if (appContainerStatus) {
+        const reason = appContainerStatus.state.terminated.reason;
+        const exitCode = appContainerStatus.state.terminated.exitCode;
+        const finishTime = appContainerStatus.state.terminated.finishedAt;
+
+        return (
+          <Status color="#cc3d42">
+            Failed at {time ? time : readableDate(finishTime)} - Reason:{" "}
+            {reason} - Exit Code: {exitCode}
+          </Status>
+        );
+      }
+    }
+
     return (
       <Status color="#cc3d42">
         Failed {time}
@@ -163,6 +209,7 @@ const ExpandedJobRun = ({
           <LastDeployed>
             {renderStatus(
               run,
+              pods,
               run.status.completionTime
                 ? readableDate(run.status.completionTime)
                 : ""

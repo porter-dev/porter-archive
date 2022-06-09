@@ -20,24 +20,29 @@ export type CreateStackBody = {
   }[];
 };
 
-export type CreateStackResponse = {
+export type CreateStackResponse = Stack;
+
+export type GetStacksResponse = Stack[];
+
+export type Stack = {
   id: string;
   name: string;
   created_at: string;
   updated_at: string;
 
-  revisions: {
-    id: number;
-    created_at: string;
-  }[];
+  revisions: StackRevision[];
 
-  latest_revision: {
-    id: number;
-    created_at: string;
+  latest_revision: StackRevision & {
     resources: AppResource[];
-
     source_configs: SourceConfig[];
   };
+};
+
+export type StackRevision = {
+  id: number;
+  created_at: string;
+  status: string; // type with enum
+  stack_id: string;
 };
 
 export type SourceConfig = {
@@ -48,6 +53,9 @@ export type SourceConfig = {
 
   image_repo_uri: string;
   image_tag: string;
+
+  stack_id: string;
+  stack_revision_id: number;
 
   build?: {
     method: "pack" | "docker";
@@ -67,4 +75,10 @@ export type AppResource = {
   stack_id: string;
 
   stack_source_config: SourceConfig;
+  stack_revision_id: number;
+  stack_app_data: {
+    template_repo_url: string;
+    template_name: string;
+    template_version: string;
+  };
 };

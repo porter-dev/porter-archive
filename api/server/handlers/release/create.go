@@ -2,6 +2,7 @@ package release
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -163,6 +164,15 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
+	if request.BuildConfig != nil {
+		_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
+	}
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	if request.GitActionConfig != nil {
 		_, _, err := createGitAction(
 			c.Config(),
@@ -176,18 +186,19 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		)
 
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			unwrappedErr := errors.Unwrap(err)
+
+			if unwrappedErr != nil {
+				if errors.Is(unwrappedErr, actions.ErrProtectedBranch) {
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
+				} else if errors.Is(unwrappedErr, actions.ErrCreatePRForProtectedBranch) {
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
+				}
+			} else {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
 		}
-	}
-
-	if request.BuildConfig != nil {
-		_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
-	}
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
 	}
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
@@ -344,11 +355,11 @@ func createGitAction(
 		// need to call Setup() in order to get the workflow file before writing the
 		// action config, in the case of a dry run, since the dry run does not create
 		// a git action config.
-		workflowYAML, githubErr := gaRunner.Setup()
+		workflowYAML, gitErr = gaRunner.Setup()
 
 		if gaRunner.DryRun {
-			if githubErr != nil {
-				return nil, nil, githubErr
+			if gitErr != nil {
+				return nil, nil, gitErr
 			}
 
 			return nil, workflowYAML, nil
@@ -382,11 +393,7 @@ func createGitAction(
 		return nil, nil, err
 	}
 
-	if gitErr != nil {
-		return nil, nil, gitErr
-	}
-
-	return ga.ToGitActionConfigType(), workflowYAML, nil
+	return ga.ToGitActionConfigType(), workflowYAML, gitErr
 }
 
 func getToken(

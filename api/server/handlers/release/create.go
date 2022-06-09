@@ -164,6 +164,15 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
+	if request.BuildConfig != nil {
+		_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
+	}
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	if request.GitActionConfig != nil {
 		_, _, err := createGitAction(
 			c.Config(),
@@ -177,26 +186,19 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		)
 
 		if err != nil {
-			if errors.Is(err, actions.ErrProtectedBranch) {
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-					fmt.Errorf("Error creating github action workflows. Cannot write to protected branch: %s",
-						request.GitActionConfig.GitBranch), http.StatusConflict,
-				))
+			unwrappedErr := errors.Unwrap(err)
+
+			if unwrappedErr != nil {
+				if errors.Is(unwrappedErr, actions.ErrProtectedBranch) {
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
+				} else if errors.Is(unwrappedErr, actions.ErrCreatePRForProtectedBranch) {
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
+				}
+			} else {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
-
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
 		}
-	}
-
-	if request.BuildConfig != nil {
-		_, err = createBuildConfig(c.Config(), release, request.BuildConfig)
-	}
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
 	}
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchSuccessTrack(
@@ -391,11 +393,7 @@ func createGitAction(
 		return nil, nil, err
 	}
 
-	if gitErr != nil {
-		return nil, nil, gitErr
-	}
-
-	return ga.ToGitActionConfigType(), workflowYAML, nil
+	return ga.ToGitActionConfigType(), workflowYAML, gitErr
 }
 
 func getToken(

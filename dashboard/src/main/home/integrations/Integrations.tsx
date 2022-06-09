@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 
 import { integrationList } from "shared/common";
@@ -9,12 +9,21 @@ import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";
 import IntegrationList from "./IntegrationList";
 import TitleSection from "components/TitleSection";
+import { Context } from "shared/Context";
 
 type PropsType = RouteComponentProps;
 
-const IntegrationCategoryStrings = ["registry", "slack"]; /*"kubernetes",*/
-
 const Integrations: React.FC<PropsType> = (props) => {
+  const { enableGitlab } = useContext(Context);
+
+  const IntegrationCategoryStrings = useMemo(() => {
+    if (!enableGitlab) {
+      return ["registry", "slack"];
+    }
+
+    return ["registry", "slack", "gitlab"];
+  }, [enableGitlab]);
+
   return (
     <StyledIntegrations>
       <Switch>
@@ -69,7 +78,7 @@ const Integrations: React.FC<PropsType> = (props) => {
 
             <IntegrationList
               currentCategory={""}
-              integrations={["registry", "slack"]}
+              integrations={IntegrationCategoryStrings}
               setCurrent={(x) =>
                 pushFiltered(props, `/integrations/${x}`, ["project_id"])
               }
@@ -106,8 +115,8 @@ const Flex = styled.div`
 
   > i {
     cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
+    font-size: 24px;
+    color: #969fbbaa;
     padding: 3px;
     margin-right: 11px;
     border-radius: 100px;

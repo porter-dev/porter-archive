@@ -29,6 +29,8 @@ type TestRepository struct {
 	azIntegration             repository.AzureIntegrationRepository
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
+	gitlabIntegration         repository.GitlabIntegrationRepository
+	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
 	jobNotificationConfig     repository.JobNotificationConfigRepository
@@ -40,6 +42,8 @@ type TestRepository struct {
 	buildConfig               repository.BuildConfigRepository
 	database                  repository.DatabaseRepository
 	allowlist                 repository.AllowlistRepository
+	apiToken                  repository.APITokenRepository
+	policy                    repository.PolicyRepository
 	tag                       repository.TagRepository
 }
 
@@ -139,6 +143,14 @@ func (t *TestRepository) GithubAppOAuthIntegration() repository.GithubAppOAuthIn
 	return t.githubAppOAuthIntegration
 }
 
+func (t *TestRepository) GitlabIntegration() repository.GitlabIntegrationRepository {
+	return t.gitlabIntegration
+}
+
+func (t *TestRepository) GitlabAppOAuthIntegration() repository.GitlabAppOAuthIntegrationRepository {
+	return t.gitlabAppOAuthIntegration
+}
+
 func (t *TestRepository) SlackIntegration() repository.SlackIntegrationRepository {
 	return t.slackIntegration
 }
@@ -183,6 +195,14 @@ func (t *TestRepository) Allowlist() repository.AllowlistRepository {
 	return t.allowlist
 }
 
+func (t *TestRepository) APIToken() repository.APITokenRepository {
+	return t.apiToken
+}
+
+func (t *TestRepository) Policy() repository.PolicyRepository {
+	return t.policy
+}
+
 func (t *TestRepository) Tag() repository.TagRepository {
 	return t.tag
 }
@@ -215,6 +235,8 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		azIntegration:             NewAzureIntegrationRepository(),
 		githubAppInstallation:     NewGithubAppInstallationRepository(canQuery),
 		githubAppOAuthIntegration: NewGithubAppOAuthIntegrationRepository(canQuery),
+		gitlabIntegration:         NewGitlabIntegrationRepository(canQuery),
+		gitlabAppOAuthIntegration: NewGitlabAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		jobNotificationConfig:     NewJobNotificationConfigRepository(canQuery),
@@ -226,6 +248,8 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		buildConfig:               NewBuildConfigRepository(canQuery),
 		database:                  NewDatabaseRepository(),
 		allowlist:                 NewAllowlistRepository(canQuery),
+		apiToken:                  NewAPITokenRepository(canQuery),
+		policy:                    NewPolicyRepository(canQuery),
 		tag:                       NewTagRepository(),
 	}
 }

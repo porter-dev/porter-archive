@@ -30,6 +30,7 @@ const (
 	InfraACR  InfraKind = "acr"
 
 	InfraRDS InfraKind = "rds"
+	InfraS3  InfraKind = "s3"
 )
 
 type Infra struct {

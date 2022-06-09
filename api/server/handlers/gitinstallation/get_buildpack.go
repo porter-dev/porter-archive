@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/integrations/buildpacks"
@@ -58,13 +59,13 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	owner, name, ok := GetOwnerAndNameParams(c, w, r)
+	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 
 	if !ok {
 		return
 	}
 
-	branch, ok := GetBranch(c, w, r)
+	branch, ok := commonutils.GetBranchParam(c, w, r)
 
 	if !ok {
 		return
@@ -103,7 +104,7 @@ func (c *GithubGetBuildpackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 					return
 				}
 			}()
-			buildpacks.Runtimes[idx].Detect(
+			buildpacks.Runtimes[idx].DetectGithub(
 				client, directoryContents, owner, name, request.Dir, repoContentOptions,
 				builderInfoMap[buildpacks.PaketoBuilder], builderInfoMap[buildpacks.HerokuBuilder],
 			)

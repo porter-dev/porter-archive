@@ -264,7 +264,7 @@ func (p *PorterRunSharedConfig) setSharedConfig() error {
 	pID := cliConf.Project
 	cID := cliConf.Cluster
 
-	kubeResp, err := p.Client.GetKubeconfig(context.TODO(), pID, cID)
+	kubeResp, err := p.Client.GetKubeconfig(context.Background(), pID, cID, cliConf.Kubeconfig)
 
 	if err != nil {
 		return err

@@ -9,11 +9,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewNamespaceScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewNamespaceScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetNamespaceScopedRoutes,
 		Children:  children,
 	}
@@ -24,8 +25,8 @@ func GetNamespaceScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes, projPath := getNamespaceRoutes(r, config, basePath, factory)
 
 	if len(children) > 0 {
@@ -46,7 +47,7 @@ func getNamespaceRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) ([]*Route, *types.Path) {
+) ([]*router.Route, *types.Path) {
 	relPath := "/namespaces/{namespace}"
 
 	newPath := &types.Path{
@@ -54,7 +55,7 @@ func getNamespaceRoutes(
 		RelativePath: relPath,
 	}
 
-	routes := make([]*Route, 0)
+	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/envgroups/list -> namespace.NewListEnvGroupsHandler
 	listEnvGroupsEndpoint := factory.NewAPIEndpoint(
@@ -79,7 +80,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listEnvGroupsEndpoint,
 		Handler:  listEnvGroupsHandler,
 		Router:   r,
@@ -109,7 +110,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: cloneEnvGroupEndpoint,
 		Handler:  cloneEnvGroupHandler,
 		Router:   r,
@@ -139,7 +140,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEnvGroupEndpoint,
 		Handler:  getEnvGroupHandler,
 		Router:   r,
@@ -169,7 +170,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getEnvGroupAllVersionsEndpoint,
 		Handler:  getEnvGroupAllVersionsHandler,
 		Router:   r,
@@ -199,7 +200,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createEnvGroupEndpoint,
 		Handler:  createEnvGroupHandler,
 		Router:   r,
@@ -229,7 +230,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateEnvGroupAppsEndpoint,
 		Handler:  updateEnvGroupAppsHandler,
 		Router:   r,
@@ -259,7 +260,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: removeEnvGroupAppEndpoint,
 		Handler:  removeEnvGroupAppHandler,
 		Router:   r,
@@ -289,7 +290,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteEnvGroupEndpoint,
 		Handler:  deleteEnvGroupHandler,
 		Router:   r,
@@ -319,7 +320,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: updateConfigMapEndpoint,
 		Handler:  updateConfigMapHandler,
 		Router:   r,
@@ -348,7 +349,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteCRDEndpoint,
 		Handler:  deleteCRDHandler,
 		Router:   r,
@@ -378,7 +379,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listReleasesEndpoint,
 		Handler:  listReleasesHandler,
 		Router:   r,
@@ -413,7 +414,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: streamPodLogsEndpoint,
 		Handler:  streamPodLogsHandler,
 		Router:   r,
@@ -447,7 +448,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: streamJobRunsEndpoint,
 		Handler:  streamJobRunsHandler,
 		Router:   r,
@@ -481,7 +482,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPreviousLogsEndpoint,
 		Handler:  getPreviousLogsHandler,
 		Router:   r,
@@ -514,7 +515,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getJobPodsEndpoint,
 		Handler:  getJobPodsHandler,
 		Router:   r,
@@ -546,7 +547,7 @@ func getNamespaceRoutes(
 		config,
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteJobEndpoint,
 		Handler:  deleteJobHandler,
 		Router:   r,
@@ -578,7 +579,7 @@ func getNamespaceRoutes(
 		config,
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: stopJobEndpoint,
 		Handler:  stopJobHandler,
 		Router:   r,
@@ -611,7 +612,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPodEndpoint,
 		Handler:  getPodHandler,
 		Router:   r,
@@ -643,7 +644,7 @@ func getNamespaceRoutes(
 		config,
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deletePodEndpoint,
 		Handler:  deletePodHandler,
 		Router:   r,
@@ -676,7 +677,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getPodEventsEndpoint,
 		Handler:  getPodEventsHandler,
 		Router:   r,
@@ -706,7 +707,7 @@ func getNamespaceRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getIngressEndpoint,
 		Handler:  getIngressHandler,
 		Router:   r,

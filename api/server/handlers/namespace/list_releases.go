@@ -35,6 +35,10 @@ func (c *ListReleasesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if request.ReleaseListFilter == nil {
+		request.ReleaseListFilter = &types.ReleaseListFilter{}
+	}
+
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 

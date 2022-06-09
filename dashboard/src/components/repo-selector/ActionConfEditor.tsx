@@ -32,6 +32,7 @@ const defaultActionConfig: ActionConfigType = {
   image_repo_uri: "",
   git_branch: "",
   git_repo_id: 0,
+  kind: "github",
 };
 
 const ActionConfEditor: React.FC<Props> = (props) => {
@@ -160,12 +161,10 @@ const ExpandedWrapper = styled.div`
   border-radius: 3px;
   border: 1px solid #ffffff44;
   max-height: 275px;
-  overflow-y: auto;
 `;
 
 const ExpandedWrapperAlt = styled(ExpandedWrapper)`
   border: 0;
-  overflow: hidden;
 `;
 
 const BackButton = styled.div`

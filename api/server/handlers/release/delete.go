@@ -1,7 +1,9 @@
 package release
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/integrations/ci/gitlab"
 	"github.com/porter-dev/porter/internal/models"
 	"helm.sh/helm/v3/pkg/release"
 )
@@ -56,28 +59,58 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			gitAction := rel.GitActionConfig
 
 			if gitAction != nil && gitAction.ID != 0 {
-				gaRunner, err := getGARunner(
-					c.Config(),
-					user.ID,
-					cluster.ProjectID,
-					cluster.ID,
-					rel.GitActionConfig,
-					helmRelease.Name,
-					helmRelease.Namespace,
-					rel,
-					helmRelease,
-				)
+				if gitAction.GitlabIntegrationID != 0 {
+					repoSplit := strings.Split(gitAction.GitRepo, "/")
 
-				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-					return
-				}
+					if len(repoSplit) != 2 {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("invalid formatting of repo name")))
+						return
+					}
 
-				err = gaRunner.Cleanup()
+					giRunner := &gitlab.GitlabCI{
+						ServerURL:        c.Config().ServerConf.ServerURL,
+						GitRepoOwner:     repoSplit[0],
+						GitRepoName:      repoSplit[1],
+						Repo:             c.Repo(),
+						ProjectID:        cluster.ProjectID,
+						ClusterID:        cluster.ID,
+						UserID:           user.ID,
+						IntegrationID:    gitAction.GitlabIntegrationID,
+						PorterConf:       c.Config(),
+						ReleaseName:      helmRelease.Name,
+						ReleaseNamespace: helmRelease.Namespace,
+					}
 
-				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-					return
+					err = giRunner.Cleanup()
+
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+						return
+					}
+				} else {
+					gaRunner, err := getGARunner(
+						c.Config(),
+						user.ID,
+						cluster.ProjectID,
+						cluster.ID,
+						rel.GitActionConfig,
+						helmRelease.Name,
+						helmRelease.Namespace,
+						rel,
+						helmRelease,
+					)
+
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+						return
+					}
+
+					err = gaRunner.Cleanup()
+
+					if err != nil {
+						c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+						return
+					}
 				}
 			}
 		}

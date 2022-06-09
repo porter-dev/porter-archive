@@ -606,3 +606,85 @@ func (repo *AzureIntegrationRepository) ListAzureIntegrationsByProjectID(
 ) ([]*ints.AzureIntegration, error) {
 	panic("unimplemented")
 }
+
+type GitlabIntegrationRepository struct {
+	canQuery           bool
+	gitlabIntegrations []*ints.GitlabIntegration
+}
+
+func NewGitlabIntegrationRepository(canQuery bool) repository.GitlabIntegrationRepository {
+	return &GitlabIntegrationRepository{
+		canQuery,
+		[]*ints.GitlabIntegration{},
+	}
+}
+
+func (repo *GitlabIntegrationRepository) CreateGitlabIntegration(gi *ints.GitlabIntegration) (*ints.GitlabIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	repo.gitlabIntegrations = append(repo.gitlabIntegrations, gi)
+	gi.ID = uint(len(repo.gitlabIntegrations))
+
+	return gi, nil
+}
+
+func (repo *GitlabIntegrationRepository) ReadGitlabIntegration(projectID, id uint) (*ints.GitlabIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	if int(id-1) >= len(repo.gitlabIntegrations) || repo.gitlabIntegrations[id-1] == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	index := int(id - 1)
+	return repo.gitlabIntegrations[index], nil
+}
+func (repo *GitlabIntegrationRepository) ListGitlabIntegrationsByProjectID(projectID uint) ([]*ints.GitlabIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	res := make([]*ints.GitlabIntegration, 0)
+
+	for _, gitlabAM := range repo.gitlabIntegrations {
+		if gitlabAM.ProjectID == projectID {
+			res = append(res, gitlabAM)
+		}
+	}
+
+	return res, nil
+}
+
+type GitlabAppOAuthIntegrationRepository struct {
+	canQuery                   bool
+	gitlabAppOAuthIntegrations []*ints.GitlabAppOAuthIntegration
+}
+
+func NewGitlabAppOAuthIntegrationRepository(canQuery bool) repository.GitlabAppOAuthIntegrationRepository {
+	return &GitlabAppOAuthIntegrationRepository{
+		canQuery,
+		[]*ints.GitlabAppOAuthIntegration{},
+	}
+}
+
+func (repo *GitlabAppOAuthIntegrationRepository) CreateGitlabAppOAuthIntegration(
+	gi *ints.GitlabAppOAuthIntegration,
+) (*ints.GitlabAppOAuthIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("cannot write database")
+	}
+
+	repo.gitlabAppOAuthIntegrations = append(repo.gitlabAppOAuthIntegrations, gi)
+	gi.ID = uint(len(repo.gitlabAppOAuthIntegrations))
+
+	return gi, nil
+}
+
+func (repo *GitlabAppOAuthIntegrationRepository) ReadGitlabAppOAuthIntegration(
+	userID, projectID, integrationID uint,
+) (*ints.GitlabAppOAuthIntegration, error) {
+	panic("not implemented")
+}

@@ -55,5 +55,6 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		Namespace: namespace,
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	c.WriteResult(w, r, res)
 }

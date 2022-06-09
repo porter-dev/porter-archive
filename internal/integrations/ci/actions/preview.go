@@ -397,7 +397,7 @@ func createNewBranch(
 	client *github.Client,
 	gitRepoOwner, gitRepoName, baseBranch, headBranch string,
 ) error {
-	_, _, err := client.Repositories.GetBranch(
+	_, resp, err := client.Repositories.GetBranch(
 		context.Background(), gitRepoOwner, gitRepoName, headBranch, true,
 	)
 
@@ -412,7 +412,7 @@ func createNewBranch(
 		if err != nil {
 			return err
 		}
-	} else {
+	} else if resp.StatusCode != http.StatusNotFound {
 		return err
 	}
 

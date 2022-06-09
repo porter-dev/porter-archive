@@ -31,6 +31,13 @@ func NewCreateGitlabIntegration(
 func (p *CreateGitlabIntegration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
+	metadata := p.Config().Metadata
+
+	if !metadata.Gitlab {
+		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("gitlab integration endpoints are not enabled")))
+		return
+	}
+
 	request := &types.CreateGitlabRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, request); !ok {

@@ -346,6 +346,8 @@ export interface ContextProps {
   setHasFinishedOnboarding: (onboardingStatus: boolean) => void;
   canCreateProject: boolean;
   setCanCreateProject: (canCreateProject: boolean) => void;
+  enableGitlab: boolean;
+  setEnableGitlab: (enableGitlab: boolean) => void;
 }
 
 export enum JobStatusType {

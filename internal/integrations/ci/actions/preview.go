@@ -88,7 +88,7 @@ func SetupEnv(opts *EnvOpts) error {
 	}
 
 	if githubBranch.GetProtected() {
-		err = createBranchIfNotExists(opts.Client, opts.GitRepoOwner, opts.GitRepoName, defaultBranch, "porter-preview")
+		err = createNewBranch(opts.Client, opts.GitRepoOwner, opts.GitRepoName, defaultBranch, "porter-preview")
 
 		if err != nil {
 			return fmt.Errorf(
@@ -163,7 +163,7 @@ func SetupEnv(opts *EnvOpts) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "409 Could not create file") {
 			// possibly a write-protected branch
-			err = createBranchIfNotExists(opts.Client, opts.GitRepoOwner, opts.GitRepoName, defaultBranch, "porter-preview")
+			err = createNewBranch(opts.Client, opts.GitRepoOwner, opts.GitRepoName, defaultBranch, "porter-preview")
 
 			if err != nil {
 				return fmt.Errorf("write-protected branch %s. Error creating porter-preview branch: %w", defaultBranch, err)
@@ -266,6 +266,18 @@ func DeleteEnv(opts *EnvOpts) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	githubBranch, _, err := opts.Client.Repositories.GetBranch(
+		context.Background(), opts.GitRepoOwner, opts.GitRepoName, defaultBranch, true,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if githubBranch.GetProtected() {
+		return ErrProtectedBranch
 	}
 
 	err = deleteGithubFile(
@@ -381,38 +393,45 @@ func getPreviewDeleteActionYAML(opts *EnvOpts) ([]byte, error) {
 	return yaml.Marshal(actionYAML)
 }
 
-func createBranchIfNotExists(
+func createNewBranch(
 	client *github.Client,
 	gitRepoOwner, gitRepoName, baseBranch, headBranch string,
 ) error {
-	_, resp, err := client.Repositories.GetBranch(
+	_, _, err := client.Repositories.GetBranch(
 		context.Background(), gitRepoOwner, gitRepoName, headBranch, true,
 	)
 
-	if resp.StatusCode == http.StatusNotFound {
-		base, _, err := client.Repositories.GetBranch(
-			context.Background(), gitRepoOwner, gitRepoName, baseBranch, true,
+	headBranchRef := fmt.Sprintf("refs/heads/%s", headBranch)
+
+	if err == nil {
+		// delete the stale branch
+		_, err := client.Git.DeleteRef(
+			context.Background(), gitRepoOwner, gitRepoName, headBranchRef,
 		)
 
 		if err != nil {
 			return err
 		}
-
-		_, _, err = client.Git.CreateRef(
-			context.Background(), gitRepoOwner, gitRepoName, &github.Reference{
-				Ref: github.String(fmt.Sprintf("refs/heads/%s", headBranch)),
-				Object: &github.GitObject{
-					SHA: base.Commit.SHA,
-				},
-			},
-		)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+	} else {
+		return err
 	}
+
+	base, _, err := client.Repositories.GetBranch(
+		context.Background(), gitRepoOwner, gitRepoName, baseBranch, true,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	_, _, err = client.Git.CreateRef(
+		context.Background(), gitRepoOwner, gitRepoName, &github.Reference{
+			Ref: github.String(headBranchRef),
+			Object: &github.GitObject{
+				SHA: base.Commit.SHA,
+			},
+		},
+	)
 
 	if err != nil {
 		return err

@@ -119,7 +119,7 @@ func (g *GithubActions) Setup() ([]byte, error) {
 		isOAuth := g.GithubOAuthIntegration != nil
 
 		if githubBranch.GetProtected() {
-			err = createBranchIfNotExists(client, g.GitRepoOwner, g.GitRepoName, branch, "porter-setup")
+			err = createNewBranch(client, g.GitRepoOwner, g.GitRepoName, branch, "porter-setup")
 
 			if err != nil {
 				return nil, fmt.Errorf(

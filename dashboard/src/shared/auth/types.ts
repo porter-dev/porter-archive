@@ -4,7 +4,10 @@ export type ScopeType =
   | "settings"
   | "namespace"
   | "application"
+  | "release"
+  | "registry"
   | "env_group"
+  | "infra"
   | "job"
   | "integrations";
 

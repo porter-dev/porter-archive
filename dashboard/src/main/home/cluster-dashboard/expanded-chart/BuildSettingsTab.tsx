@@ -231,6 +231,21 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     }
   };
 
+  const getActionConfig = () => {
+    const actionConf = chart.git_action_config;
+    if (actionConf && actionConf.gitlab_integration_id) {
+      return {
+        kind: "gitlab",
+        ...actionConf,
+      } as FullActionConfigType;
+    }
+
+    return {
+      kind: "github",
+      ...actionConf,
+    } as FullActionConfigType;
+  };
+
   return (
     <Wrapper>
       {isPreviousVersion ? (
@@ -286,7 +301,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
             <Heading>Buildpack Settings</Heading>
             <BuildpackConfigSection
               currentChart={chart}
-              actionConfig={chart.git_action_config}
+              actionConfig={getActionConfig()}
               onChange={(buildConfig) => setBuildConfig(buildConfig)}
             />
           </>
@@ -382,28 +397,45 @@ const BuildpackConfigSection: React.FC<{
     );
   };
 
+  const detectBuildpack = () => {
+    if (actionConfig.kind === "gitlab") {
+      return api.detectGitlabBuildpack<DetectBuildpackResponse>(
+        "<token>",
+        { dir: actionConfig.folder_path || "." },
+        {
+          project_id: currentProject.id,
+          integration_id: actionConfig.gitlab_integration_id,
+
+          repo_owner: actionConfig.git_repo.split("/")[0],
+          repo_name: actionConfig.git_repo.split("/")[1],
+          branch: actionConfig.git_branch,
+        }
+      );
+    }
+
+    return api.detectBuildpack<DetectBuildpackResponse>(
+      "<token>",
+      {
+        dir: actionConfig.folder_path || ".",
+      },
+      {
+        project_id: currentProject.id,
+        git_repo_id: actionConfig.git_repo_id,
+        kind: "github",
+        owner: actionConfig.git_repo.split("/")[0],
+        name: actionConfig.git_repo.split("/")[1],
+        branch: actionConfig.git_branch,
+      }
+    );
+  };
+
   useEffect(() => {
     const currentBuildConfig = currentChart?.build_config;
 
     if (!currentBuildConfig) {
       return;
     }
-
-    api
-      .detectBuildpack<DetectBuildpackResponse>(
-        "<token>",
-        {
-          dir: actionConfig.folder_path || ".",
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: actionConfig.git_branch,
-        }
-      )
+    detectBuildpack()
       .then(({ data }) => {
         const builders = data;
 

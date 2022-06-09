@@ -195,7 +195,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 			gitAction := rel.GitActionConfig
 
-			if gitAction != nil && gitAction.ID != 0 {
+			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
 				gaRunner, err := getGARunner(
 					c.Config(),
 					user.ID,

@@ -10,11 +10,12 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-func NewUserScopedRegisterer(children ...*Registerer) *Registerer {
-	return &Registerer{
+func NewUserScopedRegisterer(children ...*router.Registerer) *router.Registerer {
+	return &router.Registerer{
 		GetRoutes: GetUserScopedRoutes,
 		Children:  children,
 	}
@@ -25,8 +26,8 @@ func GetUserScopedRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-	children ...*Registerer,
-) []*Route {
+	children ...*router.Registerer,
+) []*router.Route {
 	routes := getUserRoutes(r, config, basePath, factory)
 
 	for _, child := range children {
@@ -45,8 +46,8 @@ func getUserRoutes(
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
-) []*Route {
-	routes := make([]*Route, 0)
+) []*router.Route {
+	routes := make([]*router.Route, 0)
 
 	// POST /api/welcome -> user.NewUserWelcomeHandler
 	welcomeEndpoint := factory.NewAPIEndpoint(
@@ -67,7 +68,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: welcomeEndpoint,
 		Handler:  welcomeHandler,
 		Router:   r,
@@ -93,7 +94,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: cliLoginUserEndpoint,
 		Handler:  cliLoginUserHandler,
 		Router:   r,
@@ -114,7 +115,7 @@ func getUserRoutes(
 
 	logoutUserHandler := user.NewUserLogoutHandler(config)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: logoutUserEndpoint,
 		Handler:  logoutUserHandler,
 		Router:   r,
@@ -138,7 +139,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: authCheckEndpoint,
 		Handler:  authCheckHandler,
 		Router:   r,
@@ -162,7 +163,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: deleteUserEndpoint,
 		Handler:  deleteUserHandler,
 		Router:   r,
@@ -187,7 +188,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: createEndpoint,
 		Handler:  createHandler,
 		Router:   r,
@@ -211,7 +212,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listEndpoint,
 		Handler:  listHandler,
 		Router:   r,
@@ -232,7 +233,7 @@ func getUserRoutes(
 
 	emailVerifyInitiateHandler := user.NewVerifyEmailInitiateHandler(config)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: emailVerifyInitiateEndpoint,
 		Handler:  emailVerifyInitiateHandler,
 		Router:   r,
@@ -257,7 +258,7 @@ func getUserRoutes(
 		factory.GetDecoderValidator(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: emailVerifyFinalizeEndpoint,
 		Handler:  emailVerifyFinalizeHandler,
 		Router:   r,
@@ -282,7 +283,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: listTemplatesEndpoint,
 		Handler:  listTemplatesRequest,
 		Router:   r,
@@ -311,7 +312,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTemplateEndpoint,
 		Handler:  getTemplateRequest,
 		Router:   r,
@@ -340,7 +341,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: getTemplateUpgradeNotesEndpoint,
 		Handler:  getTemplateUpgradeNotesRequest,
 		Router:   r,
@@ -365,7 +366,7 @@ func getUserRoutes(
 		config,
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: githubAppOAuthStartEndpoint,
 		Handler:  githubAppOAuthStartHandler,
 		Router:   r,
@@ -390,7 +391,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: githubAppOAuthCallbackEndpoint,
 		Handler:  githubAppOAuthCallbackHandler,
 		Router:   r,
@@ -415,7 +416,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: githubAppAccountsEndpoint,
 		Handler:  githubAppAccountsHandler,
 		Router:   r,
@@ -440,7 +441,7 @@ func getUserRoutes(
 		factory.GetResultWriter(),
 	)
 
-	routes = append(routes, &Route{
+	routes = append(routes, &router.Route{
 		Endpoint: canCreateProjectEndpoint,
 		Handler:  canCreateProjectHandler,
 		Router:   r,

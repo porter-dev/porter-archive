@@ -1188,6 +1188,7 @@ const getMetadata = baseApi<{}, {}>("GET", () => {
 const postWelcome = baseApi<{
   email: string;
   isCompany: boolean;
+  name: string;
   company: string;
   role: string;
 }>("POST", () => {

@@ -4,6 +4,9 @@ import { CreateStackBody } from "../types";
 export type StacksLaunchContextType = {
   newStack: CreateStackBody;
 
+  namespace: string;
+  clusterId: number;
+
   setStackName: (name: string) => void;
   setStackCluster: (clusterId: number) => void;
   setStackNamespace: (namespace: string) => void;
@@ -23,6 +26,9 @@ const defaultValues: StacksLaunchContextType = {
     app_resources: [],
     source_configs: [],
   },
+
+  namespace: "",
+  clusterId: NaN,
 
   setStackName: (name: string) => {},
   setStackCluster: (clusterId: number) => {},
@@ -45,7 +51,7 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
   const [newStack, setNewStack] = useState<CreateStackBody>(
     defaultValues.newStack
   );
-  const [clusterId, setClusterId] = useState<number>();
+  const [clusterId, setClusterId] = useState<number>(NaN);
   const [namespace, setNamespace] = useState("default");
 
   const setStackName: StacksLaunchContextType["setStackName"] = (name) => {
@@ -100,6 +106,8 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
     <StacksLaunchContext.Provider
       value={{
         newStack,
+        namespace,
+        clusterId,
         setStackName,
         setStackCluster,
         setStackNamespace,

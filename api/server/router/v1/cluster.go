@@ -93,9 +93,11 @@ func getV1ClusterRoutes(
 	//   '201':
 	//     description: Successfully created a new namespace
 	//     schema:
-	//       $ref: '#/definitions/CreateNamespaceResponse'
+	//       $ref: '#/definitions/NamespaceResponse'
 	//   '403':
 	//     description: Forbidden
+	//   '412':
+	//     description: Namespace already exists
 	createNamespaceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -143,7 +145,7 @@ func getV1ClusterRoutes(
 	//   '200':
 	//     description: Successfully got the namespace
 	//     schema:
-	//       $ref: '#/definitions/GetNamespaceResponse'
+	//       $ref: '#/definitions/NamespaceResponse'
 	//   '403':
 	//     description: Forbidden
 	//   '404':

@@ -10,7 +10,8 @@ export type CreateStackBody = {
   source_configs: {
     name: string;
     image_repo_uri: string;
-    build: {
+    image_tag: string;
+    build?: {
       method: "pack" | "docker";
       folder_path: string;
       git?: unknown;

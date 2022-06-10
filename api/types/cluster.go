@@ -185,32 +185,41 @@ const (
 	AWSData          ClusterResolverName = "upload-aws-data"
 )
 
+// NamespaceResponse represents the response type of requests to the namespace resource
+//
 // swagger:model
-type ListNamespacesResponse struct {
-	*v1.NamespaceList
+type NamespaceResponse struct {
+	// the name of the namespace
+	Name string `json:"name" form:"required"`
+
+	// the creation timestamp of the namespace in RFC 1123 format
+	CreationTimestamp string `json:"creationTimestamp" form:"required"`
+
+	// the deletion timestamp of the namespace in RFC 1123 format, if the namespace is deleted
+	DeletionTimestamp string `json:"deletionTimestamp,omitempty"`
+
+	// the status of the namespace - either "active" or "terminating"
+	Status v1.NamespacePhase `json:"status" form:"required"`
 }
 
+// ListNamespacesResponse represents the list of all namespaces
+//
+// swagger:model
+type ListNamespacesResponse []*NamespaceResponse
+
+// CreateNamespaceRequest represents the request body to create a namespace
+//
 // swagger:model
 type CreateNamespaceRequest struct {
+	// the name of the namespace to create
 	Name string `json:"name" form:"required"`
 }
 
-// swagger:model
-type CreateNamespaceResponse struct {
-	Metadata struct {
-		Name string `json:"name,omitempty"`
-	} `json:"metadata,omitempty"`
-}
-
-// swagger:model
-type GetNamespaceResponse struct {
-	Metadata struct {
-		Name string `json:"name,omitempty"`
-	} `json:"metadata,omitempty"`
-}
-
+// DeleteNamespaceRequest represents the namespace to delete
+//
 // swagger:model
 type DeleteNamespaceRequest struct {
+	// the name of the namespace to delete
 	Name string `json:"name" form:"required"`
 }
 

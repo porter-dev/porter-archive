@@ -99,14 +99,14 @@ class SettingsPage extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          const availableNamespaces = res.data.items.filter(
+          const availableNamespaces = res.data.filter(
             (namespace: any) => {
-              return namespace.status.phase !== "Terminating";
+              return namespace.status !== "Terminating";
             }
           );
           const namespaceOptions = availableNamespaces.map(
-            (x: { metadata: { name: string } }) => {
-              return { label: x.metadata.name, value: x.metadata.name };
+            (x: { name: string }) => {
+              return { label: x.name, value: x.name };
             }
           );
           if (availableNamespaces.length > 0) {

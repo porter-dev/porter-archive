@@ -49,13 +49,14 @@ type Project struct {
 	Infras []Infra `json:"infras"`
 
 	// auth mechanisms
-	KubeIntegrations  []ints.KubeIntegration  `json:"kube_integrations"`
-	BasicIntegrations []ints.BasicIntegration `json:"basic_integrations"`
-	OIDCIntegrations  []ints.OIDCIntegration  `json:"oidc_integrations"`
-	OAuthIntegrations []ints.OAuthIntegration `json:"oauth_integrations"`
-	AWSIntegrations   []ints.AWSIntegration   `json:"aws_integrations"`
-	GCPIntegrations   []ints.GCPIntegration   `json:"gcp_integrations"`
-	AzureIntegrations []ints.AzureIntegration `json:"azure_integrations"`
+	KubeIntegrations   []ints.KubeIntegration   `json:"kube_integrations"`
+	BasicIntegrations  []ints.BasicIntegration  `json:"basic_integrations"`
+	OIDCIntegrations   []ints.OIDCIntegration   `json:"oidc_integrations"`
+	OAuthIntegrations  []ints.OAuthIntegration  `json:"oauth_integrations"`
+	AWSIntegrations    []ints.AWSIntegration    `json:"aws_integrations"`
+	GCPIntegrations    []ints.GCPIntegration    `json:"gcp_integrations"`
+	AzureIntegrations  []ints.AzureIntegration  `json:"azure_integrations"`
+	GitlabIntegrations []ints.GitlabIntegration `json:"gitlab_integrations"`
 
 	PreviewEnvsEnabled  bool
 	RDSDatabasesEnabled bool

@@ -223,11 +223,18 @@ export interface FormElement {
   };
 }
 
-export interface RepoType {
+export type RepoType = {
   FullName: string;
-  kind: string;
-  GHRepoID: number;
-}
+} & (
+  | {
+      Kind: "github";
+      GHRepoID: number;
+    }
+  | {
+      Kind: "gitlab";
+      GitIntegrationId: number;
+    }
+);
 
 export interface FileType {
   path: string;
@@ -276,19 +283,27 @@ export interface InviteType {
   id: number;
 }
 
-export interface ActionConfigType {
+export type ActionConfigType = {
   git_repo: string;
   git_branch: string;
   image_repo_uri: string;
-  git_repo_id: number;
-}
+} & (
+  | {
+      kind: "gitlab";
+      gitlab_integration_id: number;
+    }
+  | {
+      kind: "github";
+      git_repo_id: number;
+    }
+);
 
-export interface FullActionConfigType extends ActionConfigType {
+export type FullActionConfigType = ActionConfigType & {
   dockerfile_path: string;
   folder_path: string;
   registry_id: number;
   should_create_workflow: boolean;
-}
+};
 
 export interface CapabilityType {
   github: boolean;
@@ -331,6 +346,8 @@ export interface ContextProps {
   setHasFinishedOnboarding: (onboardingStatus: boolean) => void;
   canCreateProject: boolean;
   setCanCreateProject: (canCreateProject: boolean) => void;
+  enableGitlab: boolean;
+  setEnableGitlab: (enableGitlab: boolean) => void;
 }
 
 export enum JobStatusType {

@@ -55,7 +55,7 @@ func getCreatePreviewEnvStep(
 			"project": fmt.Sprintf("%d", projectID),
 			"token":   fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
 			"namespace": fmt.Sprintf("pr-${{ github.event.inputs.pr_number }}-%s",
-				strings.ReplaceAll(repoName, "_", "-")),
+				strings.ToLower(strings.ReplaceAll(repoName, "_", "-"))),
 			"pr_id":           "${{ github.event.inputs.pr_number }}",
 			"pr_name":         "${{ github.event.inputs.pr_title }}",
 			"installation_id": fmt.Sprintf("%d", gitInstallationID),

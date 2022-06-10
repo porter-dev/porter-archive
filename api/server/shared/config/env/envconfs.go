@@ -99,6 +99,9 @@ type ServerConf struct {
 
 	// Disable filtering for project creation
 	DisableAllowlist bool `env:"DISABLE_ALLOWLIST,default=false"`
+
+	// Enable gitlab integration
+	EnableGitlab bool `env:"ENABLE_GITLAB,default=false"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

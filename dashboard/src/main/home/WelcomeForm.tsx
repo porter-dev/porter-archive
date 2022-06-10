@@ -16,9 +16,10 @@ type StateType = {
 const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
   const context = useContext(Context);
   const [active, setActive] = useState(true);
-  const [isCompany, setIsCompany] = useState(false);
-  const [role, setRole] = useState("unspecified");
+  const [isCompany, setIsCompany] = useState(true);
+  const [name, setName] = useState("");
   const [company, setCompany] = useState("");
+  const [role, setRole] = useState("unspecified");
 
   const submitForm = () => {
     api
@@ -26,6 +27,7 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
         "<token>",
         {
           email: context.user && context.user.email,
+          name,
           isCompany,
           company,
           role,
@@ -40,70 +42,64 @@ const WelcomeForm: React.FunctionComponent<Props> = ({}) => {
   };
 
   const renderContents = () => {
-    if (isCompany) {
-      return (
-        <FadeWrapper>
-          <Title>Welcome to Porter</Title>
-          <Subtitle>Just two things before getting started.</Subtitle>
-          <SubtitleAlt>
-            <Num>1</Num> What is your company website? *
-          </SubtitleAlt>
-          <Input
-            placeholder="ex: https://porter.run"
-            value={company}
-            onChange={(e: any) => setCompany(e.target.value)}
-          />
-          <SubtitleAlt>
-            <Num>2</Num> What is your role? *
-          </SubtitleAlt>
-          <RadioButton
-            onClick={() => setRole("founder")}
-            selected={role === "founder"}
-          >
-            <i className="material-icons-round">
-              {role === "founder" ? "check_box" : "check_box_outline_blank"}
-            </i>{" "}
-            Founder
-          </RadioButton>
-          <RadioButton
-            onClick={() => setRole("developer")}
-            selected={role === "developer"}
-          >
-            <i className="material-icons-round">
-              {role === "developer" ? "check_box" : "check_box_outline_blank"}
-            </i>{" "}
-            Developer
-          </RadioButton>
-          <RadioButton
-            onClick={() => setRole("devops")}
-            selected={role === "devops"}
-          >
-            <i className="material-icons-round">
-              {role === "devops" ? "check_box" : "check_box_outline_blank"}
-            </i>{" "}
-            DevOps
-          </RadioButton>
-
-          <Submit
-            isDisabled={!company || role === "unspecified"}
-            onClick={() => company && role !== "unspecified" && submitForm()}
-          >
-            <i className="material-icons-round">check</i> Done
-          </Submit>
-        </FadeWrapper>
-      );
-    }
     return (
-      <>
+      <FadeWrapper>
         <Title>Welcome to Porter</Title>
-        <Subtitle delay="0.7s">I am interested in using Porter as:</Subtitle>
-        <Option onClick={() => setIsCompany(true)}>
-          <i className="material-icons-round">people</i> A Company
-        </Option>
-        <Option onClick={() => submitForm()}>
-          <i className="material-icons-round">person</i> An Individual
-        </Option>
-      </>
+        <Subtitle>Just a few things before getting started.</Subtitle>
+        <SubtitleAlt>
+          <Num>1</Num> What is your name? *
+        </SubtitleAlt>
+        <Input
+          placeholder="John Doe"
+          value={name}
+          onChange={(e: any) => setName(e.target.value)}
+        />
+        <SubtitleAlt>
+          <Num>2</Num> What is your company website? *
+        </SubtitleAlt>
+        <Input
+          placeholder="ex: https://porter.run"
+          value={company}
+          onChange={(e: any) => setCompany(e.target.value)}
+        />
+        <SubtitleAlt>
+          <Num>3</Num> What is your role? *
+        </SubtitleAlt>
+        <RadioButton
+          onClick={() => setRole("founder")}
+          selected={role === "founder"}
+        >
+          <i className="material-icons-round">
+            {role === "founder" ? "check_box" : "check_box_outline_blank"}
+          </i>{" "}
+          Founder
+        </RadioButton>
+        <RadioButton
+          onClick={() => setRole("developer")}
+          selected={role === "developer"}
+        >
+          <i className="material-icons-round">
+            {role === "developer" ? "check_box" : "check_box_outline_blank"}
+          </i>{" "}
+          Developer
+        </RadioButton>
+        <RadioButton
+          onClick={() => setRole("devops")}
+          selected={role === "devops"}
+        >
+          <i className="material-icons-round">
+            {role === "devops" ? "check_box" : "check_box_outline_blank"}
+          </i>{" "}
+          DevOps
+        </RadioButton>
+
+        <Submit
+          isDisabled={!company || role === "unspecified"}
+          onClick={() => company && role !== "unspecified" && submitForm()}
+        >
+          <i className="material-icons-round">check</i> Done
+        </Submit>
+      </FadeWrapper>
     );
   };
 

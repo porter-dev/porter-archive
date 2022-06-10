@@ -63,15 +63,58 @@ export default class ContentsList extends Component<PropsType, StateType> {
     this.setState({ currentDir: x }, () => this.updateContents());
   };
 
-  updateContents = () => {
+  fetchContents = () => {
+    let { currentProject } = this.context;
+    const { actionConfig, branch } = this.props;
+
+    if (actionConfig.kind === "gitlab") {
+      return api
+        .getGitlabFolderContent(
+          "<token>",
+          { dir: this.state.currentDir || "./" },
+          {
+            project_id: currentProject.id,
+            integration_id: actionConfig.gitlab_integration_id,
+            repo_owner: actionConfig.git_repo.split("/")[0],
+            repo_name: actionConfig.git_repo.split("/")[1],
+            branch: branch,
+          }
+        )
+        .then((res) => {
+          const { data } = res;
+
+          return {
+            data: data.map((x: FileType) => ({
+              ...x,
+              type: x.type === "tree" ? "dir" : "file",
+            })),
+          };
+        });
+    }
+    return api.getBranchContents(
+      "<token>",
+      { dir: this.state.currentDir || "./" },
+      {
+        project_id: currentProject.id,
+        git_repo_id: actionConfig.git_repo_id,
+        kind: "github",
+        owner: actionConfig.git_repo.split("/")[0],
+        name: actionConfig.git_repo.split("/")[1],
+        branch: branch,
+      }
+    );
+  };
+
+  detectBuildpacks = () => {
     let { currentProject } = this.context;
     let { actionConfig, branch } = this.props;
 
-    // Get branch contents
-    api
-      .getBranchContents(
+    if (actionConfig.kind === "github") {
+      return api.detectBuildpack(
         "<token>",
-        { dir: this.state.currentDir || "./" },
+        {
+          dir: this.state.currentDir || ".",
+        },
         {
           project_id: currentProject.id,
           git_repo_id: actionConfig.git_repo_id,
@@ -80,7 +123,59 @@ export default class ContentsList extends Component<PropsType, StateType> {
           name: actionConfig.git_repo.split("/")[1],
           branch: branch,
         }
-      )
+      );
+    }
+
+    return api.detectGitlabBuildpack(
+      "<token>",
+      { dir: this.state.currentDir || "." },
+      {
+        project_id: currentProject.id,
+        integration_id: actionConfig.gitlab_integration_id,
+
+        repo_owner: actionConfig.git_repo.split("/")[0],
+        repo_name: actionConfig.git_repo.split("/")[1],
+        branch: branch,
+      }
+    );
+  };
+
+  fetchProcfileContent = (procfilePath: string) => {
+    let { currentProject } = this.context;
+    let { actionConfig, branch } = this.props;
+    if (actionConfig.kind === "github") {
+      return api.getProcfileContents(
+        "<token>",
+        {
+          path: procfilePath,
+        },
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: actionConfig.git_repo.split("/")[0],
+          name: actionConfig.git_repo.split("/")[1],
+          branch: branch,
+        }
+      );
+    }
+
+    return api.getGitlabProcfileContents(
+      "<token>",
+      { path: procfilePath },
+      {
+        project_id: currentProject.id,
+        integration_id: actionConfig.gitlab_integration_id,
+        owner: actionConfig.git_repo.split("/")[0],
+        name: actionConfig.git_repo.split("/")[1],
+        branch: branch,
+      }
+    );
+  };
+
+  updateContents = () => {
+    // Get branch contents
+    this.fetchContents()
       .then((res) => {
         let files = [] as FileType[];
         let folders = [] as FileType[];
@@ -104,21 +199,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         this.setState({ loading: false, error: true });
       });
 
-    api
-      .detectBuildpack(
-        "<token>",
-        {
-          dir: this.state.currentDir || ".",
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      )
+    this.detectBuildpacks()
       .then(({ data }) => {
         this.setState({
           autoBuildpack: data,
@@ -136,23 +217,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
     let ppath =
       this.props.procfilePath ||
       `${this.state.currentDir ? this.state.currentDir : "."}/Procfile`;
-    api
-      .getProcfileContents(
-        "<token>",
-        {
-          path: ppath,
-        },
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
-        }
-      )
-      .then((res) => {
-        this.setState({ processes: res.data });
+    this.fetchProcfileContent(ppath)
+      .then(({ data }) => {
+        this.setState({ processes: data });
       })
       .catch((err) => {
         console.log(err);

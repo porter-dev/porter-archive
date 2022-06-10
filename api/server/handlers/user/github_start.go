@@ -29,7 +29,7 @@ func NewUserOAuthGithubHandler(
 func (p *UserOAuthGithubHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	state := oauth.CreateRandomState()
 
-	if err := p.PopulateOAuthSession(w, r, state, false); err != nil {
+	if err := p.PopulateOAuthSession(w, r, state, false, false, "", 0); err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

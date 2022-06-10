@@ -156,7 +156,10 @@ class SettingsPage extends Component<PropsType, StateType> {
               // console.log(val);
               onSubmit(val);
             }}
-            hideBottomSpacer={!!this.props.fullActionConfig?.git_repo}
+            hideBottomSpacer={
+              !!this.props.fullActionConfig?.git_repo &&
+              this.props.fullActionConfig?.kind === "github"
+            }
           />
         </FadeWrapper>
       );
@@ -291,13 +294,14 @@ class SettingsPage extends Component<PropsType, StateType> {
             />
           </ClusterSection>
           {this.renderSettingsRegion()}
-          {this.props.fullActionConfig?.git_repo && (
-            <WorkflowPage
-              fullActionConfig={this.props.fullActionConfig}
-              name={this.props.templateName}
-              namespace={this.props.selectedNamespace}
-            />
-          )}
+          {this.props.fullActionConfig?.git_repo &&
+            this.props.fullActionConfig?.kind === "github" && (
+              <WorkflowPage
+                fullActionConfig={this.props.fullActionConfig}
+                name={this.props.templateName}
+                namespace={this.props.selectedNamespace}
+              />
+            )}
         </StyledSettingsPage>
       </PaddingWrapper>
     );

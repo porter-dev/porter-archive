@@ -79,7 +79,78 @@ func SetupEnv(opts *EnvOpts) error {
 		return err
 	}
 
-	_, err = commitGithubFile(
+	githubBranch, _, err := opts.Client.Repositories.GetBranch(
+		context.Background(), opts.GitRepoOwner, opts.GitRepoName, defaultBranch, true,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if githubBranch.GetProtected() {
+		err = createNewBranch(opts.Client, opts.GitRepoOwner, opts.GitRepoName, defaultBranch, "porter-preview")
+
+		if err != nil {
+			return fmt.Errorf(
+				"Unable to create PR to merge workflow files into protected branch: %s.\n"+
+					"To enable Porter Preview Environment deployments, please create Github workflow "+
+					"files in this branch with the following contents:\n"+
+					"--------\n%s--------\n--------\n%s--------\nERROR: %w",
+				defaultBranch, string(applyWorkflowYAML), string(deleteWorkflowYAML), ErrCreatePRForProtectedBranch,
+			)
+		}
+
+		_, err = commitWorkflowFile(
+			opts.Client,
+			fmt.Sprintf("porter_%s_env.yml", strings.ToLower(opts.EnvironmentName)),
+			applyWorkflowYAML, opts.GitRepoOwner,
+			opts.GitRepoName, "porter-preview", false,
+		)
+
+		if err != nil {
+			return fmt.Errorf(
+				"Unable to create PR to merge workflow files into protected branch: %s.\n"+
+					"To enable Porter Preview Environment deployments, please create Github workflow "+
+					"files in this branch with the following contents:\n"+
+					"--------\n%s--------\n--------\n%s--------\nERROR: %w",
+				defaultBranch, string(applyWorkflowYAML), string(deleteWorkflowYAML), ErrCreatePRForProtectedBranch,
+			)
+		}
+
+		_, err = commitWorkflowFile(
+			opts.Client,
+			fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
+			deleteWorkflowYAML, opts.GitRepoOwner,
+			opts.GitRepoName, "porter-preview", false,
+		)
+
+		if err != nil {
+			return fmt.Errorf(
+				"Unable to create PR to merge workflow files into protected branch: %s.\n"+
+					"To enable Porter Preview Environment deployments, please create a Github workflow "+
+					"file in this branch with the following contents:\n"+
+					"--------\n%s--------\nERROR: %w",
+				defaultBranch, string(deleteWorkflowYAML), ErrCreatePRForProtectedBranch,
+			)
+		}
+
+		pr, _, err := opts.Client.PullRequests.Create(
+			context.Background(), opts.GitRepoOwner, opts.GitRepoName, &github.NewPullRequest{
+				Title: github.String("Enable Porter Preview Environment deployments"),
+				Base:  github.String(defaultBranch),
+				Head:  github.String("porter-preview"),
+			},
+		)
+
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("Please merge %s to enable Porter Preview Environment deployments.\nERROR: %w",
+			pr.GetHTMLURL(), ErrProtectedBranch)
+	}
+
+	_, err = commitWorkflowFile(
 		opts.Client,
 		fmt.Sprintf("porter_%s_env.yml", strings.ToLower(opts.EnvironmentName)),
 		applyWorkflowYAML,
@@ -92,13 +163,13 @@ func SetupEnv(opts *EnvOpts) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "409 Could not create file") {
 			// possibly a write-protected branch
-			err = createPorterPreviewBranch(opts, defaultBranch)
+			err = createNewBranch(opts.Client, opts.GitRepoOwner, opts.GitRepoName, defaultBranch, "porter-preview")
 
 			if err != nil {
 				return fmt.Errorf("write-protected branch %s. Error creating porter-preview branch: %w", defaultBranch, err)
 			}
 
-			_, err = commitGithubFile(
+			_, err = commitWorkflowFile(
 				opts.Client,
 				fmt.Sprintf("porter_%s_env.yml", strings.ToLower(opts.EnvironmentName)),
 				applyWorkflowYAML,
@@ -112,7 +183,7 @@ func SetupEnv(opts *EnvOpts) error {
 				return fmt.Errorf("write-protected branch %s. Error committing to porter-preview branch: %w", defaultBranch, err)
 			}
 
-			_, err = commitGithubFile(
+			_, err = commitWorkflowFile(
 				opts.Client,
 				fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
 				deleteWorkflowYAML,
@@ -144,7 +215,7 @@ func SetupEnv(opts *EnvOpts) error {
 		return err
 	}
 
-	_, err = commitGithubFile(
+	_, err = commitWorkflowFile(
 		opts.Client,
 		fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
 		deleteWorkflowYAML,
@@ -195,6 +266,18 @@ func DeleteEnv(opts *EnvOpts) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	githubBranch, _, err := opts.Client.Repositories.GetBranch(
+		context.Background(), opts.GitRepoOwner, opts.GitRepoName, defaultBranch, true,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if githubBranch.GetProtected() {
+		return ErrProtectedBranch
 	}
 
 	err = deleteGithubFile(
@@ -310,35 +393,45 @@ func getPreviewDeleteActionYAML(opts *EnvOpts) ([]byte, error) {
 	return yaml.Marshal(actionYAML)
 }
 
-func createPorterPreviewBranch(opts *EnvOpts, defaultBranch string) error {
-	_, resp, err := opts.Client.Repositories.GetBranch(
-		context.Background(), opts.GitRepoOwner, opts.GitRepoName, "porter-preview", false,
+func createNewBranch(
+	client *github.Client,
+	gitRepoOwner, gitRepoName, baseBranch, headBranch string,
+) error {
+	_, resp, err := client.Repositories.GetBranch(
+		context.Background(), gitRepoOwner, gitRepoName, headBranch, true,
 	)
 
-	if resp.StatusCode == http.StatusNotFound {
-		branch, _, err := opts.Client.Repositories.GetBranch(
-			context.Background(), opts.GitRepoOwner, opts.GitRepoName, defaultBranch, false,
+	headBranchRef := fmt.Sprintf("refs/heads/%s", headBranch)
+
+	if err == nil {
+		// delete the stale branch
+		_, err := client.Git.DeleteRef(
+			context.Background(), gitRepoOwner, gitRepoName, headBranchRef,
 		)
 
 		if err != nil {
 			return err
 		}
-
-		_, _, err = opts.Client.Git.CreateRef(
-			context.Background(), opts.GitRepoOwner, opts.GitRepoName, &github.Reference{
-				Ref: github.String("refs/heads/porter-preview"),
-				Object: &github.GitObject{
-					SHA: branch.Commit.SHA,
-				},
-			},
-		)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+	} else if resp.StatusCode != http.StatusNotFound {
+		return err
 	}
+
+	base, _, err := client.Repositories.GetBranch(
+		context.Background(), gitRepoOwner, gitRepoName, baseBranch, true,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	_, _, err = client.Git.CreateRef(
+		context.Background(), gitRepoOwner, gitRepoName, &github.Reference{
+			Ref: github.String(headBranchRef),
+			Object: &github.GitObject{
+				SHA: base.Commit.SHA,
+			},
+		},
+	)
 
 	if err != nil {
 		return err

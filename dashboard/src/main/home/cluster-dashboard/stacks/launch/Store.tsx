@@ -74,17 +74,17 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
   const addSourceConfig: StacksLaunchContextType["addSourceConfig"] = (
     sourceConfig
   ) => {
-    const newSourceConfigName = (stackName: string, index: number) =>
+    const newSourceConfigName = (index: number) =>
       sourceConfig.build
-        ? `${stackName}-${sourceConfig.build.method}-${index}`
-        : `${stackName}-${sourceConfig.image_repo_uri}-${sourceConfig.image_tag}-${index}`;
+        ? `${sourceConfig.build.method}-${index}`
+        : `${sourceConfig.image_repo_uri}-${sourceConfig.image_tag}-${index}`;
 
     setNewStack((prev) => ({
       ...prev,
       source_configs: [
         ...prev.source_configs,
         {
-          name: newSourceConfigName(prev.name, prev.source_configs.length),
+          name: newSourceConfigName(prev.source_configs.length),
           ...sourceConfig,
         },
       ],

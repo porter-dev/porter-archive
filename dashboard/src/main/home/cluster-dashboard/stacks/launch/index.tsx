@@ -17,7 +17,7 @@ const LaunchRoutes = () => {
         <Route path={`${path}/overview`}>
           <Overview />
         </Route>
-        <Route path={`${path}/new-app`}>
+        <Route path={`${path}/new-app/:template_name/:version`}>
           <NewApp />
         </Route>
         <Route path={`*`}>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, Switch, useLocation, useRouteMatch } from "react-router";
 import Dashboard from "./Dashboard";
+import ExpandedStack from "./ExpandedStack";
 import LaunchRoutes from "./launch";
 
 const routes = () => {
@@ -10,6 +11,9 @@ const routes = () => {
     <Switch>
       <Route path={`${path}/launch`}>
         <LaunchRoutes />
+      </Route>
+      <Route path={`${path}/:namespace/:stack_id`}>
+        <ExpandedStack />
       </Route>
       <Route path={`${path}/`} exact>
         <Dashboard />

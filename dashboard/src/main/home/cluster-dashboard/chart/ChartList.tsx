@@ -28,6 +28,7 @@ type Props = {
   disableBottomPadding?: boolean;
   closeChartRedirectUrl?: string;
   selectedTag?: any;
+  appFilters?: string[];
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -42,6 +43,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   disableBottomPadding,
   closeChartRedirectUrl,
   selectedTag,
+  appFilters,
 }) => {
   const {
     newWebsocket,
@@ -356,6 +358,15 @@ const ChartList: React.FunctionComponent<Props> = ({
           { status: null } as any
         );
         return status.status === lastRunStatus;
+      })
+      .filter((chart: ChartType) => {
+        if (!Array.isArray(appFilters) || appFilters?.length === 0) {
+          return true;
+        }
+
+        return appFilters.some((filter) => {
+          return chart.name.toLowerCase().includes(filter.toLowerCase());
+        });
       });
 
     if (sortType == "Newest") {

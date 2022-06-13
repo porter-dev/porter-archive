@@ -171,7 +171,7 @@ func getV1ReleaseRoutes(
 	//   - name: name
 	//   - name: version
 	// responses:
-	//   '201':
+	//   '200':
 	//     description: Successfully got the release
 	//     schema:
 	//       $ref: '#/definitions/GetReleaseResponse'

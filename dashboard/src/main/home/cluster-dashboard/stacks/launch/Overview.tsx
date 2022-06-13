@@ -18,19 +18,13 @@ import Loading from "components/Loading";
 const Overview = () => {
   const {
     newStack,
-    clusterId,
     namespace,
     setStackName,
     setStackNamespace,
-    setStackCluster,
     submit,
   } = useContext(StacksLaunchContext);
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const [isAuthorized] = useAuth();
-
-  const [clusterOptions, setClusterOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
 
   const [namespaceOptions, setNamespaceOptions] = useState<
     { label: string; value: string }[]
@@ -39,31 +33,6 @@ const Overview = () => {
   const [submitButtonStatus, setSubmitButtonStatus] = useState("");
 
   const { pushFiltered } = useRouting();
-
-  const getClusters = () => {
-    return api
-      .getClusters("<token>", {}, { id: currentProject.id })
-      .then((res) => {
-        if (res.data) {
-          let clusterOptions: {
-            label: string;
-            value: string;
-          }[] = res.data.map((cluster: ClusterType, i: number) => ({
-            label: cluster.name,
-            value: `${cluster.id}`,
-          }));
-
-          if (res.data.length > 0) {
-            setClusterOptions(clusterOptions);
-            console.log({ clusterId });
-            if (isNaN(clusterId)) {
-              const newClusterId = res.data[0].id;
-              setStackCluster(newClusterId);
-            }
-          }
-        }
-      });
-  };
 
   const updateNamespaces = (cluster_id: number) => {
     api
@@ -108,23 +77,14 @@ const Overview = () => {
   };
 
   useEffect(() => {
-    getClusters();
-  }, []);
-
-  useEffect(() => {
-    if (isNaN(clusterId)) {
-      return;
-    }
-    updateNamespaces(clusterId);
-  }, [clusterId]);
+    updateNamespaces(currentCluster.id);
+  }, [currentCluster]);
 
   const isValid = useMemo(() => {
     if (namespace === "") {
       return false;
     }
-    if (isNaN(clusterId)) {
-      return false;
-    }
+
     if (newStack.name === "") {
       return false;
     }
@@ -138,7 +98,7 @@ const Overview = () => {
     }
 
     return true;
-  }, [namespace, clusterId, newStack.name]);
+  }, [namespace, newStack.name]);
 
   return (
     <div style={{ position: "relative" }}>
@@ -149,20 +109,9 @@ const Overview = () => {
       />
 
       <Selector
-        activeValue={`${clusterId}`}
-        setActiveValue={(cluster: string) => {
-          setStackCluster(Number(cluster));
-        }}
-        options={clusterOptions}
-        width="250px"
-        dropdownWidth="335px"
-        closeOverlay={true}
-      />
-
-      <Selector
         key={"namespace"}
         refreshOptions={() => {
-          updateNamespaces(clusterId);
+          updateNamespaces(currentCluster.id);
         }}
         addButton={isAuthorized("namespace", "", ["get", "create"])}
         activeValue={namespace}

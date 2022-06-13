@@ -88,7 +88,7 @@ func (c *DeleteReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 						return
 					}
 				} else {
-					gaRunner, err := getGARunner(
+					gaRunner, err := GetGARunner(
 						c.Config(),
 						user.ID,
 						cluster.ProjectID,

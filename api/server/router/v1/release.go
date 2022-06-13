@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/namespace"
 	"github.com/porter-dev/porter/api/server/handlers/release"
+	v1Release "github.com/porter-dev/porter/api/server/handlers/v1/release"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -301,7 +302,7 @@ func getV1ReleaseRoutes(
 		},
 	)
 
-	upgradeHandler := release.NewUpgradeReleaseHandler(
+	upgradeHandler := v1Release.NewUpgradeReleaseHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

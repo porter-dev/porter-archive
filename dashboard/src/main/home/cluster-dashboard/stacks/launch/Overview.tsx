@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import semver from "semver";
 import { StacksLaunchContext } from "./Store";
 import InputRow from "components/form-components/InputRow";
@@ -11,6 +11,8 @@ import DynamicLink from "components/DynamicLink";
 import styled from "styled-components";
 import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 import { capitalize } from "shared/string_utils";
+import SaveButton from "components/SaveButton";
+import { useRouting } from "shared/routing";
 
 const Overview = () => {
   const {
@@ -20,6 +22,7 @@ const Overview = () => {
     setStackName,
     setStackNamespace,
     setStackCluster,
+    submit,
   } = useContext(StacksLaunchContext);
   const { currentProject } = useContext(Context);
   const [isAuthorized] = useAuth();
@@ -31,6 +34,10 @@ const Overview = () => {
   const [namespaceOptions, setNamespaceOptions] = useState<
     { label: string; value: string }[]
   >([]);
+
+  const [submitButtonStatus, setSubmitButtonStatus] = useState("");
+
+  const { pushFiltered } = useRouting();
 
   const getClusters = () => {
     return api
@@ -87,6 +94,18 @@ const Overview = () => {
       .catch(console.log);
   };
 
+  const handleSubmit = () => {
+    setSubmitButtonStatus("loading");
+
+    submit().then(() => {
+      console.log("submit");
+      setTimeout(() => {
+        setSubmitButtonStatus("");
+        pushFiltered("/stacks", []);
+      }, 1000);
+    });
+  };
+
   useEffect(() => {
     getClusters();
   }, []);
@@ -98,8 +117,21 @@ const Overview = () => {
     updateNamespaces(clusterId);
   }, [clusterId]);
 
+  const isValid = useMemo(() => {
+    if (namespace === "") {
+      return false;
+    }
+    if (isNaN(clusterId)) {
+      return false;
+    }
+    if (newStack.name === "") {
+      return false;
+    }
+    return true;
+  }, [namespace, clusterId, newStack.name]);
+
   return (
-    <>
+    <div style={{ position: "relative" }}>
       <InputRow
         type="string"
         value={newStack.name}
@@ -132,12 +164,25 @@ const Overview = () => {
       />
 
       <br />
-      {newStack.app_resources.map((app) => (
-        <div key={app.name}>{app.name}</div>
-      ))}
+      <CardGrid>
+        {newStack.app_resources.map((app) => (
+          <Card key={app.name}>{app.name}</Card>
+        ))}
 
-      <AddResourceButton />
-    </>
+        <AddResourceButton />
+      </CardGrid>
+
+      <SubmitButton
+        disabled={!isValid || submitButtonStatus !== ""}
+        text="Create Stack"
+        onClick={handleSubmit}
+        clearPosition
+        statusPosition="left"
+        status={submitButtonStatus}
+      >
+        Create stack
+      </SubmitButton>
+    </div>
   );
 };
 
@@ -320,11 +365,48 @@ const VersionSelector = ({
   );
 };
 
+const CardGrid = styled.div`
+  margin-top: 32px;
+  margin-bottom: 32px;
+  display: grid;
+  grid-row-gap: 25px;
+`;
+
+const Card = styled.div`
+  display: flex;
+  color: #ffffff;
+  background: #2b2e3699;
+  justify-content: space-between;
+  border-radius: 5px;
+  cursor: pointer;
+  height: 75px;
+  padding: 12px;
+  padding-left: 14px;
+  border: 1px solid #ffffff0f;
+
+  :hover {
+    border: 1px solid #ffffff3c;
+  }
+  animation: fadeIn 0.5s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const SubmitButton = styled(SaveButton)`
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+`;
+
 const AddResourceButtonStyles = {
-  Wrapper: styled.div`
-    display: flex;
+  Wrapper: styled(Card)`
     align-items: center;
-    justify-content: space-between;
   `,
   Text: styled.span`
     font-size: 20px;

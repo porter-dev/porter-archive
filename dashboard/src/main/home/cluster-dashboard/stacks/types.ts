@@ -5,6 +5,7 @@ export type CreateStackBody = {
     source_config_name: string;
     template_name: string;
     template_version: string;
+    template_repo_url?: string;
     values: unknown;
   }[];
   source_configs: {

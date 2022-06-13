@@ -1,4 +1,6 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
+import api from "shared/api";
+import { Context } from "shared/Context";
 import { CreateStackBody } from "../types";
 
 export type StacksLaunchContextType = {
@@ -48,6 +50,7 @@ export const StacksLaunchContext = createContext<StacksLaunchContextType>(
 );
 
 const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
+  const { currentProject, setCurrentError } = useContext(Context);
   const [newStack, setNewStack] = useState<CreateStackBody>(
     defaultValues.newStack
   );
@@ -100,7 +103,18 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
     }));
   };
 
-  const submit: StacksLaunchContextType["submit"] = async () => {};
+  const submit: StacksLaunchContextType["submit"] = async () => {
+    try {
+      await api.createStack("<token>", newStack, {
+        cluster_id: clusterId,
+        namespace: namespace,
+        project_id: currentProject.id,
+      });
+    } catch (error) {
+      setCurrentError(error);
+      throw error;
+    }
+  };
 
   return (
     <StacksLaunchContext.Provider

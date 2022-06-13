@@ -19,10 +19,26 @@ type CreateStackRequest struct {
 	SourceConfigs []*CreateStackSourceConfigRequest `json:"source_configs,omitempty" form:"required,dive,required"`
 }
 
+// swagger:model
+type PutStackSourceConfigRequest struct {
+	SourceConfigs []*CreateStackSourceConfigRequest `json:"source_configs,omitempty" form:"required,dive,required"`
+}
+
+const URLParamStackRevisionNumber URLParam = "stack_revision_number"
+
+// swagger:model
+type StackRollbackRequest struct {
+	TargetRevision uint `json:"target_revision"`
+}
+
+// swagger:model
+type PatchStackSourceConfigRequest struct {
+	SourceConfig *UpdateStackSourceConfigRequest `json:"source_config,omitempty" form:"required"`
+}
+
 type CreateStackAppResourceRequest struct {
-	// The URL of the Helm registry to pull the template from
-	// required: true
-	TemplateRepoURL string `json:"template_repo_url" form:"required"`
+	// The URL of the Helm registry to pull the template from. If not set, this defaults to `https://charts.getporter.dev`.
+	TemplateRepoURL string `json:"template_repo_url"`
 
 	// The name of the template in the Helm registry, such as `web`
 	// required: true
@@ -62,8 +78,11 @@ type Stack struct {
 	LatestRevision *StackRevision `json:"latest_revision,omitempty"`
 
 	// The list of revisions deployed for this stack
-	Revisions []StackRevisionMeta `json:"revisions"`
+	Revisions []StackRevisionMeta `json:"revisions,omitempty"`
 }
+
+// swagger:model
+type StackListResponse []Stack
 
 type StackResource struct {
 	// The time that this resource was initially created
@@ -175,6 +194,18 @@ type CreateStackSourceConfigRequest struct {
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
+}
+
+// swagger:model
+type UpdateStackSourceConfigRequest struct {
+	// required: true
+	Name string `json:"name"`
+
+	// required: true
+	ImageRepoURI string `json:"image_repo_uri"`
+
+	// required: true
+	ImageTag string `json:"image_tag"`
 }
 
 type StackSourceConfigBuild struct {

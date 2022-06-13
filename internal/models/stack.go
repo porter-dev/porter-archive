@@ -29,12 +29,18 @@ func (s *Stack) ToStackType() *types.Stack {
 		revisions = append(revisions, rev.ToStackRevisionMetaType(s.UID))
 	}
 
+	var latestRevision *types.StackRevision
+
+	if len(s.Revisions) > 0 {
+		latestRevision = s.Revisions[0].ToStackRevisionType(s.UID)
+	}
+
 	return &types.Stack{
 		CreatedAt:      s.CreatedAt,
 		UpdatedAt:      s.UpdatedAt,
 		Name:           s.Name,
 		ID:             s.UID,
-		LatestRevision: s.Revisions[0].ToStackRevisionType(s.UID),
+		LatestRevision: latestRevision,
 		Revisions:      revisions,
 	}
 }

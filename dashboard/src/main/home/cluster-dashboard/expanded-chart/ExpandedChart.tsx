@@ -236,10 +236,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
       _.set(values, key, rawValues[key]);
     }
 
-    let valuesYaml = yaml.dump({
-      ...values,
-    });
-
     const syncedEnvGroups = props?.metadata
       ? props?.metadata["container.env"]
       : {};
@@ -299,12 +295,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
 
-    // console.log("valuesYaml", valuesYaml);
     try {
       await api.upgradeChartValues(
         "<token>",
         {
-          values: valuesYaml,
+          values: values,
         },
         {
           id: currentProject.id,
@@ -321,7 +316,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
       window.analytics?.track("Chart Upgraded", {
         chart: currentChart.name,
-        values: valuesYaml,
+        values: values,
       });
     } catch (err) {
       const parsedErr = err?.response?.data?.error;
@@ -336,7 +331,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
       window.analytics?.track("Failed to Upgrade Chart", {
         chart: currentChart.name,
-        values: valuesYaml,
+        values: values,
         error: err,
       });
 
@@ -349,10 +344,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
       // convert current values to yaml
       let values = currentChart.config;
 
-      let valuesYaml = yaml.dump({
-        ...values,
-      });
-
       setSaveValueStatus("loading");
       getChartData(currentChart);
 
@@ -360,7 +351,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         await api.upgradeChartValues(
           "<token>",
           {
-            values: valuesYaml,
+            values: values,
             version: version,
           },
           {
@@ -375,7 +366,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         window.analytics?.track("Chart Upgraded", {
           chart: currentChart.name,
-          values: valuesYaml,
+          values: values,
         });
 
         cb && cb();
@@ -391,7 +382,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         window.analytics?.track("Failed to Upgrade Chart", {
           chart: currentChart.name,
-          values: valuesYaml,
+          values: values,
           error: err,
         });
       }

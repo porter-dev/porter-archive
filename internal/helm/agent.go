@@ -159,16 +159,10 @@ type UpgradeReleaseConfig struct {
 // UpgradeRelease upgrades a specific release with new values.yaml
 func (a *Agent) UpgradeRelease(
 	conf *UpgradeReleaseConfig,
-	values string,
+	values map[string]interface{},
 	doAuth *oauth2.Config,
 ) (*release.Release, error) {
-	valuesYaml, err := chartutil.ReadValues([]byte(values))
-
-	if err != nil {
-		return nil, fmt.Errorf("Values could not be parsed: %v", err)
-	}
-
-	conf.Values = valuesYaml
+	conf.Values = values
 
 	return a.UpgradeReleaseByValues(conf, doAuth)
 }

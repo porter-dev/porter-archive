@@ -108,20 +108,14 @@ const SettingsSection: React.FC<PropsType> = ({
       _.set(values, "paused", true);
     }
 
-    // Weave in preexisting values and convert to yaml
-    let conf = yaml.dump(
-      {
-        ...(currentChart?.config as Object),
-        ...values,
-      },
-      { forceQuotes: true }
-    );
-
     try {
       await api.upgradeChartValues(
         "<token>",
         {
-          values: conf,
+          values: {
+            ...(currentChart?.config as Object),
+            ...values,
+          },
         },
         {
           id: currentProject.id,

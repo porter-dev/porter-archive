@@ -50,20 +50,18 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
     let { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
-    let valuesString = this.state.values;
+    let values = yaml.load(this.state.values);
 
     // if this is a job, set it to paused
     if (this.props.currentChart?.chart?.metadata?.name == "job") {
-      const valuesYAML = yaml.load(this.state.values);
-      _.set(valuesYAML, "paused", true);
-      valuesString = yaml.dump(valuesYAML);
+      _.set(values, "paused", true);
     }
 
     api
       .upgradeChartValues(
         "<token>",
         {
-          values: valuesString,
+          values: values,
         },
         {
           id: currentProject.id,

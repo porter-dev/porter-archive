@@ -114,8 +114,16 @@ func getV1ReleaseRoutes(
 	// responses:
 	//   '201':
 	//     description: Successfully created the release
+	//   '400':
+	//     description: A malformed or bad request
 	//   '403':
 	//     description: Forbidden
+	//   '404':
+	//     description: A subresource was not found
+	//   '409':
+	//     description: A conflict occurred with another external service
+	//   '412':
+	//     description: A precondition failed for the request
 	createReleaseEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -271,6 +279,8 @@ func getV1ReleaseRoutes(
 	// responses:
 	//   '200':
 	//     description: Successfully updated the release
+	//   '400':
+	//     description: A malformed or bad request
 	//   '403':
 	//     description: Forbidden
 	upgradeEndpoint := factory.NewAPIEndpoint(

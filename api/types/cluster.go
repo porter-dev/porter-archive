@@ -215,14 +215,6 @@ type CreateNamespaceRequest struct {
 	Name string `json:"name" form:"required"`
 }
 
-// DeleteNamespaceRequest represents the namespace to delete
-//
-// swagger:model
-type DeleteNamespaceRequest struct {
-	// the name of the namespace to delete
-	Name string `json:"name" form:"required"`
-}
-
 type GetTemporaryKubeconfigResponse struct {
 	Kubeconfig []byte `json:"kubeconfig"`
 }

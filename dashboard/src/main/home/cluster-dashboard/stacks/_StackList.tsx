@@ -62,7 +62,10 @@ const StackList = ({ namespace }: { namespace: string }) => {
     <>
       {stacks.map((stack) => (
         <Card to={`/stacks/${stack.id}`} key={stack.id}>
-          {stack.name} - Current Revision: {stack.latest_revision.id}
+          {stack.name} -{" "}
+          {stack.latest_revision
+            ? `No revision available for this stack`
+            : `Current Revision: ${stack.latest_revision.id}`}
         </Card>
       ))}
     </>

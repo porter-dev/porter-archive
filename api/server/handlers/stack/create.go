@@ -55,7 +55,7 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resources, err := getResourceModels(req.AppResources, sourceConfigs)
+	resources, err := getResourceModels(req.AppResources, sourceConfigs, p.Config().ServerConf.DefaultApplicationHelmRepoURL)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -167,7 +167,7 @@ func getSourceConfigModels(sourceConfigs []*types.CreateStackSourceConfigRequest
 	return res, nil
 }
 
-func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sourceConfigs []models.StackSourceConfig) ([]models.StackResource, error) {
+func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sourceConfigs []models.StackSourceConfig, defaultRepoURL string) ([]models.StackResource, error) {
 	res := make([]models.StackResource, 0)
 
 	for _, appResource := range appResources {
@@ -189,11 +189,17 @@ func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sour
 			return nil, fmt.Errorf("source config %s does not exist in source config list", appResource.SourceConfigName)
 		}
 
+		templateRepoURL := appResource.TemplateRepoURL
+
+		if templateRepoURL == "" {
+			templateRepoURL = defaultRepoURL
+		}
+
 		res = append(res, models.StackResource{
 			Name:                 appResource.Name,
 			UID:                  uid,
 			StackSourceConfigUID: linkedSourceConfigUID,
-			TemplateRepoURL:      appResource.TemplateRepoURL,
+			TemplateRepoURL:      templateRepoURL,
 			TemplateName:         appResource.TemplateName,
 			TemplateVersion:      appResource.TemplateVersion,
 			HelmRevisionID:       1,

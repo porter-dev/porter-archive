@@ -57,6 +57,14 @@ var templateMap = map[string]*types.InfraTemplateMeta{
 		Kind:               "rds",
 		RequiredCredential: "aws_integration_id",
 	},
+	"s3": {
+		Icon:               "",
+		Description:        "Create an S3 bucket.",
+		Name:               "S3",
+		Version:            "v0.1.0",
+		Kind:               "s3",
+		RequiredCredential: "aws_integration_id",
+	},
 	"eks": {
 		Icon:               "https://img.stackshare.io/service/7991/amazon-eks.png",
 		Description:        "Create an Elastic Kubernetes Service cluster.",

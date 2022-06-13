@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 )
@@ -41,13 +42,13 @@ func (c *GithubGetProcfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	owner, name, ok := GetOwnerAndNameParams(c, w, r)
+	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 
 	if !ok {
 		return
 	}
 
-	branch, ok := GetBranch(c, w, r)
+	branch, ok := commonutils.GetBranchParam(c, w, r)
 
 	if !ok {
 		return

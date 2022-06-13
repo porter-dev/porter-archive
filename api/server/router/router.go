@@ -217,6 +217,9 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	// websocket middleware for upgrading requests
 	websocketMw := middleware.NewWebsocketMiddleware(config)
 
+	// gitlab integration middleware to handle gitlab integrations for a specific project
+	gitlabIntFactory := authz.NewGitlabIntegrationScopedFactory(config)
+
 	for _, route := range routes {
 		atomicGroup := route.Router.Group(nil)
 
@@ -252,6 +255,8 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 				atomicGroup.Use(operationFactory.Middleware)
 			case types.ReleaseScope:
 				atomicGroup.Use(releaseFactory.Middleware)
+			case types.GitlabIntegrationScope:
+				atomicGroup.Use(gitlabIntFactory.Middleware)
 			}
 		}
 

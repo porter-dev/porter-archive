@@ -110,5 +110,33 @@ func getProjectOAuthRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/oauth/gitlab -> project_integration.NewProjectOAuthGitlabHandler
+	gitlabEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	gitlabHandler := project_oauth.NewProjectOAuthGitlabHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: gitlabEndpoint,
+		Handler:  gitlabHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -10,6 +10,7 @@ import { pushFiltered } from "shared/routing";
 import Loading from "../../../components/Loading";
 import SlackIntegrationList from "./SlackIntegrationList";
 import TitleSection from "components/TitleSection";
+import GitlabIntegrationList from "./GitlabIntegrationList";
 
 type Props = RouteComponentProps & {
   category: string;
@@ -22,6 +23,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
   const [currentIntegrationData, setCurrentIntegrationData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [slackData, setSlackData] = useState([]);
+  const [gitlabData, setGitlabData] = useState([]);
 
   const { currentProject, setCurrentModal } = useContext(Context);
 
@@ -79,6 +81,17 @@ const IntegrationCategories: React.FC<Props> = (props) => {
           })
           .catch(console.log);
         break;
+      case "gitlab":
+        api
+          .getGitlabIntegration(
+            "<token>",
+            {},
+            { project_id: currentProject.id }
+          )
+          .then((res) => {
+            setGitlabData(res.data);
+            setLoading(false);
+          });
       default:
         console.log("Unknown integration category.");
     }
@@ -110,7 +123,11 @@ const IntegrationCategories: React.FC<Props> = (props) => {
         </TitleSection>
         <Button
           onClick={() => {
-            if (props.category != "slack") {
+            if (props.category === "gitlab") {
+              pushFiltered(props, `/integrations/gitlab/create/gitlab`, [
+                "project_id",
+              ]);
+            } else if (props.category != "slack") {
               setCurrentModal("IntegrationsModal", {
                 category: currentCategory,
                 setCurrentIntegration: (x: string) =>
@@ -131,6 +148,8 @@ const IntegrationCategories: React.FC<Props> = (props) => {
       </Flex>
       {loading ? (
         <Loading />
+      ) : props.category === "gitlab" ? (
+        <GitlabIntegrationList gitlabData={gitlabData} />
       ) : props.category == "slack" ? (
         <SlackIntegrationList slackData={slackData} />
       ) : (
@@ -158,8 +177,8 @@ const Flex = styled.div`
 
   > i {
     cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
+    font-size: 24px;
+    color: #969fbbaa;
     padding: 3px;
     margin-right: 11px;
     border-radius: 100px;

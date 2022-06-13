@@ -17,7 +17,14 @@ type PorterHandler interface {
 	Repo() repository.Repository
 	HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
 	HandleAPIErrorNoWrite(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
-	PopulateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error
+	PopulateOAuthSession(
+		w http.ResponseWriter,
+		r *http.Request,
+		state string,
+		isUser, isProject bool,
+		integrationClient types.OAuthIntegrationClient,
+		integrationID uint,
+	) error
 }
 
 type PorterHandlerWriter interface {
@@ -81,7 +88,14 @@ func IgnoreAPIError(w http.ResponseWriter, r *http.Request, err apierrors.Reques
 	return
 }
 
-func (d *DefaultPorterHandler) PopulateOAuthSession(w http.ResponseWriter, r *http.Request, state string, isProject bool) error {
+func (d *DefaultPorterHandler) PopulateOAuthSession(
+	w http.ResponseWriter,
+	r *http.Request,
+	state string,
+	isProject, isUser bool,
+	integrationClient types.OAuthIntegrationClient,
+	integrationID uint,
+) error {
 	session, err := d.Config().Store.Get(r, d.Config().ServerConf.CookieName)
 
 	if err != nil {
@@ -104,6 +118,21 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(w http.ResponseWriter, r *ht
 		}
 
 		session.Values["project_id"] = project.ID
+	}
+
+	if isUser {
+		user, _ := r.Context().Value(types.UserScope).(*models.User)
+
+		if user == nil {
+			return fmt.Errorf("could not read user")
+		}
+
+		session.Values["user_id"] = user.ID
+	}
+
+	if integrationID != 0 && len(integrationClient) > 0 {
+		session.Values["integration_id"] = integrationID
+		session.Values["integration_client"] = string(integrationClient)
 	}
 
 	if err := session.Save(r, w); err != nil {

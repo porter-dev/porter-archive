@@ -100,11 +100,12 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     }
 
     values.container.env.build = { ...envs };
+    const valuesYaml = yaml.dump({ ...values });
     try {
       await api.upgradeChartValues(
         "<token>",
         {
-          values: values,
+          values: valuesYaml,
         },
         {
           id: currentProject.id,

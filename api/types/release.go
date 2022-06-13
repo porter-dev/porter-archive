@@ -66,8 +66,8 @@ type RollbackReleaseRequest struct {
 
 // swagger:model UpdateReleaseRequest
 type UpgradeReleaseRequest struct {
-	Values       map[string]interface{} `json:"values" form:"required"`
-	ChartVersion string                 `json:"version"`
+	Values       string `json:"values" form:"required"`
+	ChartVersion string `json:"version"`
 }
 
 type UpdateImageBatchRequest struct {

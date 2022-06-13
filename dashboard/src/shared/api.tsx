@@ -1259,7 +1259,7 @@ const updateUser = baseApi<
 
 const upgradeChartValues = baseApi<
   {
-    values: any;
+    values: string;
     version?: string;
   },
   {

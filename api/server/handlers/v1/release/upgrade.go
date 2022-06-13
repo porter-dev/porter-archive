@@ -9,6 +9,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	baseReleaseHandler "github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -51,7 +52,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	request := &types.UpgradeReleaseRequest{}
+	request := &types.V1UpgradeReleaseRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -93,7 +94,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			}
 		}
 
-		chart, err := LoadChart(c.Config(), &LoadAddonChartOpts{
+		chart, err := baseReleaseHandler.LoadChart(c.Config(), &baseReleaseHandler.LoadAddonChartOpts{
 			ProjectID:       cluster.ProjectID,
 			RepoURL:         chartRepoURL,
 			TemplateName:    helmRelease.Chart.Metadata.Name,
@@ -117,7 +118,9 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		conf.Chart = chart
 	}
 
-	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf)
+	conf.Values = request.Values
+
+	newHelmRelease, upgradeErr := helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf)
 
 	if upgradeErr == nil && newHelmRelease != nil {
 		helmRelease = newHelmRelease
@@ -186,7 +189,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// update the github actions env if the release exists and is built from source
 	if cName := helmRelease.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
 		if releaseErr == nil && rel != nil {
-			err = UpdateReleaseRepo(c.Config(), rel, helmRelease)
+			err = baseReleaseHandler.UpdateReleaseRepo(c.Config(), rel, helmRelease)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -196,7 +199,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			gitAction := rel.GitActionConfig
 
 			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
-				gaRunner, err := GetGARunner(
+				gaRunner, err := baseReleaseHandler.GetGARunner(
 					c.Config(),
 					user.ID,
 					cluster.ProjectID,

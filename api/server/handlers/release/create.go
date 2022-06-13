@@ -214,6 +214,8 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			FlowID: operationID,
 		},
 	))
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func createReleaseFromHelmRelease(

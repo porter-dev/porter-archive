@@ -232,5 +232,6 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		},
 	))
 
+	w.WriteHeader(http.StatusCreated)
 	p.WriteResult(w, r, regModel.ToRegistryType())
 }

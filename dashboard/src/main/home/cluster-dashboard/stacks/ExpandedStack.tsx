@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import styled from "styled-components";
 import ChartList from "../chart/ChartList";
 import DashboardHeader from "../DashboardHeader";
 import SortSelector from "../SortSelector";
@@ -64,17 +65,27 @@ const ExpandedStack = () => {
         currentView="stacks"
       />
 
-      <ChartList
-        currentCluster={currentCluster}
-        currentView="stacks"
-        namespace={namespace}
-        sortType="Alphabetical"
-        appFilters={
-          stack?.latest_revision?.resources?.map((res) => res.name) || []
-        }
-      />
+      <ChartListWrapper>
+        <ChartList
+          currentCluster={currentCluster}
+          currentView="stacks"
+          namespace={namespace}
+          sortType="Alphabetical"
+          appFilters={
+            stack?.latest_revision?.resources?.map((res) => res.name) || []
+          }
+          closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
+        />
+      </ChartListWrapper>
     </div>
   );
 };
 
 export default ExpandedStack;
+
+const ChartListWrapper = styled.div`
+  width: 100%;
+  margin: auto;
+  margin-top: 20px;
+  padding-bottom: 125px;
+`;

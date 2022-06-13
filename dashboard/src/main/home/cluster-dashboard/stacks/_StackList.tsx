@@ -1,25 +1,61 @@
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import api from "shared/api";
+import { Context } from "shared/Context";
 import styled from "styled-components";
 import { GetStacksResponse, Stack } from "./types";
 
-const StackList = () => {
+const StackList = ({ namespace }: { namespace: string }) => {
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [stacks, setStacks] = useState<Stack[]>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    mockApi()
+    let isSubscribed = true;
+
+    setIsLoading(true);
+
+    api
+      .listStacks(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace,
+        }
+      )
       .then((res) => {
-        setStacks(res.data);
+        if (isSubscribed) {
+          setStacks(res.data);
+        }
+      })
+      .catch((err) => {
+        if (isSubscribed) {
+          setCurrentError(err);
+        }
       })
       .finally(() => {
-        setIsLoading(false);
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
       });
-  }, []);
+  }, [namespace]);
 
   if (isLoading) {
     return <Loading />;
+  }
+
+  if (stacks.length === 0) {
+    return (
+      <div>
+        <h3>No stacks found</h3>
+        <p>You can create a stack by clicking the "Create stack" button.</p>
+      </div>
+    );
   }
 
   return (

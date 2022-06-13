@@ -29,19 +29,14 @@ func NewDeleteNamespaceHandler(
 }
 
 func (c *DeleteNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	namespace, _ := requestutils.GetURLParamString(r, types.URLParamNamespace)
-
-	if namespace == "" {
-		request := &types.DeleteNamespaceRequest{}
-
-		if ok := c.DecodeAndValidate(w, r, request); !ok {
-			return
-		}
-
-		namespace = request.Name
-	}
-
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
+	namespace, reqErr := requestutils.GetURLParamString(r, types.URLParamNamespace)
+
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+		return
+	}
 
 	agent, err := c.GetAgent(r, cluster, "")
 

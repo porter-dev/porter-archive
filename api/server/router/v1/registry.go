@@ -93,8 +93,12 @@ func getV1RegistryRoutes(
 	//     description: Successfully connected the registry
 	//     schema:
 	//       $ref: '#/definitions/CreateRegistryResponse'
+	//   '400':
+	//     description: A malformed or bad request
 	//   '403':
 	//     description: Forbidden
+	//   '404':
+	//     description: A subresource was not found
 	createRegistryEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -137,7 +141,7 @@ func getV1RegistryRoutes(
 	//   - name: project_id
 	//   - name: registry_id
 	// responses:
-	//   '201':
+	//   '200':
 	//     description: Successfully got the registry
 	//     schema:
 	//       $ref: '#/definitions/GetRegistryResponse'

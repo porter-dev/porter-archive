@@ -18,6 +18,7 @@ const (
 	SettingsScope          PermissionScope = "settings"
 	ReleaseScope           PermissionScope = "release"
 	GitlabIntegrationScope PermissionScope = "gitlab_integration"
+	StackScope             PermissionScope = "stack"
 )
 
 type NameOrUInt struct {
@@ -41,6 +42,7 @@ var ScopeHeirarchy = ScopeTree{
 	ProjectScope: {
 		ClusterScope: {
 			NamespaceScope: {
+				StackScope:   {},
 				ReleaseScope: {},
 			},
 		},

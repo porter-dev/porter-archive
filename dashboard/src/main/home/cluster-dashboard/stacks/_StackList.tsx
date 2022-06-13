@@ -49,7 +49,7 @@ const StackList = ({ namespace }: { namespace: string }) => {
     return <Loading />;
   }
 
-  if (stacks.length === 0) {
+  if (stacks?.length === 0) {
     return (
       <div>
         <h3>No stacks found</h3>

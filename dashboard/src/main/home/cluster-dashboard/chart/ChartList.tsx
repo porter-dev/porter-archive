@@ -338,12 +338,22 @@ const ChartList: React.FunctionComponent<Props> = ({
         });
       })
       .filter((chart: ChartType) => {
-        return (
-          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-          ((currentView == "applications" ||
-            currentView == "cluster-dashboard") &&
-            chart.chart.metadata.name != "job")
-        );
+        if (currentView === "jobs" && chart.chart.metadata.name === "job") {
+          return true;
+        }
+
+        if (
+          ["applications", "cluster-dashboard"].includes(currentView) &&
+          chart.chart.metadata.name !== "job"
+        ) {
+          return true;
+        }
+
+        if (currentView === "stacks") {
+          return true;
+        }
+
+        return false;
       })
       .filter((chart: ChartType) => {
         if (currentView !== "jobs") {
@@ -365,7 +375,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         }
 
         return appFilters.some((filter) => {
-          return chart.name.toLowerCase().includes(filter.toLowerCase());
+          return chart.name.toLowerCase() === filter.toLowerCase();
         });
       });
 

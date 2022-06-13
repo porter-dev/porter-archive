@@ -1,3 +1,5 @@
+import ValuesYaml from "main/home/cluster-dashboard/expanded-chart/ValuesYaml";
+
 export interface ClusterType {
   id: number;
   name: string;
@@ -162,6 +164,13 @@ export interface PorterTemplate {
   description: string;
   icon: string;
   repo_url?: string;
+}
+
+export interface ExpandedPorterTemplate {
+  form: FormYAML;
+  markdown: string;
+  metadata: ChartType["chart"]["metadata"];
+  values: ChartTypeWithExtendedConfig["config"];
 }
 
 // FormYAML represents a chart's values.yaml form abstraction

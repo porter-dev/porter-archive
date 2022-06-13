@@ -4,6 +4,7 @@ import { release } from "process";
 import { baseApi } from "./baseApi";
 
 import { BuildConfig, FullActionConfigType, StorageType } from "./types";
+import { CreateStackBody } from "main/home/cluster-dashboard/stacks/types";
 
 /**
  * Generic api call format
@@ -1928,6 +1929,73 @@ const getGitlabFolderContent = baseApi<
     `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/contents`
 );
 
+// STACKS
+
+const createStack = baseApi<
+  CreateStackBody,
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks`
+);
+
+const listStacks = baseApi<
+  {},
+  { project_id: number; cluster_id: number; namespace: string }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks`
+);
+
+const getStack = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    stack_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace, stack_id }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}`
+);
+
+const getStackRevision = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    stack_id: string;
+    revision_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, namespace, stack_id, revision_id }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/${revision_id}`
+);
+
+const rollbackStack = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    stack_id: string;
+  }
+>(
+  "POST",
+  ({ project_id, cluster_id, namespace, stack_id }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/rollback`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -2110,4 +2178,11 @@ export default {
   getGitlabRepos,
   getGitlabBranches,
   getGitlabFolderContent,
+
+  // STACKS
+  listStacks,
+  getStack,
+  getStackRevision,
+  createStack,
+  rollbackStack,
 };

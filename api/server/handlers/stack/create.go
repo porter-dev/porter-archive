@@ -41,6 +41,13 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// populate fields with defaults
+	for i, reqResource := range req.AppResources {
+		if reqResource.TemplateRepoURL == "" {
+			req.AppResources[i].TemplateRepoURL = p.Config().ServerConf.DefaultApplicationHelmRepoURL
+		}
+	}
+
 	uid, err := encryption.GenerateRandomBytes(16)
 
 	if err != nil {
@@ -189,17 +196,11 @@ func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sour
 			return nil, fmt.Errorf("source config %s does not exist in source config list", appResource.SourceConfigName)
 		}
 
-		templateRepoURL := appResource.TemplateRepoURL
-
-		if templateRepoURL == "" {
-			templateRepoURL = defaultRepoURL
-		}
-
 		res = append(res, models.StackResource{
 			Name:                 appResource.Name,
 			UID:                  uid,
 			StackSourceConfigUID: linkedSourceConfigUID,
-			TemplateRepoURL:      templateRepoURL,
+			TemplateRepoURL:      appResource.TemplateRepoURL,
 			TemplateName:         appResource.TemplateName,
 			TemplateVersion:      appResource.TemplateVersion,
 			HelmRevisionID:       1,

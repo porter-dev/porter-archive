@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -15,6 +16,7 @@ import (
 
 type StackCreateHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 func NewStackCreateHandler(
@@ -24,6 +26,7 @@ func NewStackCreateHandler(
 ) *StackCreateHandler {
 	return &StackCreateHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, reader, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -81,6 +84,39 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	// apply all app resources
+	registries, err := p.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	helmAgent, err := p.GetHelmAgent(r, cluster, "")
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	for _, appResource := range req.AppResources {
+		err = applyAppResource(&applyAppResourceOpts{
+			config:     p.Config(),
+			projectID:  proj.ID,
+			namespace:  namespace,
+			cluster:    cluster,
+			registries: registries,
+			helmAgent:  helmAgent,
+			request:    appResource,
+		})
+
+		if err != nil {
+			// TODO: mark stack with error
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// update stack revision status
@@ -160,6 +196,7 @@ func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sour
 			TemplateRepoURL:      appResource.TemplateRepoURL,
 			TemplateName:         appResource.TemplateName,
 			TemplateVersion:      appResource.TemplateVersion,
+			HelmRevisionID:       1,
 		})
 	}
 

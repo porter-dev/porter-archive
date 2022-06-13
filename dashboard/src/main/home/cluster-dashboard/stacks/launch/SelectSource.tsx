@@ -3,6 +3,8 @@ import React, { useContext, useState } from "react";
 import { StacksLaunchContext } from "./Store";
 import { CreateStackBody } from "../types";
 import { useRouting } from "shared/routing";
+import styled from "styled-components";
+import SaveButton from "components/SaveButton";
 
 const SelectSource = () => {
   const { addSourceConfig } = useContext(StacksLaunchContext);
@@ -26,7 +28,7 @@ const SelectSource = () => {
   };
 
   return (
-    <>
+    <div style={{ position: "relative" }}>
       <ImageSelector
         selectedImageUrl={imageUrl}
         setSelectedImageUrl={setImageUrl}
@@ -35,11 +37,21 @@ const SelectSource = () => {
         forceExpanded
       />
 
-      <button disabled={!imageUrl || !imageTag} onClick={handleNext}>
-        Next
-      </button>
-    </>
+      <SubmitButton
+        disabled={!imageUrl || !imageTag}
+        onClick={handleNext}
+        text="Next"
+        clearPosition
+        makeFlush
+      />
+    </div>
   );
 };
 
 export default SelectSource;
+
+const SubmitButton = styled(SaveButton)`
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+`;

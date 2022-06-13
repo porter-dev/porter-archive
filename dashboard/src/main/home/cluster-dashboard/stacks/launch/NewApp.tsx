@@ -1,3 +1,4 @@
+import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import Loading from "components/Loading";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
@@ -19,6 +20,7 @@ const NewApp = () => {
   const [template, setTemplate] = useState<ExpandedPorterTemplate>();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [saveButtonStatus, setSaveButtonStatus] = useState("");
 
   const [appName, setAppName] = useState("");
 
@@ -68,6 +70,11 @@ const NewApp = () => {
   }
 
   const handleSubmit = (values: any) => {
+    if (appName === "") {
+      setSaveButtonStatus("App name cannot be empty");
+      return;
+    }
+
     addAppResource({
       name: appName,
       source_config_name: newStack.source_configs[0]?.name || "",
@@ -75,17 +82,31 @@ const NewApp = () => {
       template_version: params.version,
       values,
     });
-    pushFiltered("/stacks/launch/overview", []);
+
+    setSaveButtonStatus("successful");
+    setTimeout(() => {
+      setSaveButtonStatus("");
+      pushFiltered("/stacks/launch/overview", []);
+    }, 1000);
   };
 
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      <Helper>App name</Helper>
       <InputRow
         type="string"
         value={appName}
         setValue={(val: string) => setAppName(val)}
+        width={"300px"}
       />
-      <PorterFormWrapper formData={template.form} onSubmit={handleSubmit} />
+      <Helper>App settings</Helper>
+      <PorterFormWrapper
+        formData={template.form}
+        onSubmit={handleSubmit}
+        isLaunch
+        saveValuesStatus={saveButtonStatus}
+        saveButtonText="Add application"
+      />
     </div>
   );
 };

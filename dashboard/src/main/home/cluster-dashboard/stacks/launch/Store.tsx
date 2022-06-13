@@ -7,10 +7,8 @@ export type StacksLaunchContextType = {
   newStack: CreateStackBody;
 
   namespace: string;
-  clusterId: number;
 
   setStackName: (name: string) => void;
-  setStackCluster: (clusterId: number) => void;
   setStackNamespace: (namespace: string) => void;
 
   addSourceConfig: (
@@ -30,10 +28,8 @@ const defaultValues: StacksLaunchContextType = {
   },
 
   namespace: "",
-  clusterId: NaN,
 
   setStackName: (name: string) => {},
-  setStackCluster: (clusterId: number) => {},
   setStackNamespace: (namespace: string) => {},
 
   addSourceConfig: (
@@ -50,11 +46,12 @@ export const StacksLaunchContext = createContext<StacksLaunchContextType>(
 );
 
 const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
-  const { currentProject, setCurrentError } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [newStack, setNewStack] = useState<CreateStackBody>(
     defaultValues.newStack
   );
-  const [clusterId, setClusterId] = useState<number>(NaN);
   const [namespace, setNamespace] = useState("default");
 
   const setStackName: StacksLaunchContextType["setStackName"] = (name) => {
@@ -63,11 +60,7 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
       name,
     }));
   };
-  const setStackCluster: StacksLaunchContextType["setStackCluster"] = (
-    newClusterId
-  ) => {
-    setClusterId(newClusterId);
-  };
+
   const setStackNamespace: StacksLaunchContextType["setStackNamespace"] = (
     namespace
   ) => {
@@ -106,7 +99,7 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
   const submit: StacksLaunchContextType["submit"] = async () => {
     try {
       await api.createStack("<token>", newStack, {
-        cluster_id: clusterId,
+        cluster_id: currentCluster.id,
         namespace: namespace,
         project_id: currentProject.id,
       });
@@ -121,9 +114,7 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
       value={{
         newStack,
         namespace,
-        clusterId,
         setStackName,
-        setStackCluster,
         setStackNamespace,
         addSourceConfig,
         addAppResource,

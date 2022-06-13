@@ -8,6 +8,15 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+// swagger:parameters createRegistry listRegistries
+type projectPathParams struct {
+	// The project id
+	// in: path
+	// required: true
+	// minimum: 1
+	ProjectID uint `json:"project_id"`
+}
+
 func NewV1ProjectScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
 		GetRoutes: GetV1ProjectScopedRoutes,

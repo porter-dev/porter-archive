@@ -43,6 +43,7 @@ const (
 	URLParamInviteID          URLParam = "invite_id"
 	URLParamNamespace         URLParam = "namespace"
 	URLParamReleaseName       URLParam = "name"
+	URLParamStackID           URLParam = "stack_id"
 	URLParamReleaseVersion    URLParam = "version"
 	URLParamWildcard          URLParam = "*"
 	URLParamIntegrationID     URLParam = "integration_id"

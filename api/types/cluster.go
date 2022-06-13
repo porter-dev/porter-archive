@@ -185,18 +185,33 @@ const (
 	AWSData          ClusterResolverName = "upload-aws-data"
 )
 
+// swagger:model
 type ListNamespacesResponse struct {
 	*v1.NamespaceList
 }
 
+// swagger:model
 type CreateNamespaceRequest struct {
 	Name string `json:"name" form:"required"`
 }
 
-type CreateNamespaceResponse struct {
-	*v1.Namespace
+type CreateNamespaceResponseMeta struct {
+	Name string `json:"name,omitempty"`
 }
 
+// swagger:model
+type CreateNamespaceResponse struct {
+	Metadata CreateNamespaceResponseMeta `json:"metadata,omitempty"`
+}
+
+// swagger:model
+type GetNamespaceResponse struct {
+	Metadata struct {
+		Name string `json:"name,omitempty"`
+	} `json:"metadata,omitempty"`
+}
+
+// swagger:model
 type DeleteNamespaceRequest struct {
 	Name string `json:"name" form:"required"`
 }

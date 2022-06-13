@@ -11,6 +11,21 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+// swagger:parameters createNamespace listNamespaces
+type clusterPathParams struct {
+	// The project id
+	// in: path
+	// required: true
+	// minimum: 1
+	ProjectID uint `json:"project_id"`
+
+	// The cluster id
+	// in: path
+	// required: true
+	// minimum: 1
+	ClusterID uint `json:"cluster_id"`
+}
+
 func NewV1ClusterScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
 		GetRoutes: GetV1ClusterScopedRoutes,
@@ -56,6 +71,31 @@ func getV1ClusterRoutes(
 	var routes []*router.Route
 
 	// POST /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewCreateNamespaceHandler
+	// swagger:operation POST /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces createNamespace
+	//
+	// Creates a new namespace
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Create a new namespace
+	// tags:
+	// - Namespaces
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - in: body
+	//     name: CreateNamespaceRequest
+	//     description: The namespace to create
+	//     schema:
+	//       $ref: '#/definitions/CreateNamespaceRequest'
+	// responses:
+	//   '201':
+	//     description: Successfully created a new namespace
+	//     schema:
+	//       $ref: '#/definitions/CreateNamespaceResponse'
+	//   '403':
+	//     description: Forbidden
 	createNamespaceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -85,6 +125,29 @@ func getV1ClusterRoutes(
 	})
 
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} -> cluster.NewGetNamespaceHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} getNamespace
+	//
+	// Gets a namespace
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Get a namespace
+	// tags:
+	// - Namespaces
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	// responses:
+	//   '200':
+	//     description: Successfully got the namespace
+	//     schema:
+	//       $ref: '#/definitions/GetNamespaceResponse'
+	//   '403':
+	//     description: Forbidden
+	//   '404':
+	//     description: Not Found
 	getNamespaceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -113,6 +176,26 @@ func getV1ClusterRoutes(
 	})
 
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewListNamespacesHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces listNamespaces
+	//
+	// Lists namespaces
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: List all namespaces
+	// tags:
+	// - Namespaces
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	// responses:
+	//   '200':
+	//     description: Successfully listed namespaces
+	//     schema:
+	//       $ref: '#/definitions/ListNamespacesResponse'
+	//   '403':
+	//     description: Forbidden
 	listNamespacesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -141,6 +224,25 @@ func getV1ClusterRoutes(
 	})
 
 	// DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} -> cluster.NewDeleteNamespaceHandler
+	// swagger:operation DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} deleteNamespace
+	//
+	// Deletes a namespace
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Delete a namespace
+	// tags:
+	// - Namespaces
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	// responses:
+	//   '200':
+	//     description: Successfully deleted namespace
+	//   '403':
+	//     description: Forbidden
 	deleteNamespaceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,

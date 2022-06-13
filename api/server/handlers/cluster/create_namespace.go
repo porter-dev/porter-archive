@@ -52,7 +52,9 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	res := types.CreateNamespaceResponse{
-		Namespace: namespace,
+		Metadata: types.CreateNamespaceResponseMeta{
+			Name: namespace.Name,
+		},
 	}
 
 	w.WriteHeader(http.StatusCreated)

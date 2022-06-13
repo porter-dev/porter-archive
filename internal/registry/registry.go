@@ -719,8 +719,8 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 
 	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 		RepositoryName: &repoName,
-		MaxResults:     &maxResults,
-		ImageIds:       imageIDs,
+		// MaxResults:     &maxResults,
+		ImageIds: imageIDs,
 	})
 
 	if err != nil {
@@ -734,8 +734,8 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 	for nextToken != nil {
 		describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 			RepositoryName: &repoName,
-			MaxResults:     &maxResults,
-			ImageIds:       resp.ImageIds,
+			// MaxResults:     &maxResults,
+			ImageIds: resp.ImageIds,
 		})
 
 		if err != nil {

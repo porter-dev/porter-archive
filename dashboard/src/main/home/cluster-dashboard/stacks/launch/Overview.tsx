@@ -13,6 +13,7 @@ import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 import { capitalize } from "shared/string_utils";
 import SaveButton from "components/SaveButton";
 import { useRouting } from "shared/routing";
+import Loading from "components/Loading";
 
 const Overview = () => {
   const {
@@ -127,6 +128,15 @@ const Overview = () => {
     if (newStack.name === "") {
       return false;
     }
+
+    if (newStack.source_configs.length === 0) {
+      return false;
+    }
+
+    if (newStack.app_resources.length === 0) {
+      return false;
+    }
+
     return true;
   }, [namespace, clusterId, newStack.name]);
 
@@ -286,6 +296,16 @@ const TemplateSelector = ({
     return capitalize(template?.name || "");
   };
 
+  if (!Array.isArray(options) || options.length === 0) {
+    return (
+      <SelectorStyles.Wrapper>
+        <SelectorStyles.Button expanded={false}>
+          <Loading />
+        </SelectorStyles.Button>
+      </SelectorStyles.Wrapper>
+    );
+  }
+
   return (
     <>
       <SelectorStyles.Wrapper ref={wrapperRef}>
@@ -333,6 +353,16 @@ const VersionSelector = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   useOutsideAlerter(wrapperRef, () => setIsExpanded(false));
+
+  if (!Array.isArray(options) || options.length === 0) {
+    return (
+      <SelectorStyles.Wrapper>
+        <SelectorStyles.Button expanded={false}>
+          <Loading />
+        </SelectorStyles.Button>
+      </SelectorStyles.Wrapper>
+    );
+  }
 
   return (
     <>

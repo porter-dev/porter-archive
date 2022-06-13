@@ -61,7 +61,7 @@ func (c *GetNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	res := &types.NamespaceResponse{
 		Name:              namespace.Name,
 		CreationTimestamp: namespace.CreationTimestamp.Time.UTC().Format(time.RFC1123),
-		Status:            namespace.Status.Phase,
+		Status:            string(namespace.Status.Phase),
 	}
 
 	if namespace.DeletionTimestamp != nil {

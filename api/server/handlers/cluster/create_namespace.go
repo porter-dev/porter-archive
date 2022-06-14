@@ -1,7 +1,9 @@
 package cluster
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -44,6 +46,15 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	_, err = agent.GetNamespace(request.Name)
+
+	if err == nil { // namespace with name already exists
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("namespace already exists"), http.StatusPreconditionFailed,
+		))
+		return
+	}
+
 	namespace, err := agent.CreateNamespace(request.Name)
 
 	if err != nil {
@@ -51,8 +62,14 @@ func (c *CreateNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	res := types.CreateNamespaceResponse{
-		Namespace: namespace,
+	res := &types.NamespaceResponse{
+		Name:              namespace.Name,
+		CreationTimestamp: namespace.CreationTimestamp.Time.UTC().Format(time.RFC1123),
+		Status:            string(namespace.Status.Phase),
+	}
+
+	if namespace.DeletionTimestamp != nil {
+		res.DeletionTimestamp = namespace.DeletionTimestamp.Time.UTC().Format(time.RFC1123)
 	}
 
 	w.WriteHeader(http.StatusCreated)

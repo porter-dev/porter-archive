@@ -7,37 +7,58 @@ const (
 )
 
 type Registry struct {
+	// The ID of the registry
+	// minimum: 1
+	// example: 2
 	ID uint `json:"id"`
 
 	// The project that this integration belongs to
+	// minimum: 1
+	// example: 1
 	ProjectID uint `json:"project_id"`
 
 	// Name of the registry
+	// example: my-ecr-reg
 	Name string `json:"name"`
 
 	// URL of the registry
+	// example: 123456789.dkr.ecr.us-west-2.amazonaws.com
 	URL string `json:"url"`
 
 	// The integration service for this registry
-	Service RegistryService `json:"service"`
+	// enum: gcr,ecr,acr,docr,dockerhub
+	// example: ecr
+	Service string `json:"service"`
 
 	// The infra id, if registry was provisioned with Porter
+	// minimum: 1
+	// example: 2
 	InfraID uint `json:"infra_id"`
 
 	// The AWS integration that was used to create or connect the registry
+	// minimum: 1
+	// example: 1
 	AWSIntegrationID uint `json:"aws_integration_id,omitempty"`
 
 	// The Azure integration that was used to create or connect the registry
+	// minimum: 1
+	// example: 0
 	AzureIntegrationID uint `json:"azure_integration_id,omitempty"`
 
 	// The GCP integration that was used to create or connect the registry
+	// minimum: 1
+	// example: 0
 	GCPIntegrationID uint `json:"gcp_integration_id,omitempty"`
 
 	// The DO integration that was used to create or connect the registry:
 	// this points to an OAuthIntegrationID
+	// minimum: 1
+	// example: 0
 	DOIntegrationID uint `json:"do_integration_id,omitempty"`
 
-	// The basic integration that was used to connect the registry:
+	// The basic integration that was used to connect the registry.
+	// minimum: 1
+	// example: 0
 	BasicIntegrationID uint `json:"basic_integration_id,omitempty"`
 }
 
@@ -71,6 +92,7 @@ type Image struct {
 	PushedAt *time.Time `json:"pushed_at"`
 }
 
+// Type of registry service
 type RegistryService string
 
 const (
@@ -81,22 +103,61 @@ const (
 	DockerHub RegistryService = "dockerhub"
 )
 
+// swagger:model ListRegistriesResponse
 type RegistryListResponse []Registry
 
+// swagger:model
 type CreateRegistryRequest struct {
-	URL                string `json:"url"`
-	Name               string `json:"name" form:"required"`
-	GCPIntegrationID   uint   `json:"gcp_integration_id"`
-	AWSIntegrationID   uint   `json:"aws_integration_id"`
-	DOIntegrationID    uint   `json:"do_integration_id"`
-	BasicIntegrationID uint   `json:"basic_integration_id"`
-	AzureIntegrationID uint   `json:"azure_integration_id"`
+	// URL of the container registry
+	// example: 123456789.dkr.ecr.us-west-2.amazonaws.com
+	URL string `json:"url"`
+
+	// Name of the container registry
+	// required: true
+	// example: my-ecr-reg
+	Name string `json:"name" form:"required"`
+
+	// The GCP integration ID to be used for this registry
+	// minimum: 1
+	// example: 0
+	GCPIntegrationID uint `json:"gcp_integration_id"`
+
+	// The AWS integration ID to be used for this registry
+	// minimum: 1
+	// example: 1
+	AWSIntegrationID uint `json:"aws_integration_id"`
+
+	// The DigitalOcean integration ID to be used for this registry
+	// minimum: 1
+	// example: 0
+	DOIntegrationID uint `json:"do_integration_id"`
+
+	// The Basic integration ID to be used for this registry
+	// minimum: 1
+	// example: 0
+	BasicIntegrationID uint `json:"basic_integration_id"`
+
+	// The Azure integration ID to be used for this registry
+	// minimum: 1
+	// example: 0
+	AzureIntegrationID uint `json:"azure_integration_id"`
 
 	// Additional Azure-specific fields
+
+	// ACR resource group name (**Azure only**)
 	ACRResourceGroupName string `json:"acr_resource_group_name"`
-	ACRName              string `json:"acr_name"`
+
+	// ACR name (**Azure only**)
+	ACRName string `json:"acr_name"`
 }
 
+// swagger:model
+type CreateRegistryResponse Registry
+
+// swagger:model
+type GetRegistryResponse Registry
+
+// swagger:model
 type CreateRegistryRepositoryRequest struct {
 	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 }
@@ -125,6 +186,26 @@ type GetRegistryDOCRTokenRequest struct {
 	ServerURL string `schema:"server_url"`
 }
 
+// swagger:model ListRegistryRepositoriesResponse
 type ListRegistryRepositoryResponse []*RegistryRepository
 
+// swagger:model ListImagesResponse
 type ListImageResponse []*Image
+
+type V1ListImageRequest struct {
+	Num      int64  `schema:"num"`
+	Next     string `schema:"next"`
+	NextPage uint   `schema:"next_page"`
+}
+
+// swagger:model V1ListImageResponse
+type V1ListImageResponse struct {
+	// The list of repository images with tags
+	Images []*Image `json:"images" form:"required"`
+
+	// The next page number used for pagination, when applicable
+	NextPage uint `json:"num_page,omitempty"`
+
+	// The next page string used for pagination, when application
+	Next string `json:"next,omitempty"`
+}

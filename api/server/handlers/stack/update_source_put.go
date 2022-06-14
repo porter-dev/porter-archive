@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/stacks"
 	"gorm.io/gorm"
 )
 
@@ -69,7 +70,7 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	revision.Status = string(types.StackRevisionStatusDeploying)
 	prevSourceConfigs := revision.SourceConfigs
 	revision.SourceConfigs = sourceConfigs
-	clonedAppResources, err := cloneAppResources(revision.Resources, prevSourceConfigs, revision.SourceConfigs)
+	clonedAppResources, err := stacks.CloneAppResources(revision.Resources, prevSourceConfigs, revision.SourceConfigs)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

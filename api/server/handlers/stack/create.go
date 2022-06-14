@@ -6,12 +6,15 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
+
+	helmrelease "helm.sh/helm/v3/pkg/release"
 )
 
 type StackCreateHandler struct {
@@ -108,8 +111,10 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	helmReleaseMap := make(map[string]*helmrelease.Release)
+
 	for _, appResource := range req.AppResources {
-		err = applyAppResource(&applyAppResourceOpts{
+		rel, err := applyAppResource(&applyAppResourceOpts{
 			config:     p.Config(),
 			projectID:  proj.ID,
 			namespace:  namespace,
@@ -124,6 +129,8 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+
+		helmReleaseMap[fmt.Sprintf("%s/%s", namespace, appResource.Name)] = rel
 	}
 
 	// update stack revision status
@@ -135,6 +142,19 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	for _, resource := range revision.Resources {
+		rel := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]
+
+		// TODO: case on addon vs application
+		_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
+
+		if err != nil {
+			// TODO: mark stack with error
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// read the stack again to get the latest revision info

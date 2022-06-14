@@ -17,6 +17,8 @@ type Release struct {
 	Name         string `json:"name"`
 	Namespace    string `json:"namespace"`
 
+	StackResourceID uint
+
 	// The complete image repository uri to pull from. This is also stored in GitActionConfig,
 	// but this should be used for the source of truth going forward.
 	ImageRepoURI string `json:"image_repo_uri,omitempty"`

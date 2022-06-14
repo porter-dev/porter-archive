@@ -47,7 +47,7 @@ func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace str
 
 	if err := repo.db.Preload("SourceConfigs").Preload("Resources").Where("stack_revisions.stack_id IN (?)", stackIDs).Where(`
 	stack_revisions.id IN (
-	  SELECT id FROM (SELECT MAX(stack_revisions.revision_number), id FROM stack_revisions WHERE stack_revisions.stack_id IN (?) GROUP BY stack_revisions.stack_id)
+	  SELECT s2.id FROM (SELECT MAX(stack_revisions.revision_number), id FROM stack_revisions WHERE stack_revisions.stack_id IN (?) GROUP BY stack_revisions.stack_id) s2
 	)
   `, stackIDs).Find(&revisions).Error; err != nil {
 		return nil, err

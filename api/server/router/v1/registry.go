@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
+	v1Registry "github.com/porter-dev/porter/api/server/handlers/v1/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -384,14 +385,33 @@ func getV1RegistryRoutes(
 	//   - name: registry_id
 	//   - name: repository
 	//     in: path
-	//     description: the image repository name
+	//     description: The image repository name
 	//     type: string
 	//     required: true
+	//   - name: num
+	//     in: query
+	//     description: |
+	//       The number of images to list.
+	//       For ECR images, a maximum of 1000 is allowed.
+	//     type: integer
+	//     required: false
+	//     minimum: 1
+	//   - name: next
+	//     in: query
+	//     description: The next page string used for pagination, from a previous request.
+	//     type: string
+	//   - name: next_page
+	//     in: query
+	//     description: The next page number used for pagination, from a previous request.
+	//     type: integer
+	//     minimum: 2
 	// responses:
 	//   '200':
 	//     description: Successfully listed images
 	//     schema:
-	//       $ref: '#/definitions/ListImagesResponse'
+	//       $ref: '#/definitions/V1ListImageResponse'
+	//   '400':
+	//     description: A malformed or bad request
 	//   '403':
 	//     description: Forbidden
 	listImagesEndpoint := factory.NewAPIEndpoint(
@@ -414,8 +434,9 @@ func getV1RegistryRoutes(
 		},
 	)
 
-	listImagesHandler := registry.NewRegistryListImagesHandler(
+	listImagesHandler := v1Registry.NewRegistryListImagesHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 

@@ -191,3 +191,21 @@ type ListRegistryRepositoryResponse []*RegistryRepository
 
 // swagger:model ListImagesResponse
 type ListImageResponse []*Image
+
+type V1ListImageRequest struct {
+	Num      int64  `schema:"num"`
+	Next     string `schema:"next"`
+	NextPage uint   `schema:"next_page"`
+}
+
+// swagger:model V1ListImageResponse
+type V1ListImageResponse struct {
+	// The list of repository images with tags
+	Images []*Image `json:"images" form:"required"`
+
+	// The next page number used for pagination, when applicable
+	NextPage uint `json:"num_page,omitempty"`
+
+	// The next page string used for pagination, when application
+	Next string `json:"next,omitempty"`
+}

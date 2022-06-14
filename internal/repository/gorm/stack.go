@@ -49,7 +49,7 @@ func (repo *StackRepository) ReadStackByStringID(projectID uint, stackID string)
 
 	if err := repo.db.
 		Preload("Revisions", func(db *gorm.DB) *gorm.DB {
-			return db.Order("stack_revisions.revision_number DESC")
+			return db.Order("stack_revisions.revision_number DESC").Limit(100)
 		}).
 		Preload("Revisions.Resources").
 		Preload("Revisions.SourceConfigs").

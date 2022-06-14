@@ -77,6 +77,16 @@ func (repo *StackRepository) UpdateStackRevision(revision *models.StackRevision)
 	return revision, nil
 }
 
+func (repo *StackRepository) ReadStackRevision(stackRevisionID uint) (*models.StackRevision, error) {
+	revision := &models.StackRevision{}
+
+	if err := repo.db.Preload("Resources").Preload("SourceConfigs").Where("id = ?", stackRevisionID).First(&revision).Error; err != nil {
+		return nil, err
+	}
+
+	return revision, nil
+}
+
 func (repo *StackRepository) ReadStackRevisionByNumber(stackID uint, revisionNumber uint) (*models.StackRevision, error) {
 	revision := &models.StackRevision{}
 
@@ -105,4 +115,22 @@ func (repo *StackRepository) AppendNewRevision(revision *models.StackRevision) (
 	}
 
 	return revision, nil
+}
+
+func (repo *StackRepository) ReadStackResource(resourceID uint) (*models.StackResource, error) {
+	resource := &models.StackResource{}
+
+	if err := repo.db.Where("id = ?", resourceID).First(&resource).Error; err != nil {
+		return nil, err
+	}
+
+	return resource, nil
+}
+
+func (repo *StackRepository) UpdateStackResource(resource *models.StackResource) (*models.StackResource, error) {
+	if err := repo.db.Save(resource).Error; err != nil {
+		return nil, err
+	}
+
+	return resource, nil
 }

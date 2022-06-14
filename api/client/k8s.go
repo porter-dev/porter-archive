@@ -38,8 +38,8 @@ func (c *Client) CreateNewK8sNamespace(
 	projectID uint,
 	clusterID uint,
 	name string,
-) (*types.CreateNamespaceResponse, error) {
-	resp := &types.CreateNamespaceResponse{}
+) (*types.NamespaceResponse, error) {
+	resp := &types.NamespaceResponse{}
 
 	err := c.postRequest(
 		fmt.Sprintf(

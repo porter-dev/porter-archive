@@ -214,6 +214,8 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			FlowID: operationID,
 		},
 	))
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func createReleaseFromHelmRelease(
@@ -537,7 +539,7 @@ type containerEnvConfig struct {
 	} `yaml:"container"`
 }
 
-func getGARunner(
+func GetGARunner(
 	config *config.Config,
 	userID, projectID, clusterID uint,
 	ga *models.GitActionConfig,

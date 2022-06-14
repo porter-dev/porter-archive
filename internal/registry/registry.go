@@ -664,6 +664,70 @@ func (r *Registry) ListImages(
 	return nil, fmt.Errorf("error listing images")
 }
 
+func (r *Registry) GetECRPaginatedImages(
+	repoName string,
+	repo repository.Repository,
+	maxResults int64,
+	nextToken *string,
+) ([]*ptypes.Image, *string, error) {
+	aws, err := repo.AWSIntegration().ReadAWSIntegration(
+		r.ProjectID,
+		r.AWSIntegrationID,
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sess, err := aws.GetSession()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	svc := ecr.New(sess)
+
+	resp, err := svc.ListImages(&ecr.ListImagesInput{
+		RepositoryName: &repoName,
+		MaxResults:     &maxResults,
+		NextToken:      nextToken,
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(resp.ImageIds) == 0 {
+		return []*ptypes.Image{}, nil, nil
+	}
+
+	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+		RepositoryName: &repoName,
+		ImageIds:       resp.ImageIds,
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	imageDetails := describeResp.ImageDetails
+
+	res := make([]*ptypes.Image, 0)
+
+	for _, img := range imageDetails {
+		for _, tag := range img.ImageTags {
+			res = append(res, &ptypes.Image{
+				Digest:         *img.ImageDigest,
+				Tag:            *tag,
+				RepositoryName: repoName,
+				PushedAt:       img.ImagePushedAt,
+			})
+		}
+	}
+
+	return res, resp.NextToken, nil
+}
+
 func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
 	aws, err := repo.AWSIntegration().ReadAWSIntegration(
 		r.ProjectID,
@@ -707,6 +771,7 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		resp, err := svc.ListImages(&ecr.ListImagesInput{
 			RepositoryName: &repoName,
 			MaxResults:     &maxResults,
+			NextToken:      nextToken,
 		})
 
 		if err != nil {
@@ -719,8 +784,7 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 
 	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 		RepositoryName: &repoName,
-		// MaxResults:     &maxResults,
-		ImageIds: imageIDs,
+		ImageIds:       imageIDs,
 	})
 
 	if err != nil {
@@ -734,8 +798,7 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 	for nextToken != nil {
 		describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 			RepositoryName: &repoName,
-			// MaxResults:     &maxResults,
-			ImageIds: resp.ImageIds,
+			NextToken:      nextToken,
 		})
 
 		if err != nil {

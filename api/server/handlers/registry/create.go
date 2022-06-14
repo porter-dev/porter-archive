@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/registry"
+	"gorm.io/gorm"
 )
 
 type RegistryCreateHandler struct {
@@ -47,6 +49,114 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	if !ok {
 		return
+	}
+
+	// validate request before saving it to the DB
+	integrationIDs := []uint{
+		request.GCPIntegrationID,
+		request.AWSIntegrationID,
+		request.DOIntegrationID,
+		request.BasicIntegrationID,
+		request.AzureIntegrationID,
+	}
+
+	idCount := 0
+
+	for _, id := range integrationIDs {
+		if id != 0 {
+			idCount += 1
+		}
+	}
+
+	if idCount > 1 {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("only one integration ID should be set"), http.StatusBadRequest,
+		))
+		return
+	} else if idCount == 0 {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("at least one integration ID should be set"), http.StatusBadRequest,
+		))
+		return
+	}
+
+	var err error
+
+	if request.GCPIntegrationID != 0 {
+		_, err = p.Repo().GCPIntegration().ReadGCPIntegration(proj.ID, request.GCPIntegrationID)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("no such GCP integration ID: %d for project ID: %d", request.GCPIntegrationID, proj.ID),
+					http.StatusNotFound,
+				))
+				return
+			}
+
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else if request.AWSIntegrationID != 0 {
+		_, err = p.Repo().AWSIntegration().ReadAWSIntegration(proj.ID, request.AWSIntegrationID)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("no such AWS integration ID: %d for project ID: %d", request.AWSIntegrationID, proj.ID),
+					http.StatusNotFound,
+				))
+				return
+			}
+
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else if request.DOIntegrationID != 0 {
+		_, err = p.Repo().OAuthIntegration().ReadOAuthIntegration(proj.ID, request.DOIntegrationID)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("no such DO integration ID: %d for project ID: %d", request.DOIntegrationID, proj.ID),
+					http.StatusNotFound,
+				))
+				return
+			}
+
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else if request.BasicIntegrationID != 0 {
+		_, err = p.Repo().BasicIntegration().ReadBasicIntegration(proj.ID, request.BasicIntegrationID)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("no such basic integration ID: %d for project ID: %d", request.BasicIntegrationID, proj.ID),
+					http.StatusNotFound,
+				))
+				return
+			}
+
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else if request.AzureIntegrationID != 0 {
+		_, err = p.Repo().AzureIntegration().ReadAzureIntegration(proj.ID, request.AzureIntegrationID)
+
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+					fmt.Errorf("no such Azure integration ID: %d for project ID: %d", request.AzureIntegrationID, proj.ID),
+					http.StatusNotFound,
+				))
+				return
+			}
+
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// create a registry model
@@ -99,7 +209,7 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		az.ACRName = request.ACRName
 		az.ACRResourceGroupName = request.ACRResourceGroupName
 
-		az, err = p.Repo().AzureIntegration().OverwriteAzureIntegration(az)
+		_, err = p.Repo().AzureIntegration().OverwriteAzureIntegration(az)
 
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -108,7 +218,7 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	// handle write to the database
-	regModel, err := p.Repo().Registry().CreateRegistry(regModel)
+	regModel, err = p.Repo().Registry().CreateRegistry(regModel)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -122,5 +232,6 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		},
 	))
 
+	w.WriteHeader(http.StatusCreated)
 	p.WriteResult(w, r, regModel.ToRegistryType())
 }

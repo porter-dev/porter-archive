@@ -296,6 +296,9 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
           }}
         ></KeyValueArray>
 
+        <Heading>Select default branch</Heading>
+        <BranchSelector actionConfig={getActionConfig()} />
+
         {!chart.git_action_config.dockerfile_path ? (
           <>
             <Heading>Buildpack Settings</Heading>
@@ -709,6 +712,37 @@ const BuildpackConfigSection: React.FC<{
       </>
     </BuildpackConfigurationContainer>
   );
+};
+
+const BranchSelector: React.FC<{
+  actionConfig: FullActionConfigType;
+  currentChart: ChartTypeWithExtendedConfig;
+  onChange: (buildConfig: BuildConfig) => void;
+}> = ({ actionConfig, currentChart, onChange }) => {
+  const { currentProject } = useContext(Context);
+
+  useEffect(() => {
+    if (actionConfig.kind === "gitlab") {
+      return;
+    }
+
+    api
+      .getBranches(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          git_repo_id: actionConfig.git_repo_id,
+          kind: "github",
+          owner: chart.git_action_config?.git_repo?.split("/")[0],
+          name: chart.git_action_config?.git_repo?.split("/")[1],
+        }
+      )
+      .then((branches) => {
+        setBranchOptions(branches);
+      });
+  }, []);
+  return <></>;
 };
 
 const DisabledOverlay = styled.div`

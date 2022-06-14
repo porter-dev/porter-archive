@@ -22,6 +22,7 @@ type PorterRelease struct {
 	ImageRepoURI    string           `json:"image_repo_uri"`
 	BuildConfig     *BuildConfig     `json:"build_config,omitempty"`
 	Tags            []string         `json:"tags,omitempty"`
+	IsStack         bool             `json:"is_stack"`
 }
 
 // swagger:model

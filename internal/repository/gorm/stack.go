@@ -30,9 +30,13 @@ func (repo *StackRepository) CreateStack(stack *models.Stack) (*models.Stack, er
 func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace string) ([]*models.Stack, error) {
 	stacks := make([]*models.Stack, 0)
 
+	// TODO: custom query
+
 	if err := repo.db.Debug().
 		Preload("Revisions", func(db *gorm.DB) *gorm.DB {
-			return db.Debug().Order("stack_revisions.revision_number DESC").Limit(1)
+			return db.Where(`stack_revisions.revision_number IN (
+				SELECT id FROM (SELECT MAX(stack_revisions.revision_number), id FROM stack_revisions GROUP BY stack_revisions.stack_id)
+			)`)
 		}).
 		Preload("Revisions.Resources").
 		Preload("Revisions.SourceConfigs").

@@ -609,14 +609,14 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/delete -> cluster.NewDeleteNamespaceHandler
+	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} -> cluster.NewDeleteNamespaceHandler
 	deleteNamespaceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
 			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/namespaces/delete",
+				RelativePath: fmt.Sprintf("%s/namespaces/{%s}", relPath, types.URLParamNamespace),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

@@ -1440,16 +1440,15 @@ const createNamespace = baseApi<
 });
 
 const deleteNamespace = baseApi<
-  {
-    name: string;
-  },
+  {},
   {
     id: number;
     cluster_id: number;
+    namespace: string;
   }
 >("DELETE", (pathParams) => {
-  let { id, cluster_id } = pathParams;
-  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/delete`;
+  let { id, cluster_id, namespace } = pathParams;
+  return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}`;
 });
 
 const deleteJob = baseApi<

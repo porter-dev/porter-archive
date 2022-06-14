@@ -144,7 +144,7 @@ func listNamespaces(user *types.GetAuthenticatedUserResponse, client *api.Client
 	cID := cliConf.Cluster
 
 	// get the list of namespaces
-	namespaces, err := client.GetK8sNamespaces(
+	namespaceList, err := client.GetK8sNamespaces(
 		context.Background(),
 		pID,
 		cID,
@@ -159,8 +159,10 @@ func listNamespaces(user *types.GetAuthenticatedUserResponse, client *api.Client
 
 	fmt.Fprintf(w, "%s\t%s\n", "NAME", "STATUS")
 
-	for _, namespace := range namespaces.Items {
-		fmt.Fprintf(w, "%s\t%s\n", namespace.Name, namespace.Status.Phase)
+	namespaces := *namespaceList
+
+	for _, namespace := range namespaces {
+		fmt.Fprintf(w, "%s\t%s\n", namespace.Name, namespace.Status)
 	}
 
 	w.Flush()

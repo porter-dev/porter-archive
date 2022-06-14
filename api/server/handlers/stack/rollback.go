@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/stacks"
 	"gorm.io/gorm"
 )
 
@@ -70,14 +71,14 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	revision.RevisionNumber = latestRevision.RevisionNumber + 1
 	revision.Status = string(types.StackRevisionStatusDeploying)
 
-	newSourceConfigs, err := cloneSourceConfigs(revision.SourceConfigs)
+	newSourceConfigs, err := stacks.CloneSourceConfigs(revision.SourceConfigs)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	appResources, err := cloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
+	appResources, err := stacks.CloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -30,14 +30,41 @@ func (repo *StackRepository) CreateStack(stack *models.Stack) (*models.Stack, er
 func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace string) ([]*models.Stack, error) {
 	stacks := make([]*models.Stack, 0)
 
-	if err := repo.db.Debug().
-		Preload("Revisions", func(db *gorm.DB) *gorm.DB {
-			return db.Debug().Order("stack_revisions.revision_number DESC").Limit(1)
-		}).
-		Preload("Revisions.Resources").
-		Preload("Revisions.SourceConfigs").
+	// get stack IDs
+	if err := repo.db.
 		Where("stacks.project_id = ? AND stacks.cluster_id = ? AND stacks.namespace = ?", projectID, clusterID, namespace).Find(&stacks).Error; err != nil {
 		return nil, err
+	}
+
+	stackIDs := make([]uint, 0)
+
+	for _, initStack := range stacks {
+		stackIDs = append(stackIDs, initStack.ID)
+	}
+
+	// query for each stack's revision
+	revisions := make([]*models.StackRevision, 0)
+
+	if err := repo.db.Preload("SourceConfigs").Preload("Resources").Where("stack_revisions.stack_id IN (?)", stackIDs).Where(`
+	stack_revisions.id IN (
+	  SELECT id FROM (SELECT MAX(stack_revisions.revision_number), id FROM stack_revisions WHERE stack_revisions.stack_id IN (?) GROUP BY stack_revisions.stack_id)
+	)
+  `, stackIDs).Find(&revisions).Error; err != nil {
+		return nil, err
+	}
+
+	// insert revisions into a map
+	stackIDToRevisionMap := make(map[uint]models.StackRevision)
+
+	for _, revision := range revisions {
+		stackIDToRevisionMap[revision.StackID] = *revision
+	}
+
+	// look up each revision for each stack
+	for _, stack := range stacks {
+		if _, exists := stackIDToRevisionMap[stack.ID]; exists {
+			stack.Revisions = append(stack.Revisions, stackIDToRevisionMap[stack.ID])
+		}
 	}
 
 	return stacks, nil

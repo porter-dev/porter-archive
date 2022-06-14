@@ -10,7 +10,7 @@ import {
 } from "shared/types";
 import api from "shared/api";
 import { getQueryParam, pushFiltered } from "shared/routing";
-import ExpandedJobChart, { ExpandedJobChartFC } from "./ExpandedJobChart";
+import { ExpandedJobChartFC } from "./ExpandedJobChart";
 import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";
 import PageNotFound from "components/PageNotFound";
@@ -61,12 +61,18 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           }/${chart.namespace}/${chart.name}`;
 
           if (isJob && this.props.match.params?.baseRoute === "applications") {
-            pushFiltered(this.props, route, ["project_id"]);
+            pushFiltered(this.props, route, [
+              "project_id",
+              "closeChartRedirectUrl",
+            ]);
             return;
           }
 
           if (!isJob && this.props.match.params?.baseRoute !== "applications") {
-            pushFiltered(this.props, route, ["project_id"]);
+            pushFiltered(this.props, route, [
+              "project_id",
+              "closeChartRedirectUrl",
+            ]);
             return;
           }
         })
@@ -100,12 +106,19 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           namespace={namespace}
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
-          closeChart={() =>
+          closeChart={() => {
+            let urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.get("closeChartRedirectUrl")) {
+              this.props.history.push(urlParams.get("closeChartRedirectUrl"));
+              return;
+            }
+
             pushFiltered(this.props, "/jobs", ["project_id"], {
               cluster: this.context.currentCluster.name,
               namespace: namespace,
-            })
-          }
+            });
+          }}
           setSidebar={setSidebar}
         />
       );

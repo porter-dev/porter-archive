@@ -17,6 +17,8 @@ export type StacksLaunchContextType = {
 
   addAppResource: (appResource: CreateStackBody["app_resources"][0]) => void;
 
+  removeAppResource: (appResource: CreateStackBody["app_resources"][0]) => void;
+
   submit: () => Promise<void>;
 };
 
@@ -37,6 +39,8 @@ const defaultValues: StacksLaunchContextType = {
   ) => {},
 
   addAppResource: (appResource: CreateStackBody["app_resources"][0]) => {},
+
+  removeAppResource: (appResource: CreateStackBody["app_resources"][0]) => {},
 
   submit: async () => {},
 };
@@ -96,6 +100,17 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
     }));
   };
 
+  const removeAppResource: StacksLaunchContextType["removeAppResource"] = (
+    appResource
+  ) => {
+    setNewStack((prev) => ({
+      ...prev,
+      app_resources: prev.app_resources.filter(
+        (ar) => ar.name !== appResource.name
+      ),
+    }));
+  };
+
   const submit: StacksLaunchContextType["submit"] = async () => {
     try {
       await api.createStack("<token>", newStack, {
@@ -118,6 +133,7 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
         setStackNamespace,
         addSourceConfig,
         addAppResource,
+        removeAppResource,
         submit,
       }}
     >

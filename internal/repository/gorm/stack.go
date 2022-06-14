@@ -49,7 +49,7 @@ func (repo *StackRepository) ReadStackByStringID(projectID uint, stackID string)
 
 	if err := repo.db.
 		Preload("Revisions", func(db *gorm.DB) *gorm.DB {
-			return db.Order("stack_revisions.revision_number DESC")
+			return db.Order("stack_revisions.revision_number DESC").Limit(100)
 		}).
 		Preload("Revisions.Resources").
 		Preload("Revisions.SourceConfigs").
@@ -71,6 +71,16 @@ func (repo *StackRepository) DeleteStack(stack *models.Stack) (*models.Stack, er
 
 func (repo *StackRepository) UpdateStackRevision(revision *models.StackRevision) (*models.StackRevision, error) {
 	if err := repo.db.Save(revision).Error; err != nil {
+		return nil, err
+	}
+
+	return revision, nil
+}
+
+func (repo *StackRepository) ReadStackRevision(stackRevisionID uint) (*models.StackRevision, error) {
+	revision := &models.StackRevision{}
+
+	if err := repo.db.Preload("Resources").Preload("SourceConfigs").Where("id = ?", stackRevisionID).First(&revision).Error; err != nil {
 		return nil, err
 	}
 
@@ -105,4 +115,22 @@ func (repo *StackRepository) AppendNewRevision(revision *models.StackRevision) (
 	}
 
 	return revision, nil
+}
+
+func (repo *StackRepository) ReadStackResource(resourceID uint) (*models.StackResource, error) {
+	resource := &models.StackResource{}
+
+	if err := repo.db.Where("id = ?", resourceID).First(&resource).Error; err != nil {
+		return nil, err
+	}
+
+	return resource, nil
+}
+
+func (repo *StackRepository) UpdateStackResource(resource *models.StackResource) (*models.StackResource, error) {
+	if err := repo.db.Save(resource).Error; err != nil {
+		return nil, err
+	}
+
+	return resource, nil
 }

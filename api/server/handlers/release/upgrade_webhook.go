@@ -204,4 +204,13 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			rel.Chart.Metadata.Name,
 		),
 	}))
+
+	c.WriteResult(w, r, nil)
+
+	err = postUpgrade(c.Config(), cluster.ProjectID, cluster.ID, rel)
+
+	if err != nil {
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 }

@@ -3,8 +3,7 @@ import React, { useContext, useState } from "react";
 import { StacksLaunchContext } from "./Store";
 import { CreateStackBody } from "../types";
 import { useRouting } from "shared/routing";
-import styled from "styled-components";
-import SaveButton from "components/SaveButton";
+import { SubmitButton } from "./components/styles";
 
 const SelectSource = () => {
   const { addSourceConfig } = useContext(StacksLaunchContext);
@@ -49,10 +48,3 @@ const SelectSource = () => {
 };
 
 export default SelectSource;
-
-const SubmitButton = styled(SaveButton)`
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 15px;
-`;

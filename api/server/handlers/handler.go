@@ -21,7 +21,7 @@ type PorterHandler interface {
 		w http.ResponseWriter,
 		r *http.Request,
 		state string,
-		isUser, isProject bool,
+		isProject, isUser bool,
 		integrationClient types.OAuthIntegrationClient,
 		integrationID uint,
 	) error

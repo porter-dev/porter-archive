@@ -14,6 +14,7 @@ staging.sh
 *.crt
 *.key
 bin
+openapi.yaml
 
 # Local docs directories
 /docs/.obsidian

@@ -186,7 +186,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// update the github actions env if the release exists and is built from source
 	if cName := helmRelease.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
 		if releaseErr == nil && rel != nil {
-			err = updateReleaseRepo(c.Config(), rel, helmRelease)
+			err = UpdateReleaseRepo(c.Config(), rel, helmRelease)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -196,7 +196,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			gitAction := rel.GitActionConfig
 
 			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
-				gaRunner, err := getGARunner(
+				gaRunner, err := GetGARunner(
 					c.Config(),
 					user.ID,
 					cluster.ProjectID,

@@ -122,14 +122,14 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          const availableNamespaces = res.data.items.filter(
+          const availableNamespaces = res.data.filter(
             (namespace: any) => {
-              return namespace.status.phase !== "Terminating";
+              return namespace.status !== "Terminating";
             }
           );
           const namespaceOptions = availableNamespaces.map(
-            (x: { metadata: { name: string } }) => {
-              return { label: x.metadata.name, value: x.metadata.name };
+            (x: { name: string }) => {
+              return { label: x.name, value: x.name };
             }
           );
           if (availableNamespaces.length > 0) {
@@ -340,7 +340,7 @@ const HeaderSection = styled.div`
 
   > i {
     cursor: pointer;
-    font-size 20px;
+    font-size: 20px;
     color: #969Fbbaa;
     padding: 2px;
     border: 2px solid #969fbbaa;

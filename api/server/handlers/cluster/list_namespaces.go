@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -44,8 +45,20 @@ func (c *ListNamespacesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res := types.ListNamespacesResponse{
-		NamespaceList: namespaceList,
+	res := types.ListNamespacesResponse{}
+
+	for _, ns := range namespaceList.Items {
+		namespace := &types.NamespaceResponse{
+			Name:              ns.Name,
+			CreationTimestamp: ns.CreationTimestamp.Time.UTC().Format(time.RFC1123),
+			Status:            string(ns.Status.Phase),
+		}
+
+		if ns.DeletionTimestamp != nil {
+			namespace.DeletionTimestamp = ns.DeletionTimestamp.Time.UTC().Format(time.RFC1123)
+		}
+
+		res = append(res, namespace)
 	}
 
 	c.WriteResult(w, r, res)

@@ -18,6 +18,7 @@ import yaml from "js-yaml";
 import { AxiosError } from "axios";
 import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
 import { DeviconsNameList } from "assets/devicons-name-list";
+import Selector from "components/Selector";
 
 type Buildpack = {
   name: string;
@@ -297,7 +298,10 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
         ></KeyValueArray>
 
         <Heading>Select default branch</Heading>
-        <BranchSelector actionConfig={getActionConfig()} />
+        <BranchSelector
+          actionConfig={getActionConfig()}
+          onChange={console.log}
+        />
 
         {!chart.git_action_config.dockerfile_path ? (
           <>
@@ -716,10 +720,20 @@ const BuildpackConfigSection: React.FC<{
 
 const BranchSelector: React.FC<{
   actionConfig: FullActionConfigType;
-  currentChart: ChartTypeWithExtendedConfig;
-  onChange: (buildConfig: BuildConfig) => void;
-}> = ({ actionConfig, currentChart, onChange }) => {
+  onChange: (buildConfig: string) => void;
+}> = ({ actionConfig, onChange }) => {
   const { currentProject } = useContext(Context);
+
+  const [branches, setBranches] = useState<string[]>([]);
+
+  const [currentBranch, setCurrentBranch] = useState<string>(
+    () => actionConfig.git_branch
+  );
+
+  const handleBranchChange = (newBranch: string) => {
+    setCurrentBranch(newBranch);
+    onChange(newBranch);
+  };
 
   useEffect(() => {
     if (actionConfig.kind === "gitlab") {
@@ -734,15 +748,34 @@ const BranchSelector: React.FC<{
           project_id: currentProject.id,
           git_repo_id: actionConfig.git_repo_id,
           kind: "github",
-          owner: chart.git_action_config?.git_repo?.split("/")[0],
-          name: chart.git_action_config?.git_repo?.split("/")[1],
+          owner: actionConfig?.git_repo?.split("/")[0],
+          name: actionConfig?.git_repo?.split("/")[1],
         }
       )
-      .then((branches) => {
-        setBranchOptions(branches);
+      .then((res) => {
+        const newBranches = res.data;
+
+        setBranches(newBranches);
       });
   }, []);
-  return <></>;
+
+  const branchOptions = branches.map((branch) => ({
+    value: branch,
+    label: branch,
+  }));
+
+  return (
+    <>
+      <Selector
+        activeValue={currentBranch}
+        options={branchOptions}
+        setActiveValue={handleBranchChange}
+        width="90%"
+        dropdownLabel={`Branches available on ${actionConfig.git_repo}`}
+        dropdownMaxHeight={"200px"}
+      />
+    </>
+  );
 };
 
 const DisabledOverlay = styled.div`

@@ -36,7 +36,7 @@ type UpdateNotificationConfigRequest struct {
 }
 
 type CreateReleaseBaseRequest struct {
-	RepoURL         string                 `json:"-" schema:"repo_url"`
+	RepoURL         string                 `json:"repo_url,omitempty" schema:"repo_url"`
 	TemplateName    string                 `json:"template_name" form:"required"`
 	TemplateVersion string                 `json:"template_version" form:"required"`
 	Values          map[string]interface{} `json:"values"`

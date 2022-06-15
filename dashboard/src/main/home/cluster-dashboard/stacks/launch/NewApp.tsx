@@ -278,6 +278,8 @@ const Polymer = styled.div`
 
 const StyledLaunchFlow = styled.div`
   min-width: 300px;
+  width: calc(100% - 100px);
+  margin-left: 50px;
   margin-top: ${(props: { disableMarginTop?: boolean }) =>
     props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
   padding-bottom: 150px;

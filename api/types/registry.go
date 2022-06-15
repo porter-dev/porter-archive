@@ -159,6 +159,8 @@ type GetRegistryResponse Registry
 
 // swagger:model
 type CreateRegistryRepositoryRequest struct {
+	// The URL to the repository of a registry (**ECR only**)
+	// required: true
 	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 }
 

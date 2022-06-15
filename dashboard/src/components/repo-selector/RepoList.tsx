@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import github from "assets/github.png";
+import github from "assets/github-white.png";
 
 import api from "shared/api";
 import { ActionConfigType, RepoType } from "shared/types";
@@ -401,6 +401,8 @@ const ProviderSelectorStyles = {
     position: absolute;
     background: #37393f;
     border-radius: 3px;
+    max-height: 300px;
+    overflow-y: auto;
     width: calc(100% - 4px);
     box-shadow: 0 8px 20px 0px #00000088;
   `,

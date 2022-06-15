@@ -43,8 +43,10 @@ export type Stack = {
 export type StackRevision = {
   id: number;
   created_at: string;
-  status: string; // type with enum
+  status: "deploying" | "deployed" | "failed"; // type with enum
   stack_id: string;
+  reason: "DeployError" | "SaveError" | "RollbackError";
+  message: string;
 };
 
 export type SourceConfig = {

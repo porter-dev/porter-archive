@@ -1,6 +1,9 @@
 import React, { useContext } from "react";
 import { StacksLaunchContext, StacksLaunchContextType } from "../Store";
 import { ButtonWithIcon, Card } from "./styles";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
+
+import styled from "styled-components";
 
 const DeleteButton = ButtonWithIcon;
 
@@ -16,11 +19,38 @@ export const AppCard = ({
   };
 
   return (
-    <Card>
+    <UnclickableCard>
+      <Flex>
+      <Icon src={hardcodedIcons[app.template_name]} />
       {app.name}
-      <DeleteButton onClick={handleDelete}>
-        <i className="material-icons-outlined">delete</i>
-      </DeleteButton>
-    </Card>
+      </Flex>
+      <Delete onClick={handleDelete}>
+        <i className="material-icons-outlined">close</i>
+      </Delete>
+    </UnclickableCard>
   );
 };
+
+const UnclickableCard = styled(Card)`
+  cursor: default;
+  :hover {
+    border: 1px solid #ffffff0f;
+  }
+`;
+
+const Delete = styled(DeleteButton)`
+  margin-right: 5px;
+`;
+
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const Icon = styled.img`
+  height: 30px;
+  margin-right: 15px;
+  margin-left: 5px;
+`;

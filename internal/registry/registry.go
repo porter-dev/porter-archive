@@ -774,8 +774,6 @@ func (r *Registry) GetECRPaginatedImages(
 		res = append(res, v)
 	}
 
-	fmt.Printf("LEN: %d\n", len(res))
-
 	return res, resp.NextToken, nil
 }
 

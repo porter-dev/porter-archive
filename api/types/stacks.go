@@ -146,6 +146,12 @@ type StackRevisionMeta struct {
 type StackRevision struct {
 	*StackRevisionMeta
 
+	// The reason for any error or status change
+	Reason string `json:"reason"`
+
+	// The message associated with an error or status change
+	Message string `json:"message"`
+
 	// The list of resources deployed in this revision
 	Resources []StackResource `json:"resources"`
 

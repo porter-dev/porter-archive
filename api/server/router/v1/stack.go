@@ -112,7 +112,7 @@ func getV1StackRoutes(
 	// POST /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks -> stack.NewStackCreateHandler
 	// swagger:operation POST /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks createStack
 	//
-	// Creates a stack
+	// Creates a new stack and triggers a deployment for all resources in the stack.
 	//
 	// ---
 	// produces:

@@ -66,7 +66,7 @@ func (r *Registry) ToRegistryType() *types.Registry {
 		ProjectID:          r.ProjectID,
 		Name:               r.Name,
 		URL:                uri,
-		Service:            serv,
+		Service:            string(serv),
 		InfraID:            r.InfraID,
 		GCPIntegrationID:   r.GCPIntegrationID,
 		AWSIntegrationID:   r.AWSIntegrationID,

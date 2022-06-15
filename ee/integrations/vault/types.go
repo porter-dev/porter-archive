@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package vault
@@ -56,6 +57,16 @@ type GetAzureCredentialResponse struct {
 type GetAzureCredentialData struct {
 	Metadata *VaultMetadata               `json:"metadata"`
 	Data     *credentials.AzureCredential `json:"data"`
+}
+
+type GetGitlabCredentialResponse struct {
+	*VaultGetResponse
+	Data *GetGitlabCredentialData `json:"data"`
+}
+
+type GetGitlabCredentialData struct {
+	Metadata *VaultMetadata                `json:"metadata"`
+	Data     *credentials.GitlabCredential `json:"data"`
 }
 
 type CreatePolicyRequest struct {

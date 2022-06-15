@@ -70,22 +70,40 @@ export const BuildpackSelection: React.FC<{
     }
   }, [selectedBuilder, selectedStack, selectedBuildpacks]);
 
-  useEffect(() => {
-    api
-      .detectBuildpack<DetectBuildpackResponse>(
+  const detectBuildpack = () => {
+    if (actionConfig.kind === "gitlab") {
+      return api.detectGitlabBuildpack<DetectBuildpackResponse>(
         "<token>",
-        {
-          dir: folderPath || ".",
-        },
+        { dir: folderPath || "." },
         {
           project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
+          integration_id: actionConfig.gitlab_integration_id,
+
+          repo_owner: actionConfig.git_repo.split("/")[0],
+          repo_name: actionConfig.git_repo.split("/")[1],
           branch: branch,
         }
-      )
+      );
+    }
+
+    return api.detectBuildpack<DetectBuildpackResponse>(
+      "<token>",
+      {
+        dir: folderPath || ".",
+      },
+      {
+        project_id: currentProject.id,
+        git_repo_id: actionConfig.git_repo_id,
+        kind: "github",
+        owner: actionConfig.git_repo.split("/")[0],
+        name: actionConfig.git_repo.split("/")[1],
+        branch: branch,
+      }
+    );
+  };
+
+  useEffect(() => {
+    detectBuildpack()
       // getMockData()
       .then(({ data }) => {
         const builders = data;

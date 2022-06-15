@@ -176,8 +176,8 @@ const Flex = styled.div`
 
   > i {
     cursor: pointer;
-    font-size 24px;
-    color: #969Fbbaa;
+    font-size: 24px;
+    color: #969fbbaa;
     padding: 3px;
     margin-right: 11px;
     border-radius: 100px;

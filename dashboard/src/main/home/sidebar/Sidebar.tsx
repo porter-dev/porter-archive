@@ -223,10 +223,12 @@ class Sidebar extends Component<PropsType, StateType> {
               </EllipsisTextWrapper>
             </NavButton>
           )}
-          <NavButton to="/stacks">
-            <Icon className="material-icons-outlined">lan</Icon>
-            Stacks
-          </NavButton>
+          {currentProject?.stacks_enabled ? (
+            <NavButton to="/stacks">
+              <Icon className="material-icons-outlined">lan</Icon>
+              Stacks
+            </NavButton>
+          ) : null}
         </>
       );
     }

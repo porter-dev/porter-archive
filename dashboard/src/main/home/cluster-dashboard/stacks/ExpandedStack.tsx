@@ -90,7 +90,9 @@ const ExpandedStack = () => {
       </InfoWrapper>
 
       {/* Stack error message */}
-      {stack.latest_revision && (
+      {stack.latest_revision &&
+      stack.latest_revision.status === "failed" &&
+      stack.latest_revision.message?.length > 0 ? (
         <StackErrorMessageStyles.Wrapper>
           <StackErrorMessageStyles.Title color="#b7b7c9">
             Error reason:
@@ -99,7 +101,7 @@ const ExpandedStack = () => {
             {stack.latest_revision.message}
           </StackErrorMessageStyles.Text>
         </StackErrorMessageStyles.Wrapper>
-      )}
+      ) : null}
 
       <LineBreak />
 

@@ -29,10 +29,14 @@ func (repo *StackRepository) CreateStack(stack *models.Stack) (*models.Stack, er
 // ReadStack gets a stack specified by its string id
 func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace string) ([]*models.Stack, error) {
 	stacks := make([]*models.Stack, 0)
+	query := repo.db.Where("stacks.project_id = ? AND stacks.cluster_id = ?", projectID, clusterID)
+
+	if namespace != "" {
+		query = query.Where("stacks.namespace = ?", namespace)
+	}
 
 	// get stack IDs
-	if err := repo.db.
-		Where("stacks.project_id = ? AND stacks.cluster_id = ? AND stacks.namespace = ?", projectID, clusterID, namespace).Find(&stacks).Error; err != nil {
+	if err := query.Find(&stacks).Error; err != nil {
 		return nil, err
 	}
 

@@ -2,6 +2,7 @@ package stack
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -96,6 +97,8 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// apply to cluster
+	rollbackErrors := make([]string, 0)
+
 	for _, resource := range revision.Resources {
 		err := rollbackAppResource(&rollbackAppResourceOpts{
 			helmAgent:      helmAgent,
@@ -104,13 +107,17 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		})
 
 		if err != nil {
-			// TODO: mark stack with error
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			rollbackErrors = append(rollbackErrors, err.Error())
 		}
 	}
 
-	revision.Status = string(types.StackRevisionStatusDeployed)
+	if len(rollbackErrors) > 0 {
+		revision.Status = string(types.StackRevisionStatusFailed)
+		revision.Reason = "RollbackError"
+		revision.Message = strings.Join(rollbackErrors, " , ")
+	} else {
+		revision.Status = string(types.StackRevisionStatusDeployed)
+	}
 
 	revision, err = p.Repo().Stack().UpdateStackRevision(revision)
 

@@ -34,7 +34,6 @@ const LaunchRoutes = () => {
 export default LaunchRoutes;
 
 const LaunchContainer = styled.div`
-  max-width: 780px;
   margin: 0 auto;
-  padding: 0 20px;
+  width: 100%;
 `;

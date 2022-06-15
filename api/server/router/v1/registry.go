@@ -400,11 +400,13 @@ func getV1RegistryRoutes(
 	//     in: query
 	//     description: The next page string used for pagination, from a previous request.
 	//     type: string
-	//   - name: next_page
+	//   - name: page
 	//     in: query
-	//     description: The next page number used for pagination, from a previous request.
+	//     description: |
+	//       The page number used for pagination, possibly from a previous request.
+	//       (**DigitalOcean only**)
 	//     type: integer
-	//     minimum: 2
+	//     minimum: 1
 	// responses:
 	//   '200':
 	//     description: Successfully listed images

@@ -5,8 +5,6 @@ import { hardcodedIcons } from "shared/hardcodedNameDict";
 
 import styled from "styled-components";
 
-const DeleteButton = ButtonWithIcon;
-
 export const AppCard = ({
   app,
 }: {
@@ -21,12 +19,12 @@ export const AppCard = ({
   return (
     <UnclickableCard>
       <Flex>
-      <Icon src={hardcodedIcons[app.template_name]} />
-      {app.name}
+        <Icon src={hardcodedIcons[app.template_name]} />
+        {app.name}
       </Flex>
-      <Delete onClick={handleDelete}>
+      <DeleteButton onClick={handleDelete}>
         <i className="material-icons-outlined">close</i>
-      </Delete>
+      </DeleteButton>
     </UnclickableCard>
   );
 };
@@ -38,7 +36,7 @@ const UnclickableCard = styled(Card)`
   }
 `;
 
-const Delete = styled(DeleteButton)`
+const DeleteButton = styled(ButtonWithIcon)`
   margin-right: 5px;
 `;
 

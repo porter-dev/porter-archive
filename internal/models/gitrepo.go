@@ -43,6 +43,9 @@ type GitActionConfig struct {
 	// The git repo ID (legacy field)
 	GitRepoID uint `json:"git_repo_id"`
 
+	// The gitlab integration ID
+	GitlabIntegrationID uint `json:"gitlab_integration_id"`
+
 	// The path to the dockerfile in the git repo
 	DockerfilePath string `json:"dockerfile_path"`
 
@@ -58,11 +61,12 @@ type GitActionConfig struct {
 // ToGitActionConfigType generates an external GitActionConfig to be shared over REST
 func (r *GitActionConfig) ToGitActionConfigType() *types.GitActionConfig {
 	return &types.GitActionConfig{
-		GitRepo:        r.GitRepo,
-		GitBranch:      r.GitBranch,
-		ImageRepoURI:   r.ImageRepoURI,
-		GitRepoID:      r.GitRepoID,
-		DockerfilePath: r.DockerfilePath,
-		FolderPath:     r.FolderPath,
+		GitRepo:             r.GitRepo,
+		GitBranch:           r.GitBranch,
+		ImageRepoURI:        r.ImageRepoURI,
+		GitRepoID:           r.GitRepoID,
+		GitlabIntegrationID: r.GitlabIntegrationID,
+		DockerfilePath:      r.DockerfilePath,
+		FolderPath:          r.FolderPath,
 	}
 }

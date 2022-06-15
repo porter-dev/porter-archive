@@ -27,6 +27,8 @@ type Repository interface {
 	GithubAppInstallation() GithubAppInstallationRepository
 	GithubAppOAuthIntegration() GithubAppOAuthIntegrationRepository
 	SlackIntegration() SlackIntegrationRepository
+	GitlabIntegration() GitlabIntegrationRepository
+	GitlabAppOAuthIntegration() GitlabAppOAuthIntegrationRepository
 	NotificationConfig() NotificationConfigRepository
 	JobNotificationConfig() JobNotificationConfigRepository
 	BuildEvent() BuildEventRepository

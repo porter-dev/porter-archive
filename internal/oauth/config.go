@@ -152,6 +152,30 @@ func MakeUpdateGithubAppOauthIntegrationFunction(
 	}
 }
 
+// MakeUpdateGitlabAppOAuthIntegrationFunction creates a function to be passed to GetAccessToken that updates the GitlabAppOAuthIntegration
+// if it needs to be updated
+func MakeUpdateGitlabAppOAuthIntegrationFunction(
+	projectID uint,
+	o *integrations.GitlabAppOAuthIntegration,
+	repo repository.Repository,
+) func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+	return func(accessToken []byte, refreshToken []byte, expiry time.Time) error {
+		o, err := repo.OAuthIntegration().ReadOAuthIntegration(projectID, o.OAuthIntegrationID)
+
+		if err != nil {
+			return err
+		}
+
+		o.AccessToken = accessToken
+		o.RefreshToken = refreshToken
+		o.Expiry = expiry
+
+		_, err = repo.OAuthIntegration().UpdateOAuthIntegration(o)
+
+		return err
+	}
+}
+
 // GetAccessToken retrieves an access token for a given client. It updates the
 // access token in the DB if necessary
 func GetAccessToken(

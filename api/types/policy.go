@@ -5,19 +5,20 @@ import "time"
 type PermissionScope string
 
 const (
-	UserScope            PermissionScope = "user"
-	ProjectScope         PermissionScope = "project"
-	ClusterScope         PermissionScope = "cluster"
-	RegistryScope        PermissionScope = "registry"
-	InviteScope          PermissionScope = "invite"
-	HelmRepoScope        PermissionScope = "helm_repo"
-	InfraScope           PermissionScope = "infra"
-	OperationScope       PermissionScope = "operation"
-	GitInstallationScope PermissionScope = "git_installation"
-	NamespaceScope       PermissionScope = "namespace"
-	SettingsScope        PermissionScope = "settings"
-	ReleaseScope         PermissionScope = "release"
-	StackScope           PermissionScope = "stack"
+	UserScope              PermissionScope = "user"
+	ProjectScope           PermissionScope = "project"
+	ClusterScope           PermissionScope = "cluster"
+	RegistryScope          PermissionScope = "registry"
+	InviteScope            PermissionScope = "invite"
+	HelmRepoScope          PermissionScope = "helm_repo"
+	InfraScope             PermissionScope = "infra"
+	OperationScope         PermissionScope = "operation"
+	GitInstallationScope   PermissionScope = "git_installation"
+	NamespaceScope         PermissionScope = "namespace"
+	SettingsScope          PermissionScope = "settings"
+	ReleaseScope           PermissionScope = "release"
+	StackScope             PermissionScope = "stack"
+	GitlabIntegrationScope PermissionScope = "gitlab_integration"
 )
 
 type NameOrUInt struct {

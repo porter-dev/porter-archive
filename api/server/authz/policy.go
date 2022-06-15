@@ -134,6 +134,8 @@ func getRequestActionForEndpoint(
 			resource.Name, reqErr = requestutils.GetURLParamString(r, types.URLParamStackID)
 		case types.InviteScope:
 			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamInviteID)
+		case types.GitlabIntegrationScope:
+			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamIntegrationID)
 		}
 
 		if reqErr != nil {

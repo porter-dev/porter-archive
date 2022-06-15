@@ -1,11 +1,23 @@
-import React from "react";
-import { Route, Switch, useLocation, useRouteMatch } from "react-router";
+import React, { useContext } from "react";
+import {
+  Redirect,
+  Route,
+  Switch,
+  useLocation,
+  useRouteMatch,
+} from "react-router";
+import { Context } from "shared/Context";
 import Dashboard from "./Dashboard";
 import ExpandedStack from "./ExpandedStack";
 import LaunchRoutes from "./launch";
 
 const routes = () => {
   const { path } = useRouteMatch();
+  const { currentProject } = useContext(Context);
+
+  if (!currentProject?.stacks_enabled) {
+    return <Redirect to={`/`} />;
+  }
 
   return (
     <Switch>

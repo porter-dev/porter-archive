@@ -5,8 +5,9 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import Placeholder from "components/Placeholder";
 import styled from "styled-components";
-import { GetStacksResponse, Stack } from "./types";
+import { Stack } from "./types";
 import { readableDate } from "shared/string_utils";
+import { CardGrid, Card } from "./launch/components/styles";
 
 const StackList = ({ namespace }: { namespace: string }) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -14,6 +15,31 @@ const StackList = ({ namespace }: { namespace: string }) => {
   );
   const [stacks, setStacks] = useState<Stack[]>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDelete = (stack: Stack) => {
+    setDeleting(stack.id);
+    api
+      .deleteStack(
+        "<token>",
+        {},
+        {
+          namespace,
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          stack_id: stack.id,
+        }
+      )
+      .then(() => {
+        setStacks((prev) => prev.filter((s) => s.id !== stack.id));
+      })
+      .catch((err) => {
+        setCurrentError(err);
+      })
+      .finally(() => {
+        setDeleting(null);
+      });
+  };
 
   useEffect(() => {
     let isSubscribed = true;
@@ -53,12 +79,10 @@ const StackList = ({ namespace }: { namespace: string }) => {
 
   if (stacks?.length === 0) {
     return (
-      <Placeholder
-        height="250px"
-      >
+      <Placeholder height="250px">
         <div>
-        <h3>No stacks found</h3>
-        <p>You can create a stack by clicking the "Create Stack" button.</p>
+          <h3>No stacks found</h3>
+          <p>You can create a stack by clicking the "Create Stack" button.</p>
         </div>
       </Placeholder>
     );
@@ -66,53 +90,66 @@ const StackList = ({ namespace }: { namespace: string }) => {
 
   return (
     <>
-      {stacks.map((stack) => (
-        <StackCard key={stack?.id}>
-          <LinkMask to={`/stacks/${namespace}/${stack?.id}`}  />
-          <DataContainer>
-            <StackName>
-              <StackIcon>
-                <i className="material-icons-outlined">lan</i>
-              </StackIcon>
-              <span>
-                {stack.name}
-              </span>
-            </StackName>
+      <CardGrid>
+        {stacks.map((stack) => (
+          <StackCard
+            as={DynamicLink}
+            key={stack?.id}
+            to={`/stacks/${namespace}/${stack?.id}`}
+          >
+            <DataContainer>
+              <StackName>
+                <StackIcon>
+                  <i className="material-icons-outlined">lan</i>
+                </StackIcon>
+                <span>{stack.name}</span>
+              </StackName>
 
+              <Flex>
+                <DeploymentImageContainer>
+                  <InfoWrapper>
+                    <LastDeployed>
+                      <Revision>
+                        {!stack.latest_revision?.id
+                          ? `No version found`
+                          : `v${stack.latest_revision.id}`}
+                      </Revision>
+                      <SepDot>•</SepDot>
+                      Last updated {readableDate(stack.updated_at)}
+                    </LastDeployed>
+                  </InfoWrapper>
+                </DeploymentImageContainer>
+              </Flex>
+            </DataContainer>
             <Flex>
-              <DeploymentImageContainer>
-                <InfoWrapper>
-                  <LastDeployed>
-                    <Revision>
-                    {!stack.latest_revision?.id
-                    ? `No version found`
-                    : `v${stack.latest_revision.id}`}
-                    </Revision>
-                    <SepDot>•</SepDot>
-                    Last updated {readableDate(stack.updated_at)}
-                  </LastDeployed>
-                </InfoWrapper>
-              </DeploymentImageContainer>
+              <RowButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete(stack);
+                }}
+                disabled={
+                  deleting === stack.id || (deleting && deleting === stack.id)
+                }
+              >
+                <i className="material-icons">delete</i>
+
+                {deleting === stack.id ? <Loading /> : "Delete"}
+              </RowButton>
             </Flex>
-          </DataContainer>
-          <MinFlex>
-            <RowButton>
-              <i className="material-icons">delete</i>
-              Delete
-            </RowButton>
-          </MinFlex>
-        </StackCard>
-      ))}
+          </StackCard>
+        ))}
+      </CardGrid>
     </>
   );
 };
 
 export default StackList;
 
-const RowButton = styled.div`
+const RowButton = styled.button`
+  min-width: 82px;
   white-space: nowrap;
   font-size: 12px;
-  z-index: 999;
   padding: 8px 10px;
   font-weight: 400;
   height: 32px;
@@ -199,11 +236,6 @@ const Flex = styled.div`
   align-items: center;
 `;
 
-const MinFlex = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
 const DataContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -212,215 +244,7 @@ const DataContainer = styled.div`
   overflow: hidden;
 `;
 
-const LinkMask = styled(DynamicLink)`
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-`;
-
-const StackCard = styled.div`
-  color: #ffffff;
-  display: flex;
-  font-weight: 500;
-  position: relative;
-  background: #2b2e3699;
-  justify-content: space-between;
-  border-radius: 5px;
+const StackCard = styled(Card)`
   font-size: 13px;
-  height: 75px;
-  padding: 12px;
-  padding-left: 14px;
-  border: 1px solid #ffffff2f;
-
-  animation: fadeIn 0.5s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+  font-weight: 500;
 `;
-
-const mockApi = () =>
-  new Promise<{ data: GetStacksResponse }>((res) =>
-    setTimeout(() => res({ data: StacksMock }), 500)
-  );
-
-const StacksMock: GetStacksResponse = [
-  {
-    created_at: "2022-06-09T11:59:27.729463-04:00",
-    updated_at: "2022-06-09T11:59:27.729463-04:00",
-    name: "string",
-    id: "5433422f46f3ba52e49bb46dd1e12ab5",
-    latest_revision: {
-      created_at: "2022-06-09T11:59:27.731416-04:00",
-      id: 1,
-      status: "deploying",
-      stack_id: "5433422f46f3ba52e49bb46dd1e12ab5",
-      resources: [
-        {
-          created_at: "2022-06-09T11:59:27.732213-04:00",
-          updated_at: "2022-06-09T11:59:27.732213-04:00",
-          stack_id: "5433422f46f3ba52e49bb46dd1e12ab5",
-          stack_revision_id: 1,
-          name: "string",
-          id: "4b2cae112ca29203acdef784392e7ac0",
-          stack_app_data: {
-            template_repo_url: "",
-            template_name: "string",
-            template_version: "string",
-          },
-          stack_source_config: {
-            created_at: "2022-06-09T11:59:27.732334-04:00",
-            updated_at: "2022-06-09T11:59:27.732334-04:00",
-            stack_id: "5433422f46f3ba52e49bb46dd1e12ab5",
-            stack_revision_id: 1,
-            name: "my-source-config",
-            id: "0d6aa05dcb37e5a0a4e8febd4854dac2",
-            image_repo_uri: "image-repo-uri",
-            image_tag: "tag",
-          },
-        },
-      ],
-      source_configs: [
-        {
-          created_at: "2022-06-09T11:59:27.732334-04:00",
-          updated_at: "2022-06-09T11:59:27.732334-04:00",
-          stack_id: "5433422f46f3ba52e49bb46dd1e12ab5",
-          stack_revision_id: 1,
-          name: "my-source-config",
-          id: "0d6aa05dcb37e5a0a4e8febd4854dac2",
-          image_repo_uri: "image-repo-uri",
-          image_tag: "tag",
-        },
-      ],
-    },
-    revisions: [
-      {
-        created_at: "2022-06-09T11:59:27.731416-04:00",
-        id: 1,
-        status: "deploying",
-        stack_id: "5433422f46f3ba52e49bb46dd1e12ab5",
-      },
-    ],
-  },
-  {
-    created_at: "2022-06-09T11:59:27.729463-04:00",
-    updated_at: "2022-06-09T11:59:27.729463-04:00",
-    name: "string",
-    id: "9873422f46f3ba52e49bb46dd1e12ab5",
-    latest_revision: {
-      created_at: "2022-06-09T11:59:27.731416-04:00",
-      id: 1,
-      status: "deploying",
-      stack_id: "9873422f46f3ba52e49bb46dd1e12ab5",
-      resources: [
-        {
-          created_at: "2022-06-09T11:59:27.732213-04:00",
-          updated_at: "2022-06-09T11:59:27.732213-04:00",
-          stack_id: "9873422f46f3ba52e49bb46dd1e12ab5",
-          stack_revision_id: 1,
-          name: "string",
-          id: "4b2cae112ca29203acdef784392e7ac0",
-          stack_app_data: {
-            template_repo_url: "",
-            template_name: "string",
-            template_version: "string",
-          },
-          stack_source_config: {
-            created_at: "2022-06-09T11:59:27.732334-04:00",
-            updated_at: "2022-06-09T11:59:27.732334-04:00",
-            stack_id: "9873422f46f3ba52e49bb46dd1e12ab5",
-            stack_revision_id: 1,
-            name: "my-source-config",
-            id: "0d6aa05dcb37e5a0a4e8febd4854dac2",
-            image_repo_uri: "image-repo-uri",
-            image_tag: "tag",
-          },
-        },
-      ],
-      source_configs: [
-        {
-          created_at: "2022-06-09T11:59:27.732334-04:00",
-          updated_at: "2022-06-09T11:59:27.732334-04:00",
-          stack_id: "9873422f46f3ba52e49bb46dd1e12ab5",
-          stack_revision_id: 1,
-          name: "my-source-config",
-          id: "0d6aa05dcb37e5a0a4e8febd4854dac2",
-          image_repo_uri: "image-repo-uri",
-          image_tag: "tag",
-        },
-      ],
-    },
-    revisions: [
-      {
-        created_at: "2022-06-09T11:59:27.731416-04:00",
-        id: 1,
-        status: "deploying",
-        stack_id: "9873422f46f3ba52e49bb46dd1e12ab5",
-      },
-    ],
-  },
-  {
-    created_at: "2022-06-09T11:59:27.729463-04:00",
-    updated_at: "2022-06-09T11:59:27.729463-04:00",
-    name: "string",
-    id: "1753422f46f3ba52e49bb46dd1e12ab5",
-    latest_revision: {
-      created_at: "2022-06-09T11:59:27.731416-04:00",
-      id: 1,
-      status: "deploying",
-      stack_id: "1753422f46f3ba52e49bb46dd1e12ab5",
-      resources: [
-        {
-          created_at: "2022-06-09T11:59:27.732213-04:00",
-          updated_at: "2022-06-09T11:59:27.732213-04:00",
-          stack_id: "1753422f46f3ba52e49bb46dd1e12ab5",
-          stack_revision_id: 1,
-          name: "string",
-          id: "4b2cae112ca29203acdef784392e7ac0",
-          stack_app_data: {
-            template_repo_url: "",
-            template_name: "string",
-            template_version: "string",
-          },
-          stack_source_config: {
-            created_at: "2022-06-09T11:59:27.732334-04:00",
-            updated_at: "2022-06-09T11:59:27.732334-04:00",
-            stack_id: "1753422f46f3ba52e49bb46dd1e12ab5",
-            stack_revision_id: 1,
-            name: "my-source-config",
-            id: "0d6aa05dcb37e5a0a4e8febd4854dac2",
-            image_repo_uri: "image-repo-uri",
-            image_tag: "tag",
-          },
-        },
-      ],
-      source_configs: [
-        {
-          created_at: "2022-06-09T11:59:27.732334-04:00",
-          updated_at: "2022-06-09T11:59:27.732334-04:00",
-          stack_id: "1753422f46f3ba52e49bb46dd1e12ab5",
-          stack_revision_id: 1,
-          name: "my-source-config",
-          id: "0d6aa05dcb37e5a0a4e8febd4854dac2",
-          image_repo_uri: "image-repo-uri",
-          image_tag: "tag",
-        },
-      ],
-    },
-    revisions: [
-      {
-        created_at: "2022-06-09T11:59:27.731416-04:00",
-        id: 1,
-        status: "deploying",
-        stack_id: "1753422f46f3ba52e49bb46dd1e12ab5",
-      },
-    ],
-  },
-];

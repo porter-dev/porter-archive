@@ -3,6 +3,7 @@ package stack
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -113,6 +114,8 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	helmReleaseMap := make(map[string]*helmrelease.Release)
 
+	deployErrs := make([]string, 0)
+
 	for _, appResource := range req.AppResources {
 		rel, err := applyAppResource(&applyAppResourceOpts{
 			config:     p.Config(),
@@ -125,17 +128,22 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		})
 
 		if err != nil {
-			// TODO: mark stack with error
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			deployErrs = append(deployErrs, err.Error())
+		} else {
+			helmReleaseMap[fmt.Sprintf("%s/%s", namespace, appResource.Name)] = rel
 		}
-
-		helmReleaseMap[fmt.Sprintf("%s/%s", namespace, appResource.Name)] = rel
 	}
 
 	// update stack revision status
 	revision := &stack.Revisions[0]
-	revision.Status = string(types.StackRevisionStatusDeployed)
+
+	if len(deployErrs) > 0 {
+		revision.Status = string(types.StackRevisionStatusFailed)
+		revision.Reason = "DeployError"
+		revision.Message = strings.Join(deployErrs, " , ")
+	} else {
+		revision.Status = string(types.StackRevisionStatusDeployed)
+	}
 
 	revision, err = p.Repo().Stack().UpdateStackRevision(revision)
 
@@ -144,14 +152,25 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, resource := range revision.Resources {
-		rel := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]
+	saveErrs := make([]string, 0)
 
-		// TODO: case on addon vs application
-		_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
+	for _, resource := range revision.Resources {
+		if rel, exists := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]; exists {
+			_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
+
+			if err != nil {
+				saveErrs = append(saveErrs, fmt.Sprintf("the resource %s/%s could not be saved right now", namespace, resource.Name))
+			}
+		}
+	}
+
+	if len(saveErrs) > 0 {
+		revision.Reason = "SaveError"
+		revision.Message = strings.Join(saveErrs, " , ")
+
+		revision, err = p.Repo().Stack().UpdateStackRevision(revision)
 
 		if err != nil {
-			// TODO: mark stack with error
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}

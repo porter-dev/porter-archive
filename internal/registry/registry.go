@@ -701,16 +701,27 @@ func (r *Registry) GetECRPaginatedImages(
 		return []*ptypes.Image{}, nil, nil
 	}
 
-	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
-		RepositoryName: &repoName,
-		ImageIds:       resp.ImageIds,
-	})
+	imageIDLen := len(resp.ImageIds)
+	imageDetails := make([]*ecr.ImageDetail, imageIDLen)
 
-	if err != nil {
-		return nil, nil, err
+	// AWS API expects the length of imageIDs to be at max 100 at a time
+	for start := 0; start < imageIDLen; start += 100 {
+		end := start + 100
+		if end > imageIDLen {
+			end = imageIDLen
+		}
+
+		describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+			RepositoryName: &repoName,
+			ImageIds:       resp.ImageIds[start:end],
+		})
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		imageDetails = append(imageDetails, describeResp.ImageDetails...)
 	}
-
-	imageDetails := describeResp.ImageDetails
 
 	res := make([]*ptypes.Image, 0)
 
@@ -782,34 +793,29 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		nextToken = resp.NextToken
 	}
 
-	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
-		RepositoryName: &repoName,
-		ImageIds:       imageIDs,
-	})
+	imageIDLen := len(imageIDs)
+	imageDetails := make([]*ecr.ImageDetail, imageIDLen)
 
-	if err != nil {
-		return nil, err
-	}
+	// AWS API expects the length of imageIDs to be at max 100 at a time
+	for start := 0; start < imageIDLen; start += 100 {
+		end := start + 100
+		if end > imageIDLen {
+			end = imageIDLen
+		}
 
-	imageDetails := describeResp.ImageDetails
-
-	nextToken = describeResp.NextToken
-
-	for nextToken != nil {
 		describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
 			RepositoryName: &repoName,
-			NextToken:      nextToken,
+			ImageIds:       imageIDs[start:end],
 		})
 
 		if err != nil {
 			return nil, err
 		}
 
-		nextToken = describeResp.NextToken
 		imageDetails = append(imageDetails, describeResp.ImageDetails...)
 	}
 
-	res := make([]*ptypes.Image, 0)
+	res := make([]*ptypes.Image, len(imageDetails))
 
 	for _, img := range imageDetails {
 		for _, tag := range img.ImageTags {

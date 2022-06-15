@@ -1,12 +1,23 @@
 import Loading from "components/Loading";
+import TitleSection from "components/TitleSection";
 import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
 import ChartList from "../chart/ChartList";
-import DashboardHeader from "../DashboardHeader";
 import SortSelector from "../SortSelector";
+import Status from "./components/Status";
+import {
+  Br,
+  InfoWrapper,
+  LastDeployed,
+  LineBreak,
+  SepDot,
+  Text,
+} from "./components/styles";
+import { getStackStatus, getStackStatusMessage } from "./shared";
 import { Stack } from "./types";
 
 const ExpandedStack = () => {
@@ -53,11 +64,44 @@ const ExpandedStack = () => {
 
   return (
     <div>
-      <DashboardHeader
-        title={stack?.name}
+      <TitleSection
         materialIconClass="material-icons-outlined"
-        image="lan"
-      />
+        icon={"lan"}
+        capitalize
+      >
+        {stack.name}
+      </TitleSection>
+      <Br />
+      <InfoWrapper>
+        <LastDeployed>
+          <Status
+            status={getStackStatus(stack)}
+            message={getStackStatusMessage(stack)}
+          />
+          <SepDot>•</SepDot>
+          <Text color="#aaaabb">
+            {!stack.latest_revision?.id
+              ? `No version found`
+              : `v${stack.latest_revision.id}`}
+          </Text>
+          <SepDot>•</SepDot>
+          Last updated {readableDate(stack.updated_at)}
+        </LastDeployed>
+      </InfoWrapper>
+
+      {/* Stack error message */}
+      {stack.latest_revision && (
+        <StackErrorMessageStyles.Wrapper>
+          <StackErrorMessageStyles.Title color="#b7b7c9">
+            Error reason:
+          </StackErrorMessageStyles.Title>
+          <StackErrorMessageStyles.Text color="#aaaabb">
+            {stack.latest_revision.message}
+          </StackErrorMessageStyles.Text>
+        </StackErrorMessageStyles.Wrapper>
+      )}
+
+      <LineBreak />
 
       <SortSelector
         setSortType={setSortType}
@@ -89,3 +133,19 @@ const ChartListWrapper = styled.div`
   margin-top: 20px;
   padding-bottom: 125px;
 `;
+
+const StackErrorMessageStyles = {
+  Text: styled(Text)`
+    font-size: 14px;
+    margin-bottom: 10px;
+  `,
+  Wrapper: styled.div`
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px;
+  `,
+  Title: styled(Text)`
+    font-size: 16px;
+    font-weight: bold;
+  `,
+};

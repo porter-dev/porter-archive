@@ -7,6 +7,8 @@ import { TemplateSelector } from "./TemplateSelector";
 import { VersionSelector } from "./VersionSelector";
 import DynamicLink from "components/DynamicLink";
 
+import styled from "styled-components";
+
 export const AddResourceButton = () => {
   const [templates, setTemplates] = useState<PorterTemplate[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<PorterTemplate>();
@@ -50,14 +52,22 @@ export const AddResourceButton = () => {
   useEffect(() => {
     getTemplates().then((templates) => {
       setTemplates(templates);
-      setCurrentTemplate(templates[0]);
-      setCurrentVersion(templates[0].currentVersion);
+      setCurrentTemplate(templates[1]);
+      setCurrentVersion(templates[1].currentVersion);
     });
   }, []);
 
   return (
     <AddResourceButtonStyles.Wrapper>
       <AddResourceButtonStyles.Flex>
+        <LinkMask
+          to={`/stacks/launch/new-app/${currentTemplate?.name}/${currentVersion}`}
+        >
+          
+        </LinkMask>
+        <Icon>
+          <i className="material-icons">add</i>
+        </Icon>
         Add a new{" "}
         <TemplateSelector
           options={templates}
@@ -73,12 +83,24 @@ export const AddResourceButton = () => {
           onChange={setCurrentVersion}
         />
       </AddResourceButtonStyles.Flex>
-
-      <DynamicLink
-        to={`/stacks/launch/new-app/${currentTemplate?.name}/${currentVersion}`}
-      >
-        Create
-      </DynamicLink>
     </AddResourceButtonStyles.Wrapper>
   );
 };
+
+const LinkMask = styled(DynamicLink)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+`;
+
+const Icon = styled.div`
+  margin-bottom: -3px;
+  > i {
+    margin-right: 20px;
+    margin-left: 9px;
+    font-size: 20px;
+    color: #aaaabb;
+  }
+`;

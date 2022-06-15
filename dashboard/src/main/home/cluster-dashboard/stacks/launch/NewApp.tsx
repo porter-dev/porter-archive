@@ -10,6 +10,11 @@ import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import { ExpandedPorterTemplate } from "shared/types";
 import { StacksLaunchContext } from "./Store";
+import DynamicLink from "components/DynamicLink";
+import styled from "styled-components";
+import Heading from "components/form-components/Heading";
+import TitleSection from "components/TitleSection";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
 
 const DEFAULT_STACK_SOURCE_CONFIG_INDEX = 0;
 
@@ -67,7 +72,7 @@ const NewApp = () => {
   }, [params]);
 
   if (isLoading) {
-    return <Loading />;
+    return <Wrapper><Loading /></Wrapper>;
   }
 
   if (hasError) {
@@ -176,24 +181,106 @@ const NewApp = () => {
   };
 
   return (
-    <div style={{ position: "relative" }}>
-      <Helper>App name</Helper>
+    <StyledLaunchFlow style={{ position: "relative" }}>
+      <TitleSection>
+        <DynamicLink to={`/stacks/launch/overview`}>
+          <BackButton>
+            <i className="material-icons">
+              keyboard_backspace
+            </i>
+          </BackButton>
+        </DynamicLink>
+        <Polymer>
+        <Icon src={hardcodedIcons[template.metadata.name]} />
+        </Polymer>
+        Add {template.metadata.name.charAt(0).toUpperCase() + template.metadata.name.slice(1)} to Stack
+      </TitleSection>
+      <Heading>Application Name <Required>*</Required></Heading>
       <InputRow
         type="string"
         value={appName}
         setValue={(val: string) => setAppName(val)}
-        width={"300px"}
+        placeholder="ex: perspective-vortex"
+        width="470px"
       />
-      <Helper>App settings</Helper>
+
+      <div style={{ position: "relative" }}>
+      <Heading>Application Settings</Heading>
+      <Helper>Configure settings for this application.</Helper>
       <PorterFormWrapper
         formData={template.form}
         onSubmit={handleSubmit}
         isLaunch
         saveValuesStatus={saveButtonStatus}
-        saveButtonText="Add application"
+        saveButtonText="Add Application"
       />
-    </div>
+      </div>
+    </StyledLaunchFlow>
   );
 };
 
 export default NewApp;
+
+const Required = styled.div`
+  margin-left: 8px;
+  color: #fc4976;
+  display: inline-block;
+`;
+
+const Wrapper = styled.div`
+  margin-top: calc(50vh - 150px);
+`;
+
+const Icon = styled.img`
+  width: 40px;
+  margin-right: 14px;
+
+  opacity: 0;
+  animation: floatIn 0.5s 0.2s;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const BackButton = styled.div`
+  > i {
+    cursor: pointer;
+    font-size: 24px;
+    color: #969fbbaa;
+    margin-right: 10px;
+    padding: 3px;
+    margin-left: 0px;
+    border-radius: 100px;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+`;
+
+const Polymer = styled.div`
+  margin-bottom: -6px;
+
+  > i {
+    color: #ffffff;
+    font-size: 24px;
+    margin-left: 5px;
+    margin-right: 18px;
+  }
+`;
+
+const StyledLaunchFlow = styled.div`
+  min-width: 300px;
+  width: calc(100% - 100px);
+  margin-left: 50px;
+  margin-top: ${(props: { disableMarginTop?: boolean }) =>
+    props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
+  padding-bottom: 150px;
+`;

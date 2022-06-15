@@ -347,11 +347,6 @@ const HidableElement = styled.div<{ show: boolean }>`
   display: ${(props) => (props.show ? "unset" : "none")};
 `;
 
-const Br = styled.div`
-  width: 100%;
-  height: 1px;
-`;
-
 const ControlRow = styled.div`
   display: flex;
   margin-left: auto;
@@ -359,39 +354,6 @@ const ControlRow = styled.div`
   align-items: center;
   flex-wrap: wrap;
   padding-left: 0px;
-`;
-
-const TopRow = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const Description = styled.div`
-  color: #aaaabb;
-  margin-top: 13px;
-  margin-left: 2px;
-  font-size: 13px;
-`;
-
-const InfoLabel = styled.div`
-  width: 72px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  color: #7a838f;
-  font-size: 13px;
-  > i {
-    color: #8b949f;
-    font-size: 18px;
-    margin-right: 5px;
-  }
-`;
-
-const InfoSection = styled.div`
-  margin-top: 20px;
-  font-family: "Work Sans", sans-serif;
-  margin-left: 0px;
-  margin-bottom: 35px;
 `;
 
 const Button = styled.div`
@@ -438,67 +400,6 @@ const Button = styled.div`
     margin-right: 5px;
     justify-content: center;
   }
-`;
-
-const ButtonAlt = styled(Button)`
-  min-width: 150px;
-  max-width: 150px;
-  background: #7a838fdd;
-
-  :hover {
-    background: #69727eee;
-  }
-`;
-
-const LineBreak = styled.div`
-  width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
-  margin: 10px 0px 35px;
-`;
-
-const Overlay = styled.div`
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  background: #00000028;
-  top: 0;
-  left: 0;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 500;
-  font-family: "Work Sans", sans-serif;
-  color: white;
-`;
-
-const DashboardImage = styled.img`
-  height: 45px;
-  width: 45px;
-  border-radius: 5px;
-`;
-
-const DashboardIcon = styled.div`
-  position: relative;
-  height: 45px;
-  min-width: 45px;
-  width: 45px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #676c7c;
-  border: 2px solid #8e94aa;
-
-  > i {
-    font-size: 22px;
-  }
-`;
-
-const Img = styled.img`
-  width: 30px;
 `;
 
 const SortFilterWrapper = styled.div`

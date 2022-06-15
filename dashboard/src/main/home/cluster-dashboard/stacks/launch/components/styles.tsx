@@ -44,6 +44,12 @@ export const SubmitButton = styled(SaveButton)`
 export const AddResourceButtonStyles = {
   Wrapper: styled(Card)`
     align-items: center;
+    position: relative;
+    font-size: 14px;
+    height: 50px;
+    :hover {
+      background: #ffffff19;
+    }
   `,
   Text: styled.span`
     font-size: 20px;

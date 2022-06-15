@@ -21,6 +21,7 @@ export interface DetailedIngressError {
 }
 
 export interface ChartType {
+  is_stack: boolean;
   image_repo_uri: string;
   git_action_config: any;
   build_config: BuildConfig;

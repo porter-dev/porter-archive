@@ -2,6 +2,7 @@ package stack
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -94,6 +95,8 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	deployErrs := make([]string, 0)
+
 	for i, appResource := range clonedAppResources {
 		// get the corresponding source config tag
 		var imageTag string
@@ -118,15 +121,19 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		})
 
 		if err != nil {
-			// TODO: mark stack with error
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			deployErrs = append(deployErrs, err.Error())
 		}
 
 		clonedAppResources[i].HelmRevisionID++
 	}
 
-	revision.Status = string(types.StackRevisionStatusDeployed)
+	if len(deployErrs) > 0 {
+		revision.Status = string(types.StackRevisionStatusFailed)
+		revision.Reason = "DeployError"
+		revision.Message = strings.Join(deployErrs, " , ")
+	} else {
+		revision.Status = string(types.StackRevisionStatusDeployed)
+	}
 
 	revision, err = p.Repo().Stack().UpdateStackRevision(revision)
 

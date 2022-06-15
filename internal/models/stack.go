@@ -55,6 +55,9 @@ type StackRevision struct {
 
 	Status string
 
+	Reason  string
+	Message string
+
 	Resources []StackResource
 
 	SourceConfigs []StackSourceConfig
@@ -88,6 +91,8 @@ func (s StackRevision) ToStackRevisionType(stackID string) *types.StackRevision 
 		StackRevisionMeta: &metaType,
 		SourceConfigs:     sourceConfigs,
 		Resources:         resources,
+		Reason:            s.Reason,
+		Message:           s.Message,
 	}
 }
 

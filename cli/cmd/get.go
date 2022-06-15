@@ -65,10 +65,11 @@ func init() {
 }
 
 type getReleaseInfo struct {
-	Name         string
-	Namespace    string
+	Name         string    `json:"name" yaml:"name"`
+	Namespace    string    `json:"namespace" yaml:"namespace"`
 	LastDeployed time.Time `json:"last_deployed" yaml:"last_deployed"`
 	ReleaseType  string    `json:"release_type" yaml:"release_type"`
+	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
 func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
@@ -83,6 +84,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		Namespace:    rel.Namespace,
 		LastDeployed: rel.Info.LastDeployed,
 		ReleaseType:  rel.Chart.Metadata.Name,
+		RevisionID:   rel.Release.Version,
 	}
 
 	if output == "yaml" {
@@ -106,6 +108,7 @@ func get(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 		fmt.Printf("Namespace:     %s\n", relInfo.Namespace)
 		fmt.Printf("Last deployed: %s\n", relInfo.LastDeployed)
 		fmt.Printf("Release type:  %s\n", relInfo.ReleaseType)
+		fmt.Printf("Revision ID:   %d\n", relInfo.RevisionID)
 	}
 
 	return nil

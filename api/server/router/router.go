@@ -260,10 +260,10 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 				atomicGroup.Use(operationFactory.Middleware)
 			case types.ReleaseScope:
 				atomicGroup.Use(releaseFactory.Middleware)
-			case types.GitlabIntegrationScope:
-				atomicGroup.Use(gitlabIntFactory.Middleware)
 			case types.StackScope:
 				atomicGroup.Use(stackFactory.Middleware)
+			case types.GitlabIntegrationScope:
+				atomicGroup.Use(gitlabIntFactory.Middleware)
 			}
 		}
 

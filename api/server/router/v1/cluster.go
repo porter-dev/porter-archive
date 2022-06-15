@@ -73,7 +73,8 @@ func getV1ClusterRoutes(
 	// POST /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewCreateNamespaceHandler
 	// swagger:operation POST /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces createNamespace
 	//
-	// Creates a new namespace
+	// Creates a new namespace in the cluster denoted by `cluster_id`. The cluster should belong to the project
+	// denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -93,9 +94,11 @@ func getV1ClusterRoutes(
 	//   '201':
 	//     description: Successfully created a new namespace
 	//     schema:
-	//       $ref: '#/definitions/CreateNamespaceResponse'
+	//       $ref: '#/definitions/NamespaceResponse'
 	//   '403':
 	//     description: Forbidden
+	//   '412':
+	//     description: Namespace already exists
 	createNamespaceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -127,7 +130,8 @@ func getV1ClusterRoutes(
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} -> cluster.NewGetNamespaceHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} getNamespace
 	//
-	// Gets a namespace
+	// Gets a namespace denoted by the name `namespace`. The namespace should belong to the cluster
+	// denoted by `cluster_id` which itself should belong to the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -143,7 +147,7 @@ func getV1ClusterRoutes(
 	//   '200':
 	//     description: Successfully got the namespace
 	//     schema:
-	//       $ref: '#/definitions/GetNamespaceResponse'
+	//       $ref: '#/definitions/NamespaceResponse'
 	//   '403':
 	//     description: Forbidden
 	//   '404':
@@ -178,7 +182,8 @@ func getV1ClusterRoutes(
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces -> cluster.NewListNamespacesHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces listNamespaces
 	//
-	// Lists namespaces
+	// Lists all namespaces in the cluster denoted by `cluster_id`. The cluster should belong to
+	// the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -226,7 +231,9 @@ func getV1ClusterRoutes(
 	// DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} -> cluster.NewDeleteNamespaceHandler
 	// swagger:operation DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace} deleteNamespace
 	//
-	// Deletes a namespace
+	// Deletes a namespace with the name `namespace`. The namespace should belong to the cluster
+	// denoted by `cluster_id` which itself should belong to the project denoted by `project_id`.
+	// Note that this endpoint does not indicate if the namespace does not exist.
 	//
 	// ---
 	// produces:

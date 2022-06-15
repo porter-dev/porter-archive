@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -701,28 +702,76 @@ func (r *Registry) GetECRPaginatedImages(
 		return []*ptypes.Image{}, nil, nil
 	}
 
-	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
-		RepositoryName: &repoName,
-		ImageIds:       resp.ImageIds,
-	})
+	imageIDLen := len(resp.ImageIds)
+	imageDetails := make([]*ecr.ImageDetail, 0)
+	imageIDMap := make(map[string]bool)
 
-	if err != nil {
-		return nil, nil, err
+	for _, id := range resp.ImageIds {
+		imageIDMap[*id.ImageTag] = true
 	}
 
-	imageDetails := describeResp.ImageDetails
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	// AWS API expects the length of imageIDs to be at max 100 at a time
+	for start := 0; start < imageIDLen; start += 100 {
+		end := start + 100
+		if end > imageIDLen {
+			end = imageIDLen
+		}
+
+		wg.Add(1)
+
+		go func(start, end int) {
+			defer wg.Done()
+
+			describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+				RepositoryName: &repoName,
+				ImageIds:       resp.ImageIds[start:end],
+			})
+
+			if err != nil {
+				return
+			}
+
+			mu.Lock()
+			imageDetails = append(imageDetails, describeResp.ImageDetails...)
+			mu.Unlock()
+		}(start, end)
+	}
+
+	wg.Wait()
 
 	res := make([]*ptypes.Image, 0)
+	imageInfoMap := make(map[string]*ptypes.Image)
 
 	for _, img := range imageDetails {
 		for _, tag := range img.ImageTags {
-			res = append(res, &ptypes.Image{
+			newImage := &ptypes.Image{
 				Digest:         *img.ImageDigest,
 				Tag:            *tag,
 				RepositoryName: repoName,
 				PushedAt:       img.ImagePushedAt,
-			})
+			}
+
+			if _, ok := imageIDMap[*tag]; ok {
+				if _, ok := imageInfoMap[*tag]; !ok {
+					imageInfoMap[*tag] = newImage
+				}
+			}
+
+			if len(imageInfoMap) == int(maxResults) {
+				break
+			}
 		}
+
+		if len(imageInfoMap) == int(maxResults) {
+			break
+		}
+	}
+
+	for _, v := range imageInfoMap {
+		res = append(res, v)
 	}
 
 	return res, resp.NextToken, nil
@@ -782,44 +831,61 @@ func (r *Registry) listECRImages(repoName string, repo repository.Repository) ([
 		nextToken = resp.NextToken
 	}
 
-	describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
-		RepositoryName: &repoName,
-		ImageIds:       imageIDs,
-	})
+	imageIDLen := len(imageIDs)
+	imageDetails := make([]*ecr.ImageDetail, 0)
 
-	if err != nil {
-		return nil, err
-	}
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 
-	imageDetails := describeResp.ImageDetails
-
-	nextToken = describeResp.NextToken
-
-	for nextToken != nil {
-		describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
-			RepositoryName: &repoName,
-			NextToken:      nextToken,
-		})
-
-		if err != nil {
-			return nil, err
+	// AWS API expects the length of imageIDs to be at max 100 at a time
+	for start := 0; start < imageIDLen; start += 100 {
+		end := start + 100
+		if end > imageIDLen {
+			end = imageIDLen
 		}
 
-		nextToken = describeResp.NextToken
-		imageDetails = append(imageDetails, describeResp.ImageDetails...)
+		wg.Add(1)
+
+		go func(start, end int) {
+			defer wg.Done()
+
+			describeResp, err := svc.DescribeImages(&ecr.DescribeImagesInput{
+				RepositoryName: &repoName,
+				ImageIds:       imageIDs[start:end],
+			})
+
+			if err != nil {
+				return
+			}
+
+			mu.Lock()
+			imageDetails = append(imageDetails, describeResp.ImageDetails...)
+			mu.Unlock()
+		}(start, end)
 	}
 
+	wg.Wait()
+
 	res := make([]*ptypes.Image, 0)
+	imageInfoMap := make(map[string]*ptypes.Image)
 
 	for _, img := range imageDetails {
 		for _, tag := range img.ImageTags {
-			res = append(res, &ptypes.Image{
+			newImage := &ptypes.Image{
 				Digest:         *img.ImageDigest,
 				Tag:            *tag,
 				RepositoryName: repoName,
 				PushedAt:       img.ImagePushedAt,
-			})
+			}
+
+			if _, ok := imageInfoMap[*tag]; !ok {
+				imageInfoMap[*tag] = newImage
+			}
 		}
+	}
+
+	for _, v := range imageInfoMap {
+		res = append(res, v)
 	}
 
 	return res, nil

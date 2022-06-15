@@ -3,7 +3,6 @@ package registry
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -76,7 +75,7 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		}
 
 		if nextToken != nil {
-			res.Next = url.QueryEscape(*nextToken)
+			res.Next = *nextToken
 		}
 
 		res.Images = append(res.Images, imgs...)

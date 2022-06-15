@@ -74,7 +74,7 @@ func getV1RegistryRoutes(
 	// POST /api/v1/projects/{project_id}/registries -> registry.NewRegistryCreateHandler
 	// swagger:operation POST /api/v1/projects/{project_id}/registries createRegistry
 	//
-	// Connects a new image registry
+	// Connects a new image registry to the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -130,7 +130,8 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryGetHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries/{registry_id} getRegistry
 	//
-	// Gets an image registry
+	// Gets an image registry denoted by `registry_id`. The registry should belong to the
+	// project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -178,7 +179,7 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries -> registry.NewRegistryListHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries listRegistries
 	//
-	// Lists registries
+	// Lists all registries connected to the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -225,7 +226,8 @@ func getV1RegistryRoutes(
 	// DELETE /api/v1/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryDeleteHandler
 	// swagger:operation DELETE /api/v1/projects/{project_id}/registries/{registry_id} deleteRegistry
 	//
-	// Deletes an image registry.
+	// Deletes a registry denoted by `registry_id`. The registry should belong to
+	// the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -324,7 +326,8 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories -> registry.NewRegistryListRepositoriesHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories listRegistryRepositories
 	//
-	// Lists image repositories inside the image registry given by `registry_id`
+	// Lists image repositories inside the image registry denoted by `registry_id`. The registry
+	// should belong to the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -372,7 +375,9 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories/* -> registry.NewRegistryListImagesHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories/{repository} listRegistryImages
 	//
-	// Lists all images in an image repository.
+	// Lists all images in the image repository denoted by the name `repository`. The repository should belong
+	// to the registry denoted by `registry_id` which should itself belong to the project denoted by
+	// `project_id`.
 	//
 	// ---
 	// produces:

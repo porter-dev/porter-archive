@@ -18,6 +18,8 @@ import yaml from "js-yaml";
 import { AxiosError } from "axios";
 import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
 import { DeviconsNameList } from "assets/devicons-name-list";
+import Selector from "components/Selector";
+import BranchList from "components/repo-selector/BranchList";
 
 type Buildpack = {
   name: string;
@@ -71,6 +73,12 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   const [buttonStatus, setButtonStatus] = useState<
     "loading" | "successful" | string
   >("");
+
+  const [currentBranch, setCurrentBranch] = useState(
+    () => chart?.git_action_config?.git_branch
+  );
+
+  const saveNewBranch = async (newBranch: string) => {};
 
   const saveBuildConfig = async (config: BuildConfig) => {
     if (config === null) {
@@ -231,7 +239,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     }
   };
 
-  const getActionConfig = () => {
+  const currentActionConfig = useMemo(() => {
     const actionConf = chart.git_action_config;
     if (actionConf && actionConf.gitlab_integration_id) {
       return {
@@ -244,7 +252,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
       kind: "github",
       ...actionConf,
     } as FullActionConfigType;
-  };
+  }, [chart]);
 
   return (
     <Wrapper>
@@ -296,12 +304,22 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
           }}
         ></KeyValueArray>
 
+        <Heading>Select default branch</Heading>
+        <Helper>
+          Change the default branch the deployments will be made from.
+        </Helper>
+        <BranchList
+          actionConfig={currentActionConfig}
+          setBranch={setCurrentBranch}
+          currentBranch={currentBranch}
+        />
+
         {!chart.git_action_config.dockerfile_path ? (
           <>
             <Heading>Buildpack Settings</Heading>
             <BuildpackConfigSection
               currentChart={chart}
-              actionConfig={getActionConfig()}
+              actionConfig={currentActionConfig}
               onChange={(buildConfig) => setBuildConfig(buildConfig)}
             />
           </>

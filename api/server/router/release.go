@@ -815,7 +815,7 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
-	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/buildconfig -> release.NewUpdateBuildConfigHandler
+	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/git_action_config -> release.NewUpdateGitActionConfigHandler
 	updateGitActionConfigEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,

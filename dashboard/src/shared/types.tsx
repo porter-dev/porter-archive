@@ -1,3 +1,5 @@
+import ValuesYaml from "main/home/cluster-dashboard/expanded-chart/ValuesYaml";
+
 export interface ClusterType {
   id: number;
   name: string;
@@ -19,6 +21,7 @@ export interface DetailedIngressError {
 }
 
 export interface ChartType {
+  is_stack: boolean;
   image_repo_uri: string;
   git_action_config: any;
   build_config: BuildConfig;
@@ -164,6 +167,13 @@ export interface PorterTemplate {
   repo_url?: string;
 }
 
+export interface ExpandedPorterTemplate {
+  form: FormYAML;
+  markdown: string;
+  metadata: ChartType["chart"]["metadata"];
+  values: ChartTypeWithExtendedConfig["config"];
+}
+
 // FormYAML represents a chart's values.yaml form abstraction
 export interface FormYAML {
   name?: string;
@@ -248,6 +258,7 @@ export interface ProjectType {
   enable_rds_databases: boolean;
   managed_infra_enabled: boolean;
   api_tokens_enabled: boolean;
+  stacks_enabled: boolean;
   roles: {
     id: number;
     kind: string;

@@ -232,7 +232,11 @@ class RevisionSection extends Component<PropsType, StateType> {
             <RollbackButton
               disabled={
                 isCurrent ||
-                !this.props.isAuthorized("application", "", ["get", "update"])
+                !this.props.isAuthorized("application", "", [
+                  "get",
+                  "update",
+                ]) ||
+                this.props.chart.is_stack
               }
               onClick={() =>
                 this.setState({ rollbackRevision: revision.version })

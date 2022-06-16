@@ -17,6 +17,7 @@ const (
 	NamespaceScope         PermissionScope = "namespace"
 	SettingsScope          PermissionScope = "settings"
 	ReleaseScope           PermissionScope = "release"
+	StackScope             PermissionScope = "stack"
 	GitlabIntegrationScope PermissionScope = "gitlab_integration"
 )
 
@@ -41,6 +42,7 @@ var ScopeHeirarchy = ScopeTree{
 	ProjectScope: {
 		ClusterScope: {
 			NamespaceScope: {
+				StackScope:   {},
 				ReleaseScope: {},
 			},
 		},

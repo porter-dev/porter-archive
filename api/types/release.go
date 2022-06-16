@@ -194,6 +194,6 @@ type PatchUpdateReleaseTags struct {
 	Tags []string `json:"tags"`
 }
 
-type UpdateActionConfigRequest struct {
+type UpdateGitActionConfigRequest struct {
 	GitActionConfig *GitActionConfig `json:"git_action_config"`
 }

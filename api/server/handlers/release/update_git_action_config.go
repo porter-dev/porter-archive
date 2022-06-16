@@ -13,26 +13,26 @@ import (
 	"gorm.io/gorm"
 )
 
-type UpdateActionConfigHandler struct {
+type UpdateGitActionConfigHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewUpdateActionConfigHandler(
+func NewUpdateGitActionConfigHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *UpdateActionConfigHandler {
-	return &UpdateActionConfigHandler{
+) *UpdateGitActionConfigHandler {
+	return &UpdateGitActionConfigHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *UpdateActionConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *UpdateGitActionConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	name, _ := requestutils.GetURLParamString(r, types.URLParamReleaseName)
 	namespace := r.Context().Value(types.NamespaceScope).(string)
 
-	request := &types.UpdateActionConfigRequest{}
+	request := &types.UpdateGitActionConfigRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return

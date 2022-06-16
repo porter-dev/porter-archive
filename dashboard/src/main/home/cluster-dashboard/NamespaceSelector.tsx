@@ -50,18 +50,18 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
           }
 
           let defaultNamespace = "default";
-          const availableNamespaces = res.data.items.filter(
+          const availableNamespaces = res.data.filter(
             (namespace: any) => {
-              return namespace.status.phase !== "Terminating";
+              return namespace.status !== "Terminating";
             }
           );
           availableNamespaces.forEach(
-            (x: { metadata: { name: string } }, i: number) => {
+            (x: { name: string }, i: number) => {
               namespaceOptions.push({
-                label: x.metadata.name,
-                value: x.metadata.name,
+                label: x.name,
+                value: x.name,
               });
-              if (x.metadata.name === urlNamespace) {
+              if (x.name === urlNamespace) {
                 defaultNamespace = urlNamespace;
               }
             }

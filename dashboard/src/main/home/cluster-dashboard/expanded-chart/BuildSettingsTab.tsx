@@ -232,7 +232,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     }
   };
 
-  const getActionConfig = () => {
+  const currentActionConfig = useMemo(() => {
     const actionConf = chart.git_action_config;
     if (actionConf && actionConf.gitlab_integration_id) {
       return {
@@ -245,7 +245,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
       kind: "github",
       ...actionConf,
     } as FullActionConfigType;
-  };
+  }, [chart]);
 
   return (
     <Wrapper>
@@ -308,7 +308,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
             <Heading>Buildpack Settings</Heading>
             <BuildpackConfigSection
               currentChart={chart}
-              actionConfig={getActionConfig()}
+              actionConfig={currentActionConfig}
               onChange={(buildConfig) => setBuildConfig(buildConfig)}
             />
           </>

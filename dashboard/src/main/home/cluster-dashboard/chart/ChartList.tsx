@@ -28,6 +28,7 @@ type Props = {
   disableBottomPadding?: boolean;
   closeChartRedirectUrl?: string;
   selectedTag?: any;
+  appFilters?: string[];
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -42,6 +43,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   disableBottomPadding,
   closeChartRedirectUrl,
   selectedTag,
+  appFilters,
 }) => {
   const {
     newWebsocket,
@@ -336,12 +338,22 @@ const ChartList: React.FunctionComponent<Props> = ({
         });
       })
       .filter((chart: ChartType) => {
-        return (
-          (currentView == "jobs" && chart.chart.metadata.name == "job") ||
-          ((currentView == "applications" ||
-            currentView == "cluster-dashboard") &&
-            chart.chart.metadata.name != "job")
-        );
+        if (currentView === "jobs" && chart.chart.metadata.name === "job") {
+          return true;
+        }
+
+        if (
+          ["applications", "cluster-dashboard"].includes(currentView) &&
+          chart.chart.metadata.name !== "job"
+        ) {
+          return true;
+        }
+
+        if (currentView === "stacks") {
+          return true;
+        }
+
+        return false;
       })
       .filter((chart: ChartType) => {
         if (currentView !== "jobs") {
@@ -356,6 +368,15 @@ const ChartList: React.FunctionComponent<Props> = ({
           { status: null } as any
         );
         return status.status === lastRunStatus;
+      })
+      .filter((chart: ChartType) => {
+        if (!Array.isArray(appFilters) || appFilters?.length === 0) {
+          return true;
+        }
+
+        return appFilters.some((filter) => {
+          return chart.name.toLowerCase() === filter.toLowerCase();
+        });
       });
 
     if (sortType == "Newest") {

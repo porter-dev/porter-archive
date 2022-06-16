@@ -45,6 +45,7 @@ type TestRepository struct {
 	apiToken                  repository.APITokenRepository
 	policy                    repository.PolicyRepository
 	tag                       repository.TagRepository
+	stack                     repository.StackRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -207,6 +208,10 @@ func (t *TestRepository) Tag() repository.TagRepository {
 	return t.tag
 }
 
+func (t *TestRepository) Stack() repository.StackRepository {
+	return t.stack
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -251,5 +256,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		apiToken:                  NewAPITokenRepository(canQuery),
 		policy:                    NewPolicyRepository(canQuery),
 		tag:                       NewTagRepository(),
+		stack:                     NewStackRepository(),
 	}
 }

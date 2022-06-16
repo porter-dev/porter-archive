@@ -32,29 +32,31 @@ func (p *StackDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	namespace, _ := r.Context().Value(types.NamespaceScope).(string)
 
-	revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].ID)
+	if len(stack.Revisions) > 0 {
+		revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].RevisionNumber)
 
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		helmAgent, err := p.GetHelmAgent(r, cluster, namespace)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		// delete all resources in stack
+		for _, appResource := range revision.Resources {
+			deleteAppResource(&deleteAppResourceOpts{
+				helmAgent: helmAgent,
+				name:      appResource.Name,
+			})
+		}
 	}
 
-	helmAgent, err := p.GetHelmAgent(r, cluster, namespace)
-
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// delete all resources in stack
-	for _, appResource := range revision.Resources {
-		deleteAppResource(&deleteAppResourceOpts{
-			helmAgent: helmAgent,
-			name:      appResource.Name,
-		})
-	}
-
-	stack, err = p.Repo().Stack().DeleteStack(stack)
+	stack, err := p.Repo().Stack().DeleteStack(stack)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

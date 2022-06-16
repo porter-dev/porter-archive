@@ -174,11 +174,11 @@ func getGithubClientFromEnvironment(config *config.Config, env *models.Environme
 	}
 
 	// authenticate as github app installation
-	itr, err := ghinstallation.NewKeyFromFile(
+	itr, err := ghinstallation.New(
 		http.DefaultTransport,
 		int64(ghAppId),
 		int64(env.GitInstallationID),
-		config.ServerConf.GithubAppSecretPath,
+		config.ServerConf.GithubAppSecret,
 	)
 
 	if err != nil {

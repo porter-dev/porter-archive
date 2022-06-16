@@ -46,14 +46,12 @@ const Overview = () => {
       )
       .then((res) => {
         if (res.data) {
-          const availableNamespaces = res.data.items.filter(
-            (namespace: any) => {
-              return namespace.status.phase !== "Terminating";
-            }
-          );
+          const availableNamespaces = res.data.filter((namespace: any) => {
+            return namespace.status !== "Terminating";
+          });
           const namespaceOptions = availableNamespaces.map(
-            (x: { metadata: { name: string } }) => {
-              return { label: x.metadata.name, value: x.metadata.name };
+            (x: { name: string }) => {
+              return { label: x.name, value: x.name };
             }
           );
           if (availableNamespaces.length > 0) {
@@ -203,7 +201,7 @@ const ClusterSection = styled.div`
 
 const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: ${props => props.height || "1px"};
+  height: ${(props) => props.height || "1px"};
 `;
 
 const Required = styled.div`

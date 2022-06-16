@@ -49,7 +49,7 @@ func (c *UpdateGitActionConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	}
 
-	actionConfig, err := c.Repo().GitActionConfig().ReadGitActionConfig(release.ID)
+	actionConfig, err := c.Repo().GitActionConfig().ReadGitActionConfig(release.GitActionConfig.ID)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {

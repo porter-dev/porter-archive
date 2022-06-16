@@ -37,14 +37,15 @@ func NewGithubIncomingWebhookHandler(
 
 func (c *GithubIncomingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	payload, err := github.ValidatePayload(r, []byte(c.Config().ServerConf.GithubIncomingWebhookSecret))
+
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error validating webhook payload: %w", err)))
 		return
 	}
 
 	event, err := github.ParseWebHook(github.WebHookType(r), payload)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error parsing webhook: %w", err)))
 		return
 	}
 
@@ -53,7 +54,7 @@ func (c *GithubIncomingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		err = c.processPullRequestEvent(event, r)
 
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error processing pull request webhook event: %w", err)))
 			return
 		}
 	}
@@ -73,14 +74,15 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 	env, err := c.Repo().Environment().ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repo)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error reading environment: %w", webhookID, owner, repo, err)
 	}
 
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d] error getting github client: %w",
+			webhookID, owner, repo, env.ID, err)
 	}
 
 	if env.Mode == "auto" && event.GetAction() == "opened" {
@@ -98,7 +100,8 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d] error creating workflow dispatch event: %w",
+				webhookID, owner, repo, env.ID, err)
 		}
 	} else if event.GetAction() == "synchronize" || event.GetAction() == "closed" {
 		depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(
@@ -106,7 +109,8 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d] error reading deployment: %w",
+				webhookID, owner, repo, env.ID, err)
 		}
 
 		if depl.Status != types.DeploymentStatusInactive {
@@ -125,13 +129,15 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 				)
 
 				if err != nil {
-					return err
+					return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error creating workflow dispatch event: %w",
+						webhookID, owner, repo, env.ID, depl.ID, err)
 				}
 			} else {
 				err = c.deleteDeployment(r, depl, env, client)
 
 				if err != nil {
-					return err
+					return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error deleting deployment: %w",
+						webhookID, owner, repo, env.ID, depl.ID, err)
 				}
 			}
 		}
@@ -149,7 +155,7 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 	cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster: %w", env.ProjectID, env.ClusterID, err)
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
@@ -163,7 +169,8 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 		err = agent.DeleteNamespace(depl.Namespace)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("[owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error deleting namespace '%s': %w",
+				env.GitRepoOwner, env.GitRepoName, env.ID, depl.ID, depl.Namespace, err)
 		}
 	}
 
@@ -188,7 +195,8 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 	_, err = c.Repo().Environment().UpdateDeployment(depl)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("[owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error updating deployment: %w",
+			env.GitRepoOwner, env.GitRepoName, env.ID, depl.ID, err)
 	}
 
 	return nil

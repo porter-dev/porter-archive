@@ -117,7 +117,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 		v1RegistryRegisterer := v1.NewV1RegistryScopedRegisterer()
 		v1ReleaseRegisterer := v1.NewV1ReleaseScopedRegisterer()
-		v1NamespaceRegisterer := v1.NewV1NamespaceScopedRegisterer(v1ReleaseRegisterer)
+		v1StackRegisterer := v1.NewV1StackScopedRegisterer()
+		v1NamespaceRegisterer := v1.NewV1NamespaceScopedRegisterer(v1ReleaseRegisterer, v1StackRegisterer)
 		v1ClusterRegisterer := v1.NewV1ClusterScopedRegisterer(v1NamespaceRegisterer)
 		v1ProjRegisterer := v1.NewV1ProjectScopedRegisterer(
 			v1ClusterRegisterer,
@@ -208,6 +209,10 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	// after authorization. Each subsequent http.Handler can lookup the release in context.
 	releaseFactory := authz.NewReleaseScopedFactory(config)
 
+	// Create a new "stack-scoped" factory which will create a new stack-scoped request after
+	// authorization. Each subsequent http.Handler can lookup the stack in context.
+	stackFactory := authz.NewStackScopedFactory(config)
+
 	// Policy doc loader loads the policy documents for a specific project.
 	policyDocLoader := policy.NewBasicPolicyDocumentLoader(config.Repo.Project(), config.Repo.Policy())
 
@@ -255,6 +260,8 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 				atomicGroup.Use(operationFactory.Middleware)
 			case types.ReleaseScope:
 				atomicGroup.Use(releaseFactory.Middleware)
+			case types.StackScope:
+				atomicGroup.Use(stackFactory.Middleware)
 			case types.GitlabIntegrationScope:
 				atomicGroup.Use(gitlabIntFactory.Middleware)
 			}

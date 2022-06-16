@@ -138,7 +138,7 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	release, err := createReleaseFromHelmRelease(c.Config(), cluster.ProjectID, cluster.ID, helmRelease)
+	release, err := CreateAppReleaseFromHelmRelease(c.Config(), cluster.ProjectID, cluster.ID, 0, helmRelease)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -218,9 +218,9 @@ func (c *CreateReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusCreated)
 }
 
-func createReleaseFromHelmRelease(
+func CreateAppReleaseFromHelmRelease(
 	config *config.Config,
-	projectID, clusterID uint,
+	projectID, clusterID, stackResourceID uint,
 	helmRelease *release.Release,
 ) (*models.Release, error) {
 	token, err := encryption.GenerateRandomBytes(16)
@@ -244,12 +244,29 @@ func createReleaseFromHelmRelease(
 	}
 
 	release := &models.Release{
-		ClusterID:    clusterID,
-		ProjectID:    projectID,
-		Namespace:    helmRelease.Namespace,
-		Name:         helmRelease.Name,
-		WebhookToken: token,
-		ImageRepoURI: repoStr,
+		ClusterID:       clusterID,
+		ProjectID:       projectID,
+		Namespace:       helmRelease.Namespace,
+		Name:            helmRelease.Name,
+		WebhookToken:    token,
+		ImageRepoURI:    repoStr,
+		StackResourceID: stackResourceID,
+	}
+
+	return config.Repo.Release().CreateRelease(release)
+}
+
+func CreateAddonReleaseFromHelmRelease(
+	config *config.Config,
+	projectID, clusterID, stackResourceID uint,
+	helmRelease *release.Release,
+) (*models.Release, error) {
+	release := &models.Release{
+		ClusterID:       clusterID,
+		ProjectID:       projectID,
+		Namespace:       helmRelease.Namespace,
+		Name:            helmRelease.Name,
+		StackResourceID: stackResourceID,
 	}
 
 	return config.Repo.Release().CreateRelease(release)

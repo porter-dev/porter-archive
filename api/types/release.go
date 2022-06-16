@@ -15,13 +15,29 @@ type Release struct {
 }
 
 type PorterRelease struct {
-	ID              uint             `json:"id"`
-	WebhookToken    string           `json:"webhook_token"`
-	LatestVersion   string           `json:"latest_version"`
+	// The ID of this Porter release
+	ID uint `json:"id"`
+
+	// The webhook token used to secure Github repository webhooks
+	WebhookToken string `json:"webhook_token"`
+
+	// The latest version of this Porter release
+	LatestVersion string `json:"latest_version"`
+
+	// Configuration regarding the connected git repository
 	GitActionConfig *GitActionConfig `json:"git_action_config,omitempty"`
-	ImageRepoURI    string           `json:"image_repo_uri"`
-	BuildConfig     *BuildConfig     `json:"build_config,omitempty"`
-	Tags            []string         `json:"tags,omitempty"`
+
+	// The complete image repository URI for this release
+	ImageRepoURI string `json:"image_repo_uri"`
+
+	// The build configuration for this release when using buildpacks
+	BuildConfig *BuildConfig `json:"build_config,omitempty"`
+
+	// The list of tags for this release
+	Tags []string `json:"tags,omitempty"`
+
+	// Whether this release is tied to a stack or not
+	IsStack bool `json:"is_stack"`
 }
 
 // swagger:model
@@ -36,22 +52,44 @@ type UpdateNotificationConfigRequest struct {
 }
 
 type CreateReleaseBaseRequest struct {
-	RepoURL         string                 `json:"repo_url,omitempty" schema:"repo_url"`
-	TemplateName    string                 `json:"template_name" form:"required"`
-	TemplateVersion string                 `json:"template_version" form:"required"`
-	Values          map[string]interface{} `json:"values"`
-	Name            string                 `json:"name" form:"required"`
+	// The repository URL for this release
+	RepoURL string `json:"repo_url,omitempty" schema:"repo_url"`
+
+	// the Porter charts templated name
+	// required: true
+	TemplateName string `json:"template_name" form:"required"`
+
+	// The Porter charts template version
+	// required: true
+	TemplateVersion string `json:"template_version" form:"required"`
+
+	// The Helm values for this release
+	Values map[string]interface{} `json:"values"`
+
+	// The name of this release
+	// required: true
+	Name string `json:"name" form:"required"`
 }
 
 // swagger:model
 type CreateReleaseRequest struct {
 	*CreateReleaseBaseRequest
 
-	ImageURL        string                        `json:"image_url" form:"required"`
+	// The repository image URL for this release
+	// required: true
+	ImageURL string `json:"image_url" form:"required"`
+
+	// Configuration regarding the connected git repository
 	GitActionConfig *CreateGitActionConfigRequest `json:"git_action_config,omitempty"`
-	BuildConfig     *CreateBuildConfigRequest     `json:"build_config,omitempty"`
-	Tags            []string                      `json:"tags,omitempty"`
-	SyncedEnvGroups []string                      `json:"synced_env_groups,omitempty"`
+
+	// Build configuration options for this release
+	BuildConfig *CreateBuildConfigRequest `json:"build_config,omitempty"`
+
+	// The list of tags for this release
+	Tags []string `json:"tags,omitempty"`
+
+	// The list of synced environment groups for this release
+	SyncedEnvGroups []string `json:"synced_env_groups,omitempty"`
 }
 
 type CreateAddonRequest struct {
@@ -66,10 +104,11 @@ type RollbackReleaseRequest struct {
 
 // swagger:model UpdateReleaseRequest
 type V1UpgradeReleaseRequest struct {
+	// The Helm values to upgrade the release with
 	// required: true
 	Values map[string]interface{} `json:"values" form:"required"`
 
-	// required: false
+	// The Porter charts version to upgrade the release with
 	ChartVersion string `json:"version"`
 }
 

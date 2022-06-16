@@ -217,33 +217,35 @@ const SettingsSection: React.FC<PropsType> = ({
 
     return (
       <>
-        <>
-          <Heading>Source Settings</Heading>
-          <Helper>Specify an image tag to use.</Helper>
-          <ImageSelector
-            selectedTag={selectedTag}
-            selectedImageUrl={selectedImageUrl}
-            setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
-            setSelectedTag={(x: string) => setSelectedTag(x)}
-            forceExpanded={true}
-            disableImageSelect={isDeployedFromGithub(currentChart)}
-          />
-          {!loadingWebhookToken && (
-            <>
-              <Br />
-              <Br />
-              <Br />
-              <SaveButton
-                clearPosition={true}
-                statusPosition="right"
-                text="Save Source Settings"
-                status={saveValuesStatus}
-                onClick={handleSubmit}
-              />
-            </>
-          )}
-          <Br />
-        </>
+        {!currentChart.is_stack ? (
+          <>
+            <Heading>Source Settings</Heading>
+            <Helper>Specify an image tag to use.</Helper>
+            <ImageSelector
+              selectedTag={selectedTag}
+              selectedImageUrl={selectedImageUrl}
+              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
+              setSelectedTag={(x: string) => setSelectedTag(x)}
+              forceExpanded={true}
+              disableImageSelect={isDeployedFromGithub(currentChart)}
+            />
+            {!loadingWebhookToken && (
+              <>
+                <Br />
+                <Br />
+                <Br />
+                <SaveButton
+                  clearPosition={true}
+                  statusPosition="right"
+                  text="Save Source Settings"
+                  status={saveValuesStatus}
+                  onClick={handleSubmit}
+                />
+              </>
+            )}
+            <Br />
+          </>
+        ) : null}
 
         <>
           <Heading>Redeploy Webhook</Heading>

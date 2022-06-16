@@ -47,6 +47,7 @@ type GormRepository struct {
 	apiToken                  repository.APITokenRepository
 	policy                    repository.PolicyRepository
 	tag                       repository.TagRepository
+	stack                     repository.StackRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -209,6 +210,10 @@ func (t *GormRepository) Tag() repository.TagRepository {
 	return t.tag
 }
 
+func (t *GormRepository) Stack() repository.StackRepository {
+	return t.stack
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -253,5 +258,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		apiToken:                  NewAPITokenRepository(db),
 		policy:                    NewPolicyRepository(db),
 		tag:                       NewTagRepository(db),
+		stack:                     NewStackRepository(db),
 	}
 }

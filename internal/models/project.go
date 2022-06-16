@@ -61,6 +61,7 @@ type Project struct {
 	PreviewEnvsEnabled  bool
 	RDSDatabasesEnabled bool
 	ManagedInfraEnabled bool
+	StacksEnabled       bool
 	APITokensEnabled    bool
 }
 
@@ -79,6 +80,7 @@ func (p *Project) ToProjectType() *types.Project {
 		PreviewEnvsEnabled:  p.PreviewEnvsEnabled,
 		RDSDatabasesEnabled: p.RDSDatabasesEnabled,
 		ManagedInfraEnabled: p.ManagedInfraEnabled,
+		StacksEnabled:       p.StacksEnabled,
 		APITokensEnabled:    p.APITokensEnabled,
 	}
 }

@@ -35,6 +35,9 @@ type PorterRelease struct {
 
 	// The list of tags for this release
 	Tags []string `json:"tags,omitempty"`
+
+	// Whether this release is tied to a stack or not
+	IsStack bool `json:"is_stack"`
 }
 
 // swagger:model

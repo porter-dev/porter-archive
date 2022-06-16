@@ -193,3 +193,7 @@ type GetReleaseAllPodsResponse []v1.Pod
 type PatchUpdateReleaseTags struct {
 	Tags []string `json:"tags"`
 }
+
+type UpdateActionConfigRequest struct {
+	GitActionConfig *GitActionConfig `json:"git_action_config"`
+}

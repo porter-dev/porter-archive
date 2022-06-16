@@ -129,9 +129,9 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			deployErrs = append(deployErrs, err.Error())
+		} else {
+			helmReleaseMap[fmt.Sprintf("%s/%s", namespace, appResource.Name)] = rel
 		}
-
-		helmReleaseMap[fmt.Sprintf("%s/%s", namespace, appResource.Name)] = rel
 	}
 
 	// update stack revision status
@@ -155,12 +155,12 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	saveErrs := make([]string, 0)
 
 	for _, resource := range revision.Resources {
-		rel := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]
+		if rel, exists := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]; exists {
+			_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
 
-		_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
-
-		if err != nil {
-			saveErrs = append(saveErrs, fmt.Sprintf("the resource %s/%s could not be saved right now", namespace, resource.Name))
+			if err != nil {
+				saveErrs = append(saveErrs, fmt.Sprintf("the resource %s/%s could not be saved right now", namespace, resource.Name))
+			}
 		}
 	}
 

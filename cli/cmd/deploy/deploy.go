@@ -345,6 +345,15 @@ func (d *DeployAgent) Push() error {
 // reuses the configuration set for the application. If overrideValues is not nil,
 // it will merge the overriding values with the existing configuration.
 func (d *DeployAgent) UpdateImageAndValues(overrideValues map[string]interface{}) error {
+	// we should fetch the latest release and its config
+	release, err := d.Client.GetRelease(context.TODO(), d.Opts.ProjectID, d.Opts.ClusterID, d.Opts.Namespace, d.App)
+
+	if err != nil {
+		return err
+	}
+
+	d.Release = release
+
 	// if this is a job chart, set "paused" to false so that the job doesn't run, unless
 	// the user has explicitly overriden the "paused" field
 	if _, exists := overrideValues["paused"]; d.Release.Chart.Name() == "job" && !exists {

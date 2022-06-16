@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/porter-dev/porter/api/server/handlers/registry"
+	v1Registry "github.com/porter-dev/porter/api/server/handlers/v1/registry"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -73,7 +74,7 @@ func getV1RegistryRoutes(
 	// POST /api/v1/projects/{project_id}/registries -> registry.NewRegistryCreateHandler
 	// swagger:operation POST /api/v1/projects/{project_id}/registries createRegistry
 	//
-	// Connects a new image registry
+	// Connects a new image registry to the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -93,8 +94,12 @@ func getV1RegistryRoutes(
 	//     description: Successfully connected the registry
 	//     schema:
 	//       $ref: '#/definitions/CreateRegistryResponse'
+	//   '400':
+	//     description: A malformed or bad request
 	//   '403':
 	//     description: Forbidden
+	//   '404':
+	//     description: A subresource was not found
 	createRegistryEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -125,7 +130,8 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryGetHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries/{registry_id} getRegistry
 	//
-	// Gets an image registry
+	// Gets an image registry denoted by `registry_id`. The registry should belong to the
+	// project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -137,7 +143,7 @@ func getV1RegistryRoutes(
 	//   - name: project_id
 	//   - name: registry_id
 	// responses:
-	//   '201':
+	//   '200':
 	//     description: Successfully got the registry
 	//     schema:
 	//       $ref: '#/definitions/GetRegistryResponse'
@@ -173,7 +179,7 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries -> registry.NewRegistryListHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries listRegistries
 	//
-	// Lists registries
+	// Lists all registries connected to the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -220,7 +226,8 @@ func getV1RegistryRoutes(
 	// DELETE /api/v1/projects/{project_id}/registries/{registry_id} -> registry.NewRegistryDeleteHandler
 	// swagger:operation DELETE /api/v1/projects/{project_id}/registries/{registry_id} deleteRegistry
 	//
-	// Deletes an image registry.
+	// Deletes a registry denoted by `registry_id`. The registry should belong to
+	// the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -319,7 +326,8 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories -> registry.NewRegistryListRepositoriesHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories listRegistryRepositories
 	//
-	// Lists image repositories inside the image registry given by `registry_id`
+	// Lists image repositories inside the image registry denoted by `registry_id`. The registry
+	// should belong to the project denoted by `project_id`.
 	//
 	// ---
 	// produces:
@@ -367,7 +375,9 @@ func getV1RegistryRoutes(
 	// GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories/* -> registry.NewRegistryListImagesHandler
 	// swagger:operation GET /api/v1/projects/{project_id}/registries/{registry_id}/repositories/{repository} listRegistryImages
 	//
-	// Lists all images in an image repository.
+	// Lists all images in the image repository denoted by the name `repository`. The repository should belong
+	// to the registry denoted by `registry_id` which should itself belong to the project denoted by
+	// `project_id`.
 	//
 	// ---
 	// produces:
@@ -380,14 +390,35 @@ func getV1RegistryRoutes(
 	//   - name: registry_id
 	//   - name: repository
 	//     in: path
-	//     description: the image repository name
+	//     description: The image repository name
 	//     type: string
 	//     required: true
+	//   - name: num
+	//     in: query
+	//     description: |
+	//       The number of images to list.
+	//       For ECR images, a maximum of 1000 is allowed.
+	//     type: integer
+	//     required: false
+	//     minimum: 1
+	//   - name: next
+	//     in: query
+	//     description: The next page string used for pagination, from a previous request.
+	//     type: string
+	//   - name: page
+	//     in: query
+	//     description: |
+	//       The page number used for pagination, possibly from a previous request.
+	//       (**DigitalOcean only**)
+	//     type: integer
+	//     minimum: 1
 	// responses:
 	//   '200':
 	//     description: Successfully listed images
 	//     schema:
-	//       $ref: '#/definitions/ListImagesResponse'
+	//       $ref: '#/definitions/V1ListImageResponse'
+	//   '400':
+	//     description: A malformed or bad request
 	//   '403':
 	//     description: Forbidden
 	listImagesEndpoint := factory.NewAPIEndpoint(
@@ -410,8 +441,9 @@ func getV1RegistryRoutes(
 		},
 	)
 
-	listImagesHandler := registry.NewRegistryListImagesHandler(
+	listImagesHandler := v1Registry.NewRegistryListImagesHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 

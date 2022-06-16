@@ -51,4 +51,6 @@ func (p *RegistryCreateRepositoryHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	w.WriteHeader(http.StatusCreated)
 }

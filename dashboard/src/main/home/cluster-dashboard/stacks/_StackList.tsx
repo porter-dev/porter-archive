@@ -8,6 +8,15 @@ import styled from "styled-components";
 import { Stack } from "./types";
 import { readableDate } from "shared/string_utils";
 import { CardGrid, Card } from "./launch/components/styles";
+import Status, { StatusProps } from "./components/Status";
+import {
+  Flex,
+  InfoWrapper,
+  LastDeployed,
+  SepDot,
+  Text,
+} from "./components/styles";
+import { getStackStatus, getStackStatusMessage } from "./shared";
 
 const StackList = ({ namespace }: { namespace: string }) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -105,21 +114,22 @@ const StackList = ({ namespace }: { namespace: string }) => {
                 <span>{stack.name}</span>
               </StackName>
 
-              <Flex>
-                <DeploymentImageContainer>
-                  <InfoWrapper>
-                    <LastDeployed>
-                      <Revision>
-                        {!stack.latest_revision?.id
-                          ? `No version found`
-                          : `v${stack.latest_revision.id}`}
-                      </Revision>
-                      <SepDot>•</SepDot>
-                      Last updated {readableDate(stack.updated_at)}
-                    </LastDeployed>
-                  </InfoWrapper>
-                </DeploymentImageContainer>
-              </Flex>
+              <InfoWrapper>
+                <LastDeployed>
+                  <Status
+                    status={getStackStatus(stack)}
+                    message={getStackStatusMessage(stack)}
+                  />
+                  <SepDot>•</SepDot>
+                  <Text color="#aaaabb">
+                    {!stack.latest_revision?.id
+                      ? `No version found`
+                      : `v${stack.latest_revision.id}`}
+                  </Text>
+                  <SepDot>•</SepDot>
+                  Last updated {readableDate(stack.updated_at)}
+                </LastDeployed>
+              </InfoWrapper>
             </DataContainer>
             <Flex>
               <RowButton
@@ -172,10 +182,6 @@ const RowButton = styled.button`
   }
 `;
 
-const Revision = styled.div`
-  color: #aaaabb;
-`;
-
 const StackIcon = styled.div`
   margin-bottom: -4px;
 
@@ -195,45 +201,6 @@ const StackName = styled.div`
   font-size: 14px;
   align-items: center;
   margin-bottom: 10px;
-`;
-
-const SepDot = styled.div`
-  color: #aaaabb66;
-  margin: 0 9px;
-`;
-
-const InfoWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-right: 8px;
-`;
-
-const LastDeployed = styled.div`
-  font-size: 13px;
-  margin-top: -1px;
-  display: flex;
-  align-items: center;
-  color: #aaaabb66;
-`;
-
-const DeploymentImageContainer = styled.div`
-  height: 20px;
-  font-size: 13px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  font-weight: 400;
-  justify-content: center;
-  color: #ffffff66;
-  margin-left: 1px;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
 `;
 
 const DataContainer = styled.div`

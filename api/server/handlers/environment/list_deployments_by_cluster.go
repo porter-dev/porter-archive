@@ -71,6 +71,8 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 			deployments = append(deployments, deployment)
 		}
 
+		envToGithubClientMap := make(map[uint]*github.Client)
+
 		var wg sync.WaitGroup
 		wg.Add(len(deployments))
 
@@ -82,17 +84,21 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 				return
 			}
 
-			client, err := getGithubClientFromEnvironment(c.Config(), env)
+			if _, ok := envToGithubClientMap[env.ID]; !ok {
+				client, err := getGithubClientFromEnvironment(c.Config(), env)
 
-			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+				if err != nil {
+					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					return
+				}
+
+				envToGithubClientMap[env.ID] = client
 			}
 
 			go func(depl *types.Deployment) {
 				defer wg.Done()
 
-				updateDeploymentWithGithubWorkflowRunStatus(c.Config(), client, env, depl)
+				updateDeploymentWithGithubWorkflowRunStatus(c.Config(), envToGithubClientMap[env.ID], env, depl)
 			}(deployment)
 		}
 
@@ -106,14 +112,18 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		}
 
 		for _, env := range envList {
-			client, err := getGithubClientFromEnvironment(c.Config(), env)
+			if _, ok := envToGithubClientMap[env.ID]; !ok {
+				client, err := getGithubClientFromEnvironment(c.Config(), env)
 
-			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+				if err != nil {
+					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					return
+				}
+
+				envToGithubClientMap[env.ID] = client
 			}
 
-			prs, err := fetchOpenPullRequests(r.Context(), c.Config(), client, env, deplInfoMap)
+			prs, err := fetchOpenPullRequests(r.Context(), c.Config(), envToGithubClientMap[env.ID], env, deplInfoMap)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

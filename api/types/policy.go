@@ -17,8 +17,8 @@ const (
 	NamespaceScope         PermissionScope = "namespace"
 	SettingsScope          PermissionScope = "settings"
 	ReleaseScope           PermissionScope = "release"
-	GitlabIntegrationScope PermissionScope = "gitlab_integration"
 	StackScope             PermissionScope = "stack"
+	GitlabIntegrationScope PermissionScope = "gitlab_integration"
 )
 
 type NameOrUInt struct {

@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -18,6 +19,11 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v2"
+)
+
+var (
+	ErrProtectedBranch            = errors.New("protected branch")
+	ErrCreatePRForProtectedBranch = errors.New("unable to create PR to merge workflow files into protected branch")
 )
 
 type GithubActions struct {
@@ -97,9 +103,63 @@ func (g *GithubActions) Setup() ([]byte, error) {
 			branch = g.defaultBranch
 		}
 
+		// check if the branch is protected
+		githubBranch, _, err := client.Repositories.GetBranch(
+			context.Background(),
+			g.GitRepoOwner,
+			g.GitRepoName,
+			branch,
+			true,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
 		isOAuth := g.GithubOAuthIntegration != nil
 
-		_, err = commitGithubFile(client, g.getPorterYMLFileName(), workflowYAML, g.GitRepoOwner, g.GitRepoName, branch, isOAuth)
+		if githubBranch.GetProtected() {
+			err = createNewBranch(client, g.GitRepoOwner, g.GitRepoName, branch, "porter-setup")
+
+			if err != nil {
+				return nil, fmt.Errorf(
+					"Unable to create PR to merge workflow files into protected branch: %s.\n"+
+						"To enable automatic deployments to Porter, please create a Github workflow "+
+						"file in this branch with the following contents:\n"+
+						"--------\n%s--------\nERROR: %w", branch, string(workflowYAML), ErrCreatePRForProtectedBranch,
+				)
+			}
+
+			_, err = commitWorkflowFile(client, g.getPorterYMLFileName(), workflowYAML, g.GitRepoOwner,
+				g.GitRepoName, "porter-setup", isOAuth)
+
+			if err != nil {
+				return nil, fmt.Errorf(
+					"Unable to create PR to merge workflow files into protected branch: %s.\n"+
+						"To enable automatic deployments to Porter, please create a Github workflow "+
+						"file in this branch with the following contents:\n"+
+						"--------\n%s--------\nERROR: %w", branch, string(workflowYAML), ErrCreatePRForProtectedBranch,
+				)
+			}
+
+			pr, _, err := client.PullRequests.Create(
+				context.Background(), g.GitRepoOwner, g.GitRepoName, &github.NewPullRequest{
+					Title: github.String("Enable Porter automatic deployments"),
+					Base:  github.String(branch),
+					Head:  github.String("porter-setup"),
+				},
+			)
+
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, fmt.Errorf("Please merge %s to enable automatic deployments on Porter.\nERROR: %w",
+				pr.GetHTMLURL(), ErrProtectedBranch)
+		}
+
+		_, err = commitWorkflowFile(client, g.getPorterYMLFileName(), workflowYAML, g.GitRepoOwner,
+			g.GitRepoName, branch, isOAuth)
 		if err != nil {
 			return workflowYAML, err
 		}
@@ -382,7 +442,7 @@ func getPorterTokenSecretName(projectID uint) string {
 	return fmt.Sprintf("PORTER_TOKEN_%d", projectID)
 }
 
-func commitGithubFile(
+func commitWorkflowFile(
 	client *github.Client,
 	filename string,
 	contents []byte,

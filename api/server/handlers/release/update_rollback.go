@@ -65,7 +65,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		rel, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
 
 		if err == nil && rel != nil {
-			err = updateReleaseRepo(c.Config(), rel, helmRelease)
+			err = UpdateReleaseRepo(c.Config(), rel, helmRelease)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -75,7 +75,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			gitAction := rel.GitActionConfig
 
 			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
-				gaRunner, err := getGARunner(
+				gaRunner, err := GetGARunner(
 					c.Config(),
 					user.ID,
 					cluster.ProjectID,
@@ -110,7 +110,7 @@ func (c *RollbackReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func updateReleaseRepo(config *config.Config, release *models.Release, helmRelease *release.Release) error {
+func UpdateReleaseRepo(config *config.Config, release *models.Release, helmRelease *release.Release) error {
 	repository := helmRelease.Config["image"].(map[string]interface{})["repository"]
 	repoStr, ok := repository.(string)
 

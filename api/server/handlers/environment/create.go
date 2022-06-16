@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -134,8 +135,18 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	})
 
 	if err != nil {
-		c.deleteEnvAndReportError(w, r, env, err)
-		return
+		unwrappedErr := errors.Unwrap(err)
+
+		if unwrappedErr != nil {
+			if errors.Is(unwrappedErr, actions.ErrProtectedBranch) {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
+			} else if errors.Is(unwrappedErr, actions.ErrCreatePRForProtectedBranch) {
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed))
+			}
+		} else {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	c.WriteResult(w, r, env.ToEnvironmentType())
@@ -144,7 +155,13 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 func (c *CreateEnvironmentHandler) deleteEnvAndReportError(
 	w http.ResponseWriter, r *http.Request, env *models.Environment, err error,
 ) {
-	c.Repo().Environment().DeleteEnvironment(env)
+	_, delErr := c.Repo().Environment().DeleteEnvironment(env)
+
+	if delErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(delErr))
+		return
+	}
+
 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 }
 

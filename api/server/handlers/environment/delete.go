@@ -1,6 +1,8 @@
 package environment
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -58,22 +60,6 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = actions.DeleteEnv(&actions.EnvOpts{
-		Client:            client,
-		ServerURL:         c.Config().ServerConf.ServerURL,
-		GitRepoOwner:      env.GitRepoOwner,
-		GitRepoName:       env.GitRepoName,
-		ProjectID:         project.ID,
-		ClusterID:         cluster.ID,
-		GitInstallationID: uint(ga.InstallationID),
-		EnvironmentName:   env.Name,
-	})
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	// delete all corresponding deployments
 	agent, err := c.GetAgent(r, cluster, "")
 
@@ -97,6 +83,30 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	env, err = c.Repo().Environment().DeleteEnvironment(env)
 
 	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	err = actions.DeleteEnv(&actions.EnvOpts{
+		Client:            client,
+		ServerURL:         c.Config().ServerConf.ServerURL,
+		GitRepoOwner:      env.GitRepoOwner,
+		GitRepoName:       env.GitRepoName,
+		ProjectID:         project.ID,
+		ClusterID:         cluster.ID,
+		GitInstallationID: uint(ga.InstallationID),
+		EnvironmentName:   env.Name,
+	})
+
+	if err != nil {
+		if errors.Is(err, actions.ErrProtectedBranch) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("We were unable to delete the Porter Preview Environment workflow files for this "+
+					"repository as the default branch is protected. Please manually delete them."), http.StatusConflict,
+			))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

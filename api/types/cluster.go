@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
-	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -185,34 +184,39 @@ const (
 	AWSData          ClusterResolverName = "upload-aws-data"
 )
 
+// NamespaceResponse represents the response type of requests to the namespace resource
+//
 // swagger:model
-type ListNamespacesResponse struct {
-	*v1.NamespaceList
+type NamespaceResponse struct {
+	// the name of the namespace
+	// example: default
+	Name string `json:"name" form:"required"`
+
+	// the creation timestamp in UTC of the namespace in RFC 1123 format
+	// example: Mon, 13 Jun 2022 17:49:12 GMT
+	CreationTimestamp string `json:"creationTimestamp" form:"required"`
+
+	// the deletion timestamp in UTC of the namespace in RFC 1123 format, if the namespace is deleted
+	// example: Mon, 13 Jun 2022 17:49:12 GMT
+	DeletionTimestamp string `json:"deletionTimestamp,omitempty"`
+
+	// the status of the namespace
+	// enum: active,terminating
+	// example: active
+	Status string `json:"status" form:"required"`
 }
 
+// ListNamespacesResponse represents the list of all namespaces
+//
+// swagger:model
+type ListNamespacesResponse []*NamespaceResponse
+
+// CreateNamespaceRequest represents the request body to create a namespace
+//
 // swagger:model
 type CreateNamespaceRequest struct {
-	Name string `json:"name" form:"required"`
-}
-
-type CreateNamespaceResponseMeta struct {
-	Name string `json:"name,omitempty"`
-}
-
-// swagger:model
-type CreateNamespaceResponse struct {
-	Metadata CreateNamespaceResponseMeta `json:"metadata,omitempty"`
-}
-
-// swagger:model
-type GetNamespaceResponse struct {
-	Metadata struct {
-		Name string `json:"name,omitempty"`
-	} `json:"metadata,omitempty"`
-}
-
-// swagger:model
-type DeleteNamespaceRequest struct {
+	// the name of the namespace to create
+	// example: sampleNS
 	Name string `json:"name" form:"required"`
 }
 

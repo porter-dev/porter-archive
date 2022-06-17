@@ -24,28 +24,56 @@ const BranchList: React.FC<Props> = ({ setBranch, actionConfig }) => {
 
   useEffect(() => {
     // Get branches
-    api
-      .getBranches(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          git_repo_id: actionConfig.git_repo_id,
-          kind: "github",
-          owner: actionConfig.git_repo.split("/")[0],
-          name: actionConfig.git_repo.split("/")[1],
-        }
-      )
-      .then((res) => {
-        setBranches(res.data);
-        setLoading(false);
-        setError(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
-        setError(true);
-      });
+    if (!actionConfig) {
+      return () => {};
+    }
+
+    if (actionConfig?.kind === "github") {
+      api
+        .getBranches(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            git_repo_id: actionConfig.git_repo_id,
+            kind: "github",
+            owner: actionConfig.git_repo.split("/")[0],
+            name: actionConfig.git_repo.split("/")[1],
+          }
+        )
+        .then((res) => {
+          setBranches(res.data);
+          setLoading(false);
+          setError(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          setLoading(false);
+          setError(true);
+        });
+    } else {
+      api
+        .getGitlabBranches(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            integration_id: actionConfig.gitlab_integration_id,
+            repo_owner: actionConfig.git_repo.split("/")[0],
+            repo_name: actionConfig.git_repo.split("/")[1],
+          }
+        )
+        .then((res) => {
+          setBranches(res.data);
+          setLoading(false);
+          setError(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          setLoading(false);
+          setError(true);
+        });
+    }
   }, []);
 
   const renderBranchList = () => {

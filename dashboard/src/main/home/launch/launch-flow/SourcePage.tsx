@@ -65,7 +65,7 @@ class SourcePage extends Component<PropsType, StateType> {
     if (sourceType === "") {
       return (
         <BlockList>
-          {capabilities.github && (
+          {capabilities.github || capabilities.gitlab ? (
             <Block onClick={() => setSourceType("repo")}>
               <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
               <BlockTitle>Git Repository</BlockTitle>
@@ -73,7 +73,7 @@ class SourcePage extends Component<PropsType, StateType> {
                 Deploy using source from a Git repo.
               </BlockDescription>
             </Block>
-          )}
+          ) : null}
           <Block onClick={() => setSourceType("registry")}>
             <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
             <BlockTitle>Docker Registry</BlockTitle>
@@ -474,6 +474,5 @@ const StyledSourceBox = styled.div`
   border-radius: 5px;
   font-size: 13px;
   margin-top: 6px;
-  overflow: auto;
   margin-bottom: 25px;
 `;

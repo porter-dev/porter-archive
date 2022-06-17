@@ -40,16 +40,6 @@ func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
 			return nil, apierrors.NewErrForbidden(fmt.Errorf("project id %d does not match token id %d", opts.ProjectID, opts.ProjectToken.ProjectID))
 		}
 
-		proj, err := b.projRepo.ReadProject(opts.ProjectID)
-
-		if err != nil {
-			return nil, apierrors.NewErrForbidden(fmt.Errorf("error fetching project: %w", err))
-		}
-
-		if !proj.APITokensEnabled {
-			return nil, apierrors.NewErrForbidden(fmt.Errorf("api tokens are not enabled for this project"))
-		}
-
 		// load the policy
 		apiPolicy, reqErr := GetAPIPolicyFromUID(b.policyRepo, opts.ProjectToken.ProjectID, opts.ProjectToken.PolicyUID)
 

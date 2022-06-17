@@ -1570,3 +1570,209 @@ func (repo *AzureIntegrationRepository) DecryptAzureIntegrationData(
 
 	return nil
 }
+
+// GitlabIntegrationRepository uses gorm.DB for querying the database
+type GitlabIntegrationRepository struct {
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
+}
+
+// NewGitlabIntegrationRepository returns a GitlabIntegrationRepository which uses
+// gorm.DB for querying the database
+func NewGitlabIntegrationRepository(
+	db *gorm.DB,
+	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
+) repository.GitlabIntegrationRepository {
+	return &GitlabIntegrationRepository{db, key, storageBackend}
+}
+
+// CreateIntegration adds a new GitlabIntegration row to the gitlab_integration table in the database
+func (repo *GitlabIntegrationRepository) CreateGitlabIntegration(gi *ints.GitlabIntegration) (*ints.GitlabIntegration, error) {
+	err := repo.EncryptGitlabIntegrationData(gi, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// if storage backend is not nil, strip out credential data, which will be stored in credential
+	// storage backend after write to DB
+	var credentialData = &credentials.GitlabCredential{}
+
+	if repo.storageBackend != nil {
+		credentialData.AppClientID = gi.AppClientID
+		credentialData.AppClientSecret = gi.AppClientSecret
+
+		gi.AppClientID = []byte{}
+		gi.AppClientSecret = []byte{}
+	}
+
+	project := &models.Project{}
+
+	if err := repo.db.Where("id = ?", gi.ProjectID).First(&project).Error; err != nil {
+		return nil, err
+	}
+
+	assoc := repo.db.Model(&project).Association("GitlabIntegrations")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Append(gi); err != nil {
+		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		err = repo.storageBackend.WriteGitlabCredential(gi, credentialData)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return gi, nil
+}
+
+func (repo *GitlabIntegrationRepository) ReadGitlabIntegration(projectID, id uint) (*ints.GitlabIntegration, error) {
+	gi := &ints.GitlabIntegration{}
+
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, id).First(&gi).Error; err != nil {
+		return nil, err
+	}
+
+	if repo.storageBackend != nil {
+		credentialData, err := repo.storageBackend.GetGitlabCredential(gi)
+
+		if err != nil {
+			return nil, err
+		}
+
+		gi.AppClientID = credentialData.AppClientID
+
+		gi.AppClientSecret = credentialData.AppClientSecret
+	}
+
+	err := repo.DecryptGitlabIntegrationData(gi, repo.key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return gi, nil
+}
+
+func (repo *GitlabIntegrationRepository) ListGitlabIntegrationsByProjectID(projectID uint) ([]*ints.GitlabIntegration, error) {
+	gi := []*ints.GitlabIntegration{}
+
+	if err := repo.db.Where("project_id = ? AND deleted_at IS NULL", projectID).Find(&gi).Error; err != nil {
+		return nil, err
+	}
+
+	return gi, nil
+}
+
+// EncryptGitlabIntegrationData will encrypt the gitlab integration data before
+// writing to the DB
+func (repo *GitlabIntegrationRepository) EncryptGitlabIntegrationData(
+	gi *ints.GitlabIntegration,
+	key *[32]byte,
+) error {
+	if len(gi.AppClientID) > 0 {
+		cipherData, err := encryption.Encrypt(gi.AppClientID, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AppClientID = cipherData
+	}
+
+	if len(gi.AppClientSecret) > 0 {
+		cipherData, err := encryption.Encrypt(gi.AppClientSecret, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AppClientSecret = cipherData
+	}
+
+	return nil
+}
+
+// DecryptGitlabIntegrationData will decrypt the gitlab integration data before
+// returning it from the DB
+func (repo *GitlabIntegrationRepository) DecryptGitlabIntegrationData(
+	gi *ints.GitlabIntegration,
+	key *[32]byte,
+) error {
+	if len(gi.AppClientID) > 0 {
+		plaintext, err := encryption.Decrypt(gi.AppClientID, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AppClientID = plaintext
+	}
+
+	if len(gi.AppClientSecret) > 0 {
+		plaintext, err := encryption.Decrypt(gi.AppClientSecret, key)
+
+		if err != nil {
+			return err
+		}
+
+		gi.AppClientSecret = plaintext
+	}
+
+	return nil
+}
+
+// GitlabAppOAuthIntegrationRepository uses gorm.DB for querying the database
+type GitlabAppOAuthIntegrationRepository struct {
+	db             *gorm.DB
+	key            *[32]byte
+	storageBackend credentials.CredentialStorage
+}
+
+// NewGitlabAppOAuthIntegrationRepository returns a GitlabAppOAuthIntegrationRepository which uses
+// gorm.DB for querying the database
+func NewGitlabAppOAuthIntegrationRepository(
+	db *gorm.DB,
+	key *[32]byte,
+	storageBackend credentials.CredentialStorage,
+) repository.GitlabAppOAuthIntegrationRepository {
+	return &GitlabAppOAuthIntegrationRepository{db, key, storageBackend}
+}
+
+func (repo *GitlabAppOAuthIntegrationRepository) CreateGitlabAppOAuthIntegration(
+	gi *ints.GitlabAppOAuthIntegration,
+) (*ints.GitlabAppOAuthIntegration, error) {
+	if err := repo.db.Create(gi).Error; err != nil {
+		return nil, err
+	}
+
+	return gi, nil
+}
+
+func (repo *GitlabAppOAuthIntegrationRepository) ReadGitlabAppOAuthIntegration(
+	userID, projectID, integrationID uint,
+) (*ints.GitlabAppOAuthIntegration, error) {
+	gi := &ints.GitlabAppOAuthIntegration{}
+
+	if err := repo.db.
+		Order("gitlab_app_o_auth_integrations.id desc").
+		Joins("INNER JOIN gitlab_integrations ON gitlab_integrations.id = gitlab_app_o_auth_integrations.gitlab_integration_id").
+		Joins("INNER JOIN o_auth_integrations ON o_auth_integrations.id = gitlab_app_o_auth_integrations.o_auth_integration_id").
+		Where("o_auth_integrations.user_id = ? AND o_auth_integrations.project_id = ? AND"+
+			" gitlab_integrations.id = ? AND gitlab_integrations.deleted_at IS NULL AND"+
+			" gitlab_app_o_auth_integrations.deleted_at IS NULL AND o_auth_integrations.deleted_at IS NULL",
+			userID, projectID, integrationID).First(&gi).Error; err != nil {
+		return nil, err
+	}
+
+	return gi, nil
+}

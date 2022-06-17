@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -30,7 +31,7 @@ func NewGetNamespaceHandler(
 }
 
 func (c *GetNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	namespace, reqErr := requestutils.GetURLParamString(r, types.URLParamNamespace)
+	ns, reqErr := requestutils.GetURLParamString(r, types.URLParamNamespace)
 
 	if reqErr != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(reqErr))
@@ -45,7 +46,7 @@ func (c *GetNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res, err := agent.GetNamespace(namespace)
+	namespace, err := agent.GetNamespace(ns)
 
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -55,6 +56,16 @@ func (c *GetNamespaceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	res := &types.NamespaceResponse{
+		Name:              namespace.Name,
+		CreationTimestamp: namespace.CreationTimestamp.Time.UTC().Format(time.RFC1123),
+		Status:            string(namespace.Status.Phase),
+	}
+
+	if namespace.DeletionTimestamp != nil {
+		res.DeletionTimestamp = namespace.DeletionTimestamp.Time.UTC().Format(time.RFC1123)
 	}
 
 	c.WriteResult(w, r, res)

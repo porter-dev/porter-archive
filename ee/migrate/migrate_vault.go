@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package migrate
@@ -48,6 +49,14 @@ func MigrateVault(db *gorm.DB, dbConf *env.DBConf, shouldFinalize bool) error {
 
 	if err != nil {
 		fmt.Printf("failed on aws migration: %v\n", err)
+
+		return err
+	}
+
+	err = migrateGitlabIntegrationModel(db, vaultClient, shouldFinalize)
+
+	if err != nil {
+		fmt.Printf("failed on gitlab migration: %v\n", err)
 
 		return err
 	}
@@ -281,6 +290,82 @@ func migrateAWSIntegrationModel(db *gorm.DB, client *vault.Client, shouldFinaliz
 
 		for saveErrorID, saveError := range saveErrors {
 			fmt.Printf("aws save error on ID %d: %v\n", saveErrorID, saveError)
+		}
+	}
+
+	return nil
+}
+
+func migrateGitlabIntegrationModel(db *gorm.DB, client *vault.Client, shouldFinalize bool) error {
+	// get count of model
+	var count int64
+
+	if err := db.Model(&ints.GitlabIntegration{}).Count(&count).Error; err != nil {
+		return err
+	}
+
+	// make a map of ids to errors -- we don't clear the integrations with errors
+	errors := make(map[uint]error)
+
+	// iterate (count / stepSize) + 1 times using Limit and Offset
+	for i := 0; i < (int(count)/stepSize)+1; i++ {
+		giInts := []*ints.GitlabIntegration{}
+
+		if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&giInts).Error; err != nil {
+			return err
+		}
+
+		// decrypt with the old key
+		for _, gi := range giInts {
+			// Check if record already exists in vault client. If so, we don't write anything to vault,
+			// since we don't want to overwrite any data that's been written.
+			if resp, _ := client.GetGitlabCredential(gi); resp != nil {
+				continue
+			}
+
+			// write the data to the vault client
+			if err := client.WriteGitlabCredential(gi, &credentials.GitlabCredential{
+				AppClientID:     gi.AppClientID,
+				AppClientSecret: gi.AppClientSecret,
+			}); err != nil {
+				errors[gi.ID] = err
+				fmt.Printf("gitlab vault write error on ID %d: %v\n", gi.ID, err)
+			}
+		}
+	}
+
+	fmt.Printf("migrated %d gitlab integrations with %d errors\n", count, len(errors))
+
+	if shouldFinalize {
+		saveErrors := make(map[uint]error, 0)
+
+		// iterate a second time, clearing the data
+		// iterate (count / stepSize) + 1 times using Limit and Offset
+		for i := 0; i < (int(count)/stepSize)+1; i++ {
+			giInts := []*ints.GitlabIntegration{}
+
+			if err := db.Order("id asc").Offset(i * stepSize).Limit(stepSize).Find(&giInts).Error; err != nil {
+				return err
+			}
+
+			// decrypt with the old key
+			for _, gi := range giInts {
+				if _, found := errors[gi.ID]; !found {
+					// clear the data from the db, and save
+					gi.AppClientID = []byte{}
+					gi.AppClientSecret = []byte{}
+
+					if err := db.Save(gi).Error; err != nil {
+						saveErrors[gi.ID] = err
+					}
+				}
+			}
+		}
+
+		fmt.Printf("cleared %d gitlab integrations with %d errors\n", count, len(saveErrors))
+
+		for saveErrorID, saveError := range saveErrors {
+			fmt.Printf("gitlab save error on ID %d: %v\n", saveErrorID, saveError)
 		}
 	}
 

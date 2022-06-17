@@ -8,6 +8,7 @@ type Project struct {
 	RDSDatabasesEnabled bool    `json:"enable_rds_databases"`
 	ManagedInfraEnabled bool    `json:"managed_infra_enabled"`
 	APITokensEnabled    bool    `json:"api_tokens_enabled"`
+	StacksEnabled       bool    `json:"stacks_enabled"`
 }
 
 type CreateProjectRequest struct {

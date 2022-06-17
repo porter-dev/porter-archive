@@ -66,4 +66,5 @@ type WelcomeWebhookRequest struct {
 	IsCompany bool   `json:"isCompany" schema:"isCompany"`
 	Company   string `json:"company" schema:"company"`
 	Role      string `json:"role" schema:"role"`
+	Name      string `json:"name" schema:"name"`
 }

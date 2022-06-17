@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/stacks"
 	"helm.sh/helm/v3/pkg/release"
 )
 
@@ -186,7 +187,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	// update the github actions env if the release exists and is built from source
 	if cName := helmRelease.Chart.Metadata.Name; cName == "job" || cName == "web" || cName == "worker" {
 		if releaseErr == nil && rel != nil {
-			err = updateReleaseRepo(c.Config(), rel, helmRelease)
+			err = UpdateReleaseRepo(c.Config(), rel, helmRelease)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -195,8 +196,8 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 			gitAction := rel.GitActionConfig
 
-			if gitAction != nil && gitAction.ID != 0 {
-				gaRunner, err := getGARunner(
+			if gitAction != nil && gitAction.ID != 0 && gitAction.GitlabIntegrationID == 0 {
+				gaRunner, err := GetGARunner(
 					c.Config(),
 					user.ID,
 					cluster.ProjectID,
@@ -229,4 +230,19 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			}
 		}
 	}
+
+	c.WriteResult(w, r, nil)
+
+	err = postUpgrade(c.Config(), cluster.ProjectID, cluster.ID, helmRelease)
+
+	if err != nil {
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+}
+
+// postUpgrade runs any necessary scripting after the release has been upgraded.
+func postUpgrade(config *config.Config, projectID, clusterID uint, release *release.Release) error {
+	// update the relevant helm revision number if tied to a stack resource
+	return stacks.UpdateHelmRevision(config, projectID, clusterID, release)
 }

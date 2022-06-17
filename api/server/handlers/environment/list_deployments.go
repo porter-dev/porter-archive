@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
-	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -41,7 +41,7 @@ func (c *ListDeploymentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	owner, name, ok := gitinstallation.GetOwnerAndNameParams(c, w, r)
+	owner, name, ok := commonutils.GetOwnerAndNameParams(c, w, r)
 
 	if !ok {
 		return

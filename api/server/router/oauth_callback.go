@@ -75,5 +75,29 @@ func GetOAuthCallbackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/oauth/gitlab/callback -> oauth_callback.NewOAuthCallbackGitlabHandler
+	gitlabEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/gitlab/callback",
+			},
+		},
+	)
+
+	gitlabHandler := oauth_callback.NewOAuthCallbackGitlabHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: gitlabEndpoint,
+		Handler:  gitlabHandler,
+		Router:   r,
+	})
+
 	return routes
 }

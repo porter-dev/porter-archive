@@ -41,7 +41,7 @@ func (c *ListDeploymentsByClusterHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	}
 
 	var deployments []*types.Deployment
-	var pullRequests []*types.EnablePullRequestRequest
+	var pullRequests []*types.PullRequest
 
 	if req.EnvironmentID == 0 {
 		depls, err := c.Repo().Environment().ListDeploymentsByCluster(project.ID, cluster.ID)
@@ -232,7 +232,7 @@ func fetchOpenPullRequests(
 	client *github.Client,
 	env *models.Environment,
 	deplInfoMap map[string]bool,
-) ([]*types.EnablePullRequestRequest, error) {
+) ([]*types.PullRequest, error) {
 	openPRs, resp, err := client.PullRequests.List(ctx, env.GitRepoOwner, env.GitRepoName,
 		&github.PullRequestListOptions{
 			ListOptions: github.ListOptions{
@@ -241,7 +241,7 @@ func fetchOpenPullRequests(
 		},
 	)
 
-	var prs []*types.EnablePullRequestRequest
+	var prs []*types.PullRequest
 
 	if resp != nil && resp.StatusCode == 404 {
 		return prs, nil
@@ -268,7 +268,7 @@ func fetchOpenPullRequests(
 
 	for _, pr := range openPRs {
 		if _, ok := deplInfoMap[fmt.Sprintf("%s-%s-%d", env.GitRepoOwner, env.GitRepoName, pr.GetNumber())]; !ok {
-			prs = append(prs, &types.EnablePullRequestRequest{
+			prs = append(prs, &types.PullRequest{
 				Title:      pr.GetTitle(),
 				Number:     uint(pr.GetNumber()),
 				RepoOwner:  env.GitRepoOwner,

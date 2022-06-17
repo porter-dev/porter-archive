@@ -103,7 +103,7 @@ type GetDeploymentRequest struct {
 	Namespace string `schema:"namespace" form:"required"`
 }
 
-type EnablePullRequestRequest struct {
+type PullRequest struct {
 	Title      string `json:"pr_title"`
 	Number     uint   `json:"pr_number"`
 	RepoOwner  string `json:"repo_owner"`

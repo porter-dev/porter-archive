@@ -33,7 +33,7 @@ func (p *StackDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	namespace, _ := r.Context().Value(types.NamespaceScope).(string)
 
 	if len(stack.Revisions) > 0 {
-		revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].ID)
+		revision, err := p.Repo().Stack().ReadStackRevisionByNumber(stack.ID, stack.Revisions[0].RevisionNumber)
 
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

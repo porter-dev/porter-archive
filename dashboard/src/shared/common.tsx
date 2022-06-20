@@ -135,3 +135,12 @@ export const getIgnoreCase = (object: any, key: string) => {
     Object.keys(object).find((k) => k.toLowerCase() === key.toLowerCase())
   ];
 };
+
+export const PORTER_IMAGE_TEMPLATES = [
+  "porterdev/hello-porter-job",
+  "porterdev/hello-porter-job:latest",
+  "public.ecr.aws/o1j4x7p4/hello-porter-job",
+  "public.ecr.aws/o1j4x7p4/hello-porter-job:latest",
+  "public.ecr.aws/o1j4x7p4/hello-porter",
+  "public.ecr.aws/o1j4x7p4/hello-porter:latest",
+];

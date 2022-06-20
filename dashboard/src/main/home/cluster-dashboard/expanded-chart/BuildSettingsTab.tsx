@@ -20,6 +20,7 @@ import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelect
 import { DeviconsNameList } from "assets/devicons-name-list";
 import Selector from "components/Selector";
 import BranchList from "components/repo-selector/BranchList";
+import Banner from "components/Banner";
 
 type Buildpack = {
   name: string;
@@ -336,10 +337,13 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
           }}
         ></KeyValueArray>
 
-        <Heading>Select default branch</Heading>
+        <Heading>Select Default Branch</Heading>
         <Helper>
           Change the default branch the deployments will be made from.
         </Helper>
+        <Banner type="warning">
+          You must also update the deploy branch in your GitHub Action file.
+        </Banner>
         <BranchList
           actionConfig={currentActionConfig}
           setBranch={setCurrentBranch}

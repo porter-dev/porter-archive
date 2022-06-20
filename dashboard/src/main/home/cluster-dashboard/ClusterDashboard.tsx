@@ -31,6 +31,7 @@ import Loading from "components/Loading";
 import JobRunTable from "./chart/JobRunTable";
 import TabSelector from "components/TabSelector";
 import TagFilter from "./TagFilter";
+import ChartSearchInput from "./chart/ChartSearchInput";
 
 // @ts-ignore
 const LazyDatabasesRoutes = loadable(() => import("./databases/routes.tsx"), {
@@ -68,6 +69,7 @@ type StateType = {
   isMetricsInstalled: boolean;
   showRuns: boolean;
   selectedTag: any;
+  chartFilter: string;
 };
 
 // TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
@@ -82,6 +84,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     isMetricsInstalled: false,
     showRuns: false,
     selectedTag: "none",
+    chartFilter: "",
   };
 
   componentDidMount() {
@@ -149,6 +152,12 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
     return (
       <>
+        <ChartSearchInput
+          onChange={(newVal) => {
+            this.setState({ chartFilter: newVal });
+          }}
+          value={this.state.chartFilter}
+        ></ChartSearchInput>
         <TagFilter
           onSelect={(newSelectedTag) =>
             this.setState({ selectedTag: newSelectedTag })
@@ -204,6 +213,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           namespace={this.state.namespace}
           sortType={this.state.sortType}
           selectedTag={this.state.selectedTag}
+          nameFilter={this.state.chartFilter}
         />
       </>
     );
@@ -268,6 +278,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             namespace={this.state.namespace}
             sortType={this.state.sortType}
             selectedTag={this.state.selectedTag}
+            nameFilter={this.state.chartFilter}
           />
         </HidableElement>
       </>

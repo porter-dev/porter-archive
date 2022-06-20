@@ -29,6 +29,7 @@ type Props = {
   closeChartRedirectUrl?: string;
   selectedTag?: any;
   appFilters?: string[];
+  nameFilter?: string;
 };
 
 interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
@@ -44,6 +45,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   closeChartRedirectUrl,
   selectedTag,
   appFilters,
+  nameFilter,
 }) => {
   const {
     newWebsocket,
@@ -377,6 +379,13 @@ const ChartList: React.FunctionComponent<Props> = ({
         return appFilters.some((filter) => {
           return chart.name.toLowerCase() === filter.toLowerCase();
         });
+      })
+      // Filter by nameFilter
+      .filter((chart: ChartType) => {
+        if (!nameFilter) {
+          return true;
+        }
+        return chart.name.includes(nameFilter);
       });
 
     if (sortType == "Newest") {

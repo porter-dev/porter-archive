@@ -13,6 +13,7 @@ type RevisionListProps = {
   stackNamespace: string;
   stackId: string;
   onRevisionClick: (revision: FullStackRevision) => void;
+  onRollback: () => void;
 };
 
 const _RevisionList = ({
@@ -22,8 +23,11 @@ const _RevisionList = ({
   stackNamespace,
   stackId,
   onRevisionClick,
+  onRollback,
 }: RevisionListProps) => {
-  const { currentProject, currentCluster } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -58,12 +62,40 @@ const _RevisionList = ({
         };
         onRevisionClick(newRevision);
       })
+      .catch((err) => {
+        setCurrentError(err);
+      })
       .finally(() => {
         setIsLoading(false);
       });
   };
 
-  const handleRevisionRollback = (revision: StackRevision) => {};
+  const handleRevisionRollback = (revision: StackRevision) => {
+    setIsLoading(true);
+
+    api
+      .rollbackStack(
+        "<token>",
+        {
+          target_revision: revision.id,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: stackNamespace,
+          stack_id: stackId,
+        }
+      )
+      .then(() => {
+        onRollback();
+      })
+      .catch((err) => {
+        setCurrentError(err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
 
   const revisionList = () => {
     if (revisions.length === 0) {
@@ -83,7 +115,10 @@ const _RevisionList = ({
           <Td>
             <RollbackButton
               disabled={isCurrent}
-              onClick={() => handleRevisionRollback(revision)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRevisionRollback(revision);
+              }}
             >
               {isCurrent ? "Current" : "Revert"}
             </RollbackButton>

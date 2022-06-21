@@ -6,6 +6,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { useRouting } from "shared/routing";
 import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
 import ChartList from "../../chart/ChartList";
@@ -29,7 +30,12 @@ const ExpandedStack = () => {
     namespace: string;
     stack_id: string;
   }>();
-  const { currentProject, currentCluster } = useContext(Context);
+
+  const { pushFiltered } = useRouting();
+
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
 
   const [stack, setStack] = useState<Stack>();
   const [sortType, setSortType] = useState("Alphabetical");
@@ -38,32 +44,33 @@ const ExpandedStack = () => {
 
   const [currentRevision, setCurrentRevision] = useState<FullStackRevision>();
 
-  useEffect(() => {
-    console.log(stack_id);
-    let isSubscribed = true;
+  const getStack = async () => {
+    setIsLoading(true);
+    try {
+      const newStack = await api
+        .getStack<Stack>(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            stack_id: stack_id,
+            namespace,
+          }
+        )
+        .then((res) => res.data);
 
-    api
-      .getStack<Stack>(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          stack_id: stack_id,
-          namespace,
-        }
-      )
-      .then((res) => {
-        if (isSubscribed) {
-          setStack(res.data);
-          setCurrentRevision(res.data.latest_revision);
-        }
-      })
-      .finally(() => {
-        if (isSubscribed) {
-          setIsLoading(false);
-        }
-      });
+      setStack(newStack);
+      setCurrentRevision(newStack.latest_revision);
+      setIsLoading(false);
+    } catch (error) {
+      setCurrentError(error);
+      pushFiltered("/stacks", []);
+    }
+  };
+
+  useEffect(() => {
+    getStack();
   }, [stack_id]);
 
   if (isLoading) {
@@ -86,6 +93,7 @@ const ExpandedStack = () => {
         stackId={stack.id}
         stackNamespace={namespace}
         onRevisionClick={(revision) => setCurrentRevision(revision)}
+        onRollback={() => getStack()}
       ></RevisionList>
       <Br />
       <InfoWrapper>

@@ -833,7 +833,7 @@ func getReleaseRoutes(
 		},
 	)
 
-	updateGitActionConfigHandler := release.NewUpdateBuildConfigHandler(
+	updateGitActionConfigHandler := release.NewUpdateGitActionConfigHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

@@ -248,7 +248,7 @@ func getProvisionerAgent(conf *ProvisionerConf) (*kubernetes.Agent, error) {
 		return nil, fmt.Errorf(`"kubeconfig" cluster option requires path to kubeconfig`)
 	}
 
-	agent, _ := kubernetes.GetAgentInClusterConfig()
+	agent, _ := kubernetes.GetAgentInClusterConfig(conf.ProvisionerJobNamespace)
 
 	return agent, nil
 }

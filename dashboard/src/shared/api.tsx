@@ -1973,7 +1973,7 @@ const getStackRevision = baseApi<
     cluster_id: number;
     namespace: string;
     stack_id: string;
-    revision_id: string;
+    revision_id: number;
   }
 >(
   "GET",

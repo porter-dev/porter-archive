@@ -112,21 +112,26 @@ func (a *Agent) GetRelease(
 
 	if getDeps && release.Chart != nil && release.Chart.Metadata != nil {
 		for _, dep := range release.Chart.Metadata.Dependencies {
-			depExists := false
+			// only search for dependency if it passes the condition specified in Chart.yaml
+			if dep.Enabled {
+				depExists := false
 
-			for _, currDep := range release.Chart.Dependencies() {
-				// we just case on name for now -- there might be edge cases we're missing
-				// but this will cover 99% of cases
-				if dep != nil && currDep != nil && dep.Name == currDep.Name() {
-					depExists = true
-					break
+				for _, currDep := range release.Chart.Dependencies() {
+					// we just case on name for now -- there might be edge cases we're missing
+					// but this will cover 99% of cases
+					if dep != nil && currDep != nil && dep.Name == currDep.Name() {
+						depExists = true
+						break
+					}
 				}
-			}
 
-			if !depExists {
-				depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
+				if !depExists {
+					depChart, err := loader.LoadChartPublic(dep.Repository, dep.Name, dep.Version)
 
-				if err == nil {
+					if err != nil {
+						return nil, fmt.Errorf("Error retrieving chart dependency %s/%s-%s: %s", dep.Repository, dep.Name, dep.Version, err.Error())
+					}
+
 					release.Chart.AddDependency(depChart)
 				}
 			}

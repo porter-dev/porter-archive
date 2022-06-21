@@ -815,5 +815,36 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
+	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/git_action_config -> release.NewUpdateGitActionConfigHandler
+	updateGitActionConfigEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/releases/{name}/{version}/git_action_config",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.ReleaseScope,
+			},
+		},
+	)
+
+	updateGitActionConfigHandler := release.NewUpdateGitActionConfigHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateGitActionConfigEndpoint,
+		Handler:  updateGitActionConfigHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

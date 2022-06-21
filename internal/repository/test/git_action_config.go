@@ -46,3 +46,17 @@ func (repo *GitActionConfigRepository) ReadGitActionConfig(id uint) (*models.Git
 	index := int(id - 1)
 	return repo.gitActionConfigs[index], nil
 }
+
+func (repo *GitActionConfigRepository) UpdateGitActionConfig(gac *models.GitActionConfig) error {
+	if !repo.canQuery {
+		return errors.New("Cannot write database")
+	}
+
+	if int(gac.ID-1) >= len(repo.gitActionConfigs) || repo.gitActionConfigs[gac.ID-1] == nil {
+		return gorm.ErrRecordNotFound
+	}
+
+	index := int(gac.ID - 1)
+	repo.gitActionConfigs[index] = gac
+	return nil
+}

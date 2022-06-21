@@ -49,3 +49,7 @@ func (repo *GitActionConfigRepository) ReadGitActionConfig(id uint) (*models.Git
 
 	return ga, nil
 }
+
+func (repo *GitActionConfigRepository) UpdateGitActionConfig(ga *models.GitActionConfig) error {
+	return repo.db.Save(ga).Error
+}

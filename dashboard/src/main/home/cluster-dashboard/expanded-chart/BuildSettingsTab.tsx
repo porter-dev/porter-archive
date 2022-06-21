@@ -18,6 +18,9 @@ import yaml from "js-yaml";
 import { AxiosError } from "axios";
 import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
 import { DeviconsNameList } from "assets/devicons-name-list";
+import Selector from "components/Selector";
+import BranchList from "components/repo-selector/BranchList";
+import Banner from "components/Banner";
 
 type Buildpack = {
   name: string;
@@ -71,6 +74,42 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   const [buttonStatus, setButtonStatus] = useState<
     "loading" | "successful" | string
   >("");
+
+  const [currentBranch, setCurrentBranch] = useState(
+    () => chart?.git_action_config?.git_branch
+  );
+
+  const saveNewBranch = async (newBranch: string) => {
+    if (!newBranch?.length) {
+      return;
+    }
+
+    if (newBranch === chart?.git_action_config?.git_branch) {
+      return;
+    }
+
+    const newGitActionConfig: FullActionConfigType = {
+      ...chart.git_action_config,
+      git_branch: newBranch,
+    };
+
+    try {
+      api.updateGitActionConfig(
+        "<token>",
+        {
+          git_action_config: newGitActionConfig,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          release_name: chart.name,
+          namespace: chart.namespace,
+        }
+      );
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const saveBuildConfig = async (config: BuildConfig) => {
     if (config === null) {
@@ -206,6 +245,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     setButtonStatus("loading");
     try {
       await saveBuildConfig(buildConfig);
+      await saveNewBranch(currentBranch);
       await saveEnvVariables(envVariables);
       setButtonStatus("successful");
     } catch (error) {
@@ -220,6 +260,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     setButtonStatus("loading");
     try {
       await saveBuildConfig(buildConfig);
+      await saveNewBranch(currentBranch);
       await saveEnvVariables(envVariables);
       await triggerWorkflow();
       setButtonStatus("successful");
@@ -295,6 +336,19 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
             setEnvVariables(values);
           }}
         ></KeyValueArray>
+
+        <Heading>Select Default Branch</Heading>
+        <Helper>
+          Change the default branch the deployments will be made from.
+        </Helper>
+        <Banner type="warning">
+          You must also update the deploy branch in your GitHub Action file.
+        </Banner>
+        <BranchList
+          actionConfig={currentActionConfig}
+          setBranch={setCurrentBranch}
+          currentBranch={currentBranch}
+        />
 
         {!chart.git_action_config.dockerfile_path ? (
           <>

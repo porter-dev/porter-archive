@@ -408,6 +408,18 @@ tabs:
       required: true
       placeholder: my-cluster
       variable: cluster_name
+    - type: select
+      label: EKS control plane version
+      variable: cluster_version
+      settings:
+        default: "1.20"
+        options:
+        - label: "1.20"
+          value: "1.20"
+        - label: "1.21"
+          value: "1.21"
+        - label: "1.22"
+          value: "1.22"
     - type: number-input
       label: Minimum number of EC2 instances to create in the application autoscaling group.
       variable: min_instances

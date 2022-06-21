@@ -20,8 +20,9 @@ import {
   Text,
 } from "../components/styles";
 import { getStackStatus, getStackStatusMessage } from "../shared";
-import { Stack, StackRevision } from "../types";
+import { FullStackRevision, Stack, StackRevision } from "../types";
 import RevisionList from "./_RevisionList";
+import SourceConfig from "./_SourceConfig";
 
 const ExpandedStack = () => {
   const { namespace, stack_id } = useParams<{
@@ -35,7 +36,7 @@ const ExpandedStack = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState("apps");
 
-  const [currentRevision, setCurrentRevision] = useState<StackRevision>();
+  const [currentRevision, setCurrentRevision] = useState<FullStackRevision>();
 
   useEffect(() => {
     console.log(stack_id);
@@ -163,7 +164,11 @@ const ExpandedStack = () => {
           {
             label: "Source Config",
             value: "source_config",
-            component: <>Sourrrce configuration</>,
+            component: (
+              <>
+                <SourceConfig revision={currentRevision}></SourceConfig>
+              </>
+            ),
           },
         ]}
         setCurrentTab={(tab) => {

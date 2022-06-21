@@ -638,7 +638,7 @@ func (d *Driver) getAddonConfig(resource *models.Resource) (map[string]interface
 type DeploymentHook struct {
 	client                                                                    *api.Client
 	resourceGroup                                                             *switchboardTypes.ResourceGroup
-	gitInstallationID, projectID, clusterID, prID, actionID                   uint
+	gitInstallationID, projectID, clusterID, prID, actionID, envID            uint
 	branchFrom, branchInto, namespace, repoName, repoOwner, prName, commitSHA string
 }
 
@@ -715,18 +715,36 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 }
 
 func (t *DeploymentHook) PreApply() error {
+	envList, err := t.client.ListEnvironments(
+		context.Background(), t.projectID, t.clusterID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	for _, env := range envList {
+		if env.GitRepoOwner == t.repoOwner && env.GitRepoName == t.repoName && env.GitInstallationID == t.gitInstallationID {
+			t.envID = env.ID
+			break
+		}
+	}
+
+	if t.envID == 0 {
+		return fmt.Errorf("could not find environment for deployment")
+	}
+
 	// attempt to read the deployment -- if it doesn't exist, create it
-	_, err := t.client.GetDeployment(
+	_, err = t.client.GetDeployment(
 		context.Background(),
-		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName,
+		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
 			Namespace: t.namespace,
 		},
 	)
 
 	// TODO: case this on the response status code rather than text
-	if err != nil && strings.Contains(err.Error(), "deployment not found") {
+	if err != nil && strings.Contains(err.Error(), "not found") {
 		// in this case, create the deployment
 		_, err = t.client.CreateDeployment(
 			context.Background(),
@@ -860,8 +878,7 @@ func (t *DeploymentHook) OnError(err error) {
 	// if the deployment exists, throw an error for that deployment
 	_, getDeplErr := t.client.GetDeployment(
 		context.Background(),
-		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName,
+		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
 			Namespace: t.namespace,
 		},

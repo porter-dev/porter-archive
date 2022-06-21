@@ -53,14 +53,14 @@ func getClusterIntegrationRoutes(
 
 	routes := make([]*router.Route, 0)
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/integrations/aws/ips -> awsClusterInt.NewListClusterIPsHandler
-	listAWSClusterIPsEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/integrations/aws/info -> awsClusterInt.NewGetClusterInfoHandler
+	getAWSClusterInfoEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/aws/ips",
+				RelativePath: relPath + "/aws/info",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -70,15 +70,15 @@ func getClusterIntegrationRoutes(
 		},
 	)
 
-	listAWSClusterIPsHandler := awsClusterInt.NewListClusterIPsHandler(
+	getAWSClusterInfoHandler := awsClusterInt.NewGetClusterInfoHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: listAWSClusterIPsEndpoint,
-		Handler:  listAWSClusterIPsHandler,
+		Endpoint: getAWSClusterInfoEndpoint,
+		Handler:  getAWSClusterInfoHandler,
 		Router:   r,
 	})
 

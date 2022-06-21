@@ -12,7 +12,7 @@ type RevisionListProps = {
   latestRevision: StackRevision;
   stackNamespace: string;
   stackId: string;
-  onRevisionClick: (revision: StackRevision) => void;
+  onRevisionClick: (revision: FullStackRevision) => void;
 };
 
 const _RevisionList = ({

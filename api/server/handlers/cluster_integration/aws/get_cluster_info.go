@@ -18,21 +18,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type ListClusterIPsHandler struct {
+type GetClusterInfoHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewListClusterIPsHandler(
+func NewGetClusterInfoHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ListClusterIPsHandler {
-	return &ListClusterIPsHandler{
+) *GetClusterInfoHandler {
+	return &GetClusterInfoHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *ListClusterIPsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
@@ -98,10 +98,14 @@ func (c *ListClusterIPsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var res types.ListAWSClusterIPsResponse
+	res := &types.GetAWSClusterInfoResponse{
+		Name:       clusterName,
+		K8sVersion: *clusterInfo.Cluster.Version,
+		EKSVersion: *clusterInfo.Cluster.PlatformVersion,
+	}
 
 	for _, subnet := range subnetsInfo.Subnets {
-		res = append(res, &types.AWSClusterIP{
+		res.Subnets = append(res.Subnets, &types.AWSSubnet{
 			AvailabilityZone:        *subnet.AvailabilityZone,
 			AvailableIPAddressCount: *subnet.AvailableIpAddressCount,
 		})

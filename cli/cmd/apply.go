@@ -405,22 +405,20 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 			Name:      resource.Name,
 		})
 
-		if err != nil {
-			if appConfig.OnlyCreate {
-				err = client.DeleteRelease(
-					context.Background(),
-					d.target.Project,
-					d.target.Cluster,
-					d.target.Namespace,
-					resource.Name,
-				)
+		if err != nil && appConfig.OnlyCreate {
+			deleteJobErr := client.DeleteRelease(
+				context.Background(),
+				d.target.Project,
+				d.target.Cluster,
+				d.target.Namespace,
+				resource.Name,
+			)
 
-				if err != nil {
-					return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-						resource.Name, err)
-				}
+			if deleteJobErr != nil {
+				return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+					resource.Name, deleteJobErr)
 			}
-
+		} else if err != nil {
 			return nil, fmt.Errorf("error waiting for job %s: %w", resource.Name, err)
 		}
 	}

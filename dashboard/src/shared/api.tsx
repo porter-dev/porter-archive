@@ -1982,7 +1982,9 @@ const getStackRevision = baseApi<
 );
 
 const rollbackStack = baseApi<
-  {},
+  {
+    target_revision: number;
+  },
   {
     project_id: number;
     cluster_id: number;

@@ -7,13 +7,7 @@ import { ChartType, ChartTypeWithExtendedConfig } from "shared/types";
 import yaml from "js-yaml";
 import { usePrevious } from "shared/hooks/usePrevious";
 import { useRouting } from "shared/routing";
-
-const PORTER_IMAGE_TEMPLATES = [
-  "porterdev/hello-porter-job",
-  "porterdev/hello-porter-job:latest",
-  "public.ecr.aws/o1j4x7p4/hello-porter-job",
-  "public.ecr.aws/o1j4x7p4/hello-porter-job:latest",
-];
+import { PORTER_IMAGE_TEMPLATES } from "shared/common";
 
 export const useJobs = (chart: ChartType) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(

@@ -2069,7 +2069,7 @@ export default {
   getClusterNode,
   getConfigMap,
   getPRDeploymentList,
-  getPRDeploymentByEnvironment: getPRDeploymentByEnvironment,
+  getPRDeploymentByEnvironment,
   getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,

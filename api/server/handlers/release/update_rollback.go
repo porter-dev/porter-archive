@@ -127,6 +127,23 @@ func UpdateReleaseRepo(config *config.Config, release *models.Release, helmRelea
 		if err != nil {
 			return err
 		}
+
+		// determine if the git action config is set, and propagate update to that as well
+		if release.GitActionConfig != nil && release.GitActionConfig.ID != 0 {
+			gitActionConfig, err := config.Repo.GitActionConfig().ReadGitActionConfig(release.GitActionConfig.ID)
+
+			if err != nil {
+				return err
+			}
+
+			gitActionConfig.ImageRepoURI = repoStr
+
+			err = config.Repo.GitActionConfig().UpdateGitActionConfig(gitActionConfig)
+
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

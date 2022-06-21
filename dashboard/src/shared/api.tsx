@@ -1,9 +1,8 @@
 import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
-import { release } from "process";
 import { baseApi } from "./baseApi";
 
-import { BuildConfig, FullActionConfigType, StorageType } from "./types";
+import { BuildConfig, FullActionConfigType } from "./types";
 import { CreateStackBody } from "main/home/cluster-dashboard/stacks/types";
 
 /**
@@ -1807,6 +1806,22 @@ const updateBuildConfig = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
 );
 
+const updateGitActionConfig = baseApi<
+  {
+    git_action_config: FullActionConfigType;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, namespace, release_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/git_action_config`
+);
+
 const reRunGHWorkflow = baseApi<
   {},
   {
@@ -2184,6 +2199,7 @@ export default {
   upgradePorterAgent,
   deletePRDeployment,
   updateBuildConfig,
+  updateGitActionConfig,
   reRunGHWorkflow,
   triggerPreviewEnvWorkflow,
   getTagsByProjectId,

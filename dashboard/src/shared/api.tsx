@@ -1808,18 +1808,21 @@ const updateBuildConfig = baseApi<
 
 const updateGitActionConfig = baseApi<
   {
-    git_action_config: FullActionConfigType;
+    git_action_config: {
+      git_branch: string;
+    };
   },
   {
     project_id: number;
     cluster_id: number;
     namespace: string;
     release_name: string;
+    revision?: 0; // Always update latest
   }
 >(
   "PATCH",
-  ({ project_id, cluster_id, namespace, release_name }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/git_action_config`
+  ({ project_id, cluster_id, namespace, release_name, revision = 0 }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/${revision}/git_action_config`
 );
 
 const reRunGHWorkflow = baseApi<

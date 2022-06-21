@@ -815,20 +815,21 @@ func getReleaseRoutes(
 		Router:   r,
 	})
 
-	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/git_action_config -> release.NewUpdateGitActionConfigHandler
+	// PATCH /api/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/releases/{name}/{version}/git_action_config -> release.NewUpdateGitActionConfigHandler
 	updateGitActionConfigEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPatch,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/releases/{name}/git_action_config",
+				RelativePath: "/releases/{name}/{version}/git_action_config",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
 				types.ClusterScope,
 				types.NamespaceScope,
+				types.ReleaseScope,
 			},
 		},
 	)

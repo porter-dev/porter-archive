@@ -1,4 +1,6 @@
 import Loading from "components/Loading";
+import Placeholder from "components/Placeholder";
+import TabSelector from "components/TabSelector";
 import TitleSection from "components/TitleSection";
 import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -6,9 +8,9 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
-import ChartList from "../chart/ChartList";
-import SortSelector from "../SortSelector";
-import Status from "./components/Status";
+import ChartList from "../../chart/ChartList";
+import SortSelector from "../../SortSelector";
+import Status from "../components/Status";
 import {
   Br,
   InfoWrapper,
@@ -16,9 +18,10 @@ import {
   LineBreak,
   SepDot,
   Text,
-} from "./components/styles";
-import { getStackStatus, getStackStatusMessage } from "./shared";
-import { Stack } from "./types";
+} from "../components/styles";
+import { getStackStatus, getStackStatusMessage } from "../shared";
+import { Stack, StackRevision } from "../types";
+import RevisionList from "./_RevisionList";
 
 const ExpandedStack = () => {
   const { namespace, stack_id } = useParams<{
@@ -30,13 +33,16 @@ const ExpandedStack = () => {
   const [stack, setStack] = useState<Stack>();
   const [sortType, setSortType] = useState("Alphabetical");
   const [isLoading, setIsLoading] = useState(true);
+  const [currentTab, setCurrentTab] = useState("apps");
+
+  const [currentRevision, setCurrentRevision] = useState<StackRevision>();
 
   useEffect(() => {
     console.log(stack_id);
     let isSubscribed = true;
 
     api
-      .getStack(
+      .getStack<Stack>(
         "<token>",
         {},
         {
@@ -49,6 +55,7 @@ const ExpandedStack = () => {
       .then((res) => {
         if (isSubscribed) {
           setStack(res.data);
+          setCurrentRevision(res.data.latest_revision);
         }
       })
       .finally(() => {
@@ -71,6 +78,14 @@ const ExpandedStack = () => {
       >
         {stack.name}
       </TitleSection>
+      <RevisionList
+        revisions={stack.revisions}
+        currentRevision={currentRevision}
+        latestRevision={stack.latest_revision}
+        stackId={stack.id}
+        stackNamespace={namespace}
+        onRevisionClick={(revision) => setCurrentRevision(revision)}
+      ></RevisionList>
       <Br />
       <InfoWrapper>
         <LastDeployed>
@@ -103,26 +118,58 @@ const ExpandedStack = () => {
         </StackErrorMessageStyles.Wrapper>
       ) : null}
 
-      <LineBreak />
+      <TabSelector
+        currentTab={currentTab}
+        options={[
+          {
+            label: "Apps",
+            value: "apps",
+            component: (
+              <>
+                <Gap></Gap>
+                {currentRevision.id !== stack.latest_revision.id ? (
+                  <ChartListWrapper>
+                    <Placeholder>
+                      Not available when previewing versions
+                    </Placeholder>
+                  </ChartListWrapper>
+                ) : (
+                  <>
+                    <SortSelector
+                      setSortType={setSortType}
+                      sortType={sortType}
+                      currentView="stacks"
+                    />
 
-      <SortSelector
-        setSortType={setSortType}
-        sortType={sortType}
-        currentView="stacks"
-      />
-
-      <ChartListWrapper>
-        <ChartList
-          currentCluster={currentCluster}
-          currentView="stacks"
-          namespace={namespace}
-          sortType="Alphabetical"
-          appFilters={
-            stack?.latest_revision?.resources?.map((res) => res.name) || []
-          }
-          closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
-        />
-      </ChartListWrapper>
+                    <ChartListWrapper>
+                      <ChartList
+                        currentCluster={currentCluster}
+                        currentView="stacks"
+                        namespace={namespace}
+                        sortType="Alphabetical"
+                        appFilters={
+                          stack?.latest_revision?.resources?.map(
+                            (res) => res.name
+                          ) || []
+                        }
+                        closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
+                      />
+                    </ChartListWrapper>
+                  </>
+                )}
+              </>
+            ),
+          },
+          {
+            label: "Source Config",
+            value: "source_config",
+            component: <>Sourrrce configuration</>,
+          },
+        ]}
+        setCurrentTab={(tab) => {
+          setCurrentTab(tab);
+        }}
+      ></TabSelector>
     </div>
   );
 };
@@ -134,6 +181,12 @@ const ChartListWrapper = styled.div`
   margin: auto;
   margin-top: 20px;
   padding-bottom: 125px;
+`;
+
+const Gap = styled.div`
+  width: 100%;
+  background: none;
+  height: 30px;
 `;
 
 const StackErrorMessageStyles = {

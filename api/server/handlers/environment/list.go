@@ -35,7 +35,7 @@ func (c *ListEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	res := make([]*types.Environment, 0)
+	var res types.ListEnvironmentsResponse
 
 	for _, env := range envs {
 		environment := env.ToEnvironmentType()

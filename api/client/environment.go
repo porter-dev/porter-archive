@@ -10,10 +10,10 @@ import (
 func (c *Client) ListEnvironments(
 	ctx context.Context,
 	projID, clusterID uint,
-) ([]*types.Environment, error) {
-	var resp []*types.Environment
+) (*types.ListEnvironmentsResponse, error) {
+	resp := &types.ListEnvironmentsResponse{}
 
-	err := c.postRequest(
+	err := c.getRequest(
 		fmt.Sprintf("/projects/%d/clusters/%d/environments", projID, clusterID),
 		nil,
 		resp,

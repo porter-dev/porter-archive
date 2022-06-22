@@ -722,6 +722,7 @@ func (t *DeploymentHook) PreApply() error {
 	}
 
 	for _, env := range envList {
+		fmt.Println(env)
 		if env.GitRepoOwner == t.repoOwner && env.GitRepoName == t.repoName && env.GitInstallationID == t.gitInstallationID {
 			t.envID = env.ID
 			break

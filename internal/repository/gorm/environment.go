@@ -29,9 +29,9 @@ func (repo *EnvironmentRepository) CreateEnvironment(env *models.Environment) (*
 func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInstallationID uint, gitRepoOwner, gitRepoName string) (*models.Environment, error) {
 	env := &models.Environment{}
 	if err := repo.db.Order("id desc").Where(
-		"project_id = ? AND cluster_id = ? AND git_installation_id = ? AND git_repo_owner = ? AND git_repo_name = ?",
+		"project_id = ? AND cluster_id = ? AND git_installation_id = ? AND git_repo_owner = LOWER(?) AND git_repo_name = LOWER(?)",
 		projectID, clusterID, gitInstallationID,
-		gitRepoOwner, gitRepoName,
+		strings.ToLower(gitRepoOwner), strings.ToLower(gitRepoName),
 	).First(&env).Error; err != nil {
 		return nil, err
 	}
@@ -56,8 +56,8 @@ func (repo *EnvironmentRepository) ReadEnvironmentByOwnerRepoName(
 	gitRepoOwner, gitRepoName string,
 ) (*models.Environment, error) {
 	env := &models.Environment{}
-	if err := repo.db.Order("id desc").Where("project_id = ? AND cluster_id = ? AND git_repo_owner = ? AND git_repo_name = ?",
-		projectID, clusterID, gitRepoOwner, gitRepoName,
+	if err := repo.db.Order("id desc").Where("project_id = ? AND cluster_id = ? AND git_repo_owner = LOWER(?) AND git_repo_name = LOWER(?)",
+		projectID, clusterID, strings.ToLower(gitRepoOwner), strings.ToLower(gitRepoName),
 	).First(&env).Error; err != nil {
 		return nil, err
 	}
@@ -68,8 +68,8 @@ func (repo *EnvironmentRepository) ReadEnvironmentByWebhookIDOwnerRepoName(
 	webhookID, gitRepoOwner, gitRepoName string,
 ) (*models.Environment, error) {
 	env := &models.Environment{}
-	if err := repo.db.Order("id desc").Where("webhook_id = ? AND git_repo_owner = ? AND git_repo_name = ?",
-		webhookID, gitRepoOwner, gitRepoName,
+	if err := repo.db.Order("id desc").Where("webhook_id = ? AND git_repo_owner = LOWER(?) AND git_repo_name = LOWER(?)",
+		webhookID, strings.ToLower(gitRepoOwner), strings.ToLower(gitRepoName),
 	).First(&env).Error; err != nil {
 		return nil, err
 	}
@@ -149,8 +149,8 @@ func (repo *EnvironmentRepository) ReadDeploymentByGitDetails(
 	depl := &models.Deployment{}
 
 	if err := repo.db.Order("id asc").
-		Where("environment_id = ? AND repo_owner = ? AND repo_name = ? AND pull_request_id = ?",
-			environmentID, gitRepoOwner, gitRepoName, prNumber).
+		Where("environment_id = ? AND repo_owner = LOWER(?) AND repo_name = LOWER(?) AND pull_request_id = ?",
+			environmentID, strings.ToLower(gitRepoOwner), strings.ToLower(gitRepoName), prNumber).
 		First(&depl).Error; err != nil {
 		return nil, err
 	}

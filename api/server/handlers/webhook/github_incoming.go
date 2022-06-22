@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -190,44 +189,31 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			// check for already running workflows we should be cancelling
 			var wg sync.WaitGroup
 			statuses := []string{"in_progress", "queued", "requested", "waiting"}
+			errChan := make(chan error)
 
 			wg.Add(len(statuses))
-
-			errChan := make(chan error)
 
 			for _, status := range statuses {
 				go func(status string) {
 					defer wg.Done()
 
-					reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-					defer cancel()
-
 					runs, _, err := client.Actions.ListWorkflowRunsByFileName(
-						reqCtx, owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+						context.Background(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 						&github.ListWorkflowRunsOptions{
 							Branch: event.GetPullRequest().GetHead().GetRef(),
 							Status: status,
 						},
 					)
 
-					if err == nil && runs.GetTotalCount() > 0 {
-						wg.Add(runs.GetTotalCount())
-
+					if err == nil {
 						for _, run := range runs.WorkflowRuns {
-							go func(id int64, url string) {
-								defer wg.Done()
+							_, err := client.Actions.CancelWorkflowRunByID(context.Background(), owner, repo, run.GetID())
 
-								reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-								defer cancel()
-
-								_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, id)
-
-								if err != nil {
-									errChan <- fmt.Errorf("error cancelling %s: %w", url, err)
-								}
-							}(run.GetID(), run.GetHTMLURL())
+							if err != nil {
+								errChan <- fmt.Errorf("error cancelling %s: %w", run.GetHTMLURL(), err)
+							}
 						}
-					} else if err != nil {
+					} else {
 						errChan <- fmt.Errorf("error listing workflows for status %s: %w", status, err)
 					}
 				}(status)

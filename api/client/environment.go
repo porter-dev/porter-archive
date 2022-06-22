@@ -13,7 +13,7 @@ func (c *Client) ListEnvironments(
 ) ([]*types.Environment, error) {
 	var resp []*types.Environment
 
-	err := c.postRequest(
+	err := c.getRequest(
 		fmt.Sprintf("/projects/%d/clusters/%d/environments", projID, clusterID),
 		nil,
 		resp,

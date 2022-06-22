@@ -34,10 +34,12 @@ export type Stack = {
 
   revisions: StackRevision[];
 
-  latest_revision: StackRevision & {
-    resources: AppResource[];
-    source_configs: SourceConfig[];
-  };
+  latest_revision: FullStackRevision;
+};
+
+export type FullStackRevision = StackRevision & {
+  resources: AppResource[];
+  source_configs: SourceConfig[];
 };
 
 export type StackRevision = {

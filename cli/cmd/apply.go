@@ -721,7 +721,9 @@ func (t *DeploymentHook) PreApply() error {
 		return err
 	}
 
-	for _, env := range envList {
+	envs := *envList
+
+	for _, env := range envs {
 		if env.GitRepoOwner == t.repoOwner && env.GitRepoName == t.repoName && env.GitInstallationID == t.gitInstallationID {
 			t.envID = env.ID
 			break
@@ -741,30 +743,7 @@ func (t *DeploymentHook) PreApply() error {
 		},
 	)
 
-	// TODO: case this on the response status code rather than text
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		// in this case, create the deployment
-		_, err = t.client.CreateDeployment(
-			context.Background(),
-			t.projectID, t.gitInstallationID, t.clusterID,
-			t.repoOwner, t.repoName,
-			&types.CreateDeploymentRequest{
-				Namespace:     t.namespace,
-				PullRequestID: t.prID,
-				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
-					ActionID: t.actionID,
-				},
-				GitHubMetadata: &types.GitHubMetadata{
-					PRName:       t.prName,
-					RepoName:     t.repoName,
-					RepoOwner:    t.repoOwner,
-					CommitSHA:    t.commitSHA,
-					PRBranchFrom: t.branchFrom,
-					PRBranchInto: t.branchInto,
-				},
-			},
-		)
-	} else if err == nil {
+	if err == nil {
 		_, err = t.client.UpdateDeployment(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,

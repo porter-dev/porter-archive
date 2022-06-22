@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -91,7 +93,50 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 	}
 
 	if env.Mode == "auto" && event.GetAction() == "opened" {
-		_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
+		depl := &models.Deployment{
+			EnvironmentID: env.ID,
+			Namespace: fmt.Sprintf("pr-%d-%s", event.GetPullRequest().GetNumber(),
+				strings.ToLower(strings.ReplaceAll(repo, "_", "-"))),
+			Status:        types.DeploymentStatusCreating,
+			PullRequestID: uint(event.GetPullRequest().GetNumber()),
+			PRName:        event.GetPullRequest().GetTitle(),
+			RepoName:      repo,
+			RepoOwner:     owner,
+			CommitSHA:     event.GetPullRequest().GetHead().GetSHA()[:7],
+			PRBranchFrom:  event.GetPullRequest().GetHead().GetRef(),
+			PRBranchInto:  event.GetPullRequest().GetBase().GetRef(),
+		}
+
+		_, err = c.Repo().Environment().CreateDeployment(depl)
+
+		if err != nil {
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error creating new deployment: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
+		}
+
+		cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
+
+		if err != nil {
+			return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster when creating new deployment: %w",
+				env.ProjectID, env.ClusterID, err)
+		}
+
+		// create the backing namespace
+		agent, err := c.GetAgent(r, cluster, "")
+
+		if err != nil {
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error getting k8s agent: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
+		}
+
+		_, err = agent.CreateNamespace(depl.Namespace)
+
+		if err != nil {
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error creating k8s namespace: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
+		}
+
+		_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
 			r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 			github.CreateWorkflowDispatchEventRequest{
 				Ref: event.GetPullRequest().GetHead().GetRef(),
@@ -142,12 +187,75 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					event.GetPullRequest().GetNumber(), err)
 			}
 		} else {
+			// check for already running workflows we should be cancelling
+			var wg sync.WaitGroup
+			statuses := []string{"in_progress", "queued", "requested", "waiting"}
+
+			wg.Add(len(statuses))
+
+			errChan := make(chan error)
+
+			for _, status := range statuses {
+				go func(status string) {
+					defer wg.Done()
+
+					reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					defer cancel()
+
+					runs, _, err := client.Actions.ListWorkflowRunsByFileName(
+						reqCtx, owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+						&github.ListWorkflowRunsOptions{
+							Branch: event.GetPullRequest().GetHead().GetRef(),
+							Status: status,
+						},
+					)
+
+					if err == nil && runs.GetTotalCount() > 0 {
+						wg.Add(runs.GetTotalCount())
+
+						for _, run := range runs.WorkflowRuns {
+							go func(id int64, url string) {
+								defer wg.Done()
+
+								reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+								defer cancel()
+
+								_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, id)
+
+								if err != nil {
+									errChan <- fmt.Errorf("error cancelling %s: %w", url, err)
+								}
+							}(run.GetID(), run.GetHTMLURL())
+						}
+					} else if err != nil {
+						errChan <- fmt.Errorf("error listing workflows for status %s: %w", status, err)
+					}
+				}(status)
+			}
+
+			wg.Wait()
+
+			chanErr := fmt.Errorf("")
+
+			for err := range errChan {
+				chanErr = fmt.Errorf("%s: %w", chanErr.Error(), err)
+			}
+
 			err = c.deleteDeployment(r, depl, env, client)
 
 			if err != nil {
+				deleteErr := fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
+					"error deleting deployment: %w", webhookID, owner, repo, env.ID, depl.ID, event.GetPullRequest().GetNumber(), err)
+
+				if chanErr.Error() != "" {
+					deleteErr = fmt.Errorf("%s. errors found while trying to cancel active workflow runs %w", deleteErr.Error(), chanErr)
+				}
+
+				return deleteErr
+			} else if chanErr.Error() != "" {
 				return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
-					"error deleting deployment: %w", webhookID, owner, repo, env.ID, depl.ID,
-					event.GetPullRequest().GetNumber(), err)
+					"deployment deleted but errors found while trying to cancel active workflow runs %w", webhookID, owner, repo, env.ID, depl.ID,
+					event.GetPullRequest().GetNumber(), chanErr)
 			}
 		}
 	}
@@ -164,7 +272,8 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 	cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
 
 	if err != nil {
-		return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster: %w", env.ProjectID, env.ClusterID, err)
+		return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster when deleting existing deployment: %w",
+			env.ProjectID, env.ClusterID, err)
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")

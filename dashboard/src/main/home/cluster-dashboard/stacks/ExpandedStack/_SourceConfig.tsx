@@ -14,22 +14,28 @@ const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
         console.log({ appList });
         return (
           <SourceConfigStyles.ItemContainer>
-            <Tooltip
-              title={
-                <>
-                  {appList.hiddenApps.map((appName) => (
-                    <SourceConfigStyles.TooltipItem>
-                      {appName}
-                    </SourceConfigStyles.TooltipItem>
-                  ))}
-                </>
-              }
-              placement={"bottom-end"}
-            >
+            {appList.hiddenApps?.length ? (
+              <Tooltip
+                title={
+                  <>
+                    {appList.hiddenApps.map((appName) => (
+                      <SourceConfigStyles.TooltipItem>
+                        {appName}
+                      </SourceConfigStyles.TooltipItem>
+                    ))}
+                  </>
+                }
+                placement={"bottom-end"}
+              >
+                <SourceConfigStyles.ItemTitle>
+                  Used by {appList.value}
+                </SourceConfigStyles.ItemTitle>
+              </Tooltip>
+            ) : (
               <SourceConfigStyles.ItemTitle>
                 Used by {appList.value}
               </SourceConfigStyles.ItemTitle>
-            </Tooltip>
+            )}
             <ImageSelector
               selectedImageUrl={sourceConfig.image_repo_uri}
               selectedTag={sourceConfig.image_tag}

@@ -110,3 +110,5 @@ type PullRequest struct {
 	BranchFrom string `json:"branch_from"`
 	BranchInto string `json:"branch_into"`
 }
+
+type ListEnvironmentsResponse []*Environment

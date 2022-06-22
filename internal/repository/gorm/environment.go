@@ -69,7 +69,7 @@ func (repo *EnvironmentRepository) ReadEnvironmentByWebhookIDOwnerRepoName(
 ) (*models.Environment, error) {
 	env := &models.Environment{}
 	if err := repo.db.Order("id desc").Where("webhook_id = ? AND git_repo_owner = LOWER(?) AND git_repo_name = LOWER(?)",
-		webhookID, strings.ToLower(gitRepoOwner), strings.ToLower((gitRepoName),
+		webhookID, strings.ToLower(gitRepoOwner), strings.ToLower(gitRepoName),
 	).First(&env).Error; err != nil {
 		return nil, err
 	}

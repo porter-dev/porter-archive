@@ -7,19 +7,30 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+func (c *Client) ListEnvironments(
+	ctx context.Context,
+	projID, clusterID uint,
+) (*types.ListEnvironmentsResponse, error) {
+	resp := &types.ListEnvironmentsResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf("/projects/%d/clusters/%d/environments", projID, clusterID),
+		nil,
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) GetDeployment(
 	ctx context.Context,
-	projID, gitInstallationID, clusterID uint,
-	gitRepoOwner, gitRepoName string,
+	projID, clusterID, envID uint,
 	req *types.GetDeploymentRequest,
 ) (*types.Deployment, error) {
 	resp := &types.Deployment{}
 
 	err := c.getRequest(
-		fmt.Sprintf(
-			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment",
-			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
-		),
+		fmt.Sprintf("/projects/%d/clusters/%d/environments/%d/deployment", projID, clusterID, envID),
 		req,
 		resp,
 	)

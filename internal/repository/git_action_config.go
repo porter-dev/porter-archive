@@ -7,4 +7,5 @@ import "github.com/porter-dev/porter/internal/models"
 type GitActionConfigRepository interface {
 	CreateGitActionConfig(gr *models.GitActionConfig) (*models.GitActionConfig, error)
 	ReadGitActionConfig(id uint) (*models.GitActionConfig, error)
+	UpdateGitActionConfig(gr *models.GitActionConfig) error
 }

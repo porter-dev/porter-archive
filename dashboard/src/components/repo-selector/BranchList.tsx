@@ -12,9 +12,14 @@ import SearchBar from "../SearchBar";
 type Props = {
   actionConfig: ActionConfigType;
   setBranch: (x: string) => void;
+  currentBranch?: string;
 };
 
-const BranchList: React.FC<Props> = ({ setBranch, actionConfig }) => {
+const BranchList: React.FC<Props> = ({
+  setBranch,
+  actionConfig,
+  currentBranch,
+}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [branches, setBranches] = useState<string[]>([]);
@@ -108,6 +113,9 @@ const BranchList: React.FC<Props> = ({ setBranch, actionConfig }) => {
         >
           <img src={branch_icon} alt={"branch icon"} />
           {branch}
+          {currentBranch === branch && (
+            <i className="material-icons-outlined">check</i>
+          )}
         </BranchName>
       );
     });
@@ -144,10 +152,6 @@ const BranchName = styled.div`
   background: #ffffff11;
   :hover {
     background: #ffffff22;
-
-    > i {
-      background: #ffffff22;
-    }
   }
 
   > img {
@@ -155,6 +159,13 @@ const BranchName = styled.div`
     height: 18px;
     margin-left: 12px;
     margin-right: 12px;
+  }
+
+  > i {
+    margin-left: auto;
+    margin-right: 15px;
+    font-size: 18px;
+    color: #03b503;
   }
 `;
 

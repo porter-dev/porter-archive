@@ -151,6 +151,42 @@ func getGitInstallationRoutes(
 			Router:   r,
 		})
 
+		// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
+		// environment.NewCreateDeploymentHandler
+		createDeploymentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent: basePath,
+					RelativePath: fmt.Sprintf(
+						"%s/{%s}/{%s}/clusters/{cluster_id}/deployment",
+						relPath,
+						types.URLParamGitRepoOwner,
+						types.URLParamGitRepoName,
+					),
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.GitInstallationScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		createDeploymentHandler := environment.NewCreateDeploymentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: createDeploymentEndpoint,
+			Handler:  createDeploymentHandler,
+			Router:   r,
+		})
+
 		// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
 		// environment.NewGetDeploymentHandler
 		getDeploymentEndpoint := factory.NewAPIEndpoint(

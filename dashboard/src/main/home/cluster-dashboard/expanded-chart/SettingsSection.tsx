@@ -18,6 +18,7 @@ import NotificationSettingsSection from "./NotificationSettingsSection";
 import { Link } from "react-router-dom";
 import { isDeployedFromGithub } from "shared/release/utils";
 import TagSelector from "./TagSelector";
+import { PORTER_IMAGE_TEMPLATES } from "shared/common";
 
 type PropsType = {
   currentChart: ChartType;
@@ -44,13 +45,6 @@ const SettingsSection: React.FC<PropsType> = ({
     setCreateWebhookButtonStatus,
   ] = useState<string>("");
   const [loadingWebhookToken, setLoadingWebhookToken] = useState<boolean>(true);
-
-  const [action, setAction] = useState<ActionConfigType>({
-    git_repo: "",
-    image_repo_uri: "",
-    git_repo_id: 0,
-    git_branch: "",
-  });
 
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
@@ -81,7 +75,6 @@ const SettingsSection: React.FC<PropsType> = ({
           return;
         }
 
-        setAction(res.data.git_action_config);
         setWebhookToken(res.data.webhook_token);
       })
       .catch(console.log)
@@ -162,7 +155,6 @@ const SettingsSection: React.FC<PropsType> = ({
       );
       setCreateWebhookButtonStatus("successful");
       setTimeout(() => {
-        setAction(res.data.git_action_config);
         setWebhookToken(res.data.webhook_token);
       }, 500);
     } catch (err) {
@@ -214,10 +206,11 @@ const SettingsSection: React.FC<PropsType> = ({
     if (!isAuthorizedToCreateWebhook) {
       buttonStatus = "Unauthorized to create webhook token";
     }
-
+    console.log(PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl));
     return (
       <>
-        {!currentChart.is_stack ? (
+        {!currentChart.is_stack &&
+        !PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl) ? (
           <>
             <Heading>Source Settings</Heading>
             <Helper>Specify an image tag to use.</Helper>
@@ -227,7 +220,7 @@ const SettingsSection: React.FC<PropsType> = ({
               setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
               setSelectedTag={(x: string) => setSelectedTag(x)}
               forceExpanded={true}
-              disableImageSelect={isDeployedFromGithub(currentChart)}
+              disableImageSelect={false}
             />
             {!loadingWebhookToken && (
               <>

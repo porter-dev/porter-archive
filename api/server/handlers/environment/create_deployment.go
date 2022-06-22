@@ -142,7 +142,7 @@ func createDeployment(
 	// Create Deployment Status to indicate it's in progress
 
 	state := "in_progress"
-	log_url := fmt.Sprintf("https://github.com/%s/%s/runs/%d", env.GitRepoOwner, env.GitRepoName, actionID)
+	log_url := fmt.Sprintf("https://github.com/%s/%s/actions/runs/%d", env.GitRepoOwner, env.GitRepoName, actionID)
 
 	deploymentStatusRequest := github.DeploymentStatusRequest{
 		State:  &state,

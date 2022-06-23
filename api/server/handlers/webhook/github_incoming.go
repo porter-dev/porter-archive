@@ -212,11 +212,11 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					if err == nil {
 						fmt.Printf("workflow runs for status - %s, count - %d\n", status, runs.GetTotalCount())
 
-						for _, run := range runs.WorkflowRuns {
-							_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, run.GetID())
+						for idx := 0; idx < runs.GetTotalCount(); idx += 1 {
+							_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, runs.WorkflowRuns[idx].GetID())
 
 							if err != nil {
-								errChan <- fmt.Errorf("error cancelling %s: %w", run.GetHTMLURL(), err)
+								errChan <- fmt.Errorf("error cancelling %s: %w", runs.WorkflowRuns[idx].GetHTMLURL(), err)
 							}
 						}
 					} else {

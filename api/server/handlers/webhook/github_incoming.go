@@ -192,10 +192,10 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			statuses := []string{"in_progress", "queued", "requested", "waiting"}
 			errChan := make(chan error)
 
-			for _, status := range statuses {
-				wg.Add(1)
+			wg.Add(len(statuses))
 
-				go func(status string) {
+			for _, status := range statuses {
+				go func(status string, errChan chan<- error) {
 					reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 					defer cancel()
 
@@ -212,11 +212,13 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					if err == nil {
 						fmt.Printf("workflow runs for status - %s, count - %d\n", status, runs.GetTotalCount())
 
-						for idx := 0; idx < runs.GetTotalCount(); idx += 1 {
-							_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, runs.WorkflowRuns[idx].GetID())
+						for _, run := range runs.WorkflowRuns {
+							_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, run.GetID())
 
 							if err != nil {
-								errChan <- fmt.Errorf("error cancelling %s: %w", runs.WorkflowRuns[idx].GetHTMLURL(), err)
+								fmt.Printf("%s\n", fmt.Errorf("error cancelling %s: %w", run.GetHTMLURL(), err).Error())
+
+								errChan <- fmt.Errorf("error cancelling %s: %w", run.GetHTMLURL(), err)
 							}
 						}
 					} else {
@@ -228,7 +230,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					fmt.Printf("workflow runs for status - %s, DONE\n", status)
 
 					wg.Done()
-				}(status)
+				}(status, errChan)
 			}
 
 			wg.Wait()

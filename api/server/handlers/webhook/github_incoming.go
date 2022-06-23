@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -190,19 +189,16 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			// check for already running workflows we should be cancelling
 			var wg sync.WaitGroup
 			statuses := []string{"in_progress", "queued", "requested", "waiting"}
-			errChan := make(chan error)
+			chanErr := fmt.Errorf("")
 
 			wg.Add(len(statuses))
 
 			for _, status := range statuses {
-				go func(status string, errChan chan<- error) {
-					reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-					defer cancel()
-
-					fmt.Printf("fetching workflow runs for status - %s\n", status)
+				go func(status string) {
+					defer wg.Done()
 
 					runs, _, err := client.Actions.ListWorkflowRunsByFileName(
-						reqCtx, owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+						context.Background(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 						&github.ListWorkflowRunsOptions{
 							Branch: event.GetPullRequest().GetHead().GetRef(),
 							Status: status,
@@ -210,41 +206,22 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					)
 
 					if err == nil {
-						fmt.Printf("workflow runs for status - %s, count - %d\n", status, runs.GetTotalCount())
-
 						for _, run := range runs.WorkflowRuns {
-							_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, run.GetID())
+							resp, err := client.Actions.CancelWorkflowRunByID(context.Background(), owner, repo, run.GetID())
 
-							if err != nil {
-								fmt.Printf("%s\n", fmt.Errorf("error cancelling %s: %w", run.GetHTMLURL(), err).Error())
-
-								errChan <- fmt.Errorf("error cancelling %s: %w", run.GetHTMLURL(), err)
+							if err != nil && resp.StatusCode != http.StatusAccepted {
+								// the go library we are using returns a 202 Accepted status as an error
+								// in this case, we should rule this out as an error
+								chanErr = fmt.Errorf("%s: error cancelling %s: %w", chanErr.Error(), run.GetHTMLURL(), err)
 							}
 						}
 					} else {
-						fmt.Printf("workflow runs for status - %s, err - %s\n", status, err.Error())
-
-						errChan <- fmt.Errorf("error listing workflows for status %s: %w", status, err)
+						chanErr = fmt.Errorf("%s: error listing workflows for status %s: %w", chanErr.Error(), status, err)
 					}
-
-					fmt.Printf("workflow runs for status - %s, DONE\n", status)
-
-					wg.Done()
-				}(status, errChan)
+				}(status)
 			}
 
 			wg.Wait()
-			close(errChan)
-
-			fmt.Println("ALL WORKFLOW STATUS CHECK DONE")
-
-			chanErr := fmt.Errorf("")
-
-			for err := range errChan {
-				chanErr = fmt.Errorf("%s: %w", chanErr.Error(), err)
-			}
-
-			fmt.Println("GOING TO DELETE DEPLOYMENT NOW")
 
 			err = c.deleteDeployment(r, depl, env, client)
 

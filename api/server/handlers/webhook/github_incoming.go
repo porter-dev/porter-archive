@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -190,56 +189,39 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			// check for already running workflows we should be cancelling
 			var wg sync.WaitGroup
 			statuses := []string{"in_progress", "queued", "requested", "waiting"}
+			chanErr := fmt.Errorf("")
 
 			wg.Add(len(statuses))
-
-			errChan := make(chan error)
 
 			for _, status := range statuses {
 				go func(status string) {
 					defer wg.Done()
 
-					reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-					defer cancel()
-
 					runs, _, err := client.Actions.ListWorkflowRunsByFileName(
-						reqCtx, owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+						context.Background(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 						&github.ListWorkflowRunsOptions{
 							Branch: event.GetPullRequest().GetHead().GetRef(),
 							Status: status,
 						},
 					)
 
-					if err == nil && runs.GetTotalCount() > 0 {
-						wg.Add(runs.GetTotalCount())
-
+					if err == nil {
 						for _, run := range runs.WorkflowRuns {
-							go func(id int64, url string) {
-								defer wg.Done()
+							resp, err := client.Actions.CancelWorkflowRunByID(context.Background(), owner, repo, run.GetID())
 
-								reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-								defer cancel()
-
-								_, err := client.Actions.CancelWorkflowRunByID(reqCtx, owner, repo, id)
-
-								if err != nil {
-									errChan <- fmt.Errorf("error cancelling %s: %w", url, err)
-								}
-							}(run.GetID(), run.GetHTMLURL())
+							if err != nil && resp.StatusCode != http.StatusAccepted {
+								// the go library we are using returns a 202 Accepted status as an error
+								// in this case, we should rule this out as an error
+								chanErr = fmt.Errorf("%s: error cancelling %s: %w", chanErr.Error(), run.GetHTMLURL(), err)
+							}
 						}
-					} else if err != nil {
-						errChan <- fmt.Errorf("error listing workflows for status %s: %w", status, err)
+					} else {
+						chanErr = fmt.Errorf("%s: error listing workflows for status %s: %w", chanErr.Error(), status, err)
 					}
 				}(status)
 			}
 
 			wg.Wait()
-
-			chanErr := fmt.Errorf("")
-
-			for err := range errChan {
-				chanErr = fmt.Errorf("%s: %w", chanErr.Error(), err)
-			}
 
 			err = c.deleteDeployment(r, depl, env, client)
 

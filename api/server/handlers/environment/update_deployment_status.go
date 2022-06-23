@@ -63,6 +63,12 @@ func (c *UpdateDeploymentStatusHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	if depl.Status == types.DeploymentStatusInactive && request.Status != string(types.DeploymentStatusCreating) {
+		// a deployment from "inactive" state can only transition to "creating"
+		c.WriteResult(w, r, depl.ToDeploymentType())
+		return
+	}
+
 	depl.Status = types.DeploymentStatus(request.Status)
 
 	// create the deployment

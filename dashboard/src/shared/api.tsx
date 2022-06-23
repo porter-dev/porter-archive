@@ -3,7 +3,10 @@ import { PullRequest } from "main/home/cluster-dashboard/preview-environments/ty
 import { baseApi } from "./baseApi";
 
 import { BuildConfig, FullActionConfigType } from "./types";
-import { CreateStackBody } from "main/home/cluster-dashboard/stacks/types";
+import {
+  CreateStackBody,
+  SourceConfig,
+} from "main/home/cluster-dashboard/stacks/types";
 
 /**
  * Generic api call format
@@ -2029,6 +2032,22 @@ const deleteStack = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}`
 );
 
+const updateStackSourceConfig = baseApi<
+  {
+    source_configs: SourceConfig[];
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    stack_id: string;
+  }
+>(
+  "PUT",
+  ({ project_id, cluster_id, namespace, stack_id }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/source`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -2220,4 +2239,5 @@ export default {
   createStack,
   rollbackStack,
   deleteStack,
+  updateStackSourceConfig,
 };

@@ -220,6 +220,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			}
 
 			wg.Wait()
+			close(errChan)
 
 			chanErr := fmt.Errorf("")
 

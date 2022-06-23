@@ -1,10 +1,29 @@
 import { Tooltip } from "@material-ui/core";
 import ImageSelector from "components/image-selector/ImageSelector";
-import React from "react";
+import SaveButton from "components/SaveButton";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import { AppResource, FullStackRevision, SourceConfig } from "../types";
+import SourceEditorDocker from "./components/SourceEditorDocker";
 
 const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
+  const [sourceConfigArrayCopy, setSourceConfigArrayCopy] = useState<
+    SourceConfig[]
+  >(() => revision.source_configs);
+
+  const handleChange = (sourceConfig: SourceConfig) => {
+    const newSourceConfigArray = [...sourceConfigArrayCopy];
+    const index = newSourceConfigArray.findIndex(
+      (sc) => sc.id === sourceConfig.id
+    );
+    newSourceConfigArray[index] = sourceConfig;
+    setSourceConfigArrayCopy(newSourceConfigArray);
+  };
+
+  const handleSave = () => {
+    console.log("save");
+  };
+
   return (
     <SourceConfigStyles.Wrapper>
       {revision.source_configs.map((sourceConfig) => {
@@ -36,15 +55,21 @@ const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
                 Used by {appList.value}
               </SourceConfigStyles.ItemTitle>
             )}
-            <ImageSelector
-              selectedImageUrl={sourceConfig.image_repo_uri}
-              selectedTag={sourceConfig.image_tag}
-              forceExpanded
-              readOnly
+            <SourceEditorDocker
+              sourceConfig={sourceConfig}
+              onChange={handleChange}
             />
           </SourceConfigStyles.ItemContainer>
         );
       })}
+      <SourceConfigStyles.SaveButtonRow>
+        <SourceConfigStyles.SaveButton
+          onClick={handleSave}
+          text="Save"
+          clearPosition={true}
+          makeFlush={true}
+        />
+      </SourceConfigStyles.SaveButtonRow>
     </SourceConfigStyles.Wrapper>
   );
 };
@@ -89,6 +114,7 @@ const formatAppList = (apps: AppResource[], limit: number = 3) => {
 const SourceConfigStyles = {
   Wrapper: styled.div`
     margin-top: 30px;
+    position: relative;
   `,
   ItemContainer: styled.div`
     background: #ffffff11;
@@ -101,5 +127,13 @@ const SourceConfigStyles = {
   `,
   TooltipItem: styled.div`
     font-size: 14px;
+  `,
+  SaveButtonRow: styled.div`
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+  `,
+  SaveButton: styled(SaveButton)`
+    z-index: unset;
   `,
 };

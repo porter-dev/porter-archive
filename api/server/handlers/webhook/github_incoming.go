@@ -222,11 +222,15 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			wg.Wait()
 			close(errChan)
 
+			fmt.Println("ALL WORKFLOW STATUS CHECK DONE")
+
 			chanErr := fmt.Errorf("")
 
 			for err := range errChan {
 				chanErr = fmt.Errorf("%s: %w", chanErr.Error(), err)
 			}
+
+			fmt.Println("GOING TO DELETE DEPLOYMENT NOW")
 
 			err = c.deleteDeployment(r, depl, env, client)
 

@@ -209,8 +209,6 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 						},
 					)
 
-					fmt.Printf("workflow runs for status - %s, err - %s\n", status, err.Error())
-
 					if err == nil {
 						fmt.Printf("workflow runs for status - %s, count - %d\n", status, runs.GetTotalCount())
 
@@ -222,6 +220,8 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 							}
 						}
 					} else {
+						fmt.Printf("workflow runs for status - %s, err - %s\n", status, err.Error())
+
 						errChan <- fmt.Errorf("error listing workflows for status %s: %w", status, err)
 					}
 

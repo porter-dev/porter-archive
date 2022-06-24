@@ -12,6 +12,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/moby/buildkit/frontend/dockerfile/dockerignore"
 	"github.com/moby/moby/pkg/jsonmessage"
 	"github.com/moby/moby/pkg/stringid"
 	"github.com/moby/term"
@@ -31,9 +32,24 @@ type BuildOpts struct {
 }
 
 // BuildLocal
-func (a *Agent) BuildLocal(opts *BuildOpts) error {
+func (a *Agent) BuildLocal(opts *BuildOpts) (err error) {
 	dockerfilePath := opts.DockerfilePath
-	tar, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{})
+
+	// attempt to read dockerignore file and paths
+	dockerIgnoreBytes, _ := ioutil.ReadFile(".dockerignore")
+	var excludes []string
+
+	if len(dockerIgnoreBytes) != 0 {
+		excludes, err = dockerignore.ReadAll(bytes.NewBuffer(dockerIgnoreBytes))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	tar, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{
+		ExcludePatterns: excludes,
+	})
 
 	if err != nil {
 		return err

@@ -10,12 +10,21 @@ import Loading from "../Loading";
 
 var ecrRepoRegex = /(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?/gim;
 
-type PropsType = {
-  setSelectedTag: (x: string) => void;
-  selectedTag: string;
-  selectedImageUrl: string;
-  registryId: number;
-};
+type PropsType =
+  | {
+      setSelectedTag: (x: string) => void;
+      selectedTag: string;
+      selectedImageUrl: string;
+      registryId: number;
+      readOnly?: boolean;
+    }
+  | {
+      setSelectedTag?: (x: string) => void;
+      selectedTag: string;
+      selectedImageUrl: string;
+      registryId: number;
+      readOnly: true;
+    };
 
 type StateType = {
   loading: boolean;
@@ -123,7 +132,8 @@ export default class TagList extends Component<PropsType, StateType> {
       <>
         <TagNameAlt>
           <Label>
-            <img src={info} /> Select Image Tag
+            <img src={info} />
+            {this.props.readOnly ? "Current image tag" : "Select Image Tag"}
           </Label>
           <Refresh onClick={this.refreshTagList}>
             <i className="material-icons">autorenew</i> Refresh

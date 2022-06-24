@@ -10,7 +10,10 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/spf13/cobra"
+	"helm.sh/helm/v3/pkg/release"
 )
+
+var allNamespaces bool
 
 // listCmd represents the "porter list" base command and "porter list all" subcommand
 var listCmd = &cobra.Command{
@@ -76,6 +79,13 @@ func init() {
 		"the namespace of the release",
 	)
 
+	listCmd.PersistentFlags().BoolVar(
+		&allNamespaces,
+		"all-namespaces",
+		false,
+		"list resources for all namespaces",
+	)
+
 	listCmd.AddCommand(listAppsCmd)
 	listCmd.AddCommand(listJobsCmd)
 	listCmd.AddCommand(listAddonsCmd)
@@ -124,24 +134,49 @@ func listAddons(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 }
 
 func writeReleases(client *api.Client, kind string) error {
-	releases, err := client.ListReleases(context.Background(), cliConf.Project, cliConf.Cluster, namespace, &types.ListReleasesRequest{
-		ReleaseListFilter: &types.ReleaseListFilter{
-			Limit: 50,
-			Skip:  0,
-			StatusFilter: []string{
-				"deployed",
-				"uninstalled",
-				"pending",
-				"pending-install",
-				"pending-upgrade",
-				"pending-rollback",
-				"failed",
-			},
-		},
-	})
+	var namespaces []string
+	var releases []*release.Release
 
-	if err != nil {
-		return err
+	if allNamespaces {
+		resp, err := client.GetK8sNamespaces(context.Background(), cliConf.Project, cliConf.Cluster)
+
+		if err != nil {
+			return err
+		}
+
+		namespaceResp := *resp
+
+		for _, ns := range namespaceResp {
+			namespaces = append(namespaces, ns.Name)
+		}
+	} else {
+		namespaces = append(namespaces, namespace)
+	}
+
+	for _, ns := range namespaces {
+		resp, err := client.ListReleases(context.Background(), cliConf.Project, cliConf.Cluster, ns,
+			&types.ListReleasesRequest{
+				ReleaseListFilter: &types.ReleaseListFilter{
+					Limit: 50,
+					Skip:  0,
+					StatusFilter: []string{
+						"deployed",
+						"uninstalled",
+						"pending",
+						"pending-install",
+						"pending-upgrade",
+						"pending-rollback",
+						"failed",
+					},
+				},
+			},
+		)
+
+		if err != nil {
+			return err
+		}
+
+		releases = append(releases, resp...)
 	}
 
 	w := new(tabwriter.Writer)

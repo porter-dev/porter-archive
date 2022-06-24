@@ -4,13 +4,17 @@ import Selector from "components/Selector";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 import { proxy, useSnapshot } from "valtio";
 import { SourceConfig } from "../../types";
+import Select from "./Select";
 
 const SourceEditorDocker = ({
   sourceConfig,
   onChange,
+  readOnly = false,
 }: {
+  readOnly: boolean;
   sourceConfig: SourceConfig;
   onChange: (sourceConfig: SourceConfig) => void;
 }) => {
@@ -48,9 +52,15 @@ const SourceEditorDocker = ({
         currentImageUrl={sourceConfig.image_repo_uri}
         value={registry}
         onChange={setRegistry}
+        readOnly={readOnly}
       />
       {registry && (
-        <_ImageSelector registry={registry} value={image} onChange={setImage} />
+        <_ImageSelector
+          registry={registry}
+          value={image}
+          onChange={setImage}
+          readOnly={readOnly}
+        />
       )}
       {registry && imageName && (
         <_TagSelector
@@ -58,6 +68,7 @@ const SourceEditorDocker = ({
           imageName={imageName}
           value={tag}
           onChange={setTag}
+          readOnly={readOnly}
         />
       )}
     </>
@@ -78,14 +89,17 @@ const _DockerRepositorySelector = ({
   currentImageUrl,
   value,
   onChange,
+  readOnly,
 }: {
   currentImageUrl: string;
   value: DockerRegistry;
   onChange: (newRegistry: DockerRegistry) => void;
+  readOnly: boolean;
 }) => {
   const { currentProject } = useContext(Context);
 
   const [registries, setRegistries] = useState<DockerRegistry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     api
@@ -104,32 +118,28 @@ const _DockerRepositorySelector = ({
           );
           onChange(currentRegistry);
         }
+        setIsLoading(false);
       });
   }, []);
 
-  const registryOptions = registries.map((registry) => {
-    return {
-      value: registry.url,
-      label: registry.name,
-    };
-  });
-
-  const handleChange = (registryUrl: string) => {
-    const registry = registries.find(
-      (registry) => registry.url === registryUrl
-    );
-
-    onChange(registry);
+  const handleChange = (newRegistry: DockerRegistry) => {
+    onChange(newRegistry);
   };
 
   return (
-    <SelectRow
-      value={value?.url}
-      options={registryOptions}
-      setActiveValue={handleChange}
-      width="100%"
-      label="Docker Registry"
-    />
+    <>
+      <Select
+        value={value}
+        options={registries}
+        onChange={handleChange}
+        accessor={(val) => val.name}
+        label="Docker Registry"
+        placeholder="Select a registry"
+        isOptionEqualToValue={(a, b) => a.url === b.url}
+        readOnly={readOnly}
+        isLoading={isLoading}
+      />
+    </>
   );
 };
 
@@ -143,16 +153,20 @@ const _ImageSelector = ({
   registry,
   value,
   onChange,
+  readOnly,
 }: {
   registry: DockerRegistry;
   value: string;
   onChange: (newValue: string) => void;
+  readOnly: boolean;
 }) => {
   const { currentProject } = useContext(Context);
 
   const [images, setImages] = useState<ImageRepo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
     api
       .getImageRepos<ImageRepo[]>(
         "<token>",
@@ -168,27 +182,33 @@ const _ImageSelector = ({
         if (!value) {
           onChange(data[0].uri);
         }
+        setIsLoading(false);
       });
   }, []);
-
-  const imageOptions = images.map((image) => {
-    return {
-      value: image.uri,
-      label: image.name,
-    };
-  });
 
   const handleChange = (image: string) => {
     onChange(image);
   };
 
+  const displayName = (imageUrl: string) => {
+    const image = images.find((i) => i.uri === imageUrl);
+    if (!image) {
+      return imageUrl;
+    }
+    return image.name;
+  };
+
   return (
-    <SelectRow
-      label="Image"
+    <Select
       value={value}
-      options={imageOptions}
-      setActiveValue={handleChange}
-      width="100%"
+      options={images.map((image) => image.uri)}
+      accessor={displayName}
+      label="Image"
+      placeholder="Select an image"
+      onChange={handleChange}
+      isOptionEqualToValue={(a, b) => a === b}
+      readOnly={readOnly}
+      isLoading={isLoading}
     />
   );
 };
@@ -206,16 +226,20 @@ const _TagSelector = ({
   imageName,
   value,
   onChange,
+  readOnly,
 }: {
   registry: DockerRegistry;
   imageName: string;
   value: string;
   onChange: (newTag: string) => void;
+  readOnly: boolean;
 }) => {
   const { currentProject } = useContext(Context);
   const [imageTags, setImageTags] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
     api
       .getImageTags<DockerImageTag[]>(
         "<token>",
@@ -234,30 +258,24 @@ const _TagSelector = ({
         });
         setImageTags(sortedTags.map((tag) => tag.tag));
 
-        if (!value) {
-          onChange(sortedTags[0].tag);
-        }
+        setIsLoading(false);
       });
   }, [registry, imageName]);
-
-  const tagOptions = imageTags.map((tag) => {
-    return {
-      value: tag,
-      label: tag,
-    };
-  });
 
   const handleChange = (tag: string) => {
     onChange(tag);
   };
 
   return (
-    <SelectRow
-      label="Tag"
+    <Select
       value={value}
-      options={tagOptions}
-      setActiveValue={handleChange}
-      width="100%"
+      options={imageTags}
+      accessor={(tag) => tag}
+      label="Tag"
+      placeholder="Select a tag"
+      onChange={handleChange}
+      readOnly={readOnly}
+      isLoading={isLoading}
     />
   );
 };

@@ -1,15 +1,31 @@
 import { Tooltip } from "@material-ui/core";
 import ImageSelector from "components/image-selector/ImageSelector";
 import SaveButton from "components/SaveButton";
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
+import api from "shared/api";
+import { Context } from "shared/Context";
 import styled from "styled-components";
-import { AppResource, FullStackRevision, SourceConfig } from "../types";
+import { AppResource, FullStackRevision, SourceConfig, Stack } from "../types";
 import SourceEditorDocker from "./components/SourceEditorDocker";
 
-const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
+const _SourceConfig = ({
+  namespace,
+  revision,
+  readOnly,
+  onSourceConfigUpdate,
+}: {
+  namespace: string;
+  revision: FullStackRevision;
+  readOnly: boolean;
+  onSourceConfigUpdate: () => void;
+}) => {
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [sourceConfigArrayCopy, setSourceConfigArrayCopy] = useState<
     SourceConfig[]
   >(() => revision.source_configs);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleChange = (sourceConfig: SourceConfig) => {
     const newSourceConfigArray = [...sourceConfigArrayCopy];
@@ -21,7 +37,27 @@ const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
   };
 
   const handleSave = () => {
-    console.log("save");
+    setIsSaving(true);
+    api
+      .updateStackSourceConfig(
+        "<token>",
+        {
+          source_configs: sourceConfigArrayCopy,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: namespace,
+          stack_id: revision.stack_id,
+        }
+      )
+      .then(() => {
+        setIsSaving(false);
+        onSourceConfigUpdate();
+      })
+      .catch((err) => {
+        setCurrentError(err);
+      });
   };
 
   return (
@@ -30,7 +66,6 @@ const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
         const apps = getAppsFromSourceConfig(revision.resources, sourceConfig);
 
         const appList = formatAppList(apps, 2);
-        console.log({ appList });
         return (
           <SourceConfigStyles.ItemContainer>
             {appList.hiddenApps?.length ? (
@@ -58,6 +93,7 @@ const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
             <SourceEditorDocker
               sourceConfig={sourceConfig}
               onChange={handleChange}
+              readOnly={readOnly || isSaving}
             />
           </SourceConfigStyles.ItemContainer>
         );
@@ -68,6 +104,8 @@ const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
           text="Save"
           clearPosition={true}
           makeFlush={true}
+          status={isSaving ? "loading" : ""}
+          statusPosition="left"
         />
       </SourceConfigStyles.SaveButtonRow>
     </SourceConfigStyles.Wrapper>

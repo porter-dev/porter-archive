@@ -58,7 +58,7 @@ const Select = <T extends unknown>({
 
   if (isLoading) {
     return (
-      <>
+      <div>
         {getLabel()}
         <SelectStyles.Wrapper>
           <SelectStyles.Selector
@@ -66,17 +66,17 @@ const Select = <T extends unknown>({
             expanded={false}
             readOnly={readOnly}
           >
-            <div>
+            <SelectStyles.Loading>
               <Loading />
-            </div>
+            </SelectStyles.Loading>
           </SelectStyles.Selector>
         </SelectStyles.Wrapper>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div>
       {getLabel()}
       <SelectStyles.Wrapper ref={wrapperRef}>
         <SelectStyles.Selector
@@ -85,9 +85,9 @@ const Select = <T extends unknown>({
           expanded={expanded}
           readOnly={readOnly}
         >
-          <div>
+          <SelectStyles.CurrentValue>
             <span>{value ? accessor(value) : placeholder}</span>
-          </div>
+          </SelectStyles.CurrentValue>
           {readOnly ? null : <i className="material-icons">arrow_drop_down</i>}
         </SelectStyles.Selector>
         {expanded && !readOnly ? (
@@ -95,28 +95,38 @@ const Select = <T extends unknown>({
             width={dropdown?.width}
             maxH={dropdown?.maxH}
           >
-            <SelectStyles.Dropdown.Label>
-              {dropdown?.label}
-            </SelectStyles.Dropdown.Label>
-            {options.map((option, i) => (
-              <SelectStyles.Dropdown.Option
-                key={i}
-                onClick={() => !readOnly && handleOptionClick(option)}
-                lastItem={i === options.length - 1}
-                selected={
-                  isOptionEqualToValue
-                    ? isOptionEqualToValue(option, value)
-                    : option === value
-                }
-                height={dropdown?.option?.height}
-              >
-                {accessor(option)}
-              </SelectStyles.Dropdown.Option>
-            ))}
+            {dropdown?.label && (
+              <SelectStyles.Dropdown.Label>
+                {dropdown?.label}
+              </SelectStyles.Dropdown.Label>
+            )}
+            {options.length > 0 ? (
+              <>
+                {options.map((option, i) => (
+                  <SelectStyles.Dropdown.Option
+                    key={i}
+                    onClick={() => !readOnly && handleOptionClick(option)}
+                    lastItem={i === options.length - 1}
+                    selected={
+                      isOptionEqualToValue
+                        ? isOptionEqualToValue(option, value)
+                        : option === value
+                    }
+                    height={dropdown?.option?.height}
+                  >
+                    {accessor(option)}
+                  </SelectStyles.Dropdown.Option>
+                ))}
+              </>
+            ) : (
+              <SelectStyles.Dropdown.NoOptions>
+                No options available
+              </SelectStyles.Dropdown.NoOptions>
+            )}
           </SelectStyles.Dropdown.Wrapper>
         ) : null}
       </SelectStyles.Wrapper>
-    </>
+    </div>
   );
 };
 
@@ -129,6 +139,7 @@ export const SelectStyles = {
   Label: styled.div`
     color: #ffffff;
     margin-bottom: 10px;
+    margin-top: 20px;
     font-size: 13px;
   `,
 
@@ -171,18 +182,22 @@ export const SelectStyles = {
       font-size: 20px;
       transform: ${(props) => (props.expanded ? "rotate(180deg)" : "")};
     }
+  `,
 
-    > div {
-      display: flex;
-      align-items: center;
-      width: 85%;
+  Loading: styled.div`
+    width: 100%;
+  `,
 
-      > span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        z-index: 0;
-      }
+  CurrentValue: styled.div`
+    display: flex;
+    align-items: center;
+    width: 85%;
+
+    > span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      z-index: 0;
     }
   `,
 
@@ -224,6 +239,20 @@ export const SelectStyles = {
         background: #ffffff22;
       }
     `,
-    Label: styled.div``,
+    Label: styled.div`
+      font-size: 13px;
+      color: #ffffff44;
+      font-weight: 500;
+      margin: 10px 13px;
+    `,
+    NoOptions: styled.div`
+      font-size: 13px;
+      color: #ffffff44;
+      font-weight: 500;
+      margin: 10px 13px;
+      :not(:first-child) {
+        border-top: 1px solid #ffffff15;
+      }
+    `,
   },
 };

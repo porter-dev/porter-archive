@@ -174,7 +174,12 @@ const ExpandedStack = () => {
             value: "source_config",
             component: (
               <>
-                <SourceConfig revision={currentRevision}></SourceConfig>
+                <SourceConfig
+                  namespace={namespace}
+                  revision={currentRevision}
+                  readOnly={stack.latest_revision.id !== currentRevision.id}
+                  onSourceConfigUpdate={() => getStack()}
+                ></SourceConfig>
               </>
             ),
           },

@@ -5,6 +5,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
+import styled from "styled-components";
 import { proxy, useSnapshot } from "valtio";
 import { SourceConfig } from "../../types";
 import Select from "./Select";
@@ -48,28 +49,33 @@ const SourceEditorDocker = ({
 
   return (
     <>
-      <_DockerRepositorySelector
-        currentImageUrl={sourceConfig.image_repo_uri}
-        value={registry}
-        onChange={setRegistry}
-        readOnly={readOnly}
-      />
+      <SourceEditorDockerStlyes.RegistryWrapper>
+        <_DockerRepositorySelector
+          currentImageUrl={sourceConfig.image_repo_uri}
+          value={registry}
+          onChange={setRegistry}
+          readOnly={readOnly}
+        />
+      </SourceEditorDockerStlyes.RegistryWrapper>
       {registry && (
-        <_ImageSelector
-          registry={registry}
-          value={image}
-          onChange={setImage}
-          readOnly={readOnly}
-        />
-      )}
-      {registry && imageName && (
-        <_TagSelector
-          registry={registry}
-          imageName={imageName}
-          value={tag}
-          onChange={setTag}
-          readOnly={readOnly}
-        />
+        <SourceEditorDockerStlyes.ImageAndTagWrapper>
+          <_ImageSelector
+            registry={registry}
+            value={image}
+            onChange={setImage}
+            readOnly={readOnly}
+          />
+
+          {registry && imageName && (
+            <_TagSelector
+              registry={registry}
+              imageName={imageName}
+              value={tag}
+              onChange={setTag}
+              readOnly={readOnly}
+            />
+          )}
+        </SourceEditorDockerStlyes.ImageAndTagWrapper>
       )}
     </>
   );
@@ -138,6 +144,9 @@ const _DockerRepositorySelector = ({
         isOptionEqualToValue={(a, b) => a.url === b.url}
         readOnly={readOnly}
         isLoading={isLoading}
+        dropdown={{
+          maxH: "200px",
+        }}
       />
     </>
   );
@@ -209,6 +218,9 @@ const _ImageSelector = ({
       isOptionEqualToValue={(a, b) => a === b}
       readOnly={readOnly}
       isLoading={isLoading}
+      dropdown={{
+        maxH: "200px",
+      }}
     />
   );
 };
@@ -251,12 +263,25 @@ const _TagSelector = ({
         }
       )
       .then(({ data }) => {
+        if (!data?.length) {
+          setImageTags([]);
+          onChange("");
+          setIsLoading(false);
+          return;
+        }
+
         const sortedTags = data.sort((a, b) => {
           const aDate = new Date(a.pushed_at);
           const bDate = new Date(b.pushed_at);
           return bDate.getTime() - aDate.getTime();
         });
         setImageTags(sortedTags.map((tag) => tag.tag));
+
+        if (sortedTags.map((tag) => tag.tag).includes(value)) {
+          onChange(value);
+        } else {
+          onChange(sortedTags[0].tag);
+        }
 
         setIsLoading(false);
       });
@@ -276,8 +301,21 @@ const _TagSelector = ({
       onChange={handleChange}
       readOnly={readOnly}
       isLoading={isLoading}
+      dropdown={{
+        maxH: "200px",
+      }}
     />
   );
 };
 
 export default SourceEditorDocker;
+
+const SourceEditorDockerStlyes = {
+  RegistryWrapper: styled.div``,
+  ImageAndTagWrapper: styled.div`
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-gap: 10px;
+    align-items: center;
+  `,
+};

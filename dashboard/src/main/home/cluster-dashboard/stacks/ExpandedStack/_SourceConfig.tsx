@@ -25,7 +25,7 @@ const _SourceConfig = ({
   const [sourceConfigArrayCopy, setSourceConfigArrayCopy] = useState<
     SourceConfig[]
   >(() => revision.source_configs);
-  const [isSaving, setIsSaving] = useState(false);
+  const [buttonStatus, setButtonStatus] = useState("");
 
   const handleChange = (sourceConfig: SourceConfig) => {
     const newSourceConfigArray = [...sourceConfigArrayCopy];
@@ -37,7 +37,7 @@ const _SourceConfig = ({
   };
 
   const handleSave = () => {
-    setIsSaving(true);
+    setButtonStatus("loading");
     api
       .updateStackSourceConfig(
         "<token>",
@@ -52,10 +52,11 @@ const _SourceConfig = ({
         }
       )
       .then(() => {
-        setIsSaving(false);
+        setButtonStatus("successful");
         onSourceConfigUpdate();
       })
       .catch((err) => {
+        setButtonStatus("Something went wrong");
         setCurrentError(err);
       });
   };
@@ -93,7 +94,7 @@ const _SourceConfig = ({
             <SourceEditorDocker
               sourceConfig={sourceConfig}
               onChange={handleChange}
-              readOnly={readOnly || isSaving}
+              readOnly={readOnly || buttonStatus === "loading"}
             />
           </SourceConfigStyles.ItemContainer>
         );
@@ -104,7 +105,7 @@ const _SourceConfig = ({
           text="Save"
           clearPosition={true}
           makeFlush={true}
-          status={isSaving ? "loading" : ""}
+          status={buttonStatus}
           statusPosition="left"
         />
       </SourceConfigStyles.SaveButtonRow>

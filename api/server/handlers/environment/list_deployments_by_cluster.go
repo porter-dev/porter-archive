@@ -221,6 +221,8 @@ func updateDeploymentWithGithubWorkflowRunStatus(
 				deployment.Status = types.DeploymentStatusFailed
 			} else if latestWorkflowRun.GetConclusion() == "timed_out" {
 				deployment.Status = types.DeploymentStatusTimedOut
+			} else if latestWorkflowRun.GetConclusion() == "success" {
+				deployment.Status = types.DeploymentStatusCreated
 			}
 		}
 	}

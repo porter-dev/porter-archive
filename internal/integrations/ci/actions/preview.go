@@ -73,12 +73,6 @@ func SetupEnv(opts *EnvOpts) error {
 		return err
 	}
 
-	deleteWorkflowYAML, err := getPreviewDeleteActionYAML(opts)
-
-	if err != nil {
-		return err
-	}
-
 	githubBranch, _, err := opts.Client.Repositories.GetBranch(
 		context.Background(), opts.GitRepoOwner, opts.GitRepoName, defaultBranch, true,
 	)
@@ -95,8 +89,8 @@ func SetupEnv(opts *EnvOpts) error {
 				"Unable to create PR to merge workflow files into protected branch: %s.\n"+
 					"To enable Porter Preview Environment deployments, please create Github workflow "+
 					"files in this branch with the following contents:\n"+
-					"--------\n%s--------\n--------\n%s--------\nERROR: %w",
-				defaultBranch, string(applyWorkflowYAML), string(deleteWorkflowYAML), ErrCreatePRForProtectedBranch,
+					"--------\n%s--------\nERROR: %w",
+				defaultBranch, string(applyWorkflowYAML), ErrCreatePRForProtectedBranch,
 			)
 		}
 
@@ -112,25 +106,8 @@ func SetupEnv(opts *EnvOpts) error {
 				"Unable to create PR to merge workflow files into protected branch: %s.\n"+
 					"To enable Porter Preview Environment deployments, please create Github workflow "+
 					"files in this branch with the following contents:\n"+
-					"--------\n%s--------\n--------\n%s--------\nERROR: %w",
-				defaultBranch, string(applyWorkflowYAML), string(deleteWorkflowYAML), ErrCreatePRForProtectedBranch,
-			)
-		}
-
-		_, err = commitWorkflowFile(
-			opts.Client,
-			fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
-			deleteWorkflowYAML, opts.GitRepoOwner,
-			opts.GitRepoName, "porter-preview", false,
-		)
-
-		if err != nil {
-			return fmt.Errorf(
-				"Unable to create PR to merge workflow files into protected branch: %s.\n"+
-					"To enable Porter Preview Environment deployments, please create a Github workflow "+
-					"file in this branch with the following contents:\n"+
 					"--------\n%s--------\nERROR: %w",
-				defaultBranch, string(deleteWorkflowYAML), ErrCreatePRForProtectedBranch,
+				defaultBranch, string(applyWorkflowYAML), ErrCreatePRForProtectedBranch,
 			)
 		}
 
@@ -159,75 +136,6 @@ func SetupEnv(opts *EnvOpts) error {
 		defaultBranch,
 		false,
 	)
-
-	if err != nil {
-		if strings.Contains(err.Error(), "409 Could not create file") {
-			// possibly a write-protected branch
-			err = createNewBranch(opts.Client, opts.GitRepoOwner, opts.GitRepoName, defaultBranch, "porter-preview")
-
-			if err != nil {
-				return fmt.Errorf("write-protected branch %s. Error creating porter-preview branch: %w", defaultBranch, err)
-			}
-
-			_, err = commitWorkflowFile(
-				opts.Client,
-				fmt.Sprintf("porter_%s_env.yml", strings.ToLower(opts.EnvironmentName)),
-				applyWorkflowYAML,
-				opts.GitRepoOwner,
-				opts.GitRepoName,
-				"porter-preview",
-				false,
-			)
-
-			if err != nil {
-				return fmt.Errorf("write-protected branch %s. Error committing to porter-preview branch: %w", defaultBranch, err)
-			}
-
-			_, err = commitWorkflowFile(
-				opts.Client,
-				fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
-				deleteWorkflowYAML,
-				opts.GitRepoOwner,
-				opts.GitRepoName,
-				"porter-preview",
-				false,
-			)
-
-			if err != nil {
-				return fmt.Errorf("write-protected branch %s. Error committing to porter-preview branch: %w", defaultBranch, err)
-			}
-
-			pr, _, err := opts.Client.PullRequests.Create(
-				context.Background(), opts.GitRepoOwner, opts.GitRepoName, &github.NewPullRequest{
-					Title: github.String("Merge Porter preview environment Github Actions workflow files"),
-					Base:  github.String(defaultBranch),
-					Head:  github.String("porter-preview"),
-				},
-			)
-
-			if err != nil {
-				return err
-			}
-
-			return fmt.Errorf("write-protected branch %s. Please merge %s to enable preview environment for your repository", defaultBranch, pr.GetURL())
-		}
-
-		return err
-	}
-
-	_, err = commitWorkflowFile(
-		opts.Client,
-		fmt.Sprintf("porter_%s_delete_env.yml", strings.ToLower(opts.EnvironmentName)),
-		deleteWorkflowYAML,
-		opts.GitRepoOwner,
-		opts.GitRepoName,
-		defaultBranch,
-		false,
-	)
-
-	if err != nil {
-		return err
-	}
 
 	return err
 }
@@ -349,43 +257,10 @@ func getPreviewApplyActionYAML(opts *EnvOpts) ([]byte, error) {
 		Jobs: map[string]GithubActionYAMLJob{
 			"porter-preview": {
 				RunsOn: "ubuntu-latest",
-				Steps:  gaSteps,
-			},
-		},
-	}
-
-	return yaml.Marshal(actionYAML)
-}
-
-func getPreviewDeleteActionYAML(opts *EnvOpts) ([]byte, error) {
-	gaSteps := []GithubActionYAMLStep{
-		getDeletePreviewEnvStep(
-			opts.ServerURL,
-			getPorterTokenSecretName(opts.ProjectID),
-			opts.ProjectID,
-			opts.ClusterID,
-			opts.GitRepoName,
-			"v0.2.0",
-		),
-	}
-
-	actionYAML := GithubActionYAML{
-		On: map[string]interface{}{
-			"workflow_dispatch": map[string]interface{}{
-				"inputs": map[string]interface{}{
-					"deployment_id": map[string]interface{}{
-						"description": "Deployment ID",
-						"type":        "number",
-						"required":    true,
-					},
+				Concurrency: map[string]string{
+					"group": "${{ github.workflow }}-${{ github.event.inputs.pr_number }}",
 				},
-			},
-		},
-		Name: "Porter Preview Environment",
-		Jobs: map[string]GithubActionYAMLJob{
-			"porter-delete-preview": {
-				RunsOn: "ubuntu-latest",
-				Steps:  gaSteps,
+				Steps: gaSteps,
 			},
 		},
 	}

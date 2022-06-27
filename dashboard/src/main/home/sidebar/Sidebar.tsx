@@ -103,6 +103,34 @@ class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
+  /**
+   * Helper function that will keep the query params before redirect the user to a new page
+   *
+   * @param location
+   * @param path Path to redirect to
+   * @returns React router `to` object
+   */
+  withQueryParams = (location: any, path: string) => {
+    let { currentCluster, currentProject } = this.context;
+    let params = this.props.match.params as any;
+    let pathNamespace = params.namespace;
+    let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
+
+    if (!pathNamespace) {
+      pathNamespace = getQueryParam(this.props, "namespace");
+    }
+
+    if (pathNamespace) {
+      search = search.concat(`&namespace=${pathNamespace}`);
+    }
+
+    return {
+      ...location,
+      pathname: path,
+      search,
+    };
+  };
+
   renderClusterContent = () => {
     let { currentCluster, currentProject } = this.context;
 
@@ -110,74 +138,16 @@ class Sidebar extends Component<PropsType, StateType> {
       return (
         <>
           <NavButton
-            to={(location) => {
-              let params = this.props.match.params as any;
-              let pathNamespace = params.namespace;
-              let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
-
-              if (!pathNamespace) {
-                pathNamespace = getQueryParam(this.props, "namespace");
-              }
-
-              if (pathNamespace) {
-                search = search.concat(`&namespace=${pathNamespace}`);
-              }
-
-              return {
-                ...location,
-                pathname: "/applications",
-                search,
-              };
-            }}
+            to={(location) => this.withQueryParams(location, "/applications")}
           >
             <Img src={monoweb} />
             Applications
           </NavButton>
-          <NavButton
-            to={() => {
-              let params = this.props.match.params as any;
-              let pathNamespace = params.namespace;
-              let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
-
-              if (!pathNamespace) {
-                pathNamespace = getQueryParam(this.props, "namespace");
-              }
-
-              if (pathNamespace) {
-                search = search.concat(`&namespace=${pathNamespace}`);
-              }
-
-              return {
-                ...location,
-                pathname: "/jobs",
-                search,
-              };
-            }}
-          >
+          <NavButton to={() => this.withQueryParams(location, "/jobs")}>
             <Img src={monojob} />
             Jobs
           </NavButton>
-          <NavButton
-            to={() => {
-              let params = this.props.match.params as any;
-              let pathNamespace = params.namespace;
-              let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
-
-              if (!pathNamespace) {
-                pathNamespace = getQueryParam(this.props, "namespace");
-              }
-
-              if (pathNamespace) {
-                search = search.concat(`&namespace=${pathNamespace}`);
-              }
-
-              return {
-                ...location,
-                pathname: "/env-groups",
-                search,
-              };
-            }}
-          >
+          <NavButton to={() => this.withQueryParams(location, "/env-groups")}>
             <Img src={sliders} />
             Env Groups
           </NavButton>
@@ -224,7 +194,9 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
           )}
           {currentProject?.stacks_enabled ? (
-            <NavButton to="/stacks">
+            <NavButton
+              to={(location) => this.withQueryParams(location, "/stacks")}
+            >
               <Icon className="material-icons-outlined">lan</Icon>
               Stacks
             </NavButton>

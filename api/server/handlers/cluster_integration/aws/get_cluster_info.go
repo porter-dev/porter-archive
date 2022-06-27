@@ -90,7 +90,14 @@ func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	ec2Svc := ec2.New(awsSession, awsConf)
 
 	subnetsInfo, err := ec2Svc.DescribeSubnets(&ec2.DescribeSubnetsInput{
-		SubnetIds: clusterInfo.Cluster.ResourcesVpcConfig.SubnetIds,
+		Filters: []*ec2.Filter{
+			{
+				Name: aws.String("vpc-id"),
+				Values: []*string{
+					clusterInfo.Cluster.ResourcesVpcConfig.VpcId,
+				},
+			},
+		},
 	})
 
 	if err != nil || len(subnetsInfo.Subnets) == 0 {
@@ -100,12 +107,15 @@ func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	res := &types.GetAWSClusterInfoResponse{
 		Name:       clusterName,
+		ARN:        *clusterInfo.Cluster.Arn,
+		Status:     *clusterInfo.Cluster.Status,
 		K8sVersion: *clusterInfo.Cluster.Version,
 		EKSVersion: *clusterInfo.Cluster.PlatformVersion,
 	}
 
 	for _, subnet := range subnetsInfo.Subnets {
 		res.Subnets = append(res.Subnets, &types.AWSSubnet{
+			SubnetID:                *subnet.SubnetId,
 			AvailabilityZone:        *subnet.AvailabilityZone,
 			AvailableIPAddressCount: *subnet.AvailableIpAddressCount,
 		})

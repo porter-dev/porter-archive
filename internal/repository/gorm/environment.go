@@ -28,12 +28,24 @@ func (repo *EnvironmentRepository) CreateEnvironment(env *models.Environment) (*
 
 func (repo *EnvironmentRepository) ReadEnvironment(projectID, clusterID, gitInstallationID uint, gitRepoOwner, gitRepoName string) (*models.Environment, error) {
 	env := &models.Environment{}
-	if err := repo.db.Order("id desc").Where(
-		"project_id = ? AND cluster_id = ? AND git_installation_id = ? AND git_repo_owner iLIKE ? AND git_repo_name iLIKE ?",
-		projectID, clusterID, gitInstallationID, gitRepoOwner, gitRepoName,
-	).First(&env).Error; err != nil {
-		return nil, err
+
+	switch repo.db.Dialector.Name() {
+	case "sqlite":
+		if err := repo.db.Order("id desc").Where(
+			"project_id = ? AND cluster_id = ? AND git_installation_id = ? AND git_repo_owner LIKE ? AND git_repo_name LIKE ?",
+			projectID, clusterID, gitInstallationID, gitRepoOwner, gitRepoName,
+		).First(&env).Error; err != nil {
+			return nil, err
+		}
+	case "postgres":
+		if err := repo.db.Order("id desc").Where(
+			"project_id = ? AND cluster_id = ? AND git_installation_id = ? AND git_repo_owner iLIKE ? AND git_repo_name iLIKE ?",
+			projectID, clusterID, gitInstallationID, gitRepoOwner, gitRepoName,
+		).First(&env).Error; err != nil {
+			return nil, err
+		}
 	}
+
 	return env, nil
 }
 
@@ -55,11 +67,22 @@ func (repo *EnvironmentRepository) ReadEnvironmentByOwnerRepoName(
 	gitRepoOwner, gitRepoName string,
 ) (*models.Environment, error) {
 	env := &models.Environment{}
-	if err := repo.db.Order("id desc").Where("project_id = ? AND cluster_id = ? AND git_repo_owner iLIKE ? AND git_repo_name iLIKE ?",
-		projectID, clusterID, gitRepoOwner, gitRepoName,
-	).First(&env).Error; err != nil {
-		return nil, err
+
+	switch repo.db.Dialector.Name() {
+	case "sqlite":
+		if err := repo.db.Order("id desc").Where("project_id = ? AND cluster_id = ? AND git_repo_owner LIKE ? AND git_repo_name LIKE ?",
+			projectID, clusterID, gitRepoOwner, gitRepoName,
+		).First(&env).Error; err != nil {
+			return nil, err
+		}
+	case "postgres":
+		if err := repo.db.Order("id desc").Where("project_id = ? AND cluster_id = ? AND git_repo_owner iLIKE ? AND git_repo_name iLIKE ?",
+			projectID, clusterID, gitRepoOwner, gitRepoName,
+		).First(&env).Error; err != nil {
+			return nil, err
+		}
 	}
+
 	return env, nil
 }
 
@@ -67,11 +90,22 @@ func (repo *EnvironmentRepository) ReadEnvironmentByWebhookIDOwnerRepoName(
 	webhookID, gitRepoOwner, gitRepoName string,
 ) (*models.Environment, error) {
 	env := &models.Environment{}
-	if err := repo.db.Order("id desc").Where("webhook_id = ? AND git_repo_owner iLIKE ? AND git_repo_name iLIKE ?",
-		webhookID, gitRepoOwner, gitRepoName,
-	).First(&env).Error; err != nil {
-		return nil, err
+
+	switch repo.db.Dialector.Name() {
+	case "sqlite":
+		if err := repo.db.Order("id desc").Where("webhook_id = ? AND git_repo_owner LIKE ? AND git_repo_name LIKE ?",
+			webhookID, gitRepoOwner, gitRepoName,
+		).First(&env).Error; err != nil {
+			return nil, err
+		}
+	case "postgres":
+		if err := repo.db.Order("id desc").Where("webhook_id = ? AND git_repo_owner iLIKE ? AND git_repo_name iLIKE ?",
+			webhookID, gitRepoOwner, gitRepoName,
+		).First(&env).Error; err != nil {
+			return nil, err
+		}
 	}
+
 	return env, nil
 }
 
@@ -147,11 +181,21 @@ func (repo *EnvironmentRepository) ReadDeploymentByGitDetails(
 ) (*models.Deployment, error) {
 	depl := &models.Deployment{}
 
-	if err := repo.db.Order("id asc").
-		Where("environment_id = ? AND repo_owner iLIKE ? AND repo_name iLIKE ? AND pull_request_id = ?",
-			environmentID, gitRepoOwner, gitRepoName, prNumber).
-		First(&depl).Error; err != nil {
-		return nil, err
+	switch repo.db.Dialector.Name() {
+	case "sqlite":
+		if err := repo.db.Order("id asc").
+			Where("environment_id = ? AND repo_owner LIKE ? AND repo_name LIKE ? AND pull_request_id = ?",
+				environmentID, gitRepoOwner, gitRepoName, prNumber).
+			First(&depl).Error; err != nil {
+			return nil, err
+		}
+	case "postgres":
+		if err := repo.db.Order("id asc").
+			Where("environment_id = ? AND repo_owner iLIKE ? AND repo_name iLIKE ? AND pull_request_id = ?",
+				environmentID, gitRepoOwner, gitRepoName, prNumber).
+			First(&depl).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	return depl, nil

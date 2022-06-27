@@ -38,6 +38,13 @@ const SourceEditorDocker = ({
   }, [image, registry]);
 
   useEffect(() => {
+    if (sourceConfig.image_repo_uri) {
+      setImage(sourceConfig.image_repo_uri);
+      setTag(sourceConfig.image_tag);
+    }
+  }, [sourceConfig]);
+
+  useEffect(() => {
     const newSourceConfig: SourceConfig = {
       ...sourceConfig,
       image_repo_uri: image,
@@ -126,7 +133,7 @@ const _DockerRepositorySelector = ({
         }
         setIsLoading(false);
       });
-  }, []);
+  }, [currentImageUrl]);
 
   const handleChange = (newRegistry: DockerRegistry) => {
     onChange(newRegistry);

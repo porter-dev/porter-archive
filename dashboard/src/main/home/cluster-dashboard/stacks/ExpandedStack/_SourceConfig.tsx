@@ -99,16 +99,18 @@ const _SourceConfig = ({
           </SourceConfigStyles.ItemContainer>
         );
       })}
-      <SourceConfigStyles.SaveButtonRow>
-        <SourceConfigStyles.SaveButton
-          onClick={handleSave}
-          text="Save"
-          clearPosition={true}
-          makeFlush={true}
-          status={buttonStatus}
-          statusPosition="left"
-        />
-      </SourceConfigStyles.SaveButtonRow>
+      {readOnly ? null : (
+        <SourceConfigStyles.SaveButtonRow>
+          <SourceConfigStyles.SaveButton
+            onClick={handleSave}
+            text="Save"
+            clearPosition={true}
+            makeFlush={true}
+            status={buttonStatus}
+            statusPosition="left"
+          />
+        </SourceConfigStyles.SaveButtonRow>
+      )}
     </SourceConfigStyles.Wrapper>
   );
 };

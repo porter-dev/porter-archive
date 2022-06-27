@@ -104,6 +104,16 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// when updating a PR comment, we have to handle several cases:
+	//   1. when a Porter environment has deployment status repeat-comments enabled
+	//      - nothing special here, simply create a new comment in the PR
+	//   2. when a Porter environment has deployment status repeat-comments disabled
+	//      - when a Porter deployment has Github comment ID saved in the DB
+	//        - try to update the comment using the Github comment ID
+	//        - if the above fails, try creating a new comment and save the new comment ID in the DB
+	//      - when a Porter deployment does not have a Github comment ID saved in the DB
+	//        - create a new comment and save the Github comment ID in the DB
+
 	// write comment in PR
 	commentBody := fmt.Sprintf("Porter has deployed this pull request to the following URL:\n%s", depl.Subdomain)
 	prComment := github.IssueComment{

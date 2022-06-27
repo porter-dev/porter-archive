@@ -51,6 +51,7 @@ type Deployment struct {
 	Subdomain      string
 	PullRequestID  uint
 	GHDeploymentID int64
+	GHPRCommentID  int64
 	PRName         string
 	RepoName       string
 	RepoOwner      string
@@ -69,6 +70,7 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		CommitSHA:    d.CommitSHA,
 		PRBranchFrom: d.PRBranchFrom,
 		PRBranchInto: d.PRBranchInto,
+		PRCommentID:  d.GHPRCommentID,
 	}
 
 	return &types.Deployment{

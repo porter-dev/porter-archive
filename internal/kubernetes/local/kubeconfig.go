@@ -80,7 +80,14 @@ func GetSelfAgentFromFileConfig(kubeconfigPath string) (*kubernetes.Agent, error
 		return nil, err
 	}
 
-	restClientGetter := kubernetes.NewRESTClientGetterFromInClusterConfig(restConf)
+	var namespace string
+	cmdConfNamespace, _, err := cmdConf.Namespace()
+
+	if err == nil && cmdConfNamespace != "" {
+		namespace = cmdConfNamespace
+	}
+
+	restClientGetter := kubernetes.NewRESTClientGetterFromInClusterConfig(restConf, namespace)
 	clientset, err := k8s.NewForConfig(restConf)
 
 	return &kubernetes.Agent{

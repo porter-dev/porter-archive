@@ -10,15 +10,27 @@ import { ImageType } from "shared/types";
 import Loading from "../Loading";
 import ImageList from "./ImageList";
 
-type PropsType = {
-  forceExpanded?: boolean;
-  selectedImageUrl: string | null;
-  selectedTag: string | null;
-  setSelectedImageUrl: (x: string) => void;
-  setSelectedTag: (x: string) => void;
-  noTagSelection?: boolean;
-  disableImageSelect?: boolean;
-};
+type PropsType =
+  | {
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl: (x: string) => void;
+      setSelectedTag: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly?: boolean;
+    }
+  | {
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl?: (x: string) => void;
+      setSelectedTag?: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly: true;
+    };
 
 type StateType = {
   isExpanded: boolean;
@@ -94,7 +106,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
       <Label>
         <img src={icon} />
         <Input
-          disabled={this.props.disableImageSelect}
+          disabled={this.props.readOnly || this.props.disableImageSelect}
           onClick={(e: any) => e.stopPropagation()}
           value={selectedImageUrl}
           onChange={(e: any) => {
@@ -118,6 +130,35 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   };
 
   render() {
+    if (this.props.readOnly) {
+      return (
+        <>
+          <StyledImageSelector isExpanded={true} forceExpanded={true}>
+            {this.renderSelected()}
+            {this.props.forceExpanded ? null : (
+              <i className="material-icons">
+                {this.state.isExpanded ? "close" : "build"}
+              </i>
+            )}
+          </StyledImageSelector>
+
+          <ImageList
+            disableImageSelect={true}
+            selectedImageUrl={this.props.selectedImageUrl}
+            selectedTag={this.props.selectedTag}
+            clickedImage={this.state.clickedImage}
+            noTagSelection={this.props.noTagSelection}
+            setSelectedImageUrl={this.props.setSelectedImageUrl}
+            setSelectedTag={this.props.setSelectedTag}
+            setClickedImage={(x: ImageType) =>
+              this.setState({ clickedImage: x })
+            }
+            readOnly
+          />
+        </>
+      );
+    }
+
     return (
       <div>
         <StyledImageSelector

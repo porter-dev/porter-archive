@@ -188,7 +188,7 @@ func getGitInstallationRoutes(
 		})
 
 		// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
-		// environment.NewCreateDeploymentHandler
+		// environment.NewGetDeploymentHandler
 		getDeploymentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
 				Verb:   types.APIVerbGet,

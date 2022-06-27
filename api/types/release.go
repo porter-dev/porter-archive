@@ -193,3 +193,13 @@ type GetReleaseAllPodsResponse []v1.Pod
 type PatchUpdateReleaseTags struct {
 	Tags []string `json:"tags"`
 }
+
+type PartialGitActionConfig struct {
+	// The branch to use for the git repository
+	// required: true
+	GitBranch string `json:"branch" form:"required"`
+}
+
+type UpdateGitActionConfigRequest struct {
+	GitActionConfig *PartialGitActionConfig `json:"git_action_config"`
+}

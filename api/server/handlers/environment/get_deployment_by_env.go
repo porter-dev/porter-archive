@@ -15,21 +15,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type GetDeploymentByClusterHandler struct {
+type GetDeploymentByEnvironmentHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewGetDeploymentByClusterHandler(
+func NewGetDeploymentByEnvironmentHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetDeploymentByClusterHandler {
-	return &GetDeploymentByClusterHandler{
+) *GetDeploymentByEnvironmentHandler {
+	return &GetDeploymentByEnvironmentHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *GetDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetDeploymentByEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
@@ -48,10 +48,12 @@ func (c *GetDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	_, err := c.Repo().Environment().ReadEnvironmentByID(project.ID, cluster.ID, envID)
 
-	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("environment with id %d not found", envID)))
-		return
-	} else if err != nil {
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment with id %d not found", envID)))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -59,6 +61,11 @@ func (c *GetDeploymentByClusterHandler) ServeHTTP(w http.ResponseWriter, r *http
 	depl, err := c.Repo().Environment().ReadDeployment(envID, request.Namespace)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("deployment not found for namespace: %s", request.Namespace)))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

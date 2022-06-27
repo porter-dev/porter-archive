@@ -8,7 +8,7 @@ import {
 } from "react-router";
 import { Context } from "shared/Context";
 import Dashboard from "./Dashboard";
-import ExpandedStack from "./ExpandedStack";
+import ExpandedStack from "./ExpandedStack/ExpandedStack";
 import LaunchRoutes from "./launch";
 
 const routes = () => {

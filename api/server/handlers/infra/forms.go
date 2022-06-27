@@ -557,6 +557,11 @@ tabs:
       placeholder: "ex: 10.99"
       settings:
         default: "10.99"
+    - type: checkbox
+      label: "Add additional private subnets to the cluster in each AZ."
+      variable: additional_private_subnets
+      settings:
+        default: false
   - name: nginx_settings
     contents:
     - type: heading

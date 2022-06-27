@@ -89,26 +89,42 @@ func (c *GetClusterInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	ec2Svc := ec2.New(awsSession, awsConf)
 
-	subnetsInfo, err := ec2Svc.DescribeSubnets(&ec2.DescribeSubnetsInput{
-		SubnetIds: clusterInfo.Cluster.ResourcesVpcConfig.SubnetIds,
-	})
-
-	if err != nil || len(subnetsInfo.Subnets) == 0 {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	res := &types.GetAWSClusterInfoResponse{
 		Name:       clusterName,
+		ARN:        *clusterInfo.Cluster.Arn,
+		Status:     *clusterInfo.Cluster.Status,
 		K8sVersion: *clusterInfo.Cluster.Version,
 		EKSVersion: *clusterInfo.Cluster.PlatformVersion,
 	}
 
-	for _, subnet := range subnetsInfo.Subnets {
-		res.Subnets = append(res.Subnets, &types.AWSSubnet{
-			AvailabilityZone:        *subnet.AvailabilityZone,
-			AvailableIPAddressCount: *subnet.AvailableIpAddressCount,
-		})
+	err = ec2Svc.DescribeSubnetsPages(&ec2.DescribeSubnetsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name: aws.String("vpc-id"),
+				Values: []*string{
+					clusterInfo.Cluster.ResourcesVpcConfig.VpcId,
+				},
+			},
+		},
+	}, func(page *ec2.DescribeSubnetsOutput, lastPage bool) bool {
+		if page == nil {
+			return false
+		}
+
+		for _, subnet := range page.Subnets {
+			res.Subnets = append(res.Subnets, &types.AWSSubnet{
+				SubnetID:                *subnet.SubnetId,
+				AvailabilityZone:        *subnet.AvailabilityZone,
+				AvailableIPAddressCount: *subnet.AvailableIpAddressCount,
+			})
+		}
+
+		return !lastPage
+	})
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	c.WriteResult(w, r, res)

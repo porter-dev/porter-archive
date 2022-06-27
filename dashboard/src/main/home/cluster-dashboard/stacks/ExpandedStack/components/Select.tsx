@@ -75,6 +75,16 @@ const Select = <T extends unknown>({
     );
   }
 
+  const isSelected = (option: T, value: T) => {
+    if (!value) {
+      return false;
+    }
+
+    if (isOptionEqualToValue) {
+      return isOptionEqualToValue(option, value);
+    }
+  };
+
   return (
     <div>
       {getLabel()}
@@ -107,11 +117,7 @@ const Select = <T extends unknown>({
                     key={i}
                     onClick={() => !readOnly && handleOptionClick(option)}
                     lastItem={i === options.length - 1}
-                    selected={
-                      isOptionEqualToValue
-                        ? isOptionEqualToValue(option, value)
-                        : option === value
-                    }
+                    selected={isSelected(option, value)}
                     height={dropdown?.option?.height}
                   >
                     {accessor(option)}

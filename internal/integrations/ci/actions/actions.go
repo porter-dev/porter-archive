@@ -235,8 +235,9 @@ type GithubActionYAMLOnPush struct {
 }
 
 type GithubActionYAMLJob struct {
-	RunsOn string                 `yaml:"runs-on,omitempty"`
-	Steps  []GithubActionYAMLStep `yaml:"steps,omitempty"`
+	RunsOn      string                 `yaml:"runs-on,omitempty"`
+	Steps       []GithubActionYAMLStep `yaml:"steps,omitempty"`
+	Concurrency map[string]string      `yaml:"concurrency,omitempty"`
 }
 
 type GithubActionYAML struct {

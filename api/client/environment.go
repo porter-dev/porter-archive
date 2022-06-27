@@ -22,6 +22,26 @@ func (c *Client) ListEnvironments(
 	return resp, err
 }
 
+func (c *Client) CreateDeployment(
+	ctx context.Context,
+	projID, gitInstallationID, clusterID uint,
+	gitRepoOwner, gitRepoName string,
+	req *types.CreateDeploymentRequest,
+) (*types.Deployment, error) {
+	resp := &types.Deployment{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment",
+			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) GetDeployment(
 	ctx context.Context,
 	projID, clusterID, envID uint,

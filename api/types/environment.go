@@ -24,6 +24,7 @@ type CreateEnvironmentRequest struct {
 
 type GitHubMetadata struct {
 	DeploymentID int64  `json:"gh_deployment_id"`
+	PRCommentID  int64  `json:"gh_pr_comment_id"`
 	PRName       string `json:"gh_pr_name"`
 	RepoName     string `json:"gh_repo_name"`
 	RepoOwner    string `json:"gh_repo_owner"`

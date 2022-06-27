@@ -199,6 +199,18 @@ const listEnvironments = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments`;
 });
 
+const toggleNewCommentForEnvironment = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, environment_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}`;
+});
+
 const createGCPIntegration = baseApi<
   {
     gcp_key_data: string;
@@ -2029,6 +2041,7 @@ export default {
   createPreviewEnvironmentDeployment,
   reenablePreviewEnvironmentDeployment,
   listEnvironments,
+  toggleNewCommentForEnvironment,
   createGCPIntegration,
   createInvite,
   createNamespace,

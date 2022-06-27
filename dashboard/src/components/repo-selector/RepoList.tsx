@@ -19,6 +19,42 @@ type Props = {
   filteredRepos?: string[];
 };
 
+type Provider =
+  | {
+      provider: "github";
+      name: string;
+      installation_id: number;
+    }
+  | {
+      provider: "gitlab";
+      instance_url: string;
+      integration_id: number;
+    };
+
+// Sort provider by name if it's github or instance url if it's gitlab
+const sortProviders = (providers: Provider[]) => {
+  const githubProviders = providers.filter(
+    (provider) => provider.provider === "github"
+  );
+
+  const gitlabProviders = providers.filter(
+    (provider) => provider.provider === "gitlab"
+  );
+
+  const githubSortedProviders = githubProviders.sort((a, b) => {
+    if (a.provider === "github" && b.provider === "github") {
+      return a.name.localeCompare(b.name);
+    }
+  });
+
+  const gitlabSortedProviders = gitlabProviders.sort((a, b) => {
+    if (a.provider === "gitlab" && b.provider === "gitlab") {
+      return a.instance_url.localeCompare(b.instance_url);
+    }
+  });
+  return [...gitlabSortedProviders, ...githubSortedProviders];
+};
+
 const RepoList: React.FC<Props> = ({
   actionConfig,
   setActionConfig,
@@ -51,8 +87,9 @@ const RepoList: React.FC<Props> = ({
           return;
         }
 
-        setProviders(data);
-        setCurrentProvider(data[0]);
+        const sortedProviders = sortProviders(data);
+        setProviders(sortedProviders);
+        setCurrentProvider(sortedProviders[0]);
       })
       .catch((err) => {
         setHasProviders(false);

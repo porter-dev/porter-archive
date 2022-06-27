@@ -148,7 +148,7 @@ const _DockerRepositorySelector = ({
         accessor={(val) => val.name}
         label="Docker Registry"
         placeholder="Select a registry"
-        isOptionEqualToValue={(a, b) => a.url === b.url}
+        isOptionEqualToValue={(a, b) => a?.url === b?.url}
         readOnly={readOnly}
         isLoading={isLoading}
         dropdown={{

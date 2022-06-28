@@ -859,15 +859,20 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 		}
 	}
 
+	req := &types.FinalizeDeploymentRequest{
+		Namespace: t.namespace,
+		Subdomain: strings.Join(subdomains, ","),
+	}
+
+	for _, res := range t.resourceGroup.Resources {
+		req.SuccessfulResources = append(req.SuccessfulResources, getReleaseName(res))
+	}
+
 	// finalize the deployment
 	_, err := t.client.FinalizeDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName,
-		&types.FinalizeDeploymentRequest{
-			Namespace: t.namespace,
-			Subdomain: strings.Join(subdomains, ","),
-		},
+		t.repoOwner, t.repoName, req,
 	)
 
 	return err
@@ -918,7 +923,7 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 
 		for _, res := range t.resourceGroup.Resources {
 			if _, ok := allErrors[res.Name]; !ok {
-				req.SuccessfulResources = append(req.SuccessfulResources, res.Name)
+				req.SuccessfulResources = append(req.SuccessfulResources, getReleaseName(res))
 			}
 		}
 
@@ -1027,3 +1032,15 @@ func (t *CloneEnvGroupHook) PostApply(map[string]interface{}) error {
 func (t *CloneEnvGroupHook) OnError(error) {}
 
 func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}
+
+func getReleaseName(res *switchboardTypes.Resource) string {
+	// can ignore the error because this method is called once
+	// GetTarget has alrealy been called and validated previously
+	target, _ := preview.GetTarget(res.Target)
+
+	if target.AppName != "" {
+		return target.AppName
+	}
+
+	return res.Name
+}

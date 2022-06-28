@@ -118,19 +118,25 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	// write comment in PR
 	commentBody := fmt.Sprintf(
-		"## ✅ Porter Preview Environments\n"+
+		"## Porter Preview Environments\n"+
+			"✅ All changes deployed successfully\n"+
 			"||Deployment Information|\n"+
 			"|-|-|\n"+
 			"| Latest SHA | [`%s`](https://github.com/%s/%s/commit/%s) |\n"+
 			"| Live URL | %s |\n"+
-			"| Github Action | %s |\n"+
+			"| Build Logs | %s |\n"+
 			"| Porter Deployments URL | %s/preview-environments/details/%s?environment_id=%d |",
 		depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, depl.Subdomain, workflowRun.GetHTMLURL(),
 		c.Config().ServerConf.ServerURL, depl.Namespace, depl.EnvironmentID,
 	)
 
-	prComment := &github.IssueComment{
-		Body: github.String(commentBody),
+	if len(request.SuccessfulResources) > 0 {
+		commentBody += "#### Successfully deployed resources\n"
+
+		for _, res := range request.SuccessfulResources {
+			commentBody += fmt.Sprintf("- [`%s`](%s/applications/%s/%s/%s?project_id=%d)\n",
+				res, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace, res, project.ID)
+		}
 	}
 
 	_, _, err = client.Issues.CreateComment(
@@ -138,7 +144,9 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		env.GitRepoOwner,
 		env.GitRepoName,
 		int(depl.PullRequestID),
-		prComment,
+		&github.IssueComment{
+			Body: github.String(commentBody),
+		},
 	)
 
 	if err != nil {

@@ -71,7 +71,13 @@ type CreateDeploymentRequest struct {
 
 type FinalizeDeploymentRequest struct {
 	Namespace string `json:"namespace" form:"required"`
-	Subdomain string `json:"subdomain" form:"required"`
+	Subdomain string `json:"subdomain"`
+}
+
+type FinalizeDeploymentWithErrorsRequest struct {
+	Namespace           string            `json:"namespace" form:"required"`
+	SuccessfulResources []string          `json:"successful_resources"`
+	Errors              map[string]string `json:"errors" form:"required"`
 }
 
 type UpdateDeploymentRequest struct {

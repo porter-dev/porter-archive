@@ -118,6 +118,26 @@ func (c *Client) FinalizeDeployment(
 	return resp, err
 }
 
+func (c *Client) FinalizeDeploymentWithErrors(
+	ctx context.Context,
+	projID, gitInstallationID, clusterID uint,
+	gitRepoOwner, gitRepoName string,
+	req *types.FinalizeDeploymentWithErrorsRequest,
+) (*types.Deployment, error) {
+	resp := &types.Deployment{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/gitrepos/%d/%s/%s/clusters/%d/deployment/finalize_errors",
+			projID, gitInstallationID, gitRepoOwner, gitRepoName, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 func (c *Client) DeleteDeployment(
 	ctx context.Context,
 	projID, clusterID, deploymentID uint,

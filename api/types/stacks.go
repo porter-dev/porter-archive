@@ -71,6 +71,9 @@ type Stack struct {
 	// The display name of the stack
 	Name string `json:"name"`
 
+	// The namespace that the stack was deployed to
+	Namespace string `json:"namespace"`
+
 	// A unique id for the stack
 	ID string `json:"id"`
 
@@ -190,13 +193,13 @@ type StackSourceConfig struct {
 // swagger:model
 type CreateStackSourceConfigRequest struct {
 	// required: true
-	Name string `json:"name"`
+	Name string `json:"name" form:"required"`
 
 	// required: true
-	ImageRepoURI string `json:"image_repo_uri"`
+	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 
 	// required: true
-	ImageTag string `json:"image_tag"`
+	ImageTag string `json:"image_tag" form:"required"`
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
@@ -205,13 +208,13 @@ type CreateStackSourceConfigRequest struct {
 // swagger:model
 type UpdateStackSourceConfigRequest struct {
 	// required: true
-	Name string `json:"name"`
+	Name string `json:"name" form:"required"`
 
 	// required: true
-	ImageRepoURI string `json:"image_repo_uri"`
+	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 
 	// required: true
-	ImageTag string `json:"image_tag"`
+	ImageTag string `json:"image_tag" form:"required"`
 }
 
 type StackSourceConfigBuild struct {

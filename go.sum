@@ -1388,6 +1388,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/porter-dev/switchboard v0.0.0-20220416181342-416fc450addb h1:WNKCA31IJaGnf0VR0uzb3b10IzQb3OSuGlFi8X/AnLs=
 github.com/porter-dev/switchboard v0.0.0-20220416181342-416fc450addb/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
+github.com/porter-dev/switchboard v0.0.0-20220628112428-7665a0121e4f h1:REYJSDm2R3pM4mq88AlSBPIPhGiKFwiehe+GKZIc7Hc=
+github.com/porter-dev/switchboard v0.0.0-20220628112428-7665a0121e4f/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSgv7Sy7s/s=
 github.com/pquerna/cachecontrol v0.0.0-20171018203845-0dec1b30a021/go.mod h1:prYjPmNq4d1NPVmpShWobRqXY3q7Vp+80DqgxxUrUIA=

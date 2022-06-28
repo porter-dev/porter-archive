@@ -71,6 +71,7 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&models.ClusterCandidate{},
 		&models.ClusterResolver{},
 		&models.Infra{},
+		&models.Operation{},
 		&models.GitActionConfig{},
 		&models.Invite{},
 		&models.KubeEvent{},

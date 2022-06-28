@@ -21,6 +21,10 @@ func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace str
 	panic("unimplemented")
 }
 
+func (repo *StackRepository) ReadStackByID(projectID, stackID uint) (*models.Stack, error) {
+	panic("unimplemented")
+}
+
 // ReadStack gets a stack specified by its string id
 func (repo *StackRepository) ReadStackByStringID(projectID uint, stackID string) (*models.Stack, error) {
 	panic("unimplemented")

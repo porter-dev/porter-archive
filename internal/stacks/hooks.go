@@ -1,6 +1,8 @@
 package stacks
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"gorm.io/gorm"
 	"helm.sh/helm/v3/pkg/release"
@@ -24,12 +26,26 @@ func UpdateHelmRevision(config *config.Config, projID, clusterID uint, rel *rele
 		return err
 	}
 
-	// read the revision number and create a new revision of the stack
-	stackRevision, err := config.Repo.Stack().ReadStackRevision(stackResource.StackRevisionID)
+	// read the revision number corresponding and create a new revision of the stack
+	oldStackRevision, err := config.Repo.Stack().ReadStackRevision(stackResource.StackRevisionID)
 
 	if err != nil {
 		return err
 	}
+
+	// get the latest revision for that stack
+	stack, err := config.Repo.Stack().ReadStackByID(projID, oldStackRevision.StackID)
+
+	if err != nil {
+		return err
+	}
+
+	if len(stack.Revisions) == 0 {
+		return fmt.Errorf("length of stack revision list was 0")
+	}
+
+	currStackRevision := stack.Revisions[0]
+	stackRevision := &currStackRevision
 
 	clonedSourceConfigs, err := CloneSourceConfigs(stackRevision.SourceConfigs)
 

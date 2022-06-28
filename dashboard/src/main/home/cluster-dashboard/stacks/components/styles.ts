@@ -96,3 +96,36 @@ export const Flex = styled.div`
   display: flex;
   align-items: center;
 `;
+
+export const NamespaceTag = {
+  Wrapper: styled.div`
+    height: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff44;
+    border: 1px solid #ffffff44;
+    border-radius: 3px;
+    padding-left: 5px;
+  `,
+
+  Tag: styled.div`
+    height: 20px;
+    margin-left: 6px;
+    color: #aaaabb;
+    background: #ffffff22;
+    border-radius: 3px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0px 6px;
+    padding-left: 7px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `,
+};

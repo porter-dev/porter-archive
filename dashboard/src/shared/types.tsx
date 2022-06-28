@@ -426,6 +426,7 @@ export type OperationType =
 
 export type Infrastructure = {
   id: number;
+  name?: string;
   api_version: string;
   created_at: string;
   updated_at: string;

@@ -39,6 +39,7 @@ func (s *Stack) ToStackType() *types.Stack {
 		CreatedAt:      s.CreatedAt,
 		UpdatedAt:      s.UpdatedAt,
 		Name:           s.Name,
+		Namespace:      s.Namespace,
 		ID:             s.UID,
 		LatestRevision: latestRevision,
 		Revisions:      revisions,

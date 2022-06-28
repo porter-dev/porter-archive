@@ -168,6 +168,8 @@ const _RevisionList = ({
 export default _RevisionList;
 
 const StyledRevisionSection = styled.div`
+  display: flex;
+  flex-direction: column;
   position: relative;
   width: 100%;
   max-height: ${(props: { showRevisions: boolean }) =>
@@ -195,7 +197,7 @@ const RevisionHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 40px;
+  min-height: 40px;
   font-size: 13px;
   width: 100%;
   padding-left: 15px;
@@ -228,6 +230,7 @@ const RevisionPreview = styled.div`
 
 const TableWrapper = styled.div`
   padding-bottom: 20px;
+  overflow-y: auto;
 `;
 
 const RevisionsTable = styled.table`

@@ -512,6 +512,12 @@ tabs:
       label: Allow Porter to manage AWS authentication for the cluster.
       settings:
         default: true
+  - name: aws_auth_warning
+    show_if: 
+      not: manage_aws_auth_configmap
+    contents:
+    - type: subtitle
+      label: "WARNING - turning this value off will result in the aws-auth configmap getting removed from the cluster, and will take existing AWS nodes offline until the configmap is re-added with the node's IAM role ARN. Make sure you know what you are doing."
   - name: arns
     show_if: manage_aws_auth_configmap
     contents:

@@ -13,6 +13,7 @@ import {
   Flex,
   InfoWrapper,
   LastDeployed,
+  NamespaceTag,
   SepDot,
   Text,
 } from "./components/styles";
@@ -80,6 +81,10 @@ const StackList = ({ namespace }: { namespace: string }) => {
           setIsLoading(false);
         }
       });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [namespace]);
 
   if (isLoading) {
@@ -104,16 +109,22 @@ const StackList = ({ namespace }: { namespace: string }) => {
           <StackCard
             as={DynamicLink}
             key={stack?.id}
-            to={`/stacks/${namespace}/${stack?.id}`}
+            to={`/stacks/${stack?.namespace}/${stack?.id}`}
           >
             <DataContainer>
-              <StackName>
-                <StackIcon>
-                  <i className="material-icons-outlined">lan</i>
-                </StackIcon>
-                <span>{stack.name}</span>
-              </StackName>
-
+              <Top>
+                <StackName>
+                  <StackIcon>
+                    <i className="material-icons-outlined">lan</i>
+                  </StackIcon>
+                  <span>{stack.name}</span>
+                </StackName>
+                <SepDot>•</SepDot>
+                <NamespaceTag.Wrapper>
+                  Namespace
+                  <NamespaceTag.Tag>{stack.namespace}</NamespaceTag.Tag>
+                </NamespaceTag.Wrapper>
+              </Top>
               <InfoWrapper>
                 <LastDeployed>
                   <Status
@@ -200,7 +211,6 @@ const StackName = styled.div`
   display: flex;
   font-size: 14px;
   align-items: center;
-  margin-bottom: 10px;
 `;
 
 const DataContainer = styled.div`
@@ -214,4 +224,10 @@ const DataContainer = styled.div`
 const StackCard = styled(Card)`
   font-size: 13px;
   font-weight: 500;
+`;
+
+const Top = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
 `;

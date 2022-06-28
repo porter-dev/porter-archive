@@ -74,6 +74,12 @@ type FinalizeDeploymentRequest struct {
 	Subdomain string `json:"subdomain"`
 }
 
+type FinalizeDeploymentWithErrorsRequest struct {
+	Namespace           string            `json:"namespace" form:"required"`
+	SuccessfulResources []string          `json:"successful_resources"`
+	Errors              map[string]string `json:"errors" form:"required"`
+}
+
 type UpdateDeploymentRequest struct {
 	*CreateGHDeploymentRequest
 

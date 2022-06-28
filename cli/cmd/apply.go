@@ -900,6 +900,42 @@ func (t *DeploymentHook) OnError(err error) {
 	}
 }
 
+func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
+	// if the deployment exists, throw an error for that deployment
+	_, getDeplErr := t.client.GetDeployment(
+		context.Background(),
+		t.projectID, t.clusterID, t.envID,
+		&types.GetDeploymentRequest{
+			Namespace: t.namespace,
+		},
+	)
+
+	if getDeplErr == nil {
+		req := &types.FinalizeDeploymentWithErrorsRequest{
+			Namespace: t.namespace,
+			Errors:    make(map[string]string),
+		}
+
+		for _, res := range t.resourceGroup.Resources {
+			if _, ok := allErrors[res.Name]; !ok {
+				req.SuccessfulResources = append(req.SuccessfulResources, res.Name)
+			}
+		}
+
+		for res, err := range allErrors {
+			req.Errors[res] = err.Error()
+		}
+
+		// FIXME: handle the error
+		t.client.FinalizeDeploymentWithErrors(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			t.repoOwner, t.repoName,
+			req,
+		)
+	}
+}
+
 type CloneEnvGroupHook struct {
 	client   *api.Client
 	resGroup *switchboardTypes.ResourceGroup
@@ -984,8 +1020,10 @@ func (t *CloneEnvGroupHook) DataQueries() map[string]interface{} {
 	return nil
 }
 
-func (t *CloneEnvGroupHook) PostApply(populatedData map[string]interface{}) error {
+func (t *CloneEnvGroupHook) PostApply(map[string]interface{}) error {
 	return nil
 }
 
-func (t *CloneEnvGroupHook) OnError(err error) {}
+func (t *CloneEnvGroupHook) OnError(error) {}
+
+func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}

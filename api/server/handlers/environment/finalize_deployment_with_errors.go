@@ -114,11 +114,12 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 	}
 
 	commentBody := fmt.Sprintf(
-		"## ❌ Porter Preview Environments\n"+
+		"## Porter Preview Environments\n"+
+			"❌ Errors encountered while deploying the changes\n"+
 			"||Deployment Information|\n"+
 			"|-|-|\n"+
 			"| Latest SHA | [`%s`](https://github.com/%s/%s/commit/%s) |\n"+
-			"| Github Action | %s |\n",
+			"| Build Logs | %s |\n",
 		depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, workflowRun.GetHTMLURL(),
 	)
 
@@ -126,7 +127,8 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		commentBody += "#### Successfully deployed resources\n"
 
 		for _, res := range request.SuccessfulResources {
-			commentBody += fmt.Sprintf("- `%s`\n", res)
+			commentBody += fmt.Sprintf("- [`%s`](%s/applications/%s/%s/%s?project_id=%d)\n",
+				res, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace, res, project.ID)
 		}
 	}
 

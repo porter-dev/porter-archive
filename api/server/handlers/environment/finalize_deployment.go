@@ -131,11 +131,18 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	)
 
 	if len(request.SuccessfulResources) > 0 {
-		commentBody += "#### Successfully deployed resources\n"
+		commentBody += "\n#### Successfully deployed resources\n"
 
 		for _, res := range request.SuccessfulResources {
-			commentBody += fmt.Sprintf("- [`%s`](%s/applications/%s/%s/%s?project_id=%d)\n",
-				res, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace, res, project.ID)
+			if res.ReleaseType == "job" {
+				commentBody += fmt.Sprintf("- [`%s`](%s/jobs/%s/%s/%s?project_id=%d)\n",
+					res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
+					res.ReleaseName, project.ID)
+			} else {
+				commentBody += fmt.Sprintf("- [`%s`](%s/applications/%s/%s/%s?project_id=%d)\n",
+					res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
+					res.ReleaseName, project.ID)
+			}
 		}
 	}
 

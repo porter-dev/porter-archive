@@ -861,11 +861,14 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 
 	req := &types.FinalizeDeploymentRequest{
 		Namespace: t.namespace,
-		Subdomain: strings.Join(subdomains, ","),
+		Subdomain: strings.Join(subdomains, ", "),
 	}
 
 	for _, res := range t.resourceGroup.Resources {
-		req.SuccessfulResources = append(req.SuccessfulResources, getReleaseName(res))
+		req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
+			ReleaseName: getReleaseName(res),
+			ReleaseType: getReleaseType(res),
+		})
 	}
 
 	// finalize the deployment
@@ -923,7 +926,10 @@ func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
 
 		for _, res := range t.resourceGroup.Resources {
 			if _, ok := allErrors[res.Name]; !ok {
-				req.SuccessfulResources = append(req.SuccessfulResources, getReleaseName(res))
+				req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
+					ReleaseName: getReleaseName(res),
+					ReleaseType: getReleaseType(res),
+				})
 			}
 		}
 
@@ -1043,4 +1049,12 @@ func getReleaseName(res *switchboardTypes.Resource) string {
 	}
 
 	return res.Name
+}
+
+func getReleaseType(res *switchboardTypes.Resource) string {
+	// can ignore the error because this method is called once
+	// GetSource has alrealy been called and validated previously
+	source, _ := preview.GetSource(res.Source)
+
+	return source.Name
 }

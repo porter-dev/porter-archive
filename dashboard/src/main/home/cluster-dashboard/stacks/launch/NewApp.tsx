@@ -19,7 +19,9 @@ import { hardcodedIcons } from "shared/hardcodedNameDict";
 const DEFAULT_STACK_SOURCE_CONFIG_INDEX = 0;
 
 const NewApp = () => {
-  const { addAppResource, newStack } = useContext(StacksLaunchContext);
+  const { addAppResource, newStack, namespace } = useContext(
+    StacksLaunchContext
+  );
   const { currentCluster } = useContext(Context);
 
   const params = useParams<{
@@ -72,7 +74,11 @@ const NewApp = () => {
   }, [params]);
 
   if (isLoading) {
-    return <Wrapper><Loading /></Wrapper>;
+    return (
+      <Wrapper>
+        <Loading />
+      </Wrapper>
+    );
   }
 
   if (hasError) {
@@ -185,17 +191,20 @@ const NewApp = () => {
       <TitleSection>
         <DynamicLink to={`/stacks/launch/overview`}>
           <BackButton>
-            <i className="material-icons">
-              keyboard_backspace
-            </i>
+            <i className="material-icons">keyboard_backspace</i>
           </BackButton>
         </DynamicLink>
         <Polymer>
-        <Icon src={hardcodedIcons[template.metadata.name]} />
+          <Icon src={hardcodedIcons[template.metadata.name]} />
         </Polymer>
-        Add {template.metadata.name.charAt(0).toUpperCase() + template.metadata.name.slice(1)} to Stack
+        Add{" "}
+        {template.metadata.name.charAt(0).toUpperCase() +
+          template.metadata.name.slice(1)}{" "}
+        to Stack
       </TitleSection>
-      <Heading>Application Name <Required>*</Required></Heading>
+      <Heading>
+        Application Name <Required>*</Required>
+      </Heading>
       <InputRow
         type="string"
         value={appName}
@@ -205,15 +214,21 @@ const NewApp = () => {
       />
 
       <div style={{ position: "relative" }}>
-      <Heading>Application Settings</Heading>
-      <Helper>Configure settings for this application.</Helper>
-      <PorterFormWrapper
-        formData={template.form}
-        onSubmit={handleSubmit}
-        isLaunch
-        saveValuesStatus={saveButtonStatus}
-        saveButtonText="Add Application"
-      />
+        <Heading>Application Settings</Heading>
+        <Helper>Configure settings for this application.</Helper>
+        <PorterFormWrapper
+          formData={template.form}
+          onSubmit={handleSubmit}
+          isLaunch
+          saveValuesStatus={saveButtonStatus}
+          saveButtonText="Add Application"
+          valuesToOverride={{ namespace }}
+          injectedProps={{
+            "key-value-array": {
+              availableSyncEnvGroups: [],
+            },
+          }}
+        />
       </div>
     </StyledLaunchFlow>
   );

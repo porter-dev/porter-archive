@@ -13,6 +13,7 @@ import {
   Flex,
   InfoWrapper,
   LastDeployed,
+  NamespaceTag,
   SepDot,
   Text,
 } from "./components/styles";
@@ -108,7 +109,7 @@ const StackList = ({ namespace }: { namespace: string }) => {
           <StackCard
             as={DynamicLink}
             key={stack?.id}
-            to={`/stacks/${namespace}/${stack?.id}`}
+            to={`/stacks/${stack?.namespace}/${stack?.id}`}
           >
             <DataContainer>
               <Top>
@@ -119,10 +120,10 @@ const StackList = ({ namespace }: { namespace: string }) => {
                   <span>{stack.name}</span>
                 </StackName>
                 <SepDot>•</SepDot>
-                <TagWrapper>
+                <NamespaceTag.Wrapper>
                   Namespace
-                  <NamespaceTag>{stack.namespace}</NamespaceTag>
-                </TagWrapper>
+                  <NamespaceTag.Tag>{stack.namespace}</NamespaceTag.Tag>
+                </NamespaceTag.Wrapper>
               </Top>
               <InfoWrapper>
                 <LastDeployed>
@@ -223,37 +224,6 @@ const DataContainer = styled.div`
 const StackCard = styled(Card)`
   font-size: 13px;
   font-weight: 500;
-`;
-
-const TagWrapper = styled.div`
-  height: 20px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff44;
-  border: 1px solid #ffffff44;
-  border-radius: 3px;
-  padding-left: 5px;
-`;
-
-const NamespaceTag = styled.div`
-  height: 20px;
-  margin-left: 6px;
-  color: #aaaabb;
-  background: #ffffff22;
-  border-radius: 3px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0px 6px;
-  padding-left: 7px;
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `;
 
 const Top = styled.div`

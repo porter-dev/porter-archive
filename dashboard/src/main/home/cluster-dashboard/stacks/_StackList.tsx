@@ -80,6 +80,10 @@ const StackList = ({ namespace }: { namespace: string }) => {
           setIsLoading(false);
         }
       });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [namespace]);
 
   if (isLoading) {

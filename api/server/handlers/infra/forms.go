@@ -500,6 +500,37 @@ tabs:
       placeholder: "ex: 10"
       settings:
         default: 10
+- name: iam
+  label: IAM
+  sections:
+  - name: toggle_aws_auth
+    contents:
+    - type: heading
+      label: Configure IAM Access
+    - type: checkbox
+      variable: manage_aws_auth_configmap
+      label: Allow Porter to manage AWS authentication for the cluster.
+      settings:
+        default: true
+  - name: arns
+    show_if: manage_aws_auth_configmap
+    contents:
+    - type: heading
+      label: Users
+    - type: subtitle
+      label: "Add AWS users to the cluster. The left input should be a valid AWS user ARN, and the right side should be a group on the cluster. For example, arn:aws:iam::66666666666:user/user1: system:masters."
+    - type: key-value-array
+      variable: aws_auth_users
+      settings:
+        default: {}
+    - type: heading
+      label: Roles
+    - type: subtitle
+      label: "Add AWS roles to the cluster. The left input should be a valid AWS role ARN, and the right side should be a group on the cluster. For example, arn:aws:iam::66666666666:role/role1: system:masters."
+    - type: key-value-array
+      variable: aws_auth_roles
+      settings:
+        default: {}
 - name: advanced
   label: Advanced
   sections:

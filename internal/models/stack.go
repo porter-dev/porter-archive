@@ -62,6 +62,8 @@ type StackRevision struct {
 	Resources []StackResource
 
 	SourceConfigs []StackSourceConfig
+
+	EnvGroups []StackEnvGroup
 }
 
 func (s StackRevision) ToStackRevisionMetaType(stackID string) types.StackRevisionMeta {
@@ -88,10 +90,17 @@ func (s StackRevision) ToStackRevisionType(stackID string) *types.StackRevision 
 		resources = append(resources, *stackResource.ToStackResource(stackID, s.RevisionNumber, s.SourceConfigs))
 	}
 
+	envGroups := make([]types.StackEnvGroup, 0)
+
+	for _, stackEnvGroup := range s.EnvGroups {
+		envGroups = append(envGroups, *stackEnvGroup.ToStackEnvGroupType(stackID, s.RevisionNumber))
+	}
+
 	return &types.StackRevision{
 		StackRevisionMeta: &metaType,
 		SourceConfigs:     sourceConfigs,
 		Resources:         resources,
+		EnvGroups:         envGroups,
 		Reason:            s.Reason,
 		Message:           s.Message,
 	}
@@ -174,5 +183,35 @@ func (s StackSourceConfig) ToStackSourceConfigType(stackID string, stackRevision
 		ID:              s.UID,
 		ImageRepoURI:    s.ImageRepoURI,
 		ImageTag:        s.ImageTag,
+	}
+}
+
+type StackEnvGroup struct {
+	gorm.Model
+
+	StackRevisionID uint
+
+	Name string
+
+	Namespace string
+
+	ProjectID uint
+
+	ClusterID uint
+
+	UID string
+
+	EnvGroupVersion uint
+}
+
+func (s StackEnvGroup) ToStackEnvGroupType(stackID string, stackRevisionID uint) *types.StackEnvGroup {
+	return &types.StackEnvGroup{
+		CreatedAt:       s.CreatedAt,
+		UpdatedAt:       s.UpdatedAt,
+		StackID:         stackID,
+		StackRevisionID: stackRevisionID,
+		Name:            s.Name,
+		ID:              s.UID,
+		EnvGroupVersion: s.EnvGroupVersion,
 	}
 }

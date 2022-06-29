@@ -86,8 +86,16 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	envGroups, err := stacks.CloneEnvGroups(revision.EnvGroups)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	revision.SourceConfigs = newSourceConfigs
 	revision.Resources = appResources
+	revision.EnvGroups = envGroups
 
 	revision, err = p.Repo().Stack().AppendNewRevision(revision)
 

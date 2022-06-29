@@ -59,6 +59,7 @@ const AlertCard = styled.div`
   color: rgb(244, 199, 199);
   margin-top: 20px;
   position: relative;
+  margin-bottom: 20px;
 `;
 
 const AlertCardIcon = styled.span`

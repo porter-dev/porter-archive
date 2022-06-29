@@ -2048,6 +2048,11 @@ const updateStackSourceConfig = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/source`
 );
 
+const getGithubStatus = baseApi<{}, {}>(
+  "GET",
+  ({}) => `/api/status/github`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -2240,4 +2245,7 @@ export default {
   rollbackStack,
   deleteStack,
   updateStackSourceConfig,
+
+  // STATUS
+  getGithubStatus,
 };

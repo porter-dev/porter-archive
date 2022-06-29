@@ -17,6 +17,7 @@ import {
   InfoWrapper,
   LastDeployed,
   LineBreak,
+  NamespaceTag,
   SepDot,
   Text,
 } from "../components/styles";
@@ -79,13 +80,19 @@ const ExpandedStack = () => {
 
   return (
     <div>
-      <TitleSection
-        materialIconClass="material-icons-outlined"
-        icon={"lan"}
-        capitalize
-      >
-        {stack.name}
-      </TitleSection>
+      <StackTitleWrapper>
+        <TitleSection
+          materialIconClass="material-icons-outlined"
+          icon={"lan"}
+          capitalize
+        >
+          {stack.name}
+        </TitleSection>
+        <NamespaceTag.Wrapper>
+          Namespace
+          <NamespaceTag.Tag>{stack.namespace}</NamespaceTag.Tag>
+        </NamespaceTag.Wrapper>
+      </StackTitleWrapper>
       <RevisionList
         revisions={stack.revisions}
         currentRevision={currentRevision}
@@ -174,7 +181,12 @@ const ExpandedStack = () => {
             value: "source_config",
             component: (
               <>
-                <SourceConfig revision={currentRevision}></SourceConfig>
+                <SourceConfig
+                  namespace={namespace}
+                  revision={currentRevision}
+                  readOnly={stack.latest_revision.id !== currentRevision.id}
+                  onSourceConfigUpdate={() => getStack()}
+                ></SourceConfig>
               </>
             ),
           },
@@ -217,3 +229,15 @@ const StackErrorMessageStyles = {
     font-weight: bold;
   `,
 };
+
+const StackTitleWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  // Hotfix to make sure the title section and the namespace tag are aligned
+  ${NamespaceTag.Wrapper} {
+    margin-bottom: 15px;
+  }
+`;

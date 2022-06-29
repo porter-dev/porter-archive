@@ -74,6 +74,22 @@ func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace str
 	return stacks, nil
 }
 
+func (repo *StackRepository) ReadStackByID(projectID, stackID uint) (*models.Stack, error) {
+	stack := &models.Stack{}
+
+	if err := repo.db.
+		Preload("Revisions", func(db *gorm.DB) *gorm.DB {
+			return db.Order("stack_revisions.revision_number DESC").Limit(100)
+		}).
+		Preload("Revisions.Resources").
+		Preload("Revisions.SourceConfigs").
+		Where("stacks.project_id = ? AND stacks.id = ?", projectID, stackID).First(&stack).Error; err != nil {
+		return nil, err
+	}
+
+	return stack, nil
+}
+
 // ReadStack gets a stack specified by its string id
 func (repo *StackRepository) ReadStackByStringID(projectID uint, stackID string) (*models.Stack, error) {
 	stack := &models.Stack{}

@@ -31,6 +31,7 @@ export type Stack = {
   name: string;
   created_at: string;
   updated_at: string;
+  namespace: string;
 
   revisions: StackRevision[];
 

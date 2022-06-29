@@ -91,8 +91,40 @@ func (repo *InfraRepository) ListInfrasByProjectID(
 		return nil, err
 	}
 
+	infraIDs := make([]uint, 0)
+
 	for _, infra := range infras {
 		repo.DecryptInfraData(infra, repo.key)
+		infraIDs = append(infraIDs, infra.ID)
+	}
+
+	// get the latest operation for each infra and use it to set LastApplied
+	operations := make([]*models.Operation, 0)
+
+	if err := repo.db.Where("operations.infra_id IN (?)", infraIDs).Where(`
+	operations.id IN (
+	  SELECT o2.id FROM (SELECT MAX(operations.id) id FROM operations WHERE operations.infra_id IN (?) GROUP BY operations.infra_id) o2
+	)
+  `, infraIDs).Find(&operations).Error; err != nil {
+		return nil, err
+	}
+
+	// insert operations into a map
+	infraIDToOperationMap := make(map[uint]models.Operation)
+
+	for _, op := range operations {
+		err := repo.DecryptOperationData(op, repo.key)
+
+		if err == nil {
+			infraIDToOperationMap[op.InfraID] = *op
+		}
+	}
+
+	// look up each revision for each stack
+	for _, infra := range infras {
+		if _, exists := infraIDToOperationMap[infra.ID]; exists {
+			infra.LastApplied = infraIDToOperationMap[infra.ID].LastApplied
+		}
 	}
 
 	return infras, nil

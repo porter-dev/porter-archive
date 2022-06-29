@@ -313,18 +313,6 @@ export type GetMetadataFunction<T = unknown> = (
   context: Partial<ContextProps>
 ) => T;
 
-type EnforceKeys<
-  Key extends string,
-  T extends Partial<Record<Key, unknown>>
-> = {
-  [K in keyof T as K extends Key ? K : never]: T[K];
+export type InjectedProps = {
+  [K in FormField["type"]]: Extract<FormField, { type: K }>["injectedProps"];
 };
-
-export type InjectedProps = Partial<
-  EnforceKeys<
-    FormField["type"],
-    {
-      "key-value-array": KeyValueArrayField["injectedProps"];
-    }
-  >
->;

@@ -2,6 +2,7 @@ import React from "react";
 import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import styled from "styled-components";
 import NewApp from "./NewApp";
+import NewEnvGroup from "./NewEnvGroup";
 import Overview from "./Overview";
 import SelectSource from "./SelectSource";
 import StacksLaunchContextProvider from "./Store";
@@ -21,6 +22,9 @@ const LaunchRoutes = () => {
           </Route>
           <Route path={`${path}/new-app/:template_name/:version/:repo_url?`}>
             <NewApp />
+          </Route>
+          <Route path={`${path}/new-env-group`}>
+            <NewEnvGroup />
           </Route>
           <Route path={`*`}>
             <Redirect to={`${path}/source`} />

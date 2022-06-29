@@ -1,17 +1,72 @@
 import { Tooltip } from "@material-ui/core";
 import ImageSelector from "components/image-selector/ImageSelector";
-import React from "react";
+import SaveButton from "components/SaveButton";
+import React, { useContext, useMemo, useState } from "react";
+import api from "shared/api";
+import { Context } from "shared/Context";
 import styled from "styled-components";
-import { AppResource, FullStackRevision, SourceConfig } from "../types";
+import { AppResource, FullStackRevision, SourceConfig, Stack } from "../types";
+import SourceEditorDocker from "./components/SourceEditorDocker";
 
-const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
+const _SourceConfig = ({
+  namespace,
+  revision,
+  readOnly,
+  onSourceConfigUpdate,
+}: {
+  namespace: string;
+  revision: FullStackRevision;
+  readOnly: boolean;
+  onSourceConfigUpdate: () => void;
+}) => {
+  const { currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
+  const [sourceConfigArrayCopy, setSourceConfigArrayCopy] = useState<
+    SourceConfig[]
+  >(() => revision.source_configs);
+  const [buttonStatus, setButtonStatus] = useState("");
+
+  const handleChange = (sourceConfig: SourceConfig) => {
+    const newSourceConfigArray = [...sourceConfigArrayCopy];
+    const index = newSourceConfigArray.findIndex(
+      (sc) => sc.id === sourceConfig.id
+    );
+    newSourceConfigArray[index] = sourceConfig;
+    setSourceConfigArrayCopy(newSourceConfigArray);
+  };
+
+  const handleSave = () => {
+    setButtonStatus("loading");
+    api
+      .updateStackSourceConfig(
+        "<token>",
+        {
+          source_configs: sourceConfigArrayCopy,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: namespace,
+          stack_id: revision.stack_id,
+        }
+      )
+      .then(() => {
+        setButtonStatus("successful");
+        onSourceConfigUpdate();
+      })
+      .catch((err) => {
+        setButtonStatus("Something went wrong");
+        setCurrentError(err);
+      });
+  };
+
   return (
     <SourceConfigStyles.Wrapper>
       {revision.source_configs.map((sourceConfig) => {
         const apps = getAppsFromSourceConfig(revision.resources, sourceConfig);
 
         const appList = formatAppList(apps, 2);
-        console.log({ appList });
         return (
           <SourceConfigStyles.ItemContainer>
             {appList.hiddenApps?.length ? (
@@ -36,15 +91,26 @@ const _SourceConfig = ({ revision }: { revision: FullStackRevision }) => {
                 Used by {appList.value}
               </SourceConfigStyles.ItemTitle>
             )}
-            <ImageSelector
-              selectedImageUrl={sourceConfig.image_repo_uri}
-              selectedTag={sourceConfig.image_tag}
-              forceExpanded
-              readOnly
+            <SourceEditorDocker
+              sourceConfig={sourceConfig}
+              onChange={handleChange}
+              readOnly={readOnly || buttonStatus === "loading"}
             />
           </SourceConfigStyles.ItemContainer>
         );
       })}
+      {readOnly ? null : (
+        <SourceConfigStyles.SaveButtonRow>
+          <SourceConfigStyles.SaveButton
+            onClick={handleSave}
+            text="Save"
+            clearPosition={true}
+            makeFlush={true}
+            status={buttonStatus}
+            statusPosition="left"
+          />
+        </SourceConfigStyles.SaveButtonRow>
+      )}
     </SourceConfigStyles.Wrapper>
   );
 };
@@ -89,6 +155,7 @@ const formatAppList = (apps: AppResource[], limit: number = 3) => {
 const SourceConfigStyles = {
   Wrapper: styled.div`
     margin-top: 30px;
+    position: relative;
   `,
   ItemContainer: styled.div`
     background: #ffffff11;
@@ -101,5 +168,13 @@ const SourceConfigStyles = {
   `,
   TooltipItem: styled.div`
     font-size: 14px;
+  `,
+  SaveButtonRow: styled.div`
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+  `,
+  SaveButton: styled(SaveButton)`
+    z-index: unset;
   `,
 };

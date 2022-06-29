@@ -743,7 +743,29 @@ func (t *DeploymentHook) PreApply() error {
 		},
 	)
 
-	if err == nil {
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		// in this case, create the deployment
+		_, err = t.client.CreateDeployment(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			t.repoOwner, t.repoName,
+			&types.CreateDeploymentRequest{
+				Namespace:     t.namespace,
+				PullRequestID: t.prID,
+				CreateGHDeploymentRequest: &types.CreateGHDeploymentRequest{
+					ActionID: t.actionID,
+				},
+				GitHubMetadata: &types.GitHubMetadata{
+					PRName:       t.prName,
+					RepoName:     t.repoName,
+					RepoOwner:    t.repoOwner,
+					CommitSHA:    t.commitSHA,
+					PRBranchFrom: t.branchFrom,
+					PRBranchInto: t.branchInto,
+				},
+			},
+		)
+	} else if err == nil {
 		_, err = t.client.UpdateDeployment(
 			context.Background(),
 			t.projectID, t.gitInstallationID, t.clusterID,
@@ -837,15 +859,28 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 		}
 	}
 
+	req := &types.FinalizeDeploymentRequest{
+		Namespace: t.namespace,
+		Subdomain: strings.Join(subdomains, ", "),
+	}
+
+	for _, res := range t.resourceGroup.Resources {
+		releaseType := getReleaseType(res)
+		releaseName := getReleaseName(res)
+
+		if releaseType != "" && releaseName != "" {
+			req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
+				ReleaseName: releaseName,
+				ReleaseType: releaseType,
+			})
+		}
+	}
+
 	// finalize the deployment
 	_, err := t.client.FinalizeDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName,
-		&types.FinalizeDeploymentRequest{
-			Namespace: t.namespace,
-			Subdomain: strings.Join(subdomains, ","),
-		},
+		t.repoOwner, t.repoName, req,
 	)
 
 	return err
@@ -874,6 +909,45 @@ func (t *DeploymentHook) OnError(err error) {
 				PRBranchFrom: t.branchFrom,
 				Status:       string(types.DeploymentStatusFailed),
 			},
+		)
+	}
+}
+
+func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
+	// if the deployment exists, throw an error for that deployment
+	_, getDeplErr := t.client.GetDeployment(
+		context.Background(),
+		t.projectID, t.clusterID, t.envID,
+		&types.GetDeploymentRequest{
+			Namespace: t.namespace,
+		},
+	)
+
+	if getDeplErr == nil {
+		req := &types.FinalizeDeploymentWithErrorsRequest{
+			Namespace: t.namespace,
+			Errors:    make(map[string]string),
+		}
+
+		for _, res := range t.resourceGroup.Resources {
+			if _, ok := allErrors[res.Name]; !ok {
+				req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
+					ReleaseName: getReleaseName(res),
+					ReleaseType: getReleaseType(res),
+				})
+			}
+		}
+
+		for res, err := range allErrors {
+			req.Errors[res] = err.Error()
+		}
+
+		// FIXME: handle the error
+		t.client.FinalizeDeploymentWithErrors(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			t.repoOwner, t.repoName,
+			req,
 		)
 	}
 }
@@ -962,8 +1036,34 @@ func (t *CloneEnvGroupHook) DataQueries() map[string]interface{} {
 	return nil
 }
 
-func (t *CloneEnvGroupHook) PostApply(populatedData map[string]interface{}) error {
+func (t *CloneEnvGroupHook) PostApply(map[string]interface{}) error {
 	return nil
 }
 
-func (t *CloneEnvGroupHook) OnError(err error) {}
+func (t *CloneEnvGroupHook) OnError(error) {}
+
+func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}
+
+func getReleaseName(res *switchboardTypes.Resource) string {
+	// can ignore the error because this method is called once
+	// GetTarget has alrealy been called and validated previously
+	target, _ := preview.GetTarget(res.Target)
+
+	if target.AppName != "" {
+		return target.AppName
+	}
+
+	return res.Name
+}
+
+func getReleaseType(res *switchboardTypes.Resource) string {
+	// can ignore the error because this method is called once
+	// GetSource has alrealy been called and validated previously
+	source, _ := preview.GetSource(res.Source)
+
+	if source != nil && source.Name != "" {
+		return source.Name
+	}
+
+	return ""
+}

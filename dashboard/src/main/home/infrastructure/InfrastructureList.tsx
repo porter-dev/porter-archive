@@ -93,6 +93,10 @@ const InfrastructureList = () => {
         },
       },
       {
+        Header: "Name",
+        accessor: "name",
+      },
+      {
         Header: "Status",
         accessor: "status",
         Cell: ({ row }) => {
@@ -130,10 +134,6 @@ const InfrastructureList = () => {
         Cell: ({ row }) => {
           return readableDate(row.original.updated_at);
         },
-      },
-      {
-        Header: "Source",
-        accessor: "source_link",
       },
       {
         Header: "Version",

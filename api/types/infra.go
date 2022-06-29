@@ -42,6 +42,8 @@ type Infra struct {
 	// The project that this integration belongs to
 	ProjectID uint `json:"project_id"`
 
+	Name string `json:"name"`
+
 	APIVersion    string `json:"api_version,omitempty"`
 	SourceLink    string `json:"source_link,omitempty"`
 	SourceVersion string `json:"source_version,omitempty"`

@@ -313,6 +313,8 @@ export type GetMetadataFunction<T = unknown> = (
   context: Partial<ContextProps>
 ) => T;
 
-export type InjectedProps = {
-  [K in FormField["type"]]: Extract<FormField, { type: K }>["injectedProps"];
-};
+export type InjectedProps = Partial<
+  {
+    [K in FormField["type"]]: Extract<FormField, { type: K }>["injectedProps"];
+  }
+>;

@@ -79,6 +79,8 @@ func UpdateHelmRevision(config *config.Config, projID, clusterID uint, rel *rele
 	stackRevision.SourceConfigs = clonedSourceConfigs
 	stackRevision.EnvGroups = clonedEnvGroups
 	stackRevision.Status = "deployed"
+	stackRevision.Reason = "ApplicationUpgrade"
+	stackRevision.Message = fmt.Sprintf("The application %s was updated from version %d to %d", rel.Name, rel.Version-1, rel.Version)
 
 	_, err = config.Repo.Stack().AppendNewRevision(stackRevision)
 
@@ -147,6 +149,8 @@ func UpdateEnvGroupVersion(config *config.Config, projID, clusterID uint, envGro
 	stackRevision.Resources = clonedAppResources
 	stackRevision.SourceConfigs = clonedSourceConfigs
 	stackRevision.EnvGroups = clonedEnvGroups
+	stackRevision.Reason = "EnvGroupUpgrade"
+	stackRevision.Message = fmt.Sprintf("The environment group %s was updated from version %d to %d", envGroup.Name, envGroup.Version-1, envGroup.Version)
 	stackRevision.Status = "deployed"
 
 	_, err = config.Repo.Stack().AppendNewRevision(stackRevision)

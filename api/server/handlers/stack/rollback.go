@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -122,9 +123,11 @@ func (p *StackRollbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if len(rollbackErrors) > 0 {
 		revision.Status = string(types.StackRevisionStatusFailed)
 		revision.Reason = "RollbackError"
-		revision.Message = strings.Join(rollbackErrors, " , ")
+		revision.Message = fmt.Sprintf("Error while rolling back to version %d: %s", req.TargetRevision, strings.Join(rollbackErrors, " , "))
 	} else {
 		revision.Status = string(types.StackRevisionStatusDeployed)
+		revision.Reason = "Rollback"
+		revision.Message = fmt.Sprintf("The stack was rolled back to version %d", req.TargetRevision)
 	}
 
 	revision, err = p.Repo().Stack().UpdateStackRevision(revision)

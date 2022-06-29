@@ -50,8 +50,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		projectOAuthRegisterer,
 		slackIntegrationRegisterer,
 	)
+	statusRegisterer := NewStatusScopedRegisterer()
 
-	userRegisterer := NewUserScopedRegisterer(projRegisterer)
+	userRegisterer := NewUserScopedRegisterer(projRegisterer, statusRegisterer)
 	panicMW := middleware.NewPanicMiddleware(config)
 
 	if config.ServerConf.PprofEnabled {

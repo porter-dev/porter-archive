@@ -8,22 +8,36 @@ export const CardGrid = styled.div`
   grid-row-gap: 25px;
 `;
 
-export const Card = styled.div`
+export const Card = styled.div<{ variant?: "clickable" | "unclickable" }>`
   display: flex;
   color: #ffffff;
   background: #2b2e3699;
   justify-content: space-between;
   border-radius: 5px;
-  cursor: pointer;
   height: 75px;
   padding: 12px;
   padding-left: 14px;
   border: 1px solid #ffffff0f;
   align-items: center;
 
-  :hover {
-    border: 1px solid #ffffff3c;
-  }
+  ${(props) => {
+    if (props.variant === "unclickable") {
+      return `
+      cursor: default;
+      :hover {
+        border: 1px solid #ffffff0f;
+      }
+      `;
+    }
+
+    return `
+      cursor: pointer;
+      :hover {
+        border: 1px solid #ffffff3c;
+      }
+    `;
+  }}
+
   animation: fadeIn 0.5s;
   @keyframes fadeIn {
     from {
@@ -127,7 +141,7 @@ export const SelectorStyles = {
   `,
 };
 
-export const ButtonWithIcon = styled.div`
+export const ButtonWithIcon = styled.div<{ variant?: "normal" | "delete" }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,6 +152,12 @@ export const ButtonWithIcon = styled.div`
   border: 1px solid #ffffff22;
   cursor: pointer;
 
+  ${({ variant }) => {
+    if (variant === "delete") {
+      return "margin-right: 5px;";
+    }
+  }}
+
   &:hover {
     background-color: #ffffff3c;
   }
@@ -145,4 +165,17 @@ export const ButtonWithIcon = styled.div`
   > i {
     font-size: 18px;
   }
+`;
+
+export const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+export const Icon = styled.img`
+  height: 30px;
+  margin-right: 15px;
+  margin-left: 5px;
 `;

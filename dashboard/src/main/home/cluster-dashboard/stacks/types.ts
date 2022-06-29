@@ -20,6 +20,11 @@ export type CreateStackBody = {
       dockerfile?: unknown;
     };
   }[];
+
+  envGroups: {
+    name: string;
+    variables: unknown[];
+  }[];
 };
 
 export type CreateStackResponse = Stack;

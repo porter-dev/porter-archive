@@ -117,7 +117,7 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	envGroupDeployErrors := make([]string, 0)
 
 	for _, envGroup := range req.EnvGroups {
-		_, err := envgroup.CreateEnvGroup(k8sAgent, types.ConfigMapInput{
+		cm, err := envgroup.CreateEnvGroup(k8sAgent, types.ConfigMapInput{
 			Name:            envGroup.Name,
 			Namespace:       namespace,
 			Variables:       envGroup.Variables,
@@ -126,6 +126,16 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			envGroupDeployErrors = append(envGroupDeployErrors, fmt.Sprintf("error creating env group %s", envGroup.Name))
+		}
+
+		// add each of the linked applications to the env group
+		for _, appName := range envGroup.LinkedApplications {
+
+			cm, err = k8sAgent.AddApplicationToVersionedConfigMap(cm, appName)
+
+			if err != nil {
+				envGroupDeployErrors = append(envGroupDeployErrors, fmt.Sprintf("error creating env group %s", envGroup.Name))
+			}
 		}
 	}
 

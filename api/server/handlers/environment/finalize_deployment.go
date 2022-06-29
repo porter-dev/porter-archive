@@ -104,6 +104,23 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// add a check for the PR to be open before creating a comment
+	prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
+				depl.ID, err), http.StatusConflict,
+		))
+		return
+	}
+
+	if prClosed {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+			http.StatusConflict))
+		return
+	}
+
 	workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
 		fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
 
@@ -162,4 +179,20 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	c.WriteResult(w, r, depl.ToDeploymentType())
+}
+
+func isGithubPRClosed(
+	client *github.Client,
+	owner, name string,
+	prNumber int,
+) (bool, error) {
+	ghPR, _, err := client.PullRequests.Get(
+		context.Background(), owner, name, prNumber,
+	)
+
+	if err != nil {
+		return false, err
+	}
+
+	return ghPR.GetState() == "closed", nil
 }

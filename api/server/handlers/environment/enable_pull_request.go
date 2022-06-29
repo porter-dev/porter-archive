@@ -56,14 +56,20 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	// add an extra check that the installation has permission to read this pull request
-	pr, ghResp, err := client.PullRequests.Get(r.Context(), env.GitRepoOwner, env.GitRepoName, int(request.Number))
+	pr, _, err := client.PullRequests.Get(r.Context(), env.GitRepoOwner, env.GitRepoName, int(request.Number))
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	ghResp, err = client.Actions.CreateWorkflowDispatchEventByFileName(
+	if pr.GetState() == "closed" {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+			http.StatusConflict))
+		return
+	}
+
+	ghResp, err := client.Actions.CreateWorkflowDispatchEventByFileName(
 		r.Context(), env.GitRepoOwner, env.GitRepoName, fmt.Sprintf("porter_%s_env.yml", env.Name),
 		github.CreateWorkflowDispatchEventRequest{
 			Ref: request.BranchFrom,

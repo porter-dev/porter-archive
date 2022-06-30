@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -142,9 +143,9 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			"| Latest SHA | [`%s`](https://github.com/%s/%s/commit/%s) |\n"+
 			"| Live URL | %s |\n"+
 			"| Build Logs | %s |\n"+
-			"| Porter Deployments URL | %s/preview-environments/details/%s?environment_id=%d |",
+			"| Porter Deployments URL | %s/preview-environments/details/%s?environment_id=%d&project_id=%d&cluster=%s |",
 		depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, depl.Subdomain, workflowRun.GetHTMLURL(),
-		c.Config().ServerConf.ServerURL, depl.Namespace, depl.EnvironmentID,
+		c.Config().ServerConf.ServerURL, depl.Namespace, depl.EnvironmentID, project.ID, url.QueryEscape(cluster.Name),
 	)
 
 	if len(request.SuccessfulResources) > 0 {

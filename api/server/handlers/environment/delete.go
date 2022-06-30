@@ -103,9 +103,13 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 		if err == nil {
 			for _, hook := range hooks {
-				if hook.GetURL() == webhookURL {
-					client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
-					break
+				if hookURL, ok := hook.Config["url"]; ok {
+					if hookURLStr, ok := hookURL.(string); ok {
+						if hookURLStr == webhookURL {
+							client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
+							break
+						}
+					}
 				}
 			}
 		}

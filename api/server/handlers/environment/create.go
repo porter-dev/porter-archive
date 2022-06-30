@@ -64,14 +64,15 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	env := &models.Environment{
-		ProjectID:         project.ID,
-		ClusterID:         cluster.ID,
-		GitInstallationID: uint(ga.InstallationID),
-		Name:              request.Name,
-		GitRepoOwner:      owner,
-		GitRepoName:       name,
-		Mode:              request.Mode,
-		WebhookID:         string(webhookUID),
+		ProjectID:           project.ID,
+		ClusterID:           cluster.ID,
+		GitInstallationID:   uint(ga.InstallationID),
+		Name:                request.Name,
+		GitRepoOwner:        owner,
+		GitRepoName:         name,
+		Mode:                request.Mode,
+		WebhookID:           string(webhookUID),
+		NewCommentsDisabled: false,
 	}
 
 	// write Github actions files to the repo

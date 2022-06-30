@@ -188,7 +188,7 @@ func getGitInstallationRoutes(
 		})
 
 		// GET /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment ->
-		// environment.NewCreateDeploymentHandler
+		// environment.NewGetDeploymentHandler
 		getDeploymentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
 				Verb:   types.APIVerbGet,
@@ -364,6 +364,42 @@ func getGitInstallationRoutes(
 		routes = append(routes, &router.Route{
 			Endpoint: updateDeploymentStatusEndpoint,
 			Handler:  updateDeploymentStatusHandler,
+			Router:   r,
+		})
+
+		// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/deployment/finalize_errors ->
+		// environment.NewFinalizeDeploymentWithErrorsHandler
+		finalizeDeploymentWithErrorsEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent: basePath,
+					RelativePath: fmt.Sprintf(
+						"%s/{%s}/{%s}/clusters/{cluster_id}/deployment/finalize_errors",
+						relPath,
+						types.URLParamGitRepoOwner,
+						types.URLParamGitRepoName,
+					),
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.GitInstallationScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		finalizeDeploymentWithErrorsHandler := environment.NewFinalizeDeploymentWithErrorsHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: finalizeDeploymentWithErrorsEndpoint,
+			Handler:  finalizeDeploymentWithErrorsHandler,
 			Router:   r,
 		})
 

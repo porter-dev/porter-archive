@@ -405,22 +405,20 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 			Name:      resource.Name,
 		})
 
-		if err != nil {
-			if appConfig.OnlyCreate {
-				err = client.DeleteRelease(
-					context.Background(),
-					d.target.Project,
-					d.target.Cluster,
-					d.target.Namespace,
-					resource.Name,
-				)
+		if err != nil && appConfig.OnlyCreate {
+			deleteJobErr := client.DeleteRelease(
+				context.Background(),
+				d.target.Project,
+				d.target.Cluster,
+				d.target.Namespace,
+				resource.Name,
+			)
 
-				if err != nil {
-					return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-						resource.Name, err)
-				}
+			if deleteJobErr != nil {
+				return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
+					resource.Name, deleteJobErr)
 			}
-
+		} else if err != nil {
 			return nil, fmt.Errorf("error waiting for job %s: %w", resource.Name, err)
 		}
 	}
@@ -638,7 +636,7 @@ func (d *Driver) getAddonConfig(resource *models.Resource) (map[string]interface
 type DeploymentHook struct {
 	client                                                                    *api.Client
 	resourceGroup                                                             *switchboardTypes.ResourceGroup
-	gitInstallationID, projectID, clusterID, prID, actionID                   uint
+	gitInstallationID, projectID, clusterID, prID, actionID, envID            uint
 	branchFrom, branchInto, namespace, repoName, repoOwner, prName, commitSHA string
 }
 
@@ -715,18 +713,37 @@ func NewDeploymentHook(client *api.Client, resourceGroup *switchboardTypes.Resou
 }
 
 func (t *DeploymentHook) PreApply() error {
+	envList, err := t.client.ListEnvironments(
+		context.Background(), t.projectID, t.clusterID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	envs := *envList
+
+	for _, env := range envs {
+		if env.GitRepoOwner == t.repoOwner && env.GitRepoName == t.repoName && env.GitInstallationID == t.gitInstallationID {
+			t.envID = env.ID
+			break
+		}
+	}
+
+	if t.envID == 0 {
+		return fmt.Errorf("could not find environment for deployment")
+	}
+
 	// attempt to read the deployment -- if it doesn't exist, create it
-	_, err := t.client.GetDeployment(
+	_, err = t.client.GetDeployment(
 		context.Background(),
-		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName,
+		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
 			Namespace: t.namespace,
 		},
 	)
 
-	// TODO: case this on the response status code rather than text
-	if err != nil && strings.Contains(err.Error(), "deployment not found") {
+	if err != nil && strings.Contains(err.Error(), "not found") {
 		// in this case, create the deployment
 		_, err = t.client.CreateDeployment(
 			context.Background(),
@@ -842,15 +859,28 @@ func (t *DeploymentHook) PostApply(populatedData map[string]interface{}) error {
 		}
 	}
 
+	req := &types.FinalizeDeploymentRequest{
+		Namespace: t.namespace,
+		Subdomain: strings.Join(subdomains, ", "),
+	}
+
+	for _, res := range t.resourceGroup.Resources {
+		releaseType := getReleaseType(res)
+		releaseName := getReleaseName(res)
+
+		if releaseType != "" && releaseName != "" {
+			req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
+				ReleaseName: releaseName,
+				ReleaseType: releaseType,
+			})
+		}
+	}
+
 	// finalize the deployment
 	_, err := t.client.FinalizeDeployment(
 		context.Background(),
 		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName,
-		&types.FinalizeDeploymentRequest{
-			Namespace: t.namespace,
-			Subdomain: strings.Join(subdomains, ","),
-		},
+		t.repoOwner, t.repoName, req,
 	)
 
 	return err
@@ -860,8 +890,7 @@ func (t *DeploymentHook) OnError(err error) {
 	// if the deployment exists, throw an error for that deployment
 	_, getDeplErr := t.client.GetDeployment(
 		context.Background(),
-		t.projectID, t.gitInstallationID, t.clusterID,
-		t.repoOwner, t.repoName,
+		t.projectID, t.clusterID, t.envID,
 		&types.GetDeploymentRequest{
 			Namespace: t.namespace,
 		},
@@ -880,6 +909,45 @@ func (t *DeploymentHook) OnError(err error) {
 				PRBranchFrom: t.branchFrom,
 				Status:       string(types.DeploymentStatusFailed),
 			},
+		)
+	}
+}
+
+func (t *DeploymentHook) OnConsolidatedErrors(allErrors map[string]error) {
+	// if the deployment exists, throw an error for that deployment
+	_, getDeplErr := t.client.GetDeployment(
+		context.Background(),
+		t.projectID, t.clusterID, t.envID,
+		&types.GetDeploymentRequest{
+			Namespace: t.namespace,
+		},
+	)
+
+	if getDeplErr == nil {
+		req := &types.FinalizeDeploymentWithErrorsRequest{
+			Namespace: t.namespace,
+			Errors:    make(map[string]string),
+		}
+
+		for _, res := range t.resourceGroup.Resources {
+			if _, ok := allErrors[res.Name]; !ok {
+				req.SuccessfulResources = append(req.SuccessfulResources, &types.SuccessfullyDeployedResource{
+					ReleaseName: getReleaseName(res),
+					ReleaseType: getReleaseType(res),
+				})
+			}
+		}
+
+		for res, err := range allErrors {
+			req.Errors[res] = err.Error()
+		}
+
+		// FIXME: handle the error
+		t.client.FinalizeDeploymentWithErrors(
+			context.Background(),
+			t.projectID, t.gitInstallationID, t.clusterID,
+			t.repoOwner, t.repoName,
+			req,
 		)
 	}
 }
@@ -968,8 +1036,34 @@ func (t *CloneEnvGroupHook) DataQueries() map[string]interface{} {
 	return nil
 }
 
-func (t *CloneEnvGroupHook) PostApply(populatedData map[string]interface{}) error {
+func (t *CloneEnvGroupHook) PostApply(map[string]interface{}) error {
 	return nil
 }
 
-func (t *CloneEnvGroupHook) OnError(err error) {}
+func (t *CloneEnvGroupHook) OnError(error) {}
+
+func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}
+
+func getReleaseName(res *switchboardTypes.Resource) string {
+	// can ignore the error because this method is called once
+	// GetTarget has alrealy been called and validated previously
+	target, _ := preview.GetTarget(res.Target)
+
+	if target.AppName != "" {
+		return target.AppName
+	}
+
+	return res.Name
+}
+
+func getReleaseType(res *switchboardTypes.Resource) string {
+	// can ignore the error because this method is called once
+	// GetSource has alrealy been called and validated previously
+	source, _ := preview.GetSource(res.Source)
+
+	if source != nil && source.Name != "" {
+		return source.Name
+	}
+
+	return ""
+}

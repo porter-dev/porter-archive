@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v41/github"
@@ -77,31 +78,79 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error reading environment: %w", webhookID, owner, repo, err)
 	}
 
+	if event.GetPullRequest() == nil {
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] incoming webhook does not have pull request information: %w",
+			webhookID, owner, repo, err)
+	}
+
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
-		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d] error getting github client: %w",
-			webhookID, owner, repo, env.ID, err)
+		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+			"error getting github client: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
 	}
 
 	if env.Mode == "auto" && event.GetAction() == "opened" {
-		_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
+		depl := &models.Deployment{
+			EnvironmentID: env.ID,
+			Namespace: fmt.Sprintf("pr-%d-%s", event.GetPullRequest().GetNumber(),
+				strings.ToLower(strings.ReplaceAll(repo, "_", "-"))),
+			Status:        types.DeploymentStatusCreating,
+			PullRequestID: uint(event.GetPullRequest().GetNumber()),
+			PRName:        event.GetPullRequest().GetTitle(),
+			RepoName:      repo,
+			RepoOwner:     owner,
+			CommitSHA:     event.GetPullRequest().GetHead().GetSHA()[:7],
+			PRBranchFrom:  event.GetPullRequest().GetHead().GetRef(),
+			PRBranchInto:  event.GetPullRequest().GetBase().GetRef(),
+		}
+
+		_, err = c.Repo().Environment().CreateDeployment(depl)
+
+		if err != nil {
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error creating new deployment: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
+		}
+
+		cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
+
+		if err != nil {
+			return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster when creating new deployment: %w",
+				env.ProjectID, env.ClusterID, err)
+		}
+
+		// create the backing namespace
+		agent, err := c.GetAgent(r, cluster, "")
+
+		if err != nil {
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error getting k8s agent: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
+		}
+
+		_, err = agent.CreateNamespace(depl.Namespace)
+
+		if err != nil {
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error creating k8s namespace: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
+		}
+
+		_, err = client.Actions.CreateWorkflowDispatchEventByFileName(
 			r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
 			github.CreateWorkflowDispatchEventRequest{
-				Ref: event.PullRequest.GetHead().GetRef(),
+				Ref: event.GetPullRequest().GetHead().GetRef(),
 				Inputs: map[string]interface{}{
-					"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
-					"pr_title":       event.PullRequest.GetTitle(),
-					"pr_branch_from": event.PullRequest.GetHead().GetRef(),
-					"pr_branch_into": event.PullRequest.GetBase().GetRef(),
+					"pr_number":      strconv.FormatUint(uint64(event.GetPullRequest().GetNumber()), 10),
+					"pr_title":       event.GetPullRequest().GetTitle(),
+					"pr_branch_from": event.GetPullRequest().GetHead().GetRef(),
+					"pr_branch_into": event.GetPullRequest().GetBase().GetRef(),
 				},
 			},
 		)
 
 		if err != nil {
-			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d] error creating workflow dispatch event: %w",
-				webhookID, owner, repo, env.ID, err)
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
 		}
 	} else if event.GetAction() == "synchronize" || event.GetAction() == "closed" {
 		depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(
@@ -109,36 +158,86 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 		)
 
 		if err != nil {
-			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d] error reading deployment: %w",
-				webhookID, owner, repo, env.ID, err)
+			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
+				"error reading deployment: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
 		}
 
-		if depl.Status != types.DeploymentStatusInactive {
-			if event.GetAction() == "synchronize" {
-				_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
-					r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
-					github.CreateWorkflowDispatchEventRequest{
-						Ref: event.PullRequest.GetHead().GetRef(),
-						Inputs: map[string]interface{}{
-							"pr_number":      strconv.FormatUint(uint64(event.PullRequest.GetNumber()), 10),
-							"pr_title":       event.PullRequest.GetTitle(),
-							"pr_branch_from": event.PullRequest.GetHead().GetRef(),
-							"pr_branch_into": event.PullRequest.GetBase().GetRef(),
-						},
+		if depl.Status == types.DeploymentStatusInactive {
+			return nil
+		}
+
+		if event.GetAction() == "synchronize" {
+			_, err := client.Actions.CreateWorkflowDispatchEventByFileName(
+				r.Context(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+				github.CreateWorkflowDispatchEventRequest{
+					Ref: event.GetPullRequest().GetHead().GetRef(),
+					Inputs: map[string]interface{}{
+						"pr_number":      strconv.FormatUint(uint64(event.GetPullRequest().GetNumber()), 10),
+						"pr_title":       event.GetPullRequest().GetTitle(),
+						"pr_branch_from": event.GetPullRequest().GetHead().GetRef(),
+						"pr_branch_into": event.GetPullRequest().GetBase().GetRef(),
 					},
-				)
+				},
+			)
 
-				if err != nil {
-					return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error creating workflow dispatch event: %w",
-						webhookID, owner, repo, env.ID, depl.ID, err)
-				}
-			} else {
-				err = c.deleteDeployment(r, depl, env, client)
+			if err != nil {
+				return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
+					"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, depl.ID,
+					event.GetPullRequest().GetNumber(), err)
+			}
+		} else {
+			// check for already running workflows we should be cancelling
+			var wg sync.WaitGroup
+			statuses := []string{"in_progress", "queued", "requested", "waiting"}
+			chanErr := fmt.Errorf("")
 
-				if err != nil {
-					return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d] error deleting deployment: %w",
-						webhookID, owner, repo, env.ID, depl.ID, err)
+			wg.Add(len(statuses))
+
+			for _, status := range statuses {
+				go func(status string) {
+					defer wg.Done()
+
+					runs, _, err := client.Actions.ListWorkflowRunsByFileName(
+						context.Background(), owner, repo, fmt.Sprintf("porter_%s_env.yml", env.Name),
+						&github.ListWorkflowRunsOptions{
+							Branch: event.GetPullRequest().GetHead().GetRef(),
+							Status: status,
+						},
+					)
+
+					if err == nil {
+						for _, run := range runs.WorkflowRuns {
+							resp, err := client.Actions.CancelWorkflowRunByID(context.Background(), owner, repo, run.GetID())
+
+							if err != nil && resp.StatusCode != http.StatusAccepted {
+								// the go library we are using returns a 202 Accepted status as an error
+								// in this case, we should rule this out as an error
+								chanErr = fmt.Errorf("%s: error cancelling %s: %w", chanErr.Error(), run.GetHTMLURL(), err)
+							}
+						}
+					} else {
+						chanErr = fmt.Errorf("%s: error listing workflows for status %s: %w", chanErr.Error(), status, err)
+					}
+				}(status)
+			}
+
+			wg.Wait()
+
+			err = c.deleteDeployment(r, depl, env, client)
+
+			if err != nil {
+				deleteErr := fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
+					"error deleting deployment: %w", webhookID, owner, repo, env.ID, depl.ID, event.GetPullRequest().GetNumber(), err)
+
+				if chanErr.Error() != "" {
+					deleteErr = fmt.Errorf("%s. errors found while trying to cancel active workflow runs %w", deleteErr.Error(), chanErr)
 				}
+
+				return deleteErr
+			} else if chanErr.Error() != "" {
+				return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
+					"deployment deleted but errors found while trying to cancel active workflow runs %w", webhookID, owner, repo, env.ID, depl.ID,
+					event.GetPullRequest().GetNumber(), chanErr)
 			}
 		}
 	}
@@ -155,7 +254,8 @@ func (c *GithubIncomingWebhookHandler) deleteDeployment(
 	cluster, err := c.Repo().Cluster().ReadCluster(env.ProjectID, env.ClusterID)
 
 	if err != nil {
-		return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster: %w", env.ProjectID, env.ClusterID, err)
+		return fmt.Errorf("[projectID: %d, clusterID: %d] error reading cluster when deleting existing deployment: %w",
+			env.ProjectID, env.ClusterID, err)
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")

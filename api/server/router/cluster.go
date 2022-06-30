@@ -348,14 +348,14 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
-		// GET /api/projects/{project_id}/clusters/{cluster_id}/{environment_id}/deployment -> environment.NewGetDeploymentByClusterHandler
+		// GET /api/projects/{project_id}/clusters/{cluster_id}/environments/{environment_id}/deployment -> environment.NewGetDeploymentByClusterHandler
 		getDeploymentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{
 				Verb:   types.APIVerbGet,
 				Method: types.HTTPVerbGet,
 				Path: &types.Path{
 					Parent:       basePath,
-					RelativePath: relPath + "/{environment_id}/deployment",
+					RelativePath: relPath + "/environments/{environment_id}/deployment",
 				},
 				Scopes: []types.PermissionScope{
 					types.UserScope,
@@ -365,7 +365,7 @@ func getClusterRoutes(
 			},
 		)
 
-		getDeploymentHandler := environment.NewGetDeploymentByClusterHandler(
+		getDeploymentHandler := environment.NewGetDeploymentByEnvironmentHandler(
 			config,
 			factory.GetDecoderValidator(),
 			factory.GetResultWriter(),

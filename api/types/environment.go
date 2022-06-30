@@ -71,9 +71,21 @@ type CreateDeploymentRequest struct {
 	PullRequestID uint   `json:"pull_request_id" form:"required"`
 }
 
+type SuccessfullyDeployedResource struct {
+	ReleaseName string `json:"release_name" form:"required"`
+	ReleaseType string `json:"release_type"`
+}
+
 type FinalizeDeploymentRequest struct {
-	Namespace string `json:"namespace" form:"required"`
-	Subdomain string `json:"subdomain" form:"required"`
+	Namespace           string                          `json:"namespace" form:"required"`
+	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
+	Subdomain           string                          `json:"subdomain"`
+}
+
+type FinalizeDeploymentWithErrorsRequest struct {
+	Namespace           string                          `json:"namespace" form:"required"`
+	SuccessfulResources []*SuccessfullyDeployedResource `json:"successful_resources"`
+	Errors              map[string]string               `json:"errors" form:"required"`
 }
 
 type UpdateDeploymentRequest struct {
@@ -116,3 +128,5 @@ type PullRequest struct {
 type ToggleNewCommentRequest struct {
 	Enable bool `json:"enable" form:"required"`
 }
+
+type ListEnvironmentsResponse []*Environment

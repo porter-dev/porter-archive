@@ -14,6 +14,7 @@ type Environment struct {
 	Mode                 string `json:"mode"`
 	DeploymentCount      uint   `json:"deployment_count"`
 	LastDeploymentStatus string `json:"last_deployment_status"`
+	NewCommentsDisabled  bool   `json:"new_comments_disabled"`
 }
 
 type CreateEnvironmentRequest struct {
@@ -121,6 +122,10 @@ type PullRequest struct {
 	RepoName   string `json:"repo_name"`
 	BranchFrom string `json:"branch_from"`
 	BranchInto string `json:"branch_into"`
+}
+
+type ToggleNewCommentRequest struct {
+	Disable bool `json:"disable"`
 }
 
 type ListEnvironmentsResponse []*Environment

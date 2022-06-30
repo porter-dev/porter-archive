@@ -145,20 +145,10 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		commentBody += fmt.Sprintf("<details>\n  <summary><code>%s</code></summary>\n\n  **Error:** %s\n</details>\n", res, err)
 	}
 
-	_, _, err = client.Issues.CreateComment(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		int(depl.PullRequestID),
-		&github.IssueComment{
-			Body: github.String(commentBody),
-		},
-	)
+	err = createOrUpdateComment(client, c.Repo(), env.NewCommentsDisabled, depl, github.String(commentBody))
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error creating github comment: %w", err), http.StatusConflict,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 

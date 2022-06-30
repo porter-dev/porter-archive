@@ -119,6 +119,14 @@ func (repo *EnvironmentRepository) ListEnvironments(projectID, clusterID uint) (
 	return envs, nil
 }
 
+func (repo *EnvironmentRepository) UpdateEnvironment(environment *models.Environment) (*models.Environment, error) {
+	if err := repo.db.Save(environment).Error; err != nil {
+		return nil, err
+	}
+
+	return environment, nil
+}
+
 func (repo *EnvironmentRepository) DeleteEnvironment(env *models.Environment) (*models.Environment, error) {
 	if err := repo.db.Delete(&env).Error; err != nil {
 		return nil, err

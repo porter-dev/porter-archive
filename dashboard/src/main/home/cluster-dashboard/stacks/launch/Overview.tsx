@@ -6,7 +6,11 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
 import { useRouting } from "shared/routing";
-import { CardGrid, SubmitButton } from "./components/styles";
+import {
+  AddResourceButtonStyles,
+  CardGrid,
+  SubmitButton,
+} from "./components/styles";
 import { AppCard } from "./components/AppCard";
 import { AddResourceButton } from "./components/AddResourceButton";
 import styled from "styled-components";
@@ -14,6 +18,8 @@ import styled from "styled-components";
 import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import TitleSection from "components/TitleSection";
+import DynamicLink from "components/DynamicLink";
+import EnvGroupCard from "./components/EnvGroupCard";
 
 const Overview = () => {
   const {
@@ -156,6 +162,23 @@ const Overview = () => {
         <AddResourceButton />
       </CardGrid>
 
+      <Heading>Env groups</Heading>
+      <CardGrid>
+        {newStack.env_groups.map((envGroup) => (
+          <EnvGroupCard key={envGroup.name} envGroup={envGroup} />
+        ))}
+
+        <AddResourceButtonStyles.Wrapper>
+          <AddResourceButtonStyles.Flex>
+            <LinkMask to={`/stacks/launch/new-env-group`}></LinkMask>
+            <Icon>
+              <i className="material-icons">add</i>
+            </Icon>
+            Add a new env group
+          </AddResourceButtonStyles.Flex>
+        </AddResourceButtonStyles.Wrapper>
+      </CardGrid>
+
       <SubmitButton
         disabled={!isValid || submitButtonStatus !== ""}
         text="Create Stack"
@@ -228,4 +251,22 @@ const StyledLaunchFlow = styled.div`
   margin-top: ${(props: { disableMarginTop?: boolean }) =>
     props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
   padding-bottom: 150px;
+`;
+
+const LinkMask = styled(DynamicLink)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+`;
+
+const Icon = styled.div`
+  margin-bottom: -3px;
+  > i {
+    margin-right: 20px;
+    margin-left: 9px;
+    font-size: 20px;
+    color: #aaaabb;
+  }
 `;

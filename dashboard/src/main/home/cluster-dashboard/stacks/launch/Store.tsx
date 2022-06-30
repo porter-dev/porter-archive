@@ -15,9 +15,14 @@ export type StacksLaunchContextType = {
     sourceConfig: Omit<CreateStackBody["source_configs"][0], "name">
   ) => void;
 
-  addAppResource: (appResource: CreateStackBody["app_resources"][0]) => void;
+  addAppResource: (
+    appResource: CreateStackBody["app_resources"][0],
+    syncedEnvGroups: string[]
+  ) => void;
 
   removeAppResource: (appResource: CreateStackBody["app_resources"][0]) => void;
+
+  addEnvGroup: (envGroup: CreateStackBody["env_groups"][0]) => void;
 
   submit: () => Promise<void>;
 };
@@ -27,6 +32,7 @@ const defaultValues: StacksLaunchContextType = {
     name: "",
     app_resources: [],
     source_configs: [],
+    env_groups: [],
   },
 
   namespace: "",
@@ -41,6 +47,8 @@ const defaultValues: StacksLaunchContextType = {
   addAppResource: (appResource: CreateStackBody["app_resources"][0]) => {},
 
   removeAppResource: (appResource: CreateStackBody["app_resources"][0]) => {},
+
+  addEnvGroup: () => {},
 
   submit: async () => {},
 };
@@ -92,12 +100,40 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
   };
 
   const addAppResource: StacksLaunchContextType["addAppResource"] = (
-    appResource
+    appResource,
+    syncedEnvGroups
   ) => {
-    setNewStack((prev) => ({
-      ...prev,
-      app_resources: [...prev.app_resources, appResource],
-    }));
+    setNewStack((prev) => {
+      const envGroups = syncedEnvGroups
+        .map((envGroupName) => {
+          return prev.env_groups.find(
+            (envGroup) => envGroup.name === envGroupName
+          );
+        })
+        .map((envGroup) => {
+          return {
+            ...envGroup,
+            linked_applications: [
+              ...envGroup.linked_applications,
+              appResource.name,
+            ],
+          };
+        });
+
+      // Replace prev.envGroups with envGroups based on name
+      const newEnvGroups = prev.env_groups.map((envGroup) => {
+        const newEnvGroup = envGroups.find(
+          (envGroup2) => envGroup2.name === envGroup.name
+        );
+        return newEnvGroup ? newEnvGroup : envGroup;
+      });
+
+      return {
+        ...prev,
+        app_resources: [...prev.app_resources, appResource],
+        env_groups: newEnvGroups,
+      };
+    });
   };
 
   const removeAppResource: StacksLaunchContextType["removeAppResource"] = (
@@ -108,6 +144,13 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
       app_resources: prev.app_resources.filter(
         (ar) => ar.name !== appResource.name
       ),
+    }));
+  };
+
+  const addEnvGroup: StacksLaunchContextType["addEnvGroup"] = (envGroup) => {
+    setNewStack((prev) => ({
+      ...prev,
+      env_groups: [...prev.env_groups, envGroup],
     }));
   };
 
@@ -134,6 +177,7 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
         addSourceConfig,
         addAppResource,
         removeAppResource,
+        addEnvGroup,
         submit,
       }}
     >

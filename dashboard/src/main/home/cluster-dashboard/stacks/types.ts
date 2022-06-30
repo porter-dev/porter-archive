@@ -20,6 +20,17 @@ export type CreateStackBody = {
       dockerfile?: unknown;
     };
   }[];
+
+  env_groups: {
+    name: string;
+    variables: {
+      [key: string]: string;
+    };
+    secret_variables: {
+      [key: string]: string;
+    };
+    linked_applications: string[];
+  }[];
 };
 
 export type CreateStackResponse = Stack;

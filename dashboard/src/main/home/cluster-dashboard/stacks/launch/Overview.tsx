@@ -8,10 +8,9 @@ import useAuth from "shared/auth/useAuth";
 import { useRouting } from "shared/routing";
 import {
   AddResourceButtonStyles,
-  CardGrid,
   SubmitButton,
+  Card,
 } from "./components/styles";
-import { AppCard } from "./components/AppCard";
 import { AddResourceButton } from "./components/AddResourceButton";
 import styled from "styled-components";
 
@@ -19,7 +18,8 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import TitleSection from "components/TitleSection";
 import DynamicLink from "components/DynamicLink";
-import EnvGroupCard from "./components/EnvGroupCard";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
+import sliders from "assets/sliders.svg";
 
 const Overview = () => {
   const {
@@ -28,6 +28,7 @@ const Overview = () => {
     setStackName,
     setStackNamespace,
     submit,
+    removeAppResource,
   } = useContext(StacksLaunchContext);
   const { currentProject, currentCluster } = useContext(Context);
   const [isAuthorized] = useAuth();
@@ -154,18 +155,42 @@ const Overview = () => {
         At least one application is required:
         <Required>*</Required>
       </Helper>
-      <CardGrid>
+      <Card.Grid>
         {newStack.app_resources.map((app) => (
-          <AppCard key={app.name} app={app} />
+          <Card.Wrapper>
+            <Card.Title>
+              <Card.Icon src={hardcodedIcons[app.template_name]}></Card.Icon>
+              {app.name}
+            </Card.Title>
+            <Card.Actions>
+              <Card.ActionButton
+                onClick={() => {
+                  removeAppResource(app);
+                }}
+              >
+                <i className="material-icons-outlined">close</i>
+              </Card.ActionButton>
+            </Card.Actions>
+          </Card.Wrapper>
         ))}
 
         <AddResourceButton />
-      </CardGrid>
+      </Card.Grid>
 
       <Heading>Env groups</Heading>
-      <CardGrid>
+      <Card.Grid>
         {newStack.env_groups.map((envGroup) => (
-          <EnvGroupCard key={envGroup.name} envGroup={envGroup} />
+          <Card.Wrapper variant="unclickable">
+            <Card.Title>
+              <Card.Icon src={sliders} />
+              {envGroup.name}
+            </Card.Title>
+            {/* <Card.Actions>
+              <Card.ActionButton onClick={() => {}}>
+                <i className="material-icons-outlined">close</i>
+              </Card.ActionButton>
+            </Card.Actions> */}
+          </Card.Wrapper>
         ))}
 
         <AddResourceButtonStyles.Wrapper>
@@ -177,7 +202,7 @@ const Overview = () => {
             Add a new env group
           </AddResourceButtonStyles.Flex>
         </AddResourceButtonStyles.Wrapper>
-      </CardGrid>
+      </Card.Grid>
 
       <SubmitButton
         disabled={!isValid || submitButtonStatus !== ""}

@@ -93,11 +93,10 @@ const NewApp = () => {
     metadata: any;
   }) => {
     setSaveButtonStatus("loading");
-    // console.log(metadata);
-    const syncedEnvGroups = metadata["container.env"]?.added?.map(
-      ({ name }: { name: string }) => name
-    );
-    // return;
+    const syncedEnvGroups =
+      metadata["container.env"]?.added?.map(
+        ({ name }: { name: string }) => name
+      ) || [];
 
     // Convert dotted keys to nested objects
     let values: any = {};

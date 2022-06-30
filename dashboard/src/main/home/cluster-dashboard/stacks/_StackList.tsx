@@ -7,7 +7,7 @@ import Placeholder from "components/Placeholder";
 import styled from "styled-components";
 import { Stack } from "./types";
 import { readableDate } from "shared/string_utils";
-import { CardGrid, Card } from "./launch/components/styles";
+import { Card } from "./launch/components/styles";
 import Status, { StatusProps } from "./components/Status";
 import {
   Flex,
@@ -104,7 +104,7 @@ const StackList = ({ namespace }: { namespace: string }) => {
 
   return (
     <>
-      <CardGrid>
+      <Card.Grid>
         {stacks.map((stack) => (
           <StackCard
             as={DynamicLink}
@@ -160,7 +160,7 @@ const StackList = ({ namespace }: { namespace: string }) => {
             </Flex>
           </StackCard>
         ))}
-      </CardGrid>
+      </Card.Grid>
     </>
   );
 };
@@ -221,7 +221,7 @@ const DataContainer = styled.div`
   overflow: hidden;
 `;
 
-const StackCard = styled(Card)`
+const StackCard = styled(Card.Wrapper)`
   font-size: 13px;
   font-weight: 500;
 `;

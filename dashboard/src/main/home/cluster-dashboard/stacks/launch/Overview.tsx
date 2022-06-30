@@ -29,6 +29,7 @@ const Overview = () => {
     setStackNamespace,
     submit,
     removeAppResource,
+    removeEnvGroup,
   } = useContext(StacksLaunchContext);
   const { currentProject, currentCluster } = useContext(Context);
   const [isAuthorized] = useAuth();
@@ -185,11 +186,15 @@ const Overview = () => {
               <Card.Icon src={sliders} />
               {envGroup.name}
             </Card.Title>
-            {/* <Card.Actions>
-              <Card.ActionButton onClick={() => {}}>
+            <Card.Actions>
+              <Card.ActionButton
+                onClick={() => {
+                  removeEnvGroup(envGroup);
+                }}
+              >
                 <i className="material-icons-outlined">close</i>
               </Card.ActionButton>
-            </Card.Actions> */}
+            </Card.Actions>
           </Card.Wrapper>
         ))}
 

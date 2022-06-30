@@ -27,8 +27,12 @@ const NewEnvGroup = () => {
     !isAlphanumeric(name) || name === "" || !envVariables.length;
 
   const handleOnSubmit = () => {
-    const variables = envVariables.filter((variable) => !variable.locked);
-    const secret_variables = envVariables.filter((variable) => variable.locked);
+    const variables = envVariables.filter(
+      (variable) => !variable.locked && !variable.hidden
+    );
+    const secret_variables = envVariables.filter(
+      (variable) => variable.locked || variable.hidden
+    );
 
     addEnvGroup({
       name,

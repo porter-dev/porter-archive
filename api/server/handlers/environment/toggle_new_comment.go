@@ -35,16 +35,17 @@ func NewToggleNewCommentHandler(
 func (c *ToggleNewCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	request := &types.ToggleNewCommentRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
 
 	environmentID, reqErr := requestutils.GetURLParamUint(r, "environment_id")
 
 	if reqErr != nil {
 		c.HandleAPIError(w, r, reqErr)
+		return
+	}
+
+	request := &types.ToggleNewCommentRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
 
@@ -60,12 +61,14 @@ func (c *ToggleNewCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	env.EnableNewComment = request.Enable
+	if env.NewCommentsDisabled != request.Disable {
+		env.NewCommentsDisabled = request.Disable
 
-	_, err = c.Repo().Environment().UpdateEnvironment(env)
+		_, err = c.Repo().Environment().UpdateEnvironment(env)
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 }

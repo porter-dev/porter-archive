@@ -31,7 +31,7 @@ const DeploymentDetail = () => {
     let environment_id = parseInt(searchParams.get("environment_id"));
     setEnvironmentId(searchParams.get("environment_id"));
     api
-      .getPRDeploymentByCluster(
+      .getPRDeploymentByEnvironment(
         "<token>",
         {
           namespace: params.namespace,

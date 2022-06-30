@@ -29,7 +29,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 	releaseRegisterer := NewReleaseScopedRegisterer()
 	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer)
-	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer)
+	clusterIntegrationRegisterer := NewClusterIntegrationScopedRegisterer()
+	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer, clusterIntegrationRegisterer)
 	infraRegisterer := NewInfraScopedRegisterer()
 	gitInstallationRegisterer := NewGitInstallationScopedRegisterer()
 	registryRegisterer := NewRegistryScopedRegisterer()
@@ -49,8 +50,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		projectOAuthRegisterer,
 		slackIntegrationRegisterer,
 	)
+	statusRegisterer := NewStatusScopedRegisterer()
 
-	userRegisterer := NewUserScopedRegisterer(projRegisterer)
+	userRegisterer := NewUserScopedRegisterer(projRegisterer, statusRegisterer)
 	panicMW := middleware.NewPanicMiddleware(config)
 
 	if config.ServerConf.PprofEnabled {

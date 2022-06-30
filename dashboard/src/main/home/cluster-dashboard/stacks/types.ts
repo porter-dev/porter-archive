@@ -31,13 +31,16 @@ export type Stack = {
   name: string;
   created_at: string;
   updated_at: string;
+  namespace: string;
 
   revisions: StackRevision[];
 
-  latest_revision: StackRevision & {
-    resources: AppResource[];
-    source_configs: SourceConfig[];
-  };
+  latest_revision: FullStackRevision;
+};
+
+export type FullStackRevision = StackRevision & {
+  resources: AppResource[];
+  source_configs: SourceConfig[];
 };
 
 export type StackRevision = {

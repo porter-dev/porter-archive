@@ -59,7 +59,7 @@ func GetDynamicClientOutOfClusterConfig(conf *OutOfClusterConfig) (dynamic.Inter
 // GetAgentOutOfClusterConfig creates a new Agent using the OutOfClusterConfig
 func GetAgentOutOfClusterConfig(conf *OutOfClusterConfig) (*Agent, error) {
 	if conf.AllowInClusterConnections && conf.Cluster.AuthMechanism == models.InCluster {
-		return GetAgentInClusterConfig()
+		return GetAgentInClusterConfig(conf.DefaultNamespace)
 	}
 
 	restConf, err := conf.ToRESTConfig()
@@ -89,14 +89,14 @@ func IsInCluster() bool {
 
 // GetAgentInClusterConfig uses the service account that kubernetes
 // gives to pods to connect
-func GetAgentInClusterConfig() (*Agent, error) {
+func GetAgentInClusterConfig(namespace string) (*Agent, error) {
 	conf, err := rest.InClusterConfig()
 
 	if err != nil {
 		return nil, err
 	}
 
-	restClientGetter := NewRESTClientGetterFromInClusterConfig(conf)
+	restClientGetter := NewRESTClientGetterFromInClusterConfig(conf, namespace)
 	clientset, err := kubernetes.NewForConfig(conf)
 
 	return &Agent{restClientGetter, clientset}, nil
@@ -419,8 +419,12 @@ func (conf *OutOfClusterConfig) setTokenCache(token string, expiry time.Time) er
 
 // NewRESTClientGetterFromInClusterConfig returns a RESTClientGetter using
 // default values set from the *rest.Config
-func NewRESTClientGetterFromInClusterConfig(conf *rest.Config) genericclioptions.RESTClientGetter {
+func NewRESTClientGetterFromInClusterConfig(conf *rest.Config, namespace string) genericclioptions.RESTClientGetter {
 	cfs := genericclioptions.NewConfigFlags(false)
+
+	if namespace != "" {
+		cfs.Namespace = &namespace
+	}
 
 	cfs.ClusterName = &conf.ServerName
 	cfs.Insecure = &conf.Insecure

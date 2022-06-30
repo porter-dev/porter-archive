@@ -1,10 +1,12 @@
 import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
-import { release } from "process";
 import { baseApi } from "./baseApi";
 
-import { BuildConfig, FullActionConfigType, StorageType } from "./types";
-import { CreateStackBody } from "main/home/cluster-dashboard/stacks/types";
+import { BuildConfig, FullActionConfigType } from "./types";
+import {
+  CreateStackBody,
+  SourceConfig,
+} from "main/home/cluster-dashboard/stacks/types";
 
 /**
  * Generic api call format
@@ -372,7 +374,7 @@ const getPRDeploymentList = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments`;
 });
 
-const getPRDeploymentByCluster = baseApi<
+const getPRDeploymentByEnvironment = baseApi<
   {
     namespace: string;
   },
@@ -384,7 +386,7 @@ const getPRDeploymentByCluster = baseApi<
 >("GET", (pathParams) => {
   const { cluster_id, project_id, environment_id } = pathParams;
 
-  return `/api/projects/${project_id}/clusters/${cluster_id}/${environment_id}/deployment`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/deployment`;
 });
 
 const getPRDeployment = baseApi<
@@ -1819,6 +1821,25 @@ const updateBuildConfig = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/buildconfig`
 );
 
+const updateGitActionConfig = baseApi<
+  {
+    git_action_config: {
+      git_branch: string;
+    };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    release_name: string;
+    revision?: 0; // Always update latest
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, namespace, release_name, revision = 0 }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/${revision}/git_action_config`
+);
+
 const reRunGHWorkflow = baseApi<
   {},
   {
@@ -1985,7 +2006,7 @@ const getStackRevision = baseApi<
     cluster_id: number;
     namespace: string;
     stack_id: string;
-    revision_id: string;
+    revision_id: number;
   }
 >(
   "GET",
@@ -1994,7 +2015,9 @@ const getStackRevision = baseApi<
 );
 
 const rollbackStack = baseApi<
-  {},
+  {
+    target_revision: number;
+  },
   {
     project_id: number;
     cluster_id: number;
@@ -2019,6 +2042,27 @@ const deleteStack = baseApi<
   "DELETE",
   ({ project_id, cluster_id, namespace, stack_id }) =>
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}`
+);
+
+const updateStackSourceConfig = baseApi<
+  {
+    source_configs: SourceConfig[];
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    stack_id: string;
+  }
+>(
+  "PUT",
+  ({ project_id, cluster_id, namespace, stack_id }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/source`
+);
+
+const getGithubStatus = baseApi<{}, {}>(
+  "GET",
+  ({}) => `/api/status/github`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -2082,7 +2126,7 @@ export default {
   getClusterNode,
   getConfigMap,
   getPRDeploymentList,
-  getPRDeploymentByCluster,
+  getPRDeploymentByEnvironment,
   getPRDeployment,
   getGHAWorkflowTemplate,
   getGitRepoList,
@@ -2195,6 +2239,7 @@ export default {
   upgradePorterAgent,
   deletePRDeployment,
   updateBuildConfig,
+  updateGitActionConfig,
   reRunGHWorkflow,
   triggerPreviewEnvWorkflow,
   getTagsByProjectId,
@@ -2212,4 +2257,8 @@ export default {
   createStack,
   rollbackStack,
   deleteStack,
+  updateStackSourceConfig,
+
+  // STATUS
+  getGithubStatus,
 };

@@ -63,6 +63,31 @@ func (c *ReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			res.BuildConfig = bc.ToBuildConfigType()
 		}
+
+		if release.StackResourceID != 0 {
+			stackResource, err := c.Repo().Stack().ReadStackResource(release.StackResourceID)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			stackRevision, err := c.Repo().Stack().ReadStackRevision(stackResource.StackRevisionID)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			stack, err := c.Repo().Stack().ReadStackByID(cluster.ProjectID, stackRevision.StackID)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			res.StackID = stack.UID
+		}
 	} else if err != gorm.ErrRecordNotFound {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

@@ -82,12 +82,6 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
-	depl.Status = types.DeploymentStatusFailed
-
-	// we do not care of the error in this case because the list deployments endpoint
-	// talks to the github API to fetch the deployment status correctly
-	c.Repo().Environment().UpdateDeployment(depl)
-
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
@@ -97,7 +91,30 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		return
 	}
 
-	// FIXME: ignore the status of thie API call for now
+	// add a check for the PR to be open before creating a comment
+	prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
+				depl.ID, err), http.StatusConflict,
+		))
+		return
+	}
+
+	if prClosed {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+			http.StatusConflict))
+		return
+	}
+
+	depl.Status = types.DeploymentStatusFailed
+
+	// we do not care of the error in this case because the list deployments endpoint
+	// talks to the github API to fetch the deployment status correctly
+	c.Repo().Environment().UpdateDeployment(depl)
+
+	// FIXME: ignore the status of this API call for now
 	client.Repositories.CreateDeploymentStatus(
 		context.Background(), owner, name, depl.GHDeploymentID, &github.DeploymentStatusRequest{
 			State:       github.String("failure"),
@@ -145,20 +162,10 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 		commentBody += fmt.Sprintf("<details>\n  <summary><code>%s</code></summary>\n\n  **Error:** %s\n</details>\n", res, err)
 	}
 
-	_, _, err = client.Issues.CreateComment(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		int(depl.PullRequestID),
-		&github.IssueComment{
-			Body: github.String(commentBody),
-		},
-	)
+	err = createOrUpdateComment(client, c.Repo(), env.NewCommentsDisabled, depl, github.String(commentBody))
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error creating github comment: %w", err), http.StatusConflict,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 

@@ -52,6 +52,9 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	if depl.Status == types.DeploymentStatusInactive {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("trying to trigger workflow run for inactive deployment"), http.StatusConflict,
+		))
 		return
 	}
 
@@ -66,6 +69,23 @@ func (c *TriggerDeploymentWorkflowHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// add a check for the PR to be open before creating a comment
+	prClosed, err := isGithubPRClosed(client, depl.RepoOwner, depl.RepoName, int(depl.PullRequestID))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
+				depl.ID, err), http.StatusConflict,
+		))
+		return
+	}
+
+	if prClosed {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+			http.StatusConflict))
 		return
 	}
 

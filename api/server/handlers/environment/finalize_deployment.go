@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/google/go-github/v41/github"
@@ -106,6 +107,23 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// add a check for the PR to be open before creating a comment
+	prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
+				depl.ID, err), http.StatusConflict,
+		))
+		return
+	}
+
+	if prClosed {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+			http.StatusConflict))
+		return
+	}
+
 	workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
 		fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
 
@@ -127,9 +145,9 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			"| Latest SHA | [`%s`](https://github.com/%s/%s/commit/%s) |\n"+
 			"| Live URL | %s |\n"+
 			"| Build Logs | %s |\n"+
-			"| Porter Deployments URL | %s/preview-environments/details/%s?environment_id=%d |",
+			"| Porter Deployments URL | %s/preview-environments/details/%s?environment_id=%d&project_id=%d&cluster=%s |",
 		depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, depl.Subdomain, workflowRun.GetHTMLURL(),
-		c.Config().ServerConf.ServerURL, depl.Namespace, depl.EnvironmentID,
+		c.Config().ServerConf.ServerURL, depl.Namespace, depl.EnvironmentID, project.ID, url.QueryEscape(cluster.Name),
 	)
 
 	if len(request.SuccessfulResources) > 0 {
@@ -263,4 +281,20 @@ func updateGithubComment(
 	)
 
 	return err
+}
+
+func isGithubPRClosed(
+	client *github.Client,
+	owner, name string,
+	prNumber int,
+) (bool, error) {
+	ghPR, _, err := client.PullRequests.Get(
+		context.Background(), owner, name, prNumber,
+	)
+
+	if err != nil {
+		return false, err
+	}
+
+	return ghPR.GetState() == "closed", nil
 }

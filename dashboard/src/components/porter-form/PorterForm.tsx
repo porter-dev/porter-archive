@@ -70,7 +70,7 @@ const PorterForm: React.FC<Props> = (props) => {
     const bundledProps = {
       ...field,
       isReadOnly,
-      injectedValues: injected ?? {},
+      injectedProps: injected ?? {},
     };
 
     switch (field.type) {

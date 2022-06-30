@@ -19,6 +19,7 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import TitleSection from "components/TitleSection";
 import DynamicLink from "components/DynamicLink";
+import EnvGroupCard from "./components/EnvGroupCard";
 
 const Overview = () => {
   const {
@@ -163,8 +164,8 @@ const Overview = () => {
 
       <Heading>Env groups</Heading>
       <CardGrid>
-        {newStack.envGroups.map((envGroup) => (
-          <>{envGroup.name}</>
+        {newStack.env_groups.map((envGroup) => (
+          <EnvGroupCard key={envGroup.name} envGroup={envGroup} />
         ))}
 
         <AddResourceButtonStyles.Wrapper>

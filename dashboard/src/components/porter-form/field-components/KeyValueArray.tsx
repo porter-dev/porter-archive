@@ -202,6 +202,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
             existingValues={getProcessedValues(state.values)}
             enableSyncedEnvGroups={enableSyncedEnvGroups}
             syncedEnvGroups={state.synced_env_groups}
+            availableEnvGroups={props.injectedProps?.availableSyncEnvGroups}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
             closeModal={() =>

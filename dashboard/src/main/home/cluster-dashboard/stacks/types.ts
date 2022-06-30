@@ -21,9 +21,15 @@ export type CreateStackBody = {
     };
   }[];
 
-  envGroups: {
+  env_groups: {
     name: string;
-    variables: unknown[];
+    variables: {
+      [key: string]: string;
+    };
+    secret_variables: {
+      [key: string]: string;
+    };
+    linked_applications: string[];
   }[];
 };
 

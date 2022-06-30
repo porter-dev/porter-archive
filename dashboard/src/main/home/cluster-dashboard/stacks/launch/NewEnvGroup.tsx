@@ -5,19 +5,42 @@ import React, { useContext, useState } from "react";
 import { isAlphanumeric } from "shared/common";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
-import EnvGroupArray from "../../env-groups/EnvGroupArray";
+import EnvGroupArray, { KeyValueType } from "../../env-groups/EnvGroupArray";
 import { SubmitButton } from "./components/styles";
 import { StacksLaunchContext } from "./Store";
+
+const envArrayToObject = (variables: KeyValueType[]) => {
+  return variables.reduce<{ [key: string]: string }>((acc, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {});
+};
 
 const NewEnvGroup = () => {
   const { addEnvGroup } = useContext(StacksLaunchContext);
   const [name, setName] = useState("");
-  const [envVariables, setEnvVariables] = useState<any[]>([]);
+  const [envVariables, setEnvVariables] = useState<KeyValueType[]>([]);
 
   const { pushFiltered } = useRouting();
 
   const isDisabled = () =>
     !isAlphanumeric(name) || name === "" || !envVariables.length;
+
+  const handleOnSubmit = () => {
+    const variables = envVariables.filter((variable) => !variable.locked);
+    const secret_variables = envVariables.filter((variable) => variable.locked);
+
+    addEnvGroup({
+      name,
+      variables: envArrayToObject(variables),
+      secret_variables: envArrayToObject(secret_variables),
+      linked_applications: [],
+    });
+    setName("");
+    setEnvVariables([]);
+    pushFiltered("/stacks/launch/overview", []);
+    return;
+  };
 
   return (
     <>
@@ -53,13 +76,7 @@ const NewEnvGroup = () => {
       />
 
       <SubmitButton
-        onClick={() => {
-          addEnvGroup({
-            name,
-            variables: [...envVariables],
-          });
-          pushFiltered("/stacks/launch/overview", []);
-        }}
+        onClick={handleOnSubmit}
         makeFlush
         clearPosition
         text="Save env group"

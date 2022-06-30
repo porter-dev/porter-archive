@@ -85,8 +85,19 @@ const NewApp = () => {
     return <>Unexpected error</>;
   }
 
-  const handleSubmit = async (rawValues: any) => {
+  const handleSubmit = async ({
+    values: rawValues,
+    metadata,
+  }: {
+    values: any;
+    metadata: any;
+  }) => {
     setSaveButtonStatus("loading");
+    // console.log(metadata);
+    const syncedEnvGroups = metadata["container.env"]?.added?.map(
+      ({ name }: { name: string }) => name
+    );
+    // return;
 
     // Convert dotted keys to nested objects
     let values: any = {};
@@ -171,13 +182,16 @@ const NewApp = () => {
       return;
     }
 
-    addAppResource({
-      name: appName,
-      source_config_name: newStack.source_configs[0]?.name || "",
-      template_name: params.template_name,
-      template_version: params.version,
-      values,
-    });
+    addAppResource(
+      {
+        name: appName,
+        source_config_name: newStack.source_configs[0]?.name || "",
+        template_name: params.template_name,
+        template_version: params.version,
+        values,
+      },
+      [...syncedEnvGroups]
+    );
 
     setSaveButtonStatus("successful");
     setTimeout(() => {
@@ -225,9 +239,10 @@ const NewApp = () => {
           valuesToOverride={{ namespace }}
           injectedProps={{
             "key-value-array": {
-              availableSyncEnvGroups: [],
+              availableSyncEnvGroups: newStack.env_groups as any,
             },
           }}
+          includeMetadata
         />
       </div>
     </StyledLaunchFlow>

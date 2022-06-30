@@ -64,15 +64,15 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	env, err := c.Repo().Environment().CreateEnvironment(&models.Environment{
-		ProjectID:         project.ID,
-		ClusterID:         cluster.ID,
-		GitInstallationID: uint(ga.InstallationID),
-		Name:              request.Name,
-		GitRepoOwner:      owner,
-		GitRepoName:       name,
-		Mode:              request.Mode,
-		WebhookID:         string(webhookUID),
-		EnableNewComment:  false,
+		ProjectID:           project.ID,
+		ClusterID:           cluster.ID,
+		GitInstallationID:   uint(ga.InstallationID),
+		Name:                request.Name,
+		GitRepoOwner:        owner,
+		GitRepoName:         name,
+		Mode:                request.Mode,
+		WebhookID:           string(webhookUID),
+		NewCommentsDisabled: false,
 	})
 
 	if err != nil {

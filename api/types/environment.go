@@ -14,7 +14,7 @@ type Environment struct {
 	Mode                 string `json:"mode"`
 	DeploymentCount      uint   `json:"deployment_count"`
 	LastDeploymentStatus string `json:"last_deployment_status"`
-	EnableNewComment     bool   `json:"enable_new_comment"`
+	NewCommentsDisabled  bool   `json:"new_comments_disabled"`
 }
 
 type CreateEnvironmentRequest struct {
@@ -24,7 +24,6 @@ type CreateEnvironmentRequest struct {
 
 type GitHubMetadata struct {
 	DeploymentID int64  `json:"gh_deployment_id"`
-	PRCommentID  int64  `json:"gh_pr_comment_id"`
 	PRName       string `json:"gh_pr_name"`
 	RepoName     string `json:"gh_repo_name"`
 	RepoOwner    string `json:"gh_repo_owner"`
@@ -126,7 +125,7 @@ type PullRequest struct {
 }
 
 type ToggleNewCommentRequest struct {
-	Enable bool `json:"enable" form:"required"`
+	Disable bool `json:"disable"`
 }
 
 type ListEnvironmentsResponse []*Environment

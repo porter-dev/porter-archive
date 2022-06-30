@@ -201,7 +201,7 @@ const listEnvironments = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments`;
 });
 
-const toggleNewCommentForEnvironment = baseApi<
+const getEnvironment = baseApi<
   {},
   {
     project_id: number;
@@ -211,6 +211,20 @@ const toggleNewCommentForEnvironment = baseApi<
 >("GET", (pathParams) => {
   let { project_id, cluster_id, environment_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}`;
+});
+
+const toggleNewCommentForEnvironment = baseApi<
+  {
+    disable: boolean;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>("PATCH", (pathParams) => {
+  let { project_id, cluster_id, environment_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/toggle_new_comment`;
 });
 
 const createGCPIntegration = baseApi<
@@ -2085,6 +2099,7 @@ export default {
   createPreviewEnvironmentDeployment,
   reenablePreviewEnvironmentDeployment,
   listEnvironments,
+  getEnvironment,
   toggleNewCommentForEnvironment,
   createGCPIntegration,
   createInvite,

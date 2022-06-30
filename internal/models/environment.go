@@ -19,7 +19,7 @@ type Environment struct {
 	Name string
 	Mode string
 
-	EnableNewComment bool
+	NewCommentsDisabled bool
 
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
@@ -35,7 +35,7 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
 
-		EnableNewComment: e.EnableNewComment,
+		NewCommentsDisabled: e.NewCommentsDisabled,
 
 		Name: e.Name,
 		Mode: e.Mode,
@@ -70,7 +70,6 @@ func (d *Deployment) ToDeploymentType() *types.Deployment {
 		CommitSHA:    d.CommitSHA,
 		PRBranchFrom: d.PRBranchFrom,
 		PRBranchInto: d.PRBranchInto,
-		PRCommentID:  d.GHPRCommentID,
 	}
 
 	return &types.Deployment{

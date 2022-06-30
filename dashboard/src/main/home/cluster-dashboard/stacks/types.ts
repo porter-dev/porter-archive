@@ -52,6 +52,7 @@ export type Stack = {
 export type FullStackRevision = StackRevision & {
   resources: AppResource[];
   source_configs: SourceConfig[];
+  env_groups: EnvGroup[];
 };
 
 export type StackRevision = {
@@ -99,4 +100,14 @@ export type AppResource = {
     template_name: string;
     template_version: string;
   };
+};
+
+export type EnvGroup = {
+  env_group_version: number;
+  updated_at: string;
+  stack_id: string;
+  name: string;
+  stack_revision_id: number;
+  created_at: string;
+  id: string;
 };

@@ -23,6 +23,7 @@ import {
 } from "../components/styles";
 import { getStackStatus, getStackStatusMessage } from "../shared";
 import { FullStackRevision, Stack, StackRevision } from "../types";
+import EnvGroups from "./components/EnvGroups";
 import RevisionList from "./_RevisionList";
 import SourceConfig from "./_SourceConfig";
 
@@ -187,6 +188,16 @@ const ExpandedStack = () => {
                   readOnly={stack.latest_revision.id !== currentRevision.id}
                   onSourceConfigUpdate={() => getStack()}
                 ></SourceConfig>
+              </>
+            ),
+          },
+          {
+            label: "Env groups",
+            value: "env_groups",
+            component: (
+              <>
+                <Gap></Gap>
+                <EnvGroups stack={stack} />
               </>
             ),
           },

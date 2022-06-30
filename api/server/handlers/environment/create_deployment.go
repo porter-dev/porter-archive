@@ -66,6 +66,22 @@ func (c *CreateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// add a check for Github PR status
+	prClosed, err := isGithubPRClosed(client, owner, name, int(request.PullRequestID))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("error fetching details of github PR. Error: %w", err), http.StatusConflict,
+		))
+		return
+	}
+
+	if prClosed {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+			http.StatusConflict))
+		return
+	}
+
 	ghDeployment, err := createDeployment(client, env, request.PRBranchFrom, request.ActionID)
 
 	if err != nil {

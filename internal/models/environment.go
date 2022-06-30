@@ -19,9 +19,13 @@ type Environment struct {
 	Name string
 	Mode string
 
+	NewCommentsDisabled bool
+
 	// WebhookID uniquely identifies the environment when other fields (project, cluster)
 	// aren't present
 	WebhookID string `gorm:"unique"`
+
+	GithubWebhookID int64
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
@@ -32,6 +36,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
+
+		NewCommentsDisabled: e.NewCommentsDisabled,
 
 		Name: e.Name,
 		Mode: e.Mode,
@@ -47,6 +53,7 @@ type Deployment struct {
 	Subdomain      string
 	PullRequestID  uint
 	GHDeploymentID int64
+	GHPRCommentID  int64
 	PRName         string
 	RepoName       string
 	RepoOwner      string

@@ -1,10 +1,12 @@
 package environment
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -79,12 +81,38 @@ func (c *DeleteEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		agent.DeleteNamespace(depl.Namespace)
 	}
 
+	ghWebhookID := env.GithubWebhookID
+	webhookUID := env.WebhookID
+
 	// delete the environment
 	env, err = c.Repo().Environment().DeleteEnvironment(env)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	// FIXME: ignore the return status codes for now, should be fixed when we start returning all non-fatal errors
+	if ghWebhookID != 0 {
+		client.Repositories.DeleteHook(context.Background(), owner, name, ghWebhookID)
+	} else {
+		webhookURL := getGithubWebhookURLFromUID(c.Config().ServerConf.ServerURL, string(webhookUID))
+
+		// FIXME: should be cycling through all webhooks if pagination is needed
+		hooks, _, err := client.Repositories.ListHooks(context.Background(), owner, name, &github.ListOptions{})
+
+		if err == nil {
+			for _, hook := range hooks {
+				if hookURL, ok := hook.Config["url"]; ok {
+					if hookURLStr, ok := hookURL.(string); ok {
+						if hookURLStr == webhookURL {
+							client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
+							break
+						}
+					}
+				}
+			}
+		}
 	}
 
 	err = actions.DeleteEnv(&actions.EnvOpts{

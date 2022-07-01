@@ -265,7 +265,7 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 	}
 
 	if shouldCreate {
-		err = client.DeployAddon(
+		err := client.DeployAddon(
 			context.Background(),
 			d.target.Project,
 			d.target.Cluster,
@@ -280,6 +280,10 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 				},
 			},
 		)
+
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		bytes, err := json.Marshal(addonConfig)
 
@@ -297,17 +301,17 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 				Values: string(bytes),
 			},
 		)
-	}
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {
 		return nil, err
 	}
 
-	return resource, err
+	return resource, nil
 }
 
 func (d *Driver) applyApplication(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {

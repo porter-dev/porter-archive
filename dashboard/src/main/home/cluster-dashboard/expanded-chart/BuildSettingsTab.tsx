@@ -124,6 +124,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   };
 
   const saveBuildConfig = async (config: BuildConfig) => {
+    console.log({ config });
     if (config === null) {
       return;
     }
@@ -257,7 +258,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     if (buildpackConfigRef.current?.isLoading) {
       return null;
     }
-    return buildpackConfigRef.current?.getBuildConfig();
+    return buildpackConfigRef.current?.getBuildConfig() || null;
   };
 
   const handleSave = async () => {

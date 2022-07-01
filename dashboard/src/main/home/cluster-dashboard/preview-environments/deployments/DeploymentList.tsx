@@ -16,6 +16,8 @@ import PullRequestCard from "./PullRequestCard";
 import DynamicLink from "components/DynamicLink";
 import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
 import SearchBar from "components/SearchBar";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import DocsHelper from "components/DocsHelper";
 
 const AvailableStatusFilters = [
   "all",
@@ -34,6 +36,7 @@ const DeploymentList = () => {
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
+  const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
 
   const [
     statusSelectorVal,
@@ -66,6 +69,18 @@ const DeploymentList = () => {
     // return mockRequest();
   };
 
+  const getEnvironment = () => {
+    return api.getEnvironment(
+      "<token>",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: currentCluster.id,
+        environment_id: Number(environment_id),
+      }
+    );
+  };
+
   useEffect(() => {
     const status_filter = getQueryParam("status_filter");
 
@@ -93,7 +108,6 @@ const DeploymentList = () => {
 
         setDeploymentList(data.deployments || []);
         setPullRequests(data.pull_requests || []);
-        setIsLoading(false);
       })
       .catch((err) => {
         console.error(err);
@@ -101,6 +115,21 @@ const DeploymentList = () => {
           setHasError(true);
         }
       });
+    getEnvironment()
+      .then(({ data }) => {
+        if (!isSubscribed) {
+          return;
+        }
+
+        setNewCommentsDisabled(data.new_comments_disabled || false);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (isSubscribed) {
+          setHasError(true);
+        }
+      });
+    setIsLoading(false);
 
     return () => {
       isSubscribed = false;
@@ -116,9 +145,15 @@ const DeploymentList = () => {
     } catch (error) {
       setHasError(true);
       console.error(error);
-    } finally {
-      setIsLoading(false);
     }
+    try {
+      const { data } = await getEnvironment();
+      setNewCommentsDisabled(data.new_comments_disabled || false);
+    } catch (error) {
+      setHasError(true);
+      console.error(error);
+    }
+    setIsLoading(false);
   };
 
   const handlePreviewEnvironmentManualCreation = (pullRequest: PullRequest) => {
@@ -232,6 +267,24 @@ const DeploymentList = () => {
     setStatusSelectorVal(value);
   };
 
+  const handleToggleCommentStatus = (currentlyDisabled: boolean) => {
+    api
+      .toggleNewCommentForEnvironment(
+        "<token>",
+        {
+          disable: !currentlyDisabled,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          environment_id: Number(environment_id),
+        }
+      )
+      .then(() => {
+        setNewCommentsDisabled(!currentlyDisabled);
+      });
+  };
+
   return (
     <>
       <PreviewEnvironmentsHeader />
@@ -282,6 +335,24 @@ const DeploymentList = () => {
           </StyledStatusSelector>
         </ActionsWrapper>
       </Flex>
+      <Flex>
+        <ActionsWrapper>
+          <FlexWrap>
+            <CheckboxRow
+              label="Disable new comments for deployments"
+              checked={newCommentsDisabled}
+              toggle={() => handleToggleCommentStatus(newCommentsDisabled)}
+            />
+            <Div>
+              <DocsHelper
+                disableMargin
+                tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
+                placement="top-end"
+              />
+            </Div>
+          </FlexWrap>
+        </ActionsWrapper>
+      </Flex>
       <Container>
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>
@@ -303,6 +374,15 @@ const mockRequest = () =>
   });
 
 const Flex = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Div = styled.div`
+  margin-bottom: -7px;
+`;
+
+const FlexWrap = styled.div`
   display: flex;
   align-items: center;
 `;

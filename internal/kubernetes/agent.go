@@ -690,7 +690,7 @@ func (a *Agent) GetNamespace(name string) (*v1.Namespace, error) {
 // DeleteNamespace deletes the namespace given the name.
 func (a *Agent) DeleteNamespace(name string) error {
 	// check if namespace exists
-	_, err := a.Clientset.CoreV1().Namespaces().Get(
+	checkNS, err := a.Clientset.CoreV1().Namespaces().Get(
 		context.TODO(),
 		name,
 		metav1.GetOptions{},
@@ -698,6 +698,12 @@ func (a *Agent) DeleteNamespace(name string) error {
 
 	// if the namespace is not found, don't return an error.
 	if err != nil && errors.IsNotFound(err) {
+		return nil
+	}
+
+	// if the namespace was found but is in the "Terminating" phase
+	// we should ignore it and not return an error
+	if checkNS != nil && checkNS.Status.Phase == v1.NamespaceTerminating {
 		return nil
 	}
 

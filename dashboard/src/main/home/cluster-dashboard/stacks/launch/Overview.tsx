@@ -107,7 +107,7 @@ const Overview = () => {
   }, [namespace, newStack.name]);
 
   return (
-    <StyledLaunchFlow style={{ position: "relative" }}>
+    <>
       <TitleSection handleNavBack={() => window.open("/stacks", "_self")}>
         <Polymer>
           <i className="material-icons">lan</i>
@@ -219,7 +219,7 @@ const Overview = () => {
       >
         Create Stack
       </SubmitButton>
-    </StyledLaunchFlow>
+    </>
   );
 };
 

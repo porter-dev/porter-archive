@@ -201,6 +201,32 @@ const listEnvironments = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments`;
 });
 
+const getEnvironment = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>("GET", (pathParams) => {
+  let { project_id, cluster_id, environment_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}`;
+});
+
+const toggleNewCommentForEnvironment = baseApi<
+  {
+    disable: boolean;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>("PATCH", (pathParams) => {
+  let { project_id, cluster_id, environment_id } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/toggle_new_comment`;
+});
+
 const createGCPIntegration = baseApi<
   {
     gcp_key_data: string;
@@ -2048,6 +2074,11 @@ const updateStackSourceConfig = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/source`
 );
 
+const getGithubStatus = baseApi<{}, {}>(
+  "GET",
+  ({}) => `/api/status/github`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -2068,6 +2099,8 @@ export default {
   createPreviewEnvironmentDeployment,
   reenablePreviewEnvironmentDeployment,
   listEnvironments,
+  getEnvironment,
+  toggleNewCommentForEnvironment,
   createGCPIntegration,
   createInvite,
   createNamespace,
@@ -2240,4 +2273,7 @@ export default {
   rollbackStack,
   deleteStack,
   updateStackSourceConfig,
+
+  // STATUS
+  getGithubStatus,
 };

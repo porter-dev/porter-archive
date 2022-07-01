@@ -209,7 +209,7 @@ const SettingsSection: React.FC<PropsType> = ({
     console.log(PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl));
     return (
       <>
-        {!currentChart.is_stack &&
+        {!currentChart.stack_id?.length &&
         !PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl) ? (
           <>
             <Heading>Source Settings</Heading>

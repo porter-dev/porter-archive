@@ -236,7 +236,7 @@ class RevisionSection extends Component<PropsType, StateType> {
                   "get",
                   "update",
                 ]) ||
-                this.props.chart.is_stack
+                !!this.props.chart.stack_id?.length
               }
               onClick={() =>
                 this.setState({ rollbackRevision: revision.version })

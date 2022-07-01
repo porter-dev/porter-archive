@@ -1,13 +1,16 @@
+import DynamicLink from "components/DynamicLink";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
+import TitleSection from "components/TitleSection";
 import React, { useContext, useState } from "react";
 import { isAlphanumeric } from "shared/common";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import EnvGroupArray, { KeyValueType } from "../../env-groups/EnvGroupArray";
-import { SubmitButton } from "./components/styles";
+import { BackButton, Icon, Polymer, SubmitButton } from "./components/styles";
 import { StacksLaunchContext } from "./Store";
+import sliders from "assets/sliders.svg";
 
 const envArrayToObject = (variables: KeyValueType[]) => {
   return variables.reduce<{ [key: string]: string }>((acc, curr) => {
@@ -48,6 +51,17 @@ const NewEnvGroup = () => {
 
   return (
     <>
+      <TitleSection>
+        <DynamicLink to={`/stacks/launch/overview`}>
+          <BackButton>
+            <i className="material-icons">keyboard_backspace</i>
+          </BackButton>
+        </DynamicLink>
+        <Polymer>
+          <Icon src={sliders} />
+        </Polymer>
+        Add a Env Group to Stack
+      </TitleSection>
       <Heading isAtTop={true}>Name</Heading>
       <Subtitle>
         <Warning

@@ -207,8 +207,6 @@ const SettingsSection: React.FC<PropsType> = ({
       buttonStatus = "Unauthorized to create webhook token";
     }
 
-    console.log(currentChart.stack_id, !currentChart.stack_id?.length);
-
     return (
       <>
         {!currentChart.stack_id?.length &&

@@ -9,6 +9,7 @@ type EnvironmentRepository interface {
 	ReadEnvironmentByOwnerRepoName(projectID, clusterID uint, owner, repo string) (*models.Environment, error)
 	ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repo string) (*models.Environment, error)
 	ListEnvironments(projectID, clusterID uint) ([]*models.Environment, error)
+	UpdateEnvironment(environment *models.Environment) (*models.Environment, error)
 	DeleteEnvironment(env *models.Environment) (*models.Environment, error)
 	CreateDeployment(deployment *models.Deployment) (*models.Deployment, error)
 	ReadDeployment(environmentID uint, namespace string) (*models.Deployment, error)

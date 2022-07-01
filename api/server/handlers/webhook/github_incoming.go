@@ -76,7 +76,11 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 
 	env, err := c.Repo().Environment().ReadEnvironmentByWebhookIDOwnerRepoName(webhookID, owner, repo)
 
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+
 		return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s] error reading environment: %w", webhookID, owner, repo, err)
 	}
 

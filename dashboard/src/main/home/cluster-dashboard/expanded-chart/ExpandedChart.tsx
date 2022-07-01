@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
@@ -25,8 +31,9 @@ import DeploymentType from "./DeploymentType";
 import IncidentsTab from "./incidents/IncidentsTab";
 import BuildSettingsTab from "./BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
-import { Stack } from "../stacks/types";
+import { FullStackRevision, Stack } from "../stacks/types";
 import { PopulatedEnvGroup } from "components/porter-form/types";
+import { usePrevious } from "shared/hooks/usePrevious";
 
 type Props = {
   namespace: string;
@@ -53,9 +60,10 @@ const useStackEnvGroups = (chart: ChartType) => {
   );
   const [stackEnvGroups, setStackEnvGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const stackRevisionCache = useRef<{ [id: number]: FullStackRevision }>({});
 
-  const getEnvGroups = async (stack: Stack) => {
-    const envGroups = stack.latest_revision.env_groups;
+  const getEnvGroups = async (stackRevision: FullStackRevision) => {
+    const envGroups = stackRevision.env_groups;
 
     const envGroupsWithValues = envGroups.map((envGroup) => {
       return api
@@ -76,28 +84,47 @@ const useStackEnvGroups = (chart: ChartType) => {
     return Promise.all(envGroupsWithValues);
   };
 
-  const getStack = (stack_id: string) =>
-    api
-      .getStack<Stack>(
-        "token",
+  const getStackRevision = (
+    stack_id: string,
+    namespace: string,
+    revision_id: number
+  ) => {
+    if (stackRevisionCache.current[revision_id]) {
+      return Promise.resolve(stackRevisionCache.current[revision_id]);
+    }
+
+    return api
+      .getStackRevision<FullStackRevision>(
+        "<token>",
         {},
         {
-          cluster_id: currentCluster.id,
           project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace,
+          revision_id,
           stack_id,
-          namespace: chart.namespace,
         }
       )
-      .then((res) => res.data);
+      .then((res) => {
+        const newRevision = res.data;
+        stackRevisionCache.current = {
+          ...stackRevisionCache.current,
+          [newRevision.id]: newRevision,
+        };
+        return newRevision;
+      });
+  };
 
   useEffect(() => {
     const stack_id = chart.stack_id;
     if (!stack_id) {
       return;
     }
+
     setLoading(true);
-    getStack(stack_id)
-      .then((stack) => getEnvGroups(stack))
+
+    getStackRevision(stack_id, chart.namespace, chart.version)
+      .then((stackRevision) => getEnvGroups(stackRevision))
       .then((populatedEnvGroups) => {
         setStackEnvGroups(populatedEnvGroups);
 
@@ -106,7 +133,7 @@ const useStackEnvGroups = (chart: ChartType) => {
       .catch((error) => {
         setCurrentError(error);
       });
-  }, [chart.stack_id]);
+  }, [chart]);
 
   return {
     isStack: chart.stack_id?.length ? true : false,

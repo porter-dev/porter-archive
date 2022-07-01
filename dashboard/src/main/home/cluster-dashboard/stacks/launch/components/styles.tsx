@@ -182,3 +182,48 @@ export const SelectorStyles = {
     text-overflow: ellipsis;
   `,
 };
+
+export const BackButton = styled.div`
+  > i {
+    cursor: pointer;
+    font-size: 24px;
+    color: #969fbbaa;
+    margin-right: 10px;
+    padding: 3px;
+    margin-left: 0px;
+    border-radius: 100px;
+    :hover {
+      background: #ffffff11;
+    }
+  }
+`;
+
+export const Polymer = styled.div`
+  margin-bottom: -6px;
+
+  > i {
+    color: #ffffff;
+    font-size: 24px;
+    margin-left: 5px;
+    margin-right: 18px;
+  }
+`;
+
+export const Icon = styled.img`
+  width: 40px;
+  margin-right: 14px;
+
+  opacity: 0;
+  animation: floatIn 0.5s 0.2s;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;

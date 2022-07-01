@@ -206,7 +206,9 @@ const SettingsSection: React.FC<PropsType> = ({
     if (!isAuthorizedToCreateWebhook) {
       buttonStatus = "Unauthorized to create webhook token";
     }
-    console.log(PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl));
+
+    console.log(currentChart.stack_id, !currentChart.stack_id?.length);
+
     return (
       <>
         {!currentChart.stack_id?.length &&

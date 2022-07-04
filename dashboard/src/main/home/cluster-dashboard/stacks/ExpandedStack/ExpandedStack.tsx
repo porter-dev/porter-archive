@@ -122,15 +122,16 @@ const ExpandedStack = () => {
       </InfoWrapper>
 
       {/* Stack error message */}
-      {stack.latest_revision &&
-      stack.latest_revision.status === "failed" &&
-      stack.latest_revision.message?.length > 0 ? (
+      {currentRevision &&
+      currentRevision?.reason &&
+      currentRevision?.message?.length > 0 ? (
         <StackErrorMessageStyles.Wrapper>
           <StackErrorMessageStyles.Title color="#b7b7c9">
-            Error reason:
+            Revision message:
           </StackErrorMessageStyles.Title>
           <StackErrorMessageStyles.Text color="#aaaabb">
-            {stack.latest_revision.message}
+            {currentRevision?.status === "failed" ? "Error: " : ""}
+            {currentRevision?.message}
           </StackErrorMessageStyles.Text>
         </StackErrorMessageStyles.Wrapper>
       ) : null}

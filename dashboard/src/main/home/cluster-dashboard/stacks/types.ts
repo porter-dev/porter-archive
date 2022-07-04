@@ -60,7 +60,14 @@ export type StackRevision = {
   created_at: string;
   status: "deploying" | "deployed" | "failed"; // type with enum
   stack_id: string;
-  reason: "DeployError" | "SaveError" | "RollbackError";
+  reason:
+    | "DeployError"
+    | "SaveError"
+    | "RollbackError"
+    | "EnvGroupUpgrade"
+    | "ApplicationUpgrade"
+    | "SourceConfigUpgrade"
+    | "Rollback";
   message: string;
 };
 

@@ -19,7 +19,13 @@ import {
 } from "./components/styles";
 import { getStackStatus, getStackStatusMessage } from "./shared";
 
-const StackList = ({ namespace }: { namespace: string }) => {
+const StackList = ({
+  namespace,
+  sortBy,
+}: {
+  namespace: string;
+  sortBy: "created_by" | "updated_at" | "alphabetical";
+}) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );

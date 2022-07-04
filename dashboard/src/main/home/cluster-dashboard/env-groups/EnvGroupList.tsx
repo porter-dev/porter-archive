@@ -87,8 +87,6 @@ class EnvGroupList extends Component<PropsType, StateType> {
         if (envGroup) {
           this.props.setExpandedEnvGroup(envGroup);
           return;
-        } else {
-          pushQueryParams(this.props, {}, ["selected_env_group"]);
         }
       }
       this.setState({ envGroups, loading: false });
@@ -118,6 +116,8 @@ class EnvGroupList extends Component<PropsType, StateType> {
             );
             if (envGroup) {
               this.props.setExpandedEnvGroup(envGroup);
+            } else {
+              pushQueryParams(this.props, {}, ["selected_env_group"]);
             }
           }
         });

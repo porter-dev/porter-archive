@@ -1,6 +1,6 @@
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import Placeholder from "components/Placeholder";
@@ -24,7 +24,7 @@ const StackList = ({
   sortBy,
 }: {
   namespace: string;
-  sortBy: "created_by" | "updated_at" | "alphabetical";
+  sortBy: "created_at" | "updated_at" | "alphabetical";
 }) => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
@@ -93,6 +93,21 @@ const StackList = ({
     };
   }, [namespace]);
 
+  const sortedStacks = useMemo(() => {
+    return (
+      stacks?.sort((a, b) => {
+        switch (sortBy) {
+          case "created_at":
+            return Date.parse(a.created_at) < Date.parse(b.created_at) ? 1 : -1;
+          case "updated_at":
+            return Date.parse(a.updated_at) < Date.parse(b.updated_at) ? 1 : -1;
+          default:
+            return a.name > b.name ? 1 : -1;
+        }
+      }) || []
+    );
+  }, [stacks, sortBy]);
+
   if (isLoading) {
     return <Loading />;
   }
@@ -103,6 +118,16 @@ const StackList = ({
         <div>
           <h3>No stacks found</h3>
           <p>You can create a stack by clicking the "Create Stack" button.</p>
+        </div>
+      </Placeholder>
+    );
+  }
+
+  if (sortedStacks.length === 0) {
+    return (
+      <Placeholder height="250px">
+        <div>
+          <h3>No stacks found with the given filters</h3>
         </div>
       </Placeholder>
     );

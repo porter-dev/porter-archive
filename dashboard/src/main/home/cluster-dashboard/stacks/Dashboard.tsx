@@ -54,11 +54,11 @@ const Dashboard = () => {
               options={[
                 {
                   value: "created_at",
-                  label: "Created at",
+                  label: "Created At",
                 },
                 {
                   value: "updated_at",
-                  label: "Last updated",
+                  label: "Last Updated",
                 },
                 {
                   value: "alphabetical",

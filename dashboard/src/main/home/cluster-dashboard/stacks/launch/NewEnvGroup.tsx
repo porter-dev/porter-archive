@@ -71,7 +71,7 @@ const NewEnvGroup = () => {
           </BackButton>
         </DynamicLink>
         <Polymer>
-          <Icon src={sliders} />
+          <SliderIcon src={sliders} />
         </Polymer>
         Add a Env Group to Stack
       </TitleSection>
@@ -121,8 +121,27 @@ const NewEnvGroup = () => {
 
 export default NewEnvGroup;
 
+export const SliderIcon = styled.img`
+  width: 25px;
+  margin-right: 16px;
+
+  opacity: 0;
+  animation: floatIn 0.5s 0.2s;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
 const Subtitle = styled.div`
-  padding: 11px 0px 16px;
+  padding: 11px 0px 0px;
   font-family: "Work Sans", sans-serif;
   font-size: 13px;
   color: #aaaabb;

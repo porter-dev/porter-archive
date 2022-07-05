@@ -3,7 +3,6 @@ package billing
 import (
 	"fmt"
 
-	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -16,33 +15,6 @@ type BillingManager interface {
 
 	// DeleteTeam deletes a billing team.
 	DeleteTeam(proj *models.Project) (err error)
-
-	// GetTeamID gets the billing team id for a project
-	GetTeamID(proj *models.Project) (teamID string, err error)
-
-	// CreatePlan creates a new plan based on the requested limits
-	CreatePlan(teamID string, proj *models.Project, planSpec *types.AddProjectBillingRequest) (string, error)
-
-	// CreateOrUpdateSubscription creates or updates a new subscription to a plan, based on a team and plan ID
-	CreateOrUpdateSubscription(teamID, planID string) error
-
-	// GetExistingPublicPlan returns an existing public plan based on a name
-	GetExistingPublicPlan(planName string) (string, error)
-
-	// AddUserToTeam adds a user to a team, and cases on whether the user can view
-	// billing based on the role.
-	AddUserToTeam(teamID string, user *models.User, role *models.Role) error
-
-	// UpdateUserInTeam updates a user's role in a team, and cases on whether the user can view
-	// billing based on the role.
-	UpdateUserInTeam(role *models.Role) error
-
-	// RemoveUserFromTeam removes a user from a team
-	RemoveUserFromTeam(role *models.Role) error
-
-	// GetIDToken retrieves a billing token for a user. The billing token can be exchanged
-	// to view billing information.
-	GetIDToken(proj *models.Project, user *models.User) (token string, teamID string, err error)
 
 	// ParseProjectUsageFromWebhook parses the project usage from a webhook payload sent
 	// from a billing agent
@@ -61,38 +33,6 @@ func (n *NoopBillingManager) CreateTeam(proj *models.Project) (teamID string, er
 
 func (n *NoopBillingManager) DeleteTeam(proj *models.Project) (err error) {
 	return nil
-}
-
-func (n *NoopBillingManager) GetTeamID(proj *models.Project) (teamID string, err error) {
-	return fmt.Sprintf("%d", proj.ID), nil
-}
-
-func (n *NoopBillingManager) CreatePlan(teamID string, proj *models.Project, planSpec *types.AddProjectBillingRequest) (string, error) {
-	return "", nil
-}
-
-func (n *NoopBillingManager) CreateOrUpdateSubscription(teamID, planID string) error {
-	return nil
-}
-
-func (n *NoopBillingManager) GetExistingPublicPlan(planName string) (string, error) {
-	return "", nil
-}
-
-func (n *NoopBillingManager) AddUserToTeam(teamID string, user *models.User, role *models.Role) error {
-	return nil
-}
-
-func (n *NoopBillingManager) UpdateUserInTeam(role *models.Role) error {
-	return nil
-}
-
-func (n *NoopBillingManager) RemoveUserFromTeam(role *models.Role) error {
-	return nil
-}
-
-func (n *NoopBillingManager) GetIDToken(proj *models.Project, user *models.User) (token string, teamID string, err error) {
-	return "", "", nil
 }
 
 func (n *NoopBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error) {

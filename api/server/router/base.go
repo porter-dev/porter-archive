@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/credentials"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/healthcheck"
@@ -513,30 +512,6 @@ func GetBaseRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getCredentialsEndpoint,
 		Handler:  getCredentialsHandler,
-		Router:   r,
-	})
-
-	// POST /api/internal/billing -> billing.NewBillingAddProjectHandler
-	addProjectBillingEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: "/internal/billing",
-			},
-			Scopes: []types.PermissionScope{},
-		},
-	)
-
-	addProjectBillingHandler := billing.NewBillingAddProjectHandler(
-		config,
-		factory.GetDecoderValidator(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: addProjectBillingEndpoint,
-		Handler:  addProjectBillingHandler,
 		Router:   r,
 	})
 

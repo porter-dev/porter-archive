@@ -81,9 +81,9 @@ const EnvGroups = ({ stack }: { stack: Stack }) => {
     <Card.Grid style={{ marginTop: "0px" }}>
       {envGroups.map((envGroup) => {
         return (
-          <Card.Wrapper>
+          <Card.Wrapper variant="unclickable">
             <Card.Title>
-              <Card.Icon src={sliders}></Card.Icon>
+              <Card.SmallerIcon src={sliders}></Card.SmallerIcon>
               {envGroup.name}
             </Card.Title>
 

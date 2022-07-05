@@ -546,8 +546,8 @@ const EnvGroupSettings = ({
           </Helper>
           {!canDelete && (
             <Helper color="#f5cb42">
-              Looks like you still have applications syncedto this env group.
-              Please remove this env group from those applications to delete
+              Applications are still synced to this env group.
+              Navigate to "Linked Applications" and remove this env group from all applications to delete.
             </Helper>
           )}
           <Button

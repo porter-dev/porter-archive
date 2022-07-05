@@ -151,12 +151,12 @@ const Overview = () => {
         />
       </ClusterSection>
 
-      <Heading>Env groups</Heading>
+      <Heading>Env Groups</Heading>
       <Card.Grid>
         {newStack.env_groups.map((envGroup) => (
           <Card.Wrapper variant="unclickable">
             <Card.Title>
-              <Card.Icon src={sliders} />
+              <Card.SmallerIcon src={sliders} />
               {envGroup.name}
             </Card.Title>
             <Card.Actions>
@@ -189,7 +189,7 @@ const Overview = () => {
       </Helper>
       <Card.Grid>
         {newStack.app_resources.map((app) => (
-          <Card.Wrapper>
+          <Card.Wrapper variant="unclickable">
             <Card.Title>
               <Card.Icon src={hardcodedIcons[app.template_name]}></Card.Icon>
               {app.name}

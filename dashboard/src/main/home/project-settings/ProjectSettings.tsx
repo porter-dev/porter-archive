@@ -71,12 +71,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
     });
 
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
-      if (this.context?.hasBillingEnabled) {
-        tabOptions.push({
-          value: "billing",
-          label: "Billing",
-        });
-      }
+      // if (this.context?.hasBillingEnabled) {
+      //   tabOptions.push({
+      //     value: "billing",
+      //     label: "Billing",
+      //   });
+      // }
 
       if (currentProject?.api_tokens_enabled) {
         tabOptions.push({
@@ -104,12 +104,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
       return <InvitePage />;
     }
 
-    if (
-      this.state.currentTab === "billing" &&
-      this.context?.hasBillingEnabled
-    ) {
-      return <BillingPage />;
-    }
+    // if (
+    //   this.state.currentTab === "billing" &&
+    //   this.context?.hasBillingEnabled
+    // ) {
+    //   return <BillingPage />;
+    // }
 
     if (this.state.currentTab === "manage-access") {
       return <InvitePage />;

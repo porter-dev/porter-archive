@@ -79,7 +79,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	p.WriteResult(w, r, proj.ToProjectType())
 
 	// add project to billing team
-	_, err = p.Config().BillingManager.CreateTeam(proj)
+	_, err = p.Config().BillingManager.CreateTeam(user, proj)
 
 	if err != nil {
 		// we do not write error response, since setting up billing error can be

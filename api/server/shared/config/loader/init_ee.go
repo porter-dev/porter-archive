@@ -24,9 +24,9 @@ func init() {
 		key[i] = b
 	}
 
-	if InstanceEnvConf.ServerConf.IronPlansAPIKey != "" && InstanceEnvConf.ServerConf.IronPlansServerURL != "" {
-		serverURL := InstanceEnvConf.ServerConf.IronPlansServerURL
-		apiKey := InstanceEnvConf.ServerConf.IronPlansAPIKey
+	if InstanceEnvConf.ServerConf.BillingPrivateServerURL != "" && InstanceEnvConf.ServerConf.BillingPrivateKey != "" {
+		serverURL := InstanceEnvConf.ServerConf.BillingPrivateServerURL
+		apiKey := InstanceEnvConf.ServerConf.BillingPrivateKey
 		var err error
 
 		InstanceBillingManager, err = eeBilling.NewClient(serverURL, apiKey)

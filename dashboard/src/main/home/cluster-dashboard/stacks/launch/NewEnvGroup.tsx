@@ -3,7 +3,7 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import TitleSection from "components/TitleSection";
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { isAlphanumeric } from "shared/common";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
@@ -26,9 +26,6 @@ const NewEnvGroup = () => {
 
   const { pushFiltered } = useRouting();
 
-  const isDisabled = () =>
-    !isAlphanumeric(name) || name === "" || !envVariables.length;
-
   const handleOnSubmit = () => {
     const variables = envVariables.filter(
       (variable) => !variable.locked && !variable.hidden
@@ -48,6 +45,22 @@ const NewEnvGroup = () => {
     pushFiltered("/stacks/launch/overview", []);
     return;
   };
+
+  const hasError = useMemo(() => {
+    if (!isAlphanumeric(name) || name === "") {
+      return { message: "Name cannot be empty." };
+    }
+
+    if (!envVariables.length) {
+      return { message: "Please add at least one environment variable." };
+    }
+
+    if (envVariables.some((variable) => !variable.value || !variable.key)) {
+      return { message: "Please fill in all environment variables." };
+    }
+
+    return null;
+  }, [name, envVariables]);
 
   return (
     <>
@@ -98,7 +111,9 @@ const NewEnvGroup = () => {
         makeFlush
         clearPosition
         text="Save env group"
-        disabled={isDisabled()}
+        disabled={!!hasError}
+        statusPosition="left"
+        status={hasError?.message || ""}
       />
     </>
   );

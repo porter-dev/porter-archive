@@ -23,6 +23,7 @@ import {
 } from "../components/styles";
 import { getStackStatus, getStackStatusMessage } from "../shared";
 import { FullStackRevision, Stack, StackRevision } from "../types";
+import EnvGroups from "./components/EnvGroups";
 import RevisionList from "./_RevisionList";
 import SourceConfig from "./_SourceConfig";
 
@@ -121,15 +122,16 @@ const ExpandedStack = () => {
       </InfoWrapper>
 
       {/* Stack error message */}
-      {stack.latest_revision &&
-      stack.latest_revision.status === "failed" &&
-      stack.latest_revision.message?.length > 0 ? (
+      {currentRevision &&
+      currentRevision?.reason &&
+      currentRevision?.message?.length > 0 ? (
         <StackErrorMessageStyles.Wrapper>
           <StackErrorMessageStyles.Title color="#b7b7c9">
-            Error reason:
+            Revision message:
           </StackErrorMessageStyles.Title>
           <StackErrorMessageStyles.Text color="#aaaabb">
-            {stack.latest_revision.message}
+            {currentRevision?.status === "failed" ? "Error: " : ""}
+            {currentRevision?.message}
           </StackErrorMessageStyles.Text>
         </StackErrorMessageStyles.Wrapper>
       ) : null}
@@ -187,6 +189,16 @@ const ExpandedStack = () => {
                   readOnly={stack.latest_revision.id !== currentRevision.id}
                   onSourceConfigUpdate={() => getStack()}
                 ></SourceConfig>
+              </>
+            ),
+          },
+          {
+            label: "Env groups",
+            value: "env_groups",
+            component: (
+              <>
+                <Gap></Gap>
+                <EnvGroups stack={stack} />
               </>
             ),
           },

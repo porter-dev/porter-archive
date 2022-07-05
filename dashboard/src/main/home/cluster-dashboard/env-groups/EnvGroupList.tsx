@@ -7,8 +7,10 @@ import { ClusterType } from "shared/types";
 
 import EnvGroup from "./EnvGroup";
 import Loading from "components/Loading";
+import { getQueryParam, pushQueryParams } from "shared/routing";
+import { RouteComponentProps, withRouter } from "react-router";
 
-type PropsType = {
+type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
   namespace: string;
   sortType: string;
@@ -27,51 +29,68 @@ const dummyEnvGroups = [
   { name: "backend-production", last_updated: "7", namespace: "default" },
 ];
 
-export default class EnvGroupList extends Component<PropsType, StateType> {
+class EnvGroupList extends Component<PropsType, StateType> {
   state = {
     envGroups: [] as any[],
     loading: false,
     error: false,
   };
 
-  updateEnvGroups = () => {
-    api
-      .listEnvGroups(
-        "<token>",
-        {},
-        {
-          id: this.context.currentProject.id,
-          namespace: this.props.namespace,
-          cluster_id: this.props.currentCluster.id,
-        }
-      )
-      .then((res) => {
-        let sortedGroups = res?.data;
-        switch (this.props.sortType) {
-          case "Oldest":
-            sortedGroups.sort((a: any, b: any) =>
-              Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
-            );
-            break;
-          case "Alphabetical":
-            sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-            break;
-          default:
-            sortedGroups.sort((a: any, b: any) =>
-              Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
-            );
-        }
-        this.setState({ envGroups: sortedGroups, loading: false });
-      })
-      .catch((err) => {
-        console.log(err);
-        this.setState({ loading: false, error: true });
-      });
+  updateEnvGroups = async () => {
+    const { currentCluster, namespace, sortType } = this.props;
+    try {
+      const envGroups = await api
+        .listEnvGroups(
+          "<token>",
+          {},
+          {
+            id: this.context.currentProject.id,
+            namespace: this.props.namespace,
+            cluster_id: this.props.currentCluster.id,
+          }
+        )
+        .then((res) => res.data);
+
+      let sortedGroups = envGroups;
+      switch (this.props.sortType) {
+        case "Oldest":
+          sortedGroups.sort((a: any, b: any) =>
+            Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
+          );
+          break;
+        case "Alphabetical":
+          sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
+          break;
+        default:
+          sortedGroups.sort((a: any, b: any) =>
+            Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
+          );
+      }
+
+      return sortedGroups;
+    } catch (error) {
+      console.log(error);
+      this.setState({ loading: false, error: true });
+    }
   };
 
   componentDidMount() {
     this.setState({ loading: true });
-    this.updateEnvGroups();
+    this.updateEnvGroups().then((envGroups) => {
+      const selectedEnvGroup = getQueryParam(this.props, "selected_env_group");
+
+      if (selectedEnvGroup) {
+        // find env group by selectedEnvGroup
+        const envGroup = envGroups.find(
+          (envGroup: any) => envGroup.name === selectedEnvGroup
+        );
+        if (envGroup) {
+          this.props.setExpandedEnvGroup(envGroup);
+          return;
+        }
+      }
+      this.setState({ envGroups, loading: false });
+    });
   }
 
   componentDidUpdate(prevProps: PropsType) {
@@ -82,9 +101,33 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
       prevProps.sortType !== this.props.sortType
     ) {
       (this.props.namespace || this.props.namespace === "") &&
-        this.updateEnvGroups();
+        this.updateEnvGroups().then((envGroups) => {
+          const selectedEnvGroup = getQueryParam(
+            this.props,
+            "selected_env_group"
+          );
+
+          this.setState({ envGroups, loading: false });
+
+          if (selectedEnvGroup) {
+            // find env group by selectedEnvGroup
+            const envGroup = envGroups.find(
+              (envGroup: any) => envGroup.name === selectedEnvGroup
+            );
+            if (envGroup) {
+              this.props.setExpandedEnvGroup(envGroup);
+            } else {
+              pushQueryParams(this.props, {}, ["selected_env_group"]);
+            }
+          }
+        });
     }
   }
+
+  handleExpand = (envGroup: any) => {
+    pushQueryParams(this.props, { selected_env_group: envGroup.name }, []);
+    this.props.setExpandedEnvGroup(envGroup);
+  };
 
   renderEnvGroupList = () => {
     let { loading, error, envGroups } = this.state;
@@ -115,7 +158,7 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
         <EnvGroup
           key={i}
           envGroup={envGroup}
-          setExpanded={() => this.props.setExpandedEnvGroup(envGroup)}
+          setExpanded={() => this.handleExpand(envGroup)}
         />
       );
     });
@@ -127,6 +170,8 @@ export default class EnvGroupList extends Component<PropsType, StateType> {
 }
 
 EnvGroupList.contextType = Context;
+
+export default withRouter(EnvGroupList);
 
 const Placeholder = styled.div`
   width: 100%;

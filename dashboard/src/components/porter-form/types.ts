@@ -9,6 +9,7 @@ import { ContextProps } from "../../shared/types";
 
 export interface GenericField {
   id: string;
+  injectedProps: unknown;
 }
 
 export interface GenericInputField extends GenericField {
@@ -87,6 +88,9 @@ export interface KeyValueArrayField extends GenericInputField {
       enable_synced_env_groups: boolean;
     };
     type: "env" | "normal";
+  };
+  injectedProps: {
+    availableSyncEnvGroups: PopulatedEnvGroup[];
   };
 }
 
@@ -308,3 +312,9 @@ export type GetMetadataFunction<T = unknown> = (
   state: PorterFormFieldFieldState,
   context: Partial<ContextProps>
 ) => T;
+
+export type InjectedProps = Partial<
+  {
+    [K in FormField["type"]]: Extract<FormField, { type: K }>["injectedProps"];
+  }
+>;

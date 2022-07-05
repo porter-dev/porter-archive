@@ -5,7 +5,15 @@ import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import MultiSaveButton from "components/MultiSaveButton";
 import _, { differenceBy, unionBy } from "lodash";
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import {
@@ -62,7 +70,6 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     Context
   );
 
-  const [buildConfig, setBuildConfig] = useState<BuildConfig>(null);
   const [envVariables, setEnvVariables] = useState(
     chart.config?.container?.env?.build || null
   );
@@ -78,6 +85,11 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   const [currentBranch, setCurrentBranch] = useState(
     () => chart?.git_action_config?.git_branch
   );
+
+  const buildpackConfigRef = useRef<{
+    isLoading: boolean;
+    getBuildConfig: () => BuildConfig;
+  }>(null);
 
   const saveNewBranch = async (newBranch: string) => {
     if (!newBranch?.length) {
@@ -112,6 +124,7 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
   };
 
   const saveBuildConfig = async (config: BuildConfig) => {
+    console.log({ config });
     if (config === null) {
       return;
     }
@@ -235,14 +248,30 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
     }
   };
 
-  const clearButtonStatus = () => {
+  const clearButtonStatus = (time: number = 800) => {
     setTimeout(() => {
       setButtonStatus("");
-    }, 800);
+    }, time);
+  };
+
+  const getBuildConfig = () => {
+    if (buildpackConfigRef.current?.isLoading) {
+      return null;
+    }
+    return buildpackConfigRef.current?.getBuildConfig() || null;
   };
 
   const handleSave = async () => {
     setButtonStatus("loading");
+
+    const buildConfig = getBuildConfig();
+
+    if (!buildConfig && !chart.git_action_config.dockerfile_path) {
+      setButtonStatus("Can't save until buildpack config is loaded.");
+      clearButtonStatus(1500);
+      return;
+    }
+
     try {
       await saveBuildConfig(buildConfig);
       await saveNewBranch(currentBranch);
@@ -258,6 +287,15 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
 
   const handleSaveAndReDeploy = async () => {
     setButtonStatus("loading");
+
+    const buildConfig = getBuildConfig();
+
+    if (!buildConfig && !chart.git_action_config.dockerfile_path) {
+      setButtonStatus("Can't save until buildpack config is loaded.");
+      clearButtonStatus();
+      return;
+    }
+
     try {
       await saveBuildConfig(buildConfig);
       await saveNewBranch(currentBranch);
@@ -354,9 +392,9 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
           <>
             <Heading>Buildpack Settings</Heading>
             <BuildpackConfigSection
+              ref={buildpackConfigRef}
               currentChart={chart}
               actionConfig={currentActionConfig}
-              onChange={(buildConfig) => setBuildConfig(buildConfig)}
             />
           </>
         ) : null}
@@ -392,11 +430,16 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
 
 export default BuildSettingsTab;
 
-const BuildpackConfigSection: React.FC<{
-  actionConfig: FullActionConfigType;
-  currentChart: ChartTypeWithExtendedConfig;
-  onChange: (buildConfig: BuildConfig) => void;
-}> = ({ actionConfig, currentChart, onChange }) => {
+const BuildpackConfigSection = forwardRef<
+  {
+    isLoading: boolean;
+    getBuildConfig: () => BuildConfig;
+  },
+  {
+    actionConfig: FullActionConfigType;
+    currentChart: ChartTypeWithExtendedConfig;
+  }
+>(({ actionConfig, currentChart }, ref) => {
   const { currentProject } = useContext(Context);
 
   const [builders, setBuilders] = useState<DetectedBuildpack[]>(null);
@@ -559,16 +602,25 @@ const BuildpackConfigSection: React.FC<{
       });
   }, [currentProject, actionConfig, currentChart]);
 
-  useEffect(() => {
-    let buildConfig: BuildConfig = {} as BuildConfig;
+  useImperativeHandle(
+    ref,
+    () => {
+      const isLoading = !stackOptions?.length || !builderOptions?.length;
+      return {
+        isLoading,
+        getBuildConfig: () => {
+          let buildConfig: BuildConfig = {} as BuildConfig;
 
-    buildConfig.builder = selectedStack;
-    buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
-      return buildpack.buildpack;
-    });
-
-    onChange(buildConfig);
-  }, [selectedBuilder, selectedBuildpacks, selectedStack]);
+          buildConfig.builder = selectedStack;
+          buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
+            return buildpack.buildpack;
+          });
+          return buildConfig;
+        },
+      };
+    },
+    [selectedBuilder, selectedBuildpacks, selectedStack]
+  );
 
   useEffect(() => {
     populateState(
@@ -763,7 +815,7 @@ const BuildpackConfigSection: React.FC<{
       </>
     </BuildpackConfigurationContainer>
   );
-};
+});
 
 const DisabledOverlay = styled.div`
   position: absolute;

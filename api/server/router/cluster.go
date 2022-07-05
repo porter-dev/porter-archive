@@ -319,6 +319,63 @@ func getClusterRoutes(
 			Router:   r,
 		})
 
+		// GET /api/projects/{project_id}/clusters/{cluster_id}/environments/{environment_id} -> environment.NewGetEnvironmentHandler
+		getEnvEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbGet,
+				Method: types.HTTPVerbGet,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/environments/{environment_id}",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		getEnvHandler := environment.NewGetEnvironmentHandler(
+			config,
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: getEnvEndpoint,
+			Handler:  getEnvHandler,
+			Router:   r,
+		})
+
+		// PATCH /api/projects/{project_id}/clusters/{cluster_id}/environment/{environment_id}/toggle_new_comment -> environment.NewToggleNewCommentHandler
+		toggleNewCommentEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbUpdate,
+				Method: types.HTTPVerbPatch,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: relPath + "/environments/{environment_id}/toggle_new_comment",
+				},
+				Scopes: []types.PermissionScope{
+					types.UserScope,
+					types.ProjectScope,
+					types.ClusterScope,
+				},
+			},
+		)
+
+		toggleNewCommentHandler := environment.NewToggleNewCommentHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: toggleNewCommentEndpoint,
+			Handler:  toggleNewCommentHandler,
+			Router:   r,
+		})
+
 		// GET /api/projects/{project_id}/clusters/{cluster_id}/deployments -> environment.NewListDeploymentsByClusterHandler
 		listDeploymentsEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{

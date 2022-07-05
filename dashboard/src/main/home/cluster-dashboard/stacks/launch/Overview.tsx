@@ -20,6 +20,7 @@ import TitleSection from "components/TitleSection";
 import DynamicLink from "components/DynamicLink";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
 import sliders from "assets/sliders.svg";
+import DocsHelper from "components/DocsHelper";
 
 const Overview = () => {
   const {
@@ -151,7 +152,15 @@ const Overview = () => {
         />
       </ClusterSection>
 
-      <Heading>Env Groups</Heading>
+      <Heading>
+        Env Groups
+        <InlineDocsHelper
+          disableMargin={true}
+          tooltipText="Environment Groups"
+          link="https://docs.porter.run/deploying-applications/environment-groups"
+        />
+      </Heading>
+      <Helper>Add scoped environment groups to this stack:</Helper>
       <Card.Grid>
         {newStack.env_groups.map((envGroup) => (
           <Card.Wrapper variant="unclickable">
@@ -299,4 +308,8 @@ const Icon = styled.div`
     font-size: 20px;
     color: #aaaabb;
   }
+`;
+
+const InlineDocsHelper = styled(DocsHelper)`
+  display: inline-block;
 `;

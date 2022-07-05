@@ -50,4 +50,5 @@ const StyledLaunchFlow = styled.div`
   min-width: 300px;
   margin-top: ${(props: { disableMarginTop?: boolean }) =>
     props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
+  margin-bottom: 50px;
 `;

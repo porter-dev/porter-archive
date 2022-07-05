@@ -166,3 +166,32 @@ func UpdateEnvGroupVersion(config *config.Config, projID, clusterID uint, envGro
 
 	return err
 }
+
+func GetStackForEnvGroup(config *config.Config, projID, clusterID uint, envGroup *types.EnvGroup) (string, error) {
+	// read stack env group by params
+	stackEnvGroup, err := config.Repo.Stack().ReadStackEnvGroupFirstMatch(projID, clusterID, envGroup.Namespace, envGroup.Name)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
+
+		return "", err
+	}
+
+	// read the revision number corresponding and create a new revision of the stack
+	oldStackRevision, err := config.Repo.Stack().ReadStackRevision(stackEnvGroup.StackRevisionID)
+
+	if err != nil {
+		return "", err
+	}
+
+	// get the latest revision for that stack
+	stack, err := config.Repo.Stack().ReadStackByID(projID, oldStackRevision.StackID)
+
+	if err != nil {
+		return "", err
+	}
+
+	return stack.UID, nil
+}

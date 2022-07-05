@@ -222,6 +222,7 @@ export type PopulatedEnvGroup = {
   };
   applications: any[];
   meta_version: number;
+  stack_id?: string;
 };
 export interface KeyValueArrayFieldState {
   values: {

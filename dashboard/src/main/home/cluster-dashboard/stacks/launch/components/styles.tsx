@@ -55,7 +55,11 @@ export const Card = {
     font-size: 14px;
     font-weight: 500;
   `,
-
+  SmallerIcon: styled.img`
+    height: 20px;
+    margin-right: 18px;
+    margin-left: 8px;
+  `,
   Icon: styled.img`
     height: 30px;
     margin-right: 15px;

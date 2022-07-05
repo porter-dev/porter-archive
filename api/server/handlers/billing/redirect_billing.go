@@ -60,7 +60,7 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/api/v1/private/cookie", c.Config().ServerConf.BillingServerURL),
+		fmt.Sprintf("%s/api/v1/private/cookie", c.Config().ServerConf.BillingPrivateServerURL),
 		strings.NewReader(string(strData)),
 	)
 
@@ -96,5 +96,5 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Add("Set-Cookie", dst.Cookie)
-	http.Redirect(w, r, c.Config().ServerConf.BillingServerURL, 302)
+	http.Redirect(w, r, c.Config().ServerConf.BillingPublicServerURL, 302)
 }

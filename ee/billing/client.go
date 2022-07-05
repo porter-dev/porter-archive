@@ -221,47 +221,19 @@ const (
 )
 
 func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.ProjectUsage, error) {
-	// TODO: parse webhook model
-	return nil, nil
+	usageData := &APIWebhookRequest{}
 
-	// subscription := &SubscriptionWebhookRequest{}
+	err := json.Unmarshal(payload, usageData)
 
-	// err := json.Unmarshal(payload, subscription)
+	if err != nil {
+		return nil, err
+	}
 
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// // if event type is not subscription, return wrong webhook event type error
-	// if subscription.EventType != "subscription" {
-	// 	return nil, nil
-	// }
-
-	// // get the project id linked to that team
-	// projBilling, err := c.repo.ProjectBilling().ReadProjectBillingByTeamID(subscription.TeamID)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// usage := &cemodels.ProjectUsage{
-	// 	ProjectID: projBilling.ProjectID,
-	// }
-
-	// for _, feature := range subscription.Plan.Features {
-	// 	// look for slug of "cpus" and "memory"
-	// 	maxLimit := uint(feature.FeatureSpec.MaxLimit)
-	// 	switch feature.Feature.Slug {
-	// 	case FeatureSlugCPU:
-	// 		usage.ResourceCPU = maxLimit
-	// 	case FeatureSlugMemory:
-	// 		usage.ResourceMemory = 1000 * maxLimit
-	// 	case FeatureSlugClusters:
-	// 		usage.Clusters = maxLimit
-	// 	case FeatureSlugUsers:
-	// 		usage.Users = maxLimit
-	// 	}
-	// }
-
-	// return usage, nil
+	return &cemodels.ProjectUsage{
+		ProjectID:      usageData.ProjectID,
+		ResourceCPU:    usageData.CPU,
+		ResourceMemory: usageData.Memory * 1000,
+		Clusters:       usageData.Clusters,
+		Users:          usageData.Users,
+	}, nil
 }

@@ -11,10 +11,10 @@ type BillingManager interface {
 	// CreateTeam creates the concept of a billing "team". This is currently a one-to-one
 	// mapping with projects, but this may change in the future (i.e. multiple projects
 	// per same team)
-	CreateTeam(proj *models.Project) (teamID string, err error)
+	CreateTeam(user *models.User, proj *models.Project) (teamID string, err error)
 
 	// DeleteTeam deletes a billing team.
-	DeleteTeam(proj *models.Project) (err error)
+	DeleteTeam(user *models.User, proj *models.Project) (err error)
 
 	// ParseProjectUsageFromWebhook parses the project usage from a webhook payload sent
 	// from a billing agent
@@ -27,11 +27,11 @@ type BillingManager interface {
 // NoopBillingManager performs no billing operations
 type NoopBillingManager struct{}
 
-func (n *NoopBillingManager) CreateTeam(proj *models.Project) (teamID string, err error) {
+func (n *NoopBillingManager) CreateTeam(user *models.User, proj *models.Project) (teamID string, err error) {
 	return fmt.Sprintf("%d", proj.ID), nil
 }
 
-func (n *NoopBillingManager) DeleteTeam(proj *models.Project) (err error) {
+func (n *NoopBillingManager) DeleteTeam(user *models.User, proj *models.Project) (err error) {
 	return nil
 }
 

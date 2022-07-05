@@ -5,6 +5,8 @@ import { Card } from "../../launch/components/styles";
 import { Stack } from "../../types";
 import sliders from "assets/sliders.svg";
 import DynamicLink from "components/DynamicLink";
+import Placeholder from "components/Placeholder";
+import Loading from "components/Loading";
 
 type PopulatedEnvGroup = {
   applications: string[];
@@ -18,6 +20,7 @@ type PopulatedEnvGroup = {
 
 const EnvGroups = ({ stack }: { stack: Stack }) => {
   const { currentProject, currentCluster } = useContext(Context);
+  const [isLoading, setIsLoading] = useState(true);
   const [envGroups, setEnvGroups] = useState<PopulatedEnvGroup[]>([]);
 
   const getEnvGroups = async () => {
@@ -42,13 +45,40 @@ const EnvGroups = ({ stack }: { stack: Stack }) => {
   };
 
   useEffect(() => {
+    let isSubscribed = true;
     getEnvGroups().then((envGroups) => {
+      if (!isSubscribed) {
+        return;
+      }
       setEnvGroups(envGroups);
+      setIsLoading(false);
     });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [stack]);
 
+  if (isLoading) {
+    return (
+      <Placeholder height="250px">
+        <Loading />
+      </Placeholder>
+    );
+  }
+
+  if (envGroups.length === 0) {
+    return (
+      <Placeholder height="250px">
+        <div>
+          <h3>No environment groups found for this stack</h3>
+        </div>
+      </Placeholder>
+    );
+  }
+
   return (
-    <Card.Grid>
+    <Card.Grid style={{ marginTop: "0px" }}>
       {envGroups.map((envGroup) => {
         return (
           <Card.Wrapper>

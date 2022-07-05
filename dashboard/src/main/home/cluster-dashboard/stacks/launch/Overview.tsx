@@ -151,33 +151,6 @@ const Overview = () => {
         />
       </ClusterSection>
 
-      <Heading>Applications</Heading>
-      <Helper>
-        At least one application is required:
-        <Required>*</Required>
-      </Helper>
-      <Card.Grid>
-        {newStack.app_resources.map((app) => (
-          <Card.Wrapper>
-            <Card.Title>
-              <Card.Icon src={hardcodedIcons[app.template_name]}></Card.Icon>
-              {app.name}
-            </Card.Title>
-            <Card.Actions>
-              <Card.ActionButton
-                onClick={() => {
-                  removeAppResource(app);
-                }}
-              >
-                <i className="material-icons-outlined">close</i>
-              </Card.ActionButton>
-            </Card.Actions>
-          </Card.Wrapper>
-        ))}
-
-        <AddResourceButton />
-      </Card.Grid>
-
       <Heading>Env groups</Heading>
       <Card.Grid>
         {newStack.env_groups.map((envGroup) => (
@@ -207,6 +180,33 @@ const Overview = () => {
             Add a new env group
           </AddResourceButtonStyles.Flex>
         </AddResourceButtonStyles.Wrapper>
+      </Card.Grid>
+
+      <Heading>Applications</Heading>
+      <Helper>
+        At least one application is required:
+        <Required>*</Required>
+      </Helper>
+      <Card.Grid>
+        {newStack.app_resources.map((app) => (
+          <Card.Wrapper>
+            <Card.Title>
+              <Card.Icon src={hardcodedIcons[app.template_name]}></Card.Icon>
+              {app.name}
+            </Card.Title>
+            <Card.Actions>
+              <Card.ActionButton
+                onClick={() => {
+                  removeAppResource(app);
+                }}
+              >
+                <i className="material-icons-outlined">close</i>
+              </Card.ActionButton>
+            </Card.Actions>
+          </Card.Wrapper>
+        ))}
+
+        <AddResourceButton />
       </Card.Grid>
 
       <SubmitButton

@@ -138,9 +138,18 @@ func UpdateEnvGroupVersion(config *config.Config, projID, clusterID uint, envGro
 		return err
 	}
 
-	for _, clonedEnvGroup := range clonedEnvGroups {
+	for i, clonedEnvGroup := range clonedEnvGroups {
 		if clonedEnvGroup.Name == envGroup.Name {
-			clonedEnvGroup.EnvGroupVersion = envGroup.Version
+			clonedEnvGroups[i].EnvGroupVersion = envGroup.Version
+		}
+	}
+
+	// find all synced apps which should have an updated revision number
+	for i, clonedAppResource := range clonedAppResources {
+		for _, appName := range envGroup.Applications {
+			if clonedAppResource.Name == appName {
+				clonedAppResources[i].HelmRevisionID = clonedAppResource.HelmRevisionID + 1
+			}
 		}
 	}
 

@@ -71,12 +71,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
     });
 
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
-      if (this.context?.hasBillingEnabled) {
-        tabOptions.push({
-          value: "billing",
-          label: "Billing",
-        });
-      }
+      // if (this.context?.hasBillingEnabled) {
+      //   tabOptions.push({
+      //     value: "billing",
+      //     label: "Billing",
+      //   });
+      // }
 
       if (currentProject?.api_tokens_enabled) {
         tabOptions.push({
@@ -104,12 +104,12 @@ class ProjectSettings extends Component<PropsType, StateType> {
       return <InvitePage />;
     }
 
-    if (
-      this.state.currentTab === "billing" &&
-      this.context?.hasBillingEnabled
-    ) {
-      return <BillingPage />;
-    }
+    // if (
+    //   this.state.currentTab === "billing" &&
+    //   this.context?.hasBillingEnabled
+    // ) {
+    //   return <BillingPage />;
+    // }
 
     if (this.state.currentTab === "manage-access") {
       return <InvitePage />;
@@ -119,7 +119,13 @@ class ProjectSettings extends Component<PropsType, StateType> {
       return (
         <Placeholder>
           <Helper>
-          Please contact <a href="mailto:support@porter.run">support@porter.run</a> to upgrade your project's usage limits.
+            Visit the{" "}
+            <a
+              href={`/api/projects/${this.context.currentProject?.id}/billing/redirect`}
+            >
+              billing portal
+            </a>{" "}
+            to view plans.
           </Helper>
         </Placeholder>
       );

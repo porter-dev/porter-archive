@@ -62,9 +62,10 @@ type ServerConf struct {
 	SlackClientID     string `env:"SLACK_CLIENT_ID"`
 	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`
 
-	IronPlansAPIKey    string `env:"IRON_PLANS_API_KEY"`
-	IronPlansServerURL string `env:"IRON_PLANS_SERVER_URL"`
-	WhitelistedUsers   []uint `env:"WHITELISTED_USERS"`
+	BillingPrivateKey       string `env:"BILLING_PRIVATE_KEY"`
+	BillingPrivateServerURL string `env:"BILLING_PRIVATE_URL"`
+	BillingPublicServerURL  string `env:"BILLING_PUBLIC_URL"`
+	WhitelistedUsers        []uint `env:"WHITELISTED_USERS"`
 
 	DOClientID     string `env:"DO_CLIENT_ID"`
 	DOClientSecret string `env:"DO_CLIENT_SECRET"`

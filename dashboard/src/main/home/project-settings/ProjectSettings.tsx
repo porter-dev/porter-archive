@@ -119,7 +119,13 @@ class ProjectSettings extends Component<PropsType, StateType> {
       return (
         <Placeholder>
           <Helper>
-          Please contact <a href="mailto:support@porter.run">support@porter.run</a> to upgrade your project's usage limits.
+            Visit the{" "}
+            <a
+              href={`/api/projects/${this.context.currentProject?.id}/billing/redirect`}
+            >
+              billing portal
+            </a>{" "}
+            to view plans.
           </Helper>
         </Placeholder>
       );

@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
@@ -31,9 +25,7 @@ import DeploymentType from "./DeploymentType";
 import IncidentsTab from "./incidents/IncidentsTab";
 import BuildSettingsTab from "./BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
-import { FullStackRevision, Stack } from "../stacks/types";
-import { PopulatedEnvGroup } from "components/porter-form/types";
-import { usePrevious } from "shared/hooks/usePrevious";
+import { useStackEnvGroups } from "./useStackEnvGroups";
 
 type Props = {
   namespace: string;
@@ -52,94 +44,6 @@ const getReadableDate = (s: string) => {
     minute: "2-digit",
   });
   return `${time} on ${date}`;
-};
-
-const useStackEnvGroups = (chart: ChartType) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
-  const [stackEnvGroups, setStackEnvGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const stackRevisionCache = useRef<{ [id: number]: FullStackRevision }>({});
-
-  const getEnvGroups = async (stackRevision: FullStackRevision) => {
-    const envGroups = stackRevision.env_groups;
-
-    const envGroupsWithValues = envGroups.map((envGroup) => {
-      return api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            namespace: chart.namespace,
-            cluster_id: currentCluster.id,
-            name: envGroup.name,
-            version: envGroup.env_group_version,
-          }
-        )
-        .then((res) => res.data);
-    });
-
-    return Promise.all(envGroupsWithValues);
-  };
-
-  const getStackRevision = (
-    stack_id: string,
-    namespace: string,
-    revision_id: number
-  ) => {
-    if (stackRevisionCache.current[revision_id]) {
-      return Promise.resolve(stackRevisionCache.current[revision_id]);
-    }
-
-    return api
-      .getStackRevision<FullStackRevision>(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          namespace,
-          revision_id,
-          stack_id,
-        }
-      )
-      .then((res) => {
-        const newRevision = res.data;
-        stackRevisionCache.current = {
-          ...stackRevisionCache.current,
-          [newRevision.id]: newRevision,
-        };
-        return newRevision;
-      });
-  };
-
-  useEffect(() => {
-    const stack_id = chart.stack_id;
-    if (!stack_id) {
-      return;
-    }
-
-    setLoading(true);
-
-    getStackRevision(stack_id, chart.namespace, chart.version)
-      .then((stackRevision) => getEnvGroups(stackRevision))
-      .then((populatedEnvGroups) => {
-        setStackEnvGroups(populatedEnvGroups);
-
-        setLoading(false);
-      })
-      .catch((error) => {
-        setCurrentError(error);
-      });
-  }, [chart]);
-
-  return {
-    isStack: chart.stack_id?.length ? true : false,
-    stackEnvGroups,
-    isLoadingStackEnvGroups: loading,
-  };
 };
 
 const ExpandedChart: React.FC<Props> = (props) => {
@@ -934,9 +838,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
                         saveValuesStatus={saveValuesStatus}
                         injectedProps={{
                           "key-value-array": {
-                            availableSyncEnvGroups: isStack
-                              ? stackEnvGroups
-                              : undefined,
+                            availableSyncEnvGroups:
+                              isStack && !isPreview
+                                ? stackEnvGroups
+                                : undefined,
                           },
                         }}
                       />

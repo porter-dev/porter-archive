@@ -16,8 +16,32 @@ import Heading from "components/form-components/Heading";
 import TitleSection from "components/TitleSection";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
 import { BackButton, Icon, Polymer } from "./components/styles";
+import { PopulatedEnvGroup } from "components/porter-form/types";
+import { CreateStackBody } from "../types";
 
 const DEFAULT_STACK_SOURCE_CONFIG_INDEX = 0;
+
+const parseEnvGroup = (namespace: string) => (
+  envGroup: CreateStackBody["env_groups"][0]
+): PopulatedEnvGroup => {
+  const variables = envGroup?.variables || {};
+  const secretVariables = envGroup?.secret_variables || {};
+
+  return {
+    name: envGroup.name,
+    version: 1,
+    namespace,
+    applications: envGroup.linked_applications,
+    meta_version: 2,
+    variables: {
+      ...variables,
+      ...Object.keys(secretVariables).reduce((acc, key) => {
+        acc[key] = "PORTERSECRET_" + key;
+        return acc;
+      }, {} as any),
+    },
+  };
+};
 
 const NewApp = () => {
   const { addAppResource, newStack, namespace } = useContext(
@@ -239,7 +263,9 @@ const NewApp = () => {
           valuesToOverride={{ namespace }}
           injectedProps={{
             "key-value-array": {
-              availableSyncEnvGroups: newStack.env_groups as any,
+              availableSyncEnvGroups: newStack.env_groups.map(
+                parseEnvGroup(namespace)
+              ),
             },
           }}
           includeMetadata

@@ -28,6 +28,7 @@ import EnvGroups from "./components/EnvGroups";
 import RevisionList from "./_RevisionList";
 import SourceConfig from "./_SourceConfig";
 import { NavLink } from "react-router-dom";
+import Settings from "./components/Settings";
 
 const ExpandedStack = () => {
   const { namespace, stack_id } = useParams<{
@@ -42,8 +43,8 @@ const ExpandedStack = () => {
   );
 
   const [stack, setStack] = useState<Stack>();
-  const [sortType, setSortType] = useState("Alphabetical");
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentTab, setCurrentTab] = useState("apps");
 
   const [currentRevision, setCurrentRevision] = useState<FullStackRevision>();
@@ -73,6 +74,28 @@ const ExpandedStack = () => {
     }
   };
 
+  const handleDelete = () => {
+    setIsDeleting(true);
+    api
+      .deleteStack(
+        "<token>",
+        {},
+        {
+          namespace,
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          stack_id: stack.id,
+        }
+      )
+      .then(() => {
+        pushFiltered("/stacks", []);
+      })
+      .catch((err) => {
+        setCurrentError(err);
+        setIsDeleting(false);
+      });
+  };
+
   useEffect(() => {
     getStack();
   }, [stack_id]);
@@ -81,16 +104,25 @@ const ExpandedStack = () => {
     return <Loading />;
   }
 
+  if (isDeleting) {
+    return (
+      <Placeholder height="400px">
+        <div>
+          <h1>Deleting Stack</h1>
+          <p>This may take some time...</p>
+          <Loading />
+        </div>
+      </Placeholder>
+    );
+  }
+
   return (
     <div>
       <StackTitleWrapper>
         <BackButton to="/stacks">
           <BackButtonImg src={backArrow} />
         </BackButton>
-        <TitleSection
-          materialIconClass="material-icons-outlined"
-          icon={"lan"}
-        >
+        <TitleSection materialIconClass="material-icons-outlined" icon={"lan"}>
           {stack.name}
         </TitleSection>
         <NamespaceTag.Wrapper>
@@ -101,18 +133,17 @@ const ExpandedStack = () => {
 
       {/* Stack error message */}
       {currentRevision &&
-        currentRevision?.reason &&
-        currentRevision?.message?.length > 0 ? (
-          <StackErrorMessageStyles.Wrapper>
-            <i className="material-icons">history</i>
-            <StackErrorMessageStyles.Text color="#aaaabb">
-              {currentRevision?.status === "failed" ? "Error: " : ""}
-              {currentRevision?.message}
-            </StackErrorMessageStyles.Text>
-          </StackErrorMessageStyles.Wrapper>
-        ) : null
-      }
-      
+      currentRevision?.reason &&
+      currentRevision?.message?.length > 0 ? (
+        <StackErrorMessageStyles.Wrapper>
+          <i className="material-icons">history</i>
+          <StackErrorMessageStyles.Text color="#aaaabb">
+            {currentRevision?.status === "failed" ? "Error: " : ""}
+            {currentRevision?.message}
+          </StackErrorMessageStyles.Text>
+        </StackErrorMessageStyles.Wrapper>
+      ) : null}
+
       <Break />
       <InfoWrapper>
         <LastDeployed>
@@ -190,6 +221,16 @@ const ExpandedStack = () => {
               <>
                 <Gap></Gap>
                 <EnvGroups stack={stack} />
+              </>
+            ),
+          },
+          {
+            label: "Settings",
+            value: "settings",
+            component: (
+              <>
+                <Gap></Gap>
+                <Settings stackName={stack.name} onDelete={handleDelete} />
               </>
             ),
           },

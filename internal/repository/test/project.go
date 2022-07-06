@@ -60,6 +60,10 @@ func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *
 	return role, nil
 }
 
+func (repo *ProjectRepository) UpdateProject(project *models.Project) (*models.Project, error) {
+	panic("unimplemented")
+}
+
 // CreateProjectRole appends a role to the existing array of roles
 func (repo *ProjectRepository) UpdateProjectRole(projID uint, role *models.Role) (*models.Role, error) {
 	if !repo.canQuery {

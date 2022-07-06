@@ -39,9 +39,10 @@ func NewClient(serverURL, apiKey string) (*Client, error) {
 func (c *Client) CreateTeam(user *cemodels.User, proj *cemodels.Project) (string, error) {
 	// call the internal billing endpoint to create a new customer in the database
 	reqData := &CreateCustomerRequest{
-		Email:     user.Email,
-		UserID:    user.ID,
-		ProjectID: proj.ID,
+		Email:       user.Email,
+		UserID:      user.ID,
+		ProjectID:   proj.ID,
+		ProjectName: proj.Name,
 	}
 
 	err := c.postRequest("/api/v1/private/customer", reqData, nil)

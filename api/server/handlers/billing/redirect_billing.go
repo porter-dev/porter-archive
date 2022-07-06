@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
+	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -33,7 +35,13 @@ type CreateBillingCookieRequest struct {
 }
 
 type CreateBillingCookieResponse struct {
-	Cookie string `json:"cookie"`
+	Token   string `json:"token"`
+	TokenID string `json:"token_id"`
+}
+
+type VerifyUserRequest struct {
+	TokenID string `schema:"token_id" form:"required"`
+	Token   string `schema:"token" form:"required"`
 }
 
 func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -86,15 +94,24 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	dst := &CreateBillingCookieResponse{}
 
-	if dst != nil {
-		err = json.NewDecoder(res.Body).Decode(dst)
+	err = json.NewDecoder(res.Body).Decode(dst)
 
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
-	w.Header().Add("Set-Cookie", dst.Cookie)
-	http.Redirect(w, r, c.Config().ServerConf.BillingPublicServerURL, 302)
+	redirectData := &VerifyUserRequest{
+		TokenID: dst.TokenID,
+		Token:   dst.Token,
+	}
+
+	vals := make(map[string][]string)
+	err = schema.NewEncoder().Encode(redirectData, vals)
+
+	urlVals := url.Values(vals)
+	encodedURLVals := urlVals.Encode()
+
+	reqURL := fmt.Sprintf("%s/api/v1/verify?%s", c.Config().ServerConf.BillingPublicServerURL, encodedURLVals)
+	http.Redirect(w, r, reqURL, 302)
 }

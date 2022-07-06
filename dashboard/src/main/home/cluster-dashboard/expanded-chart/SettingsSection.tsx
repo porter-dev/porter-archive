@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import { isDeployedFromGithub } from "shared/release/utils";
 import TagSelector from "./TagSelector";
 import { PORTER_IMAGE_TEMPLATES } from "shared/common";
+import DynamicLink from "components/DynamicLink";
 
 type PropsType = {
   currentChart: ChartType;
@@ -206,10 +207,10 @@ const SettingsSection: React.FC<PropsType> = ({
     if (!isAuthorizedToCreateWebhook) {
       buttonStatus = "Unauthorized to create webhook token";
     }
-    console.log(PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl));
+
     return (
       <>
-        {!currentChart.is_stack &&
+        {!currentChart.stack_id?.length &&
         !PORTER_IMAGE_TEMPLATES.includes(selectedImageUrl) ? (
           <>
             <Heading>Source Settings</Heading>
@@ -316,10 +317,24 @@ const SettingsSection: React.FC<PropsType> = ({
           )}
 
           <Heading>Additional Settings</Heading>
-
-          <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
-            Delete {currentChart.name}
-          </Button>
+          {currentChart.stack_id?.length ? (
+            <>
+              <Helper>
+                You have to delete the stack to remove this application.
+              </Helper>
+              <CloneButton
+                as={DynamicLink}
+                color="#5561C0"
+                to={`/stacks/${currentChart.namespace}/${currentChart.stack_id}`}
+              >
+                Go to the stack
+              </CloneButton>
+            </>
+          ) : (
+            <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
+              Delete {currentChart.name}
+            </Button>
+          )}
         </StyledSettingsSection>
       ) : (
         <Loading />
@@ -368,7 +383,7 @@ const Button = styled.button`
 
 const CloneButton = styled(Button)`
   display: flex;
-  width: min-content;
+  width: fit-content;
   align-items: center;
   justify-content: center;
   background-color: #ffffff11;

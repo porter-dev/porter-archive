@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getStack deleteStack putStackSource rollbackStack
+// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions
 type stackPathParams struct {
 	// The project id
 	// in: path
@@ -58,11 +58,11 @@ type stackRevisionPathParams struct {
 	// required: true
 	StackID string `json:"stack_id"`
 
-	// The stack revision number
+	// The stack revision id
 	// in: path
 	// required: true
 	// minimum: 1
-	StackRevisionNumber string `json:"stack_revision_number"`
+	RevisionID string `json:"revision_id"`
 }
 
 func NewV1StackScopedRegisterer(children ...*router.Registerer) *router.Registerer {
@@ -267,8 +267,60 @@ func getV1StackRoutes(
 		Router:   r,
 	})
 
-	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/{stack_revision_number} -> stack.NewStackGetRevisionHandler
-	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/{stack_revision_number} getStackRevision
+	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/revisions -> stack.NewStackListRevisionsHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/revisions listStackRevisions
+	//
+	// Lists revisions in a stack. A max of 100 revisions will be returned, sorted from most recent to least recent.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: List stack revisions
+	// tags:
+	// - Stacks
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: stack_id
+	// responses:
+	//   '200':
+	//     description: Successfully listed stack revisions
+	//     schema:
+	//       $ref: '#/definitions/ListStackRevisionsResponse'
+	//   '403':
+	//     description: Forbidden
+	listRevisionsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{stack_id}/revisions",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.StackScope,
+			},
+		},
+	)
+
+	listRevisionsHandler := stack.NewStackListRevisionsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listRevisionsEndpoint,
+		Handler:  listRevisionsHandler,
+		Router:   r,
+	})
+
+	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/{revision_id} -> stack.NewStackGetRevisionHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/{revision_id} getStackRevision
 	//
 	// Gets a stack revision
 	//
@@ -283,7 +335,7 @@ func getV1StackRoutes(
 	//   - name: cluster_id
 	//   - name: namespace
 	//   - name: stack_id
-	//   - name: stack_revision_number
+	//   - name: revision_id
 	// responses:
 	//   '200':
 	//     description: Successfully got the stack revision

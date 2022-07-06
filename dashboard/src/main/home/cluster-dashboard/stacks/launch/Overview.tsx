@@ -6,14 +6,21 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import useAuth from "shared/auth/useAuth";
 import { useRouting } from "shared/routing";
-import { CardGrid, SubmitButton } from "./components/styles";
-import { AppCard } from "./components/AppCard";
+import {
+  AddResourceButtonStyles,
+  SubmitButton,
+  Card,
+} from "./components/styles";
 import { AddResourceButton } from "./components/AddResourceButton";
 import styled from "styled-components";
 
 import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import TitleSection from "components/TitleSection";
+import DynamicLink from "components/DynamicLink";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
+import sliders from "assets/sliders.svg";
+import DocsHelper from "components/DocsHelper";
 
 const Overview = () => {
   const {
@@ -22,6 +29,8 @@ const Overview = () => {
     setStackName,
     setStackNamespace,
     submit,
+    removeAppResource,
+    removeEnvGroup,
   } = useContext(StacksLaunchContext);
   const { currentProject, currentCluster } = useContext(Context);
   const [isAuthorized] = useAuth();
@@ -99,7 +108,7 @@ const Overview = () => {
   }, [namespace, newStack.name]);
 
   return (
-    <StyledLaunchFlow style={{ position: "relative" }}>
+    <>
       <TitleSection handleNavBack={() => window.open("/stacks", "_self")}>
         <Polymer>
           <i className="material-icons">lan</i>
@@ -143,18 +152,71 @@ const Overview = () => {
         />
       </ClusterSection>
 
+      <Heading>
+        Env Groups
+        {/* <InlineDocsHelper
+          disableMargin={true}
+          tooltipText="Environment Groups"
+          link="https://docs.porter.run/deploying-applications/environment-groups"
+        /> */}
+      </Heading>
+      <Helper>Add scoped environment groups to this stack:</Helper>
+      <Card.Grid>
+        {newStack.env_groups.map((envGroup) => (
+          <Card.Wrapper variant="unclickable">
+            <Card.Title>
+              <Card.SmallerIcon src={sliders} />
+              {envGroup.name}
+            </Card.Title>
+            <Card.Actions>
+              <Card.ActionButton
+                onClick={() => {
+                  removeEnvGroup(envGroup);
+                }}
+              >
+                <i className="material-icons-outlined">close</i>
+              </Card.ActionButton>
+            </Card.Actions>
+          </Card.Wrapper>
+        ))}
+
+        <AddResourceButtonStyles.Wrapper>
+          <AddResourceButtonStyles.Flex>
+            <LinkMask to={`/stacks/launch/new-env-group`}></LinkMask>
+            <Icon>
+              <i className="material-icons">add</i>
+            </Icon>
+            Add a new env group
+          </AddResourceButtonStyles.Flex>
+        </AddResourceButtonStyles.Wrapper>
+      </Card.Grid>
+
       <Heading>Applications</Heading>
       <Helper>
         At least one application is required:
         <Required>*</Required>
       </Helper>
-      <CardGrid>
+      <Card.Grid>
         {newStack.app_resources.map((app) => (
-          <AppCard key={app.name} app={app} />
+          <Card.Wrapper variant="unclickable">
+            <Card.Title>
+              <Card.Icon src={hardcodedIcons[app.template_name]}></Card.Icon>
+              {app.name}
+            </Card.Title>
+            <Card.Actions>
+              <Card.ActionButton
+                onClick={() => {
+                  removeAppResource(app);
+                }}
+              >
+                <i className="material-icons-outlined">close</i>
+              </Card.ActionButton>
+            </Card.Actions>
+          </Card.Wrapper>
         ))}
 
         <AddResourceButton />
-      </CardGrid>
+      </Card.Grid>
 
       <SubmitButton
         disabled={!isValid || submitButtonStatus !== ""}
@@ -166,7 +228,7 @@ const Overview = () => {
       >
         Create Stack
       </SubmitButton>
-    </StyledLaunchFlow>
+    </>
   );
 };
 
@@ -228,4 +290,26 @@ const StyledLaunchFlow = styled.div`
   margin-top: ${(props: { disableMarginTop?: boolean }) =>
     props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
   padding-bottom: 150px;
+`;
+
+const LinkMask = styled(DynamicLink)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+`;
+
+const Icon = styled.div`
+  margin-bottom: -3px;
+  > i {
+    margin-right: 20px;
+    margin-left: 9px;
+    font-size: 20px;
+    color: #aaaabb;
+  }
+`;
+
+const InlineDocsHelper = styled(DocsHelper)`
+  display: inline-block;
 `;

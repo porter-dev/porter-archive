@@ -17,4 +17,6 @@ type StackRepository interface {
 
 	ReadStackResource(resourceID uint) (*models.StackResource, error)
 	UpdateStackResource(resource *models.StackResource) (*models.StackResource, error)
+
+	ReadStackEnvGroupFirstMatch(projectID, clusterID uint, namespace, name string) (*models.StackEnvGroup, error)
 }

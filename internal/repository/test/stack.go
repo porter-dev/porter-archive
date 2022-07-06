@@ -58,3 +58,7 @@ func (repo *StackRepository) ReadStackResource(resourceID uint) (*models.StackRe
 func (repo *StackRepository) UpdateStackResource(resource *models.StackResource) (*models.StackResource, error) {
 	panic("unimplemented")
 }
+
+func (repo *StackRepository) ReadStackEnvGroupFirstMatch(projectID, clusterID uint, namespace, name string) (*models.StackEnvGroup, error) {
+	panic("unimplemented")
+}

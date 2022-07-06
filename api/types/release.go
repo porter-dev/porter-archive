@@ -197,7 +197,7 @@ type PatchUpdateReleaseTags struct {
 type PartialGitActionConfig struct {
 	// The branch to use for the git repository
 	// required: true
-	GitBranch string `json:"branch" form:"required"`
+	GitBranch string `json:"git_branch" form:"required"`
 }
 
 type UpdateGitActionConfigRequest struct {

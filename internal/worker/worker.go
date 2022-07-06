@@ -3,12 +3,10 @@ package worker
 import (
 	"context"
 	"log"
-
-	"github.com/google/uuid"
 )
 
 type Job interface {
-	ID() uuid.UUID
+	ID() string
 	Run() error
 }
 

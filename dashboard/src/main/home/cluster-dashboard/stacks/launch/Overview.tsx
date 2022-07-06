@@ -154,11 +154,11 @@ const Overview = () => {
 
       <Heading>
         Env Groups
-        <InlineDocsHelper
+        {/* <InlineDocsHelper
           disableMargin={true}
           tooltipText="Environment Groups"
           link="https://docs.porter.run/deploying-applications/environment-groups"
-        />
+        /> */}
       </Heading>
       <Helper>Add scoped environment groups to this stack:</Helper>
       <Card.Grid>

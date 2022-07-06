@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getStack deleteStack putStackSource rollbackStack
+// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions
 type stackPathParams struct {
 	// The project id
 	// in: path

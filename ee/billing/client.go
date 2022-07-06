@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/api/types"
 	cemodels "github.com/porter-dev/porter/internal/models"
 )
 
@@ -221,20 +222,25 @@ const (
 	FeatureSlugUsers    string = "users"
 )
 
-func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.ProjectUsage, error) {
+func (c *Client) ParseProjectUsageFromWebhook(payload []byte) (*cemodels.ProjectUsage, *types.FeatureFlags, error) {
 	usageData := &APIWebhookRequest{}
 
 	err := json.Unmarshal(payload, usageData)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return &cemodels.ProjectUsage{
-		ProjectID:      usageData.ProjectID,
-		ResourceCPU:    usageData.CPU,
-		ResourceMemory: usageData.Memory * 1000,
-		Clusters:       usageData.Clusters,
-		Users:          usageData.Users,
-	}, nil
+			ProjectID:      usageData.ProjectID,
+			ResourceCPU:    usageData.CPU,
+			ResourceMemory: usageData.Memory * 1000,
+			Clusters:       usageData.Clusters,
+			Users:          usageData.Users,
+		}, &types.FeatureFlags{
+			PreviewEnvironmentsEnabled: usageData.PreviewEnvironmentsEnabled,
+			ManagedInfraEnabled:        usageData.ManagedInfraEnabled,
+			StacksEnabled:              usageData.StacksEnabled,
+			ManagedDatabasesEnabled:    usageData.ManagedDatabasesEnabled,
+		}, nil
 }

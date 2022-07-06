@@ -3,6 +3,7 @@ package billing
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -18,7 +19,7 @@ type BillingManager interface {
 
 	// ParseProjectUsageFromWebhook parses the project usage from a webhook payload sent
 	// from a billing agent
-	ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error)
+	ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error)
 
 	// VerifySignature verifies the signature for a webhook
 	VerifySignature(signature string, body []byte) bool
@@ -35,8 +36,8 @@ func (n *NoopBillingManager) DeleteTeam(user *models.User, proj *models.Project)
 	return nil
 }
 
-func (n *NoopBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error) {
-	return nil, nil
+func (n *NoopBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error) {
+	return nil, nil, nil
 }
 
 func (n *NoopBillingManager) VerifySignature(signature string, body []byte) bool {

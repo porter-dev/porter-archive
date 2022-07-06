@@ -22,4 +22,9 @@ type APIWebhookRequest struct {
 	Users    uint `json:"users" form:"required"`
 	CPU      uint `json:"cpu" form:"required"`
 	Memory   uint `json:"memory" form:"required"`
+
+	PreviewEnvironmentsEnabled string `json:"preview_environments_enabled,omitempty"`
+	ManagedInfraEnabled        string `json:"managed_infra_enabled,omitempty"`
+	StacksEnabled              string `json:"stacks_enabled,omitempty"`
+	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
 }

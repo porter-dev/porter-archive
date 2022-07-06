@@ -47,21 +47,7 @@ const BranchList: React.FC<Props> = ({
           }
         )
         .then((res) => {
-          setBranches([
-            ...res.data,
-            ...[
-              "asd",
-              "asdq",
-              "aoipwjoie",
-              "ajodjwioa",
-              "jaodsjoiqj",
-              "qwpepok",
-              "asdasd",
-              "qjwoeojijio",
-              "aojiqjio",
-              "asojijiqo",
-            ],
-          ]);
+          setBranches(res.data);
           setLoading(false);
           setError(false);
         })

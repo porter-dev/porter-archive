@@ -159,12 +159,13 @@ const SourceConfigStyles = {
   `,
   ItemContainer: styled.div`
     background: #ffffff11;
-    border-radius: 15px;
-    padding: 20px 15px;
+    border-radius: 8px;
+    padding: 30px 35px 35px;
   `,
   ItemTitle: styled.div`
     font-size: 16px;
     width: fit-content;
+    font-weight: 500;
   `,
   TooltipItem: styled.div`
     font-size: 14px;

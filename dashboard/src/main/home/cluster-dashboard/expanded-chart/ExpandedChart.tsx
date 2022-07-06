@@ -23,7 +23,7 @@ import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
 import IncidentsTab from "./incidents/IncidentsTab";
-import BuildSettingsTab from "./BuildSettingsTab";
+import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 import { useStackEnvGroups } from "./useStackEnvGroups";
 

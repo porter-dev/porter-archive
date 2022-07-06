@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -40,6 +41,13 @@ func (p *StackDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		k8sAgent, err := p.GetAgent(r, cluster, "")
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
 		helmAgent, err := p.GetHelmAgent(r, cluster, namespace)
 
 		if err != nil {
@@ -53,6 +61,11 @@ func (p *StackDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				helmAgent: helmAgent,
 				name:      appResource.Name,
 			})
+		}
+
+		// delete all env groups in stack
+		for _, envGroup := range revision.EnvGroups {
+			envgroup.DeleteEnvGroup(k8sAgent, envGroup.Name, envGroup.Namespace)
 		}
 	}
 

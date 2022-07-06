@@ -210,3 +210,8 @@ type GetJobRunsRequest struct {
 type StreamJobRunsRequest struct {
 	Name string `schema:"name"`
 }
+
+type GetEnvGroupResponse struct {
+	*EnvGroup
+	StackID string `json:"stack_id,omitempty"`
+}

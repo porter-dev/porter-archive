@@ -3,6 +3,7 @@ import Placeholder from "components/Placeholder";
 import TabSelector from "components/TabSelector";
 import TitleSection from "components/TitleSection";
 import React, { useContext, useEffect, useState } from "react";
+import backArrow from "assets/back_arrow.png";
 import { useParams } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -23,8 +24,11 @@ import {
 } from "../components/styles";
 import { getStackStatus, getStackStatusMessage } from "../shared";
 import { FullStackRevision, Stack, StackRevision } from "../types";
+import EnvGroups from "./components/EnvGroups";
 import RevisionList from "./_RevisionList";
 import SourceConfig from "./_SourceConfig";
+import { NavLink } from "react-router-dom";
+import Settings from "./components/Settings";
 
 const ExpandedStack = () => {
   const { namespace, stack_id } = useParams<{
@@ -39,8 +43,8 @@ const ExpandedStack = () => {
   );
 
   const [stack, setStack] = useState<Stack>();
-  const [sortType, setSortType] = useState("Alphabetical");
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentTab, setCurrentTab] = useState("apps");
 
   const [currentRevision, setCurrentRevision] = useState<FullStackRevision>();
@@ -70,6 +74,28 @@ const ExpandedStack = () => {
     }
   };
 
+  const handleDelete = () => {
+    setIsDeleting(true);
+    api
+      .deleteStack(
+        "<token>",
+        {},
+        {
+          namespace,
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          stack_id: stack.id,
+        }
+      )
+      .then(() => {
+        pushFiltered("/stacks", []);
+      })
+      .catch((err) => {
+        setCurrentError(err);
+        setIsDeleting(false);
+      });
+  };
+
   useEffect(() => {
     getStack();
   }, [stack_id]);
@@ -78,14 +104,25 @@ const ExpandedStack = () => {
     return <Loading />;
   }
 
+  if (isDeleting) {
+    return (
+      <Placeholder height="400px">
+        <div>
+          <h1>Deleting Stack</h1>
+          <p>This may take some time...</p>
+          <Loading />
+        </div>
+      </Placeholder>
+    );
+  }
+
   return (
     <div>
       <StackTitleWrapper>
-        <TitleSection
-          materialIconClass="material-icons-outlined"
-          icon={"lan"}
-          capitalize
-        >
+        <BackButton to="/stacks">
+          <BackButtonImg src={backArrow} />
+        </BackButton>
+        <TitleSection materialIconClass="material-icons-outlined" icon={"lan"}>
           {stack.name}
         </TitleSection>
         <NamespaceTag.Wrapper>
@@ -93,6 +130,32 @@ const ExpandedStack = () => {
           <NamespaceTag.Tag>{stack.namespace}</NamespaceTag.Tag>
         </NamespaceTag.Wrapper>
       </StackTitleWrapper>
+
+      {/* Stack error message */}
+      {currentRevision &&
+      currentRevision?.reason &&
+      currentRevision?.message?.length > 0 ? (
+        <StackErrorMessageStyles.Wrapper>
+          <i className="material-icons">history</i>
+          <StackErrorMessageStyles.Text color="#aaaabb">
+            {currentRevision?.status === "failed" ? "Error: " : ""}
+            {currentRevision?.message}
+          </StackErrorMessageStyles.Text>
+        </StackErrorMessageStyles.Wrapper>
+      ) : null}
+
+      <Break />
+      <InfoWrapper>
+        <LastDeployed>
+          <Status
+            status={getStackStatus(stack)}
+            message={getStackStatusMessage(stack)}
+          />
+          <SepDot>•</SepDot>
+          Last updated {readableDate(stack.updated_at)}
+        </LastDeployed>
+      </InfoWrapper>
+
       <RevisionList
         revisions={stack.revisions}
         currentRevision={currentRevision}
@@ -103,37 +166,6 @@ const ExpandedStack = () => {
         onRollback={() => getStack()}
       ></RevisionList>
       <Br />
-      <InfoWrapper>
-        <LastDeployed>
-          <Status
-            status={getStackStatus(stack)}
-            message={getStackStatusMessage(stack)}
-          />
-          <SepDot>•</SepDot>
-          <Text color="#aaaabb">
-            {!stack.latest_revision?.id
-              ? `No version found`
-              : `v${stack.latest_revision.id}`}
-          </Text>
-          <SepDot>•</SepDot>
-          Last updated {readableDate(stack.updated_at)}
-        </LastDeployed>
-      </InfoWrapper>
-
-      {/* Stack error message */}
-      {stack.latest_revision &&
-      stack.latest_revision.status === "failed" &&
-      stack.latest_revision.message?.length > 0 ? (
-        <StackErrorMessageStyles.Wrapper>
-          <StackErrorMessageStyles.Title color="#b7b7c9">
-            Error reason:
-          </StackErrorMessageStyles.Title>
-          <StackErrorMessageStyles.Text color="#aaaabb">
-            {stack.latest_revision.message}
-          </StackErrorMessageStyles.Text>
-        </StackErrorMessageStyles.Wrapper>
-      ) : null}
-
       <TabSelector
         currentTab={currentTab}
         options={[
@@ -146,32 +178,24 @@ const ExpandedStack = () => {
                 {currentRevision.id !== stack.latest_revision.id ? (
                   <ChartListWrapper>
                     <Placeholder>
-                      Not available when previewing versions
+                      Not available when previewing revisions
                     </Placeholder>
                   </ChartListWrapper>
                 ) : (
-                  <>
-                    <SortSelector
-                      setSortType={setSortType}
-                      sortType={sortType}
+                  <ChartListWrapper>
+                    <ChartList
+                      currentCluster={currentCluster}
                       currentView="stacks"
+                      namespace={namespace}
+                      sortType="Alphabetical"
+                      appFilters={
+                        stack?.latest_revision?.resources?.map(
+                          (res) => res.name
+                        ) || []
+                      }
+                      closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
                     />
-
-                    <ChartListWrapper>
-                      <ChartList
-                        currentCluster={currentCluster}
-                        currentView="stacks"
-                        namespace={namespace}
-                        sortType="Alphabetical"
-                        appFilters={
-                          stack?.latest_revision?.resources?.map(
-                            (res) => res.name
-                          ) || []
-                        }
-                        closeChartRedirectUrl={`${window.location.pathname}${window.location.search}`}
-                      />
-                    </ChartListWrapper>
-                  </>
+                  </ChartListWrapper>
                 )}
               </>
             ),
@@ -190,21 +214,78 @@ const ExpandedStack = () => {
               </>
             ),
           },
+          {
+            label: "Env Groups",
+            value: "env_groups",
+            component: (
+              <>
+                <Gap></Gap>
+                <EnvGroups stack={stack} />
+              </>
+            ),
+          },
+          {
+            label: "Settings",
+            value: "settings",
+            component: (
+              <>
+                <Gap></Gap>
+                <Settings stackName={stack.name} onDelete={handleDelete} />
+              </>
+            ),
+          },
         ]}
         setCurrentTab={(tab) => {
           setCurrentTab(tab);
         }}
       ></TabSelector>
+      <PaddingBottom />
     </div>
   );
 };
 
 export default ExpandedStack;
 
+const PaddingBottom = styled.div`
+  width: 100%;
+  height: 150px;
+`;
+
+const Break = styled.div`
+  width: 100%;
+  height: 20px;
+`;
+
+const BackButton = styled(NavLink)`
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  display: flex;
+  width: 36px;
+  cursor: pointer;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+    > img {
+      opacity: 1;
+    }
+  }
+`;
+
+const BackButtonImg = styled.img`
+  width: 16px;
+  opacity: 0.75;
+`;
+
 const ChartListWrapper = styled.div`
   width: 100%;
   margin: auto;
-  margin-top: 20px;
   padding-bottom: 125px;
 `;
 
@@ -216,13 +297,18 @@ const Gap = styled.div`
 
 const StackErrorMessageStyles = {
   Text: styled(Text)`
-    font-size: 14px;
-    margin-bottom: 10px;
+    font-size: 13px;
   `,
   Wrapper: styled.div`
     display: flex;
-    flex-direction: column;
+    align-items: center;
+
     margin-top: 5px;
+    > i {
+      color: #ffffff44;
+      margin-right: 8px;
+      font-size: 20px;
+    }
   `,
   Title: styled(Text)`
     font-size: 16px;
@@ -233,11 +319,12 @@ const StackErrorMessageStyles = {
 const StackTitleWrapper = styled.div`
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  position: relative;
   align-items: center;
 
   // Hotfix to make sure the title section and the namespace tag are aligned
   ${NamespaceTag.Wrapper} {
-    margin-bottom: 15px;
+    margin-left: 17px;
+    margin-bottom: 13px;
   }
 `;

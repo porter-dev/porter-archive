@@ -32,6 +32,7 @@ type PropsType = {
   syncedEnvGroups?: PopulatedEnvGroup[];
   setSyncedEnvGroups?: (values: PopulatedEnvGroup) => void;
   normalEnvVarsOnly?: boolean;
+  availableEnvGroups?: PopulatedEnvGroup[];
 };
 
 type StateType = {
@@ -114,6 +115,13 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
+    if (Array.isArray(this.props.availableEnvGroups)) {
+      this.setState({
+        envGroups: this.props.availableEnvGroups,
+        loading: false,
+      });
+      return;
+    }
     this.updateEnvGroups();
   }
 

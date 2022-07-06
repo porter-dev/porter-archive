@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -130,9 +131,11 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	if len(deployErrs) > 0 {
 		revision.Status = string(types.StackRevisionStatusFailed)
 		revision.Reason = "DeployError"
-		revision.Message = strings.Join(deployErrs, " , ")
+		revision.Message = fmt.Sprintf("Error while updating source configuration: %s", strings.Join(deployErrs, " , "))
 	} else {
 		revision.Status = string(types.StackRevisionStatusDeployed)
+		revision.Reason = "SourceConfigUpdate"
+		revision.Message = fmt.Sprintf("The source configuration was updated")
 	}
 
 	revision, err = p.Repo().Stack().UpdateStackRevision(revision)

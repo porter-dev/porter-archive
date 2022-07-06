@@ -27,7 +27,7 @@ import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal"
 import CommandLineIcon from "assets/command-line-icon";
 import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
-import BuildSettingsTab from "./BuildSettingsTab";
+import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { useStackEnvGroups } from "./useStackEnvGroups";
 
 const readableDate = (s: string) => {

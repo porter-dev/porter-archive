@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"gorm.io/gorm"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 type UpdateGitActionConfigHandler struct {
@@ -27,11 +28,20 @@ func NewUpdateGitActionConfigHandler(
 }
 
 func (c *UpdateGitActionConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	release, _ := r.Context().Value(types.ReleaseScope).(*models.Release)
+	helmRelease, _ := r.Context().Value(types.ReleaseScope).(*release.Release)
 
 	request := &types.UpdateGitActionConfigRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
+
+	// look up the release in the database; if not found, do not populate Porter fields
+	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	release, err := c.Repo().Release().ReadRelease(cluster.ID, helmRelease.Name, helmRelease.Namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 

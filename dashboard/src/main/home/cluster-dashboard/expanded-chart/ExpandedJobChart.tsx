@@ -28,6 +28,7 @@ import CommandLineIcon from "assets/command-line-icon";
 import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
 import BuildSettingsTab from "./BuildSettingsTab";
+import { useStackEnvGroups } from "./useStackEnvGroups";
 
 const readableDate = (s: string) => {
   let ts = new Date(s);
@@ -68,6 +69,12 @@ export const ExpandedJobChartFC: React.FC<{
     selectedJob,
     setSelectedJob,
   } = useJobs(chart);
+
+  const {
+    isStack,
+    stackEnvGroups,
+    isLoadingStackEnvGroups,
+  } = useStackEnvGroups(chart);
 
   const [devOpsMode, setDevOpsMode] = useState(
     () => localStorage.getItem("devOpsMode") === "true"
@@ -283,7 +290,7 @@ export const ExpandedJobChartFC: React.FC<{
 
   const formData = useMemo(() => cloneDeep(chart?.form || {}), [chart]);
 
-  if (status === "loading") {
+  if (status === "loading" || isLoadingStackEnvGroups) {
     return <Loading />;
   }
 
@@ -378,6 +385,12 @@ export const ExpandedJobChartFC: React.FC<{
                   <i className="material-icons">offline_bolt</i> DevOps Mode
                 </TabButton>
               }
+              injectedProps={{
+                "key-value-array": {
+                  availableSyncEnvGroups:
+                    isStack && !disableForm ? stackEnvGroups : undefined,
+                },
+              }}
             />
           )}
         </BodyWrapper>

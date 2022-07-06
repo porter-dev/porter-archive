@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/encryption"
+	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 
 	helmrelease "helm.sh/helm/v3/pkg/release"
@@ -73,6 +74,13 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	envGroups, err := getEnvGroupModels(req.EnvGroups, proj.ID, cluster.ID, namespace)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	// write stack to the database with creating status
 	stack := &models.Stack{
 		ProjectID: proj.ID,
@@ -86,6 +94,7 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				Status:         string(types.StackRevisionStatusDeploying),
 				SourceConfigs:  sourceConfigs,
 				Resources:      resources,
+				EnvGroups:      envGroups,
 			},
 		},
 	}
@@ -97,82 +106,128 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// apply all app resources
-	registries, err := p.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
+	// apply all env groups
+	k8sAgent, err := p.GetAgent(r, cluster, "")
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	helmAgent, err := p.GetHelmAgent(r, cluster, "")
+	envGroupDeployErrors := make([]string, 0)
 
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	helmReleaseMap := make(map[string]*helmrelease.Release)
-
-	deployErrs := make([]string, 0)
-
-	for _, appResource := range req.AppResources {
-		rel, err := applyAppResource(&applyAppResourceOpts{
-			config:     p.Config(),
-			projectID:  proj.ID,
-			namespace:  namespace,
-			cluster:    cluster,
-			registries: registries,
-			helmAgent:  helmAgent,
-			request:    appResource,
+	for _, envGroup := range req.EnvGroups {
+		cm, err := envgroup.CreateEnvGroup(k8sAgent, types.ConfigMapInput{
+			Name:            envGroup.Name,
+			Namespace:       namespace,
+			Variables:       envGroup.Variables,
+			SecretVariables: envGroup.SecretVariables,
 		})
 
 		if err != nil {
-			deployErrs = append(deployErrs, err.Error())
-		} else {
-			helmReleaseMap[fmt.Sprintf("%s/%s", namespace, appResource.Name)] = rel
+			envGroupDeployErrors = append(envGroupDeployErrors, fmt.Sprintf("error creating env group %s", envGroup.Name))
 		}
-	}
 
-	// update stack revision status
-	revision := &stack.Revisions[0]
+		// add each of the linked applications to the env group
+		for _, appName := range envGroup.LinkedApplications {
 
-	if len(deployErrs) > 0 {
-		revision.Status = string(types.StackRevisionStatusFailed)
-		revision.Reason = "DeployError"
-		revision.Message = strings.Join(deployErrs, " , ")
-	} else {
-		revision.Status = string(types.StackRevisionStatusDeployed)
-	}
-
-	revision, err = p.Repo().Stack().UpdateStackRevision(revision)
-
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	saveErrs := make([]string, 0)
-
-	for _, resource := range revision.Resources {
-		if rel, exists := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]; exists {
-			_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
+			cm, err = k8sAgent.AddApplicationToVersionedConfigMap(cm, appName)
 
 			if err != nil {
-				saveErrs = append(saveErrs, fmt.Sprintf("the resource %s/%s could not be saved right now", namespace, resource.Name))
+				envGroupDeployErrors = append(envGroupDeployErrors, fmt.Sprintf("error creating env group %s", envGroup.Name))
 			}
 		}
 	}
 
-	if len(saveErrs) > 0 {
-		revision.Reason = "SaveError"
-		revision.Message = strings.Join(saveErrs, " , ")
+	revision := &stack.Revisions[0]
+
+	if len(envGroupDeployErrors) > 0 {
+		revision.Status = string(types.StackRevisionStatusFailed)
+		revision.Reason = "EnvGroupDeployErr"
+		revision.Message = strings.Join(envGroupDeployErrors, " , ")
 
 		revision, err = p.Repo().Stack().UpdateStackRevision(revision)
 
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
+		}
+	} else {
+		// apply all app resources
+		registries, err := p.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		helmAgent, err := p.GetHelmAgent(r, cluster, "")
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		helmReleaseMap := make(map[string]*helmrelease.Release)
+
+		deployErrs := make([]string, 0)
+
+		for _, appResource := range req.AppResources {
+			rel, err := applyAppResource(&applyAppResourceOpts{
+				config:     p.Config(),
+				projectID:  proj.ID,
+				namespace:  namespace,
+				cluster:    cluster,
+				registries: registries,
+				helmAgent:  helmAgent,
+				request:    appResource,
+			})
+
+			if err != nil {
+				deployErrs = append(deployErrs, err.Error())
+			} else {
+				helmReleaseMap[fmt.Sprintf("%s/%s", namespace, appResource.Name)] = rel
+			}
+		}
+
+		// update stack revision status
+		if len(deployErrs) > 0 {
+			revision.Status = string(types.StackRevisionStatusFailed)
+			revision.Reason = "DeployError"
+			revision.Message = strings.Join(deployErrs, " , ")
+		} else {
+			revision.Status = string(types.StackRevisionStatusDeployed)
+		}
+
+		revision, err = p.Repo().Stack().UpdateStackRevision(revision)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		saveErrs := make([]string, 0)
+
+		for _, resource := range revision.Resources {
+			if rel, exists := helmReleaseMap[fmt.Sprintf("%s/%s", namespace, resource.Name)]; exists {
+				_, err = release.CreateAppReleaseFromHelmRelease(p.Config(), proj.ID, cluster.ID, resource.ID, rel)
+
+				if err != nil {
+					saveErrs = append(saveErrs, fmt.Sprintf("the resource %s/%s could not be saved right now", namespace, resource.Name))
+				}
+			}
+		}
+
+		if len(saveErrs) > 0 {
+			revision.Reason = "SaveError"
+			revision.Message = strings.Join(saveErrs, " , ")
+
+			revision, err = p.Repo().Stack().UpdateStackRevision(revision)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
 		}
 	}
 
@@ -243,6 +298,29 @@ func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sour
 			TemplateName:         appResource.TemplateName,
 			TemplateVersion:      appResource.TemplateVersion,
 			HelmRevisionID:       1,
+		})
+	}
+
+	return res, nil
+}
+
+func getEnvGroupModels(envGroups []*types.CreateStackEnvGroupRequest, projID, clusterID uint, namespace string) ([]models.StackEnvGroup, error) {
+	res := make([]models.StackEnvGroup, 0)
+
+	for _, envGroup := range envGroups {
+		uid, err := encryption.GenerateRandomBytes(16)
+
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, models.StackEnvGroup{
+			Name:            envGroup.Name,
+			UID:             uid,
+			EnvGroupVersion: 1,
+			ProjectID:       projID,
+			ClusterID:       clusterID,
+			Namespace:       namespace,
 		})
 	}
 

@@ -1,10 +1,17 @@
 package worker
 
-import "context"
+import (
+	"fmt"
+	"log"
+
+	"github.com/google/uuid"
+)
 
 type Dispatcher struct {
-	ctx        context.Context
 	maxWorkers int
+	exitChan   chan bool
+	workers    []*Worker
+
 	WorkerPool chan chan Job
 }
 
@@ -12,32 +19,57 @@ func NewDispatcher(maxWorkers int) *Dispatcher {
 	pool := make(chan chan Job, maxWorkers)
 	return &Dispatcher{
 		maxWorkers: maxWorkers,
+		exitChan:   make(chan bool),
+		workers:    make([]*Worker, maxWorkers),
+
 		WorkerPool: pool,
 	}
 }
 
-func (d *Dispatcher) Run(ctx context.Context, jobQueue chan Job) {
+func (d *Dispatcher) Run(jobQueue chan Job) error {
 	for i := 0; i < d.maxWorkers; i += 1 {
-		worker := NewWorker(ctx, d.WorkerPool)
+		uuid, err := uuid.NewUUID()
+
+		if err != nil {
+			return fmt.Errorf("error creating UUID for worker: %w", err)
+		}
+
+		worker := NewWorker(uuid, d.WorkerPool)
+		d.workers = append(d.workers, worker)
+
+		log.Default().Printf("starting worker with UUID: %v", uuid)
+
 		worker.Start()
 	}
 
-	d.ctx = ctx
+	d.dispatch(jobQueue)
 
-	go d.dispatch(jobQueue)
+	return nil
+}
+
+func (d *Dispatcher) Exit() {
+	d.exitChan <- true
 }
 
 func (d *Dispatcher) dispatch(jobQueue chan Job) {
-	for {
-		select {
-		case job := <-jobQueue:
-			go func(job Job) {
-				jobChannel := <-d.WorkerPool
+	go func(workers []*Worker) {
+		for {
+			select {
+			case job := <-jobQueue:
+				go func(job Job) {
+					jobChannel := <-d.WorkerPool
 
-				jobChannel <- job
-			}(job)
-		case <-d.ctx.Done():
-			return
+					jobChannel <- job
+				}(job)
+			case <-d.exitChan:
+				for _, w := range workers {
+					w.Stop()
+				}
+
+				fmt.Println("exiting dispatcher")
+
+				return
+			}
 		}
-	}
+	}(d.workers)
 }

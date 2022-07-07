@@ -1,30 +1,38 @@
 package worker
 
 import (
-	"context"
 	"log"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type Job interface {
 	ID() string
+	EnqueueTime() time.Time
 	Run() error
+	SetData([]byte)
 }
 
 type Worker struct {
+	exitChan chan bool
+	uuid     uuid.UUID
+
 	WorkerPool chan chan Job
 	JobChannel chan Job
-	ctx        context.Context
 }
 
-func NewWorker(ctx context.Context, workerPool chan chan Job) Worker {
-	return Worker{
+func NewWorker(uuid uuid.UUID, workerPool chan chan Job) *Worker {
+	return &Worker{
+		exitChan: make(chan bool),
+		uuid:     uuid,
+
 		WorkerPool: workerPool,
 		JobChannel: make(chan Job),
-		ctx:        ctx,
 	}
 }
 
-func (w Worker) Start() {
+func (w *Worker) Start() {
 	go func() {
 		for {
 			w.WorkerPool <- w.JobChannel
@@ -34,9 +42,15 @@ func (w Worker) Start() {
 				if err := job.Run(); err != nil {
 					log.Default().Printf("error running job %s: %s", job.ID(), err.Error())
 				}
-			case <-w.ctx.Done():
+			case <-w.exitChan:
+				log.Default().Printf("quitting worker with UUID: %v", w.uuid)
+
 				return
 			}
 		}
 	}()
+}
+
+func (w *Worker) Stop() {
+	w.exitChan <- true
 }

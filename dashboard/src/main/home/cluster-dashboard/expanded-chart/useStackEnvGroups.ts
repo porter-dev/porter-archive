@@ -51,6 +51,11 @@ export const useStackEnvGroups = (chart: ChartType) => {
   useEffect(() => {
     const stack_id = chart?.stack_id;
     if (!stack_id) {
+      // if the chart has been loaded and the chart doesn't have a stack id, set loading to false
+      if (loading && chart) {
+        setLoading(false);
+      }
+
       return;
     }
     setLoading(true);

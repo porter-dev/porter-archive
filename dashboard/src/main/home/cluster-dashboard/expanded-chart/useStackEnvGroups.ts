@@ -49,7 +49,7 @@ export const useStackEnvGroups = (chart: ChartType) => {
       .then((res) => res.data);
 
   useEffect(() => {
-    const stack_id = chart.stack_id;
+    const stack_id = chart?.stack_id;
     if (!stack_id) {
       return;
     }
@@ -64,10 +64,10 @@ export const useStackEnvGroups = (chart: ChartType) => {
       .catch((error) => {
         setCurrentError(error);
       });
-  }, [chart.stack_id]);
+  }, [chart?.stack_id]);
 
   return {
-    isStack: chart.stack_id?.length ? true : false,
+    isStack: chart?.stack_id?.length ? true : false,
     stackEnvGroups,
     isLoadingStackEnvGroups: loading,
   };

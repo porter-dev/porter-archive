@@ -8,6 +8,11 @@ import api from "shared/api";
 
 const ClusterSettings: React.FC = () => {
   const context = useContext(Context);
+  const [newClusterName, setNewClusterName] = useState<string>(
+    context.currentCluster.name
+  );
+  const [successfulRename, setSuccessfulRename] = useState<boolean>(false);
+
   const [accessKeyId, setAccessKeyId] = useState<string>("");
   const [secretKey, setSecretKey] = useState<string>("");
   const [startRotateCreds, setStartRotateCreds] = useState<boolean>(false);
@@ -32,6 +37,26 @@ const ClusterSettings: React.FC = () => {
       })
       .catch(() => {
         setSuccessfulRotate(false);
+      });
+  };
+
+  let updateClusterName = () => {
+    api
+      .updateClusterName(
+        "<token>",
+        {
+          name: newClusterName,
+        },
+        {
+          project_id: context.currentProject.id,
+          cluster_id: context.currentCluster.id,
+        }
+      )
+      .then(({ data }) => {
+        setSuccessfulRename(true);
+      })
+      .catch(() => {
+        setSuccessfulRename(false);
       });
   };
 
@@ -118,10 +143,39 @@ const ClusterSettings: React.FC = () => {
     }
   }
 
+  let renameClusterSection = (
+    <div>
+      <Heading>Rename Cluster</Heading>
+      <InputRow
+        type="text"
+        value={newClusterName}
+        setValue={(x: string) => setNewClusterName(x)}
+        label="Cluster Name"
+        placeholder="ex: my-awesome-cluster"
+        width="100%"
+        isRequired={true}
+      />
+      <Button color="#616FEEcc" onClick={updateClusterName}>
+        Submit
+      </Button>
+    </div>
+  );
+
+  if (successfulRename) {
+    renameClusterSection = (
+      <div>
+        <Heading>Credential Rotation</Heading>
+        <Helper>Successfully renamed the cluster! Reload the page.</Helper>
+      </div>
+    );
+  }
+
   return (
     <div>
       <StyledSettingsSection>
         {keyRotationSection}
+        <DarkMatter />
+        {renameClusterSection}
         <DarkMatter />
         <Heading>Delete Cluster</Heading>
         {helperText}

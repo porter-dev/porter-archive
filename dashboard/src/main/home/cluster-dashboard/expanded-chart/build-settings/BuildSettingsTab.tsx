@@ -19,15 +19,10 @@ import Banner from "components/Banner";
 import { UpdateBuildconfigResponse } from "./types";
 import BuildpackConfigSection from "./_BuildpackConfigSection";
 
-type OnSaveProps = {
-  buildConfig: BuildConfig;
-  gitActionConfig: FullActionConfigType;
-};
-
 type Props = {
   chart: ChartTypeWithExtendedConfig;
   isPreviousVersion: boolean;
-  onSave: (props: OnSaveProps) => void;
+  onSave: () => void;
 };
 
 const BuildSettingsTab: React.FC<Props> = ({
@@ -251,13 +246,7 @@ const BuildSettingsTab: React.FC<Props> = ({
       setCurrentError(error);
     } finally {
       clearButtonStatus();
-      onSave({
-        buildConfig,
-        gitActionConfig: {
-          ...chart.git_action_config,
-          git_branch: currentBranch,
-        },
-      });
+      onSave();
     }
   };
 
@@ -283,13 +272,7 @@ const BuildSettingsTab: React.FC<Props> = ({
       setCurrentError(error);
     } finally {
       clearButtonStatus();
-      onSave({
-        buildConfig,
-        gitActionConfig: {
-          ...chart.git_action_config,
-          git_branch: currentBranch,
-        },
-      });
+      onSave();
     }
   };
 

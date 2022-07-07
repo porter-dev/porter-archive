@@ -122,7 +122,13 @@ func httpService() http.Handler {
 
 func getJob(id string) worker.Job {
 	if id == "helm-revisions-count-tracker" {
-		return jobs.NewHelmRevisionsCountTracker(time.Now().UTC())
+		newJob, err := jobs.NewHelmRevisionsCountTracker(time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{})
+
+		if err != nil {
+			log.Default().Printf("error creating job with ID: helm-revisions-count-tracker. Error: %v", err)
+		}
+
+		return newJob
 	}
 
 	return nil

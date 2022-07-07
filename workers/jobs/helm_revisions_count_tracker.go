@@ -25,22 +25,20 @@ import (
 var stepSize int = 100
 
 type helmRevisionsCountTracker struct {
-	enqueueTime      time.Time
-	db               *gorm.DB
-	repo             repository.Repository
-	doConf           *oauth2.Config
-	dbConf           *env.DBConf
-	whitelistedUsers map[uint]uint
-	credBackend      credentials.CredentialStorage
+	enqueueTime time.Time
+	db          *gorm.DB
+	repo        repository.Repository
+	doConf      *oauth2.Config
+	dbConf      *env.DBConf
+	credBackend credentials.CredentialStorage
 }
 
 type HelmRevisionsCountTrackerOpts struct {
-	DBConf           *env.DBConf
-	DOClientID       string
-	DOClientSecret   string
-	DOScopes         []string
-	ServerURL        string
-	WhitelistedUsers map[uint]uint
+	DBConf         *env.DBConf
+	DOClientID     string
+	DOClientSecret string
+	DOScopes       []string
+	ServerURL      string
 }
 
 func NewHelmRevisionsCountTracker(

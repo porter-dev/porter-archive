@@ -12,6 +12,8 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/joeshaw/envdecode"
+	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/worker"
 	"github.com/porter-dev/porter/workers/jobs"
 )
@@ -20,10 +22,22 @@ var (
 	MaxWorkers = os.Getenv("MAX_WORKERS")
 	MaxQueue   = os.Getenv("MAX_QUEUE")
 
-	jobQueue chan worker.Job
+	jobQueue   chan worker.Job
+	envDecoder = EnvConf{}
 )
 
+type EnvConf struct {
+	ServerURL      string `env:"SERVER_URL,default=http://localhost:8080"`
+	DOClientID     string `env:"DO_CLIENT_ID"`
+	DOClientSecret string `env:"DO_CLIENT_SECRET"`
+	DBConf         env.DBConf
+}
+
 func main() {
+	if err := envdecode.StrictDecode(&envDecoder); err != nil {
+		log.Default().Fatalf("Failed to decode server conf: %v", err)
+	}
+
 	workerCount, err := strconv.Atoi(MaxWorkers)
 	if err != nil {
 		log.Default().Fatalln("invalid MAX_WORKERS value")
@@ -122,7 +136,13 @@ func httpService() http.Handler {
 
 func getJob(id string) worker.Job {
 	if id == "helm-revisions-count-tracker" {
-		newJob, err := jobs.NewHelmRevisionsCountTracker(time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{})
+		newJob, err := jobs.NewHelmRevisionsCountTracker(time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{
+			DBConf:         &envDecoder.DBConf,
+			DOClientID:     envDecoder.DOClientID,
+			DOClientSecret: envDecoder.DOClientSecret,
+			DOScopes:       []string{"read", "write"},
+			ServerURL:      envDecoder.ServerURL,
+		})
 
 		if err != nil {
 			log.Default().Printf("error creating job with ID: helm-revisions-count-tracker. Error: %v", err)

@@ -37,6 +37,27 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// if the cluster has an AWS integration, make sure that the old cluster name is set
+	if cluster.AWSIntegrationID != 0 {
+		awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(cluster.ProjectID, cluster.AWSIntegrationID)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		if string(awsInt.AWSClusterID) == "" {
+			awsInt.AWSClusterID = []byte(cluster.Name)
+
+			awsInt, err = c.Repo().AWSIntegration().OverwriteAWSIntegration(awsInt)
+
+			if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+		}
+	}
+
 	cluster.Name = request.Name
 
 	cluster, err := c.Repo().Cluster().UpdateCluster(cluster)

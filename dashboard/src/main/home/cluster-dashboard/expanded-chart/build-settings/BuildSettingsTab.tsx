@@ -11,7 +11,7 @@ import {
   ChartTypeWithExtendedConfig,
   FullActionConfigType,
 } from "shared/types";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 import yaml from "js-yaml";
 import { AxiosError } from "axios";
 import BranchList from "components/repo-selector/BranchList";
@@ -19,12 +19,22 @@ import Banner from "components/Banner";
 import { UpdateBuildconfigResponse } from "./types";
 import BuildpackConfigSection from "./_BuildpackConfigSection";
 
+type OnSaveProps = {
+  buildConfig: BuildConfig;
+  gitActionConfig: FullActionConfigType;
+};
+
 type Props = {
   chart: ChartTypeWithExtendedConfig;
   isPreviousVersion: boolean;
+  onSave: (props: OnSaveProps) => void;
 };
 
-const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
+const BuildSettingsTab: React.FC<Props> = ({
+  chart,
+  isPreviousVersion,
+  onSave,
+}) => {
   const { currentCluster, currentProject, setCurrentError } = useContext(
     Context
   );
@@ -241,6 +251,13 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
       setCurrentError(error);
     } finally {
       clearButtonStatus();
+      onSave({
+        buildConfig,
+        gitActionConfig: {
+          ...chart.git_action_config,
+          git_branch: currentBranch,
+        },
+      });
     }
   };
 
@@ -266,6 +283,13 @@ const BuildSettingsTab: React.FC<Props> = ({ chart, isPreviousVersion }) => {
       setCurrentError(error);
     } finally {
       clearButtonStatus();
+      onSave({
+        buildConfig,
+        gitActionConfig: {
+          ...chart.git_action_config,
+          git_branch: currentBranch,
+        },
+      });
     }
   };
 

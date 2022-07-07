@@ -77,7 +77,7 @@ func NewHelmRevisionsCountTracker(
 	})
 
 	return &helmRevisionsCountTracker{
-		enqueueTime, db, repo, doConf, opts.DBConf, opts.WhitelistedUsers, credBackend,
+		enqueueTime, db, repo, doConf, opts.DBConf, credBackend,
 	}, nil
 }
 

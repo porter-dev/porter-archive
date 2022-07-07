@@ -75,7 +75,7 @@ const BuildSettingsTab: React.FC<Props> = ({
     };
 
     try {
-      api.updateGitActionConfig(
+      await api.updateGitActionConfig(
         "<token>",
         {
           git_action_config: newGitActionConfig,

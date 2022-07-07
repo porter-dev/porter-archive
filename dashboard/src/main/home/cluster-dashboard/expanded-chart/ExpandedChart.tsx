@@ -507,7 +507,15 @@ const ExpandedChart: React.FC<Props> = (props) => {
           />
         );
       case "build-settings":
-        return <BuildSettingsTab chart={chart} isPreviousVersion={isPreview} />;
+        return (
+          <BuildSettingsTab
+            chart={chart}
+            isPreviousVersion={isPreview}
+            onSave={() => {
+              getChartData(currentChart);
+            }}
+          />
+        );
       default:
     }
   };

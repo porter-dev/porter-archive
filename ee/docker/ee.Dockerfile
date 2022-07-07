@@ -15,6 +15,7 @@ COPY /ee ./ee
 COPY /scripts ./scripts
 COPY /provisioner ./provisioner
 COPY /pkg ./pkg
+COPY /workers ./workers
 
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
 RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
@@ -35,7 +36,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=$GOPATH/pkg/mod \
     go build -ldflags="-w -s -X 'main.Version=${version}'" -tags ee -a -o ./bin/app ./cmd/app && \
     go build -ldflags '-w -s' -a -tags ee -o ./bin/migrate ./cmd/migrate && \
-    go build -ldflags '-w -s' -a -tags ee -o ./bin/ready ./cmd/ready
+    go build -ldflags '-w -s' -a -tags ee -o ./bin/ready ./cmd/ready && \
+    go build -ldflags '-w -s' -a -tags ee -o ./bin/worker-pool ./workers
 
 # Go test environment
 # -------------------
@@ -66,6 +68,7 @@ RUN apk update
 COPY --from=build-go /porter/bin/app /porter/
 COPY --from=build-go /porter/bin/migrate /porter/
 COPY --from=build-go /porter/bin/ready /porter/
+COPY --from=build-go /porter/bin/worker-pool /porter/worker-pool
 COPY --from=build-webpack /webpack/build /porter/static
 
 ENV DEBUG=false
@@ -81,4 +84,4 @@ ENV SQL_LITE=true
 ENV ADMIN_INIT=false
 
 EXPOSE 8080
-CMD /porter/migrate && /porter/app
+CMD /porter/migrate && /porter/app && /porter/worker-pool&

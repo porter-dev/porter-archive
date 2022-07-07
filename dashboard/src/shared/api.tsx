@@ -96,6 +96,18 @@ const overwriteAWSIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/integrations/aws/overwrite`;
 });
 
+const updateClusterName = baseApi<
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
+});
+
 const createAzureIntegration = baseApi<
   {
     azure_client_id: string;
@@ -2074,10 +2086,7 @@ const updateStackSourceConfig = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/source`
 );
 
-const getGithubStatus = baseApi<{}, {}>(
-  "GET",
-  ({}) => `/api/status/github`
-);
+const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -2091,6 +2100,7 @@ export default {
   getGitlabIntegration,
   createAWSIntegration,
   overwriteAWSIntegration,
+  updateClusterName,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,

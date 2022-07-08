@@ -18,20 +18,27 @@ const SidebarLink: React.FC<{ path: string } & Omit<NavLinkProps, "to">> = ({
    */
   const withQueryParams = (path: string) => (location: any) => {
     let pathNamespace = params.namespace;
-    let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
+    const search = new URLSearchParams();
+    if (currentCluster?.name) {
+      search.append("cluster", currentCluster.name);
+    }
+
+    if (currentProject?.id) {
+      search.append("project_id", String(currentProject.id));
+    }
 
     if (!pathNamespace) {
       pathNamespace = getQueryParam("namespace");
     }
 
     if (pathNamespace) {
-      search = search.concat(`&namespace=${pathNamespace}`);
+      search.append("namespace", pathNamespace);
     }
 
     return {
       ...location,
       pathname: path,
-      search,
+      search: search.toString(),
     };
   };
 

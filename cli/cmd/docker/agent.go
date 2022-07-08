@@ -291,7 +291,8 @@ func (a *Agent) PullImage(image string) error {
 	out, err := a.ImagePull(a.ctx, image, opts)
 
 	if err != nil {
-		if client.IsErrNotFound(err) {
+		if client.IsErrNotFound(err) ||
+			(strings.Contains(image, "gcr.io") && strings.Contains(err.Error(), "or it may not exist")) {
 			return PullImageErrNotFound
 		} else if client.IsErrUnauthorized(err) {
 			return PullImageErrUnauthorized

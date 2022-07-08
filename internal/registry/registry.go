@@ -707,7 +707,9 @@ func (r *Registry) GetECRPaginatedImages(
 	imageIDMap := make(map[string]bool)
 
 	for _, id := range resp.ImageIds {
-		imageIDMap[*id.ImageTag] = true
+		if id != nil && id.ImageTag != nil {
+			imageIDMap[*id.ImageTag] = true
+		}
 	}
 
 	var wg sync.WaitGroup

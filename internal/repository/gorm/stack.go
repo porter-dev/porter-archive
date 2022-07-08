@@ -49,7 +49,7 @@ func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace str
 	// query for each stack's revision
 	revisions := make([]*models.StackRevision, 0)
 
-	if err := repo.db.Preload("SourceConfigs").Preload("Resources").Where("stack_revisions.stack_id IN (?)", stackIDs).Where(`
+	if err := repo.db.Preload("SourceConfigs").Preload("Resources").Preload("EnvGroups").Where("stack_revisions.stack_id IN (?)", stackIDs).Where(`
 	stack_revisions.id IN (
 	  SELECT s2.id FROM (SELECT MAX(stack_revisions.id) id FROM stack_revisions WHERE stack_revisions.stack_id IN (?) GROUP BY stack_revisions.stack_id) s2
 	)
@@ -83,6 +83,7 @@ func (repo *StackRepository) ReadStackByID(projectID, stackID uint) (*models.Sta
 		}).
 		Preload("Revisions.Resources").
 		Preload("Revisions.SourceConfigs").
+		Preload("Revisions.EnvGroups").
 		Where("stacks.project_id = ? AND stacks.id = ?", projectID, stackID).First(&stack).Error; err != nil {
 		return nil, err
 	}
@@ -100,6 +101,7 @@ func (repo *StackRepository) ReadStackByStringID(projectID uint, stackID string)
 		}).
 		Preload("Revisions.Resources").
 		Preload("Revisions.SourceConfigs").
+		Preload("Revisions.EnvGroups").
 		Where("stacks.project_id = ? AND stacks.uid = ?", projectID, stackID).First(&stack).Error; err != nil {
 		return nil, err
 	}
@@ -127,7 +129,7 @@ func (repo *StackRepository) UpdateStackRevision(revision *models.StackRevision)
 func (repo *StackRepository) ReadStackRevision(stackRevisionID uint) (*models.StackRevision, error) {
 	revision := &models.StackRevision{}
 
-	if err := repo.db.Preload("Resources").Preload("SourceConfigs").Where("id = ?", stackRevisionID).First(&revision).Error; err != nil {
+	if err := repo.db.Preload("Resources").Preload("SourceConfigs").Preload("EnvGroups").Where("id = ?", stackRevisionID).First(&revision).Error; err != nil {
 		return nil, err
 	}
 
@@ -137,7 +139,7 @@ func (repo *StackRepository) ReadStackRevision(stackRevisionID uint) (*models.St
 func (repo *StackRepository) ReadStackRevisionByNumber(stackID uint, revisionNumber uint) (*models.StackRevision, error) {
 	revision := &models.StackRevision{}
 
-	if err := repo.db.Preload("Resources").Preload("SourceConfigs").Where("stack_id = ? AND revision_number = ?", stackID, revisionNumber).First(&revision).Error; err != nil {
+	if err := repo.db.Preload("Resources").Preload("SourceConfigs").Preload("EnvGroups").Where("stack_id = ? AND revision_number = ?", stackID, revisionNumber).First(&revision).Error; err != nil {
 		return nil, err
 	}
 
@@ -180,4 +182,14 @@ func (repo *StackRepository) UpdateStackResource(resource *models.StackResource)
 	}
 
 	return resource, nil
+}
+
+func (repo *StackRepository) ReadStackEnvGroupFirstMatch(projectID, clusterID uint, namespace, name string) (*models.StackEnvGroup, error) {
+	envGroup := &models.StackEnvGroup{}
+
+	if err := repo.db.Where("project_id = ? AND cluster_id = ? AND namespace = ? AND name = ?", projectID, clusterID, namespace, name).Order("id desc").First(&envGroup).Error; err != nil {
+		return nil, err
+	}
+
+	return envGroup, nil
 }

@@ -35,7 +35,6 @@ func (r *Release) ToReleaseType() *types.PorterRelease {
 		ID:           r.ID,
 		WebhookToken: r.WebhookToken,
 		ImageRepoURI: r.ImageRepoURI,
-		IsStack:      r.StackResourceID != 0,
 	}
 
 	if r.GitActionConfig != nil {

@@ -1,6 +1,7 @@
 package namespace
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -13,6 +14,8 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/stacks"
+	"gorm.io/gorm"
 )
 
 type GetEnvGroupHandler struct {
@@ -62,5 +65,23 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.WriteResult(w, r, envGroup)
+	stackId, err := stacks.GetStackForEnvGroup(c.Config(), cluster.ProjectID, cluster.ID, envGroup)
+
+	if err != nil {
+
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.WriteResult(w, r, &types.GetEnvGroupResponse{EnvGroup: envGroup})
+			return
+		}
+
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	res := &types.GetEnvGroupResponse{
+		EnvGroup: envGroup,
+		StackID:  stackId,
+	}
+
+	c.WriteResult(w, r, res)
 }

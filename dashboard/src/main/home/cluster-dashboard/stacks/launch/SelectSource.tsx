@@ -31,7 +31,7 @@ const SelectSource = () => {
   };
 
   return (
-    <StyledLaunchFlow style={{ position: "relative" }}>
+    <>
       <TitleSection handleNavBack={() => window.open("/stacks", "_self")}>
         <Polymer>
           <i className="material-icons">lan</i>
@@ -59,7 +59,7 @@ const SelectSource = () => {
         clearPosition
         makeFlush
       />
-    </StyledLaunchFlow>
+    </>
   );
 };
 
@@ -67,7 +67,7 @@ export default SelectSource;
 
 const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: ${props => props.height || "1px"};
+  height: ${(props) => props.height || "1px"};
 `;
 
 const Required = styled.div`
@@ -85,12 +85,4 @@ const Polymer = styled.div`
     margin-left: 5px;
     margin-right: 18px;
   }
-`;
-
-const StyledLaunchFlow = styled.div`
-  width: calc(100% - 100px);
-  margin-left: 50px;
-  min-width: 300px;
-  margin-top: ${(props: { disableMarginTop?: boolean }) =>
-    props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
 `;

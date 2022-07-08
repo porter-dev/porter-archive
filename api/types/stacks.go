@@ -17,6 +17,9 @@ type CreateStackRequest struct {
 	// registry or linked to a remote Git repository.
 	// required: true
 	SourceConfigs []*CreateStackSourceConfigRequest `json:"source_configs,omitempty" form:"required,dive,required"`
+
+	// A list of env groups which can be synced to an application
+	EnvGroups []*CreateStackEnvGroupRequest `json:"env_groups,omitempty" form:"required,dive,required"`
 }
 
 // swagger:model
@@ -85,6 +88,9 @@ type Stack struct {
 }
 
 // swagger:model
+type ListStackRevisionsResponse []StackRevision
+
+// swagger:model
 type StackListResponse []Stack
 
 type StackResource struct {
@@ -109,7 +115,7 @@ type StackResource struct {
 	// If this is an app resource, app-specific information for the resource
 	StackAppData *StackResourceAppData `json:"stack_app_data,omitempty"`
 
-	// The source configuration for this stack
+	// The source configuration that this resource uses, if this is an application resource
 	StackSourceConfig *StackSourceConfig `json:"stack_source_config,omitempty"`
 }
 
@@ -158,7 +164,34 @@ type StackRevision struct {
 	// The list of resources deployed in this revision
 	Resources []StackResource `json:"resources"`
 
+	// The list of source configs deployed in this revision
 	SourceConfigs []StackSourceConfig `json:"source_configs"`
+
+	// The list of env groups scoped to this stack
+	EnvGroups []StackEnvGroup `json:"env_groups"`
+}
+
+type StackEnvGroup struct {
+	// The time that this resource was initially created
+	CreatedAt time.Time `json:"created_at"`
+
+	// The time that this resource was last updated
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// The stack ID that this resource belongs to
+	StackID string `json:"stack_id"`
+
+	// The numerical revision id that this resource belongs to
+	StackRevisionID uint `json:"stack_revision_id"`
+
+	// The name of the resource
+	Name string `json:"name"`
+
+	// The id for this resource
+	ID string `json:"id"`
+
+	// The version of the env group which is being used
+	EnvGroupVersion uint `json:"env_group_version"`
 }
 
 type StackSourceConfig struct {
@@ -188,6 +221,26 @@ type StackSourceConfig struct {
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
+}
+
+// swagger:model
+type CreateStackEnvGroupRequest struct {
+	// The name of the env group
+	// required: true
+	Name string `json:"name" form:"required"`
+
+	// The non-secret variables to set in the env group
+	// required: true
+	Variables map[string]string `json:"variables,required" form:"required"`
+
+	// The secret variables to set in the env group
+	// required: true
+	SecretVariables map[string]string `json:"secret_variables,required" form:"required"`
+
+	// The list of applications that this env group should be synced to. These applications **must** be present
+	// in the stack - if an env group is created from a stack, syncing to applications which are not in the stack
+	// is not supported
+	LinkedApplications []string `json:"linked_applications"`
 }
 
 // swagger:model

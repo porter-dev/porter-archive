@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/stacks"
 )
 
 type CreateEnvGroupHandler struct {
@@ -113,6 +114,13 @@ func (c *CreateEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 
 		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(fmt.Errorf(strings.Join(errStrArr, ","))))
+		return
+	}
+
+	err = postUpgrade(c.Config(), cluster.ProjectID, cluster.ID, envGroup)
+
+	if err != nil {
+		c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 }
@@ -366,4 +374,10 @@ func getNestedMap(obj map[string]interface{}, fields ...string) (map[string]inte
 	}
 
 	return res, nil
+}
+
+// postUpgrade runs any necessary scripting after the release has been upgraded.
+func postUpgrade(config *config.Config, projectID, clusterID uint, envGroup *types.EnvGroup) error {
+	// update the relevant env group version number if tied to a stack resource
+	return stacks.UpdateEnvGroupVersion(config, projectID, clusterID, envGroup)
 }

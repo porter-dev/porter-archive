@@ -13,7 +13,7 @@ import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
 import { RouteComponentProps, withRouter } from "react-router";
-import { pushQueryParams } from "shared/routing";
+import { getQueryParam, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 type PropsType = RouteComponentProps &
@@ -79,6 +79,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                 namespace={this.state.namespace}
               />
               <SortSelector
+                currentView="env-groups"
                 setSortType={(sortType) => this.setState({ sortType })}
                 sortType={this.state.sortType}
               />
@@ -98,6 +99,16 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
     }
   };
 
+  closeExpanded = () => {
+    pushQueryParams(this.props, {}, ["selected_env_group"]);
+    const redirectUrlOnClose = getQueryParam(this.props, "redirect_url");
+    if (redirectUrlOnClose) {
+      this.props.history.push(redirectUrlOnClose);
+      return;
+    }
+    this.setState({ expandedEnvGroup: null });
+  };
+
   renderContents = () => {
     if (this.state.expandedEnvGroup) {
       return (
@@ -108,7 +119,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
           }
           currentCluster={this.props.currentCluster}
           envGroup={this.state.expandedEnvGroup}
-          closeExpanded={() => this.setState({ expandedEnvGroup: null })}
+          closeExpanded={() => this.closeExpanded()}
         />
       );
     } else {

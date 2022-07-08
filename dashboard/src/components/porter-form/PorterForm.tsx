@@ -4,6 +4,7 @@ import {
   CheckboxField,
   CronField,
   FormField,
+  InjectedProps,
   InputField,
   KeyValueArrayField,
   ResourceListField,
@@ -49,6 +50,7 @@ interface Props {
   hideSpacer?: boolean;
   // The tab to redirect to after saving the form
   redirectTabAfterSave?: string;
+  injectedProps?: InjectedProps;
 }
 
 const PorterForm: React.FC<Props> = (props) => {
@@ -63,10 +65,14 @@ const PorterForm: React.FC<Props> = (props) => {
   const { currentTab, setCurrentTab } = props;
 
   const renderSectionField = (field: FormField): JSX.Element => {
+    const injected = props.injectedProps?.[field.type];
+
     const bundledProps = {
       ...field,
       isReadOnly,
+      injectedProps: injected ?? {},
     };
+
     switch (field.type) {
       case "heading":
         return <Heading>{field.label}</Heading>;

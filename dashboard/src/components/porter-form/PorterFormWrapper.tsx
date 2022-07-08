@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import PorterForm from "./PorterForm";
-import { PorterFormData } from "./types";
+import { InjectedProps, PorterFormData } from "./types";
 import { PorterFormContextProvider } from "./PorterFormContextProvider";
 
 type PropsType = {
@@ -23,6 +23,7 @@ type PropsType = {
   hideBottomSpacer?: boolean;
   redirectTabAfterSave?: string;
   includeMetadata?: boolean;
+  injectedProps?: InjectedProps;
 };
 
 const PorterFormWrapper: React.FC<PropsType> = ({
@@ -44,6 +45,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
   hideBottomSpacer,
   redirectTabAfterSave,
   includeMetadata,
+  injectedProps,
 }) => {
   const hashCode = (s: string) => {
     return s?.split("").reduce(function (a, b) {
@@ -99,6 +101,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
           isLaunch={isLaunch}
           hideSpacer={hideBottomSpacer}
           redirectTabAfterSave={redirectTabAfterSave}
+          injectedProps={injectedProps}
         />
       </PorterFormContextProvider>
     </React.Fragment>

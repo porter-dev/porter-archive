@@ -707,6 +707,10 @@ func (r *Registry) GetECRPaginatedImages(
 	imageIDMap := make(map[string]bool)
 
 	for _, id := range resp.ImageIds {
+		if id == nil {
+			continue
+		}
+
 		imageIDMap[*id.ImageTag] = true
 	}
 
@@ -746,6 +750,10 @@ func (r *Registry) GetECRPaginatedImages(
 	imageInfoMap := make(map[string]*ptypes.Image)
 
 	for _, img := range imageDetails {
+		if img == nil {
+			continue
+		}
+
 		for _, tag := range img.ImageTags {
 			newImage := &ptypes.Image{
 				Digest:         *img.ImageDigest,

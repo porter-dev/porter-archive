@@ -189,6 +189,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     setTimeout(() => {
       pushFiltered(props, dst, ["project_id"], {
         cluster: currentCluster.name,
+        namespace: selectedNamespace,
       });
     }, 500);
   };
@@ -355,6 +356,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         props.currentTemplate.name === "job" ? "/jobs" : "/applications";
       pushFiltered(props, dst, ["project_id"], {
         cluster: currentCluster.name,
+        namespace: selectedNamespace,
       });
     }, 1000);
   };

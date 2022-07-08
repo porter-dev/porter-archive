@@ -202,6 +202,8 @@ class RevisionSection extends Component<PropsType, StateType> {
         ? String(imageTag).slice(0, 7)
         : imageTag;
 
+      const isStack = !!this.props.chart.stack_id;
+
       return (
         <Tr
           key={i}
@@ -236,7 +238,7 @@ class RevisionSection extends Component<PropsType, StateType> {
                   "get",
                   "update",
                 ]) ||
-                this.props.chart.is_stack
+                isStack
               }
               onClick={() =>
                 this.setState({ rollbackRevision: revision.version })

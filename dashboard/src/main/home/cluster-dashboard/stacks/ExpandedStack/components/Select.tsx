@@ -92,7 +92,7 @@ const Select = <T extends unknown>({
         <SelectStyles.Selector
           className={className}
           onClick={() => setExpanded(!expanded)}
-          expanded={expanded}
+          expanded={!readOnly && expanded}
           readOnly={readOnly}
         >
           <SelectStyles.CurrentValue>
@@ -153,18 +153,15 @@ export const SelectStyles = {
     height: 35px;
     border: 1px solid #ffffff55;
     font-size: 13px;
+    color: ${props => props.readOnly ? "#ffffff44" : ""};
     padding: 5px 10px;
     padding-left: 15px;
     border-radius: 3px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    cursor: ${(props) => (props.readOnly ? "normal" : "pointer")};
+    cursor: ${(props) => (props.readOnly ? "not-allowed" : "pointer")};
     background: ${(props) => {
-      if (props.readOnly) {
-        return "#ffffff55";
-      }
-
       if (props.expanded) {
         return "#ffffff33";
       }
@@ -174,10 +171,8 @@ export const SelectStyles = {
     :hover {
       background: ${(props) => {
         if (props.readOnly) {
-          return "#ffffff55";
-        }
-
-        if (props.expanded) {
+          return "#ffffff11";
+        } else if (props.expanded) {
           return "#ffffff33";
         }
         return "#ffffff22";

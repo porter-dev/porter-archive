@@ -546,23 +546,39 @@ const EnvGroupSettings = ({
           </Helper>
           {!canDelete && (
             <Helper color="#f5cb42">
-              Looks like you still have applications syncedto this env group.
-              Please remove this env group from those applications to delete
+              Applications are still synced to this env group. Navigate to
+              "Linked Applications" and remove this env group from all
+              applications to delete.
             </Helper>
           )}
-          <Button
-            color="#b91133"
-            onClick={() => {
-              setCurrentOverlay({
-                message: `Are you sure you want to delete ${name}?`,
-                onYes: handleDeleteEnvGroup,
-                onNo: () => setCurrentOverlay(null),
-              });
-            }}
-            disabled={!canDelete}
-          >
-            Delete {envGroup.name}
-          </Button>
+          {envGroup.stack_id?.length ? (
+            <>
+              <Helper color="#f5cb42">
+                You have to delete the stack to remove this env group.
+              </Helper>
+              <CloneButton
+                as={DynamicLink}
+                color="#5561C0"
+                to={`/stacks/${envGroup.namespace}/${envGroup.stack_id}`}
+              >
+                Go to the stack
+              </CloneButton>
+            </>
+          ) : (
+            <Button
+              color="#b91133"
+              onClick={() => {
+                setCurrentOverlay({
+                  message: `Are you sure you want to delete ${envGroup.name}?`,
+                  onYes: handleDeleteEnvGroup,
+                  onNo: () => setCurrentOverlay(null),
+                });
+              }}
+              disabled={!canDelete}
+            >
+              Delete {envGroup.name}
+            </Button>
+          )}
         </InnerWrapper>
       )}
     </TabWrapper>
@@ -702,6 +718,17 @@ const Button = styled.button`
   }
   :hover {
     filter: ${(props) => (!props.disabled ? "brightness(120%)" : "")};
+  }
+`;
+
+const CloneButton = styled(Button)`
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff11;
+  :hover {
+    background-color: #ffffff18;
   }
 `;
 

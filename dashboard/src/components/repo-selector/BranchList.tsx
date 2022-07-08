@@ -113,9 +113,12 @@ const BranchList: React.FC<Props> = ({
         >
           <img src={branch_icon} alt={"branch icon"} />
           {branch}
-          {currentBranch === branch && (
-            <i className="material-icons-outlined">check</i>
-          )}
+          <div>
+            <span>{actionConfig.git_branch === branch ? "Current" : ""}</span>
+            {currentBranch === branch && (
+              <i className="material-icons-outlined">check</i>
+            )}
+          </div>
         </BranchName>
       );
     });
@@ -129,6 +132,19 @@ const BranchList: React.FC<Props> = ({
         prompt={"Search branches..."}
       />
       <BranchListWrapper>
+        {actionConfig.git_branch && actionConfig.git_branch !== currentBranch && (
+          <WarningRow lastItem={false} disabled>
+            <i className="material-icons-round">warning</i>
+            <span>
+              You have unsaved changes. Please click save to commit your
+              changes.
+              <p>
+                Current Branch: <b>{actionConfig.git_branch}</b>. New branch:{" "}
+                <b>{currentBranch}</b>
+              </p>
+            </span>
+          </WarningRow>
+        )}
         <ExpandedWrapper>{renderBranchList()}</ExpandedWrapper>
       </BranchListWrapper>
     </>
@@ -137,21 +153,20 @@ const BranchList: React.FC<Props> = ({
 
 export default BranchList;
 
-const BranchName = styled.div`
+const BranchName = styled.div<{ lastItem: boolean; disabled?: boolean }>`
   display: flex;
   width: 100%;
   font-size: 13px;
   border-bottom: 1px solid
-    ${(props: { lastItem: boolean }) =>
-      props.lastItem ? "#00000000" : "#606166"};
+    ${(props) => (props.lastItem ? "#00000000" : "#606166")};
   color: #ffffff;
   user-select: none;
   align-items: center;
   padding: 10px 0px;
-  cursor: pointer;
+  cursor: ${(props) => (props.disabled ? "default" : "pointer")};
   background: #ffffff11;
   :hover {
-    background: #ffffff22;
+    background: ${(props) => (props.disabled ? "#ffffff11" : "#ffffff22")};
   }
 
   > img {
@@ -160,12 +175,45 @@ const BranchName = styled.div`
     margin-left: 12px;
     margin-right: 12px;
   }
+  > div {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+
+    > span {
+      text-transform: capitalize;
+
+      :last-child {
+        margin-right: 15px;
+      }
+    }
+
+    > i {
+      margin-left: 10px;
+      margin-right: 15px;
+      font-size: 18px;
+      color: #03b503;
+    }
+  }
+`;
+
+const WarningRow = styled(BranchName)`
+  background: #3d3f43;
+  color: #f4ca42;
+  position: sticky;
+  top: 0;
+  animation: fadeIn 0.5s ease-in-out;
 
   > i {
-    margin-left: auto;
-    margin-right: 15px;
     font-size: 18px;
-    color: #03b503;
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  p {
+    margin: 0px;
+    margin-top: 5px;
+    color: #ffffff;
   }
 `;
 
@@ -183,6 +231,7 @@ const BranchListWrapper = styled.div`
   border: 1px solid #ffffff55;
   border-radius: 3px;
   overflow-y: auto;
+  position: relative;
 `;
 
 const ExpandedWrapper = styled.div`

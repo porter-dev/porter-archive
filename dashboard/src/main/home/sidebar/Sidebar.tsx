@@ -7,7 +7,6 @@ import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 import settings from "assets/settings.svg";
 import sliders from "assets/sliders.svg";
-import PullRequestIcon from "assets/pull_request_icon.svg";
 
 import { Context } from "shared/Context";
 
@@ -16,7 +15,7 @@ import ProjectSectionContainer from "./ProjectSectionContainer";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { NavLink } from "react-router-dom";
+import SidebarLink from "./SidebarLink";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -103,64 +102,34 @@ class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
-  /**
-   * Helper function that will keep the query params before redirect the user to a new page
-   *
-   * @param location
-   * @param path Path to redirect to
-   * @returns React router `to` object
-   */
-  withQueryParams = (location: any, path: string) => {
-    let { currentCluster, currentProject } = this.context;
-    let params = this.props.match.params as any;
-    let pathNamespace = params.namespace;
-    let search = `?cluster=${currentCluster.name}&project_id=${currentProject.id}`;
-
-    if (!pathNamespace) {
-      pathNamespace = getQueryParam(this.props, "namespace");
-    }
-
-    if (pathNamespace) {
-      search = search.concat(`&namespace=${pathNamespace}`);
-    }
-
-    return {
-      ...location,
-      pathname: path,
-      search,
-    };
-  };
-
   renderClusterContent = () => {
     let { currentCluster, currentProject } = this.context;
 
     if (currentCluster) {
       return (
         <>
-          <NavButton
-            to={(location) => this.withQueryParams(location, "/applications")}
-          >
+          <NavButton path="/applications">
             <Img src={monoweb} />
             Applications
           </NavButton>
-          <NavButton to={() => this.withQueryParams(location, "/jobs")}>
+          <NavButton path="/jobs">
             <Img src={monojob} />
             Jobs
           </NavButton>
-          <NavButton to={() => this.withQueryParams(location, "/env-groups")}>
+          <NavButton path="/env-groups">
             <Img src={sliders} />
             Env Groups
           </NavButton>
           {currentCluster.service === "eks" &&
             currentCluster.infra_id > 0 &&
             currentProject.enable_rds_databases && (
-              <NavButton to={"/databases"}>
+              <NavButton path="/databases">
                 <Icon className="material-icons-outlined">storage</Icon>
                 Databases
               </NavButton>
             )}
           {currentProject?.preview_envs_enabled && (
-            <NavButton to="/preview-environments">
+            <NavButton path="/preview-environments">
               <InlineSVGWrapper
                 id="Flat"
                 fill="#FFFFFF"
@@ -194,9 +163,7 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
           )}
           {currentProject?.stacks_enabled ? (
-            <NavButton
-              to={(location) => this.withQueryParams(location, "/stacks")}
-            >
+            <NavButton path={"/stacks"}>
               <Icon className="material-icons-outlined">lan</Icon>
               Stacks
             </NavButton>
@@ -213,16 +180,16 @@ class Sidebar extends Component<PropsType, StateType> {
       return (
         <>
           <SidebarLabel>Home</SidebarLabel>
-          <NavButton to="/dashboard">
+          <NavButton path={"/dashboard"}>
             <Img src={category} />
             Dashboard
           </NavButton>
-          <NavButton to="/launch">
+          <NavButton path="/launch">
             <Img src={rocket} />
             Launch
           </NavButton>
           {currentProject && currentProject.managed_infra_enabled && (
-            <NavButton to={"/infrastructure"}>
+            <NavButton path={"/infrastructure"}>
               <i className="material-icons">build_circle</i>
               Infrastructure
             </NavButton>
@@ -233,7 +200,7 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-            <NavButton to="/integrations">
+            <NavButton path={"/integrations"}>
               <Img src={integrations} />
               Integrations
             </NavButton>
@@ -243,7 +210,7 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-            <NavButton to="/project-settings">
+            <NavButton path={"/project-settings"}>
               <Img enlarge={true} src={settings} />
               Settings
             </NavButton>
@@ -337,7 +304,7 @@ const ProjectPlaceholder = styled.div`
   }
 `;
 
-const NavButton = styled(NavLink)`
+const NavButton = styled(SidebarLink)`
   display: flex;
   align-items: center;
   position: relative;

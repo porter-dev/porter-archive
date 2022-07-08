@@ -15,11 +15,38 @@ import styled from "styled-components";
 import Heading from "components/form-components/Heading";
 import TitleSection from "components/TitleSection";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
+import { BackButton, Icon, Polymer } from "./components/styles";
+import { PopulatedEnvGroup } from "components/porter-form/types";
+import { CreateStackBody } from "../types";
 
 const DEFAULT_STACK_SOURCE_CONFIG_INDEX = 0;
 
+const parseEnvGroup = (namespace: string) => (
+  envGroup: CreateStackBody["env_groups"][0]
+): PopulatedEnvGroup => {
+  const variables = envGroup?.variables || {};
+  const secretVariables = envGroup?.secret_variables || {};
+
+  return {
+    name: envGroup.name,
+    version: 1,
+    namespace,
+    applications: envGroup.linked_applications,
+    meta_version: 2,
+    variables: {
+      ...variables,
+      ...Object.keys(secretVariables).reduce((acc, key) => {
+        acc[key] = "PORTERSECRET_" + key;
+        return acc;
+      }, {} as any),
+    },
+  };
+};
+
 const NewApp = () => {
-  const { addAppResource, newStack } = useContext(StacksLaunchContext);
+  const { addAppResource, newStack, namespace } = useContext(
+    StacksLaunchContext
+  );
   const { currentCluster } = useContext(Context);
 
   const params = useParams<{
@@ -72,15 +99,29 @@ const NewApp = () => {
   }, [params]);
 
   if (isLoading) {
-    return <Wrapper><Loading /></Wrapper>;
+    return (
+      <Wrapper>
+        <Loading />
+      </Wrapper>
+    );
   }
 
   if (hasError) {
     return <>Unexpected error</>;
   }
 
-  const handleSubmit = async (rawValues: any) => {
+  const handleSubmit = async ({
+    values: rawValues,
+    metadata,
+  }: {
+    values: any;
+    metadata: any;
+  }) => {
     setSaveButtonStatus("loading");
+    const syncedEnvGroups =
+      metadata["container.env"]?.added?.map(
+        ({ name }: { name: string }) => name
+      ) || [];
 
     // Convert dotted keys to nested objects
     let values: any = {};
@@ -165,13 +206,16 @@ const NewApp = () => {
       return;
     }
 
-    addAppResource({
-      name: appName,
-      source_config_name: newStack.source_configs[0]?.name || "",
-      template_name: params.template_name,
-      template_version: params.version,
-      values,
-    });
+    addAppResource(
+      {
+        name: appName,
+        source_config_name: newStack.source_configs[0]?.name || "",
+        template_name: params.template_name,
+        template_version: params.version,
+        values,
+      },
+      [...syncedEnvGroups]
+    );
 
     setSaveButtonStatus("successful");
     setTimeout(() => {
@@ -181,21 +225,24 @@ const NewApp = () => {
   };
 
   return (
-    <StyledLaunchFlow style={{ position: "relative" }}>
+    <>
       <TitleSection>
         <DynamicLink to={`/stacks/launch/overview`}>
           <BackButton>
-            <i className="material-icons">
-              keyboard_backspace
-            </i>
+            <i className="material-icons">keyboard_backspace</i>
           </BackButton>
         </DynamicLink>
         <Polymer>
-        <Icon src={hardcodedIcons[template.metadata.name]} />
+          <Icon src={hardcodedIcons[template.metadata.name]} />
         </Polymer>
-        Add {template.metadata.name.charAt(0).toUpperCase() + template.metadata.name.slice(1)} to Stack
+        Add{" "}
+        {template.metadata.name.charAt(0).toUpperCase() +
+          template.metadata.name.slice(1)}{" "}
+        to Stack
       </TitleSection>
-      <Heading>Application Name <Required>*</Required></Heading>
+      <Heading>
+        Application Name <Required>*</Required>
+      </Heading>
       <InputRow
         type="string"
         value={appName}
@@ -205,17 +252,26 @@ const NewApp = () => {
       />
 
       <div style={{ position: "relative" }}>
-      <Heading>Application Settings</Heading>
-      <Helper>Configure settings for this application.</Helper>
-      <PorterFormWrapper
-        formData={template.form}
-        onSubmit={handleSubmit}
-        isLaunch
-        saveValuesStatus={saveButtonStatus}
-        saveButtonText="Add Application"
-      />
+        <Heading>Application Settings</Heading>
+        <Helper>Configure settings for this application.</Helper>
+        <PorterFormWrapper
+          formData={template.form}
+          onSubmit={handleSubmit}
+          isLaunch
+          saveValuesStatus={saveButtonStatus}
+          saveButtonText="Add Application"
+          valuesToOverride={{ namespace }}
+          injectedProps={{
+            "key-value-array": {
+              availableSyncEnvGroups: newStack.env_groups.map(
+                parseEnvGroup(namespace)
+              ),
+            },
+          }}
+          includeMetadata
+        />
       </div>
-    </StyledLaunchFlow>
+    </>
   );
 };
 
@@ -229,51 +285,6 @@ const Required = styled.div`
 
 const Wrapper = styled.div`
   margin-top: calc(50vh - 150px);
-`;
-
-const Icon = styled.img`
-  width: 40px;
-  margin-right: 14px;
-
-  opacity: 0;
-  animation: floatIn 0.5s 0.2s;
-  animation-fill-mode: forwards;
-  @keyframes floatIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-  }
-`;
-
-const BackButton = styled.div`
-  > i {
-    cursor: pointer;
-    font-size: 24px;
-    color: #969fbbaa;
-    margin-right: 10px;
-    padding: 3px;
-    margin-left: 0px;
-    border-radius: 100px;
-    :hover {
-      background: #ffffff11;
-    }
-  }
-`;
-
-const Polymer = styled.div`
-  margin-bottom: -6px;
-
-  > i {
-    color: #ffffff;
-    font-size: 24px;
-    margin-left: 5px;
-    margin-right: 18px;
-  }
 `;
 
 const StyledLaunchFlow = styled.div`

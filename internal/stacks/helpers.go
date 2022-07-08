@@ -76,3 +76,26 @@ func CloneAppResources(
 
 	return res, nil
 }
+
+func CloneEnvGroups(envGroups []models.StackEnvGroup) ([]models.StackEnvGroup, error) {
+	res := make([]models.StackEnvGroup, 0)
+
+	for _, envGroup := range envGroups {
+		uid, err := encryption.GenerateRandomBytes(16)
+
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, models.StackEnvGroup{
+			UID:             uid,
+			Name:            envGroup.Name,
+			EnvGroupVersion: envGroup.EnvGroupVersion,
+			Namespace:       envGroup.Namespace,
+			ProjectID:       envGroup.ProjectID,
+			ClusterID:       envGroup.ClusterID,
+		})
+	}
+
+	return res, nil
+}

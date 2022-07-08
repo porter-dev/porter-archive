@@ -20,6 +20,17 @@ export type CreateStackBody = {
       dockerfile?: unknown;
     };
   }[];
+
+  env_groups: {
+    name: string;
+    variables: {
+      [key: string]: string;
+    };
+    secret_variables: {
+      [key: string]: string;
+    };
+    linked_applications: string[];
+  }[];
 };
 
 export type CreateStackResponse = Stack;
@@ -41,6 +52,7 @@ export type Stack = {
 export type FullStackRevision = StackRevision & {
   resources: AppResource[];
   source_configs: SourceConfig[];
+  env_groups: EnvGroup[];
 };
 
 export type StackRevision = {
@@ -48,7 +60,14 @@ export type StackRevision = {
   created_at: string;
   status: "deploying" | "deployed" | "failed"; // type with enum
   stack_id: string;
-  reason: "DeployError" | "SaveError" | "RollbackError";
+  reason:
+    | "DeployError"
+    | "SaveError"
+    | "RollbackError"
+    | "EnvGroupUpgrade"
+    | "ApplicationUpgrade"
+    | "SourceConfigUpgrade"
+    | "Rollback";
   message: string;
 };
 
@@ -88,4 +107,14 @@ export type AppResource = {
     template_name: string;
     template_version: string;
   };
+};
+
+export type EnvGroup = {
+  env_group_version: number;
+  updated_at: string;
+  stack_id: string;
+  name: string;
+  stack_revision_id: number;
+  created_at: string;
+  id: string;
 };

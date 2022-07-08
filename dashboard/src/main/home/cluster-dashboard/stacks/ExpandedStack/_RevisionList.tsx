@@ -143,8 +143,9 @@ const _RevisionList = ({
         >
           <RevisionPreview>
             {currentRevision.id === latestRevision.id
-              ? `Current Revision v${currentRevision.id}`
-              : `Previewing Revision (Not Deployed) v${currentRevision.id}`}
+              ? `Current Revision`
+              : `Previewing Revision (Not Deployed)`}{" "}
+              - <Revision>No. {currentRevision.id}</Revision>
             <i className="material-icons">arrow_drop_down</i>
           </RevisionPreview>
         </RevisionHeader>
@@ -166,6 +167,11 @@ const _RevisionList = ({
 };
 
 export default _RevisionList;
+
+const Revision = styled.div`
+  color: #ffffff;
+  margin-left: 5px;
+`;
 
 const StyledRevisionSection = styled.div`
   display: flex;

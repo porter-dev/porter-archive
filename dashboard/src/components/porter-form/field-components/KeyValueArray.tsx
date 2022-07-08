@@ -4,6 +4,7 @@ import {
   GetMetadataFunction,
   KeyValueArrayField,
   KeyValueArrayFieldState,
+  PartialEnvGroup,
   PopulatedEnvGroup,
 } from "../types";
 import sliders from "../../../assets/sliders.svg";
@@ -63,7 +64,27 @@ const KeyValueArray: React.FC<Props> = (props) => {
     if (hasSetValue(props) && !Array.isArray(state?.synced_env_groups)) {
       const values = props.value[0];
       // console.log(values);
-      const envGroups = values?.synced || [];
+      const envGroups: PartialEnvGroup[] = values?.synced || [];
+
+      if (Array.isArray(props.injectedProps?.availableSyncEnvGroups)) {
+        const availableEnvGroups = props.injectedProps.availableSyncEnvGroups;
+
+        const populatedEnvGroups = envGroups
+          .map((envGroup) => {
+            return availableEnvGroups.find(
+              (availableEnvGroup) => availableEnvGroup.name === envGroup.name
+            );
+          })
+          .filter(Boolean);
+
+        setState(() => ({
+          synced_env_groups: Array.isArray(populatedEnvGroups)
+            ? populatedEnvGroups
+            : [],
+        }));
+        return;
+      }
+
       const promises = Promise.all(
         envGroups.map(async (envGroup: any) => {
           const res = await api.getEnvGroup(
@@ -90,6 +111,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
       });
     }
   }, [
+    props.injectedProps,
     props.value[0],
     variables?.clusterId,
     variables?.namespace,
@@ -180,6 +202,7 @@ const KeyValueArray: React.FC<Props> = (props) => {
             existingValues={getProcessedValues(state.values)}
             enableSyncedEnvGroups={enableSyncedEnvGroups}
             syncedEnvGroups={state.synced_env_groups}
+            availableEnvGroups={props.injectedProps?.availableSyncEnvGroups}
             namespace={variables.namespace}
             clusterId={variables.clusterId}
             closeModal={() =>

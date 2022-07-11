@@ -24,12 +24,13 @@ func init() {
 		key[i] = b
 	}
 
-	if InstanceEnvConf.ServerConf.BillingPrivateServerURL != "" && InstanceEnvConf.ServerConf.BillingPrivateKey != "" {
+	if InstanceEnvConf.ServerConf.BillingPrivateServerURL != "" && InstanceEnvConf.ServerConf.BillingPrivateKey != "" && InstanceEnvConf.ServerConf.BillingPublicServerURL != "" {
 		serverURL := InstanceEnvConf.ServerConf.BillingPrivateServerURL
+		publicServerURL := InstanceEnvConf.ServerConf.BillingPublicServerURL
 		apiKey := InstanceEnvConf.ServerConf.BillingPrivateKey
 		var err error
 
-		InstanceBillingManager, err = eeBilling.NewClient(serverURL, apiKey)
+		InstanceBillingManager, err = eeBilling.NewClient(serverURL, publicServerURL, apiKey)
 
 		if err != nil {
 			panic(err)

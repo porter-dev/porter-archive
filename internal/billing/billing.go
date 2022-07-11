@@ -17,6 +17,9 @@ type BillingManager interface {
 	// DeleteTeam deletes a billing team.
 	DeleteTeam(user *models.User, proj *models.Project) (err error)
 
+	// GetRedirectURI gets the redirect URI to send the user to the billing portal
+	GetRedirectURI(user *models.User, proj *models.Project) (url string, err error)
+
 	// ParseProjectUsageFromWebhook parses the project usage from a webhook payload sent
 	// from a billing agent
 	ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error)
@@ -34,6 +37,10 @@ func (n *NoopBillingManager) CreateTeam(user *models.User, proj *models.Project)
 
 func (n *NoopBillingManager) DeleteTeam(user *models.User, proj *models.Project) (err error) {
 	return nil
+}
+
+func (n *NoopBillingManager) GetRedirectURI(user *models.User, proj *models.Project) (url string, err error) {
+	return "", nil
 }
 
 func (n *NoopBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error) {

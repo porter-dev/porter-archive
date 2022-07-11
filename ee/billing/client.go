@@ -15,24 +15,26 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/types"
 	cemodels "github.com/porter-dev/porter/internal/models"
 )
 
 // Client contains an API client for the internal billing engine
 type Client struct {
-	apiKey     string
-	serverURL  string
-	httpClient *http.Client
+	apiKey          string
+	serverURL       string
+	publicServerURL string
+	httpClient      *http.Client
 }
 
 // NewClient creates a new billing API client
-func NewClient(serverURL, apiKey string) (*Client, error) {
+func NewClient(serverURL, publicServerURL, apiKey string) (*Client, error) {
 	httpClient := &http.Client{
 		Timeout: time.Minute,
 	}
 
-	client := &Client{apiKey, serverURL, httpClient}
+	client := &Client{apiKey, serverURL, publicServerURL, httpClient}
 
 	return client, nil
 }
@@ -63,6 +65,51 @@ func (c *Client) DeleteTeam(user *cemodels.User, proj *cemodels.Project) error {
 	}
 
 	return c.deleteRequest("/api/v1/private/customer", reqData, nil)
+}
+
+func (c *Client) GetRedirectURI(user *cemodels.User, proj *cemodels.Project) (string, error) {
+	// get an internal cookie
+	reqData := &CreateBillingCookieRequest{
+		ProjectName: proj.Name,
+		ProjectID:   proj.ID,
+		UserID:      user.ID,
+		Email:       user.Email,
+	}
+
+	createCookieVals := make(map[string][]string)
+	err := schema.NewEncoder().Encode(reqData, createCookieVals)
+
+	if err != nil {
+		return "", err
+	}
+
+	urlVals := url.Values(createCookieVals)
+	encodedURLVals := urlVals.Encode()
+
+	dst := &CreateBillingCookieResponse{}
+
+	err = c.postRequest("/api/v1/private/cookie", reqData, dst)
+
+	if err != nil {
+		return "", err
+	}
+
+	redirectData := &VerifyUserRequest{
+		TokenID: dst.TokenID,
+		Token:   dst.Token,
+	}
+
+	vals := make(map[string][]string)
+	err = schema.NewEncoder().Encode(redirectData, vals)
+
+	if err != nil {
+		return "", err
+	}
+
+	urlVals = url.Values(vals)
+	encodedURLVals = urlVals.Encode()
+
+	return fmt.Sprintf("%s/api/v1/verify?%s", c.publicServerURL, encodedURLVals), nil
 }
 
 // VerifySignature verifies a webhook signature based on hmac protocol

@@ -24,14 +24,15 @@ const NewEnvGroupForm = (props: {
     name: string;
     variables: ProcessedEnvVariables;
     secret_variables: ProcessedEnvVariables;
-  }) => void;
+  }) => Promise<void>;
 }) => {
   const { onSubmit } = props;
 
   const [name, setName] = useState("");
   const [envVariables, setEnvVariables] = useState<KeyValueType[]>([]);
+  const [submitError, setSubmitError] = useState("");
 
-  const handleOnSubmit = () => {
+  const handleOnSubmit = async () => {
     const variables = envVariables.filter(
       (variable) => !variable.locked && !variable.hidden
     );
@@ -39,11 +40,17 @@ const NewEnvGroupForm = (props: {
       (variable) => variable.locked || variable.hidden
     );
 
-    onSubmit({
-      name: name,
-      variables: envArrayToObject(variables),
-      secret_variables: envArrayToObject(secret_variables),
-    });
+    try {
+      await onSubmit({
+        name: name,
+        variables: envArrayToObject(variables),
+        secret_variables: envArrayToObject(secret_variables),
+      });
+    } catch (error) {
+      setSubmitError(error);
+      return;
+    }
+
     setName("");
     setEnvVariables([]);
     return;
@@ -116,7 +123,7 @@ const NewEnvGroupForm = (props: {
         text="Save env group"
         disabled={!!hasError}
         statusPosition="left"
-        status={hasError?.message || ""}
+        status={hasError?.message || submitError || ""}
       />
     </>
   );

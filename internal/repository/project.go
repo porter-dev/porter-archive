@@ -11,6 +11,7 @@ type WriteProject func(project *models.Project) (*models.Project, error)
 type ProjectRepository interface {
 	CreateProject(project *models.Project) (*models.Project, error)
 	CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error)
+	UpdateProject(project *models.Project) (*models.Project, error)
 	UpdateProjectRole(projID uint, role *models.Role) (*models.Role, error)
 	ReadProject(id uint) (*models.Project, error)
 	ReadProjectRole(projID, userID uint) (*models.Role, error)

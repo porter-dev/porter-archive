@@ -11,7 +11,7 @@ const NewEnvGroup = () => {
 
   return (
     <NewEnvGroupForm
-      onSubmit={(newEnvGroup) => {
+      onSubmit={async (newEnvGroup) => {
         addEnvGroup({
           ...newEnvGroup,
           linked_applications: [],

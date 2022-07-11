@@ -50,18 +50,27 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
+	if len(proj.Roles) == 0 {
+		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Only the creator of the project can manage billing"), 302)
+		return
+	}
+
 	// at the moment, the user must be the first admin user on the project - otherwise, redirect back to
 	// home page with error
-	var isFirstAdminUser bool
+	var firstAdminRoleID uint = proj.Roles[0].ID
+	var currUserRoleID uint = 0
 
 	for _, role := range proj.Roles {
 		if role.UserID == user.ID && role.Kind == types.RoleAdmin {
-			isFirstAdminUser = true
-			break
+			currUserRoleID = role.ID
+		}
+
+		if role.Kind == types.RoleAdmin && role.ID <= firstAdminRoleID {
+			firstAdminRoleID = role.ID
 		}
 	}
 
-	if !isFirstAdminUser {
+	if currUserRoleID == 0 || currUserRoleID != firstAdminRoleID {
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Only the creator of the project can manage billing"), 302)
 		return
 	}

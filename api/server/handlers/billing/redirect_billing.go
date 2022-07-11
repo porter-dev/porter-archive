@@ -1,13 +1,9 @@
 package billing
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
-	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -27,23 +23,6 @@ func NewRedirectBillingHandler(
 	return &RedirectBillingHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
-}
-
-type CreateBillingCookieRequest struct {
-	Email       string `json:"email" form:"required"`
-	UserID      uint   `json:"user_id" form:"required"`
-	ProjectID   uint   `json:"project_id" form:"required"`
-	ProjectName string `json:"project_name" form:"required"`
-}
-
-type CreateBillingCookieResponse struct {
-	Token   string `json:"token"`
-	TokenID string `json:"token_id"`
-}
-
-type VerifyUserRequest struct {
-	TokenID string `schema:"token_id" form:"required"`
-	Token   string `schema:"token" form:"required"`
 }
 
 func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -75,72 +54,12 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// get an internal cookie
-	data := &CreateBillingCookieRequest{
-		ProjectName: proj.Name,
-		ProjectID:   proj.ID,
-		UserID:      user.ID,
-		Email:       user.Email,
-	}
-
-	var strData []byte
-	var err error
-
-	if data != nil {
-		strData, err = json.Marshal(data)
-
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-	}
-
-	req, err := http.NewRequest(
-		"POST",
-		fmt.Sprintf("%s/api/v1/private/cookie", c.Config().ServerConf.BillingPrivateServerURL),
-		strings.NewReader(string(strData)),
-	)
+	redirectURI, err := c.Config().BillingManager.GetRedirectURI(user, proj)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Accept", "application/json; charset=utf-8")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Config().ServerConf.BillingPrivateKey))
-
-	httpClient := http.Client{}
-
-	res, err := httpClient.Do(req)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	defer res.Body.Close()
-
-	dst := &CreateBillingCookieResponse{}
-
-	err = json.NewDecoder(res.Body).Decode(dst)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	redirectData := &VerifyUserRequest{
-		TokenID: dst.TokenID,
-		Token:   dst.Token,
-	}
-
-	vals := make(map[string][]string)
-	err = schema.NewEncoder().Encode(redirectData, vals)
-
-	urlVals := url.Values(vals)
-	encodedURLVals := urlVals.Encode()
-
-	reqURL := fmt.Sprintf("%s/api/v1/verify?%s", c.Config().ServerConf.BillingPublicServerURL, encodedURLVals)
-	http.Redirect(w, r, reqURL, 302)
+	http.Redirect(w, r, redirectURI, 302)
 }

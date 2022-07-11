@@ -55,7 +55,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("error cloning env group: envgroup %s not found", request.Name), http.StatusNotFound,
+				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.Name, namespace), http.StatusNotFound,
 				"no config map found for envgroup",
 			))
 			return
@@ -70,7 +70,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("error cloning env group: envgroup %s not found", request.Name), http.StatusNotFound,
+				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.Name, namespace), http.StatusNotFound,
 				"no k8s secret found for envgroup",
 			))
 			return

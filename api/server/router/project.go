@@ -227,6 +227,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/project/{project_id}/billing/redirect -> billing.NewRedirectBillingHandler
+	redirectBillingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/redirect",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	redirectBillingHandler := billing.NewRedirectBillingHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: redirectBillingEndpoint,
+		Handler:  redirectBillingHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/billing -> project.NewProjectGetBillingHandler
 	getBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -251,35 +278,6 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getBillingEndpoint,
 		Handler:  getBillingHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/billing/token -> billing.NewBillingGetTokenEndpoint
-	getBillingTokenEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/billing/token",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.SettingsScope,
-			},
-		},
-	)
-
-	getBillingTokenHandler := billing.NewBillingGetTokenHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getBillingTokenEndpoint,
-		Handler:  getBillingTokenHandler,
 		Router:   r,
 	})
 

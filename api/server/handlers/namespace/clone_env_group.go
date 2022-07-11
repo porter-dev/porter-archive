@@ -1,6 +1,8 @@
 package namespace
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
@@ -50,11 +53,32 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cm, _, err := agent.GetLatestVersionedConfigMap(request.Name, namespace)
 
 	if err != nil {
+		if errors.Is(err, kubernetes.IsNotFoundError) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.Name, namespace), http.StatusNotFound,
+				"no config map found for envgroup",
+			))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	secret, _, err := agent.GetLatestVersionedSecret(request.Name, namespace)
+
+	if err != nil {
+		if errors.Is(err, kubernetes.IsNotFoundError) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.Name, namespace), http.StatusNotFound,
+				"no k8s secret found for envgroup",
+			))
+			return
+		}
+
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
 	if request.CloneName == "" {
 		request.CloneName = request.Name

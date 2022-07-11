@@ -25,8 +25,9 @@ const NewEnvGroupForm = (props: {
     variables: ProcessedEnvVariables;
     secret_variables: ProcessedEnvVariables;
   }) => Promise<void>;
+  onCancel: () => void;
 }) => {
-  const { onSubmit } = props;
+  const { onSubmit, onCancel } = props;
 
   const [name, setName] = useState("");
   const [envVariables, setEnvVariables] = useState<KeyValueType[]>([]);
@@ -75,11 +76,9 @@ const NewEnvGroupForm = (props: {
   return (
     <>
       <TitleSection>
-        <DynamicLink to={`/stacks/launch/overview`}>
-          <BackButton>
-            <i className="material-icons">keyboard_backspace</i>
-          </BackButton>
-        </DynamicLink>
+        <BackButton onClick={onCancel}>
+          <i className="material-icons">keyboard_backspace</i>
+        </BackButton>
         <Polymer>
           <SliderIcon src={sliders} />
         </Polymer>

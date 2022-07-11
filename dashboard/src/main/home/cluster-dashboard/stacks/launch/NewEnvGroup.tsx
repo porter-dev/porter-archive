@@ -19,6 +19,10 @@ const NewEnvGroup = () => {
         pushFiltered("/stacks/launch/overview", []);
         return;
       }}
+      onCancel={() => {
+        pushFiltered("/stacks/launch/overview", []);
+        return;
+      }}
     />
   );
 };

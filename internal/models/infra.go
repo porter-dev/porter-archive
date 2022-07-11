@@ -128,6 +128,8 @@ func GetOperationID() (string, error) {
 type getInfraName struct {
 	Name        string `json:"name"`
 	ClusterName string `json:"cluster_name"`
+	DBName      string `json:"db_name"`
+	BucketName  string `json:"bucket_name"`
 	DOCRName    string `json:"docr_name"`
 	ECRName     string `json:"ecr_name"`
 	ACRName     string `json:"acr_name"`
@@ -152,6 +154,14 @@ func (i *Infra) ToInfraType() *types.Infra {
 			name = infraName.ACRName
 		}
 
+		if infraName.DBName != "" {
+			name = infraName.DBName
+		}
+
+		if infraName.BucketName != "" {
+			name = infraName.BucketName
+		}
+
 		if infraName.ClusterName != "" {
 			name = infraName.ClusterName
 		}
@@ -159,8 +169,6 @@ func (i *Infra) ToInfraType() *types.Infra {
 		if infraName.Name != "" {
 			name = infraName.Name
 		}
-	} else if err != nil {
-		fmt.Println("ERRWAS", err)
 	}
 
 	return &types.Infra{

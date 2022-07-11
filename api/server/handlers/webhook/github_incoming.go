@@ -158,7 +158,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, prNumber: %d] "+
 				"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, event.GetPullRequest().GetNumber(), err)
 		}
-	} else if event.GetAction() == "synchronize" || event.GetAction() == "closed" {
+	} else if event.GetAction() == "synchronize" || event.GetAction() == "closed" || event.GetAction() == "edited" {
 		depl, err := c.Repo().Environment().ReadDeploymentByGitDetails(
 			env.ID, owner, repo, uint(event.GetPullRequest().GetNumber()),
 		)
@@ -191,7 +191,7 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 					"error creating workflow dispatch event: %w", webhookID, owner, repo, env.ID, depl.ID,
 					event.GetPullRequest().GetNumber(), err)
 			}
-		} else {
+		} else if event.GetAction() == "closed" {
 			// check for already running workflows we should be cancelling
 			var wg sync.WaitGroup
 			statuses := []string{"in_progress", "queued", "requested", "waiting"}
@@ -244,6 +244,28 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 				return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
 					"deployment deleted but errors found while trying to cancel active workflow runs %w", webhookID, owner, repo, env.ID, depl.ID,
 					event.GetPullRequest().GetNumber(), chanErr)
+			}
+		} else if event.GetChanges() != nil {
+			shouldUpdate := false
+
+			if event.GetChanges().GetTitle() != nil && event.GetPullRequest().GetTitle() != depl.PRName {
+				depl.PRName = event.GetPullRequest().GetTitle()
+				shouldUpdate = true
+			}
+
+			if event.GetChanges().GetBase() != nil && event.GetChanges().GetBase().GetRef() != nil && event.GetPullRequest().GetBase().GetRef() != depl.PRBranchInto {
+				depl.PRBranchInto = event.GetPullRequest().GetBase().GetRef()
+				shouldUpdate = true
+			}
+
+			if shouldUpdate {
+				_, err := c.Repo().Environment().UpdateDeployment(depl)
+
+				if err != nil {
+					return fmt.Errorf("[webhookID: %s, owner: %s, repo: %s, environmentID: %d, deploymentID: %d, prNumber: %d] "+
+						"error updating deployment to reflect changes in the pull request %w", webhookID, owner, repo, env.ID, depl.ID,
+						event.GetPullRequest().GetNumber(), err)
+				}
 			}
 		}
 	}

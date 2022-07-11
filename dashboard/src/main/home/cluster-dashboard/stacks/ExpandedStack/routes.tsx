@@ -4,7 +4,7 @@ import { Context } from "shared/Context";
 import ExpandedStack from "./ExpandedStack";
 import NewEnvGroup from "./NewEnvGroup";
 
-const routes = () => {
+const ExpandedStackRoutes = () => {
   const { path } = useRouteMatch();
 
   return (
@@ -22,4 +22,4 @@ const routes = () => {
   );
 };
 
-export default routes;
+export default ExpandedStackRoutes;

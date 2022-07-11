@@ -25,6 +25,7 @@ func NewProjectDeleteHandler(
 }
 
 func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	proj, err := p.Repo().Project().DeleteProject(proj)
@@ -37,7 +38,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	p.WriteResult(w, r, proj.ToProjectType())
 
 	// delete the billing team
-	if err := p.Config().BillingManager.DeleteTeam(proj); err != nil {
+	if err := p.Config().BillingManager.DeleteTeam(user, proj); err != nil {
 		// we do not write error response, since setting up billing error can be
 		// resolved later and may not be fatal
 		p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))

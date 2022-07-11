@@ -28,3 +28,20 @@ type APIWebhookRequest struct {
 	StacksEnabled              string `json:"stacks_enabled,omitempty"`
 	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
 }
+
+type CreateBillingCookieRequest struct {
+	Email       string `json:"email" form:"required"`
+	UserID      uint   `json:"user_id" form:"required"`
+	ProjectID   uint   `json:"project_id" form:"required"`
+	ProjectName string `json:"project_name" form:"required"`
+}
+
+type CreateBillingCookieResponse struct {
+	Token   string `json:"token"`
+	TokenID string `json:"token_id"`
+}
+
+type VerifyUserRequest struct {
+	TokenID string `schema:"token_id" form:"required"`
+	Token   string `schema:"token" form:"required"`
+}

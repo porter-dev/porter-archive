@@ -30,8 +30,10 @@ func NewRedirectBillingHandler(
 }
 
 type CreateBillingCookieRequest struct {
-	ProjectID uint `json:"project_id" form:"required"`
-	UserID    uint `json:"user_id" form:"required"`
+	Email       string `json:"email" form:"required"`
+	UserID      uint   `json:"user_id" form:"required"`
+	ProjectID   uint   `json:"project_id" form:"required"`
+	ProjectName string `json:"project_name" form:"required"`
 }
 
 type CreateBillingCookieResponse struct {
@@ -66,8 +68,10 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	// get an internal cookie
 	data := &CreateBillingCookieRequest{
-		ProjectID: proj.ID,
-		UserID:    user.ID,
+		ProjectName: proj.Name,
+		ProjectID:   proj.ID,
+		UserID:      user.ID,
+		Email:       user.Email,
 	}
 
 	var strData []byte

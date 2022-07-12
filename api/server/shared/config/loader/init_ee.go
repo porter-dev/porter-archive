@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package loader
@@ -6,7 +7,6 @@ import (
 	eeBilling "github.com/porter-dev/porter/ee/billing"
 	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/ee/models"
-	eeGorm "github.com/porter-dev/porter/ee/repository/gorm"
 	"github.com/porter-dev/porter/internal/billing"
 )
 
@@ -24,14 +24,13 @@ func init() {
 		key[i] = b
 	}
 
-	eeRepo := eeGorm.NewEERepository(InstanceDB, &key)
-
-	if InstanceEnvConf.ServerConf.IronPlansAPIKey != "" && InstanceEnvConf.ServerConf.IronPlansServerURL != "" {
-		serverURL := InstanceEnvConf.ServerConf.IronPlansServerURL
-		apiKey := InstanceEnvConf.ServerConf.IronPlansAPIKey
+	if InstanceEnvConf.ServerConf.BillingPrivateServerURL != "" && InstanceEnvConf.ServerConf.BillingPrivateKey != "" && InstanceEnvConf.ServerConf.BillingPublicServerURL != "" {
+		serverURL := InstanceEnvConf.ServerConf.BillingPrivateServerURL
+		publicServerURL := InstanceEnvConf.ServerConf.BillingPublicServerURL
+		apiKey := InstanceEnvConf.ServerConf.BillingPrivateKey
 		var err error
 
-		InstanceBillingManager, err = eeBilling.NewClient(serverURL, apiKey, eeRepo)
+		InstanceBillingManager, err = eeBilling.NewClient(serverURL, publicServerURL, apiKey)
 
 		if err != nil {
 			panic(err)

@@ -131,6 +131,8 @@ func (t *helmRevisionsCountTracker) Run() error {
 			go func(cluster *models.Cluster) {
 				defer wg.Done()
 
+				log.Printf("starting release revision monitoring for cluster with ID %d", cluster.ID)
+
 				agent, err := helm.GetAgentOutOfClusterConfig(&helm.Form{
 					Cluster:                   cluster,
 					Repo:                      t.repo,
@@ -139,6 +141,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 				}, logger.New(true, os.Stdout))
 
 				if err != nil {
+					log.Printf("error fetching helm client for cluster ID %d: %v. skipping cluster ...", cluster.ID, err)
 					return
 				}
 
@@ -148,33 +151,47 @@ func (t *helmRevisionsCountTracker) Run() error {
 				})
 
 				if err != nil {
-					log.Printf("error creating S3 client for cluster with ID %d: %v. skipping cluster ...", cluster.ID, err)
+					log.Printf("error creating S3 client for cluster ID %d: %v. skipping cluster ...", cluster.ID, err)
 					return
 				}
 
 				namespaces, err := agent.K8sAgent.ListNamespaces()
 
 				if err != nil {
+					log.Printf("error fetching namespaces for cluster ID %d: %v. skipping cluster ...", cluster.ID, err)
 					return
 				}
+
+				log.Printf("fetched %d namespaces for cluster ID %d", len(namespaces.Items), cluster.ID)
 
 				for _, ns := range namespaces.Items {
 					releases, err := agent.ListReleases(ns.GetName(), &types.ReleaseListFilter{ByDate: true})
 
 					if err != nil {
+						log.Printf("error fetching releases for namespace %s in cluster ID %d: %v. skipping namespace ...",
+							len(releases), ns.Name, cluster.ID, err)
 						continue
 					}
+
+					log.Printf("fetched %d releases for namespace %s in cluster ID %d", len(releases), ns.Name, cluster.ID)
 
 					for _, rel := range releases {
 						revisions, err := agent.GetReleaseHistory(rel.Name)
 
 						if err != nil {
+							log.Printf("error fetching release history for release %s in namespace %s of cluster ID %d: %v."+
+								" skipping release ...", rel.Name, ns.Name, cluster.ID, err)
 							continue
 						}
 
 						if len(revisions) <= 100 {
+							log.Printf("release %s of namespace %s in cluster ID %d has <= 100 revisions. "+
+								"skipping release...", rel.Name, ns.Name, cluster.ID)
 							continue
 						}
+
+						log.Printf("release %s of namespace %s in cluster ID %d has more than 100 revisions. attempting to "+
+							"delete the older ones.", rel.Name, ns.Name, cluster.ID)
 
 						// sort revisions from newest to oldest
 						releaseutil.Reverse(revisions, releaseutil.SortByRevision)
@@ -201,11 +218,19 @@ func (t *helmRevisionsCountTracker) Run() error {
 								continue
 							}
 
+							log.Printf("revision %d of release %s in namespace %s of cluster ID %d was successfully backed up.",
+								rev.Version, rel.Name, ns.Name, cluster.ID)
+
 							err = agent.DeleteReleaseRevision(rev.Name, rev.Version)
 
 							if err != nil {
+								log.Printf("error deleting revision %d of release %s in namespace %s of cluster ID %d: %v",
+									rev.Version, rel.Name, ns.Name, cluster.ID)
 								continue
 							}
+
+							log.Printf("revision %d of release %s in namespace %s of cluster ID %d was successfully deleted.",
+								rev.Version, rel.Name, ns.Name, cluster.ID)
 						}
 					}
 				}

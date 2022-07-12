@@ -37,7 +37,7 @@ func (d *Dispatcher) Run(jobQueue chan Job) error {
 		worker := NewWorker(uuid, d.WorkerPool)
 		d.workers = append(d.workers, worker)
 
-		log.Default().Printf("starting worker with UUID: %v", uuid)
+		log.Printf("starting worker with UUID: %v", uuid)
 
 		worker.Start()
 	}
@@ -65,8 +65,6 @@ func (d *Dispatcher) dispatch(jobQueue chan Job) {
 				for _, w := range workers {
 					w.Stop()
 				}
-
-				fmt.Println("exiting dispatcher")
 
 				return
 			}

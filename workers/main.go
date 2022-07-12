@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -21,48 +20,41 @@ import (
 )
 
 var (
-	MaxWorkers = os.Getenv("MAX_WORKERS")
-	MaxQueue   = os.Getenv("MAX_QUEUE")
-
 	jobQueue   chan worker.Job
 	envDecoder = EnvConf{}
 )
 
 type EnvConf struct {
-	ServerURL      string `env:"SERVER_URL,default=http://localhost:8080"`
-	DOClientID     string `env:"DO_CLIENT_ID"`
-	DOClientSecret string `env:"DO_CLIENT_SECRET"`
-	DBConf         env.DBConf
+	ServerURL          string `env:"SERVER_URL,default=http://localhost:8080"`
+	DOClientID         string `env:"DO_CLIENT_ID"`
+	DOClientSecret     string `env:"DO_CLIENT_SECRET"`
+	DBConf             env.DBConf
+	MaxWorkers         uint      `env:"MAX_WORKERS,default=10"`
+	MaxQueue           uint      `env:"MAX_QUEUE,default=100"`
+	AWSAccessKeyID     string    `env:"AWS_ACCESS_KEY_ID"`
+	AWSSecretAccessKey string    `env:"AWS_SECRET_ACCESS_KEY"`
+	AWSRegion          string    `env:"AWS_REGION"`
+	S3BucketName       string    `env:"S3_BUCKET_NAME"`
+	EncryptionKey      *[32]byte `env:"ENCRYPTION_KEY"`
 }
 
 func main() {
 	if err := envdecode.StrictDecode(&envDecoder); err != nil {
-		log.Default().Fatalf("Failed to decode server conf: %v", err)
+		log.Fatalf("Failed to decode server conf: %v", err)
 	}
 
-	workerCount, err := strconv.Atoi(MaxWorkers)
-	if err != nil {
-		log.Default().Fatalln("invalid MAX_WORKERS value")
-	}
+	log.Printf("setting max worker count to: %d\n", envDecoder.MaxWorkers)
+	log.Printf("setting max job queue count to: %d\n", envDecoder.MaxQueue)
 
-	log.Default().Printf("setting max worker count to: %d\n", workerCount)
+	jobQueue = make(chan worker.Job, envDecoder.MaxQueue)
+	d := worker.NewDispatcher(int(envDecoder.MaxWorkers))
 
-	queueCount, err := strconv.Atoi(MaxQueue)
-	if err != nil {
-		log.Default().Fatalln("invalid MAX_QUEUE value")
-	}
+	log.Println("starting worker dispatcher")
 
-	log.Default().Printf("setting max job queue count to: %d\n", queueCount)
-
-	jobQueue = make(chan worker.Job, queueCount)
-	d := worker.NewDispatcher(workerCount)
-
-	log.Default().Println("starting worker dispatcher")
-
-	err = d.Run(jobQueue)
+	err := d.Run(jobQueue)
 
 	if err != nil {
-		log.Default().Fatalln(err)
+		log.Fatalln(err)
 	}
 
 	server := &http.Server{Addr: ":3000", Handler: httpService()}
@@ -74,7 +66,7 @@ func main() {
 	go func() {
 		<-sig
 
-		log.Default().Println("shutting down server")
+		log.Println("shutting down server")
 
 		shutdownCtx, shutdownCtxCancel := context.WithTimeout(serverCtx, 30*time.Second)
 		defer shutdownCtxCancel()
@@ -92,16 +84,16 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		log.Default().Println("server shutdown completed")
+		log.Println("server shutdown completed")
 
 		serverStopCtx()
 	}()
 
-	log.Default().Println("starting HTTP server at :3000")
+	log.Println("starting HTTP server at :3000")
 
 	err = server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		log.Default().Fatalf("error starting HTTP server: %v", err)
+		log.Fatalf("error starting HTTP server: %v", err)
 	}
 
 	// Wait for server context to be stopped
@@ -111,7 +103,7 @@ func main() {
 }
 
 func httpService() http.Handler {
-	log.Default().Println("setting up HTTP router and adding middleware")
+	log.Println("setting up HTTP router and adding middleware")
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -119,7 +111,7 @@ func httpService() http.Handler {
 	r.Use(middleware.Heartbeat("/ping"))
 	r.Use(middleware.AllowContentType("application/json"))
 
-	log.Default().Println("setting up HTTP POST endpoint to enqueue jobs")
+	log.Println("setting up HTTP POST endpoint to enqueue jobs")
 
 	r.Post("/enqueue/{id}", func(w http.ResponseWriter, r *http.Request) {
 		job := getJob(chi.URLParam(r, "id"))
@@ -139,15 +131,20 @@ func httpService() http.Handler {
 func getJob(id string) worker.Job {
 	if id == "helm-revisions-count-tracker" {
 		newJob, err := jobs.NewHelmRevisionsCountTracker(time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{
-			DBConf:         &envDecoder.DBConf,
-			DOClientID:     envDecoder.DOClientID,
-			DOClientSecret: envDecoder.DOClientSecret,
-			DOScopes:       []string{"read", "write"},
-			ServerURL:      envDecoder.ServerURL,
+			DBConf:             &envDecoder.DBConf,
+			DOClientID:         envDecoder.DOClientID,
+			DOClientSecret:     envDecoder.DOClientSecret,
+			DOScopes:           []string{"read", "write"},
+			ServerURL:          envDecoder.ServerURL,
+			AWSAccessKeyID:     envDecoder.AWSAccessKeyID,
+			AWSSecretAccessKey: envDecoder.AWSSecretAccessKey,
+			AWSRegion:          envDecoder.AWSRegion,
+			S3BucketName:       envDecoder.S3BucketName,
+			EncryptionKey:      envDecoder.EncryptionKey,
 		})
 
 		if err != nil {
-			log.Default().Printf("error creating job with ID: helm-revisions-count-tracker. Error: %v", err)
+			log.Printf("error creating job with ID: helm-revisions-count-tracker. Error: %v", err)
 		}
 
 		return newJob

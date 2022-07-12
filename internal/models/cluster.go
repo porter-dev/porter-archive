@@ -55,6 +55,8 @@ type Cluster struct {
 
 	NotificationsDisabled bool `json:"notifications_disabled"`
 
+	AWSClusterID string
+
 	// ------------------------------------------------------------------
 	// All fields below this line are encrypted before storage
 	// ------------------------------------------------------------------
@@ -97,6 +99,7 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 		Service:          serv,
 		InfraID:          c.InfraID,
 		AWSIntegrationID: c.AWSIntegrationID,
+		AWSClusterID:     c.AWSClusterID,
 	}
 }
 

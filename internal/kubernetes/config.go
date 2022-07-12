@@ -341,7 +341,15 @@ func (conf *OutOfClusterConfig) CreateRawConfigFromCluster() (*api.Config, error
 			return nil, err
 		}
 
-		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, cluster.Name)
+		awsClusterID := cluster.Name
+		shouldOverride := false
+
+		if cluster.AWSClusterID != "" {
+			awsClusterID = cluster.AWSClusterID
+			shouldOverride = true
+		}
+
+		tok, err := awsAuth.GetBearerToken(conf.getTokenCache, conf.setTokenCache, awsClusterID, shouldOverride)
 
 		if err != nil {
 			return nil, err

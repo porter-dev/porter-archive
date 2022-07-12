@@ -133,7 +133,7 @@ func (a *AWSIntegration) GetBearerToken(
 	if shouldClusterIdOverride {
 		validClusterId = clusterID
 	} else {
-		validClusterId := string(a.AWSClusterID)
+		validClusterId = string(a.AWSClusterID)
 
 		if validClusterId == "" {
 			validClusterId = clusterID

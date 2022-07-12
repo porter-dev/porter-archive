@@ -100,36 +100,31 @@ const DeploymentList = () => {
 
   useEffect(() => {
     let isSubscribed = true;
-    getPRDeploymentList()
-      .then(({ data }) => {
+    setIsLoading(true);
+
+    Promise.allSettled([getPRDeploymentList(), getEnvironment()]).then(
+      ([getDeploymentsResponse, getEnvironmentResponse]) => {
+        const deploymentList =
+          getDeploymentsResponse.status === "fulfilled"
+            ? getDeploymentsResponse.value.data
+            : {};
+        const environmentList =
+          getEnvironmentResponse.status === "fulfilled"
+            ? getEnvironmentResponse.value.data
+            : {};
+
         if (!isSubscribed) {
           return;
         }
 
-        setDeploymentList(data.deployments || []);
-        setPullRequests(data.pull_requests || []);
-      })
-      .catch((err) => {
-        console.error(err);
-        if (isSubscribed) {
-          setHasError(true);
-        }
-      });
-    getEnvironment()
-      .then(({ data }) => {
-        if (!isSubscribed) {
-          return;
-        }
+        setDeploymentList(deploymentList.deployments || []);
+        setPullRequests(deploymentList.pull_requrests || []);
 
-        setNewCommentsDisabled(data.new_comments_disabled || false);
-      })
-      .catch((err) => {
-        console.error(err);
-        if (isSubscribed) {
-          setHasError(true);
-        }
-      });
-    setIsLoading(false);
+        setNewCommentsDisabled(environmentList.new_comments_disabled || false);
+
+        setIsLoading(false);
+      }
+    );
 
     return () => {
       isSubscribed = false;

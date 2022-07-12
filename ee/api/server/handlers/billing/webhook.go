@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -48,7 +49,7 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	// parse usage and update project
-	newUsage, err := c.Config().BillingManager.ParseProjectUsageFromWebhook(payload)
+	newUsage, features, err := c.Config().BillingManager.ParseProjectUsageFromWebhook(payload)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -76,6 +77,37 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		newUsage.ID = existingUsage.ID
 		_, err = c.Repo().ProjectUsage().UpdateProjectUsage(newUsage)
 	}
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// update the feature flags
+	project, err := c.Repo().Project().ReadProject(newUsage.ProjectID)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if managedDatabasesEnabled, err := strconv.ParseBool(features.ManagedDatabasesEnabled); err == nil {
+		project.RDSDatabasesEnabled = managedDatabasesEnabled
+	}
+
+	if managedInfraEnabled, err := strconv.ParseBool(features.ManagedInfraEnabled); err == nil {
+		project.ManagedInfraEnabled = managedInfraEnabled
+	}
+
+	if stacksEnabled, err := strconv.ParseBool(features.StacksEnabled); err == nil {
+		project.StacksEnabled = stacksEnabled
+	}
+
+	if previewEnvsEnabled, err := strconv.ParseBool(features.PreviewEnvironmentsEnabled); err == nil {
+		project.PreviewEnvsEnabled = previewEnvsEnabled
+	}
+
+	_, err = c.Repo().Project().UpdateProject(project)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

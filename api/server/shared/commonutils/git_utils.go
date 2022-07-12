@@ -39,7 +39,7 @@ func GetLatestWorkflowRun(client *github.Client, owner, repo, filename, branch s
 		return nil, err
 	}
 
-	if workflowRuns == nil || workflowRuns.GetTotalCount() == 0 {
+	if workflowRuns == nil || workflowRuns.GetTotalCount() == 0 || len(workflowRuns.WorkflowRuns) == 0 {
 		return nil, ErrNoWorkflowRuns
 	}
 

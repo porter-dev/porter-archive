@@ -11,6 +11,9 @@ const ClusterSettings: React.FC = () => {
   const [newClusterName, setNewClusterName] = useState<string>(
     context.currentCluster.name
   );
+  const [newAWSClusterID, setNewAWSClusterID] = useState<string>(
+    context.currentCluster.aws_cluster_id
+  );
   const [successfulRename, setSuccessfulRename] = useState<boolean>(false);
 
   const [accessKeyId, setAccessKeyId] = useState<string>("");
@@ -46,6 +49,7 @@ const ClusterSettings: React.FC = () => {
         "<token>",
         {
           name: newClusterName,
+          aws_cluster_id: newAWSClusterID,
         },
         {
           project_id: context.currentProject.id,
@@ -143,6 +147,20 @@ const ClusterSettings: React.FC = () => {
     }
   }
 
+  let overrideAWSClusterNameSection =
+    context.currentCluster?.aws_integration_id &&
+    context.currentCluster?.aws_integration_id != 0 ? (
+      <InputRow
+        type="text"
+        value={newAWSClusterID}
+        setValue={(x: string) => setNewAWSClusterID(x)}
+        label="AWS Cluster ID"
+        placeholder="ex: my-awesome-cluster"
+        width="100%"
+        isRequired={false}
+      />
+    ) : null;
+
   let renameClusterSection = (
     <div>
       <Heading>Rename Cluster</Heading>
@@ -155,6 +173,7 @@ const ClusterSettings: React.FC = () => {
         width="100%"
         isRequired={true}
       />
+      {overrideAWSClusterNameSection}
       <Button color="#616FEEcc" onClick={updateClusterName}>
         Submit
       </Button>

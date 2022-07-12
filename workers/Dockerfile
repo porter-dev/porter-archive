@@ -11,6 +11,7 @@ COPY /api ./api
 COPY /ee ./ee
 COPY /internal ./internal
 COPY /pkg ./pkg
+COPY /provisioner ./provisioner
 COPY /workers ./workers
 
 RUN go build -ldflags '-w -s' -tags ee -a -o ./bin/worker-pool ./workers

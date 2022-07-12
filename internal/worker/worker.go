@@ -40,10 +40,10 @@ func (w *Worker) Start() {
 			select {
 			case job := <-w.JobChannel:
 				if err := job.Run(); err != nil {
-					log.Default().Printf("error running job %s: %s", job.ID(), err.Error())
+					log.Printf("error running job %s: %s", job.ID(), err.Error())
 				}
 			case <-w.exitChan:
-				log.Default().Printf("quitting worker with UUID: %v", w.uuid)
+				log.Printf("quitting worker with UUID: %v", w.uuid)
 
 				return
 			}

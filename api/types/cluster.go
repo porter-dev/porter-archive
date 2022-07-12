@@ -264,7 +264,7 @@ type CreateClusterCandidateRequest struct {
 type UpdateClusterRequest struct {
 	Name string `json:"name" form:"required"`
 
-	AWSClusterID string `json:"aws_cluster_name"`
+	AWSClusterID string `json:"aws_cluster_id"`
 }
 
 type ListClusterResponse []*Cluster

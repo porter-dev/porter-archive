@@ -23,7 +23,7 @@ RUN go build -ldflags '-w -s' -tags ee -a -o ./bin/worker-pool ./workers
 FROM alpine:3.16
 WORKDIR /app
 
-RUN apk update && apk add git
+RUN apk update && apk add curl
 
 COPY --from=build /app/bin/worker-pool /usr/bin/
 

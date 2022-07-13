@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -12,7 +11,6 @@ import (
 type Dispatcher struct {
 	maxWorkers int
 	exitChan   chan bool
-	workers    []*Worker
 
 	WorkerPool chan chan Job
 }
@@ -24,7 +22,6 @@ func NewDispatcher(maxWorkers int) *Dispatcher {
 	return &Dispatcher{
 		maxWorkers: maxWorkers,
 		exitChan:   make(chan bool),
-		workers:    make([]*Worker, maxWorkers),
 
 		WorkerPool: pool,
 	}
@@ -33,33 +30,26 @@ func NewDispatcher(maxWorkers int) *Dispatcher {
 // Run creates workers in the worker pool with the given
 // job queue and starts the workers
 func (d *Dispatcher) Run(jobQueue chan Job) error {
-	for i := 0; i < d.maxWorkers; i += 1 {
-		uuid, err := uuid.NewUUID()
+	go func() {
+		var workers []*Worker
 
-		if err != nil {
-			return fmt.Errorf("error creating UUID for worker: %w", err)
+		for i := 0; i < d.maxWorkers; i += 1 {
+			uuid, err := uuid.NewUUID()
+
+			if err != nil {
+				// FIXME: should let the parent thread know of this error
+				log.Printf("error creating UUID for worker: %v", err)
+				return
+			}
+
+			worker := NewWorker(uuid, d.WorkerPool)
+			workers = append(workers, worker)
+
+			log.Printf("starting worker with UUID: %v", uuid)
+
+			worker.Start()
 		}
 
-		worker := NewWorker(uuid, d.WorkerPool)
-		d.workers = append(d.workers, worker)
-
-		log.Printf("starting worker with UUID: %v", uuid)
-
-		worker.Start()
-	}
-
-	d.dispatch(jobQueue)
-
-	return nil
-}
-
-// Exit instructs the dispatcher to quit processing any more jobs
-func (d *Dispatcher) Exit() {
-	d.exitChan <- true
-}
-
-func (d *Dispatcher) dispatch(jobQueue chan Job) {
-	go func(workers []*Worker) {
 		for {
 			select {
 			case job := <-jobQueue:
@@ -75,5 +65,12 @@ func (d *Dispatcher) dispatch(jobQueue chan Job) {
 				return
 			}
 		}
-	}(d.workers)
+	}()
+
+	return nil
+}
+
+// Exit instructs the dispatcher to quit processing any more jobs
+func (d *Dispatcher) Exit() {
+	d.exitChan <- true
 }

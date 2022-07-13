@@ -118,7 +118,7 @@ const DeploymentList = () => {
         }
 
         setDeploymentList(deploymentList.deployments || []);
-        setPullRequests(deploymentList.pull_requrests || []);
+        setPullRequests(deploymentList.pull_requests || []);
 
         setNewCommentsDisabled(environmentList.new_comments_disabled || false);
 

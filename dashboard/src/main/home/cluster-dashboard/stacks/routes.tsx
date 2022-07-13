@@ -1,11 +1,5 @@
 import React, { useContext } from "react";
-import {
-  Redirect,
-  Route,
-  Switch,
-  useLocation,
-  useRouteMatch,
-} from "react-router";
+import { Redirect, Route, Switch, useRouteMatch } from "react-router";
 import { Context } from "shared/Context";
 import Dashboard from "./Dashboard";
 import ExpandedStackRoutes from "./ExpandedStack/routes";
@@ -27,7 +21,7 @@ const routes = () => {
       <Route path={`${path}/:namespace/:stack_id`}>
         <ExpandedStackRoutes />
       </Route>
-      <Route path={`${path}/`} exact>
+      <Route path={`${path}`} exact>
         <Dashboard />
       </Route>
       <Route path={`*`}>

@@ -1,5 +1,22 @@
 //go:build ee
 
+/*
+
+                            === Helm Release Revisions Tracker Job ===
+
+This job keeps a track of helm releases and their revisions and deletes older revisions once they are
+backed up to an S3 bucket.
+
+  - The job looks for clusters which have the `monitor_helm_releases` set to true.
+  - The clusters are then checked for old helm release revisions.
+  - In a cluster, list of all namespaces is fetched.
+  - For every namespace, the list of releases is fetched.
+  - For every release, its revision history is fetched.
+  - If the number of revisions exceeds 100, then we intend to only keep the most recent 100 revisions.
+  - For this, the older revisions are first backed up to an S3 bucket and then deleted.
+
+*/
+
 package jobs
 
 import (
@@ -45,6 +62,7 @@ type helmRevisionsCountTracker struct {
 	encryptionKey      *[32]byte
 }
 
+// HelmRevisionsCountTrackerOpts holds the options required to run this job
 type HelmRevisionsCountTrackerOpts struct {
 	DBConf             *env.DBConf
 	DOClientID         string

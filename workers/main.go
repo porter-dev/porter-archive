@@ -24,6 +24,7 @@ var (
 	envDecoder = EnvConf{}
 )
 
+// EnvConf holds the environment variables for this binary
 type EnvConf struct {
 	ServerURL          string `env:"SERVER_URL,default=http://localhost:8080"`
 	DOClientID         string `env:"DO_CLIENT_ID"`
@@ -145,6 +146,7 @@ func getJob(id string) worker.Job {
 
 		if err != nil {
 			log.Printf("error creating job with ID: helm-revisions-count-tracker. Error: %v", err)
+			return nil
 		}
 
 		return newJob

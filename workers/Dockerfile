@@ -1,4 +1,6 @@
-# Environment to build the worker pool binary
+# This Dockerfile is used for building the worker pool binary itself
+
+# Buildtime environment
 # -------------------------------------------
 FROM golang:1.18-alpine3.16 as build
 WORKDIR /app
@@ -16,7 +18,7 @@ COPY /workers ./workers
 
 RUN go build -ldflags '-w -s' -tags ee -a -o ./bin/worker-pool ./workers
 
-# Deployment environment
+# Runtime environment
 # ----------------------
 FROM alpine:3.16
 WORKDIR /app

@@ -77,7 +77,7 @@ type Cluster struct {
 	CertificateAuthorityData []byte `json:"certificate-authority-data,omitempty"`
 
 	// MonitorHelmReleases to trim down the number of revisions per release
-	MonitorHelmReleases bool `json:"monitor_helm_releases"`
+	MonitorHelmReleases bool
 }
 
 // ToProjectType generates an external types.Project to be shared over REST

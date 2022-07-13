@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -37,6 +38,8 @@ type EnvConf struct {
 	AWSRegion          string `env:"AWS_REGION"`
 	S3BucketName       string `env:"S3_BUCKET_NAME"`
 	EncryptionKey      string `env:"S3_ENCRYPTION_KEY"`
+
+	Port uint `env:"PORT,default=3000"`
 }
 
 func main() {
@@ -58,7 +61,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	server := &http.Server{Addr: ":3000", Handler: httpService()}
+	server := &http.Server{Addr: fmt.Sprintf(":%d", envDecoder.Port), Handler: httpService()}
 
 	serverCtx, serverStopCtx := context.WithCancel(context.Background())
 

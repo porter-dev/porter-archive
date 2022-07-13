@@ -29,13 +29,13 @@ type EnvConf struct {
 	DOClientID         string `env:"DO_CLIENT_ID"`
 	DOClientSecret     string `env:"DO_CLIENT_SECRET"`
 	DBConf             env.DBConf
-	MaxWorkers         uint      `env:"MAX_WORKERS,default=10"`
-	MaxQueue           uint      `env:"MAX_QUEUE,default=100"`
-	AWSAccessKeyID     string    `env:"AWS_ACCESS_KEY_ID"`
-	AWSSecretAccessKey string    `env:"AWS_SECRET_ACCESS_KEY"`
-	AWSRegion          string    `env:"AWS_REGION"`
-	S3BucketName       string    `env:"S3_BUCKET_NAME"`
-	EncryptionKey      *[32]byte `env:"ENCRYPTION_KEY"`
+	MaxWorkers         uint   `env:"MAX_WORKERS,default=10"`
+	MaxQueue           uint   `env:"MAX_QUEUE,default=100"`
+	AWSAccessKeyID     string `env:"AWS_ACCESS_KEY_ID"`
+	AWSSecretAccessKey string `env:"AWS_SECRET_ACCESS_KEY"`
+	AWSRegion          string `env:"AWS_REGION"`
+	S3BucketName       string `env:"S3_BUCKET_NAME"`
+	EncryptionKey      string `env:"S3_ENCRYPTION_KEY"`
 }
 
 func main() {

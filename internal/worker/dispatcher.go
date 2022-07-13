@@ -16,7 +16,7 @@ type Dispatcher struct {
 }
 
 // NewDispatcher creates a new instance of Dispatcher with
-// the given number of workers hat should be in the worker pool
+// the given number of workers that should be in the worker pool
 func NewDispatcher(maxWorkers int) *Dispatcher {
 	pool := make(chan chan Job, maxWorkers)
 	return &Dispatcher{

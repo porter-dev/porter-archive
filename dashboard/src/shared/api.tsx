@@ -99,6 +99,7 @@ const overwriteAWSIntegration = baseApi<
 const updateClusterName = baseApi<
   {
     name: string;
+    aws_cluster_id?: string;
   },
   {
     project_id: number;

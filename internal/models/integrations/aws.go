@@ -105,6 +105,7 @@ func (a *AWSIntegration) GetBearerToken(
 	getTokenCache GetTokenCacheFunc,
 	setTokenCache SetTokenCacheFunc,
 	clusterID string,
+	shouldClusterIdOverride bool,
 ) (string, error) {
 	cache, err := getTokenCache()
 
@@ -127,15 +128,21 @@ func (a *AWSIntegration) GetBearerToken(
 		return "", err
 	}
 
-	clusterIDGuess := string(a.AWSClusterID)
+	var validClusterId string
 
-	if clusterIDGuess == "" {
-		clusterIDGuess = clusterID
+	if shouldClusterIdOverride {
+		validClusterId = clusterID
+	} else {
+		validClusterId = string(a.AWSClusterID)
+
+		if validClusterId == "" {
+			validClusterId = clusterID
+		}
 	}
 
 	tok, err := generator.GetWithOptions(&token.GetTokenOptions{
 		Session:   sess,
-		ClusterID: clusterIDGuess,
+		ClusterID: validClusterId,
 	})
 
 	if err != nil {

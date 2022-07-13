@@ -29,6 +29,9 @@ type Cluster struct {
 
 	// (optional) The aws integration id, if available
 	AWSIntegrationID uint `json:"aws_integration_id"`
+
+	// (optional) The aws cluster id, if available
+	AWSClusterID string `json:"aws_cluster_id,omitempty"`
 }
 
 type ClusterCandidate struct {
@@ -260,6 +263,8 @@ type CreateClusterCandidateRequest struct {
 
 type UpdateClusterRequest struct {
 	Name string `json:"name" form:"required"`
+
+	AWSClusterID string `json:"aws_cluster_id"`
 }
 
 type ListClusterResponse []*Cluster

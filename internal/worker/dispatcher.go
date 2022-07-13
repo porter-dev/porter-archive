@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Dispatcher is responsible to maintain a global worker pool
+// and to dispatch jobs to the underlying workers, in random order
 type Dispatcher struct {
 	maxWorkers int
 	exitChan   chan bool
@@ -15,6 +17,8 @@ type Dispatcher struct {
 	WorkerPool chan chan Job
 }
 
+// NewDispatcher creates a new instance of Dispatcher with
+// the given number of workers hat should be in the worker pool
 func NewDispatcher(maxWorkers int) *Dispatcher {
 	pool := make(chan chan Job, maxWorkers)
 	return &Dispatcher{
@@ -26,6 +30,8 @@ func NewDispatcher(maxWorkers int) *Dispatcher {
 	}
 }
 
+// Run creates workers in the worker pool with the given
+// job queue and starts the workers
 func (d *Dispatcher) Run(jobQueue chan Job) error {
 	for i := 0; i < d.maxWorkers; i += 1 {
 		uuid, err := uuid.NewUUID()
@@ -47,6 +53,7 @@ func (d *Dispatcher) Run(jobQueue chan Job) error {
 	return nil
 }
 
+// Exit instructs the dispatcher to quit processing any more jobs
 func (d *Dispatcher) Exit() {
 	d.exitChan <- true
 }
@@ -56,11 +63,10 @@ func (d *Dispatcher) dispatch(jobQueue chan Job) {
 		for {
 			select {
 			case job := <-jobQueue:
-				go func(job Job) {
-					jobChannel := <-d.WorkerPool
-
-					jobChannel <- job
-				}(job)
+				go func() {
+					workerJobChan := <-d.WorkerPool
+					workerJobChan <- job
+				}()
 			case <-d.exitChan:
 				for _, w := range workers {
 					w.Stop()

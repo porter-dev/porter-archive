@@ -1,3 +1,8 @@
+# This Dockerfile is used for building a base image with curl installed
+# and is intended to be used via a Porter job to call the worker pool
+# HTTP endpoints in order to enqueue different kinds of jobs
+
+# Runtime environment
 FROM alpine:3.16
 WORKDIR /app
 

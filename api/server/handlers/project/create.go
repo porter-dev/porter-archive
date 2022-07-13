@@ -44,7 +44,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	var err error
-	proj, role, err := CreateProjectWithUser(p.Repo().Project(), proj, user)
+	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -79,22 +79,12 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	p.WriteResult(w, r, proj.ToProjectType())
 
 	// add project to billing team
-	teamID, err := p.Config().BillingManager.CreateTeam(proj)
+	_, err = p.Config().BillingManager.CreateTeam(user, proj)
 
 	if err != nil {
 		// we do not write error response, since setting up billing error can be
 		// resolved later and may not be fatal
 		p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-	}
-
-	if teamID != "" {
-		err = p.Config().BillingManager.AddUserToTeam(teamID, user, role)
-
-		if err != nil {
-			// we do not write error response, since setting up billing error can be
-			// resolved later and may not be fatal
-			p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-		}
 	}
 
 	p.Config().AnalyticsClient.Track(analytics.ProjectCreateTrack(&analytics.ProjectCreateTrackOpts{

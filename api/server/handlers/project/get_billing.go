@@ -30,7 +30,7 @@ func (p *ProjectGetBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		HasBilling: false,
 	}
 
-	if sc := p.Config().ServerConf; sc.IronPlansAPIKey != "" && sc.IronPlansServerURL != "" {
+	if sc := p.Config().ServerConf; sc.BillingPrivateKey != "" && sc.BillingPrivateServerURL != "" {
 		// determine if the project has usage attached; if so, set has_billing to true
 		usage, _ := p.Repo().ProjectUsage().ReadProjectUsage(proj.ID)
 

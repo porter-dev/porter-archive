@@ -9,10 +9,12 @@ import type { Stack } from "../types";
 
 interface StoreType {
   stack: Stack;
+  refreshStack: () => Promise<void>;
 }
 
 const defaultValues: StoreType = {
   stack: {} as Stack,
+  refreshStack: async () => {},
 };
 
 export const ExpandedStackStore = createContext(defaultValues);
@@ -23,6 +25,7 @@ const ExpandedStackStoreProvider: React.FC = ({ children }) => {
   );
 
   const [stack, setStack] = useState<Stack>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { namespace, stack_id } = useParams<{
     namespace: string;
@@ -30,9 +33,8 @@ const ExpandedStackStoreProvider: React.FC = ({ children }) => {
   }>();
   const { pushFiltered } = useRouting();
 
-  useEffect(() => {
-    let isSubscribed = true;
-
+  const getStack = async (props: { subscribed: boolean }) => {
+    setIsLoading(true);
     api
       .getStack<Stack>(
         "<token>",
@@ -45,23 +47,34 @@ const ExpandedStackStoreProvider: React.FC = ({ children }) => {
         }
       )
       .then((res) => {
-        if (isSubscribed) {
+        if (props.subscribed) {
           setStack(res.data);
         }
       })
       .catch(() => {
-        if (isSubscribed) {
+        if (props.subscribed) {
           setCurrentError("Couldn't find any stack with the given ID");
           pushFiltered("/stacks", []);
         }
+      })
+      .finally(() => {
+        if (props.subscribed) {
+          setIsLoading(false);
+        }
       });
+  };
+
+  useEffect(() => {
+    let isSubscribed = { subscribed: true };
+
+    getStack(isSubscribed);
 
     return () => {
-      isSubscribed = false;
+      isSubscribed.subscribed = false;
     };
   }, [currentCluster, currentProject, namespace, stack_id]);
 
-  if (stack === null) {
+  if (isLoading) {
     return (
       <Placeholder>
         <Loading />
@@ -70,7 +83,14 @@ const ExpandedStackStoreProvider: React.FC = ({ children }) => {
   }
 
   return (
-    <ExpandedStackStore.Provider value={{ stack }}>
+    <ExpandedStackStore.Provider
+      value={{
+        stack,
+        refreshStack: async () => {
+          await getStack({ subscribed: true });
+        },
+      }}
+    >
       {children}
     </ExpandedStackStore.Provider>
   );

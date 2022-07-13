@@ -244,7 +244,7 @@ const NewAppResourceForm = (props: {
   return (
     <>
       <TitleSection>
-        <BackButton>
+        <BackButton onClick={onCancel}>
           <i className="material-icons">keyboard_backspace</i>
         </BackButton>
         <Polymer>

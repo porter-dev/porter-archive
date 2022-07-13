@@ -4,9 +4,10 @@ import { PorterTemplate } from "shared/types";
 import semver from "semver";
 import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
-import { Card } from "../../launch/components/styles";
+import { BackButton, Card } from "../../launch/components/styles";
 import DynamicLink from "components/DynamicLink";
 import { VersionSelector } from "../../launch/components/VersionSelector";
+import TitleSection from "components/TitleSection";
 
 const TemplateSelector = () => {
   const [templates, setTemplates] = useState<PorterTemplate[]>([]);
@@ -107,7 +108,14 @@ const TemplateSelector = () => {
 
   return (
     <>
-      <h2>Select the template</h2>
+      <TitleSection>
+        <DynamicLink to={`../`}>
+          <BackButton>
+            <i className="material-icons">keyboard_backspace</i>
+          </BackButton>
+        </DynamicLink>
+        Select a template
+      </TitleSection>
       <Card.Grid>
         {templates.map((template) => {
           return (

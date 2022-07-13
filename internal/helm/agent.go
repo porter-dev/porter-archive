@@ -141,6 +141,16 @@ func (a *Agent) GetRelease(
 	return release, err
 }
 
+// DeleteReleaseRevision deletes a specific revision of a release
+func (a *Agent) DeleteReleaseRevision(
+	name string,
+	version int,
+) error {
+	_, err := a.ActionConfig.Releases.Delete(name, version)
+
+	return err
+}
+
 // GetReleaseHistory returns a list of charts for a specific release
 func (a *Agent) GetReleaseHistory(
 	name string,

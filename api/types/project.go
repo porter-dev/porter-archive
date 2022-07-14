@@ -11,6 +11,13 @@ type Project struct {
 	StacksEnabled       bool    `json:"stacks_enabled"`
 }
 
+type FeatureFlags struct {
+	PreviewEnvironmentsEnabled string `json:"preview_environments_enabled,omitempty"`
+	ManagedInfraEnabled        string `json:"managed_infra_enabled,omitempty"`
+	StacksEnabled              string `json:"stacks_enabled,omitempty"`
+	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
+}
+
 type CreateProjectRequest struct {
 	Name string `json:"name" form:"required"`
 }

@@ -56,6 +56,51 @@ func (p *StackRemoveApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	newSourceConfigs, err := stacks.CloneSourceConfigs(revision.SourceConfigs)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	appResources, err := stacks.CloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	envGroups, err := stacks.CloneEnvGroups(revision.EnvGroups)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	var newResources []models.StackResource
+
+	for _, res := range appResources {
+		if res.Name != appResourceName {
+			newResources = append(newResources, res)
+		}
+	}
+
+	newRevision := &models.StackRevision{
+		StackID:        stack.ID,
+		RevisionNumber: revision.RevisionNumber + 1,
+		Status:         string(types.StackRevisionStatusDeploying),
+		SourceConfigs:  newSourceConfigs,
+		Resources:      newResources,
+		EnvGroups:      envGroups,
+	}
+
+	revision, err = p.Repo().Stack().AppendNewRevision(newRevision)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	helmAgent, err := p.GetHelmAgent(r, cluster, namespace)
 
 	if err != nil {
@@ -63,70 +108,23 @@ func (p *StackRemoveApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	resourceDeleted := false
+	err = deleteAppResource(&deleteAppResourceOpts{
+		helmAgent: helmAgent,
+		name:      appResourceName,
+	})
 
-	for _, appResource := range revision.Resources {
-		if appResource.Name == appResourceName {
-			err := deleteAppResource(&deleteAppResourceOpts{
-				helmAgent: helmAgent,
-				name:      appResource.Name,
-			})
-
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
-
-			resourceDeleted = true
-
-			break
-		}
+	if err == nil {
+		revision.Status = string(types.StackRevisionStatusDeployed)
+	} else {
+		revision.Status = string(types.StackRevisionStatusFailed)
+		revision.Reason = "RemoveAppError"
+		revision.Message = err.Error()
 	}
 
-	if resourceDeleted {
-		newSourceConfigs, err := stacks.CloneSourceConfigs(revision.SourceConfigs)
+	_, err = p.Repo().Stack().UpdateStackRevision(revision)
 
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		appResources, err := stacks.CloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		envGroups, err := stacks.CloneEnvGroups(revision.EnvGroups)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		var newResources []models.StackResource
-
-		for _, res := range appResources {
-			if res.Name != appResourceName {
-				newResources = append(newResources, res)
-			}
-		}
-
-		newRevision := &models.StackRevision{
-			StackID:        stack.ID,
-			RevisionNumber: revision.RevisionNumber + 1,
-			Status:         string(types.StackRevisionStatusDeployed),
-			SourceConfigs:  newSourceConfigs,
-			Resources:      newResources,
-			EnvGroups:      envGroups,
-		}
-
-		_, err = p.Repo().Stack().AppendNewRevision(newRevision)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 }

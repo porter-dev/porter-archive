@@ -56,6 +56,54 @@ func (p *StackRemoveEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	newSourceConfigs, err := stacks.CloneSourceConfigs(revision.SourceConfigs)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	appResources, err := stacks.CloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	envGroups, err := stacks.CloneEnvGroups(revision.EnvGroups)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	var newEnvGroups []models.StackEnvGroup
+	var envGroupNS string
+
+	for _, envGroup := range envGroups {
+		if envGroup.Name != envGroupName {
+			newEnvGroups = append(newEnvGroups, envGroup)
+		} else {
+			envGroupNS = envGroup.Namespace
+		}
+	}
+
+	newRevision := &models.StackRevision{
+		StackID:        stack.ID,
+		RevisionNumber: revision.RevisionNumber + 1,
+		Status:         string(types.StackRevisionStatusDeploying),
+		SourceConfigs:  newSourceConfigs,
+		Resources:      appResources,
+		EnvGroups:      newEnvGroups,
+	}
+
+	revision, err = p.Repo().Stack().AppendNewRevision(newRevision)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	k8sAgent, err := p.GetAgent(r, cluster, "")
 
 	if err != nil {
@@ -63,67 +111,20 @@ func (p *StackRemoveEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	envGroupDeleted := false
+	err = envgroup.DeleteEnvGroup(k8sAgent, envGroupName, envGroupNS)
 
-	for _, envGroup := range revision.EnvGroups {
-		if envGroup.Name == envGroupName {
-			err := envgroup.DeleteEnvGroup(k8sAgent, envGroup.Name, envGroup.Namespace)
-
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
-
-			envGroupDeleted = true
-
-			break
-		}
+	if err == nil {
+		revision.Status = string(types.StackRevisionStatusDeployed)
+	} else {
+		revision.Status = string(types.StackRevisionStatusFailed)
+		revision.Reason = "RemoveEnvGroupError"
+		revision.Message = err.Error()
 	}
 
-	if envGroupDeleted {
-		newSourceConfigs, err := stacks.CloneSourceConfigs(revision.SourceConfigs)
+	_, err = p.Repo().Stack().UpdateStackRevision(revision)
 
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		appResources, err := stacks.CloneAppResources(revision.Resources, revision.SourceConfigs, newSourceConfigs)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		envGroups, err := stacks.CloneEnvGroups(revision.EnvGroups)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		var newEnvGroups []models.StackEnvGroup
-
-		for _, envGroup := range envGroups {
-			if envGroup.Name != envGroupName {
-				newEnvGroups = append(newEnvGroups, envGroup)
-			}
-		}
-
-		newRevision := &models.StackRevision{
-			StackID:        stack.ID,
-			RevisionNumber: revision.RevisionNumber + 1,
-			Status:         string(types.StackRevisionStatusDeployed),
-			SourceConfigs:  newSourceConfigs,
-			Resources:      appResources,
-			EnvGroups:      newEnvGroups,
-		}
-
-		_, err = p.Repo().Stack().AppendNewRevision(newRevision)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 }

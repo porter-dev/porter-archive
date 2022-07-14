@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions
+// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup
 type stackPathParams struct {
 	// The project id
 	// in: path
@@ -63,6 +63,66 @@ type stackRevisionPathParams struct {
 	// required: true
 	// minimum: 1
 	RevisionID string `json:"revision_id"`
+}
+
+// swagger:parameters removeApplication
+type stackRemoveApplicationPathParams struct {
+	// The project id
+	// in: path
+	// required: true
+	// minimum: 1
+	ProjectID uint `json:"project_id"`
+
+	// The cluster id
+	// in: path
+	// required: true
+	// minimum: 1
+	ClusterID uint `json:"cluster_id"`
+
+	// The namespace
+	// in: path
+	// required: true
+	Namespace string `json:"namespace"`
+
+	// The stack id
+	// in: path
+	// required: true
+	StackID string `json:"stack_id"`
+
+	// The name of the application
+	// in: path
+	// required: true
+	AppResourceName string `json:"app_resource_name"`
+}
+
+// swagger:parameters removeEnvGroup
+type stackRemoveEnvGroupPathParams struct {
+	// The project id
+	// in: path
+	// required: true
+	// minimum: 1
+	ProjectID uint `json:"project_id"`
+
+	// The cluster id
+	// in: path
+	// required: true
+	// minimum: 1
+	ClusterID uint `json:"cluster_id"`
+
+	// The namespace
+	// in: path
+	// required: true
+	Namespace string `json:"namespace"`
+
+	// The stack id
+	// in: path
+	// required: true
+	StackID string `json:"stack_id"`
+
+	// The name of the environment group
+	// in: path
+	// required: true
+	EnvGroupName string `json:"env_group_name"`
 }
 
 func NewV1StackScopedRegisterer(children ...*router.Registerer) *router.Registerer {
@@ -535,6 +595,228 @@ func getV1StackRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: deleteEndpoint,
 		Handler:  deleteHandler,
+		Router:   r,
+	})
+
+	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/add_application -> stack.NewStackAddApplicationHandler
+	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/add_application addApplication
+	//
+	// Adds an application to an existing stack
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Add an application to a stack
+	// tags:
+	// - Stacks
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: stack_id
+	//   - in: body
+	//     name: AddApplicationToStack
+	//     description: The application to add
+	//     schema:
+	//       $ref: '#/definitions/CreateStackAppResourceRequest'
+	// responses:
+	//   '200':
+	//     description: Successfully added the application to the stack
+	//   '400':
+	//     description: Stack does not have any revisions
+	//   '403':
+	//     description: Forbidden
+	addApplicationEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{stack_id}/add_application",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.StackScope,
+			},
+		},
+	)
+
+	addApplicationHandler := stack.NewStackAddApplicationHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: addApplicationEndpoint,
+		Handler:  addApplicationHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/remove_application/{app_resource_name} -> stack.NewStackRemoveApplicationHandler
+	// swagger:operation DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/remove_application/{app_resource_name} removeApplication
+	//
+	// Removes an existing application from a stack
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Remove an application from a stack
+	// tags:
+	// - Stacks
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: stack_id
+	//   - name: app_resource_name
+	// responses:
+	//   '200':
+	//     description: Successfully deleted the application from the stack
+	//   '400':
+	//     description: Stack does not have any revisions
+	//   '403':
+	//     description: Forbidden
+	removeApplicationEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{stack_id}/remove_application/{app_resource_name}",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.StackScope,
+			},
+		},
+	)
+
+	removeApplicationHandler := stack.NewStackRemoveApplicationHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: removeApplicationEndpoint,
+		Handler:  removeApplicationHandler,
+		Router:   r,
+	})
+
+	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/add_env_group -> stack.NewStackAddEnvGroupHandler
+	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/add_env_group addEnvGroup
+	//
+	// Adds an environment group to an existing stack
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Add an environment group to a stack
+	// tags:
+	// - Stacks
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: stack_id
+	//   - in: body
+	//     name: AddEnvGroupToStack
+	//     description: The environment group to add
+	//     schema:
+	//       $ref: '#/definitions/CreateStackEnvGroupRequest'
+	// responses:
+	//   '200':
+	//     description: Successfully added the environment group to the stack
+	//   '400':
+	//     description: Stack does not have any revisions
+	//   '403':
+	//     description: Forbidden
+	addEnvGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{stack_id}/add_env_group",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.StackScope,
+			},
+		},
+	)
+
+	addEnvGroupHandler := stack.NewStackAddEnvGroupHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: addEnvGroupEndpoint,
+		Handler:  addEnvGroupHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/remove_env_group/{env_group_name} -> stack.NewStackRemoveEnvGroupHandler
+	// swagger:operation DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/remove_env_group/{env_group_name} removeEnvGroup
+	//
+	// Removes an existing environment group from a stack
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Remove an environment group from a stack
+	// tags:
+	// - Stacks
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: stack_id
+	//   - name: env_group_name
+	// responses:
+	//   '200':
+	//     description: Successfully deleted the environment group from the stack
+	//   '400':
+	//     description: Stack does not have any revisions
+	//   '403':
+	//     description: Forbidden
+	removeEnvGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{stack_id}/remove_env_group/{env_group_name}",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.StackScope,
+			},
+		},
+	)
+
+	removeEnvGroupHandler := stack.NewStackRemoveEnvGroupHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: removeEnvGroupEndpoint,
+		Handler:  removeEnvGroupHandler,
 		Router:   r,
 	})
 

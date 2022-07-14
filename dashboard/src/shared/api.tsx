@@ -2088,9 +2088,7 @@ const updateStackSourceConfig = baseApi<
 );
 
 const addStackAppResource = baseApi<
-  {
-    app_resource: CreateStackBody["app_resources"][0];
-  },
+  CreateStackBody["app_resources"][0],
   {
     project_id: number;
     cluster_id: number;
@@ -2098,7 +2096,7 @@ const addStackAppResource = baseApi<
     stack_id: string;
   }
 >(
-  "POST",
+  "PATCH",
   ({ project_id, cluster_id, namespace, stack_id }) =>
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/add_application`
 );
@@ -2119,9 +2117,7 @@ const removeStackAppResource = baseApi<
 );
 
 const addStackEnvGroup = baseApi<
-  {
-    env_group: CreateStackBody["env_groups"][0];
-  },
+  CreateStackBody["env_groups"][0],
   {
     project_id: number;
     cluster_id: number;
@@ -2129,7 +2125,7 @@ const addStackEnvGroup = baseApi<
     stack_id: string;
   }
 >(
-  "POST",
+  "PATCH",
   ({ project_id, cluster_id, namespace, stack_id }) =>
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/add_env_group`
 );

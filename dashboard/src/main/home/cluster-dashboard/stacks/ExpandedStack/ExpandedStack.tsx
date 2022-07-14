@@ -4,7 +4,7 @@ import TabSelector from "components/TabSelector";
 import TitleSection from "components/TitleSection";
 import React, { useContext, useState } from "react";
 import backArrow from "assets/back_arrow.png";
-import { useParams } from "react-router";
+import { useParams, useRouteMatch } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
@@ -43,6 +43,8 @@ const ExpandedStack = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
     Context
   );
+
+  const { url } = useRouteMatch();
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTab, setCurrentTab] = useState("apps");
@@ -148,7 +150,9 @@ const ExpandedStack = () => {
             component: (
               <>
                 <Gap></Gap>
-                <DynamicLink to={`new-app-resource`}>Add new app</DynamicLink>
+                <DynamicLink to={`${url}/new-app-resource`}>
+                  Add new app
+                </DynamicLink>
                 {currentRevision.id !== stack.latest_revision.id ? (
                   <ChartListWrapper>
                     <Placeholder>

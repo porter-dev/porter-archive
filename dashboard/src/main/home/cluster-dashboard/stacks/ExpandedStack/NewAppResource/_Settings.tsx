@@ -35,7 +35,6 @@ const Settings = () => {
   const params = useParams<{
     template_name: string;
     template_version: string;
-    namespace: string;
   }>();
   const { stack, refreshStack } = useContext(ExpandedStackStore);
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -63,7 +62,7 @@ const Settings = () => {
             id: currentProject.id,
             cluster_id: currentCluster.id,
             name: envGroup.name,
-            namespace: params.namespace,
+            namespace: stack.namespace,
             version: envGroup.env_group_version,
           }
         )
@@ -118,19 +117,19 @@ const Settings = () => {
       await api.addStackAppResource(
         "<token>",
         {
-          app_resource: appResource,
+          ...appResource,
         },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          namespace: params.namespace,
+          namespace: stack.namespace,
           stack_id: stack.id,
         }
       );
 
       await refreshStack();
 
-      pushFiltered(`/stacks/${params.namespace}/${stack.id}`, []);
+      pushFiltered(`/stacks/${stack.namespace}/${stack.id}`, []);
     } catch (error) {
       const axiosError: AxiosError = error;
       if (axiosError.code === "409") {
@@ -144,7 +143,7 @@ const Settings = () => {
   return (
     <NewAppResourceForm
       availableEnvGroups={availableEnvGroups}
-      namespace={params.namespace}
+      namespace={stack.namespace}
       sourceConfig={stack.latest_revision.source_configs[0]}
       templateInfo={{
         name: params.template_name,

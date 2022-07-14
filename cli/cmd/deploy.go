@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -203,6 +204,39 @@ the image that the application uses if no --values file is specified:
 	},
 }
 
+var updateEnvGroupCmd = &cobra.Command{
+	Use:     "env-group",
+	Aliases: []string{"eg", "envgroup"},
+	Short:   "Updates an environment group's variables, specified by the --name flag.",
+	Run: func(cmd *cobra.Command, args []string) {
+		color.New(color.FgRed).Println("need to specify an operation to continue")
+	},
+}
+
+var updateSetEnvGroupCmd = &cobra.Command{
+	Use:   "set",
+	Short: "Sets the desired value of an environment variable in an env group in the form VAR=VALUE.",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, updateSetEnvGroup)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+var updateUnsetEnvGroupCmd = &cobra.Command{
+	Use:   "unset",
+	Short: "Removes an environment variable from an env group.",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, updateUnsetEnvGroup)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 var app string
 var getEnvFileDest string
 var localPath string
@@ -213,6 +247,8 @@ var stream bool
 var buildFlagsEnv []string
 var forcePush bool
 var useCache bool
+var value string
+var version uint
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -329,9 +365,27 @@ func init() {
 		"file destination for .env files",
 	)
 
+	updateEnvGroupCmd.PersistentFlags().StringVar(
+		&name,
+		"name",
+		"",
+		"the name of the environment group",
+	)
+
+	updateEnvGroupCmd.PersistentFlags().UintVar(
+		&version,
+		"version",
+		0,
+		"the version of the environment group",
+	)
+
+	updateEnvGroupCmd.AddCommand(updateSetEnvGroupCmd)
+	updateEnvGroupCmd.AddCommand(updateUnsetEnvGroupCmd)
+
 	updateCmd.AddCommand(updateBuildCmd)
 	updateCmd.AddCommand(updatePushCmd)
 	updateCmd.AddCommand(updateConfigCmd)
+	updateCmd.AddCommand(updateEnvGroupCmd)
 }
 
 func updateFull(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
@@ -436,6 +490,32 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 	}
 
 	return updateUpgradeWithAgent(updateAgent)
+}
+
+func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("need variable in the form VAR=VALUE")
+	}
+
+	key, value, found := strings.Cut(args[0], "=")
+
+	if !found {
+		return fmt.Errorf("need variable in the form VAR=VALUE")
+	}
+
+	envGroup, err := client.GetEnvGroup(context.Background(), cliConf.Project, cliConf.Cluster, namespace, &types.GetEnvGroupRequest{
+		Name: name, Version: version,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	return nil
 }
 
 // HELPER METHODS

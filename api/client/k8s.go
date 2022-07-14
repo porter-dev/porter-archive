@@ -104,8 +104,8 @@ func (c *Client) GetEnvGroup(
 	projectID, clusterID uint,
 	namespace string,
 	req *types.GetEnvGroupRequest,
-) (*types.EnvGroup, error) {
-	resp := &types.EnvGroup{}
+) (*types.GetEnvGroupResponse, error) {
+	resp := &types.GetEnvGroupResponse{}
 
 	err := c.getRequest(
 		fmt.Sprintf(

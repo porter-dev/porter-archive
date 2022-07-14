@@ -41,6 +41,15 @@ func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *
 	return role, nil
 }
 
+// UpdateProject updates an existing project
+func (repo *ProjectRepository) UpdateProject(project *models.Project) (*models.Project, error) {
+	if err := repo.db.Save(project).Error; err != nil {
+		return nil, err
+	}
+
+	return project, nil
+}
+
 func (repo *ProjectRepository) UpdateProjectRole(projID uint, role *models.Role) (*models.Role, error) {
 	foundRole := &models.Role{}
 

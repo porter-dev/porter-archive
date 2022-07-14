@@ -37,8 +37,9 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// if the cluster has an AWS integration, make sure that the old cluster name is set
-	if cluster.AWSIntegrationID != 0 {
+	// if the cluster has an AWS integration, and the request does not have a cluster name attached, make
+	// sure that the old cluster name is set
+	if cluster.AWSIntegrationID != 0 && request.AWSClusterID == "" {
 		awsInt, err := c.Repo().AWSIntegration().ReadAWSIntegration(cluster.ProjectID, cluster.AWSIntegrationID)
 
 		if err != nil {
@@ -56,6 +57,8 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				return
 			}
 		}
+	} else if request.AWSClusterID != "" {
+		cluster.AWSClusterID = request.AWSClusterID
 	}
 
 	cluster.Name = request.Name

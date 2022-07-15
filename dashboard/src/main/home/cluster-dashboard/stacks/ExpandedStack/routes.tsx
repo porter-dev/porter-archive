@@ -6,6 +6,7 @@ import {
   useLocation,
   useRouteMatch,
 } from "react-router";
+import styled from "styled-components";
 
 import ExpandedStack from "./ExpandedStack";
 import NewAppResourceRoutes from "./NewAppResource";
@@ -21,10 +22,18 @@ const ExpandedStackRoutes = () => {
       <Switch>
         <Redirect from="/:url*(/+)" to={pathname.slice(0, -1)} />
         <Route path={`${path}/new-env-group`} exact>
-          <NewEnvGroup />
+          <StyledLaunchFlow>
+            <LaunchContainer>
+              <NewEnvGroup />
+            </LaunchContainer>
+          </StyledLaunchFlow>
         </Route>
         <Route path={`${path}/new-app-resource`}>
-          <NewAppResourceRoutes />
+          <StyledLaunchFlow>
+            <LaunchContainer>
+              <NewAppResourceRoutes />
+            </LaunchContainer>
+          </StyledLaunchFlow>
         </Route>
         <Route path={`${path}`} exact>
           <ExpandedStack />
@@ -38,3 +47,17 @@ const ExpandedStackRoutes = () => {
 };
 
 export default ExpandedStackRoutes;
+
+const LaunchContainer = styled.div`
+  margin: 0 auto;
+  width: 100%;
+`;
+
+const StyledLaunchFlow = styled.div`
+  width: calc(100% - 100px);
+  margin-left: 50px;
+  min-width: 300px;
+  margin-top: ${(props: { disableMarginTop?: boolean }) =>
+    props.disableMarginTop ? "inherit" : "calc(50vh - 380px)"};
+  margin-bottom: 50px;
+`;

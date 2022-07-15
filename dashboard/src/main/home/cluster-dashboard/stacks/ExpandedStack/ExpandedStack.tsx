@@ -13,6 +13,7 @@ import styled from "styled-components";
 import ChartList from "../../chart/ChartList";
 import Status from "../components/Status";
 import {
+  Action,
   Br,
   InfoWrapper,
   LastDeployed,
@@ -150,9 +151,12 @@ const ExpandedStack = () => {
             component: (
               <>
                 <Gap></Gap>
-                <DynamicLink to={`${url}/new-app-resource`}>
-                  Add new app
-                </DynamicLink>
+                <Action.Row>
+                  <Action.Button to={`${url}/new-app-resource`}>
+                    <i className="material-icons">add</i>
+                    Create App Resource
+                  </Action.Button>
+                </Action.Row>
                 {currentRevision.id !== stack.latest_revision.id ? (
                   <ChartListWrapper>
                     <Placeholder>
@@ -198,6 +202,12 @@ const ExpandedStack = () => {
             component: (
               <>
                 <Gap></Gap>
+                <Action.Row>
+                  <Action.Button to={`${url}/new-env-group`}>
+                    <i className="material-icons">add</i>
+                    Create Env Group
+                  </Action.Button>
+                </Action.Row>
                 <EnvGroups stack={stack} />
               </>
             ),

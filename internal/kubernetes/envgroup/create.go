@@ -85,6 +85,10 @@ func CreateEnvGroup(agent *kubernetes.Agent, input types.ConfigMapInput) (*v1.Co
 
 	oldSecret, _, err := agent.GetLatestVersionedSecret(input.Name, input.Namespace)
 
+	if input.SecretVariables == nil {
+		input.SecretVariables = make(map[string]string)
+	}
+
 	if err != nil && !errors.Is(err, kubernetes.IsNotFoundError) {
 		return nil, err
 	} else if err == nil && oldSecret != nil {

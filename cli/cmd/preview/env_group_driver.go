@@ -67,7 +67,7 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 			group.Namespace = d.target.Namespace
 		}
 
-		envGroup, err := client.GetEnvGroup(
+		envGroupResp, err := client.GetEnvGroup(
 			context.Background(),
 			d.target.Project,
 			d.target.Cluster,
@@ -78,7 +78,7 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 		)
 
 		if err != nil && err.Error() == "env group not found" {
-			envGroup, err = client.CreateEnvGroup(
+			newEnvGroup, err := client.CreateEnvGroup(
 				context.Background(), d.target.Project, d.target.Cluster, group.Namespace,
 				&types.CreateEnvGroupRequest{
 					Name:      group.Name,
@@ -89,12 +89,18 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 			if err != nil {
 				return nil, err
 			}
+
+			envGroupResp = &types.GetEnvGroupResponse{
+				EnvGroup: &types.EnvGroup{
+					Variables: newEnvGroup.Variables,
+				},
+			}
 		} else if err != nil {
 			return nil, err
 		}
 
-		d.output[envGroup.Name] = map[string]interface{}{
-			"variables": envGroup.Variables,
+		d.output[envGroupResp.Name] = map[string]interface{}{
+			"variables": envGroupResp.Variables,
 		}
 	}
 

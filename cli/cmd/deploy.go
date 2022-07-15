@@ -206,7 +206,7 @@ the image that the application uses if no --values file is specified:
 
 var updateEnvGroupCmd = &cobra.Command{
 	Use:     "env-group",
-	Aliases: []string{"eg", "envgroup"},
+	Aliases: []string{"eg", "envgroup", "env-groups", "envgroups"},
 	Short:   "Updates an environment group's variables, specified by the --name flag.",
 	Run: func(cmd *cobra.Command, args []string) {
 		color.New(color.FgRed).Println("need to specify an operation to continue")

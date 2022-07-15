@@ -617,6 +617,8 @@ func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Clie
 		return err
 	}
 
+	color.New(color.FgGreen).Println("env group successfully updated")
+
 	return nil
 }
 

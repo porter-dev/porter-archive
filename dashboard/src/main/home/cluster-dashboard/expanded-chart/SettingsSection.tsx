@@ -317,24 +317,9 @@ const SettingsSection: React.FC<PropsType> = ({
           )}
 
           <Heading>Additional Settings</Heading>
-          {currentChart.stack_id?.length ? (
-            <>
-              <Helper>
-                You have to delete the stack to remove this application.
-              </Helper>
-              <CloneButton
-                as={DynamicLink}
-                color="#5561C0"
-                to={`/stacks/${currentChart.namespace}/${currentChart.stack_id}`}
-              >
-                Go to the stack
-              </CloneButton>
-            </>
-          ) : (
-            <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
-              Delete {currentChart.name}
-            </Button>
-          )}
+          <Button color="#b91133" onClick={() => setShowDeleteOverlay(true)}>
+            Delete {currentChart.name}
+          </Button>
         </StyledSettingsSection>
       ) : (
         <Loading />

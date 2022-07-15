@@ -112,6 +112,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
 	github.com/xanzy/go-gitlab v0.68.0 // indirect
+	go.uber.org/goleak v1.1.12 // indirect
 )
 
 require (

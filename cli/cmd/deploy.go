@@ -6,7 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -249,10 +251,10 @@ var forcePush bool
 var useCache bool
 var value string
 var version uint
+var varType string
 
 func init() {
 	buildFlagsEnv = []string{}
-
 	rootCmd.AddCommand(updateCmd)
 
 	updateCmd.PersistentFlags().StringVar(
@@ -261,8 +263,6 @@ func init() {
 		"",
 		"Application in the Porter dashboard",
 	)
-
-	updateCmd.MarkPersistentFlagRequired("app")
 
 	updateCmd.PersistentFlags().BoolVar(
 		&useCache,
@@ -365,6 +365,14 @@ func init() {
 		"file destination for .env files",
 	)
 
+	updateGetEnvCmd.MarkPersistentFlagRequired("app")
+
+	updateBuildCmd.MarkPersistentFlagRequired("app")
+
+	updatePushCmd.MarkPersistentFlagRequired("app")
+
+	updateConfigCmd.MarkPersistentFlagRequired("app")
+
 	updateEnvGroupCmd.PersistentFlags().StringVar(
 		&name,
 		"name",
@@ -377,6 +385,15 @@ func init() {
 		"version",
 		0,
 		"the version of the environment group",
+	)
+
+	updateEnvGroupCmd.MarkPersistentFlagRequired("name")
+
+	updateSetEnvGroupCmd.PersistentFlags().StringVar(
+		&varType,
+		"type",
+		"normal",
+		"the type of environment variable (either \"normal\" or \"secret\")",
 	)
 
 	updateEnvGroupCmd.AddCommand(updateSetEnvGroupCmd)
@@ -494,27 +511,112 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 
 func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("need variable in the form VAR=VALUE")
+		return fmt.Errorf("required variable in the form of VAR=VALUE")
 	}
 
 	key, value, found := strings.Cut(args[0], "=")
 
 	if !found {
-		return fmt.Errorf("need variable in the form VAR=VALUE")
+		return fmt.Errorf("variable should be in the form of VAR=VALUE")
 	}
 
-	envGroup, err := client.GetEnvGroup(context.Background(), cliConf.Project, cliConf.Cluster, namespace, &types.GetEnvGroupRequest{
-		Name: name, Version: version,
-	})
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Color("cyan")
+
+	s.Suffix = fmt.Sprintf(" Fetching env group '%s' in namespace '%s'", name, namespace)
+	s.Start()
+
+	envGroupResp, err := client.GetEnvGroup(context.Background(), cliConf.Project, cliConf.Cluster, namespace,
+		&types.GetEnvGroupRequest{
+			Name: name, Version: version,
+		},
+	)
+
+	s.Stop()
 
 	if err != nil {
 		return err
 	}
 
+	newEnvGroup := &types.CreateEnvGroupRequest{
+		Name:      envGroupResp.Name,
+		Variables: envGroupResp.Variables,
+	}
+
+	delete(newEnvGroup.Variables, key)
+
+	if varType == "secret" {
+		newEnvGroup.SecretVariables = make(map[string]string)
+		newEnvGroup.SecretVariables[key] = value
+
+		s.Suffix = fmt.Sprintf(" Adding new secret variable '%s' to env group '%s' in namespace '%s'", key, name, namespace)
+	} else {
+		newEnvGroup.Variables[key] = value
+
+		s.Suffix = fmt.Sprintf(" Adding new variable '%s' to env group '%s' in namespace '%s'", key, name, namespace)
+	}
+
+	s.Start()
+
+	_, err = client.CreateEnvGroup(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, newEnvGroup,
+	)
+
+	s.Stop()
+
+	if err != nil {
+		return err
+	}
+
+	color.New(color.FgGreen).Println("env group successfully updated")
+
 	return nil
 }
 
 func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("required variable name")
+	}
+
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Color("cyan")
+
+	s.Suffix = fmt.Sprintf(" Fetching env group '%s' in namespace '%s'", name, namespace)
+	s.Start()
+
+	envGroupResp, err := client.GetEnvGroup(context.Background(), cliConf.Project, cliConf.Cluster, namespace,
+		&types.GetEnvGroupRequest{
+			Name: name, Version: version,
+		},
+	)
+
+	s.Stop()
+
+	if err != nil {
+		return err
+	}
+
+	newEnvGroup := &types.CreateEnvGroupRequest{
+		Name:      envGroupResp.Name,
+		Variables: envGroupResp.Variables,
+	}
+
+	delete(newEnvGroup.Variables, args[0])
+
+	s.Suffix = fmt.Sprintf(" Removing variable '%s' from env group '%s' in namespace '%s'", args[0], name, namespace)
+
+	s.Start()
+
+	_, err = client.CreateEnvGroup(
+		context.Background(), cliConf.Project, cliConf.Cluster, namespace, newEnvGroup,
+	)
+
+	s.Stop()
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

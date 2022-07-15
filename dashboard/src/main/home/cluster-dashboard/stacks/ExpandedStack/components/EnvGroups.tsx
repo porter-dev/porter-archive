@@ -81,7 +81,6 @@ const EnvGroups = ({ stack }: { stack: Stack }) => {
 
   return (
     <>
-      <DynamicLink to={`${url}/new-env-group`}>Add new env group</DynamicLink>
       <Card.Grid style={{ marginTop: "0px" }}>
         {envGroups.map((envGroup) => {
           return (

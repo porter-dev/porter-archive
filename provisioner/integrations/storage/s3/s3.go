@@ -78,6 +78,26 @@ func (s *S3StorageClient) WriteFile(infra *models.Infra, name string, fileBytes 
 	return err
 }
 
+func (s *S3StorageClient) WriteFileWithKey(fileBytes []byte, shouldEncrypt bool, key string) error {
+	body := fileBytes
+	var err error
+	if shouldEncrypt {
+		body, err = encryption.Encrypt(fileBytes, s.encryptionKey)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = s.client.PutObject(&s3.PutObjectInput{
+		Body:   aws.ReadSeekCloser(bytes.NewReader(body)),
+		Bucket: &s.bucket,
+		Key:    aws.String(key),
+	})
+
+	return err
+}
+
 func (s *S3StorageClient) ReadFile(infra *models.Infra, name string, shouldDecrypt bool) ([]byte, error) {
 	output, err := s.client.GetObject(&s3.GetObjectInput{
 		Bucket: &s.bucket,

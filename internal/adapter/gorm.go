@@ -14,14 +14,8 @@ import (
 	"gorm.io/gorm"
 )
 
-var globalDBConn *gorm.DB
-
 // New returns a new gorm database instance
 func New(conf *env.DBConf) (*gorm.DB, error) {
-	if globalDBConn != nil {
-		return globalDBConn, nil
-	}
-
 	logger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
@@ -34,19 +28,11 @@ func New(conf *env.DBConf) (*gorm.DB, error) {
 	if conf.SQLLite {
 		// we add DisableForeignKeyConstraintWhenMigrating since our sqlite does
 		// not support foreign key constraints
-		res, err := gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{
+		return gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
 			FullSaveAssociations:                     true,
 			Logger:                                   logger,
 		})
-
-		if err != nil {
-			return nil, err
-		}
-
-		globalDBConn = res
-
-		return res, nil
 	}
 
 	// connect to default postgres instance first
@@ -100,16 +86,12 @@ func New(conf *env.DBConf) (*gorm.DB, error) {
 			}
 
 			if err == nil {
-				globalDBConn = res
-
 				return res, nil
 			}
 
 			retryCount++
 		}
 	}
-
-	globalDBConn = res
 
 	return res, err
 }

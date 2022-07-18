@@ -14,8 +14,14 @@ import (
 	"gorm.io/gorm"
 )
 
+var globalDBConn *gorm.DB
+
 // New returns a new gorm database instance
 func New(conf *env.DBConf) (*gorm.DB, error) {
+	if globalDBConn != nil {
+		return globalDBConn, nil
+	}
+
 	logger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
@@ -86,12 +92,16 @@ func New(conf *env.DBConf) (*gorm.DB, error) {
 			}
 
 			if err == nil {
+				globalDBConn = res
+
 				return res, nil
 			}
 
 			retryCount++
 		}
 	}
+
+	globalDBConn = res
 
 	return res, err
 }

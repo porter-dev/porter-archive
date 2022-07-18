@@ -46,13 +46,6 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// populate fields with defaults
-	for i, reqResource := range req.AppResources {
-		if reqResource.TemplateRepoURL == "" {
-			req.AppResources[i].TemplateRepoURL = p.Config().ServerConf.DefaultApplicationHelmRepoURL
-		}
-	}
-
 	uid, err := encryption.GenerateRandomBytes(16)
 
 	if err != nil {
@@ -272,6 +265,10 @@ func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sour
 	res := make([]models.StackResource, 0)
 
 	for _, appResource := range appResources {
+		if appResource.TemplateRepoURL == "" {
+			appResource.TemplateRepoURL = defaultRepoURL
+		}
+
 		uid, err := encryption.GenerateRandomBytes(16)
 
 		if err != nil {

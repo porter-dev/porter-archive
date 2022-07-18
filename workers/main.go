@@ -126,6 +126,8 @@ func httpService() http.Handler {
 	r.Use(middleware.Heartbeat("/ping"))
 	r.Use(middleware.AllowContentType("application/json"))
 
+	r.Mount("/debug", middleware.Profiler())
+
 	log.Println("setting up HTTP POST endpoint to enqueue jobs")
 
 	r.Post("/enqueue/{id}", func(w http.ResponseWriter, r *http.Request) {

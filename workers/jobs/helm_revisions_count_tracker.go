@@ -33,7 +33,6 @@ import (
 	"github.com/porter-dev/porter/provisioner/integrations/storage/s3"
 
 	"github.com/porter-dev/porter/ee/integrations/vault"
-	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
@@ -77,15 +76,10 @@ type HelmRevisionsCountTrackerOpts struct {
 }
 
 func NewHelmRevisionsCountTracker(
+	db *gorm.DB,
 	enqueueTime time.Time,
 	opts *HelmRevisionsCountTrackerOpts,
 ) (*helmRevisionsCountTracker, error) {
-	db, err := adapter.New(opts.DBConf)
-
-	if err != nil {
-		return nil, err
-	}
-
 	var credBackend rcreds.CredentialStorage
 
 	if opts.DBConf.VaultAPIKey != "" && opts.DBConf.VaultServerURL != "" && opts.DBConf.VaultPrefix != "" {

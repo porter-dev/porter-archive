@@ -22,7 +22,7 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v2.0
         with:
-          version: 'v1.19.15'
+          version: "v1.19.15"
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout
@@ -50,7 +50,7 @@ jobs:
       - name: Deploy to cluster
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name dev
-            
+
           kubectl rollout restart deployment/porter
   deploy-provisioner:
     runs-on: ubuntu-latest
@@ -70,7 +70,7 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v2.0
         with:
-          version: 'v1.19.15'
+          version: "v1.19.15"
       - name: Log in to gcloud CLI
         run: gcloud auth configure-docker
       - name: Checkout
@@ -84,67 +84,91 @@ jobs:
       - name: Deploy to cluster
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name dev
-            
+
           kubectl rollout restart deployment/provisioner
   build-push-ecr-server:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2.3.4
-    - name: Set Github tag
-      id: vars
-      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
-        aws-region: us-east-2
-    - name: Login to ECR
-      id: login-ecr
-      run: |
-        aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
-    - name: Write Dashboard Environment Variables
-      run: |
-        cat >./dashboard/.env <<EOL
-        NODE_ENV=development
-        API_SERVER=dashboard.dev.getporter.dev
-        DISCORD_KEY=${{secrets.DISCORD_KEY}}
-        DISCORD_CID=${{secrets.DISCORD_CID}}
-        FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
-        APPLICATION_CHART_REPO_URL=https://charts.dev.getporter.dev
-        ADDON_CHART_REPO_URL=https://chart-addons.dev.getporter.dev
-        ENABLE_SENTRY=true
-        SENTRY_DSN=${{secrets.SENTRY_DSN}}
-        SENTRY_ENV=frontend-development
-        EOL
-    - name: Build
-      run: |
-        DOCKER_BUILDKIT=1 docker build . -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:${{ steps.vars.outputs.sha_short }} -f ./ee/docker/ee.Dockerfile
-    - name: Push to ECR
-      run: |
-        docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:${{ steps.vars.outputs.sha_short }}
+      - name: Checkout code
+        uses: actions/checkout@v2.3.4
+      - name: Set Github tag
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
+      - name: Write Dashboard Environment Variables
+        run: |
+          cat >./dashboard/.env <<EOL
+          NODE_ENV=development
+          API_SERVER=dashboard.dev.getporter.dev
+          DISCORD_KEY=${{secrets.DISCORD_KEY}}
+          DISCORD_CID=${{secrets.DISCORD_CID}}
+          FEEDBACK_ENDPOINT=${{secrets.FEEDBACK_ENDPOINT}}
+          APPLICATION_CHART_REPO_URL=https://charts.dev.getporter.dev
+          ADDON_CHART_REPO_URL=https://chart-addons.dev.getporter.dev
+          ENABLE_SENTRY=true
+          SENTRY_DSN=${{secrets.SENTRY_DSN}}
+          SENTRY_ENV=frontend-development
+          EOL
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:${{ steps.vars.outputs.sha_short }} -f ./ee/docker/ee.Dockerfile
+      - name: Push to ECR
+        run: |
+          docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/porter:${{ steps.vars.outputs.sha_short }}
   build-push-ecr-provisioner:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2.3.4
-    - name: Set Github tag
-      id: vars
-      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
-        aws-region: us-east-2
-    - name: Login to ECR
-      id: login-ecr
-      run: |
-        aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
-    - name: Build
-      run: |
-        DOCKER_BUILDKIT=1 docker build . -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/provisioner-service:${{ steps.vars.outputs.sha_short }} -f ./ee/docker/provisioner.Dockerfile
-    - name: Push to ECR
-      run: |
-        docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/provisioner-service:${{ steps.vars.outputs.sha_short }}
+      - name: Checkout code
+        uses: actions/checkout@v2.3.4
+      - name: Set Github tag
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/provisioner-service:${{ steps.vars.outputs.sha_short }} -f ./ee/docker/provisioner.Dockerfile
+      - name: Push to ECR
+        run: |
+          docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/provisioner-service:${{ steps.vars.outputs.sha_short }}
+  build-push-worker-pool:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.3.4
+      - name: Set Github tag
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
+          aws-region: us-east-2
+      - name: Login to ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
+      - name: Build
+        run: |
+          DOCKER_BUILDKIT=1 docker build . -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/worker-pool:${{ steps.vars.outputs.sha_short }} -f ./workers/Dockerfile
+      - name: Push to ECR
+        run: |
+          docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/worker-pool:${{ steps.vars.outputs.sha_short }}

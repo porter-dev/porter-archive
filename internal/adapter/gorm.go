@@ -34,11 +34,19 @@ func New(conf *env.DBConf) (*gorm.DB, error) {
 	if conf.SQLLite {
 		// we add DisableForeignKeyConstraintWhenMigrating since our sqlite does
 		// not support foreign key constraints
-		return gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{
+		res, err := gorm.Open(sqlite.Open(conf.SQLLitePath), &gorm.Config{
 			DisableForeignKeyConstraintWhenMigrating: true,
 			FullSaveAssociations:                     true,
 			Logger:                                   logger,
 		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		globalDBConn = res
+
+		return res, nil
 	}
 
 	// connect to default postgres instance first

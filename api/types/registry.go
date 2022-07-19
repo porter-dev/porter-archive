@@ -97,6 +97,7 @@ type RegistryService string
 
 const (
 	GCR       RegistryService = "gcr"
+	GAR       RegistryService = "gar"
 	ECR       RegistryService = "ecr"
 	ACR       RegistryService = "acr"
 	DOCR      RegistryService = "docr"

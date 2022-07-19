@@ -49,7 +49,7 @@ type AuthGetter struct {
 }
 
 func (a *AuthGetter) GetCredentials(serverURL string) (user string, secret string, err error) {
-	if strings.Contains(serverURL, "gcr.io") {
+	if strings.Contains(serverURL, "gcr.io") || strings.Contains(serverURL, "pkg.dev") {
 		return a.GetGCRCredentials(serverURL, a.ProjectID)
 	} else if strings.Contains(serverURL, "registry.digitalocean.com") {
 		return a.GetDOCRCredentials(serverURL, a.ProjectID)

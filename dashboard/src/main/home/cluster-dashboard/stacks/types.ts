@@ -55,19 +55,26 @@ export type FullStackRevision = StackRevision & {
   env_groups: EnvGroup[];
 };
 
+type StackRevisionReason =
+  | "DeployError"
+  | "SaveError"
+  | "RollbackError"
+  | "EnvGroupUpgrade"
+  | "ApplicationUpgrade"
+  | "SourceConfigUpgrade"
+  | "Rollback"
+  | "CreationSuccess"
+  | "AddEnvGroupSuccess"
+  | "AddAppSuccess"
+  | "RemoveEnvGroupSuccess"
+  | "RemoveAppSuccess";
+
 export type StackRevision = {
   id: number;
   created_at: string;
   status: "deploying" | "deployed" | "failed"; // type with enum
   stack_id: string;
-  reason:
-    | "DeployError"
-    | "SaveError"
-    | "RollbackError"
-    | "EnvGroupUpgrade"
-    | "ApplicationUpgrade"
-    | "SourceConfigUpgrade"
-    | "Rollback";
+  reason: StackRevisionReason;
   message: string;
 };
 

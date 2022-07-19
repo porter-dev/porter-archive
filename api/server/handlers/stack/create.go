@@ -221,6 +221,16 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
+		} else {
+			revision.Reason = "CreationSuccess"
+			revision.Message = "Stack deployed successfully"
+
+			revision, err = p.Repo().Stack().UpdateStackRevision(revision)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
 		}
 	}
 

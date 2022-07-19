@@ -179,5 +179,14 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+	} else {
+		revision.Reason = "AddAppSuccess"
+		revision.Message = "New application " + req.Name + " added successfully."
+
+		_, err = p.Repo().Stack().UpdateStackRevision(revision)
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 }

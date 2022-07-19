@@ -139,6 +139,8 @@ func (p *StackAddEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		revision.Message = strings.Join(envGroupDeployErrors, " , ")
 	} else {
 		revision.Status = string(types.StackRevisionStatusDeployed)
+		revision.Reason = "AddEnvGroupSuccess"
+		revision.Message = "Env Group " + req.Name + " added successfully."
 	}
 
 	_, err = p.Repo().Stack().UpdateStackRevision(revision)

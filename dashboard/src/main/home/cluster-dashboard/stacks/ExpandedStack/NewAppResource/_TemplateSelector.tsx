@@ -119,29 +119,32 @@ const TemplateSelector = () => {
       <Card.Grid>
         {templates.map((template) => {
           return (
-            <Card.Wrapper key={template.name}>
+            <Card.Wrapper
+              key={template.name}
+              as={DynamicLink}
+              to={`settings/${template.name}/${selectedVersion[template.name]}`}
+            >
               <Card.Title>
                 New {template.name} with version:
-                <VersionSelector
-                  value={selectedVersion[template.name]}
-                  options={template.versions}
-                  onChange={(newVersion) => {
-                    setSelectedVersion((prev) => ({
-                      ...prev,
-                      [template.name]: newVersion,
-                    }));
+                <div
+                  onClickCapture={(e) => {
+                    e.preventDefault();
                   }}
-                />
+                >
+                  <VersionSelector
+                    value={selectedVersion[template.name]}
+                    options={template.versions}
+                    onChange={(newVersion) => {
+                      setSelectedVersion((prev) => ({
+                        ...prev,
+                        [template.name]: newVersion,
+                      }));
+                    }}
+                  />
+                </div>
               </Card.Title>
               <Card.Actions>
-                <Card.ActionButton
-                  as={DynamicLink}
-                  to={`settings/${template.name}/${
-                    selectedVersion[template.name]
-                  }`}
-                >
-                  <i className="material-icons-outlined">arrow_forward</i>
-                </Card.ActionButton>
+                <i className="material-icons-outlined">arrow_forward</i>
               </Card.Actions>
             </Card.Wrapper>
           );

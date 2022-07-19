@@ -115,6 +115,8 @@ func (p *StackRemoveApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	if err == nil {
 		revision.Status = string(types.StackRevisionStatusDeployed)
+		revision.Reason = "RemoveAppSuccess"
+		revision.Message = "Application " + appResourceName + " removed successfully"
 	} else {
 		revision.Status = string(types.StackRevisionStatusFailed)
 		revision.Reason = "RemoveAppError"

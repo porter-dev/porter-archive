@@ -115,6 +115,8 @@ func (p *StackRemoveEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	if err == nil {
 		revision.Status = string(types.StackRevisionStatusDeployed)
+		revision.Reason = "RemoveEnvGroupSuccess"
+		revision.Message = "EnvGroup " + envGroupName + " removed successfully"
 	} else {
 		revision.Status = string(types.StackRevisionStatusFailed)
 		revision.Reason = "RemoveEnvGroupError"

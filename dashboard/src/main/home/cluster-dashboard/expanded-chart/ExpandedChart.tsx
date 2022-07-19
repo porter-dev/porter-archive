@@ -644,16 +644,31 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
 
     try {
-      await api.uninstallTemplate(
-        "<token>",
-        {},
-        {
-          namespace: currentChart.namespace,
-          name: currentChart.name,
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
+      if (currentChart.stack_id) {
+        await api.removeStackAppResource(
+          "<token>",
+          {},
+          {
+            namespace: currentChart.namespace,
+            app_resource_name: currentChart.name,
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            stack_id: currentChart.stack_id,
+          }
+        );
+      } else {
+        await api.uninstallTemplate(
+          "<token>",
+          {},
+          {
+            namespace: currentChart.namespace,
+            name: currentChart.name,
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
+      }
+
       props.closeChart();
     } catch (error) {
       console.log(error);

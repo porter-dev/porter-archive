@@ -410,6 +410,7 @@ export type InfraKind =
   | "s3"
   | "gke"
   | "gcr"
+  | "gar"
   | "doks"
   | "docr"
   | "aks"
@@ -527,6 +528,13 @@ export const KindMap: ProviderInfoMap = {
     resource_name: "Registry",
     resource_link: "/integrations/registry",
     provider_name: "Google Container Registry (GCR)",
+  },
+  gar: {
+    provider: "gcp",
+    source: "porter/gcp/gar",
+    resource_name: "Registry",
+    resource_link: "/integrations/registry",
+    provider_name: "Google Artifact Registry (GAR)",
   },
   gke: {
     provider: "gcp",

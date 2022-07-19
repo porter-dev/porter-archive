@@ -81,6 +81,14 @@ var templateMap = map[string]*types.InfraTemplateMeta{
 		Kind:               "gcr",
 		RequiredCredential: "gcp_integration_id",
 	},
+	"gar": {
+		Icon:               "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+		Description:        "Create a Google Artifact Registry.",
+		Name:               "GAR",
+		Version:            "v0.1.0",
+		Kind:               "gar",
+		RequiredCredential: "gcp_integration_id",
+	},
 	"gke": {
 		Icon:               "https://sysdig.com/wp-content/uploads/2016/08/GKE_color.png",
 		Description:        "Create a Google Kubernetes Engine cluster.",

@@ -32,7 +32,7 @@ deleting a configuration:
 		color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
-		err := checkLoginAndRun(args, delete)
+		err := checkLoginAndRun(args, deleteDeployment)
 
 		if err != nil {
 			os.Exit(1)
@@ -100,7 +100,7 @@ func init() {
 	rootCmd.AddCommand(deleteCmd)
 }
 
-func delete(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func deleteDeployment(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	projectID := cliConf.Project
 
 	if projectID == 0 {

@@ -16,13 +16,16 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/joeshaw/envdecode"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
+	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/worker"
 	"github.com/porter-dev/porter/workers/jobs"
+	"gorm.io/gorm"
 )
 
 var (
 	jobQueue   chan worker.Job
 	envDecoder = EnvConf{}
+	dbConn     *gorm.DB
 )
 
 // EnvConf holds the environment variables for this binary
@@ -50,12 +53,20 @@ func main() {
 	log.Printf("setting max worker count to: %d\n", envDecoder.MaxWorkers)
 	log.Printf("setting max job queue count to: %d\n", envDecoder.MaxQueue)
 
+	db, err := adapter.New(&envDecoder.DBConf)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	dbConn = db
+
 	jobQueue = make(chan worker.Job, envDecoder.MaxQueue)
 	d := worker.NewDispatcher(int(envDecoder.MaxWorkers))
 
 	log.Println("starting worker dispatcher")
 
-	err := d.Run(jobQueue)
+	err = d.Run(jobQueue)
 
 	if err != nil {
 		log.Fatalln(err)
@@ -115,6 +126,8 @@ func httpService() http.Handler {
 	r.Use(middleware.Heartbeat("/ping"))
 	r.Use(middleware.AllowContentType("application/json"))
 
+	r.Mount("/debug", middleware.Profiler())
+
 	log.Println("setting up HTTP POST endpoint to enqueue jobs")
 
 	r.Post("/enqueue/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +147,7 @@ func httpService() http.Handler {
 
 func getJob(id string) worker.Job {
 	if id == "helm-revisions-count-tracker" {
-		newJob, err := jobs.NewHelmRevisionsCountTracker(time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{
+		newJob, err := jobs.NewHelmRevisionsCountTracker(dbConn, time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{
 			DBConf:             &envDecoder.DBConf,
 			DOClientID:         envDecoder.DOClientID,
 			DOClientSecret:     envDecoder.DOClientSecret,

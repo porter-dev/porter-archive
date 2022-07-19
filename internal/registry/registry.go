@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	artifactregistry "cloud.google.com/go/artifactregistry/apiv1beta2"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -18,6 +19,9 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
+	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1beta2"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 
@@ -589,6 +593,8 @@ func (r *Registry) CreateRepository(
 	// if aws, create repository
 	if r.AWSIntegrationID != 0 {
 		return r.createECRRepository(repo, name)
+	} else if r.GCPIntegrationID != 0 && strings.Contains(r.URL, "pkg.dev") {
+		return r.createGARRepository(repo, name)
 	}
 
 	// otherwise, no-op
@@ -635,6 +641,51 @@ func (r *Registry) createECRRepository(
 	return nil
 }
 
+func (r *Registry) createGARRepository(
+	repo repository.Repository,
+	name string,
+) error {
+	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	client, err := artifactregistry.NewClient(context.Background(), option.WithCredentialsJSON(gcpInt.GCPKeyData))
+
+	if err != nil {
+		return err
+	}
+
+	defer client.Close()
+
+	_, err = client.GetRepository(context.Background(), &artifactregistrypb.GetRepositoryRequest{
+		Name: name,
+	})
+
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		// create a new repository
+		_, err := client.CreateRepository(context.Background(), &artifactregistrypb.CreateRepositoryRequest{
+			Parent: gcpInt.GCPProjectID,
+			Repository: &artifactregistrypb.Repository{
+				Name:   name,
+				Format: artifactregistrypb.Repository_DOCKER,
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ListImages lists the images for an image repository
 func (r *Registry) ListImages(
 	repoName string,
@@ -651,6 +702,10 @@ func (r *Registry) ListImages(
 	}
 
 	if r.GCPIntegrationID != 0 {
+		if strings.Contains(r.URL, "pkg.dev") {
+			return r.listGARImages(repoName, repo)
+		}
+
 		return r.listGCRImages(repoName, repo)
 	}
 
@@ -998,6 +1053,59 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 			RepositoryName: repoName,
 			Tag:            tag,
 		})
+	}
+
+	return res, nil
+}
+
+func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
+	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := artifactregistry.NewClient(context.Background(), option.WithCredentialsJSON(gcpInt.GCPKeyData))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer client.Close()
+
+	nextToken := ""
+	var res []*ptypes.Image
+
+	for {
+		it := client.ListTags(context.Background(), &artifactregistrypb.ListTagsRequest{
+			Parent:    repoName,
+			PageSize:  1000,
+			PageToken: nextToken,
+		})
+
+		for {
+			resp, err := it.Next()
+
+			if err == iterator.Done {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+
+			res = append(res, &ptypes.Image{
+				RepositoryName: repoName,
+				Tag:            resp.Name,
+			})
+		}
+
+		if it.PageInfo().Token == "" {
+			break
+		}
+
+		nextToken = it.PageInfo().Token
 	}
 
 	return res, nil

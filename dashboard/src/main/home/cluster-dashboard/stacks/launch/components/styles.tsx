@@ -157,6 +157,7 @@ export const SelectorStyles = {
     width: 100%;
     max-height: 200px;
     overflow-y: auto;
+    z-index: 999;
   `,
   Option: styled.div`
     min-height: 35px;

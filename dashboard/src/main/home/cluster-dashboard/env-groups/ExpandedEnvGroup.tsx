@@ -161,23 +161,41 @@ export const ExpandedEnvGroupFC = ({
     });
   };
 
-  const handleDeleteEnvGroup = () => {
-    const { name } = currentEnvGroup;
+  const deleteEnvGroup = async () => {
+    const { name, stack_id } = currentEnvGroup;
 
-    setIsDeleting(true);
-    setCurrentOverlay(null);
-    api
-      .deleteEnvGroup(
-        "<token>",
+    if (stack_id?.length) {
+      return api.removeStackEnvGroup(
+        "<stack>",
+        {},
         {
-          name,
-        },
-        {
-          id: currentProject.id,
+          project_id: currentProject.id,
           cluster_id: currentCluster.id,
           namespace,
+          stack_id: stack_id,
+          env_group_name: name,
         }
-      )
+      );
+    }
+
+    return api.deleteEnvGroup(
+      "<token>",
+      {
+        name,
+      },
+      {
+        id: currentProject.id,
+        cluster_id: currentCluster.id,
+        namespace,
+      }
+    );
+  };
+
+  const handleDeleteEnvGroup = () => {
+    setIsDeleting(true);
+    setCurrentOverlay(null);
+
+    deleteEnvGroup()
       .then(() => {
         closeExpanded();
         setIsDeleting(true);
@@ -551,34 +569,20 @@ const EnvGroupSettings = ({
               applications to delete.
             </Helper>
           )}
-          {envGroup.stack_id?.length ? (
-            <>
-              <Helper color="#f5cb42">
-                You have to delete the stack to remove this env group.
-              </Helper>
-              <CloneButton
-                as={DynamicLink}
-                color="#5561C0"
-                to={`/stacks/${envGroup.namespace}/${envGroup.stack_id}`}
-              >
-                Go to the stack
-              </CloneButton>
-            </>
-          ) : (
-            <Button
-              color="#b91133"
-              onClick={() => {
-                setCurrentOverlay({
-                  message: `Are you sure you want to delete ${envGroup.name}?`,
-                  onYes: handleDeleteEnvGroup,
-                  onNo: () => setCurrentOverlay(null),
-                });
-              }}
-              disabled={!canDelete}
-            >
-              Delete {envGroup.name}
-            </Button>
-          )}
+
+          <Button
+            color="#b91133"
+            onClick={() => {
+              setCurrentOverlay({
+                message: `Are you sure you want to delete ${envGroup.name}?`,
+                onYes: handleDeleteEnvGroup,
+                onNo: () => setCurrentOverlay(null),
+              });
+            }}
+            disabled={!canDelete}
+          >
+            Delete {envGroup.name}
+          </Button>
         </InnerWrapper>
       )}
     </TabWrapper>

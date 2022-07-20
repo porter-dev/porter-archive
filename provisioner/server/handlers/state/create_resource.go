@@ -277,7 +277,12 @@ func createCluster(config *config.Config, infra *models.Infra, operation *models
 		}
 	}
 
-	cluster.Name = output["cluster_name"].(string)
+	// only update the cluster name if this is during creation - we don't want to overwrite the cluster name
+	// which may have been manually set
+	if isNotFound {
+		cluster.Name = output["cluster_name"].(string)
+	}
+
 	cluster.Server = output["cluster_endpoint"].(string)
 	cluster.CertificateAuthorityData = caData
 

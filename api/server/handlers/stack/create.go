@@ -46,13 +46,6 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// populate fields with defaults
-	for i, reqResource := range req.AppResources {
-		if reqResource.TemplateRepoURL == "" {
-			req.AppResources[i].TemplateRepoURL = p.Config().ServerConf.DefaultApplicationHelmRepoURL
-		}
-	}
-
 	uid, err := encryption.GenerateRandomBytes(16)
 
 	if err != nil {
@@ -231,6 +224,18 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if revision.Status != string(types.StackRevisionStatusFailed) && len(revision.Reason) == 0 {
+		revision.Reason = "CreationSuccess"
+		revision.Message = "Stack deployed successfully"
+
+		revision, err = p.Repo().Stack().UpdateStackRevision(revision)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
 	// read the stack again to get the latest revision info
 	stack, err = p.Repo().Stack().ReadStackByStringID(proj.ID, stack.UID)
 
@@ -272,6 +277,10 @@ func getResourceModels(appResources []*types.CreateStackAppResourceRequest, sour
 	res := make([]models.StackResource, 0)
 
 	for _, appResource := range appResources {
+		if appResource.TemplateRepoURL == "" {
+			appResource.TemplateRepoURL = defaultRepoURL
+		}
+
 		uid, err := encryption.GenerateRandomBytes(16)
 
 		if err != nil {

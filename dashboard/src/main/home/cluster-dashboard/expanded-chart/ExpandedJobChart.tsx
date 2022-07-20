@@ -22,7 +22,6 @@ import useAuth from "shared/auth/useAuth";
 import ExpandedJobRun from "./jobs/ExpandedJobRun";
 import { useJobs } from "./jobs/useJobs";
 import { useChart } from "shared/hooks/useChart";
-import Modal from "main/home/modals/Modal";
 import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal";
 import CommandLineIcon from "assets/command-line-icon";
 import CronParser from "cron-parser";
@@ -258,7 +257,13 @@ export const ExpandedJobChartFC: React.FC<{
     }
 
     if (currentTab === "build-settings") {
-      return <BuildSettingsTab chart={chart} isPreviousVersion={disableForm} />;
+      return (
+        <BuildSettingsTab
+          chart={chart}
+          isPreviousVersion={disableForm}
+          onSave={refreshChart}
+        />
+      );
     }
 
     if (

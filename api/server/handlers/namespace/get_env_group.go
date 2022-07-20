@@ -68,7 +68,6 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stackId, err := stacks.GetStackForEnvGroup(c.Config(), cluster.ProjectID, cluster.ID, envGroup)
 
 	if err != nil {
-
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.WriteResult(w, r, &types.GetEnvGroupResponse{EnvGroup: envGroup})
 			return

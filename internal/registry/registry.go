@@ -74,7 +74,11 @@ func (r *Registry) ListRepositories(
 	}
 
 	if r.GCPIntegrationID != 0 {
-		return r.listGCRRepositories(repo)
+		if strings.Contains(r.URL, "pkg.dev") {
+			return r.listGARRepositories(repo)
+		} else {
+			return r.listGCRRepositories(repo)
+		}
 	}
 
 	if r.DOIntegrationID != 0 {
@@ -202,6 +206,65 @@ func (r *Registry) listGCRRepositories(
 			Name: repo,
 			URI:  parsedURL.Host + "/" + repo,
 		})
+	}
+
+	return res, nil
+}
+
+func (r *Registry) listGARRepositories(
+	repo repository.Repository,
+) ([]*ptypes.RegistryRepository, error) {
+	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := artifactregistry.NewClient(context.Background(), option.WithCredentialsJSON(gcpInt.GCPKeyData))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var res []*ptypes.RegistryRepository
+	nextToken := ""
+
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		it := client.ListRepositories(context.Background(), &artifactregistrypb.ListRepositoriesRequest{
+			Parent:    gcpInt.GCPProjectID,
+			PageSize:  1000,
+			PageToken: nextToken,
+		})
+
+		for {
+			resp, err := it.Next()
+
+			if err == iterator.Done {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+
+			res = append(res, &ptypes.RegistryRepository{
+				Name: resp.GetName(),
+				URI:  parsedURL.Host + "/" + resp.GetName(),
+			})
+		}
+
+		if it.PageInfo().Token == "" {
+			break
+		}
+
+		nextToken = it.PageInfo().Token
 	}
 
 	return res, nil

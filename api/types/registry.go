@@ -26,7 +26,7 @@ type Registry struct {
 	URL string `json:"url"`
 
 	// The integration service for this registry
-	// enum: gcr,ecr,acr,docr,dockerhub
+	// enum: gcr,gar,ecr,acr,docr,dockerhub
 	// example: ecr
 	Service string `json:"service"`
 

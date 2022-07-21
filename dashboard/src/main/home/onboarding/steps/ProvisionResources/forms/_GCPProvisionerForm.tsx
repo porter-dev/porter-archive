@@ -4,6 +4,7 @@ import SelectRow from "components/form-components/SelectRow";
 import UploadArea from "components/form-components/UploadArea";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
+import { GCP_REGION_OPTIONS } from "main/home/onboarding/constants";
 import { OFState } from "main/home/onboarding/state";
 import {
   GCPProvisionerConfig,
@@ -15,33 +16,6 @@ import { readableDate } from "shared/string_utils";
 import { Infrastructure } from "shared/types";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
-
-const regionOptions = [
-  { value: "asia-east1", label: "asia-east1" },
-  { value: "asia-east2", label: "asia-east2" },
-  { value: "asia-northeast1", label: "asia-northeast1" },
-  { value: "asia-northeast2", label: "asia-northeast2" },
-  { value: "asia-northeast3", label: "asia-northeast3" },
-  { value: "asia-south1", label: "asia-south1" },
-  { value: "asia-southeast1", label: "asia-southeast1" },
-  { value: "asia-southeast2", label: "asia-southeast2" },
-  { value: "australia-southeast1", label: "australia-southeast1" },
-  { value: "europe-north1", label: "europe-north1" },
-  { value: "europe-west1", label: "europe-west1" },
-  { value: "europe-west2", label: "europe-west2" },
-  { value: "europe-west3", label: "europe-west3" },
-  { value: "europe-west4", label: "europe-west4" },
-  { value: "europe-west6", label: "europe-west6" },
-  { value: "northamerica-northeast1", label: "northamerica-northeast1" },
-  { value: "southamerica-east1", label: "southamerica-east1" },
-  { value: "us-central1", label: "us-central1" },
-  { value: "us-east1", label: "us-east1" },
-  { value: "us-east4", label: "us-east4" },
-  { value: "us-west1", label: "us-west1" },
-  { value: "us-west2", label: "us-west2" },
-  { value: "us-west3", label: "us-west3" },
-  { value: "us-west4", label: "us-west4" },
-];
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;
@@ -489,7 +463,7 @@ export const SettingsForm: React.FC<{
         isRequired={true}
       />
       <SelectRow
-        options={regionOptions}
+        options={GCP_REGION_OPTIONS}
         width="100%"
         value={region}
         scrollBuffer={true}

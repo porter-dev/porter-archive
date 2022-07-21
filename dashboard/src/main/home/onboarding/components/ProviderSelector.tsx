@@ -33,6 +33,11 @@ export const registryOptions = [
     label: "Google Cloud Registry (GCR)",
   },
   {
+    value: "gar",
+    icon: integrationList["gcr"]?.icon,
+    label: "Google Artifact Registry (GAR)",
+  },
+  {
     value: "do",
     icon: integrationList["do"]?.icon,
     label: "DigitalOcean Container Registry (DOCR)",
@@ -50,6 +55,7 @@ export const provisionerOptions = [
     icon: integrationList["gcp"]?.icon,
     label: "Google Cloud Platform (GCP)",
   },
+
   {
     value: "do",
     icon: integrationList["do"]?.icon,

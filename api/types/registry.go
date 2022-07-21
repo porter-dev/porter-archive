@@ -180,6 +180,10 @@ type GetRegistryGCRTokenRequest struct {
 	ServerURL string `schema:"server_url"`
 }
 
+type GetRegistryGARTokenRequest struct {
+	ServerURL string `schema:"server_url"`
+}
+
 type GetRegistryECRTokenRequest struct {
 	Region    string `schema:"region"`
 	AccountID string `schema:"account_id"`

@@ -314,7 +314,6 @@ export const GARegistryConfig: React.FC<{
   const [buttonStatus, setButtonStatus] = useState("");
   const [registryName, setRegistryName] = useState("");
   const [region, setRegion] = useState("us-east1");
-  const [projectId, setProjectId] = useState("");
 
   const snap = useSnapshot(OFState);
 
@@ -352,7 +351,31 @@ export const GARegistryConfig: React.FC<{
 
     setButtonStatus("loading");
 
-    const registryUrl = `${region}-docker.pkg.dev/${projectId}`;
+    let gcpProjectId = NaN;
+
+    try {
+      const gcp_integration = await api
+        .getGCPIntegration("<token>", {}, { project_id: project.id })
+        .then((res) => {
+          let integrations = res.data;
+
+          let lastUsed = integrations.find((i: any) => {
+            return (
+              i.id === snap.StateHandler?.connected_registry?.credentials?.id
+            );
+          });
+          return lastUsed;
+        });
+
+      if (gcp_integration) {
+        gcpProjectId = gcp_integration.gpc_project_id;
+      }
+    } catch (error) {
+      setButtonStatus("Couldn't get the project id from the GCP integration.");
+      return;
+    }
+
+    const registryUrl = `${region}-docker.pkg.dev/${gcpProjectId}`;
 
     try {
       const data = await api
@@ -369,7 +392,6 @@ export const GARegistryConfig: React.FC<{
           }
         )
         .then((res) => res?.data);
-
       nextFormStep({
         settings: {
           registry_connection_id: data.id,
@@ -391,15 +413,6 @@ export const GARegistryConfig: React.FC<{
         isRequired={true}
         label="🏷️ Registry Name"
         placeholder="ex: paper-straw"
-        width="100%"
-      />
-      <InputRow
-        type="text"
-        value={projectId}
-        setValue={(id: string) => setProjectId(id)}
-        isRequired={true}
-        label="🔗 Project ID"
-        placeholder="ex: skynet-dev-172969"
         width="100%"
       />
       <SelectRow

@@ -211,6 +211,26 @@ func (r *Registry) listGCRRepositories(
 	return res, nil
 }
 
+func (r *Registry) GetGARToken(repo repository.Repository) (*oauth2.Token, error) {
+	getTokenCache := r.getTokenCacheFunc(repo)
+
+	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get oauth2 access token
+	return gcp.GetBearerToken(
+		getTokenCache,
+		r.setTokenCacheFunc(repo),
+		"https://www.googleapis.com/auth/cloud-platform",
+	)
+}
+
 func (r *Registry) listGARRepositories(
 	repo repository.Repository,
 ) ([]*ptypes.RegistryRepository, error) {

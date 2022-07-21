@@ -249,7 +249,7 @@ export const SettingsForm: React.FC<{
           .filter((infra) => infra.kind == "gke")
           .sort(sortFunc);
         const matchedGCRInfras = data
-          .filter((infra) => infra.kind == "gcr")
+          .filter((infra) => infra.kind == "gcr" || infra.kind == "gar")
           .sort(sortFunc);
 
         if (matchedGKEInfras.length > 0) {
@@ -301,7 +301,8 @@ export const SettingsForm: React.FC<{
     infras: { kind: string; status: string }[]
   ) => {
     return !!infras.find(
-      (i) => ["docr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
+      (i) =>
+        ["docr", "gcr", "ecr", "gar"].includes(i.kind) && i.status === "created"
     );
   };
 
@@ -344,7 +345,7 @@ export const SettingsForm: React.FC<{
     let clusterProvisionResponse = null;
     if (snap.StateHandler.connected_registry.skip) {
       if (!hasRegistryProvisioned(infras)) {
-        registryProvisionResponse = await provisionGCR(integrationId);
+        registryProvisionResponse = await provisionGAR(integrationId);
       }
     }
     if (!hasClusterProvisioned(infras)) {
@@ -361,7 +362,7 @@ export const SettingsForm: React.FC<{
     });
   };
 
-  const provisionGCR = async (id: number) => {
+  const provisionGAR = async (id: number) => {
     // console.log("Provisioning GCR");
 
     // See if there's an infra for GKE that is in an errored state and the last operation
@@ -388,7 +389,7 @@ export const SettingsForm: React.FC<{
         const res = await api.provisionInfra(
           "<token>",
           {
-            kind: "gcr",
+            kind: "gar",
             gcp_integration_id: id,
             values: {},
           },

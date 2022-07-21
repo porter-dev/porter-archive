@@ -231,6 +231,15 @@ func (r *Registry) GetGARToken(repo repository.Repository) (*oauth2.Token, error
 	)
 }
 
+type garTokenSource struct {
+	reg  *Registry
+	repo repository.Repository
+}
+
+func (source *garTokenSource) Token() (*oauth2.Token, error) {
+	return source.reg.GetGARToken(source.repo)
+}
+
 func (r *Registry) listGARRepositories(
 	repo repository.Repository,
 ) ([]*ptypes.RegistryRepository, error) {
@@ -243,7 +252,10 @@ func (r *Registry) listGARRepositories(
 		return nil, err
 	}
 
-	client, err := artifactregistry.NewClient(context.Background(), option.WithCredentialsJSON(gcpInt.GCPKeyData))
+	client, err := artifactregistry.NewClient(context.Background(), option.WithTokenSource(&garTokenSource{
+		reg:  r,
+		repo: repo,
+	}), option.WithScopes("roles/artifactregistry.reader"))
 
 	if err != nil {
 		return nil, err
@@ -258,9 +270,11 @@ func (r *Registry) listGARRepositories(
 		return nil, err
 	}
 
+	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
+
 	for {
 		it := client.ListRepositories(context.Background(), &artifactregistrypb.ListRepositoriesRequest{
-			Parent:    gcpInt.GCPProjectID,
+			Parent:    fmt.Sprintf("projects/%s/locations/%s/repositories", gcpInt.GCPProjectID, location),
 			PageSize:  1000,
 			PageToken: nextToken,
 		})
@@ -275,8 +289,9 @@ func (r *Registry) listGARRepositories(
 			}
 
 			res = append(res, &ptypes.RegistryRepository{
-				Name: resp.GetName(),
-				URI:  parsedURL.Host + "/" + resp.GetName(),
+				Name:      resp.GetName(),
+				CreatedAt: resp.GetCreateTime().AsTime(),
+				URI:       parsedURL.Host + "/" + resp.GetName(),
 			})
 		}
 
@@ -737,7 +752,10 @@ func (r *Registry) createGARRepository(
 		return err
 	}
 
-	client, err := artifactregistry.NewClient(context.Background(), option.WithCredentialsJSON(gcpInt.GCPKeyData))
+	client, err := artifactregistry.NewClient(context.Background(), option.WithTokenSource(&garTokenSource{
+		reg:  r,
+		repo: repo,
+	}), option.WithScopes("roles/artifactregistry.writer"))
 
 	if err != nil {
 		return err
@@ -745,14 +763,22 @@ func (r *Registry) createGARRepository(
 
 	defer client.Close()
 
+	parsedURL, err := url.Parse(r.URL)
+
+	if err != nil {
+		return err
+	}
+
+	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
+
 	_, err = client.GetRepository(context.Background(), &artifactregistrypb.GetRepositoryRequest{
-		Name: name,
+		Name: fmt.Sprintf("projects/%s/locations/%s/repositories/%s", gcpInt.GCPProjectID, location, name),
 	})
 
 	if err != nil && strings.Contains(err.Error(), "not found") {
 		// create a new repository
 		_, err := client.CreateRepository(context.Background(), &artifactregistrypb.CreateRepositoryRequest{
-			Parent: gcpInt.GCPProjectID,
+			Parent: fmt.Sprintf("projects/%s/locations/%s/repositories", gcpInt.GCPProjectID, location),
 			Repository: &artifactregistrypb.Repository{
 				Name:   name,
 				Format: artifactregistrypb.Repository_DOCKER,
@@ -1162,9 +1188,17 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 	nextToken := ""
 	var res []*ptypes.Image
 
+	parsedURL, err := url.Parse(r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
+
 	for {
 		it := client.ListTags(context.Background(), &artifactregistrypb.ListTagsRequest{
-			Parent:    repoName,
+			Parent:    fmt.Sprintf("projects/%s/locations/%s/repositories/%s", gcpInt.GCPProjectID, location, repoName),
 			PageSize:  1000,
 			PageToken: nextToken,
 		})

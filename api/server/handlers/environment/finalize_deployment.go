@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/google/go-github/v41/github"
@@ -124,47 +123,19 @@ func (c *FinalizeDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	workflowRun, err := commonutils.GetLatestWorkflowRun(client, depl.RepoOwner, depl.RepoName,
-		fmt.Sprintf("porter_%s_env.yml", env.Name), depl.PRBranchFrom)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
+	commentBody := "## Porter Preview Environments\n"
 
 	if depl.Subdomain == "" {
-		depl.Subdomain = "*Ingress is disabled for this deployment*"
+		commentBody += fmt.Sprintf(
+			"✅ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) has been successfully deployed.",
+			depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA,
+		)
+	} else {
+		commentBody += fmt.Sprintf(
+			"✅ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) has been successfully deployed to %s",
+			depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, depl.Subdomain,
+		)
 	}
-
-	// write comment in PR
-	commentBody := fmt.Sprintf(
-		"## Porter Preview Environments\n"+
-			"✅ All changes deployed successfully\n"+
-			"||Deployment Information|\n"+
-			"|-|-|\n"+
-			"| Latest SHA | [`%s`](https://github.com/%s/%s/commit/%s) |\n"+
-			"| Live URL | %s |\n"+
-			"| Build Logs | %s |\n"+
-			"| Porter Deployments URL | %s/preview-environments/details/%s?environment_id=%d&project_id=%d&cluster=%s |",
-		depl.CommitSHA, depl.RepoOwner, depl.RepoName, depl.CommitSHA, depl.Subdomain, workflowRun.GetHTMLURL(),
-		c.Config().ServerConf.ServerURL, depl.Namespace, depl.EnvironmentID, project.ID, url.QueryEscape(cluster.Name),
-	)
-
-	// if len(request.SuccessfulResources) > 0 {
-	// 	commentBody += "\n#### Successfully deployed resources\n"
-
-	// 	for _, res := range request.SuccessfulResources {
-	// 		if res.ReleaseType == "job" {
-	// 			commentBody += fmt.Sprintf("- [`%s`](%s/jobs/%s/%s/%s?project_id=%d)\n",
-	// 				res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
-	// 				res.ReleaseName, project.ID)
-	// 		} else {
-	// 			commentBody += fmt.Sprintf("- [`%s`](%s/applications/%s/%s/%s?project_id=%d)\n",
-	// 				res.ReleaseName, c.Config().ServerConf.ServerURL, cluster.Name, depl.Namespace,
-	// 				res.ReleaseName, project.ID)
-	// 		}
-	// 	}
-	// }
 
 	err = createOrUpdateComment(client, c.Repo(), env.NewCommentsDisabled, depl, github.String(commentBody))
 

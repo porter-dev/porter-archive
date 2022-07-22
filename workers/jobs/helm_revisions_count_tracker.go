@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -275,9 +274,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 							err = agent.DeleteReleaseRevision(rev.Name, rev.Version)
 
-							if err != nil && strings.Contains(err.Error(), "Unauthorized") {
-
-							} else if err != nil {
+							if err != nil {
 								log.Printf("error deleting revision %d of release %s in namespace %s of cluster ID %d: %v",
 									rev.Version, rel.Name, ns.Name, cluster.ID, err)
 								continue

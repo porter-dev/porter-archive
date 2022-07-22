@@ -2,22 +2,21 @@ import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
 import TabSelector from "components/TabSelector";
 import TitleSection from "components/TitleSection";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import backArrow from "assets/back_arrow.png";
-import { useParams } from "react-router";
+import { useParams, useRouteMatch } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
 import ChartList from "../../chart/ChartList";
-import SortSelector from "../../SortSelector";
 import Status from "../components/Status";
 import {
+  Action,
   Br,
   InfoWrapper,
   LastDeployed,
-  LineBreak,
   NamespaceTag,
   SepDot,
   Text,
@@ -29,12 +28,16 @@ import RevisionList from "./_RevisionList";
 import SourceConfig from "./_SourceConfig";
 import { NavLink } from "react-router-dom";
 import Settings from "./components/Settings";
+import { ExpandedStackStore } from "./Store";
+import DynamicLink from "components/DynamicLink";
 
 const ExpandedStack = () => {
-  const { namespace, stack_id } = useParams<{
+  const { namespace } = useParams<{
     namespace: string;
     stack_id: string;
   }>();
+
+  const { stack, refreshStack } = useContext(ExpandedStackStore);
 
   const { pushFiltered } = useRouting();
 
@@ -42,37 +45,14 @@ const ExpandedStack = () => {
     Context
   );
 
-  const [stack, setStack] = useState<Stack>();
-  const [isLoading, setIsLoading] = useState(true);
+  const { url } = useRouteMatch();
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTab, setCurrentTab] = useState("apps");
 
-  const [currentRevision, setCurrentRevision] = useState<FullStackRevision>();
-
-  const getStack = async () => {
-    setIsLoading(true);
-    try {
-      const newStack = await api
-        .getStack<Stack>(
-          "<token>",
-          {},
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-            stack_id: stack_id,
-            namespace,
-          }
-        )
-        .then((res) => res.data);
-
-      setStack(newStack);
-      setCurrentRevision(newStack.latest_revision);
-      setIsLoading(false);
-    } catch (error) {
-      setCurrentError(error);
-      pushFiltered("/stacks", []);
-    }
-  };
+  const [currentRevision, setCurrentRevision] = useState<FullStackRevision>(
+    () => stack.latest_revision
+  );
 
   const handleDelete = () => {
     setIsDeleting(true);
@@ -96,12 +76,8 @@ const ExpandedStack = () => {
       });
   };
 
-  useEffect(() => {
-    getStack();
-  }, [stack_id]);
-
-  if (isLoading) {
-    return <Loading />;
+  if (stack === null) {
+    return null;
   }
 
   if (isDeleting) {
@@ -163,7 +139,7 @@ const ExpandedStack = () => {
         stackId={stack.id}
         stackNamespace={namespace}
         onRevisionClick={(revision) => setCurrentRevision(revision)}
-        onRollback={() => getStack()}
+        onRollback={() => refreshStack()}
       ></RevisionList>
       <Br />
       <TabSelector
@@ -175,6 +151,12 @@ const ExpandedStack = () => {
             component: (
               <>
                 <Gap></Gap>
+                <Action.Row>
+                  <Action.Button to={`${url}/new-app-resource`}>
+                    <i className="material-icons">add</i>
+                    Create App Resource
+                  </Action.Button>
+                </Action.Row>
                 {currentRevision.id !== stack.latest_revision.id ? (
                   <ChartListWrapper>
                     <Placeholder>
@@ -209,7 +191,7 @@ const ExpandedStack = () => {
                   namespace={namespace}
                   revision={currentRevision}
                   readOnly={stack.latest_revision.id !== currentRevision.id}
-                  onSourceConfigUpdate={() => getStack()}
+                  onSourceConfigUpdate={() => refreshStack()}
                 ></SourceConfig>
               </>
             ),
@@ -220,6 +202,12 @@ const ExpandedStack = () => {
             component: (
               <>
                 <Gap></Gap>
+                <Action.Row>
+                  <Action.Button to={`${url}/new-env-group`}>
+                    <i className="material-icons">add</i>
+                    Create Env Group
+                  </Action.Button>
+                </Action.Row>
                 <EnvGroups stack={stack} />
               </>
             ),

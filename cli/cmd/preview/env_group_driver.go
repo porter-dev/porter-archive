@@ -92,6 +92,7 @@ func (d *EnvGroupDriver) Apply(resource *models.Resource) (*models.Resource, err
 
 			envGroupResp = &types.GetEnvGroupResponse{
 				EnvGroup: &types.EnvGroup{
+					Name:      newEnvGroup.Name,
 					Variables: newEnvGroup.Variables,
 				},
 			}

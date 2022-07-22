@@ -599,6 +599,14 @@ tabs:
       variable: additional_private_subnets
       settings:
         default: false
+  - name: subnet_multiplicity
+    show_if: additional_private_subnets
+    contents:
+    - type: number-input
+      label: "Multiplicity of the subnet within each AZ."
+      variable: additional_private_subnets_multiplicity
+      settings:
+        default: 3
   - name: nginx_settings
     contents:
     - type: heading
@@ -606,6 +614,15 @@ tabs:
     - type: checkbox
       variable: disable_nginx_load_balancer
       label: Disable NGINX load balancer and expose NGINX only on a cluster IP address.
+      settings:
+        default: false
+  - name: prometheus_settings
+    contents:
+    - type: heading
+      label: Prometheus Settings
+    - type: checkbox
+      variable: additional_prometheus_node_group
+      label: Add an additional prometheus node group to ensure monitoring stability.
       settings:
         default: false
 `

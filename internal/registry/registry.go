@@ -19,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
+	v1artifactregistry "google.golang.org/api/artifactregistry/v1"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1beta2"
@@ -274,7 +275,7 @@ func (r *Registry) listGARRepositories(
 
 	for {
 		it := client.ListRepositories(context.Background(), &artifactregistrypb.ListRepositoriesRequest{
-			Parent:    fmt.Sprintf("projects/%s/locations/%s/repositories", gcpInt.GCPProjectID, location),
+			Parent:    fmt.Sprintf("projects/%s/locations/%s", gcpInt.GCPProjectID, location),
 			PageSize:  1000,
 			PageToken: nextToken,
 		})
@@ -288,10 +289,13 @@ func (r *Registry) listGARRepositories(
 				return nil, err
 			}
 
+			repoSlice := strings.Split(resp.GetName(), "/")
+			repoName := repoSlice[len(repoSlice)-1]
+
 			res = append(res, &ptypes.RegistryRepository{
 				Name:      resp.GetName(),
 				CreatedAt: resp.GetCreateTime().AsTime(),
-				URI:       parsedURL.Host + "/" + resp.GetName(),
+				URI:       parsedURL.Host + "/" + gcpInt.GCPProjectID + "/" + repoName,
 			})
 		}
 
@@ -755,7 +759,7 @@ func (r *Registry) createGARRepository(
 	client, err := artifactregistry.NewClient(context.Background(), option.WithTokenSource(&garTokenSource{
 		reg:  r,
 		repo: repo,
-	}), option.WithScopes("roles/artifactregistry.writer"))
+	}), option.WithScopes("roles/artifactregistry.admin"))
 
 	if err != nil {
 		return err
@@ -763,7 +767,7 @@ func (r *Registry) createGARRepository(
 
 	defer client.Close()
 
-	parsedURL, err := url.Parse(r.URL)
+	parsedURL, err := url.Parse("https://" + r.URL)
 
 	if err != nil {
 		return err
@@ -778,9 +782,9 @@ func (r *Registry) createGARRepository(
 	if err != nil && strings.Contains(err.Error(), "not found") {
 		// create a new repository
 		_, err := client.CreateRepository(context.Background(), &artifactregistrypb.CreateRepositoryRequest{
-			Parent: fmt.Sprintf("projects/%s/locations/%s/repositories", gcpInt.GCPProjectID, location),
+			Parent:       fmt.Sprintf("projects/%s/locations/%s", gcpInt.GCPProjectID, location),
+			RepositoryId: name,
 			Repository: &artifactregistrypb.Repository{
-				Name:   name,
 				Format: artifactregistrypb.Repository_DOCKER,
 			},
 		})
@@ -1177,18 +1181,19 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 		return nil, err
 	}
 
-	client, err := artifactregistry.NewClient(context.Background(), option.WithCredentialsJSON(gcpInt.GCPKeyData))
+	svc, err := v1artifactregistry.NewService(context.Background(), option.WithTokenSource(&garTokenSource{
+		reg:  r,
+		repo: repo,
+	}), option.WithScopes("roles/artifactregistry.reader"))
 
 	if err != nil {
 		return nil, err
 	}
 
-	defer client.Close()
-
 	nextToken := ""
 	var res []*ptypes.Image
 
-	parsedURL, err := url.Parse(r.URL)
+	parsedURL, err := url.Parse("https://" + r.URL)
 
 	if err != nil {
 		return nil, err
@@ -1196,33 +1201,34 @@ func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([
 
 	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
 
+	dockerSvc := v1artifactregistry.NewProjectsLocationsRepositoriesDockerImagesService(svc)
+
 	for {
-		it := client.ListTags(context.Background(), &artifactregistrypb.ListTagsRequest{
-			Parent:    fmt.Sprintf("projects/%s/locations/%s/repositories/%s", gcpInt.GCPProjectID, location, repoName),
-			PageSize:  1000,
-			PageToken: nextToken,
-		})
+		resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
+			gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
 
-		for {
-			resp, err := it.Next()
-
-			if err == iterator.Done {
-				break
-			} else if err != nil {
-				return nil, err
-			}
-
-			res = append(res, &ptypes.Image{
-				RepositoryName: repoName,
-				Tag:            resp.Name,
-			})
+		if err != nil {
+			return nil, err
 		}
 
-		if it.PageInfo().Token == "" {
+		for _, image := range resp.DockerImages {
+			uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
+
+			for _, tag := range image.Tags {
+				res = append(res, &ptypes.Image{
+					RepositoryName: repoName,
+					Tag:            tag,
+					PushedAt:       &uploadTime,
+					Digest:         strings.Split(image.Name, "@")[1],
+				})
+			}
+		}
+
+		if resp.NextPageToken == "" {
 			break
 		}
 
-		nextToken = it.PageInfo().Token
+		nextToken = resp.NextPageToken
 	}
 
 	return res, nil

@@ -1476,7 +1476,11 @@ func (r *Registry) GetDockerConfigJSON(
 	}
 
 	if r.GCPIntegrationID != 0 {
-		conf, err = r.getGCRDockerConfigFile(repo)
+		if strings.Contains(r.URL, "pkg.dev") {
+			conf, err = r.getGARDockerConfigFile(repo)
+		} else {
+			conf, err = r.getGCRDockerConfigFile(repo)
+		}
 	}
 
 	if r.DOIntegrationID != 0 {
@@ -1556,6 +1560,37 @@ func (r *Registry) getECRDockerConfigFile(
 }
 
 func (r *Registry) getGCRDockerConfigFile(
+	repo repository.Repository,
+) (*configfile.ConfigFile, error) {
+	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	key := r.URL
+
+	if !strings.Contains(key, "http") {
+		key = "https://" + key
+	}
+
+	parsedURL, _ := url.Parse(key)
+
+	return &configfile.ConfigFile{
+		AuthConfigs: map[string]types.AuthConfig{
+			parsedURL.Host: {
+				Username: "_json_key",
+				Password: string(gcp.GCPKeyData),
+				Auth:     generateAuthToken("_json_key", string(gcp.GCPKeyData)),
+			},
+		},
+	}, nil
+}
+
+func (r *Registry) getGARDockerConfigFile(
 	repo repository.Repository,
 ) (*configfile.ConfigFile, error) {
 	gcp, err := repo.GCPIntegration().ReadGCPIntegration(

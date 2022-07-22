@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/pkg/logger"
 	"github.com/porter-dev/porter/provisioner/integrations/storage/s3"
+	"github.com/porter-dev/porter/workers/utils"
 
 	"github.com/porter-dev/porter/ee/integrations/vault"
 	"github.com/porter-dev/porter/internal/helm"
@@ -191,13 +193,13 @@ func (t *helmRevisionsCountTracker) Run() error {
 				log.Printf("fetched %d namespaces for cluster ID %d", len(namespaces.Items), cluster.ID)
 
 				for _, ns := range namespaces.Items {
-					agent, err := helm.GetAgentOutOfClusterConfig(&helm.Form{
+					agent, err := utils.NewRetryHelmAgent(&helm.Form{
 						Cluster:                   cluster,
 						Namespace:                 ns.Name,
 						Repo:                      t.repo,
 						DigitalOceanOAuth:         t.doConf,
 						AllowInClusterConnections: false,
-					}, logger.New(true, os.Stdout))
+					}, logger.New(true, os.Stdout), 3, time.Second)
 
 					if err != nil {
 						log.Printf("error fetching helm client for namespace %s in cluster ID %d: %v. "+
@@ -219,7 +221,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 					if err != nil {
 						log.Printf("error fetching releases for namespace %s in cluster ID %d: %v. skipping namespace ...",
-							len(releases), ns.Name, cluster.ID, err)
+							ns.Name, cluster.ID, err)
 						continue
 					}
 
@@ -273,7 +275,9 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 							err = agent.DeleteReleaseRevision(rev.Name, rev.Version)
 
-							if err != nil {
+							if err != nil && strings.Contains(err.Error(), "Unauthorized") {
+
+							} else if err != nil {
 								log.Printf("error deleting revision %d of release %s in namespace %s of cluster ID %d: %v",
 									rev.Version, rel.Name, ns.Name, cluster.ID, err)
 								continue

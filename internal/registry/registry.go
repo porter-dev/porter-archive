@@ -1604,6 +1604,13 @@ func (r *Registry) getGARDockerConfigFile(
 
 	key := r.URL
 
+	tok, err := gcp.GetBearerToken(r.getTokenCacheFunc(repo), r.setTokenCacheFunc(repo),
+		"https://www.googleapis.com/auth/cloud-platform")
+
+	if err != nil {
+		return nil, err
+	}
+
 	if !strings.Contains(key, "http") {
 		key = "https://" + key
 	}
@@ -1613,9 +1620,9 @@ func (r *Registry) getGARDockerConfigFile(
 	return &configfile.ConfigFile{
 		AuthConfigs: map[string]types.AuthConfig{
 			parsedURL.Host: {
-				Username: "_json_key",
-				Password: string(gcp.GCPKeyData),
-				Auth:     generateAuthToken("_json_key", string(gcp.GCPKeyData)),
+				Username: "oauth2accesstoken",
+				Password: tok.AccessToken,
+				Auth:     generateAuthToken("oauth2accesstoken", tok.AccessToken),
 			},
 		},
 	}, nil

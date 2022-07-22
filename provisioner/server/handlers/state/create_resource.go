@@ -110,6 +110,8 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		_, err = createDOCRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraGCR):
 		_, err = createGCRRegistry(c.Config, infra, operation, req.Output)
+	case string(types.InfraGAR):
+		_, err = createGARRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraACR):
 		_, err = createACRRegistry(c.Config, infra, operation, req.Output)
 	}
@@ -277,7 +279,12 @@ func createCluster(config *config.Config, infra *models.Infra, operation *models
 		}
 	}
 
-	cluster.Name = output["cluster_name"].(string)
+	// only update the cluster name if this is during creation - we don't want to overwrite the cluster name
+	// which may have been manually set
+	if isNotFound {
+		cluster.Name = output["cluster_name"].(string)
+	}
+
 	cluster.Server = output["cluster_endpoint"].(string)
 	cluster.CertificateAuthorityData = caData
 
@@ -357,6 +364,18 @@ func createGCRRegistry(config *config.Config, infra *models.Infra, operation *mo
 		InfraID:          infra.ID,
 		URL:              output["url"].(string),
 		Name:             "gcr-registry",
+	}
+
+	return config.Repo.Registry().CreateRegistry(reg)
+}
+
+func createGARRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
+	reg := &models.Registry{
+		ProjectID:        infra.ProjectID,
+		GCPIntegrationID: infra.GCPIntegrationID,
+		InfraID:          infra.ID,
+		URL:              output["url"].(string),
+		Name:             "gar-registry",
 	}
 
 	return config.Repo.Registry().CreateRegistry(reg)

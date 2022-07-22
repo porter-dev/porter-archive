@@ -9,7 +9,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: String to echo
     - type: string-input
@@ -27,7 +27,7 @@ tabs:
   label: Main
   sections:
   - name: heading
-    contents: 
+    contents:
     - type: heading
       label: S3 Settings
   - name: bucket_name
@@ -48,7 +48,7 @@ tabs:
   label: Main
   sections:
   - name: heading
-    contents: 
+    contents:
     - type: heading
       label: Database Settings
   - name: user
@@ -110,7 +110,7 @@ tabs:
         - label: "Postgres 13"
           value: postgres13
   - name: pg-9-versions
-    show_if: 
+    show_if:
       is: "postgres9"
       variable: db_family
     contents:
@@ -165,7 +165,7 @@ tabs:
         - label: "v9.6.23"
           value: "9.6.23"
   - name: pg-10-versions
-    show_if: 
+    show_if:
       is: "postgres10"
       variable: db_family
     contents:
@@ -212,7 +212,7 @@ tabs:
         - label: "v10.18"
           value: "10.18"
   - name: pg-11-versions
-    show_if: 
+    show_if:
       is: "postgres11"
       variable: db_family
     contents:
@@ -249,7 +249,7 @@ tabs:
         - label: "v11.13"
           value: "11.13"
   - name: pg-12-versions
-    show_if: 
+    show_if:
       is: "postgres12"
       variable: db_family
     contents:
@@ -276,7 +276,7 @@ tabs:
         - label: "v12.10"
           value: "12.10"
   - name: pg-13-versions
-    show_if: 
+    show_if:
       is: "postgres13"
       variable: db_family
     contents:
@@ -326,7 +326,7 @@ tabs:
         default: 20
     - type: checkbox
       variable: db_storage_encrypted
-      label: Enable storage encryption for the database. 
+      label: Enable storage encryption for the database.
       settings:
         default: false
 - name: advanced
@@ -353,7 +353,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: ECR Configuration
     - type: string-input
@@ -371,7 +371,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: EKS Configuration
     - type: select
@@ -513,7 +513,7 @@ tabs:
       settings:
         default: true
   - name: aws_auth_warning
-    show_if: 
+    show_if:
       not: manage_aws_auth_configmap
     contents:
     - type: subtitle
@@ -635,7 +635,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: GCR Configuration
     - type: select
@@ -698,6 +698,93 @@ tabs:
           value: us-west4
 `
 
+const garForm = `name: GAR
+hasSource: false
+includeHiddenFields: true
+tabs:
+- name: main
+  label: Configuration
+  sections:
+  - name: section_one
+    contents:
+    - type: heading
+      label: GAR Configuration
+    - type: select
+      label: 📍 GCP Region
+      variable: gcp_region
+      settings:
+        default: us-central1
+        options:
+        - label: asia-east1
+          value: asia-east1
+        - label: asia-east2
+          value: asia-east2
+        - label: asia-northeast1
+          value: asia-northeast1
+        - label: asia-northeast2
+          value: asia-northeast2
+        - label: asia-northeast3
+          value: asia-northeast3
+        - label: asia-south1
+          value: asia-south1
+        - label: asia-south2
+          value: asia-south2
+        - label: asia-southeast1
+          value: asia-southeast1
+        - label: asia-southeast2
+          value: asia-southeast2
+        - label: australia-southeast1
+          value: australia-southeast1
+        - label: australia-southeast2
+          value: australia-southeast2
+        - label: europe-central2
+          value: europe-central2
+        - label: europe-north1
+          value: europe-north1
+        - label: europe-southwest1
+          value: europe-southwest1
+        - label: europe-west1
+          value: europe-west1
+        - label: europe-west2
+          value: europe-west2
+        - label: europe-west3
+          value: europe-west3
+        - label: europe-west4
+          value: europe-west4
+        - label: europe-west6
+          value: europe-west6
+        - label: europe-west8
+          value: europe-west8
+        - label: europe-west9
+          value: europe-west9
+        - label: northamerica-northeast1
+          value: northamerica-northeast1
+        - label: northamerica-northeast2
+          value: northamerica-northeast2
+        - label: southamerica-east1
+          value: southamerica-east1
+        - label: southamerica-west1
+          value: southamerica-west1
+        - label: us-central1
+          value: us-central1
+        - label: us-east1
+          value: us-east1
+        - label: us-east4
+          value: us-east4
+        - label: us-east5
+          value: us-east5
+        - label: us-south1
+          value: us-south1
+        - label: us-west1
+          value: us-west1
+        - label: us-west2
+          value: us-west2
+        - label: us-west3
+          value: us-west3
+        - label: us-west4
+          value: us-west4
+`
+
 const gkeForm = `name: GKE
 hasSource: false
 includeHiddenFields: true
@@ -706,7 +793,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: GKE Configuration
     - type: select
@@ -787,7 +874,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: DOCR Configuration
     - type: select
@@ -815,7 +902,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: DOKS Configuration
     - type: select
@@ -865,7 +952,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: ACR Configuration
     - type: select
@@ -900,7 +987,7 @@ tabs:
   label: Configuration
   sections:
   - name: section_one
-    contents: 
+    contents:
     - type: heading
       label: AKS Configuration
     - type: select

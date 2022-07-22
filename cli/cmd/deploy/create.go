@@ -411,17 +411,15 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 	var regID uint
 
 	for _, reg := range registries {
-		if c.CreateOpts.RegistryURL != "" {
-			if c.CreateOpts.RegistryURL == reg.URL {
-				regID = reg.ID
-				if c.CreateOpts.RepoSuffix != "" {
-					imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, c.CreateOpts.RepoSuffix)
-				} else {
-					imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
-				}
-
-				break
+		if c.CreateOpts.RegistryURL != "" && c.CreateOpts.RegistryURL == reg.URL {
+			regID = reg.ID
+			if c.CreateOpts.RepoSuffix != "" {
+				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, c.CreateOpts.RepoSuffix)
+			} else {
+				imageURI = fmt.Sprintf("%s/%s-%s", reg.URL, name, namespace)
 			}
+
+			break
 		} else if reg.URL != "" {
 			regID = reg.ID
 
@@ -433,6 +431,11 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 
 			break
 		}
+	}
+
+	if strings.Contains(imageURI, "pkg.dev") {
+		repoSlice := strings.Split(imageURI, "/")
+		imageURI = fmt.Sprintf("%s/%s", imageURI, repoSlice[len(repoSlice)-1])
 	}
 
 	return regID, imageURI, nil

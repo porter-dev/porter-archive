@@ -23,6 +23,7 @@ const (
 	InfraECR  InfraKind = "ecr"
 	InfraEKS  InfraKind = "eks"
 	InfraGCR  InfraKind = "gcr"
+	InfraGAR  InfraKind = "gar"
 	InfraGKE  InfraKind = "gke"
 	InfraDOCR InfraKind = "docr"
 	InfraDOKS InfraKind = "doks"

@@ -1,9 +1,11 @@
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
 import UploadArea from "components/form-components/UploadArea";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
+import { GCP_REGION_OPTIONS } from "main/home/onboarding/constants";
 import { OFState } from "main/home/onboarding/state";
 import { StateHandler } from "main/home/onboarding/state/StateHandler";
 import { GCPRegistryConfig } from "main/home/onboarding/types";
@@ -290,6 +292,139 @@ export const SettingsForm: React.FC<{
         placeholder="ex: gcr.io/skynet-dev-172969"
         width="100%"
         isRequired={true}
+      />
+      <Br />
+      <SaveButton
+        text="Continue"
+        disabled={false}
+        onClick={submit}
+        makeFlush={true}
+        clearPosition={true}
+        status={buttonStatus}
+        statusPosition={"right"}
+      />
+    </>
+  );
+};
+
+export const GARegistryConfig: React.FC<{
+  nextFormStep: (data: Partial<GCPRegistryConfig>) => void;
+  project: any;
+}> = ({ nextFormStep, project }) => {
+  const [buttonStatus, setButtonStatus] = useState("");
+  const [registryName, setRegistryName] = useState("");
+  const [region, setRegion] = useState("us-east1");
+
+  const snap = useSnapshot(OFState);
+
+  const validate = () => {
+    if (!registryName) {
+      return {
+        hasError: true,
+        error: "Registry Name cannot be empty",
+      };
+    }
+    if (!region) {
+      return {
+        hasError: true,
+        error: "Region is missing",
+      };
+    }
+
+    if (!GCP_REGION_OPTIONS.map((val) => val.value).includes(region)) {
+      return {
+        hasError: true,
+        error: "Region is invalid",
+      };
+    }
+
+    return { hasError: false, error: "" };
+  };
+
+  const submit = async () => {
+    const validation = validate();
+
+    if (validation.hasError) {
+      setButtonStatus(validation.error);
+      return;
+    }
+
+    setButtonStatus("loading");
+
+    let gcpProjectId = NaN;
+
+    try {
+      const gcp_integration = await api
+        .getGCPIntegration("<token>", {}, { project_id: project.id })
+        .then((res) => {
+          let integrations = res.data;
+
+          let lastUsed = integrations.find((i: any) => {
+            return (
+              i.id === snap.StateHandler?.connected_registry?.credentials?.id
+            );
+          });
+          return lastUsed;
+        });
+
+      if (gcp_integration) {
+        gcpProjectId = gcp_integration.gpc_project_id;
+      }
+    } catch (error) {
+      setButtonStatus("Couldn't get the project id from the GCP integration.");
+      return;
+    }
+
+    const registryUrl = `${region}-docker.pkg.dev/${gcpProjectId}`;
+
+    try {
+      const data = await api
+        .connectGCRRegistry(
+          "<token>",
+          {
+            name: registryName,
+            gcp_integration_id:
+              snap.StateHandler.connected_registry.credentials.id,
+            url: registryUrl,
+          },
+          {
+            id: project.id,
+          }
+        )
+        .then((res) => res?.data);
+      nextFormStep({
+        settings: {
+          registry_connection_id: data.id,
+          gcr_url: registryUrl,
+          registry_name: registryName,
+        },
+      });
+    } catch (error) {
+      setButtonStatus("Couldn't connect registry.");
+    }
+  };
+  return (
+    <>
+      <Helper>Porter will use this registry to store your images.</Helper>
+      <InputRow
+        type="text"
+        value={registryName}
+        setValue={(name: string) => setRegistryName(name)}
+        isRequired={true}
+        label="🏷️ Registry Name"
+        placeholder="ex: paper-straw"
+        width="100%"
+      />
+      <SelectRow
+        options={GCP_REGION_OPTIONS}
+        width="100%"
+        value={region}
+        scrollBuffer={true}
+        dropdownMaxHeight="240px"
+        setActiveValue={(x: string) => {
+          setRegion(x);
+        }}
+        label="📍 GCP Region"
       />
       <Br />
       <SaveButton

@@ -608,6 +608,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	//  GET /api/projects/{project_id}/registries/gar/token -> registry.NewRegistryGetGARTokenHandler
+	getGARTokenEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/registries/gar/token",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getGARTokenHandler := registry.NewRegistryGetGARTokenHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getGARTokenEndpoint,
+		Handler:  getGARTokenHandler,
+		Router:   r,
+	})
+
 	//  GET /api/projects/{project_id}/registries/acr/token -> registry.NewRegistryGetACRTokenHandler
 	getACRTokenEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

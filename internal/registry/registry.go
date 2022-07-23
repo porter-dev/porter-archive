@@ -1476,11 +1476,7 @@ func (r *Registry) GetDockerConfigJSON(
 	}
 
 	if r.GCPIntegrationID != 0 {
-		if strings.Contains(r.URL, "pkg.dev") {
-			conf, err = r.getGARDockerConfigFile(repo)
-		} else {
-			conf, err = r.getGCRDockerConfigFile(repo)
-		}
+		conf, err = r.getGCRDockerConfigFile(repo)
 	}
 
 	if r.DOIntegrationID != 0 {
@@ -1585,44 +1581,6 @@ func (r *Registry) getGCRDockerConfigFile(
 				Username: "_json_key",
 				Password: string(gcp.GCPKeyData),
 				Auth:     generateAuthToken("_json_key", string(gcp.GCPKeyData)),
-			},
-		},
-	}, nil
-}
-
-func (r *Registry) getGARDockerConfigFile(
-	repo repository.Repository,
-) (*configfile.ConfigFile, error) {
-	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
-		r.ProjectID,
-		r.GCPIntegrationID,
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	key := r.URL
-
-	tok, err := gcp.GetBearerToken(r.getTokenCacheFunc(repo), r.setTokenCacheFunc(repo),
-		"https://www.googleapis.com/auth/cloud-platform")
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !strings.Contains(key, "http") {
-		key = "https://" + key
-	}
-
-	parsedURL, _ := url.Parse(key)
-
-	return &configfile.ConfigFile{
-		AuthConfigs: map[string]types.AuthConfig{
-			parsedURL.Host: {
-				Username: "oauth2accesstoken",
-				Password: tok.AccessToken,
-				Auth:     generateAuthToken("oauth2accesstoken", tok.AccessToken),
 			},
 		},
 	}, nil

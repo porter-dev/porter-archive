@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
@@ -515,6 +516,36 @@ func (d *DockerSecretsPostRenderer) isRegistryNative(regName string) bool {
 		}
 
 		isNative = parsedARN.AccountID == eksAccountID && parsedARN.Region == eksRegion
+	} else if strings.Contains(regName, "pkg.dev") && d.Cluster.AuthMechanism == models.GCP {
+		// get the project id of the cluster
+		gcpInt, err := d.Repo.GCPIntegration().ReadGCPIntegration(d.Cluster.ProjectID, d.Cluster.GCPIntegrationID)
+
+		if err != nil {
+			return false
+		}
+
+		gkeProjectID, err := integrations.GCPProjectIDFromJSON(gcpInt.GCPKeyData)
+
+		if err != nil {
+			return false
+		}
+
+		regURL := regName
+
+		if !strings.HasSuffix(regURL, "https://") {
+			regURL = "https://" + regURL
+		}
+
+		parsedURL, err := url.Parse(regURL)
+
+		if err != nil {
+			return false
+		}
+
+		// parse the project id of the gcr url
+		regNameSlice := strings.Split(parsedURL.Path, "/")
+
+		isNative = gkeProjectID == regNameSlice[0]
 	}
 
 	return isNative

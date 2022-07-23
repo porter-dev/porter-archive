@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -105,6 +106,18 @@ func (a *AuthGetter) GetGARCredentials(serverURL string, projID uint) (user stri
 	}
 
 	cachedEntry := a.Cache.Get(serverURL)
+
+	if !strings.HasPrefix(serverURL, "https://") {
+		serverURL = "https://" + serverURL
+	}
+
+	parsedURL, err := url.Parse(serverURL)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	serverURL = parsedURL.Host + "/" + strings.Split(parsedURL.Path, "/")[0]
 
 	var token string
 

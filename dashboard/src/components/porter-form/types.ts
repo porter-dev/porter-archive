@@ -146,6 +146,11 @@ export interface TextAreaField extends GenericInputField {
   };
 }
 
+export interface UrlLinkField extends GenericInputField {
+  type: "url-link";
+  label: string;
+}
+
 export type FormField =
   | HeadingField
   | SubtitleField
@@ -159,7 +164,8 @@ export type FormField =
   | VeleroBackupField
   | VariableField
   | CronField
-  | TextAreaField;
+  | TextAreaField
+  | UrlLinkField;
 
 export interface ShowIfAnd {
   and: ShowIf[];

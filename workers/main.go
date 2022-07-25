@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -124,14 +125,21 @@ func httpService() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Heartbeat("/ping"))
-	r.Use(middleware.AllowContentType("application/json"))
+	// r.Use(middleware.AllowContentType("application/json"))
 
 	r.Mount("/debug", middleware.Profiler())
 
 	log.Println("setting up HTTP POST endpoint to enqueue jobs")
 
 	r.Post("/enqueue/{id}", func(w http.ResponseWriter, r *http.Request) {
-		job := getJob(chi.URLParam(r, "id"))
+		req := make(map[string]interface{})
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Printf("error converting body to json: %v", err)
+			return
+		}
+
+		job := getJob(chi.URLParam(r, "id"), req)
 
 		if job == nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -145,7 +153,7 @@ func httpService() http.Handler {
 	return r
 }
 
-func getJob(id string) worker.Job {
+func getJob(id string, input map[string]interface{}) worker.Job {
 	if id == "helm-revisions-count-tracker" {
 		newJob, err := jobs.NewHelmRevisionsCountTracker(dbConn, time.Now().UTC(), &jobs.HelmRevisionsCountTrackerOpts{
 			DBConf:             &envDecoder.DBConf,
@@ -162,6 +170,22 @@ func getJob(id string) worker.Job {
 
 		if err != nil {
 			log.Printf("error creating job with ID: helm-revisions-count-tracker. Error: %v", err)
+			return nil
+		}
+
+		return newJob
+	} else if id == "nginx-recommender" {
+		newJob, err := jobs.NewNGINXRecommender(dbConn, time.Now().UTC(), &jobs.NGINXRecommenderOpts{
+			DBConf:         &envDecoder.DBConf,
+			DOClientID:     envDecoder.DOClientID,
+			DOClientSecret: envDecoder.DOClientSecret,
+			DOScopes:       []string{"read", "write"},
+			ServerURL:      envDecoder.ServerURL,
+			Input:          input,
+		})
+
+		if err != nil {
+			log.Printf("error creating job with ID: nginx-recommender. Error: %v", err)
 			return nil
 		}
 

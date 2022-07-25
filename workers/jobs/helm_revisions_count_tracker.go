@@ -226,6 +226,8 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 					log.Printf("fetched %d releases for namespace %s in cluster ID %d", len(releases), ns.Name, cluster.ID)
 
+					time.Sleep(time.Minute * 15)
+
 					for _, rel := range releases {
 						revisions, err := agent.GetReleaseHistory(rel.Name)
 

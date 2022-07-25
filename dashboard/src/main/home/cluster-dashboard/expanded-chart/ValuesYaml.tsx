@@ -64,6 +64,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         "<token>",
         {
           values: valuesString,
+          latest_revision: this.props.currentChart.version,
         },
         {
           id: currentProject.id,

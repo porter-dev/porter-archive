@@ -113,6 +113,11 @@ const _RevisionList = ({
           <Td>{revision.id}</Td>
           <Td>{readableDate(revision.created_at)}</Td>
           <Td>
+            <RevisionStatusWrapper status={revision.status}>
+              {revision.status}
+            </RevisionStatusWrapper>
+          </Td>
+          <Td>
             <RollbackButton
               disabled={isCurrent}
               onClick={(e) => {
@@ -145,7 +150,7 @@ const _RevisionList = ({
             {currentRevision.id === latestRevision.id
               ? `Current Revision`
               : `Previewing Revision (Not Deployed)`}{" "}
-              - <Revision>No. {currentRevision.id}</Revision>
+            - <Revision>No. {currentRevision.id}</Revision>
             <i className="material-icons">arrow_drop_down</i>
           </RevisionPreview>
         </RevisionHeader>
@@ -155,6 +160,7 @@ const _RevisionList = ({
               <Tr disableHover={true}>
                 <Th>Revision No.</Th>
                 <Th>Timestamp</Th>
+                <Th>Status</Th>
                 <Th>Rollback</Th>
               </Tr>
               {revisionList()}
@@ -296,4 +302,19 @@ const LoadingOverlay = styled.div`
   width: 100%;
   height: 100%;
   position: absolute;
+`;
+
+const RevisionStatusWrapper = styled.span<{ status: StackRevision["status"] }>`
+  text-transform: capitalize;
+  color: ${(props) => {
+    if (props.status === "deployed") {
+      return "#00b300";
+    }
+    if (props.status === "failed") {
+      return "#ff0000";
+    }
+    return "#ffffff";
+  }};
+  font-weight: 500;
+  font-size: 13px;
 `;

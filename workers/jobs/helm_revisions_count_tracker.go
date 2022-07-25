@@ -226,8 +226,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 					log.Printf("fetched %d releases for namespace %s in cluster ID %d", len(releases), ns.Name, cluster.ID)
 
-					time.Sleep(time.Minute * 15)
-
 					for _, rel := range releases {
 						revisions, err := agent.GetReleaseHistory(rel.Name)
 
@@ -248,6 +246,8 @@ func (t *helmRevisionsCountTracker) Run() error {
 
 						// sort revisions from newest to oldest
 						releaseutil.Reverse(revisions, releaseutil.SortByRevision)
+
+						time.Sleep(time.Minute * 15)
 
 						for i := 100; i < len(revisions); i += 1 {
 							rev := revisions[i]

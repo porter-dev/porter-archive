@@ -97,6 +97,11 @@ export const integrationList: any = {
     icon: gcp,
     label: "GCP",
   },
+  gar: {
+    icon:
+      "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+    label: "Google Artifact Registry (GAR)",
+  },
   do: {
     icon: digitalOcean,
     label: "DigitalOcean",

@@ -64,6 +64,11 @@ export const integrationList: any = {
       "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
     label: "Google Container Registry (GCR)",
   },
+  gar: {
+    icon:
+      "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+    label: "Google Artifact Registry (GAR)",
+  },
   ecr: {
     icon:
       "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4",
@@ -96,6 +101,11 @@ export const integrationList: any = {
   gcp: {
     icon: gcp,
     label: "GCP",
+  },
+  gar: {
+    icon:
+      "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+    label: "Google Artifact Registry (GAR)",
   },
   do: {
     icon: digitalOcean,

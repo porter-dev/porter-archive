@@ -8,6 +8,7 @@ import EKSForm from "./EKSForm";
 import GCRForm from "./GCRForm";
 import ECRForm from "./ECRForm";
 import GitlabForm from "./GitlabForm";
+import GARForm from "./GARForm";
 
 type PropsType = {
   integrationName: string;
@@ -34,6 +35,8 @@ export default class CreateIntegrationForm extends Component<
         return <ECRForm closeForm={this.props.closeForm} />;
       case "gcr":
         return <GCRForm closeForm={this.props.closeForm} />;
+      case "gar":
+        return <GARForm closeForm={this.props.closeForm} />;
       case "gitlab":
         return <GitlabForm closeForm={this.props.closeForm} />;
       default:

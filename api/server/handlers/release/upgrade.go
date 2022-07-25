@@ -133,7 +133,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 		if currHelmRelease.Version != int(request.LatestRevision) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("The provided revision is not up to date with the current revision. Provided revision is %d, latest revision is %d. If you would like to deploy from this revision, please revert first and update the configuration.", request.LatestRevision, currHelmRelease.Version),
+				fmt.Errorf("The provided revision is not up to date with the current revision (you may need to refresh the deployment). Provided revision is %d, latest revision is %d. If you would like to deploy from this revision, please revert first and update the configuration.", request.LatestRevision, currHelmRelease.Version),
 				http.StatusBadRequest,
 			))
 

@@ -96,6 +96,33 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
     }
   };
 
+  const uninstallChart = async () => {
+    if (chart.stack_id) {
+      await api.removeStackAppResource(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          app_resource_name: chart.name,
+          namespace: chart.namespace,
+          stack_id: chart.stack_id,
+        }
+      );
+    } else {
+      await api.uninstallTemplate(
+        "<token>",
+        {},
+        {
+          namespace: chart.namespace,
+          name: chart.name,
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+    }
+  };
+
   /**
    * Delete/Uninstall chart
    */
@@ -128,16 +155,8 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
         return;
       }
 
-      await api.uninstallTemplate(
-        "<token>",
-        {},
-        {
-          namespace: chart.namespace,
-          name: chart.name,
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
+      await uninstallChart();
+
       setStatus("ready");
       closeChart();
       return;

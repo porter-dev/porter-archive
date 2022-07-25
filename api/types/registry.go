@@ -160,7 +160,7 @@ type GetRegistryResponse Registry
 
 // swagger:model
 type CreateRegistryRepositoryRequest struct {
-	// The URL to the repository of a registry (**ECR only**)
+	// The URL to the repository of a registry (ECR, GAR)
 	// required: true
 	ImageRepoURI string `json:"image_repo_uri" form:"required"`
 }
@@ -177,6 +177,10 @@ type GetRegistryTokenResponse struct {
 }
 
 type GetRegistryGCRTokenRequest struct {
+	ServerURL string `schema:"server_url"`
+}
+
+type GetRegistryGARTokenRequest struct {
 	ServerURL string `schema:"server_url"`
 }
 

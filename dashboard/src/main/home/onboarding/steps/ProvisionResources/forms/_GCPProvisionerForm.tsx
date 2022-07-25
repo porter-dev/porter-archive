@@ -376,7 +376,9 @@ export const SettingsForm: React.FC<{
           "<token>",
           {
             gcp_integration_id: id,
-            values: {},
+            values: {
+              gcp_region: region,
+            },
           },
           { project_id: project.id, infra_id: currGCRInfra.id }
         );
@@ -391,7 +393,9 @@ export const SettingsForm: React.FC<{
           {
             kind: "gar",
             gcp_integration_id: id,
-            values: {},
+            values: {
+              gcp_region: region,
+            },
           },
           { project_id: project.id }
         );

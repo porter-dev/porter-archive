@@ -67,6 +67,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
         {
           values: valuesYaml,
           version: chart.latest_version,
+          latest_revision: chart.version,
         },
         {
           id: currentProject.id,
@@ -237,6 +238,7 @@ export const useChart = (oldChart: ChartType, closeChart: () => void) => {
         "<token>",
         {
           values,
+          latest_revision: chart.version,
         },
         {
           id: currentProject.id,

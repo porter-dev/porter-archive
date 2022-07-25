@@ -122,6 +122,7 @@ const BuildSettingsTab: React.FC<Props> = ({
         "<token>",
         {
           values: valuesYaml,
+          latest_revision: chart.version,
         },
         {
           id: currentProject.id,

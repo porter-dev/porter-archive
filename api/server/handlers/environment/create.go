@@ -70,6 +70,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Name:                request.Name,
 		GitRepoOwner:        owner,
 		GitRepoName:         name,
+		GitRepoBranches:     strings.Join(request.GitRepoBranches, ","),
 		Mode:                request.Mode,
 		WebhookID:           string(webhookUID),
 		NewCommentsDisabled: false,

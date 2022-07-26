@@ -74,6 +74,11 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		changed = true
 	}
 
+	if request.Mode != env.Mode {
+		env.Mode = request.Mode
+		changed = true
+	}
+
 	if changed {
 		_, err = c.Repo().Environment().UpdateEnvironment(env)
 

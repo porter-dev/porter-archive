@@ -134,6 +134,7 @@ type ToggleNewCommentRequest struct {
 type ListEnvironmentsResponse []*Environment
 
 type UpdateEnvironmentSettingsRequest struct {
+	Mode               string   `json:"mode" form:"oneof=auto manual"`
 	DisableNewComments bool     `json:"disable_new_comments"`
 	GitRepoBranches    []string `json:"git_repo_branches"`
 }

@@ -5,7 +5,7 @@
 
 // YAML Field interfaces
 
-import { ContextProps } from "../../shared/types";
+import { ChartType, ContextProps } from "../../shared/types";
 
 export interface GenericField {
   id: string;
@@ -149,6 +149,9 @@ export interface TextAreaField extends GenericInputField {
 export interface UrlLinkField extends GenericInputField {
   type: "url-link";
   label: string;
+  injectedProps: {
+    chart: ChartType;
+  };
 }
 
 export type FormField =

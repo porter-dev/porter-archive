@@ -120,6 +120,29 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	conf.Values = request.Values
 
+	// if LatestRevision is set, check that the revision matches the latest revision in the database
+	if request.LatestRevision != 0 {
+		currHelmRelease, err := helmAgent.GetRelease(helmRelease.Name, 0, false)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("could not retrieve latest revision"),
+				http.StatusBadRequest,
+			))
+
+			return
+		}
+
+		if currHelmRelease.Version != int(request.LatestRevision) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("The provided revision is not up to date with the current revision (you may need to refresh the deployment). Provided revision is %d, latest revision is %d. If you would like to deploy from this revision, please revert first and update the configuration.", request.LatestRevision, currHelmRelease.Version),
+				http.StatusBadRequest,
+			))
+
+			return
+		}
+	}
+
 	newHelmRelease, upgradeErr := helmAgent.UpgradeReleaseByValues(conf, c.Config().DOConf)
 
 	if upgradeErr == nil && newHelmRelease != nil {

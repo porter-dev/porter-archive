@@ -82,19 +82,21 @@ func init() {
 
 func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	fileBytes, err := ioutil.ReadFile(porterYAML)
+
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
 
 	resGroup, err := parser.ParseRawBytes(fileBytes)
+
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing porter.yaml: %w", err)
 	}
 
 	basePath, err := os.Getwd()
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting working directory: %w", err)
 	}
 
 	worker := worker.NewWorker()
@@ -118,7 +120,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("error creating deployment hook: %w", err)
 		}
 
 		worker.RegisterHook("deployment", deploymentHook)
@@ -206,14 +208,16 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 		output:      make(map[string]interface{}),
 	}
 
-	source, err := preview.GetSource(resource.Source)
+	source, err := preview.GetSource(resource.Name, resource.Source)
+
 	if err != nil {
 		return nil, err
 	}
 
 	driver.source = source
 
-	target, err := preview.GetTarget(resource.Target)
+	target, err := preview.GetTarget(resource.Name, resource.Target)
+
 	if err != nil {
 		return nil, err
 	}
@@ -982,7 +986,7 @@ func (t *CloneEnvGroupHook) PreApply() error {
 		}
 
 		if config != nil && len(config.EnvGroups) > 0 {
-			target, err := preview.GetTarget(res.Target)
+			target, err := preview.GetTarget(res.Name, res.Target)
 
 			if err != nil {
 				return err
@@ -1051,7 +1055,7 @@ func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}
 func getReleaseName(res *switchboardTypes.Resource) string {
 	// can ignore the error because this method is called once
 	// GetTarget has alrealy been called and validated previously
-	target, _ := preview.GetTarget(res.Target)
+	target, _ := preview.GetTarget(res.Name, res.Target)
 
 	if target.AppName != "" {
 		return target.AppName
@@ -1063,7 +1067,7 @@ func getReleaseName(res *switchboardTypes.Resource) string {
 func getReleaseType(res *switchboardTypes.Resource) string {
 	// can ignore the error because this method is called once
 	// GetSource has alrealy been called and validated previously
-	source, _ := preview.GetSource(res.Source)
+	source, _ := preview.GetSource(res.Name, res.Source)
 
 	if source != nil && source.Name != "" {
 		return source.Name

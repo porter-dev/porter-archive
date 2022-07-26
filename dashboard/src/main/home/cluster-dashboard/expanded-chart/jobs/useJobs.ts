@@ -354,6 +354,7 @@ export const useJobs = (chart: ChartType) => {
         "<token>",
         {
           values: yamlValues,
+          latest_revision: chart.version,
         },
         {
           id: currentProject.id,

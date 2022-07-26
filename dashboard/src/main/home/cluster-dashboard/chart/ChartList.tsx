@@ -140,7 +140,10 @@ const ChartList: React.FunctionComponent<Props> = ({
                 return chart;
               });
             case "DELETE":
-              return tmpCharts.filter((chart) => !isSameChart(chart));
+              const chartToDelete = tmpCharts.find(isSameChart);
+              if (chartToDelete.version === newChart.version) {
+                return tmpCharts.filter((chart) => !isSameChart(chart));
+              }
             default:
               return tmpCharts;
           }

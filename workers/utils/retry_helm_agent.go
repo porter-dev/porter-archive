@@ -4,8 +4,8 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
@@ -52,14 +52,14 @@ func (a *RetryHelmAgent) ListReleases(
 
 		if err == nil {
 			return releases, nil
-		} else if strings.Contains(err.Error(), "Unauthorized") {
+		} else {
+			log.Printf("recreating helm agent for retrying ListReleases. Error: %v", err)
+
 			a.agent, err = helm.GetAgentOutOfClusterConfig(a.form, a.l)
 
 			if err != nil {
 				return nil, fmt.Errorf("error recreating helm agent for retrying ListReleases: %w", err)
 			}
-		} else {
-			return nil, err
 		}
 
 		time.Sleep(a.retryInterval)
@@ -76,14 +76,14 @@ func (a *RetryHelmAgent) GetReleaseHistory(
 
 		if err == nil {
 			return releases, nil
-		} else if strings.Contains(err.Error(), "Unauthorized") {
+		} else {
+			log.Printf("recreating helm agent for retrying GetReleaseHistory. Error: %v", err)
+
 			a.agent, err = helm.GetAgentOutOfClusterConfig(a.form, a.l)
 
 			if err != nil {
 				return nil, fmt.Errorf("error recreating helm agent for retrying GetReleaseHistory: %w", err)
 			}
-		} else {
-			return nil, err
 		}
 
 		time.Sleep(a.retryInterval)
@@ -101,14 +101,14 @@ func (a *RetryHelmAgent) DeleteReleaseRevision(
 
 		if err == nil {
 			return nil
-		} else if strings.Contains(err.Error(), "Unauthorized") {
+		} else {
+			log.Printf("recreating helm agent for retrying DeleteReleaseRevision. Error: %v", err)
+
 			a.agent, err = helm.GetAgentOutOfClusterConfig(a.form, a.l)
 
 			if err != nil {
 				return fmt.Errorf("error recreating helm agent for retrying DeleteReleaseRevision: %w", err)
 			}
-		} else {
-			return err
 		}
 
 		time.Sleep(a.retryInterval)

@@ -866,6 +866,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                                 ? stackEnvGroups
                                 : undefined,
                           },
+                          "url-link": {
+                            chart: currentChart,
+                          },
                         }}
                       />
                     </BodyWrapper>

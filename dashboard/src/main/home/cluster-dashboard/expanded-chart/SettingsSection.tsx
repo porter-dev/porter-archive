@@ -116,6 +116,7 @@ const SettingsSection: React.FC<PropsType> = ({
         "<token>",
         {
           values: conf,
+          latest_revision: currentChart?.version,
         },
         {
           id: currentProject.id,

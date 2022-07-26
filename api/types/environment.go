@@ -9,7 +9,7 @@ type Environment struct {
 	GitInstallationID uint     `json:"git_installation_id"`
 	GitRepoOwner      string   `json:"git_repo_owner"`
 	GitRepoName       string   `json:"git_repo_name"`
-	GitRepoBranches   []string `json:"branches"`
+	GitRepoBranches   []string `json:"git_repo_branches"`
 
 	Name                 string `json:"name"`
 	Mode                 string `json:"mode"`

@@ -110,11 +110,19 @@ type V1UpgradeReleaseRequest struct {
 
 	// The Porter charts version to upgrade the release with
 	ChartVersion string `json:"version"`
+
+	// (optional) if set, the backend will validate that the user was upgrading from the revision specified by
+	// LatestRevision, and there hasn't been an upgrade in the meantime.
+	LatestRevision uint `json:"latest_revision"`
 }
 
 type UpgradeReleaseRequest struct {
 	Values       string `json:"values" form:"required"`
 	ChartVersion string `json:"version"`
+
+	// (optional) if set, the backend will validate that the user was upgrading from the revision specified by
+	// LatestRevision, and there hasn't been an upgrade in the meantime.
+	LatestRevision uint `json:"latest_revision"`
 }
 
 type UpdateImageBatchRequest struct {

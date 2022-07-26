@@ -39,8 +39,8 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
+		GitRepoBranches:   strings.Split(e.GitRepoBranches, ","),
 
-		GitRepoBranches:     strings.Split(e.GitRepoBranches, ","),
 		NewCommentsDisabled: e.NewCommentsDisabled,
 
 		Name: e.Name,

@@ -73,7 +73,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GitRepoBranches:     strings.Join(request.GitRepoBranches, ","),
 		Mode:                request.Mode,
 		WebhookID:           string(webhookUID),
-		NewCommentsDisabled: false,
+		NewCommentsDisabled: request.DisableNewComments,
 	}
 
 	// write Github actions files to the repo

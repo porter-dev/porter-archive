@@ -1,22 +1,57 @@
+import { get } from "lodash";
 import React from "react";
 import styled from "styled-components";
 import { UrlLinkField } from "../types";
 import { hasSetValue } from "../utils";
 
+const populate = (str: string, obj: unknown) => {
+  return str.replace(/{.+}/g, (match) => {
+    const key = match.replace("{", "").replace("}", "");
+    let value;
+    if (key[0] === ".") {
+      value = get(obj, key.substring(1));
+    } else {
+      value = get(obj, key);
+    }
+
+    if (typeof value !== "string") {
+      return "Couldn't find value " + key;
+    }
+
+    return value;
+  });
+};
+
 const UrlLink = (props: UrlLinkField) => {
-  const { value, label } = props;
+  const { value, label, injectedProps } = props;
 
   if (!hasSetValue(props)) {
     return null;
   }
 
+  let val = value;
+
+  if (Array.isArray(value)) {
+    val = value[0];
+  }
+
+  if (typeof val !== "string") {
+    return null;
+  }
+
+  if (!injectedProps?.chart) {
+    return null;
+  }
+
+  const populatedUrl = populate(value[0], injectedProps.chart);
+
   return (
     <>
       <Label>{label}</Label>
       <StyledServiceRow>
-        <a href={value[0]} target="_blank">
+        <a href={populatedUrl} target="_blank">
           <i className="material-icons-outlined">link</i>
-          {value[0]}
+          {populatedUrl}
         </a>
       </StyledServiceRow>
     </>

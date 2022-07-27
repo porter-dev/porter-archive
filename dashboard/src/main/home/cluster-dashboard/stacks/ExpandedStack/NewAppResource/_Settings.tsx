@@ -110,8 +110,51 @@ const Settings = () => {
     };
   }, [stack, params, currentProject, currentCluster]);
 
+  const linkAppToEnvGroups = async (appName: string, envGroups: string[]) => {
+    const promises = envGroups.map((envGroupName) =>
+      api
+        .addApplicationToEnvGroup(
+          "<token>",
+          {
+            name: envGroupName,
+            app_name: appName,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: stack.namespace,
+          }
+        )
+        .catch(() => {
+          throw envGroupName;
+        })
+    );
+
+    try {
+      const res = await Promise.allSettled(promises);
+
+      const failedEnvGroupNames = res
+        .map((res) => (res.status === "rejected" ? res.reason : undefined))
+        .filter(Boolean);
+      if (failedEnvGroupNames.length > 0) {
+        setCurrentError(
+          `Failed to link application to env groups: ${failedEnvGroupNames.join(
+            ", "
+          )}. Please link them manually.`
+        );
+      }
+
+      return;
+    } catch (error) {
+      setCurrentError(
+        `Unknown error happened while linking the app to the env groups. Please link them manually.`
+      );
+    }
+  };
+
   const handleSubmit = async (
-    appResource: CreateStackBody["app_resources"][0]
+    appResource: CreateStackBody["app_resources"][0],
+    syncedEnvGroups: string[]
   ) => {
     try {
       await api.addStackAppResource(
@@ -126,6 +169,8 @@ const Settings = () => {
           stack_id: stack.id,
         }
       );
+
+      await linkAppToEnvGroups(appResource.name, syncedEnvGroups);
 
       await refreshStack();
 

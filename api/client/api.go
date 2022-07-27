@@ -109,6 +109,39 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 	return nil
 }
 
+func (c *Client) getRequestWithError(relPath string, data interface{}, response interface{}) (*types.ExternalError, error) {
+	vals := make(map[string][]string)
+	err := schema.NewEncoder().Encode(data, vals)
+
+	if err != nil {
+		return nil, fmt.Errorf("error encoding data for GET request: %w", err)
+	}
+
+	urlVals := url.Values(vals)
+	encodedURLVals := urlVals.Encode()
+	var req *http.Request
+
+	if encodedURLVals != "" {
+		req, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("%s%s?%s", c.BaseURL, relPath, encodedURLVals),
+			nil,
+		)
+	} else {
+		req, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("%s%s", c.BaseURL, relPath),
+			nil,
+		)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating HTTP GET request: %w", err)
+	}
+
+	return c.sendRequest(req, response, true)
+}
+
 type postRequestOpts struct {
 	retryCount uint
 }
@@ -162,6 +195,58 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 	}
 
 	return err
+}
+
+func (c *Client) postRequestWithError(
+	relPath string,
+	data interface{},
+	response interface{},
+	opts ...postRequestOpts,
+) (*types.ExternalError, error) {
+	var retryCount uint = 1
+
+	if len(opts) > 0 {
+		for _, opt := range opts {
+			retryCount = opt.retryCount
+		}
+	}
+
+	var httpErr *types.ExternalError
+	var err error
+
+	for i := 0; i < int(retryCount); i++ {
+		strData, err := json.Marshal(data)
+
+		if err != nil {
+			return nil, fmt.Errorf("error marshalling data for POST request: %w", err)
+		}
+
+		req, err := http.NewRequest(
+			"POST",
+			fmt.Sprintf("%s%s", c.BaseURL, relPath),
+			strings.NewReader(string(strData)),
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("error creating POST request: %w", err)
+		}
+
+		httpErr, err = c.sendRequest(req, response, true)
+
+		if httpErr == nil && err == nil {
+			return nil, nil
+		}
+
+		if i != int(retryCount)-1 {
+			if httpErr != nil {
+				fmt.Printf("Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+			} else {
+				fmt.Printf("Error: %v, retrying request...\n", err)
+			}
+		}
+	}
+
+	return httpErr, err
 }
 
 func (c *Client) deleteRequest(relPath string, data interface{}, response interface{}) error {

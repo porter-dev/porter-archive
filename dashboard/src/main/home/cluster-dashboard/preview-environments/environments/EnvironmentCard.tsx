@@ -74,7 +74,7 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
 
   return (
     <>
-      {showDeleteModal ? (
+      {/* {showDeleteModal ? (
         <Modal
           title={`Remove Preview Envs for ${git_repo_owner}/${git_repo_name}`}
           width="800px"
@@ -102,7 +102,7 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             </DeleteButton>
           </ActionWrapper>
         </Modal>
-      ) : null}
+      ) : null} */}
       <EnvironmentCardWrapper
         to={`/preview-environments/deployments/${id}/${git_repo_owner}/${git_repo_name}`}
       >
@@ -141,13 +141,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             )}
           </Status>
         </DataContainer>
-        <OptionWrapper>
-          <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
-            <Options.Option onClick={() => setShowDeleteModal(true)}>
-              <i className="material-icons">delete</i> Delete
-            </Options.Option>
-          </Options.Dropdown>
-        </OptionWrapper>
       </EnvironmentCardWrapper>
     </>
   );

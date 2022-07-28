@@ -160,6 +160,8 @@ func (s StackResource) ToStackResource(stackID string, stackRevisionID uint, sou
 type StackSourceConfig struct {
 	gorm.Model
 
+	SourceConfigID string
+
 	StackRevisionID uint
 
 	Name string
@@ -183,6 +185,7 @@ func (s StackSourceConfig) ToStackSourceConfigType(stackID string, stackRevision
 		ID:              s.UID,
 		ImageRepoURI:    s.ImageRepoURI,
 		ImageTag:        s.ImageTag,
+		SourceConfigID:  s.SourceConfigID,
 	}
 }
 

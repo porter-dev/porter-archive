@@ -225,6 +225,9 @@ type StackSourceConfig struct {
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
+
+	// Unique ID to identify between revisions
+	SourceConfigID string `json:"source_config_id"`
 }
 
 // swagger:model
@@ -257,6 +260,8 @@ type CreateStackSourceConfigRequest struct {
 
 	// required: true
 	ImageTag string `json:"image_tag" form:"required"`
+
+	SourceConfigID string `json:"source_config_id,omitempty"`
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`

@@ -170,10 +170,10 @@ const SourceConfigItem = ({
         <SourceConfigStyles.ItemTitle>
           <span>{name}</span>
 
-          {sourceConfig.source_config_id && (
+          {sourceConfig.stable_source_config_id && (
             <EditButton
               onClick={toggleEditNameMode}
-              disabled={!sourceConfig.source_config_id}
+              disabled={!sourceConfig.stable_source_config_id}
             >
               <i className="material-icons-outlined">edit</i>
             </EditButton>

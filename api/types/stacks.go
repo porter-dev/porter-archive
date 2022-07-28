@@ -227,7 +227,7 @@ type StackSourceConfig struct {
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
 
 	// Unique ID to identify between revisions
-	StableSourceConfigID string `json:"source_config_id"`
+	StableSourceConfigID string `json:"stable_source_config_id"`
 }
 
 // swagger:model

@@ -136,26 +136,33 @@ const SourceConfigItem = ({
   disabled: boolean;
 }) => {
   const [editNameMode, toggleEditNameMode] = useReducer((prev) => !prev, false);
+  const prevName = useRef(sourceConfig.name);
   const [name, setName] = useState(sourceConfig.name);
 
-  const handleNameChange = () => {
-    handleChange({ ...sourceConfig, name });
+  const handleNameChange = (newName: string) => {
+    setName(newName);
+    handleChange({ ...sourceConfig, name: newName });
+  };
 
+  const handleNameChangeCancel = () => {
+    setName(prevName.current);
+    handleChange({ ...sourceConfig, name: prevName.current });
     toggleEditNameMode();
   };
 
   return (
     <SourceConfigStyles.ItemContainer>
-      {editNameMode ? (
+      {editNameMode && !disabled ? (
         <>
           <SourceConfigStyles.ItemTitle>
             <PlainTextInput
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               type="text"
+              disabled={disabled}
             />
-            <EditButton onClick={handleNameChange}>
-              <i className="material-icons">save</i>
+            <EditButton onClick={handleNameChangeCancel}>
+              <i className="material-icons-outlined">close</i>
             </EditButton>
           </SourceConfigStyles.ItemTitle>
         </>

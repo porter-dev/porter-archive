@@ -110,6 +110,8 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		_, err = createDOCRRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraGCR):
 		_, err = createGCRRegistry(c.Config, infra, operation, req.Output)
+	case string(types.InfraGAR):
+		_, err = createGARRegistry(c.Config, infra, operation, req.Output)
 	case string(types.InfraACR):
 		_, err = createACRRegistry(c.Config, infra, operation, req.Output)
 	}
@@ -362,6 +364,18 @@ func createGCRRegistry(config *config.Config, infra *models.Infra, operation *mo
 		InfraID:          infra.ID,
 		URL:              output["url"].(string),
 		Name:             "gcr-registry",
+	}
+
+	return config.Repo.Registry().CreateRegistry(reg)
+}
+
+func createGARRegistry(config *config.Config, infra *models.Infra, operation *models.Operation, output map[string]interface{}) (*models.Registry, error) {
+	reg := &models.Registry{
+		ProjectID:        infra.ProjectID,
+		GCPIntegrationID: infra.GCPIntegrationID,
+		InfraID:          infra.ID,
+		URL:              output["url"].(string),
+		Name:             "gar-registry",
 	}
 
 	return config.Repo.Registry().CreateRegistry(reg)

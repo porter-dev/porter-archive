@@ -92,24 +92,22 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Create new deployment status to indicate deployment is ready
-	state := "inactive"
+	if depl.GHDeploymentID != 0 {
+		// set the GitHub deployment status to be inactive
+		_, _, err := client.Repositories.CreateDeploymentStatus(
+			context.Background(),
+			env.GitRepoOwner,
+			env.GitRepoName,
+			depl.GHDeploymentID,
+			&github.DeploymentStatusRequest{
+				State: github.String("inactive"),
+			},
+		)
 
-	deploymentStatusRequest := github.DeploymentStatusRequest{
-		State: &state,
-	}
-
-	_, _, err = client.Repositories.CreateDeploymentStatus(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		depl.GHDeploymentID,
-		&deploymentStatusRequest,
-	)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	depl.Status = types.DeploymentStatusInactive

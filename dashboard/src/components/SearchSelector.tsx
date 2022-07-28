@@ -14,6 +14,7 @@ type Props<T = any> = {
   renderAddButton?: any;
   className?: string;
   renderOptionIcon?: (option: T) => React.ReactNode;
+  placeholder?: string;
 };
 
 function SearchSelector<O = any>({
@@ -28,6 +29,7 @@ function SearchSelector<O = any>({
   renderAddButton,
   className,
   renderOptionIcon,
+  placeholder = "Find or add a tag...", // legacy value to not break existing code
 }: Props<O>) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [filter, setFilter] = useState("");
@@ -73,7 +75,7 @@ function SearchSelector<O = any>({
       >
         <Input
           value={filter}
-          placeholder="Find or add a tag..."
+          placeholder={placeholder}
           onClick={(e) => {
             setIsExpanded(false);
             e.stopPropagation();

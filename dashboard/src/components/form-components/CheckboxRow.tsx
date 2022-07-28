@@ -7,6 +7,9 @@ type PropsType = {
   toggle: () => void;
   isRequired?: boolean;
   disabled?: boolean;
+  wrapperStyles?: {
+    disableMargin?: boolean;
+  };
 };
 
 type StateType = {};
@@ -14,7 +17,9 @@ type StateType = {};
 export default class CheckboxRow extends Component<PropsType, StateType> {
   render() {
     return (
-      <StyledCheckboxRow>
+      <StyledCheckboxRow
+        disableMargin={this.props.wrapperStyles?.disableMargin}
+      >
         <CheckboxWrapper
           disabled={this.props.disabled}
           onClick={!this.props.disabled ? this.props.toggle : undefined}
@@ -65,9 +70,16 @@ const Checkbox = styled.div<{ checked: boolean }>`
   }
 `;
 
-const StyledCheckboxRow = styled.div`
+const StyledCheckboxRow = styled.div<{ disableMargin?: boolean }>`
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
-  margin-top: 20px;
+  ${({ disableMargin }) => {
+    if (disableMargin) {
+      return "";
+    }
+    return `
+      margin-bottom: 15px;
+      margin-top: 20px;
+    `;
+  }}
 `;

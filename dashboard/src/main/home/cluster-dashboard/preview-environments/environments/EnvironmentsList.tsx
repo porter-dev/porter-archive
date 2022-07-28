@@ -85,10 +85,10 @@ const EnvironmentsList = () => {
             <Loading />
           </FloatingPlaceholder>
         ) : null}
-
         <ControlRow>
           <ButtonEnablePREnvironments setIsReady={setButtonIsReady} />
         </ControlRow>
+
         {environments.length === 0 ? (
           <Placeholder>
             No repositories found with Preview Environments enabled.
@@ -143,6 +143,7 @@ const FloatingPlaceholder = styled(Placeholder)`
   width: 100%;
   height: 100%;
   margin-top: 0px;
+  z-index: 999;
 `;
 
 const EnvironmentsGrid = styled.div`

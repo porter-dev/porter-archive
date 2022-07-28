@@ -269,10 +269,10 @@ func getSourceConfigModels(sourceConfigs []*types.CreateStackSourceConfigRequest
 			}
 
 			// If the source config had a source config ID then we need to copy it over
-			if len(sourceConfig.SourceConfigID) != 0 {
-				newSourceConfig.SourceConfigID = sourceConfig.SourceConfigID
+			if sourceConfig.StableSourceConfigID != "" {
+				newSourceConfig.StableSourceConfigID = sourceConfig.StableSourceConfigID
 			} else {
-				newSourceConfig.SourceConfigID = string(uid)
+				newSourceConfig.StableSourceConfigID = string(uid)
 			}
 
 			res = append(res, *newSourceConfig)

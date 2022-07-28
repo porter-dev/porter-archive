@@ -13,8 +13,8 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/utils"
 )
 
-// GCR creates a GCR integration
-func GCR(
+// GAR creates a GAR integration
+func GAR(
 	client *api.Client,
 	projectID uint,
 ) (uint, error) {
@@ -54,8 +54,8 @@ Key file location: `))
 
 		color.New(color.FgGreen).Printf("created gcp integration with id %d\n", integration.ID)
 
-		regURL, err := utils.PromptPlaintext(fmt.Sprintf(`Please provide the registry URL, in the form [GCP_DOMAIN]/[GCP_PROJECT_ID]. For example, gcr.io/my-project-123456.
-Registry URL: `))
+		region, err := utils.PromptPlaintext(fmt.Sprintf(`Please enter the artifact registry region. For example, us-central-1.
+Artifact registry region: `))
 
 		if err != nil {
 			return 0, err
@@ -75,7 +75,7 @@ Registry URL: `))
 			&types.CreateRegistryRequest{
 				Name:             regName,
 				GCPIntegrationID: integration.ID,
-				URL:              regURL,
+				URL:              region + "-docker.pkg.dev/" + integration.GCPProjectID,
 			},
 		)
 

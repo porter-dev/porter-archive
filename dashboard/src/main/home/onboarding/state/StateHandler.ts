@@ -3,6 +3,7 @@ import type {
   AWSProvisionerConfig,
   AWSRegistryConfig,
   DORegistryConfig,
+  GARRegistryConfig,
   GCPProvisionerConfig,
   GCPRegistryConfig,
   SkipProvisionConfig,
@@ -12,6 +13,7 @@ import type {
 export type ConnectedRegistryConfig =
   | AWSRegistryConfig
   | GCPRegistryConfig
+  | GARRegistryConfig
   | DORegistryConfig
   | SkipRegistryConnection;
 
@@ -34,7 +36,7 @@ export type OnboardingState = {
   user_email: string;
   project: ProjectData | null;
   connected_source: ConnectedSourceData | null;
-  connected_registry: any | null;
+  connected_registry: ConnectedRegistryConfig | null;
   provision_resources: Partial<ProvisionerConfig> | null;
   actions: {
     restoreState: (state: OnboardingState) => void;

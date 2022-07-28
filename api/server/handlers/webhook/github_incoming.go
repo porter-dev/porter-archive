@@ -89,6 +89,23 @@ func (c *GithubIncomingWebhookHandler) processPullRequestEvent(event *github.Pul
 			webhookID, owner, repo, err)
 	}
 
+	envType := env.ToEnvironmentType()
+
+	if len(envType.GitRepoBranches) > 0 {
+		found := false
+
+		for _, br := range envType.GitRepoBranches {
+			if br == event.GetPullRequest().GetHead().GetRef() {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil
+		}
+	}
+
 	// create deployment on GitHub API
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 

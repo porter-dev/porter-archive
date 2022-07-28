@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
@@ -15,6 +17,7 @@ type Environment struct {
 	GitInstallationID uint
 	GitRepoOwner      string
 	GitRepoName       string
+	GitRepoBranches   string
 
 	Name string
 	Mode string
@@ -36,6 +39,7 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
+		GitRepoBranches:   strings.Split(e.GitRepoBranches, ","),
 
 		NewCommentsDisabled: e.NewCommentsDisabled,
 

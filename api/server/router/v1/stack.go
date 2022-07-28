@@ -820,5 +820,63 @@ func getV1StackRoutes(
 		Router:   r,
 	})
 
+	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/update_name -> stack.NewStackAddApplicationHandler
+	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/update_name addApplication
+	//
+	// Adds an application to an existing stack
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Add an application to a stack
+	// tags:
+	// - Stacks
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: stack_id
+	//   - in: body
+	//     name: AddApplicationToStack
+	//     description: The application to add
+	//     schema:
+	//       $ref: '#/definitions/CreateStackAppResourceRequest'
+	// responses:
+	//   '200':
+	//     description: Successfully added the application to the stack
+	//   '400':
+	//     description: Stack does not have any revisions
+	//   '403':
+	//     description: Forbidden
+	updateStackNameEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/{stack_id}/update_name",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+				types.NamespaceScope,
+				types.StackScope,
+			},
+		},
+	)
+
+	updateStackNameHandler := stack.NewStackUpdateStackNameHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateStackNameEndpoint,
+		Handler:  updateStackNameHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -83,7 +83,7 @@ func (p *RegistryCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	var err error
 
 	if request.GCPIntegrationID != 0 {
-		_, err = p.Repo().GCPIntegration().ReadGCPIntegration(proj.ID, request.GCPIntegrationID)
+		_, err := p.Repo().GCPIntegration().ReadGCPIntegration(proj.ID, request.GCPIntegrationID)
 
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {

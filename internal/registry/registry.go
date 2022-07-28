@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	artifactregistry "cloud.google.com/go/artifactregistry/apiv1beta2"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -18,6 +19,10 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/oauth2"
+	v1artifactregistry "google.golang.org/api/artifactregistry/v1"
+	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
+	artifactregistrypb "google.golang.org/genproto/googleapis/devtools/artifactregistry/v1beta2"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 
@@ -70,7 +75,11 @@ func (r *Registry) ListRepositories(
 	}
 
 	if r.GCPIntegrationID != 0 {
-		return r.listGCRRepositories(repo)
+		if strings.Contains(r.URL, "pkg.dev") {
+			return r.listGARRepositories(repo)
+		} else {
+			return r.listGCRRepositories(repo)
+		}
 	}
 
 	if r.DOIntegrationID != 0 {
@@ -198,6 +207,103 @@ func (r *Registry) listGCRRepositories(
 			Name: repo,
 			URI:  parsedURL.Host + "/" + repo,
 		})
+	}
+
+	return res, nil
+}
+
+func (r *Registry) GetGARToken(repo repository.Repository) (*oauth2.Token, error) {
+	getTokenCache := r.getTokenCacheFunc(repo)
+
+	gcp, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get oauth2 access token
+	return gcp.GetBearerToken(
+		getTokenCache,
+		r.setTokenCacheFunc(repo),
+		"https://www.googleapis.com/auth/cloud-platform",
+	)
+}
+
+type garTokenSource struct {
+	reg  *Registry
+	repo repository.Repository
+}
+
+func (source *garTokenSource) Token() (*oauth2.Token, error) {
+	return source.reg.GetGARToken(source.repo)
+}
+
+func (r *Registry) listGARRepositories(
+	repo repository.Repository,
+) ([]*ptypes.RegistryRepository, error) {
+	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := artifactregistry.NewClient(context.Background(), option.WithTokenSource(&garTokenSource{
+		reg:  r,
+		repo: repo,
+	}), option.WithScopes("roles/artifactregistry.reader"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var res []*ptypes.RegistryRepository
+	nextToken := ""
+
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
+
+	for {
+		it := client.ListRepositories(context.Background(), &artifactregistrypb.ListRepositoriesRequest{
+			Parent:    fmt.Sprintf("projects/%s/locations/%s", gcpInt.GCPProjectID, location),
+			PageSize:  1000,
+			PageToken: nextToken,
+		})
+
+		for {
+			resp, err := it.Next()
+
+			if err == iterator.Done {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+
+			repoSlice := strings.Split(resp.GetName(), "/")
+			repoName := repoSlice[len(repoSlice)-1]
+
+			res = append(res, &ptypes.RegistryRepository{
+				Name:      resp.GetName(),
+				CreatedAt: resp.GetCreateTime().AsTime(),
+				URI:       parsedURL.Host + "/" + gcpInt.GCPProjectID + "/" + repoName,
+			})
+		}
+
+		if it.PageInfo().Token == "" {
+			break
+		}
+
+		nextToken = it.PageInfo().Token
 	}
 
 	return res, nil
@@ -589,6 +695,8 @@ func (r *Registry) CreateRepository(
 	// if aws, create repository
 	if r.AWSIntegrationID != 0 {
 		return r.createECRRepository(repo, name)
+	} else if r.GCPIntegrationID != 0 && strings.Contains(r.URL, "pkg.dev") {
+		return r.createGARRepository(repo, name)
 	}
 
 	// otherwise, no-op
@@ -635,6 +743,62 @@ func (r *Registry) createECRRepository(
 	return nil
 }
 
+func (r *Registry) createGARRepository(
+	repo repository.Repository,
+	name string,
+) error {
+	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	client, err := artifactregistry.NewClient(context.Background(), option.WithTokenSource(&garTokenSource{
+		reg:  r,
+		repo: repo,
+	}), option.WithScopes("roles/artifactregistry.admin"))
+
+	if err != nil {
+		return err
+	}
+
+	defer client.Close()
+
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return err
+	}
+
+	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
+
+	_, err = client.GetRepository(context.Background(), &artifactregistrypb.GetRepositoryRequest{
+		Name: fmt.Sprintf("projects/%s/locations/%s/repositories/%s", gcpInt.GCPProjectID, location, name),
+	})
+
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		// create a new repository
+		_, err := client.CreateRepository(context.Background(), &artifactregistrypb.CreateRepositoryRequest{
+			Parent:       fmt.Sprintf("projects/%s/locations/%s", gcpInt.GCPProjectID, location),
+			RepositoryId: name,
+			Repository: &artifactregistrypb.Repository{
+				Format: artifactregistrypb.Repository_DOCKER,
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ListImages lists the images for an image repository
 func (r *Registry) ListImages(
 	repoName string,
@@ -651,6 +815,10 @@ func (r *Registry) ListImages(
 	}
 
 	if r.GCPIntegrationID != 0 {
+		if strings.Contains(r.URL, "pkg.dev") {
+			return r.listGARImages(repoName, repo)
+		}
+
 		return r.listGCRImages(repoName, repo)
 	}
 
@@ -998,6 +1166,69 @@ func (r *Registry) listGCRImages(repoName string, repo repository.Repository) ([
 			RepositoryName: repoName,
 			Tag:            tag,
 		})
+	}
+
+	return res, nil
+}
+
+func (r *Registry) listGARImages(repoName string, repo repository.Repository) ([]*ptypes.Image, error) {
+	gcpInt, err := repo.GCPIntegration().ReadGCPIntegration(
+		r.ProjectID,
+		r.GCPIntegrationID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	svc, err := v1artifactregistry.NewService(context.Background(), option.WithTokenSource(&garTokenSource{
+		reg:  r,
+		repo: repo,
+	}), option.WithScopes("roles/artifactregistry.reader"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	nextToken := ""
+	var res []*ptypes.Image
+
+	parsedURL, err := url.Parse("https://" + r.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	location := strings.TrimSuffix(parsedURL.Host, "-docker.pkg.dev")
+
+	dockerSvc := v1artifactregistry.NewProjectsLocationsRepositoriesDockerImagesService(svc)
+
+	for {
+		resp, err := dockerSvc.List(fmt.Sprintf("projects/%s/locations/%s/repositories/%s",
+			gcpInt.GCPProjectID, location, repoName)).PageSize(1000).PageToken(nextToken).Do()
+
+		if err != nil {
+			return nil, err
+		}
+
+		for _, image := range resp.DockerImages {
+			uploadTime, _ := time.Parse(time.RFC3339, image.UploadTime)
+
+			for _, tag := range image.Tags {
+				res = append(res, &ptypes.Image{
+					RepositoryName: repoName,
+					Tag:            tag,
+					PushedAt:       &uploadTime,
+					Digest:         strings.Split(image.Name, "@")[1],
+				})
+			}
+		}
+
+		if resp.NextPageToken == "" {
+			break
+		}
+
+		nextToken = resp.NextPageToken
 	}
 
 	return res, nil

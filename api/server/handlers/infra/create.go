@@ -207,6 +207,8 @@ func getSourceLinkAndVersion(kind types.InfraKind) (string, string) {
 		return "porter/aws/s3", "v0.1.0"
 	case types.InfraGCR:
 		return "porter/gcp/gcr", "v0.1.0"
+	case types.InfraGAR:
+		return "porter/gcp/gar", "v0.1.0"
 	case types.InfraGKE:
 		return "porter/gcp/gke", "v0.1.0"
 	case types.InfraDOCR:

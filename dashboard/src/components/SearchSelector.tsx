@@ -2,21 +2,21 @@ import _ from "lodash";
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 
-type Props = {
-  options: any[];
-  onSelect: (option: any) => void;
+type Props<T = any> = {
+  options: T[];
+  onSelect: (option: T) => void;
   label?: string;
   dropdownLabel?: string;
-  getOptionLabel?: (option: any) => string;
-  filterBy?: ((option: any) => string) | string;
+  getOptionLabel?: (option: T) => string;
+  filterBy?: ((option: T) => string) | string;
   noOptionsText?: string;
   dropdownMaxHeight?: string;
   renderAddButton?: any;
   className?: string;
-  renderOptionIcon?: (option: any) => React.ReactNode;
+  renderOptionIcon?: (option: T) => React.ReactNode;
 };
 
-const SearchSelector = ({
+function SearchSelector<O = any>({
   options,
   onSelect,
   label,
@@ -28,7 +28,7 @@ const SearchSelector = ({
   renderAddButton,
   className,
   renderOptionIcon,
-}: Props) => {
+}: Props<O>) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [filter, setFilter] = useState("");
 
@@ -57,7 +57,9 @@ const SearchSelector = ({
       );
     }
 
-    return options.filter((option) => option.includes(filter));
+    return options.filter((option) =>
+      typeof option === "string" ? option.includes(filter) : true
+    );
   }, [filter, options]);
 
   return (
@@ -139,7 +141,7 @@ const SearchSelector = ({
       </InputWrapper>
     </>
   );
-};
+}
 
 export default SearchSelector;
 

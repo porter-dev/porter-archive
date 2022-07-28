@@ -50,6 +50,11 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	depl, err := c.Repo().Environment().ReadDeploymentByID(project.ID, cluster.ID, deplID)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("deployment id not found in cluster and project")))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -85,6 +90,16 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	depl.Status = types.DeploymentStatusInactive
+
+	// update the deployment to mark it inactive
+	depl, err = c.Repo().Environment().UpdateDeployment(depl)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
@@ -105,19 +120,11 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		)
 
 		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("%v: %w", errGithubAPI, err), http.StatusConflict,
+			))
 			return
 		}
-	}
-
-	depl.Status = types.DeploymentStatusInactive
-
-	// update the deployment to mark it inactive
-	depl, err = c.Repo().Environment().UpdateDeployment(depl)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
 	}
 
 	c.WriteResult(w, r, depl.ToDeploymentType())

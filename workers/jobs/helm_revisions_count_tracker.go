@@ -247,8 +247,6 @@ func (t *helmRevisionsCountTracker) Run() error {
 						// sort revisions from newest to oldest
 						releaseutil.Reverse(revisions, releaseutil.SortByRevision)
 
-						time.Sleep(time.Minute * 15)
-
 						for i := 100; i < len(revisions); i += 1 {
 							rev := revisions[i]
 

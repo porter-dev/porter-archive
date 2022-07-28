@@ -18,6 +18,7 @@ import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHead
 import SearchBar from "components/SearchBar";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import DocsHelper from "components/DocsHelper";
+import EnvironmentSettings from "../environments/EnvironmentSettings";
 
 const AvailableStatusFilters = [
   "all",
@@ -36,7 +37,6 @@ const DeploymentList = () => {
   const [deploymentList, setDeploymentList] = useState<PRDeployment[]>([]);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [searchValue, setSearchValue] = useState("");
-  const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
 
   const [
     statusSelectorVal,
@@ -69,18 +69,6 @@ const DeploymentList = () => {
     // return mockRequest();
   };
 
-  const getEnvironment = () => {
-    return api.getEnvironment(
-      "<token>",
-      {},
-      {
-        project_id: currentProject.id,
-        cluster_id: currentCluster.id,
-        environment_id: Number(environment_id),
-      }
-    );
-  };
-
   useEffect(() => {
     const status_filter = getQueryParam("status_filter");
 
@@ -102,29 +90,18 @@ const DeploymentList = () => {
     let isSubscribed = true;
     setIsLoading(true);
 
-    Promise.allSettled([getPRDeploymentList(), getEnvironment()]).then(
-      ([getDeploymentsResponse, getEnvironmentResponse]) => {
-        const deploymentList =
-          getDeploymentsResponse.status === "fulfilled"
-            ? getDeploymentsResponse.value.data
-            : {};
-        const environmentList =
-          getEnvironmentResponse.status === "fulfilled"
-            ? getEnvironmentResponse.value.data
-            : {};
+    getPRDeploymentList().then(({ data }) => {
+      const deploymentList = data;
 
-        if (!isSubscribed) {
-          return;
-        }
-
-        setDeploymentList(deploymentList.deployments || []);
-        setPullRequests(deploymentList.pull_requests || []);
-
-        setNewCommentsDisabled(environmentList.new_comments_disabled || false);
-
-        setIsLoading(false);
+      if (!isSubscribed) {
+        return;
       }
-    );
+
+      setDeploymentList(deploymentList.deployments || []);
+      setPullRequests(deploymentList.pull_requests || []);
+
+      setIsLoading(false);
+    });
 
     return () => {
       isSubscribed = false;
@@ -137,13 +114,6 @@ const DeploymentList = () => {
       const { data } = await getPRDeploymentList();
       setDeploymentList(data.deployments || []);
       setPullRequests(data.pull_requests || []);
-    } catch (error) {
-      setHasError(true);
-      console.error(error);
-    }
-    try {
-      const { data } = await getEnvironment();
-      setNewCommentsDisabled(data.new_comments_disabled || false);
     } catch (error) {
       setHasError(true);
       console.error(error);
@@ -262,24 +232,6 @@ const DeploymentList = () => {
     setStatusSelectorVal(value);
   };
 
-  const handleToggleCommentStatus = (currentlyDisabled: boolean) => {
-    api
-      .toggleNewCommentForEnvironment(
-        "<token>",
-        {
-          disable: !currentlyDisabled,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          environment_id: Number(environment_id),
-        }
-      )
-      .then(() => {
-        setNewCommentsDisabled(!currentlyDisabled);
-      });
-  };
-
   return (
     <>
       <PreviewEnvironmentsHeader />
@@ -327,27 +279,11 @@ const DeploymentList = () => {
               dropdownWidth="230px"
               closeOverlay={true}
             />
+            <EnvironmentSettings environmentId={environment_id} />
           </StyledStatusSelector>
         </ActionsWrapper>
       </Flex>
-      <Flex>
-        <ActionsWrapper>
-          <FlexWrap>
-            <CheckboxRow
-              label="Disable new comments for deployments"
-              checked={newCommentsDisabled}
-              toggle={() => handleToggleCommentStatus(newCommentsDisabled)}
-            />
-            <Div>
-              <DocsHelper
-                disableMargin
-                tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
-                placement="top-end"
-              />
-            </Div>
-          </FlexWrap>
-        </ActionsWrapper>
-      </Flex>
+
       <Container>
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>

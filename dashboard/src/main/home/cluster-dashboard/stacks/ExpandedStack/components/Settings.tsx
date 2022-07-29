@@ -40,7 +40,7 @@ const Settings = ({
   const handleStackNameChange = async () => {
     setButtonStatus("loading");
     try {
-      await api.updateStackName(
+      await api.updateStack(
         "<token>",
         {
           name: stackName,

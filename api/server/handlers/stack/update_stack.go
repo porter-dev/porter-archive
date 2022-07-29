@@ -12,25 +12,25 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type StackUpdateStackName struct {
+type StackUpdateStack struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewStackUpdateStackNameHandler(
+func NewStackUpdateStackHandler(
 	config *config.Config,
 	reader shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *StackUpdateStackName {
-	return &StackUpdateStackName{
+) *StackUpdateStack {
+	return &StackUpdateStack{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, reader, writer),
 	}
 }
 
-func (p *StackUpdateStackName) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *StackUpdateStack) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	stack, _ := r.Context().Value(types.StackScope).(*models.Stack)
 
-	req := &types.UpdateStackNameRequest{}
+	req := &types.UpdateStackRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, req); !ok {
 		return

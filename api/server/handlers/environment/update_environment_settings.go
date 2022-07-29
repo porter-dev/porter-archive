@@ -27,8 +27,8 @@ func NewUpdateEnvironmentSettingsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *UpdateDeploymentStatusHandler {
-	return &UpdateDeploymentStatusHandler{
+) *UpdateEnvironmentSettingsHandler {
+	return &UpdateEnvironmentSettingsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}

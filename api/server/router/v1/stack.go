@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup
+// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup updateStack
 type stackPathParams struct {
 	// The project id
 	// in: path
@@ -847,7 +847,7 @@ func getV1StackRoutes(
 	//     description: Successfully updated the stack
 	//   '403':
 	//     description: Forbidden
-	updateStackNameEndpoint := factory.NewAPIEndpoint(
+	updateStackEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPatch,
@@ -865,15 +865,15 @@ func getV1StackRoutes(
 		},
 	)
 
-	updateStackNameHandler := stack.NewStackUpdateStackHandler(
+	updateStackHandler := stack.NewStackUpdateStackHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: updateStackNameEndpoint,
-		Handler:  updateStackNameHandler,
+		Endpoint: updateStackEndpoint,
+		Handler:  updateStackHandler,
 		Router:   r,
 	})
 

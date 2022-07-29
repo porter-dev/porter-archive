@@ -63,6 +63,7 @@ type CreateStackAppResourceRequest struct {
 	SourceConfigName string `json:"source_config_name" form:"required"`
 }
 
+// swagger:model
 type UpdateStackRequest struct {
 	Name string `json:"name" form:"required"`
 }

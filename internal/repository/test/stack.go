@@ -35,6 +35,10 @@ func (repo *StackRepository) DeleteStack(stack *models.Stack) (*models.Stack, er
 	panic("unimplemented")
 }
 
+func (repo *StackRepository) UpdateStack(stack *models.Stack) (*models.Stack, error) {
+	panic("unimplemented")
+}
+
 func (repo *StackRepository) UpdateStackRevision(revision *models.StackRevision) (*models.StackRevision, error) {
 	panic("unimplemented")
 }

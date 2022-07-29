@@ -823,13 +823,12 @@ func getV1StackRoutes(
 	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id} -> stack.NewStackUpdateStackHandler
 	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id} updateStack
 	//
-	// Updates a stack.
-	// Currently only the stack name can be updated.
+	// Updates a stack. Currently the only value available to update is the stack name.
 	//
 	// ---
 	// produces:
 	// - application/json
-	// summary: Add an application to a stack
+	// summary: Update Stack
 	// tags:
 	// - Stacks
 	// parameters:

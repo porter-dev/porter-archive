@@ -123,6 +123,26 @@ func (c *Client) GetGCRAuthorizationToken(
 	return resp, err
 }
 
+// GetGARAuthorizationToken gets a GAR authorization token
+func (c *Client) GetGARAuthorizationToken(
+	ctx context.Context,
+	projectID uint,
+	req *types.GetRegistryGARTokenRequest,
+) (*types.GetRegistryTokenResponse, error) {
+	resp := &types.GetRegistryTokenResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/registries/gar/token",
+			projectID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // GetACRAuthorizationToken gets a ACR authorization token
 func (c *Client) GetACRAuthorizationToken(
 	ctx context.Context,

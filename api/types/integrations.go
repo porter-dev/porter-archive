@@ -49,6 +49,11 @@ var PorterRegistryIntegrations = []PorterIntegration{
 		Service:       string(GCR),
 	},
 	{
+		AuthMechanism: "gcp",
+		Category:      "registry",
+		Service:       string(GAR),
+	},
+	{
 		AuthMechanism: "aws",
 		Category:      "registry",
 		Service:       string(ECR),

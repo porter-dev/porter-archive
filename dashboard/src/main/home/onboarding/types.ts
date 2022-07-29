@@ -34,6 +34,19 @@ export type GCPRegistryConfig = {
   };
 };
 
+export type GARRegistryConfig = {
+  skip: false;
+  provider: "gar";
+  credentials: {
+    id: number;
+  };
+  settings: {
+    registry_connection_id: number;
+    registry_name: string;
+    gar_url: string;
+  };
+};
+
 export type DORegistryConfig = {
   skip: false;
   provider: "do";

@@ -2162,7 +2162,7 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-const updateStackName = baseApi<
+const updateStack = baseApi<
   {
     name: string;
   },
@@ -2175,7 +2175,7 @@ const updateStackName = baseApi<
 >(
   "PATCH",
   ({ project_id, cluster_id, namespace, stack_id }) =>
-    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/update_name`
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}`
 );
 
 const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
@@ -2380,7 +2380,7 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
-  updateStackName,
+  updateStack,
 
   // STATUS
   getGithubStatus,

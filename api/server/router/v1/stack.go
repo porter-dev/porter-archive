@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup
+// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup updateStack
 type stackPathParams struct {
 	// The project id
 	// in: path
@@ -820,15 +820,15 @@ func getV1StackRoutes(
 		Router:   r,
 	})
 
-	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/update_name -> stack.NewStackAddApplicationHandler
-	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/update_name addApplication
+	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id} -> stack.NewStackUpdateStackHandler
+	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id} updateStack
 	//
-	// Adds an application to an existing stack
+	// Updates a stack. Currently the only value available to update is the stack name.
 	//
 	// ---
 	// produces:
 	// - application/json
-	// summary: Add an application to a stack
+	// summary: Update Stack
 	// tags:
 	// - Stacks
 	// parameters:
@@ -837,24 +837,22 @@ func getV1StackRoutes(
 	//   - name: namespace
 	//   - name: stack_id
 	//   - in: body
-	//     name: AddApplicationToStack
-	//     description: The application to add
+	//     name: UpdateStack
+	//     description: The stack to update
 	//     schema:
-	//       $ref: '#/definitions/CreateStackAppResourceRequest'
+	//       $ref: '#/definitions/UpdateStackRequest'
 	// responses:
 	//   '200':
-	//     description: Successfully added the application to the stack
-	//   '400':
-	//     description: Stack does not have any revisions
+	//     description: Successfully updated the stack
 	//   '403':
 	//     description: Forbidden
-	updateStackNameEndpoint := factory.NewAPIEndpoint(
+	updateStackEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPatch,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/{stack_id}/update_name",
+				RelativePath: relPath + "/{stack_id}",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -866,15 +864,15 @@ func getV1StackRoutes(
 		},
 	)
 
-	updateStackNameHandler := stack.NewStackUpdateStackNameHandler(
+	updateStackHandler := stack.NewStackUpdateStackHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: updateStackNameEndpoint,
-		Handler:  updateStackNameHandler,
+		Endpoint: updateStackEndpoint,
+		Handler:  updateStackHandler,
 		Router:   r,
 	})
 

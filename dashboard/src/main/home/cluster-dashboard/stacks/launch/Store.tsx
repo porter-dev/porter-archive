@@ -11,9 +11,7 @@ export type StacksLaunchContextType = {
   setStackName: (name: string) => void;
   setStackNamespace: (namespace: string) => void;
 
-  addSourceConfig: (
-    sourceConfig: Omit<CreateStackBody["source_configs"][0], "name">
-  ) => void;
+  addSourceConfig: (sourceConfig: CreateStackBody["source_configs"][0]) => void;
 
   addAppResource: (
     appResource: CreateStackBody["app_resources"][0],
@@ -42,9 +40,7 @@ const defaultValues: StacksLaunchContextType = {
   setStackName: (name: string) => {},
   setStackNamespace: (namespace: string) => {},
 
-  addSourceConfig: (
-    sourceConfig: Omit<CreateStackBody["source_configs"][0], "name">
-  ) => {},
+  addSourceConfig: (sourceConfig: CreateStackBody["source_configs"][0]) => {},
 
   addAppResource: (appResource: CreateStackBody["app_resources"][0]) => {},
 
@@ -96,7 +92,9 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
       source_configs: [
         ...prev.source_configs,
         {
-          name: newSourceConfigName(prev.source_configs.length),
+          name:
+            sourceConfig.name ||
+            newSourceConfigName(prev.source_configs.length),
           ...sourceConfig,
         },
       ],

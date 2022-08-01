@@ -22,6 +22,12 @@ type CreateStackRequest struct {
 	EnvGroups []*CreateStackEnvGroupRequest `json:"env_groups,omitempty" form:"required,dive,required"`
 }
 
+type PutStackSourceConfigPaylod struct {
+	*CreateStackSourceConfigRequest
+
+	StableSourceConfigID string `json:"stable_source_config_id" form:"required"`
+}
+
 // swagger:model
 type PutStackSourceConfigRequest struct {
 	SourceConfigs []*CreateStackSourceConfigRequest `json:"source_configs,omitempty" form:"required,dive,required"`
@@ -262,7 +268,7 @@ type CreateStackSourceConfigRequest struct {
 	// required: true
 	ImageTag string `json:"image_tag" form:"required"`
 
-	StableSourceConfigID string `json:"source_config_id,omitempty"`
+	StableSourceConfigID string `json:"stable_source_config_id,omitempty"`
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`

@@ -63,7 +63,17 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	changed := !reflect.DeepEqual(env.ToEnvironmentType().GitRepoBranches, request.GitRepoBranches)
+	var newBranches []string
+
+	for _, br := range request.GitRepoBranches {
+		name := strings.TrimSpace(br)
+
+		if len(name) > 0 {
+			newBranches = append(newBranches, name)
+		}
+	}
+
+	changed := !reflect.DeepEqual(env.ToEnvironmentType().GitRepoBranches, newBranches)
 
 	if changed {
 		env.GitRepoBranches = strings.Join(request.GitRepoBranches, ",")
@@ -80,11 +90,13 @@ func (c *UpdateEnvironmentSettingsHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	if changed {
-		_, err = c.Repo().Environment().UpdateEnvironment(env)
+		env, err = c.Repo().Environment().UpdateEnvironment(env)
 
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 	}
+
+	c.WriteResult(w, r, env.ToEnvironmentType())
 }

@@ -577,6 +577,13 @@ jobs:
           git config user.email "support@porter.run"
 
           git diff --quiet --exit-code || git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f
+
+          git checkout test-preview-env
+          git merge main -m "Merge with main"
+
+          sed -i 's/TEST:v.*/TEST:${{ steps.tag_name.outputs.tag }}/g' porter.yaml
+
+          git diff --quiet --exit-code || git add . && git commit -m "Update to Porter GHA version ${{steps.tag_name.outputs.tag}}" && git push -f
   run-new-release-tests-workflows:
     name: Run new-release-tests Porter workflows
     runs-on: ubuntu-latest

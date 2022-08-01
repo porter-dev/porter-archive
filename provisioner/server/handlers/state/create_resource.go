@@ -303,8 +303,9 @@ func createCluster(config *config.Config, infra *models.Infra, operation *models
 
 func getNewCluster(infra *models.Infra) *models.Cluster {
 	res := &models.Cluster{
-		ProjectID: infra.ProjectID,
-		InfraID:   infra.ID,
+		ProjectID:           infra.ProjectID,
+		InfraID:             infra.ID,
+		MonitorHelmReleases: true,
 	}
 
 	switch infra.Kind {

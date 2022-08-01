@@ -390,7 +390,6 @@ func (rcf *CandidateResolver) buildCluster() (*models.Cluster, error) {
 		InsecureSkipTLSVerify:   kcCluster.InsecureSkipTLSVerify,
 		UserLocationOfOrigin:    kcAuthInfo.LocationOfOrigin,
 		UserImpersonate:         kcAuthInfo.Impersonate,
-		MonitorHelmReleases:     true,
 	}
 
 	if len(kcAuthInfo.ImpersonateGroups) > 0 {

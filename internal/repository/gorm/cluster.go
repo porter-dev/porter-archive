@@ -120,8 +120,6 @@ func (repo *ClusterRepository) UpdateClusterCandidateCreatedClusterID(
 func (repo *ClusterRepository) CreateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
-	cluster.MonitorHelmReleases = true
-
 	ctxDB := repo.db.WithContext(context.Background())
 
 	err := repo.EncryptClusterData(cluster, repo.key)

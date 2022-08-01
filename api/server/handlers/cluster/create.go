@@ -112,6 +112,7 @@ func getClusterModelFromManualRequest(
 		GCPIntegrationID:         request.GCPIntegrationID,
 		AWSIntegrationID:         request.AWSIntegrationID,
 		CertificateAuthorityData: cert,
+		MonitorHelmReleases:      true,
 	}, nil
 }
 

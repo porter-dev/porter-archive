@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type EnablePullRequestHandler struct {
@@ -44,6 +46,11 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	env, err := c.Repo().Environment().ReadEnvironmentByOwnerRepoName(project.ID, cluster.ID, request.RepoOwner, request.RepoName)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment not found in cluster and project")))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -59,12 +66,13 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	pr, _, err := client.PullRequests.Get(r.Context(), env.GitRepoOwner, env.GitRepoName, int(request.Number))
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, err),
+			http.StatusConflict))
 		return
 	}
 
 	if pr.GetState() == "closed" {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("cannot enable deployment for closed PR"),
 			http.StatusConflict))
 		return
 	}
@@ -86,17 +94,17 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		if ghResp.StatusCode == 404 {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf(
-					"Please make sure the preview environment workflow files are present in PR branch %s and are up to"+
+					"please make sure the preview environment workflow files are present in PR branch %s and are up to"+
 						" date with the default branch", request.BranchFrom,
-				), 404),
+				), http.StatusConflict),
 			)
 			return
 		} else if ghResp.StatusCode == 422 {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf(
-					"Please make sure the workflow files in PR branch %s are up to date with the default branch",
+					"please make sure the workflow files in PR branch %s are up to date with the default branch",
 					request.BranchFrom,
-				), 422),
+				), http.StatusConflict),
 			)
 			return
 		}
@@ -141,5 +149,4 @@ func (c *EnablePullRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
 }

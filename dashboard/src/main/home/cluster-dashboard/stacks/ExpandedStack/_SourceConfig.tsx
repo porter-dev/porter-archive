@@ -1,11 +1,9 @@
-import { Tooltip } from "@material-ui/core";
-import ImageSelector from "components/image-selector/ImageSelector";
 import SaveButton from "components/SaveButton";
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useReducer, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
-import { AppResource, FullStackRevision, SourceConfig, Stack } from "../types";
+import { FullStackRevision, SourceConfig } from "../types";
 import SourceEditorDocker from "./components/SourceEditorDocker";
 
 const _SourceConfig = ({
@@ -64,39 +62,13 @@ const _SourceConfig = ({
   return (
     <SourceConfigStyles.Wrapper>
       {revision.source_configs.map((sourceConfig) => {
-        const apps = getAppsFromSourceConfig(revision.resources, sourceConfig);
-
-        const appList = formatAppList(apps, 2);
         return (
-          <SourceConfigStyles.ItemContainer>
-            {appList.hiddenApps?.length ? (
-              <Tooltip
-                title={
-                  <>
-                    {appList.hiddenApps.map((appName) => (
-                      <SourceConfigStyles.TooltipItem>
-                        {appName}
-                      </SourceConfigStyles.TooltipItem>
-                    ))}
-                  </>
-                }
-                placement={"bottom-end"}
-              >
-                <SourceConfigStyles.ItemTitle>
-                  Used by {appList.value}
-                </SourceConfigStyles.ItemTitle>
-              </Tooltip>
-            ) : (
-              <SourceConfigStyles.ItemTitle>
-                Used by {appList.value}
-              </SourceConfigStyles.ItemTitle>
-            )}
-            <SourceEditorDocker
-              sourceConfig={sourceConfig}
-              onChange={handleChange}
-              readOnly={readOnly || buttonStatus === "loading"}
-            />
-          </SourceConfigStyles.ItemContainer>
+          <SourceConfigItem
+            sourceConfig={sourceConfig}
+            key={sourceConfig.id}
+            handleChange={handleChange}
+            disabled={readOnly || buttonStatus === "loading"}
+          />
         );
       })}
       {readOnly ? null : (
@@ -117,41 +89,6 @@ const _SourceConfig = ({
 
 export default _SourceConfig;
 
-const getAppsFromSourceConfig = (
-  apps: AppResource[],
-  sourceConfig: SourceConfig
-) => {
-  return apps.filter((app) => {
-    return app.stack_source_config.id === sourceConfig.id;
-  });
-};
-
-const formatAppList = (apps: AppResource[], limit: number = 3) => {
-  if (apps.length <= limit) {
-    const formatter = new Intl.ListFormat("en", {
-      style: "long",
-      type: "conjunction",
-    });
-    return {
-      value: formatter.format(apps.map((app) => app.name)),
-      hiddenApps: [],
-    };
-  }
-
-  const hiddenApps = [...apps]
-    .splice(limit, apps.length)
-    .map((app) => app.name);
-
-  return {
-    value: apps
-      .map((app) => app.name)
-      .splice(0, limit)
-      .join(", ")
-      .concat(` and ${apps.length - limit} more`),
-    hiddenApps,
-  };
-};
-
 const SourceConfigStyles = {
   Wrapper: styled.div`
     margin-top: 30px;
@@ -164,8 +101,17 @@ const SourceConfigStyles = {
   `,
   ItemTitle: styled.div`
     font-size: 16px;
-    width: fit-content;
     font-weight: 500;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    > span {
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   `,
   TooltipItem: styled.div`
     font-size: 14px;
@@ -179,3 +125,96 @@ const SourceConfigStyles = {
     z-index: unset;
   `,
 };
+
+const SourceConfigItem = ({
+  sourceConfig,
+  handleChange,
+  disabled,
+}: {
+  sourceConfig: SourceConfig;
+  handleChange: (sourceConfig: SourceConfig) => void;
+  disabled: boolean;
+}) => {
+  const [editNameMode, toggleEditNameMode] = useReducer((prev) => !prev, false);
+  const prevName = useRef(sourceConfig.name);
+  const [name, setName] = useState(sourceConfig.name);
+
+  const handleNameChange = (newName: string) => {
+    setName(newName);
+    handleChange({ ...sourceConfig, name: newName });
+  };
+
+  const handleNameChangeCancel = () => {
+    setName(prevName.current);
+    handleChange({ ...sourceConfig, name: prevName.current });
+    toggleEditNameMode();
+  };
+
+  return (
+    <SourceConfigStyles.ItemContainer>
+      {editNameMode && !disabled ? (
+        <>
+          <SourceConfigStyles.ItemTitle>
+            <PlainTextInput
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              type="text"
+              disabled={disabled}
+            />
+            <EditButton onClick={handleNameChangeCancel}>
+              <i className="material-icons-outlined">close</i>
+            </EditButton>
+          </SourceConfigStyles.ItemTitle>
+        </>
+      ) : (
+        <SourceConfigStyles.ItemTitle>
+          <span>{name}</span>
+
+          {sourceConfig.stable_source_config_id && (
+            <EditButton
+              onClick={toggleEditNameMode}
+              disabled={!sourceConfig.stable_source_config_id}
+            >
+              <i className="material-icons-outlined">edit</i>
+            </EditButton>
+          )}
+        </SourceConfigStyles.ItemTitle>
+      )}
+
+      <SourceEditorDocker
+        sourceConfig={sourceConfig}
+        onChange={handleChange}
+        readOnly={disabled}
+      />
+    </SourceConfigStyles.ItemContainer>
+  );
+};
+
+const EditButton = styled.button`
+  outline: none;
+  cursor: pointer;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.333);
+  background: rgba(255, 255, 255, 0.067);
+  height: 35px;
+  width: 35px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  > i {
+    font-size: 20px;
+  }
+`;
+
+const PlainTextInput = styled.input`
+  outline: none;
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
+  font-size: 13px;
+  background: #ffffff11;
+  width: 100%;
+  color: white;
+  padding: 5px 10px;
+  height: 35px;
+`;

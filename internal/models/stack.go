@@ -160,6 +160,10 @@ func (s StackResource) ToStackResource(stackID string, stackRevisionID uint, sou
 type StackSourceConfig struct {
 	gorm.Model
 
+	// A unique identifier for this source config, this will allow us identify a same source config
+	// across multiple revisions and updates. This is not the same as the UID or ID which are updated over revisions.
+	StableSourceConfigID string
+
 	StackRevisionID uint
 
 	Name string
@@ -175,14 +179,15 @@ type StackSourceConfig struct {
 
 func (s StackSourceConfig) ToStackSourceConfigType(stackID string, stackRevisionID uint) *types.StackSourceConfig {
 	return &types.StackSourceConfig{
-		CreatedAt:       s.CreatedAt,
-		UpdatedAt:       s.UpdatedAt,
-		StackID:         stackID,
-		StackRevisionID: stackRevisionID,
-		Name:            s.Name,
-		ID:              s.UID,
-		ImageRepoURI:    s.ImageRepoURI,
-		ImageTag:        s.ImageTag,
+		CreatedAt:            s.CreatedAt,
+		UpdatedAt:            s.UpdatedAt,
+		StackID:              stackID,
+		StackRevisionID:      stackRevisionID,
+		Name:                 s.Name,
+		ID:                   s.UID,
+		ImageRepoURI:         s.ImageRepoURI,
+		ImageTag:             s.ImageTag,
+		StableSourceConfigID: s.StableSourceConfigID,
 	}
 }
 

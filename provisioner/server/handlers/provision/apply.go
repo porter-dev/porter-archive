@@ -153,7 +153,7 @@ func (c *ProvisionApplyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 				InfraID:                infra.ID,
 			},
 		))
-	case types.InfraDOCR, types.InfraECR, types.InfraGCR, types.InfraACR:
+	case types.InfraDOCR, types.InfraECR, types.InfraGCR, types.InfraGAR, types.InfraACR:
 		c.Config.AnalyticsClient.Track(analytics.RegistryProvisioningStartTrack(
 			&analytics.RegistryProvisioningStartTrackOpts{
 				ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(0, infra.ProjectID),

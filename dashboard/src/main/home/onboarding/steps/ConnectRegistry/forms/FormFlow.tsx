@@ -23,6 +23,7 @@ import {
 
 import {
   CredentialsForm as GCPCredentialsForm,
+  GARegistryConfig,
   SettingsForm as GCPSettingsForm,
   TestRegistryConnection as GCPTestRegistryConnection,
 } from "./_GCPRegistryForm";
@@ -40,6 +41,11 @@ const Forms = {
   gcp: {
     credentials: GCPCredentialsForm,
     settings: GCPSettingsForm,
+    test_connection: GCPTestRegistryConnection,
+  },
+  gar: {
+    credentials: GCPCredentialsForm,
+    settings: GARegistryConfig,
     test_connection: GCPTestRegistryConnection,
   },
   do: {
@@ -61,6 +67,12 @@ const FormTitle = {
     icon: integrationList["gcr"].icon,
     doc:
       "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#google-container-registry-gcr",
+  },
+  gar: {
+    label: "Google Artifact Registry (GAR)",
+    icon: integrationList["gcr"].icon,
+    doc:
+      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#google-artifact-registry-gar",
   },
   do: {
     label: "DigitalOcean Container Registry (DOCR)",

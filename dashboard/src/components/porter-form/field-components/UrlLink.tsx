@@ -5,7 +5,7 @@ import { UrlLinkField } from "../types";
 import { hasSetValue } from "../utils";
 
 const populate = (str: string, obj: unknown) => {
-  return str.replace(/{.+}/g, (match) => {
+  return str.replace(/{[^{}]*}+/g, (match) => {
     const key = match.replace("{", "").replace("}", "");
     let value;
     if (key[0] === ".") {
@@ -43,7 +43,7 @@ const UrlLink = (props: UrlLinkField) => {
     return null;
   }
 
-  const populatedUrl = populate(value[0], injectedProps.chart);
+  const populatedUrl = populate(val, injectedProps.chart);
 
   return (
     <>

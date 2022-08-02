@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup updateStack
+// swagger:parameters getStack deleteStack patchStackSource rollbackStack listStackRevisions addApplication addEnvGroup updateStack
 type stackPathParams struct {
 	// The project id
 	// in: path
@@ -432,8 +432,8 @@ func getV1StackRoutes(
 		Router:   r,
 	})
 
-	// PUT /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/source -> stack.NewStackPutSourceConfig
-	// swagger:operation PUT /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/source putStackSource
+	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/source -> stack.NewStackPatchSourceConfig
+	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id}/source patchStackSource
 	//
 	// Updates a stack's source configuration
 	//
@@ -449,10 +449,10 @@ func getV1StackRoutes(
 	//   - name: namespace
 	//   - name: stack_id
 	//   - in: body
-	//     name: PutStackSourceConfigRequest
+	//     name: PatchStackSourceConfigRequest
 	//     description: The source configurations to update
 	//     schema:
-	//       $ref: '#/definitions/PutStackSourceConfigRequest'
+	//       $ref: '#/definitions/PatchStackSourceConfigRequest'
 	// responses:
 	//   '200':
 	//     description: Successfully updated the source configuration
@@ -460,7 +460,7 @@ func getV1StackRoutes(
 	//       $ref: '#/definitions/Stack'
 	//   '403':
 	//     description: Forbidden
-	putSourceEndpoint := factory.NewAPIEndpoint(
+	patchSourceEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPut,
@@ -478,15 +478,15 @@ func getV1StackRoutes(
 		},
 	)
 
-	putSourceHandler := stack.NewStackPutSourceConfigHandler(
+	patchSourceHandler := stack.NewStackPatchSourceConfigHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: putSourceEndpoint,
-		Handler:  putSourceHandler,
+		Endpoint: patchSourceEndpoint,
+		Handler:  patchSourceHandler,
 		Router:   r,
 	})
 

@@ -2082,7 +2082,7 @@ const updateStackSourceConfig = baseApi<
     stack_id: string;
   }
 >(
-  "PUT",
+  "PATCH",
   ({ project_id, cluster_id, namespace, stack_id }) =>
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/source`
 );

@@ -16,23 +16,23 @@ import (
 	"gorm.io/gorm"
 )
 
-type StackPutSourceConfigHandler struct {
+type StackPatchSourceConfigHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewStackPutSourceConfigHandler(
+func NewStackPatchSourceConfigHandler(
 	config *config.Config,
 	reader shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *StackPutSourceConfigHandler {
-	return &StackPutSourceConfigHandler{
+) *StackPatchSourceConfigHandler {
+	return &StackPatchSourceConfigHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, reader, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *StackPatchSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	namespace, _ := r.Context().Value(types.NamespaceScope).(string)
@@ -45,7 +45,7 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	req := &types.PutStackSourceConfigRequest{}
+	req := &types.PatchStackSourceConfigRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, req); !ok {
 		return
@@ -59,7 +59,19 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	sourceConfigs, err := getSourceConfigModels(req.SourceConfigs)
+	parsedSourceConfigs := []*types.CreateStackSourceConfigRequest{}
+
+	for _, sourceConfig := range req.SourceConfigs {
+		parsedSourceConfigs = append(parsedSourceConfigs, &types.CreateStackSourceConfigRequest{
+			Name:                   sourceConfig.Name,
+			ImageRepoURI:           sourceConfig.ImageRepoURI,
+			ImageTag:               sourceConfig.ImageTag,
+			StableSourceConfigID:   sourceConfig.StableSourceConfigID,
+			StackSourceConfigBuild: sourceConfig.StackSourceConfigBuild,
+		})
+	}
+
+	sourceConfigs, err := getSourceConfigModels(parsedSourceConfigs)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

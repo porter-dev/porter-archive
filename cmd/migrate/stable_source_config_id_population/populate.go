@@ -12,51 +12,54 @@ func PopulateStableSourceConfigId(db *_gorm.DB) {
 	// Create a map that will separate source configs based on stack and name
 	// this will allow us to check all the source configs revisions that correspond
 	// to the same source config object.
-
-	sourceConfigsPerStack := make(map[uint]map[string][]*models.StackSourceConfig)
-
+	sourceConfigsPerStack := make(map[uint]map[string][]models.StackSourceConfig)
 	for _, revision := range dest {
 		if sourceConfigsPerStack[revision.StackID] == nil {
-			sourceConfigsPerStack[revision.StackID] = make(map[string][]*models.StackSourceConfig)
+			sourceConfigsPerStack[revision.StackID] = make(map[string][]models.StackSourceConfig)
 		}
 
 		for _, sc := range revision.SourceConfigs {
-			sourceConfigsPerStack[revision.StackID][sc.Name] = append(sourceConfigsPerStack[revision.StackID][sc.Name], &sc)
+			sourceConfigsPerStack[revision.StackID][sc.Name] = append(sourceConfigsPerStack[revision.StackID][sc.Name], sc)
 		}
 	}
 
 	// Populate the stable source config id for each revision of the source config
-	for _, sourceConfigs := range sourceConfigsPerStack {
-		for _, v := range sourceConfigs {
+	for _, sourceConfigsWithSameNameMap := range sourceConfigsPerStack {
+		for _, sc := range sourceConfigsWithSameNameMap {
+			sortedSourceConfigs := sortSourceConfigsByCreationDate(sc)
 
-			stableSourceConfigId := findSourceConfigWithStableSourceConfigID(v)
+			stableSourceConfigId := findSourceConfigWithStableSourceConfigID(sortedSourceConfigs)
 
 			if stableSourceConfigId == "" {
-				stableSourceConfigId = v[0].UID
+				stableSourceConfigId = sortedSourceConfigs[0].UID
 			}
 
-			for _, sourceConfig := range v {
+			for _, sourceConfig := range sortedSourceConfigs {
 				sourceConfig.StableSourceConfigID = stableSourceConfigId
+				db.Save(sourceConfig)
 			}
 		}
 	}
-
-	// Update the source configs in the database
-	for _, sourceConfigs := range sourceConfigsPerStack {
-		for _, v := range sourceConfigs {
-			for _, sc := range v {
-				db.Save(sc)
-			}
-		}
-	}
-
 }
 
-func findSourceConfigWithStableSourceConfigID(sourceConfigs []*models.StackSourceConfig) string {
+func findSourceConfigWithStableSourceConfigID(sourceConfigs []models.StackSourceConfig) string {
 	for _, sc := range sourceConfigs {
 		if sc.StableSourceConfigID != "" {
 			return sc.StableSourceConfigID
 		}
 	}
 	return ""
+}
+
+// sort source configs by creation date
+func sortSourceConfigsByCreationDate(sourceConfigs []models.StackSourceConfig) []models.StackSourceConfig {
+	for i := 0; i < len(sourceConfigs); i++ {
+		for j := i + 1; j < len(sourceConfigs); j++ {
+			if sourceConfigs[i].CreatedAt.After(sourceConfigs[j].CreatedAt) {
+				sourceConfigs[i], sourceConfigs[j] = sourceConfigs[j], sourceConfigs[i]
+			}
+		}
+	}
+
+	return sourceConfigs
 }

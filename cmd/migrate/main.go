@@ -5,6 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
+	"github.com/porter-dev/porter/cmd/migrate/stable_source_config_id_population"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/repository/gorm"
@@ -61,6 +62,10 @@ func main() {
 		}
 	}
 
+	if shouldPopulateStableSourceConfigId() {
+		stable_source_config_id_population.PopulateStableSourceConfigId(db)
+	}
+
 	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
 		logger.Fatal().Err(err).Msg("vault migration failed")
 	}
@@ -82,4 +87,20 @@ func shouldKeyRotate() (bool, string, string) {
 	}
 
 	return c.OldEncryptionKey != "" && c.NewEncryptionKey != "", c.OldEncryptionKey, c.NewEncryptionKey
+}
+
+type StableSourcePopulateConf struct {
+	// Simple env variable that will let us know if we should populate the stable_source_config_id column
+	POPULATE_SOURCE_CONFIG_ID string `env:"POPULATE_SOURCE_CONFIG_ID"`
+}
+
+func shouldPopulateStableSourceConfigId() bool {
+	var c StableSourcePopulateConf
+
+	if err := envdecode.StrictDecode(&c); err != nil {
+		log.Fatalf("Failed to decode migration conf: %s", err)
+		return false
+	}
+
+	return c.POPULATE_SOURCE_CONFIG_ID == "true"
 }

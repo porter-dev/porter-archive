@@ -19,12 +19,20 @@ func CloneSourceConfigs(sourceConfigs []models.StackSourceConfig) ([]models.Stac
 			return nil, err
 		}
 
-		res = append(res, models.StackSourceConfig{
+		newSourceConfig := &models.StackSourceConfig{
 			UID:          uid,
 			Name:         sourceConfig.Name,
 			ImageRepoURI: sourceConfig.ImageRepoURI,
 			ImageTag:     sourceConfig.ImageTag,
-		})
+		}
+
+		if sourceConfig.StableSourceConfigID != "" {
+			newSourceConfig.StableSourceConfigID = sourceConfig.StableSourceConfigID
+		} else {
+			newSourceConfig.StableSourceConfigID = string(uid)
+		}
+
+		res = append(res, *newSourceConfig)
 	}
 
 	return res, nil

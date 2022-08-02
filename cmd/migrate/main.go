@@ -91,7 +91,7 @@ func shouldKeyRotate() (bool, string, string) {
 
 type StableSourcePopulateConf struct {
 	// Simple env variable that will let us know if we should populate the stable_source_config_id column
-	POPULATE_SOURCE_CONFIG_ID string `env:"POPULATE_SOURCE_CONFIG_ID"`
+	POPULATE_SOURCE_CONFIG_ID bool `env:"POPULATE_SOURCE_CONFIG_ID"`
 }
 
 func shouldPopulateStableSourceConfigId() bool {
@@ -102,5 +102,5 @@ func shouldPopulateStableSourceConfigId() bool {
 		return false
 	}
 
-	return c.POPULATE_SOURCE_CONFIG_ID == "true"
+	return c.POPULATE_SOURCE_CONFIG_ID
 }

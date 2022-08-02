@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -88,7 +89,7 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// create incoming webhook
 	hook, _, err := client.Repositories.CreateHook(
-		r.Context(), owner, name, &github.Hook{
+		context.Background(), owner, name, &github.Hook{
 			Config: map[string]interface{}{
 				"url":          webhookURL,
 				"content_type": "json",
@@ -99,10 +100,9 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		},
 	)
 
-	if err != nil && !strings.Contains(err.Error(), "already exists on this repository") {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error trying to create a new github repository webhook: %w", err), http.StatusConflict),
-		)
+	if err != nil && !strings.Contains(err.Error(), "already exists") {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, err),
+			http.StatusConflict))
 		return
 	}
 
@@ -111,6 +111,14 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	env, err = c.Repo().Environment().CreateEnvironment(env)
 
 	if err != nil {
+		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
+
+		if deleteErr != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, deleteErr),
+				http.StatusConflict, "error creating environment"))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -119,14 +127,44 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	jwt, err := token.GetTokenForAPI(user.ID, project.ID)
 
 	if err != nil {
-		c.deleteEnvAndReportError(w, r, env, err)
+		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
+
+		if deleteErr != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, deleteErr),
+				http.StatusConflict, "error getting token for API while creating environment"))
+			return
+		}
+
+		_, deleteErr = c.Repo().Environment().DeleteEnvironment(env)
+
+		if deleteErr != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(deleteErr))
+			return
+		}
+
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	encoded, err := jwt.EncodeToken(c.Config().TokenConf)
 
 	if err != nil {
-		c.deleteEnvAndReportError(w, r, env, err)
+		_, deleteErr := client.Repositories.DeleteHook(context.Background(), owner, name, hook.GetID())
+
+		if deleteErr != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("%v: %w", errGithubAPI, deleteErr),
+				http.StatusConflict, "error encoding token while creating environment"))
+			return
+		}
+
+		_, deleteErr = c.Repo().Environment().DeleteEnvironment(env)
+
+		if deleteErr != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(deleteErr))
+			return
+		}
+
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -158,19 +196,6 @@ func (c *CreateEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	c.WriteResult(w, r, env.ToEnvironmentType())
-}
-
-func (c *CreateEnvironmentHandler) deleteEnvAndReportError(
-	w http.ResponseWriter, r *http.Request, env *models.Environment, err error,
-) {
-	_, delErr := c.Repo().Environment().DeleteEnvironment(env)
-
-	if delErr != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(delErr))
-		return
-	}
-
-	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 }
 
 func getGithubClientFromEnvironment(config *config.Config, env *models.Environment) (*github.Client, error) {

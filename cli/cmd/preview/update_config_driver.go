@@ -50,14 +50,14 @@ func NewUpdateConfigDriver(resource *models.Resource, opts *drivers.SharedDriver
 		output:      make(map[string]interface{}),
 	}
 
-	source, err := GetSource(resource.Source)
+	source, err := GetSource(resource.Name, resource.Source)
 	if err != nil {
 		return nil, err
 	}
 
 	driver.source = source
 
-	target, err := GetTarget(resource.Target)
+	target, err := GetTarget(resource.Name, resource.Target)
 	if err != nil {
 		return nil, err
 	}

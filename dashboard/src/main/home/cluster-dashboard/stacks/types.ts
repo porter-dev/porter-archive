@@ -90,6 +90,8 @@ export type SourceConfig = {
   stack_id: string;
   stack_revision_id: number;
 
+  stable_source_config_id: string;
+
   build?: {
     method: "pack" | "docker";
     folder_path: string;

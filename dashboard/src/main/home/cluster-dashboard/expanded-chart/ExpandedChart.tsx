@@ -312,6 +312,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
         "<token>",
         {
           values: valuesYaml,
+          // this is triggered from the Porter form, so we set the latest revision to ensure that the release is
+          // up to date
+          latest_revision: currentChart.version,
         },
         {
           id: currentProject.id,
@@ -369,6 +372,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           {
             values: valuesYaml,
             version: version,
+            latest_revision: currentChart.version,
           },
           {
             id: currentProject.id,

@@ -92,6 +92,18 @@ var connectGCRCmd = &cobra.Command{
 	},
 }
 
+var connectGARCmd = &cobra.Command{
+	Use:   "gar",
+	Short: "Adds a GAR instance to a project",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, runConnectGAR)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 var connectDOCRCmd = &cobra.Command{
 	Use:   "docr",
 	Short: "Adds a DOCR instance to a project",
@@ -127,6 +139,7 @@ func init() {
 	connectCmd.AddCommand(connectRegistryCmd)
 	connectCmd.AddCommand(connectDockerhubCmd)
 	connectCmd.AddCommand(connectGCRCmd)
+	connectCmd.AddCommand(connectGARCmd)
 	connectCmd.AddCommand(connectDOCRCmd)
 	connectCmd.AddCommand(connectHelmRepoCmd)
 }
@@ -168,6 +181,19 @@ func runConnectECR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ 
 
 func runConnectGCR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	regID, err := connect.GCR(
+		client,
+		cliConf.Project,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return cliConf.SetRegistry(regID)
+}
+
+func runConnectGAR(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
+	regID, err := connect.GAR(
 		client,
 		cliConf.Project,
 	)

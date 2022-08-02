@@ -22,17 +22,6 @@ type CreateStackRequest struct {
 	EnvGroups []*CreateStackEnvGroupRequest `json:"env_groups,omitempty" form:"required,dive,required"`
 }
 
-type PutStackSourceConfigPaylod struct {
-	*CreateStackSourceConfigRequest
-
-	StableSourceConfigID string `json:"stable_source_config_id" form:"required"`
-}
-
-// swagger:model
-type PutStackSourceConfigRequest struct {
-	SourceConfigs []*CreateStackSourceConfigRequest `json:"source_configs,omitempty" form:"required,dive,required"`
-}
-
 const URLParamStackRevisionNumber URLParam = "stack_revision_number"
 
 // swagger:model
@@ -40,9 +29,16 @@ type StackRollbackRequest struct {
 	TargetRevision uint `json:"target_revision"`
 }
 
+type StackSourceConfigWithRequiredStableSourceConfigID struct {
+	*CreateStackSourceConfigRequest
+
+	// required: true
+	StableSourceConfigID string `json:"stable_source_config_id" form:"required"`
+}
+
 // swagger:model
 type PatchStackSourceConfigRequest struct {
-	SourceConfig *UpdateStackSourceConfigRequest `json:"source_config,omitempty" form:"required"`
+	SourceConfigs []*StackSourceConfigWithRequiredStableSourceConfigID `json:"source_configs,omitempty" form:"required,dive,required"`
 }
 
 type CreateStackAppResourceRequest struct {
@@ -332,4 +328,21 @@ type StackSourceConfigBuildPack struct {
 
 	// A list of buildpacks to use
 	Buildpacks []string `json:"buildpacks"`
+}
+
+type BaseStackSourceConfigRequest struct {
+	// required: true
+	Name string `json:"name" form:"required"`
+
+	// required: true
+	ImageRepoURI string `json:"image_repo_uri" form:"required"`
+
+	// required: true
+	ImageTag string `json:"image_tag" form:"required"`
+
+	// required: true
+	StableSourceConfigID string `json:"stable_source_config_id"`
+
+	// If this field is empty, the resource is deployed directly from the image repo uri
+	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
 }

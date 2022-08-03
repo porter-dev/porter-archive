@@ -61,7 +61,7 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no environment found")))
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("environment not found in cluster and project")))
 			return
 		}
 
@@ -85,9 +85,7 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 	client, err := getGithubClientFromEnvironment(c.Config(), env)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("unable to get github client: %w", err), http.StatusConflict,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -95,15 +93,12 @@ func (c *FinalizeDeploymentWithErrorsHandler) ServeHTTP(w http.ResponseWriter, r
 	prClosed, err := isGithubPRClosed(client, owner, name, int(depl.PullRequestID))
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error fetching details of github PR for deployment ID: %d. Error: %w",
-				depl.ID, err), http.StatusConflict,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusConflict))
 		return
 	}
 
 	if prClosed {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("Github PR has been closed"),
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("github PR has been closed"),
 			http.StatusConflict))
 		return
 	}

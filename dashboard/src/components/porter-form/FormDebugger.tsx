@@ -11,6 +11,7 @@ import "ace-builds/src-noconflict/mode-text";
 
 import Heading from "../form-components/Heading";
 import Helper from "../form-components/Helper";
+import { ChartType } from "shared/types";
 
 type PropsType = {
   goBack: () => void;
@@ -170,6 +171,13 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           rightTabOptions={this.state.showBonusTabs ? tabOptions : []}
           renderTabContents={this.renderTabContents}
           saveButtonText={"Test Submit"}
+          injectedProps={{
+            "url-link": {
+              chart: {
+                name: "something",
+              } as ChartType,
+            },
+          }}
         />
       </StyledFormDebugger>
     );

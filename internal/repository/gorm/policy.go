@@ -17,21 +17,34 @@ func NewPolicyRepository(db *gorm.DB) repository.PolicyRepository {
 	return &PolicyRepository{db}
 }
 
-func (repo *PolicyRepository) CreatePolicy(a *models.Policy) (*models.Policy, error) {
-	if err := repo.db.Create(a).Error; err != nil {
+func (repo *PolicyRepository) CreatePolicy(policy *models.Policy) (*models.Policy, error) {
+	var project models.Project
+
+	if err := repo.db.Where("id = ?", policy.ProjectID).First(&project).Error; err != nil {
 		return nil, err
 	}
-	return a, nil
+
+	assoc := repo.db.Model(&project).Association("ProjectPolicies")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Append(policy); err != nil {
+		return nil, err
+	}
+
+	return policy, nil
 }
 
 func (repo *PolicyRepository) ListPoliciesByProjectID(projectID uint) ([]*models.Policy, error) {
-	policys := []*models.Policy{}
+	var policies []*models.Policy
 
-	if err := repo.db.Where("project_id = ?", projectID).Find(&policys).Error; err != nil {
+	if err := repo.db.Where("project_id = ?", projectID).Find(&policies).Error; err != nil {
 		return nil, err
 	}
 
-	return policys, nil
+	return policies, nil
 }
 
 func (repo *PolicyRepository) ReadPolicy(projectID uint, uid string) (*models.Policy, error) {
@@ -57,8 +70,25 @@ func (repo *PolicyRepository) UpdatePolicy(
 func (repo *PolicyRepository) DeletePolicy(
 	policy *models.Policy,
 ) (*models.Policy, error) {
-	if err := repo.db.Delete(&policy).Error; err != nil {
+	var project models.Project
+
+	if err := repo.db.Where("id = ?", policy.ProjectID).First(&project).Error; err != nil {
 		return nil, err
 	}
+
+	assoc := repo.db.Model(&project).Association("ProjectPolicies")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Delete(policy); err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Delete(policy).Error; err != nil {
+		return nil, err
+	}
+
 	return policy, nil
 }

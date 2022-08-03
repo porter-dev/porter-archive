@@ -90,6 +90,9 @@ func shouldKeyRotate() (bool, string, string) {
 }
 
 type StableSourcePopulateConf struct {
+        // we add a dummy field to avoid empty struct issue with envdecode
+	DummyField       string `env:"ASDF,default=asdf"`
+	
 	// Simple env variable that will let us know if we should populate the stable_source_config_id column
 	POPULATE_SOURCE_CONFIG_ID bool `env:"POPULATE_SOURCE_CONFIG_ID"`
 }

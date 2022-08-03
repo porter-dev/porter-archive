@@ -5,6 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
@@ -38,6 +39,20 @@ func (p *PolicyDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	policy, err := p.Repo().Policy().ReadPolicy(proj.ID, policyID)
 
 	if err == nil {
-		p.Repo().Policy().DeletePolicy(policy)
+		policy, err = p.Repo().Policy().DeletePolicy(policy)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
+
+	res, err := policy.ToAPIPolicyType()
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	p.WriteResult(w, r, res)
 }

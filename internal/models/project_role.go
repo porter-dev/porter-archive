@@ -8,11 +8,11 @@ type ProjectRole struct {
 	gorm.Model
 
 	ProjectID uint
-	PolicyID  uint
 
 	UniqueID string `gorm:"unique"`
 
 	Name string
 
-	Users []User `gorm:"many2many:user_roles"`
+	Policies []Policy `gorm:"many2many:role_policies"`
+	Users    []User   `gorm:"many2many:user_roles"`
 }

@@ -30,7 +30,12 @@ const _SourceConfig = ({
     const index = newSourceConfigArray.findIndex(
       (sc) => sc.id === sourceConfig.id
     );
-    newSourceConfigArray[index] = sourceConfig;
+
+    newSourceConfigArray[index] = {
+      ...sourceConfig,
+      display_name: sourceConfig.display_name || sourceConfig.name,
+    };
+
     setSourceConfigArrayCopy(newSourceConfigArray);
   };
 
@@ -136,19 +141,19 @@ const SourceConfigItem = ({
   disabled: boolean;
 }) => {
   const [editNameMode, toggleEditNameMode] = useReducer((prev) => !prev, false);
-  const prevName = useRef(sourceConfig.name);
+  const prevName = useRef(sourceConfig.display_name || sourceConfig.name);
   const [name, setName] = useState(
     sourceConfig.display_name || sourceConfig.name
   );
 
   const handleNameChange = (newName: string) => {
     setName(newName);
-    handleChange({ ...sourceConfig, name: newName });
+    handleChange({ ...sourceConfig, display_name: newName });
   };
 
   const handleNameChangeCancel = () => {
     setName(prevName.current);
-    handleChange({ ...sourceConfig, name: prevName.current });
+    handleChange({ ...sourceConfig, display_name: prevName.current });
     toggleEditNameMode();
   };
 

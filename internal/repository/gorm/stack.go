@@ -118,14 +118,6 @@ func (repo *StackRepository) DeleteStack(stack *models.Stack) (*models.Stack, er
 	return stack, nil
 }
 
-func (repo *StackRepository) UpdateStack(stack *models.Stack) (*models.Stack, error) {
-	if err := repo.db.Save(stack).Error; err != nil {
-		return nil, err
-	}
-
-	return stack, nil
-}
-
 func (repo *StackRepository) UpdateStackRevision(revision *models.StackRevision) (*models.StackRevision, error) {
 	if err := repo.db.Save(revision).Error; err != nil {
 		return nil, err

@@ -12,10 +12,10 @@ type Policy struct {
 
 	UniqueID string `gorm:"unique"`
 
-	ProjectID       uint
-	CreatedByUserID uint
-	Name            string
-	PolicyBytes     []byte
+	ProjectID       uint   `gorm:"not null;check:project_id>0"`
+	CreatedByUserID uint   `gorm:"not null;check:created_by_user_id>0"`
+	Name            string `gorm:"not null;check:name!=''"`
+	PolicyBytes     []byte `gorm:"not null"`
 }
 
 func (p *Policy) ToAPIPolicyTypeMeta() *types.APIPolicyMeta {

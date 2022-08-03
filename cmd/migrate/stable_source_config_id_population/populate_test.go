@@ -6,9 +6,11 @@ import (
 	"github.com/porter-dev/porter/cmd/migrate/stable_source_config_id_population"
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
+	lr "github.com/porter-dev/porter/pkg/logger"
 )
 
 func TestAllSourceConfigHaveSameStableSourceConfigID(t *testing.T) {
+	logger := lr.NewConsole(true)
 
 	tester := &tester{
 		dbFileName: "./porter_stable_source_config_id_population.db",
@@ -28,7 +30,7 @@ func TestAllSourceConfigHaveSameStableSourceConfigID(t *testing.T) {
 
 	createNewStackRevision(tester, t, stackName)
 
-	stable_source_config_id_population.PopulateStableSourceConfigId(tester.DB)
+	stable_source_config_id_population.PopulateStableSourceConfigId(tester.DB, logger)
 
 	sourceConfigs := []*models.StackSourceConfig{}
 
@@ -56,6 +58,7 @@ func TestAllSourceConfigHaveSameStableSourceConfigID(t *testing.T) {
 }
 
 func TestSourceConfigWithDifferentNamesShouldHaveDifferentStableSourceConfigID(t *testing.T) {
+	logger := lr.NewConsole(true)
 	tester := &tester{
 		dbFileName: "./porter_stable_source_config_id_population.db",
 	}
@@ -79,7 +82,7 @@ func TestSourceConfigWithDifferentNamesShouldHaveDifferentStableSourceConfigID(t
 
 	appendNewSourceConfig(t, tester, tester.initStacks[0], *newSourceConfig)
 
-	stable_source_config_id_population.PopulateStableSourceConfigId(tester.DB)
+	stable_source_config_id_population.PopulateStableSourceConfigId(tester.DB, logger)
 
 	sourceConfigs := []*models.StackSourceConfig{}
 
@@ -105,7 +108,7 @@ func TestSourceConfigWithDifferentNamesShouldHaveDifferentStableSourceConfigID(t
 	}
 
 	// check if all source configs that share name have the same StableSourceConfigID
-	for sourceConfigName, _ := range sourceConfigMap {
+	for sourceConfigName := range sourceConfigMap {
 		for _, sc := range sourceConfigMap[sourceConfigName] {
 			if sc.StableSourceConfigID != sourceConfigMap[sourceConfigName][0].StableSourceConfigID {
 				t.Fatalf("expected all StableSourceConfigID to be equal, got %s", sc.StableSourceConfigID)
@@ -115,6 +118,7 @@ func TestSourceConfigWithDifferentNamesShouldHaveDifferentStableSourceConfigID(t
 }
 
 func TestSourceConfigsFromDifferentStacksShouldHaveDifferentStableSourceConfigId(t *testing.T) {
+	logger := lr.NewConsole(true)
 	tester := &tester{
 		dbFileName: "./porter_stable_source_config_id_population.db",
 	}
@@ -131,7 +135,7 @@ func TestSourceConfigsFromDifferentStacksShouldHaveDifferentStableSourceConfigId
 	createNewStackRevision(tester, t, "first-stack")
 	createNewStackRevision(tester, t, "second-stack")
 
-	stable_source_config_id_population.PopulateStableSourceConfigId(tester.DB)
+	stable_source_config_id_population.PopulateStableSourceConfigId(tester.DB, logger)
 
 	sourceConfigs := []*models.StackSourceConfig{}
 

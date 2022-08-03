@@ -96,6 +96,9 @@ const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
       source_configs: [
         ...prev.source_configs,
         {
+          display_name:
+            sourceConfig.display_name ||
+            newSourceConfigName(prev.source_configs.length),
           name: newSourceConfigName(prev.source_configs.length),
           ...sourceConfig,
         },

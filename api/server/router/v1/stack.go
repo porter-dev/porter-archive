@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup updateStack
+// swagger:parameters getStack deleteStack putStackSource rollbackStack listStackRevisions addApplication addEnvGroup
 type stackPathParams struct {
 	// The project id
 	// in: path
@@ -817,62 +817,6 @@ func getV1StackRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: removeEnvGroupEndpoint,
 		Handler:  removeEnvGroupHandler,
-		Router:   r,
-	})
-
-	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id} -> stack.NewStackUpdateStackHandler
-	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/stacks/{stack_id} updateStack
-	//
-	// Updates a stack. Currently the only value available to update is the stack name.
-	//
-	// ---
-	// produces:
-	// - application/json
-	// summary: Update Stack
-	// tags:
-	// - Stacks
-	// parameters:
-	//   - name: project_id
-	//   - name: cluster_id
-	//   - name: namespace
-	//   - name: stack_id
-	//   - in: body
-	//     name: UpdateStack
-	//     description: The stack to update
-	//     schema:
-	//       $ref: '#/definitions/UpdateStackRequest'
-	// responses:
-	//   '200':
-	//     description: Successfully updated the stack
-	//   '403':
-	//     description: Forbidden
-	updateStackEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPatch,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/{stack_id}",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-				types.NamespaceScope,
-				types.StackScope,
-			},
-		},
-	)
-
-	updateStackHandler := stack.NewStackUpdateStackHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: updateStackEndpoint,
-		Handler:  updateStackHandler,
 		Router:   r,
 	})
 

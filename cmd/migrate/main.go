@@ -63,7 +63,7 @@ func main() {
 	}
 
 	if shouldPopulateStableSourceConfigId() {
-		stable_source_config_id_population.PopulateStableSourceConfigId(db)
+		stable_source_config_id_population.PopulateStableSourceConfigId(db, logger)
 	}
 
 	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
@@ -90,9 +90,9 @@ func shouldKeyRotate() (bool, string, string) {
 }
 
 type StableSourcePopulateConf struct {
-        // we add a dummy field to avoid empty struct issue with envdecode
-	DummyField       string `env:"ASDF,default=asdf"`
-	
+	// we add a dummy field to avoid empty struct issue with envdecode
+	DummyField string `env:"ASDF,default=asdf"`
+
 	// Simple env variable that will let us know if we should populate the stable_source_config_id column
 	POPULATE_SOURCE_CONFIG_ID bool `env:"POPULATE_SOURCE_CONFIG_ID"`
 }

@@ -218,11 +218,7 @@ const ExpandedStack = () => {
             component: (
               <>
                 <Gap></Gap>
-                <Settings
-                  stack={stack}
-                  onDelete={handleDelete}
-                  onUpdate={refreshStack}
-                />
+                <Settings stackName={stack.name} onDelete={handleDelete} />
               </>
             ),
           },

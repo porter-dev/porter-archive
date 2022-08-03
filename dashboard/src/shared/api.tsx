@@ -2145,22 +2145,6 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-const updateStack = baseApi<
-  {
-    name: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-    namespace: string;
-    stack_id: string;
-  }
->(
-  "PATCH",
-  ({ project_id, cluster_id, namespace, stack_id }) =>
-    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}`
-);
-
 const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -2362,7 +2346,6 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
-  updateStack,
 
   // STATUS
   getGithubStatus,

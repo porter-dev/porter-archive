@@ -64,11 +64,6 @@ type CreateStackAppResourceRequest struct {
 }
 
 // swagger:model
-type UpdateStackRequest struct {
-	Name string `json:"name" form:"required"`
-}
-
-// swagger:model
 type Stack struct {
 	// The time that the stack was initially created
 	CreatedAt time.Time `json:"created_at"`
@@ -226,9 +221,6 @@ type StackSourceConfig struct {
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
-
-	// Unique ID to identify between revisions
-	StableSourceConfigID string `json:"stable_source_config_id"`
 }
 
 // swagger:model
@@ -261,8 +253,6 @@ type CreateStackSourceConfigRequest struct {
 
 	// required: true
 	ImageTag string `json:"image_tag" form:"required"`
-
-	StableSourceConfigID string `json:"source_config_id,omitempty"`
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`

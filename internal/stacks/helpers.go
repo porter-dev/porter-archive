@@ -52,7 +52,7 @@ func CloneAppResources(
 			if prevSourceConfig.UID == appResource.StackSourceConfigUID {
 				// find the corresponding new source config
 				for _, newSourceConfig := range newSourceConfigs {
-					if newSourceConfig.StableSourceConfigID == prevSourceConfig.StableSourceConfigID {
+					if newSourceConfig.Name == prevSourceConfig.Name {
 						linkedSourceConfigUID = newSourceConfig.UID
 					}
 				}

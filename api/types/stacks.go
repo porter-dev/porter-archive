@@ -64,6 +64,11 @@ type CreateStackAppResourceRequest struct {
 }
 
 // swagger:model
+type UpdateStackRequest struct {
+	Name string `json:"name" form:"required"`
+}
+
+// swagger:model
 type Stack struct {
 	// The time that the stack was initially created
 	CreatedAt time.Time `json:"created_at"`

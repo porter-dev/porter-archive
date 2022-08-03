@@ -207,8 +207,11 @@ type StackSourceConfig struct {
 	// The numerical revision id that this source config belongs to
 	StackRevisionID uint `json:"stack_revision_id"`
 
-	// The display name of the stack source
+	// Unique name for the source config
 	Name string `json:"name"`
+
+	// Display name for the stack source
+	DisplayName string `json:"display_name"`
 
 	// The unique id of the stack source config
 	ID string `json:"id"`
@@ -245,6 +248,9 @@ type CreateStackEnvGroupRequest struct {
 
 // swagger:model
 type CreateStackSourceConfigRequest struct {
+	// required: true
+	DisplayName string `json:"display_name" form:"required"`
+
 	// required: true
 	Name string `json:"name" form:"required"`
 

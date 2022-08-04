@@ -3,9 +3,7 @@ import Heading from "components/form-components/Heading";
 import RepoList from "components/repo-selector/RepoList";
 import SaveButton from "components/SaveButton";
 import DocsHelper from "components/DocsHelper";
-import { ActionConfigType } from "shared/types";
-import TitleSection from "components/TitleSection";
-import { useRouteMatch } from "react-router";
+import { GithubActionConfigType } from "shared/types";
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
@@ -15,6 +13,8 @@ import { Environment } from "./types";
 import DashboardHeader from "../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import CheckboxRow from "components/form-components/CheckboxRow";
+import BranchFilterSelector from "./components/BranchFilterSelector";
+import Helper from "components/form-components/Helper";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -30,16 +30,21 @@ const ConnectNewRepo: React.FC = () => {
   const { pushFiltered } = useRouting();
 
   // NOTE: git_repo_id is a misnomer as this actually refers to the github app's installation id.
-  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
+  const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
     git_repo: null,
     image_repo_uri: null,
     git_branch: null,
     git_repo_id: 0,
+    kind: "github",
   });
 
-  useEffect(() => {}, [repo]);
+  // Branch selector data
+  const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
+  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
-  const { url } = useRouteMatch();
+  // Disable new comments data
+  const [isNewCommentsDisabled, setIsNewCommentsDisabled] = useState(false);
 
   useEffect(() => {
     api
@@ -65,6 +70,43 @@ const ConnectNewRepo: React.FC = () => {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!actionConfig.git_repo || !actionConfig.git_repo_id) {
+      return;
+    }
+
+    let isSubscribed = true;
+    const repoName = actionConfig.git_repo.split("/")[1];
+    const repoOwner = actionConfig.git_repo.split("/")[0];
+    setIsLoadingBranches(true);
+    api
+      .getBranches<string[]>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          kind: "github",
+          name: repoName,
+          owner: repoOwner,
+          git_repo_id: actionConfig.git_repo_id,
+        }
+      )
+      .then(({ data }) => {
+        if (isSubscribed) {
+          setIsLoadingBranches(false);
+          setAvailableBranches(data);
+        }
+      })
+      .catch(() => {
+        if (isSubscribed) {
+          setIsLoadingBranches(false);
+          setCurrentError(
+            "Couldn't load branches for this repository, using all branches by default."
+          );
+        }
+      });
+  }, [actionConfig]);
+
   const addRepo = () => {
     let [owner, repoName] = repo.split("/");
     setStatus("loading");
@@ -74,6 +116,8 @@ const ConnectNewRepo: React.FC = () => {
         {
           name: `preview`,
           mode: enableAutomaticDeployments ? "auto" : "manual",
+          disable_new_comments: isNewCommentsDisabled,
+          git_repo_branches: selectedBranches,
         },
         {
           project_id: currentProject.id,
@@ -114,7 +158,7 @@ const ConnectNewRepo: React.FC = () => {
       <br />
       <RepoList
         actionConfig={actionConfig}
-        setActionConfig={(a: ActionConfigType) => {
+        setActionConfig={(a: GithubActionConfigType) => {
           setActionConfig(a);
           setRepo(a.git_repo);
         }}
@@ -131,25 +175,71 @@ const ConnectNewRepo: React.FC = () => {
         />
       </HelperContainer>
 
-      <FlexWrap>
+      <Heading>Automatic pull request deployments</Heading>
+      <Helper>
+        If you enable this option, the new pull requests will be automatically
+        deployed.
+      </Helper>
+      <CheckboxWrapper>
         <CheckboxRow
-          label="Enable automatic deployments"
+          label="Enable automatic deploys"
           checked={enableAutomaticDeployments}
-          toggle={() => setEnableAutomaticDeployments((prev) => !prev)}
+          toggle={() =>
+            setEnableAutomaticDeployments(!enableAutomaticDeployments)
+          }
+          wrapperStyles={{
+            disableMargin: true,
+          }}
         />
-        <Div>
-          <DocsHelper
-            disableMargin
-            tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
-            placement="top-start"
-          />
-        </Div>
-      </FlexWrap>
+        <DocsHelper
+          disableMargin
+          tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
+        />
+      </CheckboxWrapper>
+
+      <Heading>Disable new comments for new deployments</Heading>
+      <Helper>
+        When enabled new comments will not be created for new deployments.
+        Instead the last comment will be updated.
+      </Helper>
+      <CheckboxWrapper>
+        <CheckboxRow
+          label="Disable new comments for deployments"
+          checked={isNewCommentsDisabled}
+          toggle={() => setIsNewCommentsDisabled(!isNewCommentsDisabled)}
+          wrapperStyles={{
+            disableMargin: true,
+          }}
+        />
+        <DocsHelper
+          disableMargin
+          tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
+          placement="top-end"
+        />
+      </CheckboxWrapper>
+
+      <Heading>Select allowed branches</Heading>
+      <Helper>
+        If the pull request has a base branch included in this list, it will be
+        allowed to be deployed.
+        <br />
+        (Leave empty to allow all branches)
+      </Helper>
+      <BranchFilterSelector
+        onChange={setSelectedBranches}
+        options={availableBranches}
+        value={selectedBranches}
+        showLoading={isLoadingBranches}
+      />
 
       <ActionContainer>
         <SaveButton
           text="Add Repository"
-          disabled={actionConfig.git_repo_id ? false : true}
+          disabled={
+            (actionConfig.git_repo_id ? false : true) ||
+            isLoadingBranches ||
+            status === "loading"
+          }
           onClick={addRepo}
           makeFlush={true}
           clearPosition={true}
@@ -272,4 +362,10 @@ const HeaderSection = styled.div`
     margin-left: 17px;
     margin-right: 7px;
   }
+`;
+
+const CheckboxWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
 `;

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
@@ -15,6 +17,7 @@ type Environment struct {
 	GitInstallationID uint
 	GitRepoOwner      string
 	GitRepoName       string
+	GitRepoBranches   string
 
 	Name string
 	Mode string
@@ -28,6 +31,24 @@ type Environment struct {
 	GithubWebhookID int64
 }
 
+func getGitRepoBranches(branches string) []string {
+	var branchesArr []string
+
+	if branches != "" {
+		supposedBranches := strings.Split(branches, ",")
+
+		for _, br := range supposedBranches {
+			name := strings.TrimSpace(br)
+
+			if len(name) > 0 {
+				branchesArr = append(branchesArr, name)
+			}
+		}
+	}
+
+	return branchesArr
+}
+
 func (e *Environment) ToEnvironmentType() *types.Environment {
 	return &types.Environment{
 		ID:                e.Model.ID,
@@ -36,6 +57,7 @@ func (e *Environment) ToEnvironmentType() *types.Environment {
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
+		GitRepoBranches:   getGitRepoBranches(e.GitRepoBranches),
 
 		NewCommentsDisabled: e.NewCommentsDisabled,
 

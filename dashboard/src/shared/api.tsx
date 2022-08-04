@@ -140,6 +140,8 @@ const createEnvironment = baseApi<
   {
     name: string;
     mode: "auto" | "manual";
+    disable_new_comments: boolean;
+    git_repo_branches: string[];
   },
   {
     project_id: number;
@@ -158,6 +160,23 @@ const createEnvironment = baseApi<
   } = pathParams;
   return `/api/projects/${project_id}/gitrepos/${git_installation_id}/${git_repo_owner}/${git_repo_name}/clusters/${cluster_id}/environment`;
 });
+
+const updateEnvironment = baseApi<
+  {
+    mode: "auto" | "manual";
+    new_comment_enabled: boolean;
+    git_repo_branches: string[]; // Array with branch names
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    environment_id: number;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, environment_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/settings`
+);
 
 const deleteEnvironment = baseApi<
   {
@@ -2180,6 +2199,7 @@ export default {
   createGitlabIntegration,
   createEmailVerification,
   createEnvironment,
+  updateEnvironment,
   deleteEnvironment,
   createPreviewEnvironmentDeployment,
   reenablePreviewEnvironmentDeployment,

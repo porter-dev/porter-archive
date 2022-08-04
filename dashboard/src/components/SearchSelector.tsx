@@ -1,6 +1,7 @@
 import _ from "lodash";
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
+import Loading from "./Loading";
 
 type Props<T = any> = {
   options: T[];
@@ -15,6 +16,7 @@ type Props<T = any> = {
   className?: string;
   renderOptionIcon?: (option: T) => React.ReactNode;
   placeholder?: string;
+  showLoading?: boolean;
 };
 
 function SearchSelector<O = any>({
@@ -30,6 +32,7 @@ function SearchSelector<O = any>({
   className,
   renderOptionIcon,
   placeholder = "Find or add a tag...", // legacy value to not break existing code
+  showLoading = false,
 }: Props<O>) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [filter, setFilter] = useState("");
@@ -63,6 +66,17 @@ function SearchSelector<O = any>({
       typeof option === "string" ? option.includes(filter) : true
     );
   }, [filter, options]);
+
+  if (showLoading) {
+    return (
+      <>
+        {label?.length ? <Label>{label}</Label> : null}
+        <InputWrapper className={className}>
+          <Loading />
+        </InputWrapper>
+      </>
+    );
+  }
 
   return (
     <>
@@ -156,6 +170,7 @@ const InputWrapper = styled.div`
   background: #ffffff11;
   position: relative;
   width: 100%;
+  min-height: 37px;
 `;
 
 const Input = styled.input`

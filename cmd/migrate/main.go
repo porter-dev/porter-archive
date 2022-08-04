@@ -5,6 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
+	"github.com/porter-dev/porter/cmd/migrate/populate_source_config_display_name"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/repository/gorm"
@@ -61,6 +62,14 @@ func main() {
 		}
 	}
 
+	if shouldPopulateSourceConfigDisplayName() {
+		err := populate_source_config_display_name.PopulateSourceConfigDisplayName(db, logger)
+
+		if err != nil {
+			logger.Fatal().Err(err).Msg("failed to populate source config display name")
+		}
+	}
+
 	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
 		logger.Fatal().Err(err).Msg("vault migration failed")
 	}
@@ -82,4 +91,23 @@ func shouldKeyRotate() (bool, string, string) {
 	}
 
 	return c.OldEncryptionKey != "" && c.NewEncryptionKey != "", c.OldEncryptionKey, c.NewEncryptionKey
+}
+
+type PopulateSourceConfigDisplayNameConf struct {
+	// we add a dummy field to avoid empty struct issue with envdecode
+	DummyField string `env:"ASDF,default=asdf"`
+
+	// if true, will populate the display name for all source configs
+	PopulateSourceConfigDisplayName bool `env:"POPULATE_SOURCE_CONFIG_DISPLAY_NAME"`
+}
+
+func shouldPopulateSourceConfigDisplayName() bool {
+	var c PopulateSourceConfigDisplayNameConf
+
+	if err := envdecode.StrictDecode(&c); err != nil {
+		log.Fatalf("Failed to decode migration conf: %s", err)
+		return false
+	}
+
+	return c.PopulateSourceConfigDisplayName
 }

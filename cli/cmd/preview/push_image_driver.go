@@ -35,7 +35,7 @@ func NewPushDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (d
 		output:      make(map[string]interface{}),
 	}
 
-	target, err := GetTarget(resource.Target)
+	target, err := GetTarget(resource.Name, resource.Target)
 	if err != nil {
 		return nil, err
 	}

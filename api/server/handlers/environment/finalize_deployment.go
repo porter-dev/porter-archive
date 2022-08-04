@@ -264,7 +264,7 @@ func isGithubPRClosed(
 	)
 
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("%v: %w", errGithubAPI, err)
 	}
 
 	return ghPR.GetState() == "closed", nil

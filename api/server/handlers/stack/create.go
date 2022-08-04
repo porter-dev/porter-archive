@@ -261,21 +261,12 @@ func getSourceConfigModels(sourceConfigs []*types.CreateStackSourceConfigRequest
 				return nil, err
 			}
 
-			newSourceConfig := &models.StackSourceConfig{
+			res = append(res, models.StackSourceConfig{
 				UID:          uid,
 				Name:         sourceConfig.Name,
 				ImageRepoURI: sourceConfig.ImageRepoURI,
 				ImageTag:     sourceConfig.ImageTag,
-			}
-
-			// If the source config had a source config ID then we need to copy it over
-			if sourceConfig.StableSourceConfigID != "" {
-				newSourceConfig.StableSourceConfigID = sourceConfig.StableSourceConfigID
-			} else {
-				newSourceConfig.StableSourceConfigID = string(uid)
-			}
-
-			res = append(res, *newSourceConfig)
+			})
 		}
 	}
 

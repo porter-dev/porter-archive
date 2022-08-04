@@ -89,7 +89,7 @@ func (c *UpdateDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ghDeployment, err := createDeployment(client, env, request.PRBranchFrom, request.ActionID)
+	ghDeployment, err := createGithubDeployment(client, env, request.PRBranchFrom, request.ActionID)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

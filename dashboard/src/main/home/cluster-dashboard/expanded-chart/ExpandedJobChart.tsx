@@ -395,6 +395,9 @@ export const ExpandedJobChartFC: React.FC<{
                   availableSyncEnvGroups:
                     isStack && !disableForm ? stackEnvGroups : undefined,
                 },
+                "url-link": {
+                  chart: chart,
+                },
               }}
             />
           )}

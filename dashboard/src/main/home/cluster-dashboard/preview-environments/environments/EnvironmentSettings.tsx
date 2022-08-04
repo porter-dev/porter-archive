@@ -147,6 +147,8 @@ const EnvironmentSettings = ({ environmentId }: { environmentId: string }) => {
             <Helper>
               If the pull request has a base branch included in this list, it
               will be allowed to be deployed.
+              <br />
+              (Leave empty to allow all branches)
             </Helper>
             <BranchFilterSelector
               value={selectedBranches}

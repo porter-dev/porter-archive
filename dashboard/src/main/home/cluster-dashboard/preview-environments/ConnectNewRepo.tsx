@@ -14,6 +14,7 @@ import DashboardHeader from "../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import BranchFilterSelector from "./components/BranchFilterSelector";
+import Helper from "components/form-components/Helper";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -42,6 +43,9 @@ const ConnectNewRepo: React.FC = () => {
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
+  // Disable new comments data
+  const [isNewCommentsDisabled, setIsNewCommentsDisabled] = useState(false);
+
   useEffect(() => {
     api
       .listEnvironments<Environment[]>(
@@ -67,9 +71,13 @@ const ConnectNewRepo: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!actionConfig.git_repo || !actionConfig.git_repo_id) {
+      return;
+    }
+
     let isSubscribed = true;
-    const branchName = actionConfig.git_branch.split("/")[1];
-    const branchOwner = actionConfig.git_branch.split("/")[0];
+    const repoName = actionConfig.git_repo.split("/")[1];
+    const repoOwner = actionConfig.git_repo.split("/")[0];
     setIsLoadingBranches(true);
     api
       .getBranches<string[]>(
@@ -78,8 +86,8 @@ const ConnectNewRepo: React.FC = () => {
         {
           project_id: currentProject.id,
           kind: "github",
-          name: branchName,
-          owner: branchOwner,
+          name: repoName,
+          owner: repoOwner,
           git_repo_id: actionConfig.git_repo_id,
         }
       )
@@ -108,6 +116,8 @@ const ConnectNewRepo: React.FC = () => {
         {
           name: `preview`,
           mode: enableAutomaticDeployments ? "auto" : "manual",
+          disable_new_comments: isNewCommentsDisabled,
+          git_repo_branches: selectedBranches,
         },
         {
           project_id: currentProject.id,
@@ -165,25 +175,61 @@ const ConnectNewRepo: React.FC = () => {
         />
       </HelperContainer>
 
-      <FlexWrap>
+      <Heading>Automatic pull request deployments</Heading>
+      <Helper>
+        If you enable this option, the new pull requests will be automatically
+        deployed.
+      </Helper>
+      <CheckboxWrapper>
         <CheckboxRow
-          label="Enable automatic deployments"
+          label="Enable automatic deploys"
           checked={enableAutomaticDeployments}
-          toggle={() => setEnableAutomaticDeployments((prev) => !prev)}
+          toggle={() =>
+            setEnableAutomaticDeployments(!enableAutomaticDeployments)
+          }
+          wrapperStyles={{
+            disableMargin: true,
+          }}
         />
-        <Div>
-          <DocsHelper
-            disableMargin
-            tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
-            placement="top-start"
-          />
-        </Div>
-      </FlexWrap>
+        <DocsHelper
+          disableMargin
+          tooltipText="Automatically create a Preview Environment for each new pull request in the repository. By default, preview environments must be manually created per-PR."
+        />
+      </CheckboxWrapper>
 
+      <Heading>Disable new comments for new deployments</Heading>
+      <Helper>
+        When enabled new comments will not be created for new deployments.
+        Instead the last comment will be updated.
+      </Helper>
+      <CheckboxWrapper>
+        <CheckboxRow
+          label="Disable new comments for deployments"
+          checked={isNewCommentsDisabled}
+          toggle={() => setIsNewCommentsDisabled(!isNewCommentsDisabled)}
+          wrapperStyles={{
+            disableMargin: true,
+          }}
+        />
+        <DocsHelper
+          disableMargin
+          tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
+          placement="top-end"
+        />
+      </CheckboxWrapper>
+
+      <Heading>Select allowed branches</Heading>
+      <Helper>
+        If the pull request has a base branch included in this list, it will be
+        allowed to be deployed.
+        <br />
+        (Leave empty to allow all branches)
+      </Helper>
       <BranchFilterSelector
         onChange={setSelectedBranches}
         options={availableBranches}
         value={selectedBranches}
+        showLoading={isLoadingBranches}
       />
 
       <ActionContainer>
@@ -316,4 +362,10 @@ const HeaderSection = styled.div`
     margin-left: 17px;
     margin-right: 7px;
   }
+`;
+
+const CheckboxWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
 `;

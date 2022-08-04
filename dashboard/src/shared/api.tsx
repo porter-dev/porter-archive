@@ -140,6 +140,8 @@ const createEnvironment = baseApi<
   {
     name: string;
     mode: "auto" | "manual";
+    disable_new_comments: boolean;
+    git_repo_branches: string[];
   },
   {
     project_id: number;

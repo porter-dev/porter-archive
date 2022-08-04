@@ -1,14 +1,17 @@
 import SearchSelector from "components/SearchSelector";
 import React, { useMemo } from "react";
+import styled from "styled-components";
 
 const BranchFilterSelector = ({
   value,
   options,
   onChange,
+  showLoading,
 }: {
   value: string[];
   options: string[];
   onChange: (value: string[]) => void;
+  showLoading?: boolean;
 }) => {
   const filteredBranches = useMemo(() => {
     if (!options.length) {
@@ -36,13 +39,18 @@ const BranchFilterSelector = ({
     onChange(newSelectedBranches);
   };
 
+  const placeholder = options?.length
+    ? "Find or add a branch..."
+    : "No branches found for current repository.";
+
   return (
     <>
       <SearchSelector
         options={filteredBranches}
         onSelect={(newBranch) => handleAddBranch(newBranch)}
         getOptionLabel={(option) => option}
-        placeholder="Find or add a branch..."
+        placeholder={placeholder}
+        showLoading={showLoading}
       />
       {/* List selected branches  */}
       <ul>

@@ -111,6 +111,7 @@ type CreateConfigMapRequest struct {
 }
 
 type EnvGroup struct {
+	//
 	MetaVersion  uint              `json:"meta_version"`
 	CreatedAt    time.Time         `json:"created_at"`
 	Version      uint              `json:"version"`
@@ -155,10 +156,19 @@ type AddEnvGroupApplicationRequest struct {
 
 type ListEnvGroupsResponse []*EnvGroupMeta
 
+// CreateEnvGroupRequest represents the request body to create or update an env group
+//
+// swagger:model
 type CreateEnvGroupRequest struct {
-	Name            string            `json:"name,required"`
-	Variables       map[string]string `json:"variables,required"`
-	SecretVariables map[string]string `json:"secret_variables,required"`
+	// the name of the env group to create or update
+	// example: prod-env-group
+	Name string `json:"name" form:"required"`
+
+	// the variables to include in the env group
+	Variables map[string]string `json:"variables" form:"required"`
+
+	// the secret variables to include in the env group
+	SecretVariables map[string]string `json:"secret_variables"`
 }
 
 type CreateConfigMapResponse struct {
@@ -213,11 +223,18 @@ type StreamJobRunsRequest struct {
 	Name string `schema:"name"`
 }
 
+// GetEnvGroupResponse represents the response body containing an env group
+//
+// swagger: model
 type GetEnvGroupResponse struct {
 	*EnvGroup
+
+	// the stack ID of the stack containing this env group (if any)
 	StackID string `json:"stack_id,omitempty"`
 }
 
+// CreateEnvGroupRequest represents the request body to create or update an env group
+//
 // swagger:model
 type EnvGroupReleaseRequest struct {
 	ReleaseName string `json:"release_name" form:"required"`

@@ -12,6 +12,37 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+// swagger:parameters getEnvGroup
+type envGroupPathParams struct {
+	// The project id
+	// in: path
+	// required: true
+	// minimum: 1
+	ProjectID uint `json:"project_id"`
+
+	// The cluster id
+	// in: path
+	// required: true
+	// minimum: 1
+	ClusterID uint `json:"cluster_id"`
+
+	// The namespace name
+	// in: path
+	// required: true
+	Namespace string `json:"namespace"`
+
+	// The env group name
+	// in: path
+	// required: true
+	Name string `json:"name"`
+
+	// The version of the env group. 0 means latest version.
+	// in: path
+	// required: true
+	// minimum: 0
+	Version uint `json:"version"`
+}
+
 func NewV1EnvGroupScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
 		GetRoutes: GetV1EnvGroupScopedRoutes,
@@ -57,6 +88,35 @@ func getV1EnvGroupRoutes(
 	var routes []*router.Route
 
 	// PUT /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups -> namespace.NewCreateEnvGroupHandler
+	// swagger:operation PUT /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups createOrUpdateEnvGroup
+	//
+	// Creates a new env group or updates an existing one in the namespace denoted by `namespace`. The namespace should belong to the cluster
+	// denoted by `cluster_id`. The cluster should belong to the project denoted by `project_id`.
+	//
+	// **Note:** If updating an existing env group, the linked releases with the env group will all be updated as well.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Create or update an env group
+	// tags:
+	// - Env groups
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - in: body
+	//     name: CreateEnvGroupRequest
+	//     description: The env group to create or update
+	//     schema:
+	//       $ref: '#/definitions/CreateEnvGroupRequest'
+	// responses:
+	//   '201':
+	//     description: Successfully created a new namespace
+	//     schema:
+	//       $ref: '#/definitions/NamespaceResponse'
+	//   '403':
+	//     description: Forbidden
 	createOrUpdateEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -87,6 +147,32 @@ func getV1EnvGroupRoutes(
 	})
 
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name}/versions/{version} -> env_group.NewGetEnvGroupHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name}/versions/{version} getEnvGroup
+	//
+	// Gets an env group denoted by `name` and `version` in the namespace denoted by `namespace`. The namespace should belong to the cluster denoted by
+	// `cluster_id`. The cluster should belong to the project denoted by `project_id`.
+	//
+	// **Note:** To get the latest version of an env group, set `version` to `0`.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Get an env group
+	// tags:
+	// - Env groups
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: name
+	//   - name: version
+	// responses:
+	//   '201':
+	//     description: Successfully created a new namespace
+	//     schema:
+	//       $ref: '#/definitions/NamespaceResponse'
+	//   '403':
+	//     description: Forbidden
 	getEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

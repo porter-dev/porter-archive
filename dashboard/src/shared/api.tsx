@@ -2003,6 +2003,22 @@ const createStack = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks`
 );
 
+const updateStack = baseApi<
+  {
+    name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    namespace: string;
+    stack_id: string;
+  }
+>(
+  "PATCH",
+  ({ project_id, cluster_id, namespace, stack_id }) =>
+    `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}`
+);
+
 const listStacks = baseApi<
   {},
   { project_id: number; cluster_id: number; namespace: string }
@@ -2339,6 +2355,7 @@ export default {
   getStack,
   getStackRevision,
   createStack,
+  updateStack,
   rollbackStack,
   deleteStack,
   updateStackSourceConfig,

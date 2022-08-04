@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	URLParamPodName     URLParam = "name"
-	URLParamIngressName URLParam = "name"
+	URLParamPodName         URLParam = "name"
+	URLParamIngressName     URLParam = "name"
+	URLParamEnvGroupName    URLParam = "name"
+	URLParamEnvGroupVersion URLParam = "version"
 )
 
 // ReleaseListFilter is a struct that represents the various filter options used for
@@ -214,4 +216,9 @@ type StreamJobRunsRequest struct {
 type GetEnvGroupResponse struct {
 	*EnvGroup
 	StackID string `json:"stack_id,omitempty"`
+}
+
+// swagger:model
+type EnvGroupReleaseRequest struct {
+	ReleaseName string `json:"release_name" form:"required"`
 }

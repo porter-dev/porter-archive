@@ -3,9 +3,7 @@ import Heading from "components/form-components/Heading";
 import RepoList from "components/repo-selector/RepoList";
 import SaveButton from "components/SaveButton";
 import DocsHelper from "components/DocsHelper";
-import { ActionConfigType } from "shared/types";
-import TitleSection from "components/TitleSection";
-import { useRouteMatch } from "react-router";
+import { GithubActionConfigType } from "shared/types";
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import api from "shared/api";
@@ -15,6 +13,7 @@ import { Environment } from "./types";
 import DashboardHeader from "../DashboardHeader";
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import CheckboxRow from "components/form-components/CheckboxRow";
+import BranchFilterSelector from "./components/BranchFilterSelector";
 
 const ConnectNewRepo: React.FC = () => {
   const { currentProject, currentCluster, setCurrentError } = useContext(
@@ -30,16 +29,18 @@ const ConnectNewRepo: React.FC = () => {
   const { pushFiltered } = useRouting();
 
   // NOTE: git_repo_id is a misnomer as this actually refers to the github app's installation id.
-  const [actionConfig, setActionConfig] = useState<ActionConfigType>({
+  const [actionConfig, setActionConfig] = useState<GithubActionConfigType>({
     git_repo: null,
     image_repo_uri: null,
     git_branch: null,
     git_repo_id: 0,
+    kind: "github",
   });
 
-  useEffect(() => {}, [repo]);
-
-  const { url } = useRouteMatch();
+  // Branch selector data
+  const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
+  const [availableBranches, setAvailableBranches] = useState<string[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
   useEffect(() => {
     api
@@ -64,6 +65,39 @@ const ConnectNewRepo: React.FC = () => {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    let isSubscribed = true;
+    const branchName = actionConfig.git_branch.split("/")[1];
+    const branchOwner = actionConfig.git_branch.split("/")[0];
+    setIsLoadingBranches(true);
+    api
+      .getBranches<string[]>(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          kind: "github",
+          name: branchName,
+          owner: branchOwner,
+          git_repo_id: actionConfig.git_repo_id,
+        }
+      )
+      .then(({ data }) => {
+        if (isSubscribed) {
+          setIsLoadingBranches(false);
+          setAvailableBranches(data);
+        }
+      })
+      .catch(() => {
+        if (isSubscribed) {
+          setIsLoadingBranches(false);
+          setCurrentError(
+            "Couldn't load branches for this repository, using all branches by default."
+          );
+        }
+      });
+  }, [actionConfig]);
 
   const addRepo = () => {
     let [owner, repoName] = repo.split("/");
@@ -114,7 +148,7 @@ const ConnectNewRepo: React.FC = () => {
       <br />
       <RepoList
         actionConfig={actionConfig}
-        setActionConfig={(a: ActionConfigType) => {
+        setActionConfig={(a: GithubActionConfigType) => {
           setActionConfig(a);
           setRepo(a.git_repo);
         }}
@@ -146,10 +180,20 @@ const ConnectNewRepo: React.FC = () => {
         </Div>
       </FlexWrap>
 
+      <BranchFilterSelector
+        onChange={setSelectedBranches}
+        options={availableBranches}
+        value={selectedBranches}
+      />
+
       <ActionContainer>
         <SaveButton
           text="Add Repository"
-          disabled={actionConfig.git_repo_id ? false : true}
+          disabled={
+            (actionConfig.git_repo_id ? false : true) ||
+            isLoadingBranches ||
+            status === "loading"
+          }
           onClick={addRepo}
           makeFlush={true}
           clearPosition={true}

@@ -116,9 +116,10 @@ func initData(conf *config.Config) error {
 			l.Debug().Msg("default cluster not found: attempting creation")
 
 			_, err = conf.Repo.Cluster().CreateCluster(&models.Cluster{
-				Name:          defaultClusterName,
-				AuthMechanism: models.InCluster,
-				ProjectID:     1,
+				Name:                defaultClusterName,
+				AuthMechanism:       models.InCluster,
+				ProjectID:           1,
+				MonitorHelmReleases: true,
 			})
 
 			if err != nil {

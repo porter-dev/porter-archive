@@ -25,7 +25,7 @@ import (
 	"github.com/porter-dev/switchboard/pkg/models"
 	"github.com/porter-dev/switchboard/pkg/parser"
 	switchboardTypes "github.com/porter-dev/switchboard/pkg/types"
-	"github.com/porter-dev/switchboard/pkg/worker"
+	switchboardWorker "github.com/porter-dev/switchboard/pkg/worker"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
@@ -80,25 +80,27 @@ func init() {
 	applyCmd.MarkFlagRequired("file")
 }
 
-func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string) error {
 	fileBytes, err := ioutil.ReadFile(porterYAML)
+
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
 
 	resGroup, err := parser.ParseRawBytes(fileBytes)
+
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing porter.yaml: %w", err)
 	}
 
 	basePath, err := os.Getwd()
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting working directory: %w", err)
 	}
 
-	worker := worker.NewWorker()
-	worker.RegisterDriver("deploy", NewPorterDriver)
+	worker := switchboardWorker.NewWorker()
+	worker.RegisterDriver("deploy", NewDeployDriver)
 	worker.RegisterDriver("build-image", preview.NewBuildDriver)
 	worker.RegisterDriver("push-image", preview.NewPushDriver)
 	worker.RegisterDriver("update-config", preview.NewUpdateConfigDriver)
@@ -118,7 +120,7 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []str
 		deploymentHook, err := NewDeploymentHook(client, resGroup, deplNamespace)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("error creating deployment hook: %w", err)
 		}
 
 		worker.RegisterHook("deployment", deploymentHook)
@@ -191,7 +193,7 @@ type ApplicationConfig struct {
 	Values map[string]interface{}
 }
 
-type Driver struct {
+type DeployDriver struct {
 	source      *preview.Source
 	target      *preview.Target
 	output      map[string]interface{}
@@ -199,21 +201,23 @@ type Driver struct {
 	logger      *zerolog.Logger
 }
 
-func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
-	driver := &Driver{
+func NewDeployDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
+	driver := &DeployDriver{
 		lookupTable: opts.DriverLookupTable,
 		logger:      opts.Logger,
 		output:      make(map[string]interface{}),
 	}
 
-	source, err := preview.GetSource(resource.Source)
+	source, err := preview.GetSource(resource.Name, resource.Source)
+
 	if err != nil {
 		return nil, err
 	}
 
 	driver.source = source
 
-	target, err := preview.GetTarget(resource.Target)
+	target, err := preview.GetTarget(resource.Name, resource.Target)
+
 	if err != nil {
 		return nil, err
 	}
@@ -223,16 +227,16 @@ func NewPorterDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) 
 	return driver, nil
 }
 
-func (d *Driver) ShouldApply(resource *models.Resource) bool {
+func (d *DeployDriver) ShouldApply(_ *models.Resource) bool {
 	return true
 }
 
-func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
+func (d *DeployDriver) Apply(resource *models.Resource) (*models.Resource, error) {
 	client := config.GetAPIClient()
 	name := resource.Name
 
 	if name == "" {
-		return nil, fmt.Errorf("empty app name")
+		return nil, fmt.Errorf("empty resource name")
 	}
 
 	_, err := client.GetRelease(
@@ -257,11 +261,11 @@ func (d *Driver) Apply(resource *models.Resource) (*models.Resource, error) {
 }
 
 // Simple apply for addons
-func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+func (d *DeployDriver) applyAddon(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
 	addonConfig, err := d.getAddonConfig(resource)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting addon config for resource %s: %w", resource.Name, err)
 	}
 
 	if shouldCreate {
@@ -282,13 +286,13 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 		)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error creating addon from resource %s: %w", resource.Name, err)
 		}
 	} else {
 		bytes, err := json.Marshal(addonConfig)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error marshalling addon config from resource %s: %w", resource.Name, err)
 		}
 
 		err = client.UpgradeRelease(
@@ -303,7 +307,7 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 		)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error updating addon from resource %s: %w", resource.Name, err)
 		}
 	}
 
@@ -314,7 +318,11 @@ func (d *Driver) applyAddon(resource *models.Resource, client *api.Client, shoul
 	return resource, nil
 }
 
-func (d *Driver) applyApplication(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.Client, shouldCreate bool) (*models.Resource, error) {
+	if resource == nil {
+		return nil, fmt.Errorf("nil resource")
+	}
+
 	appConfig, err := d.getApplicationConfig(resource)
 
 	if err != nil {
@@ -324,25 +332,32 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	method := appConfig.Build.Method
 
 	if method != "pack" && method != "docker" && method != "registry" {
-		return nil, fmt.Errorf("method should either be \"docker\", \"pack\" or \"registry\"")
+		return nil, fmt.Errorf("for resource %s, config.build.method should either be \"docker\", \"pack\" or \"registry\"",
+			resource.Name)
 	}
 
 	fullPath, err := filepath.Abs(appConfig.Build.Context)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("for resource %s, error getting absolute path for config.build.context: %w", resource.Name,
+			err)
 	}
 
 	tag := os.Getenv("PORTER_TAG")
 
 	if tag == "" {
+		color.New(color.FgYellow).Printf("for resource %s, since PORTER_TAG is not set, the Docker image tag will default to"+
+			" the git repo SHA", resource.Name)
+
 		commit, err := git.LastCommit()
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("for resource %s, error getting last git commit: %w", resource.Name, err)
 		}
 
 		tag = commit.Sha[:7]
+
+		color.New(color.FgYellow).Printf("for resource %s, using tag %s\n", resource.Name, tag)
 	}
 
 	// if the method is registry and a tag is defined, we use the provided tag
@@ -383,16 +398,16 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 		resource, err = d.createApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error creating app from resource %s: %w", resource.Name, err)
 		}
 	} else if !appConfig.OnlyCreate {
 		resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error updating application from resource %s: %w", resource.Name, err)
 		}
 	} else {
-		color.New(color.FgYellow).Printf("Skipping creation for %s as onlyCreate is set to true\n", resource.Name)
+		color.New(color.FgYellow).Printf("Skipping creation for resource %s as onlyCreate is set to true\n", resource.Name)
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {
@@ -430,14 +445,14 @@ func (d *Driver) applyApplication(resource *models.Resource, client *api.Client,
 	return resource, err
 }
 
-func (d *Driver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) createApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
 	// create new release
 	color.New(color.FgGreen).Printf("Creating %s release: %s\n", d.source.Name, resource.Name)
 
 	regList, err := client.ListRegistries(context.Background(), d.target.Project)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("for resource %s, error listing registries: %w", resource.Name, err)
 	}
 
 	var registryURL string
@@ -447,6 +462,8 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 	} else {
 		registryURL = (*regList)[0].URL
 	}
+
+	color.New(color.FgBlue).Printf("for resource %s, using registry %s\n", resource.Name, registryURL)
 
 	// attempt to get repo suffix from environment variables
 	var repoSuffix string
@@ -514,7 +531,7 @@ func (d *Driver) createApplication(resource *models.Resource, client *api.Client
 	return resource, handleSubdomainCreate(subdomain, err)
 }
 
-func (d *Driver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
+func (d *DeployDriver) updateApplication(resource *models.Resource, client *api.Client, sharedOpts *deploy.SharedOpts, appConf *ApplicationConfig) (*models.Resource, error) {
 	color.New(color.FgGreen).Println("Updating existing release:", resource.Name)
 
 	if len(appConf.Build.Env) > 0 {
@@ -580,7 +597,7 @@ func (d *Driver) updateApplication(resource *models.Resource, client *api.Client
 	return resource, nil
 }
 
-func (d *Driver) assignOutput(resource *models.Resource, client *api.Client) error {
+func (d *DeployDriver) assignOutput(resource *models.Resource, client *api.Client) error {
 	release, err := client.GetRelease(
 		context.Background(),
 		d.target.Project,
@@ -598,11 +615,11 @@ func (d *Driver) assignOutput(resource *models.Resource, client *api.Client) err
 	return nil
 }
 
-func (d *Driver) Output() (map[string]interface{}, error) {
+func (d *DeployDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationConfig, error) {
+func (d *DeployDriver) getApplicationConfig(resource *models.Resource) (*ApplicationConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -613,9 +630,9 @@ func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationCo
 		return nil, err
 	}
 
-	config := &ApplicationConfig{}
+	appConf := &ApplicationConfig{}
 
-	err = mapstructure.Decode(populatedConf, config)
+	err = mapstructure.Decode(populatedConf, appConf)
 
 	if err != nil {
 		return nil, err
@@ -623,13 +640,13 @@ func (d *Driver) getApplicationConfig(resource *models.Resource) (*ApplicationCo
 
 	if _, ok := resource.Config["waitForJob"]; !ok && d.source.Name == "job" {
 		// default to true and wait for the job to finish
-		config.WaitForJob = true
+		appConf.WaitForJob = true
 	}
 
-	return config, nil
+	return appConf, nil
 }
 
-func (d *Driver) getAddonConfig(resource *models.Resource) (map[string]interface{}, error) {
+func (d *DeployDriver) getAddonConfig(resource *models.Resource) (map[string]interface{}, error) {
 	return drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -974,21 +991,21 @@ func (t *CloneEnvGroupHook) PreApply() error {
 			continue
 		}
 
-		config := &ApplicationConfig{}
+		appConf := &ApplicationConfig{}
 
-		err := mapstructure.Decode(res.Config, &config)
+		err := mapstructure.Decode(res.Config, &appConf)
 		if err != nil {
 			continue
 		}
 
-		if config != nil && len(config.EnvGroups) > 0 {
-			target, err := preview.GetTarget(res.Target)
+		if appConf != nil && len(appConf.EnvGroups) > 0 {
+			target, err := preview.GetTarget(res.Name, res.Target)
 
 			if err != nil {
 				return err
 			}
 
-			for _, group := range config.EnvGroups {
+			for _, group := range appConf.EnvGroups {
 				if group.Name == "" {
 					return fmt.Errorf("env group name cannot be empty")
 				}
@@ -1051,7 +1068,7 @@ func (t *CloneEnvGroupHook) OnConsolidatedErrors(map[string]error) {}
 func getReleaseName(res *switchboardTypes.Resource) string {
 	// can ignore the error because this method is called once
 	// GetTarget has alrealy been called and validated previously
-	target, _ := preview.GetTarget(res.Target)
+	target, _ := preview.GetTarget(res.Name, res.Target)
 
 	if target.AppName != "" {
 		return target.AppName
@@ -1063,7 +1080,7 @@ func getReleaseName(res *switchboardTypes.Resource) string {
 func getReleaseType(res *switchboardTypes.Resource) string {
 	// can ignore the error because this method is called once
 	// GetSource has alrealy been called and validated previously
-	source, _ := preview.GetSource(res.Source)
+	source, _ := preview.GetSource(res.Name, res.Source)
 
 	if source != nil && source.Name != "" {
 		return source.Name

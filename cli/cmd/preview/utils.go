@@ -25,7 +25,7 @@ type Target struct {
 	Namespace string
 }
 
-func GetSource(input map[string]interface{}) (*Source, error) {
+func GetSource(resourceName string, input map[string]interface{}) (*Source, error) {
 	output := &Source{}
 
 	// first read from env vars
@@ -38,21 +38,21 @@ func GetSource(input map[string]interface{}) (*Source, error) {
 		if name, ok := input["name"]; ok {
 			nameVal, ok := name.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid name provided")
+				return nil, fmt.Errorf("error parsing source for resource '%s': invalid name provided", resourceName)
 			}
 			output.Name = nameVal
 		}
 	}
 
 	if output.Name == "" {
-		return nil, fmt.Errorf("source name required")
+		return nil, fmt.Errorf("error parsing source for resource '%s': source name required", resourceName)
 	}
 
 	if output.Repo == "" {
 		if repo, ok := input["repo"]; ok {
 			repoVal, ok := repo.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid repo provided")
+				return nil, fmt.Errorf("error parsing source for resource '%s': invalid repo provided", resourceName)
 			}
 			output.Repo = repoVal
 		}
@@ -62,7 +62,7 @@ func GetSource(input map[string]interface{}) (*Source, error) {
 		if version, ok := input["version"]; ok {
 			versionVal, ok := version.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid version provided")
+				return nil, fmt.Errorf("error parsing source for resource '%s': invalid version provided", resourceName)
 			}
 			output.Version = versionVal
 		}
@@ -97,7 +97,8 @@ func GetSource(input map[string]interface{}) (*Source, error) {
 			return output, nil
 		}
 
-		return nil, fmt.Errorf("source does not exist in any repo")
+		return nil, fmt.Errorf("error parsing source for resource '%s': source does not exist in "+
+			"'https://charts.getporter.dev' or 'https://chart-addons.getporter.dev'", resourceName)
 	} else {
 		// we look in the passed-in repo
 		values, err := existsInRepo(output.Name, output.Version, output.Repo)
@@ -108,17 +109,18 @@ func GetSource(input map[string]interface{}) (*Source, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("source '%s' does not exist in repo '%s'", output.Name, output.Repo)
+	return nil, fmt.Errorf("error parsing source for resource '%s': source '%s' does not exist in repo '%s'",
+		resourceName, output.Name, output.Repo)
 }
 
-func GetTarget(input map[string]interface{}) (*Target, error) {
+func GetTarget(resourceName string, input map[string]interface{}) (*Target, error) {
 	output := &Target{}
 
 	// first read from env vars
 	if projectEnv := os.Getenv("PORTER_PROJECT"); projectEnv != "" {
 		project, err := strconv.Atoi(projectEnv)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing target for resource '%s': %w", resourceName, err)
 		}
 		output.Project = uint(project)
 	}
@@ -126,7 +128,7 @@ func GetTarget(input map[string]interface{}) (*Target, error) {
 	if clusterEnv := os.Getenv("PORTER_CLUSTER"); clusterEnv != "" {
 		cluster, err := strconv.Atoi(clusterEnv)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing target for resource '%s': %w", resourceName, err)
 		}
 		output.Cluster = uint(cluster)
 	}
@@ -138,7 +140,7 @@ func GetTarget(input map[string]interface{}) (*Target, error) {
 		if project, ok := input["project"]; ok {
 			projectVal, ok := project.(uint)
 			if !ok {
-				return nil, fmt.Errorf("project value must be an integer")
+				return nil, fmt.Errorf("error parsing target for resource '%s': project value must be an integer", resourceName)
 			}
 			output.Project = projectVal
 		}
@@ -148,7 +150,8 @@ func GetTarget(input map[string]interface{}) (*Target, error) {
 		if cluster, ok := input["cluster"]; ok {
 			clusterVal, ok := cluster.(uint)
 			if !ok {
-				return nil, fmt.Errorf("cluster value must be an integer")
+				return nil, fmt.Errorf("error parsing target for resource '%s': cluster value must be an integer",
+					resourceName)
 			}
 			output.Cluster = clusterVal
 		}
@@ -158,7 +161,7 @@ func GetTarget(input map[string]interface{}) (*Target, error) {
 		if namespace, ok := input["namespace"]; ok {
 			namespaceVal, ok := namespace.(string)
 			if !ok {
-				return nil, fmt.Errorf("invalid namespace provided")
+				return nil, fmt.Errorf("error parsing target for resource '%s': invalid namespace provided", resourceName)
 			}
 			output.Namespace = namespaceVal
 		}
@@ -167,7 +170,7 @@ func GetTarget(input map[string]interface{}) (*Target, error) {
 	if appName, ok := input["app_name"]; ok {
 		appNameVal, ok := appName.(string)
 		if !ok {
-			return nil, fmt.Errorf("invalid app_name provided")
+			return nil, fmt.Errorf("error parsing target for resource '%s': invalid app_name provided", resourceName)
 		}
 		output.AppName = appNameVal
 	}

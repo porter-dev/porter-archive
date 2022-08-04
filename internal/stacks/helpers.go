@@ -22,6 +22,7 @@ func CloneSourceConfigs(sourceConfigs []models.StackSourceConfig) ([]models.Stac
 		newSourceConfig := &models.StackSourceConfig{
 			UID:          uid,
 			Name:         sourceConfig.Name,
+			DisplayName:  sourceConfig.DisplayName,
 			ImageRepoURI: sourceConfig.ImageRepoURI,
 			ImageTag:     sourceConfig.ImageTag,
 		}

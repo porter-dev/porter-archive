@@ -7,7 +7,7 @@ import (
 )
 
 func PopulateSourceConfigDisplayName(db *_gorm.DB, logger *lr.Logger) error {
-
+	logger.Info().Msg("Initiated source config display name population")
 	// get all source configs
 	sourceConfigs := make([]*models.StackSourceConfig, 0)
 
@@ -21,10 +21,12 @@ func PopulateSourceConfigDisplayName(db *_gorm.DB, logger *lr.Logger) error {
 		return nil
 	}
 
+	updatedCount := 0
 	// copy name to display name if display name is empty
 	for _, sourceConfig := range sourceConfigs {
 		if sourceConfig.DisplayName == "" {
 			sourceConfig.DisplayName = sourceConfig.Name
+			updatedCount++
 		}
 	}
 	// update source configs
@@ -33,5 +35,6 @@ func PopulateSourceConfigDisplayName(db *_gorm.DB, logger *lr.Logger) error {
 		return err
 	}
 
+	logger.Info().Msgf("source config display name population completed, %d source configs updated", updatedCount)
 	return nil
 }

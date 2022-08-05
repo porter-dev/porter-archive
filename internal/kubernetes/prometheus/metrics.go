@@ -301,7 +301,7 @@ func getSelectionRegex(kind, name string) (string, error) {
 
 	switch strings.ToLower(kind) {
 	case "deployment":
-		suffix = "[a-z0-9]+-[a-z0-9]+"
+		suffix = "[a-z0-9]+"
 	case "statefulset":
 		suffix = "[0-9]+"
 	case "job":
@@ -310,6 +310,8 @@ func getSelectionRegex(kind, name string) (string, error) {
 		suffix = "[a-z0-9]+-[a-z0-9]+"
 	case "ingress":
 		return name, nil
+	case "daemonset":
+		suffix = "[a-z0-9]+"
 	default:
 		return "", fmt.Errorf("not a supported controller to query for metrics")
 	}

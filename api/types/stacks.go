@@ -212,8 +212,11 @@ type StackSourceConfig struct {
 	// The numerical revision id that this source config belongs to
 	StackRevisionID uint `json:"stack_revision_id"`
 
-	// The display name of the stack source
+	// Unique name for the source config
 	Name string `json:"name"`
+
+	// Display name for the stack source
+	DisplayName string `json:"display_name"`
 
 	// The unique id of the stack source config
 	ID string `json:"id"`
@@ -226,9 +229,6 @@ type StackSourceConfig struct {
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`
-
-	// Unique ID to identify between revisions
-	StableSourceConfigID string `json:"stable_source_config_id"`
 }
 
 // swagger:model
@@ -254,6 +254,9 @@ type CreateStackEnvGroupRequest struct {
 // swagger:model
 type CreateStackSourceConfigRequest struct {
 	// required: true
+	DisplayName string `json:"display_name" form:"required"`
+
+	// required: true
 	Name string `json:"name" form:"required"`
 
 	// required: true
@@ -261,8 +264,6 @@ type CreateStackSourceConfigRequest struct {
 
 	// required: true
 	ImageTag string `json:"image_tag" form:"required"`
-
-	StableSourceConfigID string `json:"source_config_id,omitempty"`
 
 	// If this field is empty, the resource is deployed directly from the image repo uri
 	StackSourceConfigBuild *StackSourceConfigBuild `json:"build,omitempty"`

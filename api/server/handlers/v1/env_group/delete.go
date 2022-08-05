@@ -66,8 +66,8 @@ func (c *DeleteEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	} else if envGroup != nil && envGroup.MetaVersion == 2 {
 		if len(envGroup.Applications) != 0 {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("env group must not have any connected applications"),
-				http.StatusNotFound,
+				fmt.Errorf("env group must not have any connected releases"),
+				http.StatusPreconditionFailed,
 			))
 
 			return

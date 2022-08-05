@@ -111,7 +111,6 @@ type CreateConfigMapRequest struct {
 }
 
 type EnvGroup struct {
-	//
 	MetaVersion  uint              `json:"meta_version"`
 	CreatedAt    time.Time         `json:"created_at"`
 	Version      uint              `json:"version"`
@@ -223,19 +222,58 @@ type StreamJobRunsRequest struct {
 	Name string `schema:"name"`
 }
 
-// GetEnvGroupResponse represents the response body containing an env group
-//
-// swagger: model
 type GetEnvGroupResponse struct {
 	*EnvGroup
-
-	// the stack ID of the stack containing this env group (if any)
 	StackID string `json:"stack_id,omitempty"`
 }
 
-// CreateEnvGroupRequest represents the request body to create or update an env group
+// V1EnvGroupReleaseRequest represents the request body to add or remove a release in an env group
 //
 // swagger:model
-type EnvGroupReleaseRequest struct {
+type V1EnvGroupReleaseRequest struct {
 	ReleaseName string `json:"release_name" form:"required"`
 }
+
+// V1EnvGroupResponse defines an env group
+//
+// swagger:model
+type V1EnvGroupResponse struct {
+	// the UTC timestamp in RFC 3339 format indicating the creation time of the env group
+	CreatedAt time.Time `json:"created_at"`
+
+	// the version of the env group
+	Version uint `json:"version"`
+
+	// the name of the env group
+	Name string `json:"name"`
+
+	// the list of releases linked to this env group
+	Releases []string `json:"releases"`
+
+	// the variables contained in this env group
+	Variables map[string]string `json:"variables"`
+
+	// the ID of the stack containing this env group (if any)
+	StackID string `json:"stack_id,omitempty"`
+}
+
+// V1EnvGroupsAllVersionsResponse represents the response body containing all versions of an env group
+//
+// swagger:model
+type V1EnvGroupsAllVersionsResponse []*V1EnvGroupResponse
+
+type V1EnvGroupMeta struct {
+	// the UTC timestamp in RFC 3339 format indicating the creation time of the env group
+	CreatedAt time.Time `json:"created_at"`
+
+	// the name of the env group
+	Name string `json:"name"`
+
+	// the ID of the stack containing this env group (if any)
+	StackID string `json:"stack_id,omitempty"`
+}
+
+// V1ListAllEnvGroupsResponse represents the response body containing the list of env groups
+//
+// swagger:model
+type V1ListAllEnvGroupsResponse []*V1EnvGroupMeta

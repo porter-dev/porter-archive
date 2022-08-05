@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi"
-	"github.com/porter-dev/porter/api/server/handlers/namespace"
 	v1EnvGroup "github.com/porter-dev/porter/api/server/handlers/v1/env_group"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -13,7 +12,7 @@ import (
 )
 
 // swagger:parameters getEnvGroup
-type envGroupPathParams struct {
+type envGroupVersionPathParams struct {
 	// The project id
 	// in: path
 	// required: true
@@ -41,6 +40,31 @@ type envGroupPathParams struct {
 	// required: true
 	// minimum: 0
 	Version uint `json:"version"`
+}
+
+// swagger:parameters getEnvGroupAllVersions deleteEnvGroup addReleaseToEnvGroup removeReleaseFromEnvGroup
+type envGroupPathParams struct {
+	// The project id
+	// in: path
+	// required: true
+	// minimum: 1
+	ProjectID uint `json:"project_id"`
+
+	// The cluster id
+	// in: path
+	// required: true
+	// minimum: 1
+	ClusterID uint `json:"cluster_id"`
+
+	// The namespace name
+	// in: path
+	// required: true
+	Namespace string `json:"namespace"`
+
+	// The env group name
+	// in: path
+	// required: true
+	Name string `json:"name"`
 }
 
 func NewV1EnvGroupScopedRegisterer(children ...*router.Registerer) *router.Registerer {
@@ -111,10 +135,10 @@ func getV1EnvGroupRoutes(
 	//     schema:
 	//       $ref: '#/definitions/CreateEnvGroupRequest'
 	// responses:
-	//   '201':
+	//   '200':
 	//     description: Successfully created a new namespace
 	//     schema:
-	//       $ref: '#/definitions/NamespaceResponse'
+	//       $ref: '#/definitions/V1EnvGroupResponse'
 	//   '403':
 	//     description: Forbidden
 	createOrUpdateEnvGroupEndpoint := factory.NewAPIEndpoint(
@@ -134,7 +158,7 @@ func getV1EnvGroupRoutes(
 		},
 	)
 
-	createOrUpdateEnvGroupHandler := namespace.NewCreateEnvGroupHandler(
+	createOrUpdateEnvGroupHandler := v1EnvGroup.NewCreateEnvGroupHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -150,9 +174,7 @@ func getV1EnvGroupRoutes(
 	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name}/versions/{version} getEnvGroup
 	//
 	// Gets an env group denoted by `name` and `version` in the namespace denoted by `namespace`. The namespace should belong to the cluster denoted by
-	// `cluster_id`. The cluster should belong to the project denoted by `project_id`.
-	//
-	// **Note:** To get the latest version of an env group, set `version` to `0`.
+	// `cluster_id`, which in turn should belong to the project denoted by `project_id`. **Note:** To get the latest version of an env group, set `version` to `0`.
 	//
 	// ---
 	// produces:
@@ -167,12 +189,14 @@ func getV1EnvGroupRoutes(
 	//   - name: name
 	//   - name: version
 	// responses:
-	//   '201':
-	//     description: Successfully created a new namespace
+	//   '200':
+	//     description: Successfully fetched the env group
 	//     schema:
-	//       $ref: '#/definitions/NamespaceResponse'
+	//       $ref: '#/definitions/V1EnvGroupResponse'
 	//   '403':
 	//     description: Forbidden
+	//   '404':
+	//     description: Env group not found
 	getEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -204,6 +228,31 @@ func getV1EnvGroupRoutes(
 	})
 
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name} -> env_group.NewGetEnvGroupAllVersionsHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name} getEnvGroupAllVersions
+	//
+	// Gets all versions of an env group denoted by `name` in the namespace denoted by `namespace`. The namespace should belong to the cluster denoted by
+	// `cluster_id`, which in turn should belong to the project denoted by `project_id`.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Get all versions of an env group
+	// tags:
+	// - Env groups
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: name
+	// responses:
+	//   '200':
+	//     description: Successfully fetched the env group
+	//     schema:
+	//       $ref: '#/definitions/V1EnvGroupsAllVersionsResponse'
+	//   '403':
+	//     description: Forbidden
+	//   '404':
+	//     description: Env group not found
 	getEnvGroupAllVersionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -234,6 +283,28 @@ func getV1EnvGroupRoutes(
 	})
 
 	// GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups -> namespace.NewListEnvGroupsHandler
+	// swagger:operation GET /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups listAllEnvGroups
+	//
+	// Gets all env groups in the namespace denoted by `namespace`. The namespace should belong to the cluster denoted by
+	// `cluster_id`, which in turn should belong to the project denoted by `project_id`.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Get all env groups
+	// tags:
+	// - Env groups
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	// responses:
+	//   '200':
+	//     description: Successfully fetched the env group
+	//     schema:
+	//       $ref: '#/definitions/V1ListAllEnvGroupsResponse'
+	//   '403':
+	//     description: Forbidden
 	listEnvGroupsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -251,7 +322,7 @@ func getV1EnvGroupRoutes(
 		},
 	)
 
-	listEnvGroupsHandler := namespace.NewListEnvGroupsHandler(
+	listEnvGroupsHandler := v1EnvGroup.NewListEnvGroupsHandler(
 		config,
 		factory.GetResultWriter(),
 	)
@@ -263,6 +334,29 @@ func getV1EnvGroupRoutes(
 	})
 
 	// DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name} -> env_group.NewDeleteEnvGroupHandler
+	// swagger:operation DELETE /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name} deleteEnvGroup
+	//
+	// Deletes the env group denoted by `name` in the namespace denoted by `namespace`. The namespace should belong to the cluster denoted by
+	// `cluster_id`, which in turn should belong to the project denoted by `project_id`.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Delete an env group
+	// tags:
+	// - Env groups
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: name
+	// responses:
+	//   '200':
+	//     description: Successfully deleted the env group
+	//   '403':
+	//     description: Forbidden
+	//   '412':
+	//     description: Env group is linked to one or more releases
 	deleteEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbDelete,
@@ -293,6 +387,34 @@ func getV1EnvGroupRoutes(
 	})
 
 	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name}/add_release -> env_group.NewAddReleaseToEnvGroupHandler
+	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name}/add_release addReleaseToEnvGroup
+	//
+	// Adds a release to the env group denoted by `name` in the namespace denoted by `namespace`. The namespace should belong to the cluster denoted by
+	// `cluster_id`, which in turn should belong to the project denoted by `project_id`.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Add a release to an env group
+	// tags:
+	// - Env groups
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: name
+	//   - in: body
+	//     name: V1EnvGroupReleaseRequest
+	//     description: The name of the release to add
+	//     schema:
+	//       $ref: '#/definitions/V1EnvGroupReleaseRequest'
+	// responses:
+	//   '200':
+	//     description: Successfully added the release
+	//   '403':
+	//     description: Forbidden
+	//   '404':
+	//     description: Env group not found
 	addReleaseToEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -323,6 +445,34 @@ func getV1EnvGroupRoutes(
 	})
 
 	// PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name}/remove_release -> env_group.NewRemoveReleaseFromEnvGroupHandler
+	// swagger:operation PATCH /api/v1/projects/{project_id}/clusters/{cluster_id}/namespaces/{namespace}/env_groups/{name}/remove_release removeReleaseFromEnvGroup
+	//
+	// Removes a release from the env group denoted by `name` in the namespace denoted by `namespace`. The namespace should belong to the cluster denoted by
+	// `cluster_id`, which in turn should belong to the project denoted by `project_id`.
+	//
+	// ---
+	// produces:
+	// - application/json
+	// summary: Remove a release from an env group
+	// tags:
+	// - Env groups
+	// parameters:
+	//   - name: project_id
+	//   - name: cluster_id
+	//   - name: namespace
+	//   - name: name
+	//   - in: body
+	//     name: V1EnvGroupReleaseRequest
+	//     description: The name of the release to remove
+	//     schema:
+	//       $ref: '#/definitions/V1EnvGroupReleaseRequest'
+	// responses:
+	//   '200':
+	//     description: Successfully removed the release
+	//   '403':
+	//     description: Forbidden
+	//   '404':
+	//     description: Env group not found
 	removeReleaseFromEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,

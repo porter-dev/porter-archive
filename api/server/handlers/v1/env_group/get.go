@@ -1,7 +1,6 @@
 package env_group
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -16,7 +15,6 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/stacks"
-	"gorm.io/gorm"
 )
 
 type GetEnvGroupHandler struct {
@@ -64,31 +62,26 @@ func (c *GetEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-				fmt.Errorf("env group not found"),
-				http.StatusNotFound),
-			)
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("env group not found")))
 			return
 		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	res := &types.V1EnvGroupResponse{
+		CreatedAt: envGroup.CreatedAt,
+		Version:   envGroup.Version,
+		Name:      envGroup.Name,
+		Releases:  envGroup.Applications,
+		Variables: envGroup.Variables,
 	}
 
 	stackId, err := stacks.GetStackForEnvGroup(c.Config(), cluster.ProjectID, cluster.ID, envGroup)
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.WriteResult(w, r, &types.GetEnvGroupResponse{EnvGroup: envGroup})
-			return
-		}
-
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	res := &types.GetEnvGroupResponse{
-		EnvGroup: envGroup,
-		StackID:  stackId,
+	if err == nil && len(stackId) > 0 {
+		res.StackID = stackId
 	}
 
 	c.WriteResult(w, r, res)

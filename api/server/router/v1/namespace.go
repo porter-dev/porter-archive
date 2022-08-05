@@ -8,7 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// swagger:parameters getNamespace deleteNamespace createRelease createStack listStacks createOrUpdateEnvGroup
+// swagger:parameters getNamespace deleteNamespace createRelease createStack listStacks createOrUpdateEnvGroup listAllEnvGroups
 type namespacePathParams struct {
 	// The project id
 	// in: path

@@ -199,7 +199,9 @@ const _ImageSelector = ({
         }
         setImages(data);
 
-        if (!value) {
+        if (value && data.find((i) => i.uri === value)) {
+          onChange(value);
+        } else {
           onChange(data[0].uri);
         }
         setIsLoading(false);

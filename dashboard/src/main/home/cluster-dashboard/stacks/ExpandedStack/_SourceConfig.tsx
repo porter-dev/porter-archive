@@ -151,6 +151,12 @@ const SourceConfigItem = ({
     handleChange({ ...sourceConfig, display_name: newName });
   };
 
+  const onChange = (display_name: string) => (
+    newSourceConfig: SourceConfig
+  ) => {
+    handleChange({ ...newSourceConfig, display_name });
+  };
+
   const handleNameChangeCancel = () => {
     setName(prevName.current);
     handleChange({ ...sourceConfig, display_name: prevName.current });
@@ -176,16 +182,17 @@ const SourceConfigItem = ({
       ) : (
         <SourceConfigStyles.ItemTitle>
           <span>{name}</span>
-
-          <EditButton onClick={toggleEditNameMode}>
-            <i className="material-icons-outlined">edit</i>
-          </EditButton>
+          {!disabled ? (
+            <EditButton onClick={toggleEditNameMode}>
+              <i className="material-icons-outlined">edit</i>
+            </EditButton>
+          ) : null}
         </SourceConfigStyles.ItemTitle>
       )}
 
       <SourceEditorDocker
         sourceConfig={sourceConfig}
-        onChange={handleChange}
+        onChange={onChange(name)}
         readOnly={disabled}
       />
     </SourceConfigStyles.ItemContainer>

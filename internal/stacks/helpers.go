@@ -22,6 +22,7 @@ func CloneSourceConfigs(sourceConfigs []models.StackSourceConfig) ([]models.Stac
 		res = append(res, models.StackSourceConfig{
 			UID:          uid,
 			Name:         sourceConfig.Name,
+			DisplayName:  sourceConfig.DisplayName,
 			ImageRepoURI: sourceConfig.ImageRepoURI,
 			ImageTag:     sourceConfig.ImageTag,
 		})
@@ -52,7 +53,7 @@ func CloneAppResources(
 			if prevSourceConfig.UID == appResource.StackSourceConfigUID {
 				// find the corresponding new source config
 				for _, newSourceConfig := range newSourceConfigs {
-					if newSourceConfig.StableSourceConfigID == prevSourceConfig.StableSourceConfigID {
+					if newSourceConfig.Name == prevSourceConfig.Name {
 						linkedSourceConfigUID = newSourceConfig.UID
 					}
 				}

@@ -182,6 +182,7 @@ const _ImageSelector = ({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isSubscribed = true;
     setIsLoading(true);
     api
       .getImageRepos<ImageRepo[]>(
@@ -193,6 +194,9 @@ const _ImageSelector = ({
         }
       )
       .then(({ data }) => {
+        if (!isSubscribed) {
+          return;
+        }
         setImages(data);
 
         if (!value) {
@@ -200,7 +204,11 @@ const _ImageSelector = ({
         }
         setIsLoading(false);
       });
-  }, []);
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [registry]);
 
   const handleChange = (image: string) => {
     onChange(image);

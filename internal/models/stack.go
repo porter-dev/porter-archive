@@ -164,6 +164,8 @@ type StackSourceConfig struct {
 
 	Name string
 
+	DisplayName string
+
 	UID string
 
 	ImageRepoURI string
@@ -183,6 +185,7 @@ func (s StackSourceConfig) ToStackSourceConfigType(stackID string, stackRevision
 		ID:              s.UID,
 		ImageRepoURI:    s.ImageRepoURI,
 		ImageTag:        s.ImageTag,
+		DisplayName:     s.DisplayName,
 	}
 }
 

@@ -8,10 +8,11 @@ import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import styled from "styled-components";
 import TitleSection from "components/TitleSection";
+import InputRow from "components/form-components/InputRow";
 
 const SelectSource = () => {
   const { addSourceConfig } = useContext(StacksLaunchContext);
-
+  const [sourceName, setSourceName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageTag, setImageTag] = useState("");
   const { pushFiltered } = useRouting();
@@ -22,6 +23,7 @@ const SelectSource = () => {
     }
 
     const newSource: Omit<CreateStackBody["source_configs"][0], "name"> = {
+      display_name: sourceName,
       image_repo_uri: imageUrl,
       image_tag: imageTag,
     };
@@ -39,11 +41,23 @@ const SelectSource = () => {
         New Application Stack
       </TitleSection>
       <Heading>Stack Source</Heading>
+
+      <Br />
+      <InputRowWrapper>
+        <InputRow
+          label="Source Name"
+          value={sourceName}
+          setValue={(val) => setSourceName(val as string)}
+          type="text"
+          width="100%"
+          placeholder="Leave empty for auto-generated source config name"
+        />
+      </InputRowWrapper>
+
       <Helper>
         Specify a source to deploy all stack applications from:
         <Required>*</Required>
       </Helper>
-      <Br />
       <ImageSelector
         selectedImageUrl={imageUrl}
         setSelectedImageUrl={setImageUrl}
@@ -85,4 +99,8 @@ const Polymer = styled.div`
     margin-left: 5px;
     margin-right: 18px;
   }
+`;
+
+const InputRowWrapper = styled.div`
+  width: 60%;
 `;

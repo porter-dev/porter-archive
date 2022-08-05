@@ -203,7 +203,7 @@ const ProvisionResources: React.FC<{}> = () => {
       case "aws":
         return ["eks", "ecr"];
       case "gcp":
-        return ["gke", "gcr"];
+        return ["gke", "gcr", "gar"];
       case "do":
         return ["doks", "docr"];
     }

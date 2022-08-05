@@ -45,7 +45,11 @@ func (r *Registry) ToRegistryType() *types.Registry {
 	if r.AWSIntegrationID != 0 {
 		serv = types.ECR
 	} else if r.GCPIntegrationID != 0 {
-		serv = types.GCR
+		if strings.Contains(r.URL, "pkg.dev") {
+			serv = types.GAR
+		} else {
+			serv = types.GCR
+		}
 	} else if r.DOIntegrationID != 0 {
 		serv = types.DOCR
 	} else if r.AzureIntegrationID != 0 {

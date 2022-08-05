@@ -50,6 +50,11 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	depl, err := c.Repo().Environment().ReadDeploymentByID(project.ID, cluster.ID, deplID)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("deployment id not found in cluster and project")))
+			return
+		}
+
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -85,33 +90,6 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	client, err := getGithubClientFromEnvironment(c.Config(), env)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	// Create new deployment status to indicate deployment is ready
-	state := "inactive"
-
-	deploymentStatusRequest := github.DeploymentStatusRequest{
-		State: &state,
-	}
-
-	_, _, err = client.Repositories.CreateDeploymentStatus(
-		context.Background(),
-		env.GitRepoOwner,
-		env.GitRepoName,
-		depl.GHDeploymentID,
-		&deploymentStatusRequest,
-	)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	depl.Status = types.DeploymentStatusInactive
 
 	// update the deployment to mark it inactive
@@ -120,6 +98,33 @@ func (c *DeleteDeploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	client, err := getGithubClientFromEnvironment(c.Config(), env)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if depl.GHDeploymentID != 0 {
+		// set the GitHub deployment status to be inactive
+		_, _, err := client.Repositories.CreateDeploymentStatus(
+			context.Background(),
+			env.GitRepoOwner,
+			env.GitRepoName,
+			depl.GHDeploymentID,
+			&github.DeploymentStatusRequest{
+				State: github.String("inactive"),
+			},
+		)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("%v: %w", errGithubAPI, err), http.StatusConflict,
+			))
+			return
+		}
 	}
 
 	c.WriteResult(w, r, depl.ToDeploymentType())

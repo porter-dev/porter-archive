@@ -12,6 +12,7 @@ import {
   SelectField,
   ServiceIPListField,
   TextAreaField,
+  UrlLinkField,
 } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../form-components/Heading";
@@ -29,6 +30,7 @@ import ResourceList from "./field-components/ResourceList";
 import VeleroForm from "./field-components/VeleroForm";
 import CronInput from "./field-components/CronInput";
 import TextAreaInput from "./field-components/TextAreaInput";
+import UrlLink from "./field-components/UrlLink";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -98,6 +100,8 @@ const PorterForm: React.FC<Props> = (props) => {
         return <CronInput {...(bundledProps as CronField)} />;
       case "text-area":
         return <TextAreaInput {...(bundledProps as TextAreaField)} />;
+      case "url-link":
+        return <UrlLink {...(bundledProps as UrlLinkField)} />;
     }
     return <p>Not Implemented: {(field as any).type}</p>;
   };

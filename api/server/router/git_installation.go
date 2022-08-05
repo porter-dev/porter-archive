@@ -115,7 +115,7 @@ func getGitInstallationRoutes(
 
 	if config.ServerConf.GithubIncomingWebhookSecret != "" {
 
-		// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id} ->
+		// POST /api/projects/{project_id}/gitrepos/{git_installation_id}/{owner}/{name}/clusters/{cluster_id}/environment ->
 		// environment.NewCreateEnvironmentHandler
 		createEnvironmentEndpoint := factory.NewAPIEndpoint(
 			&types.APIRequestMetadata{

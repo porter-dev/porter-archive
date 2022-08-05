@@ -263,6 +263,7 @@ func getSourceConfigModels(sourceConfigs []*types.CreateStackSourceConfigRequest
 
 			res = append(res, models.StackSourceConfig{
 				UID:          uid,
+				DisplayName:  sourceConfig.DisplayName,
 				Name:         sourceConfig.Name,
 				ImageRepoURI: sourceConfig.ImageRepoURI,
 				ImageTag:     sourceConfig.ImageTag,

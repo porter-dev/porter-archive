@@ -813,6 +813,8 @@ func getRegNameFromImageRef(image string) (string, error) {
 	// if registry is dockerhub, leave the image name as-is
 	if strings.Contains(domain, "docker.io") {
 		regName = "index.docker.io/" + path
+	} else if strings.Contains(domain, "pkg.dev") {
+		regName = domain + "/" + strings.Split(path, "/")[0]
 	} else {
 		regName = domain
 

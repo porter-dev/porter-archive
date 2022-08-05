@@ -1,16 +1,30 @@
 import Heading from "components/form-components/Heading";
-import React, { useContext } from "react";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import React, { useContext, useState } from "react";
+import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
+import { SubmitButton } from "../../launch/components/styles";
+import { Stack } from "../../types";
 
 const Settings = ({
-  stackName,
+  stack,
   onDelete,
+  onUpdate,
 }: {
-  stackName: string;
+  stack: Stack;
   onDelete: () => void;
+  onUpdate: () => Promise<void>;
 }) => {
-  const { setCurrentOverlay } = useContext(Context);
+  const {
+    currentCluster,
+    currentProject,
+    setCurrentOverlay,
+    setCurrentError,
+  } = useContext(Context);
+  const [stackName, setStackName] = useState(stack.name);
+  const [buttonStatus, setButtonStatus] = useState("");
 
   const handleDelete = () => {
     setCurrentOverlay({
@@ -22,10 +36,54 @@ const Settings = ({
       onNo: () => setCurrentOverlay(null),
     });
   };
+
+  const handleStackNameChange = async () => {
+    setButtonStatus("loading");
+    try {
+      await api.updateStack(
+        "<token>",
+        {
+          name: stackName,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          stack_id: stack.id,
+          namespace: stack.namespace,
+        }
+      );
+      await onUpdate();
+      setButtonStatus("successful");
+    } catch (err) {
+      setCurrentError(err);
+      setButtonStatus("Couldn't update the stack name. Try again later.");
+    }
+  };
+
   return (
     <Wrapper>
       <StyledSettingsSection>
-        <Heading>Settings</Heading>
+        <Heading>Update Stack name</Heading>
+
+        <InputRow
+          label="Stack name"
+          value={stackName}
+          setValue={setStackName as any}
+          type="text"
+          width="300px"
+        />
+        <SaveButton
+          text="Update"
+          onClick={handleStackNameChange}
+          disabled={stackName === stack.name}
+          makeFlush
+          clearPosition
+          statusPosition="right"
+          status={buttonStatus}
+        ></SaveButton>
+
+        <Heading>Additional Settings</Heading>
+
         <Button color="#b91133" onClick={handleDelete}>
           Delete stack
         </Button>
@@ -35,6 +93,10 @@ const Settings = ({
 };
 
 export default Settings;
+
+const SaveButton = styled(SubmitButton)`
+  justify-content: flex-start;
+`;
 
 const Wrapper = styled.div`
   width: 100%;

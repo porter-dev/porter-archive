@@ -9,6 +9,7 @@ type StackRepository interface {
 	ReadStackByStringID(projectID uint, stackID string) (*models.Stack, error)
 	ListStacks(projectID uint, clusterID uint, namespace string) ([]*models.Stack, error)
 	DeleteStack(stack *models.Stack) (*models.Stack, error)
+	UpdateStack(stack *models.Stack) (*models.Stack, error)
 
 	UpdateStackRevision(revision *models.StackRevision) (*models.StackRevision, error)
 	ReadStackRevision(stackRevisionID uint) (*models.StackRevision, error)

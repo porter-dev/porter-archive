@@ -13,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
-	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -44,7 +43,7 @@ func (c *RemoveReleaseFromEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	request := &types.EnvGroupReleaseRequest{}
+	request := &types.V1EnvGroupReleaseRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -61,35 +60,20 @@ func (c *RemoveReleaseFromEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 	cm, _, err := agent.GetLatestVersionedConfigMap(name, namespace)
 
 	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("env group not found"),
-			http.StatusNotFound,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("env group not found")))
 		return
 	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	cm, err = agent.RemoveApplicationFromVersionedConfigMap(cm, request.ReleaseName)
+	_, err = agent.RemoveApplicationFromVersionedConfigMap(cm, request.ReleaseName)
 
 	if err != nil && errors.Is(err, kubernetes.IsNotFoundError) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("env group not found"),
-			http.StatusNotFound,
-		))
+		c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("env group not found")))
 		return
 	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	res, err := envgroup.ToEnvGroup(cm)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	c.WriteResult(w, r, res)
 }

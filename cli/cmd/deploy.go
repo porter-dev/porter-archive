@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
+	"github.com/porter-dev/porter/cli/cmd/docker"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	templaterUtils "github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/spf13/cobra"
@@ -148,8 +149,17 @@ for the application:
 
 var updatePushCmd = &cobra.Command{
 	Use:   "push",
-	Short: "Pushes a new image for an application specified by the --app flag.",
+	Short: "Pushes an image to a Docker registry linked to your Porter project.",
+	Args:  cobra.MaximumNArgs(1),
 	Long: fmt.Sprintf(`
+%s
+
+Pushes a local Docker image to a registry linked to your Porter project. This command
+requires the project ID to be set either by using the %s command
+or the --project flag. For example, to push a local nginx image:
+
+  %s
+
 %s
 
 Pushes a new image for an application specified by the --app flag. This command uses
@@ -164,6 +174,9 @@ are using an image registry that was created outside of Porter, make sure that y
 linked it via "porter connect".
 `,
 		color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter update push\":"),
+		color.New(color.FgBlue).Sprintf("porter config set-project"),
+		color.New(color.FgGreen, color.Bold).Sprintf("porter update push gcr.io/snowflake-123456/nginx:1234567"),
+		color.New(color.Bold).Sprintf("LEGACY USAGE:"),
 		color.New(color.FgGreen, color.Bold).Sprintf("porter update push --app nginx --tag new-tag"),
 	),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -369,8 +382,6 @@ func init() {
 
 	updateBuildCmd.MarkPersistentFlagRequired("app")
 
-	updatePushCmd.MarkPersistentFlagRequired("app")
-
 	updateConfigCmd.MarkPersistentFlagRequired("app")
 
 	updateEnvGroupCmd.PersistentFlags().StringVar(
@@ -490,6 +501,58 @@ func updateBuild(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 }
 
 func updatePush(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	if app == "" {
+		if len(args) == 0 {
+			return fmt.Errorf("please provide the docker image name")
+		}
+
+		image := args[0]
+
+		registries, err := client.ListRegistries(context.Background(), cliConf.Project)
+
+		if err != nil {
+			return err
+		}
+
+		regs := *registries
+		regID := uint(0)
+
+		for _, reg := range regs {
+			if strings.Contains(image, reg.URL) {
+				regID = reg.ID
+				break
+			}
+		}
+
+		if regID == 0 {
+			return fmt.Errorf("could not find registry for image: %s", image)
+		}
+
+		err = client.CreateRepository(context.Background(), cliConf.Project, regID,
+			&types.CreateRegistryRepositoryRequest{
+				ImageRepoURI: strings.Split(image, ":")[0],
+			},
+		)
+
+		if err != nil {
+			return err
+		}
+
+		agent, err := docker.NewAgentWithAuthGetter(client, cliConf.Project)
+
+		if err != nil {
+			return err
+		}
+
+		err = agent.PushImage(image)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	updateAgent, err := updateGetAgent(client)
 
 	if err != nil {

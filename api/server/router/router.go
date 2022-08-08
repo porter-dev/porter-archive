@@ -120,7 +120,12 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		v1RegistryRegisterer := v1.NewV1RegistryScopedRegisterer()
 		v1ReleaseRegisterer := v1.NewV1ReleaseScopedRegisterer()
 		v1StackRegisterer := v1.NewV1StackScopedRegisterer()
-		v1NamespaceRegisterer := v1.NewV1NamespaceScopedRegisterer(v1ReleaseRegisterer, v1StackRegisterer)
+		v1EnvGroupRegisterer := v1.NewV1EnvGroupScopedRegisterer()
+		v1NamespaceRegisterer := v1.NewV1NamespaceScopedRegisterer(
+			v1ReleaseRegisterer,
+			v1StackRegisterer,
+			v1EnvGroupRegisterer,
+		)
 		v1ClusterRegisterer := v1.NewV1ClusterScopedRegisterer(v1NamespaceRegisterer)
 		v1ProjRegisterer := v1.NewV1ProjectScopedRegisterer(
 			v1ClusterRegisterer,

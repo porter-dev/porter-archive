@@ -45,16 +45,16 @@ const EnvironmentSettings = ({ environmentId }: { environmentId: string }) => {
     );
   };
 
-  const getBranches = async () => {
+  const getBranches = async (env: Environment) => {
     return api.getBranches<string[]>(
       "<token>",
       {},
       {
-        project_id: environment.project_id,
-        git_repo_id: environment.git_installation_id,
+        project_id: env.project_id,
+        git_repo_id: env.git_installation_id,
         kind: "github",
-        owner: environment.git_repo_owner,
-        name: environment.git_repo_name,
+        owner: env.git_repo_owner,
+        name: env.git_repo_name,
       }
     );
   };
@@ -67,28 +67,15 @@ const EnvironmentSettings = ({ environmentId }: { environmentId: string }) => {
     setIsLoading(true);
 
     try {
-      const [environmentResponse, branchesResponse] = await Promise.allSettled([
-        getEnvironment(),
-        getBranches(),
-      ]);
+      const environment = await getEnvironment().then((res) => res.data);
+      const branches = await getBranches(environment).then((res) => res.data);
 
-      if (environmentResponse.status === "fulfilled") {
-        const environment = environmentResponse.value.data;
+      setEnvironment(environment);
+      setIsNewCommentsDisabled(environment.disable_new_comments);
+      setDeploymentMode(environment.mode);
+      setSelectedBranches(environment.git_repo_branches.filter(Boolean));
 
-        setEnvironment(environment);
-        setIsNewCommentsDisabled(environment.disable_new_comments);
-        setDeploymentMode(environment.mode);
-        setSelectedBranches(environment.git_repo_branches.filter(Boolean));
-      } else {
-        throw new Error("Failed to get environment");
-      }
-
-      if (branchesResponse.status === "fulfilled") {
-        const branches = branchesResponse.value.data;
-        setAvailableBranches(branches);
-      } else {
-        throw new Error("Failed to get branches");
-      }
+      setAvailableBranches(branches);
     } catch (error) {
       console.error(error);
     } finally {
@@ -105,7 +92,7 @@ const EnvironmentSettings = ({ environmentId }: { environmentId: string }) => {
         "<token>",
         {
           mode: deploymentMode,
-          new_comment_enabled: !isNewCommentsDisabled,
+          disable_new_comments: isNewCommentsDisabled,
           git_repo_branches: selectedBranches,
         },
         {

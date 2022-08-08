@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	URLParamPodName     URLParam = "name"
-	URLParamIngressName URLParam = "name"
+	URLParamPodName         URLParam = "name"
+	URLParamIngressName     URLParam = "name"
+	URLParamEnvGroupName    URLParam = "name"
+	URLParamEnvGroupVersion URLParam = "version"
 )
 
 // ReleaseListFilter is a struct that represents the various filter options used for
@@ -153,10 +155,19 @@ type AddEnvGroupApplicationRequest struct {
 
 type ListEnvGroupsResponse []*EnvGroupMeta
 
+// CreateEnvGroupRequest represents the request body to create or update an env group
+//
+// swagger:model
 type CreateEnvGroupRequest struct {
-	Name            string            `json:"name,required"`
-	Variables       map[string]string `json:"variables,required"`
-	SecretVariables map[string]string `json:"secret_variables,required"`
+	// the name of the env group to create or update
+	// example: prod-env-group
+	Name string `json:"name" form:"required"`
+
+	// the variables to include in the env group
+	Variables map[string]string `json:"variables" form:"required"`
+
+	// the secret variables to include in the env group
+	SecretVariables map[string]string `json:"secret_variables"`
 }
 
 type CreateConfigMapResponse struct {
@@ -215,3 +226,54 @@ type GetEnvGroupResponse struct {
 	*EnvGroup
 	StackID string `json:"stack_id,omitempty"`
 }
+
+// V1EnvGroupReleaseRequest represents the request body to add or remove a release in an env group
+//
+// swagger:model
+type V1EnvGroupReleaseRequest struct {
+	ReleaseName string `json:"release_name" form:"required"`
+}
+
+// V1EnvGroupResponse defines an env group
+//
+// swagger:model
+type V1EnvGroupResponse struct {
+	// the UTC timestamp in RFC 3339 format indicating the creation time of the env group
+	CreatedAt time.Time `json:"created_at"`
+
+	// the version of the env group
+	Version uint `json:"version"`
+
+	// the name of the env group
+	Name string `json:"name"`
+
+	// the list of releases linked to this env group
+	Releases []string `json:"releases"`
+
+	// the variables contained in this env group
+	Variables map[string]string `json:"variables"`
+
+	// the ID of the stack containing this env group (if any)
+	StackID string `json:"stack_id,omitempty"`
+}
+
+// V1EnvGroupsAllVersionsResponse represents the response body containing all versions of an env group
+//
+// swagger:model
+type V1EnvGroupsAllVersionsResponse []*V1EnvGroupResponse
+
+type V1EnvGroupMeta struct {
+	// the UTC timestamp in RFC 3339 format indicating the creation time of the env group
+	CreatedAt time.Time `json:"created_at"`
+
+	// the name of the env group
+	Name string `json:"name"`
+
+	// the ID of the stack containing this env group (if any)
+	StackID string `json:"stack_id,omitempty"`
+}
+
+// V1ListAllEnvGroupsResponse represents the response body containing the list of env groups
+//
+// swagger:model
+type V1ListAllEnvGroupsResponse []*V1EnvGroupMeta

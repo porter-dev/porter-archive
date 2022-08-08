@@ -50,20 +50,29 @@ func getGitRepoBranches(branches string) []string {
 }
 
 func (e *Environment) ToEnvironmentType() *types.Environment {
-	return &types.Environment{
+	envType := &types.Environment{
 		ID:                e.Model.ID,
 		ProjectID:         e.ProjectID,
 		ClusterID:         e.ClusterID,
 		GitInstallationID: e.GitInstallationID,
 		GitRepoOwner:      e.GitRepoOwner,
 		GitRepoName:       e.GitRepoName,
-		GitRepoBranches:   getGitRepoBranches(e.GitRepoBranches),
 
 		NewCommentsDisabled: e.NewCommentsDisabled,
 
 		Name: e.Name,
 		Mode: e.Mode,
 	}
+
+	branches := getGitRepoBranches(e.GitRepoBranches)
+
+	if len(branches) > 0 {
+		envType.GitRepoBranches = branches
+	} else {
+		envType.GitRepoBranches = []string{}
+	}
+
+	return envType
 }
 
 type Deployment struct {

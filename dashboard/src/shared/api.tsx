@@ -164,7 +164,7 @@ const createEnvironment = baseApi<
 const updateEnvironment = baseApi<
   {
     mode: "auto" | "manual";
-    new_comment_enabled: boolean;
+    disable_new_comments: boolean;
     git_repo_branches: string[]; // Array with branch names
   },
   {

@@ -105,7 +105,7 @@ const EnvironmentSettings = ({ environmentId }: { environmentId: string }) => {
         "<token>",
         {
           mode: deploymentMode,
-          new_comment_enabled: !isNewCommentsDisabled,
+          disable_new_comments: isNewCommentsDisabled,
           git_repo_branches: selectedBranches,
         },
         {

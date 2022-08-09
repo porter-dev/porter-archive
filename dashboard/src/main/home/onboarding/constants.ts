@@ -24,3 +24,9 @@ export const GCP_REGION_OPTIONS = [
   { value: "us-west3", label: "us-west3" },
   { value: "us-west4", label: "us-west4" },
 ];
+
+export const GAR_REGION_OPTIONS = GCP_REGION_OPTIONS.concat([
+  { value: "us", label: "us (multi-region)" },
+  { value: "europe", label: "europe (multi-region)" },
+  { value: "asia", label: "asia (multi-region)" },
+]);

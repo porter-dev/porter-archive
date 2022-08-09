@@ -783,6 +783,12 @@ tabs:
           value: us-west3
         - label: us-west4
           value: us-west4
+        - label: us (multi-region)
+          value: us 
+        - label: europe (multi-region)
+          value: europe
+        - label: asia (multi-region)
+          value: asia
 `
 
 const gkeForm = `name: GKE

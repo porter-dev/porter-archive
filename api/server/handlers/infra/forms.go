@@ -656,12 +656,18 @@ tabs:
           value: asia-northeast3
         - label: asia-south1
           value: asia-south1
+        - label: asia-south2
+          value: asia-south2
         - label: asia-southeast1
           value: asia-southeast1
         - label: asia-southeast2
           value: asia-southeast2
         - label: australia-southeast1
           value: australia-southeast1
+        - label: australia-southeast2
+          value: australia-southeast2
+        - label: europe-central2
+          value: europe-central2
         - label: europe-north1
           value: europe-north1
         - label: europe-west1
@@ -674,23 +680,33 @@ tabs:
           value: europe-west4
         - label: europe-west6
           value: europe-west6
+        - label: europe-west8
+          value: europe-west8
+        - label: europe-west9
+          value: europe-west9
+        - label: europe-southwest1
+          value: europe-southwest1
         - label: northamerica-northeast1
           value: northamerica-northeast1
+        - label: northamerica-northeast2
+          value: northamerica-northeast2
         - label: southamerica-east1
           value: southamerica-east1
+        - label: southamerica-west1
+          value: southamerica-west1
         - label: us-central1
           value: us-central1
         - label: us-east1
           value: us-east1
         - label: us-east4
           value: us-east4
-        - label: us-east1
-          value: us-east1
-        - label: us-east1
-          value: us-east1
+        - label: us-east5
+          value: us-east5
+        - label: us-south1
+          value: us-south1
         - label: us-west1
           value: us-west1
-        - label: us-east1
+        - label: us-west2
           value: us-west2
         - label: us-west3
           value: us-west3
@@ -741,8 +757,6 @@ tabs:
           value: europe-central2
         - label: europe-north1
           value: europe-north1
-        - label: europe-southwest1
-          value: europe-southwest1
         - label: europe-west1
           value: europe-west1
         - label: europe-west2
@@ -757,6 +771,8 @@ tabs:
           value: europe-west8
         - label: europe-west9
           value: europe-west9
+        - label: europe-southwest1
+          value: europe-southwest1
         - label: northamerica-northeast1
           value: northamerica-northeast1
         - label: northamerica-northeast2
@@ -783,6 +799,12 @@ tabs:
           value: us-west3
         - label: us-west4
           value: us-west4
+        - label: us (multi-region)
+          value: us
+        - label: europe (multi-region)
+          value: europe
+        - label: asia (multi-region)
+          value: asia
 `
 
 const gkeForm = `name: GKE
@@ -814,12 +836,18 @@ tabs:
           value: asia-northeast3
         - label: asia-south1
           value: asia-south1
+        - label: asia-south2
+          value: asia-south2
         - label: asia-southeast1
           value: asia-southeast1
         - label: asia-southeast2
           value: asia-southeast2
         - label: australia-southeast1
           value: australia-southeast1
+        - label: australia-southeast2
+          value: australia-southeast2
+        - label: europe-central2
+          value: europe-central2
         - label: europe-north1
           value: europe-north1
         - label: europe-west1
@@ -832,23 +860,33 @@ tabs:
           value: europe-west4
         - label: europe-west6
           value: europe-west6
+        - label: europe-west8
+          value: europe-west8
+        - label: europe-west9
+          value: europe-west9
+        - label: europe-southwest1
+          value: europe-southwest1
         - label: northamerica-northeast1
           value: northamerica-northeast1
+        - label: northamerica-northeast2
+          value: northamerica-northeast2
         - label: southamerica-east1
           value: southamerica-east1
+        - label: southamerica-west1
+          value: southamerica-west1
         - label: us-central1
           value: us-central1
         - label: us-east1
           value: us-east1
         - label: us-east4
           value: us-east4
-        - label: us-east1
-          value: us-east1
-        - label: us-east1
-          value: us-east1
+        - label: us-east5
+          value: us-east5
+        - label: us-south1
+          value: us-south1
         - label: us-west1
           value: us-west1
-        - label: us-east1
+        - label: us-west2
           value: us-west2
         - label: us-west3
           value: us-west3

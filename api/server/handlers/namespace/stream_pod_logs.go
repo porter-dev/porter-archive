@@ -62,12 +62,8 @@ func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		))
 
 		return
-	} else if brErr := (kubernetes.BadRequestError{}); errors.As(err, &targetErr) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			&brErr,
-			http.StatusBadRequest,
-		))
-
+	} else if _, ok := err.(*kubernetes.BadRequestError); ok {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	} else if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

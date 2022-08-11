@@ -4,7 +4,7 @@ import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import UploadArea from "components/form-components/UploadArea";
 import SaveButton from "components/SaveButton";
-import { GCP_REGION_OPTIONS } from "main/home/onboarding/constants";
+import { GAR_REGION_OPTIONS } from "main/home/onboarding/constants";
 import React, { useContext, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -109,7 +109,7 @@ const GARForm = (props: { closeForm: () => void }) => {
         />
         <Helper>GAR Region</Helper>
         <SelectRow
-          options={GCP_REGION_OPTIONS}
+          options={GAR_REGION_OPTIONS}
           width="100%"
           value={region}
           scrollBuffer={true}

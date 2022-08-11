@@ -33,6 +33,8 @@ import (
 
 var namespace string
 var verbose bool
+var existingPod bool
+var nonInteractive bool
 
 // runCmd represents the "porter run" base command when called
 // without any subcommands
@@ -63,8 +65,6 @@ var cleanupCmd = &cobra.Command{
 	},
 }
 
-var existingPod bool
-
 func init() {
 	rootCmd.AddCommand(runCmd)
 
@@ -91,11 +91,22 @@ func init() {
 		"whether to print verbose output",
 	)
 
+	runCmd.PersistentFlags().BoolVar(
+		&nonInteractive,
+		"non-interactive",
+		false,
+		"whether to run in non-interactive mode",
+	)
+
 	runCmd.AddCommand(cleanupCmd)
 }
 
 func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
+
+	if nonInteractive {
+		color.New(color.FgBlue).Println("Using non-interactive mode. The first available pod will be used to run the command.")
+	}
 
 	podsSimple, err := getPods(client, namespace, args[0])
 
@@ -108,7 +119,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if len(podsSimple) == 1 || !existingPod {
+	} else if nonInteractive || len(podsSimple) == 1 || !existingPod {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)

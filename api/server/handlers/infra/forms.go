@@ -396,6 +396,10 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.large
+          value: c6i.large
+        - label: c6i.xlarge
+          value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
     - type: string-input

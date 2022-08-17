@@ -48,6 +48,12 @@ type Project struct {
 	// provisioned aws infra
 	Infras []Infra `json:"infras"`
 
+	// linked policy documents
+	ProjectPolicies []Policy
+
+	// project roles
+	ProjectRoles []ProjectRole
+
 	// auth mechanisms
 	KubeIntegrations   []ints.KubeIntegration   `json:"kube_integrations"`
 	BasicIntegrations  []ints.BasicIntegration  `json:"basic_integrations"`

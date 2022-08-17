@@ -1,57 +1,63 @@
 package policy
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
-type PolicyCreateHandler struct {
+type PolicyUpdateHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewPolicyCreateHandler(
+func NewPolicyUpdateHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *PolicyCreateHandler {
-	return &PolicyCreateHandler{
+) *PolicyUpdateHandler {
+	return &PolicyUpdateHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *PolicyCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
+func (p *PolicyUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	req := &types.CreatePolicyRequest{}
+	policyID, reqErr := requestutils.GetURLParamString(r, types.URLParamPolicyID)
+
+	if reqErr != nil {
+		p.HandleAPIError(w, r, reqErr)
+		return
+	}
+
+	req := &types.UpdatePolicyRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, req); !ok {
 		return
 	}
 
-	// policy can't be one of the preset policy names
-	if name := strings.ToLower(req.Name); name == "admin" || name == "developer" || name == "viewer" {
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("name cannot be one of the preset policy names"),
-			http.StatusBadRequest,
-		))
-
-		return
-	}
-
-	uid, err := encryption.GenerateRandomBytes(16)
+	policy, err := p.Repo().Policy().ReadPolicy(proj.ID, policyID)
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("policy with id %s not found in project", policyID),
+				http.StatusNotFound,
+			))
+			return
+		}
+
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -63,19 +69,15 @@ func (p *PolicyCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	policy := &models.Policy{
-		ProjectID:       proj.ID,
-		UniqueID:        uid,
-		CreatedByUserID: user.ID,
-		Name:            req.Name,
-		PolicyBytes:     policyBytes,
-	}
+	if !bytes.Equal(policyBytes, policy.PolicyBytes) {
+		policy.PolicyBytes = policyBytes
 
-	policy, err = p.Repo().Policy().CreatePolicy(policy)
+		policy, err = p.Repo().Policy().UpdatePolicy(policy)
 
-	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	res, err := policy.ToAPIPolicyType()

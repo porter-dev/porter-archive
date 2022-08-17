@@ -157,8 +157,12 @@ var ViewerPolicy = []*PolicyDocument{
 	},
 }
 
-type CreatePolicy struct {
+type CreatePolicyRequest struct {
 	Name   string            `json:"name" form:"required"`
+	Policy []*PolicyDocument `json:"policy" form:"required"`
+}
+
+type UpdatePolicyRequest struct {
 	Policy []*PolicyDocument `json:"policy" form:"required"`
 }
 

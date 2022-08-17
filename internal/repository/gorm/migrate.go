@@ -50,6 +50,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.Allowlist{},
 		&models.APIToken{},
 		&models.Policy{},
+		&models.ProjectRole{},
 		&models.Tag{},
 		&models.Stack{},
 		&models.StackRevision{},

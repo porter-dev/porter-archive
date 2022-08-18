@@ -1,8 +1,10 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi"
-	project_integration "github.com/porter-dev/porter/api/server/handlers/project_integration"
+	"github.com/porter-dev/porter/api/server/handlers/project_role"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -53,30 +55,148 @@ func getProjectRoleRoutes(
 
 	var routes []*router.Route
 
-	// POST /api/projects/{project_id}/project_roles -> project_integration.NewListOAuthHandler
-	listOAuthEndpoint := factory.NewAPIEndpoint(
+	// POST /api/projects/{project_id}/project_roles -> project_role.NewCreateProjectRoleHandler
+	createProjectRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	createProjectRoleHandler := project_role.NewCreateProjectRoleHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createProjectRoleEndpoint,
+		Handler:  createProjectRoleHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/project_roles/{role_id} -> project_role.NewGetProjectRoleHandler
+	getProjectRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/oauth",
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamProjectRoleID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
+				types.SettingsScope,
 			},
 		},
 	)
 
-	listOAuthHandler := project_integration.NewListOAuthHandler(
+	getProjectRoleHandler := project_role.NewGetProjectRoleHandler(
 		config,
+		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: listOAuthEndpoint,
-		Handler:  listOAuthHandler,
+		Endpoint: getProjectRoleEndpoint,
+		Handler:  getProjectRoleHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/project_roles -> project_role.NewListProjectRolesHandler
+	listProjectRolesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	listProjectRolesHandler := project_role.NewListProjectRolesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listProjectRolesEndpoint,
+		Handler:  listProjectRolesHandler,
+		Router:   r,
+	})
+
+	// PATCH /api/projects/{project_id}/project_roles/{role_id} -> project_role.NewUpdateProjectRoleHandler
+	updateProjectRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamProjectRoleID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	updateProjectRoleHandler := project_role.NewUpdateProjectRoleHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateProjectRoleEndpoint,
+		Handler:  updateProjectRoleHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/project_roles/{role_id} -> project_role.NewDeleteProjectRoleHandler
+	deleteProjectRoleEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamProjectRoleID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	deleteProjectRoleHandler := project_role.NewDeleteProjectRoleHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteProjectRoleEndpoint,
+		Handler:  deleteProjectRoleHandler,
 		Router:   r,
 	})
 

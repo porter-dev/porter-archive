@@ -59,6 +59,15 @@ func (c *UpdateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if request.Name != "" && request.Name != role.Name {
+		if request.Name == string(types.RoleAdmin) ||
+			request.Name == string(types.RoleDeveloper) ||
+			request.Name == string(types.RoleViewer) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+				fmt.Errorf("default role names admin, developer, viewer are not allowed"), http.StatusConflict,
+			))
+			return
+		}
+
 		role.Name = request.Name
 
 		role, err = c.Repo().ProjectRole().UpdateProjectRole(role)

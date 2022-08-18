@@ -70,6 +70,10 @@ func main() {
 		}
 	}
 
+	// if err := migratelegacyrbac.MigrateFromLegacyRBAC(db, logger); err != nil {
+	// 	logger.Fatal().Err(err).Msg("failed to migrate from legacy RBAC")
+	// }
+
 	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
 		logger.Fatal().Err(err).Msg("vault migration failed")
 	}

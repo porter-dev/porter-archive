@@ -424,7 +424,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
             placeholder="ex: mrp@getporter.dev"
           />
         </InputRowWrapper>
-        <Helper>Specify a role for this user.</Helper>
+        <Helper>Specify the roles for this user.</Helper>
         <RoleSelectorWrapper>
           {/* <RadioSelector
             selected={role}
@@ -496,7 +496,6 @@ const RoleSelector = ({
         onSelect={(newRole) => onChange([...values, newRole])}
         filterBy={(role) => role?.name || ""}
         getOptionLabel={(role) => role.name || ""}
-        label="Select the roles for this user"
         placeholder="Select a role"
       />
       <RoleTagWrapper>
@@ -583,6 +582,7 @@ const RoleName = styled.div`
 
 const RoleSelectorWrapper = styled.div`
   font-size: 14px;
+  max-width: 40%;
 `;
 
 const Placeholder = styled.div`

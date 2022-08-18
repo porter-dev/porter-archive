@@ -5,6 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
+	migratelegacyrbac "github.com/porter-dev/porter/cmd/migrate/migrate_legacy_rbac"
 	"github.com/porter-dev/porter/cmd/migrate/populate_source_config_display_name"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
@@ -70,9 +71,13 @@ func main() {
 		}
 	}
 
-	// if err := migratelegacyrbac.MigrateFromLegacyRBAC(db, logger); err != nil {
-	// 	logger.Fatal().Err(err).Msg("failed to migrate from legacy RBAC")
-	// }
+	if shouldMigrateFromLegacyRBAC() {
+		err := migratelegacyrbac.MigrateFromLegacyRBAC(db, logger)
+
+		if err != nil {
+			logger.Fatal().Err(err).Msg("failed to migrate legacy RBAC")
+		}
+	}
 
 	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
 		logger.Fatal().Err(err).Msg("vault migration failed")
@@ -114,4 +119,23 @@ func shouldPopulateSourceConfigDisplayName() bool {
 	}
 
 	return c.PopulateSourceConfigDisplayName
+}
+
+type MigrateLegacyRBACConf struct {
+	// we add a dummy field to avoid empty struct issue with envdecode
+	DummyField string `env:"ASDF,default=asdf"`
+
+	// if true, will migrate away from legacy RBAC to advanced RBAC
+	MigrateLegacyRBAC bool `env:"MIGRATE_LEGACY_RBAC"`
+}
+
+func shouldMigrateFromLegacyRBAC() bool {
+	var c MigrateLegacyRBACConf
+
+	if err := envdecode.StrictDecode(&c); err != nil {
+		log.Fatalf("Failed to decode migration conf: %s", err)
+		return false
+	}
+
+	return c.MigrateLegacyRBAC
 }

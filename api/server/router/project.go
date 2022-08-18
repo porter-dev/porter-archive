@@ -1035,64 +1035,6 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// PATCH /api/projects/{project_id}/policies/{policy_id} -> policy.NewPolicyUpdateHandler
-	policyUpdateEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPatch,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/policies/{%s}", relPath, types.URLParamPolicyID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.SettingsScope,
-			},
-		},
-	)
-
-	policyUpdateHandler := policy.NewPolicyUpdateHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: policyUpdateEndpoint,
-		Handler:  policyUpdateHandler,
-		Router:   r,
-	})
-
-	// DELETE /api/projects/{project_id}/policies/{policy_id} -> policy.NewPolicyDeleteHandler
-	policyDeleteEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbDelete,
-			Method: types.HTTPVerbDelete,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/policies/{%s}", relPath, types.URLParamPolicyID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.SettingsScope,
-			},
-		},
-	)
-
-	policyDeleteHandler := policy.NewPolicyDeleteHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: policyDeleteEndpoint,
-		Handler:  policyDeleteHandler,
-		Router:   r,
-	})
-
 	//  POST /api/projects/{project_id}/api_token -> api_token.NewAPITokenCreateHandler
 	apiTokenCreateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

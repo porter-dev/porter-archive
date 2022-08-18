@@ -55,22 +55,17 @@ func (c *StreamPodLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	err = agent.GetPodLogs(namespace, name, request.Container, safeRW)
 
-	if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("pod %s/%s was not found", namespace, name),
-			http.StatusNotFound,
-		))
-
-		return
-	} else if brErr := (kubernetes.BadRequestError{}); errors.As(err, &targetErr) {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			&brErr,
-			http.StatusBadRequest,
-		))
-
-		return
-	} else if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+	if err != nil {
+		if errors.Is(err, kubernetes.IsNotFoundError) {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("pod %s/%s was not found", namespace, name),
+				http.StatusNotFound))
+			return
+		} else if _, ok := err.(*kubernetes.BadRequestError); ok {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		} else {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 }

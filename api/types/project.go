@@ -24,7 +24,7 @@ type CreateProjectRequest struct {
 
 type CreateProjectResponse Project
 
-type CreateProjectRoleRequest struct {
+type CreateLegacyProjectRoleRequest struct {
 	Kind   string `json:"kind" form:"required"`
 	UserID uint   `json:"user_id" form:"required"`
 }

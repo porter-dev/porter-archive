@@ -3,6 +3,7 @@ package repository
 type Repository interface {
 	User() UserRepository
 	Project() ProjectRepository
+	ProjectRole() ProjectRoleRepository
 	Release() ReleaseRepository
 	Environment() EnvironmentRepository
 	Session() SessionRepository

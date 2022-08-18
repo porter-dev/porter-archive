@@ -45,6 +45,26 @@ func (repo *ProjectRoleRepository) ListProjectRoles(projectID uint) ([]*models.P
 	return roles, nil
 }
 
+func (repo *ProjectRoleRepository) ListAllRolesForUser(projectID, userID uint) ([]*models.ProjectRole, error) {
+	projectRoles := []*models.ProjectRole{}
+
+	if err := repo.db.Where("project_id = ?", userID).Find(&projectRoles).Error; err != nil {
+		return nil, err
+	}
+
+	var res []*models.ProjectRole
+
+	for _, role := range projectRoles {
+		if count := repo.db.Model(role).Where("id = ?", userID).Association("Users").Count(); count == 0 {
+			continue
+		} else {
+			res = append(res, role)
+		}
+	}
+
+	return res, nil
+}
+
 func (repo *ProjectRoleRepository) UpdateUsersInProjectRole(projectID uint, roleUID string, userIDs []uint) error {
 	users := []*models.User{}
 

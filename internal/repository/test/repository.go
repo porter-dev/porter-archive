@@ -8,6 +8,7 @@ type TestRepository struct {
 	user                      repository.UserRepository
 	session                   repository.SessionRepository
 	project                   repository.ProjectRepository
+	projectRole               repository.ProjectRoleRepository
 	cluster                   repository.ClusterRepository
 	helmRepo                  repository.HelmRepoRepository
 	registry                  repository.RegistryRepository
@@ -58,6 +59,10 @@ func (t *TestRepository) Session() repository.SessionRepository {
 
 func (t *TestRepository) Project() repository.ProjectRepository {
 	return t.project
+}
+
+func (t *TestRepository) ProjectRole() repository.ProjectRoleRepository {
+	return t.projectRole
 }
 
 func (t *TestRepository) Cluster() repository.ClusterRepository {

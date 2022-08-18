@@ -9,30 +9,50 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
+import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam } from "shared/routing";
-import BillingPage from "./BillingPage";
 import APITokensSection from "./APITokensSection";
+import { RolesAdmin } from "./roles-admin";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 
+const isValidTab = (tab: string): tab is AvailableTabs => {
+  return [
+    "invite",
+    "api-tokens",
+    "manage-access",
+    "billing",
+    "additional-settings",
+    "roles-admin",
+  ].includes(tab);
+};
+
+type AvailableTabs =
+  | "invite"
+  | "api-tokens"
+  | "manage-access"
+  | "billing"
+  | "additional-settings"
+  | "roles-admin";
+
 type StateType = {
   projectName: string;
-  currentTab: string;
-  tabOptions: { value: string; label: string }[];
+  currentTab: AvailableTabs;
+  tabOptions: { value: AvailableTabs; label: string }[];
 };
 
 class ProjectSettings extends Component<PropsType, StateType> {
   state = {
     projectName: "",
-    currentTab: "manage-access",
-    tabOptions: [] as { value: string; label: string }[],
+    currentTab: "manage-access" as StateType["currentTab"],
+    tabOptions: [] as StateType["tabOptions"],
   };
 
   componentDidUpdate(prevProps: PropsType) {
     const selectedTab = getQueryParam(this.props, "selected_tab");
+
     if (prevProps.location.search !== this.props.location.search) {
-      if (selectedTab) {
+      if (selectedTab && isValidTab(selectedTab)) {
         this.setState({ currentTab: selectedTab });
       } else {
         this.setState({ currentTab: "manage-access" });
@@ -43,27 +63,15 @@ class ProjectSettings extends Component<PropsType, StateType> {
       !this.state.tabOptions.find((t) => t.value === "billing")
     ) {
       const tabOptions = this.state.tabOptions;
-      // tabOptions.splice(1, 0, { value: "billing", label: "Billing" });
       this.setState({ tabOptions });
       return;
-    }
-
-    if (
-      !this.context?.hasBillingEnabled &&
-      this.state.tabOptions.find((t) => t.value === "billing")
-    ) {
-      const tabOptions = this.state.tabOptions;
-      const billingIndex = this.state.tabOptions.findIndex(
-        (t) => t.value === "billing"
-      );
-      // tabOptions.splice(billingIndex, 1);
     }
   }
 
   componentDidMount() {
     let { currentProject } = this.context;
     this.setState({ projectName: currentProject.name });
-    const tabOptions = [];
+    const tabOptions = [] as StateType["tabOptions"];
     tabOptions.push({ value: "manage-access", label: "Manage Access" });
     tabOptions.push({
       value: "billing",
@@ -71,13 +79,6 @@ class ProjectSettings extends Component<PropsType, StateType> {
     });
 
     if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
-      // if (this.context?.hasBillingEnabled) {
-      //   tabOptions.push({
-      //     value: "billing",
-      //     label: "Billing",
-      //   });
-      // }
-
       if (currentProject?.api_tokens_enabled) {
         tabOptions.push({
           value: "api-tokens",
@@ -91,10 +92,15 @@ class ProjectSettings extends Component<PropsType, StateType> {
       });
     }
 
+    tabOptions.push({
+      value: "roles-admin",
+      label: "Roles Admin",
+    });
+
     this.setState({ tabOptions });
 
     const selectedTab = getQueryParam(this.props, "selected_tab");
-    if (selectedTab) {
+    if (selectedTab && isValidTab(selectedTab)) {
       this.setState({ currentTab: selectedTab });
     }
   }
@@ -104,70 +110,68 @@ class ProjectSettings extends Component<PropsType, StateType> {
       return <InvitePage />;
     }
 
-    // if (
-    //   this.state.currentTab === "billing" &&
-    //   this.context?.hasBillingEnabled
-    // ) {
-    //   return <BillingPage />;
-    // }
+    switch (this.state.currentTab) {
+      case "roles-admin":
+        return <RolesAdmin />;
+      case "manage-access":
+        return <InvitePage />;
+      case "api-tokens":
+        return <APITokensSection />;
+      case "billing":
+        return (
+          <Placeholder>
+            <Helper>
+              Visit the{" "}
+              <a
+                href={`/api/projects/${this.context.currentProject?.id}/billing/redirect`}
+              >
+                billing portal
+              </a>{" "}
+              to view plans.
+            </Helper>
+          </Placeholder>
+        );
+      case "additional-settings":
+      default:
+        return (
+          <>
+            <Heading isAtTop={true}>Delete Project</Heading>
+            <Helper>
+              Permanently delete this project. This will destroy all clusters
+              tied to this project that have been provisioned by Porter. Note
+              that this will not delete the image registries provisioned by
+              Porter. To delete the registries, please do so manually in your
+              cloud console.
+            </Helper>
 
-    if (this.state.currentTab === "manage-access") {
-      return <InvitePage />;
-    } else if (this.state.currentTab === "api-tokens") {
-      return <APITokensSection />;
-    } else if (this.state.currentTab === "billing") {
-      return (
-        <Placeholder>
-          <Helper>
-            Visit the{" "}
-            <a
-              href={`/api/projects/${this.context.currentProject?.id}/billing/redirect`}
+            <Helper>
+              Destruction of resources sometimes results in dangling resources.
+              To ensure that everything has been properly destroyed, please
+              visit your cloud provider's console. Instructions to properly
+              delete all resources can be found
+              <a
+                target="none"
+                href="https://docs.getporter.dev/docs/deleting-dangling-resources"
+              >
+                {" "}
+                here
+              </a>
+              .
+            </Helper>
+
+            <Warning highlight={true}>This action cannot be undone.</Warning>
+
+            <DeleteButton
+              onClick={() => {
+                this.context.setCurrentModal("UpdateProjectModal", {
+                  currentProject: this.context.currentProject,
+                });
+              }}
             >
-              billing portal
-            </a>{" "}
-            to view plans.
-          </Helper>
-        </Placeholder>
-      );
-    } else {
-      return (
-        <>
-          <Heading isAtTop={true}>Delete Project</Heading>
-          <Helper>
-            Permanently delete this project. This will destroy all clusters tied
-            to this project that have been provisioned by Porter. Note that this
-            will not delete the image registries provisioned by Porter. To
-            delete the registries, please do so manually in your cloud console.
-          </Helper>
-
-          <Helper>
-            Destruction of resources sometimes results in dangling resources. To
-            ensure that everything has been properly destroyed, please visit
-            your cloud provider's console. Instructions to properly delete all
-            resources can be found
-            <a
-              target="none"
-              href="https://docs.getporter.dev/docs/deleting-dangling-resources"
-            >
-              {" "}
-              here
-            </a>
-            .
-          </Helper>
-
-          <Warning highlight={true}>This action cannot be undone.</Warning>
-
-          <DeleteButton
-            onClick={() => {
-              this.context.setCurrentModal("UpdateProjectModal", {
-                currentProject: this.context.currentProject,
-              });
-            }}
-          >
-            Delete Project
-          </DeleteButton>
-        </>
-      );
+              Delete Project
+            </DeleteButton>
+          </>
+        );
     }
   };
 
@@ -177,7 +181,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
         <TitleSection>Project Settings</TitleSection>
         <TabRegion
           currentTab={this.state.currentTab}
-          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
+          setCurrentTab={(x: AvailableTabs) => this.setState({ currentTab: x })}
           options={this.state.tabOptions}
         >
           {this.renderTabContents()}

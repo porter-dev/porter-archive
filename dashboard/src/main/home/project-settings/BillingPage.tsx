@@ -3,6 +3,7 @@ import { CustomerProvider, PlanSelect } from "@ironplans/react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+// @TODO: Deprecated, remove.
 function BillingPage() {
   const [customerToken, setCustomerToken] = useState("");
   const [teamID, setTeamID] = useState("");

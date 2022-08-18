@@ -38,6 +38,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	inviteRegisterer := NewInviteScopedRegisterer()
 	projectIntegrationRegisterer := NewProjectIntegrationScopedRegisterer()
 	projectOAuthRegisterer := NewProjectOAuthScopedRegisterer()
+	projectRoleRegisterer := NewProjectRoleScopedRegisterer()
 	slackIntegrationRegisterer := NewSlackIntegrationScopedRegisterer()
 	projRegisterer := NewProjectScopedRegisterer(
 		clusterRegisterer,
@@ -49,6 +50,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		projectIntegrationRegisterer,
 		projectOAuthRegisterer,
 		slackIntegrationRegisterer,
+		projectRoleRegisterer,
 	)
 	statusRegisterer := NewStatusScopedRegisterer()
 

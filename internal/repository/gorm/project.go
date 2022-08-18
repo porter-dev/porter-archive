@@ -93,7 +93,7 @@ func (repo *ProjectRepository) ReadProjectRole(projID, userID uint) (*models.Rol
 func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Project, error) {
 	projects := make([]*models.Project, 0)
 
-	subQuery := repo.db.Model(&models.Role{}).Where("user_id = ?", userID).Select("project_id")
+	subQuery := repo.db.Model(&models.ProjectRole{}).Joins("JOIN user_roles ON user_roles.project_role_id = project_roles.id").Where("user_id = ?", userID).Select("project_id")
 
 	if err := repo.db.Preload("Roles").Model(&models.Project{}).Where("id IN (?)", subQuery).Find(&projects).Error; err != nil {
 		return nil, err

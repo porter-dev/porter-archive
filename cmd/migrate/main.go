@@ -79,9 +79,9 @@ func main() {
 		}
 	}
 
-	// if err := InstanceMigrate(db, envConf.DBConf); err != nil {
-	// 	logger.Fatal().Err(err).Msg("vault migration failed")
-	// }
+	if err := InstanceMigrate(db, envConf.DBConf); err != nil {
+		logger.Fatal().Err(err).Msg("vault migration failed")
+	}
 }
 
 type RotateConf struct {

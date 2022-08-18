@@ -92,10 +92,12 @@ func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
 			delete(legacyRoleKindUsersMap, types.RoleCustom) // added just to make sure nothing goes wrong from here
 
 			for roleKind, users := range legacyRoleKindUsersMap {
-				err := projectRoleRepo.UpdateUsersInProjectRole(project.ID, fmt.Sprintf("%d-%s", project.ID, roleKind), users)
+				if len(users) > 0 {
+					err := projectRoleRepo.UpdateUsersInProjectRole(project.ID, fmt.Sprintf("%d-%s", project.ID, roleKind), users)
 
-				if err != nil {
-					return err
+					if err != nil {
+						return err
+					}
 				}
 			}
 

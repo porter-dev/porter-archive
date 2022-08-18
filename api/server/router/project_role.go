@@ -200,5 +200,34 @@ func getProjectRoleRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/project_roles/scope_hierarchy -> project_role.NewGetProjectRoleScopeHierarchyHandler
+	getProjectRoleScopeHierarchyEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/scope_hierarchy", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	getProjectRoleScopeHierarchyHandler := project_role.NewGetProjectRoleScopeHierarchyHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getProjectRoleScopeHierarchyEndpoint,
+		Handler:  getProjectRoleScopeHierarchyHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

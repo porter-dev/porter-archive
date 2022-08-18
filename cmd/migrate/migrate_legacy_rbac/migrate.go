@@ -43,7 +43,7 @@ func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
 
 			var legacyRoleCount int64
 
-			if err := db.Where("unique_name = ?", fmt.Sprintf("%d-%s", project.ID, types.RoleAdmin)).
+			if err := db.Where("unique_id = ?", fmt.Sprintf("%d-%s", project.ID, types.RoleAdmin)).
 				Find(&models.ProjectRole{}).Count(&legacyRoleCount).Error; err != nil {
 				return err
 			} else if legacyRoleCount == 0 {
@@ -54,7 +54,7 @@ func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
 				}
 			}
 
-			if err := db.Where("unique_name = ?", fmt.Sprintf("%d-%s", project.ID, types.RoleDeveloper)).
+			if err := db.Where("unique_id = ?", fmt.Sprintf("%d-%s", project.ID, types.RoleDeveloper)).
 				Find(&models.ProjectRole{}).Count(&legacyRoleCount).Error; err != nil {
 				return err
 			} else if legacyRoleCount == 0 {
@@ -65,7 +65,7 @@ func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
 				}
 			}
 
-			if err := db.Where("unique_name = ?", fmt.Sprintf("%d-%s", project.ID, types.RoleViewer)).
+			if err := db.Where("unique_id = ?", fmt.Sprintf("%d-%s", project.ID, types.RoleViewer)).
 				Find(&models.ProjectRole{}).Count(&legacyRoleCount).Error; err != nil {
 				return err
 			} else if legacyRoleCount == 0 {
@@ -80,6 +80,7 @@ func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
 				types.RoleAdmin:     make([]uint, 0),
 				types.RoleDeveloper: make([]uint, 0),
 				types.RoleViewer:    make([]uint, 0),
+				types.RoleCustom:    make([]uint, 0), // added this for possible cases of custom roles in the DB?
 			}
 
 			for _, legacyRole := range project.Roles {

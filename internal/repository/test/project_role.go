@@ -24,6 +24,10 @@ func (repo *ProjectRoleRepository) ListProjectRoles(projectID uint) ([]*models.P
 	panic("not implemented")
 }
 
+func (repo *ProjectRoleRepository) ListAllRolesForUser(projectID, userID uint) ([]*models.ProjectRole, error) {
+	panic("not implemented")
+}
+
 func (repo *ProjectRoleRepository) UpdateUsersInProjectRole(projectID uint, roleUID string, userIDs []uint) error {
 	panic("not implemented")
 }

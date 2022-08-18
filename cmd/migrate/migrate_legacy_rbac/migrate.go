@@ -18,7 +18,7 @@ import (
 const stepSize = 100
 
 func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
-	logger.Info().Msg("Initiated migration from legacy RBAC")
+	logger.Info().Msg("initiated migration from legacy RBAC")
 
 	var count int64
 
@@ -29,6 +29,8 @@ func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
 	projectRepo := gorm.NewProjectRepository(db).(*gorm.ProjectRepository)
 	projectRoleRepo := gorm.NewProjectRoleRepository(db).(*gorm.ProjectRoleRepository)
 	policyRepo := gorm.NewPolicyRepository(db).(*gorm.PolicyRepository)
+
+	logger.Info().Msgf("found %d projects", count)
 
 	// iterate (count / stepSize) + 1 times using Limit and Offset
 	for i := 0; i < (int(count)/stepSize)+1; i++ {

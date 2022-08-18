@@ -9,6 +9,7 @@ export type CreateStackBody = {
     values: unknown;
   }[];
   source_configs: {
+    display_name: string;
     name: string;
     image_repo_uri: string;
     image_tag: string;
@@ -80,6 +81,7 @@ export type StackRevision = {
 
 export type SourceConfig = {
   id: string;
+  display_name: string;
   name: string;
   created_at: string;
   updated_at: string;
@@ -89,8 +91,6 @@ export type SourceConfig = {
 
   stack_id: string;
   stack_revision_id: number;
-
-  stable_source_config_id: string;
 
   build?: {
     method: "pack" | "docker";

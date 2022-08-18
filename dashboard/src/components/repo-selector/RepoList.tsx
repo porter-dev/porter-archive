@@ -442,6 +442,7 @@ const ProviderSelectorStyles = {
     overflow-y: auto;
     width: calc(100% - 4px);
     box-shadow: 0 8px 20px 0px #00000088;
+    z-index: 999;
   `,
   Option: styled.div`
     display: flex;

@@ -22,8 +22,8 @@ const SelectSource = () => {
       return;
     }
 
-    const newSource: CreateStackBody["source_configs"][0] = {
-      name: sourceName,
+    const newSource: Omit<CreateStackBody["source_configs"][0], "name"> = {
+      display_name: sourceName,
       image_repo_uri: imageUrl,
       image_tag: imageTag,
     };

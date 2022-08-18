@@ -38,7 +38,7 @@ func (repo *ProjectRoleRepository) ReadProjectRole(projectID uint, roleUID strin
 func (repo *ProjectRoleRepository) ListProjectRoles(projectID uint) ([]*models.ProjectRole, error) {
 	roles := []*models.ProjectRole{}
 
-	if err := repo.db.Where("project_id = ?", projectID).Find(&roles).Error; err != nil {
+	if err := repo.db.Preload("Users").Where("project_id = ?", projectID).Find(&roles).Error; err != nil {
 		return nil, err
 	}
 

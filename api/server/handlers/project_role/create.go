@@ -38,6 +38,15 @@ func (c *CreateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if request.Name == string(types.RoleAdmin) ||
+		request.Name == string(types.RoleDeveloper) ||
+		request.Name == string(types.RoleViewer) {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("default role names admin, developer, viewer are not allowed"), http.StatusConflict,
+		))
+		return
+	}
+
 	uid, err := encryption.GenerateRandomBytes(16)
 
 	if err != nil {

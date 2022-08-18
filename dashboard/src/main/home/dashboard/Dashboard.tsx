@@ -179,16 +179,14 @@ class Dashboard extends Component<PropsType, StateType> {
                     </Overlay>
                   </DashboardIcon>
                   {currentProject && currentProject.name}
-                  {this.context.currentProject?.roles?.filter((obj: any) => {
+                  // TODO REPLACE WITH IS AUTH HOOK
+                  {/* {this.context.currentProject?.roles?.filter((obj: any) => {
                     return obj.user_id === this.context.user.userId;
-                  })[0].kind === "admin" || (
-                    <i
-                      className="material-icons"
-                      onClick={onShowProjectSettings}
-                    >
-                      more_vert
-                    </i>
-                  )}
+                  })[0].kind === "admin" || ( */}
+                  <i className="material-icons" onClick={onShowProjectSettings}>
+                    more_vert
+                  </i>
+                  {/* )} */}
                 </TitleSection>
                 <Br />
 

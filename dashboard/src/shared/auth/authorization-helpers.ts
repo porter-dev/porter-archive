@@ -93,11 +93,14 @@ export const isAuthorized = (
 
 export const populatePolicy = (
   currPolicy: PolicyDocType,
-  tree: HIERARCHY_TREE,
-  currScope: ScopeType,
-  parentVerbs: Array<Verbs>
+  tree: HIERARCHY_TREE = POLICY_HIERARCHY_TREE,
+  currentScope?: ScopeType,
+  parentVerbs?: Array<Verbs>
 ) => {
-  const currTree = tree[currScope];
+  const scope = currentScope || currPolicy.scope;
+  const verbs = parentVerbs || currPolicy.verbs;
+
+  const currTree = tree[scope];
   const treeKeys = Object.keys(currTree) as Array<ScopeType>;
 
   currPolicy.children = currPolicy?.children || {};
@@ -108,7 +111,7 @@ export const populatePolicy = (
     if (!childPolicy) {
       childPolicy = {
         scope: child,
-        verbs: parentVerbs,
+        verbs: verbs,
         resources: [],
         children: {},
       };

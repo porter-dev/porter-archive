@@ -30,7 +30,7 @@ func (p *ProjectGetPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	policyDocLoader := policy.NewBasicPolicyDocumentLoader(p.Config().Repo.Project(), p.Config().Repo.Policy())
+	policyDocLoader := policy.NewBasicPolicyDocumentLoader(p.Config().Repo.ProjectRole(), p.Config().Repo.Policy())
 
 	policyDocs, err := policyDocLoader.LoadPolicyDocuments(&policy.PolicyLoaderOpts{
 		UserID:    user.ID,

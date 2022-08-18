@@ -10,6 +10,7 @@ type GormRepository struct {
 	user                      repository.UserRepository
 	session                   repository.SessionRepository
 	project                   repository.ProjectRepository
+	projectRole               repository.ProjectRoleRepository
 	cluster                   repository.ClusterRepository
 	database                  repository.DatabaseRepository
 	helmRepo                  repository.HelmRepoRepository
@@ -60,6 +61,10 @@ func (t *GormRepository) Session() repository.SessionRepository {
 
 func (t *GormRepository) Project() repository.ProjectRepository {
 	return t.project
+}
+
+func (t *GormRepository) ProjectRole() repository.ProjectRoleRepository {
+	return t.projectRole
 }
 
 func (t *GormRepository) Cluster() repository.ClusterRepository {
@@ -221,6 +226,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		user:                      NewUserRepository(db),
 		session:                   NewSessionRepository(db),
 		project:                   NewProjectRepository(db),
+		projectRole:               NewProjectRoleRepository(db),
 		cluster:                   NewClusterRepository(db, key),
 		database:                  NewDatabaseRepository(db, key),
 		helmRepo:                  NewHelmRepoRepository(db, key),

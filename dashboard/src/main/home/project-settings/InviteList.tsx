@@ -13,6 +13,8 @@ import CopyToClipboard from "components/CopyToClipboard";
 import { Column } from "react-table";
 import Table from "components/Table";
 import RadioSelector from "components/RadioSelector";
+import { Role } from "./roles-admin/types";
+import SearchSelector from "components/SearchSelector";
 
 type Props = {};
 
@@ -22,6 +24,7 @@ export type Collaborator = {
   project_id: string;
   email: string;
   kind: string;
+  roles: string[];
 };
 
 const InvitePage: React.FunctionComponent<Props> = ({}) => {
@@ -42,6 +45,9 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const [isInvalidEmail, setIsInvalidEmail] = useState(false);
   const [isHTTPS] = useState(() => window.location.protocol === "https:");
 
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
+
   useEffect(() => {
     api
       .getAvailableRoles("<token>", {}, { project_id: currentProject?.id })
@@ -53,6 +59,10 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         setRoleList(availableRoleList);
         setRole("developer");
       });
+
+    api
+      .listRoles("<token>", {}, { project_id: currentProject?.id })
+      .then((res) => setRoles(res.data));
 
     getData();
   }, [currentProject]);
@@ -119,10 +129,15 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
   const createInvite = () => {
     api
-      .createInvite("<token>", { email, kind: role }, { id: currentProject.id })
+      .createInvite(
+        "<token>",
+        { email, kind: role, roles: selectedRoles.map((role) => role.id) },
+        { id: currentProject.id }
+      )
       .then(() => {
         getData();
         setEmail("");
+        setSelectedRoles([]);
       })
       .catch((err) => {
         if (err.response.data?.error) {
@@ -150,12 +165,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const replaceInvite = (
     inviteEmail: string,
     inviteId: number,
-    kind: string
+    kind: string,
+    roles: string[]
   ) => {
     api
       .createInvite(
         "<token>",
-        { email: inviteEmail, kind },
+        { email: inviteEmail, kind, roles },
         { id: currentProject.id }
       )
       .then(() =>
@@ -219,6 +235,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       status: string;
       invite_link: string;
       kind: string;
+      roles: string[];
     }>[]
   >(
     () => [
@@ -230,7 +247,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         Header: "Role",
         accessor: "kind",
         Cell: ({ row }) => {
-          return <Role>{row.values.kind || "Developer"}</Role>;
+          return <RoleName>{row.values.roles?.join(",") || "N/A"}</RoleName>;
         },
       },
       {
@@ -253,7 +270,8 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
                   replaceInvite(
                     row.values.email,
                     row.original.id,
-                    row.values.kind
+                    row.values.kind,
+                    row.values.roles
                   )
                 }
               >
@@ -408,10 +426,15 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         </InputRowWrapper>
         <Helper>Specify a role for this user.</Helper>
         <RoleSelectorWrapper>
-          <RadioSelector
+          {/* <RadioSelector
             selected={role}
             setSelected={setRole}
             options={roleList}
+          /> */}
+          <RoleSelector
+            options={roles}
+            onChange={setSelectedRoles}
+            values={selectedRoles}
           />
         </RoleSelectorWrapper>
         <ButtonWrapper>
@@ -453,6 +476,72 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
 export default InvitePage;
 
+const RoleSelector = ({
+  options,
+  onChange,
+  values,
+}: {
+  options: Role[];
+  onChange: (roles: Role[]) => void;
+  values: Role[];
+}) => {
+  const filteredOptions = options.filter(
+    (option) => !values.map((val) => val.name).includes(option.name)
+  );
+
+  return (
+    <>
+      <SearchSelector
+        options={filteredOptions}
+        onSelect={(newRole) => onChange([...values, newRole])}
+        filterBy={(role) => role?.name || ""}
+        getOptionLabel={(role) => role.name || ""}
+        label="Select the roles for this user"
+        placeholder="Select a role"
+      />
+      <RoleTagWrapper>
+        {values.map((role) => (
+          <RoleTag>
+            {role.name}
+            <i
+              className="material-icons-outlined"
+              onClick={() => {
+                onChange(values.filter((value) => value.id !== role.id));
+              }}
+            >
+              delete
+            </i>
+          </RoleTag>
+        ))}
+      </RoleTagWrapper>
+    </>
+  );
+};
+
+const RoleTagWrapper = styled.div`
+  margin-top: 15px;
+`;
+
+const RoleTag = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f2f2;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-right: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000000;
+
+  > i {
+    margin-left: 4px;
+    font-size: 14px;
+
+    cursor: pointer;
+  }
+`;
+
 const Flex = styled.div`
   display: flex;
   align-items: center;
@@ -487,7 +576,7 @@ const SettingsButton = styled(DeleteButton)`
   margin-right: -60px;
 `;
 
-const Role = styled.div`
+const RoleName = styled.div`
   text-transform: capitalize;
   margin-right: 50px;
 `;

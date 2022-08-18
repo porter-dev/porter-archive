@@ -259,6 +259,8 @@ const createGCPIntegration = baseApi<
 const createInvite = baseApi<
   {
     email: string;
+    roles: string[];
+    // legacy field
     kind: string;
   },
   {

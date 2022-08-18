@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
@@ -30,4 +32,10 @@ func (role *ProjectRole) ToProjectRoleType(policy *types.PolicyDocument) *types.
 	}
 
 	return res
+}
+
+func (role *ProjectRole) IsDefaultRole() bool {
+	return role.UniqueID == fmt.Sprintf("%d-%s", role.ProjectID, types.RoleAdmin) ||
+		role.UniqueID == fmt.Sprintf("%d-%s", role.ProjectID, types.RoleDeveloper) ||
+		role.UniqueID == fmt.Sprintf("%d-%s", role.ProjectID, types.RoleViewer)
 }

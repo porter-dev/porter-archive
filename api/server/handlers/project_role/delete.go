@@ -51,6 +51,13 @@ func (c *DeleteProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if role.IsDefaultRole() {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("cannot delete default project role"), http.StatusConflict,
+		))
+		return
+	}
+
 	if len(role.Users) > 0 {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("role has one or more users assigned"), http.StatusPreconditionFailed,

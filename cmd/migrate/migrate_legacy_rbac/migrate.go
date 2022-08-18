@@ -154,7 +154,7 @@ func createNewRole(
 	newPolicy, err := policyRepo.CreatePolicy(&models.Policy{
 		UniqueID:    uid,
 		ProjectID:   projectID,
-		Name:        fmt.Sprintf("%d-%s-project-role-policy", projectID, kind),
+		Name:        fmt.Sprintf("%s-project-role-policy", kind),
 		PolicyBytes: policyBytes,
 	})
 

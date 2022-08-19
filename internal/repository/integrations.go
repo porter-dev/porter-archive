@@ -18,6 +18,7 @@ type BasicIntegrationRepository interface {
 	CreateBasicIntegration(am *ints.BasicIntegration) (*ints.BasicIntegration, error)
 	ReadBasicIntegration(projectID, id uint) (*ints.BasicIntegration, error)
 	ListBasicIntegrationsByProjectID(projectID uint) ([]*ints.BasicIntegration, error)
+	DeleteBasicIntegration(am *ints.BasicIntegration) (*ints.BasicIntegration, error)
 }
 
 // OIDCIntegrationRepository represents the set of queries on the OIDC auth

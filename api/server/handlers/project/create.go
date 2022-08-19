@@ -147,7 +147,7 @@ func createDefaultProjectRoles(projectID, userID uint, repo repository.Repositor
 			return err
 		}
 
-		_, err = repo.ProjectRole().CreateProjectRole(&models.ProjectRole{
+		role, err := repo.ProjectRole().CreateProjectRole(&models.ProjectRole{
 			UniqueID:  fmt.Sprintf("%d-%s", projectID, kind),
 			ProjectID: projectID,
 			PolicyUID: policy.UniqueID,
@@ -156,6 +156,14 @@ func createDefaultProjectRoles(projectID, userID uint, repo repository.Repositor
 
 		if err != nil {
 			return err
+		}
+
+		if kind == types.RoleAdmin {
+			err := repo.ProjectRole().UpdateUsersInProjectRole(projectID, role.UniqueID, []uint{userID})
+
+			if err != nil {
+				return err
+			}
 		}
 	}
 

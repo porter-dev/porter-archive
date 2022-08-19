@@ -1,8 +1,10 @@
+//go:build ee
 // +build ee
 
 package invite
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
+	"gorm.io/gorm"
 )
 
 type InviteCreateHandler struct {
@@ -41,6 +44,15 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if request.ProjectRoleUID != "" {
+		_, err := c.Repo().ProjectRole().ReadProjectRole(project.ID, request.ProjectRoleUID)
+
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
+			return
+		}
+	}
+
 	// create invite model
 	invite, err := CreateInviteWithProject(request, project.ID)
 
@@ -56,8 +68,6 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	// app.Logger.Info().Msgf("New invite created: %d", invite.ID)
 
 	if err := c.Config().UserNotifier.SendProjectInviteEmail(
 		&notifier.SendProjectInviteEmailOpts{
@@ -83,10 +93,11 @@ func CreateInviteWithProject(invite *types.CreateInviteRequest, projectID uint) 
 	expiry := time.Now().Add(24 * time.Hour)
 
 	return &models.Invite{
-		Email:     invite.Email,
-		Kind:      invite.Kind,
-		Expiry:    &expiry,
-		ProjectID: projectID,
-		Token:     oauth.CreateRandomState(),
+		Email:          invite.Email,
+		Kind:           invite.Kind,
+		Expiry:         &expiry,
+		ProjectID:      projectID,
+		Token:          oauth.CreateRandomState(),
+		ProjectRoleUID: invite.ProjectRoleUID,
 	}, nil
 }

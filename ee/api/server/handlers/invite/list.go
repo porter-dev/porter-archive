@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package invite
@@ -36,7 +37,7 @@ func (c *InvitesListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res types.ListInvitesResponse = make([]*types.Invite, 0)
+	var res types.ListInvitesResponse
 
 	for _, invite := range invites {
 		res = append(res, invite.ToInviteType())

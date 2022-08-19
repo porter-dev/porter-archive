@@ -27,7 +27,7 @@ func (c *Client) CreateRegistry(
 	return resp, err
 }
 
-// CreateRegistry creates a new registry integration
+// CreateHelmRepo creates a new helm repo in the project
 func (c *Client) CreateHelmRepo(
 	ctx context.Context,
 	projectID uint,
@@ -45,6 +45,40 @@ func (c *Client) CreateHelmRepo(
 	)
 
 	return resp, err
+}
+
+// ListHelmRepos list helm repos in the project
+func (c *Client) ListHelmRepos(
+	ctx context.Context,
+	projectID uint,
+) ([]*types.HelmRepo, error) {
+	var resp []*types.HelmRepo
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/helmrepos",
+			projectID,
+		),
+		nil,
+		&resp,
+	)
+
+	return resp, err
+}
+
+// DeleteHelmRepo deletes a helm repo from the project
+func (c *Client) DeleteHelmRepo(
+	ctx context.Context,
+	projectID, helmRepoID uint,
+) error {
+	return c.deleteRequest(
+		fmt.Sprintf(
+			"/projects/%d/helmrepos/%d",
+			projectID, helmRepoID,
+		),
+		nil,
+		nil,
+	)
 }
 
 // ListRegistries returns a list of registries for a project

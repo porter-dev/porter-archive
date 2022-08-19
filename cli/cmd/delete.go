@@ -85,6 +85,21 @@ var deleteAddonsCmd = &cobra.Command{
 	},
 }
 
+// deleteHelmCmd represents the "porter delete helm" subcommand
+var deleteHelmCmd = &cobra.Command{
+	Use:     "helm",
+	Aliases: []string{"helmrepo", "helmrepos"},
+	Short:   "Deletes an existing helm repo",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		err := checkLoginAndRun(args, deleteHelm)
+
+		if err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	deleteCmd.PersistentFlags().StringVar(
 		&namespace,
@@ -96,6 +111,7 @@ func init() {
 	deleteCmd.AddCommand(deleteAppsCmd)
 	deleteCmd.AddCommand(deleteJobsCmd)
 	deleteCmd.AddCommand(deleteAddonsCmd)
+	deleteCmd.AddCommand(deleteHelmCmd)
 
 	rootCmd.AddCommand(deleteCmd)
 }
@@ -214,6 +230,39 @@ func deleteAddon(_ *types.GetAuthenticatedUserResponse, client *api.Client, args
 	err = client.DeleteRelease(
 		context.Background(), cliConf.Project, cliConf.Cluster, namespace, name,
 	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteHelm(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
+	name := args[0]
+
+	resp, err := client.ListHelmRepos(context.Background(), cliConf.Project)
+
+	if err != nil {
+		return err
+	}
+
+	var repo *types.HelmRepo
+
+	for _, r := range resp {
+		if r.Name == name {
+			repo = r
+			break
+		}
+	}
+
+	if repo == nil {
+		return fmt.Errorf("no helm repo found with name: %s", name)
+	}
+
+	color.New(color.FgBlue).Printf("Deleting helm repo: %s\n", name)
+
+	err = client.DeleteHelmRepo(context.Background(), cliConf.Project, repo.ID)
 
 	if err != nil {
 		return err

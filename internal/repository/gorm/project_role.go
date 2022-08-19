@@ -28,7 +28,7 @@ func (repo *ProjectRoleRepository) CreateProjectRole(role *models.ProjectRole) (
 func (repo *ProjectRoleRepository) ReadProjectRole(projectID uint, roleUID string) (*models.ProjectRole, error) {
 	role := &models.ProjectRole{}
 
-	if err := repo.db.Where("project_id = ? AND unique_id = ?", projectID, roleUID).First(role).Error; err != nil {
+	if err := repo.db.Preload("Users").Where("project_id = ? AND unique_id = ?", projectID, roleUID).First(role).Error; err != nil {
 		return nil, err
 	}
 
@@ -48,7 +48,7 @@ func (repo *ProjectRoleRepository) ListProjectRoles(projectID uint) ([]*models.P
 func (repo *ProjectRoleRepository) ListAllRolesForUser(projectID, userID uint) ([]*models.ProjectRole, error) {
 	projectRoles := []*models.ProjectRole{}
 
-	if err := repo.db.Where("project_id = ?", userID).Find(&projectRoles).Error; err != nil {
+	if err := repo.db.Where("project_id = ?", projectID).Find(&projectRoles).Error; err != nil {
 		return nil, err
 	}
 

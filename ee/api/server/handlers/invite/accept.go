@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
 )
 
@@ -78,23 +79,32 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	kind := invite.Kind
+	if invite.ProjectRoleUID != "" {
+		err := updatePrijectRoleWithUser(c.Repo(), proj.ID, user.ID, invite.ProjectRoleUID)
 
-	if kind == "" {
-		kind = models.RoleDeveloper
-	}
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
+			return
+		} else if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else { // legacy operation
+		kind := invite.Kind
 
-	role := &models.Role{
-		Role: types.Role{
-			UserID:    user.ID,
-			ProjectID: proj.ID,
-			Kind:      types.RoleKind(kind),
-		},
-	}
+		if kind == "" {
+			kind = models.RoleDeveloper
+		}
 
-	if role, err = c.Repo().Project().CreateProjectRole(proj, role); err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		err := updatePrijectRoleWithUser(c.Repo(), proj.ID, user.ID, fmt.Sprintf("%d-%s", proj.ID, kind))
+
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
+			return
+		} else if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// update the invite
@@ -106,4 +116,36 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	http.Redirect(w, r, "/dashboard", 302)
+}
+
+func updatePrijectRoleWithUser(repo repository.Repository, projectID, userID uint, projectRoleUID string) error {
+	role, err := repo.ProjectRole().ReadProjectRole(projectID, projectRoleUID)
+
+	if err != nil {
+		return err
+	}
+
+	userAlreadyInRole := false
+	var userIDs []uint
+
+	for _, u := range role.Users {
+		if u.ID == userID {
+			userAlreadyInRole = true
+			break
+		}
+
+		userIDs = append(userIDs, u.ID)
+	}
+
+	if !userAlreadyInRole {
+		userIDs = append(userIDs, userID)
+
+		err := repo.ProjectRole().UpdateUsersInProjectRole(projectID, role.UniqueID, userIDs)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -48,11 +48,12 @@ type GetProjectPolicyResponse []*PolicyDocument
 type ListProjectRolesResponse []RoleKind
 
 type Collaborator struct {
-	ID        uint   `json:"id"`
-	Kind      string `json:"kind"`
-	UserID    uint   `json:"user_id"`
-	Email     string `json:"email"`
-	ProjectID uint   `json:"project_id"`
+	ID             uint   `json:"id,omitempty"`
+	Kind           string `json:"kind,omitempty"`
+	ProjectRoleUID string `json:"project_role_uid"`
+	UserID         uint   `json:"user_id"`
+	Email          string `json:"email"`
+	ProjectID      uint   `json:"project_id"`
 }
 
 type ListCollaboratorsResponse []*Collaborator

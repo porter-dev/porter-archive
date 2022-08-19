@@ -1,8 +1,11 @@
+//go:build ee
 // +build ee
 
 package invite
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -11,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"gorm.io/gorm"
 )
 
 type InviteUpdateRoleHandler struct {
@@ -28,6 +32,7 @@ func NewInviteUpdateRoleHandler(
 
 func (c *InviteUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	invite, _ := r.Context().Value(types.InviteScope).(*models.Invite)
+	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.UpdateInviteRoleRequest{}
 
@@ -35,10 +40,29 @@ func (c *InviteUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	invite.Kind = request.Kind
+	changed := false
 
-	if _, err := c.Repo().Invite().UpdateInvite(invite); err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	if request.ProjectRoleUID != "" {
+		_, err := c.Repo().ProjectRole().ReadProjectRole(project.ID, request.ProjectRoleUID)
+
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
+			return
+		}
+
+		invite.ProjectRoleUID = request.ProjectRoleUID
+
+		changed = true
+	} else if invite.Kind != "" {
+		invite.Kind = request.Kind
+
+		changed = true
+	}
+
+	if changed {
+		if _, err := c.Repo().Invite().UpdateInvite(invite); err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

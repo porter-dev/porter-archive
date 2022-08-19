@@ -16,22 +16,24 @@ type Invite struct {
 	Expiry *time.Time
 	Email  string
 
-	// Kind is the role kind that this refers to
+	// Kind is the role kind that this refers to (legacy field)
 	Kind string
 
-	ProjectID uint
-	UserID    uint
+	ProjectID      uint
+	UserID         uint
+	ProjectRoleUID string
 }
 
 // ToInviteType generates an external Invite to be shared over REST
 func (i *Invite) ToInviteType() *types.Invite {
 	return &types.Invite{
-		ID:       i.Model.ID,
-		Token:    i.Token,
-		Email:    i.Email,
-		Expired:  i.IsExpired(),
-		Accepted: i.IsAccepted(),
-		Kind:     i.Kind,
+		ID:             i.Model.ID,
+		Token:          i.Token,
+		Email:          i.Email,
+		Expired:        i.IsExpired(),
+		Accepted:       i.IsAccepted(),
+		Kind:           i.Kind,
+		ProjectRoleUID: i.ProjectRoleUID,
 	}
 }
 

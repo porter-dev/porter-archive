@@ -48,7 +48,7 @@ func (repo *ProjectRoleRepository) ListProjectRoles(projectID uint) ([]*models.P
 func (repo *ProjectRoleRepository) ListAllRolesForUser(projectID, userID uint) ([]*models.ProjectRole, error) {
 	projectRoles := []*models.ProjectRole{}
 
-	if err := repo.db.Where("project_id = ?", userID).Find(&projectRoles).Error; err != nil {
+	if err := repo.db.Where("project_id = ?", projectID).Find(&projectRoles).Error; err != nil {
 		return nil, err
 	}
 

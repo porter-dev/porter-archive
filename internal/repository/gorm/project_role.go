@@ -28,7 +28,7 @@ func (repo *ProjectRoleRepository) CreateProjectRole(role *models.ProjectRole) (
 func (repo *ProjectRoleRepository) ReadProjectRole(projectID uint, roleUID string) (*models.ProjectRole, error) {
 	role := &models.ProjectRole{}
 
-	if err := repo.db.Where("project_id = ? AND unique_id = ?", projectID, roleUID).First(role).Error; err != nil {
+	if err := repo.db.Preload("Users").Where("project_id = ? AND unique_id = ?", projectID, roleUID).First(role).Error; err != nil {
 		return nil, err
 	}
 

@@ -99,15 +99,17 @@ func (c *CreateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = c.Repo().ProjectRole().UpdateUsersInProjectRole(project.ID, role.UniqueID, request.Users)
+	if len(request.Users) > 0 {
+		err = c.Repo().ProjectRole().UpdateUsersInProjectRole(project.ID, role.UniqueID, request.Users)
 
-	if err != nil {
-		// we need to delete the policy and project role we just created
-		c.Repo().Policy().DeletePolicy(policy)
-		c.Repo().ProjectRole().DeleteProjectRole(role)
+		if err != nil {
+			// we need to delete the policy and project role we just created
+			c.Repo().Policy().DeletePolicy(policy)
+			c.Repo().ProjectRole().DeleteProjectRole(role)
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusCreated)

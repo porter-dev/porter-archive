@@ -293,6 +293,8 @@ export interface InviteType {
   email: string;
   accepted: boolean;
   id: number;
+  // List of roles ids
+  roles: string[];
 }
 
 export type ActionConfigType = {

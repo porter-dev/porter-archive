@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -44,12 +45,20 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if request.ProjectRoleUID != "" {
-		_, err := c.Repo().ProjectRole().ReadProjectRole(project.ID, request.ProjectRoleUID)
+	if len(request.RoleUIDs) == 0 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("roles cannot be empty"), http.StatusPreconditionFailed,
+		))
+		return
+	} else {
+		// check for valid project roles
+		for _, role := range request.RoleUIDs {
+			_, err := c.Repo().ProjectRole().ReadProjectRole(project.ID, role)
 
-		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
-			return
+			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("role not found in project: %s", role)))
+				return
+			}
 		}
 	}
 
@@ -93,11 +102,11 @@ func CreateInviteWithProject(invite *types.CreateInviteRequest, projectID uint) 
 	expiry := time.Now().Add(24 * time.Hour)
 
 	return &models.Invite{
-		Email:          invite.Email,
-		Kind:           invite.Kind,
-		Expiry:         &expiry,
-		ProjectID:      projectID,
-		Token:          oauth.CreateRandomState(),
-		ProjectRoleUID: invite.ProjectRoleUID,
+		Email:     invite.Email,
+		Kind:      invite.Kind,
+		Expiry:    &expiry,
+		ProjectID: projectID,
+		Token:     oauth.CreateRandomState(),
+		Roles:     []byte(strings.Join(invite.RoleUIDs, ",")),
 	}, nil
 }

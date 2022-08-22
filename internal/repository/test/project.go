@@ -43,7 +43,7 @@ func (repo *ProjectRepository) CreateProject(project *models.Project) (*models.P
 }
 
 // CreateProjectRole appends a role to the existing array of roles
-func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
+func (repo *ProjectRepository) CreateLegacyProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
 	if !repo.canQuery || strings.Contains(repo.failingMethods, CreateProjectRoleMethod) {
 		return nil, errors.New("Cannot write database")
 	}
@@ -65,7 +65,7 @@ func (repo *ProjectRepository) UpdateProject(project *models.Project) (*models.P
 }
 
 // CreateProjectRole appends a role to the existing array of roles
-func (repo *ProjectRepository) UpdateProjectRole(projID uint, role *models.Role) (*models.Role, error) {
+func (repo *ProjectRepository) UpdateLegacyProjectRole(projID uint, role *models.Role) (*models.Role, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
@@ -100,7 +100,7 @@ func (repo *ProjectRepository) UpdateProjectRole(projID uint, role *models.Role)
 }
 
 // ReadProject gets a projects specified by a unique id
-func (repo *ProjectRepository) ReadProjectRole(userID, projID uint) (*models.Role, error) {
+func (repo *ProjectRepository) ReadLegacyProjectRole(userID, projID uint) (*models.Role, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
@@ -156,7 +156,7 @@ func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Proj
 }
 
 // ListProjectRoles returns a list of roles for the project
-func (repo *ProjectRepository) ListProjectRoles(projID uint) ([]models.Role, error) {
+func (repo *ProjectRepository) ListLegacyProjectRoles(projID uint) ([]models.Role, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot read from database")
 	}
@@ -187,7 +187,7 @@ func (repo *ProjectRepository) DeleteProject(project *models.Project) (*models.P
 	return project, nil
 }
 
-func (repo *ProjectRepository) DeleteProjectRole(projID, userID uint) (*models.Role, error) {
+func (repo *ProjectRepository) DeleteLegacyProjectRole(projID, userID uint) (*models.Role, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
 	}

@@ -11,7 +11,7 @@ type Invite struct {
 	Email    string   `json:"email"`
 	Accepted bool     `json:"accepted"`
 	Kind     string   `json:"kind"`
-	RoleUIDs []string `json:"roles"`
+	Roles    []string `json:"roles"`
 }
 
 type GetInviteResponse Invite

@@ -301,7 +301,7 @@ func getSelectionRegex(kind, name string) (string, error) {
 
 	switch strings.ToLower(kind) {
 	case "deployment":
-		suffix = "[a-z0-9]+"
+		suffix = "[a-z0-9]+(-[a-z0-9]+)*"
 	case "statefulset":
 		suffix = "[0-9]+"
 	case "job":

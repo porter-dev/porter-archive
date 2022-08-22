@@ -22,7 +22,7 @@ type Invite struct {
 
 	ProjectID uint
 	UserID    uint
-	RoleUIDs  []byte // stored as a byte-array of comma-separated strings of role UIDs
+	Roles     []byte // stored as a byte-array of comma-separated strings of role UIDs
 }
 
 // ToInviteType generates an external Invite to be shared over REST
@@ -34,7 +34,7 @@ func (i *Invite) ToInviteType() *types.Invite {
 		Expired:  i.IsExpired(),
 		Accepted: i.IsAccepted(),
 		Kind:     i.Kind,
-		RoleUIDs: strings.Split(string(i.RoleUIDs), ""),
+		Roles:    strings.Split(string(i.Roles), ","),
 	}
 }
 

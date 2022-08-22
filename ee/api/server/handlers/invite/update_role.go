@@ -41,6 +41,13 @@ func (c *InviteUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	if request.Kind == "" && len(request.RoleUIDs) == 0 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("roles cannot be empty"), http.StatusBadRequest,
+		))
+		return
+	}
+
 	changed := false
 
 	if len(request.RoleUIDs) > 0 {
@@ -57,7 +64,7 @@ func (c *InviteUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		invite.Roles = []byte(strings.Join(request.RoleUIDs, ","))
 
 		changed = true
-	} else if invite.Kind != "" { // legacy invite
+	} else if request.Kind != "" { // legacy invite
 		invite.Kind = request.Kind
 
 		changed = true

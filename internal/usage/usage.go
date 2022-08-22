@@ -47,7 +47,7 @@ func GetUsage(opts *GetUsageOpts) (
 	}
 
 	// query for the linked user counts
-	roles, err := opts.Repo.Project().ListProjectRoles(opts.Project.ID)
+	roles, err := opts.Repo.Project().ListLegacyProjectRoles(opts.Project.ID)
 
 	if err != nil {
 		return nil, nil, nil, err

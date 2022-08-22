@@ -107,6 +107,6 @@ func CreateInviteWithProject(invite *types.CreateInviteRequest, projectID uint) 
 		Expiry:    &expiry,
 		ProjectID: projectID,
 		Token:     oauth.CreateRandomState(),
-		RoleUIDs:  []byte(strings.Join(invite.RoleUIDs, ",")),
+		Roles:     []byte(strings.Join(invite.RoleUIDs, ",")),
 	}, nil
 }

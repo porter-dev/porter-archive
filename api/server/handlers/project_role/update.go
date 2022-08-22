@@ -78,7 +78,14 @@ func (c *UpdateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	if len(request.Users) > 0 {
+	if len(request.Users) == 0 {
+		err = c.Repo().ProjectRole().ClearUsersInProjectRole(project.ID, roleUID)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else {
 		err = c.Repo().ProjectRole().UpdateUsersInProjectRole(project.ID, roleUID, request.Users)
 
 		if err != nil {

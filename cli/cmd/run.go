@@ -33,6 +33,9 @@ import (
 
 var namespace string
 var verbose bool
+var existingPod bool
+var nonInteractive bool
+var containerName string
 
 // runCmd represents the "porter run" base command when called
 // without any subcommands
@@ -63,8 +66,6 @@ var cleanupCmd = &cobra.Command{
 	},
 }
 
-var existingPod bool
-
 func init() {
 	rootCmd.AddCommand(runCmd)
 
@@ -91,11 +92,30 @@ func init() {
 		"whether to print verbose output",
 	)
 
+	runCmd.PersistentFlags().BoolVar(
+		&nonInteractive,
+		"non-interactive",
+		false,
+		"whether to run in non-interactive mode",
+	)
+
+	runCmd.PersistentFlags().StringVarP(
+		&containerName,
+		"container",
+		"c",
+		"",
+		"name of the container inside pod to run the command in",
+	)
+
 	runCmd.AddCommand(cleanupCmd)
 }
 
 func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
 	color.New(color.FgGreen).Println("Running", strings.Join(args[1:], " "), "for release", args[0])
+
+	if nonInteractive {
+		color.New(color.FgBlue).Println("Using non-interactive mode. The first available pod will be used to run the command.")
+	}
 
 	podsSimple, err := getPods(client, namespace, args[0])
 
@@ -108,7 +128,7 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 	if len(podsSimple) == 0 {
 		return fmt.Errorf("At least one pod must exist in this deployment.")
-	} else if len(podsSimple) == 1 || !existingPod {
+	} else if nonInteractive || len(podsSimple) == 1 || !existingPod {
 		selectedPod = podsSimple[0]
 	} else {
 		podNames := make([]string, 0)
@@ -133,12 +153,35 @@ func run(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []strin
 
 	var selectedContainerName string
 
-	// if the selected pod has multiple container, spawn selector
 	if len(selectedPod.ContainerNames) == 0 {
-		return fmt.Errorf("At least one pod must exist in this deployment.")
+		return fmt.Errorf("At least one container must exist in the selected pod.")
 	} else if len(selectedPod.ContainerNames) == 1 {
+		if containerName != "" && containerName != selectedPod.ContainerNames[0] {
+			return fmt.Errorf("provided container %s does not exist in pod %s", containerName, selectedPod.Name)
+		}
+
 		selectedContainerName = selectedPod.ContainerNames[0]
-	} else {
+	}
+
+	if containerName != "" && selectedContainerName == "" {
+		// check if provided container name exists in the pod
+		for _, name := range selectedPod.ContainerNames {
+			if name == containerName {
+				selectedContainerName = name
+				break
+			}
+		}
+
+		if selectedContainerName == "" {
+			return fmt.Errorf("provided container %s does not exist in pod %s", containerName, selectedPod.Name)
+		}
+	}
+
+	if selectedContainerName == "" {
+		if nonInteractive {
+			return fmt.Errorf("container name must be specified using the --container flag when using non-interactive mode")
+		}
+
 		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)
 
 		if err != nil {

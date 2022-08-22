@@ -91,6 +91,26 @@ func (repo *ProjectRoleRepository) UpdateUsersInProjectRole(projectID uint, role
 	return nil
 }
 
+func (repo *ProjectRoleRepository) ClearUsersInProjectRole(projectID uint, roleUID string) error {
+	role := &models.ProjectRole{}
+
+	if err := repo.db.Where("project_id = ? AND unique_id = ?", projectID, roleUID).First(role).Error; err != nil {
+		return err
+	}
+
+	assoc := repo.db.Model(&role).Association("Users")
+
+	if assoc.Error != nil {
+		return assoc.Error
+	}
+
+	if err := assoc.Clear(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (repo *ProjectRoleRepository) UpdateProjectRole(role *models.ProjectRole) (*models.ProjectRole, error) {
 	if err := repo.db.Save(role).Error; err != nil {
 		return nil, err

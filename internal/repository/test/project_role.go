@@ -32,6 +32,10 @@ func (repo *ProjectRoleRepository) UpdateUsersInProjectRole(projectID uint, role
 	panic("not implemented")
 }
 
+func (repo *ProjectRoleRepository) ClearUsersInProjectRole(projectID uint, roleUID string) error {
+	panic("not implemented")
+}
+
 func (repo *ProjectRoleRepository) UpdateProjectRole(role *models.ProjectRole) (*models.ProjectRole, error) {
 	panic("not implemented")
 }

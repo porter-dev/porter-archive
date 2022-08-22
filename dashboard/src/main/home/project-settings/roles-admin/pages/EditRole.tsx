@@ -1,7 +1,6 @@
 import SearchSelector from "components/SearchSelector";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
-import { populatePolicy } from "shared/auth/authorization-helpers";
 import { PolicyDocType } from "shared/auth/types";
 import { Context } from "shared/Context";
 import styled from "styled-components";
@@ -10,12 +9,12 @@ import { Navigate } from "../RolesAdmin";
 import { RolesAdminContext, useUpdateRole } from "../Store";
 
 type PartialUser = {
-  id: number;
+  user_id: number;
   email: string;
 };
 
 const EditRole = ({ navigate }: { navigate: Navigate }) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, user: currentUser } = useContext(Context);
   const { currentRole } = useContext(RolesAdminContext);
   const [policy, setPolicy] = useState<PolicyDocType>(() => {
     return currentRole.policy;
@@ -34,16 +33,16 @@ const EditRole = ({ navigate }: { navigate: Navigate }) => {
       )
       .then((res) => {
         setAvailableUsers(
-          res.data.filter((user) => !currentRole.users.includes(user.id))
+          res.data.filter((user) => !currentRole.users.includes(user.user_id))
         );
         setUsers(
-          res.data.filter((user) => currentRole.users.includes(user.id))
+          res.data.filter((user) => currentRole.users.includes(user.user_id))
         );
       });
   }, [currentProject]);
 
   const filteredUsers = availableUsers.filter(
-    (user) => !users.find((u) => u.id === user.id)
+    (user) => !users.find((u) => u.user_id === user.user_id)
   );
 
   const handleSave = () => {
@@ -58,7 +57,11 @@ const EditRole = ({ navigate }: { navigate: Navigate }) => {
   };
 
   return (
-    <div>
+    <div
+      style={{
+        paddingBottom: "300px",
+      }}
+    >
       EditRole <button onClick={() => navigate("index")}>Back</button>
       <h1>{currentRole.name}</h1>
       <PolicyDocumentRenderer
@@ -81,16 +84,21 @@ const EditRole = ({ navigate }: { navigate: Navigate }) => {
       />
       <UserList>
         {users.map((user) => (
-          <User key={user.id}>
+          <User key={user.user_id}>
             {user.email}
             {/* add Delete button */}
-            <button
-              onClick={() => {
-                setUsers(users.filter((u) => u.id !== user.id));
-              }}
-            >
-              X
-            </button>
+
+            {currentUser?.userId !== user.user_id ? (
+              <button
+                onClick={() => {
+                  setUsers(users.filter((u) => u.user_id !== user.user_id));
+                }}
+              >
+                X
+              </button>
+            ) : (
+              <span> (you) </span>
+            )}
           </User>
         ))}
       </UserList>

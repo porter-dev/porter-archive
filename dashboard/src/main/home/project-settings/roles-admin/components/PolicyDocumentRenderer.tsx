@@ -1,5 +1,5 @@
 import { capitalize, get, set } from "lodash";
-import React, { useContext, useEffect } from "react";
+import React, { useCallback, useContext, useEffect } from "react";
 import api from "shared/api";
 import {
   POLICY_HIERARCHY_TREE,
@@ -38,7 +38,9 @@ const PolicyDocumentRenderer = ({
       .getScopeHierarchy("<token>", {}, { project_id: currentProject.id })
       .then((res) => {
         setScopeHierarchy(res.data);
-        onChange(populatePolicy(value, res.data));
+        const newPolicyDoc = structuredClone(value);
+
+        onChange(populatePolicy(newPolicyDoc, res.data));
       });
   }, [currentProject?.id]);
 
@@ -62,7 +64,7 @@ const PolicyDocumentRenderer = ({
     <Store.Provider
       value={{ data: populatePolicy(value, scopeHierarchy), handleChangeVerbs }}
     >
-      {RenderComponents(readOnly, value)}
+      {RenderComponents(readOnly, value, scopeHierarchy)}
     </Store.Provider>
   );
 };

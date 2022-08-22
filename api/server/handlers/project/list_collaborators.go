@@ -54,6 +54,10 @@ func (p *CollaboratorsListHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				}
 			}
 		}
+
+		for _, user := range userCollaboratorMap {
+			res = append(res, user)
+		}
 	} else { // legacy operation
 		legacyRoles, err := p.Repo().Project().ListLegacyProjectRoles(proj.ID)
 

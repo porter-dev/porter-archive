@@ -14,7 +14,7 @@ type PartialUser = {
 };
 
 const EditRole = ({ navigate }: { navigate: Navigate }) => {
-  const { currentProject, user: currentUser } = useContext(Context);
+  const { currentProject } = useContext(Context);
   const { currentRole } = useContext(RolesAdminContext);
   const [policy, setPolicy] = useState<PolicyDocType>(() => {
     return currentRole.policy;
@@ -33,10 +33,10 @@ const EditRole = ({ navigate }: { navigate: Navigate }) => {
       )
       .then((res) => {
         setAvailableUsers(
-          res.data.filter((user) => !currentRole.users.includes(user.user_id))
+          res.data.filter((user) => !currentRole.users?.includes(user.user_id))
         );
         setUsers(
-          res.data.filter((user) => currentRole.users.includes(user.user_id))
+          res.data.filter((user) => currentRole.users?.includes(user.user_id))
         );
       });
   }, [currentProject]);
@@ -50,7 +50,7 @@ const EditRole = ({ navigate }: { navigate: Navigate }) => {
       id: currentRole.id,
       name: currentRole.name,
       policy,
-      users: currentRole.users,
+      users: currentRole.users || [],
     });
 
     navigate("index");
@@ -88,17 +88,13 @@ const EditRole = ({ navigate }: { navigate: Navigate }) => {
             {user.email}
             {/* add Delete button */}
 
-            {currentUser?.userId !== user.user_id ? (
-              <button
-                onClick={() => {
-                  setUsers(users.filter((u) => u.user_id !== user.user_id));
-                }}
-              >
-                X
-              </button>
-            ) : (
-              <span> (you) </span>
-            )}
+            <button
+              onClick={() => {
+                setUsers(users.filter((u) => u.user_id !== user.user_id));
+              }}
+            >
+              X
+            </button>
           </User>
         ))}
       </UserList>

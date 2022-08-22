@@ -81,6 +81,35 @@ func getHelmRepoRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/helmrepos/{helm_repo_id} -> registry.NewHelmRepoDeleteHandler
+	deleteEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.HelmRepoScope,
+			},
+		},
+	)
+
+	deleteHandler := helmrepo.NewHelmRepoDeleteHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteEndpoint,
+		Handler:  deleteHandler,
+		Router:   r,
+	})
+
 	//  GET /api/projects/{project_id}/helmrepos/{helm_repo_id}/charts -> helmrepo.NewChartListHandler
 	hrListEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

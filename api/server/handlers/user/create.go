@@ -1,6 +1,7 @@
 package user
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -134,19 +136,98 @@ func addUserToDefaultProject(config *config.Config, user *models.User) error {
 				return err
 			}
 
-			// create a new Role with the user as the admin
-			_, err = config.Repo.Project().CreateProjectRole(project, &models.Role{
-				Role: types.Role{
-					UserID:    user.ID,
-					ProjectID: project.ID,
-					Kind:      types.RoleAdmin,
-				},
-			})
+			err = createNewRole(project.ID, types.RoleAdmin, config.Repo.ProjectRole(), config.Repo.Policy())
+
+			if err != nil {
+				return err
+			}
+
+			err = createNewRole(project.ID, types.RoleAdmin, config.Repo.ProjectRole(), config.Repo.Policy())
+
+			if err != nil {
+				return err
+			}
+
+			err = createNewRole(project.ID, types.RoleAdmin, config.Repo.ProjectRole(), config.Repo.Policy())
+
+			if err != nil {
+				return err
+			}
+
+			// attach user to admin role
+			err = config.Repo.ProjectRole().UpdateUsersInProjectRole(project.ID, fmt.Sprintf("%d-%s", project.ID, types.RoleAdmin), []uint{user.ID})
 
 			if err != nil {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func createNewRole(
+	projectID uint,
+	kind types.RoleKind,
+	projectRoleRepo repository.ProjectRoleRepository,
+	policyRepo repository.PolicyRepository,
+) error {
+	// for legacy roles - admin, developer, viewer (kinds)
+	// default role name such as <project ID>-<kind> for uniqueness
+	// similarly, create policy for each new default role as <project ID>-<kind>-project-role-policy
+
+	uid, err := encryption.GenerateRandomBytes(16)
+
+	if err != nil {
+		return err
+	}
+
+	var policyBytes []byte
+
+	switch kind {
+	case types.RoleAdmin:
+		policyBytes, err = json.Marshal(types.AdminPolicy)
+
+		if err != nil {
+			return err
+		}
+	case types.RoleDeveloper:
+		policyBytes, err = json.Marshal(types.DeveloperPolicy)
+
+		if err != nil {
+			return err
+		}
+	case types.RoleViewer:
+		policyBytes, err = json.Marshal(types.ViewerPolicy)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	newPolicy, err := policyRepo.CreatePolicy(&models.Policy{
+		UniqueID:    uid,
+		ProjectID:   projectID,
+		Name:        fmt.Sprintf("%s-project-role-policy", kind),
+		PolicyBytes: policyBytes,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = projectRoleRepo.CreateProjectRole(&models.ProjectRole{
+		UniqueID:  fmt.Sprintf("%d-%s", projectID, kind),
+		ProjectID: projectID,
+		PolicyUID: newPolicy.UniqueID,
+		Name:      string(kind),
+	})
+
+	if err != nil {
+		// delete newly created policy first
+		policyRepo.DeletePolicy(newPolicy)
+
+		return err
 	}
 
 	return nil

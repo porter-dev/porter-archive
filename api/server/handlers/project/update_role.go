@@ -36,7 +36,7 @@ func (p *RoleUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := p.Repo().Project().ReadProjectRole(proj.ID, request.UserID)
+	role, err := p.Repo().Project().ReadLegacyProjectRole(proj.ID, request.UserID)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -45,7 +45,7 @@ func (p *RoleUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	role.Kind = types.RoleKind(request.Kind)
 
-	role, err = p.Repo().Project().UpdateProjectRole(proj.ID, role)
+	role, err = p.Repo().Project().UpdateLegacyProjectRole(proj.ID, role)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

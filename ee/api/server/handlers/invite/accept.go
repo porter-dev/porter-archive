@@ -79,15 +79,19 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if invite.ProjectRoleUID != "" {
-		err := updatePrijectRoleWithUser(c.Repo(), proj.ID, user.ID, invite.ProjectRoleUID)
+	inviteType := invite.ToInviteType()
 
-		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
-			return
-		} else if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+	if len(inviteType.RoleUIDs) > 0 {
+		for _, roleUID := range inviteType.RoleUIDs {
+			err := updateProjectRoleWithUser(c.Repo(), proj.ID, user.ID, roleUID)
+
+			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
+				return
+			} else if err != nil {
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
 		}
 	} else { // legacy operation
 		kind := invite.Kind
@@ -96,7 +100,7 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			kind = models.RoleDeveloper
 		}
 
-		err := updatePrijectRoleWithUser(c.Repo(), proj.ID, user.ID, fmt.Sprintf("%d-%s", proj.ID, kind))
+		err := updateProjectRoleWithUser(c.Repo(), proj.ID, user.ID, fmt.Sprintf("%d-%s", proj.ID, kind))
 
 		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
@@ -118,7 +122,7 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	http.Redirect(w, r, "/dashboard", 302)
 }
 
-func updatePrijectRoleWithUser(repo repository.Repository, projectID, userID uint, projectRoleUID string) error {
+func updateProjectRoleWithUser(repo repository.Repository, projectID, userID uint, projectRoleUID string) error {
 	role, err := repo.ProjectRole().ReadProjectRole(projectID, projectRoleUID)
 
 	if err != nil {

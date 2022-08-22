@@ -103,7 +103,7 @@ func MigrateFromLegacyRBAC(db *_gorm.DB, logger *lr.Logger) error {
 
 			for _, legacyRole := range project.Roles {
 				// delete legacy role from project
-				if _, err := projectRepo.DeleteProjectRole(project.ID, legacyRole.UserID); err != nil {
+				if _, err := projectRepo.DeleteLegacyProjectRole(project.ID, legacyRole.UserID); err != nil {
 					return fmt.Errorf("error encountered while deleting legacy project role: %w", err)
 				}
 			}

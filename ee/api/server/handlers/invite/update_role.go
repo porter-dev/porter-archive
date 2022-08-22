@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -42,18 +43,21 @@ func (c *InviteUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	changed := false
 
-	if request.ProjectRoleUID != "" {
-		_, err := c.Repo().ProjectRole().ReadProjectRole(project.ID, request.ProjectRoleUID)
+	if len(request.RoleUIDs) > 0 {
+		// check for valid project roles
+		for _, roleUID := range request.RoleUIDs {
+			_, err := c.Repo().ProjectRole().ReadProjectRole(project.ID, roleUID)
 
-		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-			c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("no such role exists")))
-			return
+			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("role not found in project: %s", roleUID)))
+				return
+			}
 		}
 
-		invite.ProjectRoleUID = request.ProjectRoleUID
+		invite.RoleUIDs = []byte(strings.Join(request.RoleUIDs, ","))
 
 		changed = true
-	} else if invite.Kind != "" {
+	} else if invite.Kind != "" { // legacy invite
 		invite.Kind = request.Kind
 
 		changed = true
@@ -64,6 +68,4 @@ func (c *InviteUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		}
 	}
-
-	w.WriteHeader(http.StatusOK)
 }

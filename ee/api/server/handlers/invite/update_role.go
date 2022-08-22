@@ -54,7 +54,7 @@ func (c *InviteUpdateRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			}
 		}
 
-		invite.RoleUIDs = []byte(strings.Join(request.RoleUIDs, ","))
+		invite.Roles = []byte(strings.Join(request.RoleUIDs, ","))
 
 		changed = true
 	} else if invite.Kind != "" { // legacy invite

@@ -81,8 +81,8 @@ func (c *InviteAcceptHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	inviteType := invite.ToInviteType()
 
-	if len(inviteType.RoleUIDs) > 0 {
-		for _, roleUID := range inviteType.RoleUIDs {
+	if len(inviteType.Roles) > 0 {
+		for _, roleUID := range inviteType.Roles {
 			err := updateProjectRoleWithUser(c.Repo(), proj.ID, user.ID, roleUID)
 
 			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {

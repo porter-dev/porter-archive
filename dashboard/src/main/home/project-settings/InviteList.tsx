@@ -494,7 +494,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
 export default InvitePage;
 
-const RoleSelector = ({
+export const RoleSelector = ({
   options,
   onChange,
   values,

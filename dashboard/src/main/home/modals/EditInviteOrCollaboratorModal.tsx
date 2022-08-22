@@ -6,6 +6,8 @@ import { Context } from "shared/Context";
 import RadioSelector from "components/RadioSelector";
 import api from "shared/api";
 import { setTimeout } from "timers";
+import { RoleList } from "../project-settings/roles-admin/types";
+import { RoleSelector } from "../project-settings/InviteList";
 
 const EditCollaboratorModal = () => {
   const {
@@ -24,6 +26,9 @@ const EditCollaboratorModal = () => {
   const [selectedRole, setSelectedRole] = useState("");
   const [roleList, setRoleList] = useState([]);
 
+  const [roles, setRoles] = useState<RoleList>([]);
+  const [selectedRoles, setSelectedRoles] = useState<RoleList>([]);
+
   useEffect(() => {
     api
       .getAvailableRoles("<token>", {}, { project_id })
@@ -35,7 +40,17 @@ const EditCollaboratorModal = () => {
         setRoleList(availableRoleList);
         setSelectedRole(user?.kind || "developer");
       });
-  }, []);
+
+    api.listRoles<RoleList>("<token>", {}, { project_id }).then((res) => {
+      const newRoles = res.data;
+      setRoles(newRoles);
+
+      const selectedRoles = newRoles.filter((role) =>
+        user.roles.includes(role.id)
+      );
+      setSelectedRoles(selectedRoles);
+    });
+  }, [project_id]);
 
   const capitalizeFirstLetter = (string: string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -57,6 +72,7 @@ const EditCollaboratorModal = () => {
         {
           kind: selectedRole,
           user_id: user.id,
+          roles: selectedRoles.map((role) => role.id),
         },
         { project_id }
       );
@@ -74,7 +90,7 @@ const EditCollaboratorModal = () => {
     try {
       await api.updateInvite(
         "<token>",
-        { kind: selectedRole },
+        { kind: selectedRole, roles: selectedRoles.map((role) => role.id) },
         { project_id, invite_id: user.id }
       );
       setStatus("successful");
@@ -93,10 +109,15 @@ const EditCollaboratorModal = () => {
       </ModalTitle>
       <Subtitle>Specify a different role for this user.</Subtitle>
       <RoleSelectorWrapper>
-        <RadioSelector
+        {/* <RadioSelector
           selected={selectedRole}
           setSelected={setSelectedRole}
           options={roleList}
+        /> */}
+        <RoleSelector
+          onChange={(e) => setSelectedRoles(e)}
+          options={roles}
+          values={selectedRoles}
         />
       </RoleSelectorWrapper>
 

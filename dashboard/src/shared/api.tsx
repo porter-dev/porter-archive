@@ -1554,7 +1554,7 @@ const getAvailableRoles = baseApi<{}, { project_id: number }>(
 );
 
 const updateInvite = baseApi<
-  { kind: string },
+  { kind: string; roles: string[] },
   { project_id: number; invite_id: number }
 >(
   "POST",
@@ -1571,6 +1571,7 @@ const updateCollaborator = baseApi<
   {
     kind: string;
     user_id: number;
+    roles: string[];
   },
   { project_id: number }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/roles`);

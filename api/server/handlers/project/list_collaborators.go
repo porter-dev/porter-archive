@@ -38,18 +38,24 @@ func (p *CollaboratorsListHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if len(roles) > 0 {
+		userCollaboratorMap := make(map[uint]*types.Collaborator)
+
 		for _, role := range roles {
 			for _, user := range role.Users {
-				res = append(res, &types.Collaborator{
-					ProjectRoleUID: role.UniqueID,
-					UserID:         user.ID,
-					ProjectID:      proj.ID,
-					Email:          user.Email,
-				})
+				if _, ok := userCollaboratorMap[user.ID]; ok {
+					userCollaboratorMap[user.ID].RoleUIDs = append(userCollaboratorMap[user.ID].RoleUIDs, role.UniqueID)
+				} else {
+					userCollaboratorMap[user.ID] = &types.Collaborator{
+						RoleUIDs:  []string{role.UniqueID},
+						UserID:    user.ID,
+						Email:     user.Email,
+						ProjectID: proj.ID,
+					}
+				}
 			}
 		}
 	} else { // legacy operation
-		legacyRoles, err := p.Repo().Project().ListProjectRoles(proj.ID)
+		legacyRoles, err := p.Repo().Project().ListLegacyProjectRoles(proj.ID)
 
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

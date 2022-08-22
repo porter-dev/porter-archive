@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
 import SaveButton from "components/SaveButton";
 import { Context } from "shared/Context";
-import RadioSelector from "components/RadioSelector";
 import api from "shared/api";
 import { setTimeout } from "timers";
 import { RoleList } from "../project-settings/roles-admin/types";
 import { RoleSelector } from "../project-settings/InviteList";
+import { AxiosError } from "axios";
 
 const EditCollaboratorModal = () => {
   const {
@@ -81,6 +80,12 @@ const EditCollaboratorModal = () => {
         setTimeout(() => setCurrentModal(null, null), 500);
       });
     } catch (error) {
+      const axiosError: AxiosError = error;
+
+      if (axiosError?.response?.status === 400) {
+        setStatus("You must select at least one role");
+        return;
+      }
       setStatus("error");
     }
   };
@@ -98,6 +103,13 @@ const EditCollaboratorModal = () => {
         setTimeout(() => setCurrentModal(null, null), 500);
       });
     } catch (error) {
+      const axiosError: AxiosError = error;
+
+      if (axiosError?.response?.status === 400) {
+        setStatus("You must select at least one role");
+        return;
+      }
+
       setStatus("error");
     }
   };

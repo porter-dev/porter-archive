@@ -36,14 +36,14 @@ func (p *RoleDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := p.Repo().Project().ReadProjectRole(proj.ID, request.UserID)
+	role, err := p.Repo().Project().ReadLegacyProjectRole(proj.ID, request.UserID)
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
 
-	role, err = p.Repo().Project().DeleteProjectRole(proj.ID, request.UserID)
+	role, err = p.Repo().Project().DeleteLegacyProjectRole(proj.ID, request.UserID)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

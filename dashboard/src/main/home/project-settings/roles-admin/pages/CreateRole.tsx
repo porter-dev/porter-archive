@@ -15,7 +15,7 @@ import { Navigate } from "../RolesAdmin";
 import { RolesAdminContext, useCreateRole } from "../Store";
 
 type PartialUser = {
-  id: number;
+  user_id: number;
   email: string;
 };
 
@@ -42,14 +42,14 @@ const CreateRole = ({ navigate }: { navigate: Navigate }) => {
   }, [currentProject]);
 
   const filteredUsers = availableUsers.filter(
-    (user) => !users.find((u) => u.id === user.id)
+    (user) => !users.find((u) => u.user_id === user.user_id)
   );
 
   const handleSave = async () => {
     await mutate({
       name,
       policy: policyDocument,
-      users: users.map((user) => user.id),
+      users: users.map((user) => user.user_id),
     });
     navigate("index");
   };
@@ -88,12 +88,12 @@ const CreateRole = ({ navigate }: { navigate: Navigate }) => {
       />
       <UserList>
         {users.map((user) => (
-          <User key={user.id}>
+          <User key={user.user_id}>
             {user.email}
             {/* add Delete button */}
             <button
               onClick={() => {
-                setUsers(users.filter((u) => u.id !== user.id));
+                setUsers(users.filter((u) => u.user_id !== user.user_id));
               }}
             >
               X

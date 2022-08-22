@@ -124,6 +124,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       kind: c.kind,
       accepted: true,
       token: "",
+      roles: c.roles,
     }));
   };
 
@@ -235,7 +236,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       status: string;
       invite_link: string;
       kind: string;
-      roles: string[];
+      roles_names: string[];
     }>[]
   >(
     () => [
@@ -245,9 +246,11 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
       },
       {
         Header: "Role",
-        accessor: "kind",
+        accessor: "roles_names",
         Cell: ({ row }) => {
-          return <RoleName>{row.values.roles?.join(",") || "N/A"}</RoleName>;
+          return (
+            <RoleName>{row.values.roles_names?.join(", ") || "N/A"}</RoleName>
+          );
         },
       },
       {
@@ -359,11 +362,17 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     const mappedInviteList = inviteList.map(
       ({ accepted, expired, token, ...rest }) => {
         const currentUser: boolean = user.email === rest.email;
+
+        const roles_names = rest.roles.map(
+          (roleId) => roles.find((role) => role.id === roleId)?.name
+        );
+
         if (accepted) {
           return {
             status: "accepted",
             invite_link: buildInviteLink(token),
             currentUser,
+            roles_names,
             ...rest,
           };
         }
@@ -373,6 +382,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
             status: "expired",
             invite_link: buildInviteLink(token),
             currentUser,
+            roles_names,
             ...rest,
           };
         }
@@ -381,13 +391,21 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           status: "pending",
           invite_link: buildInviteLink(token),
           currentUser,
+          roles_names,
           ...rest,
         };
       }
     );
 
     return mappedInviteList || [];
-  }, [invites, currentProject?.id, window?.location?.host, isHTTPS, user?.id]);
+  }, [
+    invites,
+    currentProject?.id,
+    window?.location?.host,
+    isHTTPS,
+    user?.id,
+    roles,
+  ]);
 
   const hasSeats = useMemo(() => {
     if (String(edition) === "dev-ee") {

@@ -50,7 +50,7 @@ const EditRole = ({ navigate }: { navigate: Navigate }) => {
       id: currentRole.id,
       name: currentRole.name,
       policy,
-      users: currentRole.users || [],
+      users: users?.map((user) => user.user_id) || [],
     });
 
     navigate("index");

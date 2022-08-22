@@ -304,6 +304,33 @@ func (repo *BasicIntegrationRepository) ListBasicIntegrationsByProjectID(
 	return basics, nil
 }
 
+// DeleteBasicIntegration deletes an existing basic auth mechanism
+func (repo *BasicIntegrationRepository) DeleteBasicIntegration(
+	am *ints.BasicIntegration,
+) (*ints.BasicIntegration, error) {
+	project := &models.Project{}
+
+	if err := repo.db.Where("id = ?", am.ProjectID).First(&project).Error; err != nil {
+		return nil, err
+	}
+
+	assoc := repo.db.Model(&project).Association("BasicIntegrations")
+
+	if assoc.Error != nil {
+		return nil, assoc.Error
+	}
+
+	if err := assoc.Delete(am); err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Delete(am).Error; err != nil {
+		return nil, err
+	}
+
+	return am, nil
+}
+
 // EncryptBasicIntegrationData will encrypt the basic integration data before
 // writing to the DB
 func (repo *BasicIntegrationRepository) EncryptBasicIntegrationData(

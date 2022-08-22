@@ -137,6 +137,27 @@ func (repo *BasicIntegrationRepository) ListBasicIntegrationsByProjectID(
 	return res, nil
 }
 
+// DeleteBasicIntegration deletes a basic integration
+func (repo *BasicIntegrationRepository) DeleteBasicIntegration(
+	am *ints.BasicIntegration,
+) (*ints.BasicIntegration, error) {
+	if !repo.canQuery {
+		return nil, errors.New("Cannot read from database")
+	}
+
+	var newInts []*ints.BasicIntegration
+
+	for _, basicInt := range repo.basicIntegrations {
+		if basicInt.ID != am.ID {
+			newInts = append(newInts, basicInt)
+		}
+	}
+
+	repo.basicIntegrations = newInts
+
+	return am, nil
+}
+
 // OIDCIntegrationRepository implements repository.OIDCIntegrationRepository
 type OIDCIntegrationRepository struct {
 	canQuery         bool

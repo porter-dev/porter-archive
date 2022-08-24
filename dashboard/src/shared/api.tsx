@@ -7,6 +7,10 @@ import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
+import {
+  CreateRoleBody,
+  UpdateRoleBody,
+} from "main/home/project-settings/roles-admin/types";
 
 /**
  * Generic api call format
@@ -274,6 +278,8 @@ const createGCPIntegration = baseApi<
 const createInvite = baseApi<
   {
     email: string;
+    roles: string[];
+    // legacy field
     kind: string;
   },
   {
@@ -1567,7 +1573,7 @@ const getAvailableRoles = baseApi<{}, { project_id: number }>(
 );
 
 const updateInvite = baseApi<
-  { kind: string },
+  { kind: string; roles: string[] },
   { project_id: number; invite_id: number }
 >(
   "POST",
@@ -1584,6 +1590,7 @@ const updateCollaborator = baseApi<
   {
     kind: string;
     user_id: number;
+    roles: string[];
   },
   { project_id: number }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/roles`);
@@ -2182,6 +2189,79 @@ const removeStackEnvGroup = baseApi<
 
 const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
+// ROLES
+
+/**
+  POST /api/projects/{project_id}/project_roles
+  GET /api/projects/{project_id}/project_roles/{role_id}
+  GET /api/projects/{project_id}/project_roles
+  PATCH /api/projects/{project_id}/project_roles/{role_id}
+  DELETE /api/projects/{project_id}/project_roles/{role_id}
+  PATCH /api/projects/{project_id}/invites/{invite_id}
+  POST /api/projects/{project_id}/invites
+ */
+
+const listRoles = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/project_roles`
+);
+
+const createRole = baseApi<
+  CreateRoleBody,
+  {
+    project_id: number;
+  }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/project_roles`);
+
+const getRole = baseApi<
+  {},
+  {
+    project_id: number;
+    role_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, role_id }) =>
+    `/api/projects/${project_id}/project_roles/${role_id}`
+);
+
+const updateRole = baseApi<
+  UpdateRoleBody,
+  {
+    project_id: number;
+    role_id: string;
+  }
+>(
+  "PATCH",
+  ({ project_id, role_id }) =>
+    `/api/projects/${project_id}/project_roles/${role_id}`
+);
+
+const deleteRole = baseApi<
+  {},
+  {
+    project_id: number;
+    role_id: string;
+  }
+>(
+  "DELETE",
+  ({ project_id, role_id }) =>
+    `/api/projects/${project_id}/project_roles/${role_id}`
+);
+
+const getScopeHierarchy = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>(
+  "GET",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/project_roles/scope_hierarchy`
+);
+
+// /ROLES
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -2386,4 +2466,12 @@ export default {
 
   // STATUS
   getGithubStatus,
+
+  // ROLES
+  listRoles,
+  getRole,
+  createRole,
+  updateRole,
+  deleteRole,
+  getScopeHierarchy,
 };

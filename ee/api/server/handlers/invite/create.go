@@ -1,10 +1,13 @@
+//go:build ee
 // +build ee
 
 package invite
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -15,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
+	"gorm.io/gorm"
 )
 
 type InviteCreateHandler struct {
@@ -41,6 +45,23 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if len(request.RoleUIDs) == 0 {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("roles cannot be empty"), http.StatusPreconditionFailed,
+		))
+		return
+	} else {
+		// check for valid project roles
+		for _, role := range request.RoleUIDs {
+			_, err := c.Repo().ProjectRole().ReadProjectRole(project.ID, role)
+
+			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+				c.HandleAPIError(w, r, apierrors.NewErrNotFound(fmt.Errorf("role not found in project: %s", role)))
+				return
+			}
+		}
+	}
+
 	// create invite model
 	invite, err := CreateInviteWithProject(request, project.ID)
 
@@ -56,8 +77,6 @@ func (c *InviteCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	// app.Logger.Info().Msgf("New invite created: %d", invite.ID)
 
 	if err := c.Config().UserNotifier.SendProjectInviteEmail(
 		&notifier.SendProjectInviteEmailOpts{
@@ -88,5 +107,6 @@ func CreateInviteWithProject(invite *types.CreateInviteRequest, projectID uint) 
 		Expiry:    &expiry,
 		ProjectID: projectID,
 		Token:     oauth.CreateRandomState(),
+		Roles:     []byte(strings.Join(invite.RoleUIDs, ",")),
 	}, nil
 }

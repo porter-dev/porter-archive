@@ -33,7 +33,7 @@ func (p *PolicyCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	req := &types.CreatePolicy{}
+	req := &types.CreatePolicyRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, req); !ok {
 		return

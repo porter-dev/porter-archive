@@ -23,12 +23,12 @@ type PolicyDocumentLoader interface {
 
 // RepoPolicyDocumentLoader loads policy documents by reading from the repository database
 type RepoPolicyDocumentLoader struct {
-	projRepo   repository.ProjectRepository
-	policyRepo repository.PolicyRepository
+	projRoleRepo repository.ProjectRoleRepository
+	policyRepo   repository.PolicyRepository
 }
 
-func NewBasicPolicyDocumentLoader(projRepo repository.ProjectRepository, policyRepo repository.PolicyRepository) *RepoPolicyDocumentLoader {
-	return &RepoPolicyDocumentLoader{projRepo, policyRepo}
+func NewBasicPolicyDocumentLoader(projRoleRepo repository.ProjectRoleRepository, policyRepo repository.PolicyRepository) *RepoPolicyDocumentLoader {
+	return &RepoPolicyDocumentLoader{projRoleRepo, policyRepo}
 }
 
 func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
@@ -51,30 +51,42 @@ func (b *RepoPolicyDocumentLoader) LoadPolicyDocuments(
 	} else if opts.ProjectID != 0 && opts.UserID != 0 {
 		userID := opts.UserID
 		projectID := opts.ProjectID
-		// read role and case on role "kind"
-		role, err := b.projRepo.ReadProjectRole(projectID, userID)
 
-		if err != nil && err == gorm.ErrRecordNotFound {
-			return nil, apierrors.NewErrForbidden(
-				fmt.Errorf("user %d does not have a role in project %d", userID, projectID),
-			)
-		} else if err != nil {
+		roles, err := b.projRoleRepo.ListAllRolesForUser(projectID, userID)
+
+		if err != nil {
 			return nil, apierrors.NewErrInternal(err)
-		}
-
-		// load role based on role kind
-		switch role.Kind {
-		case types.RoleAdmin:
-			return types.AdminPolicy, nil
-		case types.RoleDeveloper:
-			return types.DeveloperPolicy, nil
-		case types.RoleViewer:
-			return types.ViewerPolicy, nil
-		default:
+		} else if len(roles) == 0 {
 			return nil, apierrors.NewErrForbidden(
-				fmt.Errorf("%s role not supported for user %d, project %d", string(role.Kind), userID, projectID),
+				fmt.Errorf("user does not have any roles assigned in this project"),
 			)
 		}
+
+		var policies []*types.PolicyDocument
+
+		for _, role := range roles {
+			policy, err := b.policyRepo.ReadPolicy(projectID, role.PolicyUID)
+
+			if err != nil {
+				return nil, apierrors.NewErrInternal(err)
+			}
+
+			policyType, err := policy.ToAPIPolicyType()
+
+			if err != nil {
+				return nil, apierrors.NewErrInternal(err)
+			}
+
+			policies = append(policies, policyType.Policy...)
+		}
+
+		if len(policies) == 0 {
+			return nil, apierrors.NewErrForbidden(
+				fmt.Errorf("user does not have any roles assigned in this project"),
+			)
+		}
+
+		return policies, nil
 	}
 
 	return nil, apierrors.NewErrForbidden(

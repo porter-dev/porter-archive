@@ -1,6 +1,8 @@
 package project
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 )
@@ -43,10 +46,19 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Name: request.Name,
 	}
 
-	var err error
-	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
+	proj, err := p.Repo().Project().CreateProject(proj)
 
 	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	err = createDefaultProjectRoles(proj.ID, user.ID, p.Repo())
+
+	if err != nil {
+		// we need to first delete the default project roles we just created
+		deleteAllProjectRoles(proj.ID, p.Repo())
+
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -92,36 +104,68 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}))
 }
 
-func CreateProjectWithUser(
-	projectRepo repository.ProjectRepository,
-	proj *models.Project,
-	user *models.User,
-) (*models.Project, *models.Role, error) {
-	proj, err := projectRepo.CreateProject(proj)
+func createDefaultProjectRoles(projectID, userID uint, repo repository.Repository) error {
+	for _, kind := range []types.RoleKind{types.RoleAdmin, types.RoleDeveloper, types.RoleViewer} {
+		uid, err := encryption.GenerateRandomBytes(16)
 
-	if err != nil {
-		return nil, nil, err
+		if err != nil {
+			return err
+		}
+
+		var policyBytes []byte
+
+		switch kind {
+		case types.RoleAdmin:
+			policyBytes, err = json.Marshal(types.AdminPolicy)
+
+			if err != nil {
+				return err
+			}
+		case types.RoleDeveloper:
+			policyBytes, err = json.Marshal(types.DeveloperPolicy)
+
+			if err != nil {
+				return err
+			}
+		case types.RoleViewer:
+			policyBytes, err = json.Marshal(types.ViewerPolicy)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		policy, err := repo.Policy().CreatePolicy(&models.Policy{
+			UniqueID:        uid,
+			ProjectID:       projectID,
+			CreatedByUserID: userID,
+			Name:            fmt.Sprintf("%s-project-role-policy", kind),
+			PolicyBytes:     policyBytes,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		role, err := repo.ProjectRole().CreateProjectRole(&models.ProjectRole{
+			UniqueID:  fmt.Sprintf("%d-%s", projectID, kind),
+			ProjectID: projectID,
+			PolicyUID: policy.UniqueID,
+			Name:      string(kind),
+		})
+
+		if err != nil {
+			return err
+		}
+
+		if kind == types.RoleAdmin {
+			err := repo.ProjectRole().UpdateUsersInProjectRole(projectID, role.UniqueID, []uint{userID})
+
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	// create a new Role with the user as the admin
-	role, err := projectRepo.CreateProjectRole(proj, &models.Role{
-		Role: types.Role{
-			UserID:    user.ID,
-			ProjectID: proj.ID,
-			Kind:      types.RoleAdmin,
-		},
-	})
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// read the project again to get the model with the role attached
-	proj, err = projectRepo.ReadProject(proj.ID)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return proj, role, nil
+	return nil
 }

@@ -26,8 +26,8 @@ func (repo *ProjectRepository) CreateProject(project *models.Project) (*models.P
 	return project, nil
 }
 
-// CreateProjectRole appends a role to the existing array of roles
-func (repo *ProjectRepository) CreateProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
+// CreateLegacyProjectRole appends a role to the existing array of roles
+func (repo *ProjectRepository) CreateLegacyProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
 	assoc := repo.db.Model(&project).Association("Roles")
 
 	if assoc.Error != nil {
@@ -50,7 +50,7 @@ func (repo *ProjectRepository) UpdateProject(project *models.Project) (*models.P
 	return project, nil
 }
 
-func (repo *ProjectRepository) UpdateProjectRole(projID uint, role *models.Role) (*models.Role, error) {
+func (repo *ProjectRepository) UpdateLegacyProjectRole(projID uint, role *models.Role) (*models.Role, error) {
 	foundRole := &models.Role{}
 
 	if err := repo.db.Where("project_id = ? AND user_id = ?", projID, role.UserID).First(&foundRole).Error; err != nil {
@@ -78,7 +78,7 @@ func (repo *ProjectRepository) ReadProject(id uint) (*models.Project, error) {
 }
 
 // ReadProject gets a projects specified by a unique id
-func (repo *ProjectRepository) ReadProjectRole(projID, userID uint) (*models.Role, error) {
+func (repo *ProjectRepository) ReadLegacyProjectRole(projID, userID uint) (*models.Role, error) {
 	// find the role
 	role := &models.Role{}
 
@@ -93,7 +93,7 @@ func (repo *ProjectRepository) ReadProjectRole(projID, userID uint) (*models.Rol
 func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Project, error) {
 	projects := make([]*models.Project, 0)
 
-	subQuery := repo.db.Model(&models.Role{}).Where("user_id = ?", userID).Select("project_id")
+	subQuery := repo.db.Model(&models.ProjectRole{}).Joins("JOIN user_roles ON user_roles.project_role_id = project_roles.id").Where("user_id = ?", userID).Select("project_id")
 
 	if err := repo.db.Preload("Roles").Model(&models.Project{}).Where("id IN (?)", subQuery).Find(&projects).Error; err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Proj
 }
 
 // ReadProject gets a projects specified by a unique id
-func (repo *ProjectRepository) ListProjectRoles(projID uint) ([]models.Role, error) {
+func (repo *ProjectRepository) ListLegacyProjectRoles(projID uint) ([]models.Role, error) {
 	project := &models.Project{}
 
 	if err := repo.db.Preload("Roles").Where("id = ?", projID).First(&project).Error; err != nil {
@@ -121,7 +121,7 @@ func (repo *ProjectRepository) DeleteProject(project *models.Project) (*models.P
 	return project, nil
 }
 
-func (repo *ProjectRepository) DeleteProjectRole(projID, userID uint) (*models.Role, error) {
+func (repo *ProjectRepository) DeleteLegacyProjectRole(projID, userID uint) (*models.Role, error) {
 	// find the role
 	role := &models.Role{}
 

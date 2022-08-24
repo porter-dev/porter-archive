@@ -24,7 +24,7 @@ type CreateProjectRequest struct {
 
 type CreateProjectResponse Project
 
-type CreateProjectRoleRequest struct {
+type CreateLegacyProjectRoleRequest struct {
 	Kind   string `json:"kind" form:"required"`
 	UserID uint   `json:"user_id" form:"required"`
 }
@@ -48,11 +48,12 @@ type GetProjectPolicyResponse []*PolicyDocument
 type ListProjectRolesResponse []RoleKind
 
 type Collaborator struct {
-	ID        uint   `json:"id"`
-	Kind      string `json:"kind"`
-	UserID    uint   `json:"user_id"`
-	Email     string `json:"email"`
-	ProjectID uint   `json:"project_id"`
+	ID        uint     `json:"id,omitempty"`
+	Kind      string   `json:"kind,omitempty"`
+	RoleUIDs  []string `json:"roles"`
+	UserID    uint     `json:"user_id"`
+	Email     string   `json:"email"`
+	ProjectID uint     `json:"project_id"`
 }
 
 type ListCollaboratorsResponse []*Collaborator

@@ -5,20 +5,22 @@ import "time"
 type PermissionScope string
 
 const (
-	UserScope              PermissionScope = "user"
-	ProjectScope           PermissionScope = "project"
-	ClusterScope           PermissionScope = "cluster"
-	RegistryScope          PermissionScope = "registry"
-	InviteScope            PermissionScope = "invite"
-	HelmRepoScope          PermissionScope = "helm_repo"
-	InfraScope             PermissionScope = "infra"
-	OperationScope         PermissionScope = "operation"
-	GitInstallationScope   PermissionScope = "git_installation"
-	NamespaceScope         PermissionScope = "namespace"
-	SettingsScope          PermissionScope = "settings"
-	ReleaseScope           PermissionScope = "release"
-	StackScope             PermissionScope = "stack"
-	GitlabIntegrationScope PermissionScope = "gitlab_integration"
+	UserScope               PermissionScope = "user"
+	ProjectScope            PermissionScope = "project"
+	ClusterScope            PermissionScope = "cluster"
+	RegistryScope           PermissionScope = "registry"
+	InviteScope             PermissionScope = "invite"
+	HelmRepoScope           PermissionScope = "helm_repo"
+	InfraScope              PermissionScope = "infra"
+	OperationScope          PermissionScope = "operation"
+	GitInstallationScope    PermissionScope = "git_installation"
+	NamespaceScope          PermissionScope = "namespace"
+	SettingsScope           PermissionScope = "settings"
+	ReleaseScope            PermissionScope = "release"
+	StackScope              PermissionScope = "stack"
+	GitlabIntegrationScope  PermissionScope = "gitlab_integration"
+	PreviewEnvironmentScope PermissionScope = "preview_environment"
+	EnvironmentScope        PermissionScope = "environment"
 )
 
 type NameOrUInt struct {
@@ -52,7 +54,13 @@ var ScopeHeirarchy = ScopeTree{
 		InfraScope: {
 			OperationScope: {},
 		},
-		SettingsScope: {},
+		SettingsScope: {
+			InviteScope: {},
+		},
+		PreviewEnvironmentScope: {
+			EnvironmentScope: {},
+		},
+		GitlabIntegrationScope: {},
 	},
 }
 
@@ -157,8 +165,12 @@ var ViewerPolicy = []*PolicyDocument{
 	},
 }
 
-type CreatePolicy struct {
+type CreatePolicyRequest struct {
 	Name   string            `json:"name" form:"required"`
+	Policy []*PolicyDocument `json:"policy" form:"required"`
+}
+
+type UpdatePolicyRequest struct {
 	Policy []*PolicyDocument `json:"policy" form:"required"`
 }
 

@@ -1,6 +1,7 @@
 package authz_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/authz/policy"
-	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -28,12 +28,47 @@ func TestPolicyMiddlewareSuccessfulProjectCluster(t *testing.T) {
 	}, false, false)
 
 	user := apitest.CreateTestUser(t, config, true)
-	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	project, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	policyBytes, err := json.Marshal(types.AdminPolicy)
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	pol, err := config.Repo.Policy().CreatePolicy(&models.Policy{
+		UniqueID:    "test-policy-uid",
+		ProjectID:   project.ID,
+		Name:        "test-policy",
+		PolicyBytes: policyBytes,
+	})
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	role, err := config.Repo.ProjectRole().CreateProjectRole(&models.ProjectRole{
+		UniqueID:  "1-admin",
+		ProjectID: project.ID,
+		PolicyUID: pol.UniqueID,
+		Name:      "admin",
+	})
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	err = config.Repo.ProjectRole().UpdateUsersInProjectRole(project.ID, role.UniqueID, []uint{user.ID})
+
+	if err != nil {
+		t.Fatalf("%v", err)
 	}
 
 	req, rr := apitest.GetRequestAndRecorder(t, string(types.HTTPVerbPost), "/api/projects/1/clusters/1", nil)
@@ -76,12 +111,47 @@ func TestPolicyMiddlewareSuccessfulApplication(t *testing.T) {
 	}, false, false)
 
 	user := apitest.CreateTestUser(t, config, true)
-	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	project, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	policyBytes, err := json.Marshal(types.AdminPolicy)
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	pol, err := config.Repo.Policy().CreatePolicy(&models.Policy{
+		UniqueID:    "test-policy-uid",
+		ProjectID:   project.ID,
+		Name:        "test-policy",
+		PolicyBytes: policyBytes,
+	})
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	role, err := config.Repo.ProjectRole().CreateProjectRole(&models.ProjectRole{
+		UniqueID:  "1-admin",
+		ProjectID: project.ID,
+		PolicyUID: pol.UniqueID,
+		Name:      "admin",
+	})
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+
+	err = config.Repo.ProjectRole().UpdateUsersInProjectRole(project.ID, role.UniqueID, []uint{user.ID})
+
+	if err != nil {
+		t.Fatalf("%v", err)
 	}
 
 	req, rr := apitest.GetRequestAndRecorder(
@@ -141,9 +211,10 @@ func TestPolicyMiddlewareInvalidPermissions(t *testing.T) {
 	}, false, true)
 
 	user := apitest.CreateTestUser(t, config, true)
-	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	_, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)
@@ -175,9 +246,10 @@ func TestPolicyMiddlewareFailInvalidLoader(t *testing.T) {
 	}, true, false)
 
 	user := apitest.CreateTestUser(t, config, true)
-	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	_, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)
@@ -208,9 +280,10 @@ func TestPolicyMiddlewareFailBadParam(t *testing.T) {
 	}, true, false)
 
 	user := apitest.CreateTestUser(t, config, true)
-	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	_, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)
@@ -240,7 +313,7 @@ func loadHandlers(
 	shouldLoaderLoadViewer bool,
 ) (*config.Config, http.Handler, *testHandler) {
 	config := apitest.LoadConfig(t)
-	var loader policy.PolicyDocumentLoader = policy.NewBasicPolicyDocumentLoader(config.Repo.Project(), config.Repo.Policy())
+	var loader policy.PolicyDocumentLoader = policy.NewBasicPolicyDocumentLoader(config.Repo.ProjectRole(), config.Repo.Policy())
 
 	if shouldLoaderFail {
 		loader = &failingDocLoader{}

@@ -224,6 +224,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		user:                      NewUserRepository(canQuery, failingMethods...),
 		session:                   NewSessionRepository(canQuery, failingMethods...),
 		project:                   NewProjectRepository(canQuery, failingMethods...),
+		projectRole:               NewProjectRoleRepository(canQuery),
 		cluster:                   NewClusterRepository(canQuery),
 		helmRepo:                  NewHelmRepoRepository(canQuery),
 		registry:                  NewRegistryRepository(canQuery),

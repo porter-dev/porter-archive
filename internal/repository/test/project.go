@@ -42,83 +42,8 @@ func (repo *ProjectRepository) CreateProject(project *models.Project) (*models.P
 	return project, nil
 }
 
-// CreateProjectRole appends a role to the existing array of roles
-func (repo *ProjectRepository) CreateLegacyProjectRole(project *models.Project, role *models.Role) (*models.Role, error) {
-	if !repo.canQuery || strings.Contains(repo.failingMethods, CreateProjectRoleMethod) {
-		return nil, errors.New("Cannot write database")
-	}
-
-	if int(project.ID-1) >= len(repo.projects) || repo.projects[project.ID-1] == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	index := int(project.ID - 1)
-	oldProject := *repo.projects[index]
-	repo.projects[index] = project
-	project.Roles = append(oldProject.Roles, *role)
-
-	return role, nil
-}
-
 func (repo *ProjectRepository) UpdateProject(project *models.Project) (*models.Project, error) {
 	panic("unimplemented")
-}
-
-// CreateProjectRole appends a role to the existing array of roles
-func (repo *ProjectRepository) UpdateLegacyProjectRole(projID uint, role *models.Role) (*models.Role, error) {
-	if !repo.canQuery {
-		return nil, errors.New("Cannot read from database")
-	}
-
-	var foundProject *models.Project
-
-	// find all roles matching
-	for _, project := range repo.projects {
-		if project.ID == projID {
-			foundProject = project
-		}
-	}
-
-	if foundProject == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	var index int
-
-	for i, _role := range foundProject.Roles {
-		if _role.UserID == role.UserID {
-			index = i
-		}
-	}
-
-	if index == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	foundProject.Roles[index] = *role
-	return role, nil
-}
-
-// ReadProject gets a projects specified by a unique id
-func (repo *ProjectRepository) ReadLegacyProjectRole(userID, projID uint) (*models.Role, error) {
-	if !repo.canQuery {
-		return nil, errors.New("Cannot read from database")
-	}
-
-	if int(projID-1) >= len(repo.projects) || repo.projects[projID-1] == nil {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	// find role in project roles
-	index := int(projID - 1)
-
-	for _, role := range repo.projects[index].Roles {
-		if role.UserID == userID {
-			return &role, nil
-		}
-	}
-
-	return nil, gorm.ErrRecordNotFound
 }
 
 // ReadProject gets a projects specified by a unique id

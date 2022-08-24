@@ -485,9 +485,9 @@ const useLogs = (
   /**
    * In some situations, we might never hit the limit for the max buffer size.
    * An example is if the total logs for the pod < LOGS_BUFFER_SIZE.
-   * 
-   * For handling situations like this, we would want to force a flush operation on the buffer
-   * so that we dont have any stale logs
+   *
+   * For handling situations like this, we would want to force a flush operation
+   * on the buffer so that we dont have any stale logs
    */
   useEffect(() => {
     const flushLogsBufferInterval = setInterval(

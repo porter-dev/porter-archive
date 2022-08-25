@@ -14,9 +14,10 @@ func TestGetProjectSuccessful(t *testing.T) {
 	// create a test project
 	config := apitest.LoadConfig(t)
 	user := apitest.CreateTestUser(t, config, true)
-	proj, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	proj, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)

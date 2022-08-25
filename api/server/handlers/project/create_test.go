@@ -33,15 +33,9 @@ func TestCreateProjectSuccessful(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	expProject := &types.CreateProjectResponse{
-		ID:   1,
-		Name: "test-project",
-		Roles: []*types.Role{
-			{
-				Kind:      types.RoleAdmin,
-				UserID:    user.ID,
-				ProjectID: 1,
-			},
-		},
+		ID:    1,
+		Name:  "test-project",
+		Roles: []*types.Role{},
 	}
 
 	gotProject := &types.CreateProjectResponse{}
@@ -85,56 +79,6 @@ func TestFailingCreateMethod(t *testing.T) {
 	)
 
 	config := apitest.LoadConfig(t, test.CreateProjectMethod)
-	user := apitest.CreateTestUser(t, config, true)
-	req = apitest.WithAuthenticatedUser(t, req, user)
-
-	handler := project.NewProjectCreateHandler(
-		config,
-		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
-		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
-	)
-
-	handler.ServeHTTP(rr, req)
-
-	apitest.AssertResponseInternalServerError(t, rr)
-}
-
-func TestFailingCreateRoleMethod(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(
-		t,
-		string(types.HTTPVerbPost),
-		"/api/projects",
-		&types.CreateProjectRequest{
-			Name: "test-project",
-		},
-	)
-
-	config := apitest.LoadConfig(t, test.CreateProjectRoleMethod)
-	user := apitest.CreateTestUser(t, config, true)
-	req = apitest.WithAuthenticatedUser(t, req, user)
-
-	handler := project.NewProjectCreateHandler(
-		config,
-		shared.NewDefaultRequestDecoderValidator(config.Logger, config.Alerter),
-		shared.NewDefaultResultWriter(config.Logger, config.Alerter),
-	)
-
-	handler.ServeHTTP(rr, req)
-
-	apitest.AssertResponseInternalServerError(t, rr)
-}
-
-func TestFailingReadMethod(t *testing.T) {
-	req, rr := apitest.GetRequestAndRecorder(
-		t,
-		string(types.HTTPVerbPost),
-		"/api/projects",
-		&types.CreateProjectRequest{
-			Name: "test-project",
-		},
-	)
-
-	config := apitest.LoadConfig(t, test.ReadProjectMethod)
 	user := apitest.CreateTestUser(t, config, true)
 	req = apitest.WithAuthenticatedUser(t, req, user)
 

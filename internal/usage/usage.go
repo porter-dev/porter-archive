@@ -47,17 +47,19 @@ func GetUsage(opts *GetUsageOpts) (
 	}
 
 	// query for the linked user counts
-	roles, err := opts.Repo.Project().ListLegacyProjectRoles(opts.Project.ID)
+	roles, err := opts.Repo.ProjectRole().ListProjectRoles(opts.Project.ID)
 
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	countedRoles := make([]models.Role, 0)
+	countedRoles := make(map[uint]bool)
 
 	for _, role := range roles {
-		if _, exists := opts.WhitelistedUsers[role.UserID]; !exists {
-			countedRoles = append(countedRoles, role)
+		for _, u := range role.Users {
+			if _, exists := opts.WhitelistedUsers[u.ID]; !exists {
+				countedRoles[u.ID] = true
+			}
 		}
 	}
 

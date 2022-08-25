@@ -42,11 +42,9 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	// read the user from context
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
-	proj := &models.Project{
+	proj, err := p.Repo().Project().CreateProject(&models.Project{
 		Name: request.Name,
-	}
-
-	proj, err := p.Repo().Project().CreateProject(proj)
+	})
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

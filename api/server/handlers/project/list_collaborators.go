@@ -58,39 +58,6 @@ func (p *CollaboratorsListHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		for _, user := range userCollaboratorMap {
 			res = append(res, user)
 		}
-	} else { // legacy operation
-		legacyRoles, err := p.Repo().Project().ListLegacyProjectRoles(proj.ID)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		roleMap := make(map[uint]*models.Role)
-		idArr := make([]uint, 0)
-
-		for _, role := range legacyRoles {
-			roleCp := role
-			roleMap[role.UserID] = &roleCp
-			idArr = append(idArr, role.UserID)
-		}
-
-		users, err := p.Repo().User().ListUsersByIDs(idArr)
-
-		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		for _, user := range users {
-			res = append(res, &types.Collaborator{
-				ID:        roleMap[user.ID].ID,
-				Kind:      string(roleMap[user.ID].Kind),
-				UserID:    roleMap[user.ID].UserID,
-				Email:     user.Email,
-				ProjectID: roleMap[user.ID].ProjectID,
-			})
-		}
 	}
 
 	p.WriteResult(w, r, res)

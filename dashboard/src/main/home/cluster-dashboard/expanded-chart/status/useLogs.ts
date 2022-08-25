@@ -1,4 +1,6 @@
 import Anser from "anser";
+import dayjs from "dayjs";
+import _ from "lodash";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -6,6 +8,13 @@ import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { SelectedPodType } from "./types";
 
 const MAX_LOGS = 250;
+
+const ANSI_RESET = "\u001B[0m";
+const ANSI_YELLOW_BACKGROUND = "\u001b[43m";
+const ANSI_BLUE = "\u001B[34m";
+const ANSI_RED = "\u001b[31m";
+const ANSI_GREEN = "\u001b[32m";
+const ANSI_PURPLE = "\u001B[35m";
 
 export const useLogs = (
   currentPod: SelectedPodType,
@@ -33,28 +42,39 @@ export const useLogs = (
   } = useWebsockets();
 
   const getSystemLogs = async () => {
+    if (!currentPod?.metadata?.name || !currentPod?.metadata?.namespace) {
+      return;
+    }
+
     const events = await api
       .getPodEvents(
         "<token>",
         {},
         {
-          name: currentPod?.metadata?.name,
-          namespace: currentPod?.metadata?.namespace,
+          name: currentPod.metadata.name,
+          namespace: currentPod.metadata.namespace,
           cluster_id: currentCluster?.id,
           id: currentProject?.id,
         }
       )
       .then((res) => res.data);
 
-    let processedLogs = [] as Anser.AnserJsonEntry[][];
-
-    events.items.forEach((evt: any) => {
-      let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
-      let ansiLog = Anser.ansiToJson(
-        `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
-      );
-      processedLogs.push(ansiLog);
-    });
+    const processedLogs: Anser.AnserJsonEntry[][] = _.sortBy(events.items, [
+      "lastTimestamp",
+    ])
+      .map((evt: any) => {
+        const ansiEvtType = evt.type == "Warning" ? ANSI_RED : ANSI_GREEN;
+        const ansiLog = Anser.ansiToJson(
+          `${dayjs(evt.lastTimestamp).format("hh:mm:ss A")} \t ${ansiEvtType}${
+            evt.type
+          }${ANSI_RESET} \t ${ANSI_PURPLE}Count:${
+            evt.count
+          } \t ${ANSI_YELLOW_BACKGROUND}${ANSI_BLUE}\t${
+            evt.reason
+          } ${ANSI_RESET} \t ${evt.message}`
+        );
+        return ansiLog;
+      });
 
     // SET LOGS FOR SYSTEM
     setLogs((prevState) => ({

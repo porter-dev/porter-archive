@@ -14,7 +14,8 @@ import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import CommandLineIcon from "assets/command-line-icon";
 import ConnectToLogsInstructionModal from "./ConnectToLogsInstructionModal";
 
-const MAX_LOGS = 250;
+const MAX_LOGS = 5000;
+const LOGS_BUFFER_SIZE = 1000;
 
 type SelectedPodType = {
   spec: {
@@ -257,6 +258,7 @@ const useLogs = (
   currentPod: SelectedPodType,
   scroll?: (smooth: boolean) => void
 ) => {
+  let logsBuffer: Anser.AnserJsonEntry[][] = [];
   const currentPodName = useRef<string>();
 
   const { currentCluster, currentProject } = useContext(Context);
@@ -340,6 +342,51 @@ const useLogs = (
     } catch (error) {}
   };
 
+  /**
+   * Updates the `logs` for `containerName` with `newLogs`
+   * @param containerName Name of the container
+   * @param newLogs New logs to update for
+   */
+  const updateContainerLogs = (
+    containerName: string,
+    newLogs: Anser.AnserJsonEntry[][]
+  ) => {
+    setLogs((logs) => {
+      const tmpLogs = { ...logs };
+      let containerLogs = tmpLogs[containerName] || [];
+
+      containerLogs.push(...newLogs);
+      // this is technically not as efficient as things could be
+      // if there are performance issues, a deque can be used in place of a list
+      // for storing logs
+      if (containerLogs.length > MAX_LOGS) {
+        containerLogs.shift();
+      }
+
+      if (typeof scroll === "function") {
+        scroll(true);
+      }
+      return {
+        ...logs,
+        [containerName]: containerLogs,
+      };
+    });
+  };
+
+  /**
+   * Flushes the logs buffer. If `containerName` is provided,
+   * it will update logs for the `containerName` before executing
+   * the flush operation
+   * @param containerName Name of the container
+   */
+  const flushLogsBuffer = (containerName?: string) => {
+    if (containerName) {
+      updateContainerLogs(containerName, logsBuffer);
+    }
+
+    logsBuffer = [];
+  };
+
   const setupWebsocket = (containerName: string, websocketKey: string) => {
     if (!currentPod?.metadata?.name) return;
 
@@ -351,25 +398,12 @@ const useLogs = (
       },
       onmessage: (evt: MessageEvent) => {
         let ansiLog = Anser.ansiToJson(evt.data);
-        setLogs((logs) => {
-          const tmpLogs = { ...logs };
-          let containerLogs = tmpLogs[containerName] || [];
+        logsBuffer.push(ansiLog);
 
-          containerLogs.push(ansiLog);
-          // this is technically not as efficient as things could be
-          // if there are performance issues, a deque can be used in place of a list
-          // for storing logs
-          if (containerLogs.length > MAX_LOGS) {
-            containerLogs.shift();
-          }
-          if (typeof scroll === "function") {
-            scroll(true);
-          }
-          return {
-            ...logs,
-            [containerName]: containerLogs,
-          };
-        });
+        // If size of the logs buffer is exceeded, immediately flush the buffer
+        if (logsBuffer.length > LOGS_BUFFER_SIZE) {
+          flushLogsBuffer(containerName);
+        }
       },
       onclose: () => {
         console.log("Closed websocket:", websocketKey);
@@ -384,6 +418,8 @@ const useLogs = (
     const websocketKey = `${currentPodName.current}-${currentContainer}-websocket`;
     closeWebsocket(websocketKey);
 
+    // Flush and re-initialize empty buffer
+    flushLogsBuffer();
     setPrevLogs((prev) => ({ ...prev, [currentContainer]: [] }));
     setLogs((prev) => ({ ...prev, [currentContainer]: [] }));
 
@@ -420,6 +456,7 @@ const useLogs = (
 
     closeAllWebsockets();
 
+    flushLogsBuffer();
     setPrevLogs({});
     setLogs({});
 
@@ -445,6 +482,22 @@ const useLogs = (
     };
   }, []);
 
+  /**
+   * In some situations, we might never hit the limit for the max buffer size.
+   * An example is if the total logs for the pod < LOGS_BUFFER_SIZE.
+   *
+   * For handling situations like this, we would want to force a flush operation
+   * on the buffer so that we dont have any stale logs
+   */
+  useEffect(() => {
+    const flushLogsBufferInterval = setInterval(
+      () => flushLogsBuffer(currentContainer),
+      3000
+    );
+
+    return () => clearInterval(flushLogsBufferInterval);
+  }, [currentContainer]);
+
   const currentLogs = useMemo(() => {
     return logs[currentContainer] || [];
   }, [currentContainer, logs]);
@@ -456,7 +509,11 @@ const useLogs = (
   return {
     containers,
     currentContainer,
-    setCurrentContainer,
+    setCurrentContainer: (newContainer: string) => {
+      // First flush the logs of the older container
+      flushLogsBuffer(currentContainer);
+      setCurrentContainer(newContainer);
+    },
     logs: currentLogs,
     previousLogs: currentPreviousLogs,
     refresh,

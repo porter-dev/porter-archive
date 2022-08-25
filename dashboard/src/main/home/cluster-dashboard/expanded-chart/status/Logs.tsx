@@ -1,11 +1,4 @@
-import React, {
-  Component,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 import * as Anser from "anser";
@@ -258,7 +251,7 @@ const useLogs = (
   currentPod: SelectedPodType,
   scroll?: (smooth: boolean) => void
 ) => {
-  let logsBuffer: Anser.AnserJsonEntry[][] = [];
+  let logsBufferRef = useRef<Anser.AnserJsonEntry[][]>([]);
   const currentPodName = useRef<string>();
 
   const { currentCluster, currentProject } = useContext(Context);
@@ -360,7 +353,7 @@ const useLogs = (
       // if there are performance issues, a deque can be used in place of a list
       // for storing logs
       if (containerLogs.length > MAX_LOGS) {
-        containerLogs.shift();
+        containerLogs.slice(MAX_LOGS);
       }
 
       if (typeof scroll === "function") {
@@ -381,10 +374,10 @@ const useLogs = (
    */
   const flushLogsBuffer = (containerName?: string) => {
     if (containerName) {
-      updateContainerLogs(containerName, logsBuffer);
+      updateContainerLogs(containerName, logsBufferRef.current);
     }
 
-    logsBuffer = [];
+    logsBufferRef.current = [];
   };
 
   const setupWebsocket = (containerName: string, websocketKey: string) => {
@@ -398,10 +391,10 @@ const useLogs = (
       },
       onmessage: (evt: MessageEvent) => {
         let ansiLog = Anser.ansiToJson(evt.data);
-        logsBuffer.push(ansiLog);
+        logsBufferRef.current.push(ansiLog);
 
         // If size of the logs buffer is exceeded, immediately flush the buffer
-        if (logsBuffer.length > LOGS_BUFFER_SIZE) {
+        if (logsBufferRef.current.length > LOGS_BUFFER_SIZE) {
           flushLogsBuffer(containerName);
         }
       },
@@ -480,6 +473,10 @@ const useLogs = (
     return () => {
       closeAllWebsockets();
     };
+  }, []);
+
+  useEffect(() => {
+    flushLogsBuffer(currentContainer);
   }, []);
 
   /**

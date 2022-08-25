@@ -8,9 +8,9 @@ import (
 
 const LatestMigrationVersion uint = 1
 
-type MigrationFunc func(db *gorm.DB, logger *lr.Logger) error
+type migrationFunc func(db *gorm.DB, logger *lr.Logger) error
 
-var StartupMigrations = make(map[uint]MigrationFunc)
+var StartupMigrations = make(map[uint]migrationFunc)
 
 func init() {
 	StartupMigrations[1] = migrate_legacy_rbac.MigrateFromLegacyRBAC

@@ -1,7 +1,6 @@
 package loader
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
-	"github.com/porter-dev/porter/cmd/migrate/startup_migrations"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
@@ -21,7 +19,6 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -80,36 +77,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	if err != nil {
 		return nil, err
-	}
-
-	dbMigration := &models.DbMigration{}
-
-	if err := InstanceDB.Model(&models.DbMigration{}).First(dbMigration).Error; err != nil {
-		if errors.Is(err, pgorm.ErrRecordNotFound) {
-			dbMigration.Version = 0
-		} else {
-			return nil, err
-		}
-	}
-
-	latestMigrationVersion := startup_migrations.LatestMigrationVersion
-
-	if dbMigration.Version < latestMigrationVersion {
-		for ver, fn := range startup_migrations.StartupMigrations {
-			if ver > dbMigration.Version {
-				err := fn(InstanceDB, res.Logger)
-
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-
-		dbMigration.Version = latestMigrationVersion
-
-		if err := InstanceDB.Save(dbMigration).Error; err != nil {
-			return nil, err
-		}
 	}
 
 	var key [32]byte

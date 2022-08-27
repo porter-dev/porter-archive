@@ -114,7 +114,9 @@ export const useLogs = (
       // if there are performance issues, a deque can be used in place of a list
       // for storing logs
       if (containerLogs.length > MAX_LOGS) {
-        containerLogs.slice(MAX_LOGS);
+        const logsToBeRemoved =
+          newLogs.length < LOGS_BUFFER_SIZE ? newLogs.length : LOGS_BUFFER_SIZE;
+        containerLogs = containerLogs.slice(logsToBeRemoved);
       }
 
       if (typeof scroll === "function") {

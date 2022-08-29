@@ -95,6 +95,7 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// repository is set to current repository by default
 	repository := rel.Config["image"].(map[string]interface{})["repository"]
+	currTag := rel.Config["image"].(map[string]interface{})["tag"]
 
 	gitAction := release.GitActionConfig
 
@@ -106,7 +107,13 @@ func (c *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	image := map[string]interface{}{}
 	image["repository"] = repository
+
 	image["tag"] = request.Commit
+
+	if request.Commit == "" {
+		image["tag"] = currTag
+	}
+
 	rel.Config["image"] = image
 
 	if rel.Config["auto_deploy"] == false {

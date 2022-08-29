@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,19 +47,14 @@ func runHelm(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []s
 
 	cmd := exec.Command("helm", args...)
 
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	err = cmd.Run()
 
 	if err != nil {
-		return fmt.Errorf("error running helm: %s", stderr.String())
+		return fmt.Errorf("error running helm: %w", err)
 	}
-
-	fmt.Print(out.String())
 
 	return nil
 }

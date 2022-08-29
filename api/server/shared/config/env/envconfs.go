@@ -100,7 +100,7 @@ type ServerConf struct {
 	ProvisionerTest bool `env:"PROVISIONER_TEST,default=false"`
 
 	// Disable filtering for project creation
-	DisableAllowlist bool `env:"DISABLE_ALLOWLIST,default=false"`
+	DisableAllowlist bool `env:"DISABLE_ALLOWLIST,default=true"`
 
 	// Enable gitlab integration
 	EnableGitlab bool `env:"ENABLE_GITLAB,default=false"`

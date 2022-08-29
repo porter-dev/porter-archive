@@ -8,22 +8,26 @@ import { SelectedPodType } from "./types";
 const MAX_LOGS = 5000;
 const LOGS_BUFFER_SIZE = 1000;
 
+interface Log {
+  line: Anser.AnserJsonEntry[];
+  lineNumber: number;
+}
+
 export const useLogs = (
   currentPod: SelectedPodType,
   scroll?: (smooth: boolean) => void
 ) => {
-  let logsBufferRef = useRef<Anser.AnserJsonEntry[][]>([]);
+  let logsBufferRef = useRef<Log[]>([]);
   const currentPodName = useRef<string>();
 
   const { currentCluster, currentProject } = useContext(Context);
   const [containers, setContainers] = useState<string[]>([]);
   const [currentContainer, setCurrentContainer] = useState<string>("");
   const [logs, setLogs] = useState<{
-    [key: string]: Anser.AnserJsonEntry[][];
+    [key: string]: Log[];
   }>({});
-
   const [prevLogs, setPrevLogs] = useState<{
-    [key: string]: Anser.AnserJsonEntry[][];
+    [key: string]: Log[];
   }>({});
 
   const {
@@ -48,14 +52,16 @@ export const useLogs = (
       )
       .then((res) => res.data);
 
-    let processedLogs = [] as Anser.AnserJsonEntry[][];
-
-    events.items.forEach((evt: any) => {
+    const processedLogs: Log[] = events.items.map((evt: any, idx: number) => {
       let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
       let ansiLog = Anser.ansiToJson(
         `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
       );
-      processedLogs.push(ansiLog);
+
+      return {
+        line: ansiLog,
+        lineNumber: idx + 1,
+      };
     });
 
     // SET LOGS FOR SYSTEM
@@ -82,12 +88,13 @@ export const useLogs = (
         )
         .then((res) => res.data);
       // Process logs
-      const processedLogs: Anser.AnserJsonEntry[][] = logs.previous_logs.map(
-        (currentLog) => {
-          let ansiLog = Anser.ansiToJson(currentLog);
-          return ansiLog;
-        }
-      );
+      const processedLogs: Log[] = logs.previous_logs.map((currentLog, idx) => {
+        let ansiLog = Anser.ansiToJson(currentLog);
+        return {
+          line: ansiLog,
+          lineNumber: idx + 1,
+        };
+      });
 
       setPrevLogs((pl) => ({
         ...pl,
@@ -101,15 +108,17 @@ export const useLogs = (
    * @param containerName Name of the container
    * @param newLogs New logs to update for
    */
-  const updateContainerLogs = (
-    containerName: string,
-    newLogs: Anser.AnserJsonEntry[][]
-  ) => {
+  const updateContainerLogs = (containerName: string, newLogs: Log[]) => {
     setLogs((logs) => {
-      const tmpLogs = { ...logs };
-      let containerLogs = tmpLogs[containerName] || [];
+      let containerLogs = logs[containerName] || [];
+      const lastLineNumber = containerLogs?.at(-1)?.lineNumber || 0;
 
-      containerLogs.push(...newLogs);
+      containerLogs.push(
+        ...newLogs.map((l) => ({
+          ...l,
+          lineNumber: lastLineNumber + l.lineNumber,
+        }))
+      );
       // this is technically not as efficient as things could be
       // if there are performance issues, a deque can be used in place of a list
       // for storing logs
@@ -137,7 +146,7 @@ export const useLogs = (
    */
   const flushLogsBuffer = (containerName?: string) => {
     if (containerName) {
-      updateContainerLogs(containerName, logsBufferRef.current);
+      updateContainerLogs(containerName, [...logsBufferRef.current]);
     }
 
     logsBufferRef.current = [];
@@ -154,7 +163,11 @@ export const useLogs = (
       },
       onmessage: (evt: MessageEvent) => {
         let ansiLog = Anser.ansiToJson(evt.data);
-        logsBufferRef.current.push(ansiLog);
+
+        logsBufferRef.current.push({
+          line: ansiLog,
+          lineNumber: logsBufferRef.current.length + 1,
+        });
 
         // If size of the logs buffer is exceeded, immediately flush the buffer
         if (logsBufferRef.current.length > LOGS_BUFFER_SIZE) {

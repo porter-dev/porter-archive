@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -49,19 +48,14 @@ func runKubectl(_ *types.GetAuthenticatedUserResponse, client *api.Client, args 
 
 	cmd := exec.Command("kubectl", args...)
 
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	err = cmd.Run()
 
 	if err != nil {
-		return fmt.Errorf("error running kubectl: %s", stderr.String())
+		return fmt.Errorf("error running helm: %w", err)
 	}
-
-	fmt.Print(out.String())
 
 	return nil
 }

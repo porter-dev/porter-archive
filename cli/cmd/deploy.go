@@ -243,6 +243,7 @@ var updateSetEnvGroupCmd = &cobra.Command{
 var updateUnsetEnvGroupCmd = &cobra.Command{
 	Use:   "unset",
 	Short: "Removes an environment variable from an env group.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateUnsetEnvGroup)
 
@@ -262,9 +263,10 @@ var stream bool
 var buildFlagsEnv []string
 var forcePush bool
 var useCache bool
-var value string
 var version uint
 var varType string
+var normalEnvVars []string
+var secretEnvVars []string
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -405,6 +407,22 @@ func init() {
 		"type",
 		"normal",
 		"the type of environment variable (either \"normal\" or \"secret\")",
+	)
+
+	updateSetEnvGroupCmd.PersistentFlags().StringArrayVarP(
+		&normalEnvVars,
+		"normal",
+		"e",
+		[]string{},
+		"list of variables to set, in the form VAR=VALUE",
+	)
+
+	updateSetEnvGroupCmd.PersistentFlags().StringArrayVarP(
+		&normalEnvVars,
+		"normal",
+		"e",
+		[]string{},
+		"list of variables to set, in the form VAR=VALUE",
 	)
 
 	updateEnvGroupCmd.AddCommand(updateSetEnvGroupCmd)
@@ -664,9 +682,11 @@ func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Clie
 		Variables: envGroupResp.Variables,
 	}
 
-	delete(newEnvGroup.Variables, args[0])
+	for _, v := range args {
+		delete(newEnvGroup.Variables, v)
+	}
 
-	s.Suffix = fmt.Sprintf(" Removing variable '%s' from env group '%s' in namespace '%s'", args[0], name, namespace)
+	s.Suffix = fmt.Sprintf(" Removing variables from env group '%s' in namespace '%s'", name, namespace)
 
 	s.Start()
 

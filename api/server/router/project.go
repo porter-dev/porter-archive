@@ -396,8 +396,9 @@ func getProjectRoutes(
 				RelativePath: relPath + "/collaborators/{user_id}",
 			},
 			Scopes: []types.PermissionScope{
-				types.SettingsScope,
+				types.UserScope,
 				types.ProjectScope,
+				types.SettingsScope,
 			},
 		},
 	)

@@ -1,18 +1,21 @@
 package main
 
 import (
+	"errors"
 	"log"
 
 	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 	"github.com/porter-dev/porter/cmd/migrate/keyrotate"
-	migratelegacyrbac "github.com/porter-dev/porter/cmd/migrate/migrate_legacy_rbac"
 	"github.com/porter-dev/porter/cmd/migrate/populate_source_config_display_name"
+	"github.com/porter-dev/porter/cmd/migrate/startup_migrations"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	lr "github.com/porter-dev/porter/pkg/logger"
 
 	"github.com/joeshaw/envdecode"
+	pgorm "gorm.io/gorm"
 )
 
 func main() {
@@ -49,6 +52,39 @@ func main() {
 		return
 	}
 
+	dbMigration := &models.DbMigration{}
+
+	if err := db.Model(&models.DbMigration{}).First(dbMigration).Error; err != nil {
+		if errors.Is(err, pgorm.ErrRecordNotFound) {
+			dbMigration.Version = 0
+		} else {
+			logger.Fatal().Err(err).Msg("failed to check for db migration version")
+			return
+		}
+	}
+
+	latestMigrationVersion := startup_migrations.LatestMigrationVersion
+
+	if dbMigration.Version < latestMigrationVersion {
+		for ver, fn := range startup_migrations.StartupMigrations {
+			if ver > dbMigration.Version {
+				err := fn(db, logger)
+
+				if err != nil {
+					logger.Fatal().Err(err).Msg("failed to run startup migration script")
+					return
+				}
+			}
+		}
+
+		dbMigration.Version = latestMigrationVersion
+
+		if err := db.Save(dbMigration).Error; err != nil {
+			logger.Fatal().Err(err).Msg("failed to update migration version to latest")
+			return
+		}
+	}
+
 	if shouldRotate, oldKeyStr, newKeyStr := shouldKeyRotate(); shouldRotate {
 		oldKey := [32]byte{}
 		newKey := [32]byte{}
@@ -68,14 +104,6 @@ func main() {
 
 		if err != nil {
 			logger.Fatal().Err(err).Msg("failed to populate source config display name")
-		}
-	}
-
-	if shouldMigrateFromLegacyRBAC() {
-		err := migratelegacyrbac.MigrateFromLegacyRBAC(db, logger)
-
-		if err != nil {
-			logger.Fatal().Err(err).Msg("failed to migrate legacy RBAC")
 		}
 	}
 
@@ -119,23 +147,4 @@ func shouldPopulateSourceConfigDisplayName() bool {
 	}
 
 	return c.PopulateSourceConfigDisplayName
-}
-
-type MigrateLegacyRBACConf struct {
-	// we add a dummy field to avoid empty struct issue with envdecode
-	DummyField string `env:"ASDF,default=asdf"`
-
-	// if true, will migrate away from legacy RBAC to advanced RBAC
-	MigrateLegacyRBAC bool `env:"MIGRATE_LEGACY_RBAC"`
-}
-
-func shouldMigrateFromLegacyRBAC() bool {
-	var c MigrateLegacyRBACConf
-
-	if err := envdecode.StrictDecode(&c); err != nil {
-		log.Fatalf("Failed to decode migration conf: %s", err)
-		return false
-	}
-
-	return c.MigrateLegacyRBAC
 }

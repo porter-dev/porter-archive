@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/authz"
-	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
@@ -18,9 +17,10 @@ func TestProjectMiddlewareSuccessful(t *testing.T) {
 	config, handler, next := loadProjectHandlers(t)
 
 	user := apitest.CreateTestUser(t, config, true)
-	proj, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	proj, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)
@@ -46,9 +46,10 @@ func TestProjectMiddlewareFailedRead(t *testing.T) {
 	config, _, _ := loadProjectHandlers(t)
 
 	user := apitest.CreateTestUser(t, config, true)
-	_, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+
+	_, err := config.Repo.Project().CreateProject(&models.Project{
 		Name: "test-project",
-	}, user)
+	})
 
 	if err != nil {
 		t.Fatal(err)

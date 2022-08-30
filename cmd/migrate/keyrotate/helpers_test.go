@@ -138,24 +138,6 @@ func initProject(tester *tester, t *testing.T) {
 	tester.initProjects = append(tester.initProjects, proj)
 }
 
-func initProjectRole(tester *tester, t *testing.T) {
-	t.Helper()
-
-	role := &models.Role{
-		Role: types.Role{
-			Kind:      types.RoleAdmin,
-			UserID:    tester.initUsers[0].Model.ID,
-			ProjectID: tester.initProjects[0].Model.ID,
-		},
-	}
-
-	role, err := tester.repo.Project().CreateProjectRole(tester.initProjects[0], role)
-
-	if err != nil {
-		t.Fatalf("%v\n", err)
-	}
-}
-
 func initKubeIntegration(tester *tester, t *testing.T) {
 	t.Helper()
 

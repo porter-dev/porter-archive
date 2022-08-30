@@ -69,11 +69,9 @@ const EditCollaboratorModal = () => {
       await api.updateCollaborator(
         "<token>",
         {
-          kind: selectedRole,
-          user_id: user.id,
           roles: selectedRoles.map((role) => role.id),
         },
-        { project_id }
+        { project_id, user_id: user.id }
       );
       setStatus("successful");
       refetchCallerData().then(() => {

@@ -138,11 +138,11 @@ func getInviteRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteUpdateRoleHandler
+	// PATCH /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteUpdateRoleHandler
 	updateRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
+			Method: types.HTTPVerbPatch,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: relPath,

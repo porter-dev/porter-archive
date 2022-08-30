@@ -1,12 +1,13 @@
 package project
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/types"
 )
 
 type RolesListHandler struct {
@@ -23,7 +24,5 @@ func NewRolesListHandler(
 }
 
 func (p *RolesListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var res types.ListProjectRolesResponse = []types.RoleKind{types.RoleAdmin, types.RoleDeveloper, types.RoleViewer}
-
-	p.WriteResult(w, r, res)
+	p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("deprecated"), http.StatusBadRequest))
 }

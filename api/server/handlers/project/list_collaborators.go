@@ -37,27 +37,25 @@ func (p *CollaboratorsListHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if len(roles) > 0 {
-		userCollaboratorMap := make(map[uint]*types.Collaborator)
+	userCollaboratorMap := make(map[uint]*types.Collaborator)
 
-		for _, role := range roles {
-			for _, user := range role.Users {
-				if _, ok := userCollaboratorMap[user.ID]; ok {
-					userCollaboratorMap[user.ID].RoleUIDs = append(userCollaboratorMap[user.ID].RoleUIDs, role.UniqueID)
-				} else {
-					userCollaboratorMap[user.ID] = &types.Collaborator{
-						RoleUIDs:  []string{role.UniqueID},
-						UserID:    user.ID,
-						Email:     user.Email,
-						ProjectID: proj.ID,
-					}
+	for _, role := range roles {
+		for _, user := range role.Users {
+			if _, ok := userCollaboratorMap[user.ID]; ok {
+				userCollaboratorMap[user.ID].RoleUIDs = append(userCollaboratorMap[user.ID].RoleUIDs, role.UniqueID)
+			} else {
+				userCollaboratorMap[user.ID] = &types.Collaborator{
+					RoleUIDs:  []string{role.UniqueID},
+					UserID:    user.ID,
+					Email:     user.Email,
+					ProjectID: proj.ID,
 				}
 			}
 		}
+	}
 
-		for _, user := range userCollaboratorMap {
-			res = append(res, user)
-		}
+	for _, user := range userCollaboratorMap {
+		res = append(res, user)
 	}
 
 	p.WriteResult(w, r, res)

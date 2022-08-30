@@ -45,11 +45,7 @@ type ListProjectInfraResponse []*Infra
 
 type GetProjectPolicyResponse []*PolicyDocument
 
-type ListProjectRolesResponse []RoleKind
-
 type Collaborator struct {
-	ID        uint     `json:"id,omitempty"`
-	Kind      string   `json:"kind,omitempty"`
 	RoleUIDs  []string `json:"roles"`
 	UserID    uint     `json:"user_id"`
 	Email     string   `json:"email"`
@@ -58,21 +54,8 @@ type Collaborator struct {
 
 type ListCollaboratorsResponse []*Collaborator
 
-type UpdateRoleRequest struct {
-	UserID uint   `json:"user_id,required"`
-	Kind   string `json:"kind,required"`
-}
-
-type UpdateRoleResponse struct {
-	*Role
-}
-
-type DeleteRoleRequest struct {
-	UserID uint `schema:"user_id,required"`
-}
-
-type DeleteRoleResponse struct {
-	*Role
+type UpdateCollaboratorRoleRequest struct {
+	RoleUIDs []string `json:"roles" form:"required"`
 }
 
 type GetBillingTokenResponse struct {

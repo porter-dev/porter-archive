@@ -386,6 +386,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// PATCH /api/projects/{project_id}/collaborators/{user_id} -> project.UpdateCollaboratorWithRolesHandler
+	updateCollaboratorRolesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPatch,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/collaborators/{user_id}",
+			},
+			Scopes: []types.PermissionScope{
+				types.SettingsScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	updateCollaboratorRolesHandler := project.NewUpdateCollaboratorRolesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateCollaboratorRolesEndpoint,
+		Handler:  updateCollaboratorRolesHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/roles -> project.NewRolesListHandler
 	listRolesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -39,3 +39,13 @@ func (role *ProjectRole) IsDefaultRole() bool {
 		role.UniqueID == fmt.Sprintf("%d-%s", role.ProjectID, types.RoleDeveloper) ||
 		role.UniqueID == fmt.Sprintf("%d-%s", role.ProjectID, types.RoleViewer)
 }
+
+func (role *ProjectRole) GetUserIDs() []uint {
+	var ids []uint
+
+	for _, user := range role.Users {
+		ids = append(ids, user.ID)
+	}
+
+	return ids
+}

@@ -66,6 +66,8 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
+	rolesMap := make(map[string]*models.ProjectRole)
+
 	// check for valid project roles
 	for _, roleUID := range request.RoleUIDs {
 		role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, roleUID)
@@ -78,20 +80,75 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 			return
 		}
 
-		userIDs := role.GetUserIDs()
-		found := false
+		rolesMap[roleUID] = role
+	}
 
-		for _, id := range userIDs {
-			if id == userID {
-				found = true
-				break
+	userRoles, err := p.Repo().ProjectRole().ListAllRolesForUser(proj.ID, userID)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	userRolesMap := make(map[string]bool)
+
+	for _, role := range userRoles {
+		userRolesMap[role.UniqueID] = true
+	}
+
+	if len(userRoles) == 0 {
+		for _, uid := range request.RoleUIDs {
+			userIDs := rolesMap[uid].GetUserIDs()
+			userIDs = append(userIDs, userID)
+
+			err := p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+		}
+	} else {
+		var rolesToAdd []string
+		var rolesToRemove []string
+
+		for _, uid := range userRoles {
+			if _, ok := rolesMap[uid.UniqueID]; !ok {
+				// user had this role, should be removed from
+				rolesToRemove = append(rolesToRemove, uid.UniqueID)
 			}
 		}
 
-		if !found {
+		for _, uid := range request.RoleUIDs {
+			if _, ok := userRolesMap[uid]; !ok {
+				// user does not have this role, should be added to
+				rolesToAdd = append(rolesToAdd, uid)
+			}
+		}
+
+		for _, uid := range rolesToAdd {
+			userIDs := rolesMap[uid].GetUserIDs()
 			userIDs = append(userIDs, userID)
 
-			err := p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, roleUID, userIDs)
+			err := p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+		}
+
+		for _, uid := range rolesToRemove {
+			userIDs := rolesMap[uid].GetUserIDs()
+			var newUserIDs []uint
+
+			for _, id := range userIDs {
+				if id != userID {
+					newUserIDs = append(newUserIDs, id)
+				}
+			}
+
+			err := p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, newUserIDs)
 
 			if err != nil {
 				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

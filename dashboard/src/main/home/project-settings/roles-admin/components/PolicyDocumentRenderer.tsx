@@ -1,5 +1,5 @@
-import { capitalize, get, set } from "lodash";
-import React, { useCallback, useContext, useEffect } from "react";
+import _, { capitalize, get, set } from "lodash";
+import React, { useContext, useEffect, useRef } from "react";
 import api from "shared/api";
 import {
   POLICY_HIERARCHY_TREE,
@@ -30,8 +30,28 @@ const PolicyDocumentRenderer = ({
   onChange: (data: PolicyDocType) => void;
   readOnly?: boolean;
 }) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, setCurrentOverlay } = useContext(Context);
   const [scopeHierarchy, setScopeHierarchy] = React.useState<any>(null);
+  const emptyPolicyDoc = useRef(
+    populatePolicy({
+      scope: "project",
+      verbs: [],
+    })
+  );
+
+  useEffect(() => {
+    if (!scopeHierarchy) {
+      return;
+    }
+
+    emptyPolicyDoc.current = populatePolicy(
+      {
+        scope: "project",
+        verbs: [],
+      },
+      scopeHierarchy
+    );
+  }, [scopeHierarchy]);
 
   useEffect(() => {
     api
@@ -44,12 +64,41 @@ const PolicyDocumentRenderer = ({
       });
   }, [currentProject?.id]);
 
-  const handleChangeVerbs = (dataPath: string, verbs: Verbs[]) => {
+  const handleChangeVerbs = (verbsPath: string, verbs: Verbs[]) => {
     const newPolicyDoc = structuredClone(value) as PolicyDocType;
+    const pathToChildren = verbsPath
+      .split(".")
+      .slice(0, -1)
+      .concat(["children"])
+      .join(".");
 
-    set(newPolicyDoc, dataPath, verbs);
+    const isReadRemovedTransitive =
+      !verbs.includes("get") &&
+      Object.keys(_.get(newPolicyDoc, pathToChildren, {})).length;
 
-    onChange(newPolicyDoc);
+    if (isReadRemovedTransitive) {
+      const emptyPolicyDocumentForChildren = get(
+        emptyPolicyDoc.current,
+        pathToChildren
+      );
+
+      set(newPolicyDoc, pathToChildren, emptyPolicyDocumentForChildren);
+    }
+
+    set(newPolicyDoc, verbsPath, verbs);
+
+    if (isReadRemovedTransitive) {
+      setCurrentOverlay({
+        message: `Dummy text?`,
+        onYes: () => {
+          onChange(newPolicyDoc);
+          setCurrentOverlay(null);
+        },
+        onNo: () => setCurrentOverlay(null),
+      });
+    } else {
+      onChange(newPolicyDoc);
+    }
   };
 
   if (!scopeHierarchy) {
@@ -111,13 +160,13 @@ const RenderComponents = (
 
   const Component = (
     <>
-      <Card anidationLevel={anidationLevel}>
-        <ScopePermissionsHandler
-          name={scope}
-          dataPath={verbsPath}
-          readOnly={readOnly}
-        />
-      </Card>
+      <ScopePermissionsHandler
+        name={scope}
+        parent={dataPath.split(".").slice(0, -1).join(".")}
+        dataPath={verbsPath}
+        readOnly={readOnly}
+        anidationLevel={anidationLevel}
+      />
       {components.map((c) => c)}
     </>
   );
@@ -135,28 +184,48 @@ const Card = styled.div<{ anidationLevel: number }>`
 `;
 
 const ScopePermissionsHandler = ({
+  anidationLevel,
+  parent,
   name,
   dataPath,
   readOnly,
 }: {
+  anidationLevel: number;
+  parent: string;
   name: string;
   dataPath: string;
   readOnly: boolean;
 }) => {
   const { handleChangeVerbs, data } = React.useContext(Store);
+  const { setCurrentError } = React.useContext(Context);
 
   const verbs = get(data, dataPath);
 
+  const onChange = (newVerbs: Verbs[]) => {
+    const pathToParentsVerbs = parent.split(".").concat("verbs").join(".");
+
+    const isActionAllowed =
+      anidationLevel === 0
+        ? true
+        : get(data, pathToParentsVerbs, []).includes("get");
+
+    if (isActionAllowed) {
+      handleChangeVerbs(dataPath, newVerbs);
+      return;
+    }
+
+    setCurrentError(
+      "This action is not allowed since the parent does not have read permissions enabled."
+    );
+
+    // show something to tell user
+  };
+
   return (
-    <>
+    <Card anidationLevel={anidationLevel}>
       {name}
-      {readOnly ? null : (
-        <Select
-          values={verbs}
-          onChange={(newVerbs) => handleChangeVerbs(dataPath, newVerbs)}
-        />
-      )}
-    </>
+      {readOnly ? null : <Select values={verbs} onChange={onChange} />}
+    </Card>
   );
 };
 

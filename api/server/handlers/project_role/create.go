@@ -2,6 +2,7 @@ package project_role
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
+	"gorm.io/gorm"
 )
 
 type CreateProjectRoleHandler struct {
@@ -100,17 +103,47 @@ func (c *CreateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if len(request.Users) > 0 {
+		for _, u := range request.Users {
+			err := validateUserForProjectRole(c.Repo(), u, project.ID)
+
+			if err != nil {
+				c.HandleAPIError(w, r, err)
+				return
+			}
+		}
+
 		err = c.Repo().ProjectRole().UpdateUsersInProjectRole(project.ID, role.UniqueID, request.Users)
 
 		if err != nil {
-			// we need to delete the policy and project role we just created
-			c.Repo().Policy().DeletePolicy(policy)
-			c.Repo().ProjectRole().DeleteProjectRole(role)
-
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func validateUserForProjectRole(repo repository.Repository, userID, projectID uint) apierrors.RequestError {
+	// check for valid user
+	_, err := repo.User().ReadUser(userID)
+
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return apierrors.NewErrNotFound(fmt.Errorf("user with id %d does not exist", userID))
+	} else if err != nil {
+		return apierrors.NewErrInternal(err)
+	}
+
+	// a user needs to have been a collaborator with at least one role already in a project to be added to a new role
+	roles, err := repo.ProjectRole().ListAllRolesForUser(projectID, userID)
+
+	if err != nil {
+		return apierrors.NewErrInternal(err)
+	}
+
+	if len(roles) == 0 {
+		return apierrors.NewErrPassThroughToClient(fmt.Errorf("user is not a collaborator in this project"),
+			http.StatusBadRequest)
+	}
+
+	return nil
 }

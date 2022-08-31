@@ -1569,9 +1569,15 @@ const updateCollaborator = baseApi<
   }
 >("PATCH", ({ project_id, user_id }) => `/api/projects/${project_id}/collaborators/${user_id}`);
 
-const removeCollaborator = baseApi<{ user_id: number }, { project_id: number }>(
+const removeCollaborator = baseApi<
+  {},
+  {
+    project_id: number;
+    user_id: number;
+  }
+>(
   "DELETE",
-  ({ project_id }) => `/api/projects/${project_id}/roles`
+  ({ project_id, user_id }) => `/api/projects/${project_id}/collaborators/${user_id}`
 );
 
 const getPolicyDocument = baseApi<{}, { project_id: number }>(

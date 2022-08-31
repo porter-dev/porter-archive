@@ -27,7 +27,7 @@ export type Collaborator = {
   roles: string[];
 };
 
-const InvitePage: React.FunctionComponent<Props> = ({}) => {
+const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   const {
     currentProject,
     setCurrentModal,
@@ -220,8 +220,11 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     try {
       api.removeCollaborator(
         "<token>",
-        { user_id },
-        { project_id: currentProject.id }
+        {},
+        {
+          project_id: currentProject.id,
+          user_id: user.id
+        }
       );
       getData();
     } catch (error) {
@@ -350,9 +353,8 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     inviteList.sort((a: any, b: any) => (a.email > b.email ? 1 : -1));
     inviteList.sort((a: any, b: any) => (a.accepted > b.accepted ? 1 : -1));
     const buildInviteLink = (token: string) => `
-      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${
-      currentProject.id
-    }/invites/${token}
+      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${currentProject.id
+      }/invites/${token}
     `;
 
     if (!user) {

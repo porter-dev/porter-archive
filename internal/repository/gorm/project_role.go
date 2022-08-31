@@ -48,7 +48,7 @@ func (repo *ProjectRoleRepository) ListProjectRoles(projectID uint) ([]*models.P
 func (repo *ProjectRoleRepository) ListAllRolesForUser(projectID, userID uint) ([]*models.ProjectRole, error) {
 	projectRoles := []*models.ProjectRole{}
 
-	if err := repo.db.Where("project_id = ?", projectID).Find(&projectRoles).Error; err != nil {
+	if err := repo.db.Preload("Users").Where("project_id = ?", projectID).Find(&projectRoles).Error; err != nil {
 		return nil, err
 	}
 
@@ -66,6 +66,11 @@ func (repo *ProjectRoleRepository) ListAllRolesForUser(projectID, userID uint) (
 }
 
 func (repo *ProjectRoleRepository) UpdateUsersInProjectRole(projectID uint, roleUID string, userIDs []uint) error {
+	// add a safeguard here
+	if len(userIDs) == 0 {
+		return repo.ClearUsersInProjectRole(projectID, roleUID)
+	}
+
 	users := []*models.User{}
 
 	if err := repo.db.Find(&users, userIDs).Error; err != nil {

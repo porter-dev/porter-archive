@@ -415,6 +415,35 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/collaborators/{user_id} -> project.NewDeleteCollaboratorHandler
+	deleteCollaboratorEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/collaborators/{user_id}",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	deleteCollaboratorHandler := project.NewDeleteCollaboratorHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteCollaboratorEndpoint,
+		Handler:  deleteCollaboratorHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/roles -> project.NewRolesListHandler
 	listRolesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

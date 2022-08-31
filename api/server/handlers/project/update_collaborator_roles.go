@@ -90,91 +90,77 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
+	if len(userRoles) == 0 {
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("user is not a collaborator in this project"), http.StatusBadRequest,
+		))
+		return
+	}
+
 	userRolesMap := make(map[string]bool)
 
 	for _, role := range userRoles {
 		userRolesMap[role.UniqueID] = true
 	}
 
-	if len(userRoles) == 0 {
-		for _, uid := range request.RoleUIDs {
-			role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+	var rolesToAdd []string
+	var rolesToRemove []string
 
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
-
-			userIDs := role.GetUserIDs()
-			userIDs = append(userIDs, userID)
-
-			err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
-
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
+	for _, uid := range userRoles {
+		if _, ok := rolesMap[uid.UniqueID]; !ok {
+			// user had this role, should be removed from
+			rolesToRemove = append(rolesToRemove, uid.UniqueID)
 		}
-	} else {
-		var rolesToAdd []string
-		var rolesToRemove []string
+	}
 
-		for _, uid := range userRoles {
-			if _, ok := rolesMap[uid.UniqueID]; !ok {
-				// user had this role, should be removed from
-				rolesToRemove = append(rolesToRemove, uid.UniqueID)
-			}
+	for _, uid := range request.RoleUIDs {
+		if _, ok := userRolesMap[uid]; !ok {
+			// user does not have this role, should be added to
+			rolesToAdd = append(rolesToAdd, uid)
+		}
+	}
+
+	for _, uid := range rolesToAdd {
+		role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
 		}
 
-		for _, uid := range request.RoleUIDs {
-			if _, ok := userRolesMap[uid]; !ok {
-				// user does not have this role, should be added to
-				rolesToAdd = append(rolesToAdd, uid)
-			}
+		userIDs := role.GetUserIDs()
+		userIDs = append(userIDs, userID)
+
+		err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	for _, uid := range rolesToRemove {
+		role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
 		}
 
-		for _, uid := range rolesToAdd {
-			role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+		userIDs := role.GetUserIDs()
+		var newUserIDs []uint
 
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
-
-			userIDs := role.GetUserIDs()
-			userIDs = append(userIDs, userID)
-
-			err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
-
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+		for _, id := range userIDs {
+			if id != userID {
+				newUserIDs = append(newUserIDs, id)
 			}
 		}
 
-		for _, uid := range rolesToRemove {
-			role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+		err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, newUserIDs)
 
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
-
-			userIDs := role.GetUserIDs()
-			var newUserIDs []uint
-
-			for _, id := range userIDs {
-				if id != userID {
-					newUserIDs = append(newUserIDs, id)
-				}
-			}
-
-			err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, newUserIDs)
-
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
+		if err != nil {
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
 		}
 	}
 }

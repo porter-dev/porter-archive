@@ -58,7 +58,14 @@ func (c *UpdateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !role.IsDefaultRole() && request.Name != "" && request.Name != role.Name {
+	if role.IsDefaultRole() {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			fmt.Errorf("cannot update default project roles"), http.StatusBadRequest,
+		))
+		return
+	}
+
+	if request.Name != "" && request.Name != role.Name {
 		if request.Name == string(types.RoleAdmin) ||
 			request.Name == string(types.RoleDeveloper) ||
 			request.Name == string(types.RoleViewer) {
@@ -86,6 +93,15 @@ func (c *UpdateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	} else {
+		for _, u := range request.Users {
+			err := validateUserForProjectRole(c.Repo(), u, project.ID)
+
+			if err != nil {
+				c.HandleAPIError(w, r, err)
+				return
+			}
+		}
+
 		err = c.Repo().ProjectRole().UpdateUsersInProjectRole(project.ID, roleUID, request.Users)
 
 		if err != nil {
@@ -94,7 +110,7 @@ func (c *UpdateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	if !role.IsDefaultRole() && request.Policy != nil {
+	if request.Policy != nil {
 		policy, err := c.Repo().Policy().ReadPolicy(project.ID, role.PolicyUID)
 
 		if err != nil {

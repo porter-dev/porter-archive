@@ -169,11 +169,20 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 				}
 			}
 
-			err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, newUserIDs)
+			if len(newUserIDs) == 0 {
+				err = p.Repo().ProjectRole().ClearUsersInProjectRole(proj.ID, uid)
 
-			if err != nil {
-				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
+				if err != nil {
+					p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					return
+				}
+			} else {
+				err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, newUserIDs)
+
+				if err != nil {
+					p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					return
+				}
 			}
 		}
 	}

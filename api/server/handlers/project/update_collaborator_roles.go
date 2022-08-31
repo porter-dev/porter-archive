@@ -98,10 +98,17 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	if len(userRoles) == 0 {
 		for _, uid := range request.RoleUIDs {
-			userIDs := rolesMap[uid].GetUserIDs()
+			role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			userIDs := role.GetUserIDs()
 			userIDs = append(userIDs, userID)
 
-			err := p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
+			err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
 
 			if err != nil {
 				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -127,10 +134,17 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		}
 
 		for _, uid := range rolesToAdd {
-			userIDs := rolesMap[uid].GetUserIDs()
+			role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			userIDs := role.GetUserIDs()
 			userIDs = append(userIDs, userID)
 
-			err := p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
+			err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, userIDs)
 
 			if err != nil {
 				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -139,7 +153,14 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		}
 
 		for _, uid := range rolesToRemove {
-			userIDs := rolesMap[uid].GetUserIDs()
+			role, err := p.Repo().ProjectRole().ReadProjectRole(proj.ID, uid)
+
+			if err != nil {
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			userIDs := role.GetUserIDs()
 			var newUserIDs []uint
 
 			for _, id := range userIDs {
@@ -148,7 +169,7 @@ func (p *UpdateCollaboratorRolesHandler) ServeHTTP(w http.ResponseWriter, r *htt
 				}
 			}
 
-			err := p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, newUserIDs)
+			err = p.Repo().ProjectRole().UpdateUsersInProjectRole(proj.ID, uid, newUserIDs)
 
 			if err != nil {
 				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

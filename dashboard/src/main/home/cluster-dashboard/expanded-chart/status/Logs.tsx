@@ -86,7 +86,7 @@ const LogsFC: React.FC<{
 
               return (
                 <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
-                  {ansi.content.trim().replace(/ /g, "\u00a0")}
+                  {ansi.content.replace(/ /g, "\u00a0")}
                 </LogSpan>
               );
             })}
@@ -118,7 +118,7 @@ const LogsFC: React.FC<{
 
             return (
               <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
-                {ansi.content.trim().replace(/ /g, "\u00a0")}
+                {ansi.content.replace(/ /g, "\u00a0")}
               </LogSpan>
             );
           })}

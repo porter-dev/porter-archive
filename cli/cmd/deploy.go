@@ -231,6 +231,7 @@ var updateEnvGroupCmd = &cobra.Command{
 var updateSetEnvGroupCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Sets the desired value of an environment variable in an env group in the form VAR=VALUE.",
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateSetEnvGroup)
 
@@ -243,6 +244,7 @@ var updateSetEnvGroupCmd = &cobra.Command{
 var updateUnsetEnvGroupCmd = &cobra.Command{
 	Use:   "unset",
 	Short: "Removes an environment variable from an env group.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := checkLoginAndRun(args, updateUnsetEnvGroup)
 
@@ -262,9 +264,10 @@ var stream bool
 var buildFlagsEnv []string
 var forcePush bool
 var useCache bool
-var value string
 var version uint
 var varType string
+var normalEnvGroupVars []string
+var secretEnvGroupVars []string
 
 func init() {
 	buildFlagsEnv = []string{}
@@ -405,6 +408,22 @@ func init() {
 		"type",
 		"normal",
 		"the type of environment variable (either \"normal\" or \"secret\")",
+	)
+
+	updateSetEnvGroupCmd.PersistentFlags().StringArrayVarP(
+		&normalEnvGroupVars,
+		"normal",
+		"n",
+		[]string{},
+		"list of variables to set, in the form VAR=VALUE",
+	)
+
+	updateSetEnvGroupCmd.PersistentFlags().StringArrayVarP(
+		&secretEnvGroupVars,
+		"secret",
+		"s",
+		[]string{},
+		"list of secret variables to set, in the form VAR=VALUE",
 	)
 
 	updateEnvGroupCmd.AddCommand(updateSetEnvGroupCmd)
@@ -573,14 +592,8 @@ func updateUpgrade(_ *types.GetAuthenticatedUserResponse, client *api.Client, ar
 }
 
 func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("required variable in the form of VAR=VALUE")
-	}
-
-	key, value, found := strings.Cut(args[0], "=")
-
-	if !found {
-		return fmt.Errorf("variable should be in the form of VAR=VALUE")
+	if len(normalEnvGroupVars) == 0 && len(secretEnvGroupVars) == 0 && len(args) == 0 {
+		return fmt.Errorf("please provide one or more variables to update")
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -606,17 +619,56 @@ func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client
 		Variables: envGroupResp.Variables,
 	}
 
-	delete(newEnvGroup.Variables, key)
+	// first check for multiple variables being set using the -e or -s flags
+	if len(normalEnvGroupVars) > 0 || len(secretEnvGroupVars) > 0 {
+		for _, v := range normalEnvGroupVars {
+			delete(newEnvGroup.Variables, v)
 
-	if varType == "secret" {
-		newEnvGroup.SecretVariables = make(map[string]string)
-		newEnvGroup.SecretVariables[key] = value
+			key, value, err := validateVarValue(v)
 
-		s.Suffix = fmt.Sprintf(" Adding new secret variable '%s' to env group '%s' in namespace '%s'", key, name, namespace)
-	} else {
-		newEnvGroup.Variables[key] = value
+			if err != nil {
+				return err
+			}
 
-		s.Suffix = fmt.Sprintf(" Adding new variable '%s' to env group '%s' in namespace '%s'", key, name, namespace)
+			newEnvGroup.Variables[key] = value
+		}
+
+		if len(secretEnvGroupVars) > 0 {
+			newEnvGroup.SecretVariables = make(map[string]string)
+		}
+
+		for _, v := range secretEnvGroupVars {
+			delete(newEnvGroup.Variables, v)
+
+			key, value, err := validateVarValue(v)
+
+			if err != nil {
+				return err
+			}
+
+			newEnvGroup.SecretVariables[key] = value
+		}
+
+		s.Suffix = fmt.Sprintf(" Updating env group '%s' in namespace '%s'", name, namespace)
+	} else { // legacy usage
+		key, value, err := validateVarValue(args[0])
+
+		if err != nil {
+			return err
+		}
+
+		delete(newEnvGroup.Variables, key)
+
+		if varType == "secret" {
+			newEnvGroup.SecretVariables = make(map[string]string)
+			newEnvGroup.SecretVariables[key] = value
+
+			s.Suffix = fmt.Sprintf(" Adding new secret variable '%s' to env group '%s' in namespace '%s'", key, name, namespace)
+		} else {
+			newEnvGroup.Variables[key] = value
+
+			s.Suffix = fmt.Sprintf(" Adding new variable '%s' to env group '%s' in namespace '%s'", key, name, namespace)
+		}
 	}
 
 	s.Start()
@@ -634,6 +686,16 @@ func updateSetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client
 	color.New(color.FgGreen).Println("env group successfully updated")
 
 	return nil
+}
+
+func validateVarValue(in string) (string, string, error) {
+	key, value, found := strings.Cut(in, "=")
+
+	if !found {
+		return "", "", fmt.Errorf("%s is not in the form of VAR=VALUE", in)
+	}
+
+	return key, value, nil
 }
 
 func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Client, args []string) error {
@@ -664,9 +726,11 @@ func updateUnsetEnvGroup(_ *types.GetAuthenticatedUserResponse, client *api.Clie
 		Variables: envGroupResp.Variables,
 	}
 
-	delete(newEnvGroup.Variables, args[0])
+	for _, v := range args {
+		delete(newEnvGroup.Variables, v)
+	}
 
-	s.Suffix = fmt.Sprintf(" Removing variable '%s' from env group '%s' in namespace '%s'", args[0], name, namespace)
+	s.Suffix = fmt.Sprintf(" Removing variables from env group '%s' in namespace '%s'", name, namespace)
 
 	s.Start()
 

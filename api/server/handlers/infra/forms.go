@@ -91,6 +91,12 @@ tabs:
           value: db.t3.xlarge
         - label: db.t3.2xlarge
           value: db.t3.2xlarge
+        - label: db.r6g.large
+          value: db.r6g.large
+        - label: db.r6g.xlarge
+          value: db.r6g.xlarge
+        - label: db.r6g.2xlarge
+          value: db.r6g.2xlarge
   - name: family-versions
     contents:
     - type: select

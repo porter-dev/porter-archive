@@ -17,7 +17,7 @@ export const useLogs = (
   currentPod: SelectedPodType,
   scroll?: (smooth: boolean) => void
 ) => {
-  let logsBufferRef = useRef<Log[]>([]);
+  let logsBufferRef = useRef<Record<string, Log[]>>({});
   const currentPodName = useRef<string>();
 
   const { currentCluster, currentProject } = useContext(Context);
@@ -146,10 +146,15 @@ export const useLogs = (
    */
   const flushLogsBuffer = (containerName?: string) => {
     if (containerName) {
-      updateContainerLogs(containerName, [...logsBufferRef.current]);
+      updateContainerLogs(containerName, [
+        ...(logsBufferRef.current[containerName] || []),
+      ]);
+      logsBufferRef.current[containerName] = [];
+      return;
     }
 
-    logsBufferRef.current = [];
+    // If no container name is provided flush all,
+    logsBufferRef.current = {};
   };
 
   const setupWebsocket = (containerName: string, websocketKey: string) => {
@@ -164,13 +169,17 @@ export const useLogs = (
       onmessage: (evt: MessageEvent) => {
         let ansiLog = Anser.ansiToJson(evt.data);
 
-        logsBufferRef.current.push({
+        if (!logsBufferRef.current[containerName]) {
+          logsBufferRef.current[containerName] = [];
+        }
+
+        logsBufferRef.current[containerName].push({
           line: ansiLog,
-          lineNumber: logsBufferRef.current.length + 1,
+          lineNumber: logsBufferRef.current[containerName].length + 1,
         });
 
         // If size of the logs buffer is exceeded, immediately flush the buffer
-        if (logsBufferRef.current.length > LOGS_BUFFER_SIZE) {
+        if (logsBufferRef.current[containerName].length > LOGS_BUFFER_SIZE) {
           flushLogsBuffer(containerName);
         }
       },
@@ -188,7 +197,7 @@ export const useLogs = (
     closeWebsocket(websocketKey);
 
     // Flush and re-initialize empty buffer
-    flushLogsBuffer();
+    flushLogsBuffer(currentContainer);
     setPrevLogs((prev) => ({ ...prev, [currentContainer]: [] }));
     setLogs((prev) => ({ ...prev, [currentContainer]: [] }));
 
@@ -264,8 +273,11 @@ export const useLogs = (
    */
   useEffect(() => {
     const flushLogsBufferInterval = setInterval(
-      () => flushLogsBuffer(currentContainer),
-      3000
+      () =>
+        Object.keys(logsBufferRef.current).forEach((container) =>
+          flushLogsBuffer(container)
+        ),
+      5000
     );
 
     return () => clearInterval(flushLogsBufferInterval);

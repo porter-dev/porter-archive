@@ -7,7 +7,7 @@ COPY package*.json ./
 
 ENV NODE_ENV=development
 
-RUN npm install
+RUN npm ci --legacy-peer-deps
 RUN npm i -g http-parser-js
 
 COPY . ./

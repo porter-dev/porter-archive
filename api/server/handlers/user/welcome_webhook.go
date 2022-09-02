@@ -27,14 +27,19 @@ func NewUserWelcomeHandler(
 }
 
 func (u *UserWelcomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Skip if no welcome hook is configured.
+	welcomeFormWebhook := u.Config().ServerConf.WelcomeFormWebhook
+	if welcomeFormWebhook == "" {
+		return
+	}
+
 	reqVals := &types.WelcomeWebhookRequest{}
 
 	if ok := u.DecodeAndValidate(w, r, reqVals); !ok {
 		return
 	}
 
-	req, err := http.NewRequest("GET", u.Config().ServerConf.WelcomeFormWebhook, nil)
-
+	req, err := http.NewRequest("GET", welcomeFormWebhook, nil)
 	if err != nil {
 		return
 	}

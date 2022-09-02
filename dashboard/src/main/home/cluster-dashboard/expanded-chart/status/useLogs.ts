@@ -272,16 +272,22 @@ export const useLogs = (
    * on the buffer so that we dont have any stale logs
    */
   useEffect(() => {
-    const flushLogsBufferInterval = setInterval(
-      () =>
-        Object.keys(logsBufferRef.current).forEach((container) =>
-          flushLogsBuffer(container)
-        ),
-      5000
-    );
+    const flushAllLogs = () =>
+      Object.keys(logsBufferRef.current).forEach((container) =>
+        flushLogsBuffer(container)
+      );
+
+    /**
+     * We dont want users to wait for too long for the initial
+     * logs to appear. So we use a setTimeout for 1s to force-flush
+     * logs after 1s of load
+     */
+    setTimeout(flushAllLogs, 1000);
+
+    const flushLogsBufferInterval = setInterval(flushAllLogs, 5000);
 
     return () => clearInterval(flushLogsBufferInterval);
-  }, [currentContainer]);
+  }, []);
 
   const currentLogs = useMemo(() => {
     return logs[currentContainer] || [];

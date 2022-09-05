@@ -18,7 +18,7 @@ services:
       - postgres
     env_file:
       - ./docker/.env
-    command: /bin/sh -c '/porter/bin/migrate; air -c .air.toml;'
+    command: air -c .air.toml
     restart: on-failure
     volumes:
       - ./cmd:/porter/cmd

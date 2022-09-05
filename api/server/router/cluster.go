@@ -697,7 +697,7 @@ func getClusterRoutes(
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/kubeconfig -> cluster.NewGetTemporaryKubeconfigHandler
 	getTemporaryKubeconfigEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
+			Verb:   types.APIVerbUpdate, // we do not want users with no-write access to be able to use this
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,

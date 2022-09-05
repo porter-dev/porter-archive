@@ -260,6 +260,7 @@ export interface ProjectType {
   managed_infra_enabled: boolean;
   api_tokens_enabled: boolean;
   stacks_enabled: boolean;
+  advanced_rbac_enabled: boolean;
   roles: {
     id: number;
     kind: string;
@@ -328,16 +329,18 @@ export interface CapabilityType {
   provisioner: boolean;
 }
 
+export type OverlayData = {
+  message: string;
+  onYes: () => void;
+  onNo: () => void;
+};
+
 export interface ContextProps {
   currentModal?: string;
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
-  currentOverlay: {
-    message: string;
-    onYes: any;
-    onNo: any;
-  };
-  setCurrentOverlay: (x: any) => void;
+  currentOverlay: OverlayData;
+  setCurrentOverlay: (x: OverlayData) => void;
   currentError?: string;
   setCurrentError: (currentError: string) => void;
   currentCluster?: ClusterType;

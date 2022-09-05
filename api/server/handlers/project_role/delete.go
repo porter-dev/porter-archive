@@ -32,6 +32,13 @@ func NewDeleteProjectRoleHandler(
 func (c *DeleteProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
+	if !project.AdvancedRBACEnabled {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			errors.New("advanced RBAC is not enabled for this project"), http.StatusPreconditionFailed,
+		))
+		return
+	}
+
 	roleUID, reqErr := requestutils.GetURLParamString(r, types.URLParamProjectRoleID)
 
 	if reqErr != nil {

@@ -4,6 +4,7 @@ import {
   CapabilityType,
   ClusterType,
   ContextProps,
+  OverlayData,
   ProjectType,
   UsageData,
 } from "shared/types";
@@ -27,12 +28,8 @@ export interface GlobalContextType {
   currentModal: string;
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
-  currentOverlay: {
-    message: string;
-    onYes: any;
-    onNo: any;
-  };
-  setCurrentOverlay: (x: any) => void;
+  currentOverlay: OverlayData;
+  setCurrentOverlay: (x: OverlayData) => void;
   currentError: string | null;
   setCurrentError: (currentError: string) => void;
   currentCluster: ClusterType;
@@ -85,7 +82,7 @@ class ContextProvider extends Component<PropsType, StateType> {
       this.setState({ currentModal, currentModalData });
     },
     currentOverlay: null,
-    setCurrentOverlay: (x: any) => this.setState({ currentOverlay: x }),
+    setCurrentOverlay: (x: OverlayData) => this.setState({ currentOverlay: x }),
     currentError: null,
     setCurrentError: (currentError: string) => {
       this.setState({ currentError });

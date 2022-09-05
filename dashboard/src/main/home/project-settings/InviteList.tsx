@@ -27,11 +27,12 @@ export type Collaborator = {
   roles: string[];
 };
 
-const InvitePage: React.FunctionComponent<Props> = ({ }) => {
+const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const {
     currentProject,
     setCurrentModal,
     setCurrentError,
+    setCurrentOverlay,
     user,
     usage,
     hasBillingEnabled,
@@ -40,8 +41,6 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [invites, setInvites] = useState<Array<InviteType>>([]);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("developer");
-  const [roleList, setRoleList] = useState([]);
   const [isInvalidEmail, setIsInvalidEmail] = useState(false);
   const [isHTTPS] = useState(() => window.location.protocol === "https:");
 
@@ -50,26 +49,11 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
 
   useEffect(() => {
     api
-      .getAvailableRoles("<token>", {}, { project_id: currentProject?.id })
-      .then(({ data }: { data: string[] }) => {
-        const availableRoleList = data?.map((role) => ({
-          value: role,
-          label: capitalizeFirstLetter(role),
-        }));
-        setRoleList(availableRoleList);
-        setRole("developer");
-      });
-
-    api
       .listRoles("<token>", {}, { project_id: currentProject?.id })
       .then((res) => setRoles(res.data));
 
     getData();
   }, [currentProject]);
-
-  const capitalizeFirstLetter = (string: string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
 
   const getData = async () => {
     setIsLoading(true);
@@ -132,7 +116,11 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
     api
       .createInvite(
         "<token>",
-        { email, kind: role, roles: selectedRoles.map((role) => role.id) },
+        {
+          email,
+          kind: "developer",
+          roles: selectedRoles.map((role) => role.id),
+        },
         { id: currentProject.id }
       )
       .then(() => {
@@ -217,13 +205,14 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   };
 
   const removeCollaborator = (user_id: number) => {
+    const project_id = currentProject.id;
     try {
       api.removeCollaborator(
         "<token>",
         {},
         {
-          project_id: currentProject.id,
-          user_id: user.id
+          project_id,
+          user_id,
         }
       );
       getData();
@@ -319,7 +308,18 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
                 </SettingsButton>
                 <DeleteButton
                   invis={row.original.currentUser}
-                  onClick={() => removeCollaborator(row.original.id)}
+                  onClick={() => {
+                    setCurrentOverlay({
+                      message: `Are you sure you want to remove user ${row.original.email} from the project?`,
+                      onYes: () => {
+                        removeCollaborator(row.original.id);
+                        setCurrentOverlay(null);
+                      },
+                      onNo: () => {
+                        setCurrentOverlay(null);
+                      },
+                    });
+                  }}
                 >
                   <i className="material-icons">delete</i>
                 </DeleteButton>
@@ -350,11 +350,12 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
 
   const data = useMemo(() => {
     const inviteList = [...invites];
-    inviteList.sort((a: any, b: any) => (a.email > b.email ? 1 : -1));
-    inviteList.sort((a: any, b: any) => (a.accepted > b.accepted ? 1 : -1));
+    inviteList.sort((a, b) => (a.email > b.email ? 1 : -1));
+    inviteList.sort((a, b) => (a.accepted > b.accepted ? 1 : -1));
     const buildInviteLink = (token: string) => `
-      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${currentProject.id
-      }/invites/${token}
+      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${
+      currentProject.id
+    }/invites/${token}
     `;
 
     if (!user) {

@@ -1,6 +1,9 @@
 package gorm
 
 import (
+	"fmt"
+
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -18,6 +21,16 @@ func NewProjectRoleRepository(db *gorm.DB) repository.ProjectRoleRepository {
 }
 
 func (repo *ProjectRoleRepository) CreateProjectRole(role *models.ProjectRole) (*models.ProjectRole, error) {
+	proj := &models.Project{}
+
+	if err := repo.db.Where("id = ?", role.ProjectID).First(proj).Error; err != nil {
+		return nil, fmt.Errorf("error creating role for project: %w", err)
+	}
+
+	if !role.IsDefaultRole() && !proj.AdvancedRBACEnabled {
+		return nil, fmt.Errorf("advanced RBAC is not enabled for this project")
+	}
+
 	if err := repo.db.Create(role).Error; err != nil {
 		return nil, err
 	}
@@ -99,8 +112,12 @@ func (repo *ProjectRoleRepository) UpdateUsersInProjectRole(projectID uint, role
 func (repo *ProjectRoleRepository) ClearUsersInProjectRole(projectID uint, roleUID string) error {
 	role := &models.ProjectRole{}
 
-	if err := repo.db.Where("project_id = ? AND unique_id = ?", projectID, roleUID).First(role).Error; err != nil {
+	if err := repo.db.Preload("Users").Where("project_id = ? AND unique_id = ?", projectID, roleUID).First(role).Error; err != nil {
 		return err
+	}
+
+	if role.UniqueID == fmt.Sprintf("%d-%s", role.ProjectID, types.RoleAdmin) && len(role.Users) == 1 {
+		return fmt.Errorf("cannot remove the last admin from this project")
 	}
 
 	assoc := repo.db.Model(&role).Association("Users")

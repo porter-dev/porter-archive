@@ -9,6 +9,7 @@ type Project struct {
 	ManagedInfraEnabled bool    `json:"managed_infra_enabled"`
 	APITokensEnabled    bool    `json:"api_tokens_enabled"`
 	StacksEnabled       bool    `json:"stacks_enabled"`
+	AdvancedRBACEnabled bool    `json:"advanced_rbac_enabled"`
 }
 
 type FeatureFlags struct {

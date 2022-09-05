@@ -58,14 +58,7 @@ func (c *UpdateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if role.IsDefaultRole() {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("cannot update default project roles"), http.StatusBadRequest,
-		))
-		return
-	}
-
-	if request.Name != "" && request.Name != role.Name {
+	if project.AdvancedRBACEnabled && !role.IsDefaultRole() && request.Name != "" && request.Name != role.Name {
 		if request.Name == string(types.RoleAdmin) ||
 			request.Name == string(types.RoleDeveloper) ||
 			request.Name == string(types.RoleViewer) {
@@ -110,7 +103,7 @@ func (c *UpdateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	if request.Policy != nil {
+	if project.AdvancedRBACEnabled && !role.IsDefaultRole() && request.Policy != nil {
 		policy, err := c.Repo().Policy().ReadPolicy(project.ID, role.PolicyUID)
 
 		if err != nil {

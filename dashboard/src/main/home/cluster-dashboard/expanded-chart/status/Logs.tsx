@@ -77,14 +77,15 @@ const LogsFC: React.FC<{
     ) {
       return previousLogs?.map((log, i) => {
         return (
-          <Log key={i}>
-            {log.map((ansi, j) => {
+          <Log key={[log.lineNumber, i].join(".")}>
+            <span className="line-number">{log.lineNumber}</span>
+            {log.line.map((ansi, j) => {
               if (ansi.clearLine) {
                 return null;
               }
 
               return (
-                <LogSpan key={i + "." + j} ansi={ansi}>
+                <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
                   {ansi.content.replace(/ /g, "\u00a0")}
                 </LogSpan>
               );
@@ -108,14 +109,15 @@ const LogsFC: React.FC<{
 
     return logs?.map((log, i) => {
       return (
-        <Log key={i}>
-          {log.map((ansi, j) => {
+        <Log key={[log.lineNumber, i].join(".")}>
+          <span className="line-number">{log.lineNumber}</span>
+          {log.line.map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
             }
 
             return (
-              <LogSpan key={i + "." + j} ansi={ansi}>
+              <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
                 {ansi.content.replace(/ /g, "\u00a0")}
               </LogSpan>
             );
@@ -351,6 +353,14 @@ const Message = styled.div`
 
 const Log = styled.div`
   font-family: monospace;
+  & > .line-number {
+    display: inline-block;
+    text-align: right;
+    min-width: 35px;
+    margin-right: 8px;
+    opacity: 0.3;
+    font-family: monospace;
+  }
 `;
 
 const LogSpan = styled.span`

@@ -63,10 +63,6 @@ Below are instructions for a quickstart. For full documentation, please visit ou
 
 3. 🚀 Deploy your applications from a [git repository](https://docs.getporter.dev/docs/applications) or [Docker image registry](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
 
-## Running Porter Locally
-
-While it requires a few additional steps, it is possible to run Porter locally. Follow [this guide](https://docs.getporter.dev/docs/running-porter-locally) to run the local version of Porter.
-
 ## Want to Help?
 
 We welcome all contributions. If you're interested in contributing, please read our [contributing guide](https://github.com/porter-dev/porter/blob/master/CONTRIBUTING.md) and [join our Discord community](https://discord.gg/GJynMR3KXK).

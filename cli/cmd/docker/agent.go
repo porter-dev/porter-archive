@@ -401,7 +401,7 @@ func (a *Agent) getPushOptions(image string) (types.ImagePushOptions, error) {
 }
 
 func GetServerURLFromTag(image string) (string, error) {
-	named, err := reference.ParseNamed(image)
+	named, err := reference.ParseNormalizedNamed(image)
 
 	if err != nil {
 		return "", err
@@ -430,6 +430,10 @@ func GetServerURLFromTag(image string) (string, error) {
 
 	if err != nil {
 		return "", err
+	}
+
+	if domain == "docker.io" {
+		domain = "index.docker.io"
 	}
 
 	return fmt.Sprintf("%s/%s", domain, nonImagePath), nil

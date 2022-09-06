@@ -5,20 +5,20 @@ import styled, { createGlobalStyle } from "styled-components";
 
 import MainWrapper from "./main/MainWrapper";
 
-export default class App extends Component {
-  render() {
-    return (
-      <StyledMain>
-        <GlobalStyle />
-        <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">
-          <BrowserRouter>
-            <MainWrapper />
-          </BrowserRouter>
-        </PorterErrorBoundary>
-      </StyledMain>
-    );
-  }
-}
+const App = () => {
+  return (
+    <StyledMain>
+      <GlobalStyle />
+      <PorterErrorBoundary errorBoundaryLocation="globalErrorBoundary">
+        <BrowserRouter>
+          <MainWrapper />
+        </BrowserRouter>
+      </PorterErrorBoundary>
+    </StyledMain>
+  );
+};
+
+export default App;
 
 const GlobalStyle = createGlobalStyle`
   * {

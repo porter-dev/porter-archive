@@ -28,7 +28,6 @@ export type ControllerTabPodType = {
   restartCount: number | string;
   podAge: string;
   revisionNumber?: number;
-  containerStatus: any;
 };
 
 const formatCreationTimestamp = timeFormat("%H:%M:%S %b %d, '%y");
@@ -126,7 +125,6 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             status: pod?.status,
             replicaSetName,
             restartCount,
-            containerStatus,
             podAge: pod?.metadata?.creationTimestamp ? podAge : "N/A",
             revisionNumber:
               (pod?.metadata?.annotations &&
@@ -235,8 +233,8 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
         {},
         {
           cluster_id: currentCluster.id,
-          name: pod?.name,
-          namespace: pod?.namespace,
+          name: pod.metadata?.name,
+          namespace: pod.metadata?.namespace,
           id: currentProject.id,
         }
       )

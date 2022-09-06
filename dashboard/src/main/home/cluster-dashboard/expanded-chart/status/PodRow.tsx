@@ -43,12 +43,6 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
           {pod?.name}
           <Grey>Restart count: {pod.restartCount}</Grey>
           <Grey>Created on: {pod.podAge}</Grey>
-          {podStatus === "failed" ? (
-            <FailedStatusContainer>
-              <Grey>Failure Reason: {pod?.containerStatus?.state?.waiting?.reason}</Grey>
-              <Grey>{pod?.containerStatus?.state?.waiting?.message}</Grey>
-            </FailedStatusContainer>
-          ) : null}
         </Tooltip>
       )}
 
@@ -77,13 +71,6 @@ const InfoIcon = styled.div`
 const Grey = styled.div`
   margin-top: 5px;
   color: #aaaabb;
-`;
-
-const FailedStatusContainer = styled.div`
-  width: 100%;
-  border: 1px solid hsl(0deg, 100%, 30%);
-  padding: 5px;
-  margin-block: 5px;
 `;
 
 const Tooltip = styled.div`

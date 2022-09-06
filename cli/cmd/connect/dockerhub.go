@@ -22,21 +22,19 @@ func Dockerhub(
 
 	// query for dockerhub name
 
-	repoName, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the Docker Hub image path, in the form of ${org_name}/${repo_name}. For example, porter1/porter.
-Image path: `))
+	repoName, err := utils.PromptPlaintext("Provide the Docker Hub organization name. For example, if your Docker Hub repository is 'myorg/myrepo', enter 'myorg'.\nName: ")
 
 	if err != nil {
 		return 0, err
 	}
 
-	username, err := utils.PromptPlaintext(fmt.Sprintf(`Docker Hub username: `))
+	username, err := utils.PromptPlaintext("Docker Hub username: ")
 
 	if err != nil {
 		return 0, err
 	}
 
-	password, err := utils.PromptPassword(`Provide the Docker Hub personal access token.
-Token:`)
+	password, err := utils.PromptPassword("Provide the Docker Hub personal access token.\nToken: ")
 
 	if err != nil {
 		return 0, err

@@ -29,7 +29,7 @@ const useAuth = () => {
       }
       // We iterate over all the policies in search for at least one policy that will authorize
       // the user to perform an action.
-      authContext.currentPolicy.reduce(
+      return authContext.currentPolicy.reduce(
         isAuthorizedReducer(scope, resource, verb),
         false
       );

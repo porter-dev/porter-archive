@@ -23,13 +23,17 @@ const useAuth = () => {
       scope: ScopeType,
       resource: string | string[],
       verb: Verbs | Array<Verbs>
-    ) =>
+    ) => {
+      if (!authContext || !authContext.currentPolicy) {
+        return false;
+      }
       // We iterate over all the policies in search for at least one policy that will authorize
       // the user to perform an action.
       authContext.currentPolicy.reduce(
         isAuthorizedReducer(scope, resource, verb),
         false
-      ),
+      );
+    },
     [authContext.currentPolicy]
   );
 

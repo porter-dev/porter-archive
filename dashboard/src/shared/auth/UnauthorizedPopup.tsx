@@ -1,5 +1,6 @@
 import { Collapse, Snackbar } from "@material-ui/core";
 import { Alert } from "@material-ui/lab";
+import Modal from "main/home/modals/Modal";
 import React from "react";
 import styled from "styled-components";
 import { proxy, useSnapshot } from "valtio";
@@ -17,6 +18,7 @@ const actions = {
   },
   hideUnauthorizedPopup: () => {
     state.showUnauthorizedPopup = false;
+    state.expanded = false;
     state.message = "";
   },
   toggleExpanded: () => {
@@ -29,13 +31,25 @@ export const UnauthorizedPopupActions = actions;
 export const UnauthorizedPopup = () => {
   const { showUnauthorizedPopup, message, expanded } = useSnapshot(state);
 
-  if (expanded) {
-    // TODO: Implement expanded view. Should be a modal with the full message and contact information.
+  if (!showUnauthorizedPopup) {
     return null;
   }
 
-  if (!showUnauthorizedPopup) {
-    return null;
+  if (expanded) {
+    // TODO: Implement expanded view. Should be a modal with the full message and contact information.
+    return (
+      <Modal onRequestClose={actions.toggleExpanded} height="fit-content">
+        <ModalContentWrapper>
+          <ModalTitle>Unauthorized</ModalTitle>
+          <ModalMessage>{message}</ModalMessage>
+          <ModalContact>
+            Please contact your administrator. If you think this is a mistake,
+            please contact us at{" "}
+            <a href="mailto:contact@getporter.dev">contact@getporter.dev</a>
+          </ModalContact>
+        </ModalContentWrapper>
+      </Modal>
+    );
   }
 
   return (
@@ -81,4 +95,29 @@ const ActionButton = styled.button`
   > i {
     font-size: 18px;
   }
+`;
+
+const ModalContentWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const ModalTitle = styled.div`
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 10px;
+`;
+
+const ModalMessage = styled.div`
+  font-size: 14px;
+  margin-bottom: 10px;
+`;
+
+const ModalContact = styled.div`
+  font-size: 14px;
+  margin-bottom: 10px;
+  text-align: center;
 `;

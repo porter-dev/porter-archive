@@ -88,9 +88,10 @@ const apiQueryBuilder = <ParamsType extends {}, PathParamsType = {}>(
   pathParams: PathParamsType
 ) => {
   try {
-    return axios(
+    const res = ((await axios(
       buildAxiosConfig(method, endpoint, token, params, pathParams)
-    ) as AxiosPromise<ResponseType>;
+    )) as unknown) as AxiosPromise<ResponseType>;
+    return res;
   } catch (error) {
     const axiosError = error as AxiosError;
 

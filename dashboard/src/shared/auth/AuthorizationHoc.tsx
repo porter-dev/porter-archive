@@ -2,15 +2,16 @@ import React, { useCallback, useContext } from "react";
 import { AuthContext } from "./AuthContext";
 import { isAuthorized } from "./authorization-helpers";
 import { ScopeType, Verbs } from "./types";
+import useAuth from "./useAuth";
 
 export const GuardedComponent = <ComponentProps extends object>(
   scope: ScopeType,
   resource: string,
   verb: Verbs | Array<Verbs>
 ) => (Component: any) => (props: ComponentProps) => {
-  const authContext = useContext(AuthContext);
+  const [isAuth] = useAuth();
 
-  if (isAuthorized(authContext.currentPolicy, scope, resource, verb)) {
+  if (isAuth(scope, resource, verb)) {
     return <Component {...props} />;
   }
 
@@ -36,13 +37,7 @@ export function withAuth<P>(
   })`;
 
   const C = (props: P) => {
-    const authContext = useContext(AuthContext);
-
-    const isAuth = useCallback(
-      (scope: ScopeType, resource: string, verb: Verbs | Array<Verbs>) =>
-        isAuthorized(authContext.currentPolicy, scope, resource, verb),
-      [authContext.currentPolicy]
-    );
+    const [isAuth] = useAuth();
     // At this point, the props being passed in are the original props the component expects.
     return <WrappedComponent {...props} isAuthorized={isAuth} />;
   };

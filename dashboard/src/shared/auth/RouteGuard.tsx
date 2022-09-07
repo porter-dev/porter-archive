@@ -6,6 +6,7 @@ import { isAuthorized } from "./authorization-helpers";
 import { ScopeType, Verbs } from "./types";
 
 import Loading from "components/Loading";
+import useAuth from "./useAuth";
 
 type GuardedRouteProps = {
   scope: ScopeType;
@@ -22,15 +23,13 @@ const GuardedRoute: React.FC<RouteProps & GuardedRouteProps> = ({
   ...rest
 }) => {
   const { currentPolicy } = useContext(AuthContext);
-  const auth = useMemo(() => {
-    return isAuthorized(currentPolicy, scope, resource, verb);
-  }, [currentPolicy, scope, resource, verb]);
+  const [isAuth] = useAuth();
 
   const render = (props: any) => {
     if (!currentPolicy) {
       return <div> Loading </div>;
     }
-    if (auth) {
+    if (isAuth(scope, resource, verb)) {
       return children || <Component {...props} />;
     }
     return <UnauthorizedPage />;
@@ -40,19 +39,17 @@ const GuardedRoute: React.FC<RouteProps & GuardedRouteProps> = ({
 };
 
 export const fakeGuardedRoute = <ComponentProps extends object>(
-  scope: string,
+  scope: ScopeType,
   resource: string,
   verb: Verbs | Array<Verbs>
 ) => (Component: any) => (props: ComponentProps) => {
   const { currentPolicy } = useContext(AuthContext);
-  const auth = useMemo(() => {
-    return isAuthorized(currentPolicy, scope, resource, verb);
-  }, [currentPolicy, scope, resource, verb]);
+  const [isAuth] = useAuth();
 
   if (!currentPolicy) {
     return <Loading />;
   }
-  if (auth) {
+  if (isAuth(scope, resource, verb)) {
     return <Component {...props} />;
   }
 

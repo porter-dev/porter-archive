@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -97,6 +98,43 @@ func GetIngressesWithNGINXAnnotation(clientset kubernetes.Interface) ([]SimpleIn
 	}
 
 	return res, nil
+}
+
+func TestQueryPrometheus(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+) error {
+	now := time.Now()
+	prev := now.Add(-10 * time.Minute)
+
+	queryParams := map[string]string{
+		"start": fmt.Sprintf("%d", uint(now.Unix())),
+		"end":   fmt.Sprintf("%d", uint(prev.Unix())),
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/api/v1/label/__name__/values",
+		queryParams,
+	)
+
+	rawQuery, err := resp.DoRaw(context.TODO())
+
+	if err != nil {
+		return fmt.Errorf("could not query prometheus: %v", err)
+	}
+
+	rawQueryObj := &promRawValuesQuery{}
+
+	json.Unmarshal(rawQuery, rawQueryObj)
+
+	if rawQueryObj.Status != "success" {
+		return fmt.Errorf("could not query prometheus: label query was not successful")
+	}
+
+	return nil
 }
 
 type QueryOpts struct {

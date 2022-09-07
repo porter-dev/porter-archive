@@ -151,3 +151,37 @@ func (s *UserNotifier) SendProjectInviteEmail(opts *notifier.SendProjectInviteEm
 
 	return err
 }
+
+func (s *UserNotifier) SendTextEmail(opts *notifier.SendTextEmailOpts) error {
+	request := sendgrid.GetRequest(s.client.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request.Method = "POST"
+
+	sgMail := &mail.SGMailV3{
+		Content: []*mail.Content{
+			{
+				Type:  "text/plain",
+				Value: opts.Text,
+			},
+		},
+		Personalizations: []*mail.Personalization{
+			{
+				Subject: opts.Subject,
+				To: []*mail.Email{
+					{
+						Address: opts.Email,
+					},
+				},
+			},
+		},
+		From: &mail.Email{
+			Address: s.client.SenderEmail,
+			Name:    "Porter",
+		},
+	}
+
+	request.Body = mail.GetRequestBody(sgMail)
+
+	_, err := sendgrid.API(request)
+
+	return err
+}

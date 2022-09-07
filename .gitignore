@@ -68,3 +68,5 @@ terraform.rc
 .vscode
 
 tmp
+
+./bin/admin

@@ -22,11 +22,17 @@ type SendProjectInviteEmailOpts struct {
 	ProjectOwnerEmail string
 }
 
+type SendTextEmailOpts struct {
+	Email   string
+	Subject string
+	Text    string
+}
 type UserNotifier interface {
 	SendPasswordResetEmail(opts *SendPasswordResetEmailOpts) error
 	SendGithubRelinkEmail(opts *SendGithubRelinkEmailOpts) error
 	SendEmailVerification(opts *SendEmailVerificationOpts) error
 	SendProjectInviteEmail(opts *SendProjectInviteEmailOpts) error
+	SendTextEmail(opts *SendTextEmailOpts) error
 }
 
 type EmptyUserNotifier struct{}
@@ -44,5 +50,9 @@ func (e *EmptyUserNotifier) SendEmailVerification(opts *SendEmailVerificationOpt
 }
 
 func (e *EmptyUserNotifier) SendProjectInviteEmail(opts *SendProjectInviteEmailOpts) error {
+	return nil
+}
+
+func (e *EmptyUserNotifier) SendTextEmail(opts *SendTextEmailOpts) error {
 	return nil
 }

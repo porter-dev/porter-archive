@@ -35,6 +35,13 @@ func (c *CreateProjectRoleHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
+	if !project.AdvancedRBACEnabled {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
+			errors.New("advanced RBAC is not enabled for this project"), http.StatusPreconditionFailed,
+		))
+		return
+	}
+
 	request := &types.CreateProjectRoleRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {

@@ -5,14 +5,14 @@ import { POLICY_HIERARCHY_TREE, populatePolicy } from "./authorization-helpers";
 import { PolicyDocType } from "./types";
 
 type AuthContext = {
-  currentPolicy: PolicyDocType;
+  currentPolicy: PolicyDocType[];
 };
 
 export const AuthContext = React.createContext<AuthContext>({} as AuthContext);
 
 const AuthProvider: React.FC = ({ children }) => {
   const { user, currentProject } = useContext(Context);
-  const [currentPolicy, setCurrentPolicy] = useState(null);
+  const [currentPolicy, setCurrentPolicy] = useState<PolicyDocType[]>(null);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -20,20 +20,25 @@ const AuthProvider: React.FC = ({ children }) => {
       setCurrentPolicy(null);
     } else {
       api
-        .getPolicyDocument("<token>", {}, { project_id: currentProject?.id })
+        .getPolicyDocument<PolicyDocType[]>(
+          "<token>",
+          {},
+          { project_id: currentProject?.id }
+        )
         .then((res) => {
           if (!isSubscribed) {
             return;
           }
-          const currentPolicy = res.data[0];
-          setCurrentPolicy(
+
+          const policies = res.data.map((incompletePolicy) =>
             populatePolicy(
-              currentPolicy,
+              incompletePolicy,
               POLICY_HIERARCHY_TREE,
-              currentPolicy.scope,
-              currentPolicy.verbs
+              incompletePolicy.scope,
+              incompletePolicy.verbs
             )
           );
+          setCurrentPolicy(policies);
         });
     }
     return () => {

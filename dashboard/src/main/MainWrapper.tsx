@@ -2,27 +2,25 @@ import React, { Component } from "react";
 
 import { ContextProvider } from "../shared/Context";
 import Main from "./Main";
-import { RouteComponentProps, withRouter } from "react-router";
+import { useHistory, useLocation, withRouter } from "react-router";
 import AuthProvider from "shared/auth/AuthContext";
 import MainWrapperErrorBoundary from "shared/error_handling/MainWrapperErrorBoundary";
+import { UnauthorizedPopup } from "shared/auth/UnauthorizedPopup";
 
-type PropsType = RouteComponentProps & {};
+const MainWrapper = () => {
+  const location = useLocation();
+  const history = useHistory();
 
-type StateType = {};
-
-class MainWrapper extends Component<PropsType, StateType> {
-  render() {
-    let { history, location } = this.props;
-    return (
-      <ContextProvider history={history} location={location}>
-        <AuthProvider>
-          <MainWrapperErrorBoundary>
-            <Main />
-          </MainWrapperErrorBoundary>
-        </AuthProvider>
-      </ContextProvider>
-    );
-  }
-}
+  return (
+    <ContextProvider history={history} location={location}>
+      <AuthProvider>
+        <MainWrapperErrorBoundary>
+          <Main />
+        </MainWrapperErrorBoundary>
+      </AuthProvider>
+      <UnauthorizedPopup />
+    </ContextProvider>
+  );
+};
 
 export default withRouter(MainWrapper);

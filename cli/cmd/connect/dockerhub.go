@@ -23,8 +23,7 @@ func Dockerhub(
 
 	// query for dockerhub name
 
-	repoName, err := utils.PromptPlaintext(`Provide the Docker Hub repository, in the form of ${org_name}/${repo_name}. For example, porter1/porter.
-Repository: `)
+	repoName, err := utils.PromptPlaintext("Provide the Docker Hub repository, in the form of ${org_name}/${repo_name}. For example, porter1/porter.\nRepository: ")
 	if err != nil {
 		return 0, err
 	}
@@ -32,7 +31,7 @@ Repository: `)
 	orgRepo := strings.Split(repoName, "/")
 
 	if len(orgRepo) != 2 || orgRepo[0] == "" || orgRepo[1] == "" {
-		return 0, fmt.Errorf("invalid Docker Hub image path: %s", repoName)
+		return 0, fmt.Errorf("invalid Docker Hub repository: %s", repoName)
 	}
 
 	username, err := utils.PromptPlaintext("Docker Hub username: ")

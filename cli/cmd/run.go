@@ -541,7 +541,13 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 			return err
 		}
 
-		if namespace.Name != "default" {
+		if namespace.Name == "default" {
+			for _, cronJob := range cronJobs.Items {
+				if cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
+					return nil
+				}
+			}
+		} else {
 			for _, cronJob := range cronJobs.Items {
 				if cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
 					err = config.Clientset.BatchV1beta1().CronJobs(namespace.Name).Delete(
@@ -551,12 +557,6 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 						return err
 					}
 				}
-			}
-		}
-
-		for _, cronJob := range cronJobs.Items {
-			if namespace.Name == "default" && cronJob.Name == "porter-ephemeral-pod-deletion-cronjob" {
-				return nil
 			}
 		}
 	}
@@ -618,16 +618,36 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 }
 
 func checkForServiceAccount(config *PorterRunSharedConfig) error {
-	serviceAccounts, err := config.Clientset.CoreV1().ServiceAccounts(namespace).List(
-		context.Background(), metav1.ListOptions{},
-	)
+	namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 
-	for _, serviceAccount := range serviceAccounts.Items {
-		if serviceAccount.Name == "porter-ephemeral-pod-deletion-service-account" {
-			return nil
+	for _, namespace := range namespaces.Items {
+		serviceAccounts, err := config.Clientset.CoreV1().ServiceAccounts(namespace.Name).List(
+			context.Background(), metav1.ListOptions{},
+		)
+		if err != nil {
+			return err
+		}
+
+		if namespace.Name == "default" {
+			for _, svcAccount := range serviceAccounts.Items {
+				if svcAccount.Name == "porter-ephemeral-pod-deletion-service-account" {
+					return nil
+				}
+			}
+		} else {
+			for _, svcAccount := range serviceAccounts.Items {
+				if svcAccount.Name == "porter-ephemeral-pod-deletion-service-account" {
+					err = config.Clientset.CoreV1().ServiceAccounts(namespace.Name).Delete(
+						context.Background(), svcAccount.Name, metav1.DeleteOptions{},
+					)
+					if err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
@@ -636,7 +656,7 @@ func checkForServiceAccount(config *PorterRunSharedConfig) error {
 			Name: "porter-ephemeral-pod-deletion-service-account",
 		},
 	}
-	_, err = config.Clientset.CoreV1().ServiceAccounts(namespace).Create(
+	_, err = config.Clientset.CoreV1().ServiceAccounts("default").Create(
 		context.Background(), serviceAccount, metav1.CreateOptions{},
 	)
 	if err != nil {

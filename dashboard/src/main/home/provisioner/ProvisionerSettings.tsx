@@ -27,7 +27,7 @@ type Props = {
   provisioner?: boolean;
 };
 
-const providers = ["aws", "gcp", "do"];
+const providers = ["aws", "gcp"];
 
 const ProvisionerSettings: React.FC<Props> = ({
   provisioner,

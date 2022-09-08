@@ -438,6 +438,9 @@ func (c *CreateAgent) GetImageRepoURL(name, namespace string) (uint, string, err
 	if strings.Contains(imageURI, "pkg.dev") {
 		repoSlice := strings.Split(imageURI, "/")
 		imageURI = fmt.Sprintf("%s/%s", imageURI, repoSlice[len(repoSlice)-1])
+	} else if strings.Contains(imageURI, "index.docker.io") {
+		repoSlice := strings.Split(imageURI, "/")
+		imageURI = strings.Join(repoSlice[:len(repoSlice)-1], "/")
 	}
 
 	return regID, imageURI, nil

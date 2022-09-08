@@ -22,7 +22,9 @@ const tabOptions: {
   value: TabEnum;
 }[] = [
   { label: "Nodes", value: "nodes" },
+  /*
   { label: "Incidents", value: "incidents" },
+  */
   { label: "Metrics", value: "metrics" },
   { label: "Namespaces", value: "namespaces" },
   { label: "Settings", value: "settings" },

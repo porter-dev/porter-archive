@@ -530,9 +530,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let leftTabOptions = [] as any[];
     leftTabOptions.push({ label: "Status", value: "status" });
 
+    /* Temporarily disable incident detection
     if (!DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
       leftTabOptions.push({ label: "Incidents", value: "incidents" });
     }
+    */
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });

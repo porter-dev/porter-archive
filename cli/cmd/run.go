@@ -528,6 +528,24 @@ func executeRunEphemeral(config *PorterRunSharedConfig, namespace, name, contain
 }
 
 func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
+	// try and create the cron job and all of the other required resources as necessary,
+	// starting with the service account, then role and then a role binding
+
+	err := checkForServiceAccount(config)
+	if err != nil {
+		return err
+	}
+
+	err = checkForClusterRole(config)
+	if err != nil {
+		return err
+	}
+
+	err = checkForRoleBinding(config)
+	if err != nil {
+		return err
+	}
+
 	namespaces, err := config.Clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return err
@@ -559,24 +577,6 @@ func checkForPodDeletionCronJob(config *PorterRunSharedConfig) error {
 				}
 			}
 		}
-	}
-
-	// try and create the cron job and all of the other required resources as necessary,
-	// starting with the service account, then role and then a role binding
-
-	err = checkForServiceAccount(config)
-	if err != nil {
-		return err
-	}
-
-	err = checkForClusterRole(config)
-	if err != nil {
-		return err
-	}
-
-	err = checkForRoleBinding(config)
-	if err != nil {
-		return err
 	}
 
 	// create the cronjob

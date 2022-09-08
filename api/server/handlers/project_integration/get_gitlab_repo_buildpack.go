@@ -147,7 +147,6 @@ func initBuilderInfo() map[string]*buildpacks.BuilderInfo {
 		Name: "Paketo",
 		Builders: []string{
 			"paketobuildpacks/builder:full",
-			"paketobuildpacks/builder:base",
 		},
 	}
 	builders[buildpacks.HerokuBuilder] = &buildpacks.BuilderInfo{

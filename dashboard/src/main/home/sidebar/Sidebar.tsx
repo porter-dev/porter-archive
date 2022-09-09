@@ -146,7 +146,7 @@ class Sidebar extends Component<PropsType, StateType> {
 
           {this.context.hasFinishedOnboarding && (
             <>
-              <SidebarLabel>Current Cluster</SidebarLabel>
+              <SidebarLabel>Clusters</SidebarLabel>
               <ClusterSection
                 setWelcome={this.props.setWelcome}
                 currentView={currentView}
@@ -275,7 +275,7 @@ const SidebarBg = styled.div`
 
 const SidebarLabel = styled.div`
   color: #ffffff99;
-  padding: 5px 16px;
+  padding: 5px 23px;
   margin-bottom: 5px;
   font-size: 14px;
   z-index: 1;

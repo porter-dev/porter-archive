@@ -341,10 +341,11 @@ const LinkWrapper = styled.div`
 const ClusterSelector = styled(SidebarLink)`
   position: relative;
   display: block;
-  padding-left: 7px;
+  border-radius: 5px;
   width: 100%;
   height: 42px;
-  margin: 0 auto 0 auto;
+  margin: 5px 15px;
+  padding: 0 30px 2px 10px;
   font-size: 14px;
   font-weight: 500;
   color: white;

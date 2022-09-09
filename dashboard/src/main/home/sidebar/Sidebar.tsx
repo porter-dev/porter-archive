@@ -307,10 +307,12 @@ const ProjectPlaceholder = styled.div`
 const NavButton = styled(SidebarLink)`
   display: flex;
   align-items: center;
+  border-radius: 5px;
   position: relative;
   text-decoration: none;
-  height: 42px;
-  padding: 0 30px 2px 20px;
+  height: 36px;
+  margin: 5px 15px;
+  padding: 0 30px 2px 8px;
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
   color: #ffffff;
@@ -369,10 +371,10 @@ const SidebarBg = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  background-color: #292c35;
+  background-color: #202227;
   height: 100%;
   z-index: -1;
-  box-shadow: 8px 0px 8px 0px #00000010;
+  border-right: 1px solid #383A3F;
 `;
 
 const SidebarLabel = styled.div`
@@ -465,7 +467,7 @@ const CollapseButton = styled.div`
 
 const StyledSidebar = styled.section`
   font-family: "Work Sans", sans-serif;
-  width: 200px;
+  width: 225px;
   position: relative;
   padding-top: 20px;
   height: 100vh;
@@ -475,7 +477,7 @@ const StyledSidebar = styled.section`
   animation-fill-mode: forwards;
   @keyframes showSidebar {
     from {
-      margin-left: -200px;
+      margin-left: -225px;
     }
     to {
       margin-left: 0px;
@@ -486,7 +488,7 @@ const StyledSidebar = styled.section`
       margin-left: 0px;
     }
     to {
-      margin-left: -200px;
+      margin-left: -225px;
     }
   }
 `;

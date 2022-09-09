@@ -74,7 +74,7 @@ class ProjectSection extends Component<PropsType, StateType> {
         <div>
           <Dropdown>
             {this.renderOptionList()}
-            {this.context.canCreateProject && (
+            {this.context.user?.email.includes("porter.run") && (
               <Option
                 selected={false}
                 lastItem={true}
@@ -197,10 +197,10 @@ const Option = styled.div`
 
 const Dropdown = styled.div`
   position: absolute;
-  right: 10px;
+  right: 13px;
   top: calc(100% + 5px);
   background: #26282f;
-  width: 180px;
+  width: 199px;
   max-height: 500px;
   border-radius: 3px;
   z-index: 999;
@@ -221,7 +221,6 @@ const Letter = styled.div`
   position: absolute;
   padding-bottom: 2px;
   font-weight: 500;
-  background: #00000028;
   top: 0;
   left: 0;
   display: flex;
@@ -254,6 +253,7 @@ const ProjectIconAlt = styled(ProjectIcon)`
 
 const StyledProjectSection = styled.div`
   position: relative;
+  margin-left: 3px;
 `;
 
 const MainSelector = styled.div`

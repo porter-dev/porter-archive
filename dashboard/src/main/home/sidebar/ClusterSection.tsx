@@ -256,8 +256,8 @@ const SideLine = styled.div`
   position: absolute;
   left: 34px;
   width: 1px;
-  top: 3px;
-  height: calc(100% - 14px);
+  top: 5px;
+  height: calc(100% - 12px);
   background: #383A3F;
 `;
 

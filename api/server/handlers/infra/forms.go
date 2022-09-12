@@ -408,6 +408,10 @@ tabs:
           value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: r5.large
+          value: r5.large
+        - value: r5.xlarge
+          value: r5.xlarge
     - type: string-input
       label: 👤 Issuer Email
       required: true

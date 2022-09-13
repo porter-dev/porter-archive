@@ -18,15 +18,23 @@ import (
 	"github.com/joeshaw/envdecode"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/opa"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/worker"
 	"github.com/porter-dev/porter/workers/jobs"
 	"gorm.io/gorm"
+
+	"github.com/porter-dev/porter/ee/integrations/vault"
+	rcreds "github.com/porter-dev/porter/internal/repository/credentials"
+	pgorm "github.com/porter-dev/porter/internal/repository/gorm"
 )
 
 var (
-	jobQueue   chan worker.Job
-	envDecoder = EnvConf{}
-	dbConn     *gorm.DB
+	jobQueue    chan worker.Job
+	envDecoder  = EnvConf{}
+	dbConn      *gorm.DB
+	repo        repository.Repository
+	opaPolicies *opa.KubernetesPolicies
 )
 
 // EnvConf holds the environment variables for this binary
@@ -42,6 +50,8 @@ type EnvConf struct {
 	AWSRegion          string `env:"AWS_REGION"`
 	S3BucketName       string `env:"S3_BUCKET_NAME"`
 	EncryptionKey      string `env:"S3_ENCRYPTION_KEY"`
+
+	OPAConfigFileDir string `env:"OPA_CONFIG_FILE_DIR,default=./internal/opa"`
 
 	Port uint `env:"PORT,default=3000"`
 }
@@ -61,6 +71,30 @@ func main() {
 	}
 
 	dbConn = db
+
+	var credBackend rcreds.CredentialStorage
+
+	if envDecoder.DBConf.VaultAPIKey != "" && envDecoder.DBConf.VaultServerURL != "" && envDecoder.DBConf.VaultPrefix != "" {
+		credBackend = vault.NewClient(
+			envDecoder.DBConf.VaultServerURL,
+			envDecoder.DBConf.VaultAPIKey,
+			envDecoder.DBConf.VaultPrefix,
+		)
+	}
+
+	var key [32]byte
+
+	for i, b := range []byte(envDecoder.DBConf.EncryptionKey) {
+		key[i] = b
+	}
+
+	repo = pgorm.NewRepository(db, &key, credBackend)
+
+	opaPolicies, err = opa.LoadPolicies(envDecoder.OPAConfigFileDir)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	jobQueue = make(chan worker.Job, envDecoder.MaxQueue)
 	d := worker.NewDispatcher(int(envDecoder.MaxWorkers))
@@ -174,18 +208,18 @@ func getJob(id string, input map[string]interface{}) worker.Job {
 		}
 
 		return newJob
-	} else if id == "nginx-recommender" {
-		newJob, err := jobs.NewNGINXRecommender(dbConn, time.Now().UTC(), &jobs.NGINXRecommenderOpts{
+	} else if id == "recommender" {
+		newJob, err := jobs.NewRecommender(dbConn, time.Now().UTC(), &jobs.RecommenderOpts{
 			DBConf:         &envDecoder.DBConf,
 			DOClientID:     envDecoder.DOClientID,
 			DOClientSecret: envDecoder.DOClientSecret,
 			DOScopes:       []string{"read", "write"},
 			ServerURL:      envDecoder.ServerURL,
 			Input:          input,
-		})
+		}, opaPolicies)
 
 		if err != nil {
-			log.Printf("error creating job with ID: nginx-recommender. Error: %v", err)
+			log.Printf("error creating job with ID: recommender. Error: %v", err)
 			return nil
 		}
 

@@ -25,6 +25,8 @@ cert-manager:
     name: cert-manager
     namespace: cert-manager
   policies:
+  - path: "./policies/cert-manager/cert_manager_version.rego"
+    name: "cert_manager.version"
   - path: "./policies/cert-manager/cainjector_memory_limits.rego"
     name: "cert_manager.cainjector_memory_limits"
   - path: "./policies/cert-manager/controller_memory_limits.rego"

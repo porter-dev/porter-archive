@@ -207,16 +207,18 @@ func (n *recommender) getMonitorTestResultFromQueryResult(queryRes *opa.OPARecom
 	currTime := time.Now()
 
 	return &models.MonitorTestResult{
-		ProjectID:        n.projectID,
-		ClusterID:        n.clusterID,
-		Category:         queryRes.CategoryName,
-		ObjectID:         queryRes.ObjectID,
-		LastStatusChange: &currTime,
-		LastTested:       &currTime,
-		LastRunResult:    string(runResult),
-		Title:            queryRes.PolicyTitle,
-		Message:          queryRes.PolicyMessage,
-		Severity:         queryRes.PolicySeverity,
+		ProjectID:         n.projectID,
+		ClusterID:         n.clusterID,
+		Category:          queryRes.CategoryName,
+		ObjectID:          queryRes.ObjectID,
+		LastStatusChange:  &currTime,
+		LastTested:        &currTime,
+		LastRunResult:     string(runResult),
+		LastRunResultEnum: models.GetLastRunResultEnum(string(runResult)),
+		Title:             queryRes.PolicyTitle,
+		Message:           queryRes.PolicyMessage,
+		Severity:          queryRes.PolicySeverity,
+		SeverityEnum:      models.GetSeverityEnum(queryRes.PolicySeverity),
 	}
 }
 
@@ -238,6 +240,8 @@ func mergeMonitorTestResultFromQueryResult(monitor *models.MonitorTestResult, qu
 	monitor.Title = queryRes.PolicyTitle
 	monitor.Message = queryRes.PolicyMessage
 	monitor.Severity = queryRes.PolicySeverity
+	monitor.SeverityEnum = models.GetSeverityEnum(queryRes.PolicySeverity)
+	monitor.LastRunResultEnum = models.GetLastRunResultEnum(string(runResult))
 
 	return monitor
 }

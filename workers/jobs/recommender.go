@@ -40,12 +40,12 @@ type recommender struct {
 	db                   *gorm.DB
 	repo                 repository.Repository
 	doConf               *oauth2.Config
-	projectID, clusterID uint
-	collectionName       string
+	clusterAndProjectIDs []clusterAndProjectID
+	categories           []string
 	policies             *opa.KubernetesPolicies
 }
 
-// HelmRevisionsCountTrackerOpts holds the options required to run this job
+// RecommenderOpts holds the options required to run this job
 type RecommenderOpts struct {
 	DBConf         *env.DBConf
 	DOClientID     string
@@ -53,23 +53,23 @@ type RecommenderOpts struct {
 	DOScopes       []string
 	ServerURL      string
 
+	LegacyProjectIDs []uint
+
 	Input map[string]interface{}
 }
 
 type recommenderInput struct {
-	ProjectID uint `form:"required" mapstructure:"project_id"`
-	ClusterID uint `form:"required" mapstructure:"cluster_id"`
+	Projects  []uint `mapstructure:"projects"`
+	ClusterID uint   `mapstructure:"cluster_id"`
 
-	CollectionName string `form:"required" mapstructure:"name"`
+	Priority string `mapstructure:"priority"`
+
+	Categories []string `mapstructure:"categories"`
 }
 
-type Recommendation struct {
-	// ID         RecommendationID
-	Message   string
-	Automatic bool
-	// Severity   RecommendationSeverity
-	Warning    string
-	LastTested time.Time
+type clusterAndProjectID struct {
+	clusterID uint
+	projectID uint
 }
 
 func NewRecommender(
@@ -118,9 +118,60 @@ func NewRecommender(
 		return nil, fmt.Errorf(requestErr.Error())
 	}
 
+	clusterIDs, err := getClustersToParse(db, repo.Cluster(), parsedInput, opts.LegacyProjectIDs)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &recommender{
-		enqueueTime, db, repo, doConf, parsedInput.ProjectID, parsedInput.ClusterID, parsedInput.CollectionName, opaPolicies,
+		enqueueTime, db, repo, doConf, clusterIDs, parsedInput.Categories, opaPolicies,
 	}, nil
+}
+
+func getClustersToParse(db *gorm.DB, clusterRepo repository.ClusterRepository, input *recommenderInput, legacyProjects []uint) ([]clusterAndProjectID, error) {
+	// if the project and cluster ID is set, make sure that the project id matches the cluster's
+	// project id
+	if input.ClusterID != 0 {
+		if len(input.Projects) != 1 {
+			return nil, fmt.Errorf("if cluster ID is passed, you must pass the matching project ID")
+		}
+
+		_, err := clusterRepo.ReadCluster(input.Projects[0], input.ClusterID)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return []clusterAndProjectID{{
+			clusterID: input.ClusterID,
+			projectID: input.Projects[0],
+		}}, nil
+	}
+
+	// if there are no projects set, query for all clusters within the relevant projects
+	clusters := make([]*models.Cluster, 0)
+
+	query := db.Where(`clusters.project_id IN (?) OR clusters.project_id IN (
+		SELECT p2.id FROM projects AS p2
+		INNER JOIN project_usages ON p2.id=project_usages.project_id
+		WHERE project_usages.resource_cpu != 10 AND project_usages.resource_memory != 20000 AND project_usages.clusters != 1 AND project_usages.users != 1
+	)`, legacyProjects)
+
+	if err := query.Find(&clusters).Error; err != nil {
+		return nil, err
+	}
+
+	res := make([]clusterAndProjectID, 0)
+
+	for _, cluster := range clusters {
+		res = append(res, clusterAndProjectID{
+			clusterID: cluster.ID,
+			projectID: cluster.ProjectID,
+		})
+	}
+
+	return res, nil
 }
 
 func (n *recommender) ID() string {
@@ -132,72 +183,74 @@ func (n *recommender) EnqueueTime() time.Time {
 }
 
 func (n *recommender) Run() error {
-	fmt.Println(n.projectID, n.clusterID)
+	for _, ids := range n.clusterAndProjectIDs {
+		fmt.Println(ids.projectID, ids.clusterID)
 
-	cluster, err := n.repo.Cluster().ReadCluster(n.projectID, n.clusterID)
-
-	if err != nil {
-		log.Printf("error reading cluster ID %d: %v. skipping cluster ...", n.clusterID, err)
-		return err
-	}
-
-	k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
-		Cluster:                   cluster,
-		Repo:                      n.repo,
-		DigitalOceanOAuth:         n.doConf,
-		AllowInClusterConnections: false,
-	})
-
-	if err != nil {
-		log.Printf("error getting k8s agent for cluster ID %d: %v. skipping cluster ...", n.clusterID, err)
-		return err
-	}
-
-	dynamicClient, err := kubernetes.GetDynamicClientOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
-		Cluster:                   cluster,
-		Repo:                      n.repo,
-		DigitalOceanOAuth:         n.doConf,
-		AllowInClusterConnections: false,
-	})
-
-	if err != nil {
-		log.Printf("error getting dynamic client for cluster ID %d: %v. skipping cluster ...", n.clusterID, err)
-		return err
-	}
-
-	runner := opa.NewRunner(n.policies, k8sAgent, dynamicClient)
-
-	queryResults, err := runner.GetRecommendationsByName(n.collectionName)
-
-	if err != nil {
-		log.Printf("error querying opa policies for cluster ID %d: %v. skipping cluster ...", n.clusterID, err)
-		return err
-	}
-
-	for _, queryRes := range queryResults {
-		fmt.Println(queryRes.ObjectID, queryRes.Allow, queryRes.PolicyTitle, queryRes.PolicyMessage)
-
-		monitor, err := n.repo.MonitorTestResult().ReadMonitorTestResult(n.projectID, n.clusterID, queryRes.ObjectID)
+		cluster, err := n.repo.Cluster().ReadCluster(ids.projectID, ids.clusterID)
 
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				monitor, err = n.repo.MonitorTestResult().CreateMonitorTestResult(n.getMonitorTestResultFromQueryResult(queryRes))
-			} else {
-				return err
-			}
-		} else {
-			monitor, err = n.repo.MonitorTestResult().UpdateMonitorTestResult(mergeMonitorTestResultFromQueryResult(monitor, queryRes))
+			log.Printf("error reading cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
+			continue
 		}
 
+		k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
+			Cluster:                   cluster,
+			Repo:                      n.repo,
+			DigitalOceanOAuth:         n.doConf,
+			AllowInClusterConnections: false,
+		})
+
 		if err != nil {
-			return err
+			log.Printf("error getting k8s agent for cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
+			continue
+		}
+
+		dynamicClient, err := kubernetes.GetDynamicClientOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
+			Cluster:                   cluster,
+			Repo:                      n.repo,
+			DigitalOceanOAuth:         n.doConf,
+			AllowInClusterConnections: false,
+		})
+
+		if err != nil {
+			log.Printf("error getting dynamic client for cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
+			continue
+		}
+
+		runner := opa.NewRunner(n.policies, k8sAgent, dynamicClient)
+
+		queryResults, err := runner.GetRecommendations(n.categories)
+
+		if err != nil {
+			log.Printf("error querying opa policies for cluster ID %d: %v. skipping cluster ...", ids.clusterID, err)
+			continue
+		}
+
+		for _, queryRes := range queryResults {
+			fmt.Println(queryRes.ObjectID, queryRes.Allow, queryRes.PolicyTitle, queryRes.PolicyMessage)
+
+			monitor, err := n.repo.MonitorTestResult().ReadMonitorTestResult(ids.projectID, ids.clusterID, queryRes.ObjectID)
+
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					monitor, err = n.repo.MonitorTestResult().CreateMonitorTestResult(n.getMonitorTestResultFromQueryResult(cluster, queryRes))
+				} else {
+					continue
+				}
+			} else {
+				monitor, err = n.repo.MonitorTestResult().UpdateMonitorTestResult(mergeMonitorTestResultFromQueryResult(monitor, queryRes))
+			}
+
+			if err != nil {
+				continue
+			}
 		}
 	}
 
 	return nil
 }
 
-func (n *recommender) getMonitorTestResultFromQueryResult(queryRes *opa.OPARecommenderQueryResult) *models.MonitorTestResult {
+func (n *recommender) getMonitorTestResultFromQueryResult(cluster *models.Cluster, queryRes *opa.OPARecommenderQueryResult) *models.MonitorTestResult {
 	runResult := types.MonitorTestStatusSuccess
 
 	if !queryRes.Allow {
@@ -207,8 +260,8 @@ func (n *recommender) getMonitorTestResultFromQueryResult(queryRes *opa.OPARecom
 	currTime := time.Now()
 
 	return &models.MonitorTestResult{
-		ProjectID:         n.projectID,
-		ClusterID:         n.clusterID,
+		ProjectID:         cluster.ProjectID,
+		ClusterID:         cluster.ID,
 		Category:          queryRes.CategoryName,
 		ObjectID:          queryRes.ObjectID,
 		LastStatusChange:  &currTime,

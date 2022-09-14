@@ -1,6 +1,6 @@
 package prometheus.nodeexporter_memory_limits
 
-import future.keywords.if
+import future.keywords
 
 # Policy expects input structure of form:
 # values: {}
@@ -8,7 +8,7 @@ import future.keywords.if
 # This policy tests for the existence of memory limits as a hard constraint. We look
 # for Helm values of the form:
 # 
-# pushgateway:
+# nodeExporter:
 #   resources:
 #     limits:
 #       cpu: 200m
@@ -17,18 +17,21 @@ import future.keywords.if
 #       cpu: 10m
 #       memory: 256Mi
 
+POLICY_ID := "nodeexporter_memory_limits"
+
 POLICY_VERSION := "v0.0.1"
 
 POLICY_SEVERITY := "high"
 
 POLICY_TITLE := sprintf("Prometheus nodeExporter should have memory limits set", [])
 
+POLICY_SUCCESS_MESSAGE := sprintf("Success: Prometheus nodeExporter has memory limits set", [])
+
 allow if {
 	input.values.nodeExporter.resources.limits.memory
 }
 
-POLICY_MESSAGE := sprintf("Success: Prometheus nodeExporter has memory limits set", []) if allow
-
-else := sprintf("Failed: Prometheus nodeExporter does not have memory limits set", []) {
-	true
+FAILURE_MESSAGE contains msg if {
+	not allow
+	msg := "Failed: Prometheus nodeExporter does not have memory limits set"
 }

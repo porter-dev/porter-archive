@@ -1,6 +1,6 @@
 package prometheus.pushgateway_memory_limits
 
-import future.keywords.if
+import future.keywords
 
 # Policy expects input structure of form:
 # values: {}
@@ -17,18 +17,21 @@ import future.keywords.if
 #       cpu: 10m
 #       memory: 256Mi
 
+POLICY_ID := "pushgateway_memory_limits"
+
 POLICY_VERSION := "v0.0.1"
 
 POLICY_SEVERITY := "high"
 
 POLICY_TITLE := sprintf("Prometheus pushgateway should have memory limits set", [])
 
+POLICY_SUCCESS_MESSAGE := sprintf("Success: Prometheus pushgateway has memory limits set", [])
+
 allow if {
 	input.values.pushgateway.resources.limits.memory
 }
 
-POLICY_MESSAGE := sprintf("Success: Prometheus pushgateway has memory limits set", []) if allow
-
-else := sprintf("Failed: Prometheus pushgateway does not have memory limits set", []) {
-	true
+FAILURE_MESSAGE contains msg if {
+	not allow
+	msg := "Failed: Prometheus pushgateway does not have memory limits set"
 }

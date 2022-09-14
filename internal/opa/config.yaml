@@ -46,3 +46,55 @@ nginx_pod:
   policies:
   - path: "./policies/pod/running.rego"
     name: "pod.running"
+prometheus_server_pod:
+  kind: "pod"
+  match:
+    namespace: monitoring
+    labels:
+      app: "prometheus"
+      component: "server"
+      release: "prometheus"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+prometheus_alertmanager_pod:
+  kind: "pod"
+  match:
+    namespace: monitoring
+    labels:
+      app: "prometheus"
+      component: "alertmanager"
+      release: "prometheus"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+porter_agent_pod:
+  kind: "pod"
+  match:
+    namespace: porter-agent-system
+    labels:
+      control-plane: "controller-manager"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+porter_agent_redis_pod:
+  kind: "pod"
+  match:
+    namespace: porter-agent-system
+    labels:
+      app.kubernetes.io/component: "master"
+      app.kubernetes.io/instance: "porter-agent"
+      app.kubernetes.io/managed-by: "Helm"
+      app.kubernetes.io/name: "redis"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+certificates:
+  kind: "crd_list"
+  match:
+    group: cert-manager.io
+    version: v1
+    resource: certificates
+  policies:
+  - path: "./policies/certificates/expiry_two_weeks.rego"
+    name: "certificates.expiry_two_weeks"

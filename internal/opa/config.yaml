@@ -19,6 +19,18 @@ nginx:
     name: "nginx.memory_limits"
   - path: "./policies/nginx/wait_shutdown.rego"
     name: "nginx.wait_shutdown"
+cert-manager:
+  kind: "helm_release"
+  match:
+    name: cert-manager
+    namespace: cert-manager
+  policies:
+  - path: "./policies/cert-manager/cainjector_memory_limits.rego"
+    name: "cert_manager.cainjector_memory_limits"
+  - path: "./policies/cert-manager/controller_memory_limits.rego"
+    name: "cert_manager.controller_memory_limits"
+  - path: "./policies/cert-manager/webhook_memory_limits.rego"
+    name: "cert_manager.webhook_memory_limits"
 prometheus:
   kind: "helm_release"
   match:
@@ -35,6 +47,8 @@ prometheus:
     name: "prometheus.pushgateway_memory_limits"
   - path: "./policies/prometheus/nodeexporter_memory_limits.rego"
     name: "prometheus.nodeexporter_memory_limits"
+  - path: "./policies/prometheus/prometheus_version.rego"
+    name: "prometheus.version"
 nginx_pod:
   kind: "pod"
   match:

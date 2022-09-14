@@ -43,4 +43,5 @@ type Repository interface {
 	Policy() PolicyRepository
 	Tag() TagRepository
 	Stack() StackRepository
+	MonitorTestResult() MonitorTestResultRepository
 }

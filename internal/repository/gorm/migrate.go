@@ -57,7 +57,11 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.StackResource{},
 		&models.StackSourceConfig{},
 		&models.StackEnvGroup{},
+<<<<<<< HEAD
 		&models.DbMigration{},
+=======
+		&models.MonitorTestResult{},
+>>>>>>> belanger/recommender-system-2
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

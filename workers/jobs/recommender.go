@@ -2,11 +2,9 @@
 
 /*
 
-                            === NGINX Recommender Job ===
+                            === Recommender Job ===
 
-This job checks an NGINX instance installed on a cluster and makes a recommendation.
-
-TODO: recommender alg details
+This job checks to see if a cluster matches policies set by the OPA config file.
 
 */
 

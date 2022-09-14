@@ -153,7 +153,19 @@ func (n *recommender) Run() error {
 		return err
 	}
 
-	runner := opa.NewRunner(n.policies, k8sAgent)
+	dynamicClient, err := kubernetes.GetDynamicClientOutOfClusterConfig(&kubernetes.OutOfClusterConfig{
+		Cluster:                   cluster,
+		Repo:                      n.repo,
+		DigitalOceanOAuth:         n.doConf,
+		AllowInClusterConnections: false,
+	})
+
+	if err != nil {
+		log.Printf("error getting dynamic client for cluster ID %d: %v. skipping cluster ...", n.clusterID, err)
+		return err
+	}
+
+	runner := opa.NewRunner(n.policies, k8sAgent, dynamicClient)
 
 	queryResults, err := runner.GetRecommendationsByName(n.collectionName)
 

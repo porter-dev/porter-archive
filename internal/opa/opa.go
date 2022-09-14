@@ -13,7 +13,10 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/pkg/logger"
 	"helm.sh/helm/v3/pkg/release"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 type KubernetesPolicies struct {
@@ -23,7 +26,8 @@ type KubernetesPolicies struct {
 type KubernetesOPARunner struct {
 	*KubernetesPolicies
 
-	k8sAgent *kubernetes.Agent
+	k8sAgent      *kubernetes.Agent
+	dynamicClient dynamic.Interface
 }
 
 type KubernetesBuiltInKind string
@@ -31,6 +35,7 @@ type KubernetesBuiltInKind string
 const (
 	HelmRelease KubernetesBuiltInKind = "helm_release"
 	Pod         KubernetesBuiltInKind = "pod"
+	CRDList     KubernetesBuiltInKind = "crd_list"
 )
 
 type KubernetesOPAQueryCollection struct {
@@ -46,22 +51,38 @@ type MatchParameters struct {
 	ChartName string `json:"chart_name"`
 
 	Labels map[string]string `json:"labels"`
+
+	// parameters for CRDs
+	Group    string `json:"group"`
+	Version  string `json:"version"`
+	Resource string `json:"resource"`
 }
 
 type OPARecommenderQueryResult struct {
-	Allow bool `mapstructure:"Allow"`
+	Allow bool
 
 	CategoryName string
 	ObjectID     string
 
+	PolicyVersion  string
+	PolicySeverity string
+	PolicyTitle    string
+	PolicyMessage  string
+}
+
+type rawQueryResult struct {
+	Allow          bool   `mapstructure:"ALLOW"`
+	PolicyID       string `mapstructure:"POLICY_ID"`
 	PolicyVersion  string `mapstructure:"POLICY_VERSION"`
 	PolicySeverity string `mapstructure:"POLICY_SEVERITY"`
 	PolicyTitle    string `mapstructure:"POLICY_TITLE"`
-	PolicyMessage  string `mapstructure:"POLICY_MESSAGE"`
+	SuccessMessage string `mapstructure:"POLICY_SUCCESS_MESSAGE"`
+
+	FailureMessage []string `mapstructure:"FAILURE_MESSAGE"`
 }
 
-func NewRunner(policies *KubernetesPolicies, k8sAgent *kubernetes.Agent) *KubernetesOPARunner {
-	return &KubernetesOPARunner{policies, k8sAgent}
+func NewRunner(policies *KubernetesPolicies, k8sAgent *kubernetes.Agent, dynamicClient dynamic.Interface) *KubernetesOPARunner {
+	return &KubernetesOPARunner{policies, k8sAgent, dynamicClient}
 }
 
 func (runner *KubernetesOPARunner) GetRecommendationsByName(name string) ([]*OPARecommenderQueryResult, error) {
@@ -77,6 +98,8 @@ func (runner *KubernetesOPARunner) GetRecommendationsByName(name string) ([]*OPA
 		return runner.runHelmReleaseQueries(name, queryCollection)
 	case Pod:
 		return runner.runPodQueries(name, queryCollection)
+	case CRDList:
+		return runner.runCRDListQueries(name, queryCollection)
 	default:
 		return nil, fmt.Errorf("Not a supported query kind")
 	}
@@ -147,18 +170,19 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 			}
 
 			if len(results) == 1 {
-				queryRes := &OPARecommenderQueryResult{
-					ObjectID:     fmt.Sprintf("helm_release/%s/%s", helmRelease.Namespace, helmRelease.Name),
-					CategoryName: name,
-				}
+				rawQueryRes := &rawQueryResult{}
 
-				err = mapstructure.Decode(results[0].Expressions[0].Value, queryRes)
+				err = mapstructure.Decode(results[0].Expressions[0].Value, rawQueryRes)
 
 				if err != nil {
 					return nil, err
 				}
 
-				res = append(res, queryRes)
+				res = append(res, rawQueryResToRecommenderQueryResult(
+					rawQueryRes,
+					fmt.Sprintf("helm_release/%s/%s/%s", helmRelease.Namespace, helmRelease.Name, rawQueryRes.PolicyID),
+					name,
+				))
 			}
 		}
 	}
@@ -201,21 +225,91 @@ func (runner *KubernetesOPARunner) runPodQueries(name string, collection Kuberne
 			}
 
 			if len(results) == 1 {
-				queryRes := &OPARecommenderQueryResult{
-					ObjectID:     fmt.Sprintf("pod/%s/%s", pod.Namespace, pod.Name),
-					CategoryName: name,
-				}
+				rawQueryRes := &rawQueryResult{}
 
-				err = mapstructure.Decode(results[0].Expressions[0].Value, queryRes)
+				err = mapstructure.Decode(results[0].Expressions[0].Value, rawQueryRes)
 
 				if err != nil {
 					return nil, err
 				}
 
-				res = append(res, queryRes)
+				res = append(res, rawQueryResToRecommenderQueryResult(
+					rawQueryRes,
+					fmt.Sprintf("pod/%s/%s", pod.Namespace, pod.Name),
+					name,
+				))
 			}
 		}
 	}
 
 	return res, nil
+}
+
+func (runner *KubernetesOPARunner) runCRDListQueries(name string, collection KubernetesOPAQueryCollection) ([]*OPARecommenderQueryResult, error) {
+	res := make([]*OPARecommenderQueryResult, 0)
+
+	objRes := schema.GroupVersionResource{
+		Group:    collection.Match.Group,
+		Version:  collection.Match.Version,
+		Resource: collection.Match.Resource,
+	}
+
+	crdList, err := runner.dynamicClient.Resource(objRes).Namespace(collection.Match.Namespace).List(context.Background(), v1.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, crd := range crdList.Items {
+		for _, query := range collection.Queries {
+			results, err := query.Eval(
+				context.Background(),
+				rego.EvalInput(crd.Object),
+			)
+
+			if err != nil {
+				return nil, err
+			}
+
+			if len(results) == 1 {
+				rawQueryRes := &rawQueryResult{}
+
+				err = mapstructure.Decode(results[0].Expressions[0].Value, rawQueryRes)
+
+				if err != nil {
+					return nil, err
+				}
+
+				res = append(res, rawQueryResToRecommenderQueryResult(
+					rawQueryRes,
+					fmt.Sprintf("%s/%s/%s/%s", collection.Match.Group, collection.Match.Version, collection.Match.Resource, rawQueryRes.PolicyID),
+					name,
+				))
+			}
+		}
+	}
+
+	return res, nil
+}
+
+func rawQueryResToRecommenderQueryResult(rawQueryRes *rawQueryResult, objectID, categoryName string) *OPARecommenderQueryResult {
+	queryRes := &OPARecommenderQueryResult{
+		ObjectID:     objectID,
+		CategoryName: categoryName,
+	}
+
+	message := rawQueryRes.SuccessMessage
+
+	// if failure, compose failure messages into single string
+	if !rawQueryRes.Allow {
+		message = strings.Join(rawQueryRes.FailureMessage, ". ")
+	}
+
+	queryRes.PolicyMessage = message
+	queryRes.Allow = rawQueryRes.Allow
+	queryRes.PolicySeverity = rawQueryRes.PolicySeverity
+	queryRes.PolicyTitle = rawQueryRes.PolicyTitle
+	queryRes.PolicyVersion = rawQueryRes.PolicyVersion
+
+	return queryRes
 }

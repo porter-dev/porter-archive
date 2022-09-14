@@ -25,10 +25,10 @@ func (m *MonitorTestResultRepository) CreateMonitorTestResult(monitor *models.Mo
 	return monitor, nil
 }
 
-func (m *MonitorTestResultRepository) ReadMonitorTestResult(projectID, clusterID uint, operationID string) (*models.MonitorTestResult, error) {
+func (m *MonitorTestResultRepository) ReadMonitorTestResult(projectID, clusterID uint, objectID string) (*models.MonitorTestResult, error) {
 	res := &models.MonitorTestResult{}
 
-	if err := m.db.Where("project_id = ? AND cluster_id = ? AND operation_id = ?", projectID, clusterID, operationID).Find(res).Error; err != nil {
+	if err := m.db.Where("project_id = ? AND cluster_id = ? AND object_id = ?", projectID, clusterID, objectID).First(res).Error; err != nil {
 		return nil, err
 	}
 

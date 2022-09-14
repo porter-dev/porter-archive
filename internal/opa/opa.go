@@ -39,9 +39,10 @@ const (
 )
 
 type KubernetesOPAQueryCollection struct {
-	Kind    KubernetesBuiltInKind
-	Match   MatchParameters
-	Queries []rego.PreparedEvalQuery
+	Kind      KubernetesBuiltInKind
+	Match     MatchParameters
+	MustExist bool
+	Queries   []rego.PreparedEvalQuery
 }
 
 type MatchParameters struct {
@@ -85,24 +86,49 @@ func NewRunner(policies *KubernetesPolicies, k8sAgent *kubernetes.Agent, dynamic
 	return &KubernetesOPARunner{policies, k8sAgent, dynamicClient}
 }
 
-func (runner *KubernetesOPARunner) GetRecommendationsByName(name string) ([]*OPARecommenderQueryResult, error) {
-	// look up to determine if the name is registered
-	queryCollection, exists := runner.Policies[name]
+func (runner *KubernetesOPARunner) GetRecommendations(categories []string) ([]*OPARecommenderQueryResult, error) {
+	collectionNames := categories
 
-	if !exists {
-		return nil, fmt.Errorf("No policies for %s found", name)
+	if len(categories) == 0 {
+		for catName, _ := range runner.Policies {
+			collectionNames = append(collectionNames, catName)
+		}
 	}
 
-	switch queryCollection.Kind {
-	case HelmRelease:
-		return runner.runHelmReleaseQueries(name, queryCollection)
-	case Pod:
-		return runner.runPodQueries(name, queryCollection)
-	case CRDList:
-		return runner.runCRDListQueries(name, queryCollection)
-	default:
-		return nil, fmt.Errorf("Not a supported query kind")
+	res := make([]*OPARecommenderQueryResult, 0)
+
+	for _, name := range collectionNames {
+		// look up to determine if the name is registered
+		queryCollection, exists := runner.Policies[name]
+
+		if !exists {
+			return nil, fmt.Errorf("No policies for %s found", name)
+		}
+
+		var currResults []*OPARecommenderQueryResult
+		var err error
+
+		switch queryCollection.Kind {
+		case HelmRelease:
+			currResults, err = runner.runHelmReleaseQueries(name, queryCollection)
+		case Pod:
+			currResults, err = runner.runPodQueries(name, queryCollection)
+		case CRDList:
+			currResults, err = runner.runCRDListQueries(name, queryCollection)
+		default:
+			fmt.Printf("%s is not a supported query kind", queryCollection.Kind)
+			continue
+		}
+
+		if err != nil {
+			fmt.Printf("%s", err.Error())
+			continue
+		}
+
+		res = append(res, currResults...)
 	}
+
+	return res, nil
 }
 
 func (runner *KubernetesOPARunner) SetK8sAgent(k8sAgent *kubernetes.Agent) {
@@ -125,7 +151,31 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 		helmRelease, err := helmAgent.GetRelease(collection.Match.Name, 0, false)
 
 		if err != nil {
-			return nil, err
+			if collection.MustExist && strings.Contains(err.Error(), "not found") {
+				return []*OPARecommenderQueryResult{
+					{
+						Allow:          false,
+						ObjectID:       fmt.Sprintf("helm_release/%s/%s/%s", collection.Match.Namespace, collection.Match.Name, "exists"),
+						CategoryName:   name,
+						PolicyVersion:  "v0.0.1",
+						PolicySeverity: "high",
+						PolicyTitle:    fmt.Sprintf("The helm release %s must exist", collection.Match.Name),
+						PolicyMessage:  "The helm release was not found on the cluster",
+					},
+				}, nil
+			} else {
+				return nil, err
+			}
+		} else if collection.MustExist {
+			res = append(res, &OPARecommenderQueryResult{
+				Allow:          true,
+				ObjectID:       fmt.Sprintf("helm_release/%s/%s/%s", collection.Match.Namespace, collection.Match.Name, "exists"),
+				CategoryName:   name,
+				PolicyVersion:  "v0.0.1",
+				PolicySeverity: "high",
+				PolicyTitle:    fmt.Sprintf("The helm release %s must exist", collection.Match.Name),
+				PolicyMessage:  "The helm release was found",
+			})
 		}
 
 		helmReleases = append(helmReleases, helmRelease)

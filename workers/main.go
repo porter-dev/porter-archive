@@ -53,6 +53,8 @@ type EnvConf struct {
 
 	OPAConfigFileDir string `env:"OPA_CONFIG_FILE_DIR,default=./internal/opa"`
 
+	LegacyProjectIDs []uint `env:"LEGACY_PROJECT_IDS"`
+
 	Port uint `env:"PORT,default=3000"`
 }
 
@@ -210,12 +212,13 @@ func getJob(id string, input map[string]interface{}) worker.Job {
 		return newJob
 	} else if id == "recommender" {
 		newJob, err := jobs.NewRecommender(dbConn, time.Now().UTC(), &jobs.RecommenderOpts{
-			DBConf:         &envDecoder.DBConf,
-			DOClientID:     envDecoder.DOClientID,
-			DOClientSecret: envDecoder.DOClientSecret,
-			DOScopes:       []string{"read", "write"},
-			ServerURL:      envDecoder.ServerURL,
-			Input:          input,
+			DBConf:           &envDecoder.DBConf,
+			DOClientID:       envDecoder.DOClientID,
+			DOClientSecret:   envDecoder.DOClientSecret,
+			DOScopes:         []string{"read", "write"},
+			ServerURL:        envDecoder.ServerURL,
+			Input:            input,
+			LegacyProjectIDs: envDecoder.LegacyProjectIDs,
 		}, opaPolicies)
 
 		if err != nil {

@@ -10,6 +10,7 @@ nginx:
   match:
     name: nginx-ingress
     namespace: ingress-nginx
+  mustExist: true
   policies:
   - path: "./policies/nginx/nginx_version.rego"
     name: "nginx.version"
@@ -24,6 +25,7 @@ cert-manager:
   match:
     name: cert-manager
     namespace: cert-manager
+  mustExist: true
   policies:
   - path: "./policies/cert-manager/cert_manager_version.rego"
     name: "cert_manager.version"
@@ -38,6 +40,7 @@ prometheus:
   match:
     name: prometheus
     namespace: monitoring
+  mustExist: true
   policies:
   - path: "./policies/prometheus/server_memory_limits.rego"
     name: "prometheus.server_memory_limits"

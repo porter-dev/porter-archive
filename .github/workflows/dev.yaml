@@ -162,13 +162,22 @@ jobs:
           aws-access-key-id: ${{ secrets.ECR_DEV_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.ECR_DEV_AWS_ACCESS_SECRET_KEY }}
           aws-region: us-east-2
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - name: Log in to gcloud CLI
+        run: gcloud auth configure-docker
       - name: Login to ECR
         id: login-ecr
         run: |
           aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 801172602658.dkr.ecr.us-east-2.amazonaws.com
       - name: Build
         run: |
-          DOCKER_BUILDKIT=1 docker build . -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/worker-pool:${{ steps.vars.outputs.sha_short }} -f ./workers/Dockerfile
+          DOCKER_BUILDKIT=1 docker build . -t 801172602658.dkr.ecr.us-east-2.amazonaws.com/worker-pool:${{ steps.vars.outputs.sha_short }} -t gcr.io/porter-dev-273614/worker-pool:dev -f ./workers/Dockerfile
       - name: Push to ECR
         run: |
           docker push 801172602658.dkr.ecr.us-east-2.amazonaws.com/worker-pool:${{ steps.vars.outputs.sha_short }}
+          docker push gcr.io/porter-dev-273614/worker-pool:dev

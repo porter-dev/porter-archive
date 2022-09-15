@@ -83,7 +83,7 @@ class ProjectSection extends Component<PropsType, StateType> {
                 }
               >
                 <ProjectIconAlt>+</ProjectIconAlt>
-                <ProjectLabel>Create a Project</ProjectLabel>
+                <ProjectLabel>Create a project</ProjectLabel>
               </Option>
             )}
           </Dropdown>
@@ -124,7 +124,7 @@ class ProjectSection extends Component<PropsType, StateType> {
           })
         }
       >
-        <Plus>+</Plus> Create a Project
+        <Plus>+</Plus> Create a project
       </InitializeButton>
     );
   }

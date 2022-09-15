@@ -8,8 +8,7 @@ POLICY_VERSION := "v0.0.1"
 
 POLICY_SEVERITY := "high"
 
-# TODO: set the actual latest stable version
-latest_stable_version := "0.115.0"
+latest_stable_version := "0.50.0"
 
 POLICY_TITLE := sprintf("The web version should be at least v%s", [latest_stable_version])
 

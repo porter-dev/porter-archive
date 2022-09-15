@@ -26,5 +26,9 @@ WORKDIR /app
 RUN apk update && apk add curl
 
 COPY --from=build /app/bin/worker-pool /usr/bin/
+COPY /internal/opa/config.yaml /app/opa/config.yaml
+COPY /internal/opa/policies /app/opa/policies
+
+ENV OPA_CONFIG_FILE_DIR /app/opa
 
 ENTRYPOINT [ "worker-pool" ]

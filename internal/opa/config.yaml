@@ -1,0 +1,119 @@
+web:
+  kind: "helm_release"
+  match:
+    chart_name: "web"
+  policies:
+  - path: "./policies/web/web_version.rego"
+    name: "web.version"
+nginx:
+  kind: "helm_release"
+  match:
+    name: nginx-ingress
+    namespace: ingress-nginx
+  mustExist: true
+  policies:
+  - path: "./policies/nginx/nginx_version.rego"
+    name: "nginx.version"
+  - path: "./policies/nginx/nginx_topology_spread_constraints.rego"
+    name: "nginx.topology_spread_constraints"
+  - path: "./policies/nginx/memory_limits.rego"
+    name: "nginx.memory_limits"
+  - path: "./policies/nginx/wait_shutdown.rego"
+    name: "nginx.wait_shutdown"
+cert-manager:
+  kind: "helm_release"
+  match:
+    name: cert-manager
+    namespace: cert-manager
+  mustExist: true
+  policies:
+  - path: "./policies/cert-manager/cert_manager_version.rego"
+    name: "cert_manager.version"
+  - path: "./policies/cert-manager/cainjector_memory_limits.rego"
+    name: "cert_manager.cainjector_memory_limits"
+  - path: "./policies/cert-manager/controller_memory_limits.rego"
+    name: "cert_manager.controller_memory_limits"
+  - path: "./policies/cert-manager/webhook_memory_limits.rego"
+    name: "cert_manager.webhook_memory_limits"
+prometheus:
+  kind: "helm_release"
+  match:
+    name: prometheus
+    namespace: monitoring
+  mustExist: true
+  policies:
+  - path: "./policies/prometheus/server_memory_limits.rego"
+    name: "prometheus.server_memory_limits"
+  - path: "./policies/prometheus/alertmanager_memory_limits.rego"
+    name: "prometheus.alertmanager_memory_limits"
+  - path: "./policies/prometheus/kubestatemetrics_memory_limits.rego"
+    name: "prometheus.kubestatemetrics_memory_limits"
+  - path: "./policies/prometheus/pushgateway_memory_limits.rego"
+    name: "prometheus.pushgateway_memory_limits"
+  - path: "./policies/prometheus/nodeexporter_memory_limits.rego"
+    name: "prometheus.nodeexporter_memory_limits"
+  - path: "./policies/prometheus/prometheus_version.rego"
+    name: "prometheus.version"
+nginx_pod:
+  kind: "pod"
+  match:
+    namespace: ingress-nginx
+    labels:
+      app.kubernetes.io/component: "controller"
+      app.kubernetes.io/instance: "nginx-ingress"
+      app.kubernetes.io/name: "ingress-nginx"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+prometheus_server_pod:
+  kind: "pod"
+  match:
+    namespace: monitoring
+    labels:
+      app: "prometheus"
+      component: "server"
+      release: "prometheus"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+prometheus_alertmanager_pod:
+  kind: "pod"
+  match:
+    namespace: monitoring
+    labels:
+      app: "prometheus"
+      component: "alertmanager"
+      release: "prometheus"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+porter_agent_pod:
+  kind: "pod"
+  match:
+    namespace: porter-agent-system
+    labels:
+      control-plane: "controller-manager"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+porter_agent_redis_pod:
+  kind: "pod"
+  match:
+    namespace: porter-agent-system
+    labels:
+      app.kubernetes.io/component: "master"
+      app.kubernetes.io/instance: "porter-agent"
+      app.kubernetes.io/managed-by: "Helm"
+      app.kubernetes.io/name: "redis"
+  policies:
+  - path: "./policies/pod/running.rego"
+    name: "pod.running"
+certificates:
+  kind: "crd_list"
+  match:
+    group: cert-manager.io
+    version: v1
+    resource: certificates
+  policies:
+  - path: "./policies/certificates/expiry_two_weeks.rego"
+    name: "certificates.expiry_two_weeks"

@@ -21,3 +21,6 @@ build-cli-dev:
 
 start-provisioner-dev: install setup-env-files
 	bash ./scripts/dev-environment/StartProvisionerServer.sh
+
+start-worker-dev: install setup-env-files
+	bash ./scripts/dev-environment/StartWorkerServer.sh

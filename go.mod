@@ -51,8 +51,8 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220628200809-02e64fa58f26
 	google.golang.org/api v0.88.0
 	google.golang.org/genproto v0.0.0-20220628213854-d9e0b6570c03
-	google.golang.org/grpc v1.47.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/grpc v1.49.0
+	google.golang.org/protobuf v1.28.1
 	gorm.io/driver/sqlite v1.1.3
 	gorm.io/gorm v1.22.3
 	helm.sh/helm/v3 v3.9.0
@@ -84,7 +84,9 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.5 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.4.0 // indirect
+	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/PuerkitoBio/goquery v1.5.1 // indirect
+	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.16.4 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.15.9 // indirect
@@ -114,8 +116,12 @@ require (
 	github.com/mmcdole/gofeed v1.1.3 // indirect
 	github.com/mmcdole/goxpp v0.0.0-20181012175147-0068e33feabf // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/open-policy-agent/opa v0.44.0 // indirect
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
+	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
 	github.com/xanzy/go-gitlab v0.68.0 // indirect
+	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	go.uber.org/goleak v1.1.12 // indirect
 )
 
@@ -135,7 +141,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.9.3 // indirect
+	github.com/Microsoft/hcsshim v0.9.4 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/apex/log v1.9.0 // indirect
@@ -150,7 +156,7 @@ require (
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211130200136-a8f946100490 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
-	github.com/containerd/containerd v1.6.6 // indirect
+	github.com/containerd/containerd v1.6.8 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.11.4 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -252,10 +258,10 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.12.2 // indirect
+	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.35.0 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rubenv/sql-migrate v1.1.2 // indirect
@@ -265,7 +271,7 @@ require (
 	github.com/sendgrid/rest v2.6.3+incompatible // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -282,7 +288,7 @@ require (
 	go.starlark.net v0.0.0-20220328144851-d1966c6b9fcd // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect

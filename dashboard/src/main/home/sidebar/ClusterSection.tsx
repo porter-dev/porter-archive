@@ -126,7 +126,7 @@ export const ClusterSection: React.FC<Props> = ({
             </svg>
           </ClusterIcon>
           <Tooltip title={cluster?.name}>
-            <ClusterName>medicspot-production</ClusterName>
+            <ClusterName>{cluster?.name}</ClusterName>
           </Tooltip>
           <I isExpanded={isExpanded} className="material-icons">arrow_drop_down</I>
           <Spacer />

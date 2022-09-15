@@ -7,7 +7,7 @@ import settings from "assets/settings.svg";
 
 import { Context } from "shared/Context";
 
-import ClusterSection from "./ClusterSection";
+import Clusters from "./Clusters";
 import ProjectSectionContainer from "./ProjectSectionContainer";
 import { RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, pushFiltered } from "shared/routing";
@@ -104,7 +104,7 @@ class Sidebar extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
     if (currentProject) {
       return (
-        <>
+        <ScrollWrapper>
           <SidebarLabel>Home</SidebarLabel>
           <NavButton path={"/dashboard"}>
             <Img src={category} />
@@ -138,7 +138,7 @@ class Sidebar extends Component<PropsType, StateType> {
           ]) && (
             <NavButton path={"/project-settings"}>
               <Img enlarge={true} src={settings} />
-              Settings
+              Project settings
             </NavButton>
           )}
 
@@ -147,7 +147,7 @@ class Sidebar extends Component<PropsType, StateType> {
           {this.context.hasFinishedOnboarding && (
             <>
               <SidebarLabel>Clusters</SidebarLabel>
-              <ClusterSection
+              <Clusters
                 setWelcome={this.props.setWelcome}
                 currentView={currentView}
                 isSelected={false}
@@ -156,7 +156,7 @@ class Sidebar extends Component<PropsType, StateType> {
               />
             </>
           )}
-        </>
+        </ScrollWrapper>
       );
     }
 
@@ -199,6 +199,11 @@ Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
 
+const ScrollWrapper = styled.div`
+  overflow-y: auto;
+  max-height: calc(100vh - 95px);
+`;
+
 const ProjectPlaceholder = styled.div`
   background: #ffffff11;
   border-radius: 5px;
@@ -224,10 +229,10 @@ const NavButton = styled(SidebarLink)`
   border-radius: 5px;
   position: relative;
   text-decoration: none;
-  height: 36px;
+  height: 34px;
   margin: 5px 15px;
-  padding: 0 30px 2px 8px;
-  font-size: 14px;
+  padding: 0 30px 2px 6px;
+  font-size: 13px;
   font-family: "Work Sans", sans-serif;
   color: #ffffff;
   cursor: ${(props: { disabled?: boolean }) =>
@@ -255,11 +260,11 @@ const NavButton = styled(SidebarLink)`
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
-  height: 23px;
-  width: 23px;
+  height: 22px;
+  width: 22px;
   padding-top: 4px;
   border-radius: 3px;
-  margin-right: 10px;
+  margin-right: 8px;
 `;
 
 const SidebarBg = styled.div`
@@ -277,7 +282,7 @@ const SidebarLabel = styled.div`
   color: #ffffff99;
   padding: 5px 23px;
   margin-bottom: 5px;
-  font-size: 14px;
+  font-size: 13px;
   z-index: 1;
   font-weight: 500;
 `;
@@ -363,7 +368,7 @@ const CollapseButton = styled.div`
 
 const StyledSidebar = styled.section`
   font-family: "Work Sans", sans-serif;
-  width: 225px;
+  width: 235px;
   position: relative;
   padding-top: 20px;
   height: 100vh;
@@ -373,7 +378,7 @@ const StyledSidebar = styled.section`
   animation-fill-mode: forwards;
   @keyframes showSidebar {
     from {
-      margin-left: -225px;
+      margin-left: -235px;
     }
     to {
       margin-left: 0px;
@@ -384,7 +389,7 @@ const StyledSidebar = styled.section`
       margin-left: 0px;
     }
     to {
-      margin-left: -225px;
+      margin-left: -235px;
     }
   }
 `;

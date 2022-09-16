@@ -91,7 +91,7 @@ const StackList = ({
     return () => {
       isSubscribed = false;
     };
-  }, [namespace]);
+  }, [namespace, currentCluster]);
 
   const sortedStacks = useMemo(() => {
     return (

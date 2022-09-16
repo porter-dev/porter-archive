@@ -109,9 +109,25 @@ export default class JobResource extends Component<PropsType, StateType> {
       }
     });
 
+    if (!completeCondition) {
+      // otherwise look for a failed reason
+      this.props.job.status?.conditions?.forEach(
+        (condition: any, i: number) => {
+          if (condition.type == "Failed") {
+            completeCondition = condition;
+          }
+        }
+      );
+    }
+
+    // if still no complete condition, return unknown
+    if (!completeCondition) {
+      return "Succeeded";
+    }
+
     return (
-      completeCondition.reason ||
-      `Completed at ${readableDate(completeCondition.lastTransitionTime)}`
+      completeCondition?.reason ||
+      `Completed at ${readableDate(completeCondition?.lastTransitionTime)}`
     );
   };
 

@@ -5,7 +5,7 @@ import { useHistory, useLocation } from "react-router";
 import { useRouting } from "shared/routing";
 import styled from "styled-components";
 import DashboardHeader from "../DashboardHeader";
-import NamespaceSelector from "../NamespaceSelector";
+import { NamespaceSelector } from "../NamespaceSelector";
 import SortSelector from "../SortSelector";
 import { Action } from "./components/styles";
 import StackList from "./_StackList";

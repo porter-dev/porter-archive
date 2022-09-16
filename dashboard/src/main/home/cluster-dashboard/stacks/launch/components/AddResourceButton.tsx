@@ -62,9 +62,7 @@ export const AddResourceButton = () => {
       <AddResourceButtonStyles.Flex>
         <LinkMask
           to={`/stacks/launch/new-app/${currentTemplate?.name}/${currentVersion}`}
-        >
-          
-        </LinkMask>
+        ></LinkMask>
         <Icon>
           <i className="material-icons">add</i>
         </Icon>

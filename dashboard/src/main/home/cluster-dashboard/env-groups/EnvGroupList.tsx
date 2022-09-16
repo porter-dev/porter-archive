@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -10,49 +10,47 @@ import Loading from "components/Loading";
 import { getQueryParam, pushQueryParams } from "shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 
-type PropsType = RouteComponentProps & {
+type Props = RouteComponentProps & {
   currentCluster: ClusterType;
   namespace: string;
   sortType: string;
   setExpandedEnvGroup: (envGroup: any) => void;
 };
 
-type StateType = {
+type State = {
   envGroups: any[];
   loading: boolean;
   error: boolean;
 };
 
-const dummyEnvGroups = [
-  { name: "sapporo", last_updated: "12", namespace: "default" },
-  { name: "backend-staging", last_updated: "4", namespace: "default" },
-  { name: "backend-production", last_updated: "7", namespace: "default" },
-];
+const EnvGroupList: React.FunctionComponent<Props> = (props) => {
+  const context = useContext(Context);
 
-class EnvGroupList extends Component<PropsType, StateType> {
-  state = {
-    envGroups: [] as any[],
-    loading: false,
-    error: false,
-  };
+  const { currentCluster, namespace, sortType, setExpandedEnvGroup } = props;
 
-  updateEnvGroups = async () => {
-    const { currentCluster, namespace, sortType } = this.props;
+  const [envGroups, setEnvGroups] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+
+  const updateEnvGroups = async () => {
+    let { currentProject, currentCluster } = context;
     try {
       const envGroups = await api
         .listEnvGroups(
           "<token>",
           {},
           {
-            id: this.context.currentProject.id,
-            namespace: this.props.namespace,
-            cluster_id: this.props.currentCluster.id,
+            id: currentProject.id,
+            namespace: namespace,
+            cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res.data);
+        .then((res) => {
+          return res.data;
+        });
 
       let sortedGroups = envGroups;
-      switch (this.props.sortType) {
+      switch (sortType) {
         case "Oldest":
           sortedGroups.sort((a: any, b: any) =>
             Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
@@ -69,76 +67,50 @@ class EnvGroupList extends Component<PropsType, StateType> {
 
       return sortedGroups;
     } catch (error) {
-      console.log(error);
-      this.setState({ loading: false, error: true });
+      setIsLoading(false);
+      setHasError(true);
     }
   };
 
-  componentDidMount() {
-    this.setState({ loading: true });
-    this.updateEnvGroups().then((envGroups) => {
-      const selectedEnvGroup = getQueryParam(this.props, "selected_env_group");
-
-      if (selectedEnvGroup) {
-        // find env group by selectedEnvGroup
-        const envGroup = envGroups.find(
-          (envGroup: any) => envGroup.name === selectedEnvGroup
-        );
-        if (envGroup) {
-          this.props.setExpandedEnvGroup(envGroup);
-          return;
-        }
-      }
-      this.setState({ envGroups, loading: false });
-    });
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
+  useEffect(() => {
     // Prevents reload when opening ClusterConfigModal
-    if (
-      prevProps.currentCluster !== this.props.currentCluster ||
-      prevProps.namespace !== this.props.namespace ||
-      prevProps.sortType !== this.props.sortType
-    ) {
-      (this.props.namespace || this.props.namespace === "") &&
-        this.updateEnvGroups().then((envGroups) => {
-          const selectedEnvGroup = getQueryParam(
-            this.props,
-            "selected_env_group"
+    (namespace || namespace === "") &&
+      updateEnvGroups().then((envGroups) => {
+        const selectedEnvGroup = getQueryParam(props, "selected_env_group");
+
+        setEnvGroups(envGroups);
+        if (envGroups && envGroups.length > 0) {
+          setHasError(false);
+        }
+        setIsLoading(false);
+
+        if (selectedEnvGroup) {
+          // find env group by selectedEnvGroup
+          const envGroup = envGroups.find(
+            (envGroup: any) => envGroup.name === selectedEnvGroup
           );
-
-          this.setState({ envGroups, loading: false });
-
-          if (selectedEnvGroup) {
-            // find env group by selectedEnvGroup
-            const envGroup = envGroups.find(
-              (envGroup: any) => envGroup.name === selectedEnvGroup
-            );
-            if (envGroup) {
-              this.props.setExpandedEnvGroup(envGroup);
-            } else {
-              pushQueryParams(this.props, {}, ["selected_env_group"]);
-            }
+          if (envGroup) {
+            setExpandedEnvGroup(envGroup);
+          } else {
+            pushQueryParams(props, {}, ["selected_env_group"]);
           }
-        });
-    }
-  }
+        }
+      });
+  }, [currentCluster, namespace, sortType]);
 
-  handleExpand = (envGroup: any) => {
-    pushQueryParams(this.props, { selected_env_group: envGroup.name }, []);
-    this.props.setExpandedEnvGroup(envGroup);
+  const handleExpand = (envGroup: any) => {
+    pushQueryParams(props, { selected_env_group: envGroup.name }, []);
+    props.setExpandedEnvGroup(envGroup);
   };
 
-  renderEnvGroupList = () => {
-    let { loading, error, envGroups } = this.state;
-
-    if (loading || (!this.props.namespace && this.props.namespace !== "")) {
+  const renderEnvGroupList = () => {
+    if (isLoading || (!namespace && namespace !== "")) {
       return (
         <LoadingWrapper>
           <Loading />
         </LoadingWrapper>
       );
-    } else if (error) {
+    } else if (hasError) {
       return (
         <Placeholder>
           <i className="material-icons">error</i> Error connecting to cluster.
@@ -153,23 +125,19 @@ class EnvGroupList extends Component<PropsType, StateType> {
       );
     }
 
-    return this.state.envGroups.map((envGroup: any, i: number) => {
+    return envGroups.map((envGroup: any, i: number) => {
       return (
         <EnvGroup
           key={i}
           envGroup={envGroup}
-          setExpanded={() => this.handleExpand(envGroup)}
+          setExpanded={() => handleExpand(envGroup)}
         />
       );
     });
   };
 
-  render() {
-    return <StyledEnvGroupList>{this.renderEnvGroupList()}</StyledEnvGroupList>;
-  }
-}
-
-EnvGroupList.contextType = Context;
+  return <StyledEnvGroupList>{renderEnvGroupList()}</StyledEnvGroupList>;
+};
 
 export default withRouter(EnvGroupList);
 

@@ -48,8 +48,8 @@ const CheckboxWrapper = styled.div<{ disabled?: boolean }>`
 `;
 
 const Checkbox = styled.div<{ checked: boolean }>`
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   border: 1px solid #ffffff55;
   margin: 1px 10px 0px 1px;
   border-radius: 3px;

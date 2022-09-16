@@ -87,7 +87,7 @@ export const Dashboard: React.FunctionComponent = () => {
           </InfoLabel>
         </TopRow>
         <Description>
-          Cluster dashboard for {context.currentCluster.name}
+          Cluster settings for {context.currentCluster.name}
         </Description>
       </InfoSection>
 

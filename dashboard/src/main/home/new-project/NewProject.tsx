@@ -217,7 +217,6 @@ const Letter = styled.div`
   height: 100%;
   width: 100%;
   position: absolute;
-  background: #00000028;
   top: 0;
   left: 0;
   display: flex;

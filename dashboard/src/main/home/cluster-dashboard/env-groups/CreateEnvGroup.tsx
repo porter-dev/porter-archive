@@ -122,11 +122,9 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          const availableNamespaces = res.data.filter(
-            (namespace: any) => {
-              return namespace.status !== "Terminating";
-            }
-          );
+          const availableNamespaces = res.data.filter((namespace: any) => {
+            return namespace.status !== "Terminating";
+          });
           const namespaceOptions = availableNamespaces.map(
             (x: { name: string }) => {
               return { label: x.name, value: x.name };
@@ -341,7 +339,7 @@ const HeaderSection = styled.div`
   > i {
     cursor: pointer;
     font-size: 20px;
-    color: #969Fbbaa;
+    color: #969fbbaa;
     padding: 2px;
     border: 2px solid #969fbbaa;
     border-radius: 100px;

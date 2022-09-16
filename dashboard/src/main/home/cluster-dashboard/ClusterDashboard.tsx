@@ -16,7 +16,7 @@ import {
 import DashboardHeader from "./DashboardHeader";
 import ChartList from "./chart/ChartList";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
-import NamespaceSelector from "./NamespaceSelector";
+import { NamespaceSelector } from "./NamespaceSelector";
 import SortSelector from "./SortSelector";
 import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
 import { RouteComponentProps, withRouter } from "react-router";

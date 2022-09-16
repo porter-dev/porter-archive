@@ -157,9 +157,7 @@ class Sidebar extends Component<PropsType, StateType> {
             </>
           )}
           {currentProject?.preview_envs_enabled && (
-            <NavButton 
-              path="/preview-environments"
-            >
+            <NavButton path="/preview-environments">
               <InlineSVGWrapper
                 id="Flat"
                 fill="#FFFFFF"
@@ -301,7 +299,7 @@ const SidebarBg = styled.div`
   background-color: #202227;
   height: 100%;
   z-index: -1;
-  border-right: 1px solid #383A3F;
+  border-right: 1px solid #383a3f;
 `;
 
 const SidebarLabel = styled.div`

@@ -140,11 +140,11 @@ class Clusters extends Component<PropsType, StateType> {
     if (clusters.length > 0 && currentCluster) {
       clusters.sort((a, b) => a.id - b.id);
 
-      return clusters.map((cluster: ClusterType, i: number) => {  
+      return clusters.map((cluster: ClusterType, i: number) => {
         return (
-          <ClusterSection 
-            key={i} 
-            cluster={cluster} 
+          <ClusterSection
+            key={i}
+            cluster={cluster}
             currentCluster={currentCluster}
             currentProject={currentProject}
             setCurrentCluster={setCurrentCluster}
@@ -172,11 +172,7 @@ class Clusters extends Component<PropsType, StateType> {
   };
 
   render() {
-    return (
-      <>
-        {this.renderContents()}
-      </>
-    );
+    return <>{this.renderContents()}</>;
   }
 }
 

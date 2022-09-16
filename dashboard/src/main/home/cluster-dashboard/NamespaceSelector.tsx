@@ -22,9 +22,12 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
 }) => {
   const context = useContext(Context);
   let _isMounted = true;
-  const [namespaceOptions, setNamespaceOptions] = useState<{
-    label: string, value: string,
-  }[]>([]);
+  const [namespaceOptions, setNamespaceOptions] = useState<
+    {
+      label: string;
+      value: string;
+    }[]
+  >([]);
   const [defaultNamespace, setDefaultNamespace] = useState<string>("default");
 
   const updateOptions = () => {
@@ -53,23 +56,19 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
             urlNamespace = "ALL";
           }
 
-          const availableNamespaces = res.data.filter(
-            (namespace: any) => {
-              return namespace.status !== "Terminating";
-            }
-          );
+          const availableNamespaces = res.data.filter((namespace: any) => {
+            return namespace.status !== "Terminating";
+          });
           setDefaultNamespace("default");
-          availableNamespaces.forEach(
-            (x: { name: string }, i: number) => {
-              namespaceOptions.push({
-                label: x.name,
-                value: x.name,
-              });
-              if (x.name === urlNamespace) {
-                setDefaultNamespace(urlNamespace);
-              }
+          availableNamespaces.forEach((x: { name: string }, i: number) => {
+            namespaceOptions.push({
+              label: x.name,
+              value: x.name,
+            });
+            if (x.name === urlNamespace) {
+              setDefaultNamespace(urlNamespace);
             }
-          );
+          });
           setNamespaceOptions(namespaceOptions);
         }
       })
@@ -118,7 +117,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       />
     </StyledNamespaceSelector>
   );
-}
+};
 
 const Label = styled.div`
   display: flex;

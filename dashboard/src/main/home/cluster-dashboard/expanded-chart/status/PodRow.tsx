@@ -45,7 +45,9 @@ const PodRow: React.FunctionComponent<PodRowProps> = ({
           <Grey>Created on: {pod.podAge}</Grey>
           {podStatus === "failed" ? (
             <FailedStatusContainer>
-              <Grey>Failure Reason: {pod?.containerStatus?.state?.waiting?.reason}</Grey>
+              <Grey>
+                Failure Reason: {pod?.containerStatus?.state?.waiting?.reason}
+              </Grey>
               <Grey>{pod?.containerStatus?.state?.waiting?.message}</Grey>
             </FailedStatusContainer>
           ) : null}

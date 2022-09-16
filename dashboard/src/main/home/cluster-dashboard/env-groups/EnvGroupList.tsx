@@ -26,13 +26,8 @@ type State = {
 const EnvGroupList: React.FunctionComponent<Props> = (props) => {
   const context = useContext(Context);
 
-  const {
-    currentCluster,
-    namespace,
-    sortType,
-    setExpandedEnvGroup,  
-  } = props;
-  
+  const { currentCluster, namespace, sortType, setExpandedEnvGroup } = props;
+
   const [envGroups, setEnvGroups] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
@@ -81,10 +76,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
     // Prevents reload when opening ClusterConfigModal
     (namespace || namespace === "") &&
       updateEnvGroups().then((envGroups) => {
-        const selectedEnvGroup = getQueryParam(
-          props,
-          "selected_env_group"
-        );
+        const selectedEnvGroup = getQueryParam(props, "selected_env_group");
 
         setEnvGroups(envGroups);
         if (envGroups && envGroups.length > 0) {
@@ -144,12 +136,8 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
     });
   };
 
-  return (
-    <StyledEnvGroupList>
-      {renderEnvGroupList()}
-    </StyledEnvGroupList>
-  );
-}
+  return <StyledEnvGroupList>{renderEnvGroupList()}</StyledEnvGroupList>;
+};
 
 export default withRouter(EnvGroupList);
 

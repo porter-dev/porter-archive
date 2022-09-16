@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -6,7 +6,7 @@ import api from "shared/api";
 
 import Selector from "components/Selector";
 
-type PropsType = {
+type Props = {
   setNamespace: (x: string) => void;
   namespace: string;
 };
@@ -16,15 +16,22 @@ type StateType = {
 };
 
 // TODO: fix update to unmounted component
-export default class NamespaceSelector extends Component<PropsType, StateType> {
-  _isMounted = false;
+export const NamespaceSelector: React.FunctionComponent<Props> = ({
+  setNamespace,
+  namespace,
+}) => {
+  const context = useContext(Context);
+  let _isMounted = true;
+  const [namespaceOptions, setNamespaceOptions] = useState<
+    {
+      label: string;
+      value: string;
+    }[]
+  >([]);
+  const [defaultNamespace, setDefaultNamespace] = useState<string>("default");
 
-  state = {
-    namespaceOptions: [] as { label: string; value: string }[],
-  };
-
-  updateOptions = () => {
-    let { currentCluster, currentProject } = this.context;
+  const updateOptions = () => {
+    let { currentCluster, currentProject } = context;
 
     api
       .getNamespaces(
@@ -36,7 +43,7 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
         }
       )
       .then((res) => {
-        if (this._isMounted) {
+        if (_isMounted) {
           let namespaceOptions: { label: string; value: string }[] = [
             { label: "All", value: "ALL" },
           ];
@@ -49,84 +56,68 @@ export default class NamespaceSelector extends Component<PropsType, StateType> {
             urlNamespace = "ALL";
           }
 
-          let defaultNamespace = "default";
-          const availableNamespaces = res.data.filter(
-            (namespace: any) => {
-              return namespace.status !== "Terminating";
-            }
-          );
-          availableNamespaces.forEach(
-            (x: { name: string }, i: number) => {
-              namespaceOptions.push({
-                label: x.name,
-                value: x.name,
-              });
-              if (x.name === urlNamespace) {
-                defaultNamespace = urlNamespace;
-              }
-            }
-          );
-          this.setState({ namespaceOptions }, () => {
-            if (
-              urlNamespace === "" ||
-              defaultNamespace === "" ||
-              urlNamespace === "ALL"
-            ) {
-              this.props.setNamespace("ALL");
-            } else if (this.props.namespace !== defaultNamespace) {
-              this.props.setNamespace(defaultNamespace);
+          const availableNamespaces = res.data.filter((namespace: any) => {
+            return namespace.status !== "Terminating";
+          });
+          setDefaultNamespace("default");
+          availableNamespaces.forEach((x: { name: string }, i: number) => {
+            namespaceOptions.push({
+              label: x.name,
+              value: x.name,
+            });
+            if (x.name === urlNamespace) {
+              setDefaultNamespace(urlNamespace);
             }
           });
+          setNamespaceOptions(namespaceOptions);
         }
       })
       .catch((err) => {
-        if (this._isMounted) {
-          this.setState({ namespaceOptions: [{ label: "All", value: "ALL" }] });
+        if (_isMounted) {
+          setNamespaceOptions([{ label: "All", value: "ALL" }]);
         }
       });
   };
 
-  componentDidMount() {
-    this._isMounted = true;
-    this.updateOptions();
-  }
-
-  componentDidUpdate(prevProps: PropsType) {
-    if (prevProps.namespace !== this.props.namespace) {
-      this.updateOptions();
+  useEffect(() => {
+    let urlParams = new URLSearchParams(window.location.search);
+    let urlNamespace = urlParams.get("namespace");
+    if (
+      urlNamespace === "" ||
+      defaultNamespace === "" ||
+      urlNamespace === "ALL"
+    ) {
+      setNamespace("ALL");
+    } else if (namespace !== defaultNamespace) {
+      setNamespace(defaultNamespace);
     }
-  }
+  }, [namespaceOptions]);
 
-  componentWillUnmount() {
-    this._isMounted = false;
-  }
+  useEffect(() => {
+    updateOptions();
+  }, [namespace, context.currentCluster]);
 
-  handleSetActive = (namespace: any) => {
-    // console.log("SELECTED", namespace);
-    this.props.setNamespace(namespace);
+  const handleSetActive = (namespace: any) => {
+    setNamespace(namespace);
   };
 
-  render() {
-    return (
-      <StyledNamespaceSelector>
-        <Label>
-          <i className="material-icons">filter_alt</i> Namespace
-        </Label>
-        <Selector
-          activeValue={this.props.namespace}
-          setActiveValue={this.handleSetActive}
-          options={this.state.namespaceOptions}
-          dropdownLabel="Namespace"
-          width="150px"
-          dropdownWidth="230px"
-          closeOverlay={true}
-        />
-      </StyledNamespaceSelector>
-    );
-  }
-}
-
-NamespaceSelector.contextType = Context;
+  return (
+    <StyledNamespaceSelector>
+      <Label>
+        <i className="material-icons">filter_alt</i> Namespace
+      </Label>
+      <Selector
+        activeValue={namespace}
+        setActiveValue={handleSetActive}
+        options={namespaceOptions}
+        dropdownLabel="Namespace"
+        width="150px"
+        dropdownWidth="230px"
+        closeOverlay={true}
+      />
+    </StyledNamespaceSelector>
+  );
+};
 
 const Label = styled.div`
   display: flex;

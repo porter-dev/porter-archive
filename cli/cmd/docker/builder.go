@@ -12,6 +12,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/docker/pkg/fileutils"
 	"github.com/moby/buildkit/frontend/dockerfile/dockerignore"
 	"github.com/moby/moby/pkg/jsonmessage"
 	"github.com/moby/moby/pkg/stringid"
@@ -46,6 +47,8 @@ func (a *Agent) BuildLocal(opts *BuildOpts) (err error) {
 			return err
 		}
 	}
+
+	excludes = trimBuildFilesFromExcludes(excludes, dockerfilePath)
 
 	tar, err := archive.TarWithOptions(opts.BuildContext, &archive.TarOptions{
 		ExcludePatterns: excludes,
@@ -105,6 +108,16 @@ func (a *Agent) BuildLocal(opts *BuildOpts) (err error) {
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 
 	return jsonmessage.DisplayJSONMessagesStream(out.Body, os.Stderr, termFd, isTerm, nil)
+}
+
+func trimBuildFilesFromExcludes(excludes []string, dockerfile string) []string {
+	if keep, _ := fileutils.Matches(".dockerignore", excludes); keep {
+		excludes = append(excludes, "!.dockerignore")
+	}
+	if keep, _ := fileutils.Matches(dockerfile, excludes); keep {
+		excludes = append(excludes, "!"+dockerfile)
+	}
+	return excludes
 }
 
 // AddDockerfileToBuildContext from a ReadCloser, returns a new archive and

@@ -153,7 +153,7 @@ export const SelectStyles = {
     height: 35px;
     border: 1px solid #ffffff55;
     font-size: 13px;
-    color: ${props => props.readOnly ? "#ffffff44" : ""};
+    color: ${(props) => (props.readOnly ? "#ffffff44" : "")};
     padding: 5px 10px;
     padding-left: 15px;
     border-radius: 3px;

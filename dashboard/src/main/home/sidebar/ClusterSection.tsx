@@ -13,11 +13,11 @@ import cluster from "assets/cluster.svg";
 import SidebarLink from "./SidebarLink";
 
 type Props = {
-  cluster: ClusterType,
-  currentCluster: ClusterType,
-  currentProject: ProjectType,
-  setCurrentCluster: (x: ClusterType, callback?: any) => void,
-  navToClusterDashboard: () => void,
+  cluster: ClusterType;
+  currentCluster: ClusterType;
+  currentProject: ProjectType;
+  setCurrentCluster: (x: ClusterType, callback?: any) => void;
+  navToClusterDashboard: () => void;
 };
 
 export const ClusterSection: React.FC<Props> = ({
@@ -42,23 +42,32 @@ export const ClusterSection: React.FC<Props> = ({
       return (
         <Relative>
           <SideLine />
-          <NavButton 
-            path="/applications" 
-            active={currentCluster.id === clusterId && window.location.pathname === "/applications"}
+          <NavButton
+            path="/applications"
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/applications"
+            }
           >
             <Img src={monoweb} />
             Applications
           </NavButton>
-          <NavButton 
+          <NavButton
             path="/jobs"
-            active={currentCluster.id === clusterId && window.location.pathname === "/jobs"}
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/jobs"
+            }
           >
             <Img src={monojob} />
             Jobs
           </NavButton>
-          <NavButton 
+          <NavButton
             path="/env-groups"
-            active={currentCluster.id === clusterId && window.location.pathname === "/env-groups"}
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/env-groups"
+            }
           >
             <Img src={sliders} />
             Env groups
@@ -66,26 +75,35 @@ export const ClusterSection: React.FC<Props> = ({
           {cluster.service === "eks" &&
             cluster.infra_id > 0 &&
             currentProject.enable_rds_databases && (
-              <NavButton 
+              <NavButton
                 path="/databases"
-                active={currentCluster.id === clusterId && window.location.pathname === "/databases"}
+                active={
+                  currentCluster.id === clusterId &&
+                  window.location.pathname === "/databases"
+                }
               >
                 <Icon className="material-icons-outlined">storage</Icon>
                 Databases
               </NavButton>
             )}
           {currentProject?.stacks_enabled ? (
-            <NavButton 
+            <NavButton
               path="/stacks"
-              active={currentCluster.id === clusterId && window.location.pathname === "/stacks"}
+              active={
+                currentCluster.id === clusterId &&
+                window.location.pathname === "/stacks"
+              }
             >
               <Icon className="material-icons-outlined">lan</Icon>
               Stacks
             </NavButton>
           ) : null}
-          <NavButton 
+          <NavButton
             path={"/cluster-dashboard"}
-            active={currentCluster.id === clusterId && window.location.pathname === "/cluster-dashboard"}
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/cluster-dashboard"
+            }
           >
             <Icon className="material-icons">device_hub</Icon>
             Cluster settings
@@ -100,19 +118,67 @@ export const ClusterSection: React.FC<Props> = ({
       <ClusterSelector onClick={() => setIsExpanded(!isExpanded)}>
         <LinkWrapper>
           <ClusterIcon>
-            <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15.207 12.4403C16.8094 12.4403 18.1092 11.1414 18.1092 9.53907C18.1092 7.93673 16.8094 6.63782 15.207 6.63782" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M9.54993 13.4133C7.4086 13.4133 5.69168 11.6964 5.69168 9.55417C5.69168 7.41284 7.4086 5.69592 9.54993 5.69592C11.6913 5.69592 13.4082 7.41284 13.4082 9.55417C13.4082 11.6964 11.6913 13.4133 9.54993 13.4133Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.69591 9.54996C5.69591 7.40863 7.41283 5.69171 9.55508 5.69171C11.6964 5.69171 13.4133 7.40863 13.4133 9.54996C13.4133 11.6913 11.6964 13.4082 9.55508 13.4082C7.41283 13.4082 5.69591 11.6913 5.69591 9.54996Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 19 19"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15.207 12.4403C16.8094 12.4403 18.1092 11.1414 18.1092 9.53907C18.1092 7.93673 16.8094 6.63782 15.207 6.63782"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M9.54993 13.4133C7.4086 13.4133 5.69168 11.6964 5.69168 9.55417C5.69168 7.41284 7.4086 5.69592 9.54993 5.69592C11.6913 5.69592 13.4082 7.41284 13.4082 9.55417C13.4082 11.6964 11.6913 13.4133 9.54993 13.4133Z"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M5.69591 9.54996C5.69591 7.40863 7.41283 5.69171 9.55508 5.69171C11.6964 5.69171 13.4133 7.40863 13.4133 9.54996C13.4133 11.6913 11.6964 13.4082 9.55508 13.4082C7.41283 13.4082 5.69591 11.6913 5.69591 9.54996Z"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </ClusterIcon>
           <Tooltip title={cluster?.name}>
             <ClusterName>{cluster?.name}</ClusterName>
           </Tooltip>
-          <I isExpanded={isExpanded} className="material-icons">arrow_drop_down</I>
+          <I isExpanded={isExpanded} className="material-icons">
+            arrow_drop_down
+          </I>
           <Spacer />
         </LinkWrapper>
       </ClusterSelector>
@@ -151,7 +217,8 @@ const I = styled.i`
   color: #ffffff99;
   font-size: 20px;
   border-radius: 100px;
-  transform: ${(props: { isExpanded: boolean }) => props.isExpanded ? "" : "rotate(-90deg)"};
+  transform: ${(props: { isExpanded: boolean }) =>
+    props.isExpanded ? "" : "rotate(-90deg)"};
 `;
 
 const Relative = styled.div`
@@ -164,7 +231,7 @@ const SideLine = styled.div`
   width: 1px;
   top: 5px;
   height: calc(100% - 12px);
-  background: #383A3F;
+  background: #383a3f;
 `;
 
 const Icon = styled.span`
@@ -192,10 +259,10 @@ const NavButton = styled(SidebarLink)`
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
-  background: ${(props: any) => props.active ? "#ffffff11" : ""};
+  background: ${(props: any) => (props.active ? "#ffffff11" : "")};
 
   :hover {
-    background: ${(props: any) => props.active ? "#ffffff11" : "#ffffff08"};
+    background: ${(props: any) => (props.active ? "#ffffff11" : "#ffffff08")};
   }
 
   > i {

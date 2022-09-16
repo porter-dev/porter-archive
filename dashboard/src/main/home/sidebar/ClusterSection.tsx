@@ -134,7 +134,20 @@ export const ClusterSection: React.FC<Props> = ({
 
   return (
     <>
-      <ClusterSelector onClick={() => setIsExpanded(!isExpanded)}>
+      <ClusterSelector 
+        onClick={() => setIsExpanded(!isExpanded)}
+        active={
+          !isExpanded && cluster.id === currentCluster.id && [
+            "/cluster-dashboard",
+            "/preview-environments",
+            "/stacks",
+            "/databases",
+            "/env-groups",
+            "/jobs",
+            "/applications"
+          ].includes(window.location.pathname)
+        }
+      >
         <LinkWrapper>
           <ClusterIcon>
             <svg

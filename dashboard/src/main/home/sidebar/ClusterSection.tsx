@@ -1,331 +1,305 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
+
 import styled from "styled-components";
-import drawerBg from "assets/drawer-bg.png";
-
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
-
-import Drawer from "./Drawer";
-import { RouteComponentProps, withRouter } from "react-router";
+import { ClusterType, ProjectType } from "shared/types";
 import { Tooltip } from "@material-ui/core";
+import settings from "assets/settings.svg";
+
+import monojob from "assets/monojob.png";
+import monoweb from "assets/monoweb.png";
+import sliders from "assets/sliders.svg";
+import cluster from "assets/cluster.svg";
+
 import SidebarLink from "./SidebarLink";
 
-type PropsType = RouteComponentProps & {
-  forceCloseDrawer: boolean;
-  releaseDrawer: () => void;
-  setWelcome: (x: boolean) => void;
-  currentView: string;
-  isSelected: boolean;
-  forceRefreshClusters: boolean;
-  setRefreshClusters: (x: boolean) => void;
+type Props = {
+  cluster: ClusterType;
+  currentCluster: ClusterType;
+  currentProject: ProjectType;
+  setCurrentCluster: (x: ClusterType, callback?: any) => void;
+  navToClusterDashboard: () => void;
 };
 
-type StateType = {
-  showDrawer: boolean;
-  initializedDrawer: boolean;
-  clusters: ClusterType[];
+export const ClusterSection: React.FC<Props> = ({
+  cluster,
+  currentCluster,
+  currentProject,
+  setCurrentCluster,
+  navToClusterDashboard,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Track last project id for refreshing clusters on project change
-  prevProjectId: number;
-};
-
-class ClusterSection extends Component<PropsType, StateType> {
-  // Need to track initialized for animation mounting
-  state = {
-    showDrawer: false,
-    initializedDrawer: false,
-    clusters: [] as ClusterType[],
-    prevProjectId: this.context.currentProject.id,
-  };
-
-  updateClusters = () => {
-    let {
-      user,
-      currentProject,
-      setCurrentCluster,
-      currentCluster,
-    } = this.context;
-
-    // TODO: query with selected filter once implemented
-    api
-      .getClusters("<token>", {}, { id: currentProject.id })
-      .then((res) => {
-        window.analytics?.identify(user.userId, {
-          currentProject,
-          clusters: res.data,
-        });
-
-        this.props.setWelcome(false);
-        // TODO: handle uninitialized kubeconfig
-        if (res.data) {
-          let clusters = res.data;
-          clusters.sort((a: any, b: any) => a.id - b.id);
-          if (clusters.length > 0) {
-            let queryString = window.location.search;
-            let urlParams = new URLSearchParams(queryString);
-            let paramClusterName = urlParams.get("cluster");
-            let params = this.props.match.params as any;
-            let pathClusterName = params.cluster;
-
-            // Set cluster from URL if in path or params
-            let defaultCluster = null as ClusterType;
-            if (paramClusterName || pathClusterName) {
-              clusters.forEach((cluster: ClusterType) => {
-                if (!defaultCluster) {
-                  if (cluster.name === pathClusterName) {
-                    defaultCluster = cluster;
-                  } else if (cluster.name === paramClusterName) {
-                    defaultCluster = cluster;
-                  }
-                }
-              });
-            }
-
-            this.setState({ clusters });
-            let saved = JSON.parse(
-              localStorage.getItem(currentProject.id + "-cluster")
-            );
-            if (!defaultCluster && saved && saved !== "null") {
-              // Ensures currentCluster isn't prematurely set (causes issues downstream)
-              let loaded = false;
-              for (let i = 0; i < clusters.length; i++) {
-                if (
-                  clusters[i].id === saved.id &&
-                  clusters[i].project_id === saved.project_id &&
-                  clusters[i].name === saved.name
-                ) {
-                  loaded = true;
-                  setCurrentCluster(clusters[i]);
-                  break;
-                }
-              }
-              if (!loaded) {
-                setCurrentCluster(clusters[0]);
-              }
-            } else {
-              setCurrentCluster(defaultCluster || clusters[0]);
-            }
-          } else if (
-            this.props.currentView !== "provisioner" &&
-            this.props.currentView !== "new-project"
-          ) {
-            this.setState({ clusters: [] });
-            setCurrentCluster(null);
-          }
-        }
-      })
-      .catch((err) => this.props.setWelcome(true));
-  };
-
-  componentDidMount() {
-    this.updateClusters();
-  }
-
-  // Need to override showDrawer when the sidebar is closed
-  componentDidUpdate(prevProps: PropsType) {
-    if (prevProps !== this.props) {
-      // Refresh clusters on project change
-      if (this.state.prevProjectId !== this.context.currentProject.id) {
-        this.updateClusters();
-        this.setState({ prevProjectId: this.context.currentProject.id });
-      } else if (this.props.forceRefreshClusters === true) {
-        this.updateClusters();
-        this.props.setRefreshClusters(false);
-      }
-
-      if (this.props.forceCloseDrawer && this.state.showDrawer) {
-        this.setState({ showDrawer: false });
-        this.props.releaseDrawer();
-      }
+  useEffect(() => {
+    if (!isExpanded) {
+      currentCluster.id === cluster.id && setIsExpanded(true);
     }
-  }
+  }, [currentCluster]);
 
-  toggleDrawer = (): void => {
-    if (!this.state.initializedDrawer) {
-      this.setState({ initializedDrawer: true });
-    }
-    this.setState({ showDrawer: !this.state.showDrawer });
-  };
+  const renderClusterContent = (cluster: any) => {
+    let clusterId = cluster.id;
 
-  renderDrawer = (): JSX.Element | undefined => {
-    if (this.state.initializedDrawer) {
+    if (currentCluster && isExpanded) {
       return (
-        <Drawer
-          toggleDrawer={this.toggleDrawer}
-          showDrawer={this.state.showDrawer}
-          clusters={this.state.clusters}
-        />
-      );
-    }
-  };
-
-  showClusterConfigModal = () => {
-    this.context.setCurrentModal("ClusterConfigModal", {
-      updateClusters: this.updateClusters,
-    });
-  };
-
-  renderContents = (): JSX.Element => {
-    let { clusters, showDrawer } = this.state;
-    let { currentCluster } = this.context;
-
-    if (clusters.length > 0) {
-      return (
-        <ClusterSelector path="/cluster-dashboard">
-          <LinkWrapper>
-            <ClusterIcon>
-              <i className="material-icons">device_hub</i>
-            </ClusterIcon>
-            <Tooltip title={currentCluster?.name}>
-              <ClusterName>{currentCluster?.name}</ClusterName>
-            </Tooltip>
-          </LinkWrapper>
-          <DrawerButton
-            onClick={(e) => {
-              e.preventDefault();
-              this.toggleDrawer();
-            }}
+        <Relative>
+          <SideLine />
+          <NavButton
+            path="/applications"
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/applications"
+            }
           >
-            <BgAccent src={drawerBg} />
-            <DropdownIcon showDrawer={showDrawer}>
-              <i className="material-icons">arrow_drop_down</i>
-            </DropdownIcon>
-          </DrawerButton>
-        </ClusterSelector>
+            <Img src={monoweb} />
+            Applications
+          </NavButton>
+          <NavButton
+            path="/jobs"
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/jobs"
+            }
+          >
+            <Img src={monojob} />
+            Jobs
+          </NavButton>
+          <NavButton
+            path="/env-groups"
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/env-groups"
+            }
+          >
+            <Img src={sliders} />
+            Env groups
+          </NavButton>
+          {cluster.service === "eks" &&
+            cluster.infra_id > 0 &&
+            currentProject.enable_rds_databases && (
+              <NavButton
+                path="/databases"
+                active={
+                  currentCluster.id === clusterId &&
+                  window.location.pathname === "/databases"
+                }
+              >
+                <Icon className="material-icons-outlined">storage</Icon>
+                Databases
+              </NavButton>
+            )}
+          {currentProject?.stacks_enabled ? (
+            <NavButton
+              path="/stacks"
+              active={
+                currentCluster.id === clusterId &&
+                window.location.pathname === "/stacks"
+              }
+            >
+              <Icon className="material-icons-outlined">lan</Icon>
+              Stacks
+            </NavButton>
+          ) : null}
+          <NavButton
+            path={"/cluster-dashboard"}
+            active={
+              currentCluster.id === clusterId &&
+              window.location.pathname === "/cluster-dashboard"
+            }
+          >
+            <Icon className="material-icons">device_hub</Icon>
+            Cluster settings
+          </NavButton>
+        </Relative>
       );
     }
-
-    return (
-      <InitializeButton
-        onClick={() =>
-          this.context.setCurrentModal("ClusterInstructionsModal", {})
-        }
-      >
-        <Plus>+</Plus> Connect a Cluster
-      </InitializeButton>
-    );
   };
 
-  render() {
-    return (
-      <>
-        {this.renderDrawer()}
-        {this.renderContents()}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <ClusterSelector onClick={() => setIsExpanded(!isExpanded)}>
+        <LinkWrapper>
+          <ClusterIcon>
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 19 19"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15.207 12.4403C16.8094 12.4403 18.1092 11.1414 18.1092 9.53907C18.1092 7.93673 16.8094 6.63782 15.207 6.63782"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M9.54993 13.4133C7.4086 13.4133 5.69168 11.6964 5.69168 9.55417C5.69168 7.41284 7.4086 5.69592 9.54993 5.69592C11.6913 5.69592 13.4082 7.41284 13.4082 9.55417C13.4082 11.6964 11.6913 13.4133 9.54993 13.4133Z"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M5.69591 9.54996C5.69591 7.40863 7.41283 5.69171 9.55508 5.69171C11.6964 5.69171 13.4133 7.40863 13.4133 9.54996C13.4133 11.6913 11.6964 13.4082 9.55508 13.4082C7.41283 13.4082 5.69591 11.6913 5.69591 9.54996Z"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </ClusterIcon>
+          <Tooltip title={cluster?.name}>
+            <ClusterName>{cluster?.name}</ClusterName>
+          </Tooltip>
+          <I isExpanded={isExpanded} className="material-icons">
+            arrow_drop_down
+          </I>
+          <Spacer />
+        </LinkWrapper>
+      </ClusterSelector>
+      <div onClick={() => setCurrentCluster(cluster)}>
+        {renderClusterContent(cluster)}
+      </div>
+    </>
+  );
+};
 
-ClusterSection.contextType = Context;
-
-export default withRouter(ClusterSection);
-
-const Plus = styled.div`
-  margin-right: 10px;
-  font-size: 15px;
+const Spacer = styled.div`
+  flex: 1;
 `;
 
-const InitializeButton = styled.div`
+const Settings = styled.p`
+  color: #ffffff44;
+  width: 16px;
+  padding-right: 7px;
+  height: 100%;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 1px;
+  :hover {
+    color: #ffffff;
+  }
+  > i {
+    font-size: 16px;
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+
+const I = styled.i`
+  color: #ffffff99;
+  font-size: 20px;
+  border-radius: 100px;
+  transform: ${(props: { isExpanded: boolean }) =>
+    props.isExpanded ? "" : "rotate(-90deg)"};
+`;
+
+const Relative = styled.div`
   position: relative;
+`;
+
+const SideLine = styled.div`
+  position: absolute;
+  left: 32px;
+  width: 1px;
+  top: 5px;
+  height: calc(100% - 12px);
+  background: #383a3f;
+`;
+
+const Icon = styled.span`
+  padding: 4px;
+  width: 22px;
+  padding-top: 4px;
+  border-radius: 3px;
+  margin-right: 8px;
+  font-size: 16px;
+`;
+
+const NavButton = styled(SidebarLink)`
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: calc(100% - 30px);
-  height: 38px;
-  margin: 10px 15px 12px;
+  border-radius: 5px;
+  position: relative;
+  text-decoration: none;
+  height: 34px;
+  margin: 5px 15px;
+  margin-left: 39px;
+  padding: 0 30px 2px 8px;
   font-size: 13px;
-  font-weight: 500;
-  border-radius: 3px;
+  font-family: "Work Sans", sans-serif;
   color: #ffffff;
-  padding-bottom: 1px;
-  cursor: pointer;
-  background: #ffffff11;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: any) => (props.active ? "#ffffff11" : "")};
 
   :hover {
-    background: #ffffff22;
+    background: ${(props: any) => (props.active ? "#ffffff11" : "#ffffff08")};
+  }
+
+  > i {
+    font-size: 20px;
+    padding-top: 4px;
+    border-radius: 3px;
+    margin-right: 10px;
   }
 `;
 
-const BgAccent = styled.img`
-  height: 30px;
-  background: #819bfd;
-  width: 30px;
-  border-top-left-radius: 100px;
-  max-width: 30px;
-  border-bottom-left-radius: 100px;
-  position: absolute;
-  top: 6px;
-  right: -8px;
-  border: none;
-  outline: none;
-`;
-
-const DrawerButton = styled.div`
-  position: absolute;
-  height: 42px;
+const Img = styled.img<{ enlarge?: boolean }>`
+  padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
+  height: 22px;
   width: 22px;
-  top: 0px;
-  right: 0px;
-  z-index: 0;
-  overflow: hidden;
-  border: none;
-  outline: none;
+  padding-top: 4px;
+  border-radius: 3px;
+  margin-right: 8px;
 `;
 
 const ClusterName = styled.div`
   white-space: nowrap;
   overflow: hidden;
-  padding-right: 15px;
   text-overflow: ellipsis;
   display: inline-block;
-  width: 130px;
   margin-left: 3px;
+  margin-right: 4px;
   font-weight: 400;
   color: #ffffff;
 `;
 
-const DropdownIcon = styled.span`
-  position: absolute;
-  right: ${(props: { showDrawer: boolean }) =>
-    props.showDrawer ? "-2px" : "2px"};
-  top: 10px;
-  > i {
-    font-size: 18px;
-  }
-  -webkit-transform: ${(props: { showDrawer: boolean }) =>
-    props.showDrawer ? "rotate(-90deg)" : "rotate(90deg)"};
-  transform: ${(props: { showDrawer: boolean }) =>
-    props.showDrawer ? "rotate(-90deg)" : "rotate(90deg)"};
-  animation: ${(props: { showDrawer: boolean }) =>
-    props.showDrawer ? "rotateLeft 0.5s" : "rotateRight 0.5s"};
-  animation-fill-mode: forwards;
-
-  @keyframes rotateLeft {
-    100% {
-      right: 2px;
-      -webkit-transform: rotate(90deg);
-      transform: rotate(90deg);
-    }
-  }
-
-  @keyframes rotateRight {
-    100% {
-      right: -2px;
-      -webkit-transform: rotate(-90deg);
-      transform: rotate(-90deg);
-    }
-  }
-`;
-
 const ClusterIcon = styled.div`
-  > i {
-    font-size: 16px;
+  > svg {
+    width: 13px;
     display: flex;
     align-items: center;
-    margin-bottom: 0px;
-    margin-left: 17px;
-    margin-right: 10px;
+    margin-bottom: -1x;
+    margin-right: 9px;
     color: #ffffff;
   }
 `;
@@ -335,31 +309,30 @@ const LinkWrapper = styled.div`
   height: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 `;
 
-const ClusterSelector = styled(SidebarLink)`
+const ClusterSelector = styled.div`
   position: relative;
   display: block;
-  padding-left: 7px;
-  width: 100%;
-  height: 42px;
-  margin: 0 auto 0 auto;
-  font-size: 14px;
+  border-radius: 5px;
+  width: calc(100% - 30px);
+  height: 34px;
+  padding: 0 6px 2px 11px;
+  font-size: 13px;
+  margin: 5px 15px;
   font-weight: 500;
   color: white;
   cursor: pointer;
   z-index: 1;
-
-  &.active {
-    background: #ffffff11;
-
-    :hover {
-      background: #ffffff11;
-    }
-  }
-
+  background: ${(props: { active?: boolean }) =>
+    props.active ? "#ffffff11" : ""};
   :hover {
-    background: #ffffff08;
+    > div {
+      > i {
+        background: #ffffff11;
+      }
+    }
   }
 `;

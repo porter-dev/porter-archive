@@ -48,7 +48,7 @@ const ConnectExternalCluster: React.FC<Props> = ({
           }
         }
       });
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -65,13 +65,9 @@ const ConnectExternalCluster: React.FC<Props> = ({
         return (
           <Placeholder>
             1. To install the Porter CLI, run the following in your terminal:
-            <Code>
-              /bin/bash -c "$(curl -fsSL https://install.porter.run)"
-            </Code>
+            <Code>/bin/bash -c "$(curl -fsSL https://install.porter.run)"</Code>
             Alternatively, on macOS you can use Homebrew:
-            <Code>
-              brew install porter-dev/porter/porter
-            </Code>
+            <Code>brew install porter-dev/porter/porter</Code>
           </Placeholder>
         );
       case 1:

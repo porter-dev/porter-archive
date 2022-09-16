@@ -99,11 +99,9 @@ class SettingsPage extends Component<PropsType, StateType> {
       )
       .then((res) => {
         if (res.data) {
-          const availableNamespaces = res.data.filter(
-            (namespace: any) => {
-              return namespace.status !== "Terminating";
-            }
-          );
+          const availableNamespaces = res.data.filter((namespace: any) => {
+            return namespace.status !== "Terminating";
+          });
           const namespaceOptions = availableNamespaces.map(
             (x: { name: string }) => {
               return { label: x.name, value: x.name };

@@ -68,10 +68,11 @@ func LoadPolicies(configFilePathDir string) (*KubernetesPolicies, error) {
 		}
 
 		policies[name] = KubernetesOPAQueryCollection{
-			Kind:      KubernetesBuiltInKind(cfPolicyCollection.Kind),
-			Queries:   queries,
-			Match:     cfPolicyCollection.Match,
-			MustExist: cfPolicyCollection.MustExist,
+			Kind:             KubernetesBuiltInKind(cfPolicyCollection.Kind),
+			Queries:          queries,
+			Match:            cfPolicyCollection.Match,
+			OverrideSeverity: cfPolicyCollection.OverrideSeverity,
+			MustExist:        cfPolicyCollection.MustExist,
 		}
 	}
 

@@ -133,3 +133,19 @@ node:
     name: "node.porter_run_taints"
   - path: "./policies/node/porter_run_labels.rego"
     name: "node.porter_run_labels"
+  - path: "./policies/node/healthy.rego"
+    name: "node.healthy"
+descheduler:
+  kind: "helm_release"
+  match:
+    name: descheduler
+    namespace: kube-system
+  mustExist: true
+  policies: []
+vpa:
+  kind: "helm_release"
+  match:
+    name: vpa
+    namespace: kube-system
+  mustExist: true
+  policies: []

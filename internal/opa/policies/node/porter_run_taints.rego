@@ -2,7 +2,7 @@ package node.porter_run_taints
 
 import future.keywords
 
-POLICY_ID := "porter_run_taints"
+POLICY_ID := sprintf("porter_run_taints_%s", [input.metadata.name])
 
 POLICY_VERSION := "v0.0.1"
 

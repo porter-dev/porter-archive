@@ -74,8 +74,6 @@ func LoadPolicies(configFilePathDir string) (*KubernetesPolicies, error) {
 			OverrideSeverity: cfPolicyCollection.OverrideSeverity,
 			MustExist:        cfPolicyCollection.MustExist,
 		}
-
-		fmt.Println("ADDED POLICY WITH SEVERITY", cfPolicyCollection.OverrideSeverity)
 	}
 
 	return &KubernetesPolicies{

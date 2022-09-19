@@ -211,8 +211,10 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 			results, err := query.Eval(
 				context.Background(),
 				rego.EvalInput(map[string]interface{}{
-					"version": helmRelease.Chart.Metadata.Version,
-					"values":  helmRelease.Config,
+					"version":   helmRelease.Chart.Metadata.Version,
+					"values":    helmRelease.Config,
+					"name":      helmRelease.Name,
+					"namespace": helmRelease.Namespace,
 				}),
 			)
 

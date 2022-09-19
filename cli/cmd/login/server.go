@@ -242,7 +242,6 @@ const successScreen = `
     </div>
     </div>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <img id='logo' src='https://i.ibb.co/y64zfm5/porter.png'>
     <div id='success'>Authentication successful!</div>
     <div id='subtitle'>You can now close this window.</div>
     <script>

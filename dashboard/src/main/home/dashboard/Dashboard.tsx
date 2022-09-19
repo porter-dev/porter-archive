@@ -255,7 +255,7 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #aaaabb;
+  color: #8b949f;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
@@ -299,24 +299,24 @@ const Overlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
 `;
 
 const DashboardImage = styled.img`
-  height: 45px;
-  width: 45px;
+  height: 35px;
+  width: 35px;
   border-radius: 5px;
   box-shadow: 0 2px 5px 4px #00000011;
 `;
 
 const DashboardIcon = styled.div`
   position: relative;
-  height: 45px;
+  height: 23px;
   margin-right: 17px;
-  width: 45px;
+  min-width: 23px;
   border-radius: 5px;
   display: flex;
   align-items: center;

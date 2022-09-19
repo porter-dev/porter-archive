@@ -426,7 +426,7 @@ const Polymer = styled.div`
 `;
 
 const TemplatesWrapper = styled.div`
-  width: calc(85%);
+  width: 100%;
   overflow: visible;
   min-width: 300px;
 `;

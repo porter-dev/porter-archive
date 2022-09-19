@@ -171,7 +171,6 @@ const StyledOnboarding = styled.div`
   z-index: 1;
   display: flex;
   align-items: center;
-  margin-top: -6%;
   padding-bottom: 5%;
   min-width: 350px;
   position: relative;

@@ -78,7 +78,7 @@ const MaterialIcon = styled.span<{ width: string }>`
 `;
 
 const StyledTitle = styled.div<{ capitalize: boolean }>`
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   user-select: text;
   text-transform: ${(props) => (props.capitalize ? "capitalize" : "")};

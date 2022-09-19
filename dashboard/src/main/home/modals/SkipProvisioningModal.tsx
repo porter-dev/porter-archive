@@ -1,6 +1,7 @@
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
 import React, { useContext } from "react";
+import { contextType } from "react-modal";
 import { Context } from "shared/Context";
 import styled from "styled-components";
 
@@ -9,7 +10,7 @@ import styled from "styled-components";
  * will open this modal to let user skip onboarding and keep using porter.
  */
 const SkipOnboardingModal = () => {
-  const { currentModalData, setHasFinishedOnboarding } = useContext(Context);
+  const { currentModalData, setHasFinishedOnboarding, setCurrentModal } = useContext(Context);
 
   return (
     <>
@@ -27,6 +28,7 @@ const SkipOnboardingModal = () => {
               currentModalData.skipOnboarding();
             }
             setHasFinishedOnboarding(true);
+            setCurrentModal(null);
           }}
           status={""}
           clearPosition

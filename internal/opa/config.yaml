@@ -56,7 +56,7 @@ prometheus:
     name: "prometheus.version"
 nginx_pod:
   kind: "pod"
-  override_severity: "critical"
+  overrideSeverity: "critical"
   match:
     namespace: ingress-nginx
     labels:

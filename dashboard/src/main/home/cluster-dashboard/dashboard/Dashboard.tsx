@@ -22,7 +22,9 @@ const tabOptions: {
   value: TabEnum;
 }[] = [
   { label: "Nodes", value: "nodes" },
+  /*
   { label: "Incidents", value: "incidents" },
+  */
   { label: "Metrics", value: "metrics" },
   { label: "Namespaces", value: "namespaces" },
   { label: "Settings", value: "settings" },
@@ -85,7 +87,7 @@ export const Dashboard: React.FunctionComponent = () => {
           </InfoLabel>
         </TopRow>
         <Description>
-          Cluster dashboard for {context.currentCluster.name}
+          Cluster settings for {context.currentCluster.name}
         </Description>
       </InfoSection>
 

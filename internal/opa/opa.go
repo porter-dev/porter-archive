@@ -39,10 +39,11 @@ const (
 )
 
 type KubernetesOPAQueryCollection struct {
-	Kind      KubernetesBuiltInKind
-	Match     MatchParameters
-	MustExist bool
-	Queries   []rego.PreparedEvalQuery
+	Kind             KubernetesBuiltInKind
+	Match            MatchParameters
+	MustExist        bool
+	OverrideSeverity string
+	Queries          []rego.PreparedEvalQuery
 }
 
 type MatchParameters struct {
@@ -158,7 +159,7 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 						ObjectID:       fmt.Sprintf("helm_release/%s/%s/%s", collection.Match.Namespace, collection.Match.Name, "exists"),
 						CategoryName:   name,
 						PolicyVersion:  "v0.0.1",
-						PolicySeverity: "high",
+						PolicySeverity: getSeverity("high", collection),
 						PolicyTitle:    fmt.Sprintf("The helm release %s must exist", collection.Match.Name),
 						PolicyMessage:  "The helm release was not found on the cluster",
 					},
@@ -172,7 +173,7 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 				ObjectID:       fmt.Sprintf("helm_release/%s/%s/%s", collection.Match.Namespace, collection.Match.Name, "exists"),
 				CategoryName:   name,
 				PolicyVersion:  "v0.0.1",
-				PolicySeverity: "high",
+				PolicySeverity: getSeverity("high", collection),
 				PolicyTitle:    fmt.Sprintf("The helm release %s must exist", collection.Match.Name),
 				PolicyMessage:  "The helm release was found",
 			})
@@ -232,12 +233,21 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 					rawQueryRes,
 					fmt.Sprintf("helm_release/%s/%s/%s", helmRelease.Namespace, helmRelease.Name, rawQueryRes.PolicyID),
 					name,
+					collection,
 				))
 			}
 		}
 	}
 
 	return res, nil
+}
+
+func getSeverity(defaultSeverity string, collection KubernetesOPAQueryCollection) string {
+	if collection.OverrideSeverity != "" {
+		return collection.OverrideSeverity
+	}
+
+	return defaultSeverity
 }
 
 func (runner *KubernetesOPARunner) runPodQueries(name string, collection KubernetesOPAQueryCollection) ([]*OPARecommenderQueryResult, error) {
@@ -287,6 +297,7 @@ func (runner *KubernetesOPARunner) runPodQueries(name string, collection Kuberne
 					rawQueryRes,
 					fmt.Sprintf("pod/%s/%s", pod.Namespace, pod.Name),
 					name,
+					collection,
 				))
 			}
 		}
@@ -334,6 +345,7 @@ func (runner *KubernetesOPARunner) runCRDListQueries(name string, collection Kub
 					rawQueryRes,
 					fmt.Sprintf("%s/%s/%s/%s", collection.Match.Group, collection.Match.Version, collection.Match.Resource, rawQueryRes.PolicyID),
 					name,
+					collection,
 				))
 			}
 		}
@@ -342,7 +354,7 @@ func (runner *KubernetesOPARunner) runCRDListQueries(name string, collection Kub
 	return res, nil
 }
 
-func rawQueryResToRecommenderQueryResult(rawQueryRes *rawQueryResult, objectID, categoryName string) *OPARecommenderQueryResult {
+func rawQueryResToRecommenderQueryResult(rawQueryRes *rawQueryResult, objectID, categoryName string, collection KubernetesOPAQueryCollection) *OPARecommenderQueryResult {
 	queryRes := &OPARecommenderQueryResult{
 		ObjectID:     objectID,
 		CategoryName: categoryName,
@@ -357,7 +369,7 @@ func rawQueryResToRecommenderQueryResult(rawQueryRes *rawQueryResult, objectID, 
 
 	queryRes.PolicyMessage = message
 	queryRes.Allow = rawQueryRes.Allow
-	queryRes.PolicySeverity = rawQueryRes.PolicySeverity
+	queryRes.PolicySeverity = getSeverity(rawQueryRes.PolicySeverity, collection)
 	queryRes.PolicyTitle = rawQueryRes.PolicyTitle
 	queryRes.PolicyVersion = rawQueryRes.PolicyVersion
 

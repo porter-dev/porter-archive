@@ -126,7 +126,6 @@ const GitlabForm: React.FC<Props> = () => {
           makeFlush={true}
           text="Save Gitlab Settings"
           status={buttonStatus || error?.message}
-          
         />
       </StyledForm>
     </>

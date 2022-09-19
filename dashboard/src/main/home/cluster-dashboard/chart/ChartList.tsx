@@ -323,7 +323,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => {
       isSubscribed = false;
     };
-  }, [namespace, currentView]);
+  }, [namespace, currentView, context.currentCluster]);
 
   const filteredCharts = useMemo(() => {
     if (!Array.isArray(charts)) {

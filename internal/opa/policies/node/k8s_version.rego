@@ -2,7 +2,7 @@ package node.k8s_version
 
 import future.keywords
 
-POLICY_ID := "k8s_version"
+POLICY_ID := sprintf("k8s_version_%s", [input.metadata.name])
 
 POLICY_VERSION := "v0.0.1"
 

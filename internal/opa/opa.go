@@ -315,6 +315,11 @@ func (runner *KubernetesOPARunner) runCRDListQueries(name string, collection Kub
 		Resource: collection.Match.Resource,
 	}
 
+	// just case on the "core" group and unset it
+	if collection.Match.Group == "core" {
+		objRes.Group = ""
+	}
+
 	crdList, err := runner.dynamicClient.Resource(objRes).Namespace(collection.Match.Namespace).List(context.Background(), v1.ListOptions{})
 
 	if err != nil {

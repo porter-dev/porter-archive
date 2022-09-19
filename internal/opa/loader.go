@@ -13,11 +13,11 @@ import (
 type ConfigFile map[string]ConfigFilePolicyCollection
 
 type ConfigFilePolicyCollection struct {
-	Kind             string             `yaml:"kind"`
-	Match            MatchParameters    `yaml:"match"`
-	MustExist        bool               `yaml:"mustExist"`
-	OverrideSeverity string             `yaml:"override_severity"`
-	Policies         []ConfigFilePolicy `yaml:"policies"`
+	Kind             string             `json:"kind"`
+	Match            MatchParameters    `json:"match"`
+	MustExist        bool               `json:"mustExist"`
+	OverrideSeverity string             `json:"overrideSeverity"`
+	Policies         []ConfigFilePolicy `json:"policies"`
 }
 
 type ConfigFilePolicy struct {

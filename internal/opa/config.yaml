@@ -56,6 +56,7 @@ prometheus:
     name: "prometheus.version"
 nginx_pod:
   kind: "pod"
+  override_severity: "critical"
   match:
     namespace: ingress-nginx
     labels:
@@ -117,3 +118,5 @@ certificates:
   policies:
   - path: "./policies/certificates/expiry_two_weeks.rego"
     name: "certificates.expiry_two_weeks"
+  - path: "./policies/certificates/expired.rego"
+    name: "certificates.expired"

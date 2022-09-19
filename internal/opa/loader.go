@@ -13,10 +13,11 @@ import (
 type ConfigFile map[string]ConfigFilePolicyCollection
 
 type ConfigFilePolicyCollection struct {
-	Kind      string             `yaml:"kind"`
-	Match     MatchParameters    `yaml:"match"`
-	MustExist bool               `yaml:"mustExist"`
-	Policies  []ConfigFilePolicy `yaml:"policies"`
+	Kind             string             `yaml:"kind"`
+	Match            MatchParameters    `yaml:"match"`
+	MustExist        bool               `yaml:"mustExist"`
+	OverrideSeverity string             `yaml:"override_severity"`
+	Policies         []ConfigFilePolicy `yaml:"policies"`
 }
 
 type ConfigFilePolicy struct {
@@ -67,10 +68,11 @@ func LoadPolicies(configFilePathDir string) (*KubernetesPolicies, error) {
 		}
 
 		policies[name] = KubernetesOPAQueryCollection{
-			Kind:      KubernetesBuiltInKind(cfPolicyCollection.Kind),
-			Queries:   queries,
-			Match:     cfPolicyCollection.Match,
-			MustExist: cfPolicyCollection.MustExist,
+			Kind:             KubernetesBuiltInKind(cfPolicyCollection.Kind),
+			Queries:          queries,
+			Match:            cfPolicyCollection.Match,
+			OverrideSeverity: cfPolicyCollection.OverrideSeverity,
+			MustExist:        cfPolicyCollection.MustExist,
 		}
 	}
 

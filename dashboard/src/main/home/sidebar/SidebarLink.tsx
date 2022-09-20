@@ -25,14 +25,11 @@ const SidebarLink: React.FC<
       search.append("project_id", String(currentProject.id));
     }
 
-    console.log("GOT NAMESPACE", getQueryParam("namespace"));
-
     if (!pathNamespace) {
       pathNamespace = getQueryParam("namespace");
     }
 
     if (pathNamespace) {
-      console.log("APPENDING NAMESPACE", pathNamespace);
       search.append("namespace", pathNamespace);
     }
 

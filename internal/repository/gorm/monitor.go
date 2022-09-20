@@ -42,3 +42,29 @@ func (m *MonitorTestResultRepository) UpdateMonitorTestResult(monitor *models.Mo
 
 	return monitor, nil
 }
+
+func (m *MonitorTestResultRepository) ArchiveMonitorTestResults(recommenderID string) error {
+	query := m.db.Debug().Unscoped().Model(&models.MonitorTestResult{}).Where("last_recommender_run_id != ?", recommenderID)
+
+	return query.Update("archived", true).Error
+}
+
+func (m *MonitorTestResultRepository) DeleteOldMonitorTestResults(recommenderID string) error {
+	monitors := make([]*models.MonitorTestResult, 0)
+
+	query := m.db.Debug().Unscoped().Where("last_recommender_run_id != ?", recommenderID)
+
+	// we need to switch on the database type to delete records older than 24 hours
+	switch m.db.Dialector.Name() {
+	case "sqlite":
+		query = query.Where(
+			"last_tested < DATETIME('now', '-1 day')",
+		)
+	case "postgres":
+		query = query.Where(
+			"last_tested < NOW() - INTERVAL '1 day'",
+		)
+	}
+
+	return query.Delete(monitors).Error
+}

@@ -68,7 +68,7 @@ type CreateReleaseBaseRequest struct {
 
 	// The name of this release
 	// required: true
-	Name string `json:"name" form:"required"`
+	Name string `json:"name" form:"required,dns1123"`
 }
 
 // swagger:model

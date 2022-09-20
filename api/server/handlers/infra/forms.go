@@ -639,6 +639,27 @@ tabs:
       label: Add an additional prometheus node group to ensure monitoring stability.
       settings:
         default: false
+  - name: prometheus_machine_settings
+    show_if: additional_prometheus_node_group
+    contents:
+    - type: select
+      label: ⚙️ AWS Prometheus Machine Type
+      variable: additional_prometheus_machine_type
+      settings:
+        default: t2.medium
+        options:
+        - label: t2.medium
+          value: t2.medium
+        - label: t2.large
+          value: t2.large
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.large
+          value: t3.large
+        - label: t3.xlarge
+          value: t3.xlarge
 `
 
 const gcrForm = `name: GCR

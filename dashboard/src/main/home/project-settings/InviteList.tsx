@@ -119,7 +119,11 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 
   const createInvite = () => {
     api
-      .createInvite("<token>", { email, kind: role }, { id: currentProject.id })
+      .createInvite(
+        "<token>",
+        { email: email.toLowerCase(), kind: role },
+        { id: currentProject.id }
+      )
       .then(() => {
         getData();
         setEmail("");
@@ -395,7 +399,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   return (
     <>
       <>
-        <Heading isAtTop={true}>Share Project</Heading>
+        <Heading isAtTop={true}>Share project</Heading>
         <Helper>Generate a project invite for another user.</Helper>
         <InputRowWrapper>
           <InputRow
@@ -403,7 +407,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
             type="text"
             setValue={(newEmail: string) => setEmail(newEmail)}
             width="100%"
-            placeholder="ex: mrp@getporter.dev"
+            placeholder="ex: mrp@porter.run"
           />
         </InputRowWrapper>
         <Helper>Specify a role for this user.</Helper>
@@ -416,7 +420,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         </RoleSelectorWrapper>
         <ButtonWrapper>
           <InviteButton disabled={!hasSeats} onClick={() => validateEmail()}>
-            Create Invite
+            Create invite
           </InviteButton>
           {isInvalidEmail && (
             <Invalid>Invalid email address. Please try again.</Invalid>
@@ -429,7 +433,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         </ButtonWrapper>
       </>
 
-      <Heading>Invites & Collaborators</Heading>
+      <Heading>Invites & collaborators</Heading>
       <Helper>Manage pending invites and view collaborators.</Helper>
       {isLoading && <Loading height={"30%"} />}
       {data?.length && !isLoading ? (

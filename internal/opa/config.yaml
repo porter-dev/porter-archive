@@ -56,7 +56,7 @@ prometheus:
     name: "prometheus.version"
 nginx_pod:
   kind: "pod"
-  override_severity: "critical"
+  overrideSeverity: "critical"
   match:
     namespace: ingress-nginx
     labels:
@@ -120,3 +120,32 @@ certificates:
     name: "certificates.expiry_two_weeks"
   - path: "./policies/certificates/expired.rego"
     name: "certificates.expired"
+node:
+  kind: "crd_list"
+  match:
+    group: core
+    version: v1
+    resource: nodes
+  policies:
+  - path: "./policies/node/k8s_version.rego"
+    name: "node.k8s_version"
+  - path: "./policies/node/porter_run_taints.rego"
+    name: "node.porter_run_taints"
+  - path: "./policies/node/porter_run_labels.rego"
+    name: "node.porter_run_labels"
+  - path: "./policies/node/healthy.rego"
+    name: "node.healthy"
+descheduler:
+  kind: "helm_release"
+  match:
+    name: descheduler
+    namespace: kube-system
+  mustExist: true
+  policies: []
+vpa:
+  kind: "helm_release"
+  match:
+    name: vpa
+    namespace: kube-system
+  mustExist: true
+  policies: []

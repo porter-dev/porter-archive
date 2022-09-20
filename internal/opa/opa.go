@@ -211,8 +211,10 @@ func (runner *KubernetesOPARunner) runHelmReleaseQueries(name string, collection
 			results, err := query.Eval(
 				context.Background(),
 				rego.EvalInput(map[string]interface{}{
-					"version": helmRelease.Chart.Metadata.Version,
-					"values":  helmRelease.Config,
+					"version":   helmRelease.Chart.Metadata.Version,
+					"values":    helmRelease.Config,
+					"name":      helmRelease.Name,
+					"namespace": helmRelease.Namespace,
 				}),
 			)
 
@@ -313,6 +315,11 @@ func (runner *KubernetesOPARunner) runCRDListQueries(name string, collection Kub
 		Group:    collection.Match.Group,
 		Version:  collection.Match.Version,
 		Resource: collection.Match.Resource,
+	}
+
+	// just case on the "core" group and unset it
+	if collection.Match.Group == "core" {
+		objRes.Group = ""
 	}
 
 	crdList, err := runner.dynamicClient.Resource(objRes).Namespace(collection.Match.Namespace).List(context.Background(), v1.ListOptions{})

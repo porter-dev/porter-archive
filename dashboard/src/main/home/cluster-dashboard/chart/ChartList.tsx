@@ -297,7 +297,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       controllers.map((controller) => closeWebsocket(controller));
       closeWebsocket(jobWebsocketID);
     };
-  }, []);
+  }, [context.currentCluster]);
 
   useEffect(() => {
     const websocketID = "helm_releases";
@@ -307,7 +307,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => {
       closeWebsocket(websocketID);
     };
-  }, [namespace]);
+  }, [namespace, context.currentCluster]);
 
   useEffect(() => {
     let isSubscribed = true;

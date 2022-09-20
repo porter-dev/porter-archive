@@ -364,7 +364,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   const renderCurrentPage = () => {
     let { form, currentTab } = props;
 
-    if (currentPage === "source" && currentTab === "porter") {
+    if (currentPage === "source" && form?.hasSource) {
       return (
         <SourcePage
           sourceType={sourceType}

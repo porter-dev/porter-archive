@@ -21,6 +21,9 @@ type MonitorTestResult struct {
 	LastRunResult     string
 	LastRunResultEnum uint
 
+	LastRecommenderRunID string
+	Archived             bool
+
 	Title   string
 	Message string
 

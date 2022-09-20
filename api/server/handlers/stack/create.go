@@ -67,6 +67,18 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resValidator := make(map[string]bool)
+
+	for _, res := range resources {
+		if _, ok := resValidator[res.Name]; ok {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("duplicate app resource name: %s", res.Name),
+				http.StatusBadRequest))
+			return
+		}
+
+		resValidator[res.Name] = true
+	}
+
 	envGroups, err := getEnvGroupModels(req.EnvGroups, proj.ID, cluster.ID, namespace)
 
 	if err != nil {

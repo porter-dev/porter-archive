@@ -3,11 +3,9 @@ import { NavLink, NavLinkProps, useParams } from "react-router-dom";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
 
-const SidebarLink: React.FC<{ path: string } & Omit<NavLinkProps, "to">> = ({
-  children,
-  path,
-  ...props
-}) => {
+const SidebarLink: React.FC<
+  { path: string; targetClusterName?: string } & Omit<NavLinkProps, "to">
+> = ({ children, path, ...props }) => {
   const params = useParams<{ namespace: string }>();
   const { getQueryParam } = useRouting();
   const { currentCluster, currentProject } = useContext(Context);
@@ -20,7 +18,7 @@ const SidebarLink: React.FC<{ path: string } & Omit<NavLinkProps, "to">> = ({
     let pathNamespace = params.namespace;
     const search = new URLSearchParams();
     if (currentCluster?.name) {
-      search.append("cluster", currentCluster.name);
+      search.append("cluster", props.targetClusterName || currentCluster.name);
     }
 
     if (currentProject?.id) {

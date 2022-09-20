@@ -46,9 +46,9 @@ const DocsHelper: React.FC<Props> = ({
               <StyledContent onClick={handleTooltipOpen}>
                 {tooltipText}
                 {link && (
-                <A target="_blank" href={link}>
-                  Documentation {">"}
-                </A>
+                  <A target="_blank" href={link}>
+                    Documentation {">"}
+                  </A>
                 )}
               </StyledContent>
             </Tooltip>

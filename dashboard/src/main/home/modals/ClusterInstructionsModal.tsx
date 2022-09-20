@@ -29,13 +29,9 @@ export default class ClusterInstructionsModal extends Component<
         return (
           <Placeholder>
             1. To install the Porter CLI, run the following in your terminal:
-            <Code>
-              /bin/bash -c "$(curl -fsSL https://install.porter.run)"
-            </Code>
+            <Code>/bin/bash -c "$(curl -fsSL https://install.porter.run)"</Code>
             Alternatively, on macOS you can use Homebrew:
-            <Code>
-              brew install porter-dev/porter/porter
-            </Code>
+            <Code>brew install porter-dev/porter/porter</Code>
             2. Log in to the Porter CLI:
             <Code>
               porter config set-host {location.protocol + "//" + location.host}

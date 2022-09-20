@@ -5,7 +5,7 @@ import { Context } from "shared/Context";
 import styled from "styled-components";
 
 const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const [selectedTag, setSelectedTag] = useState("none");
   const [tags, setTags] = useState([]);
 
@@ -22,7 +22,7 @@ const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
     return () => {
       isSubscribed = false;
     };
-  }, [currentProject]);
+  }, [currentProject, currentCluster]);
 
   useEffect(() => {
     const currentTag = tags.find((tag) => tag.name === selectedTag);

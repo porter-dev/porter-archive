@@ -49,19 +49,19 @@ const TemplateList: React.FC<Props> = ({
           throw Error("Data is not an array");
         }
 
-        let sortedVersionData = data.map((template: any) => {
-          let versions = template.versions.reverse();
+        let sortedVersionData = data
+          .map((template: any) => {
+            let versions = template.versions.reverse();
 
-          versions = template.versions.sort(semver.rcompare);
+            versions = template.versions.sort(semver.rcompare);
 
-          return {
-            ...template,
-            versions,
-            currentVersion: versions[0],
-          };
-        }).sort((a: any, b: any) =>
-          a.name > b.name ? 1 : -1
-        );
+            return {
+              ...template,
+              versions,
+              currentVersion: versions[0],
+            };
+          })
+          .sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
 
         setTemplateList(sortedVersionData);
         setIsLoading(false);

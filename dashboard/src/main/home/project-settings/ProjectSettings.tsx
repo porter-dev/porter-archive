@@ -64,7 +64,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     let { currentProject } = this.context;
     this.setState({ projectName: currentProject.name });
     const tabOptions = [];
-    tabOptions.push({ value: "manage-access", label: "Manage Access" });
+    tabOptions.push({ value: "manage-access", label: "Manage access" });
     tabOptions.push({
       value: "billing",
       label: "Billing",
@@ -87,7 +87,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
       tabOptions.push({
         value: "additional-settings",
-        label: "Additional Settings",
+        label: "Additional settings",
       });
     }
 
@@ -132,7 +132,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
     } else {
       return (
         <>
-          <Heading isAtTop={true}>Delete Project</Heading>
+          <Heading isAtTop={true}>Delete project</Heading>
           <Helper>
             Permanently delete this project. This will destroy all clusters tied
             to this project that have been provisioned by Porter. Note that this
@@ -164,7 +164,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
               });
             }}
           >
-            Delete Project
+            Delete project
           </DeleteButton>
         </>
       );
@@ -174,7 +174,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledProjectSettings>
-        <TitleSection>Project Settings</TitleSection>
+        <TitleSection>Project settings</TitleSection>
         <TabRegion
           currentTab={this.state.currentTab}
           setCurrentTab={(x: string) => this.setState({ currentTab: x })}

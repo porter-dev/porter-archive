@@ -99,7 +99,7 @@ export const ClusterSection: React.FC<Props> = ({
             </NavButton>
           ) : null}
           {currentProject?.preview_envs_enabled && (
-            <NavButton 
+            <NavButton
               path="/preview-environments"
               active={
                 currentCluster.id === clusterId &&
@@ -134,17 +134,19 @@ export const ClusterSection: React.FC<Props> = ({
 
   return (
     <>
-      <ClusterSelector 
+      <ClusterSelector
         onClick={() => setIsExpanded(!isExpanded)}
         active={
-          !isExpanded && cluster.id === currentCluster.id && [
+          !isExpanded &&
+          cluster.id === currentCluster.id &&
+          [
             "/cluster-dashboard",
             "/preview-environments",
             "/stacks",
             "/databases",
             "/env-groups",
             "/jobs",
-            "/applications"
+            "/applications",
           ].includes(window.location.pathname)
         }
       >

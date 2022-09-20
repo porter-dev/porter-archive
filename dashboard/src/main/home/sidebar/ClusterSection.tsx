@@ -44,6 +44,7 @@ export const ClusterSection: React.FC<Props> = ({
           <SideLine />
           <NavButton
             path="/applications"
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
               window.location.pathname === "/applications"
@@ -54,6 +55,7 @@ export const ClusterSection: React.FC<Props> = ({
           </NavButton>
           <NavButton
             path="/jobs"
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
               window.location.pathname === "/jobs"
@@ -64,6 +66,7 @@ export const ClusterSection: React.FC<Props> = ({
           </NavButton>
           <NavButton
             path="/env-groups"
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
               window.location.pathname === "/env-groups"
@@ -77,6 +80,7 @@ export const ClusterSection: React.FC<Props> = ({
             currentProject.enable_rds_databases && (
               <NavButton
                 path="/databases"
+                targetClusterName={cluster?.name}
                 active={
                   currentCluster.id === clusterId &&
                   window.location.pathname === "/databases"
@@ -89,6 +93,7 @@ export const ClusterSection: React.FC<Props> = ({
           {currentProject?.stacks_enabled ? (
             <NavButton
               path="/stacks"
+              targetClusterName={cluster?.name}
               active={
                 currentCluster.id === clusterId &&
                 window.location.pathname === "/stacks"
@@ -99,8 +104,9 @@ export const ClusterSection: React.FC<Props> = ({
             </NavButton>
           ) : null}
           {currentProject?.preview_envs_enabled && (
-            <NavButton 
+            <NavButton
               path="/preview-environments"
+              targetClusterName={cluster?.name}
               active={
                 currentCluster.id === clusterId &&
                 window.location.pathname === "/preview-environments"
@@ -119,6 +125,7 @@ export const ClusterSection: React.FC<Props> = ({
           )}
           <NavButton
             path={"/cluster-dashboard"}
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
               window.location.pathname === "/cluster-dashboard"
@@ -134,17 +141,19 @@ export const ClusterSection: React.FC<Props> = ({
 
   return (
     <>
-      <ClusterSelector 
+      <ClusterSelector
         onClick={() => setIsExpanded(!isExpanded)}
         active={
-          !isExpanded && cluster.id === currentCluster.id && [
+          !isExpanded &&
+          cluster.id === currentCluster.id &&
+          [
             "/cluster-dashboard",
             "/preview-environments",
             "/stacks",
             "/databases",
             "/env-groups",
             "/jobs",
-            "/applications"
+            "/applications",
           ].includes(window.location.pathname)
         }
       >

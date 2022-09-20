@@ -22,6 +22,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 
 	"github.com/porter-dev/porter/ee/integrations/vault"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -41,6 +42,7 @@ type recommender struct {
 	clusterAndProjectIDs []clusterAndProjectID
 	categories           []string
 	policies             *opa.KubernetesPolicies
+	runRecommenderID     string
 }
 
 // RecommenderOpts holds the options required to run this job
@@ -122,8 +124,14 @@ func NewRecommender(
 		return nil, err
 	}
 
+	recommenderID, err := encryption.GenerateRandomBytes(32)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &recommender{
-		enqueueTime, db, repo, doConf, clusterIDs, parsedInput.Categories, opaPolicies,
+		enqueueTime, db, repo, doConf, clusterIDs, parsedInput.Categories, opaPolicies, string(recommenderID),
 	}, nil
 }
 
@@ -231,12 +239,12 @@ func (n *recommender) Run() error {
 
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					monitor, err = n.repo.MonitorTestResult().CreateMonitorTestResult(n.getMonitorTestResultFromQueryResult(cluster, queryRes))
+					monitor, err = n.repo.MonitorTestResult().CreateMonitorTestResult(n.getMonitorTestResultFromQueryResult(cluster, queryRes, n.runRecommenderID))
 				} else {
 					continue
 				}
 			} else {
-				monitor, err = n.repo.MonitorTestResult().UpdateMonitorTestResult(mergeMonitorTestResultFromQueryResult(monitor, queryRes))
+				monitor, err = n.repo.MonitorTestResult().UpdateMonitorTestResult(mergeMonitorTestResultFromQueryResult(monitor, queryRes, n.runRecommenderID))
 			}
 
 			if err != nil {
@@ -245,10 +253,17 @@ func (n *recommender) Run() error {
 		}
 	}
 
-	return nil
+	// archive any test results which don't match
+	err := n.repo.MonitorTestResult().ArchiveMonitorTestResults(n.runRecommenderID)
+
+	if err != nil {
+		return err
+	}
+
+	return n.repo.MonitorTestResult().DeleteOldMonitorTestResults(n.runRecommenderID)
 }
 
-func (n *recommender) getMonitorTestResultFromQueryResult(cluster *models.Cluster, queryRes *opa.OPARecommenderQueryResult) *models.MonitorTestResult {
+func (n *recommender) getMonitorTestResultFromQueryResult(cluster *models.Cluster, queryRes *opa.OPARecommenderQueryResult, recommenderID string) *models.MonitorTestResult {
 	runResult := types.MonitorTestStatusSuccess
 
 	if !queryRes.Allow {
@@ -258,22 +273,24 @@ func (n *recommender) getMonitorTestResultFromQueryResult(cluster *models.Cluste
 	currTime := time.Now()
 
 	return &models.MonitorTestResult{
-		ProjectID:         cluster.ProjectID,
-		ClusterID:         cluster.ID,
-		Category:          queryRes.CategoryName,
-		ObjectID:          queryRes.ObjectID,
-		LastStatusChange:  &currTime,
-		LastTested:        &currTime,
-		LastRunResult:     string(runResult),
-		LastRunResultEnum: models.GetLastRunResultEnum(string(runResult)),
-		Title:             queryRes.PolicyTitle,
-		Message:           queryRes.PolicyMessage,
-		Severity:          queryRes.PolicySeverity,
-		SeverityEnum:      models.GetSeverityEnum(queryRes.PolicySeverity),
+		ProjectID:            cluster.ProjectID,
+		ClusterID:            cluster.ID,
+		Category:             queryRes.CategoryName,
+		ObjectID:             queryRes.ObjectID,
+		LastStatusChange:     &currTime,
+		LastTested:           &currTime,
+		LastRunResult:        string(runResult),
+		LastRunResultEnum:    models.GetLastRunResultEnum(string(runResult)),
+		LastRecommenderRunID: recommenderID,
+		Title:                queryRes.PolicyTitle,
+		Message:              queryRes.PolicyMessage,
+		Severity:             queryRes.PolicySeverity,
+		SeverityEnum:         models.GetSeverityEnum(queryRes.PolicySeverity),
+		Archived:             false,
 	}
 }
 
-func mergeMonitorTestResultFromQueryResult(monitor *models.MonitorTestResult, queryRes *opa.OPARecommenderQueryResult) *models.MonitorTestResult {
+func mergeMonitorTestResultFromQueryResult(monitor *models.MonitorTestResult, queryRes *opa.OPARecommenderQueryResult, recommenderID string) *models.MonitorTestResult {
 	runResult := types.MonitorTestStatusSuccess
 
 	if !queryRes.Allow {
@@ -293,6 +310,8 @@ func mergeMonitorTestResultFromQueryResult(monitor *models.MonitorTestResult, qu
 	monitor.Severity = queryRes.PolicySeverity
 	monitor.SeverityEnum = models.GetSeverityEnum(queryRes.PolicySeverity)
 	monitor.LastRunResultEnum = models.GetLastRunResultEnum(string(runResult))
+	monitor.LastRecommenderRunID = recommenderID
+	monitor.Archived = false
 
 	return monitor
 }

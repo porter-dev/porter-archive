@@ -66,6 +66,8 @@ func main() {
 	log.Printf("setting max worker count to: %d\n", envDecoder.MaxWorkers)
 	log.Printf("setting max job queue count to: %d\n", envDecoder.MaxQueue)
 
+	log.Printf("legacy project ids are: %v", envDecoder.LegacyProjectIDs)
+
 	db, err := adapter.New(&envDecoder.DBConf)
 
 	if err != nil {

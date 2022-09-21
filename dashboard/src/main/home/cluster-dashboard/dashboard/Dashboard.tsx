@@ -71,6 +71,11 @@ export const Dashboard: React.FunctionComponent = () => {
     }
   }, [location]);
 
+  // Need to reset tab to reset views that don't auto-update on cluster switch (esp namespaces + settings)
+  useEffect(() => {
+    setCurrentTab("nodes");
+  }, [context.currentCluster]);
+
   return (
     <>
       <TitleSection>

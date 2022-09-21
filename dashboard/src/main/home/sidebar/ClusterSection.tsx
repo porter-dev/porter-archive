@@ -47,7 +47,7 @@ export const ClusterSection: React.FC<Props> = ({
             targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/applications"
+              window.location.pathname.startsWith("/applications")
             }
           >
             <Img src={monoweb} />
@@ -58,7 +58,7 @@ export const ClusterSection: React.FC<Props> = ({
             targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/jobs"
+              window.location.pathname.startsWith("/jobs")
             }
           >
             <Img src={monojob} />
@@ -69,7 +69,7 @@ export const ClusterSection: React.FC<Props> = ({
             targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/env-groups"
+              window.location.pathname.startsWith("/env-groups")
             }
           >
             <Img src={sliders} />
@@ -83,7 +83,7 @@ export const ClusterSection: React.FC<Props> = ({
                 targetClusterName={cluster?.name}
                 active={
                   currentCluster.id === clusterId &&
-                  window.location.pathname === "/databases"
+                  window.location.pathname.startsWith("/databases")
                 }
               >
                 <Icon className="material-icons-outlined">storage</Icon>
@@ -96,7 +96,7 @@ export const ClusterSection: React.FC<Props> = ({
               targetClusterName={cluster?.name}
               active={
                 currentCluster.id === clusterId &&
-                window.location.pathname === "/stacks"
+                window.location.pathname.startsWith("/stacks")
               }
             >
               <Icon className="material-icons-outlined">lan</Icon>
@@ -109,7 +109,7 @@ export const ClusterSection: React.FC<Props> = ({
               targetClusterName={cluster?.name}
               active={
                 currentCluster.id === clusterId &&
-                window.location.pathname === "/preview-environments"
+                window.location.pathname.startsWith("/preview-environments")
               }
             >
               <InlineSVGWrapper
@@ -128,7 +128,7 @@ export const ClusterSection: React.FC<Props> = ({
             targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/cluster-dashboard"
+              window.location.pathname.startsWith("/cluster-dashboard")
             }
           >
             <Icon className="material-icons">device_hub</Icon>
@@ -145,16 +145,15 @@ export const ClusterSection: React.FC<Props> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         active={
           !isExpanded &&
-          cluster.id === currentCluster.id &&
-          [
-            "/cluster-dashboard",
-            "/preview-environments",
-            "/stacks",
-            "/databases",
-            "/env-groups",
-            "/jobs",
-            "/applications",
-          ].includes(window.location.pathname)
+          cluster.id === currentCluster.id && (
+            window.location.pathname.startsWith("/cluster-dashboard") ||
+            window.location.pathname.startsWith("/preview-environments") ||
+            window.location.pathname.startsWith("/stacks") ||
+            window.location.pathname.startsWith("/databases") ||
+            window.location.pathname.startsWith("/env-groups") ||
+            window.location.pathname.startsWith("/jobs") ||
+            window.location.pathname.startsWith("/applications")
+          )
         }
       >
         <LinkWrapper>

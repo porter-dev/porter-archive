@@ -44,7 +44,7 @@ const Metrics: React.FC = () => {
     if (selectedMetric && selectedRange && selectedIngress) {
       getMetrics();
     }
-  }, [selectedMetric, selectedRange, selectedIngress, selectedPercentile]);
+  }, [selectedMetric, selectedRange, selectedIngress, selectedPercentile, currentCluster]);
 
   useEffect(() => {
     Promise.all([

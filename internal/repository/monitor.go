@@ -7,6 +7,6 @@ type MonitorTestResultRepository interface {
 	ReadMonitorTestResult(projectID, clusterID uint, operationID string) (*models.MonitorTestResult, error)
 	UpdateMonitorTestResult(monitor *models.MonitorTestResult) (*models.MonitorTestResult, error)
 
-	ArchiveMonitorTestResults(recommenderID string) error
-	DeleteOldMonitorTestResults(recommenderID string) error
+	ArchiveMonitorTestResults(projectID, clusterID uint, recommenderID string) error
+	DeleteOldMonitorTestResults(projectID, clusterID uint, recommenderID string) error
 }

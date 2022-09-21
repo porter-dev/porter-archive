@@ -23,10 +23,10 @@ func (n *MonitorTestResultRepository) UpdateMonitorTestResult(monitor *models.Mo
 	panic("not implemented") // TODO: Implement
 }
 
-func (n *MonitorTestResultRepository) ArchiveMonitorTestResults(recommenderID string) error {
+func (n *MonitorTestResultRepository) ArchiveMonitorTestResults(projectID, clusterID uint, recommenderID string) error {
 	panic("not implemented") // TODO: Implement
 }
 
-func (n *MonitorTestResultRepository) DeleteOldMonitorTestResults(recommenderID string) error {
+func (n *MonitorTestResultRepository) DeleteOldMonitorTestResults(projectID, clusterID uint, recommenderID string) error {
 	panic("not implemented") // TODO: Implement
 }

@@ -71,6 +71,10 @@ export const Dashboard: React.FunctionComponent = () => {
     }
   }, [location]);
 
+  useEffect(() => {
+    setCurrentTab("nodes");
+  }, [context.currentCluster]);
+
   return (
     <>
       <TitleSection>

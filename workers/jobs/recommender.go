@@ -251,16 +251,23 @@ func (n *recommender) Run() error {
 				continue
 			}
 		}
+
+		err = n.repo.MonitorTestResult().ArchiveMonitorTestResults(ids.projectID, ids.clusterID, n.runRecommenderID)
+
+		if err != nil {
+			log.Printf("error archiving test results for cluster ID %d: %v", ids.clusterID, err)
+			continue
+		}
+
+		err = n.repo.MonitorTestResult().DeleteOldMonitorTestResults(ids.projectID, ids.clusterID, n.runRecommenderID)
+
+		if err != nil {
+			log.Printf("error deleting old test results for cluster ID %d: %v", ids.clusterID, err)
+			continue
+		}
 	}
 
-	// archive any test results which don't match
-	err := n.repo.MonitorTestResult().ArchiveMonitorTestResults(n.runRecommenderID)
-
-	if err != nil {
-		return err
-	}
-
-	return n.repo.MonitorTestResult().DeleteOldMonitorTestResults(n.runRecommenderID)
+	return nil
 }
 
 func (n *recommender) getMonitorTestResultFromQueryResult(cluster *models.Cluster, queryRes *opa.OPARecommenderQueryResult, recommenderID string) *models.MonitorTestResult {

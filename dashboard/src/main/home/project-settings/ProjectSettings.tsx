@@ -88,7 +88,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
       tabOptions.push({
         value: "additional-settings",
-        label: "Additional Settings",
+        label: "Additional settings",
       });
     }
 
@@ -178,7 +178,7 @@ class ProjectSettings extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledProjectSettings>
-        <TitleSection>Project Settings</TitleSection>
+        <TitleSection>Project settings</TitleSection>
         <TabRegion
           currentTab={this.state.currentTab}
           setCurrentTab={(x: AvailableTabs) => this.setState({ currentTab: x })}

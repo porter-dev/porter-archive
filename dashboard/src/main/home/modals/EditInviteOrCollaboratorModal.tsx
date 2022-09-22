@@ -115,7 +115,7 @@ const EditCollaboratorModal = () => {
   return (
     <>
       <ModalTitle>
-        Update {isInvite ? "Invite for" : "Collaborator"} {user?.email}
+        Update {isInvite ? "invite for" : "collaborator"} {user?.email}
       </ModalTitle>
       <Subtitle>Specify a different role for this user.</Subtitle>
       <RoleSelectorWrapper>
@@ -132,7 +132,7 @@ const EditCollaboratorModal = () => {
       </RoleSelectorWrapper>
 
       <SaveButton
-        text={`Update ${isInvite ? "Invite" : "Collaborator"}`}
+        text={`Update ${isInvite ? "invite" : "collaborator"}`}
         color="#616FEEcc"
         onClick={() => handleUpdate()}
         status={status}

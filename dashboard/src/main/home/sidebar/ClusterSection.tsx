@@ -44,9 +44,10 @@ export const ClusterSection: React.FC<Props> = ({
           <SideLine />
           <NavButton
             path="/applications"
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/applications"
+              window.location.pathname.startsWith("/applications")
             }
           >
             <Img src={monoweb} />
@@ -54,9 +55,10 @@ export const ClusterSection: React.FC<Props> = ({
           </NavButton>
           <NavButton
             path="/jobs"
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/jobs"
+              window.location.pathname.startsWith("/jobs")
             }
           >
             <Img src={monojob} />
@@ -64,9 +66,10 @@ export const ClusterSection: React.FC<Props> = ({
           </NavButton>
           <NavButton
             path="/env-groups"
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/env-groups"
+              window.location.pathname.startsWith("/env-groups")
             }
           >
             <Img src={sliders} />
@@ -77,9 +80,10 @@ export const ClusterSection: React.FC<Props> = ({
             currentProject.enable_rds_databases && (
               <NavButton
                 path="/databases"
+                targetClusterName={cluster?.name}
                 active={
                   currentCluster.id === clusterId &&
-                  window.location.pathname === "/databases"
+                  window.location.pathname.startsWith("/databases")
                 }
               >
                 <Icon className="material-icons-outlined">storage</Icon>
@@ -89,9 +93,10 @@ export const ClusterSection: React.FC<Props> = ({
           {currentProject?.stacks_enabled ? (
             <NavButton
               path="/stacks"
+              targetClusterName={cluster?.name}
               active={
                 currentCluster.id === clusterId &&
-                window.location.pathname === "/stacks"
+                window.location.pathname.startsWith("/stacks")
               }
             >
               <Icon className="material-icons-outlined">lan</Icon>
@@ -99,11 +104,12 @@ export const ClusterSection: React.FC<Props> = ({
             </NavButton>
           ) : null}
           {currentProject?.preview_envs_enabled && (
-            <NavButton 
+            <NavButton
               path="/preview-environments"
+              targetClusterName={cluster?.name}
               active={
                 currentCluster.id === clusterId &&
-                window.location.pathname === "/preview-environments"
+                window.location.pathname.startsWith("/preview-environments")
               }
             >
               <InlineSVGWrapper
@@ -119,9 +125,10 @@ export const ClusterSection: React.FC<Props> = ({
           )}
           <NavButton
             path={"/cluster-dashboard"}
+            targetClusterName={cluster?.name}
             active={
               currentCluster.id === clusterId &&
-              window.location.pathname === "/cluster-dashboard"
+              window.location.pathname.startsWith("/cluster-dashboard")
             }
           >
             <Icon className="material-icons">device_hub</Icon>
@@ -134,18 +141,19 @@ export const ClusterSection: React.FC<Props> = ({
 
   return (
     <>
-      <ClusterSelector 
+      <ClusterSelector
         onClick={() => setIsExpanded(!isExpanded)}
         active={
-          !isExpanded && cluster.id === currentCluster.id && [
-            "/cluster-dashboard",
-            "/preview-environments",
-            "/stacks",
-            "/databases",
-            "/env-groups",
-            "/jobs",
-            "/applications"
-          ].includes(window.location.pathname)
+          !isExpanded &&
+          cluster.id === currentCluster.id && (
+            window.location.pathname.startsWith("/cluster-dashboard") ||
+            window.location.pathname.startsWith("/preview-environments") ||
+            window.location.pathname.startsWith("/stacks") ||
+            window.location.pathname.startsWith("/databases") ||
+            window.location.pathname.startsWith("/env-groups") ||
+            window.location.pathname.startsWith("/jobs") ||
+            window.location.pathname.startsWith("/applications")
+          )
         }
       >
         <LinkWrapper>

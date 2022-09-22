@@ -117,6 +117,14 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// re-read the stack to get the most upto date information
+	stack, err = p.Repo().Stack().ReadStackByID(proj.ID, stack.ID)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	registries, err := p.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 
 	if err != nil {
@@ -144,6 +152,7 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			registries: registries,
 			helmAgent:  helmAgent,
 			request:    req,
+			stack:      stack,
 		})
 
 		if err != nil {

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	v10Validator "github.com/go-playground/validator/v10"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-
-	"github.com/go-playground/validator/v10"
+	"github.com/porter-dev/porter/internal/validator"
 )
 
 // Validator will validate the fields for a request object to ensure that
@@ -22,19 +22,13 @@ type Validator interface {
 // DefaultValidator uses the go-playground v10 validator for verifying that
 // request objects are well-formed
 type DefaultValidator struct {
-	v10 *validator.Validate
+	v10 *v10Validator.Validate
 }
 
 // NewDefaultValidator returns a Validator constructed from the go-playground v10
 // validator
 func NewDefaultValidator() Validator {
-	v10 := validator.New()
-
-	// set tag name to "form" since the request structs are used on both
-	// the client and server side
-	v10.SetTagName("form")
-
-	return &DefaultValidator{v10}
+	return &DefaultValidator{validator.New()}
 }
 
 // Validate uses the go-playground v10 validator and checks struct fields against
@@ -47,7 +41,7 @@ func (v *DefaultValidator) Validate(s interface{}) apierrors.RequestError {
 	}
 
 	// translate all validator errors
-	errs, ok := err.(validator.ValidationErrors)
+	errs, ok := err.(v10Validator.ValidationErrors)
 
 	if !ok {
 		return apierrors.NewErrInternal(fmt.Errorf("could not cast err to validator.ValidationErrors"))
@@ -93,7 +87,7 @@ type ValidationErrObject struct {
 
 // NewValidationErrObject simply returns a ValidationErrObject from a go-playground v10
 // validator `FieldError`
-func NewValidationErrObject(fieldErr validator.FieldError) *ValidationErrObject {
+func NewValidationErrObject(fieldErr v10Validator.FieldError) *ValidationErrObject {
 	return &ValidationErrObject{
 		Field:       fieldErr.Field(),
 		Condition:   fieldErr.ActualTag(),

@@ -48,7 +48,7 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 	conf.Values["stack"] = map[string]interface{}{
 		"enabled":  true,
 		"name":     opts.stack.Name,
-		"revision": opts.stack.Revisions[0].ID,
+		"revision": opts.stack.Revisions[0].RevisionNumber,
 	}
 
 	return opts.helmAgent.InstallChart(conf, opts.config.DOConf)

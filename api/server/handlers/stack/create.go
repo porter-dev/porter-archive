@@ -67,11 +67,35 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	nameValidator := make(map[string]bool)
+
+	for _, res := range resources {
+		if _, ok := nameValidator[res.Name]; ok {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("duplicate app resource name: %s", res.Name),
+				http.StatusBadRequest))
+			return
+		}
+
+		nameValidator[res.Name] = true
+	}
+
 	envGroups, err := getEnvGroupModels(req.EnvGroups, proj.ID, cluster.ID, namespace)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	nameValidator = make(map[string]bool)
+
+	for _, eg := range envGroups {
+		if _, ok := nameValidator[eg.Name]; ok {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("duplicate env group name: %s", eg.Name),
+				http.StatusBadRequest))
+			return
+		}
+
+		nameValidator[eg.Name] = true
 	}
 
 	// write stack to the database with creating status
@@ -174,6 +198,7 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				registries: registries,
 				helmAgent:  helmAgent,
 				request:    appResource,
+				stack:      stack,
 			})
 
 			if err != nil {

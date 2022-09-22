@@ -174,6 +174,7 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				registries: registries,
 				helmAgent:  helmAgent,
 				request:    appResource,
+				stack:      stack,
 			})
 
 			if err != nil {

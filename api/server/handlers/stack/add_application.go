@@ -82,6 +82,18 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	appResources = append(appResources, newResources...)
 
+	nameValidator := make(map[string]bool)
+
+	for _, res := range appResources {
+		if _, ok := nameValidator[res.Name]; ok {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("duplicate app resource name: %s", res.Name),
+				http.StatusBadRequest))
+			return
+		}
+
+		nameValidator[res.Name] = true
+	}
+
 	envGroups, err := stacks.CloneEnvGroups(latestRevision.EnvGroups)
 
 	if err != nil {

@@ -46,7 +46,7 @@ import (
 	"helm.sh/helm/v3/pkg/releaseutil"
 )
 
-var stepSize int = 100
+var stepSize int = 20
 
 type helmRevisionsCountTracker struct {
 	enqueueTime        time.Time

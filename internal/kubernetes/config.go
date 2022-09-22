@@ -114,6 +114,7 @@ type OutOfClusterConfig struct {
 	Repo                      repository.Repository
 	DefaultNamespace          string // optional
 	AllowInClusterConnections bool
+	Timeout                   time.Duration // optional
 
 	// Only required if using DigitalOcean OAuth as an auth mechanism
 	DigitalOceanOAuth *oauth2.Config
@@ -134,6 +135,8 @@ func (conf *OutOfClusterConfig) ToRESTConfig() (*rest.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	restConf.Timeout = conf.Timeout
 
 	rest.SetKubernetesDefaults(restConf)
 	return restConf, nil

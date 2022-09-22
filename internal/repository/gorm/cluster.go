@@ -1,8 +1,6 @@
 package gorm
 
 import (
-	"context"
-
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -120,8 +118,6 @@ func (repo *ClusterRepository) UpdateClusterCandidateCreatedClusterID(
 func (repo *ClusterRepository) CreateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
-	ctxDB := repo.db.WithContext(context.Background())
-
 	err := repo.EncryptClusterData(cluster, repo.key)
 
 	if err != nil {
@@ -130,11 +126,11 @@ func (repo *ClusterRepository) CreateCluster(
 
 	project := &models.Project{}
 
-	if err := ctxDB.Where("id = ?", cluster.ProjectID).First(&project).Error; err != nil {
+	if err := repo.db.Where("id = ?", cluster.ProjectID).First(&project).Error; err != nil {
 		return nil, err
 	}
 
-	assoc := ctxDB.Model(&project).Association("Clusters")
+	assoc := repo.db.Model(&project).Association("Clusters")
 
 	if assoc.Error != nil {
 		return nil, assoc.Error
@@ -147,13 +143,13 @@ func (repo *ClusterRepository) CreateCluster(
 	// create a token cache by default
 	cluster.TokenCache.ClusterID = cluster.ID
 
-	if err := ctxDB.Create(&cluster.TokenCache).Error; err != nil {
+	if err := repo.db.Create(&cluster.TokenCache).Error; err != nil {
 		return nil, err
 	}
 
 	cluster.TokenCacheID = cluster.TokenCache.ID
 
-	if err := ctxDB.Save(cluster).Error; err != nil {
+	if err := repo.db.Save(cluster).Error; err != nil {
 		return nil, err
 	}
 
@@ -170,19 +166,17 @@ func (repo *ClusterRepository) CreateCluster(
 func (repo *ClusterRepository) ReadCluster(
 	projectID, clusterID uint,
 ) (*models.Cluster, error) {
-	ctxDB := repo.db.WithContext(context.Background())
-
 	cluster := &models.Cluster{}
 
 	// preload Clusters association
-	if err := ctxDB.Where("project_id = ? AND id = ?", projectID, clusterID).First(&cluster).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND id = ?", projectID, clusterID).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 
 	cache := ints.ClusterTokenCache{}
 
 	if cluster.TokenCacheID != 0 {
-		if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
+		if err := repo.db.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -202,19 +196,17 @@ func (repo *ClusterRepository) ReadCluster(
 func (repo *ClusterRepository) ReadClusterByInfraID(
 	projectID, infraID uint,
 ) (*models.Cluster, error) {
-	ctxDB := repo.db.WithContext(context.Background())
-
 	cluster := &models.Cluster{}
 
 	// preload Clusters association
-	if err := ctxDB.Where("project_id = ? AND infra_id = ?", projectID, infraID).First(&cluster).Error; err != nil {
+	if err := repo.db.Where("project_id = ? AND infra_id = ?", projectID, infraID).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 
 	cache := ints.ClusterTokenCache{}
 
 	if cluster.TokenCacheID != 0 {
-		if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
+		if err := repo.db.Where("id = ?", cluster.TokenCacheID).First(&cache).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -235,11 +227,9 @@ func (repo *ClusterRepository) ReadClusterByInfraID(
 func (repo *ClusterRepository) ListClustersByProjectID(
 	projectID uint,
 ) ([]*models.Cluster, error) {
-	ctxDB := repo.db.WithContext(context.Background())
-
 	clusters := []*models.Cluster{}
 
-	if err := ctxDB.Where("project_id = ?", projectID).Find(&clusters).Error; err != nil {
+	if err := repo.db.Where("project_id = ?", projectID).Find(&clusters).Error; err != nil {
 		return nil, err
 	}
 
@@ -254,15 +244,13 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 func (repo *ClusterRepository) UpdateCluster(
 	cluster *models.Cluster,
 ) (*models.Cluster, error) {
-	ctxDB := repo.db.WithContext(context.Background())
-
 	err := repo.EncryptClusterData(cluster, repo.key)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if err := ctxDB.Save(cluster).Error; err != nil {
+	if err := repo.db.Save(cluster).Error; err != nil {
 		return nil, err
 	}
 
@@ -279,8 +267,6 @@ func (repo *ClusterRepository) UpdateCluster(
 func (repo *ClusterRepository) UpdateClusterTokenCache(
 	tokenCache *ints.ClusterTokenCache,
 ) (*models.Cluster, error) {
-	ctxDB := repo.db.WithContext(context.Background())
-
 	if tok := tokenCache.Token; len(tok) > 0 {
 		cipherData, err := encryption.Encrypt(tok, repo.key)
 
@@ -293,23 +279,23 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 
 	cluster := &models.Cluster{}
 
-	if err := ctxDB.Where("id = ?", tokenCache.ClusterID).First(&cluster).Error; err != nil {
+	if err := repo.db.Where("id = ?", tokenCache.ClusterID).First(&cluster).Error; err != nil {
 		return nil, err
 	}
 
 	if cluster.TokenCacheID == 0 {
 		tokenCache.ClusterID = cluster.ID
-		if err := ctxDB.Create(tokenCache).Error; err != nil {
+		if err := repo.db.Create(tokenCache).Error; err != nil {
 			return nil, err
 		}
 		cluster.TokenCacheID = tokenCache.ID
-		if err := ctxDB.Save(cluster).Error; err != nil {
+		if err := repo.db.Save(cluster).Error; err != nil {
 			return nil, err
 		}
 	} else {
 		prev := &ints.ClusterTokenCache{}
 
-		if err := ctxDB.Where("id = ?", cluster.TokenCacheID).First(prev).Error; err != nil {
+		if err := repo.db.Where("id = ?", cluster.TokenCacheID).First(prev).Error; err != nil {
 			return nil, err
 		}
 
@@ -317,7 +303,7 @@ func (repo *ClusterRepository) UpdateClusterTokenCache(
 		prev.Expiry = tokenCache.Expiry
 		prev.ClusterID = cluster.ID
 
-		if err := ctxDB.Save(prev).Error; err != nil {
+		if err := repo.db.Save(prev).Error; err != nil {
 			return nil, err
 		}
 	}

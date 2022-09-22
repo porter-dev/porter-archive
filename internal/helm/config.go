@@ -3,6 +3,7 @@ package helm
 import (
 	"errors"
 	"io/ioutil"
+	"time"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
@@ -26,6 +27,7 @@ type Form struct {
 	Storage                   string `json:"storage" form:"oneof=secret configmap memory" default:"secret"`
 	Namespace                 string `json:"namespace"`
 	AllowInClusterConnections bool
+	Timeout                   time.Duration // optional
 }
 
 // GetAgentOutOfClusterConfig creates a new Agent from outside the cluster using
@@ -38,6 +40,7 @@ func GetAgentOutOfClusterConfig(form *Form, l *logger.Logger) (*Agent, error) {
 		Repo:                      form.Repo,
 		DigitalOceanOAuth:         form.DigitalOceanOAuth,
 		AllowInClusterConnections: form.AllowInClusterConnections,
+		Timeout:                   form.Timeout,
 	}
 
 	k8sAgent, err := kubernetes.GetAgentOutOfClusterConfig(conf)

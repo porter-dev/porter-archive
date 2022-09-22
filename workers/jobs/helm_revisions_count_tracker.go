@@ -175,6 +175,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 					Repo:                      t.repo,
 					DigitalOceanOAuth:         t.doConf,
 					AllowInClusterConnections: false,
+					Timeout:                   5 * time.Second,
 				})
 
 				if err != nil {
@@ -198,6 +199,7 @@ func (t *helmRevisionsCountTracker) Run() error {
 						Repo:                      t.repo,
 						DigitalOceanOAuth:         t.doConf,
 						AllowInClusterConnections: false,
+						Timeout:                   5 * time.Second,
 					}, logger.New(true, os.Stdout), 3, time.Second)
 
 					if err != nil {

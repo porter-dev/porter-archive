@@ -82,6 +82,18 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	appResources = append(appResources, newResources...)
 
+	nameValidator := make(map[string]bool)
+
+	for _, res := range appResources {
+		if _, ok := nameValidator[res.Name]; ok {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("duplicate app resource name: %s", res.Name),
+				http.StatusBadRequest))
+			return
+		}
+
+		nameValidator[res.Name] = true
+	}
+
 	envGroups, err := stacks.CloneEnvGroups(latestRevision.EnvGroups)
 
 	if err != nil {
@@ -99,6 +111,14 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	revision, err := p.Repo().Stack().AppendNewRevision(newRevision)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// re-read the stack to get the most upto date information
+	stack, err = p.Repo().Stack().ReadStackByID(proj.ID, stack.ID)
 
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -132,6 +152,7 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			registries: registries,
 			helmAgent:  helmAgent,
 			request:    req,
+			stack:      stack,
 		})
 
 		if err != nil {

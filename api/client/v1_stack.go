@@ -44,3 +44,20 @@ func (c *Client) AddEnvGroupToStack(
 
 	return err
 }
+
+func (c *Client) RemoveEnvGroupFromStack(
+	ctx context.Context,
+	projectID, clusterID uint,
+	namespace, stackID, envGroupName string,
+) error {
+	err := c.deleteRequest(
+		fmt.Sprintf(
+			"/v1/projects/%d/clusters/%d/namespaces/%s/stacks/%s/remove_env_group/%s",
+			projectID, clusterID, namespace, stackID, envGroupName,
+		),
+		nil,
+		nil,
+	)
+
+	return err
+}

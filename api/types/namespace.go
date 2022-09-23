@@ -135,8 +135,8 @@ type GetEnvGroupRequest struct {
 
 type CloneEnvGroupRequest struct {
 	Namespace string `json:"namespace" form:"required"`
-	Name      string `json:"name" form:"required"`
-	CloneName string `json:"clone_name"`
+	Name      string `json:"name" form:"required,dns1123"`
+	CloneName string `json:"clone_name,dns1123"`
 	Version   uint   `json:"version"`
 }
 
@@ -149,7 +149,7 @@ type DeleteEnvGroupRequest struct {
 }
 
 type AddEnvGroupApplicationRequest struct {
-	Name            string `json:"name" form:"required"`
+	Name            string `json:"name" form:"required,dns1123"`
 	ApplicationName string `json:"app_name" form:"required"`
 }
 
@@ -161,7 +161,7 @@ type ListEnvGroupsResponse []*EnvGroupMeta
 type CreateEnvGroupRequest struct {
 	// the name of the env group to create or update
 	// example: prod-env-group
-	Name string `json:"name" form:"required"`
+	Name string `json:"name" form:"required,dns1123"`
 
 	// the variables to include in the env group
 	Variables map[string]string `json:"variables" form:"required"`
@@ -231,7 +231,7 @@ type GetEnvGroupResponse struct {
 //
 // swagger:model
 type V1EnvGroupReleaseRequest struct {
-	ReleaseName string `json:"release_name" form:"required"`
+	ReleaseName string `json:"release_name" form:"required,dns1123"`
 }
 
 // V1EnvGroupResponse defines an env group

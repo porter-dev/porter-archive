@@ -88,6 +88,18 @@ func (p *StackAddEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	envGroups = append(envGroups, newEnvGroups...)
 
+	nameValidator := make(map[string]bool)
+
+	for _, eg := range envGroups {
+		if _, ok := nameValidator[eg.Name]; ok {
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("duplicate env group name: %s", eg.Name),
+				http.StatusBadRequest))
+			return
+		}
+
+		nameValidator[eg.Name] = true
+	}
+
 	newRevision := &models.StackRevision{
 		StackID:        stack.ID,
 		RevisionNumber: latestRevision.RevisionNumber + 1,

@@ -17,6 +17,7 @@ type applyAppResourceOpts struct {
 	helmAgent  *helm.Agent
 	request    *types.CreateStackAppResourceRequest
 	registries []*models.Registry
+	stack      *models.Stack
 }
 
 func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
@@ -38,6 +39,16 @@ func applyAppResource(opts *applyAppResourceOpts) (*release.Release, error) {
 		Cluster:    opts.cluster,
 		Repo:       opts.config.Repo,
 		Registries: opts.registries,
+	}
+
+	if conf.Values == nil {
+		conf.Values = make(map[string]interface{})
+	}
+
+	conf.Values["stack"] = map[string]interface{}{
+		"enabled":  true,
+		"name":     opts.stack.Name,
+		"revision": opts.stack.Revisions[0].RevisionNumber,
 	}
 
 	return opts.helmAgent.InstallChart(conf, opts.config.DOConf)

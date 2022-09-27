@@ -227,7 +227,7 @@ func (a *Agent) UpgradeReleaseByValues(
 		conf.Values["stack"] = map[string]interface{}{
 			"enabled":  true,
 			"name":     conf.Stack.Name,
-			"revision": conf.Stack.Revisions[0].RevisionNumber,
+			"revision": conf.Stack.Revisions[0].RevisionNumber + 1,
 		}
 	}
 

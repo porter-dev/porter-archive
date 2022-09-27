@@ -98,6 +98,14 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	deployErrs := make([]string, 0)
 
+	// read the stack again to get the latest revision info
+	stack, err = p.Repo().Stack().ReadStackByStringID(proj.ID, stack.UID)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	for i, appResource := range clonedAppResources {
 		// get the corresponding source config tag
 		var imageTag string
@@ -119,6 +127,7 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			namespace:  namespace,
 			cluster:    cluster,
 			registries: registries,
+			stack:      stack,
 		})
 
 		if err != nil {

@@ -11,7 +11,7 @@ import styled, { keyframes } from "styled-components";
 
 const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
-const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
+const DEFAULT_HEROKU_STACK = "heroku/buildpacks:22";
 
 type BuildConfig = {
   builder: string;

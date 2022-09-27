@@ -72,6 +72,7 @@ type updateAppResourceTagOpts struct {
 	namespace  string
 	cluster    *models.Cluster
 	registries []*models.Registry
+	stack      *models.Stack
 }
 
 func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
@@ -93,6 +94,7 @@ func updateAppResourceTag(opts *updateAppResourceTagOpts) error {
 		Repo:       opts.config.Repo,
 		Registries: opts.registries,
 		Values:     rel.Config,
+		Stack:      opts.stack,
 	}
 
 	_, err = opts.helmAgent.UpgradeReleaseByValues(conf, opts.config.DOConf)

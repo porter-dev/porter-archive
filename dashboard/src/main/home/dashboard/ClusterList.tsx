@@ -6,15 +6,12 @@ import api from "shared/api";
 import {
   ClusterType,
   DetailedClusterType,
-  DetailedIngressError,
 } from "shared/types";
 import Helper from "components/form-components/Helper";
 import { pushFiltered } from "shared/routing";
 
 import { RouteComponentProps, withRouter } from "react-router";
 
-import CopyToClipboard from "components/CopyToClipboard";
-import Loading from "components/Loading";
 import Modal from "../modals/Modal";
 
 type PropsType = RouteComponentProps & {
@@ -71,87 +68,11 @@ class Templates extends Component<PropsType, StateType> {
     }
   };
 
-  updateClusterWithDetailedData = async (clusterId: number) => {
-    try {
-      const currentClusterIndex = this.state.clusters.findIndex(
-        (cluster) => cluster.id === clusterId
-      );
-      const res = await api.getCluster(
-        "<token>",
-        {},
-        { project_id: this.context.currentProject.id, cluster_id: clusterId }
-      );
-      if (res.data) {
-        this.setState((prevState) => {
-          const currentCluster = prevState.clusters[currentClusterIndex];
-          prevState.clusters.splice(currentClusterIndex, 1, {
-            ...currentCluster,
-            ingress_ip: res.data.ingress_ip,
-            ingress_error: res.data.ingress_error,
-          });
-          return prevState;
-        });
-      }
-    } catch (error) {}
-  };
-
   renderIcon = () => {
     return (
       <DashboardIcon>
         <i className="material-icons">device_hub</i>
       </DashboardIcon>
-    );
-  };
-
-  renderIngressIp = (
-    clusterId: number,
-    ingressIp: string | undefined,
-    ingressError: DetailedIngressError
-  ) => {
-    if (typeof ingressIp !== "string") {
-      return (
-        <Url onClick={(e) => e.preventDefault()}>
-          <Loading />
-        </Url>
-      );
-    }
-
-    if (!ingressIp.length && ingressError) {
-      return (
-        <>
-          <Url
-            onClick={(e) => {
-              e.stopPropagation();
-              this.setState({ showErrorModal: { clusterId, show: true } });
-            }}
-          >
-            <Bolded>Ingress IP:</Bolded>
-            <span>{ingressError.message}</span>
-            <i className="material-icons">launch</i>
-          </Url>
-        </>
-      );
-    }
-
-    if (!ingressIp.length) {
-      return (
-        <Url>
-          <Bolded>Ingress IP:</Bolded>
-          <span>Ingress IP not available</span>
-        </Url>
-      );
-    }
-
-    return (
-      <CopyToClipboard
-        as={Url}
-        text={ingressIp}
-        wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
-      >
-        <Bolded>Ingress IP:</Bolded>
-        <span>{ingressIp}</span>
-        <i className="material-icons-outlined">content_copy</i>
-      </CopyToClipboard>
     );
   };
 
@@ -172,11 +93,6 @@ class Templates extends Component<PropsType, StateType> {
               {this.renderIcon()}
               <TemplateTitle>{cluster.name}</TemplateTitle>
             </TitleContainer>
-            {this.renderIngressIp(
-              cluster.id,
-              cluster.ingress_ip,
-              cluster.ingress_error
-            )}
           </TemplateBlock>
         );
       }
@@ -209,7 +125,6 @@ class Templates extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledClusterList>
-        <Helper>Clusters connected to this project:</Helper>
         <TemplateList>{this.renderClusters()}</TemplateList>
         {this.renderErrorModal()}
       </StyledClusterList>
@@ -320,31 +235,4 @@ const TemplateList = styled.div`
   grid-column-gap: 25px;
   grid-row-gap: 25px;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-`;
-
-const Url = styled.a`
-  width: 100%;
-  font-size: 13px;
-  user-select: text;
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  > i {
-    margin-left: 10px;
-    font-size: 15px;
-  }
-
-  > span {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-`;
-
-const Bolded = styled.div`
-  font-weight: 500;
-  color: #ffffff44;
-  margin-right: 6px;
-  white-space: nowrap;
 `;

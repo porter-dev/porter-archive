@@ -122,9 +122,9 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
           <BackButtonImg src={backArrow} />
         </BackButton>
       )}
-      <TitleSection>Getting Started</TitleSection>
+      <TitleSection>Getting started</TitleSection>
       <Subtitle>
-        Step 2 of 3 - Connect an existing registry (Optional)
+        Step 2 of 3 - Connect an existing registry (optional)
         <DocsHelper
           tooltipText="If you already have an existing image registry, you can connect your existing registry during project creation. If you don't have an image registry or don't know what that means, skip this step. Porter will handle the rest."
           link={

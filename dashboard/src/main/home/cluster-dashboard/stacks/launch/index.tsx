@@ -45,7 +45,7 @@ const LaunchContainer = styled.div`
 `;
 
 const StyledLaunchFlow = styled.div`
-  width: calc(100% - 100px);
+  width: calc(100%);
   margin-left: 50px;
   min-width: 300px;
   margin-top: ${(props: { disableMarginTop?: boolean }) =>

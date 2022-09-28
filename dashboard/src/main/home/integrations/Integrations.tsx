@@ -126,12 +126,7 @@ const Flex = styled.div`
   }
 `;
 
-const TitleSectionAlt = styled(TitleSection)`
-  margin-left: -42px;
-  width: calc(100% + 42px);
-`;
-
 const StyledIntegrations = styled.div`
-  width: calc(85%);
+  width: 100%;
   min-width: 300px;
 `;

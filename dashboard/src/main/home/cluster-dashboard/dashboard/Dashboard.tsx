@@ -22,7 +22,9 @@ const tabOptions: {
   value: TabEnum;
 }[] = [
   { label: "Nodes", value: "nodes" },
+  /*
   { label: "Incidents", value: "incidents" },
+  */
   { label: "Metrics", value: "metrics" },
   { label: "Namespaces", value: "namespaces" },
   { label: "Settings", value: "settings" },
@@ -69,6 +71,11 @@ export const Dashboard: React.FunctionComponent = () => {
     }
   }, [location]);
 
+  // Need to reset tab to reset views that don't auto-update on cluster switch (esp namespaces + settings)
+  useEffect(() => {
+    setCurrentTab("nodes");
+  }, [context.currentCluster]);
+
   return (
     <>
       <TitleSection>
@@ -85,7 +92,7 @@ export const Dashboard: React.FunctionComponent = () => {
           </InfoLabel>
         </TopRow>
         <Description>
-          Cluster dashboard for {context.currentCluster.name}
+          Cluster settings for {context.currentCluster.name}
         </Description>
       </InfoSection>
 

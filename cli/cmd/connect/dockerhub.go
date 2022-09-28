@@ -3,6 +3,7 @@ package connect
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/porter-dev/porter/api/types"
 
@@ -22,21 +23,24 @@ func Dockerhub(
 
 	// query for dockerhub name
 
-	repoName, err := utils.PromptPlaintext(fmt.Sprintf(`Provide the Docker Hub image path, in the form of ${org_name}/${repo_name}. For example, porter1/porter.
-Image path: `))
+	repoName, err := utils.PromptPlaintext("Provide the Docker Hub repository, in the form of ${org_name}/${repo_name}. For example, porter1/porter.\nRepository: ")
+	if err != nil {
+		return 0, err
+	}
+
+	orgRepo := strings.Split(repoName, "/")
+
+	if len(orgRepo) != 2 || orgRepo[0] == "" || orgRepo[1] == "" {
+		return 0, fmt.Errorf("invalid Docker Hub repository: %s", repoName)
+	}
+
+	username, err := utils.PromptPlaintext("Docker Hub username: ")
 
 	if err != nil {
 		return 0, err
 	}
 
-	username, err := utils.PromptPlaintext(fmt.Sprintf(`Docker Hub username: `))
-
-	if err != nil {
-		return 0, err
-	}
-
-	password, err := utils.PromptPassword(`Provide the Docker Hub personal access token.
-Token:`)
+	password, err := utils.PromptPassword("Provide the Docker Hub personal access token.\nToken: ")
 
 	if err != nil {
 		return 0, err

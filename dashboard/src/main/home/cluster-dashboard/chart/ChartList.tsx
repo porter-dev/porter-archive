@@ -297,7 +297,7 @@ const ChartList: React.FunctionComponent<Props> = ({
       controllers.map((controller) => closeWebsocket(controller));
       closeWebsocket(jobWebsocketID);
     };
-  }, []);
+  }, [context.currentCluster]);
 
   useEffect(() => {
     const websocketID = "helm_releases";
@@ -307,7 +307,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => {
       closeWebsocket(websocketID);
     };
-  }, [namespace]);
+  }, [namespace, context.currentCluster]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -323,7 +323,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     return () => {
       isSubscribed = false;
     };
-  }, [namespace, currentView]);
+  }, [namespace, currentView, context.currentCluster]);
 
   const filteredCharts = useMemo(() => {
     if (!Array.isArray(charts)) {

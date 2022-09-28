@@ -7,7 +7,7 @@ import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
 
 import DashboardHeader from "../DashboardHeader";
-import NamespaceSelector from "../NamespaceSelector";
+import { NamespaceSelector } from "../NamespaceSelector";
 import SortSelector from "../SortSelector";
 import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";

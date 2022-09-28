@@ -91,6 +91,12 @@ tabs:
           value: db.t3.xlarge
         - label: db.t3.2xlarge
           value: db.t3.2xlarge
+        - label: db.r5.large
+          value: db.r5.large
+        - label: db.r5.xlarge
+          value: db.r5.xlarge
+        - label: db.r5.2xlarge
+          value: db.r5.2xlarge
   - name: family-versions
     contents:
     - type: select
@@ -396,8 +402,16 @@ tabs:
           value: t3.xlarge
         - label: t3.2xlarge
           value: t3.2xlarge
+        - label: c6i.large
+          value: c6i.large
+        - label: c6i.xlarge
+          value: c6i.xlarge
         - label: c6i.2xlarge
           value: c6i.2xlarge
+        - label: r5.large
+          value: r5.large
+        - value: r5.xlarge
+          value: r5.xlarge
     - type: string-input
       label: 👤 Issuer Email
       required: true
@@ -625,6 +639,27 @@ tabs:
       label: Add an additional prometheus node group to ensure monitoring stability.
       settings:
         default: false
+  - name: prometheus_machine_settings
+    show_if: additional_prometheus_node_group
+    contents:
+    - type: select
+      label: ⚙️ AWS Prometheus Machine Type
+      variable: additional_prometheus_machine_type
+      settings:
+        default: t2.medium
+        options:
+        - label: t2.medium
+          value: t2.medium
+        - label: t2.large
+          value: t2.large
+        - label: t2.xlarge
+          value: t2.xlarge
+        - label: t3.medium
+          value: t3.medium
+        - label: t3.large
+          value: t3.large
+        - label: t3.xlarge
+          value: t3.xlarge
 `
 
 const gcrForm = `name: GCR
@@ -656,12 +691,18 @@ tabs:
           value: asia-northeast3
         - label: asia-south1
           value: asia-south1
+        - label: asia-south2
+          value: asia-south2
         - label: asia-southeast1
           value: asia-southeast1
         - label: asia-southeast2
           value: asia-southeast2
         - label: australia-southeast1
           value: australia-southeast1
+        - label: australia-southeast2
+          value: australia-southeast2
+        - label: europe-central2
+          value: europe-central2
         - label: europe-north1
           value: europe-north1
         - label: europe-west1
@@ -674,23 +715,33 @@ tabs:
           value: europe-west4
         - label: europe-west6
           value: europe-west6
+        - label: europe-west8
+          value: europe-west8
+        - label: europe-west9
+          value: europe-west9
+        - label: europe-southwest1
+          value: europe-southwest1
         - label: northamerica-northeast1
           value: northamerica-northeast1
+        - label: northamerica-northeast2
+          value: northamerica-northeast2
         - label: southamerica-east1
           value: southamerica-east1
+        - label: southamerica-west1
+          value: southamerica-west1
         - label: us-central1
           value: us-central1
         - label: us-east1
           value: us-east1
         - label: us-east4
           value: us-east4
-        - label: us-east1
-          value: us-east1
-        - label: us-east1
-          value: us-east1
+        - label: us-east5
+          value: us-east5
+        - label: us-south1
+          value: us-south1
         - label: us-west1
           value: us-west1
-        - label: us-east1
+        - label: us-west2
           value: us-west2
         - label: us-west3
           value: us-west3
@@ -741,8 +792,6 @@ tabs:
           value: europe-central2
         - label: europe-north1
           value: europe-north1
-        - label: europe-southwest1
-          value: europe-southwest1
         - label: europe-west1
           value: europe-west1
         - label: europe-west2
@@ -757,6 +806,8 @@ tabs:
           value: europe-west8
         - label: europe-west9
           value: europe-west9
+        - label: europe-southwest1
+          value: europe-southwest1
         - label: northamerica-northeast1
           value: northamerica-northeast1
         - label: northamerica-northeast2
@@ -783,6 +834,12 @@ tabs:
           value: us-west3
         - label: us-west4
           value: us-west4
+        - label: us (multi-region)
+          value: us
+        - label: europe (multi-region)
+          value: europe
+        - label: asia (multi-region)
+          value: asia
 `
 
 const gkeForm = `name: GKE
@@ -814,12 +871,18 @@ tabs:
           value: asia-northeast3
         - label: asia-south1
           value: asia-south1
+        - label: asia-south2
+          value: asia-south2
         - label: asia-southeast1
           value: asia-southeast1
         - label: asia-southeast2
           value: asia-southeast2
         - label: australia-southeast1
           value: australia-southeast1
+        - label: australia-southeast2
+          value: australia-southeast2
+        - label: europe-central2
+          value: europe-central2
         - label: europe-north1
           value: europe-north1
         - label: europe-west1
@@ -832,23 +895,33 @@ tabs:
           value: europe-west4
         - label: europe-west6
           value: europe-west6
+        - label: europe-west8
+          value: europe-west8
+        - label: europe-west9
+          value: europe-west9
+        - label: europe-southwest1
+          value: europe-southwest1
         - label: northamerica-northeast1
           value: northamerica-northeast1
+        - label: northamerica-northeast2
+          value: northamerica-northeast2
         - label: southamerica-east1
           value: southamerica-east1
+        - label: southamerica-west1
+          value: southamerica-west1
         - label: us-central1
           value: us-central1
         - label: us-east1
           value: us-east1
         - label: us-east4
           value: us-east4
-        - label: us-east1
-          value: us-east1
-        - label: us-east1
-          value: us-east1
+        - label: us-east5
+          value: us-east5
+        - label: us-south1
+          value: us-south1
         - label: us-west1
           value: us-west1
-        - label: us-east1
+        - label: us-west2
           value: us-west2
         - label: us-west3
           value: us-west3

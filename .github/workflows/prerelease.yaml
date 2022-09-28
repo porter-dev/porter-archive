@@ -134,7 +134,7 @@ jobs:
         run: |
           mkdir -p ./release/static
           cd dashboard
-          npm i --production=false
+          npm i --production=false --legacy-peer-deps
           npm run build
           cd ..
           zip --junk-paths ./release/static/static_${{steps.tag_name.outputs.tag}}.zip ./dashboard/build/*

@@ -166,6 +166,7 @@ type UpgradeReleaseConfig struct {
 	Cluster    *models.Cluster
 	Repo       repository.Repository
 	Registries []*models.Registry
+	Stack      *models.Stack
 
 	// Optional, if chart should be overriden
 	Chart *chart.Chart
@@ -220,6 +221,14 @@ func (a *Agent) UpgradeReleaseByValues(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if conf.Stack != nil {
+		conf.Values["stack"] = map[string]interface{}{
+			"enabled":  true,
+			"name":     conf.Stack.Name,
+			"revision": conf.Stack.Revisions[0].RevisionNumber,
+		}
 	}
 
 	res, err := cmd.Run(conf.Name, ch, conf.Values)

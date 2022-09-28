@@ -141,6 +141,23 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 	}
 
+	// check if release is part of a stack
+	stacks, err := c.Repo().Stack().ListStacks(cluster.ProjectID, cluster.ID, helmRelease.Namespace)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	for _, stk := range stacks {
+		for _, res := range stk.Revisions[0].Resources {
+			if res.Name == helmRelease.Name {
+				conf.Stack = stk
+				break
+			}
+		}
+	}
+
 	newHelmRelease, upgradeErr := helmAgent.UpgradeRelease(conf, request.Values, c.Config().DOConf)
 
 	if upgradeErr == nil && newHelmRelease != nil {

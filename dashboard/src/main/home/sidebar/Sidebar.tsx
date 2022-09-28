@@ -156,6 +156,7 @@ class Sidebar extends Component<PropsType, StateType> {
               />
             </>
           )}
+<<<<<<< HEAD
           {currentProject?.preview_envs_enabled && (
             <NavButton path="/preview-environments">
               <InlineSVGWrapper
@@ -169,6 +170,8 @@ class Sidebar extends Component<PropsType, StateType> {
               Preview envs
             </NavButton>
           )}
+=======
+>>>>>>> 6819cce9bfbf1bc3579f6b757d748914208d371d
         </ScrollWrapper>
       );
     }
@@ -212,6 +215,7 @@ Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
 
+<<<<<<< HEAD
 const InlineSVGWrapper = styled.svg`
   width: 32px;
   height: 32px;
@@ -225,6 +229,11 @@ const InlineSVGWrapper = styled.svg`
 
 const ScrollWrapper = styled.div`
   overflow-y: auto;
+=======
+const ScrollWrapper = styled.div`
+  overflow-y: auto;
+  padding-bottom: 25px;
+>>>>>>> 6819cce9bfbf1bc3579f6b757d748914208d371d
   max-height: calc(100vh - 95px);
 `;
 

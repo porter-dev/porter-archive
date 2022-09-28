@@ -22,3 +22,11 @@ func (n *MonitorTestResultRepository) ReadMonitorTestResult(projectID, clusterID
 func (n *MonitorTestResultRepository) UpdateMonitorTestResult(monitor *models.MonitorTestResult) (*models.MonitorTestResult, error) {
 	panic("not implemented") // TODO: Implement
 }
+
+func (n *MonitorTestResultRepository) ArchiveMonitorTestResults(projectID, clusterID uint, recommenderID string) error {
+	panic("not implemented") // TODO: Implement
+}
+
+func (n *MonitorTestResultRepository) DeleteOldMonitorTestResults(projectID, clusterID uint, recommenderID string) error {
+	panic("not implemented") // TODO: Implement
+}

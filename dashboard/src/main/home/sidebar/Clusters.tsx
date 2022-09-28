@@ -205,6 +205,7 @@ const InitializeButton = styled.div`
     background: #ffffff22;
   }
 `;
+<<<<<<< HEAD
 
 const BgAccent = styled.img`
   height: 30px;
@@ -219,3 +220,5 @@ const BgAccent = styled.img`
   border: none;
   outline: none;
 `;
+=======
+>>>>>>> 6819cce9bfbf1bc3579f6b757d748914208d371d

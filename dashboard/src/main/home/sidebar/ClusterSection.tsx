@@ -35,6 +35,10 @@ export const ClusterSection: React.FC<Props> = ({
     }
   }, [currentCluster]);
 
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [currentProject]);
+
   const renderClusterContent = (cluster: any) => {
     let clusterId = cluster.id;
 

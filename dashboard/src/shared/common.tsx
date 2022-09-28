@@ -15,7 +15,7 @@ export const infraNames: any = {
 export const integrationList: any = {
   kubernetes: {
     icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",
+      "https://upload.wikimedia.org/wikipedia/labs/thumb/b/ba/Kubernetes-icon-color.svg/2110px-Kubernetes-icon-color.svg.png",
     label: "Kubernetes",
     buttonText: "Add a Cluster",
   },

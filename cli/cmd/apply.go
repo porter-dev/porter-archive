@@ -323,6 +323,8 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 		return nil, fmt.Errorf("nil resource")
 	}
 
+	resourceName := resource.Name
+
 	appConfig, err := d.getApplicationConfig(resource)
 
 	if err != nil {
@@ -333,13 +335,13 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 
 	if method != "pack" && method != "docker" && method != "registry" {
 		return nil, fmt.Errorf("for resource %s, config.build.method should either be \"docker\", \"pack\" or \"registry\"",
-			resource.Name)
+			resourceName)
 	}
 
 	fullPath, err := filepath.Abs(appConfig.Build.Context)
 
 	if err != nil {
-		return nil, fmt.Errorf("for resource %s, error getting absolute path for config.build.context: %w", resource.Name,
+		return nil, fmt.Errorf("for resource %s, error getting absolute path for config.build.context: %w", resourceName,
 			err)
 	}
 
@@ -347,17 +349,17 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 
 	if tag == "" {
 		color.New(color.FgYellow).Printf("for resource %s, since PORTER_TAG is not set, the Docker image tag will default to"+
-			" the git repo SHA", resource.Name)
+			" the git repo SHA", resourceName)
 
 		commit, err := git.LastCommit()
 
 		if err != nil {
-			return nil, fmt.Errorf("for resource %s, error getting last git commit: %w", resource.Name, err)
+			return nil, fmt.Errorf("for resource %s, error getting last git commit: %w", resourceName, err)
 		}
 
 		tag = commit.Sha[:7]
 
-		color.New(color.FgYellow).Printf("for resource %s, using tag %s\n", resource.Name, tag)
+		color.New(color.FgYellow).Printf("for resource %s, using tag %s\n", resourceName, tag)
 	}
 
 	// if the method is registry and a tag is defined, we use the provided tag
@@ -398,16 +400,16 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 		resource, err = d.createApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
-			return nil, fmt.Errorf("error creating app from resource %s: %w", resource.Name, err)
+			return nil, fmt.Errorf("error creating app from resource %s: %w", resourceName, err)
 		}
 	} else if !appConfig.OnlyCreate {
 		resource, err = d.updateApplication(resource, client, sharedOpts, appConfig)
 
 		if err != nil {
-			return nil, fmt.Errorf("error updating application from resource %s: %w", resource.Name, err)
+			return nil, fmt.Errorf("error updating application from resource %s: %w", resourceName, err)
 		}
 	} else {
-		color.New(color.FgYellow).Printf("Skipping creation for resource %s as onlyCreate is set to true\n", resource.Name)
+		color.New(color.FgYellow).Printf("Skipping creation for resource %s as onlyCreate is set to true\n", resourceName)
 	}
 
 	if err = d.assignOutput(resource, client); err != nil {
@@ -415,13 +417,13 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 	}
 
 	if d.source.Name == "job" && appConfig.WaitForJob && (shouldCreate || !appConfig.OnlyCreate) {
-		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resource.Name)
+		color.New(color.FgYellow).Printf("Waiting for job '%s' to finish\n", resourceName)
 
 		err = wait.WaitForJob(client, &wait.WaitOpts{
 			ProjectID: d.target.Project,
 			ClusterID: d.target.Cluster,
 			Namespace: d.target.Namespace,
-			Name:      resource.Name,
+			Name:      resourceName,
 		})
 
 		if err != nil && appConfig.OnlyCreate {
@@ -430,15 +432,15 @@ func (d *DeployDriver) applyApplication(resource *models.Resource, client *api.C
 				d.target.Project,
 				d.target.Cluster,
 				d.target.Namespace,
-				resource.Name,
+				resourceName,
 			)
 
 			if deleteJobErr != nil {
 				return nil, fmt.Errorf("error deleting job %s with waitForJob and onlyCreate set to true: %w",
-					resource.Name, deleteJobErr)
+					resourceName, deleteJobErr)
 			}
 		} else if err != nil {
-			return nil, fmt.Errorf("error waiting for job %s: %w", resource.Name, err)
+			return nil, fmt.Errorf("error waiting for job %s: %w", resourceName, err)
 		}
 	}
 

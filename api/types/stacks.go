@@ -56,7 +56,7 @@ type CreateStackAppResourceRequest struct {
 
 	// The name of the resource.
 	// required: true
-	Name string `json:"name" form:"required"`
+	Name string `json:"name" form:"required,dns1123"`
 
 	// The name of the source config (must exist inside `source_configs`).
 	// required: true
@@ -235,15 +235,15 @@ type StackSourceConfig struct {
 type CreateStackEnvGroupRequest struct {
 	// The name of the env group
 	// required: true
-	Name string `json:"name" form:"required"`
+	Name string `json:"name" form:"required,dns1123"`
 
 	// The non-secret variables to set in the env group
 	// required: true
-	Variables map[string]string `json:"variables,required" form:"required"`
+	Variables map[string]string `json:"variables" form:"required"`
 
 	// The secret variables to set in the env group
 	// required: true
-	SecretVariables map[string]string `json:"secret_variables,required" form:"required"`
+	SecretVariables map[string]string `json:"secret_variables" form:"required"`
 
 	// The list of applications that this env group should be synced to. These applications **must** be present
 	// in the stack - if an env group is created from a stack, syncing to applications which are not in the stack

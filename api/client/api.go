@@ -164,6 +164,61 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 	return err
 }
 
+type patchRequestOpts struct {
+	retryCount uint
+}
+
+func (c *Client) patchRequest(relPath string, data interface{}, response interface{}, opts ...patchRequestOpts) error {
+	var retryCount uint = 1
+
+	if len(opts) > 0 {
+		for _, opt := range opts {
+			retryCount = opt.retryCount
+		}
+	}
+
+	var httpErr *types.ExternalError
+	var err error
+
+	for i := 0; i < int(retryCount); i++ {
+		strData, err := json.Marshal(data)
+
+		if err != nil {
+			return nil
+		}
+
+		req, err := http.NewRequest(
+			"PATCH",
+			fmt.Sprintf("%s%s", c.BaseURL, relPath),
+			strings.NewReader(string(strData)),
+		)
+
+		if err != nil {
+			return err
+		}
+
+		httpErr, err = c.sendRequest(req, response, true)
+
+		if httpErr == nil && err == nil {
+			return nil
+		}
+
+		if i != int(retryCount)-1 {
+			if httpErr != nil {
+				fmt.Printf("Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+			} else {
+				fmt.Printf("Error: %v, retrying request...\n", err)
+			}
+		}
+	}
+
+	if httpErr != nil {
+		return fmt.Errorf("%v", httpErr.Error)
+	}
+
+	return err
+}
+
 func (c *Client) deleteRequest(relPath string, data interface{}, response interface{}) error {
 	strData, err := json.Marshal(data)
 

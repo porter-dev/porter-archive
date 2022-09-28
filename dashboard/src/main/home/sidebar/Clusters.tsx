@@ -205,20 +205,3 @@ const InitializeButton = styled.div`
     background: #ffffff22;
   }
 `;
-<<<<<<< HEAD
-
-const BgAccent = styled.img`
-  height: 30px;
-  background: #819bfd;
-  width: 30px;
-  border-top-left-radius: 100px;
-  max-width: 30px;
-  border-bottom-left-radius: 100px;
-  position: absolute;
-  top: 6px;
-  right: -8px;
-  border: none;
-  outline: none;
-`;
-=======
->>>>>>> 6819cce9bfbf1bc3579f6b757d748914208d371d

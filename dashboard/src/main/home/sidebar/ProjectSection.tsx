@@ -200,11 +200,7 @@ const Dropdown = styled.div`
   right: 13px;
   top: calc(100% + 5px);
   background: #26282f;
-<<<<<<< HEAD
-  width: 199px;
-=======
   width: 210px;
->>>>>>> 6819cce9bfbf1bc3579f6b757d748914208d371d
   max-height: 500px;
   border-radius: 3px;
   z-index: 999;

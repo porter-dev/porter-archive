@@ -4,6 +4,7 @@ import yaml from "js-yaml";
 import backArrow from "assets/back_arrow.png";
 import _, { cloneDeep } from "lodash";
 import loadingSrc from "assets/loading.gif";
+import leftArrow from "assets/left-arrow.svg";
 
 import { ChartType, ClusterType, ResourceType } from "shared/types";
 import { Context } from "shared/Context";
@@ -760,10 +761,12 @@ const ExpandedChart: React.FC<Props> = (props) => {
         />
       ) : (
         <StyledExpandedChart>
+          <BreadcrumbRow>
+            <Breadcrumb onClick={props.closeChart}>
+              <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+            </Breadcrumb>
+          </BreadcrumbRow>
           <HeaderWrapper>
-            <BackButton onClick={props.closeChart}>
-              <BackButtonImg src={backArrow} />
-            </BackButton>
             <TitleSection
               icon={currentChart.chart.metadata.icon}
               iconWidth="33px"
@@ -891,50 +894,46 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
 export default ExpandedChart;
 
-const RepositoryName = styled.div`
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 390px;
-  position: relative;
-  margin-right: 3px;
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
 `;
 
-const Tooltip = styled.div`
-  position: absolute;
-  left: -40px;
-  top: 28px;
-  min-height: 18px;
-  max-width: calc(700px);
-  padding: 5px 7px;
-  background: #272731;
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const BreadcrumbIcon = styled.img`
+  width: 13px;
+  opacity: 50%;
+  margin-right: 7px;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
   z-index: 999;
-  color: white;
-  font-size: 12px;
-  font-family: "Work Sans", sans-serif;
-  outline: 1px solid #ffffff55;
-  opacity: 0;
-  animation: faded-in 0.2s 0.15s;
-  animation-fill-mode: forwards;
-  @keyframes faded-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
   }
 `;
 
-const TextWrap = styled.div``;
-
-const LoadingWrapper = styled.div`
-  width: 100%;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const Wrap = styled.div`
+  z-index: 999;
 `;
+
+const TextWrap = styled.div``;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
@@ -945,7 +944,7 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
-  margin-bottom: 120px;
+  margin-bottom: 50px;
 `;
 
 const BackButton = styled.div`
@@ -1117,25 +1116,8 @@ const Icon = styled.img`
   width: 100%;
 `;
 
-const IconWrapper = styled.div`
-  color: #efefef;
-  font-size: 16px;
-  height: 20px;
-  width: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 3px;
-  margin-right: 12px;
-
-  > i {
-    font-size: 20px;
-  }
-`;
-
 const StyledExpandedChart = styled.div`
   width: 100%;
-  overflow: hidden;
   z-index: 0;
   animation: fadeIn 0.3s;
   animation-timing-function: ease-out;
@@ -1151,25 +1133,6 @@ const StyledExpandedChart = styled.div`
       opacity: 1;
     }
   }
-`;
-
-const DeploymentImageContainer = styled.div`
-  height: 20px;
-  font-size: 13px;
-  position: relative;
-  display: flex;
-  margin-left: 15px;
-  margin-bottom: -3px;
-  align-items: center;
-  font-weight: 400;
-  justify-content: center;
-  color: #ffffff66;
-  padding-left: 5px;
-`;
-
-const DeploymentTypeIcon = styled(Icon)`
-  width: 20px;
-  margin-right: 10px;
 `;
 
 const A = styled.a`

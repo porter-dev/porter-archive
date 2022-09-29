@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import yaml from "js-yaml";
-import backArrow from "assets/back_arrow.png";
 import _, { cloneDeep } from "lodash";
 import loadingSrc from "assets/loading.gif";
 import leftArrow from "assets/left-arrow.svg";
@@ -906,12 +905,6 @@ const BreadcrumbRow = styled.div`
   justify-content: flex-start;
 `;
 
-const BreadcrumbIcon = styled.img`
-  width: 13px;
-  opacity: 50%;
-  margin-right: 7px;
-`;
-
 const Breadcrumb = styled.div`
   color: #aaaabb88;
   font-size: 13px;
@@ -945,33 +938,6 @@ const LineBreak = styled.div`
 const BodyWrapper = styled.div`
   position: relative;
   margin-bottom: 50px;
-`;
-
-const BackButton = styled.div`
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  display: flex;
-  width: 36px;
-  cursor: pointer;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
-  }
-`;
-
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
 `;
 
 const Header = styled.div`
@@ -1110,10 +1076,6 @@ const NamespaceTag = styled.div`
   padding-left: 7px;
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
-`;
-
-const Icon = styled.img`
-  width: 100%;
 `;
 
 const StyledExpandedChart = styled.div`

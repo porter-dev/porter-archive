@@ -189,8 +189,8 @@ const GHALink = styled(DynamicLink)`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin-bottom: 20px;
 `;
 

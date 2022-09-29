@@ -310,14 +310,14 @@ const PRName = styled.div`
 
 const DeploymentCardWrapper = styled.div`
   display: flex;
-  background: #2b2e3699;
   justify-content: space-between;
-  border-radius: 5px;
   font-size: 13px;
   height: 75px;
   padding: 12px;
   padding-left: 14px;
-  border: 1px solid #ffffff0f;
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
 
   animation: fadeIn 0.5s;
   @keyframes fadeIn {

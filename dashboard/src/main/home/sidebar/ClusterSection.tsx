@@ -8,7 +8,6 @@ import settings from "assets/settings.svg";
 import monojob from "assets/monojob.png";
 import monoweb from "assets/monoweb.png";
 import sliders from "assets/sliders.svg";
-import cluster from "assets/cluster.svg";
 
 import SidebarLink from "./SidebarLink";
 
@@ -34,6 +33,10 @@ export const ClusterSection: React.FC<Props> = ({
       currentCluster.id === cluster.id && setIsExpanded(true);
     }
   }, [currentCluster]);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [currentProject]);
 
   const renderClusterContent = (cluster: any) => {
     let clusterId = cluster.id;

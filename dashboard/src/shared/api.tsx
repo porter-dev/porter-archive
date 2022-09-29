@@ -1304,6 +1304,7 @@ const upgradeChartValues = baseApi<
   {
     values: string;
     version?: string;
+    latest_revision?: number;
   },
   {
     id: number;

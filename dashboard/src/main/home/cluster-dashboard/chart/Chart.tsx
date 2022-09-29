@@ -365,7 +365,6 @@ const StyledChart = styled.div`
   margin-bottom: 15px;
   padding-top: 2px;
   padding-bottom: 13px;
-  border-radius: 8px;
   position: relative;
   width: calc(100% + 2px);
   height: calc(100% + 2px);

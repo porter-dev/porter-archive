@@ -17,7 +17,7 @@ export const Card = {
     padding-left: 14px;
     align-items: center;
     border-radius: 5px;
-    background: #262A30;
+    background: #262a30;
     border: 1px solid #494b4f;
 
     ${(props) => {

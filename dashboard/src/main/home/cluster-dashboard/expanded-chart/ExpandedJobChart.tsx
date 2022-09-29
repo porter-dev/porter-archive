@@ -429,7 +429,8 @@ const ExpandedJobHeader: React.FC<{
   <>
     <BreadcrumbRow>
       <Breadcrumb onClick={closeChart}>
-        <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+        <ArrowIcon src={leftArrow} />
+        <Wrap>Back</Wrap>
       </Breadcrumb>
     </BreadcrumbRow>
     <HeaderWrapper>

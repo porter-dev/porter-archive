@@ -33,8 +33,8 @@ export const integrationList: any = {
   registry: {
     icon:
       "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
-    label: "Docker Registry",
-    buttonText: "Add a Registry",
+    label: "Docker registry",
+    buttonText: "Add a registry",
   },
   gke: {
     icon: "https://sysdig.com/wp-content/uploads/2016/08/GKE_color.png",

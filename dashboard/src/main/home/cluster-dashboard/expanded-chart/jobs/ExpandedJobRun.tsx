@@ -199,7 +199,8 @@ const ExpandedJobRun = ({
     <StyledExpandedChart>
       <BreadcrumbRow>
         <Breadcrumb onClick={onClose}>
-          <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
         </Breadcrumb>
       </BreadcrumbRow>
       <HeaderWrapper>

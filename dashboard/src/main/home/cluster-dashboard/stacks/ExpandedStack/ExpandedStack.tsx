@@ -96,7 +96,8 @@ const ExpandedStack = () => {
     <div>
       <BreadcrumbRow>
         <Breadcrumb to="/stacks">
-          <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
         </Breadcrumb>
       </BreadcrumbRow>
       <StackTitleWrapper>
@@ -156,7 +157,7 @@ const ExpandedStack = () => {
                 <Action.Row>
                   <Action.Button to={`${url}/new-app-resource`}>
                     <i className="material-icons">add</i>
-                    Create App Resource
+                    Create app resource
                   </Action.Button>
                 </Action.Row>
                 {currentRevision.id !== stack.latest_revision.id ? (
@@ -185,7 +186,7 @@ const ExpandedStack = () => {
             ),
           },
           {
-            label: "Source Config",
+            label: "Source config",
             value: "source_config",
             component: (
               <>
@@ -199,7 +200,7 @@ const ExpandedStack = () => {
             ),
           },
           {
-            label: "Env Groups",
+            label: "Env groups",
             value: "env_groups",
             component: (
               <>

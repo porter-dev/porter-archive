@@ -3,7 +3,7 @@ import Placeholder from "components/Placeholder";
 import TabSelector from "components/TabSelector";
 import TitleSection from "components/TitleSection";
 import React, { useContext, useState } from "react";
-import backArrow from "assets/back_arrow.png";
+import leftArrow from "assets/left-arrow.svg";
 import { useParams, useRouteMatch } from "react-router";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -94,10 +94,12 @@ const ExpandedStack = () => {
 
   return (
     <div>
+      <BreadcrumbRow>
+        <Breadcrumb to="/stacks">
+          <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <StackTitleWrapper>
-        <BackButton to="/stacks">
-          <BackButtonImg src={backArrow} />
-        </BackButton>
         <TitleSection materialIconClass="material-icons-outlined" icon={"lan"}>
           {stack.name}
         </TitleSection>
@@ -205,7 +207,7 @@ const ExpandedStack = () => {
                 <Action.Row>
                   <Action.Button to={`${url}/new-env-group`}>
                     <i className="material-icons">add</i>
-                    Create Env Group
+                    Create env group
                   </Action.Button>
                 </Action.Row>
                 <EnvGroups stack={stack} />
@@ -237,6 +239,39 @@ const ExpandedStack = () => {
 };
 
 export default ExpandedStack;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled(DynamicLink)`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
 
 const PaddingBottom = styled.div`
   width: 100%;

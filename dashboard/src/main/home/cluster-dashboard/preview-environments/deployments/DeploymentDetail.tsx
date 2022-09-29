@@ -66,7 +66,9 @@ const DeploymentDetail = () => {
   return (
     <StyledExpandedChart>
       <BreadcrumbRow>
-        <Breadcrumb to={`/preview-environments/deployments/${environmentId}/${repository}`}>
+        <Breadcrumb
+          to={`/preview-environments/deployments/${environmentId}/${repository}`}
+        >
           <ArrowIcon src={leftArrow} />
           <Wrap>Back</Wrap>
         </Breadcrumb>

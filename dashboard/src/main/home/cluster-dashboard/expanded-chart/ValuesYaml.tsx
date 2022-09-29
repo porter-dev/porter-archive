@@ -100,6 +100,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
             value={this.state.values}
             onChange={(e: any) => this.setState({ values: e })}
             readOnly={this.props.disabled}
+            height="calc(100vh - 462px)"
           />
         </Wrapper>
         {!this.props.disabled && (
@@ -129,7 +130,7 @@ const StyledValuesYaml = styled.div`
   flex-direction: column;
   width: 100%;
   min-height: 400px;
-  height: 50vh;
+  height: calc(100vh - 400px);
   font-size: 13px;
   overflow: hidden;
   border-radius: 8px;

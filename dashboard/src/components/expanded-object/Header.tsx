@@ -1,7 +1,6 @@
 import DynamicLink from "components/DynamicLink";
 import React from "react";
 import styled from "styled-components";
-import backArrow from "assets/back_arrow.png";
 import TitleSection from "components/TitleSection";
 
 import leftArrow from "assets/left-arrow.svg";
@@ -31,11 +30,16 @@ const Header: React.FunctionComponent<Props> = (props) => {
     <>
       <BreadcrumbRow>
         <Breadcrumb to={back_link}>
-          <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
         </Breadcrumb>
       </BreadcrumbRow>
       <HeaderWrapper>
-        <Title icon={icon} iconWidth="25px" materialIconClass={materialIconClass}>
+        <Title
+          icon={icon}
+          iconWidth="25px"
+          materialIconClass={materialIconClass}
+        >
           {name}
           <Flex>{inline_title_items}</Flex>
         </Title>

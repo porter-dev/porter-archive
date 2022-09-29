@@ -92,7 +92,8 @@ export const ExpandedNodeView = () => {
     <StyledExpandedNodeView>
       <BreadcrumbRow>
         <Breadcrumb onClick={closeNodeView}>
-          <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
         </Breadcrumb>
       </BreadcrumbRow>
       <HeaderWrapper>

@@ -98,7 +98,7 @@ export default class Selector extends Component<SelectorPropsType, StateType> {
           }}
         >
           <Plus>+</Plus>
-          Add Namespace
+          Add namespace
         </NewOption>
       );
     }

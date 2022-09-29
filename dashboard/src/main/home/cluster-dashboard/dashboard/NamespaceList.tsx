@@ -155,7 +155,7 @@ export const NamespaceList: React.FunctionComponent = () => {
               {isAuthorized("namespace", "", ["get", "delete"]) &&
                 isAvailableForDeletion(namespace?.metadata?.name) &&
                 namespace?.status?.phase === "Active" && (
-                  <OptionsDropdown.Dropdown>
+                  <OptionsDropdown.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
                     <OptionsDropdown.Option onClick={() => onDelete(namespace)}>
                       <i className="material-icons-outlined">delete</i>
                       <span>Delete</span>
@@ -281,17 +281,14 @@ const Button = styled.div`
 `;
 
 const StyledCard = styled.div`
-  background: #26282f;
   min-height: 80px;
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #26282f;
-  box-shadow: 0 4px 15px 0px #00000055;
-  border-radius: 8px;
   padding: 14px;
   animation: fadeIn 0.5s;
+  cursor: pointer;
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -300,12 +297,11 @@ const StyledCard = styled.div`
       opacity: 1;
     }
   }
-
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
   :hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 20px 0px #00000030;
-    cursor: pointer;
+    border: 1px solid #7a7b80;
   }
 `;
 

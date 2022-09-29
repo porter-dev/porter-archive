@@ -762,7 +762,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
         <StyledExpandedChart>
           <BreadcrumbRow>
             <Breadcrumb onClick={props.closeChart}>
-              <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+              <ArrowIcon src={leftArrow} />
+              <Wrap>Back</Wrap>
             </Breadcrumb>
           </BreadcrumbRow>
           <HeaderWrapper>
@@ -903,6 +904,7 @@ const BreadcrumbRow = styled.div`
   width: 100%;
   display: flex;
   justify-content: flex-start;
+  z-index: 999;
 `;
 
 const Breadcrumb = styled.div`

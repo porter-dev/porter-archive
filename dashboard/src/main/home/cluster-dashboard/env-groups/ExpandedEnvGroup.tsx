@@ -421,7 +421,8 @@ export const ExpandedEnvGroupFC = ({
     <StyledExpandedChart>
       <BreadcrumbRow>
         <Breadcrumb onClick={closeExpanded}>
-          <ArrowIcon src={leftArrow} /><Wrap>Back</Wrap>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
         </Breadcrumb>
       </BreadcrumbRow>
       <HeaderWrapper>

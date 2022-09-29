@@ -148,17 +148,16 @@ const NodeListWrapper = styled.div`
 `;
 
 const StyledChart = styled.div`
-  background: #26282f;
   padding: 14px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
   position: relative;
-  border: 2px solid #9eb4ff00;
   width: 100%;
   height: 100%;
   :not(:last-child) {
     margin-bottom: 25px;
   }
+  border-radius: 8px;
+  background: #262a30;
+  border: 1px solid #494b4f;
 `;
 
 const StatusHeader = styled.div`

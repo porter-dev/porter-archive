@@ -132,7 +132,10 @@ export const Dashboard: React.FunctionComponent = () => {
       const res = await api.getCluster(
         "<token>",
         {},
-        { project_id: context.currentProject.id, cluster_id: context.currentCluster.id }
+        {
+          project_id: context.currentProject.id,
+          cluster_id: context.currentCluster.id,
+        }
       );
       if (res.data) {
         const { ingress_ip, ingress_error } = res.data;
@@ -161,12 +164,7 @@ export const Dashboard: React.FunctionComponent = () => {
             <i className="material-icons">info</i> Info
           </InfoLabel>
         </TopRow>
-        <Description>
-          {renderIngressIp(
-            ingressIp,
-            ingressError
-          )}
-        </Description>
+        <Description>{renderIngressIp(ingressIp, ingressError)}</Description>
       </InfoSection>
 
       <TabSelector

@@ -3,10 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import {
-  ClusterType,
-  DetailedClusterType,
-} from "shared/types";
+import { ClusterType, DetailedClusterType } from "shared/types";
 import Helper from "components/form-components/Helper";
 import { pushFiltered } from "shared/routing";
 
@@ -245,10 +242,10 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: #262A30;
+  background: #262a30;
   border: 1px solid #494b4f;
   :hover {
-    border: 1px solid #7A7B80;
+    border: 1px solid #7a7b80;
   }
 
   animation: fadeIn 0.3s 0s;

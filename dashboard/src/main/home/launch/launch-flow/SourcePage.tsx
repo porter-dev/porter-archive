@@ -68,7 +68,7 @@ class SourcePage extends Component<PropsType, StateType> {
           {capabilities.github || capabilities.gitlab ? (
             <Block onClick={() => setSourceType("repo")}>
               <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
-              <BlockTitle>Git Repository</BlockTitle>
+              <BlockTitle>Git repository</BlockTitle>
               <BlockDescription>
                 Deploy using source from a Git repo.
               </BlockDescription>
@@ -76,7 +76,7 @@ class SourcePage extends Component<PropsType, StateType> {
           ) : null}
           <Block onClick={() => setSourceType("registry")}>
             <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
-            <BlockTitle>Docker Registry</BlockTitle>
+            <BlockTitle>Docker registry</BlockTitle>
             <BlockDescription>
               Deploy a container from an image registry.
             </BlockDescription>
@@ -397,7 +397,6 @@ const BlockTitle = styled.div`
 const Block = styled.div<{ disabled?: boolean }>`
   align-items: center;
   user-select: none;
-  border-radius: 5px;
   display: flex;
   font-size: 13px;
   overflow: hidden;
@@ -410,10 +409,15 @@ const Block = styled.div<{ disabled?: boolean }>`
   cursor: ${(props) => (props.disabled ? "" : "pointer")};
   color: #ffffff;
   position: relative;
-  background: #26282f;
-  box-shadow: 0 3px 5px 0px #00000022;
+
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
   :hover {
-    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
+    
+  }
+  :hover {
+    border: ${(props) => props.disabled ? "" : "1px solid #7a7b80"};
   }
 
   animation: fadeIn 0.3s 0s;

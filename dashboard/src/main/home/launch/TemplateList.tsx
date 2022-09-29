@@ -193,10 +193,8 @@ const TemplateTitle = styled.div`
 `;
 
 const TemplateBlock = styled.div`
-  border: 1px solid #ffffff00;
   align-items: center;
   user-select: none;
-  border-radius: 8px;
   display: flex;
   font-size: 13px;
   font-weight: 500;
@@ -208,10 +206,11 @@ const TemplateBlock = styled.div`
   cursor: pointer;
   color: #ffffff;
   position: relative;
-  background: #26282f;
-  box-shadow: 0 4px 15px 0px #00000044;
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
   :hover {
-    background: #ffffff11;
+    border: 1px solid #7a7b80;
   }
 
   animation: fadeIn 0.3s 0s;

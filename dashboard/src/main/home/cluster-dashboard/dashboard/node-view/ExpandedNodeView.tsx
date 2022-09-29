@@ -155,33 +155,6 @@ const Wrap = styled.div`
   z-index: 999;
 `;
 
-const BackButton = styled.div`
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  display: flex;
-  width: 36px;
-  cursor: pointer;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
-  }
-`;
-
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
-`;
-
 const StatusWrapper = styled.div`
   margin-left: 3px;
   margin-bottom: 20px;

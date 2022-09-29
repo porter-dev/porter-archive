@@ -143,7 +143,7 @@ const StyledListSection = styled.div`
   font-size: 13px;
   width: 100%;
   min-height: 400px;
-  height: 50vh;
+  height: calc(100vh - 400px);
   font-size: 13px;
   overflow: hidden;
   border-radius: 8px;

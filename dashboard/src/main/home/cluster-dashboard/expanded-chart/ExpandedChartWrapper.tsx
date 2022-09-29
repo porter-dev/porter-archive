@@ -156,6 +156,5 @@ export default withRouter(ExpandedChartWrapper);
 
 const LoadingWrapper = styled.div`
   width: 100%;
-  height: 100%;
-  margin-top: -50px;
+  height: 100vh;
 `;

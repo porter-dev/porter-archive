@@ -76,7 +76,7 @@ const ConnectSource: React.FC<{
 
   return (
     <div>
-      <TitleSection>Getting Started</TitleSection>
+      <TitleSection>Getting started</TitleSection>
       <Subtitle>
         Step 1 of 3 - Connect to GitHub
         <DocsHelper

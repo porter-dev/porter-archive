@@ -308,7 +308,7 @@ const ProvisionResources: React.FC<{}> = () => {
           <BackButtonImg src={backArrow} />
         </BackButton>
       )}
-      <TitleSection>Getting Started</TitleSection>
+      <TitleSection>Getting started</TitleSection>
       <Subtitle>
         Step 3 of 3 - Provision resources
         <DocsHelper

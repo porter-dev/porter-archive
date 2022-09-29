@@ -207,7 +207,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
           />
           <SaveButton
             disabled={this.isDisabled()}
-            text="Create Env Group"
+            text="Create env group"
             onClick={this.onSubmit}
             status={
               this.isDisabled()

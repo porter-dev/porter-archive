@@ -64,7 +64,7 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                   this.setState({ createEnvMode: !this.state.createEnvMode })
                 }
               >
-                <i className="material-icons">add</i> Create Env Group
+                <i className="material-icons">add</i> Create env group
               </Button>
             )}
             <SortFilterWrapper>

@@ -155,7 +155,10 @@ export const NamespaceList: React.FunctionComponent = () => {
               {isAuthorized("namespace", "", ["get", "delete"]) &&
                 isAvailableForDeletion(namespace?.metadata?.name) &&
                 namespace?.status?.phase === "Active" && (
-                  <OptionsDropdown.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
+                  <OptionsDropdown.Dropdown
+                    expandIcon="more_vert"
+                    shrinkIcon="more_vert"
+                  >
                     <OptionsDropdown.Option onClick={() => onDelete(namespace)}>
                       <i className="material-icons-outlined">delete</i>
                       <span>Delete</span>

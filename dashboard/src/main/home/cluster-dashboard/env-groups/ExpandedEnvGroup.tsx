@@ -701,8 +701,8 @@ const TextWrap = styled.div``;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin: 15px 0px 55px;
 `;
 

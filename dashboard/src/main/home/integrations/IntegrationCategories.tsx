@@ -114,13 +114,17 @@ const IntegrationCategories: React.FC<Props> = (props) => {
   return (
     <>
       <BreadcrumbRow>
-        <Breadcrumb onClick={() => pushFiltered(props, "/integrations", ["project_id"])}>
+        <Breadcrumb
+          onClick={() => pushFiltered(props, "/integrations", ["project_id"])}
+        >
           <ArrowIcon src={leftArrow} />
           <Wrap>Back</Wrap>
         </Breadcrumb>
       </BreadcrumbRow>
       <Flex>
-        <TitleSection icon={icon} iconWidth="32px">{label}</TitleSection>
+        <TitleSection icon={icon} iconWidth="32px">
+          {label}
+        </TitleSection>
         <Button
           onClick={() => {
             if (props.category === "gitlab") {

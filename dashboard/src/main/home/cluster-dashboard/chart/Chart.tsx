@@ -229,7 +229,7 @@ const BottomWrapper = styled.div`
   justify-content: space-between;
   align-items: center;
   padding-right: 11px;
-  margin-top: 12px;
+  margin-top: 3px;
 `;
 
 const TopRightContainer = styled.div`
@@ -362,16 +362,17 @@ const JobStatus = styled.span<{ status?: JobStatusType }>`
 
 const StyledChart = styled.div`
   cursor: pointer;
-  margin-bottom: 25px;
-  padding: 1px;
+  margin-bottom: 15px;
+  padding-top: 2px;
+  padding-bottom: 13px;
   border-radius: 8px;
   position: relative;
   width: calc(100% + 2px);
   height: calc(100% + 2px);
-  background: #26292E;
   border-radius: 5px;
-  border: 1px solid #aaaabb33;
+  background: #262A30;
+  border: 1px solid #494b4f;
   :hover {
-    background: #ffffff11;
+    border: 1px solid #7A7B80;
   }
 `;

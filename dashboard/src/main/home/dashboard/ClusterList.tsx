@@ -244,11 +244,11 @@ const TemplateBlock = styled.div`
   cursor: pointer;
   color: #ffffff;
   position: relative;
-  background: #26292E;
   border-radius: 5px;
-  border: 1px solid #aaaabb33;
+  background: #262A30;
+  border: 1px solid #494b4f;
   :hover {
-    background: #ffffff11;
+    border: 1px solid #7A7B80;
   }
 
   animation: fadeIn 0.3s 0s;

@@ -379,7 +379,7 @@ const StyledSidebar = styled.section`
   animation-fill-mode: forwards;
   @keyframes showSidebar {
     from {
-      margin-left: -235px;
+      margin-left: -240px;
     }
     to {
       margin-left: 0px;
@@ -390,7 +390,7 @@ const StyledSidebar = styled.section`
       margin-left: 0px;
     }
     to {
-      margin-left: -235px;
+      margin-left: -240px;
     }
   }
 `;

@@ -148,15 +148,14 @@ export const ClusterSection: React.FC<Props> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         active={
           !isExpanded &&
-          cluster.id === currentCluster.id && (
-            window.location.pathname.startsWith("/cluster-dashboard") ||
+          cluster.id === currentCluster.id &&
+          (window.location.pathname.startsWith("/cluster-dashboard") ||
             window.location.pathname.startsWith("/preview-environments") ||
             window.location.pathname.startsWith("/stacks") ||
             window.location.pathname.startsWith("/databases") ||
             window.location.pathname.startsWith("/env-groups") ||
             window.location.pathname.startsWith("/jobs") ||
-            window.location.pathname.startsWith("/applications")
-          )
+            window.location.pathname.startsWith("/applications"))
         }
       >
         <LinkWrapper>

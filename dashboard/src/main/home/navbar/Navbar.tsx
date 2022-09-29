@@ -43,10 +43,10 @@ class Navbar extends Component<PropsType, StateType> {
               <SettingsIcon>
                 <i className="material-icons">settings</i>
               </SettingsIcon>
-              Account Settings
+              Account settings
             </UserDropdownButton>
             <UserDropdownButton onClick={this.props.logOut}>
-              <i className="material-icons">keyboard_return</i> Log Out
+              <i className="material-icons">keyboard_return</i> Log out
               {version !== "production" && <VersionTag>{version}</VersionTag>}
             </UserDropdownButton>
           </Dropdown>
@@ -211,16 +211,14 @@ const Dropdown = styled.div`
 `;
 
 const StyledNavbar = styled.div`
-  width: 100%;
   height: 60px;
   position: absolute;
   top: 0;
-  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  padding-right: 5px;
   justify-content: flex-end;
-  z-index: 0;
+  z-index: 1;
 `;
 
 const NavButton = styled.a`

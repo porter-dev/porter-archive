@@ -159,11 +159,11 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     >
       {this.allCollapsed() ? (
         <>
-          <i className="material-icons">expand_more</i> Expand All
+          <i className="material-icons">expand_more</i> Expand all
         </>
       ) : (
         <>
-          <i className="material-icons">expand_less</i> Collapse All
+          <i className="material-icons">expand_less</i> Collapse all
         </>
       )}
     </Button>
@@ -182,9 +182,6 @@ export default class IntegrationList extends Component<PropsType, StateType> {
           onYes={this.handleDeleteIntegration}
           onNo={() => this.setState({ isDelete: false })}
         />
-        {this.props.titles && this.props.titles.length > 0 && (
-          <ControlRow>{this.collapseAllButton()}</ControlRow>
-        )}
         {this.renderContents()}
       </StyledIntegrationList>
     );
@@ -200,12 +197,11 @@ const Flex = styled.div`
 `;
 
 const MainRow = styled.div`
-  height: 70px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 25px;
+  padding: 15px;
   border-radius: 5px;
   :hover {
     background: ${(props: { disabled: boolean }) =>
@@ -233,12 +229,15 @@ const Integration = styled.div`
   margin-left: -2px;
   display: flex;
   flex-direction: column;
-  background: #26282f;
   cursor: ${(props: { disabled: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
-  margin-bottom: 15px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
 `;
 
 const Label = styled.div`
@@ -249,7 +248,7 @@ const Label = styled.div`
 
 const Icon = styled.img`
   width: 30px;
-  margin-right: 18px;
+  margin-right: 15px;
 `;
 
 const Placeholder = styled.div`
@@ -267,7 +266,7 @@ const Placeholder = styled.div`
 `;
 
 const StyledIntegrationList = styled.div`
-  margin-top: 20px;
+  margin-top: 30px;
   margin-bottom: 80px;
 `;
 
@@ -292,7 +291,7 @@ const Button = styled.div`
   font-size: 13px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
-  border-radius: 8px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   padding: 0px 8px;

@@ -352,7 +352,6 @@ const BlockTitle = styled.div`
 const Block = styled.div<{ disabled?: boolean }>`
   align-items: center;
   user-select: none;
-  border-radius: 5px;
   display: flex;
   font-size: 13px;
   overflow: hidden;
@@ -362,15 +361,16 @@ const Block = styled.div<{ disabled?: boolean }>`
   align-items: center;
   justify-content: space-between;
   height: 170px;
+  filter: ${({ disabled }) => (disabled ? "grayscale(1)" : "")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   color: #ffffff;
   position: relative;
-  background: #26282f;
-  box-shadow: 0 3px 5px 0px #00000022;
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
   :hover {
-    background: ${(props) => (props.disabled ? "" : "#ffffff11")};
+    border: ${(props) => (props.disabled ? "" : "1px solid #7a7b80")};
   }
-  filter: ${({ disabled }) => (disabled ? "grayscale(1)" : "")};
 
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {

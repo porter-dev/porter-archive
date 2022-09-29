@@ -369,9 +369,9 @@ const StyledChart = styled.div`
   width: calc(100% + 2px);
   height: calc(100% + 2px);
   border-radius: 5px;
-  background: #262A30;
+  background: #262a30;
   border: 1px solid #494b4f;
   :hover {
-    border: 1px solid #7A7B80;
+    border: 1px solid #7a7b80;
   }
 `;

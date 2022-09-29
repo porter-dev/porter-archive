@@ -220,13 +220,13 @@ const Overview = () => {
 
       <SubmitButton
         disabled={!isValid || submitButtonStatus !== ""}
-        text="Create Stack"
+        text="Create stack"
         onClick={handleSubmit}
         clearPosition
         statusPosition="left"
         status={submitButtonStatus}
       >
-        Create Stack
+        Create stack
       </SubmitButton>
     </>
   );

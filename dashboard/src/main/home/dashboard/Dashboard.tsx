@@ -149,7 +149,7 @@ class Dashboard extends Component<PropsType, StateType> {
     let { currentProject, capabilities } = this.context;
     let { onShowProjectSettings } = this;
 
-    let tabOptions = [{ label: "Project overview", value: "overview" }];
+    let tabOptions = [{ label: "Connected clusters", value: "overview" }];
 
     if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
       tabOptions.push({ label: "Create a cluster", value: "create-cluster" });

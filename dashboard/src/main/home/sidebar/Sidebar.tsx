@@ -369,7 +369,7 @@ const CollapseButton = styled.div`
 
 const StyledSidebar = styled.section`
   font-family: "Work Sans", sans-serif;
-  width: 235px;
+  width: 240px;
   position: relative;
   padding-top: 20px;
   height: 100vh;

@@ -48,7 +48,6 @@ const Chart: React.FunctionComponent<Props> = ({
   isJob,
   closeChartRedirectUrl,
 }) => {
-  const [expand, setExpand] = useState<boolean>(false);
   const [chartControllers, setChartControllers] = useState<any>([]);
   const [showDescription, setShowDescription] = useState(false);
   const context = useContext(Context);
@@ -120,9 +119,6 @@ const Chart: React.FunctionComponent<Props> = ({
 
   return (
     <StyledChart
-      onMouseEnter={() => setExpand(true)}
-      onMouseLeave={() => setExpand(false)}
-      expand={expand}
       onClick={() => {
         const cluster = context.currentCluster?.name;
         let route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${
@@ -233,7 +229,7 @@ const BottomWrapper = styled.div`
   justify-content: space-between;
   align-items: center;
   padding-right: 11px;
-  margin-top: 12px;
+  margin-top: 3px;
 `;
 
 const TopRightContainer = styled.div`
@@ -365,66 +361,17 @@ const JobStatus = styled.span<{ status?: JobStatusType }>`
 `;
 
 const StyledChart = styled.div`
-  background: #26282f;
   cursor: pointer;
-  margin-bottom: 25px;
-  padding: 1px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
+  margin-bottom: 15px;
+  padding-top: 2px;
+  padding-bottom: 13px;
   position: relative;
-  border: 2px solid #9eb4ff00;
   width: calc(100% + 2px);
   height: calc(100% + 2px);
-
-  animation: ${(props: { expand: boolean }) =>
-      props.expand ? "expand" : "shrink"}
-    0.12s;
-  animation-fill-mode: forwards;
-  animation-timing-function: ease-out;
-
-  @keyframes expand {
-    from {
-      width: calc(100% + 2px);
-      padding-top: 4px;
-      padding-bottom: 14px;
-      margin-left: 0px;
-      box-shadow: 0 4px 15px 0px #00000055;
-      padding-left: 1px;
-      margin-bottom: 25px;
-      margin-top: 0px;
-    }
-    to {
-      width: calc(100% + 22px);
-      padding-top: 7px;
-      padding-bottom: 20px;
-      margin-left: -10px;
-      box-shadow: 0 8px 20px 0px #00000030;
-      padding-left: 5px;
-      margin-bottom: 21px;
-      margin-top: -4px;
-    }
-  }
-
-  @keyframes shrink {
-    from {
-      width: calc(100% + 22px);
-      padding-top: 7px;
-      padding-bottom: 20px;
-      margin-left: -10px;
-      box-shadow: 0 8px 20px 0px #00000030;
-      padding-left: 5px;
-      margin-bottom: 21px;
-      margin-top: -4px;
-    }
-    to {
-      width: calc(100% + 2px);
-      padding-top: 4px;
-      padding-bottom: 14px;
-      margin-left: 0px;
-      box-shadow: 0 4px 15px 0px #00000055;
-      padding-left: 1px;
-      margin-bottom: 25px;
-      margin-top: 0px;
-    }
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
   }
 `;

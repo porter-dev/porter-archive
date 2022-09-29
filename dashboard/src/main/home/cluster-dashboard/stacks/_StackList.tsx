@@ -117,7 +117,7 @@ const StackList = ({
       <Placeholder height="250px">
         <div>
           <h3>No stacks found</h3>
-          <p>You can create a stack by clicking the "Create Stack" button.</p>
+          <p>You can create a stack by clicking the "Create stack" button.</p>
         </div>
       </Placeholder>
     );

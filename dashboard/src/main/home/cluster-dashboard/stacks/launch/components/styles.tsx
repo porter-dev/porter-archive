@@ -11,14 +11,14 @@ export const Card = {
   Wrapper: styled.div<{ variant?: "clickable" | "unclickable" }>`
     display: flex;
     color: #ffffff;
-    background: #2b2e3699;
     justify-content: space-between;
-    border-radius: 5px;
     height: 75px;
     padding: 12px;
     padding-left: 14px;
-    border: 1px solid #ffffff0f;
     align-items: center;
+    border-radius: 5px;
+    background: #262a30;
+    border: 1px solid #494b4f;
 
     ${(props) => {
       if (props.variant === "unclickable") {
@@ -33,7 +33,7 @@ export const Card = {
       return `
         cursor: pointer;
         :hover {
-          border: 1px solid #ffffff3c;
+          border: 1px solid #7A7B80;
         }
       `;
     }}

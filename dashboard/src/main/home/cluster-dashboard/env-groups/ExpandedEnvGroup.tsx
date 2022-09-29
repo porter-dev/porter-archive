@@ -9,6 +9,7 @@ import styled, { keyframes } from "styled-components";
 import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import loading from "assets/loading.gif";
+import leftArrow from "assets/left-arrow.svg";
 
 import { ClusterType } from "shared/types";
 import { Context } from "shared/Context";
@@ -418,10 +419,13 @@ export const ExpandedEnvGroupFC = ({
 
   return (
     <StyledExpandedChart>
+      <BreadcrumbRow>
+        <Breadcrumb onClick={closeExpanded}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <HeaderWrapper>
-        <BackButton onClick={closeExpanded}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
         <TitleSection icon={key} iconWidth="33px">
           {envGroup.name}
           <TagWrapper>
@@ -627,6 +631,39 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
     </>
   );
 };
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
 
 const HeadingWrapper = styled.div`
   display: flex;

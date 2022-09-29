@@ -414,10 +414,9 @@ const Block = styled.div<{ disabled?: boolean }>`
   background: #262a30;
   border: 1px solid #494b4f;
   :hover {
-    
   }
   :hover {
-    border: ${(props) => props.disabled ? "" : "1px solid #7a7b80"};
+    border: ${(props) => (props.disabled ? "" : "1px solid #7a7b80")};
   }
 
   animation: fadeIn 0.3s 0s;

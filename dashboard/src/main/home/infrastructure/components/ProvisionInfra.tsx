@@ -375,8 +375,8 @@ export default ProvisionInfra;
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin: 10px 0px 35px;
 `;
 

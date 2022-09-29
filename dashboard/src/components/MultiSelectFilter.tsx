@@ -8,7 +8,7 @@ import CheckboxList from "components/form-components/CheckboxList";
 type Props = {
   name: string;
   icon?: any;
-  options: { value: any, label: string }[];
+  options: { value: any; label: string }[];
   selected: any[];
   setSelected: any;
 };
@@ -21,8 +21,9 @@ export const MultiSelectFilter: React.FC<Props> = (props) => {
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside.bind(this));
-    return () => document.removeEventListener("mousedown", handleClickOutside.bind(this));
-  }, [])
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside.bind(this));
+  }, []);
 
   const handleClickOutside = (event: any) => {
     if (
@@ -41,37 +42,30 @@ export const MultiSelectFilter: React.FC<Props> = (props) => {
     return props.options.map(
       (option: { value: any; label: string }, i: number) => {
         return (
-          <Option
-            key={i}
-            onClick={() => alert("choise")}
-          >
+          <Option key={i} onClick={() => alert("choise")}>
             {option.label}
           </Option>
         );
       }
     );
-  }
+  };
 
   const renderDropdown = () => {
     if (expanded) {
       return (
         <DropdownWrapper>
-          <Dropdown
-            ref={wrapperRef}
-          >
-            {
-              props.options.length > 0 ? (
-                <ScrollableWrapper>
-                  <CheckboxList
-                    options={props.options}
-                    selected={props.selected}
-                    setSelected={props.setSelected}
-                  />
-                </ScrollableWrapper>
-              ) : (
-                <Placeholder>No options found</Placeholder>
-              )
-            }
+          <Dropdown ref={wrapperRef}>
+            {props.options.length > 0 ? (
+              <ScrollableWrapper>
+                <CheckboxList
+                  options={props.options}
+                  selected={props.selected}
+                  setSelected={props.setSelected}
+                />
+              </ScrollableWrapper>
+            ) : (
+              <Placeholder>No options found</Placeholder>
+            )}
           </Dropdown>
         </DropdownWrapper>
       );
@@ -80,13 +74,15 @@ export const MultiSelectFilter: React.FC<Props> = (props) => {
 
   return (
     <Relative>
-      <StyledMultiSelectFilter 
+      <StyledMultiSelectFilter
         onClick={() => setExpanded(!expanded)}
         ref={parentRef}
       >
         {props.icon && <FilterIcon src={props.icon} />}
         {props.name}
-        {props.selected.length > 0 && <FilterCount>{props.selected.length}</FilterCount>}
+        {props.selected.length > 0 && (
+          <FilterCount>{props.selected.length}</FilterCount>
+        )}
         <DropdownIcon src={arrow} />
       </StyledMultiSelectFilter>
       {renderDropdown()}
@@ -172,7 +168,7 @@ const Dropdown = styled.div`
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  background: #2F3135;
+  background: #2f3135;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
 `;
@@ -192,7 +188,7 @@ const StyledMultiSelectFilter = styled.div`
   font-size: 13px;
   position: relative;
   padding: 10px;
-  background: #26292E;
+  background: #26292e;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
   display: flex;

@@ -3,19 +3,14 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import {
-  ClusterType,
-  DetailedClusterType,
-  DetailedIngressError,
-} from "shared/types";
+import { ClusterType, DetailedClusterType } from "shared/types";
 import Helper from "components/form-components/Helper";
 import { pushFiltered } from "shared/routing";
 
 import { RouteComponentProps, withRouter } from "react-router";
 
-import CopyToClipboard from "components/CopyToClipboard";
-import Loading from "components/Loading";
 import Modal from "../modals/Modal";
+import Heading from "components/form-components/Heading";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -59,10 +54,6 @@ class Templates extends Component<PropsType, StateType> {
 
       if (res.data) {
         this.setState({ clusters: res.data, loading: false, error: "" });
-
-        this.state.clusters.forEach((cluster) => {
-          this.updateClusterWithDetailedData(cluster.id);
-        });
       } else {
         this.setState({ loading: false, error: "Response data missing" });
       }
@@ -71,87 +62,64 @@ class Templates extends Component<PropsType, StateType> {
     }
   };
 
-  updateClusterWithDetailedData = async (clusterId: number) => {
-    try {
-      const currentClusterIndex = this.state.clusters.findIndex(
-        (cluster) => cluster.id === clusterId
-      );
-      const res = await api.getCluster(
-        "<token>",
-        {},
-        { project_id: this.context.currentProject.id, cluster_id: clusterId }
-      );
-      if (res.data) {
-        this.setState((prevState) => {
-          const currentCluster = prevState.clusters[currentClusterIndex];
-          prevState.clusters.splice(currentClusterIndex, 1, {
-            ...currentCluster,
-            ingress_ip: res.data.ingress_ip,
-            ingress_error: res.data.ingress_error,
-          });
-          return prevState;
-        });
-      }
-    } catch (error) {}
-  };
-
   renderIcon = () => {
     return (
       <DashboardIcon>
-        <i className="material-icons">device_hub</i>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 19 19"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M15.207 12.4403C16.8094 12.4403 18.1092 11.1414 18.1092 9.53907C18.1092 7.93673 16.8094 6.63782 15.207 6.63782"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M9.54993 13.4133C7.4086 13.4133 5.69168 11.6964 5.69168 9.55417C5.69168 7.41284 7.4086 5.69592 9.54993 5.69592C11.6913 5.69592 13.4082 7.41284 13.4082 9.55417C13.4082 11.6964 11.6913 13.4133 9.54993 13.4133Z"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M5.69591 9.54996C5.69591 7.40863 7.41283 5.69171 9.55508 5.69171C11.6964 5.69171 13.4133 7.40863 13.4133 9.54996C13.4133 11.6913 11.6964 13.4082 9.55508 13.4082C7.41283 13.4082 5.69591 11.6913 5.69591 9.54996Z"
+            stroke="white"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </DashboardIcon>
-    );
-  };
-
-  renderIngressIp = (
-    clusterId: number,
-    ingressIp: string | undefined,
-    ingressError: DetailedIngressError
-  ) => {
-    if (typeof ingressIp !== "string") {
-      return (
-        <Url onClick={(e) => e.preventDefault()}>
-          <Loading />
-        </Url>
-      );
-    }
-
-    if (!ingressIp.length && ingressError) {
-      return (
-        <>
-          <Url
-            onClick={(e) => {
-              e.stopPropagation();
-              this.setState({ showErrorModal: { clusterId, show: true } });
-            }}
-          >
-            <Bolded>Ingress IP:</Bolded>
-            <span>{ingressError.message}</span>
-            <i className="material-icons">launch</i>
-          </Url>
-        </>
-      );
-    }
-
-    if (!ingressIp.length) {
-      return (
-        <Url>
-          <Bolded>Ingress IP:</Bolded>
-          <span>Ingress IP not available</span>
-        </Url>
-      );
-    }
-
-    return (
-      <CopyToClipboard
-        as={Url}
-        text={ingressIp}
-        wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
-      >
-        <Bolded>Ingress IP:</Bolded>
-        <span>{ingressIp}</span>
-        <i className="material-icons-outlined">content_copy</i>
-      </CopyToClipboard>
     );
   };
 
@@ -168,15 +136,8 @@ class Templates extends Component<PropsType, StateType> {
             }}
             key={i}
           >
-            <TitleContainer>
-              {this.renderIcon()}
-              <TemplateTitle>{cluster.name}</TemplateTitle>
-            </TitleContainer>
-            {this.renderIngressIp(
-              cluster.id,
-              cluster.ingress_ip,
-              cluster.ingress_error
-            )}
+            {this.renderIcon()}
+            <TemplateTitle>{cluster.name}</TemplateTitle>
           </TemplateBlock>
         );
       }
@@ -209,7 +170,7 @@ class Templates extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledClusterList>
-        <Helper>Clusters connected to this project:</Helper>
+        {/* <Heading isAtTop>Connected clusters</Heading> */}
         <TemplateList>{this.renderClusters()}</TemplateList>
         {this.renderErrorModal()}
       </StyledClusterList>
@@ -238,40 +199,30 @@ const CodeBlock = styled.span`
 `;
 
 const StyledClusterList = styled.div`
-  margin-top: -17px;
+  margin-top: -7px;
   padding-left: 2px;
   overflow: visible;
 `;
 
-const TitleContainer = styled.div`
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  align-items: center;
-`;
 const DashboardIcon = styled.div`
   position: relative;
-  height: 45px;
-  min-width: 45px;
-  width: 45px;
-  border-radius: 5px;
+  height: 25px;
+  min-width: 25px;
+  width: 25px;
+  border-radius: 200px;
+  margin-right: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #676c7c;
-  border: 2px solid #8e94aa;
-  margin-bottom: 10px;
+  border: 1px solid #8e94aa;
   > i {
     font-size: 22px;
   }
 `;
 
 const TemplateTitle = styled.div`
-  margin-bottom: 0px;
-  margin-top: 13px;
-  width: 100%;
   text-align: center;
-  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   white-space: nowrap;
@@ -279,25 +230,22 @@ const TemplateTitle = styled.div`
 `;
 
 const TemplateBlock = styled.div`
-  border: 1px solid #ffffff00;
   align-items: center;
   user-select: none;
-  border-radius: 8px;
   display: flex;
   font-size: 13px;
   font-weight: 500;
-  padding: 35px;
-  flex-direction: column;
+  padding: 15px;
+  margin-bottom: 20px;
   align-item: center;
-  justify-content: space-between;
-  height: 192px;
   cursor: pointer;
   color: #ffffff;
   position: relative;
-  background: #26282f;
-  box-shadow: 0 4px 15px 0px #00000055;
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
   :hover {
-    background: #ffffff11;
+    border: 1px solid #7a7b80;
   }
 
   animation: fadeIn 0.3s 0s;
@@ -314,37 +262,4 @@ const TemplateBlock = styled.div`
 const TemplateList = styled.div`
   overflow-y: auto;
   overflow: visible;
-  margin-top: 32px;
-  padding-bottom: 150px;
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-`;
-
-const Url = styled.a`
-  width: 100%;
-  font-size: 13px;
-  user-select: text;
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  > i {
-    margin-left: 10px;
-    font-size: 15px;
-  }
-
-  > span {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-`;
-
-const Bolded = styled.div`
-  font-weight: 500;
-  color: #ffffff44;
-  margin-right: 6px;
-  white-space: nowrap;
 `;

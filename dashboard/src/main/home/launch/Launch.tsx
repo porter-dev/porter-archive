@@ -19,8 +19,8 @@ import TemplateList from "./TemplateList";
 import { capitalize } from "lodash";
 
 const initialTabOptions = [
-  { label: "New Application", value: "porter" },
-  { label: "Community Add-ons", value: "community" },
+  { label: "New application", value: "porter" },
+  { label: "Community add-ons", value: "community" },
 ];
 
 type TabOption = {
@@ -426,7 +426,7 @@ const Polymer = styled.div`
 `;
 
 const TemplatesWrapper = styled.div`
-  width: calc(85%);
+  width: 100%;
   overflow: visible;
   min-width: 300px;
 `;

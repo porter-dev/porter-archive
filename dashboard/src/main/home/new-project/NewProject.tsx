@@ -117,7 +117,7 @@ export const NewProjectFC = () => {
               <BackButtonImg src={backArrow} />
             </BackButton>
           )}
-          <TitleSection>New Project</TitleSection>
+          <TitleSection>New project</TitleSection>
         </FadeWrapper>
         <FadeWrapper delay="0.7s">
           <Helper>
@@ -147,7 +147,7 @@ export const NewProjectFC = () => {
             />
           </InputWrapper>
           <NewProjectSaveButton
-            text="Create Project"
+            text="Create project"
             disabled={false}
             onClick={createProject}
             status={buttonStatus}

@@ -42,7 +42,7 @@ const Dashboard = () => {
       <Action.Row>
         <Action.Button to={"/stacks/launch"}>
           <i className="material-icons">add</i>
-          Create Stack
+          Create stack
         </Action.Button>
         <FilterWrapper>
           <StyledSortSelector>

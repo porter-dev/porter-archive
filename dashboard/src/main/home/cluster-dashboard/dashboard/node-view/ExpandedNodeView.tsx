@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useParams } from "react-router";
 import styled from "styled-components";
-import backArrow from "assets/back_arrow.png";
+import leftArrow from "assets/left-arrow.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
@@ -49,8 +49,6 @@ export const ExpandedNodeView = () => {
           setNode(res.data);
         }
       });
-
-    return () => (isSubscribed = false);
   }, [nodeId, currentCluster.id, currentProject.id]);
 
   const closeNodeView = () => {
@@ -92,10 +90,13 @@ export const ExpandedNodeView = () => {
 
   return (
     <StyledExpandedNodeView>
+      <BreadcrumbRow>
+        <Breadcrumb onClick={closeNodeView}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <HeaderWrapper>
-        <BackButton onClick={closeNodeView}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
         <TitleSection icon={nodePng}>
           {nodeId}
           <InstanceType>{instanceType}</InstanceType>
@@ -120,6 +121,39 @@ export const ExpandedNodeView = () => {
 };
 
 export default ExpandedNodeView;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
 
 const BackButton = styled.div`
   position: absolute;

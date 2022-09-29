@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 import TabSelector from "components/TabSelector";
 import TitleSection from "components/TitleSection";
+import api from "shared/api";
 
 import NodeList from "./NodeList";
 
@@ -14,6 +15,11 @@ import Metrics from "./Metrics";
 import { useLocation } from "react-router";
 import { getQueryParam } from "shared/routing";
 import IncidentsTab from "./incidents/IncidentsTab";
+
+import CopyToClipboard from "components/CopyToClipboard";
+import Loading from "components/Loading";
+
+import { DetailedIngressError } from "shared/types";
 
 type TabEnum = "nodes" | "settings" | "namespaces" | "metrics" | "incidents";
 
@@ -35,6 +41,8 @@ export const Dashboard: React.FunctionComponent = () => {
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
   const [isAuthorized] = useAuth();
   const location = useLocation();
+  const [ingressIp, setIngressIp] = useState(null);
+  const [ingressError, setIngressError] = useState(null);
 
   const context = useContext(Context);
   const renderTab = () => {
@@ -76,6 +84,71 @@ export const Dashboard: React.FunctionComponent = () => {
     setCurrentTab("nodes");
   }, [context.currentCluster]);
 
+  const renderIngressIp = (
+    ingressIp: string | undefined,
+    ingressError: DetailedIngressError
+  ) => {
+    if (typeof ingressIp !== "string") {
+      return (
+        <Url onClick={(e) => e.preventDefault()}>
+          <Loading />
+        </Url>
+      );
+    }
+
+    if (!ingressIp.length && ingressError) {
+      return (
+        <>
+          <Bolded>Ingress IP:</Bolded>
+          <span>{ingressError.message}</span>
+        </>
+      );
+    }
+
+    if (!ingressIp.length) {
+      return (
+        <>
+          <Bolded>Ingress IP:</Bolded>
+          <span>Ingress IP not available</span>
+        </>
+      );
+    }
+
+    return (
+      <CopyToClipboard
+        as={Url}
+        text={ingressIp}
+        wrapperProps={{ onClick: (e: any) => e.stopPropagation() }}
+      >
+        <Bolded>Ingress IP:</Bolded>
+        <span>{ingressIp}</span>
+        <i className="material-icons-outlined">content_copy</i>
+      </CopyToClipboard>
+    );
+  };
+
+  const updateClusterWithDetailedData = async () => {
+    try {
+      const res = await api.getCluster(
+        "<token>",
+        {},
+        {
+          project_id: context.currentProject.id,
+          cluster_id: context.currentCluster.id,
+        }
+      );
+      if (res.data) {
+        const { ingress_ip, ingress_error } = res.data;
+        setIngressIp(ingress_ip);
+        setIngressError(ingress_error);
+      }
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    updateClusterWithDetailedData();
+  }, []);
+
   return (
     <>
       <TitleSection>
@@ -91,9 +164,7 @@ export const Dashboard: React.FunctionComponent = () => {
             <i className="material-icons">info</i> Info
           </InfoLabel>
         </TopRow>
-        <Description>
-          Cluster settings for {context.currentCluster.name}
-        </Description>
+        <Description>{renderIngressIp(ingressIp, ingressError)}</Description>
       </InfoSection>
 
       <TabSelector
@@ -108,9 +179,9 @@ export const Dashboard: React.FunctionComponent = () => {
 };
 
 const DashboardIcon = styled.div`
-  height: 45px;
-  min-width: 45px;
-  width: 45px;
+  height: 35px;
+  min-width: 35px;
+  width: 35px;
   border-radius: 5px;
   margin-right: 17px;
   display: flex;
@@ -119,7 +190,7 @@ const DashboardIcon = styled.div`
   background: #676c7c;
   border: 2px solid #8e94aa;
   > i {
-    font-size: 22px;
+    font-size: 18px;
   }
 `;
 
@@ -129,7 +200,7 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #aaaabb;
+  color: #8b949f;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
@@ -140,7 +211,7 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #7a838f;
+  color: #8b949f;
   font-size: 13px;
   > i {
     color: #8b949f;
@@ -154,4 +225,29 @@ const InfoSection = styled.div`
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;
+`;
+
+const Url = styled.a`
+  font-size: 13px;
+  user-select: text;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  > i {
+    margin-left: 10px;
+    font-size: 15px;
+  }
+
+  > span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+`;
+
+const Bolded = styled.span`
+  color: #8b949f;
+  margin-right: 6px;
+  white-space: nowrap;
 `;

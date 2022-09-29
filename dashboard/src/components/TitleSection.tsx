@@ -65,20 +65,21 @@ const StyledTitleSection = styled.div`
   margin-bottom: 15px;
   display: flex;
   align-items: center;
+  height: 35px;
 `;
 
 const Icon = styled.img<{ width: string }>`
-  width: ${(props) => props.width || "28px"};
+  width: ${(props) => props.width || "25px"};
   margin-right: 16px;
 `;
 
 const MaterialIcon = styled.span<{ width: string }>`
-  width: ${(props) => props.width || "28px"};
+  width: ${(props) => props.width || "25px"};
   margin-right: 16px;
 `;
 
 const StyledTitle = styled.div<{ capitalize: boolean }>`
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 600;
   user-select: text;
   text-transform: ${(props) => (props.capitalize ? "capitalize" : "")};

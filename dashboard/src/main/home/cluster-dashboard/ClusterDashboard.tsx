@@ -191,7 +191,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
                 pushFiltered(this.props, "/launch", ["project_id"])
               }
             >
-              <i className="material-icons">add</i> Launch Template
+              <i className="material-icons">add</i> Launch template
             </Button>
           )}
           <SortFilterWrapper>{this.renderCommonFilters()}</SortFilterWrapper>
@@ -240,7 +240,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
                 pushFiltered(this.props, "/launch", ["project_id"])
               }
             >
-              <i className="material-icons">add</i> Launch Template
+              <i className="material-icons">add</i> Launch template
             </Button>
           )}
           <SortFilterWrapper>

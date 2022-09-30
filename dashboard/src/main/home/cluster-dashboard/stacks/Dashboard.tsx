@@ -40,10 +40,6 @@ const Dashboard = () => {
         description="Groups of applications deployed from a shared source."
       />
       <Action.Row>
-        <Action.Button to={"/stacks/launch"}>
-          <i className="material-icons">add</i>
-          Create stack
-        </Action.Button>
         <FilterWrapper>
           <StyledSortSelector>
             <Label>
@@ -77,6 +73,10 @@ const Dashboard = () => {
             setNamespace={handleNamespaceChange}
           />
         </FilterWrapper>
+        <Action.Button to={"/stacks/launch"}>
+          <i className="material-icons">add</i>
+          Create stack
+        </Action.Button>
       </Action.Row>
       <StackList namespace={currentNamespace} sortBy={currentSort} />
     </>

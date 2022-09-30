@@ -185,6 +185,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     return (
       <>
         <ControlRow>
+          <SortFilterWrapper>{this.renderCommonFilters()}</SortFilterWrapper>
           {isAuthorizedToAdd && (
             <Button
               onClick={() =>
@@ -194,7 +195,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">add</i> Launch template
             </Button>
           )}
-          <SortFilterWrapper>{this.renderCommonFilters()}</SortFilterWrapper>
         </ControlRow>
 
         <ChartList
@@ -364,14 +364,13 @@ const Button = styled.div`
   font-size: 13px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   margin-bottom: 35px;
   padding: 0px 8px;
   min-width: 155px;
   padding-bottom: 1px;
-  margin-right: 10px;
   font-weight: 500;
   padding-right: 15px;
   overflow: hidden;

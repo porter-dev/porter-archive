@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useParams } from "react-router";
 import styled from "styled-components";
-import backArrow from "assets/back_arrow.png";
+import leftArrow from "assets/left-arrow.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
@@ -49,8 +49,6 @@ export const ExpandedNodeView = () => {
           setNode(res.data);
         }
       });
-
-    return () => (isSubscribed = false);
   }, [nodeId, currentCluster.id, currentProject.id]);
 
   const closeNodeView = () => {
@@ -92,10 +90,13 @@ export const ExpandedNodeView = () => {
 
   return (
     <StyledExpandedNodeView>
+      <BreadcrumbRow>
+        <Breadcrumb onClick={closeNodeView}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
       <HeaderWrapper>
-        <BackButton onClick={closeNodeView}>
-          <BackButtonImg src={backArrow} />
-        </BackButton>
         <TitleSection icon={nodePng}>
           {nodeId}
           <InstanceType>{instanceType}</InstanceType>
@@ -121,31 +122,37 @@ export const ExpandedNodeView = () => {
 
 export default ExpandedNodeView;
 
-const BackButton = styled.div`
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  display: flex;
-  width: 36px;
-  cursor: pointer;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
 
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
   :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
+    background: #ffffff11;
   }
 `;
 
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
+const Wrap = styled.div`
+  z-index: 999;
 `;
 
 const StatusWrapper = styled.div`

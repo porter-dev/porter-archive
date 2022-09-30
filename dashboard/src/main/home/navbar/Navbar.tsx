@@ -43,10 +43,10 @@ class Navbar extends Component<PropsType, StateType> {
               <SettingsIcon>
                 <i className="material-icons">settings</i>
               </SettingsIcon>
-              Account Settings
+              Account settings
             </UserDropdownButton>
             <UserDropdownButton onClick={this.props.logOut}>
-              <i className="material-icons">keyboard_return</i> Log Out
+              <i className="material-icons">keyboard_return</i> Log out
               {version !== "production" && <VersionTag>{version}</VersionTag>}
             </UserDropdownButton>
           </Dropdown>
@@ -108,13 +108,6 @@ const SettingsIcon = styled.div`
 
 const I = styled.i`
   margin-right: 7px;
-`;
-
-const PolicySelector = styled(Select)`
-  height: 30px;
-  width: 100px;
-  margin-right: 15px;
-  color: white !important;
 `;
 
 const CloseOverlay = styled.div`
@@ -217,45 +210,15 @@ const Dropdown = styled.div`
   }
 `;
 
-const DropdownAlt = styled(Dropdown)`
-  animation: fadeIn 0.3s 0.5s;
-  opacity: 0;
-  animation-fill-mode: forwards;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
 const StyledNavbar = styled.div`
-  width: 100%;
   height: 60px;
   position: absolute;
   top: 0;
-  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  padding-right: 5px;
   justify-content: flex-end;
   z-index: 1;
-`;
-
-const HelpIcon = styled.div`
-  > a {
-    > i {
-      font-size: 18px;
-      margin-left: 8px;
-      margin-top: 2px;
-      color: #8590ff;
-      :hover {
-        color: #aaaabb;
-      }
-    }
-  }
 `;
 
 const NavButton = styled.a`
@@ -279,30 +242,5 @@ const NavButton = styled.a`
     color: ${(props: { selected?: boolean }) =>
       props.selected ? "#ffffff" : "#ffffff88"};
     font-size: 24px;
-  }
-`;
-
-const FeedbackButton = styled(NavButton)`
-  color: ${(props: { selected?: boolean }) =>
-    props.selected ? "#ffffff" : "#ffffff88"};
-  font-family: "Work Sans", sans-serif;
-  font-size: 14px;
-  margin-right: 20px;
-  :hover {
-    color: #ffffff;
-    > div {
-      > i {
-        color: #ffffff;
-      }
-    }
-  }
-
-  > div {
-    > i {
-      color: ${(props: { selected?: boolean }) =>
-        props.selected ? "#ffffff" : "#ffffff88"};
-      font-size: 26px;
-      margin-right: 6px;
-    }
   }
 `;

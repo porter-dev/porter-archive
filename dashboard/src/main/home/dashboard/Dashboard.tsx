@@ -149,16 +149,16 @@ class Dashboard extends Component<PropsType, StateType> {
     let { currentProject, capabilities } = this.context;
     let { onShowProjectSettings } = this;
 
-    let tabOptions = [{ label: "Project Overview", value: "overview" }];
+    let tabOptions = [{ label: "Connected clusters", value: "overview" }];
 
     if (this.props.isAuthorized("cluster", "", ["get", "create"])) {
-      tabOptions.push({ label: "Create a Cluster", value: "create-cluster" });
+      tabOptions.push({ label: "Create a cluster", value: "create-cluster" });
     }
 
-    tabOptions.push({ label: "Provisioner Status", value: "provisioner" });
+    tabOptions.push({ label: "Provisioner status", value: "provisioner" });
 
     if (!capabilities?.provisioner) {
-      tabOptions = [{ label: "Project Overview", value: "overview" }];
+      tabOptions = [{ label: "Project overview", value: "overview" }];
     }
 
     return (
@@ -253,7 +253,7 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #aaaabb;
+  color: #8b949f;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
@@ -264,7 +264,7 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #7a838f;
+  color: #8b949f;
   font-size: 13px;
   > i {
     color: #8b949f;
@@ -282,8 +282,8 @@ const InfoSection = styled.div`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin: 10px 0px 20px;
 `;
 
@@ -297,24 +297,23 @@ const Overlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 500;
   font-family: "Work Sans", sans-serif;
   color: white;
 `;
 
 const DashboardImage = styled.img`
-  height: 45px;
-  width: 45px;
+  height: 35px;
+  width: 35px;
   border-radius: 5px;
-  box-shadow: 0 2px 5px 4px #00000011;
 `;
 
 const DashboardIcon = styled.div`
   position: relative;
-  height: 45px;
+  height: 35px;
   margin-right: 17px;
-  width: 45px;
+  width: 35px;
   border-radius: 5px;
   display: flex;
   align-items: center;

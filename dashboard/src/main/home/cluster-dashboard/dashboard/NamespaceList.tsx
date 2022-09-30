@@ -247,7 +247,7 @@ const Button = styled.div`
   font-size: 13px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   padding: 0px 8px;

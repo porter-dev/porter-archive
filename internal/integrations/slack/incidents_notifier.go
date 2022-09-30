@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
@@ -34,14 +33,13 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 		url,
 	)
 
-	namespace := strings.Split(incident.ID, ":")[2]
 	createdAt := incident.CreatedAt
 
 	res = append(
 		res,
 		getMarkdownBlock(topSectionMarkdwn),
 		getDividerBlock(),
-		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`")),
+		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+incident.ReleaseNamespace+"`")),
 		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`")),
 		getMarkdownBlock(fmt.Sprintf(
 			"*Created at:* <!date^%d^ {date_num} {time_secs}| %s>",
@@ -80,7 +78,6 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url string) error {
 	res := []*SlackBlock{}
 
-	namespace := strings.Split(incident.ID, ":")[2]
 	createdAt := incident.CreatedAt
 	resolvedAt := incident.UpdatedAt
 
@@ -94,7 +91,7 @@ func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url 
 		res,
 		getMarkdownBlock(topSectionMarkdwn),
 		getDividerBlock(),
-		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+namespace+"`")),
+		getMarkdownBlock(fmt.Sprintf("*Namespace:* %s", "`"+incident.ReleaseNamespace+"`")),
 		getMarkdownBlock(fmt.Sprintf("*Name:* %s", "`"+incident.ReleaseName+"`")),
 		getMarkdownBlock(fmt.Sprintf(
 			"*Created at:* <!date^%d^ {date_num} {time_secs}| %s>",

@@ -3,7 +3,6 @@ package cluster
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -41,16 +40,10 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// FIXME: better error detection for correct incident ID
-	segments := strings.Split(request.ID, ":")
-	if len(segments) != 4 || (len(segments) > 0 && segments[0] != "incident") {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("invalid incident ID: %s", request.ID)))
-		return
-	}
-
 	slackInts, _ := c.Repo().SlackIntegration().ListSlackIntegrationsByProjectID(cluster.ProjectID)
 
-	rel, err := c.Repo().Release().ReadRelease(cluster.ID, segments[1], segments[2])
+	rel, err := c.Repo().Release().ReadRelease(cluster.ID, request.ReleaseName, request.ReleaseNamespace)
+
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -77,7 +70,7 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				"%s/cluster-dashboard/incidents/%s?namespace=%s",
 				c.Config().ServerConf.ServerURL,
 				request.ID,
-				segments[2],
+				request.ReleaseNamespace,
 			),
 		)
 

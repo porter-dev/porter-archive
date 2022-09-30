@@ -35,7 +35,7 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 	)
 
 	namespace := strings.Split(incident.ID, ":")[2]
-	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
+	createdAt := incident.CreatedAt
 
 	res = append(
 		res,
@@ -48,7 +48,7 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 			createdAt.Unix(),
 			createdAt.Format("2006-01-02 15:04:05 UTC"),
 		)),
-		getMarkdownBlock(fmt.Sprintf("```\n%s\n```", incident.LatestMessage)),
+		getMarkdownBlock(fmt.Sprintf("```\n%s\n```", incident.Summary)),
 	)
 
 	slackPayload := &SlackPayload{
@@ -81,8 +81,8 @@ func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url 
 	res := []*SlackBlock{}
 
 	namespace := strings.Split(incident.ID, ":")[2]
-	createdAt := time.Unix(incident.CreatedAt, 0).UTC()
-	resolvedAt := time.Unix(incident.UpdatedAt, 0).UTC()
+	createdAt := incident.CreatedAt
+	resolvedAt := incident.UpdatedAt
 
 	topSectionMarkdwn := fmt.Sprintf(
 		":white_check_mark: The incident for application %s has been resolved. <%s|View the incident.>",

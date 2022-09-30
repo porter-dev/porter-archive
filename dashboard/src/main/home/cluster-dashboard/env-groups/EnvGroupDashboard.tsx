@@ -58,15 +58,6 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
       return (
         <>
           <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
-            {isAuthorizedToAdd && (
-              <Button
-                onClick={() =>
-                  this.setState({ createEnvMode: !this.state.createEnvMode })
-                }
-              >
-                <i className="material-icons">add</i> Create env group
-              </Button>
-            )}
             <SortFilterWrapper>
               <NamespaceSelector
                 setNamespace={(namespace) =>
@@ -84,6 +75,15 @@ class EnvGroupDashboard extends Component<PropsType, StateType> {
                 sortType={this.state.sortType}
               />
             </SortFilterWrapper>
+            {isAuthorizedToAdd && (
+              <Button
+                onClick={() =>
+                  this.setState({ createEnvMode: !this.state.createEnvMode })
+                }
+              >
+                <i className="material-icons">add</i> Create env group
+              </Button>
+            )}
           </ControlRow>
 
           <EnvGroupList
@@ -174,12 +174,11 @@ const Button = styled.div`
   font-size: 13px;
   cursor: pointer;
   font-family: "Work Sans", sans-serif;
-  border-radius: 20px;
+  border-radius: 5px;
   color: white;
   height: 35px;
   padding: 0px 8px;
   padding-bottom: 1px;
-  margin-right: 10px;
   font-weight: 500;
   padding-right: 15px;
   overflow: hidden;

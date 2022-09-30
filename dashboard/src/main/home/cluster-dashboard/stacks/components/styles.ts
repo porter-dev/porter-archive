@@ -146,13 +146,12 @@ export const Action = {
     font-size: 13px;
     cursor: pointer;
     font-family: "Work Sans", sans-serif;
-    border-radius: 20px;
+    border-radius: 5px;
     color: white;
     height: 35px;
     padding: 0px 8px;
     min-width: 130px;
     padding-bottom: 1px;
-    margin-right: 10px;
     font-weight: 500;
     padding-right: 15px;
     overflow: hidden;

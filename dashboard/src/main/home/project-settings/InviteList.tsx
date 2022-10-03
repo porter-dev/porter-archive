@@ -72,7 +72,9 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           id: currentProject?.id,
         }
       );
-      invites = response.data.filter((i: InviteType) => !i.accepted && i.email !== "support@porter.run");
+      invites = response.data.filter(
+        (i: InviteType) => !i.accepted && i.email !== "support@porter.run"
+      );
     } catch (err) {
       console.log(err);
     }

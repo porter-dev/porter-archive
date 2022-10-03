@@ -48,6 +48,8 @@ jobs:
           ENABLE_SENTRY=true
           SENTRY_DSN=${{secrets.SENTRY_DSN}}
           SENTRY_ENV=frontend-production
+          ZAPIER_WEBHOOK_URL=${{secrets.ZAPIER_WEBHOOK_URL}}
+          DISCORD_WEBHOOK_URL=${{secrets.DISCORD_WEBHOOK_URL}}
           EOL
       - name: Build
         run: |

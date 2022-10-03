@@ -8,8 +8,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
-	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -30,6 +30,7 @@ func NewGetIncidentEventLogsHandler(
 }
 
 func (c *GetIncidentEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	request := &types.GetIncidentEventLogsRequest{}
@@ -38,27 +39,17 @@ func (c *GetIncidentEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	agent, err := c.GetAgent(r, cluster, "")
+	k8sAgent, err := c.GetAgent(r, cluster, "monitoring")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	// get agent service
-	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
+	err = k8sAgent.StreamPorterAgentLokiLog(request.LogID, safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	logs, err := porter_agent.GetLogs(agent.Clientset, agentSvc, request.LogID)
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	c.WriteResult(w, r, logs)
 }

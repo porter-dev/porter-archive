@@ -191,14 +191,15 @@ func (p *StackCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		for _, appResource := range req.AppResources {
 			rel, err := applyAppResource(&applyAppResourceOpts{
-				config:     p.Config(),
-				projectID:  proj.ID,
-				namespace:  namespace,
-				cluster:    cluster,
-				registries: registries,
-				helmAgent:  helmAgent,
-				request:    appResource,
-				stack:      stack,
+				config:        p.Config(),
+				projectID:     proj.ID,
+				namespace:     namespace,
+				cluster:       cluster,
+				registries:    registries,
+				helmAgent:     helmAgent,
+				request:       appResource,
+				stackName:     stack.Name,
+				stackRevision: stack.Revisions[0].RevisionNumber,
 			})
 
 			if err != nil {

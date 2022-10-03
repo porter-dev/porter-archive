@@ -119,15 +119,16 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		// TODO: case on if image tag is empty
 
 		err = updateAppResourceTag(&updateAppResourceTagOpts{
-			helmAgent:  helmAgent,
-			name:       appResource.Name,
-			tag:        imageTag,
-			config:     p.Config(),
-			projectID:  proj.ID,
-			namespace:  namespace,
-			cluster:    cluster,
-			registries: registries,
-			stack:      stack,
+			helmAgent:     helmAgent,
+			name:          appResource.Name,
+			tag:           imageTag,
+			config:        p.Config(),
+			projectID:     proj.ID,
+			namespace:     namespace,
+			cluster:       cluster,
+			registries:    registries,
+			stackName:     stack.Name,
+			stackRevision: stack.Revisions[0].RevisionNumber,
 		})
 
 		if err != nil {

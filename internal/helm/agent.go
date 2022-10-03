@@ -166,10 +166,13 @@ type UpgradeReleaseConfig struct {
 	Cluster    *models.Cluster
 	Repo       repository.Repository
 	Registries []*models.Registry
-	Stack      *models.Stack
 
 	// Optional, if chart should be overriden
 	Chart *chart.Chart
+
+	// Optional, if chart is part of a Porter Stack
+	StackName     string
+	StackRevision uint
 }
 
 // UpgradeRelease upgrades a specific release with new values.yaml
@@ -223,11 +226,11 @@ func (a *Agent) UpgradeReleaseByValues(
 		return nil, err
 	}
 
-	if conf.Stack != nil {
+	if conf.StackName != "" && conf.StackRevision > 0 {
 		conf.Values["stack"] = map[string]interface{}{
 			"enabled":  true,
-			"name":     conf.Stack.Name,
-			"revision": conf.Stack.Revisions[0].RevisionNumber,
+			"name":     conf.StackName,
+			"revision": conf.StackRevision,
 		}
 	}
 

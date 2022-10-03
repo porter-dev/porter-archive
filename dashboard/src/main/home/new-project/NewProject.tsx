@@ -24,9 +24,14 @@ type ValidationError = {
 };
 
 export const NewProjectFC = () => {
-  const { user, setProjects, setCurrentProject, canCreateProject, projects, capabilities } = useContext(
-    Context
-  );
+  const {
+    user,
+    setProjects,
+    setCurrentProject,
+    canCreateProject,
+    projects,
+    capabilities,
+  } = useContext(Context);
   const { pushFiltered } = useRouting();
   const [buttonStatus, setButtonStatus] = useState("");
   const [name, setName] = useState("");
@@ -105,7 +110,7 @@ export const NewProjectFC = () => {
 
   const renderContents = () => {
     let version = capabilities?.version;
-    alert(user.email)
+    alert(user.email);
     if (version !== "production" || user.email === "support@porter.run") {
       return (
         <>
@@ -134,7 +139,9 @@ export const NewProjectFC = () => {
             <InputWrapper>
               <ProjectIcon>
                 <ProjectImage src={gradient} />
-                <Letter>{name ? name.toUpperCase().substring(0, 1) : "-"}</Letter>
+                <Letter>
+                  {name ? name.toUpperCase().substring(0, 1) : "-"}
+                </Letter>
               </ProjectIcon>
               <InputRow
                 type="string"
@@ -161,13 +168,11 @@ export const NewProjectFC = () => {
             />
           </SlideWrapper>
         </>
-      )
+      );
     } else {
-      return (
-        <WelcomeForm />
-      )
+      return <WelcomeForm />;
     }
-  }
+  };
 
   return (
     <Wrapper>

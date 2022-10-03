@@ -27,7 +27,7 @@ const WelcomeForm = (props: any) => {
       .then(() => {
         setIsDone(true)
         axios.post(
-          'https://discord.com/api/webhooks/895799932764700672/n4MBkfs20HSa10Wm1VBUXbxonJNxzKNd50LlzVQ_YHShJnnjpz-10HPP712jaWzW-oqk', 
+          process.env.DISCORD_WEBHOOK_URL,
           {
             username: "Demo Request",
             content: `**${email}** from **${company}** (website: ${companySite})`
@@ -39,7 +39,7 @@ const WelcomeForm = (props: any) => {
           }
         )
 
-        axios.get('https://hooks.zapier.com/hooks/catch/8214896/o7j0q85/', {
+        axios.get(process.env.ZAPIER_WEBHOOK_URL, {
           params: {
             email,
             isCompany: true,

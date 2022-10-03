@@ -400,7 +400,7 @@ class Home extends Component<PropsType, StateType> {
               Join Our Discord
             </DiscordButton>
             {/* This should only be shown on the first render of the app */}
-            {this.state.showWelcomeForm &&
+            {/* this.state.showWelcomeForm &&
               localStorage.getItem("welcomed") != "true" &&
               projects?.length === 0 && (
                 <>
@@ -412,7 +412,7 @@ class Home extends Component<PropsType, StateType> {
                     currentView={this.props.currentRoute} // For form feedback
                   />
                 </>
-              )}
+              ) */}
           </>
         )}
 

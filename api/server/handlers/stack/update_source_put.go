@@ -98,6 +98,14 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	deployErrs := make([]string, 0)
 
+	// read the stack again to get the latest revision info
+	stack, err = p.Repo().Stack().ReadStackByStringID(proj.ID, stack.UID)
+
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	for i, appResource := range clonedAppResources {
 		// get the corresponding source config tag
 		var imageTag string
@@ -111,14 +119,16 @@ func (p *StackPutSourceConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		// TODO: case on if image tag is empty
 
 		err = updateAppResourceTag(&updateAppResourceTagOpts{
-			helmAgent:  helmAgent,
-			name:       appResource.Name,
-			tag:        imageTag,
-			config:     p.Config(),
-			projectID:  proj.ID,
-			namespace:  namespace,
-			cluster:    cluster,
-			registries: registries,
+			helmAgent:     helmAgent,
+			name:          appResource.Name,
+			tag:           imageTag,
+			config:        p.Config(),
+			projectID:     proj.ID,
+			namespace:     namespace,
+			cluster:       cluster,
+			registries:    registries,
+			stackName:     stack.Name,
+			stackRevision: stack.Revisions[0].RevisionNumber,
 		})
 
 		if err != nil {

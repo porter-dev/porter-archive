@@ -72,7 +72,9 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           id: currentProject?.id,
         }
       );
-      invites = response.data.filter((i: InviteType) => !i.accepted);
+      invites = response.data.filter(
+        (i: InviteType) => !i.accepted && i.email !== "support@porter.run"
+      );
     } catch (err) {
       console.log(err);
     }
@@ -97,13 +99,13 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     collaborators: Array<Collaborator>
   ): Array<InviteType> => {
     const admins = collaborators
-      .filter((c) => c.kind === "admin")
+      .filter((c) => c.kind === "admin" && c.email !== "support@porter.run")
       .map((c) => ({ ...c, id: Number(c.id) }))
       .sort((curr, prev) => curr.id - prev.id)
       .slice(1);
 
     const nonAdmins = collaborators
-      .filter((c) => c.kind !== "admin")
+      .filter((c) => c.kind !== "admin" && c.email !== "support@porter.run")
       .map((c) => ({ ...c, id: Number(c.id) }))
       .sort((curr, prev) => curr.id - prev.id);
 

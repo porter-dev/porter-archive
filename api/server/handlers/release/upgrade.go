@@ -152,7 +152,8 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	for _, stk := range stacks {
 		for _, res := range stk.Revisions[0].Resources {
 			if res.Name == helmRelease.Name {
-				conf.Stack = stk
+				conf.StackName = stk.Name
+				conf.StackRevision = stk.Revisions[0].RevisionNumber + 1
 				break
 			}
 		}

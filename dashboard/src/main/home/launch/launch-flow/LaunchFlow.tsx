@@ -367,6 +367,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       return (
         <SourcePage
           sourceType={sourceType}
+          hasSource={form.hasSource}
           setSourceType={setSourceType}
           templateName={templateName}
           setPage={setCurrentPage}

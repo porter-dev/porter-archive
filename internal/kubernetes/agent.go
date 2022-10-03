@@ -1832,7 +1832,9 @@ func (a *Agent) StreamPorterAgentLokiLog(logID string, rw *websocket.WebsocketSa
 
 			opts := &v1.PodExecOptions{
 				Command: []string{
-					"logzy",
+					"sh",
+					"-c",
+					"/porter/agent-cli",
 					logID,
 				},
 				Stdout: true,

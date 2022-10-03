@@ -112,10 +112,10 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             <Prompt>Reset Password</Prompt>
             <DarkMatter />
             {formSection}
-            <Helper>
+            {/* <Helper>
               Don't have an account?
               <Link href="/register">Sign up</Link>
-            </Helper>
+            </Helper> */}
           </FormWrapper>
         </LoginPanel>
 

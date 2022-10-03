@@ -149,11 +149,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
 
     return (
       <>
-        <TagFilter
-          onSelect={(newSelectedTag) =>
-            this.setState({ selectedTag: newSelectedTag })
-          }
-        />
         <NamespaceSelector
           setNamespace={(namespace) =>
             this.setState({ namespace }, () => {
@@ -165,10 +160,10 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           }
           namespace={this.state.namespace}
         />
-        <SortSelector
-          setSortType={(sortType) => this.setState({ sortType })}
-          sortType={this.state.sortType}
-          currentView={currentView}
+        <TagFilter
+          onSelect={(newSelectedTag) =>
+            this.setState({ selectedTag: newSelectedTag })
+          }
         />
       </>
     );
@@ -185,16 +180,23 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     return (
       <>
         <ControlRow>
-          <SortFilterWrapper>{this.renderCommonFilters()}</SortFilterWrapper>
-          {isAuthorizedToAdd && (
-            <Button
-              onClick={() =>
-                pushFiltered(this.props, "/launch", ["project_id"])
-              }
-            >
-              <i className="material-icons">add</i> Launch template
-            </Button>
-          )}
+          <FilterWrapper>{this.renderCommonFilters()}</FilterWrapper>
+          <Flex>
+            <SortSelector
+              setSortType={(sortType) => this.setState({ sortType })}
+              sortType={this.state.sortType}
+              currentView={currentView}
+            />
+            {isAuthorizedToAdd && (
+              <Button
+                onClick={() =>
+                  pushFiltered(this.props, "/launch", ["project_id"])
+                }
+              >
+                <i className="material-icons">add</i> Launch template
+              </Button>
+            )}
+          </Flex>
         </ControlRow>
 
         <ChartList
@@ -243,7 +245,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               <i className="material-icons">add</i> Launch template
             </Button>
           )}
-          <SortFilterWrapper>
+          <FilterWrapper>
             <LastRunStatusSelector
               lastRunStatus={this.state.lastRunStatus}
               setLastRunStatus={(lastRunStatus: JobStatusType) => {
@@ -251,7 +253,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
               }}
             />
             {this.renderCommonFilters()}
-          </SortFilterWrapper>
+          </FilterWrapper>
         </ControlRow>
         <HidableElement show={this.state.showRuns}>
           <JobRunTable
@@ -316,6 +318,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
             image={monoweb}
             title={currentView}
             description="Continuously running web services, workers, and add-ons."
+            disableLineBreak
           />
 
           {this.renderBodyForApps()}
@@ -347,13 +350,17 @@ const HidableElement = styled.div<{ show: boolean }>`
   display: ${(props) => (props.show ? "unset" : "none")};
 `;
 
+const Flex = styled.div`
+  display: flex;
+  align-items: center;
+  border-bottom: 30px solid transparent;
+`;
+
 const ControlRow = styled.div`
   display: flex;
-  margin-left: auto;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  padding-left: 0px;
 `;
 
 const Button = styled.div`
@@ -366,13 +373,10 @@ const Button = styled.div`
   font-family: "Work Sans", sans-serif;
   border-radius: 5px;
   color: white;
-  height: 35px;
-  margin-bottom: 35px;
-  padding: 0px 8px;
+  height: 30px;
+  padding: 0 8px;
   min-width: 155px;
-  padding-bottom: 1px;
-  font-weight: 500;
-  padding-right: 15px;
+  padding-right: 13px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -401,11 +405,10 @@ const Button = styled.div`
   }
 `;
 
-const SortFilterWrapper = styled.div`
+const FilterWrapper = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 35px;
+  border-bottom: 30px solid transparent;
   > div:not(:first-child) {
-    margin-left: 30px;
   }
 `;

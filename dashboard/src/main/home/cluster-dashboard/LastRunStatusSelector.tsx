@@ -1,8 +1,10 @@
 import React from "react";
 import styled from "styled-components";
 
-import Selector from "components/Selector";
+import RadioFilter from "components/RadioFilter";
 import { JobStatusType } from "shared/types";
+
+import last_run from "assets/last-run.svg";
 
 type PropsType = {
   lastRunStatus: JobStatusType;
@@ -23,21 +25,13 @@ const LastRunStatusSelector = (props: PropsType) => {
   );
 
   return (
-    <StyledLastRunStatusSelector>
-      <Label>
-        <i className="material-icons">filter_alt</i>
-        Last Run Status
-      </Label>
-      <Selector
-        activeValue={props.lastRunStatus}
-        setActiveValue={props.setLastRunStatus}
-        options={options}
-        dropdownLabel="Last Run Status"
-        width="150px"
-        dropdownWidth="230px"
-        closeOverlay={true}
-      />
-    </StyledLastRunStatusSelector>
+    <RadioFilter
+      selected={props.lastRunStatus}
+      setSelected={props.setLastRunStatus}
+      options={options}
+      name="Last run status"
+      icon={last_run}
+    />
   );
 };
 

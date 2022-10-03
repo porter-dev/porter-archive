@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
+import folder from "assets/folder-outline.svg";
+
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-import Selector from "components/Selector";
+import RadioFilter from "components/RadioFilter";
 
 type Props = {
   setNamespace: (x: string) => void;
@@ -102,20 +104,13 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   };
 
   return (
-    <StyledNamespaceSelector>
-      <Label>
-        <i className="material-icons">filter_alt</i> Namespace
-      </Label>
-      <Selector
-        activeValue={namespace}
-        setActiveValue={handleSetActive}
-        options={namespaceOptions}
-        dropdownLabel="Namespace"
-        width="150px"
-        dropdownWidth="230px"
-        closeOverlay={true}
-      />
-    </StyledNamespaceSelector>
+    <RadioFilter
+      icon={folder}
+      selected={namespace}
+      setSelected={handleSetActive}
+      options={namespaceOptions}
+      name="Namespace"
+    />
   );
 };
 

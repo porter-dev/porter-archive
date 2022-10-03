@@ -625,6 +625,19 @@ tabs:
       variable: additional_private_subnets_multiplicity
       settings:
         default: 3
+  - name: net_settings_azs_toggle
+    contents:
+    - type: checkbox
+      label: "Specify the AZs to provision this cluster in."
+      variable: specify_azs
+      settings:
+        default: false
+  - name: net_settings_azs
+    show_if: specify_azs
+    contents:
+    - type: array-input
+      variable: azs
+      label: Availability Zones
   - name: nginx_settings
     contents:
     - type: heading

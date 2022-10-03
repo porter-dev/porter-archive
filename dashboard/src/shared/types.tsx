@@ -327,6 +327,7 @@ export type FullActionConfigType = ActionConfigType & {
 export interface CapabilityType {
   github: boolean;
   provisioner: boolean;
+  version?: string;
 }
 
 export type OverlayData = {

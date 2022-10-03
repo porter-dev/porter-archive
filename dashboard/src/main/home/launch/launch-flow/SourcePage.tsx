@@ -68,15 +68,16 @@ class SourcePage extends Component<PropsType, StateType> {
     if (sourceType === "") {
       return (
         <BlockList>
-          {(capabilities.github || capabilities.gitlab) && hasSource !== "registry-only" && (
-            <Block onClick={() => setSourceType("repo")}>
-              <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
-              <BlockTitle>Git repository</BlockTitle>
-              <BlockDescription>
-                Deploy using source from a Git repo.
-              </BlockDescription>
-            </Block>
-          )}
+          {(capabilities.github || capabilities.gitlab) &&
+            hasSource !== "registry-only" && (
+              <Block onClick={() => setSourceType("repo")}>
+                <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
+                <BlockTitle>Git repository</BlockTitle>
+                <BlockDescription>
+                  Deploy using source from a Git repo.
+                </BlockDescription>
+              </Block>
+            )}
           {hasSource !== "repo-only" && (
             <Block onClick={() => setSourceType("registry")}>
               <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />

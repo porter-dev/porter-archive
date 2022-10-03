@@ -145,14 +145,15 @@ func (p *StackAddApplicationHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	for _, appResource := range newResources {
 		rel, err := applyAppResource(&applyAppResourceOpts{
-			config:     p.Config(),
-			projectID:  proj.ID,
-			namespace:  namespace,
-			cluster:    cluster,
-			registries: registries,
-			helmAgent:  helmAgent,
-			request:    req,
-			stack:      stack,
+			config:        p.Config(),
+			projectID:     proj.ID,
+			namespace:     namespace,
+			cluster:       cluster,
+			registries:    registries,
+			helmAgent:     helmAgent,
+			request:       req,
+			stackName:     stack.Name,
+			stackRevision: stack.Revisions[0].RevisionNumber,
 		})
 
 		if err != nil {

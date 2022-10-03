@@ -203,7 +203,7 @@ export default class Login extends Component<PropsType, StateType> {
     if (this.state.hasResetPassword) {
       return (
         <Helper>
-          {/* <Link href="/register">Sign up</Link> | */}
+          <Link href="/register">Sign up</Link> |
           <Link href="/password/reset">Forgot password?</Link>
         </Helper>
       );
@@ -211,7 +211,7 @@ export default class Login extends Component<PropsType, StateType> {
 
     return (
       <Helper>
-        {/* <Link href="/register">Sign up</Link> */}
+        <Link href="/register">Sign up</Link>
       </Helper>
     );
   }

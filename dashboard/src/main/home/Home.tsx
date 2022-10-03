@@ -529,7 +529,7 @@ export default withRouter(withAuth(Home));
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
-  padding-top: 10vh;
+  padding: 45px;
   overflow-y: auto;
   display: flex;
   flex: 1;
@@ -539,7 +539,7 @@ const ViewWrapper = styled.div`
 `;
 
 const DashboardWrapper = styled.div`
-  width: calc(85%);
+  width: 100%;
   min-width: 300px;
   height: fit-content;
 `;

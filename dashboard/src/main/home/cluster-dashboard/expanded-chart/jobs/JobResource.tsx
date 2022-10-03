@@ -172,7 +172,7 @@ export default class JobResource extends Component<PropsType, StateType> {
           onClick={() => this.setState({ configIsExpanded: true })}
         >
           <img src={plus} />
-          Show Job Config
+          Show job config
         </ExpandConfigBar>
       );
     } else {
@@ -494,14 +494,13 @@ const StartedText = styled.div`
 const StyledJob = styled.div`
   display: flex;
   flex-direction: column;
-  background: #2b2e3699;
   margin-bottom: 20px;
-  border-radius: 5px;
   overflow: hidden;
-  border: 1px solid #ffffff0a;
-
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
   :hover {
-    border: 1px solid #ffffff3c;
+    border: 1px solid #7a7b80;
   }
 `;
 

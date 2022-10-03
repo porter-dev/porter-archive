@@ -1,8 +1,9 @@
 import DynamicLink from "components/DynamicLink";
 import React from "react";
 import styled from "styled-components";
-import backArrow from "assets/back_arrow.png";
 import TitleSection from "components/TitleSection";
+
+import leftArrow from "assets/left-arrow.svg";
 
 type Props = {
   last_updated: string;
@@ -26,25 +27,67 @@ const Header: React.FunctionComponent<Props> = (props) => {
   } = props;
 
   return (
-    <HeaderWrapper>
-      <BackButton to={back_link}>
-        <BackButtonImg src={backArrow} />
-      </BackButton>
-      <Title icon={icon} iconWidth="25px" materialIconClass={materialIconClass}>
-        {name}
-        <Flex>{inline_title_items}</Flex>
-      </Title>
+    <>
+      <BreadcrumbRow>
+        <Breadcrumb to={back_link}>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <HeaderWrapper>
+        <Title
+          icon={icon}
+          iconWidth="25px"
+          materialIconClass={materialIconClass}
+        >
+          {name}
+          <Flex>{inline_title_items}</Flex>
+        </Title>
 
-      {sub_title_items || (
-        <InfoWrapper>
-          <InfoText>Last updated {last_updated}</InfoText>
-        </InfoWrapper>
-      )}
-    </HeaderWrapper>
+        {sub_title_items || (
+          <InfoWrapper>
+            <InfoText>Last updated {last_updated}</InfoText>
+          </InfoWrapper>
+        )}
+      </HeaderWrapper>
+    </>
   );
 };
 
 export default Header;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled(DynamicLink)`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
 
 const HeaderWrapper = styled.div`
   position: relative;
@@ -61,33 +104,6 @@ const InfoWrapper = styled.div`
 const InfoText = styled.span`
   font-size: 13px;
   color: #aaaabb66;
-`;
-
-const BackButton = styled(DynamicLink)`
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  display: flex;
-  width: 36px;
-  cursor: pointer;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
-  }
-`;
-
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
 `;
 
 const Title = styled(TitleSection)`

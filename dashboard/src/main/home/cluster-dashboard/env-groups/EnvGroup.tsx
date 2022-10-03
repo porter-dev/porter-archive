@@ -81,7 +81,7 @@ const BottomWrapper = styled.div`
   justify-content: space-between;
   align-items: center;
   padding-right: 11px;
-  margin-top: 12px;
+  margin-top: 3px;
 `;
 
 const Version = styled.div`
@@ -108,7 +108,7 @@ const InfoWrapper = styled.div`
 const LastDeployed = styled.div`
   font-size: 13px;
   margin-left: 14px;
-  margin-top: -1px;
+  margin-bottom: -1px;
   display: flex;
   align-items: center;
   color: #aaaabb66;
@@ -195,66 +195,17 @@ const Title = styled.div`
 `;
 
 const StyledEnvGroup = styled.div`
-  background: #26282f;
   cursor: pointer;
-  margin-bottom: 25px;
-  padding: 1px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
+  margin-bottom: 15px;
+  padding-top: 2px;
+  padding-bottom: 13px;
   position: relative;
-  border: 2px solid #9eb4ff00;
   width: calc(100% + 2px);
   height: calc(100% + 2px);
-
-  animation: ${(props: { expand: boolean }) =>
-      props.expand ? "expand" : "shrink"}
-    0.12s;
-  animation-fill-mode: forwards;
-  animation-timing-function: ease-out;
-
-  @keyframes expand {
-    from {
-      width: calc(100% + 2px);
-      padding-top: 4px;
-      padding-bottom: 14px;
-      margin-left: 0px;
-      box-shadow: 0 4px 15px 0px #00000055;
-      padding-left: 1px;
-      margin-bottom: 25px;
-      margin-top: 0px;
-    }
-    to {
-      width: calc(100% + 22px);
-      padding-top: 7px;
-      padding-bottom: 20px;
-      margin-left: -10px;
-      box-shadow: 0 8px 20px 0px #00000030;
-      padding-left: 5px;
-      margin-bottom: 21px;
-      margin-top: -4px;
-    }
-  }
-
-  @keyframes shrink {
-    from {
-      width: calc(100% + 22px);
-      padding-top: 7px;
-      padding-bottom: 20px;
-      margin-left: -10px;
-      box-shadow: 0 8px 20px 0px #00000030;
-      padding-left: 5px;
-      margin-bottom: 21px;
-      margin-top: -4px;
-    }
-    to {
-      width: calc(100% + 2px);
-      padding-top: 4px;
-      padding-bottom: 14px;
-      margin-left: 0px;
-      box-shadow: 0 4px 15px 0px #00000055;
-      padding-left: 1px;
-      margin-bottom: 25px;
-      margin-top: 0px;
-    }
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
   }
 `;

@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import backArrow from "assets/back_arrow.png";
 import TitleSection from "components/TitleSection";
 import pr_icon from "assets/pull_request_icon.svg";
 import { useRouteMatch, useLocation } from "react-router";
@@ -13,6 +12,7 @@ import ChartList from "../../chart/ChartList";
 import github from "assets/github-white.png";
 import { integrationList } from "shared/common";
 import { capitalize } from "shared/string_utils";
+import leftArrow from "assets/left-arrow.svg";
 
 const DeploymentDetail = () => {
   const { params } = useRouteMatch<{ namespace: string }>();
@@ -65,12 +65,15 @@ const DeploymentDetail = () => {
 
   return (
     <StyledExpandedChart>
-      <HeaderWrapper>
-        <BackButton
+      <BreadcrumbRow>
+        <Breadcrumb
           to={`/preview-environments/deployments/${environmentId}/${repository}`}
         >
-          <BackButtonImg src={backArrow} />
-        </BackButton>
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <HeaderWrapper>
         <Title icon={pr_icon} iconWidth="25px">
           {prDeployment.gh_pr_name}
         </Title>
@@ -142,6 +145,39 @@ const DeploymentDetail = () => {
 
 export default DeploymentDetail;
 
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled(DynamicLink)`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
 const Flex = styled.div`
   display: flex;
   align-items: center;
@@ -189,8 +225,8 @@ const GHALink = styled(DynamicLink)`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin-bottom: 20px;
 `;
 

@@ -369,7 +369,7 @@ const CollapseButton = styled.div`
 
 const StyledSidebar = styled.section`
   font-family: "Work Sans", sans-serif;
-  width: 235px;
+  width: 240px;
   position: relative;
   padding-top: 20px;
   height: 100vh;
@@ -379,7 +379,7 @@ const StyledSidebar = styled.section`
   animation-fill-mode: forwards;
   @keyframes showSidebar {
     from {
-      margin-left: -235px;
+      margin-left: -240px;
     }
     to {
       margin-left: 0px;
@@ -390,7 +390,7 @@ const StyledSidebar = styled.section`
       margin-left: 0px;
     }
     to {
-      margin-left: -235px;
+      margin-left: -240px;
     }
   }
 `;

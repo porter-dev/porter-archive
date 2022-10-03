@@ -55,8 +55,9 @@ const Br = styled.div`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
+  width: 100%;
   margin: 10px 0px 35px;
 `;
 
@@ -66,11 +67,10 @@ const TopRow = styled.div`
 `;
 
 const Description = styled.div`
-  color: #aaaabb;
+  color: #8b949f;
   margin-top: 13px;
   margin-left: 2px;
   font-size: 13px;
-  line-height: 1.5em;
 `;
 
 const InfoLabel = styled.div`
@@ -78,7 +78,7 @@ const InfoLabel = styled.div`
   height: 20px;
   display: flex;
   align-items: center;
-  color: #7a838f;
+  color: #8b949f;
   font-size: 13px;
   > i {
     color: #8b949f;

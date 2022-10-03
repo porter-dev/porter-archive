@@ -11,6 +11,7 @@ import Loading from "../../../components/Loading";
 import SlackIntegrationList from "./SlackIntegrationList";
 import TitleSection from "components/TitleSection";
 import GitlabIntegrationList from "./GitlabIntegrationList";
+import leftArrow from "assets/left-arrow.svg";
 
 type Props = RouteComponentProps & {
   category: string;
@@ -112,13 +113,16 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 
   return (
     <>
-      <Flex>
-        <TitleSection
-          handleNavBack={() =>
-            pushFiltered(props, "/integrations", ["project_id"])
-          }
-          icon={icon}
+      <BreadcrumbRow>
+        <Breadcrumb
+          onClick={() => pushFiltered(props, "/integrations", ["project_id"])}
         >
+          <ArrowIcon src={leftArrow} />
+          <Wrap>Back</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <Flex>
+        <TitleSection icon={icon} iconWidth="32px">
           {label}
         </TitleSection>
         <Button
@@ -169,6 +173,39 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 
 export default withRouter(IntegrationCategories);
 
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const Breadcrumb = styled.div`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
 const Flex = styled.div`
   display: flex;
   align-items: center;
@@ -196,10 +233,12 @@ const Button = styled.div`
     background: #505edddd;
   }
   color: white;
+  height: 35px;
   font-weight: 500;
   font-size: 13px;
-  padding: 10px 15px;
-  border-radius: 3px;
+  padding: 7px 7px;
+  padding-right: 12px;
+  border-radius: 5px;
   cursor: pointer;
   box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
@@ -210,10 +249,10 @@ const Button = styled.div`
   i {
     width: 20px;
     height: 20px;
-    font-size: 16px;
+    font-size: 15px;
     display: flex;
     align-items: center;
-    margin-right: 10px;
+    margin-right: 5px;
     justify-content: center;
   }
 `;

@@ -129,12 +129,15 @@ const Integration = styled.div`
   margin-left: -2px;
   display: flex;
   flex-direction: column;
-  background: #26282f;
   cursor: ${(props: { disabled: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 15px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
+  border-radius: 5px;
+  background: #262a30;
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
 `;
 
 const Icon = styled.img`
@@ -148,11 +151,11 @@ const MainRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 25px;
+  padding: 15px;
+  padding-left: 20px;
+  padding-right: 30px;
   border-radius: 5px;
   :hover {
-    background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#ffffff11"};
     > i {
       background: ${(props: { disabled: boolean }) =>
         props.disabled ? "" : "#ffffff11"};
@@ -178,9 +181,9 @@ const MaterialIconTray = styled.div`
   align-items: center;
   justify-content: space-between;
   > i {
-    background: #26282f;
     border-radius: 20px;
     font-size: 18px;
+    border: 1px solid #494b4f;
     padding: 5px;
     margin: 0 5px;
     color: #ffffff44;

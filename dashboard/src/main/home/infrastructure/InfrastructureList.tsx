@@ -223,12 +223,11 @@ const DatabasesListWrapper = styled.div`
 `;
 
 const StyledTableWrapper = styled.div`
-  background: #26282f;
   padding: 14px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px 0px #00000055;
   position: relative;
-  border: 2px solid #9eb4ff00;
+  border-radius: 8px;
+  background: #262a30;
+  border: 1px solid #494b4f;
   width: 100%;
   height: 100%;
   :not(:last-child) {
@@ -274,8 +273,8 @@ const InfoSection = styled.div`
 
 const LineBreak = styled.div`
   width: calc(100% - 0px);
-  height: 2px;
-  background: #ffffff20;
+  height: 1px;
+  background: #494b4f;
   margin: 10px 0px 35px;
 `;
 

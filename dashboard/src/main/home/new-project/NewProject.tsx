@@ -105,7 +105,6 @@ export const NewProjectFC = () => {
 
   const renderContents = () => {
     let version = capabilities?.version;
-    alert(user.email)
     if (version !== "production" || user.email === "support@porter.run") {
       return (
         <>

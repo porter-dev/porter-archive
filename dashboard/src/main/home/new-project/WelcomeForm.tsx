@@ -14,30 +14,37 @@ const WelcomeForm = (props: any) => {
 
   const encode = (data: any) => {
     return Object.keys(data)
-        .map(key => encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
-        .join("&");
-  }
+      .map(
+        (key) => encodeURIComponent(key) + "=" + encodeURIComponent(data[key])
+      )
+      .join("&");
+  };
 
   const submitForm = (e: any) => {
     fetch("/", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: encode({ "form-name": "demo", email, company, "website": companySite})
+      body: encode({
+        "form-name": "demo",
+        email,
+        company,
+        website: companySite,
+      }),
     })
       .then(() => {
-        setIsDone(true)
+        setIsDone(true);
         axios.post(
           process.env.DISCORD_WEBHOOK_URL,
           {
             username: "Demo Request",
-            content: `**${email}** from **${company}** (website: ${companySite})`
+            content: `**${email}** from **${company}** (website: ${companySite})`,
           },
           {
             headers: {
-              'Content-Type': 'application/json'
-            }
+              "Content-Type": "application/json",
+            },
           }
-        )
+        );
 
         axios.get(process.env.ZAPIER_WEBHOOK_URL, {
           params: {
@@ -45,10 +52,10 @@ const WelcomeForm = (props: any) => {
             isCompany: true,
             company: `${company} - ${companySite}`,
             role: "**Requesting Demo**",
-          }
-        })
+          },
+        });
       })
-      .catch(error => alert(error));
+      .catch((error) => alert(error));
 
     e.preventDefault();
   };
@@ -63,52 +70,50 @@ const WelcomeForm = (props: any) => {
       onExited={() => setActive(false)}
     >
       <StyledWelcomeForm>
-        {
-          isDone ? (
-            <div>
-              <Title>Your response has been recorded.</Title>
-              <Subtitle>We'll be in touch shortly!</Subtitle>
-            </div>
-          ) : (
-            <form name="demo" onSubmit={submitForm}>
-              <Title>Book a Demo</Title>
-              <Subtitle>Just two things and we'll be in touch.</Subtitle>
-              <SubtitleAlt>
-                <Num>1</Num> What is your work email? *
-              </SubtitleAlt>
-              <Input
-                type="email"
-                placeholder="ex: sophon@acme.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <SubtitleAlt>
-                <Num>2</Num> What is your company name? *
-              </SubtitleAlt>
-              <Input
-                type="text"
-                placeholder="ex: Acme"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-              />
-              <SubtitleAlt>
-                <Num>3</Num> What is your company website? *
-              </SubtitleAlt>
-              <Input
-                type="text"
-                name="website"
-                placeholder="ex: https://acme.com"
-                value={companySite}
-                onChange={(e) => setCompanySite(e.target.value)}
-              />
-              <Submit
-                type="submit"
-                value="Done"
-                disabled={!company || !email || !companySite}
-              />
-            </form>
-          )
-        }
+        {isDone ? (
+          <div>
+            <Title>Your response has been recorded.</Title>
+            <Subtitle>We'll be in touch shortly!</Subtitle>
+          </div>
+        ) : (
+          <form name="demo" onSubmit={submitForm}>
+            <Title>Book a Demo</Title>
+            <Subtitle>Just two things and we'll be in touch.</Subtitle>
+            <SubtitleAlt>
+              <Num>1</Num> What is your work email? *
+            </SubtitleAlt>
+            <Input
+              type="email"
+              placeholder="ex: sophon@acme.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <SubtitleAlt>
+              <Num>2</Num> What is your company name? *
+            </SubtitleAlt>
+            <Input
+              type="text"
+              placeholder="ex: Acme"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+            />
+            <SubtitleAlt>
+              <Num>3</Num> What is your company website? *
+            </SubtitleAlt>
+            <Input
+              type="text"
+              name="website"
+              placeholder="ex: https://acme.com"
+              value={companySite}
+              onChange={(e) => setCompanySite(e.target.value)}
+            />
+            <Submit
+              type="submit"
+              value="Done"
+              disabled={!company || !email || !companySite}
+            />
+          </form>
+        )}
       </StyledWelcomeForm>
     </CSSTransition>
   );

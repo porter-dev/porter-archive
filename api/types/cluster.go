@@ -280,7 +280,9 @@ type GetIncidentsRequest struct {
 }
 
 type GetIncidentEventLogsRequest struct {
-	LogID string `schema:"log_id"`
+	Labels    []string `schema:"labels" form:"required"`
+	StartTime string   `schema:"start_time" form:"required"`
+	Limit     uint32   `schema:"limit"`
 }
 
 type IncidentNotifyRequest struct {

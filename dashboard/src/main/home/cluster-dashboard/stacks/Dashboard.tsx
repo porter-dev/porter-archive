@@ -49,7 +49,8 @@ const Dashboard = () => {
         <Flex>
           <RadioFilter
             selected={currentSort}
-            setSelected={(sortType) => setCurrentSort(sortType as any)}
+            noMargin
+            setSelected={(sortType: any) => setCurrentSort(sortType as any)}
             options={[
               {
                 value: "created_at",
@@ -96,6 +97,7 @@ const Button = styled(DynamicLink)`
   font-family: "Work Sans", sans-serif;
   border-radius: 5px;
   color: white;
+  margin-left: 10px;
   height: 30px;
   padding: 0 8px;
   padding-right: 13px;

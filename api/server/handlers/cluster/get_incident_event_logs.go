@@ -42,7 +42,7 @@ func (c *GetIncidentEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	k8sAgent, err := c.GetAgent(r, cluster, "monitoring")
+	k8sAgent, err := c.GetAgent(r, cluster, "porter-agent-system")
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

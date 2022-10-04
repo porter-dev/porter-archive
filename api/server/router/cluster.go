@@ -1201,7 +1201,7 @@ func getClusterRoutes(
 		},
 	)
 
-	getIncidentHandler := cluster.NewListIncidentsHandler(
+	getIncidentHandler := cluster.NewGetIncidentHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

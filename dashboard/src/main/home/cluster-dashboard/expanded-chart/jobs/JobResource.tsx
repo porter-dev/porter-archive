@@ -201,7 +201,7 @@ export default class JobResource extends Component<PropsType, StateType> {
                 <KeyValueArray
                   envLoader={true}
                   values={envObject}
-                  label="Environment Variables:"
+                  label="Environment variables:"
                   disabled={true}
                 />
                 <DarkMatter />

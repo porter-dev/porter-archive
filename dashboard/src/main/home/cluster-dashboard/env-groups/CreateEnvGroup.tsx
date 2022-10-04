@@ -193,7 +193,7 @@ export default class CreateEnvGroup extends Component<PropsType, StateType> {
             />
           </DestinationSection>
 
-          <Heading>Environment Variables</Heading>
+          <Heading>Environment variables</Heading>
           <Helper>
             Set environment variables for your secrets and environment-specific
             configuration.

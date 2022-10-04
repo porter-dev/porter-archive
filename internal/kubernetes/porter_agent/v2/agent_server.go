@@ -76,6 +76,34 @@ func GetIncidentByID(
 	return incident, nil
 }
 
+func ListIncidentEvents(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	incidentID string,
+	req *types.ListIncidentEventsRequest,
+) (*types.ListIncidentEventsResponse, error) {
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		fmt.Sprintf("/incidents/%s/events", incidentID),
+		nil,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	events := &types.ListIncidentEventsResponse{}
+
+	if err := json.Unmarshal(rawQuery, events); err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
 // func GetHistoricalLogs(
 // 	clientset kubernetes.Interface,
 // 	service *v1.Service,

@@ -139,30 +139,59 @@ func ListIncidentEvents(
 	return events, nil
 }
 
-// func GetHistoricalLogs(
-// 	clientset kubernetes.Interface,
-// 	service *v1.Service,
-// 	req *GetLogRequest,
-// ) (*LogsResponse, error) {
-// 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
-// 		"http",
-// 		service.Name,
-// 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-// 		fmt.Sprintf("/incidents/logs/%s", logID),
-// 		nil,
-// 	)
+func GetHistoricalLogs(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	req *types.GetLogRequest,
+) (*types.GetLogResponse, error) {
+	vals := make(map[string]string)
 
-// 	rawQuery, err := resp.DoRaw(context.Background())
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if req.Limit != 0 {
+		vals["limit"] = fmt.Sprintf("%d", req.Limit)
+	}
 
-// 	logsResp := &LogsResponse{}
+	if req.StartRange != nil {
+		startVal, err := req.StartRange.MarshalText()
 
-// 	err = json.Unmarshal(rawQuery, logsResp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+		if err != nil {
+			return nil, err
+		}
 
-// 	return logsResp, nil
-// }
+		vals["start_range"] = string(startVal)
+	}
+
+	if req.EndRange != nil {
+		endVal, err := req.EndRange.MarshalText()
+
+		if err != nil {
+			return nil, err
+		}
+
+		vals["end_range"] = string(endVal)
+	}
+
+	vals["pod_selector"] = req.PodSelector
+	vals["namespace"] = req.Namespace
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/logs",
+		vals,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	logsResp := &types.GetLogResponse{}
+
+	err = json.Unmarshal(rawQuery, logsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return logsResp, nil
+}

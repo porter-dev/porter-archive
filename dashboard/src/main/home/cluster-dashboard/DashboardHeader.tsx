@@ -58,7 +58,7 @@ const LineBreak = styled.div`
   height: 1px;
   background: #494b4f;
   width: 100%;
-  margin: 10px 0px 35px;
+  margin: 10px 0px 15px;
 `;
 
 const TopRow = styled.div`

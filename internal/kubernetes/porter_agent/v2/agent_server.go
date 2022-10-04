@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 
+	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -26,11 +28,17 @@ func ListIncidents(
 	service *v1.Service,
 	req *types.ListIncidentsRequest,
 ) (*types.ListIncidentsResponse, error) {
+	vals := make(map[string][]string)
+	err := schema.NewEncoder().Encode(req, vals)
+
+	urlVals := url.Values(vals)
+	encodedURLVals := urlVals.Encode()
+
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,
 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		"/incidents",
+		fmt.Sprintf("/incidents?%s", encodedURLVals),
 		nil,
 	)
 
@@ -82,11 +90,17 @@ func ListIncidentEvents(
 	incidentID string,
 	req *types.ListIncidentEventsRequest,
 ) (*types.ListIncidentEventsResponse, error) {
+	vals := make(map[string][]string)
+	err := schema.NewEncoder().Encode(req, vals)
+
+	urlVals := url.Values(vals)
+	encodedURLVals := urlVals.Encode()
+
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,
 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		fmt.Sprintf("/incidents/%s/events", incidentID),
+		fmt.Sprintf("/incidents/%s/events?%s", incidentID, encodedURLVals),
 		nil,
 	)
 

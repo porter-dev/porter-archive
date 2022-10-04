@@ -208,8 +208,8 @@ const Relative = styled.div`
 
 const DropdownWrapper = styled.div<{ dropdownAlignRight?: boolean }>`
   position: absolute;
-  left: ${props => props.dropdownAlignRight ? "" : "0"};
-  right: ${props => props.dropdownAlignRight ? "0" : ""};
+  left: ${(props) => (props.dropdownAlignRight ? "" : "0")};
+  right: ${(props) => (props.dropdownAlignRight ? "0" : "")};
   z-index: 1;
   top: calc(100% + 5px);
 `;

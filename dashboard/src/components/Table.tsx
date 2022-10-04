@@ -365,7 +365,7 @@ const SearchInput = styled.input`
   width: 100%;
   color: white;
   padding: 0;
-  height: 20px;
+  height: 21px;
 `;
 
 const SearchRow = styled.div`
@@ -376,7 +376,7 @@ const SearchRow = styled.div`
   border-radius: 4px;
   user-select: none;
   align-items: center;
-  padding: 10px 0px;
+  padding: 7px 0px;
   min-width: 300px;
   max-width: min-content;
   background: #ffffff11;
@@ -386,7 +386,7 @@ const SearchRow = styled.div`
     height: 18px;
     margin-left: 12px;
     margin-right: 12px;
-    font-size: 20px;
+    font-size: 18px;
   }
 `;
 

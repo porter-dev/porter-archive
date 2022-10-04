@@ -128,7 +128,6 @@ const DeploymentDetail = () => {
         </Flex>
         <LinkToActionsWrapper></LinkToActionsWrapper>
       </HeaderWrapper>
-      <LineBreak />
       <ChartListWrapper>
         <ChartList
           currentCluster={context.currentCluster}

@@ -3,7 +3,8 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 
-import Selector from "components/Selector";
+import RadioFilter from "components/RadioFilter";
+import sort from "assets/sort.svg";
 
 type PropsType = {
   setSortType: (x: string) => void;
@@ -46,17 +47,14 @@ export default class SortSelector extends Component<PropsType, StateType> {
   render() {
     return (
       <StyledSortSelector>
-        <Label>
-          <i className="material-icons">sort</i> Sort
-        </Label>
-        <Selector
-          activeValue={this.props.sortType}
-          setActiveValue={(sortType) => this.props.setSortType(sortType)}
+        <RadioFilter
+          selected={this.props.sortType}
+          setSelected={(sortType: any) => this.props.setSortType(sortType)}
           options={this.getSortOptions()}
-          dropdownLabel="Sort By"
-          width="150px"
-          dropdownWidth="230px"
-          closeOverlay={true}
+          name="Sort"
+          icon={sort}
+          dropdownAlignRight={true}
+          noMargin
         />
       </StyledSortSelector>
     );

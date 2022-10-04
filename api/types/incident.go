@@ -94,10 +94,11 @@ type ListIncidentEventsResponse struct {
 }
 
 type GetLogRequest struct {
-	Limit      uint       `json:"limit"`
-	StartRange *time.Time `json:"start_range"`
-	EndRange   *time.Time `json:"end_range"`
-	Pods       []string   `json:"pods"`
+	Limit       uint       `schema:"limit"`
+	StartRange  *time.Time `schema:"start_range"`
+	EndRange    *time.Time `schema:"end_range"`
+	PodSelector string     `schema:"pod_selector" form:"required"`
+	Namespace   string     `schema:"namespace" form:"required"`
 }
 
 type LogLine struct {

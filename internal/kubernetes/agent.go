@@ -1805,7 +1805,7 @@ func (a *Agent) StreamPorterAgentLokiLog(
 			defer wg.Done()
 
 			podList, err := a.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), metav1.ListOptions{
-				LabelSelector: "", // FIXME: add label selector for porter agent deployment
+				LabelSelector: "app.kubernetes.io/instance=porter-agent",
 			})
 
 			if err != nil {
@@ -1818,7 +1818,6 @@ func (a *Agent) StreamPorterAgentLokiLog(
 				return
 			}
 
-			// FIXME: choose a pod randomly
 			pod := podList.Items[0]
 
 			restConf, err := a.RESTClientGetter.ToRESTConfig()

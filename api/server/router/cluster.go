@@ -1125,7 +1125,7 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents -> cluster.NewGetIncidentsHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents -> cluster.NewListIncidentsHandler
 	listIncidentsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -1142,7 +1142,7 @@ func getClusterRoutes(
 		},
 	)
 
-	getIncidentsHandler := cluster.NewListIncidentsHandler(
+	listIncidentsHandler := cluster.NewListIncidentsHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -1150,7 +1150,36 @@ func getClusterRoutes(
 
 	routes = append(routes, &router.Route{
 		Endpoint: listIncidentsEndpoint,
-		Handler:  getIncidentsHandler,
+		Handler:  listIncidentsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/{incident_id} -> cluster.NewGetIncidentHandler
+	getIncidentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/incidents/{%s}", relPath, types.URLParamIncidentID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getIncidentHandler := cluster.NewListIncidentsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getIncidentEndpoint,
+		Handler:  getIncidentHandler,
 		Router:   r,
 	})
 

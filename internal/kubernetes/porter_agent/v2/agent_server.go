@@ -23,7 +23,7 @@ func GetAgentService(clientset kubernetes.Interface) (*v1.Service, error) {
 func GetAllIncidents(
 	clientset kubernetes.Interface,
 	service *v1.Service,
-) (*IncidentsResponse, error) {
+) (*ListIncidentsResponse, error) {
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,
@@ -37,7 +37,7 @@ func GetAllIncidents(
 		return nil, err
 	}
 
-	incidentsResp := &IncidentsResponse{}
+	incidentsResp := &ListIncidentsResponse{}
 
 	err = json.Unmarshal(rawQuery, incidentsResp)
 	if err != nil {
@@ -47,86 +47,86 @@ func GetAllIncidents(
 	return incidentsResp, nil
 }
 
-func GetIncidentEventsByID(
-	clientset kubernetes.Interface,
-	service *v1.Service,
-	incidentID string,
-) (*EventsResponse, error) {
-	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
-		"http",
-		service.Name,
-		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		fmt.Sprintf("/incidents/%s", incidentID),
-		nil,
-	)
+// func GetIncidentEventsByID(
+// 	clientset kubernetes.Interface,
+// 	service *v1.Service,
+// 	incidentID string,
+// ) (*EventsResponse, error) {
+// 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+// 		"http",
+// 		service.Name,
+// 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+// 		fmt.Sprintf("/incidents/%s", incidentID),
+// 		nil,
+// 	)
 
-	rawQuery, err := resp.DoRaw(context.Background())
-	if err != nil {
-		return nil, err
-	}
+// 	rawQuery, err := resp.DoRaw(context.Background())
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	eventsResp := &EventsResponse{}
+// 	eventsResp := &EventsResponse{}
 
-	err = json.Unmarshal(rawQuery, eventsResp)
-	if err != nil {
-		return nil, err
-	}
+// 	err = json.Unmarshal(rawQuery, eventsResp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return eventsResp, nil
-}
+// 	return eventsResp, nil
+// }
 
-func GetIncidentsByReleaseNamespace(
-	clientset kubernetes.Interface,
-	service *v1.Service,
-	releaseName, namespace string,
-) (*IncidentsResponse, error) {
-	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
-		"http",
-		service.Name,
-		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		fmt.Sprintf("/incidents/namespaces/%s/releases/%s", namespace, releaseName),
-		nil,
-	)
+// func GetIncidentsByReleaseNamespace(
+// 	clientset kubernetes.Interface,
+// 	service *v1.Service,
+// 	releaseName, namespace string,
+// ) (*IncidentsResponse, error) {
+// 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+// 		"http",
+// 		service.Name,
+// 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+// 		fmt.Sprintf("/incidents/namespaces/%s/releases/%s", namespace, releaseName),
+// 		nil,
+// 	)
 
-	rawQuery, err := resp.DoRaw(context.Background())
-	if err != nil {
-		return nil, err
-	}
+// 	rawQuery, err := resp.DoRaw(context.Background())
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	incidentsResp := &IncidentsResponse{}
+// 	incidentsResp := &IncidentsResponse{}
 
-	err = json.Unmarshal(rawQuery, incidentsResp)
-	if err != nil {
-		return nil, err
-	}
+// 	err = json.Unmarshal(rawQuery, incidentsResp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return incidentsResp, nil
-}
+// 	return incidentsResp, nil
+// }
 
-func GetLogs(
-	clientset kubernetes.Interface,
-	service *v1.Service,
-	logID string,
-) (*LogsResponse, error) {
-	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
-		"http",
-		service.Name,
-		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		fmt.Sprintf("/incidents/logs/%s", logID),
-		nil,
-	)
+// func GetLogs(
+// 	clientset kubernetes.Interface,
+// 	service *v1.Service,
+// 	logID string,
+// ) (*LogsResponse, error) {
+// 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+// 		"http",
+// 		service.Name,
+// 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+// 		fmt.Sprintf("/incidents/logs/%s", logID),
+// 		nil,
+// 	)
 
-	rawQuery, err := resp.DoRaw(context.Background())
-	if err != nil {
-		return nil, err
-	}
+// 	rawQuery, err := resp.DoRaw(context.Background())
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	logsResp := &LogsResponse{}
+// 	logsResp := &LogsResponse{}
 
-	err = json.Unmarshal(rawQuery, logsResp)
-	if err != nil {
-		return nil, err
-	}
+// 	err = json.Unmarshal(rawQuery, logsResp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return logsResp, nil
-}
+// 	return logsResp, nil
+// }

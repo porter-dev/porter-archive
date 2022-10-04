@@ -2,49 +2,6 @@ package v2
 
 import "time"
 
-type ContainerEvent struct {
-	Name     string `json:"container_name"`
-	Reason   string `json:"reason"`
-	Message  string `json:"message"`
-	LogID    string `json:"log_id"`
-	ExitCode int32  `json:"exit_code"`
-}
-
-type PodEvent struct {
-	EventID         string                     `json:"event_id"`
-	PodName         string                     `json:"pod_name"`
-	Namespace       string                     `json:"namespace"`
-	Cluster         string                     `json:"cluster"`
-	OwnerName       string                     `json:"release_name"`
-	OwnerType       string                     `json:"release_type"`
-	Timestamp       int64                      `json:"timestamp"`
-	Phase           string                     `json:"pod_phase"`
-	Status          string                     `json:"pod_status"`
-	Reason          string                     `json:"reason"`
-	Message         string                     `json:"message"`
-	ContainerEvents map[string]*ContainerEvent `json:"container_events"`
-}
-
-type IncidentsResponse struct {
-	Incidents []*Incident `json:"incidents" form:"required"`
-}
-
-type EventsResponse struct {
-	IncidentID    string      `json:"incident_id" form:"required"`
-	ChartName     string      `json:"chart_name"`
-	ReleaseName   string      `json:"release_name"`
-	CreatedAt     int64       `json:"created_at"`
-	UpdatedAt     int64       `json:"updated_at"`
-	LatestState   string      `json:"latest_state"`
-	LatestReason  string      `json:"latest_reason"`
-	LatestMessage string      `json:"latest_message"`
-	Events        []*PodEvent `json:"events" form:"required"`
-}
-
-type LogsResponse struct {
-	Contents string `json:"contents" form:"required"`
-}
-
 type SeverityType string
 
 const (
@@ -83,8 +40,68 @@ type IncidentMeta struct {
 	InvolvedObjectNamespace string             `json:"involved_object_namespace" form:"required"`
 }
 
+type PaginationRequest struct {
+	Page int64 `schema:"page"`
+}
+
+type PaginationResponse struct {
+	NumPages    int64 `json:"num_pages" form:"required"`
+	CurrentPage int64 `json:"current_page" form:"required"`
+	NextPage    int64 `json:"next_page" form:"required"`
+}
+
+type ListIncidentsRequest struct {
+	*PaginationRequest
+	Status           *IncidentStatus `schema:"status"`
+	ReleaseName      *string         `schema:"release_name"`
+	ReleaseNamespace *string         `schema:"release_namespace"`
+}
+
+type ListIncidentsResponse struct {
+	Incidents  []*IncidentMeta     `json:"incidents" form:"required"`
+	Pagination *PaginationResponse `json:"pagination"`
+}
+
 type Incident struct {
 	*IncidentMeta
 	Pods   []string `json:"pods" form:"required"`
 	Detail string   `json:"detail" form:"required"`
+}
+
+type IncidentEvent struct {
+	ID           string     `json:"id" form:"required"`
+	LastSeen     *time.Time `json:"last_seen" form:"required"`
+	PodName      string     `json:"pod_name" form:"required"`
+	PodNamespace string     `json:"pod_namespace" form:"required"`
+	Summary      string     `json:"summary" form:"required"`
+	Detail       string     `json:"detail" form:"required"`
+}
+
+type ListIncidentEventsRequest struct {
+	*PaginationRequest
+	PodName      *string `schema:"pod_name"`
+	PodNamespace *string `schema:"pod_namespace"`
+	Summary      *string `schema:"summary"`
+}
+
+type ListIncidentEventsResponse struct {
+	Events     []*IncidentEvent    `json:"events" form:"required"`
+	Pagination *PaginationResponse `json:"pagination"`
+}
+
+type GetLogRequest struct {
+	Limit      uint       `json:"limit"`
+	StartRange *time.Time `json:"start_range"`
+	EndRange   *time.Time `json:"end_range"`
+	Pods       []string   `json:"pods"`
+}
+
+type LogLine struct {
+	Timestamp *time.Time `json:"timestamp"`
+	Line      string     `json:"line"`
+}
+
+type GetLogResponse struct {
+	ContinueTime *time.Time `json:"continue_time"`
+	Logs         []LogLine  `json:"logs"`
 }

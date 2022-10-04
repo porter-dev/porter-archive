@@ -232,13 +232,13 @@ class ClusterDashboard extends Component<PropsType, StateType> {
           </FilterWrapper>
           <Flex>
             <ToggleButton>
-              <ToggleOption 
-                onClick={() => this.setState({ showRuns: false})}
+              <ToggleOption
+                onClick={() => this.setState({ showRuns: false })}
                 selected={!this.state.showRuns}
               >
                 Jobs
               </ToggleOption>
-              <ToggleOption 
+              <ToggleOption
                 nudgeLeft
                 onClick={() => this.setState({ showRuns: true })}
                 selected={this.state.showRuns}
@@ -348,15 +348,16 @@ ClusterDashboard.contextType = Context;
 
 export default withRouter(withAuth(ClusterDashboard));
 
-const ToggleOption = styled.div<{ selected: boolean, nudgeLeft?: boolean }>`
+const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
   padding: 0 10px;
-  color: ${props => props.selected ? "" : "#494b4f"};
+  color: ${(props) => (props.selected ? "" : "#494b4f")};
   border: 1px solid #494b4f;
   height: 100%;
   display: flex;
-  margin-left: ${props => props.nudgeLeft ? "-1px" : ""};
+  margin-left: ${(props) => (props.nudgeLeft ? "-1px" : "")};
   align-items: center;
-  border-radius: ${props => props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
+  border-radius: ${(props) =>
+    props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
   :hover {
     border: 1px solid #7a7b80;
     z-index: 999;

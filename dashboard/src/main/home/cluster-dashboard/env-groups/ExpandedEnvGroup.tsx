@@ -402,6 +402,7 @@ export const ExpandedEnvGroupFC = ({
       default:
         return (
           <EnvGroupSettings
+            namespace={namespace}
             envGroup={currentEnvGroup}
             handleDeleteEnvGroup={handleDeleteEnvGroup}
           />
@@ -515,12 +516,18 @@ const EnvGroupVariablesEditor = ({
 const EnvGroupSettings = ({
   envGroup,
   handleDeleteEnvGroup,
+  namespace,
 }: {
   envGroup: EditableEnvGroup;
   handleDeleteEnvGroup: () => void;
+  namespace?: string;
 }) => {
-  const { setCurrentOverlay } = useContext(Context);
+  const { setCurrentOverlay, currentProject, currentCluster } = useContext(
+    Context
+  );
   const [isAuthorized] = useAuth();
+  const [name, setName] = useState(null);
+  const [cloneNamespace, setCloneNamespace] = useState(null);
 
   const canDelete = useMemo(() => {
     // add a case for when applications is null - in this case this is a deprecated env group version
@@ -530,6 +537,29 @@ const EnvGroupSettings = ({
 
     return envGroup?.applications?.length === 0;
   }, [envGroup]);
+
+  const cloneEnvGroup = async () => {
+    try {
+      await api.cloneEnvGroup(
+        "<token>",
+        {
+          name: envGroup.name,
+          namespace: cloneNamespace,
+          clone_name: name,
+          version: envGroup.version,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: namespace,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    } finally {
+      alert("cloned!");
+    }
+  };
 
   return (
     <TabWrapper>
@@ -573,7 +603,6 @@ const EnvGroupSettings = ({
               applications to delete.
             </Helper>
           )}
-
           <Button
             color="#b91133"
             onClick={() => {
@@ -587,6 +616,26 @@ const EnvGroupSettings = ({
           >
             Delete {envGroup.name}
           </Button>
+
+          <Heading>Clone Environment Group</Heading>
+          <Helper>
+            Clone this set of environment variables into a new env group.
+          </Helper>
+          <InputRow
+            type="string"
+            value={name}
+            setValue={(x: string) => setName(x)}
+            label="Env group name"
+            placeholder="ex: my-cloned-env-group"
+          />
+          <InputRow
+            type="string"
+            value={cloneNamespace}
+            setValue={(x: string) => setCloneNamespace(x)}
+            label="Env group namespace"
+            placeholder="ex: default"
+          />
+          <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
         </InnerWrapper>
       )}
     </TabWrapper>

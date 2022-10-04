@@ -10,6 +10,7 @@ type Props = {
   selected: any;
   setSelected: any;
   noMargin?: boolean;
+  dropdownAlignRight?: boolean;
 };
 
 const RadioFilter: React.FC<Props> = (props) => {
@@ -50,7 +51,7 @@ const RadioFilter: React.FC<Props> = (props) => {
     let { options } = props;
     if (expanded) {
       return (
-        <DropdownWrapper>
+        <DropdownWrapper dropdownAlignRight={props.dropdownAlignRight}>
           <Dropdown ref={wrapperRef}>
             {options?.length > 0 ? (
               <ScrollableWrapper>
@@ -205,10 +206,10 @@ const Relative = styled.div`
   position: relative;
 `;
 
-const DropdownWrapper = styled.div`
+const DropdownWrapper = styled.div<{ dropdownAlignRight?: boolean }>`
   position: absolute;
-  width: 100%;
-  right: 0;
+  left: ${(props) => (props.dropdownAlignRight ? "" : "0")};
+  right: ${(props) => (props.dropdownAlignRight ? "0" : "")};
   z-index: 1;
   top: calc(100% + 5px);
 `;

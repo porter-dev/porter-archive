@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 
-	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -28,18 +26,30 @@ func ListIncidents(
 	service *v1.Service,
 	req *types.ListIncidentsRequest,
 ) (*types.ListIncidentsResponse, error) {
-	vals := make(map[string][]string)
-	err := schema.NewEncoder().Encode(req, vals)
+	vals := make(map[string]string)
 
-	urlVals := url.Values(vals)
-	encodedURLVals := urlVals.Encode()
+	if req.Status != nil {
+		vals["status"] = string(*req.Status)
+	}
+
+	if req.ReleaseName != nil {
+		vals["release_name"] = *req.ReleaseName
+	}
+
+	if req.ReleaseNamespace != nil {
+		vals["release_namespace"] = *req.ReleaseNamespace
+	}
+
+	if req.PaginationRequest != nil {
+		vals["page"] = fmt.Sprintf("%d", req.PaginationRequest.Page)
+	}
 
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,
 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		fmt.Sprintf("/incidents?%s", encodedURLVals),
-		nil,
+		"/incidents",
+		vals,
 	)
 
 	rawQuery, err := resp.DoRaw(context.Background())
@@ -90,18 +100,29 @@ func ListIncidentEvents(
 	incidentID string,
 	req *types.ListIncidentEventsRequest,
 ) (*types.ListIncidentEventsResponse, error) {
-	vals := make(map[string][]string)
-	err := schema.NewEncoder().Encode(req, vals)
+	vals := make(map[string]string)
 
-	urlVals := url.Values(vals)
-	encodedURLVals := urlVals.Encode()
+	if req.PodName != nil {
+		vals["pod_name"] = *req.PodName
+	}
+
+	if req.PodNamespace != nil {
+		vals["pod_namespace"] = *req.PodNamespace
+	}
+
+	if req.Summary != nil {
+		vals["summary"] = *req.Summary
+	}
+	if req.PaginationRequest != nil {
+		vals["page"] = fmt.Sprintf("%d", req.PaginationRequest.Page)
+	}
 
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,
 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		fmt.Sprintf("/incidents/%s/events?%s", incidentID, encodedURLVals),
-		nil,
+		fmt.Sprintf("/incidents/%s/events", incidentID),
+		vals,
 	)
 
 	rawQuery, err := resp.DoRaw(context.Background())

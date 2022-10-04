@@ -38,9 +38,9 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	incidentID := request.IncidentID
-	releaseName := request.ReleaseName
-	namespace := request.Namespace
+	// incidentID := request.IncidentID
+	// releaseName := request.ReleaseName
+	// namespace := request.Namespace
 
 	agent, err := c.GetAgent(r, cluster, "")
 
@@ -57,31 +57,31 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if incidentID != "" {
-		events, err := porter_agent.GetIncidentEventsByID(agent.Clientset, agentSvc, incidentID)
+	// if incidentID != "" {
+	// 	events, err := porter_agent.GetIncidentEventsByID(agent.Clientset, agentSvc, incidentID)
 
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
+	// 	if err != nil {
+	// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	// 		return
+	// 	}
 
-		c.WriteResult(w, r, events)
-		return
-	} else if releaseName != "" {
-		if namespace == "" {
-			namespace = "default"
-		}
+	// 	c.WriteResult(w, r, events)
+	// 	return
+	// } else if releaseName != "" {
+	// 	if namespace == "" {
+	// 		namespace = "default"
+	// 	}
 
-		incidents, err := porter_agent.GetIncidentsByReleaseNamespace(agent.Clientset, agentSvc, releaseName, namespace)
+	// 	incidents, err := porter_agent.GetIncidentsByReleaseNamespace(agent.Clientset, agentSvc, releaseName, namespace)
 
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
+	// 	if err != nil {
+	// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	// 		return
+	// 	}
 
-		c.WriteResult(w, r, incidents)
-		return
-	}
+	// 	c.WriteResult(w, r, incidents)
+	// 	return
+	// }
 
 	incidents, err := porter_agent.GetAllIncidents(agent.Clientset, agentSvc)
 

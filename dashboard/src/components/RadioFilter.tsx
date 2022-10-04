@@ -9,6 +9,7 @@ type Props = {
   options: { value: any; label: string }[];
   selected: any;
   setSelected: any;
+  noMargin?: boolean;
 };
 
 const RadioFilter: React.FC<Props> = (props) => {
@@ -80,6 +81,7 @@ const RadioFilter: React.FC<Props> = (props) => {
       <StyledRadioFilter
         onClick={() => setExpanded(!expanded)}
         ref={parentRef}
+        noMargin={props.noMargin}
       >
         {props.icon && <FilterIcon src={props.icon} />}
         {props.name}
@@ -230,7 +232,7 @@ const FilterIcon = styled.img`
   margin-right: 9px;
 `;
 
-const StyledRadioFilter = styled.div`
+const StyledRadioFilter = styled.div<{ noMargin?: boolean }>`
   height: 30px;
   font-size: 13px;
   position: relative;
@@ -239,7 +241,7 @@ const StyledRadioFilter = styled.div`
   border-radius: 5px;
   display: flex;
   align-items: center;
-  margin-right: 10px;
+  margin-right: ${props => props.noMargin ? "" : "10px"};
   cursor: pointer;
   border: 1px solid #494b4f;
   :hover {

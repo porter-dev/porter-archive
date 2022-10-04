@@ -49,10 +49,11 @@ export default class SortSelector extends Component<PropsType, StateType> {
       <StyledSortSelector>
         <RadioFilter
           selected={this.props.sortType}
-          setSelected={(sortType) => this.props.setSortType(sortType)}
+          setSelected={(sortType: any) => this.props.setSortType(sortType)}
           options={this.getSortOptions()}
           name="Sort"
           icon={sort}
+          noMargin
         />
       </StyledSortSelector>
     );

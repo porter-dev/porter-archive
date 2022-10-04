@@ -176,6 +176,7 @@ const ControlRow = styled.div`
 
 const Button = styled.div`
   display: flex;
+  margin-left: 10px;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;

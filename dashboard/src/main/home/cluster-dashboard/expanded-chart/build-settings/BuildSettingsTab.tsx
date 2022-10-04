@@ -329,7 +329,7 @@ const BuildSettingsTab: React.FC<Props> = ({
           </AlertCardAction>
         </AlertCard>
       ) : null} */}
-        <Heading isAtTop>Build Environment Variables</Heading>
+        <Heading isAtTop>Build environment variables</Heading>
         <KeyValueArray
           values={envVariables}
           envLoader
@@ -342,7 +342,7 @@ const BuildSettingsTab: React.FC<Props> = ({
           }}
         ></KeyValueArray>
 
-        <Heading>Select Default Branch</Heading>
+        <Heading>Select default branch</Heading>
         <Helper>
           Change the default branch the deployments will be made from.
         </Helper>

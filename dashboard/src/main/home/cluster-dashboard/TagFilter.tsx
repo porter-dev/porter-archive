@@ -1,8 +1,10 @@
-import Selector from "components/Selector";
+import RadioFilter from "components/RadioFilter";
 import React, { useContext, useEffect, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import styled from "styled-components";
+
+import tag from "assets/tag.svg";
 
 const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -30,24 +32,18 @@ const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
   }, [selectedTag]);
 
   return (
-    <StyledTagSelector>
-      <Label>
-        <i className="material-icons">tag</i>
-        Tag
-      </Label>
-      <Selector
-        activeValue={selectedTag}
-        options={[{ label: "No tag selected", value: "none" }].concat(
-          tags.map((tag) => ({
-            value: tag.name,
-            label: tag.name,
-          }))
-        )}
-        setActiveValue={(newVal) => setSelectedTag(newVal)}
-        width={"150px"}
-        dropdownWidth="fit-content"
-      />
-    </StyledTagSelector>
+    <RadioFilter
+      selected={selectedTag}
+      options={[{ label: "All", value: "none" }].concat(
+        tags.map((tag) => ({
+          value: tag.name,
+          label: tag.name,
+        }))
+      )}
+      setSelected={(newVal: any) => setSelectedTag(newVal)}
+      name="Tag"
+      icon={tag}
+    />
   );
 };
 

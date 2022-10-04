@@ -3,10 +3,9 @@ import styled from "styled-components";
 
 export const Card = {
   Grid: styled.div`
-    margin-top: 32px;
     margin-bottom: 32px;
     display: grid;
-    grid-row-gap: 25px;
+    grid-row-gap: 15px;
   `,
   Wrapper: styled.div<{ variant?: "clickable" | "unclickable" }>`
     display: flex;
@@ -17,7 +16,7 @@ export const Card = {
     padding-left: 14px;
     align-items: center;
     border-radius: 5px;
-    background: #262a30;
+    background: #26292e;
     border: 1px solid #494b4f;
 
     ${(props) => {

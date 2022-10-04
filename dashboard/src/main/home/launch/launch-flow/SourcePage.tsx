@@ -417,7 +417,7 @@ const Block = styled.div<{ disabled?: boolean }>`
   position: relative;
 
   border-radius: 5px;
-  background: #262a30;
+  background: #26292e;
   border: 1px solid #494b4f;
   :hover {
   }

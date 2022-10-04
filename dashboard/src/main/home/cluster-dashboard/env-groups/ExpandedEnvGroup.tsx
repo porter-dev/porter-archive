@@ -518,11 +518,13 @@ const EnvGroupSettings = ({
   handleDeleteEnvGroup,
   namespace,
 }: {
-  envGroup: EditableEnvGroup ;
+  envGroup: EditableEnvGroup;
   handleDeleteEnvGroup: () => void;
   namespace?: string;
 }) => {
-  const { setCurrentOverlay, currentProject, currentCluster } = useContext(Context);
+  const { setCurrentOverlay, currentProject, currentCluster } = useContext(
+    Context
+  );
   const [isAuthorized] = useAuth();
   const [name, setName] = useState(null);
   const [cloneNamespace, setCloneNamespace] = useState(null);
@@ -551,11 +553,11 @@ const EnvGroupSettings = ({
           cluster_id: currentCluster.id,
           namespace: namespace,
         }
-      )
+      );
     } catch (error) {
       console.log(error);
     } finally {
-      alert("cloned!")
+      alert("cloned!");
     }
   };
 
@@ -633,11 +635,7 @@ const EnvGroupSettings = ({
             label="Env group namespace"
             placeholder="ex: default"
           />
-          <Button
-            onClick={cloneEnvGroup}
-          >
-            Clone {envGroup.name}
-          </Button>
+          <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
         </InnerWrapper>
       )}
     </TabWrapper>

@@ -13,34 +13,30 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetIncidentsHandler struct {
+type ListIncidentsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetIncidentsHandler(
+func NewListIncidentsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetIncidentsHandler {
-	return &GetIncidentsHandler{
+) *ListIncidentsHandler {
+	return &ListIncidentsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *ListIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.GetIncidentsRequest{}
+	request := &types.ListIncidentsRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
-
-	// incidentID := request.IncidentID
-	// releaseName := request.ReleaseName
-	// namespace := request.Namespace
 
 	agent, err := c.GetAgent(r, cluster, "")
 
@@ -57,33 +53,7 @@ func (c *GetIncidentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// if incidentID != "" {
-	// 	events, err := porter_agent.GetIncidentEventsByID(agent.Clientset, agentSvc, incidentID)
-
-	// 	if err != nil {
-	// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 		return
-	// 	}
-
-	// 	c.WriteResult(w, r, events)
-	// 	return
-	// } else if releaseName != "" {
-	// 	if namespace == "" {
-	// 		namespace = "default"
-	// 	}
-
-	// 	incidents, err := porter_agent.GetIncidentsByReleaseNamespace(agent.Clientset, agentSvc, releaseName, namespace)
-
-	// 	if err != nil {
-	// 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 		return
-	// 	}
-
-	// 	c.WriteResult(w, r, incidents)
-	// 	return
-	// }
-
-	incidents, err := porter_agent.GetAllIncidents(agent.Clientset, agentSvc)
+	incidents, err := porter_agent.ListIncidents(agent.Clientset, agentSvc, request)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

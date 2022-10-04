@@ -11,7 +11,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/integrations/slack"
-	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -34,7 +33,7 @@ func NewNotifyNewIncidentHandler(
 func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &porter_agent.Incident{}
+	request := &types.Incident{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return

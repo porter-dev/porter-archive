@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/porter-dev/porter/api/types"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -20,10 +21,11 @@ func GetAgentService(clientset kubernetes.Interface) (*v1.Service, error) {
 	)
 }
 
-func GetAllIncidents(
+func ListIncidents(
 	clientset kubernetes.Interface,
 	service *v1.Service,
-) (*ListIncidentsResponse, error) {
+	req *types.ListIncidentsRequest,
+) (*types.ListIncidentsResponse, error) {
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,
@@ -37,7 +39,7 @@ func GetAllIncidents(
 		return nil, err
 	}
 
-	incidentsResp := &ListIncidentsResponse{}
+	incidentsResp := &types.ListIncidentsResponse{}
 
 	err = json.Unmarshal(rawQuery, incidentsResp)
 	if err != nil {
@@ -47,66 +49,37 @@ func GetAllIncidents(
 	return incidentsResp, nil
 }
 
-// func GetIncidentEventsByID(
+func GetIncidentByID(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	incidentID string,
+) (*types.Incident, error) {
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		fmt.Sprintf("/incidents/%s", incidentID),
+		nil,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	incident := &types.Incident{}
+
+	if err := json.Unmarshal(rawQuery, incident); err != nil {
+		return nil, err
+	}
+
+	return incident, nil
+}
+
+// func GetHistoricalLogs(
 // 	clientset kubernetes.Interface,
 // 	service *v1.Service,
-// 	incidentID string,
-// ) (*EventsResponse, error) {
-// 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
-// 		"http",
-// 		service.Name,
-// 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-// 		fmt.Sprintf("/incidents/%s", incidentID),
-// 		nil,
-// 	)
-
-// 	rawQuery, err := resp.DoRaw(context.Background())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	eventsResp := &EventsResponse{}
-
-// 	err = json.Unmarshal(rawQuery, eventsResp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return eventsResp, nil
-// }
-
-// func GetIncidentsByReleaseNamespace(
-// 	clientset kubernetes.Interface,
-// 	service *v1.Service,
-// 	releaseName, namespace string,
-// ) (*IncidentsResponse, error) {
-// 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
-// 		"http",
-// 		service.Name,
-// 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-// 		fmt.Sprintf("/incidents/namespaces/%s/releases/%s", namespace, releaseName),
-// 		nil,
-// 	)
-
-// 	rawQuery, err := resp.DoRaw(context.Background())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	incidentsResp := &IncidentsResponse{}
-
-// 	err = json.Unmarshal(rawQuery, incidentsResp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return incidentsResp, nil
-// }
-
-// func GetLogs(
-// 	clientset kubernetes.Interface,
-// 	service *v1.Service,
-// 	logID string,
+// 	req *GetLogRequest,
 // ) (*LogsResponse, error) {
 // 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 // 		"http",

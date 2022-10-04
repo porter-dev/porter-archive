@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/porter-dev/porter/api/types"
-	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -24,7 +23,7 @@ func NewIncidentsNotifier(conf *types.NotificationConfig, slackInts ...*integrat
 	}
 }
 
-func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url string) error {
+func (s *IncidentsNotifier) NotifyNew(incident *types.Incident, url string) error {
 	res := []*SlackBlock{}
 
 	topSectionMarkdwn := fmt.Sprintf(
@@ -75,7 +74,7 @@ func (s *IncidentsNotifier) NotifyNew(incident *porter_agent.Incident, url strin
 	return nil
 }
 
-func (s *IncidentsNotifier) NotifyResolved(incident *porter_agent.Incident, url string) error {
+func (s *IncidentsNotifier) NotifyResolved(incident *types.Incident, url string) error {
 	res := []*SlackBlock{}
 
 	createdAt := incident.CreatedAt

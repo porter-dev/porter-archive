@@ -1156,7 +1156,7 @@ func getClusterRoutes(
 	})
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents -> cluster.NewGetIncidentsHandler
-	getIncidentsEndpoint := factory.NewAPIEndpoint(
+	listIncidentsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
@@ -1172,45 +1172,15 @@ func getClusterRoutes(
 		},
 	)
 
-	getIncidentsHandler := cluster.NewGetIncidentsHandler(
+	getIncidentsHandler := cluster.NewListIncidentsHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getIncidentsEndpoint,
+		Endpoint: listIncidentsEndpoint,
 		Handler:  getIncidentsHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/logs -> cluster.NewGetIncidentsHandler
-	getIncidentEventLogsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/incidents/logs",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-			IsWebsocket: true,
-		},
-	)
-
-	getIncidentEventLogsHandler := cluster.NewGetIncidentEventLogsHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getIncidentEventLogsEndpoint,
-		Handler:  getIncidentEventLogsHandler,
 		Router:   r,
 	})
 

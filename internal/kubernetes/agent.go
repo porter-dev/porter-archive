@@ -1804,7 +1804,7 @@ func (a *Agent) StreamPorterAgentLokiLog(
 
 			defer wg.Done()
 
-			podList, err := a.Clientset.CoreV1().Pods("monitoring").List(context.Background(), metav1.ListOptions{
+			podList, err := a.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), metav1.ListOptions{
 				LabelSelector: "", // FIXME: add label selector for porter agent deployment
 			})
 

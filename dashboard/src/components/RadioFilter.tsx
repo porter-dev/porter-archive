@@ -60,7 +60,10 @@ const RadioFilter: React.FC<Props> = (props) => {
                     return (
                       <OptionRow
                         isLast={i === options.length - 1}
-                        onClick={() => props.setSelected(option.value)}
+                        onClick={() => {
+                          props.setSelected(option.value);
+                          setExpanded(false);
+                        }}
                         key={i}
                         selected={props.selected === option.value}
                       >

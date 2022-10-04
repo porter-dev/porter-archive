@@ -22,12 +22,16 @@ const arraysEqual = (a: any, b: any) => {
     if (a[i] !== b[i]) return false;
   }
   return true;
-}
+};
 
 const CheckboxList = ({ label, options, selected, setSelected }: PropsType) => {
   let onSelectOption = (option: { value: any; label: string }) => {
     const tmp = [...selected];
-    if (tmp.filter(e => e.value === option.value || arraysEqual(e.value, option.value)).length === 0) {
+    if (
+      tmp.filter(
+        (e) => e.value === option.value || arraysEqual(e.value, option.value)
+      ).length === 0
+    ) {
       setSelected([...tmp, option]);
     } else {
       tmp.forEach((x, i) => {
@@ -49,7 +53,15 @@ const CheckboxList = ({ label, options, selected, setSelected }: PropsType) => {
             onClick={() => onSelectOption(option)}
             key={i}
           >
-            <Checkbox checked={selected.filter(e => e.value === option.value || arraysEqual(e.value, option.value)).length > 0}>
+            <Checkbox
+              checked={
+                selected.filter(
+                  (e) =>
+                    e.value === option.value ||
+                    arraysEqual(e.value, option.value)
+                ).length > 0
+              }
+            >
               <i className="material-icons">done</i>
             </Checkbox>
             <Text>{option.label}</Text>

@@ -54,18 +54,20 @@ const RadioFilter: React.FC<Props> = (props) => {
           <Dropdown ref={wrapperRef}>
             {options?.length > 0 ? (
               <ScrollableWrapper>
-                {options.map((option: { value: any; label: string }, i: number) => {
-                  return (
-                    <OptionRow
-                      isLast={i === options.length - 1}
-                      onClick={() => props.setSelected(option.value)}
-                      key={i}
-                      selected={props.selected === option.value}
-                    >
-                      <Text>{option.label}</Text>
-                    </OptionRow>
-                  );
-                })}
+                {options.map(
+                  (option: { value: any; label: string }, i: number) => {
+                    return (
+                      <OptionRow
+                        isLast={i === options.length - 1}
+                        onClick={() => props.setSelected(option.value)}
+                        key={i}
+                        selected={props.selected === option.value}
+                      >
+                        <Text>{option.label}</Text>
+                      </OptionRow>
+                    );
+                  }
+                )}
               </ScrollableWrapper>
             ) : (
               <Placeholder>No options found</Placeholder>
@@ -87,11 +89,11 @@ const RadioFilter: React.FC<Props> = (props) => {
         {props.name}
         <Bar />
         <Selected>
-          {
-            props.selected ? (
-              props.selected === "" ? "All" : getLabel(props.selected)
-            ) : ""
-          }
+          {props.selected
+            ? props.selected === ""
+              ? "All"
+              : getLabel(props.selected)
+            : ""}
         </Selected>
         <DropdownIcon src={arrow} />
       </StyledRadioFilter>
@@ -125,7 +127,7 @@ const Text = styled.div`
   margin-right: 10px;
 `;
 
-const OptionRow = styled.div<{ isLast: boolean, selected?: boolean }>`
+const OptionRow = styled.div<{ isLast: boolean; selected?: boolean }>`
   width: 100%;
   height: 35px;
   padding-left: 10px;
@@ -133,7 +135,7 @@ const OptionRow = styled.div<{ isLast: boolean, selected?: boolean }>`
   cursor: pointer;
   align-items: center;
   font-size: 13px;
-  background: ${props => props.selected ? "#ffffff11" : ""};
+  background: ${(props) => (props.selected ? "#ffffff11" : "")};
 
   :hover {
     background: #ffffff18;
@@ -241,7 +243,7 @@ const StyledRadioFilter = styled.div<{ noMargin?: boolean }>`
   border-radius: 5px;
   display: flex;
   align-items: center;
-  margin-right: ${props => props.noMargin ? "" : "10px"};
+  margin-right: ${(props) => (props.noMargin ? "" : "10px")};
   cursor: pointer;
   border: 1px solid #494b4f;
   :hover {

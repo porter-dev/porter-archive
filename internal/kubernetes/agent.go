@@ -1755,7 +1755,12 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 	return a.RunWebsocketTask(run)
 }
 
-func (a *Agent) StreamPorterAgentLokiLog(logID string, rw *websocket.WebsocketSafeReadWriter) error {
+func (a *Agent) StreamPorterAgentLokiLog(
+	labels []string,
+	startTime string,
+	limit uint32,
+	rw *websocket.WebsocketSafeReadWriter,
+) error {
 	run := func() error {
 		errorchan := make(chan error)
 
@@ -1830,15 +1835,26 @@ func (a *Agent) StreamPorterAgentLokiLog(logID string, rw *websocket.WebsocketSa
 				Namespace(pod.Namespace).
 				SubResource("exec")
 
+			cmd := []string{
+				"sh",
+				"-c",
+				"/porter/agent-cli",
+				"--start",
+				startTime,
+			}
+
+			for _, label := range labels {
+				cmd = append(cmd, "--label", label)
+			}
+
+			if limit > 0 {
+				cmd = append(cmd, "--limit", fmt.Sprintf("%d", limit))
+			}
+
 			opts := &v1.PodExecOptions{
-				Command: []string{
-					"sh",
-					"-c",
-					"/porter/agent-cli",
-					logID,
-				},
-				Stdout: true,
-				Stderr: true,
+				Command: cmd,
+				Stdout:  true,
+				Stderr:  true,
 			}
 
 			req.VersionedParams(

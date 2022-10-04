@@ -1,7 +1,10 @@
 package cluster
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -46,7 +49,27 @@ func (c *GetIncidentEventLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err = k8sAgent.StreamPorterAgentLokiLog(request.LogID, safeRW)
+	if len(request.Labels) == 0 {
+		return
+	}
+
+	// validate that the labels are valid
+	for _, label := range request.Labels {
+		if key, val, found := strings.Cut(label, "="); !found || key == "" || val == "" {
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid label: %s", label),
+				http.StatusBadRequest))
+			return
+		}
+	}
+
+	// validate start time
+	if _, err := time.Parse(time.RFC3339, request.StartTime); err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("invalid start time: %s", request.StartTime),
+			http.StatusBadRequest))
+		return
+	}
+
+	err = k8sAgent.StreamPorterAgentLokiLog(request.Labels, request.StartTime, request.Limit, safeRW)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

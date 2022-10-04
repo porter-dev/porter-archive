@@ -410,7 +410,7 @@ tabs:
   - name: env_vars
     contents:
     - type: heading
-      label: Environment Variables
+      label: Environment variables
     - type: subtitle
       label: Set environment variables for your secrets and environment-specific configuration.
     - type: env-key-value-array

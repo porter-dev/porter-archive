@@ -50,15 +50,16 @@ const Dashboard = () => {
           <RadioFilter
             selected={currentSort}
             noMargin
+            dropdownAlignRight={true}
             setSelected={(sortType: any) => setCurrentSort(sortType as any)}
             options={[
               {
                 value: "created_at",
-                label: "Created At",
+                label: "Created at",
               },
               {
                 value: "updated_at",
-                label: "Last Updated",
+                label: "Last updated",
               },
               {
                 value: "alphabetical",

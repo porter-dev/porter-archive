@@ -497,7 +497,7 @@ const StyledJob = styled.div`
   margin-bottom: 20px;
   overflow: hidden;
   border-radius: 5px;
-  background: #262a30;
+  background: #26292e;
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

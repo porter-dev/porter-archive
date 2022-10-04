@@ -121,7 +121,7 @@ const Input = styled.input<{ disabled: boolean; width: string }>`
   font-size: 13px;
   background: #ffffff11;
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
-  width: ${(props) => (props.width ? props.width : "270px")};
+  width: ${(props) => (props.width ? props.width : "100%")};
   color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
   padding: 5px 10px;
   height: 35px;

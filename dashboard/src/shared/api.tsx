@@ -1384,6 +1384,22 @@ const createEnvGroup = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/create`;
 });
 
+const cloneEnvGroup = baseApi<
+  {
+    name: string;
+    namespace: string;
+    clone_name: string;
+    version: number;
+  },
+  {
+    id: number;
+    namespace: string;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/envgroup/clone`;
+});
+
 const updateEnvGroup = baseApi<
   {
     name: string;
@@ -2324,6 +2340,7 @@ export default {
   getLogBucketLogs,
   getCanCreateProject,
   createEnvGroup,
+  cloneEnvGroup,
   updateEnvGroup,
   listEnvGroups,
   getEnvGroup,

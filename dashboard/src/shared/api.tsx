@@ -2005,6 +2005,41 @@ const getGitlabFolderContent = baseApi<
     `/api/projects/${project_id}/integrations/gitlab/${integration_id}/repos/${repo_owner}/${repo_name}/${branch}/contents`
 );
 
+const getLogPodValues = baseApi<
+  {
+    match_prefix?: string;
+    start_range?: string;
+    end_range?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/logs/pod_values`
+);
+
+const getLogs = baseApi<
+  {
+    limit?: number;
+    start_range?: string;
+    end_range?: string;
+    pod_selector: string;
+    namespace: string;
+    search_param?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/logs`
+);
+
 // STACKS
 
 const createStack = baseApi<
@@ -2367,6 +2402,8 @@ export default {
   getGitlabRepos,
   getGitlabBranches,
   getGitlabFolderContent,
+  getLogPodValues,
+  getLogs,
 
   // STACKS
   listStacks,

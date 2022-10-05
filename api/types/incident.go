@@ -97,6 +97,7 @@ type GetLogRequest struct {
 	Limit       uint       `schema:"limit"`
 	StartRange  *time.Time `schema:"start_range"`
 	EndRange    *time.Time `schema:"end_range"`
+	SearchParam string     `schema:"search_param"`
 	PodSelector string     `schema:"pod_selector" form:"required"`
 	Namespace   string     `schema:"namespace" form:"required"`
 }

@@ -57,7 +57,8 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	// detect the version of the agent which is installed
 	res := &types.GetAgentResponse{
-		Version: getAgentVersionFromDeployment(depl),
+		Version:       getAgentVersionFromDeployment(depl),
+		ShouldUpgrade: false,
 	}
 
 	res.LatestVersion, err = getLatestAgentVersion(c.Config().ServerConf.DefaultAddonHelmRepoURL)
@@ -67,22 +68,24 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	versionSem, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(res.Version, "v")))
+	if res.LatestVersion != res.Version {
+		versionSem, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(res.Version, "v")))
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 
-	latestVersionSem, err := semver.NewVersion(strings.TrimPrefix(res.LatestVersion, "v"))
+		latestVersionSem, err := semver.NewVersion(strings.TrimPrefix(res.LatestVersion, "v"))
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 
-	if versionSem.Check(latestVersionSem) {
-		res.ShouldUpgrade = true
+		if versionSem.Check(latestVersionSem) {
+			res.ShouldUpgrade = true
+		}
 	}
 
 	c.WriteResult(w, r, res)

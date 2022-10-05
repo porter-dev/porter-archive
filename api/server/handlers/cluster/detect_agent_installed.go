@@ -87,6 +87,9 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	res.Version = "v" + strings.TrimPrefix(res.Version, "v")
+	res.LatestVersion = "v" + strings.TrimPrefix(res.LatestVersion, "v")
+
 	c.WriteResult(w, r, res)
 }
 

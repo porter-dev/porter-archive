@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
 
 import filterOutline from "assets/filter-outline.svg";
 import downArrow from "assets/down-arrow.svg";
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { useLogs } from "./useAgentLogs";
+import Anser from "anser";
+import { flatMap } from "lodash";
 
 type Props = {
   currentChart?: any;
@@ -12,17 +17,59 @@ type Props = {
   setIsFullscreen: (x: boolean) => void;
 };
 
-const LogsSection: React.FC<Props> = ({ 
+const LogsSection: React.FC<Props> = ({
   currentChart,
   isFullscreen,
-  setIsFullscreen
+  setIsFullscreen,
 }) => {
-  const [podFilter, setPodFilter] = useState("pod-a");
+  const { currentProject, currentCluster } = useContext(Context);
+  const [podFilter, setPodFilter] = useState();
+  const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
   const [scrollToBottom, setScrollToBottom] = useState(true);
 
+  // TODO: don't hardcode namespace
+  const { logs, refresh } = useLogs(podFilter, currentChart.namespace);
+
   useEffect(() => {
+    api
+      .getLogPodValues(
+        "<TOKEN>",
+        {
+          match_prefix: currentChart.name,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then((res) => {
+        console.log(res.data);
+        setPodFilterOpts(res.data);
+        setPodFilter(res.data[0]);
+      });
+
     console.log(currentChart);
   }, []);
+
+  const renderLogs = () => {
+    return logs?.map((log, i) => {
+      return (
+        <Log key={i}>
+          {log.map((ansi, j) => {
+            if (ansi.clearLine) {
+              return null;
+            }
+
+            return (
+              <LogSpan key={i + "." + j} ansi={ansi}>
+                {ansi.content.replace(/ /g, "\u00a0")}
+              </LogSpan>
+            );
+          })}
+        </Log>
+      );
+    });
+  };
 
   const renderContents = () => {
     return (
@@ -34,12 +81,8 @@ const LogsSection: React.FC<Props> = ({
                 <i className="material-icons">search</i>
                 <SearchInput
                   value=""
-                  onChange={(e: any) => {
-
-                  }}
-                  onKeyPress={({ key }) => {
-
-                  }}
+                  onChange={(e: any) => {}}
+                  onKeyPress={({ key }) => {}}
                   placeholder="Search logs . . ."
                 />
               </SearchBarWrapper>
@@ -48,24 +91,12 @@ const LogsSection: React.FC<Props> = ({
               icon={filterOutline}
               selected={podFilter}
               setSelected={setPodFilter}
-              options={[
-                {
-                  value: 'pod-a',
-                  label: 'Pod A'
-                },
-                {
-                  value: 'pod-b',
-                  label: 'Pod B'
-                },
-                {
-                  value: 'pod-c',
-                  label: 'Pod C'
-                },
-                {
-                  value: 'pod-d',
-                  label: 'Pod D'
-                },
-              ]}
+              options={podFilterOpts?.map((name) => {
+                return {
+                  value: name,
+                  label: name,
+                };
+              })}
               name="Filter logs"
             />
           </Flex>
@@ -81,50 +112,46 @@ const LogsSection: React.FC<Props> = ({
               <i className="material-icons">autorenew</i>
               Refresh
             </Button>
-            {
-              !isFullscreen && (
-                <>
-                  <Spacer />
-                  <Icon onClick={() => setIsFullscreen(true)}>
-                    <i className="material-icons">open_in_full</i>
-                  </Icon>
-                </>
-              )
-            }
+            {!isFullscreen && (
+              <>
+                <Spacer />
+                <Icon onClick={() => setIsFullscreen(true)}>
+                  <i className="material-icons">open_in_full</i>
+                </Icon>
+              </>
+            )}
           </Flex>
         </FlexRow>
         <StyledLogsSection isFullscreen={isFullscreen}>
-          <Message>
+          {renderLogs()}
+          {/* <Message>
+            
             No matching logs found.
             <Highlight onClick={() => {}}>
               <i className="material-icons">autorenew</i>
               Refresh
             </Highlight>
-          </Message>
+          </Message> */}
         </StyledLogsSection>
       </>
     );
-  }
+  };
 
   return (
     <>
-      {
-        isFullscreen ? (
-          <Fullscreen>
-            <AbsoluteTitle>
-              <BackButton onClick={() => setIsFullscreen(false)}>
-                <i className="material-icons">navigate_before</i>
-              </BackButton>
-              Logs ({currentChart.name})
-            </AbsoluteTitle>
-            {renderContents()}
-          </Fullscreen>
-        ) : (
-          <>
-            {renderContents()}
-          </>
-        )
-      }
+      {isFullscreen ? (
+        <Fullscreen>
+          <AbsoluteTitle>
+            <BackButton onClick={() => setIsFullscreen(false)}>
+              <i className="material-icons">navigate_before</i>
+            </BackButton>
+            Logs ({currentChart.name})
+          </AbsoluteTitle>
+          {renderContents()}
+        </Fullscreen>
+      ) : (
+        <>{renderContents()}</>
+      )}
     </>
   );
 };
@@ -278,8 +305,8 @@ const FlexRow = styled.div<{ isFullscreen?: boolean }>`
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  margin-top: ${props => props.isFullscreen ? "10px" : ""};
-  padding: ${props => props.isFullscreen ? "0 20px" : ""};
+  margin-top: ${(props) => (props.isFullscreen ? "10px" : "")};
+  padding: ${(props) => (props.isFullscreen ? "0 20px" : "")};
 `;
 
 const SearchBarWrapper = styled.div`
@@ -310,7 +337,7 @@ const SearchRow = styled.div`
   align-items: center;
   height: 30px;
   margin-right: 15px;
-  background: #26292E;
+  background: #26292e;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
 `;
@@ -323,19 +350,22 @@ const SearchRowWrapper = styled(SearchRow)`
 const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
   width: 100%;
   min-height: 400px;
-  height: ${props => props.isFullscreen ? "calc(100vh - 125px)" : "calc(100vh - 460px)"};
+  height: ${(props) =>
+    props.isFullscreen ? "calc(100vh - 125px)" : "calc(100vh - 460px)"};
   display: flex;
   flex-direction: column;
   position: relative;
   font-size: 13px;
-  border-radius: ${props => props.isFullscreen ? "" : "8px"};
-  border: ${props => props.isFullscreen ? "" : "1px solid #ffffff33"};
-  border-top: ${props => props.isFullscreen ? "1px solid #ffffff33" : ""};
+  border-radius: ${(props) => (props.isFullscreen ? "" : "8px")};
+  border: ${(props) => (props.isFullscreen ? "" : "1px solid #ffffff33")};
+  border-top: ${(props) => (props.isFullscreen ? "1px solid #ffffff33" : "")};
   padding: 18px 22px;
   background: #121318;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
+  overflow-y: auto;
+  overflow-wrap: break-word;
   @keyframes floatIn {
     from {
       opacity: 0;
@@ -346,4 +376,20 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
       transform: translateY(0px);
     }
   }
+`;
+
+const Log = styled.div`
+  font-family: monospace;
+  user-select: text;
+`;
+
+const LogSpan = styled.span`
+  font-family: monospace, sans-serif;
+  font-size: 12px;
+  font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.decoration && props.ansi?.decoration == "bold" ? "700" : "400"};
+  color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
+  background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
+    props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
 `;

@@ -1758,6 +1758,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 func (a *Agent) StreamPorterAgentLokiLog(
 	labels []string,
 	startTime string,
+	searchParam string,
 	limit uint32,
 	rw *websocket.WebsocketSafeReadWriter,
 ) error {
@@ -1805,7 +1806,7 @@ func (a *Agent) StreamPorterAgentLokiLog(
 			defer wg.Done()
 
 			podList, err := a.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), metav1.ListOptions{
-				LabelSelector: "app.kubernetes.io/instance=porter-agent",
+				LabelSelector: "control-plane=controller-manager",
 			})
 
 			if err != nil {
@@ -1835,8 +1836,6 @@ func (a *Agent) StreamPorterAgentLokiLog(
 				SubResource("exec")
 
 			cmd := []string{
-				"sh",
-				"-c",
 				"/porter/agent-cli",
 				"--start",
 				startTime,
@@ -1844,6 +1843,10 @@ func (a *Agent) StreamPorterAgentLokiLog(
 
 			for _, label := range labels {
 				cmd = append(cmd, "--label", label)
+			}
+
+			if searchParam != "" {
+				cmd = append(cmd, "--search", searchParam)
 			}
 
 			if limit > 0 {

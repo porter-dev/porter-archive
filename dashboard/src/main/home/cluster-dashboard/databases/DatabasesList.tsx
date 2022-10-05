@@ -256,7 +256,7 @@ const StyledTableWrapper = styled.div`
   padding: 14px;
   position: relative;
   border-radius: 8px;
-  background: #262a30;
+  background: #26292e;
   border: 1px solid #494b4f;
   width: 100%;
   height: 100%;

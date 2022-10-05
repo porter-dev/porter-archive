@@ -125,7 +125,7 @@ const Button = styled(DynamicLink)`
   font-family: "Work Sans", sans-serif;
   border-radius: 5px;
   color: white;
-  height: 35px;
+  height: 30px;
   padding: 0px 8px;
   padding-bottom: 1px;
   margin-right: 10px;

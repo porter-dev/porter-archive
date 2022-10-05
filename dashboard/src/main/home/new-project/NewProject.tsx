@@ -15,6 +15,7 @@ import { isAlphanumeric } from "shared/common";
 import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
+import WelcomeForm from "./WelcomeForm";
 import { trackCreateNewProject } from "shared/anayltics";
 
 type ValidationError = {
@@ -23,13 +24,17 @@ type ValidationError = {
 };
 
 export const NewProjectFC = () => {
-  const { user, setProjects, setCurrentProject, canCreateProject } = useContext(
-    Context
-  );
+  const {
+    user,
+    setProjects,
+    setCurrentProject,
+    canCreateProject,
+    projects,
+    capabilities,
+  } = useContext(Context);
   const { pushFiltered } = useRouting();
   const [buttonStatus, setButtonStatus] = useState("");
   const [name, setName] = useState("");
-  const { projects } = useContext(Context);
 
   useEffect(() => {
     if (!canCreateProject) {
@@ -103,61 +108,76 @@ export const NewProjectFC = () => {
     }
   };
 
+  const renderContents = () => {
+    let version = capabilities?.version;
+    if (version !== "production" || user.email === "support@porter.run") {
+      return (
+        <>
+          <FadeWrapper>
+            {!isFirstProject && (
+              <BackButton
+                onClick={() => {
+                  pushFiltered("/dashboard", []);
+                }}
+              >
+                <BackButtonImg src={backArrow} />
+              </BackButton>
+            )}
+            <TitleSection>New project</TitleSection>
+          </FadeWrapper>
+          <FadeWrapper delay="0.7s">
+            <Helper>
+              Project name
+              <Warning highlight={validateProjectName().hasError}>
+                (lowercase letters, numbers, and "-" only)
+              </Warning>
+              <Required>*</Required>
+            </Helper>
+          </FadeWrapper>
+          <SlideWrapper delay="1.2s">
+            <InputWrapper>
+              <ProjectIcon>
+                <ProjectImage src={gradient} />
+                <Letter>
+                  {name ? name.toUpperCase().substring(0, 1) : "-"}
+                </Letter>
+              </ProjectIcon>
+              <InputRow
+                type="string"
+                value={name}
+                setValue={(x: string) => {
+                  setButtonStatus("");
+                  setName(x);
+                }}
+                placeholder="ex: perspective-vortex"
+                width="470px"
+                disabled={buttonStatus === "loading"}
+              />
+            </InputWrapper>
+            <NewProjectSaveButton
+              text="Create project"
+              disabled={false}
+              onClick={createProject}
+              status={buttonStatus}
+              makeFlush={true}
+              clearPosition={true}
+              statusPosition="right"
+              saveText="Creating project..."
+              successText="Project created successfully!"
+            />
+          </SlideWrapper>
+        </>
+      );
+    } else {
+      return <WelcomeForm />;
+    }
+  };
+
   return (
     <Wrapper>
       <StyledNewProject>
         <PageIllustration />
-        <FadeWrapper>
-          {!isFirstProject && (
-            <BackButton
-              onClick={() => {
-                pushFiltered("/dashboard", []);
-              }}
-            >
-              <BackButtonImg src={backArrow} />
-            </BackButton>
-          )}
-          <TitleSection>New project</TitleSection>
-        </FadeWrapper>
-        <FadeWrapper delay="0.7s">
-          <Helper>
-            Project name
-            <Warning highlight={validateProjectName().hasError}>
-              (lowercase letters, numbers, and "-" only)
-            </Warning>
-            <Required>*</Required>
-          </Helper>
-        </FadeWrapper>
-        <SlideWrapper delay="1.2s">
-          <InputWrapper>
-            <ProjectIcon>
-              <ProjectImage src={gradient} />
-              <Letter>{name ? name.toUpperCase().substring(0, 1) : "-"}</Letter>
-            </ProjectIcon>
-            <InputRow
-              type="string"
-              value={name}
-              setValue={(x: string) => {
-                setButtonStatus("");
-                setName(x);
-              }}
-              placeholder="ex: perspective-vortex"
-              width="470px"
-              disabled={buttonStatus === "loading"}
-            />
-          </InputWrapper>
-          <NewProjectSaveButton
-            text="Create project"
-            disabled={false}
-            onClick={createProject}
-            status={buttonStatus}
-            makeFlush={true}
-            clearPosition={true}
-            statusPosition="right"
-            saveText="Creating project..."
-            successText="Project created successfully!"
-          />
-        </SlideWrapper>
+        {renderContents()}
       </StyledNewProject>
     </Wrapper>
   );

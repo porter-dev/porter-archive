@@ -91,7 +91,7 @@ export const ExpandedEnvGroupFC = ({
 
   const tabOptions = useMemo(() => {
     if (!isAuthorized("env_group", "", ["get", "delete"])) {
-      return [{ value: "variables-editor", label: "Environment Variables" }];
+      return [{ value: "variables-editor", label: "Environment variables" }];
     }
 
     if (
@@ -99,21 +99,21 @@ export const ExpandedEnvGroupFC = ({
       currentEnvGroup?.applications?.length
     ) {
       return [
-        { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked Applications" },
+        { value: "variables-editor", label: "Environment variables" },
+        { value: "applications", label: "Linked applications" },
       ];
     }
 
     if (currentEnvGroup?.applications?.length) {
       return [
-        { value: "variables-editor", label: "Environment Variables" },
-        { value: "applications", label: "Linked Applications" },
+        { value: "variables-editor", label: "Environment variables" },
+        { value: "applications", label: "Linked applications" },
         { value: "settings", label: "Settings" },
       ];
     }
 
     return [
-      { value: "variables-editor", label: "Environment Variables" },
+      { value: "variables-editor", label: "Environment variables" },
       { value: "settings", label: "Settings" },
     ];
   }, [currentEnvGroup]);
@@ -402,6 +402,7 @@ export const ExpandedEnvGroupFC = ({
       default:
         return (
           <EnvGroupSettings
+            namespace={namespace}
             envGroup={currentEnvGroup}
             handleDeleteEnvGroup={handleDeleteEnvGroup}
           />
@@ -478,7 +479,7 @@ const EnvGroupVariablesEditor = ({
   return (
     <TabWrapper>
       <InnerWrapper>
-        <Heading>Environment Variables</Heading>
+        <Heading>Environment variables</Heading>
         <Helper>
           Set environment variables for your secrets and environment-specific
           configuration.
@@ -515,12 +516,19 @@ const EnvGroupVariablesEditor = ({
 const EnvGroupSettings = ({
   envGroup,
   handleDeleteEnvGroup,
+  namespace,
 }: {
   envGroup: EditableEnvGroup;
   handleDeleteEnvGroup: () => void;
+  namespace?: string;
 }) => {
-  const { setCurrentOverlay } = useContext(Context);
+  const { setCurrentOverlay, currentProject, currentCluster, setCurrentError } = useContext(
+    Context
+  );
   const [isAuthorized] = useAuth();
+  const [name, setName] = useState(null);
+  const [cloneNamespace, setCloneNamespace] = useState(null);
+  const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const canDelete = useMemo(() => {
     // add a case for when applications is null - in this case this is a deprecated env group version
@@ -530,6 +538,30 @@ const EnvGroupSettings = ({
 
     return envGroup?.applications?.length === 0;
   }, [envGroup]);
+
+  const cloneEnvGroup = async () => {
+    setCloneSuccess(false);
+    try {
+      await api.cloneEnvGroup(
+        "<token>",
+        {
+          name: envGroup.name,
+          namespace: cloneNamespace,
+          clone_name: name,
+          version: envGroup.version,
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: namespace,
+        }
+      );
+      setCloneSuccess(true);
+    } catch (error) {
+      console.log(error);
+      setCurrentError(error);
+    }
+  };
 
   return (
     <TabWrapper>
@@ -561,7 +593,7 @@ const EnvGroupSettings = ({
 
                 <DarkMatter /> */}
 
-          <Heading>Manage Environment Group</Heading>
+          <Heading>Manage environment group</Heading>
           <Helper>
             Permanently delete this set of environment variables. This action
             cannot be undone.
@@ -573,7 +605,6 @@ const EnvGroupSettings = ({
               applications to delete.
             </Helper>
           )}
-
           <Button
             color="#b91133"
             onClick={() => {
@@ -587,6 +618,38 @@ const EnvGroupSettings = ({
           >
             Delete {envGroup.name}
           </Button>
+          <DarkMatter />
+          <Heading>Clone environment group</Heading>
+          <Helper>
+            Clone this set of environment variables into a new env group.
+          </Helper>
+          <InputRow
+            type="string"
+            value={name}
+            setValue={(x: string) => setName(x)}
+            label="New env group name"
+            placeholder="ex: my-cloned-env-group"
+          />
+          <InputRow
+            type="string"
+            value={cloneNamespace}
+            setValue={(x: string) => setCloneNamespace(x)}
+            label="New env group namespace"
+            placeholder="ex: default"
+          />
+          <FlexAlt>
+            <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
+            {
+              cloneSuccess && (
+                <StatusWrapper position="right" successful={true}>
+                  <i className="material-icons">done</i>
+                  <StatusTextWrapper>
+                  Successfully cloned 
+                  </StatusTextWrapper>
+                </StatusWrapper>
+              )
+            }
+          </FlexAlt>
         </InnerWrapper>
       )}
     </TabWrapper>
@@ -631,6 +694,65 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
     </>
   );
 };
+
+const FlexAlt = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+`;
+
+const StatusTextWrapper = styled.p`
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 19px;
+  margin: 0;
+`;
+
+const StatusWrapper = styled.div<{
+  successful: boolean;
+  position: "right" | "left";
+}>`
+  display: flex;
+  align-items: center;
+  max-width: 170px;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #ffffff55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 5px;
+  margin-bottom: 30px;
+  height: 35px;
+  margin-left: 15px;
+
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+    float: left;
+    color: ${(props) => (props.successful ? "#4797ff" : "#fcba03")};
+  }
+
+  animation-fill-mode: forwards;
+
+  @keyframes statusFloatIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const DarkMatter = styled.div`
+  width: 100%;
+  height: 1px;
+  margin-top: -20px;
+`;
 
 const ArrowIcon = styled.img`
   width: 15px;

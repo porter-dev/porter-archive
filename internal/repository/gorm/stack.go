@@ -53,7 +53,8 @@ func (repo *StackRepository) ListStacks(projectID, clusterID uint, namespace str
 	stack_revisions.id IN (
 	  SELECT s2.id FROM (SELECT MAX(stack_revisions.id) id FROM stack_revisions WHERE stack_revisions.stack_id IN (?) GROUP BY stack_revisions.stack_id) s2
 	)
-  `, stackIDs).Find(&revisions).Error; err != nil {
+  `, stackIDs).
+		Find(&revisions).Error; err != nil {
 		return nil, err
 	}
 

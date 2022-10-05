@@ -2,16 +2,22 @@ package cluster
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	v1 "k8s.io/api/apps/v1"
+	"sigs.k8s.io/yaml"
 )
 
 type DetectAgentInstalledHandler struct {
@@ -50,15 +56,73 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	// detect the version of the agent which is installed
-	res := &types.GetAgentResponse{}
+	res := &types.GetAgentResponse{
+		Version: getAgentVersionFromDeployment(depl),
+	}
 
-	versionAnn, ok := depl.ObjectMeta.Annotations["porter.run/agent-major-version"]
+	res.LatestVersion, err = getLatestAgentVersion(c.Config().ServerConf.DefaultAddonHelmRepoURL)
 
-	if !ok {
-		res.Version = "v1"
-	} else {
-		res.Version = versionAnn
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	versionSem, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(res.Version, "v")))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	latestVersionSem, err := semver.NewVersion(strings.TrimPrefix(res.LatestVersion, "v"))
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if versionSem.Check(latestVersionSem) {
+		res.ShouldUpgrade = true
 	}
 
 	c.WriteResult(w, r, res)
+}
+
+func getAgentVersionFromDeployment(depl *v1.Deployment) string {
+	versionAnn, ok := depl.ObjectMeta.Annotations["porter.run/agent-version"]
+
+	if !ok {
+		// fallback to porter agent v2 annotation
+		versionAnn = depl.ObjectMeta.Annotations["porter.run/agent-major-version"]
+	}
+
+	if versionAnn != "" {
+		return versionAnn
+	}
+
+	return "v1"
+}
+
+func getLatestAgentVersion(helmRepoURL string) (string, error) {
+	chart, err := loader.LoadChartPublic(helmRepoURL, "porter-agent", "")
+
+	if err != nil {
+		return "", fmt.Errorf("could not load latest porter-agent chart: %w", err)
+	}
+
+	for _, t := range chart.Templates {
+		if t.Name == "deployment.yaml" {
+			depl := &v1.Deployment{}
+
+			err := yaml.Unmarshal(t.Data, depl)
+
+			if err != nil {
+				return "", fmt.Errorf("could not unmarshal deployment.yaml: %w", err)
+			}
+
+			return getAgentVersionFromDeployment(depl), nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find deployment.yaml in porter-agent chart")
 }

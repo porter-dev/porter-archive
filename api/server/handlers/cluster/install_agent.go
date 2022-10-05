@@ -108,13 +108,19 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			"clusterID": fmt.Sprintf("%d", cluster.ID),
 			"projectID": fmt.Sprintf("%d", proj.ID),
 		},
-	}
-
-	if exists, err := checkIfMonitoringNodeExists(k8sAgent); err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	} else if exists {
-		porterAgentValues["monitoringWorkload"] = true
+		"loki": map[string]interface{}{
+			"nodeSelector": map[string]interface{}{
+				"porter.run/workload-kind": "monitoring",
+			},
+			"tolerations": []map[string]interface{}{
+				{
+					"key":      "porter.run/workload-kind",
+					"operator": "Equal",
+					"value":    "monitoring",
+					"effect":   "NoSchedule",
+				},
+			},
+		},
 	}
 
 	conf := &helm.InstallChartConfig{
@@ -179,20 +185,4 @@ func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent) error {
 	}
 
 	return nil
-}
-
-func checkIfMonitoringNodeExists(k8sAgent *kubernetes.Agent) (bool, error) {
-	nodeList, err := k8sAgent.Clientset.CoreV1().Nodes().List(context.Background(), v1.ListOptions{
-		LabelSelector: monitoringNodeLabel,
-	})
-
-	if err != nil {
-		return false, fmt.Errorf("error listing nodes: %w", err)
-	}
-
-	if len(nodeList.Items) > 0 {
-		return true, nil
-	}
-
-	return false, nil
 }

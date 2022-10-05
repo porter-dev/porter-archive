@@ -196,6 +196,58 @@ func GetHistoricalLogs(
 	return logsResp, nil
 }
 
+func GetPodValues(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	req *types.GetPodValuesRequest,
+) ([]string, error) {
+	vals := make(map[string]string)
+
+	if req.StartRange != nil {
+		startVal, err := req.StartRange.MarshalText()
+
+		if err != nil {
+			return nil, err
+		}
+
+		vals["start_range"] = string(startVal)
+	}
+
+	if req.EndRange != nil {
+		endVal, err := req.EndRange.MarshalText()
+
+		if err != nil {
+			return nil, err
+		}
+
+		vals["end_range"] = string(endVal)
+	}
+
+	vals["match_prefix"] = req.MatchPrefix
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/logs/pod_values",
+		vals,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	valsResp := make([]string, 0)
+
+	err = json.Unmarshal(rawQuery, &valsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return valsResp, nil
+}
+
 func GetHistoricalEvents(
 	clientset kubernetes.Interface,
 	service *v1.Service,

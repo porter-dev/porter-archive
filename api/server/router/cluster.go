@@ -1271,6 +1271,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/logs/pod_values -> cluster.NewGetLogPodValuesHandler
+	getLogPodValuesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/logs/pod_values", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getLogPodValuesHandler := cluster.NewGetLogPodValuesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getLogPodValuesEndpoint,
+		Handler:  getLogPodValuesHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/events -> cluster.NewGetEventsHandler
 	getEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

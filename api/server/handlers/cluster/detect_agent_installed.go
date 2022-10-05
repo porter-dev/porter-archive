@@ -17,7 +17,6 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	v1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/yaml"
 )
 
 type DetectAgentInstalledHandler struct {
@@ -113,19 +112,5 @@ func getLatestAgentVersion(helmRepoURL string) (string, error) {
 		return "", fmt.Errorf("could not load latest porter-agent chart: %w", err)
 	}
 
-	for _, t := range chart.Templates {
-		if t.Name == "deployment.yaml" {
-			depl := &v1.Deployment{}
-
-			err := yaml.Unmarshal(t.Data, depl)
-
-			if err != nil {
-				return "", fmt.Errorf("could not unmarshal deployment.yaml: %w", err)
-			}
-
-			return getAgentVersionFromDeployment(depl), nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find deployment.yaml in porter-agent chart")
+	return chart.Metadata.Version, nil
 }

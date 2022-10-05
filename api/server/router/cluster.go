@@ -1271,6 +1271,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/events -> cluster.NewGetEventsHandler
+	getEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/events", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getEventsHandler := cluster.NewGetEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getEventsEndpoint,
+		Handler:  getEventsHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/incidents/notify_new -> cluster.NewNotifyNewIncidentHandler
 	notifyNewIncidentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

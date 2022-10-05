@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
+import DatePicker from "react-datepicker";
 
 import filterOutline from "assets/filter-outline.svg";
 import downArrow from "assets/down-arrow.svg";
@@ -10,6 +11,7 @@ import api from "shared/api";
 import { useLogs } from "./useAgentLogs";
 import Anser from "anser";
 import { flatMap } from "lodash";
+import time from "assets/time.svg";
 
 type Props = {
   currentChart?: any;
@@ -26,9 +28,15 @@ const LogsSection: React.FC<Props> = ({
   const [podFilter, setPodFilter] = useState();
   const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
   const [scrollToBottom, setScrollToBottom] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [startDate, setStartDate] = useState(new Date());
 
   // TODO: don't hardcode namespace
-  const { logs, refresh } = useLogs(podFilter, currentChart.namespace);
+  const { logs, refresh } = useLogs(
+    podFilter,
+    currentChart.namespace,
+    searchText
+  );
 
   useEffect(() => {
     api
@@ -80,13 +88,29 @@ const LogsSection: React.FC<Props> = ({
               <SearchBarWrapper>
                 <i className="material-icons">search</i>
                 <SearchInput
-                  value=""
-                  onChange={(e: any) => {}}
-                  onKeyPress={({ key }) => {}}
-                  placeholder="Search logs . . ."
+                  value={searchText}
+                  onChange={(e: any) => {
+                    setSearchText(e.value);
+                  }}
+                  placeholder="Search logs..."
                 />
               </SearchBarWrapper>
             </SearchRowWrapper>
+            <DateTimePickerWrapper>
+              <TimeIcon src={time} />
+              <link
+                rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.14.1/react-datepicker.min.css"
+              />
+              <Div>
+                <StyledDatePicker
+                  selected={startDate}
+                  onChange={(date: any) => setStartDate(date)}
+                  showTimeSelect
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                />
+              </Div>
+            </DateTimePickerWrapper>
             <RadioFilter
               icon={filterOutline}
               selected={podFilter}
@@ -157,6 +181,47 @@ const LogsSection: React.FC<Props> = ({
 };
 
 export default LogsSection;
+
+const TimeIcon = styled.img`
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  z-index: 999;
+  top: 6px;
+  left: 8px;
+`;
+
+const Div = styled.div`
+  display: block;
+`;
+
+const DateTimePickerWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 44px;
+  margin-right: 15px;
+  position: relative;
+  padding-left: 12px;
+  height: 30px;
+  border-radius: 5px;
+  border: 1px solid #494b4f;
+  height: 30px;
+  background: #26292e;
+`;
+
+const StyledDatePicker = styled(DatePicker)`
+  border: 0;
+  width: calc(100% + 44px);
+  padding-left: 30px;
+  border: none;
+  margin-bottom: 3px;
+  outline-width: 0;
+  background: transparent;
+  text-align: center;
+  padding: 0 15px;
+  font-size: 13px;
+`;
 
 const BackButton = styled.div`
   display: flex;
@@ -243,9 +308,9 @@ const Checkbox = styled.div<{ checked: boolean }>`
   }
 `;
 
-const Spacer = styled.div`
+const Spacer = styled.div<{ width?: string }>`
   height: 100%;
-  width: 15px;
+  width: ${(props) => props.width || "15px"};
 `;
 
 const Button = styled.div`
@@ -344,7 +409,7 @@ const SearchRow = styled.div`
 
 const SearchRowWrapper = styled(SearchRow)`
   border-radius: 5px;
-  width: 400px;
+  width: 250px;
 `;
 
 const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`

@@ -195,3 +195,60 @@ func GetHistoricalLogs(
 
 	return logsResp, nil
 }
+
+func GetHistoricalEvents(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	req *types.GetEventRequest,
+) (*types.GetEventResponse, error) {
+	vals := make(map[string]string)
+
+	if req.Limit != 0 {
+		vals["limit"] = fmt.Sprintf("%d", req.Limit)
+	}
+
+	if req.StartRange != nil {
+		startVal, err := req.StartRange.MarshalText()
+
+		if err != nil {
+			return nil, err
+		}
+
+		vals["start_range"] = string(startVal)
+	}
+
+	if req.EndRange != nil {
+		endVal, err := req.EndRange.MarshalText()
+
+		if err != nil {
+			return nil, err
+		}
+
+		vals["end_range"] = string(endVal)
+	}
+
+	vals["pod_selector"] = req.PodSelector
+	vals["namespace"] = req.Namespace
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/events",
+		vals,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	eventsResp := &types.GetEventResponse{}
+
+	err = json.Unmarshal(rawQuery, eventsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return eventsResp, nil
+}

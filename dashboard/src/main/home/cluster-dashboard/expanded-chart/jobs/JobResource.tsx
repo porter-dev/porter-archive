@@ -201,7 +201,7 @@ export default class JobResource extends Component<PropsType, StateType> {
                 <KeyValueArray
                   envLoader={true}
                   values={envObject}
-                  label="Environment Variables:"
+                  label="Environment variables:"
                   disabled={true}
                 />
                 <DarkMatter />
@@ -497,7 +497,7 @@ const StyledJob = styled.div`
   margin-bottom: 20px;
   overflow: hidden;
   border-radius: 5px;
-  background: #262a30;
+  background: #26292e;
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;
@@ -560,7 +560,7 @@ const Subtitle = styled.div`
 `;
 
 const JobLogsWrapper = styled.div`
-  height: 250px;
+  max-height: 500px;
   width: 100%;
   background-color: black;
   overflow-y: auto;

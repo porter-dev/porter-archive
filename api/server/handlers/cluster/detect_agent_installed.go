@@ -17,7 +17,6 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	v1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/yaml"
 )
 
 type DetectAgentInstalledHandler struct {
@@ -57,7 +56,8 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	// detect the version of the agent which is installed
 	res := &types.GetAgentResponse{
-		Version: getAgentVersionFromDeployment(depl),
+		Version:       getAgentVersionFromDeployment(depl),
+		ShouldUpgrade: false,
 	}
 
 	res.LatestVersion, err = getLatestAgentVersion(c.Config().ServerConf.DefaultAddonHelmRepoURL)
@@ -67,23 +67,28 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	versionSem, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(res.Version, "v")))
+	if res.LatestVersion != res.Version {
+		versionSem, err := semver.NewConstraint(fmt.Sprintf("> %s", strings.TrimPrefix(res.Version, "v")))
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		latestVersionSem, err := semver.NewVersion(strings.TrimPrefix(res.LatestVersion, "v"))
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		if versionSem.Check(latestVersionSem) {
+			res.ShouldUpgrade = true
+		}
 	}
 
-	latestVersionSem, err := semver.NewVersion(strings.TrimPrefix(res.LatestVersion, "v"))
-
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	if versionSem.Check(latestVersionSem) {
-		res.ShouldUpgrade = true
-	}
+	res.Version = "v" + strings.TrimPrefix(res.Version, "v")
+	res.LatestVersion = "v" + strings.TrimPrefix(res.LatestVersion, "v")
 
 	c.WriteResult(w, r, res)
 }
@@ -110,19 +115,5 @@ func getLatestAgentVersion(helmRepoURL string) (string, error) {
 		return "", fmt.Errorf("could not load latest porter-agent chart: %w", err)
 	}
 
-	for _, t := range chart.Templates {
-		if t.Name == "deployment.yaml" {
-			depl := &v1.Deployment{}
-
-			err := yaml.Unmarshal(t.Data, depl)
-
-			if err != nil {
-				return "", fmt.Errorf("could not unmarshal deployment.yaml: %w", err)
-			}
-
-			return getAgentVersionFromDeployment(depl), nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find deployment.yaml in porter-agent chart")
+	return chart.Metadata.Version, nil
 }

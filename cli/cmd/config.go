@@ -168,6 +168,67 @@ var configSetKubeconfigCmd = &cobra.Command{
 	},
 }
 
+var configCreateProfileCmd = &cobra.Command{
+	Use:   "create-profile [NAME]",
+	Args:  cobra.ExactArgs(1),
+	Short: "Creates a new Porter CLI profile",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := cliConf.CreateProfile(args[0])
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+var configListProfilesCmd = &cobra.Command{
+	Use:     "list-profiles",
+	Aliases: []string{"list-profile"},
+	Args:    cobra.NoArgs,
+	Short:   "List all Porter CLI profiles",
+	Run: func(cmd *cobra.Command, args []string) {
+		profiles, err := cliConf.ListProfiles()
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+
+		for _, profile := range profiles {
+			fmt.Println(profile)
+		}
+	},
+}
+
+var configSetProfileCmd = &cobra.Command{
+	Use:   "set-profile [NAME]",
+	Args:  cobra.ExactArgs(1),
+	Short: "Use a particular Porter CLI profile",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := cliConf.SetProfile(args[0])
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+var configDeleteProfileCmd = &cobra.Command{
+	Use:   "delete-profile [NAME]",
+	Args:  cobra.ExactArgs(1),
+	Short: "Delete a Porter CLI profile",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := cliConf.DeleteProfile(args[0])
+
+		if err != nil {
+			color.New(color.FgRed).Printf("An error occurred: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(configCmd)
 
@@ -177,6 +238,12 @@ func init() {
 	configCmd.AddCommand(configSetRegistryCmd)
 	configCmd.AddCommand(configSetHelmRepoCmd)
 	configCmd.AddCommand(configSetKubeconfigCmd)
+
+	configCmd.AddCommand(configCreateProfileCmd)
+	configCmd.AddCommand(configListProfilesCmd)
+	configCmd.AddCommand(configSetProfileCmd)
+	configCmd.AddCommand(configDeleteProfileCmd)
+
 }
 
 func printConfig() error {
@@ -186,7 +253,7 @@ func printConfig() error {
 		return err
 	}
 
-	fmt.Println(string(config))
+	fmt.Print(string(config))
 
 	return nil
 }

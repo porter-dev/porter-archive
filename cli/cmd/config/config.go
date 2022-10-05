@@ -15,7 +15,13 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-var home = homedir.HomeDir()
+var (
+	home           = homedir.HomeDir()
+	porterDir      = filepath.Join(home, ".porter")
+	defaultFile    = filepath.Join(porterDir, "default.yaml")
+	porterFile     = filepath.Join(porterDir, "porter.yaml")
+	currentProfile = "default"
+)
 
 // config is a shared object used by all commands
 var config = &CLIConfig{}
@@ -58,12 +64,61 @@ func InitAndLoadNewConfig() *CLIConfig {
 	return newConfig
 }
 
+func createDefaultProfileIfNeeded() {
+	// first check if the porter directory exists at all
+	if _, err := os.Stat(porterDir); os.IsNotExist(err) {
+		return
+	}
+
+	// since the porter directory exists, let us check for the existence of the default profile
+	if _, err := os.Stat(defaultFile); os.IsNotExist(err) {
+		// since the default profile does not exist, let us check for the existence of an older porter.yaml
+		if _, err := os.Stat(porterFile); err != nil {
+			if os.IsNotExist(err) {
+				return
+			}
+			color.New(color.FgRed).Printf("%v\n", err)
+			os.Exit(1)
+		} else {
+			// since the porter.yaml exists, let us copy it to the default profile
+			bytes, err := ioutil.ReadFile(porterFile)
+
+			if err != nil {
+				color.New(color.FgRed).Printf("%v\n", err)
+				os.Exit(1)
+			}
+
+			err = ioutil.WriteFile(defaultFile, bytes, 0644)
+
+			if err != nil {
+				color.New(color.FgRed).Printf("%v\n", err)
+				os.Exit(1)
+			}
+
+			// let us now remove the existing porter.yaml and create a symlink porter.yaml -> default.yaml
+			err = os.Remove(porterFile)
+
+			if err != nil {
+				color.New(color.FgRed).Printf("%v\n", err)
+				os.Exit(1)
+			}
+
+			err = os.Symlink(defaultFile, porterFile)
+
+			if err != nil {
+				color.New(color.FgRed).Printf("%v\n", err)
+				os.Exit(1)
+			}
+		}
+	}
+}
+
 func initAndLoadConfig(_config *CLIConfig) {
+	createDefaultProfileIfNeeded()
+
 	initFlagSet()
 
 	// check that the .porter folder exists; create if not
-	porterDir := filepath.Join(home, ".porter")
-
 	if _, err := os.Stat(porterDir); os.IsNotExist(err) {
 		os.Mkdir(porterDir, 0700)
 	} else if err != nil {
@@ -88,12 +143,38 @@ func initAndLoadConfig(_config *CLIConfig) {
 	viper.BindEnv("cluster")
 	viper.BindEnv("token")
 
-	err := viper.ReadInConfig()
+	currentProfileFile, err := os.Readlink(porterFile)
+
+	if err != nil {
+		color.New(color.FgRed).Printf("%v\n", err)
+		os.Exit(1)
+	}
+
+	currentProfile = strings.TrimSuffix(filepath.Base(currentProfileFile), filepath.Ext(currentProfileFile))
+
+	err = viper.ReadInConfig()
 
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// create blank config file
-			err := ioutil.WriteFile(filepath.Join(home, ".porter", "porter.yaml"), []byte{}, 0644)
+			err := ioutil.WriteFile(defaultFile, []byte{}, 0644)
+
+			if err != nil {
+				color.New(color.FgRed).Printf("%v\n", err)
+				os.Exit(1)
+			}
+
+			if _, err := os.Stat(porterFile); os.IsExist(err) {
+				err := os.Remove(porterFile)
+
+				if err != nil {
+					color.New(color.FgRed).Printf("%v\n", err)
+					os.Exit(1)
+				}
+			}
+
+			// create symlink to default config file
+			err = os.Symlink(defaultFile, porterFile)
 
 			if err != nil {
 				color.New(color.FgRed).Printf("%v\n", err)
@@ -312,6 +393,144 @@ func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 	}
 
 	config.Kubeconfig = kubeconfig
+
+	return nil
+}
+
+func (c *CLIConfig) CreateProfile(name string) error {
+	profiles, err := c.ListProfiles()
+
+	if err != nil {
+		return err
+	}
+
+	exists := false
+
+	for _, profile := range profiles {
+		if profile == name {
+			exists = true
+			break
+		}
+	}
+
+	if exists {
+		return fmt.Errorf("profile %s already exists", name)
+	}
+
+	err = ioutil.WriteFile(filepath.Join(porterDir, name+".yaml"), []byte{}, 0644)
+
+	if err != nil {
+		return fmt.Errorf("error creating profile: %w", err)
+	}
+
+	return nil
+}
+
+func (c *CLIConfig) ListProfiles() ([]string, error) {
+	files, err := ioutil.ReadDir(porterDir)
+
+	if err != nil {
+		return nil, fmt.Errorf("error listing profiles: %w", err)
+	}
+
+	var profiles []string
+
+	for _, file := range files {
+		profileName := strings.TrimSuffix(filepath.Base(file.Name()), filepath.Ext(file.Name()))
+		profileFile := filepath.Join(porterDir, file.Name())
+
+		fd, err := os.Lstat(profileFile)
+
+		if err != nil {
+			return nil, fmt.Errorf("error listing profiles: %w", err)
+		}
+
+		if !file.IsDir() && filepath.Ext(file.Name()) == ".yaml" && fd.Mode()&os.ModeSymlink != os.ModeSymlink {
+			f, err := os.Open(profileFile)
+
+			if err != nil {
+				return nil, fmt.Errorf("error reading profile: %s. Error: %w", profileName, err)
+			}
+
+			defer f.Close()
+
+			if err := viper.New().ReadConfig(f); err == nil {
+				profiles = append(profiles, profileName)
+			} else {
+				fmt.Println(err)
+			}
+		}
+	}
+
+	return profiles, nil
+}
+
+func (c *CLIConfig) SetProfile(name string) error {
+	profiles, err := c.ListProfiles()
+
+	if err != nil {
+		return err
+	}
+
+	exists := false
+
+	for _, profile := range profiles {
+		if profile == name {
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		return fmt.Errorf("profile %s does not exist", name)
+	}
+
+	err = os.Remove(porterFile)
+
+	if err != nil {
+		return fmt.Errorf("error setting profile: %w", err)
+	}
+
+	err = os.Symlink(filepath.Join(porterDir, name+".yaml"), porterFile)
+
+	if err != nil {
+		return fmt.Errorf("error setting profile: %w", err)
+	}
+
+	return nil
+}
+
+func (c *CLIConfig) DeleteProfile(name string) error {
+	if name == "default" {
+		return fmt.Errorf("cannot delete the default profile")
+	} else if name == currentProfile {
+		return fmt.Errorf("cannot delete the current profile")
+	}
+
+	profiles, err := c.ListProfiles()
+
+	if err != nil {
+		return err
+	}
+
+	exists := false
+
+	for _, profile := range profiles {
+		if profile == name {
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		return fmt.Errorf("profile %s does not exist", name)
+	}
+
+	err = os.Remove(filepath.Join(porterDir, name+".yaml"))
+
+	if err != nil {
+		return fmt.Errorf("error deleting profile: %w", err)
+	}
 
 	return nil
 }

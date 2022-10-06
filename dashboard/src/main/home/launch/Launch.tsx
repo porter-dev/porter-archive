@@ -59,8 +59,10 @@ class Templates extends Component<PropsType, StateType> {
   };
 
   async componentDidMount() {
-    let default_addon_helm_repo_url = this.context?.capabilities?.default_addon_helm_repo_url;
-    let default_app_helm_repo_url = this.context?.capabilities?.default_app_helm_repo_url;
+    let default_addon_helm_repo_url = this.context?.capabilities
+      ?.default_addon_helm_repo_url;
+    let default_app_helm_repo_url = this.context?.capabilities
+      ?.default_app_helm_repo_url;
     try {
       const res = await api.getTemplates(
         "<token>",

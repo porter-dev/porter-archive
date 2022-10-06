@@ -8,13 +8,7 @@ type Props = {};
 
 const LaunchWrapper: React.FC<Props> = (props) => {
   const { capabilities } = useContext(Context);
-  return (
-    <>
-      {
-        capabilities && <Launch />
-      }
-    </>
-  );
+  return <>{capabilities && <Launch />}</>;
 };
 
 export default LaunchWrapper;

@@ -25,40 +25,14 @@ export const useLogs = (
     closeWebsocket,
   } = useWebsockets();
 
+  console.log("SEARCH PARAM IS", searchParam);
+
   useEffect(() => {
-    if (!currentPod) {
-      return;
-    }
-    api
-      .getLogs(
-        "<token>",
-        {
-          pod_selector: currentPod,
-          namespace: namespace,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
-      )
-      .then((res) => {
-        console.log(res.data);
-        var initLogs: Anser.AnserJsonEntry[][] = [];
-        res.data.logs?.forEach((logLine: any) => {
-          var parsedLine = JSON.parse(logLine.line);
-
-          let ansiLog = Anser.ansiToJson(parsedLine.log);
-          initLogs.push(ansiLog);
-        });
-
-        setLogs(initLogs.reverse());
-        setInitialized(true);
-        refresh();
-      });
-  }, [currentPod, namespace]);
+    refresh();
+  }, [currentPod, namespace, searchParam]);
 
   const setupWebsocket = (websocketKey: string) => {
-    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki?pod_selector=${currentPod}&namespace=${namespace}`;
+    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki?pod_selector=${currentPod}&namespace=${namespace}&search_param=${searchParam}`;
 
     const config: NewWebsocketOptions = {
       onopen: () => {
@@ -90,23 +64,42 @@ export const useLogs = (
   };
 
   const refresh = () => {
-    const websocketKey = `${currentPod}-${namespace}-websocket`;
-    closeWebsocket(websocketKey);
-
-    setupWebsocket(websocketKey);
-  };
-
-  useEffect(() => {
     if (!currentPod) {
       return;
     }
 
-    if (!initialized) {
-      return;
-    }
+    const websocketKey = `${currentPod}-${namespace}-websocket`;
 
-    refresh();
-  }, [currentPod, namespace]);
+    api
+      .getLogs(
+        "<token>",
+        {
+          pod_selector: currentPod,
+          namespace: namespace,
+          search_param: searchParam,
+        },
+        {
+          cluster_id: currentCluster.id,
+          project_id: currentProject.id,
+        }
+      )
+      .then((res) => {
+        console.log(res.data);
+        var initLogs: Anser.AnserJsonEntry[][] = [];
+        res.data.logs?.forEach((logLine: any) => {
+          var parsedLine = JSON.parse(logLine.line);
+
+          let ansiLog = Anser.ansiToJson(parsedLine.log);
+          initLogs.push(ansiLog);
+        });
+
+        setLogs(initLogs.reverse());
+        setInitialized(true);
+        closeWebsocket(websocketKey);
+
+        setupWebsocket(websocketKey);
+      });
+  };
 
   return {
     logs,

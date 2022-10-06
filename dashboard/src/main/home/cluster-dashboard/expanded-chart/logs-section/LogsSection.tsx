@@ -29,13 +29,13 @@ const LogsSection: React.FC<Props> = ({
   const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
   const [scrollToBottom, setScrollToBottom] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [enteredSearchText, setEnteredSearchText] = useState("");
   const [startDate, setStartDate] = useState(new Date());
 
-  // TODO: don't hardcode namespace
   const { logs, refresh } = useLogs(
     podFilter,
     currentChart.namespace,
-    searchText
+    enteredSearchText
   );
 
   useEffect(() => {
@@ -90,7 +90,12 @@ const LogsSection: React.FC<Props> = ({
                 <SearchInput
                   value={searchText}
                   onChange={(e: any) => {
-                    setSearchText(e.value);
+                    setSearchText(e.target.value);
+                  }}
+                  onKeyPress={(event) => {
+                    if (event.key === "Enter") {
+                      setEnteredSearchText(searchText);
+                    }
                   }}
                   placeholder="Search logs..."
                 />

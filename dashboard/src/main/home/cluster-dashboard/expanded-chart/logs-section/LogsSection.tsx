@@ -19,6 +19,10 @@ type Props = {
   setIsFullscreen: (x: boolean) => void;
 };
 
+const escapeRegExp = (str: string) => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
 const LogsSection: React.FC<Props> = ({
   currentChart,
   isFullscreen,
@@ -35,7 +39,8 @@ const LogsSection: React.FC<Props> = ({
   const { logs, refresh } = useLogs(
     podFilter,
     currentChart.namespace,
-    enteredSearchText
+    enteredSearchText,
+    startDate.toISOString()
   );
 
   useEffect(() => {
@@ -94,7 +99,7 @@ const LogsSection: React.FC<Props> = ({
                   }}
                   onKeyPress={(event) => {
                     if (event.key === "Enter") {
-                      setEnteredSearchText(searchText);
+                      setEnteredSearchText(escapeRegExp(searchText));
                     }
                   }}
                   placeholder="Search logs..."

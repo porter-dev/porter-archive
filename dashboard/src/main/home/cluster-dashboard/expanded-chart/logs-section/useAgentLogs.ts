@@ -11,6 +11,7 @@ export const useLogs = (
   currentPod: string,
   namespace: string,
   searchParam: string,
+  startDate: string,
   scroll?: (smooth: boolean) => void
 ) => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -25,11 +26,9 @@ export const useLogs = (
     closeWebsocket,
   } = useWebsockets();
 
-  console.log("SEARCH PARAM IS", searchParam);
-
   useEffect(() => {
     refresh();
-  }, [currentPod, namespace, searchParam]);
+  }, [currentPod, namespace, searchParam, startDate]);
 
   const setupWebsocket = (websocketKey: string) => {
     const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki?pod_selector=${currentPod}&namespace=${namespace}&search_param=${searchParam}`;
@@ -77,6 +76,7 @@ export const useLogs = (
           pod_selector: currentPod,
           namespace: namespace,
           search_param: searchParam,
+          end_range: startDate,
         },
         {
           cluster_id: currentCluster.id,

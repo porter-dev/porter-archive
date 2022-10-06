@@ -36,11 +36,15 @@ const LogsSection: React.FC<Props> = ({
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [startDate, setStartDate] = useState(new Date());
 
+  var d = new Date(startDate);
+  d.setDate(d.getDate() - 1);
+  var start = d.toISOString();
+
   const { logs, refresh } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
-    startDate.toISOString()
+    start
   );
 
   useEffect(() => {

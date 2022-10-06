@@ -103,7 +103,7 @@ const EventsTab: React.FC<{
     return (
       <Placeholder>
         <i className="material-icons">search</i>
-        We coulnd't find any controllers for this application.
+        We couldn't find any controllers for this application.
       </Placeholder>
     );
   }

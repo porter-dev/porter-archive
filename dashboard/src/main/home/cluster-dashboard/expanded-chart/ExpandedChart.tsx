@@ -225,7 +225,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const onSubmit = async (props: any) => {
     const rawValues = props.values;
 
-    // console.log("raw", rawValues);
     // Convert dotted keys to nested objects
     let values: any = {};
 
@@ -306,7 +305,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
 
-    // console.log("valuesYaml", valuesYaml);
     try {
       await api.upgradeChartValues(
         "<token>",
@@ -413,7 +411,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderTabContents = (currentTab: string) => {
     let { setSidebar } = props;
     let chart = currentChart;
-    // console.log("CONTROLLERS", controllers);
     switch (currentTab) {
       case "metrics":
         return <MetricsSection currentChart={chart} />;

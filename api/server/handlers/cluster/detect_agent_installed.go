@@ -55,7 +55,7 @@ func (c *DetectAgentInstalledHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	// detect the version of the agent which is installed
-	res := &types.GetAgentResponse{
+	res := &types.DetectAgentResponse{
 		Version:       getAgentVersionFromDeployment(depl),
 		ShouldUpgrade: false,
 	}

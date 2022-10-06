@@ -15,20 +15,25 @@ type Metadata struct {
 	Analytics          bool   `json:"analytics"`
 	Version            string `json:"version"`
 	Gitlab             bool   `json:"gitlab"`
+
+	DefaultAppHelmRepoURL   string `json:"default_app_helm_repo_url"`
+	DefaultAddonHelmRepoURL string `json:"default_addon_helm_repo_url"`
 }
 
 func MetadataFromConf(sc *env.ServerConf, version string) *Metadata {
 	return &Metadata{
-		Provisioning:       sc.ProvisionerServerURL != "" && sc.ProvisionerToken != "",
-		Github:             hasGithubAppVars(sc),
-		GithubLogin:        sc.GithubClientID != "" && sc.GithubClientSecret != "" && sc.GithubLoginEnabled,
-		BasicLogin:         sc.BasicLoginEnabled,
-		GoogleLogin:        sc.GoogleClientID != "" && sc.GoogleClientSecret != "",
-		SlackNotifications: sc.SlackClientID != "" && sc.SlackClientSecret != "",
-		Email:              sc.SendgridAPIKey != "",
-		Analytics:          sc.SegmentClientKey != "",
-		Version:            version,
-		Gitlab:             sc.EnableGitlab,
+		Provisioning:            sc.ProvisionerServerURL != "" && sc.ProvisionerToken != "",
+		Github:                  hasGithubAppVars(sc),
+		GithubLogin:             sc.GithubClientID != "" && sc.GithubClientSecret != "" && sc.GithubLoginEnabled,
+		BasicLogin:              sc.BasicLoginEnabled,
+		GoogleLogin:             sc.GoogleClientID != "" && sc.GoogleClientSecret != "",
+		SlackNotifications:      sc.SlackClientID != "" && sc.SlackClientSecret != "",
+		Email:                   sc.SendgridAPIKey != "",
+		Analytics:               sc.SegmentClientKey != "",
+		Version:                 version,
+		Gitlab:                  sc.EnableGitlab,
+		DefaultAppHelmRepoURL:   sc.DefaultApplicationHelmRepoURL,
+		DefaultAddonHelmRepoURL: sc.DefaultAddonHelmRepoURL,
 	}
 }
 

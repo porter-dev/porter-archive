@@ -90,9 +90,7 @@ const RadioFilter: React.FC<Props> = (props) => {
         noMargin={props.noMargin}
       >
         {props.icon && <FilterIcon src={props.icon} />}
-        <TextAlt>
-          {props.name}
-        </TextAlt>
+        <TextAlt>{props.name}</TextAlt>
         <Bar />
         <Selected>
           {props.selected

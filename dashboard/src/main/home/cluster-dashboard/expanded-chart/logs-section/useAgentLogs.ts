@@ -17,7 +17,6 @@ export const useLogs = (
   const { currentCluster, currentProject } = useContext(Context);
   const [logs, setLogs] = useState<Anser.AnserJsonEntry[][]>([]);
   const [initialized, setInitialized] = useState(false);
-
   const {
     newWebsocket,
     openWebsocket,
@@ -40,7 +39,7 @@ export const useLogs = (
       onmessage: (evt: MessageEvent) => {
         let newLogs: Anser.AnserJsonEntry[][] = [];
 
-        evt.data.split("\n").forEach((logLine: string) => {
+        evt?.data?.split("\n").forEach((logLine: string) => {
           if (logLine) {
             var parsedLine = JSON.parse(logLine);
 
@@ -76,7 +75,9 @@ export const useLogs = (
           pod_selector: currentPod,
           namespace: namespace,
           search_param: searchParam,
-          end_range: startDate,
+          start_range: startDate,
+          // end_range: startDate,
+          limit: 100,
         },
         {
           cluster_id: currentCluster.id,
@@ -84,13 +85,14 @@ export const useLogs = (
         }
       )
       .then((res) => {
-        console.log(res.data);
         var initLogs: Anser.AnserJsonEntry[][] = [];
         res.data.logs?.forEach((logLine: any) => {
-          var parsedLine = JSON.parse(logLine.line);
+          if (logLine) {
+            var parsedLine = JSON.parse(logLine.line);
 
-          let ansiLog = Anser.ansiToJson(parsedLine.log);
-          initLogs.push(ansiLog);
+            let ansiLog = Anser.ansiToJson(parsedLine.log);
+            initLogs.push(ansiLog);
+          }
         });
 
         setLogs(initLogs.reverse());

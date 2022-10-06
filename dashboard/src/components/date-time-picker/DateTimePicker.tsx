@@ -10,14 +10,14 @@ type Props = {
   setStartDate: any;
 };
 
-const DateTimePicker: React.FC<Props> = ({
-  startDate,
-  setStartDate,
-}) => {
+const DateTimePicker: React.FC<Props> = ({ startDate, setStartDate }) => {
   return (
     <DateTimePickerWrapper>
       <TimeIcon src={time} />
-      <link rel="stylesheet"  href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.14.1/react-datepicker.min.css" />
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.14.1/react-datepicker.min.css"
+      />
       <Bar />
       <StyledDatePicker
         selected={startDate}

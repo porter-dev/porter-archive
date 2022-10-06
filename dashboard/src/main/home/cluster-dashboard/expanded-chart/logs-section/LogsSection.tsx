@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from "react";
 
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
-import DatePicker from "react-datepicker";
 
 import filterOutline from "assets/filter-outline.svg";
 import downArrow from "assets/down-arrow.svg";
@@ -12,6 +11,7 @@ import { useLogs } from "./useAgentLogs";
 import Anser from "anser";
 import { flatMap } from "lodash";
 import time from "assets/time.svg";
+import DateTimePicker from "components/date-time-picker/DateTimePicker";
 
 type Props = {
   currentChart?: any;
@@ -101,21 +101,7 @@ const LogsSection: React.FC<Props> = ({
                 />
               </SearchBarWrapper>
             </SearchRowWrapper>
-            <DateTimePickerWrapper>
-              <TimeIcon src={time} />
-              <link
-                rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.14.1/react-datepicker.min.css"
-              />
-              <Div>
-                <StyledDatePicker
-                  selected={startDate}
-                  onChange={(date: any) => setStartDate(date)}
-                  showTimeSelect
-                  dateFormat="MMMM d, yyyy h:mm aa"
-                />
-              </Div>
-            </DateTimePickerWrapper>
+            <DateTimePicker startDate={startDate} setStartDate={setStartDate} />
             <RadioFilter
               icon={filterOutline}
               selected={podFilter}
@@ -186,47 +172,6 @@ const LogsSection: React.FC<Props> = ({
 };
 
 export default LogsSection;
-
-const TimeIcon = styled.img`
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  z-index: 999;
-  top: 6px;
-  left: 8px;
-`;
-
-const Div = styled.div`
-  display: block;
-`;
-
-const DateTimePickerWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-right: 44px;
-  margin-right: 15px;
-  position: relative;
-  padding-left: 12px;
-  height: 30px;
-  border-radius: 5px;
-  border: 1px solid #494b4f;
-  height: 30px;
-  background: #26292e;
-`;
-
-const StyledDatePicker = styled(DatePicker)`
-  border: 0;
-  width: calc(100% + 44px);
-  padding-left: 30px;
-  border: none;
-  margin-bottom: 3px;
-  outline-width: 0;
-  background: transparent;
-  text-align: center;
-  padding: 0 15px;
-  font-size: 13px;
-`;
 
 const BackButton = styled.div`
   display: flex;
@@ -315,7 +260,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
 
 const Spacer = styled.div<{ width?: string }>`
   height: 100%;
-  width: ${(props) => props.width || "15px"};
+  width: ${(props) => props.width || "10px"};
 `;
 
 const Button = styled.div`
@@ -406,7 +351,7 @@ const SearchRow = styled.div`
   display: flex;
   align-items: center;
   height: 30px;
-  margin-right: 15px;
+  margin-right: 10px;
   background: #26292e;
   border-radius: 5px;
   border: 1px solid #aaaabb33;

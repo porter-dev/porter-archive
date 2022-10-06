@@ -831,6 +831,31 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/agent/status -> cluster.NewGetAgentStatusHandler
+	getAgentStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/agent/status",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getAgentStatusHandler := cluster.NewGetAgentStatusHandler(config, factory.GetResultWriter())
+
+	routes = append(routes, &router.Route{
+		Endpoint: getAgentStatusEndpoint,
+		Handler:  getAgentStatusHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/agent/upgrade -> cluster.NewInstallAgentHandler
 	upgradeAgentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -304,3 +304,30 @@ func GetHistoricalEvents(
 
 	return eventsResp, nil
 }
+
+func GetAgentStatus(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+) (*types.GetAgentStatusResponse, error) {
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/status",
+		nil,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	statusResp := &types.GetAgentStatusResponse{}
+
+	err = json.Unmarshal(rawQuery, statusResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return statusResp, nil
+}

@@ -419,7 +419,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     switch (currentTab) {
       case "logs":
         return (
-          <LogsSection 
+          <LogsSection
             currentChart={chart}
             isFullscreen={isFullscreen}
             setIsFullscreen={setIsFullscreen}
@@ -540,11 +540,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let leftTabOptions = [] as any[];
     if (
       currentChart.chart.metadata.home === "https://getporter.dev/" &&
-      (
-        currentChart.chart.metadata.name === "web" || 
+      (currentChart.chart.metadata.name === "web" ||
         currentChart.chart.metadata.name === "worker" ||
-        currentChart.chart.metadata.name === "job"
-      )
+        currentChart.chart.metadata.name === "job")
     ) {
       leftTabOptions.push({ label: "Logs", value: "logs" });
     }
@@ -781,10 +779,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
       ) : (
         <>
           {isFullscreen ? (
-            <LogsSection 
+            <LogsSection
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
-              currentChart={currentChart} 
+              currentChart={currentChart}
             />
           ) : (
             <StyledExpandedChart>
@@ -802,7 +800,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   {currentChart.name}
                   <DeploymentType currentChart={currentChart} />
                   <TagWrapper>
-                    Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
+                    Namespace{" "}
+                    <NamespaceTag>{currentChart.namespace}</NamespaceTag>
                   </TagWrapper>
                 </TitleSection>
 
@@ -827,7 +826,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Placeholder>
                     <TextWrap>
                       <Header>
-                        <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
+                        <Spinner src={loadingSrc} /> Deleting "
+                        {currentChart.name}"
                       </Header>
                       You will be automatically redirected after deletion is
                       complete.
@@ -879,7 +879,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
                             isReadOnly={
                               isPreview ||
                               imageIsPlaceholder ||
-                              !isAuthorized("application", "", ["get", "update"])
+                              !isAuthorized("application", "", [
+                                "get",
+                                "update",
+                              ])
                             }
                             onSubmit={onSubmit}
                             includeMetadata

@@ -12,10 +12,10 @@ type Props = {
   setIsFullscreen: (x: boolean) => void;
 };
 
-const LogsSection: React.FC<Props> = ({ 
+const LogsSection: React.FC<Props> = ({
   currentChart,
   isFullscreen,
-  setIsFullscreen
+  setIsFullscreen,
 }) => {
   const [podFilter, setPodFilter] = useState("pod-a");
   const [scrollToBottom, setScrollToBottom] = useState(true);
@@ -44,30 +44,27 @@ const LogsSection: React.FC<Props> = ({
                 />
               </SearchBarWrapper>
             </SearchRowWrapper>
-            <DateTimePicker
-              startDate={startDate}
-              setStartDate={setStartDate}
-            />
+            <DateTimePicker startDate={startDate} setStartDate={setStartDate} />
             <RadioFilter
               icon={filterOutline}
               selected={podFilter}
               setSelected={setPodFilter}
               options={[
                 {
-                  value: 'pod-a',
-                  label: 'Pod A'
+                  value: "pod-a",
+                  label: "Pod A",
                 },
                 {
-                  value: 'pod-b',
-                  label: 'Pod B'
+                  value: "pod-b",
+                  label: "Pod B",
                 },
                 {
-                  value: 'pod-c',
-                  label: 'Pod C'
+                  value: "pod-c",
+                  label: "Pod C",
                 },
                 {
-                  value: 'pod-d',
-                  label: 'Pod D'
+                  value: "pod-d",
+                  label: "Pod D",
                 },
               ]}
               name="Filter logs"
@@ -85,16 +82,14 @@ const LogsSection: React.FC<Props> = ({
               <i className="material-icons">autorenew</i>
               Refresh
             </Button>
-            {
-              !isFullscreen && (
-                <>
-                  <Spacer />
-                  <Icon onClick={() => setIsFullscreen(true)}>
-                    <i className="material-icons">open_in_full</i>
-                  </Icon>
-                </>
-              )
-            }
+            {!isFullscreen && (
+              <>
+                <Spacer />
+                <Icon onClick={() => setIsFullscreen(true)}>
+                  <i className="material-icons">open_in_full</i>
+                </Icon>
+              </>
+            )}
           </Flex>
         </FlexRow>
         <StyledLogsSection isFullscreen={isFullscreen}>
@@ -108,27 +103,23 @@ const LogsSection: React.FC<Props> = ({
         </StyledLogsSection>
       </>
     );
-  }
+  };
 
   return (
     <>
-      {
-        isFullscreen ? (
-          <Fullscreen>
-            <AbsoluteTitle>
-              <BackButton onClick={() => setIsFullscreen(false)}>
-                <i className="material-icons">navigate_before</i>
-              </BackButton>
-              Logs ({currentChart.name})
-            </AbsoluteTitle>
-            {renderContents()}
-          </Fullscreen>
-        ) : (
-          <>
-            {renderContents()}
-          </>
-        )
-      }
+      {isFullscreen ? (
+        <Fullscreen>
+          <AbsoluteTitle>
+            <BackButton onClick={() => setIsFullscreen(false)}>
+              <i className="material-icons">navigate_before</i>
+            </BackButton>
+            Logs ({currentChart.name})
+          </AbsoluteTitle>
+          {renderContents()}
+        </Fullscreen>
+      ) : (
+        <>{renderContents()}</>
+      )}
     </>
   );
 };
@@ -222,7 +213,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
 
 const Spacer = styled.div<{ width?: string }>`
   height: 100%;
-  width: ${props => props.width || "10px"};
+  width: ${(props) => props.width || "10px"};
 `;
 
 const Button = styled.div`
@@ -282,8 +273,8 @@ const FlexRow = styled.div<{ isFullscreen?: boolean }>`
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  margin-top: ${props => props.isFullscreen ? "10px" : ""};
-  padding: ${props => props.isFullscreen ? "0 20px" : ""};
+  margin-top: ${(props) => (props.isFullscreen ? "10px" : "")};
+  padding: ${(props) => (props.isFullscreen ? "0 20px" : "")};
 `;
 
 const SearchBarWrapper = styled.div`
@@ -314,7 +305,7 @@ const SearchRow = styled.div`
   align-items: center;
   height: 30px;
   margin-right: 10px;
-  background: #26292E;
+  background: #26292e;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
 `;
@@ -327,14 +318,15 @@ const SearchRowWrapper = styled(SearchRow)`
 const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
   width: 100%;
   min-height: 400px;
-  height: ${props => props.isFullscreen ? "calc(100vh - 125px)" : "calc(100vh - 460px)"};
+  height: ${(props) =>
+    props.isFullscreen ? "calc(100vh - 125px)" : "calc(100vh - 460px)"};
   display: flex;
   flex-direction: column;
   position: relative;
   font-size: 13px;
-  border-radius: ${props => props.isFullscreen ? "" : "8px"};
-  border: ${props => props.isFullscreen ? "" : "1px solid #ffffff33"};
-  border-top: ${props => props.isFullscreen ? "1px solid #ffffff33" : ""};
+  border-radius: ${(props) => (props.isFullscreen ? "" : "8px")};
+  border: ${(props) => (props.isFullscreen ? "" : "1px solid #ffffff33")};
+  border-top: ${(props) => (props.isFullscreen ? "1px solid #ffffff33" : "")};
   padding: 18px 22px;
   background: #121318;
   animation: floatIn 0.3s;

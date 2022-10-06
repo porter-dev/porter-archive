@@ -969,7 +969,6 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
-  margin-bottom: 50px;
 `;
 
 const Header = styled.div`

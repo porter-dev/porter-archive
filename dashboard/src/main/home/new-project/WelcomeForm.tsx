@@ -78,7 +78,9 @@ const WelcomeForm = (props: any) => {
         ) : (
           <form name="demo" onSubmit={submitForm}>
             <Title>Book a Demo</Title>
-            <Subtitle>Talk to an expert to determine if Porter is a right fit for you.</Subtitle>
+            <Subtitle>
+              Talk to an expert to determine if Porter is a right fit for you.
+            </Subtitle>
             <SubtitleAlt>
               <Num>1</Num> What is your work email? *
             </SubtitleAlt>

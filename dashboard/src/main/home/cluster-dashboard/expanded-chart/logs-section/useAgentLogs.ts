@@ -11,23 +11,46 @@ export const useLogs = (
   currentPod: string,
   namespace: string,
   searchParam: string,
-  startDate: string,
-  scroll?: (smooth: boolean) => void
+  // if setDate is set, results are not live
+  setDate: Date
 ) => {
+  var d = new Date();
+  d.setDate(d.getDate() - 14);
+
+  const isLive = !setDate;
   const { currentCluster, currentProject } = useContext(Context);
   const [logs, setLogs] = useState<Anser.AnserJsonEntry[][]>([]);
-  const [initialized, setInitialized] = useState(false);
+  const [startDate, setStartDate] = useState<Date>(d);
+  const [endDate, setEndDate] = useState<Date>(setDate || new Date());
+
+  // if we are live:
+  // - start date is initially set to 2 weeks ago
+  // - the query has an end date set to current date
+  // - moving the cursor forward does nothing
+
+  // if we are not live:
+  // - end date is set to the setDate
+  // - start date is initially set to 2 weeks ago, but then gets set to the
+  //   result of the initial query
+  // - moving the cursor both forward and backward changes the start and end dates
+
   const {
     newWebsocket,
     openWebsocket,
-    closeAllWebsockets,
-    getWebsocket,
     closeWebsocket,
+    closeAllWebsockets,
   } = useWebsockets();
 
   useEffect(() => {
-    refresh();
-  }, [currentPod, namespace, searchParam, startDate]);
+    return refresh();
+  }, [currentPod, namespace, searchParam, setDate]);
+
+  useEffect(() => {
+    // if the streaming is no longer live, close all websockets
+    if (!isLive) {
+      closeAllWebsockets();
+    }
+  }, [isLive]);
 
   const setupWebsocket = (websocketKey: string) => {
     const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki?pod_selector=${currentPod}&namespace=${namespace}&search_param=${searchParam}`;
@@ -61,13 +84,13 @@ export const useLogs = (
     openWebsocket(websocketKey);
   };
 
-  const refresh = () => {
-    if (!currentPod) {
-      return;
-    }
-
-    const websocketKey = `${currentPod}-${namespace}-websocket`;
-
+  const queryLogs = (
+    initLogs: Anser.AnserJsonEntry[][],
+    startDate: Date,
+    endDate: Date,
+    direction: string,
+    cb?: () => void
+  ) => {
     api
       .getLogs(
         "<token>",
@@ -75,9 +98,10 @@ export const useLogs = (
           pod_selector: currentPod,
           namespace: namespace,
           search_param: searchParam,
-          start_range: startDate,
-          // end_range: startDate,
-          limit: 100,
+          start_range: startDate.toISOString(),
+          end_range: endDate.toISOString(),
+          limit: 1000,
+          direction: direction,
         },
         {
           cluster_id: currentCluster.id,
@@ -85,26 +109,79 @@ export const useLogs = (
         }
       )
       .then((res) => {
-        var initLogs: Anser.AnserJsonEntry[][] = [];
+        var newLogs: Anser.AnserJsonEntry[][] = [];
         res.data.logs?.forEach((logLine: any) => {
           if (logLine) {
             var parsedLine = JSON.parse(logLine.line);
 
             let ansiLog = Anser.ansiToJson(parsedLine.log);
-            initLogs.push(ansiLog);
+            newLogs.push(ansiLog);
           }
         });
 
-        setLogs(initLogs.reverse());
-        setInitialized(true);
-        closeWebsocket(websocketKey);
+        var modifiedLogs: Anser.AnserJsonEntry[][] = initLogs;
 
-        setupWebsocket(websocketKey);
+        if (direction == "forward") {
+          modifiedLogs.push(...newLogs);
+        } else if (direction == "backward") {
+          modifiedLogs.push(...newLogs.reverse());
+        }
+
+        setLogs([...modifiedLogs]);
+        cb && cb();
       });
+  };
+
+  const refresh = () => {
+    if (!currentPod) {
+      return;
+    }
+
+    const websocketKey = `${currentPod}-${namespace}-websocket`;
+    var newEndDate = setDate || new Date();
+
+    queryLogs([], startDate, newEndDate, "backward", () => {
+      setEndDate(newEndDate);
+      closeWebsocket(websocketKey);
+
+      if (isLive) {
+        setupWebsocket(websocketKey);
+        return () => {
+          closeWebsocket(websocketKey);
+        };
+      }
+    });
+  };
+
+  const moveCursor = (direction: number) => {
+    if (direction < 0) {
+      // we query by setting the endDate equal to the previous startDate, and setting the direction
+      // to "backward"
+      var twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+      queryLogs(logs, twoWeeksAgo, startDate, "backward", () => {
+        setEndDate(startDate);
+        setStartDate(twoWeeksAgo);
+      });
+    } else {
+      if (isLive) {
+        return;
+      }
+
+      // we query by setting the startDate equal to the previous endDate, setting the endDate equal to the
+      // current time, and setting the direction to "forward"
+      var currDate = new Date();
+      queryLogs(logs, endDate, currDate, "forward", () => {
+        setStartDate(endDate);
+        setEndDate(currDate);
+      });
+    }
   };
 
   return {
     logs,
     refresh,
+    moveCursor,
   };
 };

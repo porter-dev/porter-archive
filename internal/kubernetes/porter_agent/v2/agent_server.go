@@ -177,6 +177,10 @@ func GetHistoricalLogs(
 		vals["search_param"] = req.SearchParam
 	}
 
+	if req.Direction != "" {
+		vals["direction"] = req.Direction
+	}
+
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,

@@ -181,7 +181,7 @@ const ExpandedJobRun = ({
             <KeyValueArray
               envLoader={true}
               values={envObject}
-              label="Environment Variables:"
+              label="Environment variables:"
               disabled={true}
             />
             <DarkMatter />

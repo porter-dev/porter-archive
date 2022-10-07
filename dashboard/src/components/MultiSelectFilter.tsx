@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import arrow from "assets/arrow-down.svg";
 
-import CheckboxList from "components/form-components/CheckboxList";
+import CheckboxList from "./CheckboxList";
 
 type Props = {
   name: string;
@@ -169,6 +169,7 @@ const Dropdown = styled.div`
   overflow-y: auto;
   margin-bottom: 20px;
   background: #2f3135;
+  padding: 0;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
 `;

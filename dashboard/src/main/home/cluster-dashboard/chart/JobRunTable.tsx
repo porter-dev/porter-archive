@@ -253,7 +253,7 @@ const JobRunTable: React.FC<Props> = ({
         },
       },
       {
-        Header: "Commit/Image tag",
+        Header: "Image tag",
         id: "commit_or_image_tag",
         accessor: (originalRow) => {
           const container = originalRow.spec?.template?.spec?.containers[0];
@@ -419,7 +419,7 @@ const CommandString = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 300px;
+  max-width: 160px;
   color: #ffffff55;
   margin-right: 27px;
   font-family: monospace;

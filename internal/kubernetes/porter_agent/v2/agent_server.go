@@ -173,6 +173,10 @@ func GetHistoricalLogs(
 	vals["pod_selector"] = req.PodSelector
 	vals["namespace"] = req.Namespace
 
+	if req.SearchParam != "" {
+		vals["search_param"] = req.SearchParam
+	}
+
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,

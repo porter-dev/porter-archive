@@ -103,7 +103,7 @@ const NewEnvGroupForm = (props: {
         width="100%"
       />
 
-      <Heading>Environment Variables</Heading>
+      <Heading>Environment variables</Heading>
       <Helper>
         Set environment variables for your secrets and environment-specific
         configuration.

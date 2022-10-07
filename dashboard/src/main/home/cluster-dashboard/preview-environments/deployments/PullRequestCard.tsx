@@ -141,7 +141,7 @@ const DeploymentCardWrapper = styled.div`
   padding: 12px;
   padding-left: 14px;
   border-radius: 5px;
-  background: #262a30;
+  background: #26292e;
   border: 1px solid #494b4f;
 
   animation: fadeIn 0.5s;

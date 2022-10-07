@@ -34,17 +34,13 @@ const LogsSection: React.FC<Props> = ({
   const [scrollToBottom, setScrollToBottom] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
-  const [startDate, setStartDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(null);
 
-  var d = new Date(startDate);
-  d.setDate(d.getDate() - 1);
-  var start = d.toISOString();
-
-  const { logs, refresh } = useLogs(
+  const { logs, refresh, moveCursor } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
-    start
+    selectedDate
   );
 
   useEffect(() => {
@@ -110,7 +106,10 @@ const LogsSection: React.FC<Props> = ({
                 />
               </SearchBarWrapper>
             </SearchRowWrapper>
-            <DateTimePicker startDate={startDate} setStartDate={setStartDate} />
+            <DateTimePicker
+              startDate={selectedDate}
+              setStartDate={setSelectedDate}
+            />
             <RadioFilter
               icon={filterOutline}
               selected={podFilter}
@@ -132,7 +131,7 @@ const LogsSection: React.FC<Props> = ({
               Scroll to bottom
             </Button>
             <Spacer />
-            <Button>
+            <Button onClick={() => refresh()}>
               <i className="material-icons">autorenew</i>
               Refresh
             </Button>

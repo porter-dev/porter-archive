@@ -2029,6 +2029,7 @@ const getLogs = baseApi<
     pod_selector: string;
     namespace: string;
     search_param?: string;
+    direction?: string;
   },
   {
     project_id: number;

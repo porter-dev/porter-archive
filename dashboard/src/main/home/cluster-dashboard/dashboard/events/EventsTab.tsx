@@ -3,7 +3,6 @@ import styled from "styled-components";
 import EventCard from "components/events/EventCard";
 import Loading from "components/Loading";
 import InfiniteScroll from "react-infinite-scroll-component";
-import Dropdown from "components/Dropdown";
 import { useKubeEvents } from "components/events/useEvents";
 import SubEventsList from "components/events/SubEventsList";
 
@@ -39,8 +38,7 @@ const EventsTab = () => {
       <Placeholder>
         <div>
           <Header>We couldn't detect the Porter agent on your cluster</Header>
-          In order to use the events tab, you need to install the Porter agent
-          on your cluster.
+          In order to use the events tab, you need to install the Porter agent.
           <InstallPorterAgentButton onClick={() => triggerInstall()}>
             <i className="material-icons">add</i> Install Porter agent
           </InstallPorterAgentButton>

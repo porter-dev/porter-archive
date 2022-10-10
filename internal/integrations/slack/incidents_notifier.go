@@ -102,6 +102,8 @@ func (s *IncidentsNotifier) NotifyResolved(incident *types.Incident, url string)
 			resolvedAt.Unix(),
 			resolvedAt.Format("2006-01-02 15:04:05 UTC"),
 		)),
+		getMarkdownBlock(fmt.Sprintf("*Incident Summary:*")),
+		getMarkdownBlock(fmt.Sprintf("```\n%s\n```", incident.Summary)),
 	)
 
 	slackPayload := &SlackPayload{

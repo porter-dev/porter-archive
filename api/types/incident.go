@@ -79,6 +79,7 @@ type IncidentEvent struct {
 	PodNamespace string     `json:"pod_namespace" form:"required"`
 	Summary      string     `json:"summary" form:"required"`
 	Detail       string     `json:"detail" form:"required"`
+	Revision     string     `json:"revision"`
 }
 
 type ListIncidentEventsRequest struct {

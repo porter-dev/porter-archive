@@ -11,19 +11,19 @@ import (
 	"github.com/porter-dev/porter/internal/models/integrations"
 )
 
-type IncidentsNotifier struct {
+type IncidentNotifier struct {
 	slackInts []*integrations.SlackIntegration
 	Config    *types.NotificationConfig
 }
 
-func NewIncidentsNotifier(conf *types.NotificationConfig, slackInts ...*integrations.SlackIntegration) *IncidentsNotifier {
-	return &IncidentsNotifier{
+func NewIncidentNotifier(conf *types.NotificationConfig, slackInts ...*integrations.SlackIntegration) *IncidentNotifier {
+	return &IncidentNotifier{
 		slackInts: slackInts,
 		Config:    conf,
 	}
 }
 
-func (s *IncidentsNotifier) NotifyNew(incident *types.Incident, url string) error {
+func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error {
 	res := []*SlackBlock{}
 
 	topSectionMarkdwn := fmt.Sprintf(
@@ -74,7 +74,7 @@ func (s *IncidentsNotifier) NotifyNew(incident *types.Incident, url string) erro
 	return nil
 }
 
-func (s *IncidentsNotifier) NotifyResolved(incident *types.Incident, url string) error {
+func (s *IncidentNotifier) NotifyResolved(incident *types.Incident, url string) error {
 	res := []*SlackBlock{}
 
 	createdAt := incident.CreatedAt

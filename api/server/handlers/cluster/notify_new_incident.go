@@ -10,8 +10,11 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/notifier/sendgrid"
+	"github.com/porter-dev/porter/internal/notifier/slack"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 type NotifyNewIncidentHandler struct {
@@ -61,10 +64,36 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		notifConf = conf.ToNotificationConfigType()
 	}
 
-	notifier := slack.NewIncidentsNotifier(notifConf, slackInts...)
+	users, err := getUsersByProjectID(c.Repo(), cluster.ProjectID)
+
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	notifiers := make([]notifier.IncidentNotifier, 0)
+
+	if c.Config().SlackConf != nil {
+		notifiers = append(notifiers, slack.NewIncidentNotifier(notifConf, slackInts...))
+	}
+
+	if sc := c.Config().ServerConf; sc.SendgridAPIKey != "" && sc.SendgridSenderEmail != "" && sc.SendgridIncidentAlertTemplateID != "" {
+		notifiers = append(notifiers, sendgrid.NewIncidentNotifier(&sendgrid.IncidentNotifierOpts{
+			SharedOpts: &sendgrid.SharedOpts{
+				APIKey:      c.Config().ServerConf.SendgridAPIKey,
+				SenderEmail: c.Config().ServerConf.SendgridSenderEmail,
+			},
+			IncidentAlertTemplateID: sc.SendgridIncidentAlertTemplateID,
+			Users:                   users,
+		}))
+	}
+
+	multi := notifier.NewMultiIncidentNotifier(
+		notifiers...,
+	)
 
 	if !cluster.NotificationsDisabled {
-		err := notifier.NotifyNew(
+		err := multi.NotifyNew(
 			request, fmt.Sprintf(
 				"%s/cluster-dashboard/incidents/%s?namespace=%s",
 				c.Config().ServerConf.ServerURL,
@@ -78,4 +107,23 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
+}
+
+func getUsersByProjectID(repo repository.Repository, projectID uint) ([]*models.User, error) {
+	roles, err := repo.Project().ListProjectRoles(projectID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	roleMap := make(map[uint]*models.Role)
+	idArr := make([]uint, 0)
+
+	for _, role := range roles {
+		roleCp := role
+		roleMap[role.UserID] = &roleCp
+		idArr = append(idArr, role.UserID)
+	}
+
+	return repo.User().ListUsersByIDs(idArr)
 }

@@ -110,19 +110,18 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 }
 
 func getUsersByProjectID(repo repository.Repository, projectID uint) ([]*models.User, error) {
-	roles, err := repo.Project().ListProjectRoles(projectID)
+	roles, err := repo.ProjectRole().ListProjectRoles(projectID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	roleMap := make(map[uint]*models.Role)
 	idArr := make([]uint, 0)
 
 	for _, role := range roles {
-		roleCp := role
-		roleMap[role.UserID] = &roleCp
-		idArr = append(idArr, role.UserID)
+		for _, user := range role.Users {
+			idArr = append(idArr, user.ID)
+		}
 	}
 
 	return repo.User().ListUsersByIDs(idArr)

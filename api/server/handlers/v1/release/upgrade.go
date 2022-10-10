@@ -15,8 +15,9 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/helm"
-	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/notifier/slack"
 	"helm.sh/helm/v3/pkg/release"
 )
 
@@ -166,9 +167,9 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		notifConf = conf.ToNotificationConfigType()
 	}
 
-	notifier := slack.NewSlackNotifier(notifConf, slackInts...)
+	deplNotifier := slack.NewDeploymentNotifier(notifConf, slackInts...)
 
-	notifyOpts := &slack.NotifyOpts{
+	notifyOpts := &notifier.NotifyOpts{
 		ProjectID:   cluster.ProjectID,
 		ClusterID:   cluster.ID,
 		ClusterName: cluster.Name,
@@ -185,11 +186,11 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	if upgradeErr != nil {
-		notifyOpts.Status = slack.StatusHelmFailed
+		notifyOpts.Status = notifier.StatusHelmFailed
 		notifyOpts.Info = upgradeErr.Error()
 
 		if !cluster.NotificationsDisabled {
-			notifier.Notify(notifyOpts)
+			deplNotifier.Notify(notifyOpts)
 		}
 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
@@ -201,11 +202,11 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	if helmRelease.Chart != nil && helmRelease.Chart.Metadata.Name != "job" {
-		notifyOpts.Status = slack.StatusHelmDeployed
+		notifyOpts.Status = notifier.StatusHelmDeployed
 		notifyOpts.Version = helmRelease.Version
 
 		if !cluster.NotificationsDisabled {
-			notifier.Notify(notifyOpts)
+			deplNotifier.Notify(notifyOpts)
 		}
 	}
 

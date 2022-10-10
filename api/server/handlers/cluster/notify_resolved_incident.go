@@ -10,8 +10,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/integrations/slack"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier/slack"
 )
 
 type NotifyResolvedIncidentHandler struct {
@@ -61,7 +61,7 @@ func (c *NotifyResolvedIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http
 		notifConf = conf.ToNotificationConfigType()
 	}
 
-	notifier := slack.NewIncidentsNotifier(notifConf, slackInts...)
+	notifier := slack.NewIncidentNotifier(notifConf, slackInts...)
 
 	if !cluster.NotificationsDisabled {
 		err := notifier.NotifyResolved(

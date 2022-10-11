@@ -59,7 +59,7 @@ const useLastSeenPodStatus = ({
           name: podName,
         }
       );
-      //console.log(getPodStatus(res.data.status));
+      // console.log(getPodStatus(res.data.status));
 
       setCurrentStatus(getPodStatus(res.data.status));
     } catch (error) {

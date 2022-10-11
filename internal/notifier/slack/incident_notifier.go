@@ -13,13 +13,11 @@ import (
 
 type IncidentNotifier struct {
 	slackInts []*integrations.SlackIntegration
-	Config    *types.NotificationConfig
 }
 
-func NewIncidentNotifier(conf *types.NotificationConfig, slackInts ...*integrations.SlackIntegration) *IncidentNotifier {
+func NewIncidentNotifier(slackInts ...*integrations.SlackIntegration) *IncidentNotifier {
 	return &IncidentNotifier{
 		slackInts: slackInts,
-		Config:    conf,
 	}
 }
 

@@ -111,6 +111,7 @@ class ClusterDashboard extends Component<PropsType, StateType> {
   componentDidUpdate(prevProps: PropsType) {
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
+      localStorage.setItem("namespace", "default");
       this.setState(
         {
           namespace: "default",
@@ -151,7 +152,6 @@ class ClusterDashboard extends Component<PropsType, StateType> {
         <NamespaceSelector
           setNamespace={(namespace) =>
             this.setState({ namespace }, () => {
-              console.log(window.location, namespace);
               pushQueryParams(this.props, {
                 namespace: this.state.namespace || "ALL",
               });

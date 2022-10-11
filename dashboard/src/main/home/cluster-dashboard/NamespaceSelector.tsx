@@ -30,7 +30,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       value: string;
     }[]
   >([]);
-  const [defaultNamespace, setDefaultNamespace] = useState<string>("default");
+  const [defaultNamespace, setDefaultNamespace] = useState<string>(localStorage.getItem("namespace"));
 
   const updateOptions = () => {
     let { currentCluster, currentProject } = context;
@@ -61,7 +61,11 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
           const availableNamespaces = res.data.filter((namespace: any) => {
             return namespace.status !== "Terminating";
           });
-          setDefaultNamespace("default");
+          if (localStorage.getItem("namespace")) {
+            setDefaultNamespace(localStorage.getItem("namespace"));
+          } else {
+            setDefaultNamespace("default");
+          }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
             namespaceOptions.push({
               label: x.name,
@@ -100,6 +104,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   }, [namespace, context.currentCluster]);
 
   const handleSetActive = (namespace: any) => {
+    localStorage.setItem("namespace", namespace);
     setNamespace(namespace);
   };
 

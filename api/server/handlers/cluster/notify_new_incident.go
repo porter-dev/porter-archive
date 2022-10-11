@@ -74,7 +74,7 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	notifiers := make([]notifier.IncidentNotifier, 0)
 
 	if c.Config().SlackConf != nil {
-		notifiers = append(notifiers, slack.NewIncidentNotifier(notifConf, slackInts...))
+		notifiers = append(notifiers, slack.NewIncidentNotifier(slackInts...))
 	}
 
 	if sc := c.Config().ServerConf; sc.SendgridAPIKey != "" && sc.SendgridSenderEmail != "" && sc.SendgridIncidentAlertTemplateID != "" {
@@ -89,6 +89,7 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	multi := notifier.NewMultiIncidentNotifier(
+		notifConf,
 		notifiers...,
 	)
 

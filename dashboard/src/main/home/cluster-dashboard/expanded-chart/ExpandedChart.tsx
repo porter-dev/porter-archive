@@ -133,6 +133,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const getControllers = async (chart: ChartType) => {
+    
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
 

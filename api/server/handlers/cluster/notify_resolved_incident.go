@@ -11,6 +11,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/notifier/sendgrid"
 	"github.com/porter-dev/porter/internal/notifier/slack"
 )
 
@@ -61,10 +63,37 @@ func (c *NotifyResolvedIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http
 		notifConf = conf.ToNotificationConfigType()
 	}
 
-	notifier := slack.NewIncidentNotifier(notifConf, slackInts...)
+	notifiers := make([]notifier.IncidentNotifier, 0)
+
+	if c.Config().SlackConf != nil {
+		notifiers = append(notifiers, slack.NewIncidentNotifier(slackInts...))
+	}
+
+	if sc := c.Config().ServerConf; sc.SendgridAPIKey != "" && sc.SendgridSenderEmail != "" && sc.SendgridIncidentAlertTemplateID != "" {
+		users, err := getUsersByProjectID(c.Repo(), cluster.ProjectID)
+
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
+		notifiers = append(notifiers, sendgrid.NewIncidentNotifier(&sendgrid.IncidentNotifierOpts{
+			SharedOpts: &sendgrid.SharedOpts{
+				APIKey:      c.Config().ServerConf.SendgridAPIKey,
+				SenderEmail: c.Config().ServerConf.SendgridSenderEmail,
+			},
+			IncidentResolvedTemplateID: sc.SendgridIncidentResolvedTemplateID,
+			Users:                      users,
+		}))
+	}
+
+	multi := notifier.NewMultiIncidentNotifier(
+		notifConf,
+		notifiers...,
+	)
 
 	if !cluster.NotificationsDisabled {
-		err := notifier.NotifyResolved(
+		err := multi.NotifyResolved(
 			request, fmt.Sprintf(
 				"%s/cluster-dashboard/incidents/%s?namespace=%s",
 				c.Config().ServerConf.ServerURL,

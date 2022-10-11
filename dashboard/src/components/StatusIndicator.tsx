@@ -1,8 +1,8 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import loading from "assets/loading.gif";
 
-type PropsType = {
+type Props = {
   status: string;
   controllers: Record<string, Record<string, any>>;
   margin_left: string;
@@ -11,31 +11,32 @@ type PropsType = {
 type StateType = {};
 
 // Manages a tab selector and renders the associated view
-export default class StatusIndicator extends Component<PropsType, StateType> {
-  renderStatus = (status: string) => {
+const StatusIndicator: React.FC<Props> = (props) => {
+
+  useEffect(() => {
+    console.log(props.controllers)
+  }, []);
+
+
+  const renderStatus = (status: string) => {
     if (status == "loading") {
-      return (
-        <div>
-          <Spinner src={loading} />
-        </div>
-      );
+      return <Spinner src={loading} />;
     }
 
     return (
-      <div>
-        <StatusColor status={status} />
-      </div>
+      <StatusCircle >
+      </StatusCircle>
     );
   };
 
-  getChartStatus = (chartStatus: string) => {
+  const getChartStatus = (chartStatus: string) => {
     if (chartStatus === "deployed") {
-      for (var uid in this.props.controllers) {
-        let value = this.props.controllers[uid];
-        let available = this.getAvailability(value.metadata.kind, value);
+      for (var uid in props.controllers) {
+        let value = props.controllers[uid];
+        let available = getAvailability(value.metadata.kind, value);
         let progressing = true;
 
-        this.props.controllers[uid]?.status?.conditions?.forEach(
+        props.controllers[uid]?.status?.conditions?.forEach(
           (condition: any) => {
             if (
               condition.type == "Progressing" &&
@@ -58,7 +59,7 @@ export default class StatusIndicator extends Component<PropsType, StateType> {
     return chartStatus;
   };
 
-  getAvailability = (kind: string, c: any) => {
+  const getAvailability = (kind: string, c: any) => {
     switch (kind?.toLowerCase()) {
       case "deployment":
       case "replicaset":
@@ -72,16 +73,25 @@ export default class StatusIndicator extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    let status = this.getChartStatus(this.props.status);
-    return (
-      <Status margin_left={this.props.margin_left}>
-        {this.renderStatus(status)}
-        {status}
-      </Status>
-    );
-  }
+  return (
+    <Status margin_left={props.margin_left}>
+      {renderStatus(getChartStatus(props.status))}
+      {getChartStatus(props.status)}
+    </Status>
+  );
 }
+
+export default StatusIndicator;
+
+const StatusCircle = styled.div`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 10px;
+  background: 
+    conic-gradient(from 0deg, 
+      #ffffff33 5%, #ffffffaa 0% 5%);
+`;
 
 const Spinner = styled.img`
   width: 15px;

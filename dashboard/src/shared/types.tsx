@@ -321,6 +321,8 @@ export interface CapabilityType {
   github: boolean;
   provisioner: boolean;
   version?: string;
+  default_app_helm_repo_url?: string;
+  default_addon_helm_repo_url?: string;
 }
 
 export interface ContextProps {

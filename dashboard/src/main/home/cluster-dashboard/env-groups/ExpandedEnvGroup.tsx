@@ -522,9 +522,12 @@ const EnvGroupSettings = ({
   handleDeleteEnvGroup: () => void;
   namespace?: string;
 }) => {
-  const { setCurrentOverlay, currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const {
+    setCurrentOverlay,
+    currentProject,
+    currentCluster,
+    setCurrentError,
+  } = useContext(Context);
   const [isAuthorized] = useAuth();
   const [name, setName] = useState(null);
   const [cloneNamespace, setCloneNamespace] = useState(null);
@@ -639,16 +642,12 @@ const EnvGroupSettings = ({
           />
           <FlexAlt>
             <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
-            {
-              cloneSuccess && (
-                <StatusWrapper position="right" successful={true}>
-                  <i className="material-icons">done</i>
-                  <StatusTextWrapper>
-                  Successfully cloned 
-                  </StatusTextWrapper>
-                </StatusWrapper>
-              )
-            }
+            {cloneSuccess && (
+              <StatusWrapper position="right" successful={true}>
+                <i className="material-icons">done</i>
+                <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
+              </StatusWrapper>
+            )}
           </FlexAlt>
         </InnerWrapper>
       )}

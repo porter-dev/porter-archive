@@ -15,6 +15,7 @@ import api from "shared/api";
 import { Direction, useLogs } from "./useAgentLogs";
 import Anser from "anser";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
+import dayjs from "dayjs";
 
 type Props = {
   currentChart?: any;
@@ -40,7 +41,7 @@ const LogsSection: React.FC<Props> = ({
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const { logs, refresh, moveCursor } = useLogs(
+  const { logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
@@ -79,6 +80,9 @@ const LogsSection: React.FC<Props> = ({
       return (
         <Log key={[log.lineNumber, i].join(".")}>
           <span className="line-number">{log.lineNumber}.</span>
+          <span className="line-timestamp">
+            {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
+          </span>
           {log.line.map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
@@ -158,7 +162,11 @@ const LogsSection: React.FC<Props> = ({
         </FlexRow>
         <StyledLogsSection isFullscreen={isFullscreen}>
           <LoadMoreButton
-            active={selectedDate && logs.length !== 0}
+            active={
+              selectedDate &&
+              logs.length !== 0 &&
+              paginationInfo.previousCursor !== null
+            }
             role="button"
             onClick={() => moveCursor(Direction.backward)}
             ref={scrollToBottomRef}
@@ -436,6 +444,14 @@ const Log = styled.div`
   & > * {
     padding-block: 5px;
   }
+  & > .line-timestamp {
+    height: 100%;
+    color: #949effff;
+    opacity: 0.5;
+    font-family: monospace;
+    min-width: 45px;
+    padding-inline-end: 5px;
+  }
   & > .line-number {
     height: 100%;
     background: #202538;
@@ -449,6 +465,9 @@ const Log = styled.div`
 `;
 
 const LogSpan = styled.span`
+  display: inline-block;
+  word-wrap: break-word;
+  max-width: 80%;
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>

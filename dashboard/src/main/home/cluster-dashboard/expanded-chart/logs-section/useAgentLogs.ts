@@ -5,9 +5,11 @@ import { useContext, useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
+import { isJSON } from "shared/util";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
+const QUERY_LIMIT = 1000;
 
 export enum Direction {
   forward = "forward",
@@ -27,17 +29,29 @@ interface LogLine {
 }
 
 const parseLogs = (logs: string[] = []): Log[] => {
-  return logs.filter(Boolean).map((logLine: string, idx) => {
-    const parsedLine: LogLine = JSON.parse(logLine);
-    // TODO Move log parsing to the render method
-    const ansiLog = Anser.ansiToJson(parsedLine.log);
-    return {
-      line: ansiLog,
-      lineNumber: idx + 1,
-      timestamp: parsedLine.time,
-    };
-  });
+  return logs
+    .filter(Boolean)
+    .filter(isJSON)
+    .map((logLine: string, idx) => {
+      try {
+        const parsedLine: LogLine = JSON.parse(logLine);
+        // TODO Move log parsing to the render method
+        const ansiLog = Anser.ansiToJson(parsedLine.log);
+        return {
+          line: ansiLog,
+          lineNumber: idx + 1,
+          timestamp: parsedLine.time,
+        };
+      } catch (err) {
+        console.error(err, logLine);
+      }
+    });
 };
+
+interface PaginationInfo {
+  previousCursor: string | null;
+  nextCursor: string | null;
+}
 
 export const useLogs = (
   currentPod: string,
@@ -50,6 +64,10 @@ export const useLogs = (
   const logsBufferRef = useRef<Log[]>([]);
   const { currentCluster, currentProject } = useContext(Context);
   const [logs, setLogs] = useState<Log[]>([]);
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
+    previousCursor: null,
+    nextCursor: null,
+  });
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -152,7 +170,9 @@ export const useLogs = (
         console.log("Opened websocket:", websocketKey);
       },
       onmessage: (evt: MessageEvent) => {
-        const newLogs = parseLogs(evt?.data?.split("\n"));
+        const newLogs = parseLogs(
+          evt?.data?.split("}\n").map((line: string) => line + "}")
+        );
 
         pushLogs(newLogs);
       },
@@ -165,18 +185,23 @@ export const useLogs = (
     openWebsocket(websocketKey);
   };
 
-  const queryLogs = (startDate: Date, endDate: Date, direction: Direction) => {
+  const queryLogs = (
+    startDate: string,
+    endDate: string,
+    direction: Direction,
+    limit: number = QUERY_LIMIT
+  ) => {
     return api
       .getLogs(
         "<token>",
         {
           pod_selector: currentPod,
-          namespace: namespace,
+          namespace,
           search_param: searchParam,
-          start_range: startDate.toISOString(),
-          end_range: endDate.toISOString(),
-          limit: 1000,
-          direction: direction,
+          start_range: startDate,
+          end_range: endDate,
+          limit,
+          direction,
         },
         {
           cluster_id: currentCluster.id,
@@ -188,7 +213,11 @@ export const useLogs = (
           res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line)
         );
 
-        return newLogs;
+        return {
+          logs: newLogs,
+          previousCursor: res.data.backward_continue_time,
+          nextCursor: res.data.forward_continue_time,
+        };
       });
   };
 
@@ -203,11 +232,16 @@ export const useLogs = (
     const endDate = dayjs(setDate);
     const twoWeeksAgo = endDate.subtract(14, "days");
 
-    const initialLogs = await queryLogs(
-      twoWeeksAgo.toDate(),
-      endDate.toDate(),
+    const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
+      twoWeeksAgo.toISOString(),
+      endDate.toISOString(),
       Direction.forward
     );
+
+    setPaginationInfo({
+      previousCursor,
+      nextCursor,
+    });
 
     updateLogs(initialLogs);
 
@@ -224,17 +258,24 @@ export const useLogs = (
     if (direction === Direction.backward) {
       // we query by setting the endDate equal to the previous startDate, and setting the direction
       // to "backward"
-      const refDate = dayjs(logs[0]?.timestamp);
-      const twoWeeksAgo = refDate.subtract(14, "days");
+      const refDate = paginationInfo.previousCursor ?? dayjs().toISOString();
+      const twoWeeksAgo = dayjs(refDate).subtract(14, "days");
 
-      const newLogs = await queryLogs(
-        twoWeeksAgo.toDate(),
-        refDate.toDate(),
+      const { logs: newLogs, previousCursor } = await queryLogs(
+        twoWeeksAgo.toISOString(),
+        refDate,
         Direction.backward
       );
 
-      // TODO For backwards query, we want to add to the front of the current logs rather than append at the end
-      updateLogs(newLogs);
+      updateLogs(
+        paginationInfo.previousCursor ? newLogs.slice(0, -1) : newLogs,
+        direction
+      );
+
+      setPaginationInfo((paginationInfo) => ({
+        ...paginationInfo,
+        previousCursor,
+      }));
     } else {
       if (isLive) {
         return;
@@ -242,17 +283,22 @@ export const useLogs = (
 
       // we query by setting the startDate equal to the previous endDate, setting the endDate equal to the
       // current time, and setting the direction to "forward"
-      const refDate = logs.length
-        ? dayjs(logs.at(-1).timestamp)
-        : dayjs(setDate);
+      const refDate = paginationInfo.nextCursor ?? dayjs(setDate).toISOString();
       const currDate = dayjs();
-      const newLogs = await queryLogs(
-        refDate.toDate(),
-        currDate.toDate(),
+
+      const { logs: newLogs, nextCursor } = await queryLogs(
+        refDate,
+        currDate.toISOString(),
         Direction.forward
       );
 
-      updateLogs(newLogs);
+      // If previously we had next cursor set, it is likely that the log might have a duplicate entry so we ignore the first line
+      updateLogs(paginationInfo.nextCursor ? newLogs.slice(1) : newLogs);
+
+      setPaginationInfo((paginationInfo) => ({
+        ...paginationInfo,
+        nextCursor,
+      }));
     }
   };
 
@@ -296,5 +342,6 @@ export const useLogs = (
     logs,
     refresh,
     moveCursor,
+    paginationInfo,
   };
 };

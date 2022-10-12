@@ -1,16 +1,19 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
 
 import filterOutline from "assets/filter-outline.svg";
-import downArrow from "assets/down-arrow.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { useLogs } from "./useAgentLogs";
 import Anser from "anser";
-import { flatMap } from "lodash";
-import time from "assets/time.svg";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
 
 type Props = {
@@ -28,10 +31,11 @@ const LogsSection: React.FC<Props> = ({
   isFullscreen,
   setIsFullscreen,
 }) => {
+  const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
   const [podFilter, setPodFilter] = useState();
   const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
-  const [scrollToBottom, setScrollToBottom] = useState(true);
+  const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -40,7 +44,7 @@ const LogsSection: React.FC<Props> = ({
     podFilter,
     currentChart.namespace,
     enteredSearchText,
-    selectedDate
+    selectedDate,
   );
 
   useEffect(() => {
@@ -56,25 +60,32 @@ const LogsSection: React.FC<Props> = ({
         }
       )
       .then((res) => {
-        console.log(res.data);
         setPodFilterOpts(res.data);
         setPodFilter(res.data[0]);
       });
-
-    console.log(currentChart);
   }, []);
+
+  useEffect(() => {
+    if (scrollToBottomRef.current && scrollToBottomEnabled) {
+      scrollToBottomRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      });
+    }
+  }, [logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   const renderLogs = () => {
     return logs?.map((log, i) => {
       return (
-        <Log key={i}>
-          {log.map((ansi, j) => {
+        <Log key={[log.lineNumber, i].join(".")}>
+          <span className="line-number">{log.lineNumber}</span>
+          {log.line.map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
             }
 
             return (
-              <LogSpan key={i + "." + j} ansi={ansi}>
+              <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
                 {ansi.content.replace(/ /g, "\u00a0")}
               </LogSpan>
             );
@@ -124,8 +135,8 @@ const LogsSection: React.FC<Props> = ({
             />
           </Flex>
           <Flex>
-            <Button onClick={() => setScrollToBottom(!scrollToBottom)}>
-              <Checkbox checked={scrollToBottom}>
+            <Button onClick={() => setScrollToBottomEnabled((s) => !s)}>
+              <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
               </Checkbox>
               Scroll to bottom
@@ -155,6 +166,7 @@ const LogsSection: React.FC<Props> = ({
               Refresh
             </Highlight>
           </Message> */}
+          <div ref={scrollToBottomRef} />
         </StyledLogsSection>
       </>
     );
@@ -404,6 +416,14 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
 const Log = styled.div`
   font-family: monospace;
   user-select: text;
+  & > .line-number {
+    display: inline-block;
+    text-align: right;
+    min-width: 35px;
+    margin-right: 8px;
+    opacity: 0.3;
+    font-family: monospace;
+  }
 `;
 
 const LogSpan = styled.span`

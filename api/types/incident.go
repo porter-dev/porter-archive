@@ -116,8 +116,9 @@ type LogLine struct {
 }
 
 type GetLogResponse struct {
-	ContinueTime *time.Time `json:"continue_time"`
-	Logs         []LogLine  `json:"logs"`
+	BackwardContinueTime *time.Time `json:"backward_continue_time"`
+	ForwardContinueTime  *time.Time `json:"forward_continue_time"`
+	Logs                 []LogLine  `json:"logs"`
 }
 
 type GetEventRequest struct {

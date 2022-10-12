@@ -96,10 +96,12 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	if !cluster.NotificationsDisabled {
 		err := multi.NotifyNew(
 			request, fmt.Sprintf(
-				"%s/cluster-dashboard/incidents/%s?namespace=%s",
+				"%s/applications/%s/%s/%s?project_id=%d",
 				c.Config().ServerConf.ServerURL,
-				request.ID,
+				cluster.Name,
 				request.ReleaseNamespace,
+				request.ReleaseName,
+				cluster.ProjectID,
 			),
 		)
 

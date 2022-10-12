@@ -112,8 +112,14 @@ class ClusterDashboard extends Component<PropsType, StateType> {
     // Reset namespace filter and close expanded chart on cluster change
     if (prevProps.currentCluster !== this.props.currentCluster) {
       let namespace = "default";
-      if (localStorage.getItem(`${this.context.currentProject.id}-${this.context.currentCluster.id}-namespace`)) {
-        namespace = localStorage.getItem(`${this.context.currentProject.id}-${this.context.currentCluster.id}-namespace`);
+      if (
+        localStorage.getItem(
+          `${this.context.currentProject.id}-${this.context.currentCluster.id}-namespace`
+        )
+      ) {
+        namespace = localStorage.getItem(
+          `${this.context.currentProject.id}-${this.context.currentCluster.id}-namespace`
+        );
       }
       this.setState(
         {

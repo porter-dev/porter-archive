@@ -34,7 +34,7 @@ const LogsSection: React.FC<Props> = ({
   const [scrollToBottom, setScrollToBottom] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const { logs, refresh, moveCursor } = useLogs(
     podFilter,

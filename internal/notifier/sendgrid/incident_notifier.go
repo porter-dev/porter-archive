@@ -29,30 +29,32 @@ func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error
 	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
 	request.Method = "POST"
 
-	addrs := make([]*mail.Email, 0)
+	personalizations := make([]*mail.Personalization, 0)
+
+	templData := map[string]interface{}{
+		"incident_text": incident.Summary,
+		"app_url":       url,
+		"subject":       fmt.Sprintf("Your application %s crashed on Porter", incident.ReleaseName),
+		"preheader":     incident.Summary,
+		"created_at":    fmt.Sprintf("%s", incident.CreatedAt.Format("Jan 2, 2006 at 3:04pm (MST)")),
+	}
 
 	for _, user := range s.opts.Users {
-		addrs = append(addrs, &mail.Email{
-			Address: user.Email,
+		personalizations = append(personalizations, &mail.Personalization{
+			To: []*mail.Email{
+				{
+					Address: user.Email,
+				},
+			},
+			DynamicTemplateData: templData,
 		})
 	}
 
 	sgMail := &mail.SGMailV3{
-		Personalizations: []*mail.Personalization{
-			{
-				To: addrs,
-				DynamicTemplateData: map[string]interface{}{
-					"incident_text": incident.Summary,
-					"app_url":       url,
-					"subject":       fmt.Sprintf("Your application %s crashed on Porter", incident.ReleaseName),
-					"preheader":     incident.Summary,
-					"created_at":    fmt.Sprintf("%v", incident.CreatedAt),
-				},
-			},
-		},
+		Personalizations: personalizations,
 		From: &mail.Email{
 			Address: s.opts.SenderEmail,
-			Name:    "Porter",
+			Name:    "Porter Notifications",
 		},
 		TemplateID: s.opts.IncidentAlertTemplateID,
 	}
@@ -65,5 +67,42 @@ func (s *IncidentNotifier) NotifyNew(incident *types.Incident, url string) error
 }
 
 func (s *IncidentNotifier) NotifyResolved(incident *types.Incident, url string) error {
-	return nil
+	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request.Method = "POST"
+
+	personalizations := make([]*mail.Personalization, 0)
+
+	templData := map[string]interface{}{
+		"incident_resolved_text": fmt.Sprintf("[Resolved] The incident for application %s has been resolved. The incident text was:\n\n:%s", incident.ReleaseName, incident.Summary),
+		"app_url":                url,
+		"subject":                fmt.Sprintf("[Resolved] The incident for application %s has been resolved", incident.ReleaseName),
+		"preheader":              incident.Summary,
+		"resolved_at":            fmt.Sprintf("%s", incident.UpdatedAt.Format("Jan 2, 2006 at 3:04pm (MST)")),
+	}
+
+	for _, user := range s.opts.Users {
+		personalizations = append(personalizations, &mail.Personalization{
+			To: []*mail.Email{
+				{
+					Address: user.Email,
+				},
+			},
+			DynamicTemplateData: templData,
+		})
+	}
+
+	sgMail := &mail.SGMailV3{
+		Personalizations: personalizations,
+		From: &mail.Email{
+			Address: s.opts.SenderEmail,
+			Name:    "Porter Notifications",
+		},
+		TemplateID: s.opts.IncidentResolvedTemplateID,
+	}
+
+	request.Body = mail.GetRequestBody(sgMail)
+
+	_, err := sendgrid.API(request)
+
+	return err
 }

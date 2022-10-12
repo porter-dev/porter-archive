@@ -30,7 +30,9 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       value: string;
     }[]
   >([]);
-  const [defaultNamespace, setDefaultNamespace] = useState<string>("default");
+  const [defaultNamespace, setDefaultNamespace] = useState<string>(
+    localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`)
+  );
 
   const updateOptions = () => {
     let { currentCluster, currentProject } = context;
@@ -61,7 +63,11 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
           const availableNamespaces = res.data.filter((namespace: any) => {
             return namespace.status !== "Terminating";
           });
-          setDefaultNamespace("default");
+          if (localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`)) {
+            setDefaultNamespace(localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`));
+          } else {
+            setDefaultNamespace("default");
+          }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
             namespaceOptions.push({
               label: x.name,
@@ -99,7 +105,12 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
     updateOptions();
   }, [namespace, context.currentCluster]);
 
+  useEffect(() => {
+    setNamespace(localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`));
+  }, [context.currentCluster]);
+
   const handleSetActive = (namespace: any) => {
+    localStorage.setItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`, namespace);
     setNamespace(namespace);
   };
 

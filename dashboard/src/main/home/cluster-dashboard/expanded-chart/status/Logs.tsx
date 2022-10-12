@@ -196,13 +196,7 @@ const LogsFC: React.FC<{
             Show previous Logs
           </Scroll>
         )}
-        <Refresh
-          onClick={() => {
-            // this.refreshLogs();
-            // console.log("Refresh logs");
-            refresh();
-          }}
-        >
+        <Refresh onClick={() => refresh()}>
           <i className="material-icons">autorenew</i>
           Refresh
         </Refresh>

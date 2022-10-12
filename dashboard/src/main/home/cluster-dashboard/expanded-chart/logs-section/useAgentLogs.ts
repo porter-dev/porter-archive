@@ -20,12 +20,22 @@ interface Log {
   timestamp: string;
 }
 
-const parseLogs = (logs: string[] = []): AnserJsonEntry[][] => {
-  return logs.filter(Boolean).map((logLine: string) => {
-    const parsedLine = JSON.parse(logLine);
+interface LogLine {
+  log: string;
+  stream: string;
+  time: string;
+}
+
+const parseLogs = (logs: string[] = []): Log[] => {
+  return logs.filter(Boolean).map((logLine: string, idx) => {
+    const parsedLine: LogLine = JSON.parse(logLine);
     // TODO Move log parsing to the render method
     const ansiLog = Anser.ansiToJson(parsedLine.log);
-    return ansiLog;
+    return {
+      line: ansiLog,
+      lineNumber: idx + 1,
+      timestamp: parsedLine.time,
+    };
   });
 };
 
@@ -39,9 +49,9 @@ export const useLogs = (
   const d = dayjs().subtract(14, "days");
 
   const isLive = !setDate;
-  const logsBufferRef = useRef<AnserJsonEntry[][]>([]);
+  const logsBufferRef = useRef<Log[]>([]);
   const { currentCluster, currentProject } = useContext(Context);
-  const [logs, setLogs] = useState<AnserJsonEntry[][]>([]);
+  const [logs, setLogs] = useState<Log[]>([]);
   const [startDate, setStartDate] = useState<dayjs.Dayjs>(d);
   const [endDate, setEndDate] = useState<dayjs.Dayjs>(dayjs(setDate));
 
@@ -63,17 +73,30 @@ export const useLogs = (
     closeAllWebsockets,
   } = useWebsockets();
 
-  const updateLogs = (newLogs: AnserJsonEntry[][]) => {
+  const updateLogs = (newLogs: Log[]) => {
+    // Nothing to update here
+    if (!newLogs.length) {
+      return;
+    }
+
     setLogs((logs) => {
-      let currentLogs = logs;
-      currentLogs.push(...newLogs);
-      if (logs.length > MAX_LOGS) {
+      let updatedLogs = _.cloneDeep(logs);
+      const lastLineNumber = updatedLogs.at(-1)?.lineNumber ?? 0;
+
+      updatedLogs.push(
+        ...newLogs.map((log) => ({
+          ...log,
+          lineNumber: lastLineNumber + log.lineNumber,
+        }))
+      );
+
+      if (updatedLogs.length > MAX_LOGS) {
         const logsToBeRemoved =
           newLogs.length < MAX_BUFFER_LOGS ? newLogs.length : MAX_BUFFER_LOGS;
-        currentLogs = currentLogs.slice(logsToBeRemoved);
+        updatedLogs = updatedLogs.slice(logsToBeRemoved);
       }
 
-      return logs;
+      return updatedLogs;
     });
   };
 
@@ -90,7 +113,7 @@ export const useLogs = (
     logsBufferRef.current = [];
   };
 
-  const pushLogs = (newLogs: AnserJsonEntry[][]) => {
+  const pushLogs = (newLogs: Log[]) => {
     logsBufferRef.current.push(...newLogs);
 
     if (logsBufferRef.current.length > MAX_BUFFER_LOGS) {
@@ -148,7 +171,7 @@ export const useLogs = (
         );
 
         pushLogs(
-          direction === Direction.backward ? newLogs.reverse() : newLogs
+          direction === Direction.backward ? newLogs : newLogs.reverse()
         );
         cb && cb();
       });

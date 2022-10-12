@@ -14,7 +14,7 @@ import ClusterDashboard from "./cluster-dashboard/ClusterDashboard";
 import Dashboard from "./dashboard/Dashboard";
 import WelcomeForm from "./WelcomeForm";
 import Integrations from "./integrations/Integrations";
-import Templates from "./launch/Launch";
+import LaunchWrapper from "./launch/LaunchWrapper";
 
 import Navbar from "./navbar/Navbar";
 import ProjectSettings from "./project-settings/ProjectSettings";
@@ -503,7 +503,7 @@ class Home extends Component<PropsType, StateType> {
               path={"/project-settings"}
               render={() => <GuardedProjectSettings />}
             />
-            <Route path={"*"} render={() => <Templates />} />
+            <Route path={"*"} render={() => <LaunchWrapper />} />
           </Switch>
         </ViewWrapper>
 

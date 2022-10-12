@@ -1,16 +1,19 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
 
 import filterOutline from "assets/filter-outline.svg";
-import downArrow from "assets/down-arrow.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { useLogs } from "./useAgentLogs";
+import { Direction, useLogs } from "./useAgentLogs";
 import Anser from "anser";
-import { flatMap } from "lodash";
-import time from "assets/time.svg";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
 
 type Props = {
@@ -28,13 +31,14 @@ const LogsSection: React.FC<Props> = ({
   isFullscreen,
   setIsFullscreen,
 }) => {
+  const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
   const [podFilter, setPodFilter] = useState();
   const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
-  const [scrollToBottom, setScrollToBottom] = useState(true);
+  const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const { logs, refresh, moveCursor } = useLogs(
     podFilter,
@@ -56,25 +60,32 @@ const LogsSection: React.FC<Props> = ({
         }
       )
       .then((res) => {
-        console.log(res.data);
         setPodFilterOpts(res.data);
         setPodFilter(res.data[0]);
       });
-
-    console.log(currentChart);
   }, []);
+
+  useEffect(() => {
+    if (scrollToBottomRef.current && scrollToBottomEnabled) {
+      scrollToBottomRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   const renderLogs = () => {
     return logs?.map((log, i) => {
       return (
-        <Log key={i}>
-          {log.map((ansi, j) => {
+        <Log key={[log.lineNumber, i].join(".")}>
+          <span className="line-number">{log.lineNumber}.</span>
+          {log.line.map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
             }
 
             return (
-              <LogSpan key={i + "." + j} ansi={ansi}>
+              <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
                 {ansi.content.replace(/ /g, "\u00a0")}
               </LogSpan>
             );
@@ -124,8 +135,8 @@ const LogsSection: React.FC<Props> = ({
             />
           </Flex>
           <Flex>
-            <Button onClick={() => setScrollToBottom(!scrollToBottom)}>
-              <Checkbox checked={scrollToBottom}>
+            <Button onClick={() => setScrollToBottomEnabled((s) => !s)}>
+              <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
               </Checkbox>
               Scroll to bottom
@@ -146,6 +157,14 @@ const LogsSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <StyledLogsSection isFullscreen={isFullscreen}>
+          <LoadMoreButton
+            active={selectedDate && logs.length !== 0}
+            role="button"
+            onClick={() => moveCursor(Direction.backward)}
+            ref={scrollToBottomRef}
+          >
+            Load Previous
+          </LoadMoreButton>
           {renderLogs()}
           {/* <Message>
             
@@ -155,6 +174,14 @@ const LogsSection: React.FC<Props> = ({
               Refresh
             </Highlight>
           </Message> */}
+          <LoadMoreButton
+            active={selectedDate && logs.length !== 0}
+            role="button"
+            onClick={() => moveCursor(Direction.forward)}
+            ref={scrollToBottomRef}
+          >
+            Load more
+          </LoadMoreButton>
         </StyledLogsSection>
       </>
     );
@@ -382,8 +409,7 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
   border-radius: ${(props) => (props.isFullscreen ? "" : "8px")};
   border: ${(props) => (props.isFullscreen ? "" : "1px solid #ffffff33")};
   border-top: ${(props) => (props.isFullscreen ? "1px solid #ffffff33" : "")};
-  padding: 18px 22px;
-  background: #121318;
+  background: #101420;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
@@ -404,6 +430,22 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
 const Log = styled.div`
   font-family: monospace;
   user-select: text;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  & > * {
+    padding-block: 5px;
+  }
+  & > .line-number {
+    height: 100%;
+    background: #202538;
+    display: inline-block;
+    text-align: right;
+    min-width: 45px;
+    padding-inline-end: 5px;
+    opacity: 0.3;
+    font-family: monospace;
+  }
 `;
 
 const LogSpan = styled.span`
@@ -415,4 +457,15 @@ const LogSpan = styled.span`
     props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
     props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`;
+
+const LoadMoreButton = styled.div<{ active: boolean }>`
+  width: 100%;
+  display: ${(props) => (props.active ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  padding-block: 10px;
+  background: #1f2023;
+  cursor: pointer;
+  font-family: monospace;
 `;

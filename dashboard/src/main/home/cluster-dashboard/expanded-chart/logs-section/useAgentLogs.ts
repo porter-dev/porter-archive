@@ -46,14 +46,10 @@ export const useLogs = (
   // if setDate is set, results are not live
   setDate?: Date
 ) => {
-  const d = dayjs().subtract(14, "days");
-
   const isLive = !setDate;
   const logsBufferRef = useRef<Log[]>([]);
   const { currentCluster, currentProject } = useContext(Context);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [startDate, setStartDate] = useState<dayjs.Dayjs>(d);
-  const [endDate, setEndDate] = useState<dayjs.Dayjs>(dayjs(setDate));
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -73,7 +69,10 @@ export const useLogs = (
     closeAllWebsockets,
   } = useWebsockets();
 
-  const updateLogs = (newLogs: Log[]) => {
+  const updateLogs = (
+    newLogs: Log[],
+    direction: Direction = Direction.forward
+  ) => {
     // Nothing to update here
     if (!newLogs.length) {
       return;
@@ -81,19 +80,43 @@ export const useLogs = (
 
     setLogs((logs) => {
       let updatedLogs = _.cloneDeep(logs);
-      const lastLineNumber = updatedLogs.at(-1)?.lineNumber ?? 0;
 
-      updatedLogs.push(
-        ...newLogs.map((log) => ({
-          ...log,
-          lineNumber: lastLineNumber + log.lineNumber,
-        }))
-      );
+      /**
+       * If direction = Direction.forward, we want to append the new logs
+       * at the end of the current logs, else we want to append before the current logs
+       *
+       */
+      if (direction === Direction.forward) {
+        const lastLineNumber = updatedLogs.at(-1)?.lineNumber ?? 0;
 
-      if (updatedLogs.length > MAX_LOGS) {
-        const logsToBeRemoved =
-          newLogs.length < MAX_BUFFER_LOGS ? newLogs.length : MAX_BUFFER_LOGS;
-        updatedLogs = updatedLogs.slice(logsToBeRemoved);
+        updatedLogs.push(
+          ...newLogs.map((log) => ({
+            ...log,
+            lineNumber: lastLineNumber + log.lineNumber,
+          }))
+        );
+
+        // For direction = Direction.forward, remove logs from the front
+        if (updatedLogs.length > MAX_LOGS) {
+          const logsToBeRemoved =
+            newLogs.length < MAX_BUFFER_LOGS ? newLogs.length : MAX_BUFFER_LOGS;
+          updatedLogs = updatedLogs.slice(logsToBeRemoved);
+        }
+      } else {
+        updatedLogs = newLogs.concat(
+          updatedLogs.map((log) => ({
+            ...log,
+            lineNumber: log.lineNumber + newLogs.length,
+          }))
+        );
+
+        // For direction = Direction.backward, remove logs from the back
+        if (updatedLogs.length > MAX_LOGS) {
+          const logsToBeRemoved =
+            newLogs.length < MAX_BUFFER_LOGS ? newLogs.length : MAX_BUFFER_LOGS;
+
+          updatedLogs = updatedLogs.slice(0, logsToBeRemoved);
+        }
       }
 
       return updatedLogs;
@@ -142,13 +165,8 @@ export const useLogs = (
     openWebsocket(websocketKey);
   };
 
-  const queryLogs = (
-    startDate: Date,
-    endDate: Date,
-    direction: Direction,
-    cb?: () => void
-  ) => {
-    api
+  const queryLogs = (startDate: Date, endDate: Date, direction: Direction) => {
+    return api
       .getLogs(
         "<token>",
         {
@@ -170,55 +188,53 @@ export const useLogs = (
           res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line)
         );
 
-        pushLogs(
-          direction === Direction.backward ? newLogs : newLogs.reverse()
-        );
-        cb && cb();
+        return newLogs;
       });
   };
 
-  const refresh = () => {
+  const refresh = async () => {
     if (!currentPod) {
       return;
     }
 
+    setLogs([]);
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
-    const newEndDate = dayjs(setDate);
+    const endDate = dayjs(setDate);
+    const twoWeeksAgo = endDate.subtract(14, "days");
 
-    queryLogs(
-      startDate.toDate(),
-      newEndDate.toDate(),
-      Direction.backward,
-      () => {
-        setEndDate(newEndDate);
-        closeWebsocket(websocketKey);
-
-        if (isLive) {
-          setupWebsocket(websocketKey);
-          return () => {
-            closeWebsocket(websocketKey);
-          };
-        }
-      }
+    const initialLogs = await queryLogs(
+      twoWeeksAgo.toDate(),
+      endDate.toDate(),
+      Direction.forward
     );
+
+    updateLogs(initialLogs);
+
+    closeWebsocket(websocketKey);
+
+    if (isLive) {
+      setupWebsocket(websocketKey);
+    }
+
+    return () => isLive && closeWebsocket(websocketKey);
   };
 
-  const moveCursor = (direction: number) => {
-    if (direction < 0) {
+  const moveCursor = async (direction: Direction) => {
+    if (direction === Direction.backward) {
       // we query by setting the endDate equal to the previous startDate, and setting the direction
       // to "backward"
-      const twoWeeksAgo = dayjs().subtract(14, "days");
+      const refDate = dayjs(logs[0]?.timestamp);
+      const twoWeeksAgo = refDate.subtract(14, "days");
 
-      queryLogs(
+      const newLogs = await queryLogs(
         twoWeeksAgo.toDate(),
-        startDate.toDate(),
-        Direction.backward,
-        () => {
-          setEndDate(startDate);
-          setStartDate(twoWeeksAgo);
-        }
+        refDate.toDate(),
+        Direction.backward
       );
+
+      // TODO For backwards query, we want to add to the front of the current logs rather than append at the end
+      updateLogs(newLogs);
     } else {
       if (isLive) {
         return;
@@ -226,15 +242,22 @@ export const useLogs = (
 
       // we query by setting the startDate equal to the previous endDate, setting the endDate equal to the
       // current time, and setting the direction to "forward"
+      const refDate = logs.length
+        ? dayjs(logs.at(-1).timestamp)
+        : dayjs(setDate);
       const currDate = dayjs();
-      queryLogs(endDate.toDate(), currDate.toDate(), Direction.forward, () => {
-        setStartDate(endDate);
-        setEndDate(currDate);
-      });
+      const newLogs = await queryLogs(
+        refDate.toDate(),
+        currDate.toDate(),
+        Direction.forward
+      );
+
+      updateLogs(newLogs);
     }
   };
 
   useEffect(() => {
+    setLogs([]);
     flushLogsBuffer(true);
   }, []);
 

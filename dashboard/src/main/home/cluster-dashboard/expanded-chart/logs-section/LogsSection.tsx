@@ -12,7 +12,7 @@ import RadioFilter from "components/RadioFilter";
 import filterOutline from "assets/filter-outline.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { useLogs } from "./useAgentLogs";
+import { Direction, useLogs } from "./useAgentLogs";
 import Anser from "anser";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
 
@@ -44,7 +44,7 @@ const LogsSection: React.FC<Props> = ({
     podFilter,
     currentChart.namespace,
     enteredSearchText,
-    selectedDate,
+    selectedDate
   );
 
   useEffect(() => {
@@ -68,8 +68,8 @@ const LogsSection: React.FC<Props> = ({
   useEffect(() => {
     if (scrollToBottomRef.current && scrollToBottomEnabled) {
       scrollToBottomRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
+        behavior: "smooth",
+        block: "end",
       });
     }
   }, [logs, scrollToBottomRef, scrollToBottomEnabled]);
@@ -78,7 +78,7 @@ const LogsSection: React.FC<Props> = ({
     return logs?.map((log, i) => {
       return (
         <Log key={[log.lineNumber, i].join(".")}>
-          <span className="line-number">{log.lineNumber}</span>
+          <span className="line-number">{log.lineNumber}.</span>
           {log.line.map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
@@ -157,6 +157,14 @@ const LogsSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <StyledLogsSection isFullscreen={isFullscreen}>
+          <LoadMoreButton
+            active={selectedDate && logs.length !== 0}
+            role="button"
+            onClick={() => moveCursor(Direction.backward)}
+            ref={scrollToBottomRef}
+          >
+            Load Previous
+          </LoadMoreButton>
           {renderLogs()}
           {/* <Message>
             
@@ -166,7 +174,14 @@ const LogsSection: React.FC<Props> = ({
               Refresh
             </Highlight>
           </Message> */}
-          <div ref={scrollToBottomRef} />
+          <LoadMoreButton
+            active={selectedDate && logs.length !== 0}
+            role="button"
+            onClick={() => moveCursor(Direction.forward)}
+            ref={scrollToBottomRef}
+          >
+            Load more
+          </LoadMoreButton>
         </StyledLogsSection>
       </>
     );
@@ -394,8 +409,7 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
   border-radius: ${(props) => (props.isFullscreen ? "" : "8px")};
   border: ${(props) => (props.isFullscreen ? "" : "1px solid #ffffff33")};
   border-top: ${(props) => (props.isFullscreen ? "1px solid #ffffff33" : "")};
-  padding: 18px 22px;
-  background: #121318;
+  background: #101420;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
@@ -416,11 +430,19 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
 const Log = styled.div`
   font-family: monospace;
   user-select: text;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  & > * {
+    padding-block: 5px;
+  }
   & > .line-number {
+    height: 100%;
+    background: #202538;
     display: inline-block;
     text-align: right;
-    min-width: 35px;
-    margin-right: 8px;
+    min-width: 45px;
+    padding-inline-end: 5px;
     opacity: 0.3;
     font-family: monospace;
   }
@@ -435,4 +457,15 @@ const LogSpan = styled.span`
     props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
     props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`;
+
+const LoadMoreButton = styled.div<{ active: boolean }>`
+  width: 100%;
+  display: ${(props) => (props.active ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  padding-block: 10px;
+  background: #1f2023;
+  cursor: pointer;
+  font-family: monospace;
 `;

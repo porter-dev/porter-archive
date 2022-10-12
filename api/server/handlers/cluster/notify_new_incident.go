@@ -74,7 +74,7 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	notifiers := make([]notifier.IncidentNotifier, 0)
 
 	if c.Config().SlackConf != nil {
-		notifiers = append(notifiers, slack.NewIncidentNotifier(notifConf, slackInts...))
+		notifiers = append(notifiers, slack.NewIncidentNotifier(slackInts...))
 	}
 
 	if sc := c.Config().ServerConf; sc.SendgridAPIKey != "" && sc.SendgridSenderEmail != "" && sc.SendgridIncidentAlertTemplateID != "" {
@@ -89,16 +89,19 @@ func (c *NotifyNewIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	multi := notifier.NewMultiIncidentNotifier(
+		notifConf,
 		notifiers...,
 	)
 
 	if !cluster.NotificationsDisabled {
 		err := multi.NotifyNew(
 			request, fmt.Sprintf(
-				"%s/cluster-dashboard/incidents/%s?namespace=%s",
+				"%s/applications/%s/%s/%s?project_id=%d",
 				c.Config().ServerConf.ServerURL,
-				request.ID,
+				cluster.Name,
 				request.ReleaseNamespace,
+				request.ReleaseName,
+				cluster.ProjectID,
 			),
 		)
 

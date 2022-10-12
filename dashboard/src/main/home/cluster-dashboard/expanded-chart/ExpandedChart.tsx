@@ -23,7 +23,7 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
 import TitleSection from "components/TitleSection";
 import DeploymentType from "./DeploymentType";
-import IncidentsTab from "./incidents/IncidentsTab";
+import EventsTab from "./events/EventsTab";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 import { useStackEnvGroups } from "./useStackEnvGroups";
@@ -419,7 +419,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     switch (currentTab) {
       case "logs":
         return (
-          <LogsSection
+          <LogsSection 
             currentChart={chart}
             isFullscreen={isFullscreen}
             setIsFullscreen={setIsFullscreen}
@@ -427,14 +427,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
         );
       case "metrics":
         return <MetricsSection currentChart={chart} />;
-      case "incidents":
+      case "events":
         if (DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
           return null;
         }
         return (
-          <IncidentsTab
-            releaseName={chart?.name}
-            namespace={chart?.namespace}
+          <EventsTab
+            controllers={controllers}
           />
         );
       case "status":
@@ -540,19 +539,16 @@ const ExpandedChart: React.FC<Props> = (props) => {
     let leftTabOptions = [] as any[];
     if (
       currentChart.chart.metadata.home === "https://getporter.dev/" &&
-      (currentChart.chart.metadata.name === "web" ||
+      (
+        currentChart.chart.metadata.name === "web" || 
         currentChart.chart.metadata.name === "worker" ||
-        currentChart.chart.metadata.name === "job")
+        currentChart.chart.metadata.name === "job"
+      )
     ) {
+      leftTabOptions.push({ label: "Events", value: "events" });
       leftTabOptions.push({ label: "Logs", value: "logs" });
     }
     leftTabOptions.push({ label: "Status", value: "status" });
-
-    /* Temporarily disable incident detection
-    if (!DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
-      leftTabOptions.push({ label: "Incidents", value: "incidents" });
-    }
-    */
 
     if (props.isMetricsInstalled) {
       leftTabOptions.push({ label: "Metrics", value: "metrics" });
@@ -779,10 +775,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
       ) : (
         <>
           {isFullscreen ? (
-            <LogsSection
+            <LogsSection 
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
-              currentChart={currentChart}
+              currentChart={currentChart} 
             />
           ) : (
             <StyledExpandedChart>
@@ -800,8 +796,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   {currentChart.name}
                   <DeploymentType currentChart={currentChart} />
                   <TagWrapper>
-                    Namespace{" "}
-                    <NamespaceTag>{currentChart.namespace}</NamespaceTag>
+                    Namespace <NamespaceTag>{currentChart.namespace}</NamespaceTag>
                   </TagWrapper>
                 </TitleSection>
 
@@ -826,8 +821,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Placeholder>
                     <TextWrap>
                       <Header>
-                        <Spinner src={loadingSrc} /> Deleting "
-                        {currentChart.name}"
+                        <Spinner src={loadingSrc} /> Deleting "{currentChart.name}"
                       </Header>
                       You will be automatically redirected after deletion is
                       complete.
@@ -879,10 +873,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                             isReadOnly={
                               isPreview ||
                               imageIsPlaceholder ||
-                              !isAuthorized("application", "", [
-                                "get",
-                                "update",
-                              ])
+                              !isAuthorized("application", "", ["get", "update"])
                             }
                             onSubmit={onSubmit}
                             includeMetadata
@@ -972,6 +963,8 @@ const LineBreak = styled.div`
 
 const BodyWrapper = styled.div`
   position: relative;
+  padding-bottom: 0;
+  margin-bottom: 0;
 `;
 
 const Header = styled.div`

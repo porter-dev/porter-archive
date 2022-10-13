@@ -76,6 +76,7 @@ const createAWSIntegration = baseApi<
     aws_cluster_id?: string;
     aws_access_key_id: string;
     aws_secret_access_key: string;
+    aws_assume_role_arn?: string;
   },
   { id: number }
 >("POST", (pathParams) => {

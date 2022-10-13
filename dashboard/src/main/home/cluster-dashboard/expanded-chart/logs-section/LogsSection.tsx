@@ -504,6 +504,7 @@ const Log = styled.div`
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  width: 100%;
   & > * {
     padding-block: 5px;
   }
@@ -529,8 +530,8 @@ const Log = styled.div`
 
 const LogSpan = styled.span`
   display: inline-block;
-  word-wrap: break-word;
-  max-width: 80%;
+  word-wrap: anywhere;
+  flex-grow: 1;
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>

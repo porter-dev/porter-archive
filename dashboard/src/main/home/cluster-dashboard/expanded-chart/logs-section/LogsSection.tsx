@@ -468,7 +468,6 @@ const SearchRow = styled.div`
   background: #26292e;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
-  display: none;
 `;
 
 const SearchRowWrapper = styled(SearchRow)`

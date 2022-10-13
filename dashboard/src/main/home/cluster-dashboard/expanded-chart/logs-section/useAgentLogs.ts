@@ -108,9 +108,9 @@ export const useLogs = (
         const lastLineNumber = updatedLogs.at(-1)?.lineNumber ?? 0;
 
         updatedLogs.push(
-          ...newLogs.map((log) => ({
+          ...newLogs.map((log, idx) => ({
             ...log,
-            lineNumber: lastLineNumber + log.lineNumber,
+            lineNumber: lastLineNumber + idx + 1,
           }))
         );
 
@@ -157,7 +157,7 @@ export const useLogs = (
   const pushLogs = (newLogs: Log[]) => {
     logsBufferRef.current.push(...newLogs);
 
-    if (logsBufferRef.current.length > MAX_BUFFER_LOGS) {
+    if (logsBufferRef.current.length >= MAX_BUFFER_LOGS) {
       flushLogsBuffer();
     }
   };

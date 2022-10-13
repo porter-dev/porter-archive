@@ -45,6 +45,7 @@ const AWSCredentialForm: React.FunctionComponent<Props> = ({
   const { currentProject, setCurrentError } = useContext(Context);
   const [accessId, setAccessId] = useState("");
   const [secretKey, setSecretKey] = useState("");
+  const [assumeRoleArn, setAssumeRoleArn] = useState("");
   const [buttonStatus, setButtonStatus] = useState("");
   const [awsRegion, setAWSRegion] = useState("us-east-1");
   const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +61,7 @@ const AWSCredentialForm: React.FunctionComponent<Props> = ({
           aws_region: awsRegion,
           aws_access_key_id: accessId,
           aws_secret_access_key: secretKey,
+          aws_assume_role_arn: assumeRoleArn,
         },
         {
           id: currentProject.id,
@@ -124,6 +126,17 @@ const AWSCredentialForm: React.FunctionComponent<Props> = ({
         }}
         label="📍 AWS Region"
       />
+      <InputRow
+        type="text"
+        value={assumeRoleArn}
+        setValue={(x: string) => {
+          setAssumeRoleArn(x);
+        }}
+        label="👤 (Optional) AWS Assume Role ARN"
+        placeholder="ex: arn:aws:iam::01234567890:role/my_assumed_role"
+        width="100%"
+        isRequired={false}
+      />
       <Flex>
         <SaveButton
           text="Continue"
@@ -145,6 +158,7 @@ const Flex = styled.div`
   display: flex;
   color: #ffffff;
   align-items: center;
+  margin-top: 30px;
   > i {
     color: #aaaabb;
     font-size: 20px;

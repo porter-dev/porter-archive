@@ -57,6 +57,7 @@ func CreateAWSIntegration(request *types.CreateAWSRequest, projectID, userID uin
 		UserID:             userID,
 		ProjectID:          projectID,
 		AWSRegion:          request.AWSRegion,
+		AWSAssumeRoleArn:   request.AWSAssumeRoleArn,
 		AWSClusterID:       []byte(request.AWSClusterID),
 		AWSAccessKeyID:     []byte(request.AWSAccessKeyID),
 		AWSSecretAccessKey: []byte(request.AWSSecretAccessKey),

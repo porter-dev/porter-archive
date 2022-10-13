@@ -10,6 +10,7 @@ import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
 
 import filterOutline from "assets/filter-outline.svg";
+import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { Direction, useLogs } from "./useAgentLogs";
@@ -25,6 +26,60 @@ type Props = {
 
 const escapeRegExp = (str: string) => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+interface QueryModeSelectionToggleProps {
+  selectedDate?: Date;
+  setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
+}
+
+const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
+  return (
+    <div
+      style={{
+        marginRight: "10px",
+        display: "flex",
+        gap: "10px",
+      }}
+    >
+      <ToggleButton>
+        <ToggleOption
+          onClick={() => props.setSelectedDate(undefined)}
+          selected={!props.selectedDate}
+        >
+          <span
+            style={{
+              display: "inline-black",
+              width: "0.5rem",
+              height: "0.5rem",
+              marginRight: "5px",
+              borderRadius: "20px",
+              backgroundColor: "#ed5f85",
+              border: "0px",
+              outline: "none",
+              boxShadow: props.selectedDate
+                ? "none"
+                : "0px 0px 5px 1px #ed5f85",
+            }}
+          ></span>
+          Live
+        </ToggleOption>
+        <ToggleOption
+          nudgeLeft
+          onClick={() => props.setSelectedDate(dayjs().toDate())}
+          selected={!!props.selectedDate}
+        >
+          <TimeIcon src={time} />
+        </ToggleOption>
+      </ToggleButton>
+      {props.selectedDate && (
+        <DateTimePicker
+          startDate={props.selectedDate}
+          setStartDate={props.setSelectedDate}
+        />
+      )}
+    </div>
+  );
 };
 
 const LogsSection: React.FC<Props> = ({
@@ -99,6 +154,15 @@ const LogsSection: React.FC<Props> = ({
     });
   };
 
+  const onLoadPrevious = useCallback(() => {
+    if (!selectedDate) {
+      setSelectedDate(dayjs(logs[0].timestamp).toDate());
+      return;
+    }
+
+    moveCursor(Direction.backward);
+  }, [logs, selectedDate]);
+
   const renderContents = () => {
     return (
       <>
@@ -121,9 +185,9 @@ const LogsSection: React.FC<Props> = ({
                 />
               </SearchBarWrapper>
             </SearchRowWrapper>
-            <DateTimePicker
-              startDate={selectedDate}
-              setStartDate={setSelectedDate}
+            <QueryModeSelectionToggle
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
             />
             <RadioFilter
               icon={filterOutline}
@@ -163,13 +227,11 @@ const LogsSection: React.FC<Props> = ({
         <StyledLogsSection isFullscreen={isFullscreen}>
           <LoadMoreButton
             active={
-              selectedDate &&
               logs.length !== 0 &&
-              paginationInfo.previousCursor !== null
+              (!selectedDate || paginationInfo.previousCursor !== null)
             }
             role="button"
-            onClick={() => moveCursor(Direction.backward)}
-            ref={scrollToBottomRef}
+            onClick={onLoadPrevious}
           >
             Load Previous
           </LoadMoreButton>
@@ -186,10 +248,10 @@ const LogsSection: React.FC<Props> = ({
             active={selectedDate && logs.length !== 0}
             role="button"
             onClick={() => moveCursor(Direction.forward)}
-            ref={scrollToBottomRef}
           >
             Load more
           </LoadMoreButton>
+          <div ref={scrollToBottomRef} />
         </StyledLogsSection>
       </>
     );
@@ -398,6 +460,7 @@ const SearchRow = styled.div`
   background: #26292e;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
+  display: none;
 `;
 
 const SearchRowWrapper = styled(SearchRow)`
@@ -449,7 +512,7 @@ const Log = styled.div`
     color: #949effff;
     opacity: 0.5;
     font-family: monospace;
-    min-width: 45px;
+    min-width: fit-content;
     padding-inline-end: 5px;
   }
   & > .line-number {
@@ -487,4 +550,36 @@ const LoadMoreButton = styled.div<{ active: boolean }>`
   background: #1f2023;
   cursor: pointer;
   font-family: monospace;
+`;
+
+const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
+  padding: 0 10px;
+  color: ${(props) => (props.selected ? "" : "#494b4f")};
+  border: 1px solid #494b4f;
+  height: 100%;
+  display: flex;
+  margin-left: ${(props) => (props.nudgeLeft ? "-1px" : "")};
+  align-items: center;
+  border-radius: ${(props) =>
+    props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
+  :hover {
+    border: 1px solid #7a7b80;
+    z-index: 999;
+  }
+`;
+
+const ToggleButton = styled.div`
+  background: #26292e;
+  border-radius: 5px;
+  font-size: 13px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+`;
+
+const TimeIcon = styled.img`
+  width: 16px;
+  height: 16px;
+  z-index: 999;
 `;

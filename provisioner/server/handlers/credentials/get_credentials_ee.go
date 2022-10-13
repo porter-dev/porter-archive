@@ -1,3 +1,4 @@
+//go:build ee
 // +build ee
 
 package credentials
@@ -99,6 +100,7 @@ func (c *CredentialsGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			AWSSecretAccessKey: awsInt.AWSSecretAccessKey,
 			AWSSessionToken:    awsInt.AWSSessionToken,
 			AWSRegion:          []byte(awsInt.AWSRegion),
+			AWSAssumeRoleArn:   []byte(awsInt.AWSAssumeRoleArn),
 		}
 	} else if ceToken.AzureCredentialID != 0 {
 		azInt, err := repo.AzureIntegration().ReadAzureIntegration(ceToken.ProjectID, ceToken.AzureCredentialID)

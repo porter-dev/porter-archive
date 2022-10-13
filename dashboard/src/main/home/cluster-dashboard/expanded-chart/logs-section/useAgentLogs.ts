@@ -172,10 +172,10 @@ export const useLogs = (
       },
       onmessage: (evt: MessageEvent) => {
         // Nothing to do here
-        if (!evt.data || typeof evt.data !== "string") {
-          return;
+        if (!evt?.data || typeof evt.data !== "string") {
+          return
         }
-
+        
         const newLogs = parseLogs(
           evt?.data?.split("}\n").map((line: string) => line + "}")
         );

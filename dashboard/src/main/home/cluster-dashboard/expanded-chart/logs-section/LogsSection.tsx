@@ -17,6 +17,8 @@ import { Direction, useLogs } from "./useAgentLogs";
 import Anser from "anser";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
 import dayjs from "dayjs";
+import Loading from "components/Loading";
+import _ from "lodash";
 
 type Props = {
   currentChart?: any;
@@ -96,7 +98,7 @@ const LogsSection: React.FC<Props> = ({
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const { logs, refresh, moveCursor, paginationInfo } = useLogs(
+  const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
@@ -116,7 +118,7 @@ const LogsSection: React.FC<Props> = ({
         }
       )
       .then((res) => {
-        setPodFilterOpts(res.data);
+        setPodFilterOpts(_.uniq(res.data ?? []));
         setPodFilter(res.data[0]);
       });
   }, []);
@@ -225,18 +227,22 @@ const LogsSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <StyledLogsSection isFullscreen={isFullscreen}>
-          <LoadMoreButton
-            active={
-              logs.length !== 0 &&
-              (!selectedDate || paginationInfo.previousCursor !== null)
-            }
-            role="button"
-            onClick={onLoadPrevious}
-          >
-            Load Previous
-          </LoadMoreButton>
-          {renderLogs()}
-          {/* <Message>
+          {loading || !logs.length ? (
+            <Loading message="Waiting for logs..." />
+          ) : (
+            <>
+              <LoadMoreButton
+                active={
+                  logs.length !== 0 &&
+                  (!selectedDate || paginationInfo.previousCursor !== null)
+                }
+                role="button"
+                onClick={onLoadPrevious}
+              >
+                Load Previous
+              </LoadMoreButton>
+              {renderLogs()}
+              {/* <Message>
             
             No matching logs found.
             <Highlight onClick={() => {}}>
@@ -244,14 +250,16 @@ const LogsSection: React.FC<Props> = ({
               Refresh
             </Highlight>
           </Message> */}
-          <LoadMoreButton
-            active={selectedDate && logs.length !== 0}
-            role="button"
-            onClick={() => moveCursor(Direction.forward)}
-          >
-            Load more
-          </LoadMoreButton>
-          <div ref={scrollToBottomRef} />
+              <LoadMoreButton
+                active={selectedDate && logs.length !== 0}
+                role="button"
+                onClick={() => moveCursor(Direction.forward)}
+              >
+                Load more
+              </LoadMoreButton>
+              <div ref={scrollToBottomRef} />
+            </>
+          )}
         </StyledLogsSection>
       </>
     );

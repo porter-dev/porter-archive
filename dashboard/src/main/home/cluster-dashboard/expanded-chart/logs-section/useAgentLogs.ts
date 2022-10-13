@@ -68,6 +68,7 @@ export const useLogs = (
     previousCursor: null,
     nextCursor: null,
   });
+  const [loading, setLoading] = useState(true);
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -230,6 +231,7 @@ export const useLogs = (
       return;
     }
 
+    setLoading(true);
     setLogs([]);
     flushLogsBuffer(true);
     const websocketKey = `${currentPod}-${namespace}-websocket`;
@@ -250,6 +252,8 @@ export const useLogs = (
     updateLogs(initialLogs);
 
     closeWebsocket(websocketKey);
+
+    setLoading(false);
 
     if (isLive) {
       setupWebsocket(websocketKey);
@@ -347,5 +351,6 @@ export const useLogs = (
     refresh,
     moveCursor,
     paginationInfo,
+    loading,
   };
 };

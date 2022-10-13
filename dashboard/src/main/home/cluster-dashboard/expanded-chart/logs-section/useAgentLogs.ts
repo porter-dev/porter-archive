@@ -213,6 +213,10 @@ export const useLogs = (
           res.data.logs?.filter(Boolean).map((logLine: any) => logLine.line)
         );
 
+        if (direction === Direction.backward) {
+          newLogs.reverse();
+        }
+
         return {
           logs: newLogs,
           previousCursor: res.data.backward_continue_time,
@@ -235,7 +239,7 @@ export const useLogs = (
     const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
       twoWeeksAgo.toISOString(),
       endDate.toISOString(),
-      Direction.forward
+      Direction.backward
     );
 
     setPaginationInfo({

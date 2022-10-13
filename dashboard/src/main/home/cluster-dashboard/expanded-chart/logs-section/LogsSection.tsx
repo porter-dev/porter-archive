@@ -124,13 +124,13 @@ const LogsSection: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if (scrollToBottomRef.current && scrollToBottomEnabled) {
+    if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
       scrollToBottomRef.current.scrollIntoView({
         behavior: "smooth",
         block: "end",
       });
     }
-  }, [logs, scrollToBottomRef, scrollToBottomEnabled]);
+  }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   const renderLogs = () => {
     return logs?.map((log, i) => {
@@ -257,9 +257,9 @@ const LogsSection: React.FC<Props> = ({
               >
                 Load more
               </LoadMoreButton>
-              <div ref={scrollToBottomRef} />
             </>
           )}
+          <div ref={scrollToBottomRef} />
         </StyledLogsSection>
       </>
     );

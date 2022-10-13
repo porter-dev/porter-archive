@@ -650,7 +650,7 @@ const DropdownAlt = styled(Dropdown)`
 const RangeWrapper = styled.div`
   float: right;
   font-weight: bold;
-  width: 156px;
+  width: 158px;
   margin-top: -8px;
 `;
 

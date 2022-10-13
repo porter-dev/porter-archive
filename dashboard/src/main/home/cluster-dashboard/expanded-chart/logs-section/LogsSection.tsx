@@ -17,7 +17,6 @@ import { Direction, useLogs } from "./useAgentLogs";
 import Anser from "anser";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
 import dayjs from "dayjs";
-import { useKubeEvents } from "components/events/useEvents";
 
 type Props = {
   currentChart?: any;
@@ -29,7 +28,12 @@ const escapeRegExp = (str: string) => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
-const QueryModeSelectionToggle = (props: any) => {
+interface QueryModeSelectionToggleProps {
+  selectedDate?: Date;
+  setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
+}
+
+const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
   return (
     <div
       style={{
@@ -50,10 +54,12 @@ const QueryModeSelectionToggle = (props: any) => {
               height: "0.5rem",
               marginRight: "5px",
               borderRadius: "20px",
-              backgroundColor: "rgb(185, 0, 0)",
+              backgroundColor: "#ed5f85",
               border: "0px",
               outline: "none",
-              boxShadow: "0px 0px 5px 3px rgba(173,0,0,.3)",
+              boxShadow: props.selectedDate
+                ? "none"
+                : "0px 0px 5px 1px #ed5f85",
             }}
           ></span>
           Live
@@ -61,7 +67,7 @@ const QueryModeSelectionToggle = (props: any) => {
         <ToggleOption
           nudgeLeft
           onClick={() => props.setSelectedDate(dayjs().toDate())}
-          selected={props.selectedDate}
+          selected={!!props.selectedDate}
         >
           <TimeIcon src={time} />
         </ToggleOption>
@@ -148,6 +154,15 @@ const LogsSection: React.FC<Props> = ({
     });
   };
 
+  const onLoadPrevious = useCallback(() => {
+    if (!selectedDate) {
+      setSelectedDate(dayjs(logs[0].timestamp).toDate());
+      return;
+    }
+
+    moveCursor(Direction.backward);
+  }, [logs, selectedDate]);
+
   const renderContents = () => {
     return (
       <>
@@ -212,12 +227,11 @@ const LogsSection: React.FC<Props> = ({
         <StyledLogsSection isFullscreen={isFullscreen}>
           <LoadMoreButton
             active={
-              selectedDate &&
               logs.length !== 0 &&
-              paginationInfo.previousCursor !== null
+              (!selectedDate || paginationInfo.previousCursor !== null)
             }
             role="button"
-            onClick={() => moveCursor(Direction.backward)}
+            onClick={onLoadPrevious}
           >
             Load Previous
           </LoadMoreButton>

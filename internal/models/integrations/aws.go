@@ -29,6 +29,9 @@ type AWSIntegration struct {
 	// The optional AWS region (required by some session configurations)
 	AWSRegion string `json:"aws_region"`
 
+	// The assumed role ARN to use for sessions
+	AWSAssumeRoleArn string
+
 	// ------------------------------------------------------------------
 	// All fields encrypted before storage.
 	// ------------------------------------------------------------------
@@ -141,8 +144,9 @@ func (a *AWSIntegration) GetBearerToken(
 	}
 
 	tok, err := generator.GetWithOptions(&token.GetTokenOptions{
-		Session:   sess,
-		ClusterID: validClusterId,
+		AssumeRoleARN: a.AWSAssumeRoleArn,
+		Session:       sess,
+		ClusterID:     validClusterId,
 	})
 
 	if err != nil {

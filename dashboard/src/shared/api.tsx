@@ -2041,6 +2041,22 @@ const getLogs = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/logs`
 );
 
+const listIncidents = baseApi<
+  {
+    release_name?: number;
+    release_namespace?: string;
+    status?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
+);
+
 // STACKS
 
 const createStack = baseApi<
@@ -2405,7 +2421,7 @@ export default {
   getGitlabFolderContent,
   getLogPodValues,
   getLogs,
-
+  listIncidents,
   // STACKS
   listStacks,
   getStack,

@@ -31,7 +31,9 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
     }[]
   >([]);
   const [defaultNamespace, setDefaultNamespace] = useState<string>(
-    localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`)
+    localStorage.getItem(
+      `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+    )
   );
 
   const updateOptions = () => {
@@ -63,8 +65,16 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
           const availableNamespaces = res.data.filter((namespace: any) => {
             return namespace.status !== "Terminating";
           });
-          if (localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`)) {
-            setDefaultNamespace(localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`));
+          if (
+            localStorage.getItem(
+              `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+            )
+          ) {
+            setDefaultNamespace(
+              localStorage.getItem(
+                `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+              )
+            );
           } else {
             setDefaultNamespace("default");
           }
@@ -106,11 +116,18 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   }, [namespace, context.currentCluster]);
 
   useEffect(() => {
-    setNamespace(localStorage.getItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`));
+    setNamespace(
+      localStorage.getItem(
+        `${context.currentProject.id}-${context.currentCluster.id}-namespace`
+      )
+    );
   }, [context.currentCluster]);
 
   const handleSetActive = (namespace: any) => {
-    localStorage.setItem(`${context.currentProject.id}-${context.currentCluster.id}-namespace`, namespace);
+    localStorage.setItem(
+      `${context.currentProject.id}-${context.currentCluster.id}-namespace`,
+      namespace
+    );
     setNamespace(namespace);
   };
 

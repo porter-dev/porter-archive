@@ -37,6 +37,9 @@ type AWSCredential struct {
 
 	// An optional region associated with this AWS credential
 	AWSRegion []byte `json:"aws_region"`
+
+	// An optional assume role ARN
+	AWSAssumeRoleArn []byte `json:"aws_assume_role_arn"`
 }
 
 type AzureCredential struct {

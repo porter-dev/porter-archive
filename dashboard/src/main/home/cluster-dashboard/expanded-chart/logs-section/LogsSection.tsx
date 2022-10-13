@@ -138,7 +138,7 @@ const LogsSection: React.FC<Props> = ({
           <span className="line-timestamp">
             {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
           </span>
-          {log.line.map((ansi, j) => {
+          {log.line?.map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
             }

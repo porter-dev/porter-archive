@@ -233,8 +233,7 @@ const LogsSection: React.FC<Props> = ({
             <>
               <LoadMoreButton
                 active={
-                  logs.length !== 0 &&
-                  (!selectedDate || paginationInfo.previousCursor !== null)
+                  logs.length !== 0 && paginationInfo.previousCursor !== null
                 }
                 role="button"
                 onClick={onLoadPrevious}
@@ -468,7 +467,6 @@ const SearchRow = styled.div`
   background: #26292e;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
-  display: none;
 `;
 
 const SearchRowWrapper = styled(SearchRow)`

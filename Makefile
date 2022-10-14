@@ -24,3 +24,6 @@ start-provisioner-dev: install setup-env-files
 
 start-worker-dev: install setup-env-files
 	bash ./scripts/dev-environment/StartWorkerServer.sh
+
+test-opa-policies: install 
+	opa test ./internal/opa/policies/. -v

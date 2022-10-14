@@ -2,7 +2,7 @@
 
 # Setup all the environment requirements.
 
-REQUIRED_APPLICATIONS=('node' 'go' 'npm')
+REQUIRED_APPLICATIONS=('node' 'go' 'npm', 'opa')
 for i in "${REQUIRED_APPLICATIONS[@]}"; do
   if ! command -v $i &> /dev/null
   then

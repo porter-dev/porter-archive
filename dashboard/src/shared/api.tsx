@@ -1787,61 +1787,6 @@ const getPreviousLogsForContainer = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/pod/${name}/previous_logs`
 );
 
-const getIncidents = baseApi<
-  {},
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
-);
-
-const getIncidentsByReleaseName = baseApi<
-  {
-    namespace: string;
-    release_name: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
-);
-
-const getIncidentById = baseApi<
-  {
-    incident_id: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
-);
-
-const getIncidentLogsByLogId = baseApi<
-  {
-    log_id: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->(
-  "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/logs`
-);
-
 const upgradePorterAgent = baseApi<
   {},
   { project_id: number; cluster_id: number }
@@ -2039,6 +1984,48 @@ const getLogs = baseApi<
   "GET",
   ({ project_id, cluster_id }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/logs`
+);
+
+const listIncidents = baseApi<
+  {
+    release_name?: number;
+    release_namespace?: string;
+    status?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents`
+);
+
+const getIncident = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    incident_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, incident_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/${incident_id}`
+);
+
+const getIncidentEvents = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    incident_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, incident_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/incidents/${incident_id}/events`
 );
 
 // STACKS
@@ -2386,10 +2373,6 @@ export default {
   provisionDatabase,
   getDatabases,
   getPreviousLogsForContainer,
-  getIncidents,
-  getIncidentsByReleaseName,
-  getIncidentById,
-  getIncidentLogsByLogId,
   upgradePorterAgent,
   deletePRDeployment,
   updateBuildConfig,
@@ -2405,7 +2388,9 @@ export default {
   getGitlabFolderContent,
   getLogPodValues,
   getLogs,
-
+  listIncidents,
+  getIncident,
+  getIncidentEvents,
   // STACKS
   listStacks,
   getStack,

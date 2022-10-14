@@ -36,6 +36,7 @@ type IncidentMeta struct {
 	LastSeen                *time.Time         `json:"last_seen" form:"required"`
 	Status                  IncidentStatus     `json:"status" form:"required"`
 	Summary                 string             `json:"summary" form:"required"`
+	ShortSummary            string             `json:"short_summary"`
 	Severity                SeverityType       `json:"severity" form:"required"`
 	InvolvedObjectKind      InvolvedObjectKind `json:"involved_object_kind" form:"required"`
 	InvolvedObjectName      string             `json:"involved_object_name" form:"required"`

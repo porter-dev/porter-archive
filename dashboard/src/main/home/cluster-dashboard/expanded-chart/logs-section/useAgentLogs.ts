@@ -173,9 +173,9 @@ export const useLogs = (
       onmessage: (evt: MessageEvent) => {
         // Nothing to do here
         if (!evt?.data || typeof evt.data !== "string") {
-          return
+          return;
         }
-        
+
         const newLogs = parseLogs(
           evt?.data?.split("}\n").map((line: string) => line + "}")
         );
@@ -225,7 +225,11 @@ export const useLogs = (
 
         return {
           logs: newLogs,
-          previousCursor: res.data.backward_continue_time,
+          previousCursor:
+            // There are no more historical logs so don't set the previous cursor
+            newLogs.length < QUERY_LIMIT && direction == Direction.backward
+              ? null
+              : res.data.backward_continue_time,
           nextCursor: res.data.forward_continue_time,
         };
       });

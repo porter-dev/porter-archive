@@ -233,8 +233,7 @@ const LogsSection: React.FC<Props> = ({
             <>
               <LoadMoreButton
                 active={
-                  logs.length !== 0 &&
-                  (!selectedDate || paginationInfo.previousCursor !== null)
+                  logs.length !== 0 && paginationInfo.previousCursor !== null
                 }
                 role="button"
                 onClick={onLoadPrevious}

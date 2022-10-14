@@ -81,6 +81,12 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			rel, err := helmAgent.GetRelease(releases[index].Name, 0, false)
 
 			if err != nil {
+				// if this is a release not found error, just return - the release has likely been deleted from the underlying
+				// cluster but has not been deleted from the Porter database yet
+				if strings.Contains(err.Error(), "release: not found") {
+					return
+				}
+
 				mu.Lock()
 				errors = append(errors, fmt.Sprintf("Error for %s, index %d: %s", releases[index].Name, index, err.Error()))
 				mu.Unlock()
@@ -106,7 +112,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 				if err != nil {
 					// if this is a release not found error, just return - the release has likely been deleted from the underlying
-					// cluster but has not been deleted from the Porter database yet
+					// cluster in the time since we've read the release, but has not been deleted from the Porter database yet
 					if strings.Contains(err.Error(), "release: not found") {
 						return
 					}

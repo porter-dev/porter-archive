@@ -14,14 +14,16 @@ import api from "shared/api";
 import Modal from "main/home/modals/Modal";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
+import { InitLogData } from "../logs-section/LogsSection";
 
 const iconDict: any = {};
 
 type Props = {
   filters: any;
+  setLogData?: (logData: InitLogData) => void;
 };
 
-const EventList: React.FC<Props> = ({ filters }) => {
+const EventList: React.FC<Props> = ({ filters, setLogData }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [events, setEvents] = useState([]);
   const [expandedEvent, setExpandedEvent] = useState(null);
@@ -133,7 +135,15 @@ const EventList: React.FC<Props> = ({ filters }) => {
             width: 30,
             Cell: ({ row }: CellProps<any>) => {
               return (
-                <TableButton width="102px">
+                <TableButton
+                  width="102px"
+                  onClick={() => {
+                    setLogData({
+                      podName: "hello",
+                      timestamp: row.original.last_seen,
+                    });
+                  }}
+                >
                   <Icon src={document} />
                   View logs
                 </TableButton>

@@ -6,12 +6,14 @@ import Loading from "components/Loading";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Context } from "shared/Context";
 import Dropdown from "components/Dropdown";
+import { InitLogData } from "../logs-section/LogsSection";
 
 type Props = {
   currentChart: any;
+  setLogData?: (logData: InitLogData) => void;
 };
 
-const EventsTab: React.FC<Props> = ({ currentChart }) => {
+const EventsTab: React.FC<Props> = ({ currentChart, setLogData }) => {
   const [hasPorterAgent, setHasPorterAgent] = useState(true);
   const { currentProject, currentCluster } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +80,7 @@ const EventsTab: React.FC<Props> = ({ currentChart }) => {
   return (
     <EventsPageWrapper>
       <EventList
+        setLogData={setLogData}
         filters={{
           release_name: currentChart.name,
           release_namespace: currentChart.namespace,

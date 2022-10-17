@@ -21,11 +21,11 @@ import Loading from "components/Loading";
 import _ from "lodash";
 import { ChartType } from "shared/types";
 
-export type InitLogData = {
+export type InitLogData = Partial<{
   podName: string;
   timestamp: string;
   revision: string;
-};
+}>;
 
 type Props = {
   currentChart?: ChartType;
@@ -96,19 +96,19 @@ const LogsSection: React.FC<Props> = ({
   currentChart,
   isFullscreen,
   setIsFullscreen,
-  initData,
+  initData = {},
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState(initData?.podName);
+  const [podFilter, setPodFilter] = useState(initData.podName);
   const [podFilterOpts, setPodFilterOpts] = useState<string[]>(
-    initData ? [initData?.podName] : null
+    _.compact([initData.podName])
   );
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    initData ? dayjs(initData?.timestamp).toDate() : undefined
+    initData ? dayjs(initData.timestamp).toDate() : undefined
   );
 
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
@@ -124,7 +124,7 @@ const LogsSection: React.FC<Props> = ({
       .getLogPodValues(
         "<TOKEN>",
         {
-          revision: currentChart.version.toString(),
+          revision: initData.revision ?? currentChart.version.toString(),
           match_prefix: currentChart.name,
         },
         {
@@ -136,7 +136,7 @@ const LogsSection: React.FC<Props> = ({
         setPodFilterOpts(_.uniq(res.data ?? []));
 
         // only set pod filter if the current pod is not found in the resulting data
-        if (!res.data?.contains(podFilter)) {
+        if (!res.data?.includes(podFilter)) {
           setPodFilter(res.data[0]);
         }
       });

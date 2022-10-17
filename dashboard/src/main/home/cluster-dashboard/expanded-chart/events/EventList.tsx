@@ -16,8 +16,6 @@ import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import { InitLogData } from "../logs-section/LogsSection";
 
-const iconDict: any = {};
-
 type Props = {
   filters: any;
   setLogData?: (logData: InitLogData) => void;
@@ -27,7 +25,6 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [events, setEvents] = useState([]);
   const [expandedEvent, setExpandedEvent] = useState(null);
-  const [expandedEventDetails, setExpandedEventDetails] = useState(null);
   const [expandedIncidentEvents, setExpandedIncidentEvents] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -75,9 +72,9 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
         }
       )
       .then((res) => {
-        let podName = res.data?.events[0]?.pod_name;
-        let timestamp = res.data?.events[0]?.last_seen;
-        let revision = res.data?.events[0]?.revision;
+        const podName = res.data?.events[0]?.pod_name;
+        const timestamp = res.data?.events[0]?.last_seen;
+        const revision = res.data?.events[0]?.revision;
 
         setLogData({
           podName,

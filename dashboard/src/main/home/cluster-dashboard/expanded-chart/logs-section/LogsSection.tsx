@@ -1,17 +1,24 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import styled from "styled-components";
 import RadioFilter from "components/RadioFilter";
 
 import filterOutline from "assets/filter-outline.svg";
-import downArrow from "assets/down-arrow.svg";
+import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { useLogs } from "./useAgentLogs";
+import { Direction, useLogs } from "./useAgentLogs";
 import Anser from "anser";
-import { flatMap } from "lodash";
-import time from "assets/time.svg";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
+import dayjs from "dayjs";
+import Loading from "components/Loading";
+import _ from "lodash";
 
 type Props = {
   currentChart?: any;
@@ -23,20 +30,75 @@ const escapeRegExp = (str: string) => {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
+interface QueryModeSelectionToggleProps {
+  selectedDate?: Date;
+  setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
+}
+
+const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
+  return (
+    <div
+      style={{
+        marginRight: "10px",
+        display: "flex",
+        gap: "10px",
+      }}
+    >
+      <ToggleButton>
+        <ToggleOption
+          onClick={() => props.setSelectedDate(undefined)}
+          selected={!props.selectedDate}
+        >
+          <span
+            style={{
+              display: "inline-black",
+              width: "0.5rem",
+              height: "0.5rem",
+              marginRight: "5px",
+              borderRadius: "20px",
+              backgroundColor: "#ed5f85",
+              border: "0px",
+              outline: "none",
+              boxShadow: props.selectedDate
+                ? "none"
+                : "0px 0px 5px 1px #ed5f85",
+            }}
+          ></span>
+          Live
+        </ToggleOption>
+        <ToggleOption
+          nudgeLeft
+          onClick={() => props.setSelectedDate(dayjs().toDate())}
+          selected={!!props.selectedDate}
+        >
+          <TimeIcon src={time} />
+        </ToggleOption>
+      </ToggleButton>
+      {props.selectedDate && (
+        <DateTimePicker
+          startDate={props.selectedDate}
+          setStartDate={props.setSelectedDate}
+        />
+      )}
+    </div>
+  );
+};
+
 const LogsSection: React.FC<Props> = ({
   currentChart,
   isFullscreen,
   setIsFullscreen,
 }) => {
+  const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
   const [podFilter, setPodFilter] = useState();
   const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
-  const [scrollToBottom, setScrollToBottom] = useState(true);
+  const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const { logs, refresh, moveCursor } = useLogs(
+  const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
@@ -56,25 +118,35 @@ const LogsSection: React.FC<Props> = ({
         }
       )
       .then((res) => {
-        console.log(res.data);
-        setPodFilterOpts(res.data);
+        setPodFilterOpts(_.uniq(res.data ?? []));
         setPodFilter(res.data[0]);
       });
-
-    console.log(currentChart);
   }, []);
+
+  useEffect(() => {
+    if (!loading && scrollToBottomRef.current && scrollToBottomEnabled) {
+      scrollToBottomRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [loading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
   const renderLogs = () => {
     return logs?.map((log, i) => {
       return (
-        <Log key={i}>
-          {log.map((ansi, j) => {
+        <Log key={[log.lineNumber, i].join(".")}>
+          <span className="line-number">{log.lineNumber}.</span>
+          <span className="line-timestamp">
+            {dayjs(log.timestamp).format("MMM D, YYYY HH:mm:ss")}
+          </span>
+          {log.line?.map((ansi, j) => {
             if (ansi.clearLine) {
               return null;
             }
 
             return (
-              <LogSpan key={i + "." + j} ansi={ansi}>
+              <LogSpan key={[log.lineNumber, i, j].join(".")} ansi={ansi}>
                 {ansi.content.replace(/ /g, "\u00a0")}
               </LogSpan>
             );
@@ -83,6 +155,15 @@ const LogsSection: React.FC<Props> = ({
       );
     });
   };
+
+  const onLoadPrevious = useCallback(() => {
+    if (!selectedDate) {
+      setSelectedDate(dayjs(logs[0].timestamp).toDate());
+      return;
+    }
+
+    moveCursor(Direction.backward);
+  }, [logs, selectedDate]);
 
   const renderContents = () => {
     return (
@@ -106,9 +187,9 @@ const LogsSection: React.FC<Props> = ({
                 />
               </SearchBarWrapper>
             </SearchRowWrapper>
-            <DateTimePicker
-              startDate={selectedDate}
-              setStartDate={setSelectedDate}
+            <QueryModeSelectionToggle
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
             />
             <RadioFilter
               icon={filterOutline}
@@ -124,8 +205,8 @@ const LogsSection: React.FC<Props> = ({
             />
           </Flex>
           <Flex>
-            <Button onClick={() => setScrollToBottom(!scrollToBottom)}>
-              <Checkbox checked={scrollToBottom}>
+            <Button onClick={() => setScrollToBottomEnabled((s) => !s)}>
+              <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
               </Checkbox>
               Scroll to bottom
@@ -146,8 +227,21 @@ const LogsSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <StyledLogsSection isFullscreen={isFullscreen}>
-          {renderLogs()}
-          {/* <Message>
+          {loading || !logs.length ? (
+            <Loading message="Waiting for logs..." />
+          ) : (
+            <>
+              <LoadMoreButton
+                active={
+                  logs.length !== 0 && paginationInfo.previousCursor !== null
+                }
+                role="button"
+                onClick={onLoadPrevious}
+              >
+                Load Previous
+              </LoadMoreButton>
+              {renderLogs()}
+              {/* <Message>
             
             No matching logs found.
             <Highlight onClick={() => {}}>
@@ -155,6 +249,16 @@ const LogsSection: React.FC<Props> = ({
               Refresh
             </Highlight>
           </Message> */}
+              <LoadMoreButton
+                active={selectedDate && logs.length !== 0}
+                role="button"
+                onClick={() => moveCursor(Direction.forward)}
+              >
+                Load more
+              </LoadMoreButton>
+            </>
+          )}
+          <div ref={scrollToBottomRef} />
         </StyledLogsSection>
       </>
     );
@@ -382,8 +486,7 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
   border-radius: ${(props) => (props.isFullscreen ? "" : "8px")};
   border: ${(props) => (props.isFullscreen ? "" : "1px solid #ffffff33")};
   border-top: ${(props) => (props.isFullscreen ? "1px solid #ffffff33" : "")};
-  padding: 18px 22px;
-  background: #121318;
+  background: #101420;
   animation: floatIn 0.3s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards;
@@ -404,9 +507,37 @@ const StyledLogsSection = styled.div<{ isFullscreen: boolean }>`
 const Log = styled.div`
   font-family: monospace;
   user-select: text;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  & > * {
+    padding-block: 5px;
+  }
+  & > .line-timestamp {
+    height: 100%;
+    color: #949effff;
+    opacity: 0.5;
+    font-family: monospace;
+    min-width: fit-content;
+    padding-inline-end: 5px;
+  }
+  & > .line-number {
+    height: 100%;
+    background: #202538;
+    display: inline-block;
+    text-align: right;
+    min-width: 45px;
+    padding-inline-end: 5px;
+    opacity: 0.3;
+    font-family: monospace;
+  }
 `;
 
 const LogSpan = styled.span`
+  display: inline-block;
+  word-wrap: anywhere;
+  flex-grow: 1;
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>
@@ -415,4 +546,47 @@ const LogSpan = styled.span`
     props.ansi?.fg ? `rgb(${props.ansi?.fg})` : "white"};
   background-color: ${(props: { ansi: Anser.AnserJsonEntry }) =>
     props.ansi?.bg ? `rgb(${props.ansi?.bg})` : "transparent"};
+`;
+
+const LoadMoreButton = styled.div<{ active: boolean }>`
+  width: 100%;
+  display: ${(props) => (props.active ? "flex" : "none")};
+  justify-content: center;
+  align-items: center;
+  padding-block: 10px;
+  background: #1f2023;
+  cursor: pointer;
+  font-family: monospace;
+`;
+
+const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
+  padding: 0 10px;
+  color: ${(props) => (props.selected ? "" : "#494b4f")};
+  border: 1px solid #494b4f;
+  height: 100%;
+  display: flex;
+  margin-left: ${(props) => (props.nudgeLeft ? "-1px" : "")};
+  align-items: center;
+  border-radius: ${(props) =>
+    props.nudgeLeft ? "0 5px 5px 0" : "5px 0 0 5px"};
+  :hover {
+    border: 1px solid #7a7b80;
+    z-index: 999;
+  }
+`;
+
+const ToggleButton = styled.div`
+  background: #26292e;
+  border-radius: 5px;
+  font-size: 13px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+`;
+
+const TimeIcon = styled.img`
+  width: 16px;
+  height: 16px;
+  z-index: 999;
 `;

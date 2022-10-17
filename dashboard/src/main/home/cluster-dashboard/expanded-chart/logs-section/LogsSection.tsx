@@ -13,10 +13,16 @@ import { flatMap } from "lodash";
 import time from "assets/time.svg";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
 
+export type InitLogData = {
+  podName: string;
+  timestamp: string;
+};
+
 type Props = {
   currentChart?: any;
   isFullscreen: boolean;
   setIsFullscreen: (x: boolean) => void;
+  initData?: InitLogData;
 };
 
 const escapeRegExp = (str: string) => {
@@ -27,14 +33,19 @@ const LogsSection: React.FC<Props> = ({
   currentChart,
   isFullscreen,
   setIsFullscreen,
+  initData,
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState();
-  const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
+  const [podFilter, setPodFilter] = useState(initData?.podName);
+  const [podFilterOpts, setPodFilterOpts] = useState<string[]>(
+    initData?.podName ? [initData?.podName] : []
+  );
   const [scrollToBottom, setScrollToBottom] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    initData ? new Date(initData?.timestamp) : null
+  );
 
   const { logs, refresh, moveCursor } = useLogs(
     podFilter,

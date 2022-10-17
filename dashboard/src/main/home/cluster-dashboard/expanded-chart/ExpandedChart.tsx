@@ -77,6 +77,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [fullScreenLogs, setFullScreenLogs] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [logData, setLogData] = useState<InitLogData>();
+  const [overrideCurrentTab, setOverrideCurrentTab] = useState("");
 
   const {
     isStack,
@@ -97,6 +98,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setCurrentError,
     setCurrentOverlay,
   } = useContext(Context);
+
+  const renderLogsAtTimestamp = (initLogData: InitLogData) => {
+    setLogData(initLogData);
+    setOverrideCurrentTab("logs");
+  };
 
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
@@ -433,7 +439,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
         if (DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
           return null;
         }
-        return <EventsTab currentChart={chart} setLogData={setLogData} />;
+        return (
+          <EventsTab currentChart={chart} setLogData={renderLogsAtTimestamp} />
+        );
       case "status":
         if (isLoadingChartData) {
           return (
@@ -902,6 +910,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                                 chart: currentChart,
                               },
                             }}
+                            overrideCurrentTab={overrideCurrentTab}
                           />
                         </BodyWrapper>
                       )}

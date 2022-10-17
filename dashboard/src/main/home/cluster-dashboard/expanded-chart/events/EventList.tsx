@@ -8,7 +8,7 @@ import danger from "assets/danger.svg";
 import document from "assets/document.svg";
 import info from "assets/info-outlined.svg";
 import status from "assets/info-circle.svg";
-import { readableDate } from "shared/string_utils";
+import { readableDate, relativeDate } from "shared/string_utils";
 import TitleSection from "components/TitleSection";
 import api from "shared/api";
 import Modal from "main/home/modals/Modal";
@@ -106,14 +106,14 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
         Header: "Monitors",
         columns: [
           {
-            Header: "Name",
-            accessor: "release_name",
-            width: 180,
+            Header: "Description",
+            accessor: "short_summary",
+            width: 500,
             Cell: ({ row }: CellProps<any>) => {
               return (
                 <NameWrapper>
                   <AlertIcon src={danger} />
-                  {row.original.release_name}
+                  {row.original.short_summary}
                   {row?.original && row.original.severity === "normal" ? (
                     <></>
                   ) : (
@@ -124,16 +124,11 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
             },
           },
           {
-            Header: "Summary",
-            accessor: "short_summary",
-            width: 270,
-          },
-          {
-            Header: "Last updated",
+            Header: "Last seen",
             accessor: "updated_at",
             width: 140,
             Cell: ({ row }: CellProps<any>) => {
-              return <Flex>{readableDate(row.original.updated_at)}</Flex>;
+              return <Flex>{relativeDate(row.original.updated_at)}</Flex>;
             },
           },
           {

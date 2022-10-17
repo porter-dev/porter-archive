@@ -19,11 +19,19 @@ import DateTimePicker from "components/date-time-picker/DateTimePicker";
 import dayjs from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
+import { ChartType } from "shared/types";
+
+export type InitLogData = {
+  podName: string;
+  timestamp: string;
+  revision: string;
+};
 
 type Props = {
-  currentChart?: any;
+  currentChart?: ChartType;
   isFullscreen: boolean;
   setIsFullscreen: (x: boolean) => void;
+  initData?: InitLogData;
 };
 
 const escapeRegExp = (str: string) => {
@@ -88,20 +96,26 @@ const LogsSection: React.FC<Props> = ({
   currentChart,
   isFullscreen,
   setIsFullscreen,
+  initData,
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
-  const [podFilter, setPodFilter] = useState();
-  const [podFilterOpts, setPodFilterOpts] = useState<string[]>();
+  const [podFilter, setPodFilter] = useState(initData?.podName);
+  const [podFilterOpts, setPodFilterOpts] = useState<string[]>(
+    initData ? [initData?.podName] : null
+  );
   const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    initData ? dayjs(initData?.timestamp).toDate() : undefined
+  );
 
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(
     podFilter,
     currentChart.namespace,
     enteredSearchText,
+    currentChart,
     selectedDate
   );
 
@@ -110,6 +124,7 @@ const LogsSection: React.FC<Props> = ({
       .getLogPodValues(
         "<TOKEN>",
         {
+          revision: currentChart.version.toString(),
           match_prefix: currentChart.name,
         },
         {
@@ -119,7 +134,11 @@ const LogsSection: React.FC<Props> = ({
       )
       .then((res) => {
         setPodFilterOpts(_.uniq(res.data ?? []));
-        setPodFilter(res.data[0]);
+
+        // only set pod filter if the current pod is not found in the resulting data
+        if (!res.data?.contains(podFilter)) {
+          setPodFilter(res.data[0]);
+        }
       });
   }, []);
 

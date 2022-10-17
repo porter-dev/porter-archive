@@ -41,6 +41,7 @@ type IncidentMeta struct {
 	InvolvedObjectKind      InvolvedObjectKind `json:"involved_object_kind" form:"required"`
 	InvolvedObjectName      string             `json:"involved_object_name" form:"required"`
 	InvolvedObjectNamespace string             `json:"involved_object_namespace" form:"required"`
+	ShouldViewLogs          bool               `json:"should_view_logs"`
 }
 
 type PaginationRequest struct {
@@ -100,12 +101,20 @@ type GetLogRequest struct {
 	StartRange  *time.Time `schema:"start_range"`
 	EndRange    *time.Time `schema:"end_range"`
 	SearchParam string     `schema:"search_param"`
+	Revision    string     `schema:"revision"`
 	PodSelector string     `schema:"pod_selector" form:"required"`
 	Namespace   string     `schema:"namespace" form:"required"`
 	Direction   string     `schema:"direction"`
 }
 
 type GetPodValuesRequest struct {
+	StartRange  *time.Time `schema:"start_range"`
+	EndRange    *time.Time `schema:"end_range"`
+	MatchPrefix string     `schema:"match_prefix"`
+	Revision    string     `schema:"revision"`
+}
+
+type GetRevisionValuesRequest struct {
 	StartRange  *time.Time `schema:"start_range"`
 	EndRange    *time.Time `schema:"end_range"`
 	MatchPrefix string     `schema:"match_prefix"`

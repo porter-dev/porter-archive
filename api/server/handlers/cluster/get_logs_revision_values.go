@@ -1,46 +1,42 @@
-package namespace
+package cluster
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
+	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type StreamPodLogsLokiHandler struct {
+type GetLogRevisionValuesHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewStreamPodLogsLokiHandler(
+func NewGetLogRevisionValuesHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *StreamPodLogsLokiHandler {
-	return &StreamPodLogsLokiHandler{
+) *GetLogRevisionValuesHandler {
+	return &GetLogRevisionValuesHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *StreamPodLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	request := &types.GetLogRequest{}
+func (c *GetLogRevisionValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
+	request := &types.GetRevisionValuesRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
-
-	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
-
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
 
@@ -49,26 +45,20 @@ func (c *StreamPodLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if request.StartRange == nil {
-		dayAgo := time.Now().Add(-24 * time.Hour)
-		request.StartRange = &dayAgo
-	}
-
-	startTime, err := request.StartRange.MarshalText()
+	// get agent service
+	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	err = agent.StreamPorterAgentLokiLog([]string{
-		fmt.Sprintf("pod=%s", request.PodSelector),
-		fmt.Sprintf("namespace=%s", request.Namespace),
-		fmt.Sprintf("helm_sh_revision=%s", request.Revision),
-	}, string(startTime), request.SearchParam, 0, safeRW)
+	revisions, err := porter_agent.GetRevisionValues(agent.Clientset, agentSvc, request)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	c.WriteResult(w, r, revisions)
 }

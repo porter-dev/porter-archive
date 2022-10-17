@@ -8,20 +8,22 @@ import danger from "assets/danger.svg";
 import document from "assets/document.svg";
 import info from "assets/info-outlined.svg";
 import status from "assets/info-circle.svg";
-import { readableDate } from "shared/string_utils";
+import { readableDate, relativeDate } from "shared/string_utils";
 import TitleSection from "components/TitleSection";
 import api from "shared/api";
 import Modal from "main/home/modals/Modal";
 import time from "assets/time.svg";
 import { Context } from "shared/Context";
+import { InitLogData } from "../logs-section/LogsSection";
 
 const iconDict: any = {};
 
 type Props = {
   filters: any;
+  setLogData?: (logData: InitLogData) => void;
 };
 
-const EventList: React.FC<Props> = ({ filters }) => {
+const EventList: React.FC<Props> = ({ filters, setLogData }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [events, setEvents] = useState([]);
   const [expandedEvent, setExpandedEvent] = useState(null);
@@ -61,6 +63,30 @@ const EventList: React.FC<Props> = ({ filters }) => {
       });
   }, [expandedEvent]);
 
+  const redirectToLogs = (incident: any) => {
+    api
+      .getIncidentEvents(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          incident_id: incident.id,
+        }
+      )
+      .then((res) => {
+        let podName = res.data?.events[0]?.pod_name;
+        let timestamp = res.data?.events[0]?.last_seen;
+        let revision = res.data?.events[0]?.revision;
+
+        setLogData({
+          podName,
+          timestamp,
+          revision,
+        });
+      });
+  };
+
   const renderExpandedEventMessage = () => {
     if (!expandedIncidentEvents) {
       return <Loading />;
@@ -80,14 +106,14 @@ const EventList: React.FC<Props> = ({ filters }) => {
         Header: "Monitors",
         columns: [
           {
-            Header: "Name",
-            accessor: "release_name",
-            width: 180,
+            Header: "Description",
+            accessor: "short_summary",
+            width: 500,
             Cell: ({ row }: CellProps<any>) => {
               return (
                 <NameWrapper>
                   <AlertIcon src={danger} />
-                  {row.original.release_name}
+                  {row.original.short_summary}
                   {row?.original && row.original.severity === "normal" ? (
                     <></>
                   ) : (
@@ -98,16 +124,11 @@ const EventList: React.FC<Props> = ({ filters }) => {
             },
           },
           {
-            Header: "Summary",
-            accessor: "short_summary",
-            width: 270,
-          },
-          {
-            Header: "Last updated",
+            Header: "Last seen",
             accessor: "updated_at",
             width: 140,
             Cell: ({ row }: CellProps<any>) => {
-              return <Flex>{readableDate(row.original.updated_at)}</Flex>;
+              return <Flex>{relativeDate(row.original.updated_at)}</Flex>;
             },
           },
           {
@@ -132,8 +153,17 @@ const EventList: React.FC<Props> = ({ filters }) => {
             accessor: "",
             width: 30,
             Cell: ({ row }: CellProps<any>) => {
+              if (!row.original.should_view_logs) {
+                return null;
+              }
+
               return (
-                <TableButton width="102px">
+                <TableButton
+                  width="102px"
+                  onClick={() => {
+                    redirectToLogs(row.original);
+                  }}
+                >
                   <Icon src={document} />
                   View logs
                 </TableButton>

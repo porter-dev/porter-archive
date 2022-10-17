@@ -1993,6 +1993,7 @@ const getGitlabFolderContent = baseApi<
 
 const getLogPodValues = baseApi<
   {
+    revision?: string;
     match_prefix?: string;
     start_range?: string;
     end_range?: string;
@@ -2012,6 +2013,7 @@ const getLogs = baseApi<
     limit?: number;
     start_range?: string;
     end_range?: string;
+    revision?: string;
     pod_selector: string;
     namespace: string;
     search_param?: string;

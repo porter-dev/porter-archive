@@ -14,7 +14,7 @@ import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
 import MetricsSection from "./metrics/MetricsSection";
-import LogsSection from "./logs-section/LogsSection";
+import LogsSection, { InitLogData } from "./logs-section/LogsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
@@ -76,6 +76,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [isAuthorized] = useAuth();
   const [fullScreenLogs, setFullScreenLogs] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [logData, setLogData] = useState<InitLogData>();
 
   const {
     isStack,
@@ -423,6 +424,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             currentChart={chart}
             isFullscreen={isFullscreen}
             setIsFullscreen={setIsFullscreen}
+            initData={logData}
           />
         );
       case "metrics":
@@ -431,7 +433,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         if (DisabledNamespacesForIncidents.includes(currentChart.namespace)) {
           return null;
         }
-        return <EventsTab currentChart={chart} />;
+        return <EventsTab currentChart={chart} setLogData={setLogData} />;
       case "status":
         if (isLoadingChartData) {
           return (

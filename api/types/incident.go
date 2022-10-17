@@ -111,6 +111,12 @@ type GetPodValuesRequest struct {
 	MatchPrefix string     `schema:"match_prefix"`
 }
 
+type GetRevisionValuesRequest struct {
+	StartRange  *time.Time `schema:"start_range"`
+	EndRange    *time.Time `schema:"end_range"`
+	MatchPrefix string     `schema:"match_prefix"`
+}
+
 type LogLine struct {
 	Timestamp *time.Time `json:"timestamp"`
 	Line      string     `json:"line"`

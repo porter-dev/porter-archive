@@ -1971,6 +1971,7 @@ const getLogs = baseApi<
     limit?: number;
     start_range?: string;
     end_range?: string;
+    revision?: string;
     pod_selector: string;
     namespace: string;
     search_param?: string;

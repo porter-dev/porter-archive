@@ -63,6 +63,30 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
       });
   }, [expandedEvent]);
 
+  const redirectToLogs = (incident: any) => {
+    api
+      .getIncidentEvents(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          incident_id: incident.id,
+        }
+      )
+      .then((res) => {
+        let podName = res.data?.events[0]?.pod_name;
+        let timestamp = res.data?.events[0]?.last_seen;
+        let revision = res.data?.events[0]?.revision;
+
+        setLogData({
+          podName,
+          timestamp,
+          revision,
+        });
+      });
+  };
+
   const renderExpandedEventMessage = () => {
     if (!expandedIncidentEvents) {
       return <Loading />;
@@ -134,14 +158,15 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
             accessor: "",
             width: 30,
             Cell: ({ row }: CellProps<any>) => {
+              if (!row.original.should_view_logs) {
+                return null;
+              }
+
               return (
                 <TableButton
                   width="102px"
                   onClick={() => {
-                    setLogData({
-                      podName: "hello",
-                      timestamp: row.original.last_seen,
-                    });
+                    redirectToLogs(row.original);
                   }}
                 >
                   <Icon src={document} />

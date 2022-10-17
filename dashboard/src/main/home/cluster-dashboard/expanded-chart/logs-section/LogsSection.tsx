@@ -23,6 +23,7 @@ import _ from "lodash";
 export type InitLogData = {
   podName: string;
   timestamp: string;
+  revision: string;
 };
 
 type Props = {
@@ -130,7 +131,11 @@ const LogsSection: React.FC<Props> = ({
       )
       .then((res) => {
         setPodFilterOpts(_.uniq(res.data ?? []));
-        setPodFilter(res.data[0]);
+
+        // only set pod filter if the current pod is not found in the resulting data
+        if (!res.data?.contains(podFilter)) {
+          setPodFilter(res.data[0]);
+        }
       });
   }, []);
 

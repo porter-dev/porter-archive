@@ -41,6 +41,7 @@ type IncidentMeta struct {
 	InvolvedObjectKind      InvolvedObjectKind `json:"involved_object_kind" form:"required"`
 	InvolvedObjectName      string             `json:"involved_object_name" form:"required"`
 	InvolvedObjectNamespace string             `json:"involved_object_namespace" form:"required"`
+	ShouldViewLogs          bool               `json:"should_view_logs"`
 }
 
 type PaginationRequest struct {

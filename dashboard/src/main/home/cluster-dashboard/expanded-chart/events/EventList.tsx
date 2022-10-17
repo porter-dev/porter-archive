@@ -138,8 +138,10 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
                 <TableButton
                   width="102px"
                   onClick={() => {
-                    // setLogData()
-                    // TODO: POD NAME AND TIMESTAMP
+                    setLogData({
+                      podName: "hello",
+                      timestamp: row.original.last_seen,
+                    });
                   }}
                 >
                   <Icon src={document} />

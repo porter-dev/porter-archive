@@ -5,6 +5,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
+import { ChartType } from "shared/types";
 import { isJSON } from "shared/util";
 
 const MAX_LOGS = 5000;
@@ -57,12 +58,15 @@ export const useLogs = (
   currentPod: string,
   namespace: string,
   searchParam: string,
+  currentChart: ChartType,
   // if setDate is set, results are not live
   setDate?: Date
 ) => {
   const isLive = !setDate;
   const logsBufferRef = useRef<Log[]>([]);
-  const { currentCluster, currentProject } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError } = useContext(
+    Context
+  );
   const [logs, setLogs] = useState<Log[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
     previousCursor: null,
@@ -164,7 +168,16 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
-    const endpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki?pod_selector=${currentPod}&namespace=${namespace}&search_param=${searchParam}`;
+    const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
+
+    const q = new URLSearchParams({
+      pod_selector: currentPod,
+      namespace,
+      search_param: searchParam,
+      revision: currentChart.version.toString(),
+    }).toString();
+
+    const endpoint = `${websocketBaseURL}?${q}`;
 
     const config: NewWebsocketOptions = {
       onopen: () => {
@@ -196,13 +209,18 @@ export const useLogs = (
     endDate: string,
     direction: Direction,
     limit: number = QUERY_LIMIT
-  ) => {
+  ): Promise<{
+    logs: Log[];
+    previousCursor: string | null;
+    nextCursor: string | null;
+  }> => {
     return api
       .getLogs(
         "<token>",
         {
           pod_selector: currentPod,
           namespace,
+          revision: currentChart.version.toString(),
           search_param: searchParam,
           start_range: startDate,
           end_range: endDate,
@@ -231,6 +249,15 @@ export const useLogs = (
               ? null
               : res.data.backward_continue_time,
           nextCursor: res.data.forward_continue_time,
+        };
+      })
+      .catch((err) => {
+        setCurrentError(err);
+
+        return {
+          logs: [],
+          previousCursor: null,
+          nextCursor: null,
         };
       });
   };

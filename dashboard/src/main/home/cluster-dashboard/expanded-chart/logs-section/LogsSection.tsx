@@ -19,6 +19,7 @@ import DateTimePicker from "components/date-time-picker/DateTimePicker";
 import dayjs from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
+import { ChartType } from "shared/types";
 
 export type InitLogData = {
   podName: string;
@@ -27,7 +28,7 @@ export type InitLogData = {
 };
 
 type Props = {
-  currentChart?: any;
+  currentChart?: ChartType;
   isFullscreen: boolean;
   setIsFullscreen: (x: boolean) => void;
   initData?: InitLogData;
@@ -114,7 +115,8 @@ const LogsSection: React.FC<Props> = ({
     podFilter,
     currentChart.namespace,
     enteredSearchText,
-    selectedDate
+    currentChart,
+    selectedDate,
   );
 
   useEffect(() => {

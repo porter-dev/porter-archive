@@ -78,6 +78,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [logData, setLogData] = useState<InitLogData>();
   const [overrideCurrentTab, setOverrideCurrentTab] = useState("");
+  const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
 
   const {
     isStack,
@@ -333,6 +334,25 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       );
 
+      await api.detectPorterAgent(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then(() => setIsAgentInstalled(true))
+      .catch((err) => {
+        setIsAgentInstalled(false);
+
+        if (err.status !== 404) {
+          setCurrentError(
+            "We could not detect the Porter agent installation status, please try again."
+          );
+        }
+      });
+
       getChartData(currentChart);
 
       setSaveValueStatus("successful");
@@ -425,6 +445,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
     // console.log("CONTROLLERS", controllers);
     switch (currentTab) {
       case "logs":
+        if (!isAgentInstalled) {
+          return null;
+        }
+
         return (
           <LogsSection
             currentChart={chart}
@@ -550,7 +574,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
         currentChart.chart.metadata.name === "job")
     ) {
       leftTabOptions.push({ label: "Events", value: "events" });
-      leftTabOptions.push({ label: "Logs", value: "logs" });
+
+      if (isAgentInstalled) {
+        leftTabOptions.push({ label: "Logs", value: "logs" });
+      }
     }
     leftTabOptions.push({ label: "Status", value: "status" });
 

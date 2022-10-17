@@ -116,7 +116,7 @@ const LogsSection: React.FC<Props> = ({
     currentChart.namespace,
     enteredSearchText,
     currentChart,
-    selectedDate,
+    selectedDate
   );
 
   useEffect(() => {
@@ -124,6 +124,7 @@ const LogsSection: React.FC<Props> = ({
       .getLogPodValues(
         "<TOKEN>",
         {
+          revision: currentChart.version.toString(),
           match_prefix: currentChart.name,
         },
         {

@@ -233,6 +233,7 @@ func GetPodValues(
 	}
 
 	vals["match_prefix"] = req.MatchPrefix
+	vals["revision"] = req.Revision
 
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",

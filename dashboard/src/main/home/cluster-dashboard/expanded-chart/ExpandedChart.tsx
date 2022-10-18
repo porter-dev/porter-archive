@@ -72,7 +72,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [imageIsPlaceholder, setImageIsPlaceholer] = useState<boolean>(false);
   const [newestImage, setNewestImage] = useState<string>(null);
   const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(true);
-  const [showRepoTooltip, setShowRepoTooltip] = useState(false);
   const [isAuthorized] = useAuth();
   const [fullScreenLogs, setFullScreenLogs] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -316,7 +315,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setSaveValueStatus("loading");
 
-    // console.log("valuesYaml", valuesYaml);
     try {
       await api.upgradeChartValues(
         "<token>",
@@ -333,25 +331,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           cluster_id: currentCluster.id,
         }
       );
-
-      await api.detectPorterAgent(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
-      .then(() => setIsAgentInstalled(true))
-      .catch((err) => {
-        setIsAgentInstalled(false);
-
-        if (err.status !== 404) {
-          setCurrentError(
-            "We could not detect the Porter agent installation status, please try again."
-          );
-        }
-      });
 
       getChartData(currentChart);
 
@@ -727,6 +706,29 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
   };
 
+  // Check if porter agent is installed. If not installed hide the `Logs` component
+  useEffect(() => {
+    api
+      .detectPorterAgent(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      )
+      .then(() => setIsAgentInstalled(true))
+      .catch((err) => {
+        setIsAgentInstalled(false);
+
+        if (err.status !== 404) {
+          setCurrentError(
+            "We could not detect the Porter agent installation status, please try again."
+          );
+        }
+      });
+  }, []);
+
   useEffect(() => {
     window.analytics?.track("Opened Chart", {
       chart: currentChart.name,
@@ -753,7 +755,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   useEffect(() => {
     updateTabs();
     localStorage.setItem("devOpsMode", devOpsMode.toString());
-  }, [devOpsMode, currentChart?.form, isPreview]);
+  }, [devOpsMode, currentChart?.form, isPreview, isAgentInstalled]);
 
   useEffect((): any => {
     let isSubscribed = true;

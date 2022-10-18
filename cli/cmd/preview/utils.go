@@ -8,25 +8,11 @@ import (
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 )
 
-type Source struct {
-	Name          string
-	Repo          string
-	Version       string
-	IsApplication bool
-	SourceValues  map[string]interface{}
-}
-
-type Target struct {
-	AppName   string
-	Project   uint
-	Cluster   uint
-	Namespace string
-}
-
-func GetSource(resourceName string, input map[string]interface{}) (*Source, error) {
-	output := &Source{}
+func GetSource(resourceName string, input map[string]interface{}) (*preview.Source, error) {
+	output := &preview.Source{}
 
 	// first read from env vars
 	output.Name = os.Getenv("PORTER_SOURCE_NAME")
@@ -113,8 +99,8 @@ func GetSource(resourceName string, input map[string]interface{}) (*Source, erro
 		resourceName, output.Name, output.Repo)
 }
 
-func GetTarget(resourceName string, input map[string]interface{}) (*Target, error) {
-	output := &Target{}
+func GetTarget(resourceName string, input map[string]interface{}) (*preview.Target, error) {
+	output := &preview.Target{}
 
 	// first read from env vars
 	if projectEnv := os.Getenv("PORTER_PROJECT"); projectEnv != "" {

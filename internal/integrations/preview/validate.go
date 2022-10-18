@@ -17,21 +17,19 @@ var (
 
 type driverBasedResourceValidator func(*types.Resource) error
 
-type porterYAMLValidator struct {
-	driverValidators map[string]driverBasedResourceValidator
-}
+var driverValidators = make(map[string]driverBasedResourceValidator)
 
-func NewPorterYAMLValidator() *porterYAMLValidator {
-	driverValidators := make(map[string]driverBasedResourceValidator)
-
+func init() {
+	driverValidators["deploy"] = deployDriverValidator
+	driverValidators["build-image"] = buildImageDriverValidator
 	driverValidators["push-image"] = pushImageDriverValidator
-
-	return &porterYAMLValidator{
-		driverValidators: driverValidators,
-	}
+	driverValidators["update-config"] = updateConfigDriverValidator
+	driverValidators["random-string"] = randomStringDriverValidator
+	driverValidators["env-group"] = envGroupDriverValidator
+	driverValidators["os-env"] = osEnvDriverValidator
 }
 
-func (v *porterYAMLValidator) Validate(contents string) []error {
+func Validate(contents string) []error {
 	var errors []error
 
 	resGroup, err := parser.ParseRawBytes([]byte(contents))
@@ -42,7 +40,7 @@ func (v *porterYAMLValidator) Validate(contents string) []error {
 	}
 
 	for _, res := range resGroup.Resources {
-		if validator, ok := v.driverValidators[res.Driver]; ok {
+		if validator, ok := driverValidators[res.Driver]; ok {
 			if err := validator(res); err != nil {
 				errors = append(errors, err)
 			}

@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
@@ -23,7 +24,7 @@ type PushDriverConfig struct {
 }
 
 type PushDriver struct {
-	target      *Target
+	target      *preview.Target
 	config      *PushDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}

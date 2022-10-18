@@ -8,6 +8,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
@@ -19,7 +20,7 @@ type EnvGroupDriverConfig struct {
 type EnvGroupDriver struct {
 	output      map[string]interface{}
 	lookupTable *map[string]drivers.Driver
-	target      *Target
+	target      *preview.Target
 	config      *EnvGroupDriverConfig
 }
 

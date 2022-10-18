@@ -240,7 +240,6 @@ const Button = styled.div`
   padding-right: 12px;
   border-radius: 5px;
   cursor: pointer;
-  box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;
   align-items: center;

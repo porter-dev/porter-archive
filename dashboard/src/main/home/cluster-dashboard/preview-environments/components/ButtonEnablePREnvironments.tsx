@@ -106,7 +106,7 @@ const ButtonEnablePREnvironments = ({ setIsReady }: Props) => {
     <>
       <Container>
         <Button {...getButtonProps()}>
-          <i className="material-icons">add</i> Add Repository
+          <i className="material-icons">add</i> Add repository
         </Button>
       </Container>
     </>

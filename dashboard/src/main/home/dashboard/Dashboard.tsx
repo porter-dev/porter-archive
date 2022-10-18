@@ -13,6 +13,7 @@ import TabRegion from "components/TabRegion";
 import Provisioner from "../provisioner/Provisioner";
 import FormDebugger from "components/porter-form/FormDebugger";
 import TitleSection from "components/TitleSection";
+import Banner from "components/Banner";
 
 import { pushFiltered, pushQueryParams } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -129,9 +130,9 @@ class Dashboard extends Component<PropsType, StateType> {
       }
       return (
         <>
-          <Banner color={helperColor}>
-            <i className="material-icons">{helperIcon}</i>
-            {helperText}
+          <Banner type="warning">
+            <i className="material-icons">warning</i>
+            Project is in trouble
           </Banner>
           <ProvisionerSettings infras={this.state.infras} provisioner={true} />
         </>
@@ -198,6 +199,9 @@ class Dashboard extends Component<PropsType, StateType> {
                       <i className="material-icons">info</i> Info
                     </InfoLabel>
                   </TopRow>
+                  <Banner type="error">
+                    GitHub has an ongoing incident: https://www.githubstatus.com/incidents/w0q17vf0dzjr
+                  </Banner>
                   <Description>
                     Project overview for {currentProject && currentProject.name}
                     .
@@ -228,25 +232,18 @@ const Br = styled.div`
   height: 1px;
 `;
 
+const Code = styled.div`
+  font-family: monospace;
+  margin: 0 7px;
+`;
+
 const DashboardWrapper = styled.div`
   padding-bottom: 100px;
 `;
 
-const Banner = styled.div<{ color: string }>`
-  height: 40px;
-  width: 100%;
-  margin: 5px 0 30px;
-  font-size: 13px;
-  display: flex;
-  border-radius: 5px;
-  padding-left: 15px;
-  align-items: center;
-  background: #ffffff11;
-  color: ${(props) => props.color};
-  > i {
-    margin-right: 10px;
-    font-size: 18px;
-  }
+const A = styled.a`
+  margin-left: 10px;
+  color: #8590ff;
 `;
 
 const TopRow = styled.div`

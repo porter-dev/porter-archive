@@ -18,6 +18,8 @@ import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHead
 import SearchBar from "components/SearchBar";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import DocsHelper from "components/DocsHelper";
+import pullRequestIcon from "assets/pull_request_icon.svg";
+import DashboardHeader from "../../DashboardHeader";
 
 const AvailableStatusFilters = [
   "all",
@@ -282,18 +284,20 @@ const DeploymentList = () => {
 
   return (
     <>
-      <PreviewEnvironmentsHeader />
+      <BreadcrumbRow>
+        <Breadcrumb to="/preview-environments">
+          <ArrowIcon src={pullRequestIcon} />
+          <Wrap>Preview environments</Wrap>
+        </Breadcrumb>
+      </BreadcrumbRow>
+      <DashboardHeader
+        image="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
+        title={selectedRepo}
+        description={`Preview environments for the ${selectedRepo} repository.`}
+        disableLineBreak
+        capitalize={false}
+      />
       <Flex>
-        <BackButton to={"/preview-environments"} className="material-icons">
-          keyboard_backspace
-        </BackButton>
-
-        <Icon
-          src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
-          alt="git repository icon"
-        />
-        <Title>{selectedRepo}</Title>
-
         <ActionsWrapper>
           <StyledStatusSelector>
             <RefreshButton color={"#7d7d81"} onClick={handleRefresh}>
@@ -368,6 +372,39 @@ const mockRequest = () =>
     );
   });
 
+const BreadcrumbRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+`;
+
+const ArrowIcon = styled.img`
+  width: 15px;
+  margin-right: 8px;
+  opacity: 50%;
+`;
+
+const Wrap = styled.div`
+  z-index: 999;
+`;
+
+const Breadcrumb = styled(DynamicLink)`
+  color: #aaaabb88;
+  font-size: 13px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  margin-top: -10px;
+  z-index: 999;
+  padding: 5px;
+  padding-right: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  :hover {
+    background: #ffffff11;
+  }
+`;
+
 const Flex = styled.div`
   display: flex;
   align-items: center;
@@ -397,7 +434,6 @@ const Icon = styled.img`
   width: 25px;
   height: 25px;
   margin-right: 6px;
-  margin-left: 14px;
 `;
 
 const Title = styled.div`

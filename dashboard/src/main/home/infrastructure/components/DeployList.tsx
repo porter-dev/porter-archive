@@ -10,7 +10,7 @@ import {
   OperationType,
 } from "shared/types";
 import { readableDate } from "shared/string_utils";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import ExpandedOperation from "./ExpandedOperation";
 

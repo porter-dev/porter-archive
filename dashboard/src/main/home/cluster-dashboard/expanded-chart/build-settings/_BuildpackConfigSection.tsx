@@ -2,7 +2,7 @@ import { DeviconsNameList } from "assets/devicons-name-list";
 import Helper from "components/form-components/Helper";
 import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
+import Placeholder from "components/OldPlaceholder";
 import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
 import { differenceBy } from "lodash";
 import React, {

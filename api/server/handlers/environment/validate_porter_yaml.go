@@ -92,7 +92,7 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	)
 
 	if ghResp.StatusCode == 404 {
-		res.Errors = append(res.Errors, preview.ErrNoPorterYAMLFile)
+		res.Errors = append(res.Errors, preview.ErrNoPorterYAMLFile.Error())
 		c.WriteResult(w, r, res)
 		return
 	}
@@ -110,12 +110,16 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	if contents == "" {
-		res.Errors = append(res.Errors, preview.ErrEmptyPorterYAMLFile)
+		res.Errors = append(res.Errors, preview.ErrEmptyPorterYAMLFile.Error())
 		c.WriteResult(w, r, res)
 		return
 	}
 
-	res.Errors = append(res.Errors, preview.Validate(contents)...)
+	for _, err := range preview.Validate(contents) {
+		if err != nil {
+			res.Errors = append(res.Errors, err.Error())
+		}
+	}
 
 	c.WriteResult(w, r, res)
 }

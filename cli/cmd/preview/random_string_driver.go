@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
@@ -11,14 +12,9 @@ import (
 const defaultCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const lowerCharset = "abcdefghijklmnopqrstuvwxyz"
 
-type RandomStringDriverConfig struct {
-	Length int
-	Lower  bool
-}
-
 type RandomStringDriver struct {
 	output map[string]interface{}
-	config *RandomStringDriverConfig
+	config *preview.RandomStringDriverConfig
 }
 
 func NewRandomStringDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
@@ -26,7 +22,7 @@ func NewRandomStringDriver(resource *models.Resource, opts *drivers.SharedDriver
 		output: make(map[string]interface{}),
 	}
 
-	driverConfig := &RandomStringDriverConfig{}
+	driverConfig := &preview.RandomStringDriverConfig{}
 
 	err := mapstructure.Decode(resource.Config, driverConfig)
 

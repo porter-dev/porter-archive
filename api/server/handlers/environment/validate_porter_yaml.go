@@ -115,9 +115,7 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	validator := preview.NewPorterYAMLValidator()
-
-	res.Errors = append(res.Errors, validator.Validate(contents)...)
+	res.Errors = append(res.Errors, preview.Validate(contents)...)
 
 	c.WriteResult(w, r, res)
 }

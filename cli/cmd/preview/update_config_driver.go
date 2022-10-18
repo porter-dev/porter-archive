@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
@@ -37,8 +38,8 @@ type UpdateConfigDriverConfig struct {
 }
 
 type UpdateConfigDriver struct {
-	source      *Source
-	target      *Target
+	source      *preview.Source
+	target      *preview.Target
 	config      *UpdateConfigDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}

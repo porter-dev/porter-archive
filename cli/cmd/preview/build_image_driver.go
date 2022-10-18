@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/docker"
+	"github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
 )
@@ -36,8 +37,8 @@ type BuildDriverConfig struct {
 }
 
 type BuildDriver struct {
-	source      *Source
-	target      *Target
+	source      *preview.Source
+	target      *preview.Target
 	config      *BuildDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}

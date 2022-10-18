@@ -50,7 +50,7 @@ func (d *RandomStringDriver) Apply(resource *models.Resource) (*models.Resource,
 		useCharset = lowerCharset
 	}
 
-	d.output["value"] = randomString(d.config.Length, useCharset)
+	d.output["value"] = randomString(int(d.config.Length), useCharset)
 
 	return resource, nil
 }

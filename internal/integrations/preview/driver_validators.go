@@ -34,7 +34,15 @@ func deployDriverValidator(resource *types.Resource) error {
 		return err
 	}
 
-	if source.Repo == "" || source.Repo == "https://charts.getporter.dev" {
+	if source.Name == "" {
+		return fmt.Errorf("for resource '%s': source name is empty", resource.Name)
+	}
+
+	if source.Repo == "" {
+		source.Repo = "https://charts.getporter.dev"
+	}
+
+	if source.Repo == "https://charts.getporter.dev" {
 		appConfig := &ApplicationConfig{}
 
 		err = mapstructure.Decode(resource.Config, appConfig)

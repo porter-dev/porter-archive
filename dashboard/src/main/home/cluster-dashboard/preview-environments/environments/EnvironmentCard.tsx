@@ -250,7 +250,6 @@ const Button = styled.button`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  box-shadow: 0 5px 8px 0px #00000010;
   cursor: pointer;
   border: none;
   :not(:last-child) {

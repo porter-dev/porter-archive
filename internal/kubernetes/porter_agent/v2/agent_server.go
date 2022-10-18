@@ -21,6 +21,52 @@ func GetAgentService(clientset kubernetes.Interface) (*v1.Service, error) {
 	)
 }
 
+func ListPorterEvents(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	req *types.ListEventsRequest,
+) (*types.ListEventsResponse, error) {
+	vals := make(map[string]string)
+
+	if req.Type != nil {
+		vals["type"] = *req.Type
+	}
+
+	if req.ReleaseName != nil {
+		vals["release_name"] = *req.ReleaseName
+	}
+
+	if req.ReleaseNamespace != nil {
+		vals["release_namespace"] = *req.ReleaseNamespace
+	}
+
+	if req.PaginationRequest != nil {
+		vals["page"] = fmt.Sprintf("%d", req.PaginationRequest.Page)
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/events",
+		vals,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	eventsResp := &types.ListEventsResponse{}
+
+	err = json.Unmarshal(rawQuery, eventsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return eventsResp, nil
+}
+
 func ListIncidents(
 	clientset kubernetes.Interface,
 	service *v1.Service,
@@ -310,11 +356,11 @@ func GetRevisionValues(
 	return valsResp, nil
 }
 
-func GetHistoricalEvents(
+func GetHistoricalKubernetesEvents(
 	clientset kubernetes.Interface,
 	service *v1.Service,
-	req *types.GetEventRequest,
-) (*types.GetEventResponse, error) {
+	req *types.GetKubernetesEventRequest,
+) (*types.GetKubernetesEventResponse, error) {
 	vals := make(map[string]string)
 
 	if req.Limit != 0 {
@@ -357,7 +403,7 @@ func GetHistoricalEvents(
 		return nil, err
 	}
 
-	eventsResp := &types.GetEventResponse{}
+	eventsResp := &types.GetKubernetesEventResponse{}
 
 	err = json.Unmarshal(rawQuery, eventsResp)
 	if err != nil {

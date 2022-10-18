@@ -1988,6 +1988,22 @@ const getLogs = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/logs`
 );
 
+const listPorterEvents = baseApi<
+  {
+    release_name?: number;
+    release_namespace?: string;
+    type?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/events`
+);
+
 const listIncidents = baseApi<
   {
     release_name?: number;
@@ -2390,6 +2406,7 @@ export default {
   getGitlabFolderContent,
   getLogPodValues,
   getLogs,
+  listPorterEvents,
   listIncidents,
   getIncident,
   getIncidentEvents,

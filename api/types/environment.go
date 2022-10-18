@@ -138,3 +138,11 @@ type UpdateEnvironmentSettingsRequest struct {
 	DisableNewComments bool     `json:"disable_new_comments"`
 	GitRepoBranches    []string `json:"git_repo_branches"`
 }
+
+type ValidatePorterYAMLRequest struct {
+	Branch string `schema:"branch"`
+}
+
+type ValidatePorterYAMLResponse struct {
+	Errors []string `json:"errors"`
+}

@@ -13,26 +13,26 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type GetEventsHandler struct {
+type GetKubernetesEventsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-func NewGetEventsHandler(
+func NewGetKubernetesEventsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetEventsHandler {
-	return &GetEventsHandler{
+) *GetKubernetesEventsHandler {
+	return &GetKubernetesEventsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (c *GetEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetKubernetesEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.GetEventRequest{}
+	request := &types.GetKubernetesEventRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		return
@@ -53,7 +53,7 @@ func (c *GetEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logs, err := porter_agent.GetHistoricalEvents(agent.Clientset, agentSvc, request)
+	logs, err := porter_agent.GetHistoricalKubernetesEvents(agent.Clientset, agentSvc, request)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

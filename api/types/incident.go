@@ -131,20 +131,52 @@ type GetLogResponse struct {
 	Logs                 []LogLine  `json:"logs"`
 }
 
-type GetEventRequest struct {
+type GetKubernetesEventRequest struct {
 	Limit       uint       `schema:"limit"`
 	StartRange  *time.Time `schema:"start_range"`
 	EndRange    *time.Time `schema:"end_range"`
+	Revision    string     `schema:"revision"`
 	PodSelector string     `schema:"pod_selector" form:"required"`
 	Namespace   string     `schema:"namespace" form:"required"`
 }
 
-type EventLine struct {
+type KubernetesEventLine struct {
 	Timestamp *time.Time `json:"timestamp"`
 	Event     string     `json:"event"`
 }
 
-type GetEventResponse struct {
-	ContinueTime *time.Time  `json:"continue_time"`
-	Events       []EventLine `json:"events"`
+type GetKubernetesEventResponse struct {
+	ContinueTime *time.Time            `json:"continue_time"`
+	Events       []KubernetesEventLine `json:"events"`
+}
+
+type EventType string
+
+const (
+	EventTypeIncident           EventType = "incident"
+	EventTypeIncidentResolved   EventType = "incident_resolved"
+	EventTypeDeploymentStarted  EventType = "deployment_started"
+	EventTypeDeploymentFinished EventType = "deployment_finished"
+	EventTypeDeploymentErrored  EventType = "deployment_errored"
+)
+
+type Event struct {
+	Type             EventType              `json:"type"`
+	Version          string                 `json:"version"`
+	ReleaseName      string                 `json:"release_name"`
+	ReleaseNamespace string                 `json:"release_namespace"`
+	Timestamp        *time.Time             `json:"timestamp"`
+	Data             map[string]interface{} `json:"data"`
+}
+
+type ListEventsRequest struct {
+	*PaginationRequest
+	ReleaseName      *string `schema:"release_name"`
+	ReleaseNamespace *string `schema:"release_namespace"`
+	Type             *string `schema:"type"`
+}
+
+type ListEventsResponse struct {
+	Events     []*Event            `json:"events" form:"required"`
+	Pagination *PaginationResponse `json:"pagination"`
 }

@@ -232,7 +232,6 @@ const DeleteButton = styled.div`
   margin-left: 0;
   justify-content: center;
   border-radius: 5px;
-  box-shadow: 0 2px 5px 0 #00000030;
   cursor: pointer;
   user-select: none;
   :focus {

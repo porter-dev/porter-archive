@@ -15,10 +15,12 @@ import Helper from "components/form-components/Helper";
 import AWSFormSection from "./AWSFormSection";
 import GCPFormSection from "./GCPFormSection";
 import DOFormSection from "./DOFormSection";
+import AzureFormSection from "./AzureFormSection";
 import SaveButton from "components/SaveButton";
 import ExistingClusterSection from "./ExistingClusterSection";
 import { useHistory, useLocation } from "react-router";
 import { pushFiltered } from "shared/routing";
+import azure from "assets/azure.png";
 
 type Props = {
   isInNewProject?: boolean;
@@ -163,6 +165,21 @@ const ProvisionerSettings: React.FC<Props> = ({
       );
     }
 
+    if (selectedProvider === "azure") {
+      return (
+        <AzureFormSection
+          handleError={handleError}
+          projectName={projectName}
+          infras={infras}
+          highlightCosts={highlightCosts}
+          setSelectedProvisioner={(x: string | null) => {
+            handleSelectProvider(x);
+          }}
+          trackOnSave={() => trackOnSave(selectedProvider)}
+        />
+      );
+    }
+
     if (selectedProvider === "do") {
       return (
         <DOFormSection
@@ -267,10 +284,28 @@ const ProvisionerSettings: React.FC<Props> = ({
                   <InfoTooltip text={""} />
                   */}
                 </CostSection>
-                <BlockDescription>Hosted in your own cloud.</BlockDescription>
+                <BlockDescription>Hosted in your own cloud</BlockDescription>
               </Block>
             );
           })}
+          {
+            window.location.href.includes("dashboard.staging.getporter.dev") && (
+              <Block
+                key={3}
+                disabled={isUsageExceeded}
+                onClick={() => {
+                  if (!isUsageExceeded) {
+                    handleSelectProvider("azure");
+                    setHighlightCosts(false);
+                  }
+                }}
+              >
+                <Icon src={azure} />
+                <BlockTitle>Azure</BlockTitle>
+                <BlockDescription>Hosted in your own cloud</BlockDescription>
+              </Block>
+            )
+          }
         </BlockList>
       ) : (
         <>{renderSelectedProvider()}</>

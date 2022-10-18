@@ -20,6 +20,7 @@ type driverBasedResourceValidator func(*types.Resource) error
 var driverValidators = make(map[string]driverBasedResourceValidator)
 
 func init() {
+	driverValidators[""] = deployDriverValidator
 	driverValidators["deploy"] = deployDriverValidator
 	driverValidators["build-image"] = buildImageDriverValidator
 	driverValidators["push-image"] = pushImageDriverValidator
@@ -36,6 +37,15 @@ func Validate(contents string) []error {
 
 	if err != nil {
 		errors = append(errors, fmt.Errorf("error parsing porter.yaml: %w", err))
+		return errors
+	}
+
+	depResolver := newDependencyResolver(resGroup.Resources)
+
+	err = depResolver.Resolve()
+
+	if err != nil {
+		errors = append(errors, fmt.Errorf("error resolving dependencies: %w", err))
 		return errors
 	}
 

@@ -32,6 +32,7 @@ type Props = {
   isFullscreen: boolean;
   setIsFullscreen: (x: boolean) => void;
   initData?: InitLogData;
+  setInitData: (initData: InitLogData) => void;
 };
 
 const escapeRegExp = (str: string) => {
@@ -97,6 +98,7 @@ const LogsSection: React.FC<Props> = ({
   isFullscreen,
   setIsFullscreen,
   initData = {},
+  setInitData,
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
@@ -108,7 +110,7 @@ const LogsSection: React.FC<Props> = ({
   const [searchText, setSearchText] = useState("");
   const [enteredSearchText, setEnteredSearchText] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    initData ? dayjs(initData.timestamp).toDate() : undefined
+    initData.timestamp ? dayjs(initData.timestamp).toDate() : undefined
   );
 
   const { loading, logs, refresh, moveCursor, paginationInfo } = useLogs(

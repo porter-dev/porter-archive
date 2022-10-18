@@ -135,5 +135,5 @@ type ValidatePorterYAMLRequest struct {
 }
 
 type ValidatePorterYAMLResponse struct {
-	Errors []error `json:"errors,omitempty"`
+	Errors []error `json:"errors"`
 }

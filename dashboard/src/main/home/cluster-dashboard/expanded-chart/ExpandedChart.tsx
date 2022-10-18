@@ -38,9 +38,9 @@ type Props = {
 };
 
 const getReadableDate = (s: string) => {
-  let ts = new Date(s);
-  let date = ts.toLocaleDateString();
-  let time = ts.toLocaleTimeString([], {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -75,7 +75,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [isAuthorized] = useAuth();
   const [fullScreenLogs, setFullScreenLogs] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [logData, setLogData] = useState<InitLogData>();
+  const [logData, setLogData] = useState<InitLogData>({});
   const [overrideCurrentTab, setOverrideCurrentTab] = useState("");
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
 
@@ -180,7 +180,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const wsConfig = {
       onmessage(evt: MessageEvent) {
         const event = JSON.parse(evt.data);
-        let object = event.Object;
+        const object = event.Object;
         object.metadata.kind = event.Kind;
 
         if (event.event_type != "UPDATE") {
@@ -248,11 +248,11 @@ const ExpandedChart: React.FC<Props> = (props) => {
       values = currentChart.config;
     }
 
-    for (let key in rawValues) {
+    for (const key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
 
-    let valuesYaml = yaml.dump({
+    const valuesYaml = yaml.dump({
       ...values,
     });
 
@@ -365,9 +365,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const handleUpgradeVersion = useCallback(
     async (version: string, cb: () => void) => {
       // convert current values to yaml
-      let values = currentChart.config;
+      const values = currentChart.config;
 
-      let valuesYaml = yaml.dump({
+      const valuesYaml = yaml.dump({
         ...values,
       });
 
@@ -399,7 +399,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
         cb && cb();
       } catch (err) {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
@@ -419,9 +419,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   );
 
   const renderTabContents = (currentTab: string) => {
-    let { setSidebar } = props;
-    let chart = currentChart;
-    // console.log("CONTROLLERS", controllers);
+    const { setSidebar } = props;
+    const chart = currentChart; // // Reset the logData when navigating to a different tab
+
     switch (currentTab) {
       case "logs":
         if (!isAgentInstalled) {
@@ -434,6 +434,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             isFullscreen={isFullscreen}
             setIsFullscreen={setIsFullscreen}
             initData={logData}
+            setInitData={setLogData}
           />
         );
       case "metrics":
@@ -587,7 +588,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     // Filter tabs if previewing an old revision or updating the chart version
     if (isPreview) {
-      let liveTabs = ["status", "events", "settings", "deploy", "metrics"];
+      const liveTabs = ["status", "events", "settings", "deploy", "metrics"];
       rightTabOptions = rightTabOptions.filter(
         (tab: any) => !liveTabs.includes(tab.value)
       );
@@ -728,6 +729,35 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       });
   }, []);
+
+  useEffect(() => {
+    if (logData.revision) {
+      api
+        .getRevisions(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: props.currentChart.namespace,
+            cluster_id: currentCluster.id,
+            name: props.currentChart.name,
+          }
+        )
+        .then((res) => {
+          const chart = res.data?.find(
+            (revision: ChartType) =>
+              revision.version.toString() === logData.revision
+          );
+
+          setCurrentChart(chart ?? props.currentChart);
+        })
+        .catch(console.log);
+
+        return;
+    }
+
+    setCurrentChart(props.currentChart);
+  }, [logData, props.currentChart]);
 
   useEffect(() => {
     window.analytics?.track("Opened Chart", {
@@ -940,6 +970,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
                               },
                             }}
                             overrideCurrentTab={overrideCurrentTab}
+                            onTabChange={
+                              (newTab) => {
+                                if (newTab !== "logs") {
+                                  setOverrideCurrentTab("");
+                                  setLogData({});
+                                }
+                              }
+                            }
                           />
                         </BodyWrapper>
                       )}

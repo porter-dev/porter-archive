@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/deploy"
 	"github.com/porter-dev/porter/cli/cmd/deploy/wait"
 	"github.com/porter-dev/porter/cli/cmd/preview"
+	previewInt "github.com/porter-dev/porter/internal/integrations/preview"
 	"github.com/porter-dev/porter/internal/templater/utils"
 	"github.com/porter-dev/switchboard/pkg/drivers"
 	"github.com/porter-dev/switchboard/pkg/models"
@@ -194,8 +195,8 @@ type ApplicationConfig struct {
 }
 
 type DeployDriver struct {
-	source      *preview.Source
-	target      *preview.Target
+	source      *previewInt.Source
+	target      *previewInt.Target
 	output      map[string]interface{}
 	lookupTable *map[string]drivers.Driver
 	logger      *zerolog.Logger

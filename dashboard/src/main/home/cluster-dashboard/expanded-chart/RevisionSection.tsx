@@ -184,12 +184,10 @@ class RevisionSection extends Component<PropsType, StateType> {
   };
 
   handleClickRevision = (revision: ChartType) => {
-    let isCurrent = revision.version === this.state.maxVersion;
-    if (isCurrent) {
-      this.props.setRevision(revision, true);
-    } else {
-      this.props.setRevision(revision);
-    }
+    this.props.setRevision(
+      revision,
+      revision.version === this.state.maxVersion
+    );
   };
 
   renderRevisionList = () => {

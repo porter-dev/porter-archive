@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import PorterForm from "./PorterForm";
 import { InjectedProps, PorterFormData } from "./types";
 import { PorterFormContextProvider } from "./PorterFormContextProvider";
+import _ from "lodash";
 
 type PropsType = {
   formData: any;
@@ -25,6 +26,7 @@ type PropsType = {
   includeMetadata?: boolean;
   injectedProps?: InjectedProps;
   overrideCurrentTab?: string;
+  onTabChange?: (newTab: string) => void;
 };
 
 const PorterFormWrapper: React.FC<PropsType> = ({
@@ -48,6 +50,7 @@ const PorterFormWrapper: React.FC<PropsType> = ({
   includeMetadata,
   injectedProps,
   overrideCurrentTab,
+  onTabChange = _.noop,
 }) => {
   const hashCode = (s: string) => {
     return s?.split("").reduce(function (a, b) {
@@ -105,7 +108,10 @@ const PorterFormWrapper: React.FC<PropsType> = ({
           color={color}
           saveValuesStatus={saveValuesStatus}
           currentTab={currentTab}
-          setCurrentTab={setCurrentTab}
+          setCurrentTab={(newTab) => {
+            setCurrentTab(newTab);
+            onTabChange(newTab);
+          }}
           isLaunch={isLaunch}
           hideSpacer={hideBottomSpacer}
           redirectTabAfterSave={redirectTabAfterSave}

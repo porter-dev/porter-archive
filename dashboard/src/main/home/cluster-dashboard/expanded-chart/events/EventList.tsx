@@ -237,10 +237,10 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
             </TableWrapper>
           ) : (
             <Placeholder>
-              <div>
+              <NoResultsFoundWrapper>
                 <Title>No results found</Title>
                 There were no results found for this filter.
-              </div>
+              </NoResultsFoundWrapper>
             </Placeholder>
           )}
         </>
@@ -405,4 +405,9 @@ const StyledMonitorList = styled.div`
   background: #ffffff11;
   border-radius: 5px;
   border: 1px solid #aaaabb33;
+`;
+
+const NoResultsFoundWrapper = styled(Flex)`
+  flex-direction: column;
+  justify-contents: center;
 `;

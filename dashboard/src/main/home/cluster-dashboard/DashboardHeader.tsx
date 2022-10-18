@@ -7,7 +7,7 @@ import TitleSection from "components/TitleSection";
 
 type PropsType = {
   image: any;
-  title: string;
+  title: any;
   description?: string;
   materialIconClass?: string;
   disableLineBreak?: boolean;
@@ -89,7 +89,7 @@ const InfoLabel = styled.div`
 `;
 
 const InfoSection = styled.div`
-  margin-top: 20px;
+  margin-top: 15px;
   font-family: "Work Sans", sans-serif;
   margin-left: 0px;
   margin-bottom: 35px;

@@ -292,7 +292,14 @@ const DeploymentList = () => {
       </BreadcrumbRow>
       <DashboardHeader
         image="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
-        title={selectedRepo}
+        title={
+          <StyledLink 
+            to={`https://github.com/${selectedRepo}`}
+            target="_blank"
+          >
+            {selectedRepo}
+          </StyledLink>
+        }
         description={`Preview environments for the ${selectedRepo} repository.`}
         disableLineBreak
         capitalize={false}
@@ -371,6 +378,13 @@ const mockRequest = () =>
       1000
     );
   });
+
+const StyledLink = styled(DynamicLink)`
+  color: white;
+  :hover {
+    text-decoration: underline;
+  }
+`;
 
 const BreadcrumbRow = styled.div`
   width: 100%;

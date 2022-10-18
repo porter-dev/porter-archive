@@ -13,15 +13,11 @@ import (
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
-type EnvGroupDriverConfig struct {
-	EnvGroups []*types.EnvGroup `mapstructure:"env_groups"`
-}
-
 type EnvGroupDriver struct {
 	output      map[string]interface{}
 	lookupTable *map[string]drivers.Driver
 	target      *preview.Target
-	config      *EnvGroupDriverConfig
+	config      *preview.EnvGroupDriverConfig
 }
 
 func NewEnvGroupDriver(resource *models.Resource, opts *drivers.SharedDriverOpts) (drivers.Driver, error) {
@@ -113,7 +109,7 @@ func (d *EnvGroupDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *EnvGroupDriver) getConfig(resource *models.Resource) (*EnvGroupDriverConfig, error) {
+func (d *EnvGroupDriver) getConfig(resource *models.Resource) (*preview.EnvGroupDriverConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -124,7 +120,7 @@ func (d *EnvGroupDriver) getConfig(resource *models.Resource) (*EnvGroupDriverCo
 		return nil, err
 	}
 
-	config := &EnvGroupDriverConfig{}
+	config := &preview.EnvGroupDriverConfig{}
 
 	err = mapstructure.Decode(populatedConf, config)
 

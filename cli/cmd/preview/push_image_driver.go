@@ -16,16 +16,9 @@ import (
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
-type PushDriverConfig struct {
-	Push struct {
-		UsePackCache bool `mapstructure:"use_pack_cache"`
-		Image        string
-	}
-}
-
 type PushDriver struct {
 	target      *preview.Target
-	config      *PushDriverConfig
+	config      *preview.PushDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
 }
@@ -158,7 +151,7 @@ func (d *PushDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *PushDriver) getConfig(resource *models.Resource) (*PushDriverConfig, error) {
+func (d *PushDriver) getConfig(resource *models.Resource) (*preview.PushDriverConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -169,7 +162,7 @@ func (d *PushDriver) getConfig(resource *models.Resource) (*PushDriverConfig, er
 		return nil, err
 	}
 
-	config := &PushDriverConfig{}
+	config := &preview.PushDriverConfig{}
 
 	err = mapstructure.Decode(populatedConf, config)
 

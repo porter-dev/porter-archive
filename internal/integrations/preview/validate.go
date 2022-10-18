@@ -45,7 +45,7 @@ func Validate(contents string) []error {
 				errors = append(errors, err)
 			}
 		} else {
-			errors = append(errors, fmt.Errorf("%w: %s", ErrUnsupportedDriver, res.Driver))
+			errors = append(errors, fmt.Errorf("for resource '%s': %w: %s", res.Name, ErrUnsupportedDriver, res.Driver))
 		}
 	}
 

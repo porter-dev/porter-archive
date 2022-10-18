@@ -1179,7 +1179,7 @@ func getClusterRoutes(
 	})
 
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/events -> cluster.NewGetEventsHandler
-	getEventsEndpoint := factory.NewAPIEndpoint(
+	getPorterEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
@@ -1195,15 +1195,44 @@ func getClusterRoutes(
 		},
 	)
 
-	getEventsHandler := cluster.NewGetEventsHandler(
+	getPorterEventsHandler := cluster.NewGetPorterEventsHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getEventsEndpoint,
-		Handler:  getEventsHandler,
+		Endpoint: getPorterEventsEndpoint,
+		Handler:  getPorterEventsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/k8s_events -> cluster.NewGetEventsHandler
+	getK8sEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/k8s_events", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getK8sEventsHandler := cluster.NewGetKubernetesEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getK8sEventsEndpoint,
+		Handler:  getK8sEventsHandler,
 		Router:   r,
 	})
 

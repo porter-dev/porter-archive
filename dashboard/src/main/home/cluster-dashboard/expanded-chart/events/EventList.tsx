@@ -5,6 +5,7 @@ import styled from "styled-components";
 import EventTable from "./EventTable";
 import Loading from "components/Loading";
 import danger from "assets/danger.svg";
+import rocket from "assets/rocket.png";
 import document from "assets/document.svg";
 import info from "assets/info-outlined.svg";
 import status from "assets/info-circle.svg";
@@ -30,12 +31,12 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
 
   useEffect(() => {
     api
-      .listIncidents("<token>", filters, {
+      .listPorterEvents("<token>", filters, {
         project_id: currentProject.id,
         cluster_id: currentCluster.id,
       })
       .then((res) => {
-        setEvents(res.data.incidents);
+        setEvents(res.data.events);
         setIsLoading(false);
       });
   }, []);
@@ -97,6 +98,29 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
     );
   };
 
+  const renderIncidentSummaryCell = (incident: any) => {
+    return (
+      <NameWrapper>
+        <AlertIcon src={danger} />
+        {incident.short_summary}
+        {incident.severity === "normal" ? (
+          <></>
+        ) : (
+          <Status color="#cc3d42">Critical</Status>
+        )}
+      </NameWrapper>
+    );
+  };
+
+  const renderDeploymentFinishedCell = (release: any) => {
+    return (
+      <NameWrapper>
+        <AlertIcon src={rocket} />
+        Revision {release.revision} was successfully deployed
+      </NameWrapper>
+    );
+  };
+
   const columns = React.useMemo(
     () => [
       {
@@ -104,28 +128,24 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
         columns: [
           {
             Header: "Description",
-            accessor: "short_summary",
+            accessor: "type",
             width: 500,
             Cell: ({ row }: CellProps<any>) => {
-              return (
-                <NameWrapper>
-                  <AlertIcon src={danger} />
-                  {row.original.short_summary}
-                  {row?.original && row.original.severity === "normal" ? (
-                    <></>
-                  ) : (
-                    <Status color="#cc3d42">Critical</Status>
-                  )}
-                </NameWrapper>
-              );
+              if (row.original.type == "incident") {
+                return renderIncidentSummaryCell(row.original.data);
+              } else if (row.original.type == "deployment_finished") {
+                return renderDeploymentFinishedCell(row.original.data);
+              }
+
+              return null;
             },
           },
           {
-            Header: "Last seen",
-            accessor: "updated_at",
+            Header: "Last Seen",
+            accessor: "timestamp",
             width: 140,
             Cell: ({ row }: CellProps<any>) => {
-              return <Flex>{relativeDate(row.original.updated_at)}</Flex>;
+              return <Flex>{relativeDate(row.original.timestamp)}</Flex>;
             },
           },
           {
@@ -133,16 +153,20 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
             accessor: "",
             width: 20,
             Cell: ({ row }: CellProps<any>) => {
-              return (
-                <TableButton
-                  onClick={() => {
-                    setExpandedEvent(row.original);
-                  }}
-                >
-                  <Icon src={info} />
-                  Details
-                </TableButton>
-              );
+              if (row.original.type == "incident") {
+                return (
+                  <TableButton
+                    onClick={() => {
+                      setExpandedEvent(row.original.data);
+                    }}
+                  >
+                    <Icon src={info} />
+                    Details
+                  </TableButton>
+                );
+              }
+
+              return null;
             },
           },
           {
@@ -150,7 +174,11 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
             accessor: "",
             width: 30,
             Cell: ({ row }: CellProps<any>) => {
-              if (!row.original.should_view_logs) {
+              if (row.original.type != "incident") {
+                return null;
+              }
+
+              if (!row.original.data.should_view_logs) {
                 return null;
               }
 
@@ -158,7 +186,7 @@ const EventList: React.FC<Props> = ({ filters, setLogData }) => {
                 <TableButton
                   width="102px"
                   onClick={() => {
-                    redirectToLogs(row.original);
+                    redirectToLogs(row.original.data);
                   }}
                 >
                   <Icon src={document} />

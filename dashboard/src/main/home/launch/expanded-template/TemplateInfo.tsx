@@ -283,7 +283,6 @@ const Button = styled.div`
   border-radius: 3px;
   cursor: ${(props: { isDisabled: boolean }) =>
     !props.isDisabled ? "pointer" : "default"};
-  box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;
   align-items: center;

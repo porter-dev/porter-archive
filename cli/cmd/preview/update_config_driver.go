@@ -20,27 +20,10 @@ import (
 	"github.com/porter-dev/switchboard/pkg/models"
 )
 
-type UpdateConfigDriverConfig struct {
-	WaitForJob bool
-
-	// If set to true, this does not run an update, it only creates the initial application and job,
-	// skipping subsequent updates
-	OnlyCreate bool
-
-	UpdateConfig struct {
-		Image string
-		Tag   string
-	} `mapstructure:"update_config"`
-
-	EnvGroups []types.EnvGroupMeta `mapstructure:"env_groups"`
-
-	Values map[string]interface{}
-}
-
 type UpdateConfigDriver struct {
 	source      *preview.Source
 	target      *preview.Target
-	config      *UpdateConfigDriverConfig
+	config      *preview.UpdateConfigDriverConfig
 	lookupTable *map[string]drivers.Driver
 	output      map[string]interface{}
 }
@@ -226,7 +209,7 @@ func (d *UpdateConfigDriver) Output() (map[string]interface{}, error) {
 	return d.output, nil
 }
 
-func (d *UpdateConfigDriver) getConfig(resource *models.Resource) (*UpdateConfigDriverConfig, error) {
+func (d *UpdateConfigDriver) getConfig(resource *models.Resource) (*preview.UpdateConfigDriverConfig, error) {
 	populatedConf, err := drivers.ConstructConfig(&drivers.ConstructConfigOpts{
 		RawConf:      resource.Config,
 		LookupTable:  *d.lookupTable,
@@ -237,7 +220,7 @@ func (d *UpdateConfigDriver) getConfig(resource *models.Resource) (*UpdateConfig
 		return nil, err
 	}
 
-	config := &UpdateConfigDriverConfig{}
+	config := &preview.UpdateConfigDriverConfig{}
 
 	err = mapstructure.Decode(populatedConf, config)
 

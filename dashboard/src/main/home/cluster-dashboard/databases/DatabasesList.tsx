@@ -316,7 +316,6 @@ const Button = styled(Link)`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  box-shadow: 0 5px 8px 0px #00000010;
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
@@ -354,7 +353,6 @@ const ConnectButton = styled.button<{}>`
   border: 0;
   border-radius: 5px;
   background: #5561c0;
-  box-shadow: 0 2px 5px 0 #00000030;
   cursor: pointer;
   user-select: none;
   :focus {

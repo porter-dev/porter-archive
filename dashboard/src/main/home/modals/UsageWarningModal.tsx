@@ -167,7 +167,6 @@ const Button = styled.button`
   padding: 10px 15px;
   border-radius: 3px;
   cursor: "pointer";
-  box-shadow: 0 5px 8px 0px #00000010;
   display: flex;
   flex-direction: row;
   align-items: center;

@@ -53,7 +53,7 @@ export default class SortSelector extends Component<PropsType, StateType> {
           options={this.getSortOptions()}
           name="Sort"
           icon={sort}
-          dropdownAlignRight={true}
+          dropdownAlignRight={false}
           noMargin
         />
       </StyledSortSelector>

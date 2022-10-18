@@ -46,9 +46,9 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	request := &types.ValidatePorterYAMLRequest{}
+	req := &types.ValidatePorterYAMLRequest{}
 
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
+	if ok := c.DecodeAndValidate(w, r, req); !ok {
 		return
 	}
 
@@ -73,7 +73,7 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	res := &types.ValidatePorterYAMLResponse{}
 
-	if request.Branch == "" { // get the default branch name
+	if req.Branch == "" { // get the default branch name
 		repo, _, err := ghClient.Repositories.Get(r.Context(), env.GitRepoOwner, env.GitRepoName)
 
 		if err != nil {
@@ -81,18 +81,18 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		request.Branch = repo.GetDefaultBranch()
+		req.Branch = repo.GetDefaultBranch()
 	}
 
 	fileContents, _, ghResp, err := ghClient.Repositories.GetContents(
 		context.Background(), env.GitRepoOwner, env.GitRepoName, "porter.yaml",
 		&github.RepositoryContentGetOptions{
-			Ref: request.Branch,
+			Ref: req.Branch,
 		},
 	)
 
 	if ghResp.StatusCode == 404 {
-		res.Errors = append(res.Errors, "no porter.yaml file found in the root of the repository")
+		res.Errors = append(res.Errors, preview.ErrNoPorterYAMLFile)
 		c.WriteResult(w, r, res)
 		return
 	}
@@ -110,18 +110,14 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	}
 
 	if contents == "" {
-		res.Errors = append(res.Errors, "porter.yaml file is empty")
+		res.Errors = append(res.Errors, preview.ErrEmptyPorterYAMLFile)
 		c.WriteResult(w, r, res)
 		return
 	}
 
 	validator := preview.NewPorterYAMLValidator()
 
-	err = validator.Validate(contents)
+	res.Errors = append(res.Errors, validator.Validate(contents)...)
 
-	if err != nil {
-		res.Errors = append(res.Errors, err.Error())
-		c.WriteResult(w, r, res)
-		return
-	}
+	c.WriteResult(w, r, res)
 }

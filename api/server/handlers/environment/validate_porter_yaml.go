@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -71,7 +72,9 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	res := &types.ValidatePorterYAMLResponse{}
+	res := &types.ValidatePorterYAMLResponse{
+		Errors: []string{},
+	}
 
 	if req.Branch == "" { // get the default branch name
 		repo, _, err := ghClient.Repositories.Get(r.Context(), env.GitRepoOwner, env.GitRepoName)
@@ -109,7 +112,7 @@ func (c *ValidatePorterYAMLHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if contents == "" {
+	if strings.TrimSpace(contents) == "" {
 		res.Errors = append(res.Errors, preview.ErrEmptyPorterYAMLFile.Error())
 		c.WriteResult(w, r, res)
 		return

@@ -12,7 +12,7 @@ import {
   TFState,
 } from "shared/types";
 import api from "shared/api";
-import Placeholder from "./Placeholder";
+import Placeholder from "./OldPlaceholder";
 import Loading from "./Loading";
 import { Context } from "shared/Context";
 import { useWebsockets } from "shared/hooks/useWebsockets";

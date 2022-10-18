@@ -141,13 +141,6 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
             )}
           </Status>
         </DataContainer>
-        <OptionWrapper>
-          <Options.Dropdown expandIcon="more_vert" shrinkIcon="more_vert">
-            <Options.Option onClick={() => setShowDeleteModal(true)}>
-              <i className="material-icons">delete</i> Delete
-            </Options.Option>
-          </Options.Dropdown>
-        </OptionWrapper>
       </EnvironmentCardWrapper>
     </>
   );

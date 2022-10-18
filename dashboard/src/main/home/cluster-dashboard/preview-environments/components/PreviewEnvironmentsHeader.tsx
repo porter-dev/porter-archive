@@ -24,9 +24,10 @@ export const PreviewEnvironmentsHeader = () => {
     <>
       <DashboardHeader
         image={PullRequestIcon}
-        title="Preview Environments"
+        title="Preview environments"
         description="Create full-stack preview environments for your pull requests."
         disableLineBreak
+        capitalize={false}
       />
       {githubStatus != "no active incidents" ? (
         <AlertCard>

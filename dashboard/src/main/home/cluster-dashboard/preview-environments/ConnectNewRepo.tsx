@@ -98,7 +98,8 @@ const ConnectNewRepo: React.FC = () => {
     <>
       <DashboardHeader
         image={PullRequestIcon}
-        title="Preview Environments"
+        title="Preview environments"
+        capitalize={false}
         description="Create full-stack preview environments for your pull requests."
       />
 

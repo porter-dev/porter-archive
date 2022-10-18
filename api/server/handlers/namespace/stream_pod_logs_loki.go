@@ -64,7 +64,6 @@ func (c *StreamPodLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	err = agent.StreamPorterAgentLokiLog([]string{
 		fmt.Sprintf("pod=%s", request.PodSelector),
 		fmt.Sprintf("namespace=%s", request.Namespace),
-		fmt.Sprintf("helm_sh_revision=%s", request.Revision),
 	}, string(startTime), request.SearchParam, 0, safeRW)
 
 	if err != nil {

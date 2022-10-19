@@ -110,20 +110,26 @@ const EnvironmentsList = () => {
         <ControlRow>
           <ButtonEnablePREnvironments setIsReady={setButtonIsReady} />
         </ControlRow>
-        {environments.length === 0 ? (
-          <Placeholder title="No repositories found" height="calc(100vh - 400px)">
-            No repositories were found with Preview Environments enabled.
-          </Placeholder>
+        {isLoading ? (
+          <LoadingWrapper><Loading /></LoadingWrapper>
         ) : (
-          <EnvironmentsGrid>
-            {environments.map((env) => (
-              <EnvironmentCard
-                key={env.id}
-                environment={env}
-                onDelete={removeEnvironmentFromList}
-              />
-            ))}
-          </EnvironmentsGrid>
+          <>
+            {environments.length === 0 ? (
+              <Placeholder title="No repositories found" height="calc(100vh - 400px)">
+                No repositories were found with Preview Environments enabled.
+              </Placeholder>
+            ) : (
+              <EnvironmentsGrid>
+                {environments.map((env) => (
+                  <EnvironmentCard
+                    key={env.id}
+                    environment={env}
+                    onDelete={removeEnvironmentFromList}
+                  />
+                ))}
+              </EnvironmentsGrid>
+            )}
+          </>
         )}
       </Relative>
     </>
@@ -131,6 +137,10 @@ const EnvironmentsList = () => {
 };
 
 export default EnvironmentsList;
+
+const LoadingWrapper = styled.div`
+  padding-top: 100px;
+`;
 
 const Relative = styled.div`
   position: relative;

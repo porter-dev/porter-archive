@@ -24,6 +24,9 @@ type Cluster struct {
 	// The integration service for this cluster
 	Service ClusterService `json:"service"`
 
+	// Whether or not the Porter agent integration is enabled
+	AgentIntegrationEnabled bool `json:"agent_integration_enabled"`
+
 	// The infra id, if cluster was provisioned with Porter
 	InfraID uint `json:"infra_id"`
 
@@ -262,9 +265,11 @@ type CreateClusterCandidateRequest struct {
 }
 
 type UpdateClusterRequest struct {
-	Name string `json:"name" form:"required"`
+	Name string `json:"name"`
 
 	AWSClusterID string `json:"aws_cluster_id"`
+
+	AgentIntegrationEnabled *bool `json:"agent_integration_enabled"`
 }
 
 type ListClusterResponse []*Cluster

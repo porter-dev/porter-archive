@@ -5,7 +5,7 @@ import styled from "styled-components";
 import leftArrow from "assets/left-arrow.svg";
 import KeyValueArray from "components/form-components/KeyValueArray";
 import Loading from "components/Loading";
-import TabRegion from "components/TabRegion";
+import TabRegion, { TabOption } from "components/TabRegion";
 import TitleSection from "components/TitleSection";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -77,7 +77,7 @@ const ExpandedJobRun = ({
   );
   const [currentTab, setCurrentTab] = useState<
     "events" | "logs" | "metrics" | "config" | string
-  >("events");
+  >(currentCluster.agent_integration_enabled ? "events" : "logs");
   const [pods, setPods] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { pushQueryParams } = useRouting();
@@ -176,7 +176,7 @@ const ExpandedJobRun = ({
   };
 
   const renderLogsSection = () => {
-    if (useDeprecatedLogs) {
+    if (useDeprecatedLogs || !currentCluster.agent_integration_enabled) {
       return (
         <JobLogsWrapper>
           <Logs
@@ -216,6 +216,30 @@ const ExpandedJobRun = ({
     return <Loading />;
   }
 
+  let options: TabOption[] = [];
+
+  if (currentCluster.agent_integration_enabled) {
+    options.push({
+      label: "Events",
+      value: "events",
+    });
+  }
+
+  options.push(
+    {
+      label: "Logs",
+      value: "logs",
+    },
+    {
+      label: "Metrics",
+      value: "metrics",
+    },
+    {
+      label: "Config",
+      value: "config",
+    }
+  );
+
   return (
     <StyledExpandedChart>
       <BreadcrumbRow>
@@ -248,24 +272,7 @@ const ExpandedJobRun = ({
         <TabRegion
           currentTab={currentTab}
           setCurrentTab={(x: string) => setCurrentTab(x)}
-          options={[
-            {
-              label: "Events",
-              value: "events",
-            },
-            {
-              label: "Logs",
-              value: "logs",
-            },
-            {
-              label: "Metrics",
-              value: "metrics",
-            },
-            {
-              label: "Config",
-              value: "config",
-            },
-          ]}
+          options={options}
         >
           {currentTab === "events" && renderEventsSection()}
           {currentTab === "logs" && renderLogsSection()}

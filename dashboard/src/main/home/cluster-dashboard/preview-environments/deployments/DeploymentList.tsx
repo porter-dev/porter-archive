@@ -20,6 +20,7 @@ import CheckboxRow from "components/form-components/CheckboxRow";
 import DocsHelper from "components/DocsHelper";
 import pullRequestIcon from "assets/pull_request_icon.svg";
 import DashboardHeader from "../../DashboardHeader";
+import Placeholder from "components/Placeholder";
 
 const AvailableStatusFilters = [
   "all",
@@ -210,15 +211,15 @@ const DeploymentList = () => {
   const renderDeploymentList = () => {
     if (isLoading) {
       return (
-        <Placeholder>
+        <LoadingWrapper>
           <Loading />
-        </Placeholder>
+        </LoadingWrapper>
       );
     }
 
     if (!deploymentList.length && !pullRequests.length) {
       return (
-        <Placeholder>
+        <Placeholder height="calc(100vh - 400px)">
           No preview apps have been found. Open a PR to create a new preview
           app.
         </Placeholder>
@@ -227,7 +228,7 @@ const DeploymentList = () => {
 
     if (!filteredDeployments.length && !filteredPullRequests.length) {
       return (
-        <Placeholder>
+        <Placeholder height="calc(100vh - 400px)">
           No preview apps have been found with the given filter.
         </Placeholder>
       );
@@ -372,6 +373,10 @@ const mockRequest = () =>
     );
   });
 
+const LoadingWrapper = styled.div`
+  padding-top: 100px;
+`;
+
 const I = styled.i`
   font-size: 18px;
   user-select: none;
@@ -495,26 +500,6 @@ const RefreshButton = styled.button`
   :hover {
     background-color: rgb(97 98 102 / 44%);
     color: white;
-  }
-`;
-
-const Placeholder = styled.div`
-  padding: 30px;
-  padding-bottom: 40px;
-  font-size: 13px;
-  color: #ffffff44;
-  min-height: 400px;
-  height: 40vh;
-  border-radius: 8px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-
-  > i {
-    font-size: 18px;
-    margin-right: 8px;
   }
 `;
 

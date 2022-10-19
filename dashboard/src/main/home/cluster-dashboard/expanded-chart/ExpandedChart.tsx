@@ -27,6 +27,7 @@ import EventsTab from "./events/EventsTab";
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 import { useStackEnvGroups } from "./useStackEnvGroups";
+import DeployStatusSection from "./deploy-status-section/DeployStatusSection";
 
 type Props = {
   namespace: string;
@@ -140,6 +141,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   };
 
   const getControllers = async (chart: ChartType) => {
+    
     // don't retrieve controllers for chart that failed to even deploy.
     if (chart.info.status == "failed") return;
 
@@ -613,9 +615,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const renderUrl = () => {
     if (url) {
       return (
-        <Url href={url} target="_blank">
+        <Url>
           <i className="material-icons">link</i>
-          {url}
+          <a href={url} target="_blank">{url}</a>
         </Url>
       );
     }
@@ -867,11 +869,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   currentChart.chart.metadata.name != "job" &&
                   renderUrl()}
                 <InfoWrapper>
+                  {/*
                   <StatusIndicator
                     controllers={controllers}
                     status={currentChart.info.status}
                     margin_left={"0px"}
                   />
+                  */}
+                  <DeployStatusSection chart={currentChart} />
                   <LastDeployed>
                     <Dot>•</Dot>Last deployed
                     {" " + getReadableDate(currentChart.info.last_deployed)}
@@ -1077,15 +1082,16 @@ const Bolded = styled.div`
   margin-right: 6px;
 `;
 
-const Url = styled.a`
+const Url = styled.div`
   display: block;
-  margin-left: 2px;
+  margin-left: 5px;
   font-size: 13px;
   margin-top: 16px;
   user-select: all;
   margin-bottom: -5px;
   user-select: text;
   display: flex;
+  color: #949eff;
   align-items: center;
 
   > i {
@@ -1128,7 +1134,7 @@ const HeaderWrapper = styled.div`
 `;
 
 const Dot = styled.div`
-  margin-right: 9px;
+  margin-right: 16px;
 `;
 
 const InfoWrapper = styled.div`
@@ -1140,7 +1146,7 @@ const InfoWrapper = styled.div`
 
 const LastDeployed = styled.div`
   font-size: 13px;
-  margin-left: 10px;
+  margin-left: 8px;
   margin-top: -1px;
   display: flex;
   align-items: center;

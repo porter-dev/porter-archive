@@ -88,6 +88,18 @@ func apply(_ *types.GetAuthenticatedUserResponse, client *api.Client, _ []string
 		return fmt.Errorf("error reading porter.yaml: %w", err)
 	}
 
+	validationErrors := previewInt.Validate(string(fileBytes))
+
+	if len(validationErrors) > 0 {
+		errString := "the following error(s) were found while validating the porter.yaml file:"
+
+		for _, err := range validationErrors {
+			errString += "\n- " + strings.ReplaceAll(err.Error(), "\n\n*", "\n  *")
+		}
+
+		return fmt.Errorf(errString)
+	}
+
 	resGroup, err := parser.ParseRawBytes(fileBytes)
 
 	if err != nil {

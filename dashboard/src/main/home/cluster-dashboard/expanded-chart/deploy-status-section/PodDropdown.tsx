@@ -11,11 +11,13 @@ import ControllerTab from "./ControllerTab";
 type Props = {
   selectors?: string[];
   currentChart: ChartType;
+  onUpdate: (props: any) => void;
 };
 
 const PodDropdown: React.FunctionComponent<Props> = ({
   currentChart,
   selectors,
+  onUpdate,
 }) => {
   const [selectedPod, setSelectedPod] = useState<any>({});
   const [controllers, setControllers] = useState<any[]>([]);
@@ -77,6 +79,7 @@ const PodDropdown: React.FunctionComponent<Props> = ({
           isLast={i === controllers?.length - 1}
           isFirst={i === 0}
           setPodError={(x: string) => setPodError(x)}
+          onUpdate={onUpdate}
         />
       );
     });

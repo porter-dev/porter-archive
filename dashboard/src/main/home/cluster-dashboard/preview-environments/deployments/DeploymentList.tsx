@@ -293,12 +293,23 @@ const DeploymentList = () => {
       <DashboardHeader
         image="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png"
         title={
-          <StyledLink 
-            to={`https://github.com/${selectedRepo}`}
-            target="_blank"
-          >
-            {selectedRepo}
-          </StyledLink>
+          <Flex>
+            <StyledLink 
+              to={`https://github.com/${selectedRepo}`}
+              target="_blank"
+            >
+              {selectedRepo}
+            </StyledLink>
+            <DynamicLink
+              to={`/preview-environments/deployments/${environment_id}/${repo_owner}/${repo_name}/settings`}
+            >
+              <I
+                className="material-icons"
+              >
+                more_vert
+              </I>
+            </DynamicLink>
+          </Flex>
         }
         description={`Preview environments for the ${selectedRepo} repository.`}
         disableLineBreak
@@ -341,24 +352,6 @@ const DeploymentList = () => {
           </StyledStatusSelector>
         </ActionsWrapper>
       </Flex>
-      <Flex>
-        <ActionsWrapper>
-          <FlexWrap>
-            <CheckboxRow
-              label="Disable new comments for deployments"
-              checked={newCommentsDisabled}
-              toggle={() => handleToggleCommentStatus(newCommentsDisabled)}
-            />
-            <Div>
-              <DocsHelper
-                disableMargin
-                tooltipText="When checked, comments for every new deployment are disabled. Instead, the most recent comment is updated each time."
-                placement="top-end"
-              />
-            </Div>
-          </FlexWrap>
-        </ActionsWrapper>
-      </Flex>
       <Container>
         <EventsGrid>{renderDeploymentList()}</EventsGrid>
       </Container>
@@ -378,6 +371,25 @@ const mockRequest = () =>
       1000
     );
   });
+
+const I = styled.i`
+  font-size: 18px;
+  user-select: none;
+  margin-left: 15px;
+  color: #aaaabb;
+  margin-bottom: -3px;
+  cursor: pointer;
+  width: 30px;
+  border-radius: 40px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  :hover {
+    background: #26292e;
+    border: 1px solid #494b4f; 
+  }
+`;
 
 const StyledLink = styled(DynamicLink)`
   color: white;

@@ -1062,14 +1062,14 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/{incident_id}/events -> cluster.NewListIncidentEventsHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/incidents/events -> cluster.NewListIncidentEventsHandler
 	listIncidentEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/incidents/{%s}/events", relPath, types.URLParamIncidentID),
+				RelativePath: fmt.Sprintf("%s/incidents/events", relPath),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1204,6 +1204,35 @@ func getClusterRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getPorterEventsEndpoint,
 		Handler:  getPorterEventsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/events/job -> cluster.NewGetPorterJobEventsHandler
+	getPorterJobEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/events/job", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterJobEventsHandler := cluster.NewGetPorterJobEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterJobEventsEndpoint,
+		Handler:  getPorterJobEventsHandler,
 		Router:   r,
 	})
 

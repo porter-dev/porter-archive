@@ -67,6 +67,54 @@ func ListPorterEvents(
 	return eventsResp, nil
 }
 
+func ListPorterJobEvents(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	req *types.ListJobEventsRequest,
+) (*types.ListEventsResponse, error) {
+	vals := make(map[string]string)
+
+	vals["job_name"] = req.JobName
+
+	if req.Type != nil {
+		vals["type"] = *req.Type
+	}
+
+	if req.ReleaseName != nil {
+		vals["release_name"] = *req.ReleaseName
+	}
+
+	if req.ReleaseNamespace != nil {
+		vals["release_namespace"] = *req.ReleaseNamespace
+	}
+
+	if req.PaginationRequest != nil {
+		vals["page"] = fmt.Sprintf("%d", req.PaginationRequest.Page)
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/events/job",
+		vals,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	eventsResp := &types.ListEventsResponse{}
+
+	err = json.Unmarshal(rawQuery, eventsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return eventsResp, nil
+}
+
 func ListIncidents(
 	clientset kubernetes.Interface,
 	service *v1.Service,
@@ -143,10 +191,13 @@ func GetIncidentByID(
 func ListIncidentEvents(
 	clientset kubernetes.Interface,
 	service *v1.Service,
-	incidentID string,
 	req *types.ListIncidentEventsRequest,
 ) (*types.ListIncidentEventsResponse, error) {
 	vals := make(map[string]string)
+
+	if req.IncidentID != nil {
+		vals["incident_id"] = *req.IncidentID
+	}
 
 	if req.PodName != nil {
 		vals["pod_name"] = *req.PodName
@@ -159,15 +210,20 @@ func ListIncidentEvents(
 	if req.Summary != nil {
 		vals["summary"] = *req.Summary
 	}
+
 	if req.PaginationRequest != nil {
 		vals["page"] = fmt.Sprintf("%d", req.PaginationRequest.Page)
+	}
+
+	if req.PodPrefix != nil {
+		vals["pod_prefix"] = *req.PodPrefix
 	}
 
 	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
 		"http",
 		service.Name,
 		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
-		fmt.Sprintf("/incidents/%s/events", incidentID),
+		"/incidents/events",
 		vals,
 	)
 

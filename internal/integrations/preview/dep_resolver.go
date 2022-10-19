@@ -23,20 +23,22 @@ func newDependencyResolver(resources []*types.Resource) *dependencyResolver {
 }
 
 func (r *dependencyResolver) Resolve() error {
-	// construct dependency graph
-	for _, resource := range r.resources {
-		// check for duplicate resource
-		if _, ok := r.graph[resource.Name]; ok {
-			return fmt.Errorf("duplicate resource detected: '%s'", resource.Name)
+	if len(r.resources) > 0 {
+		// construct dependency graph
+		for _, resource := range r.resources {
+			// check for duplicate resource
+			if _, ok := r.graph[resource.Name]; ok {
+				return fmt.Errorf("duplicate resource detected: '%s'", resource.Name)
+			}
+
+			r.graph[resource.Name] = append(r.graph[resource.Name], resource.DependsOn...)
 		}
 
-		r.graph[resource.Name] = append(r.graph[resource.Name], resource.DependsOn...)
-	}
+		err := r.depResolve(r.resources[0].Name)
 
-	err := r.depResolve(r.resources[0].Name)
-
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

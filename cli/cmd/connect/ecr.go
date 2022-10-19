@@ -3,6 +3,7 @@ package connect
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -53,7 +54,7 @@ Would you like to proceed? %s `,
 		creds, err := agent.CreateIAMECRUser(region)
 
 		if err != nil {
-			color.New(color.FgRed).Printf("Automatic creation failed, manual input required. Error was: %v\n", err)
+			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
 			return ecrManual(client, projectID, region)
 		}
 
